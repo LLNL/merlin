@@ -1,0 +1,6 @@
+matplotlib
+scipy
+
+# Install JAG.
+-e git+ssh://git@cz-bitbucket.llnl.gov:7999/mlsi/implosion.git#egg=jag
+

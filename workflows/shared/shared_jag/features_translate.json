@@ -1,0 +1,40 @@
+{
+  "_comments": "This file includes the subset of variables to extract into .npz.",
+  "outputs":
+  {
+    "scalars":
+    {
+      "BWx": 0.0589304541331639,
+      "tMAXpressure": 1.89664721722855,
+      "BT": 1.89668245212101,
+      "tMAXt": 1.88915923121634,
+      "BWn": 0.03691551927523,
+      "MAXpressure": 647817.122622967,
+      "BAt": 4.66878379747342,
+      "Yn": 5.73880208197888e+15,
+      "Ye": 12.9643690388372,
+      "Yx": 13.0729885815946,
+      "tMAXte": 1.88915923121634,
+      "BAtion": 4.66878379747342,
+      "iBT": 64,
+      "MAXte": 5.08784468550675,
+      "BAte": 4.66878379747342,
+      "tMAXtion": 1.88915923121634,
+      "BTx": 1.86461074560845,
+      "MAXt": 5.08784468550675,
+      "BTn": 1.89668245212101,
+      "BApressure": 523754.131359304,
+      "MAXtion": 5.08784468550675,
+      "tMINradius": 1.88917907561909,
+      "MINradius": 22.83772819554
+    }
+  },
+  "inputs":
+  {
+    "shape_model_initial_modes:(4,3)": 0.350085533577,
+    "betti_prl15_trans_u": 0.0329377912239,
+    "betti_prl15_trans_v": 0.457591003375,
+    "shape_model_initial_modes:(1,0)": 0.768306511978,
+    "shape_model_initial_modes:(2,1)": 0.630669518932
+  }
+}

@@ -1,0 +1,11 @@
+celery[redis]>=4.3.0
+numpy
+parse
+psutil>=5.1.0
+cryptography
+cached_property
+coloredlogs
+importlib_resources; python_version < '3.7'
+
+# Install tip of maestrowf
+-e git+https://github.com/LLNL/maestrowf.git#egg=maestrowf
