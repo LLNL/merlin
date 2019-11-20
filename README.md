@@ -69,7 +69,7 @@ technologies ([rabbitmq](https://www.rabbitmq.com) and
 [redis](https://redis.io) are currently supported). Although not
 a hard dependency, we encourage the use of
 [flux](http://flux-framework.org) for interfacing with
-HPC batch systems, since it can scale to very large number of jobs.
+HPC batch systems, since it can scale to a very large number of jobs.
 
 The integrated system looks a little something like this:
 
@@ -79,7 +79,7 @@ In this example, here's how it all works:
 
 1. The scientist describes her HPC workflow as a maestro DAG (directed acyclic graph)
 "spec" file `workflow.yaml`
-2. She then sends it to the persistent server `merlin run workflow.yaml` .
+2. She then sends it to the persistent server with  `merlin run workflow.yaml` .
 Merlin translates the file into tasks.
 3. The scientist submits a job request to her HPC center. These jobs ask for workers via
 the command `merlin run-workers workflow.yaml`.

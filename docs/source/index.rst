@@ -58,7 +58,7 @@ technologies (`rabbitmq <https://www.rabbitmq.com>`_ and
 `redis <https://redis.io>`_ are currently supported). Although not
 a hard dependency, we encourage the use of
 `flux <http://flux-framework.org>`_ for interfacing with
-HPC batch systems, since it can scale to very large number of jobs.
+HPC batch systems, since it can scale to a very large number of jobs.
 
 The integrated system looks a little something like this:
 
