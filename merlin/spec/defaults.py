@@ -4,11 +4,11 @@
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
-# LLNL-CODE-<PENDING>
+# LLNL-CODE-797170
 # All rights reserved.
 # This file is part of Merlin, Version: 1.0.0.
 #
-# For details, see https://github.com/LLNL/<MERLIN_REPO_NAME>.
+# For details, see https://github.com/LLNL/merlin.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
