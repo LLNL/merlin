@@ -65,7 +65,7 @@ provide an interface for describing workflows, as well as for defining
 workflow task dependencies. It translates those dependencies into concrete
 tasks via [celery](https://docs.celeryproject.org/), 
 which can be configured for a variety of backend
-technologies ([rabbitmq](https://www.rabbitmq.com)] and
+technologies ([rabbitmq](https://www.rabbitmq.com) and
 [redis](https://redis.io) are currently supported). Although not
 a hard dependency, we encourage the use of
 [flux](http://flux-framework.org) for interfacing with
@@ -79,14 +79,15 @@ In this example, here's how it all works:
 
 1. The scientist describes her HPC workflow as a maestro DAG (directed acyclic graph)
 "spec" file `workflow.yaml`
-2. They then send it to the persistent server `merlin run workflow.yaml` .
+2. She then sends it to the persistent server `merlin run workflow.yaml` .
 Merlin translates the file into tasks.
-3. Merlin workers appear in batch HPC allocations that issue the command
-`merlin run-workers workflow.yaml`.
-4. These workers pull work from the queue and make calls to flux to get the 
-appropraite resources.
+3. The scientist submits a job request to her HPC center. These jobs ask for workers via
+the command `merlin run-workers workflow.yaml`.
+4. Coffee break.
+5. As jobs stand up, they pull work from the queue, making calls to flux to get the 
+necessary HPC resources.
 5. Later, workers on a different allocation, with GPU resources connect to the 
-server and contribute to processing the workload
+server and contribute to processing the workload.
 
 The central queue server deals with task dependencies and keeps the workers fed.
 
