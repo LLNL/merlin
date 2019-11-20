@@ -4,7 +4,7 @@
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
-# LLNL-CODE-<PENDING>
+# LLNL-CODE-797170
 # All rights reserved.
 # This file is part of Merlin, Version: 1.0.0.
 #
