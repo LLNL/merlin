@@ -73,7 +73,7 @@ HPC batch systems, since it can scale to a very large number of jobs.
 
 The integrated system looks a little something like this:
 
-<img src="docs/images/merlin_arch.png" width="400" alt="a typical Merlin workflow">
+<img src="docs/images/merlin_arch.png" alt="a typical Merlin workflow">
 
 In this example, here's how it all works:
 
