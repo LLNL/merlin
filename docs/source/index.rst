@@ -8,7 +8,7 @@ Welcome to Merlin's documentation!
 
 Merlin is a tool for running machine learning based workflows. The goal of
 Merlin is to make it easy to build, run, and process the kinds of large
-scale HPC workflows needed for cognative simulation.
+scale HPC workflows needed for cognitive simulation.
 
 Merlin Overview
 ---------------
