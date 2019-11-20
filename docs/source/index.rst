@@ -22,7 +22,9 @@ To become your own Big Data generator.
 Data sets of this size can be large enough to train deep neural networks
 that can mimic your HPC application, to be used for such
 things as design optimization, uncertainty quantification and statistical
-experimental inference.
+experimental inference. Merlin's been used to study inertial confinement
+fusion, extreme ultraviolet light generation, structural mechanics and
+atomic physics, to name a few.
 
 How does it work?
 
@@ -46,18 +48,25 @@ necessary for the intelligent sampling of design spaces or reinforcement
 learning tasks.
 
 Merlin does all of this by leveraging some key HPC and cloud computing
-technologies, building off open source components. It uses Maestro to
+technologies, building off open source components. It uses
+`maestro <https://github.com/LLNL/maestrowf>`_ to
 provide an interface for describing workflows, as well as for defining
 workflow task dependencies. It translates those dependencies into concrete
-tasks via celery, which can be configured for a variety of backend
-technologies (rabbitmq and redis are currently supported). Although not
-a hard dependency, we encourage the use of flux for interfacing with
+tasks via `celery <https://docs.celeryproject.org/>`_, 
+which can be configured for a variety of backend
+technologies (`rabbitmq <https://www.rabbitmq.com>`_ and
+`redis <https://redis.io>`_ are currently supported). Although not
+a hard dependency, we encourage the use of
+`flux <http://flux-framework.org>`_ for interfacing with
 HPC batch systems, since it can scale to very large number of jobs.
 
 The integrated system looks a little something like this:
+
 .. image:: ../images/merlin_arch.png
 
 For more details, check out the rest of the documentation.
+
+Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
 
 .. toctree::
    :maxdepth: 1
