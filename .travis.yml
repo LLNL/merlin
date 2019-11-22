@@ -1,0 +1,15 @@
+language: python
+python: 
+  - "3.6"
+  - "3.7"
+  - "3.8"
+install: 
+  - "pip install --upgrade pip"
+  - "pip install cryptography"
+  - "pip install -r requirements.txt"
+  - "pip install -e ."
+  - "pip install -r requirements/mysql.txt"
+  - "pip install --upgrade sphinx"
+script: 
+  - "python -m pytest tests/"
+
