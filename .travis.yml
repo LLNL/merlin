@@ -1,0 +1,11 @@
+language: python
+python:
+  - "3.6"
+
+install:
+    make all
+
+script:
+    ls ;
+    python tests/integration/run_tests.py --exit --verbose ;
+    python -m pytest tests/ ;
