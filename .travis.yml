@@ -1,6 +1,8 @@
 language: python
 python: 
   - "3.6"
+  - "3.7"
+  - "3.8"
 install: 
   - "pip install --upgrade pip"
   - "pip install cryptography"
@@ -10,5 +12,4 @@ install:
   - "pip install --upgrade sphinx"
 script: 
   - "python -m pytest tests/"
-  - "python tests/integration/run_tests.py --verbose"
 
