@@ -5,12 +5,12 @@ python:
 
 install:
     #    make all
-    pip install --upgrade pip
-    #virtualenv/python3.6/bin/easy_install cryptography
-    pip install -r requirements.txt
-    pip install -e .
-    pip install -r requirements/mysql.txt
-    pip install --upgrade sphinx
+    pip install --upgrade pip ;
+    #virtualenv/python3.6/bin/easy_install cryptography ;
+    pip install -r requirements.txt ;
+    pip install -e . ;
+    pip install -r requirements/mysql.txt ;
+    pip install --upgrade sphinx ;
 
 script:
     ls ;
