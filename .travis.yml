@@ -1,18 +1,14 @@
 language: python
-
-python:
+python: 
   - "3.6"
+install: 
+  - "pip install --upgrade pip ;"
+  - "pip install -r requirements.txt ;"
+  - "pip install -e . ;"
+  - "pip install -r requirements/mysql.txt ;"
+  - "pip install --upgrade sphinx ;"
+script: 
+  - "ls ;"
+  - "python tests/integration/run_tests.py --exit --verbose ;"
+  - "python -m pytest tests/ ;"
 
-install:
-    #    make all
-    pip install --upgrade pip ;
-    #virtualenv/python3.6/bin/easy_install cryptography ;
-    pip install -r requirements.txt ;
-    pip install -e . ;
-    pip install -r requirements/mysql.txt ;
-    pip install --upgrade sphinx ;
-
-script:
-    ls ;
-    python tests/integration/run_tests.py --exit --verbose ;
-    python -m pytest tests/ ;
