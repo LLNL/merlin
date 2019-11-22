@@ -1,9 +1,16 @@
-#language: python
-#python:
-#  - "3.6"
+language: python
+
+python:
+  - "3.6"
 
 install:
-    make all
+    #    make all
+    pip install --upgrade pip
+    merlin_3_6/bin/easy_install cryptography
+    pip install -r requirements.txt
+    pip install -e .
+    pip install -r requirements/mysql.txt
+    pip install --upgrade sphinx
 
 script:
     ls ;
