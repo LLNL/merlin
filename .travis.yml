@@ -3,11 +3,12 @@ python:
   - "3.6"
 install: 
   - "pip install --upgrade pip"
+  - "pip install cryptography"
   - "pip install -r requirements.txt"
   - "pip install -e ."
   - "pip install -r requirements/mysql.txt"
   - "pip install --upgrade sphinx"
 script: 
   - "python -m pytest tests/"
-  - "python tests/integration/run_tests.py --exit --verbose"
+  - "python tests/integration/run_tests.py --verbose"
 
