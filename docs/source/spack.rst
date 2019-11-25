@@ -9,16 +9,6 @@ Merlin will then be installed in this specific version allowing for
 multiple python versions on a single system without the need for a
 virtualenv. The py-merlinwf package builds with python3.6+.
 
-Checkout merlin spack repo
-**************************
-
-
-Get the latest version of merlin.spack from github.
-
-::
-
-  git clone https://github.com/LLNL/merlin.spack.git
-
 
 Checkout spack
 **************
@@ -30,6 +20,16 @@ make sure merlin and spack are in separate directories.
 .. code:: bash
 
   git clone https://github.com/spack/spack.git
+
+
+The merlin addition to spack is currently in pull requests, you can clone a 
+branch that has all of the PR changes here:
+
+.. code:: bash
+
+  git clone https://github.com/koning/spack.git
+  cd spack
+  git checkout feature/koning/merlinwf
 
 
 Setup spack
@@ -57,18 +57,12 @@ To see the compilers.
 
     spack compiler list
 
-Add the merlin.spack repo to spack (done once):
-
-.. code:: bash
-
-    spack repo add <path>/<to>/merlin.spack
-
 
 Build merlin
 ************
 
-Build merlin, this will take a *long* time, be prepared to wait.  It is going
-to build python and everything python needs including numpy.
+Build merlin, this will take a *long* time, be prepared to wait.  It will
+build python and all python modules merlin needs including numpy.
 
 .. code:: bash
 
