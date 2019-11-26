@@ -121,6 +121,10 @@ namely a demo workflow that has simulation and machine-learning:
 More documentation on the example workflows can be found under
 'Running the Examples'.
 
+# Code of Conduct
+Please note that Merlin has a
+[**Code of Conduct**](.github/CODE_OF_CONDUCT.md). By participating in
+the Merlin community, you agree to abide by its rules.
 
 # Running the Examples
 Example workflows can be found in the `workflows/` directory.
