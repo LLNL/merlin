@@ -100,8 +100,6 @@ setup(
     packages=find_packages(exclude=["tests.*", "tests"]),
     install_requires=install_requires(),
     extras_require=extras_require(),
-    setup_requires=["pytest-runner"],
-    tests_require=["pytest"],
     entry_points={
         "console_scripts": [
             "merlin=merlin.main:main",
