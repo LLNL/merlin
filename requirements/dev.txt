@@ -4,7 +4,6 @@ dep-license
 flake8
 isort
 pytest
-pytest-runner
 sphinx
 sphinx_rtd_theme
 
