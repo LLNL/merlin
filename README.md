@@ -1,4 +1,4 @@
-<img src="docs/images/merlin.png" width="400"
+<img src="https://github.com/LLNL/merlin/blob/master/docs/images/merlin.png" width="400"
 alt="
            *      
        *~~~~~                                       
