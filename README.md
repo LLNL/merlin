@@ -1,16 +1,6 @@
-<img src="docs/images/merlin.png" width="400"
-alt="
-           *      
-       *~~~~~                                       
-      *~~*~~~*      __  __           _ _       
-     /   ~~~~~     |  \/  |         | (_)      
-         ~~~~~     | \  / | ___ _ __| |_ _ __  
-        ~~~~~*     | |\/| |/ _ \ '__| | | '_ \ 
-       *~~~~~~~    | |  | |  __/ |  | | | | | |
-      ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
-     *~~~~~~~~~~~                                    
-       ~~~*~~~*    Machine Learning for HPC Workflows                                 
-">
+![alt text][logo]
+
+[logo]: https://github.com/LLNL/merlin/blob/master/docs/images/merlin.png "Merlin logo"
 
 Welcome to the Merlin README, a condensed guide. For more in-depth Merlin
  information, try our [web docs here](https://merlin.readthedocs.io/).
@@ -121,6 +111,10 @@ namely a demo workflow that has simulation and machine-learning:
 More documentation on the example workflows can be found under
 'Running the Examples'.
 
+# Code of Conduct
+Please note that Merlin has a
+[**Code of Conduct**](.github/CODE_OF_CONDUCT.md). By participating in
+the Merlin community, you agree to abide by its rules.
 
 # Running the Examples
 Example workflows can be found in the `workflows/` directory.

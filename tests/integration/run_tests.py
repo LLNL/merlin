@@ -40,10 +40,7 @@ import time
 from contextlib import suppress
 from glob import glob
 from re import search
-from subprocess import (
-    PIPE,
-    Popen,
-)
+from subprocess import PIPE, Popen
 
 
 OUTPUT_DIR = "cli_test_studies"
@@ -343,11 +340,16 @@ def define_tests():
     demo = "workflows/feature_demo/feature_demo.yaml"
     simple = "workflows/simple_chain/simple_chain.yaml"
     black = "black --check --target-version py36"
+    config_dir = "./CLI_TEST_MERLIN_CONFIG"
 
     return {
         "merlin": ("merlin", ReturnCodeCond(1)),
         "merlin help": ("merlin --help", ReturnCodeCond()),
         "merlin version": ("merlin --version", ReturnCodeCond()),
+        "merlin config": (
+            f"merlin config -o {config_dir}; rm -rf {config_dir}",
+            ReturnCodeCond(),
+        ),
         "run-workers echo simple_chain": (
             f"{workers} {simple} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
@@ -447,7 +449,7 @@ def setup_argparse():
         nargs="+",
         default=None,
         help="Provide space-delimited ids of tests you want to run."
-        "Example: '--ids 1 5 8'",
+        "Example: '--ids 1 5 8 13'",
     )
     return parser
 

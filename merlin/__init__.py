@@ -37,7 +37,8 @@ This module contains the source code for Merlin.
 import os
 import sys
 
-__version__ = "1.0.0"
+
+__version__ = "1.0.2"
 VERSION = __version__
 PATH_TO_PROJ = os.path.join(os.path.dirname(__file__), "")
 
