@@ -94,10 +94,12 @@ setup(
     description="The building blocks of workflows!",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    classifiers=["Programming Language :: Python :: 3.6"],
+    classifiers=[
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+    ],
     keywords="machine learning workflow",
     url="https://github.com/LLNL/merlin",
     license="MIT",
@@ -107,7 +109,7 @@ setup(
     entry_points={
         "console_scripts": [
             "merlin=merlin.main:main",
-            "merlin-templates=merlin.merlin_templates:main"
+            "merlin-templates=merlin.merlin_templates:main",
         ]
     },
     include_package_data=True,
