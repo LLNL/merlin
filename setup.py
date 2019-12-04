@@ -89,23 +89,27 @@ def extras_require():
 
 
 setup(
-    name="merlin",
+    name="merlinwf",
     version=version,
     description="The building blocks of workflows!",
     long_description=readme(),
-    classifiers=["Programming Language :: Python :: 3.6+"],
+    long_description_content_type="text/markdown",
+    classifiers=[
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+    ],
     keywords="machine learning workflow",
-    url="https://lc.llnl.gov/bitbucket/projects/MLSI/repos/merlin/browse",
+    url="https://github.com/LLNL/merlin",
     license="MIT",
     packages=find_packages(exclude=["tests.*", "tests"]),
     install_requires=install_requires(),
     extras_require=extras_require(),
-    setup_requires=["pytest-runner"],
-    tests_require=["pytest"],
     entry_points={
         "console_scripts": [
             "merlin=merlin.main:main",
-            "merlin-templates=merlin.merlin_templates:main"
+            "merlin-templates=merlin.merlin_templates:main",
         ]
     },
     include_package_data=True,
