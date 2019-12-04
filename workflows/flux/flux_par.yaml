@@ -16,7 +16,7 @@ study:
 - description: Build the code
   name: build
   run:
-    cmd: mpicc -o mpi_hello $(SPECROOT)/hello.c >& build.out
+    cmd: mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c >& build.out
     task_queue: flux_par
 - description: Echo the params
   name: runs 
@@ -60,4 +60,4 @@ merlin:
     column_labels: [V1, V2]
     file: $(MERLIN_INFO)/samples.npy
     generate:
-      cmd: python $(SPECROOT)/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
+      cmd: python $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

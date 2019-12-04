@@ -19,7 +19,7 @@ study:
   name: build
   run:
     cmd: |
-      mpicc -o mpi_hello_sleep $(SPECROOT)/hello_sleep.c >& build.out
+      mpicc -o mpi_hello_sleep $(SPECROOT)/scripts/hello_sleep.c >& build.out
       # Add start time to flux
       flux wreck setenv FLUX_START_TIME=${FLUX_START_TIME}
       flux wreck setenv FLUX_START_SECONDS=${FLUX_START_SECONDS}
@@ -47,7 +47,7 @@ study:
   run:
     cmd: |
       #export PATH=/collab/usr/gapps/merlin/spack/idesign/${SYS_TYPE}/bin:$PATH
-      $(SPECROOT)/flux_info.py >flux_timings.out
+      $(SPECROOT)/scripts/flux_info.py >flux_timings.out
     depends: [runs*]
     task_queue: flux_paper
 
@@ -68,4 +68,4 @@ merlin:
     column_labels: [V1, V2]
     file: $(MERLIN_INFO)/samples.npy
     generate:
-      cmd: python $(SPECROOT)/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
+      cmd: python $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
