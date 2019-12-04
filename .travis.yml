@@ -12,6 +12,8 @@ install:
   - "pip install -r requirements/mysql.txt"
   - "pip install --upgrade sphinx"
 script: 
+  - "DIFF=git diff master.. CHANGELOG.md"
+  - "if [ -z '$DIFF' ]; then exit 1 ; else : ; fi"
   - "merlin config"
   - "python -m pytest tests/"
   - "python tests/integration/run_tests.py --verbose --ids 1 2 3 4 5 6 7 8 9 12 13 18 19 20"
