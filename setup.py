@@ -34,7 +34,7 @@ from setuptools import find_packages
 
 version = __import__("merlin").VERSION
 
-extras = ["mysql, dev"]
+extras = ["mysql", "dev"]
 
 
 def readme():
