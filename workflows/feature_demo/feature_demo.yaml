@@ -138,7 +138,7 @@ merlin:
                 args: -l INFO --concurrency 3 --prefetch-multiplier 1 -Ofair
     samples:
         generate:
-            cmd: python $(SPECROOT)/make_samples.py -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
+            cmd: python $(MAKE_SAMPLES) -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
         # can be a file glob of numpy sample files.
         file: $(MERLIN_INFO)/samples.npy
         column_labels: [X0, X1]
