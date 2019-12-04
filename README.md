@@ -1,16 +1,6 @@
-<img src="docs/images/merlin.png" width="400"
-alt="
-           *      
-       *~~~~~                                       
-      *~~*~~~*      __  __           _ _       
-     /   ~~~~~     |  \/  |         | (_)      
-         ~~~~~     | \  / | ___ _ __| |_ _ __  
-        ~~~~~*     | |\/| |/ _ \ '__| | | '_ \ 
-       *~~~~~~~    | |  | |  __/ |  | | | | | |
-      ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
-     *~~~~~~~~~~~                                    
-       ~~~*~~~*    Machine Learning for HPC Workflows                                 
-">
+![alt text][logo]
+
+[logo]: https://github.com/LLNL/merlin/blob/master/docs/images/merlin.png "Merlin logo"
 
 Welcome to the Merlin README, a condensed guide. For more in-depth Merlin
  information, try our [web docs here](https://merlin.readthedocs.io/).
