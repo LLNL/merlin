@@ -12,11 +12,12 @@ env:
         WORKER_NAME: demo_worker
         VERIFY_QUEUE: default_verify_queue
 
-        HELLO: $(SPECROOT)/hello_world.py
-        FEATURES: $(SPECROOT)/features.json
-        TRANSLATE: $(SPECROOT)/translator.py
-        COLLECT: $(SPECROOT)/collector.py
-        MAKE_SAMPLES: $(SPECROOT)/make_samples.py
+        SCRIPTS: $(SPECROOT)/scripts
+        HELLO: $(SCRIPTS)/hello_world.py
+        FEATURES: $(SCRIPTS)/features.json
+        TRANSLATE: $(SCRIPTS)/translator.py
+        COLLECT: $(SCRIPTS)/collector.py
+        MAKE_SAMPLES: $(SCRIPTS)/make_samples.py
 
         SHARED: $(SPECROOT)/../shared
         LEARN: $(SHARED)/learn.py
@@ -137,7 +138,7 @@ merlin:
                 args: -l INFO --concurrency 3 --prefetch-multiplier 1 -Ofair
     samples:
         generate:
-            cmd: python $(SPECROOT)/make_samples.py -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
+            cmd: python $(MAKE_SAMPLES) -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
         # can be a file glob of numpy sample files.
         file: $(MERLIN_INFO)/samples.npy
         column_labels: [X0, X1]
