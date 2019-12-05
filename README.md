@@ -119,3 +119,7 @@ Please note that Merlin has a
 [**Code of Conduct**](.github/CODE_OF_CONDUCT.md). By participating in
 the Merlin community, you agree to abide by its rules.
 
+# License
+Merlin is distributed under the terms of the [MIT LICENSE](https://github.com/LLNL/merlin/blob/master/LICENSE).
+
+LLNL-CODE-797170
