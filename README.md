@@ -103,28 +103,19 @@ To update the project:
 To run something a little more like what you're interested in,
 namely a demo workflow that has simulation and machine-learning:
 
+    # This processes the workflow and creates tasks on the server
     (venv) $ merlin run workflows/feature_demo/feature_demo.yaml
+    # This launches workers that can process those tasks
     (venv) $ merlin run-workers workflows/feature_demo/feature_demo.yaml
 
-More documentation on the example workflows can be found under
-'Running the Examples'.
+For more information try:
+
+    (venv) $ merlin --help
+
+...or add `--help` to the end of any sub-command you want to learn more about.
 
 # Code of Conduct
 Please note that Merlin has a
 [**Code of Conduct**](.github/CODE_OF_CONDUCT.md). By participating in
 the Merlin community, you agree to abide by its rules.
 
-# Running the Examples
-Example workflows can be found in the `workflows/` directory.
-They can be run with the command line interface.
-
-    # This processes the workflow and creates tasks on the server
-    (venv) $ merlin run workflows/feature_demo/feature_demo.yaml
-    # This launches workers that can process those tasks
-    (venv) $ merlin run-workers workflows/feature_demo/feature_demo.yaml
-
-For more information see:
-
-    (venv) $ merlin --help
-
-...or add `--help` to the end of any sub-command you want to learn more about.
