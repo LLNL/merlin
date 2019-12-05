@@ -3,12 +3,9 @@ celery[redis]>=4.3.0
 coloredlogs
 cryptography
 importlib_resources; python_version < '3.7'
-# maestrowf>=1.1.5
+maestrowf==1.1.5a0
 numpy
 parse
 psutil>=5.1.0
 pyyaml>=5.1.2
 tabulate
-
-# Install tip of maestrowf
-maestrowf @  git+https://github.com/LLNL/maestrowf.git#egg=maestrowf
