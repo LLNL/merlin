@@ -31,27 +31,15 @@
 PYTHON?=python3
 PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
-VENV?=venv_merlin_$(SYS_TYPE)_py$(PYV)
 CERT?=/etc/pki/tls/cert.pem
-PIP?=$(VENV)/bin/pip
-PYTH?=$(VENV)/bin/python
 MRLN?=merlin/
 TEST?=tests/
 MAX_COMPLEXITY?=5
-VENVMOD?=venv
 
 PENV=merlin$(PYV)
 
-.PHONY : all
-.PHONY : install
-.PHONY : virtualenv
-.PHONY : install-pip-mysql
-.PHONY : install-tasks
-.PHONY : install-scipy
-.PHONY : update
-.PHONY : pull
-.PHONY : clean-output
 .PHONY : clean-py
+.PHONY : clean-output
 .PHONY : clean
 .PHONY : unit-tests
 .PHONY : cli-tests
@@ -61,44 +49,6 @@ PENV=merlin$(PYV)
 .PHONY : check-camel-case
 .PHONY : checks
 .PHONY : start-workers
-
-
-all: install install-tasks install-pip-mysql install-sphinx
-
-
-# install requirements
-install: virtualenv
-	$(PIP) install --cert $(CERT) -r requirements.txt
-
-
-# this only works outside the venv
-virtualenv:
-	$(PYTHON) -m $(VENVMOD) $(VENV) --prompt $(PENV) --system-site-packages
-	$(PIP) install --cert $(CERT) --upgrade pip
-
-
-install-sphinx:
-	$(PIP) install --upgrade sphinx
-
-
-install-pip-mysql:
-	$(PIP) install -r requirements/mysql.txt
-
-
-install-tasks:
-	$(PIP) install -e .
-
-
-install-scipy:
-	$(PIP) install --cert $(CERT) scipy --ignore-installed
-
-
-# this only works outside the venv
-update: pull install clean
-
-
-pull:
-	git pull
 
 
 # remove python bytecode files
@@ -120,12 +70,12 @@ clean: clean-py
 
 
 unit-tests:
-	-$(PYTH) -m pytest $(TEST)
+	-python -m pytest $(TEST)
 
 
 # run CLI tests
 cli-tests:
-	-$(PYTH) $(TEST)integration/run_tests.py
+	-python $(TEST)integration/run_tests.py
 
 
 # run unit and CLI tests
@@ -142,7 +92,7 @@ fix-style:
 
 # run code style checks
 check-style:
-	-$(PYTH) -m flake8 --max-complexity $(MAX_COMPLEXITY) --exclude ascii_art.py $(MRLN)
+	-python -m flake8 --max-complexity $(MAX_COMPLEXITY) --exclude ascii_art.py $(MRLN)
 	-black --check --target-version py36 $(MRLN)
 
 
@@ -155,9 +105,4 @@ check-camel-case: clean-py
 
 # run all checks
 checks: check-style check-camel-case
-
-
-# basic shortcut for starting celery workers
-start-workers:
-	celery worker -A merlin -l INFO
 
