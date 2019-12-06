@@ -1,5 +1,4 @@
-prune docs
-prune tests
+prune Makefile
 include workflows/*
 include merlin/data/*
 include requirements.txt
