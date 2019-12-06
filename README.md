@@ -98,15 +98,15 @@ That's it.
 To run something a little more like what you're interested in,
 namely a demo workflow that has simulation and machine-learning:
 
-1. Install the workflows dependencies:
+Install the workflows dependencies:
 
     $ pip install -r workflows/feature_demo/requirements.txt
 
-2. Process the workflow and create tasks on the server:
+Process the workflow and create tasks on the server:
 
     $ merlin run workflows/feature_demo/feature_demo.yaml
 
-3. Launch workers that can process those tasks:
+Launch workers that can process those tasks:
 
     $ merlin run-workers workflows/feature_demo/feature_demo.yaml
 
