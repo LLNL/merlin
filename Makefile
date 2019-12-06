@@ -67,7 +67,6 @@ all: install install-tasks install-pip-mysql install-sphinx
 
 # install requirements
 install: virtualenv
-	$(VENV)/bin/easy_install cryptography
 	$(PIP) install --cert $(CERT) -r requirements.txt
 
 
