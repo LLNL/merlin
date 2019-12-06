@@ -2,13 +2,7 @@
 
 [logo]: https://github.com/LLNL/merlin/blob/master/docs/images/merlin.png "Merlin logo"
 
-Welcome to the Merlin README, a condensed guide. For more in-depth Merlin
- information, try our [web docs here](https://merlin.readthedocs.io/).
-
-See the [CHANGELOG](CHANGELOG.md) for up-to-date details about features,
- fixes, etc.
-
-# A brief introduction to Merlin
+## A brief introduction to Merlin
 Merlin is a tool for running machine learning based workflows. The goal of
 Merlin is to make it easy to build, run, and process the kinds of large
 scale HPC workflows needed for cognitive simulation.
@@ -85,7 +79,7 @@ For more details, check out the rest of the [documentation](https://merlin.readt
 
 Need help? <merlin@llnl.gov>
 
-# Quick Start
+## Quick Start
 
 Note: Merlin supports Python 3.6+.
 
@@ -115,12 +109,16 @@ For more information, try:
 
 ...or add `--help` to the end of any sub-command you want to learn more about.
 
-# Code of Conduct
+## Documentation
+[**Full documentation**](http://merlin.readthedocs.io/) is available, or
+run `merlin --help`.
+
+## Code of Conduct
 Please note that Merlin has a
 [**Code of Conduct**](.github/CODE_OF_CONDUCT.md). By participating in
 the Merlin community, you agree to abide by its rules.
 
-# License
+## License
 Merlin is distributed under the terms of the [MIT LICENSE](https://github.com/LLNL/merlin/blob/master/LICENSE).
 
 LLNL-CODE-797170
