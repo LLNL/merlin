@@ -89,28 +89,23 @@ Need help? <merlin@llnl.gov>
 
 Note: Merlin supports Python 3.6+.
 
-To install the project and set up its virtualenv with dependencies, run:
+To install Merlin and its dependencies, run:
 
-    $ make all
-    $ source venv_merlin_$SYS_TYPE_py$(PYVERSION)/bin/activate  
+    $ pip3 install merlinwf
 
 That's it.
-
-To update the project:
-
-    $ make update
 
 To run something a little more like what you're interested in,
 namely a demo workflow that has simulation and machine-learning:
 
     # This processes the workflow and creates tasks on the server
-    (venv) $ merlin run workflows/feature_demo/feature_demo.yaml
+    $ merlin run workflows/feature_demo/feature_demo.yaml
     # This launches workers that can process those tasks
-    (venv) $ merlin run-workers workflows/feature_demo/feature_demo.yaml
+    $ merlin run-workers workflows/feature_demo/feature_demo.yaml
 
 For more information try:
 
-    (venv) $ merlin --help
+    $ merlin --help
 
 ...or add `--help` to the end of any sub-command you want to learn more about.
 
