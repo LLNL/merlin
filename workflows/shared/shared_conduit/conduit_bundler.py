@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-<PENDING>
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.0.
+# This file is part of Merlin, Version: 1.0.5.
 #
 # For details, see https://github.com/LLNL/<MERLIN_REPO_NAME>.
 #
