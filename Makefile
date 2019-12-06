@@ -40,7 +40,7 @@ MAX_COMPLEXITY?=5
 PENV=merlin$(PYV)
 
 .PHONY : all
-.PHONY : install
+.PHONY : install-dev
 .PHONY : virtualenv
 .PHONY : install-workflow-deps
 .PHONY : install-pip-mysql
@@ -57,7 +57,6 @@ PENV=merlin$(PYV)
 .PHONY : check-style
 .PHONY : check-camel-case
 .PHONY : checks
-.PHONY : start-workers
 
 
 all: install-dev install-tasks install-workflow-deps install-pip-mysql
@@ -78,7 +77,7 @@ install-workflow-deps:
 	$(PIP) install -r workflows/feature_demo/requirements.txt
 
 
-install-$(PIP)-mysql:
+install-pip-mysql:
 	$(PIP) install -r requirements/mysql.txt
 
 
