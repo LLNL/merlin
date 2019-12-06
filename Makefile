@@ -33,8 +33,9 @@ PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version
 PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 VENV?=venv_merlin_py$(PYV)
 PIP?=$(VENV)/bin/pip
-MRLN?=merlin/
-TEST?=tests/
+MRLN=merlin/
+TEST=tests/
+WKFW=workflows/
 MAX_COMPLEXITY?=5
 
 PENV=merlin$(PYV)
@@ -74,7 +75,7 @@ virtualenv:
 
 
 install-workflow-deps:
-	$(PIP) install -r workflows/feature_demo/requirements.txt
+	$(PIP) install -r $(WKFW)feature_demo/requirements.txt
 
 
 install-pip-mysql:
@@ -102,7 +103,7 @@ clean-py:
 # remove all studies/ directories
 clean-output:
 	-find $(MRLN) -name "studies*" -type d -exec rm -rf {} \;
-	-find workflows/ -name "studies*" -type d -exec rm -rf {} \;
+	-find $(WKFW) -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "merlin.log" -type f -exec rm -rf {} \;
 
