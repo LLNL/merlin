@@ -96,21 +96,20 @@ To install Merlin and its dependencies, run:
 That's it.
 
 To run something a little more like what you're interested in,
-namely a demo workflow that has simulation and machine-learning:
-
-Install the workflows dependencies:
+namely a demo workflow that has simulation and machine-learning,
+first install the workflow's dependencies:
 
     $ pip install -r workflows/feature_demo/requirements.txt
 
-Process the workflow and create tasks on the server:
+Then process the workflow and create tasks on the server:
 
     $ merlin run workflows/feature_demo/feature_demo.yaml
 
-Launch workers that can process those tasks:
+And finally, launch workers that can process those tasks:
 
     $ merlin run-workers workflows/feature_demo/feature_demo.yaml
 
-For more information try:
+For more information, try:
 
     $ merlin --help
 
