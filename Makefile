@@ -31,22 +31,20 @@
 PYTHON?=python3
 PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
-VENV?=venv_merlin_$(SYS_TYPE)_py$(PYV)
-CERT?=/etc/pki/tls/cert.pem
+VENV?=venv_merlin_py$(PYV)
 PIP?=$(VENV)/bin/pip
 MRLN?=merlin/
 TEST?=tests/
 MAX_COMPLEXITY?=5
-VENVMOD?=venv
 
 PENV=merlin$(PYV)
 
 .PHONY : all
 .PHONY : install
 .PHONY : virtualenv
+.PHONY : install-workflow-deps
 .PHONY : install-pip-mysql
 .PHONY : install-tasks
-.PHONY : install-scipy
 .PHONY : update
 .PHONY : pull
 .PHONY : clean-output
@@ -62,34 +60,30 @@ PENV=merlin$(PYV)
 .PHONY : start-workers
 
 
-all: install install-tasks install-pip-mysql install-sphinx
+all: install-dev install-tasks install-workflow-deps install-pip-mysql
 
 
 # install requirements
-install: virtualenv
-	$(PIP) install --cert $(CERT) -r requirements.txt
+install-dev: virtualenv
+	$(PIP) install -r requirements.txt
 
 
 # this only works outside the venv
 virtualenv:
-	$(PYTHON) -m $(VENVMOD) $(VENV) --prompt $(PENV) --system-site-packages
-	$(PIP) install --cert $(CERT) --upgrade pip
+	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages
+	$(PIP) install --upgrade pip
 
 
-install-sphinx:
-	$(PIP) install --upgrade sphinx
+install-workflow-deps:
+	$(PIP) install -r workflows/feature_demo/requirements.txt
 
 
-install-pip-mysql:
+install-$(PIP)-mysql:
 	$(PIP) install -r requirements/mysql.txt
 
 
 install-tasks:
 	$(PIP) install -e .
-
-
-install-scipy:
-	$(PIP) install --cert $(CERT) scipy --ignore-installed
 
 
 # this only works outside the venv
@@ -154,9 +148,4 @@ check-camel-case: clean-py
 
 # run all checks
 checks: check-style check-camel-case
-
-
-# basic shortcut for starting celery workers
-start-workers:
-	celery worker -A merlin -l INFO
 
