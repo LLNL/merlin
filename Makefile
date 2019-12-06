@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.0.
+# This file is part of Merlin, Version: 1.0.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -34,7 +34,6 @@ PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.versio
 VENV?=venv_merlin_$(SYS_TYPE)_py$(PYV)
 CERT?=/etc/pki/tls/cert.pem
 PIP?=$(VENV)/bin/pip
-PYTH?=$(VENV)/bin/python
 MRLN?=merlin/
 TEST?=tests/
 MAX_COMPLEXITY?=5
@@ -121,12 +120,12 @@ clean: clean-py
 
 
 unit-tests:
-	-$(PYTH) -m pytest $(TEST)
+	-python -m pytest $(TEST)
 
 
 # run CLI tests
 cli-tests:
-	-$(PYTH) $(TEST)integration/run_tests.py
+	-python $(TEST)integration/run_tests.py
 
 
 # run unit and CLI tests
@@ -143,7 +142,7 @@ fix-style:
 
 # run code style checks
 check-style:
-	-$(PYTH) -m flake8 --max-complexity $(MAX_COMPLEXITY) --exclude ascii_art.py $(MRLN)
+	-python -m flake8 --max-complexity $(MAX_COMPLEXITY) --exclude ascii_art.py $(MRLN)
 	-black --check --target-version py36 $(MRLN)
 
 
