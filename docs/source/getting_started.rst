@@ -1,7 +1,12 @@
 Getting Started
 ================
 
-Quick Start Setup
+Quick Start
+++++++++++++++
+::
+    pip3 install merlinwf
+
+Developer Setup
 ++++++++++++++++++
 
 This setup will work in most cases and can be used to quickly setup Merlin.
