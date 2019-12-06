@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - requirements.txt just has release components, not dev deps
 
+### Changed
+- Made `README.md` more concise and user-friendly.
+
 ## [1.0.5] - 2019-12-05
 
 ### Fixed
