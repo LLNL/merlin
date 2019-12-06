@@ -103,20 +103,22 @@ And finally, launch workers that can process those tasks:
 
     $ merlin run-workers workflows/feature_demo/feature_demo.yaml
 
-For more information, try:
-
-    $ merlin --help
-
-...or add `--help` to the end of any sub-command you want to learn more about.
 
 ## Documentation
 [**Full documentation**](http://merlin.readthedocs.io/) is available, or
-run `merlin --help`.
+run:
+
+    $ merlin --help
+
+(or add `--help` to the end of any sub-command you
+want to learn more about.)
+
 
 ## Code of Conduct
 Please note that Merlin has a
 [**Code of Conduct**](.github/CODE_OF_CONDUCT.md). By participating in
 the Merlin community, you agree to abide by its rules.
+
 
 ## License
 Merlin is distributed under the terms of the [MIT LICENSE](https://github.com/LLNL/merlin/blob/master/LICENSE).
