@@ -1,6 +1,4 @@
-![alt text][logo]
-
-[logo]: https://github.com/LLNL/merlin/blob/master/docs/images/merlin.png "Merlin logo"
+![Merlin](https://github.com/LLNL/merlin/blob/master/docs/images/merlin.png "Merlin logo")
 
 Welcome to the Merlin README, a condensed guide. For more in-depth Merlin
  information, try our [web docs here](https://merlin.readthedocs.io/).
