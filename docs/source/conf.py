@@ -12,16 +12,20 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+from datetime import date
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('../../..'))
 
 MERLIN_VERSION = __import__("merlin").VERSION
 
 # -- Project information -----------------------------------------------------
 
+_year = date.today().year
+
 project = u'Merlin'
-copyright = u'2019, MLSI'
+copyright = f'{_year}, MLSI'
 author = u'MLSI'
 
 # The short X.Y version
