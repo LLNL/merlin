@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - requirements.txt just has release components, not dev deps
+- Broken Merlin logo image on PyPI summary page.
 
 ## [1.0.5] - 2019-12-05
 
