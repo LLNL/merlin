@@ -2,4 +2,3 @@ include workflows/*
 include merlin/data/*
 include requirements.txt
 include requirements/*
-include tests/*
