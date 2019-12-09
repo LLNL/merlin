@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - requirements.txt just has release components, not dev deps
+- A bug related to the deprecated word 'unicode' in openfilelist.py
 
 ## [1.0.5] - 2019-12-05
 
