@@ -16,17 +16,18 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../../..'))
 
+MERLIN_VERSION = __import__("merlin").VERSION
 
 # -- Project information -----------------------------------------------------
 
 project = u'Merlin'
-copyright = u'2018, MLSI'
+copyright = u'2019, MLSI'
 author = u'MLSI'
 
 # The short X.Y version
-version = u'1.0.0'
+version = MERLIN_VERSION
 # The full version, including alpha/beta/rc tags
-release = u'1.0.0'
+release = MERLIN_VERSION
 
 
 # -- General configuration ---------------------------------------------------
