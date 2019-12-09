@@ -45,7 +45,7 @@ PENV=merlin$(PYV)
 .PHONY : virtualenv
 .PHONY : install-workflow-deps
 .PHONY : install-pip-mysql
-.PHONY : install-tasks
+.PHONY : install-merlin
 .PHONY : update
 .PHONY : pull
 .PHONY : clean-output
@@ -60,7 +60,7 @@ PENV=merlin$(PYV)
 .PHONY : checks
 
 
-all: install-dev install-tasks install-workflow-deps install-pip-mysql
+all: install-dev install-merlin install-workflow-deps install-pip-mysql
 
 
 # install requirements
@@ -82,7 +82,7 @@ install-pip-mysql:
 	$(PIP) install -r requirements/mysql.txt
 
 
-install-tasks:
+install-merlin:
 	$(PIP) install -e .
 
 
