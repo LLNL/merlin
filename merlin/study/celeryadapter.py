@@ -141,6 +141,28 @@ def query_celery_workers():
         LOG.warning("No workers found!")
 
 
+def query_celery_queues(queues):
+    """Return stats for queues specified.
+
+    Send results to the log.
+    """
+    from merlin.celery import app
+
+    connection = app.connection()
+    found_queues = []
+    try:
+        channel = connection.channel()
+        for queue in queues:
+            try:
+                name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
+                found_queues.append((name, jobs, consumers))
+                LOG.info(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
+            except:
+                LOG.warning(f"Cannot find queue {queue} on server.")
+    finally:
+        connection.close() 
+    return found_queues
+
 def get_workers(app):
     """Get all workers connected to a celery application.
 

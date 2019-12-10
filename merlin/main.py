@@ -208,6 +208,17 @@ def purge_tasks(args):
 
     LOG.info(f"Purge return = {ret} .")
 
+def query_status(args):
+    """
+    CLI command for querying queue status.
+
+    :param 'args': parsed CLI arguments
+    """
+    print(banner_small)
+    filepath = verify_filepath(args.specification)
+    variables_dict = parse_override_vars(args.variables)
+    spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
+    _ = router.query_status(args.task_server, spec, args.steps)
 
 def query_workers(args):
     """
@@ -461,6 +472,42 @@ def setup_argparse():
         help="Task server type from which to stop workers.\
                             Default: %(default)s",
     )
+
+    # merlin status
+    status = subparsers.add_parser(
+        "status", help="List server stats (name, number of tasks to do, \
+                              number of connected workers) for a workflow spec."
+    )
+    status.set_defaults(func=query_status)
+    status.add_argument(
+        "specification", type=str, help="Path to a Merlin YAML spec file"
+    )
+    status.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="steps",
+        default=["all"],
+        help="The specific steps in the YAML file you want to query",
+    )
+    status.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type from which to stop workers.\
+                            Default: %(default)s",
+    )
+    status.add_argument(
+        "--vars",
+        action="store",
+        dest="variables",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
+        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+    )
+       
 
     # merlin info
     info = subparsers.add_parser(
