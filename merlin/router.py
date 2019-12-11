@@ -38,6 +38,7 @@ decoupled from the logic the tasks are running.
 import logging
 import os
 from contextlib import suppress
+from datetime import datetime
 
 from merlin.study.celeryadapter import (
     create_celery_config,
@@ -126,6 +127,27 @@ def query_status(task_server, spec, steps):
         return query_celery_queues(queues)
     else:
         LOG.error("Celery is not specified as the task server!")
+
+
+def dump_status(query_return, csv_file):
+    """
+    Dump the results of a query_status to a csv file.
+
+    :param `query_return`: The output of query_status
+    :param `csv_file`: The csv file to append
+    """
+    if os.path.exists(csv_file):
+        fmode = "a"
+    else:
+        fmode = "w"
+    with open(csv_file, mode=fmode) as f:
+        f.write("# time")
+        for name, job, consumer in query_return:
+            f.write(f",{name}:tasks,{name}:consumers")
+        f.write(f"\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        for name, job, consumer in query_return:
+            f.write(f",{job},{consumer}")
+        f.write("\n")
 
 
 def query_workers(task_server):
