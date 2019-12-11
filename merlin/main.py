@@ -42,10 +42,16 @@ from argparse import (
 )
 from contextlib import suppress
 
-from merlin import VERSION, router
+from merlin import (
+    VERSION,
+    router,
+)
 from merlin.ascii_art import banner_small
 from merlin.log_formatter import setup_logging
-from merlin.spec.expansion import RESERVED, get_spec_with_expansion
+from merlin.spec.expansion import (
+    RESERVED,
+    get_spec_with_expansion,
+)
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
 
@@ -208,6 +214,7 @@ def purge_tasks(args):
 
     LOG.info(f"Purge return = {ret} .")
 
+
 def query_status(args):
     """
     CLI command for querying queue status.
@@ -219,6 +226,7 @@ def query_status(args):
     variables_dict = parse_override_vars(args.variables)
     spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
     _ = router.query_status(args.task_server, spec, args.steps)
+
 
 def query_workers(args):
     """
@@ -475,8 +483,9 @@ def setup_argparse():
 
     # merlin status
     status = subparsers.add_parser(
-        "status", help="List server stats (name, number of tasks to do, \
-                              number of connected workers) for a workflow spec."
+        "status",
+        help="List server stats (name, number of tasks to do, \
+                              number of connected workers) for a workflow spec.",
     )
     status.set_defaults(func=query_status)
     status.add_argument(
@@ -507,7 +516,6 @@ def setup_argparse():
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
-       
 
     # merlin info
     info = subparsers.add_parser(
