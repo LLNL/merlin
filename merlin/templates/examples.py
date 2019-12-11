@@ -268,7 +268,7 @@ TEMPLATES = [
         "name": "simple_chain",
         "filename": "simple_chain.yaml",
         "description": "A fully documented Merlin example spec example",
-        "content": yaml.safe_load("simple_chain.yaml"),
+        "content": open("merlin/templates/workflows/simple_chain/simple_chain.yaml", "r").read(),
     },
     {
         "name": "feature_demo",
