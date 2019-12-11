@@ -121,9 +121,9 @@ def query_status(task_server, spec, steps):
     LOG.info(f"Querying queues for steps = {steps}")
 
     if task_server == "celery":
-        queues = spec.make_queue_string(steps)
+        queues = spec.get_queue_list(steps)
         # Query the queues
-        return query_celery_queues(sorted(queues.split(",")))
+        return query_celery_queues(queues)
     else:
         LOG.error("Celery is not specified as the task server!")
 

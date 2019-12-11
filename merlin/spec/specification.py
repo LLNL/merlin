@@ -176,11 +176,11 @@ class MerlinSpec(YAMLSpecification):
                 queues[step.name] = step.run["task_queue"]
         return queues
 
-    def make_queue_string(self, steps):
+    def get_queue_list(self, steps):
         """
-        Return a unique queue string for the steps
+        Return a sorted list of queues corresponding to spec steps
 
-        param steps: a list of step names
+        param steps: a list of step names or 'all'
         """
         queues = self.get_task_queues()
         if steps[0] == "all":
@@ -197,4 +197,12 @@ class MerlinSpec(YAMLSpecification):
                     f"Invalid steps '{steps}'! Try one of these (or 'all'):\n{nl.join(queues.keys())}"
                 )
                 raise
-        return ",".join(set(task_queues))
+        return sorted(set(task_queues))
+
+    def make_queue_string(self, steps):
+        """
+        Return a unique queue string for the steps
+
+        param steps: a list of step names
+        """
+        return ",".join(set(self.get_queue_list(steps)))
