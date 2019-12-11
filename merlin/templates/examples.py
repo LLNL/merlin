@@ -272,8 +272,8 @@ TEMPLATES = [
     },
     {
         "name": "feature_demo",
-        "filename": "feature_demo.yaml",
+        "filename": "feature_demo",
         "description": "A fully documented Merlin example spec example",
-        "content": yaml.safe_load("feature_demo.yaml"),
+        "content": "merlin/templates/workflows/feature_demo/",
     },
 ]

@@ -35,6 +35,7 @@ up new workflows.
 import logging
 import os
 
+import shutil
 import tabulate
 
 from merlin.templates import examples
@@ -56,8 +57,11 @@ def write_template(filepath, content):
     :param filepath: The path to write the template file to.
     :param content: The formatted content to write the file to.
     """
-    with open(filepath, "w") as _file:
-        _file.write(content)
+    if os.path.isdir(content):
+        destination = shutil.copytree(content, os.path.basename(filepath)) 
+    else:
+        with open(filepath, "w") as _file:
+            _file.write(content)
 
 
 def list_templates():
@@ -81,7 +85,7 @@ def setup_template(name, outdir=None):
         LOG.error(f"Template '{name}' not found.")
         return None
 
-    if outdir:
+    if outdir or (not template["filename"].endswith("yaml")):
         filepath = os.path.join(outdir, template["filename"])
     else:
         filepath = template["filename"]
