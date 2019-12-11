@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A bug related to the deprecated word 'unicode' in `openfilelist.py`.
 - Broken Merlin logo image on PyPI summary page.
 
+### Removed
+- Dependencies outside the requirements directory
+- LLNL-specific material in the Makefile
+
 ## [1.0.5] - 2019-12-05
 
 ### Fixed
