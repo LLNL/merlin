@@ -110,7 +110,6 @@ clean-py:
 # remove all studies/ directories
 clean-output:
 	-find $(MRLN) -name "studies*" -type d -exec rm -rf {} \;
-	-find workflows/ -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "merlin.log" -type f -exec rm -rf {} \;
 

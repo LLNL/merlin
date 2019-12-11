@@ -28,6 +28,8 @@
 # SOFTWARE.
 ###############################################################################
 
+import yaml
+
 # Taken from https://lc.llnl.gov/mlsi/docs/merlin/merlin_config.html
 TEMPLATE_FILE_CONTENTS = """
 ####################################
@@ -261,5 +263,17 @@ TEMPLATES = [
         "filename": "template_spec.yaml",
         "description": "A fully documented Merlin example spec example",
         "content": TEMPLATE_FILE_CONTENTS,
+    },
+    {
+        "name": "simple_chain",
+        "filename": "simple_chain.yaml",
+        "description": "A fully documented Merlin example spec example",
+        "content": yaml.safe_load("simple_chain.yaml"),
+    },
+    {
+        "name": "feature_demo",
+        "filename": "feature_demo.yaml",
+        "description": "A fully documented Merlin example spec example",
+        "content": yaml.safe_load("feature_demo.yaml"),
     },
 ]
