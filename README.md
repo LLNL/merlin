@@ -1,6 +1,4 @@
-![alt text][logo]
-
-[logo]: https://github.com/LLNL/merlin/blob/master/docs/images/merlin.png "Merlin logo"
+![Merlin](https://raw.githubusercontent.com/LLNL/merlin/master/docs/images/merlin.png)
 
 ## A brief introduction to Merlin
 Merlin is a tool for running machine learning based workflows. The goal of

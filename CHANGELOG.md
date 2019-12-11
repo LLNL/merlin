@@ -10,7 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Development dependencies install via pip: `pip install "merlinwf[dev]"`
 
 ### Fixed
-- requirements.txt just has release components, not dev deps
+- `MANIFEST.in` fixes as required by Spack.
+- `requirements.txt` just has release components, not dev deps.
+- A bug related to the deprecated word 'unicode' in `openfilelist.py`.
+- Broken Merlin logo image on PyPI summary page.
 
 ### Changed
 - Made `README.md` more concise and user-friendly.
