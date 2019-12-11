@@ -42,6 +42,7 @@ from contextlib import suppress
 from merlin.study.celeryadapter import (
     create_celery_config,
     purge_celery_tasks,
+    query_celery_queues,
     query_celery_workers,
     run_celery,
     start_celery_workers,
@@ -105,6 +106,24 @@ def purge_tasks(task_server, spec, force, steps):
         queues = spec.make_queue_string(steps)
         # Purge tasks
         return purge_celery_tasks(queues, force)
+    else:
+        LOG.error("Celery is not specified as the task server!")
+
+
+def query_status(task_server, spec, steps):
+    """
+    Queries status of queues in spec file from server.
+
+    :param `task_server`: The task server from which to purge tasks.
+    :param `spec`: A MerlinSpec object
+    :param `steps`: Spaced-separated list of stepnames to query. Default is all
+    """
+    LOG.info(f"Querying queues for steps = {steps}")
+
+    if task_server == "celery":
+        queues = spec.make_queue_string(steps)
+        # Query the queues
+        return query_celery_queues(sorted(queues.split(",")))
     else:
         LOG.error("Celery is not specified as the task server!")
 
