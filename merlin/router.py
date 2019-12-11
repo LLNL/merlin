@@ -141,7 +141,7 @@ def dump_status(query_return, csv_file):
     else:
         fmode = "w"
     with open(csv_file, mode=fmode) as f:
-        if f.mode == 'w': # add the header
+        if f.mode == "w":  # add the header
             f.write("# time")
             for name, job, consumer in query_return:
                 f.write(f",{name}:tasks,{name}:consumers")
