@@ -12,7 +12,7 @@ All set up? See the :doc:`Merlin Commands <./merlin_commands>` section for using
 Developer Setup
 ++++++++++++++++++
 To install with the additional developer dependencies, use::
-    pip3 install merlinwf[dev]
+    pip3 install "merlinwf[dev]"
     
 or::
     pip3 install -e "git+https://github.com/LLNL/merlin.git@develop#egg=merlinwf[dev]"
