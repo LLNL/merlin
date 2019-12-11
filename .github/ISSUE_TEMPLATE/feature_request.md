@@ -1,8 +1,8 @@
 ---
 name: Feature request
 about: Suggest an idea for Merlin
-title: "[FEATURE]"
-labels: ''
+title: "[FEATURE] "
+labels: enhancement
 assignees: ''
 
 ---
