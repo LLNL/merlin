@@ -141,10 +141,12 @@ def dump_status(query_return, csv_file):
     else:
         fmode = "w"
     with open(csv_file, mode=fmode) as f:
-        f.write("# time")
-        for name, job, consumer in query_return:
-            f.write(f",{name}:tasks,{name}:consumers")
-        f.write(f"\n{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        if f.mode == 'w': # add the header
+            f.write("# time")
+            for name, job, consumer in query_return:
+                f.write(f",{name}:tasks,{name}:consumers")
+            f.write("\n")
+        f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         for name, job, consumer in query_return:
             f.write(f",{job},{consumer}")
         f.write("\n")
