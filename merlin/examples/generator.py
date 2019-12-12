@@ -37,6 +37,7 @@ import os
 
 import shutil
 import tabulate
+import yaml
 
 from merlin.examples import examples
 
@@ -81,8 +82,8 @@ def list_examples():
     rows = []
     for example in examples:
         with open(os.path.join(os.path.join(EXAMPLE_DIR, example), example + ".yaml")) as f:
-            example_objs = yaml.safe_read(f)
-        rows.append([example_objs["name"], example_objs["description"]])
+            example_descrips = yaml.safe_load(f)["description"]
+        rows.append([example_descrips["name"], example_descrips["description"]])
     return "\n" + tabulate.tabulate(rows, headers) + "\n"
 
 

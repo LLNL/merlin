@@ -1,6 +1,6 @@
 description:
-  description: Run a scan through Merlin/Maestro
-  name: SLURMPARMERLIN
+  description: SLURMPARMERLIN - Run a scan through Merlin/Maestro
+  name: slurm
 
 batch:
   type: slurm
