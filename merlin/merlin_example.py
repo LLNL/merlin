@@ -38,20 +38,20 @@ import sys
 
 from merlin.ascii_art import banner_small
 from merlin.log_formatter import setup_logging
-from merlin.templates.generator import list_examples, setup_example
+from merlin.examples.generator import list_examples, setup_example
 
 
 LOG = logging.getLogger("merlin-example")
 DEFAULT_LOG_LEVEL = "INFO"
 
 
-def process_template(args):
-    setup_template(args.template, args.path)
+def process_example(args):
+    setup_example(args.example, args.path)
 
 
-def template_list(args):
+def example_list(args):
     print(banner_small)
-    list_templates()
+    list_examples()
 
 
 def setup_argparse():
@@ -59,7 +59,7 @@ def setup_argparse():
         prog="Merlin Examples",
         description=banner_small,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=list_templates() + "\nSee merlin-example <command> --help for more info.\n",
+        epilog=list_examples() + "\nSee merlin-example <command> --help for more info.\n",
     )
     parser.add_argument(
         "-lvl",
@@ -72,7 +72,7 @@ def setup_argparse():
         "[Default: %(default)s]",
     )
     parser.add_argument(
-        "template", action="store", type=str, help="The name of the example to setup."
+        "example", action="store", type=str, help="The name of the example to setup."
     )
     parser.add_argument(
         "-p",
@@ -83,7 +83,7 @@ def setup_argparse():
         help="Specify a path to write the workflow to. Defaults to current "
         "working directory",
     )
-    parser.set_defaults(func=process_template)
+    parser.set_defaults(func=process_example)
 
     return parser
 

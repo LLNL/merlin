@@ -109,7 +109,7 @@ setup(
     entry_points={
         "console_scripts": [
             "merlin=merlin.main:main",
-            "merlin-examples=merlin.merlin_examples:main",
+            "merlin-example=merlin.merlin_example:main",
         ]
     },
     include_package_data=True,
