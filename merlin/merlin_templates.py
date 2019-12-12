@@ -98,7 +98,7 @@ def setup_argparse():
         "--path",
         action="store",
         type=str,
-        default=os.getcwd(),
+        default=None,
         help="Specify a path to write the workflow to. Defaults to current "
         "working directory",
     )

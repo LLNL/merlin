@@ -43,6 +43,15 @@ from merlin.templates import examples
 
 LOG = logging.getLogger("merlin-templates")
 
+TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
+
+
+def gather_templates():
+    result = {}
+    for d in os.listdir(TEMPLATE_DIR):
+        result[d] = d
+    return result
+
 
 def find_template(name):
     for template in examples.TEMPLATES:
@@ -50,18 +59,20 @@ def find_template(name):
             return template  # Return only the first template for now.
 
 
-def write_template(filepath, content):
+def write_template(src_path, dst_path):
     """
     Write out the template workflow to a file.
 
-    :param filepath: The path to write the template file to.
+    :param src_path: The path to copy from.
     :param content: The formatted content to write the file to.
     """
-    if os.path.isdir(content):
-        destination = shutil.copytree(content, os.path.basename(filepath)) 
+    if os.path.isdir(src_path):
+        print(f"{src_path}")
+        print(f"{dst_path}")
+        shutil.copytree(src_path, dst_path) 
     else:
-        with open(filepath, "w") as _file:
-            _file.write(content)
+        with open(src_path, "w") as _file:
+            _file.write(src_path)
 
 
 def list_templates():
@@ -77,23 +88,26 @@ def list_templates():
     print("")
 
 
-def setup_template(name, outdir=None):
+def setup_template(name, outdir):
     """Setup the given template."""
-    template = find_template(name)
+    #template = find_template(name)
+    template = gather_templates()[name]
 
     if template is None:
         LOG.error(f"Template '{name}' not found.")
         return None
 
-    if outdir or (not template["filename"].endswith("yaml")):
-        filepath = os.path.join(outdir, template["filename"])
+    if template == "simple_chain":
+        src_path = os.path.join(TEMPLATE_DIR, os.path.join("simple_chain", "simple_chain.yaml"))
     else:
-        filepath = template["filename"]
+        src_path = os.path.join(TEMPLATE_DIR, template)
+        if outdir is None:
+            outdir = os.path.join(os.getcwd(), template)
 
-    if os.path.isfile(filepath):
-        LOG.error(f"Filename '{filepath}' already exists!")
-        return None
+        if os.path.exists(outdir):
+            LOG.error(f"File '{outdir}' already exists!")
+            return None
 
     LOG.info(f"Copying template '{name}' to {outdir}")
-    write_template(filepath, template["content"])
+    write_template(src_path, outdir)
     return template
