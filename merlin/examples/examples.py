@@ -30,6 +30,7 @@
 
 import yaml
 
+
 # Taken from https://lc.llnl.gov/mlsi/docs/merlin/merlin_config.html
 TEMPLATE_FILE_CONTENTS = """
 ####################################

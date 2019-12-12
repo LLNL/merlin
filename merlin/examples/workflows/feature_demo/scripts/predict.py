@@ -1,12 +1,13 @@
 import argparse
+import sys
+
+import numpy as np
+
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-import sys
-
-import numpy as np
 
 
 def setup_argparse():

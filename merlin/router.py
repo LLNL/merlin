@@ -167,4 +167,3 @@ def create_config(task_server, config_dir):
             create_celery_config(config_dir, config_file, data_file)
     else:
         LOG.error("Only celery can be configured currently.")
-

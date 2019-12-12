@@ -1,13 +1,14 @@
 import argparse
+import sys
+
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-import numpy as np
-import sys
-
-from sklearn.ensemble import RandomForestRegressor
 
 
 FOREST_DEFAULTS = {"max_depth": 2, "random_state": 0, "n_estimators": 100}

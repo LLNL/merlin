@@ -34,8 +34,8 @@ Merlin, or for setting up new workflows.
 """
 import logging
 import os
-
 import shutil
+
 import tabulate
 import yaml
 
@@ -68,10 +68,9 @@ def write_example(src_path, dst_path):
     :param content: The formatted content to write the file to.
     """
     if os.path.isdir(src_path):
-        shutil.copytree(src_path, dst_path) 
+        shutil.copytree(src_path, dst_path)
     else:
-        with open(src_path, "w") as _file:
-            _file.write(src_path)
+        shutil.copy(src_path, dst_path)
 
 
 def list_examples():
@@ -81,7 +80,9 @@ def list_examples():
     headers = ["name", "description"]
     rows = []
     for example in examples:
-        with open(os.path.join(os.path.join(EXAMPLE_DIR, example), example + ".yaml")) as f:
+        with open(
+            os.path.join(os.path.join(EXAMPLE_DIR, example), example + ".yaml")
+        ) as f:
             example_descrips = yaml.safe_load(f)["description"]
         rows.append([example_descrips["name"], example_descrips["description"]])
     return "\n" + tabulate.tabulate(rows, headers) + "\n"
@@ -95,13 +96,17 @@ def setup_example(name, outdir):
         LOG.error(f"Template '{name}' not found.")
         return None
 
+    if outdir is None:
+        outdir = os.getcwd()
+
     if example == "simple_chain":
-        src_path = os.path.join(EXAMPLE_DIR, os.path.join("simple_chain", "simple_chain.yaml"))
+        src_path = os.path.join(
+            EXAMPLE_DIR, os.path.join("simple_chain", "simple_chain.yaml")
+        )
     else:
         src_path = os.path.join(EXAMPLE_DIR, example)
-        if outdir is None:
-            outdir = os.path.join(os.getcwd(), example)
 
+        outdir = os.path.join(outdir, example)
         if os.path.exists(outdir):
             LOG.error(f"File '{outdir}' already exists!")
             return None
