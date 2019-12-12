@@ -240,25 +240,25 @@ Generate new spec template
 --------------------------
 
 If you want to start a new workflow from a built-in template, use Merlin's
-template builder ``merlin-templates``:
+template builder ``merlin-examples``:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin-templates list
+    (merlin3_7) $ merlin-examples list
 
 This will list the available templates and a description for each one. To
 select a template:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin-templates setup <template_name>
+    (merlin3_7) $ merlin-examples setup <template_name>
 
 This will copy the template file to the current working directory. It is
 possible to specify a path to copy the template to.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin-templates setup <template_name> -p path/to/dir
+    (merlin3_7) $ merlin-examples setup <template_name> -p path/to/dir
 
 If the specified directory does not exist Merlin will automatically create it.
 

@@ -29,7 +29,7 @@
 ###############################################################################
 
 """
-This module handles the CLI for the merlin-templates.
+This module handles the CLI for the merlin-examples.
 """
 import argparse
 import logging
@@ -38,10 +38,10 @@ import sys
 
 from merlin.ascii_art import banner_small
 from merlin.log_formatter import setup_logging
-from merlin.templates.generator import list_templates, setup_template
+from merlin.templates.generator import list_examples, setup_example
 
 
-LOG = logging.getLogger("merlin-templates")
+LOG = logging.getLogger("merlin-examples")
 DEFAULT_LOG_LEVEL = "INFO"
 
 
@@ -56,10 +56,10 @@ def template_list(args):
 
 def setup_argparse():
     parser = argparse.ArgumentParser(
-        prog="Merlin Templates",
+        prog="Merlin Examples",
         description=banner_small,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=list_templates() + "\nSee merlin-templates <command> --help for more info.\n",
+        epilog=list_templates() + "\nSee merlin-examples <command> --help for more info.\n",
     )
     parser.add_argument(
         "-lvl",
@@ -72,7 +72,7 @@ def setup_argparse():
         "[Default: %(default)s]",
     )
     parser.add_argument(
-        "template", action="store", type=str, help="The name of the template to setup."
+        "template", action="store", type=str, help="The name of the example to setup."
     )
     parser.add_argument(
         "-p",

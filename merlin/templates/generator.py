@@ -29,8 +29,8 @@
 ###############################################################################
 
 """
-This module contains a list of example templates that can be used for setting
-up new workflows.
+This module contains a list of examples that can be used when learning to use
+Merlin, or for setting up new workflows.
 """
 import logging
 import os
@@ -38,30 +38,30 @@ import os
 import shutil
 import tabulate
 
-from merlin.templates import examples
+from merlin.examples import examples
 
 
-LOG = logging.getLogger("merlin-templates")
+LOG = logging.getLogger("merlin-examples")
 
-TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
+EXAMPLE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
 
 
-def gather_templates():
+def gather_examples():
     result = {}
-    for d in os.listdir(TEMPLATE_DIR):
+    for d in os.listdir(EXAMPLE_DIR):
         result[d] = d
     return result
 
 
-def find_template(name):
-    for template in examples.TEMPLATES:
-        if template["name"] == name:
-            return template  # Return only the first template for now.
+def find_example(name):
+    for example in examples.EXAMPLES:
+        if example["name"] == name:
+            return example  # Return only the first example for now.
 
 
-def write_template(src_path, dst_path):
+def write_example(src_path, dst_path):
     """
-    Write out the template workflow to a file.
+    Write out the example workflow to a file.
 
     :param src_path: The path to copy from.
     :param content: The formatted content to write the file to.
@@ -73,38 +73,38 @@ def write_template(src_path, dst_path):
             _file.write(src_path)
 
 
-def list_templates():
-    """List all available templates."""
-    templates = gather_templates()
+def list_examples():
+    """List all available examples."""
+    examples = gather_examples()
 
     headers = ["name", "description"]
     rows = []
-    for template in templates:
-        with open(os.path.join(os.path.join(TEMPLATE_DIR, template), template + ".yaml")) as f:
-            template_objs = yaml.safe_read(f)
-        rows.append([template_objs["name"], template_objs["description"]])
+    for example in examples:
+        with open(os.path.join(os.path.join(EXAMPLE_DIR, example), example + ".yaml")) as f:
+            example_objs = yaml.safe_read(f)
+        rows.append([example_objs["name"], example_objs["description"]])
     return "\n" + tabulate.tabulate(rows, headers) + "\n"
 
 
-def setup_template(name, outdir):
-    """Setup the given template."""
+def setup_example(name, outdir):
+    """Setup the given example."""
     try:
-        template = gather_templates()[name]
+        example = gather_examples()[name]
     except KeyError:
         LOG.error(f"Template '{name}' not found.")
         return None
 
-    if template == "simple_chain":
-        src_path = os.path.join(TEMPLATE_DIR, os.path.join("simple_chain", "simple_chain.yaml"))
+    if example == "simple_chain":
+        src_path = os.path.join(EXAMPLE_DIR, os.path.join("simple_chain", "simple_chain.yaml"))
     else:
-        src_path = os.path.join(TEMPLATE_DIR, template)
+        src_path = os.path.join(EXAMPLE_DIR, example)
         if outdir is None:
-            outdir = os.path.join(os.getcwd(), template)
+            outdir = os.path.join(os.getcwd(), example)
 
         if os.path.exists(outdir):
             LOG.error(f"File '{outdir}' already exists!")
             return None
 
-    LOG.info(f"Copying template '{name}' to {outdir}")
-    write_template(src_path, outdir)
-    return template
+    LOG.info(f"Copying example '{name}' to {outdir}")
+    write_example(src_path, outdir)
+    return example
