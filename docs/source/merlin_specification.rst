@@ -234,6 +234,12 @@ see :doc:`./merlin_variables`.
               args: <celery worker args> <optional>
               steps: [runs1, post-process, monitor]  # [all] when steps is omitted
               nodes: <Number of nodes for this worker or batch num nodes>
+              # A list of machines to run the given steps can be specified
+              # in the machines keyword. <optional>
+              # A full OUTPUT_PATH and the steps argument are required
+              # when using this option. Currently all machines in the
+              # list must have access to the OUTPUT_PATH. 
+              machines: [host1, host2]
 
           learnworkers:
               args: <celery worker args> <optional>
@@ -245,6 +251,7 @@ see :doc:`./merlin_variables`.
               # scheduler or cannot run under flux.
               batch:
                  type: local
+              machines: [host3]
 
     ###################################################
     # Sample definitions
