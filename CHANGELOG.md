@@ -4,6 +4,23 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Development dependencies install via pip: `pip install "merlinwf[dev]"`
+- `merlin status <yaml spec>` that returns queues, number of connected
+  workers and number of unused tasks in each of those queues
+
+### Fixed
+- `MANIFEST.in` fixes as required by Spack.
+- `requirements.txt` just has release components, not dev deps.
+- A bug related to the deprecated word 'unicode' in `openfilelist.py`.
+- Broken Merlin logo image on PyPI summary page.
+
+### Removed
+- Dependencies outside the requirements directory
+- LLNL-specific material in the Makefile
+
 ## [1.0.5] - 2019-12-05
 
 ### Fixed
