@@ -29,7 +29,7 @@
 ###############################################################################
 
 """
-This module handles the CLI for the merlin-examples.
+This module handles the CLI for the merlin-example.
 """
 import argparse
 import logging
@@ -41,7 +41,7 @@ from merlin.log_formatter import setup_logging
 from merlin.templates.generator import list_examples, setup_example
 
 
-LOG = logging.getLogger("merlin-examples")
+LOG = logging.getLogger("merlin-example")
 DEFAULT_LOG_LEVEL = "INFO"
 
 
@@ -59,7 +59,7 @@ def setup_argparse():
         prog="Merlin Examples",
         description=banner_small,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=list_templates() + "\nSee merlin-examples <command> --help for more info.\n",
+        epilog=list_templates() + "\nSee merlin-example <command> --help for more info.\n",
     )
     parser.add_argument(
         "-lvl",

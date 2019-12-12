@@ -41,7 +41,7 @@ import tabulate
 from merlin.examples import examples
 
 
-LOG = logging.getLogger("merlin-examples")
+LOG = logging.getLogger("merlin-example")
 
 EXAMPLE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
 
