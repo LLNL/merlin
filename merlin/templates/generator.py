@@ -67,8 +67,6 @@ def write_template(src_path, dst_path):
     :param content: The formatted content to write the file to.
     """
     if os.path.isdir(src_path):
-        print(f"{src_path}")
-        print(f"{dst_path}")
         shutil.copytree(src_path, dst_path) 
     else:
         with open(src_path, "w") as _file:
@@ -77,23 +75,22 @@ def write_template(src_path, dst_path):
 
 def list_templates():
     """List all available templates."""
-    templates = examples.TEMPLATES
+    templates = gather_templates()
 
-    print("")
     headers = ["name", "description"]
     rows = []
     for template in templates:
-        rows.append([template["name"], template["description"]])
-    print(tabulate.tabulate(rows, headers))
-    print("")
+        with open(os.path.join(os.path.join(TEMPLATE_DIR, template), template + ".yaml")) as f:
+            template_objs = yaml.safe_read(f)
+        rows.append([template_objs["name"], template_objs["description"]])
+    return "\n" + tabulate.tabulate(rows, headers) + "\n"
 
 
 def setup_template(name, outdir):
     """Setup the given template."""
-    #template = find_template(name)
-    template = gather_templates()[name]
-
-    if template is None:
+    try:
+        template = gather_templates()[name]
+    except KeyError:
         LOG.error(f"Template '{name}' not found.")
         return None
 
