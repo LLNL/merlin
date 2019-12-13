@@ -104,7 +104,7 @@ Designing and Building Workflows
 
 Where are some example workflows?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin-templates``
+``merlin-example``
 
 How do I launch a workflow?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
