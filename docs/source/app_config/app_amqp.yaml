@@ -1,8 +1,7 @@
-
 celery:
     # directory where Merlin looks for the following:
     # mysql-ca-cert.pem rabbit-client-cert.pem  rabbit-client-key.pem redis.pass
-    certs: /path/to/celery/config
+    certs: /usr/workspace/wsb/icfsi/merlin/config
 
 broker:
     # can be redis, redis+sock, or rabbitmq
@@ -10,7 +9,7 @@ broker:
     #username: # defaults to your username unless changed here
     password: ~/.merlin/rabbit-password
     # server URL
-    server: server.domain.com
+    server: jackalope.llnl.gov
 
     ### for rabbitmq, redis+sock connections ###
     #vhost: # defaults to your username unless changed here
@@ -27,12 +26,12 @@ broker:
 results_backend:
     # must be redis
     name: redis
-
-    dbname: dbname
-    username: username
+    
+    dbname: mlsi
+    username: mlsi
     # name of file where redis password is stored.
     password: redis.pass
-    server: server.domain.com
+    server: jackalope.llnl.gov
     # merlin will generate this key if it does not exist yet,
     # and will use it to encrypt all data over the wire to
     # your redis server.

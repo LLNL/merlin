@@ -60,11 +60,14 @@
 import copy
 
 
+unistr = (unicode, str)
+
+
 class OpenFileList:
     openwas = open
 
     def __new__(cls, files, *v, **kw):
-        if isinstance(files, str):
+        if isinstance(files, unistr):
             return open(files, *v, **kw)
         return super(OpenFileList, cls).__new__(cls)
 

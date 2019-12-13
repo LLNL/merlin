@@ -1,8 +1,9 @@
-![Merlin](https://raw.githubusercontent.com/LLNL/merlin/master/docs/images/merlin.png)
+![alt text][logo]
+
+[logo]: https://github.com/LLNL/merlin/blob/master/docs/images/merlin.png "Merlin logo"
 
 Welcome to the Merlin README, a condensed guide. For more in-depth Merlin
- information try our [web docs here](https://merlin.readthedocs.io/), or
-our [recent paper here](https://arxiv.org/abs/1912.02892).
+ information, try our [web docs here](https://merlin.readthedocs.io/).
 
 See the [CHANGELOG](CHANGELOG.md) for up-to-date details about features,
  fixes, etc.

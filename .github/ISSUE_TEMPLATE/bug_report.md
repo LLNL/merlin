@@ -1,8 +1,8 @@
 ---
 name: Bug report
 about: Create a report to help Merlin improve
-title: "[BUG] "
-labels: bug
+title: "[BUG]"
+labels: ''
 assignees: ''
 
 ---

@@ -5,8 +5,9 @@ python:
   - "3.8"
 install: 
   - "pip install --upgrade pip"
+  - "pip install cryptography"
   - "pip install -r requirements.txt"
-  - "pip install -r merlin/examples/workflows/feature_demo/requirements.txt"
+  - "pip install -r workflows/feature_demo/requirements.txt"
   - "pip install -e ."
   - "pip install -r requirements/mysql.txt"
   - "pip install -r requirements/dev.txt"

@@ -36,10 +36,7 @@ import logging
 import os
 import re
 import subprocess
-from contextlib import (
-    contextmanager,
-    suppress,
-)
+from contextlib import contextmanager, suppress
 from copy import deepcopy
 from types import SimpleNamespace
 

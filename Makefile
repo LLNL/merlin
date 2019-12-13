@@ -31,21 +31,22 @@
 PYTHON?=python3
 PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
-VENV?=venv_merlin_py$(PYV)
+VENV?=venv_merlin_$(SYS_TYPE)_py$(PYV)
+CERT?=/etc/pki/tls/cert.pem
 PIP?=$(VENV)/bin/pip
-MRLN=merlin/
-TEST=tests/
-WKFW=merlin/examples/workflows/
+MRLN?=merlin/
+TEST?=tests/
 MAX_COMPLEXITY?=5
+VENVMOD?=venv
 
 PENV=merlin$(PYV)
 
 .PHONY : all
-.PHONY : install-dev
+.PHONY : install
 .PHONY : virtualenv
-.PHONY : install-workflow-deps
 .PHONY : install-pip-mysql
-.PHONY : install-merlin
+.PHONY : install-tasks
+.PHONY : install-scipy
 .PHONY : update
 .PHONY : pull
 .PHONY : clean-output
@@ -58,32 +59,38 @@ PENV=merlin$(PYV)
 .PHONY : check-style
 .PHONY : check-camel-case
 .PHONY : checks
+.PHONY : start-workers
 
 
-all: install-dev install-merlin install-workflow-deps install-pip-mysql
+all: install install-tasks install-pip-mysql install-sphinx
 
 
 # install requirements
-install-dev: virtualenv
-	$(PIP) install -r requirements/dev.txt
+install: virtualenv
+	$(VENV)/bin/easy_install cryptography
+	$(PIP) install --cert $(CERT) -r requirements.txt
 
 
 # this only works outside the venv
 virtualenv:
-	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages
-	$(PIP) install --upgrade pip
+	$(PYTHON) -m $(VENVMOD) $(VENV) --prompt $(PENV) --system-site-packages
+	$(PIP) install --cert $(CERT) --upgrade pip
 
 
-install-workflow-deps:
-	$(PIP) install -r $(WKFW)feature_demo/requirements.txt
+install-sphinx:
+	$(PIP) install --upgrade sphinx
 
 
 install-pip-mysql:
 	$(PIP) install -r requirements/mysql.txt
 
 
-install-merlin:
+install-tasks:
 	$(PIP) install -e .
+
+
+install-scipy:
+	$(PIP) install --cert $(CERT) scipy --ignore-installed
 
 
 # this only works outside the venv
@@ -147,4 +154,9 @@ check-camel-case: clean-py
 
 # run all checks
 checks: check-style check-camel-case
+
+
+# basic shortcut for starting celery workers
+start-workers:
+	celery worker -A merlin -l INFO
 

@@ -1,24 +1,52 @@
 Getting Started
 ================
 
-Quick Start
-++++++++++++++
-::
-    pip3 install merlinwf
-    
-All set up? See the :doc:`Merlin Commands <./merlin_commands>` section for using merlin.
-
-
-Developer Setup
+Quick Start Setup
 ++++++++++++++++++
-To install with the additional developer dependencies, use::
-    pip3 install "merlinwf[dev]"
-    
-or::
-    pip3 install -e "git+https://github.com/LLNL/merlin.git@develop#egg=merlinwf[dev]"
 
-See the :doc:`Spack <./spack>` section for an alternative method to setup merlin on supercomputers.
+This setup will work in most cases and can be used to quickly setup Merlin.
 
+Clone the `Merlin <https://github.com/LLNL/merlin.git>`_
+repository. See the :doc:`Spack <./spack>` section for an alternative method to setup merlin.
+
+::
+
+    git clone https://github.com/LLNL/merlin.git
+
+Then run the following::
+
+   cd merlin
+   make all
+
+for a different python3 version::
+
+   cd merlin
+   make PYTHON=python3-3.7.2 all
+
+The Makefile should have created a virtualenv and installed all required
+dependencies.
+
+Activate the virtualenv::
+
+    $ source venv_merlin_<system>_py<version>/bin/activate  # Or activate.csh if using .cshrc
+    # The prompt will be merlin<python major version>_<python minor version>
+    # This can be changed by setting the PENV variable in the Makefile.
+    (merlin3_7) $
+
+    with python 3.7.* this will be,
+    $ source venv_merlin_${SYS_TYPE}_py3_7/bin/activate
+
+.. note:: The ${SYS_TYPE} variable may not be defined on your machine.
+
+.. note:: A virtualenv may only be created for the current system. This virtualenv
+   setup process must be repeated for each different system being run on.
+
+See the :doc:`Merlin Commands <./merlin_commands>` section for using merlin.
+
+To exit the virtualenv::
+
+    (merlin3_7) $ deactivate
+    $
 
 Configuring Merlin
 *******************

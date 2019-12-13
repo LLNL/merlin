@@ -38,12 +38,10 @@ decoupled from the logic the tasks are running.
 import logging
 import os
 from contextlib import suppress
-from datetime import datetime
 
 from merlin.study.celeryadapter import (
     create_celery_config,
     purge_celery_tasks,
-    query_celery_queues,
     query_celery_workers,
     run_celery,
     start_celery_workers,
@@ -108,47 +106,6 @@ def purge_tasks(task_server, spec, force, steps):
         return purge_celery_tasks(queues, force)
     else:
         LOG.error("Celery is not specified as the task server!")
-
-
-def query_status(task_server, spec, steps):
-    """
-    Queries status of queues in spec file from server.
-
-    :param `task_server`: The task server from which to purge tasks.
-    :param `spec`: A MerlinSpec object
-    :param `steps`: Spaced-separated list of stepnames to query. Default is all
-    """
-    LOG.info(f"Querying queues for steps = {steps}")
-
-    if task_server == "celery":
-        queues = spec.get_queue_list(steps)
-        # Query the queues
-        return query_celery_queues(queues)
-    else:
-        LOG.error("Celery is not specified as the task server!")
-
-
-def dump_status(query_return, csv_file):
-    """
-    Dump the results of a query_status to a csv file.
-
-    :param `query_return`: The output of query_status
-    :param `csv_file`: The csv file to append
-    """
-    if os.path.exists(csv_file):
-        fmode = "a"
-    else:
-        fmode = "w"
-    with open(csv_file, mode=fmode) as f:
-        if f.mode == "w":  # add the header
-            f.write("# time")
-            for name, job, consumer in query_return:
-                f.write(f",{name}:tasks,{name}:consumers")
-            f.write("\n")
-        f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        for name, job, consumer in query_return:
-            f.write(f",{job},{consumer}")
-        f.write("\n")
 
 
 def query_workers(task_server):
