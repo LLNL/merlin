@@ -40,10 +40,7 @@ import time
 from contextlib import suppress
 from glob import glob
 from re import search
-from subprocess import (
-    PIPE,
-    Popen,
-)
+from subprocess import PIPE, Popen
 
 
 OUTPUT_DIR = "cli_test_studies"
@@ -124,7 +121,6 @@ def process_test_result(passed, info, is_verbose, exit):
 def run_tests(args, tests):
     """
     Run all inputted tests.
-
     :param `tests`: a dictionary of
         {"test_name" : ("test_command", [conditions])}
     """
@@ -340,8 +336,11 @@ def define_tests():
     run = "merlin run"
     restart = "merlin restart"
     purge = "merlin purge"
-    demo = "workflows/feature_demo/feature_demo.yaml"
-    simple = "workflows/simple_chain/simple_chain.yaml"
+    examples = "merlin/examples/workflows"
+    demo = f"{examples}/feature_demo/feature_demo.yaml"
+    simple = f"{examples}/simple_chain/simple_chain.yaml"
+    slurm = f"{examples}/slurm/slurm.yaml"
+    flux = f"{examples}/flux/flux.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
 
@@ -362,11 +361,11 @@ def define_tests():
             [ReturnCodeCond(), RegexCond(celery_regex)],
         ),
         "run-workers echo slurm_test": (
-            f"{workers} workflows/slurm/slurm_test.yaml --echo",
+            f"{workers} {slurm} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
         ),
         "run-workers echo flux_test": (
-            f"{workers} workflows/flux/flux_test.yaml --echo",
+            f"{workers} {flux} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
         ),
         "run-workers echo override feature_demo": (
