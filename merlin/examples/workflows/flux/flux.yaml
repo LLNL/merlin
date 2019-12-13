@@ -1,6 +1,6 @@
 description:
-  description: Run a scan through Merlin/Maestro
-  name: FLUXPARMERLIN
+  description: FLUXPARMERLIN - Run a scan through Merlin/Maestro
+  name: flux
 
 batch:
   type: flux

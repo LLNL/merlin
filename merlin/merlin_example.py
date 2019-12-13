@@ -29,50 +29,39 @@
 ###############################################################################
 
 """
-This module handles the CLI for the merlin-templates.
+This module handles the CLI for the merlin-example.
 """
 import argparse
 import logging
 import os
 import sys
 
-from merlin import router
 from merlin.ascii_art import banner_small
+from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
-from merlin.templates.generator import list_templates
 
 
-LOG = logging.getLogger("merlin-templates")
+LOG = logging.getLogger("merlin-example")
 DEFAULT_LOG_LEVEL = "INFO"
 
 
-def setup_template(args):
+def process_example(args):
+    setup_example(args.example, args.path)
 
+
+def example_list(args):
     print(banner_small)
-
-    outdir = os.getcwd()
-
-    if args.path:
-        output = args.path
-
-    router.templates(args.template, args.path)
-
-
-def template_list(args):
-    print(banner_small)
-    list_templates()
+    list_examples()
 
 
 def setup_argparse():
     parser = argparse.ArgumentParser(
-        prog="Merlin Templates",
+        prog="Merlin Examples",
         description=banner_small,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="See merlin-templates <command> --help for more info.",
+        epilog=list_examples()
+        + "\nSee merlin-example <command> --help for more info.\n",
     )
-    subparsers = parser.add_subparsers(dest="subparsers")
-    subparsers.required = True
-
     parser.add_argument(
         "-lvl",
         "--level",
@@ -83,26 +72,19 @@ def setup_argparse():
         help="Set the log level. Options: DEBUG, INFO, WARNING, ERROR. "
         "[Default: %(default)s]",
     )
-
-    # Naming variable subparser _list to avoid conflict with Python's list
-    # reserved word.
-    _list = subparsers.add_parser("list", help="List available templates.")
-    _list.set_defaults(func=template_list)
-
-    setup = subparsers.add_parser("setup", help="Setup a new template.")
-    setup.add_argument(
-        "template", action="store", type=str, help="The name of the template to setup."
+    parser.add_argument(
+        "example", action="store", type=str, help="The name of the example to setup."
     )
-    setup.add_argument(
+    parser.add_argument(
         "-p",
         "--path",
         action="store",
         type=str,
-        default=os.getcwd(),
+        default=None,
         help="Specify a path to write the workflow to. Defaults to current "
         "working directory",
     )
-    setup.set_defaults(func=setup_template)
+    parser.set_defaults(func=process_example)
 
     return parser
 
