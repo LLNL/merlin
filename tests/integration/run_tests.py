@@ -388,6 +388,10 @@ def define_tests():
             f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             ReturnCodeCond(),
         ),
+        "merlin-example simple_chain": (
+            f"merlin-example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
+            ReturnCodeCond(),
+        ),
         # "restart local simple_chain": (
         #    f"{restart} --local $(find studies/ -type d -name 'simple_chain_*')",
         #    [ReturnCodeCond(), NoStderrCond()],
