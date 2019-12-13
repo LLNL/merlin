@@ -414,12 +414,12 @@ class MerlinStudy:
     def get_adapter_config(self, override_type=None):
         spec = MerlinSpec.load_specification(self.spec.path)
         adapter_config = dict(spec.batch)
-  
+
         if "type" not in adapter_config.keys():
             adapter_config["type"] = "local"
 
         # The type may be overriden, preserve the batch type
-        adapter_config["batch_type"] = adapter_config["type"] 
+        adapter_config["batch_type"] = adapter_config["type"]
 
         if override_type is not None:
             adapter_config["type"] = override_type

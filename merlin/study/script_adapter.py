@@ -36,6 +36,7 @@ import logging
 
 from maestrowf.interfaces.script.localscriptadapter import LocalScriptAdapter
 from maestrowf.interfaces.script.slurmscriptadapter import SlurmScriptAdapter
+
 from merlin.common.abstracts.enums import ReturnCode
 
 
@@ -68,7 +69,20 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "cores per task": "-c",
             "gpus per task": "-g",
         }
-        new_unsupported = ["cmd", "ntasks", "nodes", "gpus", "walltime", "reservation", "restart","task_queue", "max_retries", "pre", "post", "depends"]
+        new_unsupported = [
+            "cmd",
+            "ntasks",
+            "nodes",
+            "gpus",
+            "walltime",
+            "reservation",
+            "restart",
+            "task_queue",
+            "max_retries",
+            "pre",
+            "post",
+            "depends",
+        ]
         self._unsupported = set(new_unsupported)
 
     def get_header(self, step):
@@ -101,7 +115,16 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         """
         super(MerlinSlurmScriptAdapter, self).__init__(**kwargs)
 
-        new_unsupported = ["task_queue", "max_retries", "pre", "post", "gpus per task", "walltime", "gpus", "restart"]
+        new_unsupported = [
+            "task_queue",
+            "max_retries",
+            "pre",
+            "post",
+            "gpus per task",
+            "walltime",
+            "gpus",
+            "restart",
+        ]
         self._unsupported = set(list(self._unsupported) + new_unsupported)
 
     def get_header(self, step):
@@ -142,7 +165,20 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "cores per task": "-c",
             "gpus per task": "-g",
         }
-        new_unsupported = ["cmd", "ntasks", "nodes", "gpus", "walltime", "reservation", "restart","task_queue", "max_retries", "pre", "post", "depends"]
+        new_unsupported = [
+            "cmd",
+            "ntasks",
+            "nodes",
+            "gpus",
+            "walltime",
+            "reservation",
+            "restart",
+            "task_queue",
+            "max_retries",
+            "pre",
+            "post",
+            "depends",
+        ]
         self._unsupported = set(new_unsupported)
 
 
@@ -167,21 +203,21 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         self.batch_type = "merlin-" + kwargs.get("batch_type", "local")
 
         if "host" not in kwargs.keys():
-           kwargs["host"] = "None"
+            kwargs["host"] = "None"
         if "bank" not in kwargs.keys():
-           kwargs["bank"] = "None"
+            kwargs["bank"] = "None"
         if "queue" not in kwargs.keys():
-           kwargs["queue"] = "None"
+            kwargs["queue"] = "None"
 
-        self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(self.batch_type)(**kwargs)
+        self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(self.batch_type)(
+            **kwargs
+        )
 
     def write_script(self, *args, **kwargs):
         """
         TODO
         """
-        _, script, restart_script = self.batch_adapter.write_script(
-                *args, **kwargs
-            )
+        _, script, restart_script = self.batch_adapter.write_script(*args, **kwargs)
         return True, script, restart_script
 
     def submit(self, step, path, cwd, job_map=None, env=None):
@@ -232,18 +268,19 @@ class MerlinScriptAdapter(LocalScriptAdapter):
 
 class MerlinScriptAdapterFactory(object):
     factories = {
-       "merlin-flux": MerlinFluxScriptAdapter,
-       "merlin-lsf": MerlinLSFScriptAdapter,
-       "merlin-slurm": MerlinSlurmScriptAdapter,
-       "merlin-local": MerlinScriptAdapter,
+        "merlin-flux": MerlinFluxScriptAdapter,
+        "merlin-lsf": MerlinLSFScriptAdapter,
+        "merlin-slurm": MerlinSlurmScriptAdapter,
+        "merlin-local": MerlinScriptAdapter,
     }
 
     @classmethod
     def get_adapter(cls, adapter_id):
         if adapter_id.lower() not in cls.factories:
-            msg = "Adapter '{0}' not found. Specify an adapter that exists " \
-                  "or implement a new one mapping to the '{0}'" \
-                  .format(str(adapter_id))
+            msg = (
+                "Adapter '{0}' not found. Specify an adapter that exists "
+                "or implement a new one mapping to the '{0}'".format(str(adapter_id))
+            )
             LOGGER.error(msg)
             raise Exception(msg)
 
@@ -252,5 +289,3 @@ class MerlinScriptAdapterFactory(object):
     @classmethod
     def get_valid_adapters(cls):
         return cls.factories.keys()
-
-
