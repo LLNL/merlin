@@ -38,10 +38,14 @@ study:
           fi
         fi
       fi
-      flux wreckrun -n 1 -N 1 $(build.workspace)/mpi_hello_sleep $(SLEEP_TIME) $(V1) $(V2) > flux_run.out
+      $(LAUNCHER) $(build.workspace)/mpi_hello_sleep $(SLEEP_TIME) $(V1) $(V2) > flux_run.out
       sleep 10
     depends: [build]
     task_queue: flux_paper
+    nodes: 1
+    procs: 1
+
+
 - description: Dump flux info
   name: data
   run:

@@ -18,9 +18,12 @@ study:
 - description: Echo the params
   name: runs 
   run:
-    cmd: srun -n 4 -N 2 $(build.workspace)/mpi_hello $(V1) $(V2) > slurm_run.out
+    cmd: $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > slurm_run.out
     depends: [build]
     task_queue: slurm_par
+    nodes: 2
+    procs: 4
+
 - description: Dump slurm info
   name: data
   run:
