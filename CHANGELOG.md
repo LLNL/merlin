@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Development dependencies install via pip: `pip install "merlinwf[dev]"`
 - `merlin status <yaml spec>` that returns queues, number of connected
   workers and number of unused tasks in each of those queues
+- `merlin-example` cli command, which allows users to start running the
+  examples immedately (even after pip-installing).
 
 ### Fixed
 - `MANIFEST.in` fixes as required by Spack.
@@ -20,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Dependencies outside the requirements directory
 - LLNL-specific material in the Makefile
+- `merlin-templates` cli command
 
 ## [1.0.5] - 2019-12-05
 
