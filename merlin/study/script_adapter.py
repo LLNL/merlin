@@ -209,9 +209,11 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         if "queue" not in kwargs.keys():
             kwargs["queue"] = "None"
 
-        self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(self.batch_type)(
+        self.batch_adapter = super(MerlinScriptAdapter, self)
+        if self.batch_type != "merlin-local":
+            self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(self.batch_type)(
             **kwargs
-        )
+            )
 
     def write_script(self, *args, **kwargs):
         """
