@@ -245,7 +245,7 @@ If you want to run an example workflow, use Merlin's ``merlin-example``:
 
     (merlin3_7) $ merlin-example --help
 
-This will list the available example workflowsand a description for each one. To
+This will list the available example workflows and a description for each one. To
 select one:
 
 .. code:: bash
