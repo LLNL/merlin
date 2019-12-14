@@ -225,7 +225,11 @@ def query_status(args):
     filepath = verify_filepath(args.specification)
     variables_dict = parse_override_vars(args.variables)
     spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
-    _ = router.query_status(args.task_server, spec, args.steps)
+    ret = router.query_status(args.task_server, spec, args.steps)
+    for name, jobs, consumers in ret:
+        print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
+    if args.csv is not None:
+        router.dump_status(ret, args.csv)
 
 
 def query_workers(args):
@@ -515,6 +519,9 @@ def setup_argparse():
         default=None,
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+    )
+    status.add_argument(
+        "--csv", type=str, help="csv file to dump status report to", default=None,
     )
 
     # merlin info

@@ -164,9 +164,7 @@ def query_celery_queues(queues):
             try:
                 name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
                 found_queues.append((name, jobs, consumers))
-                LOG.info(
-                    f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}"
-                )
+                LOG.info(f"Found queue {queue}.")
             except:
                 LOG.warning(f"Cannot find queue {queue} on server.")
     finally:
