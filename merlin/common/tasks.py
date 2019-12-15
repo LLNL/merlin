@@ -29,34 +29,18 @@
 ###############################################################################
 
 """Test tasks."""
-from __future__ import (
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
 
-from celery import (
-    chain,
-    chord,
-    group,
-    shared_task,
-    signature,
-)
-from celery.exceptions import (
-    OperationalError,
-    TimeoutError,
-)
+from celery import chain, chord, group, shared_task, signature
+from celery.exceptions import OperationalError, TimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
-from merlin.exceptions import (
-    HardFailException,
-    InvalidChainException,
-    RetryException,
-)
+from merlin.exceptions import HardFailException, InvalidChainException, RetryException
 from merlin.router import stop_workers
 from merlin.spec.expansion import (
     parameter_substitutions_for_cmd,
@@ -99,7 +83,7 @@ def merlin_step(self, *args, **kwargs):
         else:
             LOG.debug(f"discard argument {a}")
 
-    config = kwargs.pop("adapter_config", {"type": "local", "batch_type":"local"})
+    config = kwargs.pop("adapter_config", {"type": "local", "batch_type": "local"})
     next_in_chain = kwargs.pop("next_in_chain", None)
 
     if step:

@@ -41,14 +41,8 @@ from maestrowf.datastructures.core import Study
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import (
-    determine_user_variables,
-    expand_line,
-)
-from merlin.spec.override import (
-    dump_with_overrides,
-    error_override_vars,
-)
+from merlin.spec.expansion import determine_user_variables, expand_line
+from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
 from merlin.utils import load_array_file
