@@ -30,13 +30,7 @@
 
 DESCRIPTION = {"description": {}}
 
-BATCH = {
-    "batch": {
-        "type": "local",
-        "dry_run": False,
-        "shell": "/bin/bash",
-    }
-}
+BATCH = {"batch": {"type": "local", "dry_run": False, "shell": "/bin/bash",}}
 
 ENV = {"env": {"variables": {}}}
 

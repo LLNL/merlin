@@ -37,8 +37,16 @@ import subprocess
 import time
 from contextlib import suppress
 
-from merlin.study.batch import batch_check_parallel, batch_worker_launch
-from merlin.utils import get_procs, get_yaml_var, is_running, regex_list_filter
+from merlin.study.batch import (
+    batch_check_parallel,
+    batch_worker_launch,
+)
+from merlin.utils import (
+    get_procs,
+    get_yaml_var,
+    is_running,
+    regex_list_filter,
+)
 
 
 LOG = logging.getLogger(__name__)
