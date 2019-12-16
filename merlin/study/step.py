@@ -156,7 +156,7 @@ class Step:
         default_batch_type = adapter_config.pop("batch_type", adapter_config["type"])
         # Set batch_type to default if unset
         adapter_config.update({"batch_type": default_batch_type})
-        # Override the default bath: type: from the step config
+        # Override the default batch: type: from the step config
         batch = self.step.step.run.pop("batch", None)
         if batch:
             batch_type = batch.pop("type", default_batch_type)
