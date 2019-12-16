@@ -209,6 +209,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         if "queue" not in kwargs.keys():
             kwargs["queue"] = "None"
 
+        # Using super prevents recursion. 
         self.batch_adapter = super(MerlinScriptAdapter, self)
         if self.batch_type != "merlin-local":
             self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(
