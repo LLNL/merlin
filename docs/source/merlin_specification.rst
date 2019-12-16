@@ -155,6 +155,8 @@ see :doc:`./merlin_variables`.
         nodes: 1
         procs: 1
         task_queue: lqueue
+        batch:
+          type: <override the default batch type>
 
     - name: monitor
       description: Monitor on alloc1
@@ -245,7 +247,9 @@ see :doc:`./merlin_variables`.
               # An optional batch section in the worker can override the
               # main batch config. This is useful if other workers are running
               # flux, but some component of the workflow requires the native
-              # scheduler or cannot run under flux.
+              # scheduler or cannot run under flux. Another possibility is to 
+              # have the default type as local and workers needed for flux or
+              # slurm steps.
               batch:
                  type: local
 

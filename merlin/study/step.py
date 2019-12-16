@@ -154,8 +154,13 @@ class Step:
 
         # Update batch type if the task overrides the default value from the batch section
         default_batch_type = adapter_config.pop("batch_type", adapter_config["type"])
-        batch_type = self.step.step.run.pop("batch_type", default_batch_type)
-        adapter_config.update({"batch_type": batch_type})
+        # Set batch_type to default if unset
+        adapter_config.update({"batch_type": default_batch_type})
+        # Override the default bath: type: from the step config
+        batch = self.step.step.run.pop("batch", None)
+        if batch:
+            batch_type = batch.pop("type", default_batch_type)
+            adapter_config.update({"batch_type": batch_type})
 
         adapter = cls_adapter(**adapter_config)
         LOG.debug(f"Maestro step config = {adapter_config}")
