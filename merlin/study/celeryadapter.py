@@ -229,11 +229,10 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
     for worker_name, worker_val in workers.items():
         worker_machines = get_yaml_var(worker_val, "machines", None)
         if worker_machines:
-            print("check machines = ", check_machines(worker_machines))
+            LOG.debug("check machines = ", check_machines(worker_machines))
             if not check_machines(worker_machines):
                 continue
 
-            print("yenv= ", yenv)
             if yenv:
                 output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
                 if output_path and not os.path.exists(output_path):
