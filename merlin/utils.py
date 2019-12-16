@@ -363,3 +363,21 @@ def nested_namespace_to_dicts(ns):
 
     new_ns = deepcopy(ns)
     return recurse(new_ns)
+
+
+def get_flux_version(flux_path):
+    """
+    Return the flux version as a string
+
+    :param `flux_path`: the full path to flux
+    """
+    cmd = [flux_path, "version"]
+
+    ps = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, encoding="utf8"
+        ).communicate()[0]
+
+    if ps:
+        return re.search(r'\s*([\d.]+)', ps).group(1)
+
+    return ""
