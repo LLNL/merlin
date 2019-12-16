@@ -153,7 +153,7 @@ class Step:
         adapter_config.update({"shell": shell})
 
         # Update batch type if the task overrides the default value from the batch section
-        default_batch_type = adapter_config.pop("batch_type")
+        default_batch_type = adapter_config.pop("batch_type", adapter_config["type"])
         batch_type = self.step.step.run.pop("batch_type", default_batch_type)
         adapter_config.update({"batch_type": batch_type})
 

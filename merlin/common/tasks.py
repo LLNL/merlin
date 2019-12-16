@@ -83,7 +83,7 @@ def merlin_step(self, *args, **kwargs):
         else:
             LOG.debug(f"discard argument {a}")
 
-    config = kwargs.pop("adapter_config", {"type": "local", "batch_type": "local"})
+    config = kwargs.pop("adapter_config", {"type": "local"})
     next_in_chain = kwargs.pop("next_in_chain", None)
 
     if step:
