@@ -239,25 +239,25 @@ whose name matches a regular expression:
 Generate working examples
 -------------------------
 
-If you want to run an example workflow, use Merlin's ``merlin-example``:
+If you want to run an example workflow, use Merlin's ``merlin example``:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin-example --help
+    (merlin3_7) $ merlin example --help
 
 This will list the available example workflows and a description for each one. To
 select one:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin-example <template_name>
+    (merlin3_7) $ merlin example <template_name>
 
 This will copy the example workflow to the current working directory. It is
 possible to specify another path to copy to.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin-example <template_name> -p path/to/dir
+    (merlin3_7) $ merlin example <template_name> -p path/to/dir
 
 If the specified directory does not exist Merlin will automatically create it.
 

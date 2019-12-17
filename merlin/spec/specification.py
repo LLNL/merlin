@@ -31,7 +31,7 @@
 """
 This module contains a class, MerlinSpec, which holds the unchanged
 data from the Merlin specification file.
-To see examples of yaml specifications, run `merlin-example`.
+To see examples of yaml specifications, run `merlin example`.
 """
 import logging
 import os
@@ -101,7 +101,7 @@ class MerlinSpec(YAMLSpecification):
             merlin_block = {}
             LOG.warning(
                 f"Workflow specification missing \n "
-                f"encouraged 'merlin' section! Run 'merlin-example' for examples.\n"
+                f"encouraged 'merlin' section! Run 'merlin example' for examples.\n"
                 f"Using default configuration with no sampling."
             )
         return merlin_block
