@@ -369,15 +369,13 @@ def get_flux_version(flux_path):
     """
     Return the flux version as a string
 
-    :param `flux_path`: the full path to flux
+    :param `flux_path`: the full path to the flux bin
     """
     cmd = [flux_path, "version"]
 
-    ps = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, encoding="utf8"
-        ).communicate()[0]
+    ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()[0]
 
     if ps:
-        return re.search(r'\s*([\d.]+)', ps).group(1)
+        return re.search(r"\s*([\d.]+)", ps).group(1)
 
     return ""

@@ -51,7 +51,10 @@ from merlin.spec.override import (
 )
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
-from merlin.utils import load_array_file
+from merlin.utils import (
+    get_flux_version,
+    load_array_file,
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -343,6 +346,19 @@ class MerlinStudy:
 
         return MerlinSpec.load_specification(self.expanded_filepath)
 
+    @cached_property
+    def flux_version(self):
+        """
+        Returns a the flux version
+        """
+        flux_bin = "flux"
+        if self.expanded_spec.merlin["batch"]:
+            if self.expanded_spec.merlin["batch"]["flux_path"]:
+                flux_bin = os.path.join(
+                    self.expanded_spec.merlin["batch"]["flux_path"], "flux"
+                )
+        return get_flux_version(flux_bin)
+
     def generate_samples(self):
         """
         Runs the function defined in 'generate' if self.samples_file is not
@@ -420,6 +436,9 @@ class MerlinStudy:
 
         # The type may be overriden, preserve the batch type
         adapter_config["batch_type"] = adapter_config["type"]
+
+        if adapter_config["batch_type"] == "flux":
+            adapter_config["flux_version"] = self.flux_version
 
         if override_type is not None:
             adapter_config["type"] = override_type
