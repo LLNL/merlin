@@ -352,11 +352,8 @@ class MerlinStudy:
         Returns a the flux version
         """
         flux_bin = "flux"
-        if self.expanded_spec.merlin["batch"]:
-            if self.expanded_spec.merlin["batch"]["flux_path"]:
-                flux_bin = os.path.join(
-                    self.expanded_spec.merlin["batch"]["flux_path"], "flux"
-                )
+        if "flux_path" in self.expanded_spec.batch.keys():
+            flux_bin = os.path.join(self.expanded_spec.batch["flux_path"], "flux")
         return get_flux_version(flux_bin)
 
     def generate_samples(self):
@@ -437,14 +434,16 @@ class MerlinStudy:
         # The type may be overriden, preserve the batch type
         adapter_config["batch_type"] = adapter_config["type"]
 
-        if adapter_config["batch_type"] == "flux":
-            adapter_config["flux_version"] = self.flux_version
-
         if override_type is not None:
             adapter_config["type"] = override_type
 
         # if a dry run was ordered by the yaml spec OR the cli flag, do a dry run.
         adapter_config["dry_run"] = self.dry_run or adapter_config["dry_run"]
+
+        # Add the version if using flux to switch the command in the step
+        if adapter_config["batch_type"] == "flux":
+            adapter_config["flux_version"] = self.flux_version
+
 
         LOG.debug(f"Adapter config = {adapter_config}")
         return adapter_config
