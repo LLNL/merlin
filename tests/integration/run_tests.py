@@ -342,8 +342,8 @@ def define_tests():
     examples = "merlin/examples/workflows"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
-    slurm = f"{examples}/slurm/slurm.yaml"
-    flux = f"{examples}/flux/flux.yaml"
+    slurm = f"{examples}/slurm/slurm_test.yaml"
+    flux = f"{examples}/flux/flux_test.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
 
@@ -388,8 +388,9 @@ def define_tests():
             f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             ReturnCodeCond(),
         ),
-        "merlin-example simple_chain": (
-            f"merlin-example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
+        "example failure": (f"merlin example failure", RegexCond("not found"),),
+        "example simple_chain": (
+            f"merlin example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
             ReturnCodeCond(),
         ),
         # "restart local simple_chain": (
