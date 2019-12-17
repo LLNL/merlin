@@ -29,7 +29,7 @@
 ###############################################################################
 
 """
-This module handles the CLI for the merlin-example.
+This module handles the CLI for the deprecated `merlin-templates` command.
 """
 import argparse
 import logging
@@ -61,7 +61,6 @@ def setup_argparse():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.set_defaults(func=process_templates)
-
     return parser
 
 

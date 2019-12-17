@@ -32,6 +32,7 @@
 This module contains a list of examples that can be used when learning to use
 Merlin, or for setting up new workflows.
 """
+import glob
 import logging
 import os
 import shutil
@@ -47,17 +48,16 @@ LOG = logging.getLogger(__name__)
 EXAMPLE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
 
 
-def gather_examples():
+def gather_example_dirs():
     result = {}
     for d in os.listdir(EXAMPLE_DIR):
         result[d] = d
     return result
 
 
-def find_example(name):
-    for example in examples.EXAMPLES:
-        if example["name"] == name:
-            return example  # Return only the first example for now.
+def gather_all_examples():
+    specs = glob.glob(os.path.join(EXAMPLE_DIR, "") + "*/*.yaml")
+    return specs
 
 
 def write_example(src_path, dst_path):
@@ -74,23 +74,25 @@ def write_example(src_path, dst_path):
 
 def list_examples():
     """List all available examples."""
-    examples = gather_examples()
+    examples = gather_example_dirs()
 
     headers = ["name", "description"]
     rows = []
-    for example in examples:
-        with open(
-            os.path.join(os.path.join(EXAMPLE_DIR, example), example + ".yaml")
-        ) as f:
-            example_descrips = yaml.safe_load(f)["description"]
-        rows.append([example_descrips["name"], example_descrips["description"]])
+    print(gather_all_examples())
+    for example_dir in examples:
+        directory = os.path.join(os.path.join(EXAMPLE_DIR, example_dir), "")
+        specs = glob.glob(directory + "*.yaml")
+        for spec in specs:
+            with open(spec) as f:
+                spec_metadata = yaml.safe_load(f)["description"]
+            rows.append([spec_metadata["name"], spec_metadata["description"]])
     return "\n" + tabulate.tabulate(rows, headers) + "\n"
 
 
 def setup_example(name, outdir):
     """Setup the given example."""
     try:
-        example = gather_examples()[name]
+        example = gather_example_dirs()[name]
     except KeyError:
         LOG.error(f"Example '{name}' not found.")
         return None

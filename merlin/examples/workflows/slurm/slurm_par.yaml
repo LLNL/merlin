@@ -1,6 +1,6 @@
 description:
-  description: SLURMPARMERLIN - Run a scan through Merlin/Maestro
-  name: slurm
+  description: Run a scan through Merlin/Maestro
+  name: slurm_par
 
 batch:
   type: slurm
