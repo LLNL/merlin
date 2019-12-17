@@ -42,7 +42,7 @@ import yaml
 from merlin.examples import examples
 
 
-LOG = logging.getLogger("merlin-example")
+LOG = logging.getLogger(__name__)
 
 EXAMPLE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
 
@@ -92,7 +92,7 @@ def setup_example(name, outdir):
     try:
         example = gather_examples()[name]
     except KeyError:
-        LOG.error(f"Template '{name}' not found.")
+        LOG.error(f"Example '{name}' not found.")
         return None
 
     if outdir is None:

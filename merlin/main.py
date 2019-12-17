@@ -39,6 +39,7 @@ from argparse import (
     ArgumentDefaultsHelpFormatter,
     ArgumentParser,
     RawDescriptionHelpFormatter,
+    RawTextHelpFormatter,
 )
 from contextlib import suppress
 
@@ -281,7 +282,8 @@ def config_merlin(args):
 
 
 def process_example(args):
-    setup_example(args.example, args.path)
+    print(banner_small)
+    setup_example(args.workflow, args.path)
 
 
 def setup_argparse():
@@ -562,13 +564,13 @@ def setup_argparse():
 
     # merlin example
     example = subparsers.add_parser(
-        "example", help="Generate an example merlin workflow.", epilog=list_examples()
+        "example", help="Generate an example merlin workflow.", formatter_class=RawTextHelpFormatter
     )
     example.add_argument(
         "workflow",
         action="store",
         type=str,
-        help="The name of the example workflow to setup.",
+        help="The name of the example workflow to setup.\n" + list_examples(),
     )
     example.add_argument(
         "-p",
