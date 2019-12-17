@@ -552,6 +552,24 @@ def setup_argparse():
                             Default: ~/.merlin",
     )
 
+    # merlin example
+    example = subparsers.add_parser(
+        "example", help="Generate an example merlin workflow.\nSee `merlin example <command> --help` for more info."
+    )
+    example.add_argument(
+        "workflow", action="store", type=str, help="The name of the example workflow to setup."
+    )
+    example.add_argument(
+        "-p",
+        "--path",
+        action="store",
+        type=str,
+        default=None,
+        help="Specify a path to write the workflow to. Defaults to current "
+        "working directory",
+    )
+    example.set_defaults(func=process_example)
+
     return parser
 
 
