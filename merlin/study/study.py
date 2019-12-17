@@ -444,6 +444,5 @@ class MerlinStudy:
         if adapter_config["batch_type"] == "flux":
             adapter_config["flux_version"] = self.flux_version
 
-
         LOG.debug(f"Adapter config = {adapter_config}")
         return adapter_config
