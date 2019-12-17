@@ -47,6 +47,10 @@ from merlin import (
     router,
 )
 from merlin.ascii_art import banner_small
+from merlin.examples.generator import (
+    list_examples,
+    setup_example,
+)
 from merlin.log_formatter import setup_logging
 from merlin.spec.expansion import (
     RESERVED,
@@ -274,6 +278,10 @@ def config_merlin(args):
         USER_HOME = os.path.expanduser("~")
         output_dir = os.path.join(USER_HOME, ".merlin")
     _ = router.create_config(args.task_server, output_dir)
+
+
+def process_example(args):
+    setup_example(args.example, args.path)
 
 
 def setup_argparse():
@@ -554,10 +562,13 @@ def setup_argparse():
 
     # merlin example
     example = subparsers.add_parser(
-        "example", help="Generate an example merlin workflow.\nSee `merlin example <command> --help` for more info."
+        "example", help="Generate an example merlin workflow.", epilog=list_examples()
     )
     example.add_argument(
-        "workflow", action="store", type=str, help="The name of the example workflow to setup."
+        "workflow",
+        action="store",
+        type=str,
+        help="The name of the example workflow to setup.",
     )
     example.add_argument(
         "-p",

@@ -44,17 +44,14 @@ from merlin.examples.generator import (
 from merlin.log_formatter import setup_logging
 
 
-LOG = logging.getLogger("merlin-example")
+LOG = logging.getLogger("merlin-templates")
 DEFAULT_LOG_LEVEL = "INFO"
 
 
-def process_example(args):
-    setup_example(args.example, args.path)
-
-
-def example_list(args):
-    print(banner_small)
-    list_examples()
+def process_templates(args):
+    LOG.warning(
+        "The command `merlin-templates` has been deprecated in favor of `merlin example`."
+    )
 
 
 def setup_argparse():
@@ -62,32 +59,8 @@ def setup_argparse():
         prog="Merlin Examples",
         description=banner_small,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=list_examples()
-        + "\nSee merlin-example <command> --help for more info.\n",
     )
-    parser.add_argument(
-        "-lvl",
-        "--level",
-        action="store",
-        dest="level",
-        type=str,
-        default=DEFAULT_LOG_LEVEL,
-        help="Set the log level. Options: DEBUG, INFO, WARNING, ERROR. "
-        "[Default: %(default)s]",
-    )
-    parser.add_argument(
-        "example", action="store", type=str, help="The name of the example to setup."
-    )
-    parser.add_argument(
-        "-p",
-        "--path",
-        action="store",
-        type=str,
-        default=None,
-        help="Specify a path to write the workflow to. Defaults to current "
-        "working directory",
-    )
-    parser.set_defaults(func=process_example)
+    parser.set_defaults(func=process_templates)
 
     return parser
 
@@ -95,9 +68,7 @@ def setup_argparse():
 def main():
     parser = setup_argparse()
     args = parser.parse_args()
-
-    setup_logging(logger=LOG, log_level=args.level.upper(), colors=True)
-
+    setup_logging(logger=LOG, log_level="INFO", colors=True)
     args.func(args)
 
 
