@@ -56,8 +56,7 @@ def gather_example_dirs():
 
 
 def gather_all_examples():
-    specs = glob.glob(os.path.join(EXAMPLE_DIR, "") + "*/*.yaml")
-    return specs
+    return glob.glob(os.path.join(EXAMPLE_DIR, "") + "*/*.yaml")
 
 
 def write_example(src_path, dst_path):
@@ -78,7 +77,6 @@ def list_examples():
 
     headers = ["name", "description"]
     rows = []
-    print(gather_all_examples())
     for example_dir in examples:
         directory = os.path.join(os.path.join(EXAMPLE_DIR, example_dir), "")
         specs = glob.glob(directory + "*.yaml")
@@ -91,9 +89,14 @@ def list_examples():
 
 def setup_example(name, outdir):
     """Setup the given example."""
-    try:
-        example = gather_example_dirs()[name]
-    except KeyError:
+    example = None
+    spec_paths = gather_all_examples()
+    for spec_path in spec_paths:
+        spec = os.path.basename(os.path.normpath(spec_path)).replace(".yaml", "")
+        if name == spec:
+            example = os.path.basename(os.path.dirname(spec_path))
+            break
+    if example is None:
         LOG.error(f"Example '{name}' not found.")
         return None
 
