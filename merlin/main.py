@@ -564,7 +564,9 @@ def setup_argparse():
 
     # merlin example
     example = subparsers.add_parser(
-        "example", help="Generate an example merlin workflow.", formatter_class=RawTextHelpFormatter
+        "example",
+        help="Generate an example merlin workflow.",
+        formatter_class=RawTextHelpFormatter,
     )
     example.add_argument(
         "workflow",
