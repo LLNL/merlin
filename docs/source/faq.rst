@@ -170,6 +170,7 @@ Steps have a ``name``, ``description``, and ``run`` field, as shown below.
         task_queue: ...
         shell: ...
         max_retries: ...
+        walltime: ...
 
 Optional fields are ``depends``, ``task_queue``, and ``shell``.
 
@@ -179,6 +180,11 @@ You can add the field ``shell`` under the ``run`` portion of your step
 to change the language you write your step in. The default is ``/bin/bash``,
 but you can do things like ``/usr/bin/env python`` as well.
 See the ``basic_ensemble.yaml`` for an example.
+
+How do I set a time limit for a step?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can add the field ``walltime`` under the ``run`` portion of your step
+to set a hard time limit for your step (in seconds).
 
 Running Workflows
 -----------------
