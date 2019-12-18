@@ -130,7 +130,7 @@ Step return variables
                echo "hi mom!" >> my_file.txt
                exit $(MERLIN_RESTART)
             max_retries: 23
-            countdown: 1.5
+            countdown: 2
 
    * - ``$(meriln_soft_fail)``
      - Mark this step as a failure, note in the warning log but keep going.
