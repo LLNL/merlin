@@ -236,3 +236,7 @@ You might also have rogue workers. To find out, try ``merlin query-workers``.
 
 Where do tasks get run?
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+Where can I learn more about merlin?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Check out our (paper)[https://arxiv.org/abs/1912.02892] on arXiv.
