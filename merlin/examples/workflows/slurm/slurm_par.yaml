@@ -1,5 +1,5 @@
 description:
-  description: Run a scan through Merlin/Maestro
+  description: Launch slurm jobs in parallel.
   name: slurm_par
 
 batch:

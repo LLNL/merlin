@@ -1,5 +1,5 @@
 description:
-  description: Run a scan through Merlin/Maestro
+  description: Launch flux jobs in parallel.
   name: flux_par
 
 batch:

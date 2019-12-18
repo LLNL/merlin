@@ -1,5 +1,5 @@
 description:
-  description: Run a scan through Merlin/Maestro
+  description: Run a flux query.
   name: flux_test
 
 batch:
