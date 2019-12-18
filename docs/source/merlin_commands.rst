@@ -250,18 +250,18 @@ select one:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin example <template_name>
+    (merlin3_7) $ merlin example <example_name>
 
 This will copy the example workflow to the current working directory. It is
 possible to specify another path to copy to.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin example <template_name> -p path/to/dir
+    (merlin3_7) $ merlin example <example_name> -p path/to/dir
 
 If the specified directory does not exist Merlin will automatically create it.
 
-This will generate the template file at the specified location, ready to be run.
+This will generate the example workflow at the specified location, ready to be run.
 
 
 Purging Tasks
