@@ -107,6 +107,13 @@ class Step:
         """
         return self.step.step.to_dict()["run"]["max_retries"]
 
+    @property
+    def countdown(self):
+        """
+        Returns the countdown (retry delay) for this step.
+        """
+        return self.step.step.to_dict()["run"]["countdown"]
+
     def needs_merlin_expansion(self, labels):
         """
         :return : True if the cmd has any of the default keywords or spec

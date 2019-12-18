@@ -119,7 +119,8 @@ Step return variables
    * - ``$(MERLIN_RESTART)``
      - Restart this step. The default maximum number of retries for any given step
        is 30. You can override this by adding a max_retries field under the run 
-       field in the specification. 
+       field in the specification. countdown is the delay in seconds between each
+       retry.
      -
        ::
 
@@ -129,6 +130,7 @@ Step return variables
                echo "hi mom!" >> my_file.txt
                exit $(MERLIN_RESTART)
             max_retries: 23
+            countdown: 1.5
 
    * - ``$(meriln_soft_fail)``
      - Mark this step as a failure, note in the warning log but keep going.
