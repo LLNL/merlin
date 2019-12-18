@@ -34,7 +34,12 @@ BATCH = {"batch": {"type": "local", "dry_run": False, "shell": "/bin/bash"}}
 
 ENV = {"env": {"variables": {}}}
 
-STUDY_STEP_RUN = {"task_queue": "merlin", "shell": "/bin/bash", "max_retries": 30, "countdown": 1.0}
+STUDY_STEP_RUN = {
+    "task_queue": "merlin",
+    "shell": "/bin/bash",
+    "max_retries": 30,
+    "countdown": 1,
+}
 
 PARAMETER = {"global.parameters": {}}
 
