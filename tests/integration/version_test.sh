@@ -41,8 +41,11 @@ fi
 # Ensure __init__.py has changed
 if [[ $(git diff HEAD..master -- merlin/__init__.py) ]]
 then
-    exit 0
+    :
 else
     echo "Error: merlin/__init__.py has not been updated (version?)"
     exit 1
 fi
+
+
+exit 0
