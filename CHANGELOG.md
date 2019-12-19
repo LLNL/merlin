@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Development dependencies install via pip: `pip install "merlinwf[dev]"`
 - `merlin status <yaml spec>` that returns queues, number of connected
   workers and number of unused tasks in each of those queues
+- `version_tests.sh`, for checking that the merlin version is incremented
+  before changes are merged into master.
 
 ### Fixed
 - `MANIFEST.in` fixes as required by Spack.
