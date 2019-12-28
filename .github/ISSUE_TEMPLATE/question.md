@@ -1,5 +1,5 @@
 ---
-name: 🤓 General Question
+name: 🤓 General question
 labels: 'question'
 title: '[Q/A] '
 about: Ask, discuss, debate with the Merlin team
