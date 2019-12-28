@@ -1,10 +1,9 @@
 ---
-name: Question
-about: Describe this issue template's purpose here.
-title: ''
-labels: ''
-assignees: ''
-
+name: 🤓 General Question
+labels: 'question'
+title: '[Q/A] '
+about: Ask, discuss, debate with the Merlin team
 ---
 
-
+## 🤓 Question
+<!-- (Have you searched the issues page before asking?) -->
