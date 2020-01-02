@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Development dependencies install via pip: `pip install "merlinwf[dev]"`
 - `merlin status <yaml spec>` that returns queues, number of connected
   workers and number of unused tasks in each of those queues
-- The step/run field `countdown`, which adds a delay in seconds to retries.
+- The step/run field `retry_delay`, which adds a delay in seconds to step retries.
 
 ### Fixed
 - `MANIFEST.in` fixes as required by Spack.

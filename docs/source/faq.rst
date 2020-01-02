@@ -142,7 +142,7 @@ To restart failed steps after a workflow has run, see :ref:`restart`.
 
 The max number of retries in given step can be specified with the ``max_retries`` field.
 
-The delay between retries in seconds is specified with the ``countdown`` field.
+The delay between retries in seconds is specified with the ``retry_delay`` field.
 
 How do I mark a step failure?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,7 +172,7 @@ Steps have a ``name``, ``description``, and ``run`` field, as shown below.
         task_queue: ...
         shell: ...
         max_retries: ...
-        countdown: ...
+        retry_delay: ...
 
 Optional fields are ``depends``, ``task_queue``, and ``shell``.
 
