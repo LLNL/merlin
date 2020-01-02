@@ -50,7 +50,7 @@ Continuous integration testing
 ******************************
 
 
-Continuous integration testing is being implemented for the github repo.
+Continuous integration testing is being implemented for the GitHub repo.
 
 
 .. _style-checks:

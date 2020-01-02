@@ -94,7 +94,7 @@ for more details.
 What is flux?
 ~~~~~~~~~~~~~
 Flux is a hierarchical scheduler and launcher for parallel simulations. It allows the user
-to specifiy the same launch command that will work on different HPC clusters with different 
+to specify the same launch command that will work on different HPC clusters with different 
 default schedulers such as SLURM or LSF.
 More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
 
