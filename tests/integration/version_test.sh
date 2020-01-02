@@ -1,25 +1,20 @@
 #!/bin/bash
 
 # Ensure CHANGELOG version and merlin/__init__.py version are equal
-grep CHANGELOG.md -m 1 -e "## \[[0-9]\+\.[0-9]\+\.[0-9]\+\]" > GREP1
-grep merlin/__init__.py -m 1 -e "\"[0-9]\+\.[0-9]\+\.[0-9]\+\"" > GREP2
-grep -o GREP1 -e "[0-9]\+\.[0-9]\+\.[0-9]\+" > GREP3
-grep -o GREP2 -e "[0-9]\+\.[0-9]\+\.[0-9]\+" > GREP4
-if ! cmp GREP3 GREP4
-then 
-    echo "Error: merlin/__init__.py version different from CHANGELOG.md verison" 
+CLVER=`grep CHANGELOG.md -m 1 -o -e "\[[0-9]\+\.[0-9]\+\.[0-9]\+\]" | grep -oe "[0-9]\+\.[0-9]\+\.[0-9]\+"`
+MVER=`grep merlin/__init__.py -m 1 -o -e "[0-9]\+\.[0-9]\+\.[0-9]\+"`
+if [[ $CLVER != $MVER ]]
+then
+  echo "Error: merlin/__init__.py version (${MVER}) different from CHANGELOG.md verison (${CLVER})"
     exit 1
 fi
 
 
 # Ensure CHANGELOG version and git tag version are equal
-git tag > TAGS
-grep "." TAGS | tail -1 > TAG
-grep CHANGELOG.md -m 1 -e "## \[[0-9]\+\.[0-9]\+\.[0-9]\+\]" > GREP1
-grep -o GREP1 -e "[0-9]\+\.[0-9]\+\.[0-9]\+" > GREP2
-if ! cmp TAG GREP2
-then 
-    echo "Error: CHANGELOG.md verison different from most recent git tag" 
+TAGVER=`git tag | grep "." | tail -1`
+if [[ $TAGVER != $CLVER ]]
+then
+  echo "Error: CHANGELOG.md verison (${CLVER}) different from most recent git tag (${TAGVER})"
     exit 1
 fi
 
