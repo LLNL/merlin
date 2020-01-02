@@ -123,7 +123,7 @@ def merlin_step(self, *args, **kwargs):
             LOG.info(f"Dry-ran step '{step_name}' in '{step_dir}'.")
         elif result == ReturnCode.RESTART:
             LOG.warning(f"** Restarting step '{step_name}' in '{step_dir}'.")
-            raise RetryException
+            self.retry(args=args, kwargs=kwargs, countdown=self.retry_delay)
         elif result == ReturnCode.SOFT_FAIL:
             LOG.warning(
                 f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow."
