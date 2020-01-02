@@ -49,7 +49,7 @@ DEFAULT_LOG_LEVEL = "ERROR"
 
 
 def process_templates(args):
-    LOG.warning(
+    LOG.error(
         "The command `merlin-templates` has been deprecated in favor of `merlin example`."
     )
 
