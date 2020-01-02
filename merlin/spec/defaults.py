@@ -38,7 +38,7 @@ STUDY_STEP_RUN = {
     "task_queue": "merlin",
     "shell": "/bin/bash",
     "max_retries": 30,
-    "countdown": 1,
+    "retry_delay": 1,
 }
 
 PARAMETER = {"global.parameters": {}}

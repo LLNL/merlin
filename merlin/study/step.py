@@ -108,11 +108,11 @@ class Step:
         return self.step.step.to_dict()["run"]["max_retries"]
 
     @property
-    def countdown(self):
+    def retry_delay(self):
         """
-        Returns the countdown (retry delay) for this step.
+        Returns the retry delay for this step.
         """
-        return self.step.step.to_dict()["run"]["countdown"]
+        return self.step.step.to_dict()["run"]["retry_delay"]
 
     def needs_merlin_expansion(self, labels):
         """

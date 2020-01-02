@@ -104,7 +104,7 @@ def merlin_step(self, *args, **kwargs):
 
     if step:
         self.max_retries = step.max_retries
-        self.countdown = step.countdown
+        self.countdown = step.retry_delay
         step_name = step.name()
         step_dir = step.get_workspace()
         LOG.debug(f"merlin_step: step_name '{step_name}' step_dir '{step_dir}'")
