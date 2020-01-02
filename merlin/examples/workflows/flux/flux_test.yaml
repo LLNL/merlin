@@ -1,5 +1,5 @@
 description:
-  description: Run a flux query.
+  description: A simple ensemble of echo commands run by flux.
   name: flux_test
 
 batch:

@@ -1,5 +1,5 @@
 description:
-  description: Run a slurm query.
+  description: A simple ensemble of serial jobs run by slurm (srun).
   name: slurm_test
 
 batch:

@@ -56,7 +56,8 @@ def gather_example_dirs():
 
 
 def gather_all_examples():
-    return glob.glob(os.path.join(EXAMPLE_DIR, "") + "*/*.yaml")
+    path = os.path.join(os.path.join(EXAMPLE_DIR, ""), os.path.join("*", "*.yaml"))
+    return glob.glob(path)
 
 
 def write_example(src_path, dst_path):
@@ -73,11 +74,9 @@ def write_example(src_path, dst_path):
 
 def list_examples():
     """List all available examples."""
-    examples = gather_example_dirs()
-
     headers = ["name", "description"]
     rows = []
-    for example_dir in examples:
+    for example_dir in gather_example_dirs():
         directory = os.path.join(os.path.join(EXAMPLE_DIR, example_dir), "")
         specs = glob.glob(directory + "*.yaml")
         for spec in specs:

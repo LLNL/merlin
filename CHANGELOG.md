@@ -22,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Dependencies outside the requirements directory.
 - LLNL-specific material in the Makefile.
-- `merlin-templates` cli command (now shows deprecation message).
+
+### Deprecated
+- `merlin-templates` cli command, in favor of `merlin example`.
 
 ## [1.0.5] - 2019-12-05
 

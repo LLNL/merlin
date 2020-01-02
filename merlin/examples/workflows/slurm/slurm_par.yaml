@@ -1,5 +1,5 @@
 description:
-  description: Launch slurm jobs in parallel.
+  description: A simple ensemble of parallel MPI jobs run by slurm (srun).
   name: slurm_par
 
 batch:

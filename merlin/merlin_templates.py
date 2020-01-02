@@ -45,7 +45,7 @@ from merlin.log_formatter import setup_logging
 
 
 LOG = logging.getLogger("merlin-templates")
-DEFAULT_LOG_LEVEL = "INFO"
+DEFAULT_LOG_LEVEL = "ERROR"
 
 
 def process_templates(args):
@@ -67,7 +67,7 @@ def setup_argparse():
 def main():
     parser = setup_argparse()
     args = parser.parse_args()
-    setup_logging(logger=LOG, log_level="INFO", colors=True)
+    setup_logging(logger=LOG, log_level=DEFAULT_LOG_LEVEL, colors=True)
     args.func(args)
 
 

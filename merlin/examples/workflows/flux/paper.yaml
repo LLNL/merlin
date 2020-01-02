@@ -1,5 +1,5 @@
 description:
-  description: Run a scan through Merlin/Maestro, this yaml file assumes bash and will give timings for all the runs at the end.
+  description: Use flux to run single core MPI jobs and record timings.
   name: paper_flux
 
 batch:
