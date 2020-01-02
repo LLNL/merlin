@@ -23,7 +23,7 @@ fi
 
 
 # Ensure CHANGELOG version and merlin/__init__.py version are equal
-MVER=`grep merlin/__init__.py -m 1 -o -e "$VSTRING"`
+MVER=`grep "__version__" merlin/__init__.py | grep -oe "$VSTRING"`
 if [[ $VER_CHANGELOG != $MVER ]]
 then
     echo "Error: merlin/__init__.py version (${MVER}) different from CHANGELOG.md verison (${VER_CHANGELOG})"
