@@ -183,7 +183,7 @@ def launch_workers(args):
     if not args.worker_echo_only:
         print(banner_small)
     filepath = verify_filepath(args.specification)
-    LOG.info(f"Lauching workers from '{filepath}'")
+    LOG.info(f"Launching workers from '{filepath}'")
     variables_dict = parse_override_vars(args.variables)
     spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
     status = router.launch_workers(
