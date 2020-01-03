@@ -243,7 +243,7 @@ def load_array_file(filename, ndmin=2):
                 f"Array in {filename} has fewer than the required \
                        minimum dimensions ({array.ndim} < {ndmin})!"
             )
-    # Make sure text files load as strings with mininum number of dimensions
+    # Make sure text files load as strings with minimum number of dimensions
     elif protocol == "csv":
         array = np.loadtxt(filename, delimiter=",", ndmin=ndmin, dtype=np.str)
     elif protocol == "tab":

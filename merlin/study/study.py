@@ -93,7 +93,7 @@ class MerlinStudy:
         self.dry_run = dry_run
         self.no_errors = no_errors
 
-        # If we load from a file, record that in the object for provenence
+        # If we load from a file, record that in the object for provenance
         # downstream
         if self.samples_file is not None:
             self.spec.merlin["samples"]["file"] = self.samples_file
@@ -159,7 +159,7 @@ class MerlinStudy:
 
         :param `dest`: destination for fully expanded yaml file
         """
-        # specification text including defaults and overriden user variables
+        # specification text including defaults and overridden user variables
         full_spec = dump_with_overrides(self.spec, self.override_vars)
 
         with open(dest, "w") as dumped_file:
