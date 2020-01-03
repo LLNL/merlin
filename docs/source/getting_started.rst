@@ -24,7 +24,7 @@ Configuring Merlin
 *******************
 
 Once Merlin has been installed, the installation needs to be configured.
-Documentiation for merlin configuration is in the :doc:`Configuring Merlin <./merlin_config>` section. 
+Documentation for merlin configuration is in the :doc:`Configuring Merlin <./merlin_config>` section. 
 
 That's it. To start running Merlin see the :doc:`Merlin Workflows. <./merlin_workflows>`
 
