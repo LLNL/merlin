@@ -71,6 +71,8 @@ class MerlinStudy:
         normally.
     :param `samples_file`: File to load samples from. Ignores sample lookup
         and generation in the spec if set.
+    :param `dry_run`: Flag to dry-run a workflow, which sets up the workspace but does not launch tasks.
+    :param `no_errors`: Flag to ignore some errors for testing.
     """
 
     def __init__(
@@ -80,6 +82,7 @@ class MerlinStudy:
         restart_dir=None,
         samples_file=None,
         dry_run=False,
+        no_errors=False,
     ):
         self.spec = MerlinSpec.load_specification(filepath)
         self.override_vars = override_vars
@@ -88,6 +91,7 @@ class MerlinStudy:
         self.samples_file = samples_file
         self.label_clash_error()
         self.dry_run = dry_run
+        self.no_errors = no_errors
 
         # If we load from a file, record that in the object for provenence
         # downstream
@@ -354,7 +358,7 @@ class MerlinStudy:
         flux_bin = "flux"
         if "flux_path" in self.expanded_spec.batch.keys():
             flux_bin = os.path.join(self.expanded_spec.batch["flux_path"], "flux")
-        return get_flux_version(flux_bin)
+        return get_flux_version(flux_bin, no_errors=self.no_errors)
 
     def generate_samples(self):
         """

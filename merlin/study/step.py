@@ -167,7 +167,7 @@ class Step:
 
         # Preserve the default shell if the step shell is different
         adapter_config.update({"shell": default_shell})
-        # Preserve the default batch type  if the step batch type is different
+        # Preserve the default batch type if the step batch type is different
         adapter_config.update({"batch_type": default_batch_type})
 
         self.step.setup_workspace()
