@@ -42,10 +42,16 @@ from argparse import (
 )
 from contextlib import suppress
 
-from merlin import VERSION, router
+from merlin import (
+    VERSION,
+    router,
+)
 from merlin.ascii_art import banner_small
 from merlin.log_formatter import setup_logging
-from merlin.spec.expansion import RESERVED, get_spec_with_expansion
+from merlin.spec.expansion import (
+    RESERVED,
+    get_spec_with_expansion,
+)
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
 
