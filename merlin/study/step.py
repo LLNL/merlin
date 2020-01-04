@@ -61,6 +61,16 @@ class Step:
         """
         return self.step.step.to_dict()["run"]["cmd"]
 
+    def get_restart(self):
+        """
+        get the restart command text body, else return run command"
+        """
+        restart = self.step.step.to_dict()["run"]["restart"]
+        if restart:
+            return restart
+
+        return self.step.step.to_dict()["run"]["cmd"]
+
     def clone_changing_workspace_and_cmd(
         self, new_cmd=None, cmd_replacement_pairs=None, new_workspace=None
     ):

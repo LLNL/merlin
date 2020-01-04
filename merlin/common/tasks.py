@@ -43,6 +43,7 @@ from celery import (
     group,
     shared_task,
     signature,
+    Task,
 )
 from celery.exceptions import (
     OperationalError,
@@ -56,6 +57,7 @@ from merlin.exceptions import (
     HardFailException,
     InvalidChainException,
     RetryException,
+    RestartException,
 )
 from merlin.router import stop_workers
 from merlin.spec.expansion import (
@@ -72,12 +74,32 @@ retry_exceptions = (
     TimeoutError,
     OperationalError,
     RetryException,
+    RestartException,
 )
 
 LOG = logging.getLogger(__name__)
 
+class MerlinTask(Task):
 
-@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        if isinstance(exc, RestartException):
+            """
+            When a RestartException is called the command to be run is 
+            switched to the Maestro restart command if present, otherwise
+            it is the initial command.
+            """
+            self.merlin_restart_cmd = True
+        else:
+            self.merlin_restart_cmd = False
+
+    def run(self, *args, **kwargs):
+        kwargs["merlin_restart_cmd"] = False
+        if hasattr(self, "merlin_restart_cmd"):
+            kwargs["merlin_restart_cmd"] = self.merlin_restart_cmd
+        super(MerlinTask, self).run(*args, **kwargs)
+
+
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True, base=MerlinTask)
 def merlin_step(self, *args, **kwargs):
     """
     Executes a Merlin Step
@@ -122,6 +144,9 @@ def merlin_step(self, *args, **kwargs):
             LOG.info(f"Dry-ran step '{step_name}' in '{step_dir}'.")
         elif result == ReturnCode.RESTART:
             LOG.warning(f"** Restarting step '{step_name}' in '{step_dir}'.")
+            raise RestartException
+        elif result == ReturnCode.RETRY:
+            LOG.warning(f"** Retrying step '{step_name}' in '{step_dir}'.")
             raise RetryException
         elif result == ReturnCode.SOFT_FAIL:
             LOG.warning(
@@ -207,9 +232,9 @@ def prepare_chain_workspace(sample_index, chain):
         LOG.debug(f"...workspace {workspace} prepared.")
 
 
-@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True, base=MerlinTask)
 def add_merlin_expanded_chain_to_chord(
-    self, task_type, chain, samples, labels, sample_index, adapter_config, min_sample_id
+    self, task_type, chain, samples, labels, sample_index, adapter_config, min_sample_id, merlin_restart_cmd
 ):
     """
     Expands tasks in a chain, then adds the expanded tasks to the current chord.
@@ -274,6 +299,7 @@ def add_merlin_expanded_chain_to_chord(
                 next_index,
                 adapter_config,
                 next_index.min,
+                merlin_restart_cmd,
             )
             next_step.set(queue=chain[0].get_task_queue())
             LOG.debug(
@@ -367,7 +393,7 @@ def add_chains_to_chord(self, all_chains):
     return ReturnCode.OK
 
 
-@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True, base=MerlinTask)
 def expand_tasks_with_samples(
     self,
     _,
@@ -431,7 +457,7 @@ def expand_tasks_with_samples(
         sample_index.name = ""
         LOG.debug(f"queuing merlin expansion task")
         sig = add_merlin_expanded_chain_to_chord.s(
-            task_type, steps, samples, labels, sample_index, adapter_config, 0
+            task_type, steps, samples, labels, sample_index, adapter_config, 0, merlin_restart_cmd,
         )
         sig.set(queue=steps[0].get_task_queue())
         if self.request.is_eager:

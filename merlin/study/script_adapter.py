@@ -100,6 +100,8 @@ class MerlinScriptAdapter(LocalScriptAdapter):
             LOG.warning("Execution returned status SOFT_FAIL. ")
         elif retcode == ReturnCode.HARD_FAIL:
             LOG.warning("Execution returned status HARD_FAIL. ")
+        elif retcode == ReturnCode.RETRY:
+            LOG.debug("Execution returned status RETRY.")
         else:
             LOG.warning(
                 f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL"
