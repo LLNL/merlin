@@ -45,18 +45,18 @@ from merlin.examples import examples
 
 LOG = logging.getLogger(__name__)
 
-EXAMPLE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
+EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
 
 
 def gather_example_dirs():
     result = {}
-    for d in os.listdir(EXAMPLE_DIR):
+    for d in os.listdir(EXAMPLES_DIR):
         result[d] = d
     return result
 
 
 def gather_all_examples():
-    path = os.path.join(os.path.join(EXAMPLE_DIR, ""), os.path.join("*", "*.yaml"))
+    path = os.path.join(os.path.join(EXAMPLES_DIR, ""), os.path.join("*", "*.yaml"))
     return glob.glob(path)
 
 
@@ -77,7 +77,7 @@ def list_examples():
     headers = ["name", "description"]
     rows = []
     for example_dir in gather_example_dirs():
-        directory = os.path.join(os.path.join(EXAMPLE_DIR, example_dir), "")
+        directory = os.path.join(os.path.join(EXAMPLES_DIR, example_dir), "")
         specs = glob.glob(directory + "*.yaml")
         for spec in specs:
             with open(spec) as f:
@@ -102,12 +102,11 @@ def setup_example(name, outdir):
     if outdir is None:
         outdir = os.getcwd()
 
-    if example == "simple_chain":
-        src_path = os.path.join(
-            EXAMPLE_DIR, os.path.join("simple_chain", "simple_chain.yaml")
-        )
+    # if there is only 1 file in the example, don't bother making a directory for it
+    if len(os.listdir(os.path.dirname(spec_path))) == 1:
+        src_path = os.path.join(EXAMPLES_DIR, os.path.join(example, example + ".yaml"))
     else:
-        src_path = os.path.join(EXAMPLE_DIR, example)
+        src_path = os.path.join(EXAMPLES_DIR, example)
 
         outdir = os.path.join(outdir, example)
         if os.path.exists(outdir):
