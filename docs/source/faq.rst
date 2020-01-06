@@ -104,7 +104,7 @@ Designing and Building Workflows
 
 Where are some example workflows?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin-templates``
+``merlin example --help``
 
 How do I launch a workflow?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,7 +178,7 @@ How do I specify the language used in a step?
 You can add the field ``shell`` under the ``run`` portion of your step
 to change the language you write your step in. The default is ``/bin/bash``,
 but you can do things like ``/usr/bin/env python`` as well.
-See the ``basic_ensemble.yaml`` for an example.
+Use ``merlin example feature_demo`` to see an example of this.
 
 Running Workflows
 -----------------

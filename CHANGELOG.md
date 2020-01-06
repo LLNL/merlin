@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Development dependencies install via pip: `pip install "merlinwf[dev]"`
+- Development dependencies install via pip: `pip install "merlinwf[dev]"`.
 - `merlin status <yaml spec>` that returns queues, number of connected
-  workers and number of unused tasks in each of those queues
+  workers and number of unused tasks in each of those queues.
+- `merlin example` cli command, which allows users to start running the
+  examples immedately (even after pip-installing).
 - `version_tests.sh`, for checking that the merlin version is incremented
   before changes are merged into master.
 
@@ -21,8 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation typos.
 
 ### Removed
-- Dependencies outside the requirements directory
-- LLNL-specific material in the Makefile
+- Dependencies outside the requirements directory.
+- LLNL-specific material in the Makefile.
+
+### Deprecated
+- `merlin-templates` cli command, in favor of `merlin example`.
+
 
 ## [1.0.5] - 2019-12-05
 

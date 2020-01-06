@@ -1,6 +1,6 @@
 description:
-  description: Run a scan through Merlin/Maestro
-  name: FLUXPARMERLIN
+  description: A simple ensemble of parallel MPI jobs run by flux.
+  name: flux_par
 
 batch:
   type: flux
