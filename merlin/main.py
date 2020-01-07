@@ -39,6 +39,7 @@ from argparse import (
     ArgumentDefaultsHelpFormatter,
     ArgumentParser,
     RawDescriptionHelpFormatter,
+    RawTextHelpFormatter,
 )
 from contextlib import suppress
 
@@ -47,6 +48,10 @@ from merlin import (
     router,
 )
 from merlin.ascii_art import banner_small
+from merlin.examples.generator import (
+    list_examples,
+    setup_example,
+)
 from merlin.log_formatter import setup_logging
 from merlin.spec.expansion import (
     RESERVED,
@@ -183,7 +188,7 @@ def launch_workers(args):
     if not args.worker_echo_only:
         print(banner_small)
     filepath = verify_filepath(args.specification)
-    LOG.info(f"Lauching workers from '{filepath}'")
+    LOG.info(f"Launching workers from '{filepath}'")
     variables_dict = parse_override_vars(args.variables)
     spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
     status = router.launch_workers(
@@ -274,6 +279,11 @@ def config_merlin(args):
         USER_HOME = os.path.expanduser("~")
         output_dir = os.path.join(USER_HOME, ".merlin")
     _ = router.create_config(args.task_server, output_dir)
+
+
+def process_example(args):
+    print(banner_small)
+    setup_example(args.workflow, args.path)
 
 
 def setup_argparse():
@@ -551,6 +561,29 @@ def setup_argparse():
         help="Optional directory to place the default config file.\
                             Default: ~/.merlin",
     )
+
+    # merlin example
+    example = subparsers.add_parser(
+        "example",
+        help="Generate an example merlin workflow.",
+        formatter_class=RawTextHelpFormatter,
+    )
+    example.add_argument(
+        "workflow",
+        action="store",
+        type=str,
+        help="The name of the example workflow to setup.\n" + list_examples(),
+    )
+    example.add_argument(
+        "-p",
+        "--path",
+        action="store",
+        type=str,
+        default=None,
+        help="Specify a path to write the workflow to. Defaults to current "
+        "working directory",
+    )
+    example.set_defaults(func=process_example)
 
     return parser
 

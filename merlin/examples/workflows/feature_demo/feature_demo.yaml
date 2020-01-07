@@ -18,10 +18,8 @@ env:
         TRANSLATE: $(SCRIPTS)/translator.py
         COLLECT: $(SCRIPTS)/collector.py
         MAKE_SAMPLES: $(SCRIPTS)/make_samples.py
-
-        SHARED: $(SPECROOT)/../shared
-        LEARN: $(SHARED)/learn.py
-        PREDICT: $(SHARED)/predict.py
+        LEARN: $(SCRIPTS)/learn.py
+        PREDICT: $(SCRIPTS)/predict.py
 
 study:
     - name: hello

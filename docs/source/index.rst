@@ -12,7 +12,7 @@ scale HPC workflows needed for cognitive simulation.
 
 Merlin Overview
 ---------------
-Merlin is a distributed task queueing system, designed to allow complex
+Merlin is a distributed task queuing system, designed to allow complex
 HPC workflows to scale to large numbers of simulations 
 (we've done 100 Million on the Sierra Supercomputer).
 

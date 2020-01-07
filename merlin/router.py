@@ -49,7 +49,6 @@ from merlin.study.celeryadapter import (
     start_celery_workers,
     stop_celery_workers,
 )
-from merlin.templates.generator import setup_template
 
 
 try:
@@ -211,16 +210,3 @@ def create_config(task_server, config_dir):
             create_celery_config(config_dir, config_file, data_file)
     else:
         LOG.error("Only celery can be configured currently.")
-
-
-def templates(template_name, outdir):
-    """
-    Setup a Merlin template spec.
-
-    :param template_name: Then name of the template to copy into the workspace.
-    :param outdir: The directory to copy the template to.
-    """
-    with suppress(FileExistsError):
-        os.makedirs(outdir)
-
-    template = setup_template(template_name, outdir)
