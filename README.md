@@ -99,11 +99,11 @@ Then install the workflow's dependencies:
 
 Then process the workflow and create tasks on the server:
 
-    $ merlin run workflows/feature_demo/feature_demo.yaml
+    $ merlin run feature_demo/feature_demo.yaml
 
 And finally, launch workers that can process those tasks:
 
-    $ merlin run-workers workflows/feature_demo/feature_demo.yaml
+    $ merlin run-workers feature_demo/feature_demo.yaml
 
 
 ## Documentation
