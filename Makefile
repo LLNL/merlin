@@ -35,7 +35,7 @@ VENV?=venv_merlin_py$(PYV)
 PIP?=$(VENV)/bin/pip
 MRLN=merlin/
 TEST=tests/
-WKFW=workflows/
+WKFW=merlin/examples/workflows/
 MAX_COMPLEXITY?=5
 
 PENV=merlin$(PYV)
@@ -103,7 +103,6 @@ clean-py:
 # remove all studies/ directories
 clean-output:
 	-find $(MRLN) -name "studies*" -type d -exec rm -rf {} \;
-	-find $(WKFW) -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "merlin.log" -type f -exec rm -rf {} \;
 

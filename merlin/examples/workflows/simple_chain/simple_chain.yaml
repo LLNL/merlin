@@ -1,5 +1,5 @@
 description:
-    name: simple chain
+    name: simple_chain
     description: test to see that chains are not run in parallel
 
 batch:

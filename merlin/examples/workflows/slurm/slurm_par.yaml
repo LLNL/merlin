@@ -1,6 +1,6 @@
 description:
-  description: Run a scan through Merlin/Maestro
-  name: SLURMPARMERLIN
+  description: A simple ensemble of parallel MPI jobs run by slurm (srun).
+  name: slurm_par
 
 batch:
   type: slurm
