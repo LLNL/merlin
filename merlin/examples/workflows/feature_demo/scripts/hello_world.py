@@ -1,6 +1,6 @@
 import argparse
-import sys
 import json
+import sys
 
 
 def process_args(args):

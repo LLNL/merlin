@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.1.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -36,7 +36,10 @@ import logging
 import os
 import re
 import subprocess
-from contextlib import contextmanager, suppress
+from contextlib import (
+    contextmanager,
+    suppress,
+)
 from copy import deepcopy
 from types import SimpleNamespace
 
@@ -239,7 +242,7 @@ def load_array_file(filename, ndmin=2):
                 f"Array in {filename} has fewer than the required \
                        minimum dimensions ({array.ndim} < {ndmin})!"
             )
-    # Make sure text files load as strings with mininum number of dimensions
+    # Make sure text files load as strings with minimum number of dimensions
     elif protocol == "csv":
         array = np.loadtxt(filename, delimiter=",", ndmin=ndmin, dtype=np.str)
     elif protocol == "tab":

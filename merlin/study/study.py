@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.1.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,8 +41,14 @@ from maestrowf.datastructures.core import Study
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import determine_user_variables, expand_line
-from merlin.spec.override import dump_with_overrides, error_override_vars
+from merlin.spec.expansion import (
+    determine_user_variables,
+    expand_line,
+)
+from merlin.spec.override import (
+    dump_with_overrides,
+    error_override_vars,
+)
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
 from merlin.utils import load_array_file
@@ -80,7 +86,7 @@ class MerlinStudy:
         self.label_clash_error()
         self.dry_run = dry_run
 
-        # If we load from a file, record that in the object for provenence
+        # If we load from a file, record that in the object for provenance
         # downstream
         if self.samples_file is not None:
             self.spec.merlin["samples"]["file"] = self.samples_file
@@ -146,7 +152,7 @@ class MerlinStudy:
 
         :param `dest`: destination for fully expanded yaml file
         """
-        # specification text including defaults and overriden user variables
+        # specification text including defaults and overridden user variables
         full_spec = dump_with_overrides(self.spec, self.override_vars)
 
         with open(dest, "w") as dumped_file:

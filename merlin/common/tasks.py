@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.1.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,18 +29,34 @@
 ###############################################################################
 
 """Test tasks."""
-from __future__ import absolute_import, unicode_literals
+from __future__ import (
+    absolute_import,
+    unicode_literals,
+)
 
 import logging
 import os
 
-from celery import chain, chord, group, shared_task, signature
-from celery.exceptions import OperationalError, TimeoutError
+from celery import (
+    chain,
+    chord,
+    group,
+    shared_task,
+    signature,
+)
+from celery.exceptions import (
+    OperationalError,
+    TimeoutError,
+)
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
-from merlin.exceptions import HardFailException, InvalidChainException, RetryException
+from merlin.exceptions import (
+    HardFailException,
+    InvalidChainException,
+    RetryException,
+)
 from merlin.router import stop_workers
 from merlin.spec.expansion import (
     parameter_substitutions_for_cmd,
@@ -245,7 +261,7 @@ def add_merlin_expanded_chain_to_chord(
         LOG.debug(f"adding chain to chord")
         add_chains_to_chord(self, all_chains)
     else:
-        # recurse down the sample_index heirarchy
+        # recurse down the sample_index hierarchy
         for next_index in sample_index.children.values():
             next_index.name = os.path.join(sample_index.name, next_index.name)
             next_step = add_merlin_expanded_chain_to_chord.s(
@@ -374,7 +390,7 @@ def expand_tasks_with_samples(
     :labels : A list of strings containing the label associated with each column in the samples.
     :task_type : The celery task type to create. Currently always merlin_step.
     :adapter_config : A dictionary used for configuring maestro script adapters.
-    :level_max_dirs : The max number of directories per level in the sample heirarchy.
+    :level_max_dirs : The max number of directories per level in the sample hierarchy.
 
     """
     LOG.debug(f"expand_tasks_with_samples called with chain,{chain}\n")
@@ -413,7 +429,7 @@ def expand_tasks_with_samples(
     if needs_expansion:
         prepare_chain_workspace(sample_index, steps)
         sample_index.name = ""
-        LOG.debug(f"queueing merlin expansion task")
+        LOG.debug(f"queuing merlin expansion task")
         sig = add_merlin_expanded_chain_to_chord.s(
             task_type, steps, samples, labels, sample_index, adapter_config, 0
         )
@@ -424,7 +440,7 @@ def expand_tasks_with_samples(
             self.add_to_chord(sig, lazy=False)
         LOG.debug(f"merlin expansion task queued")
     else:
-        LOG.debug(f"queueing simple chain task")
+        LOG.debug(f"queuing simple chain task")
         add_simple_chain_to_chord(self, task_type, steps, adapter_config)
         LOG.debug(f"simple chain task queued")
 

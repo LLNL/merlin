@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.1.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,8 +37,16 @@ import subprocess
 import time
 from contextlib import suppress
 
-from merlin.study.batch import batch_check_parallel, batch_worker_launch
-from merlin.utils import get_procs, get_yaml_var, is_running, regex_list_filter
+from merlin.study.batch import (
+    batch_check_parallel,
+    batch_worker_launch,
+)
+from merlin.utils import (
+    get_procs,
+    get_yaml_var,
+    is_running,
+    regex_list_filter,
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -139,6 +147,29 @@ def query_celery_workers():
             LOG.info(worker)
     else:
         LOG.warning("No workers found!")
+
+
+def query_celery_queues(queues):
+    """Return stats for queues specified.
+
+    Send results to the log.
+    """
+    from merlin.celery import app
+
+    connection = app.connection()
+    found_queues = []
+    try:
+        channel = connection.channel()
+        for queue in queues:
+            try:
+                name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
+                found_queues.append((name, jobs, consumers))
+                LOG.info(f"Found queue {queue}.")
+            except:
+                LOG.warning(f"Cannot find queue {queue} on server.")
+    finally:
+        connection.close()
+    return found_queues
 
 
 def get_workers(app):
