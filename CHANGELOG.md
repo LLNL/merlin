@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broken Merlin logo image on PyPI summary page.
 - Documentation typos.
 
+### Changed
+- Made `README.md` more concise and user-friendly.
+
 ### Removed
 - Dependencies outside the requirements directory.
 - LLNL-specific material in the Makefile.
