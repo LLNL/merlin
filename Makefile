@@ -38,6 +38,11 @@ TEST=tests/
 WKFW=merlin/examples/workflows/
 MAX_COMPLEXITY?=5
 
+VER?=1.0.0
+VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+
+CHANGELOG_VSTRING="## \[$(VSTRING)\]"
+INIT_VSTRING="__version__ = \"$(VSTRING)\""
+
 PENV=merlin$(PYV)
 
 .PHONY : all
@@ -147,4 +152,19 @@ check-camel-case: clean-py
 
 # run all checks
 checks: check-style check-camel-case
+
+
+# Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
+# 	Use like this: make VER=?.?.? verison
+version:
+	# do merlin/__init__.py
+	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
+	# do CHANGELOG.md
+	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
+	# do all file headers (works on linux)
+	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	# do git tag
+	git tag $(VER)
+	# remind user to use git push --tags
+	echo "Remember to use git push --tags"
 
