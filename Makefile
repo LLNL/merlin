@@ -38,8 +38,8 @@ TEST=tests/
 WKFW=merlin/examples/workflows/
 MAX_COMPLEXITY?=5
 
-VER?="1.0.0"
-VSTRING="[0-9]\+\.[0-9]\+\.[0-9]\+"
+VER?=1.0.0
+VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+
 CHANGELOG_VSTRING="## \[$(VSTRING)\]"
 INIT_VSTRING="__version__ = \"$(VSTRING)\""
 
