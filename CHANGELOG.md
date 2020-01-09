@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2020-01-09
 
 ### Added
-- Makefile target `version` for auto-incrementing the version.
+- Makefile target `version` for devs to auto-increment the version.
 
 ## [1.1.0] - 2020-01-07
 
