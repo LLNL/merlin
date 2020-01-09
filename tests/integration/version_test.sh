@@ -56,4 +56,5 @@ then
 fi
 
 
+echo "version_test.sh exit status: $STATUS"
 exit $STATUS
