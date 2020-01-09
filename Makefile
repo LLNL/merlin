@@ -160,7 +160,7 @@ version:
 	# do merlin/__init__.py
 	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
 	# do CHANGELOG.md
-	sed -i 's/## [Unreleased]/## [$(VER)]/g' CHANGELOG.md
+	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
 	# do all file headers (works on linux)
 	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	# do git tag
