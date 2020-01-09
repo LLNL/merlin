@@ -4,7 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2020-01-07
 
 ### Added
 - Development dependencies install via pip: `pip install "merlinwf[dev]"`.
@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A bug related to the deprecated word 'unicode' in `openfilelist.py`.
 - Broken Merlin logo image on PyPI summary page.
 - Documentation typos.
+
+### Changed
+- Made `README.md` more concise and user-friendly.
 
 ### Removed
 - Dependencies outside the requirements directory.
