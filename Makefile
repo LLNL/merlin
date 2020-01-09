@@ -156,7 +156,7 @@ checks: check-style check-camel-case
 
 # increment the Merlin version
 # Use like this: make VER=?.?.? inc_verison
-inc_version:
+version:
 	# do merlin/__init__.py
 	# sed -i 's/$(INIT_VSTRING)/__version__ = "$(VER)"/g' merlin/__init__.py
 	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
