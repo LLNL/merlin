@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `version_tests.sh`, for CI checking that the merlin version is incremented
+  before changes are merged into master.
+
 ### Changed
 - Improved the `fix-style` dev Makefile target.
 - Improved the `version` dev Makefile target.

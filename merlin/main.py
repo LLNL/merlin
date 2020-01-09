@@ -531,7 +531,7 @@ def setup_argparse():
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
     status.add_argument(
-        "--csv", type=str, help="csv file to dump status report to", default=None,
+        "--csv", type=str, help="csv file to dump status report to", default=None
     )
 
     # merlin info
