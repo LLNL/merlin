@@ -158,11 +158,11 @@ checks: check-style check-camel-case
 # Use like this: make VER=?.?.? inc_verison
 version:
 	# do merlin/__init__.py
-	# sed -i 's/$(INIT_VSTRING)/__version__ = "$(VER)"/g' merlin/__init__.py
-	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
 	# do CHANGELOG.md
 	# sed -i 's/$(VSTRING)/new/g' file.txt
-	# do all file headers
+	# do all file headers (works on linux)
+	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	# do git tag
 	# git tag $(VER)
 	# remind user to use git push --tags
