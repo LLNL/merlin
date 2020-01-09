@@ -133,8 +133,10 @@ tests: unit-tests cli-tests
 fix-style:
 	isort -rc $(MRLN)
 	isort -rc $(TEST)
+	isort *.py
 	black --target-version py36 $(MRLN)
 	black --target-version py36 $(TEST)
+	black --target-version py36 *.py
 
 
 # run code style checks
@@ -163,6 +165,7 @@ version:
 	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
 	# do all file headers (works on linux)
 	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	# do git tag
 	git tag $(VER)
 	# remind user to use git push --tags
