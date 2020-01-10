@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Improved the `fix-style` dev Makefile target.
 - Improved the `version` dev Makefile target.
+- Updated travis logic.
 
 ## [1.1.1] - 2020-01-09
 
