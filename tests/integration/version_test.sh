@@ -31,11 +31,11 @@ then
 fi
 
 
-# Ensure CHANGELOG version and git tag version are equal
+# Ensure CHANGELOG version and previous git tag version are not equal
 TAGVER=`git tag | grep "." | tail -1`
-if [[ $TAGVER != $VER_CHANGELOG ]]
+if [[ $TAGVER == $VER_CHANGELOG ]]
 then
-    echo "Error: CHANGELOG.md verison (${VER_CHANGELOG}) different from most recent git tag (${TAGVER})"
+    echo "Error: CHANGELOG.md verison (${VER_CHANGELOG}) same as previous git tag (${TAGVER})"
     STATUS=1
 fi
 
