@@ -35,8 +35,13 @@ VENV?=venv_merlin_py$(PYV)
 PIP?=$(VENV)/bin/pip
 MRLN=merlin/
 TEST=tests/
-WKFW=workflows/
+WKFW=merlin/examples/workflows/
 MAX_COMPLEXITY?=5
+
+VER?=1.0.0
+VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+
+CHANGELOG_VSTRING="## \[$(VSTRING)\]"
+INIT_VSTRING="__version__ = \"$(VSTRING)\""
 
 PENV=merlin$(PYV)
 
@@ -103,7 +108,6 @@ clean-py:
 # remove all studies/ directories
 clean-output:
 	-find $(MRLN) -name "studies*" -type d -exec rm -rf {} \;
-	-find $(WKFW) -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "merlin.log" -type f -exec rm -rf {} \;
 
@@ -129,8 +133,10 @@ tests: unit-tests cli-tests
 fix-style:
 	isort -rc $(MRLN)
 	isort -rc $(TEST)
+	isort *.py
 	black --target-version py36 $(MRLN)
 	black --target-version py36 $(TEST)
+	black --target-version py36 *.py
 
 
 # run code style checks
@@ -148,4 +154,20 @@ check-camel-case: clean-py
 
 # run all checks
 checks: check-style check-camel-case
+
+
+# Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
+# 	Use like this: make VER=?.?.? verison
+version:
+	# do merlin/__init__.py
+	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
+	# do CHANGELOG.md
+	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
+	# do all file headers (works on linux)
+	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	# do git tag
+	git tag $(VER)
+	# remind user to use git push --tags
+	echo "Remember to use git push --tags"
 

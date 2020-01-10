@@ -1,8 +1,9 @@
 import argparse
 import json
-import numpy as np
 import os
 import sys
+
+import numpy as np
 
 
 def setup_argparse():
@@ -23,16 +24,15 @@ def setup_argparse():
 
 
 def process_args(args):
-    #data = cb.load_node(args.input)
+    # data = cb.load_node(args.input)
     samples = json.load(open(args.input, "r"))
     schema = json.load(open(args.schema, "r"))
-
 
     input_array_dict = {}
     output_array_dict = {}
     for s in samples:
-        make_data_array_dict(input_array_dict, s["inputs"],schema["inputs"])
-        make_data_array_dict(output_array_dict, s["outputs"],schema["outputs"])
+        make_data_array_dict(input_array_dict, s["inputs"], schema["inputs"])
+        make_data_array_dict(output_array_dict, s["outputs"], schema["outputs"])
 
     for path in output_array_dict:
         output_array_dict[path] = np.array(output_array_dict[path])
@@ -58,7 +58,7 @@ def generate_scalar_path_pairs(node, schema, path=""):
                     ):
                         yield pair
             else:
-                if not isinstance(schema[child],dict):
+                if not isinstance(schema[child], dict):
                     yield path + child, node[child]
 
 
