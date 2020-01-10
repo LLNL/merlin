@@ -1,42 +1,40 @@
 description:
-  description: Run a scan through Merlin/Maestro
-  name: SLURMPARMERLIN
+  description: A simple ensemble of echo commands run by flux.
+  name: flux_test
 
 batch:
-  type: slurm
+  type: flux
+  nodes: 1
+  queue: pbatch
+  flux_start_opts: -o,-S,log-filename=flux_test.out
 
 env:
   variables:
     N_SAMPLES: 10
 
 study:
-- description: Build the code
-  name: build
-  run:
-    cmd: mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c >& build.out
-    task_queue: slurm_par
 - description: Echo the params
   name: runs 
   run:
-    cmd: $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > slurm_run.out
-    depends: [build]
-    task_queue: slurm_par
-    nodes: 2
-    procs: 4
+    cmd: $(LAUNCHER) echo "$(V1) $(V2)" > flux_run.out
+    task_queue: flux_test
+    nodes: 1
+    procs: 1
+    cores per task: 1
 
-- description: Dump slurm info
+- description: Dump flux info
   name: data
   run:
     cmd: |
-      echo "data" > data.out
+      flux kvs dir lwj.0.0.5 >& flux_kvs.out
     depends: [runs*]
-    task_queue: slurm_par
+    task_queue: flux_test
 
 global.parameters:
   STUDY:
     label: STUDY.%%
     values:
-    - SLURMTEST
+    - FLUXTEST
 
 merlin:
   resources:

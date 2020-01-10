@@ -1,12 +1,9 @@
 description:
-  description: Run a scan through Merlin/Maestro
-  name: FLUXTESTMERLIN
+  description: A simple ensemble of serial jobs run by slurm (srun).
+  name: slurm_test
 
 batch:
-  type: flux
-  nodes: 1
-  queue: pbatch
-  flux_start_opts: -o,-S,log-filename=flux_test.out
+  type: slurm
 
 env:
   variables:
@@ -16,25 +13,24 @@ study:
 - description: Echo the params
   name: runs 
   run:
-    cmd: $(LAUNCHER) echo "$(V1) $(V2)" > flux_run.out
-    task_queue: flux_test
+    cmd: $(LAUNCHER)  echo "$(V1) $(V2)" > slurm_run.out
+    task_queue: slurm_test
     nodes: 1
     procs: 1
-    cores per task: 1
 
-- description: Dump flux info
+- description: Dump slurm info
   name: data
   run:
     cmd: |
-      flux kvs dir lwj.0.0.5 >& flux_kvs.out
+      echo "data" > slurm_data.out
     depends: [runs*]
-    task_queue: flux_test
+    task_queue: slurm_test
 
 global.parameters:
   STUDY:
     label: STUDY.%%
     values:
-    - FLUXTEST
+    - SLURMTEST
 
 merlin:
   resources:

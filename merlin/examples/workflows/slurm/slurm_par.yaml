@@ -1,6 +1,6 @@
 description:
-  description: Run a scan through Merlin/Maestro
-  name: SLURMTESTMERLIN
+  description: A simple ensemble of parallel MPI jobs run by slurm (srun).
+  name: slurm_par
 
 batch:
   type: slurm
@@ -10,21 +10,27 @@ env:
     N_SAMPLES: 10
 
 study:
+- description: Build the code
+  name: build
+  run:
+    cmd: mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c >& build.out
+    task_queue: slurm_par
 - description: Echo the params
   name: runs 
   run:
-    cmd: $(LAUNCHER)  echo "$(V1) $(V2)" > slurm_run.out
-    task_queue: slurm_test
-    nodes: 1
-    procs: 1
+    cmd: $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > slurm_run.out
+    depends: [build]
+    task_queue: slurm_par
+    nodes: 2
+    procs: 4
 
 - description: Dump slurm info
   name: data
   run:
     cmd: |
-      echo "data" > slurm_data.out
+      echo "data" > data.out
     depends: [runs*]
-    task_queue: slurm_test
+    task_queue: slurm_par
 
 global.parameters:
   STUDY:
