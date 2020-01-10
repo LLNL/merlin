@@ -1,26 +1,27 @@
 language: python
-python: 
-  - "3.6"
-  - "3.7"
-  - "3.8"
-install: 
-  - "pip install --upgrade pip"
-  - "pip install -r requirements.txt"
-  - "pip install -r requirements/dev.txt"
-  - "pip install -r merlin/examples/workflows/feature_demo/requirements.txt"
-  - "pip install -e ."
-  - "pip install -r requirements/mysql.txt"
-  - "pip install --upgrade sphinx"
-  - "merlin config"
-script: 
-  - "python -m pytest tests/"
-  - "python tests/integration/run_tests.py --verbose --ids 1 2 3 4 5 6 7 8 9 12 13 14 15 20 21 22"
-  - if [ "$TRAVIS_BRANCH" = "master" ]; then ./tests/integration/version_test.sh; fi
+python:
+- '3.6'
+- '3.7'
+- '3.8'
+install:
+- pip install --upgrade pip
+- pip install -r requirements.txt
+- pip install -r requirements/dev.txt
+- pip install -r merlin/examples/workflows/feature_demo/requirements.txt
+- pip install -e .
+- pip install -r requirements/mysql.txt
+- pip install --upgrade sphinx
+- merlin config
+script:
+- python -m pytest tests/
+- python tests/integration/run_tests.py --verbose --ids 1 2 3 4 5 6 7 8 9 12 13 14
+  15 20 21 22
+- if [ "$TRAVIS_BRANCH" = "master" ]; then ./tests/integration/version_test.sh; fi
 deploy:
   provider: pypi
-  user: "__token__"
+  user: __token__
   password:
-    secure: Bd4xw0sEPixUiOwnl+5MYQaSX8SHKc0Dughg2Ls/B/e3NcvmCbYeBEz+2yclByffdNkxrQCTzMI90gZ5i7aKBuzEZ4E/RHXytwoLWOIKw3rE5jun44Vb9anLz2V+hEF6DSZ47fe+5re0D/TKCjtP7KTqLTDDdgg6+f648IbiE2CCmJXXeia48MzkUlLHYRbIuyWXGhaQasZwIoZQ872+xX0n8/3p+bV6BZ415DwJSsEdFmDu/F9drSVLUV6monU4eIfVoveos4HPH76J5WDMlwq6ZMaxF5E88ExiM9JJ4KNrrxBgLFS2I0BZmI92edHqtSs6TWz7Qo4wvW/6emosQjs6EWS8JmhSMdMFyhBos+Mx6HJYqJb4Nxcx9vclcpWSSzKSKUkAKX7bN5+v2Oy5BXfCdLBxWY+et+6ZY7/SzutOfgPmEz7BG7YiC9vZAGYpas4H3C6sOAdIb8y2lvL9Vht1+94GITZ0nFzdmpNGmAN6g9BAPvrEVWnZKdy0qpcBIpS/KW0N5/8jG74D0ouEDRgH5ahV5+RoyzzGrShC2XBHne4bGHb59DHWBRJBo2bS2Df0+gZPsd15kfjOCyZNHUIni2yQ83GgGc7hznLJd/UIvvPTGG42LjppzER5kimGor8BZ3B58dKrHqqFgRyAowOgoVlhd01rMi4a1QwS6ao=
+    secure: BMxgzsEZ4FmDRIBQFFohy5acUU8Z4KkQruIyfoiyuS7aBbx58fRGYwYaHeXLmTb7pzXCML70YMUuD94uuqiAmQd0JPFbcJHWDcqKrVpPzRTOgjce6URgMqUPGaY2RN8P8FLDoagn4fgoEKbB+V6heCmo8A8MIFgZ/W2sC9d57Y9E1m1y9eECOCUAPqbdmyYZaeLjMDJ/+Z2JpVjVoWhC1Zoqyyd0NoiMZAVp5bhFViAKcU/JoO3HzIts5T2oGPsp4OJwD6fNq62oHrCjC7K0+lKzWAey1ZSeG0f5sgqty29miaQEVflPZT7YE4LO9Rh5nISAyJBumMsbLID4UMraFjmOUJDq7RwU68S4xf6rNbHmWoHfMe+wfFtPv/mum3MiAAQPVji/LQ0pM1DRlyxNp5+gyoRgygz1mXNvRofYjULT0Q/js7g+eFKeyuEzkErbggjPZyGoLNABu7VXdtlcDD5Fuorz/S6FGlCyyXcu1MWpBg/7QHQNgK8FUDs2B1CU1zc+Eai19im+iZIPwU2IxBZpf7WttmSdUZKZx1R1eZ7id6pAnOFTakozBlDCDdSmZMNZ4wN2zm9ywzLrEPSkP2uGFgmRi0slYNk3GjUu5+/PKfanCq5Of5E1V2sZCM1BGZrMy5dMuVqWOW+yJs0rGpd5znVHxKonH45C8FEKNQE=
   on:
     tags: false
     branch: develop
