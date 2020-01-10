@@ -3,7 +3,6 @@ All notable changes to Merlin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [Unreleased]
 
 ### Added
@@ -15,6 +14,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   All of the machines must have access to the OUTPUT_PATH and the
   steps list is mandatory for all workers.
 
+
+## [1.1.2] - 2020-01-09
+
+### Added
+- `version_tests.sh`, for CI checking that the merlin version is incremented
+  before changes are merged into master.
+
+### Changed
+- Improved the `fix-style` dev Makefile target.
+- Improved the `version` dev Makefile target.
+
+## [1.1.1] - 2020-01-09
+
+### Added
+- Makefile target `version` for devs to auto-increment the version.
+
+## [1.1.0] - 2020-01-07
+
+### Added
+- Development dependencies install via pip: `pip install "merlinwf[dev]"`.
+- `merlin status <yaml spec>` that returns queues, number of connected
+
 ### Fixed
 - `MANIFEST.in` fixes as required by Spack.
 - `requirements.txt` just has release components, not dev deps.
@@ -22,9 +43,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Broken Merlin logo image on PyPI summary page.
 - Documentation typos.
 
+### Changed
+- Made `README.md` more concise and user-friendly.
+
 ### Removed
-- Dependencies outside the requirements directory
-- LLNL-specific material in the Makefile
+- Dependencies outside the requirements directory.
+- LLNL-specific material in the Makefile.
+
+### Deprecated
+- `merlin-templates` cli command, in favor of `merlin example`.
+
 
 ## [1.0.5] - 2019-12-05
 

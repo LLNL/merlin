@@ -236,34 +236,32 @@ whose name matches a regular expression:
    only one might get the signal. In this case, you can send it
    again.
 
-Generate new spec template
---------------------------
+Generate working examples
+-------------------------
 
-If you want to start a new workflow from a built-in template, use Merlin's
-template builder ``merlin-templates``:
-
-.. code:: bash
-
-    (merlin3_7) $ merlin-templates list
-
-This will list the available templates and a description for each one. To
-select a template:
+If you want to run an example workflow, use Merlin's ``merlin example``:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin-templates setup <template_name>
+    (merlin3_7) $ merlin example --help
 
-This will copy the template file to the current working directory. It is
-possible to specify a path to copy the template to.
+This will list the available example workflows and a description for each one. To
+select one:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin-templates setup <template_name> -p path/to/dir
+    (merlin3_7) $ merlin example <example_name>
+
+This will copy the example workflow to the current working directory. It is
+possible to specify another path to copy to.
+
+.. code:: bash
+
+    (merlin3_7) $ merlin example <example_name> -p path/to/dir
 
 If the specified directory does not exist Merlin will automatically create it.
 
-This will generate the template file at the specified location, ready for your
-editing.
+This will generate the example workflow at the specified location, ready to be run.
 
 
 Purging Tasks
