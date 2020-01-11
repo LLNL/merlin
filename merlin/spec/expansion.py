@@ -37,7 +37,7 @@ from os.path import (
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec.override import (
-    dump_with_overridesRETReturnCodfe,
+    dump_with_overrides,
     error_override_vars,
 )
 from merlin.spec.specification import MerlinSpec

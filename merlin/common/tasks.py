@@ -225,7 +225,6 @@ def add_merlin_expanded_chain_to_chord(
     sample_index,
     adapter_config,
     min_sample_id,
-    merlin_restart_cmd,
 ):
     """
     Expands tasks in a chain, then adds the expanded tasks to the current chord.
@@ -290,7 +289,6 @@ def add_merlin_expanded_chain_to_chord(
                 next_index,
                 adapter_config,
                 next_index.min,
-                merlin_restart_cmd,
             )
             next_step.set(queue=chain_[0].get_task_queue())
             LOG.debug(
@@ -408,7 +406,6 @@ def expand_tasks_with_samples(
     :task_type : The celery task type to create. Currently always merlin_step.
     :adapter_config : A dictionary used for configuring maestro script adapters.
     :level_max_dirs : The max number of directories per level in the sample hierarchy.
-
     """
     LOG.debug(f"expand_tasks_with_samples called with chain,{chain_}\n")
     # Figure out how many directories there are, make a glob string
@@ -455,7 +452,6 @@ def expand_tasks_with_samples(
             sample_index,
             adapter_config,
             0,
-            merlin_restart_cmd,
         )
         sig.set(queue=steps[0].get_task_queue())
         if self.request.is_eager:
