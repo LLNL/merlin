@@ -90,7 +90,9 @@ class Step:
                 step_dict["run"]["cmd"] = re.sub(re.escape(str1), str2, cmd, flags=re.I)
                 restart_cmd = self.get_restart_cmd()
                 if restart_cmd:
-                    step_dict["run"]["restart"] = re.sub(re.escape(str1), str2, restart_cmd, flags=re.I)
+                    step_dict["run"]["restart"] = re.sub(
+                        re.escape(str1), str2, restart_cmd, flags=re.I
+                    )
         if new_workspace is None:
             new_workspace = self.get_workspace()
         LOG.debug(f"cloned step with workspace {new_workspace}")

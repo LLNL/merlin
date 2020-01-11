@@ -38,12 +38,12 @@ import logging
 import os
 
 from celery import (
+    Task,
     chain,
     chord,
     group,
     shared_task,
     signature,
-    Task,
 )
 from celery.exceptions import (
     OperationalError,
@@ -56,8 +56,8 @@ from merlin.common.sample_index_factory import create_hierarchy
 from merlin.exceptions import (
     HardFailException,
     InvalidChainException,
-    RetryException,
     RestartException,
+    RetryException,
 )
 from merlin.router import stop_workers
 from merlin.spec.expansion import (
@@ -217,7 +217,15 @@ def prepare_chain_workspace(sample_index, chain_):
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def add_merlin_expanded_chain_to_chord(
-    self, task_type, chain_, samples, labels, sample_index, adapter_config, min_sample_id, merlin_restart_cmd
+    self,
+    task_type,
+    chain_,
+    samples,
+    labels,
+    sample_index,
+    adapter_config,
+    min_sample_id,
+    merlin_restart_cmd,
 ):
     """
     Expands tasks in a chain, then adds the expanded tasks to the current chord.
@@ -440,7 +448,14 @@ def expand_tasks_with_samples(
         sample_index.name = ""
         LOG.debug(f"queuing merlin expansion task")
         sig = add_merlin_expanded_chain_to_chord.s(
-            task_type, steps, samples, labels, sample_index, adapter_config, 0, merlin_restart_cmd,
+            task_type,
+            steps,
+            samples,
+            labels,
+            sample_index,
+            adapter_config,
+            0,
+            merlin_restart_cmd,
         )
         sig.set(queue=steps[0].get_task_queue())
         if self.request.is_eager:
@@ -499,7 +514,9 @@ def queue_merlin_study(study, adapter):
                     for gchain in chain_group
                 ]
             ),
-            chordfinisher.s().set(queue=egraph.step(chain_group[0][0]).get_task_queue()),
+            chordfinisher.s().set(
+                queue=egraph.step(chain_group[0][0]).get_task_queue()
+            ),
         )
         for chain_group in groups_of_chains[1:]
     )

@@ -32,7 +32,12 @@
 Module of all Merlin-specific exception types.
 """
 
-__all__ = ("RetryException", "SoftFailException", "HardFailException", "RestartException")
+__all__ = (
+    "RetryException",
+    "SoftFailException",
+    "HardFailException",
+    "RestartException",
+)
 
 
 class RetryException(Exception):
