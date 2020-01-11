@@ -16,8 +16,12 @@ study:
 - description: Echo the params
   name: runs 
   run:
-    cmd: flux wreckrun -n 1 -N 1 echo "$(V1) $(V2)" > flux_run.out
+    cmd: $(LAUNCHER) echo "$(V1) $(V2)" > flux_run.out
     task_queue: flux_test
+    nodes: 1
+    procs: 1
+    cores per task: 1
+
 - description: Dump flux info
   name: data
   run:
@@ -43,4 +47,4 @@ merlin:
     column_labels: [V1, V2]
     file: $(MERLIN_INFO)/samples.npy
     generate:
-      cmd: python $(SPECROOT)/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
+      cmd: python $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

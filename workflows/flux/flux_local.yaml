@@ -1,12 +1,12 @@
 description:
-  description: A simple ensemble of parallel MPI jobs run by flux.
-  name: flux_par
+  description: Run a scan through Merlin/Maestro
+  name: FLUXLOCALMERLIN
 
 batch:
-  type: flux
+  type: local
   nodes: 1
   queue: pbatch
-  flux_start_opts: -o,-S,log-filename=flux_par.out
+  flux_start_opts: -o,-S,log-filename=flux_local.out
 
 env:
   variables:
@@ -17,7 +17,7 @@ study:
   name: build
   run:
     cmd: mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c >& build.out
-    task_queue: flux_par
+    task_queue: flux_local
 - description: Echo the params
   name: runs 
   run:
@@ -34,10 +34,12 @@ study:
      fi
      $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > flux_run.out
     depends: [build]
-    task_queue: flux_par
+    task_queue: flux_local
     nodes: 1
     procs: 4
     cores per task: 1
+    batch:
+      type: flux
 
 - description: Dump flux info
   name: data
@@ -45,7 +47,7 @@ study:
     cmd: |
       flux kvs dir lwj.0.0.5 >& flux_kvs.out
     depends: [runs*]
-    task_queue: flux_par
+    task_queue: flux_local
 
 global.parameters:
   STUDY:
@@ -60,6 +62,8 @@ merlin:
       simworkers:
         args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
         steps: [runs, data]
+        batch:
+          type: flux
   samples:
     column_labels: [V1, V2]
     file: $(MERLIN_INFO)/samples.npy

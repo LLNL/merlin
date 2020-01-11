@@ -51,7 +51,10 @@ from merlin.spec.override import (
 )
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
-from merlin.utils import load_array_file
+from merlin.utils import (
+    get_flux_version,
+    load_array_file,
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -68,6 +71,8 @@ class MerlinStudy:
         normally.
     :param `samples_file`: File to load samples from. Ignores sample lookup
         and generation in the spec if set.
+    :param `dry_run`: Flag to dry-run a workflow, which sets up the workspace but does not launch tasks.
+    :param `no_errors`: Flag to ignore some errors for testing.
     """
 
     def __init__(
@@ -77,6 +82,7 @@ class MerlinStudy:
         restart_dir=None,
         samples_file=None,
         dry_run=False,
+        no_errors=False,
     ):
         self.spec = MerlinSpec.load_specification(filepath)
         self.override_vars = override_vars
@@ -85,6 +91,7 @@ class MerlinStudy:
         self.samples_file = samples_file
         self.label_clash_error()
         self.dry_run = dry_run
+        self.no_errors = no_errors
 
         # If we load from a file, record that in the object for provenance
         # downstream
@@ -344,6 +351,16 @@ class MerlinStudy:
 
         return MerlinSpec.load_specification(self.expanded_filepath)
 
+    @cached_property
+    def flux_version(self):
+        """
+        Returns a the flux version
+        """
+        flux_bin = "flux"
+        if "flux_path" in self.expanded_spec.batch.keys():
+            flux_bin = os.path.join(self.expanded_spec.batch["flux_path"], "flux")
+        return get_flux_version(flux_bin, no_errors=self.no_errors)
+
     def generate_samples(self):
         """
         Runs the function defined in 'generate' if self.samples_file is not
@@ -415,11 +432,22 @@ class MerlinStudy:
     def get_adapter_config(self, override_type=None):
         spec = MerlinSpec.load_specification(self.spec.path)
         adapter_config = dict(spec.batch)
+
+        if "type" not in adapter_config.keys():
+            adapter_config["type"] = "local"
+
+        # The type may be overriden, preserve the batch type
+        adapter_config["batch_type"] = adapter_config["type"]
+
         if override_type is not None:
             adapter_config["type"] = override_type
 
         # if a dry run was ordered by the yaml spec OR the cli flag, do a dry run.
         adapter_config["dry_run"] = self.dry_run or adapter_config["dry_run"]
+
+        # Add the version if using flux to switch the command in the step
+        if adapter_config["batch_type"] == "flux":
+            adapter_config["flux_version"] = self.flux_version
 
         LOG.debug(f"Adapter config = {adapter_config}")
         return adapter_config

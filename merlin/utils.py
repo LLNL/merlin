@@ -56,6 +56,7 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 ARRAY_FILE_FORMATS = ".npy, .csv, .tab"
+DEFAULT_FLUX_VERSION = "0.13"
 
 
 def get_user_process_info(user=None, attrs=None):
@@ -363,3 +364,36 @@ def nested_namespace_to_dicts(ns):
 
     new_ns = deepcopy(ns)
     return recurse(new_ns)
+
+
+def get_flux_version(flux_path, no_errors=False):
+    """
+    Return the flux version as a string
+
+    :param `flux_path`: the full path to the flux bin
+    :param `no_errors`: a flag to determine if this a test run to ignore errors
+    """
+    cmd = [flux_path, "version"]
+
+    ps = None
+
+    try:
+        ps = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, encoding="utf8"
+        ).communicate()
+    except FileNotFoundError as e:
+        LOG.error(f"The flux path {flux_path} canot be found")
+        if not no_errors:
+            raise e
+
+    try:
+        flux_ver = re.search(r"\s*([\d.]+)", ps[0]).group(1)
+    except (ValueError, TypeError) as e:
+        LOG.error(f"The flux version canot be determined")
+        if not no_errors:
+            raise e
+        else:
+            flux_ver = DEFAULT_FLUX_VERSION
+            LOG.warning(f"Using syntax for default version: {flux_ver}")
+
+    return flux_ver
