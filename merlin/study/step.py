@@ -54,6 +54,7 @@ class Step:
         :param maestro_step_record: The StepRecord object.
         """
         self.step = maestro_step_record
+        self.restart = False
 
     def get_cmd(self):
         """
@@ -61,15 +62,11 @@ class Step:
         """
         return self.step.step.to_dict()["run"]["cmd"]
 
-    def get_restart(self):
+    def get_restart_cmd(self):
         """
-        get the restart command text body, else return run command"
+        get the restart command text body, else return None"
         """
-        restart = self.step.step.to_dict()["run"]["restart"]
-        if restart:
-            return restart
-
-        return self.step.step.to_dict()["run"]["cmd"]
+        return self.step.step.to_dict()["run"]["restart"]
 
     def clone_changing_workspace_and_cmd(
         self, new_cmd=None, cmd_replacement_pairs=None, new_workspace=None
@@ -91,6 +88,9 @@ class Step:
             for str1, str2 in cmd_replacement_pairs:
                 cmd = step_dict["run"]["cmd"]
                 step_dict["run"]["cmd"] = re.sub(re.escape(str1), str2, cmd, flags=re.I)
+                restart_cmd = self.get_restart_cmd()
+                if restart_cmd:
+                    step_dict["run"]["restart"] = re.sub(re.escape(str1), str2, restart_cmd, flags=re.I)
         if new_workspace is None:
             new_workspace = self.get_workspace()
         LOG.debug(f"cloned step with workspace {new_workspace}")
@@ -117,12 +117,27 @@ class Step:
         """
         return self.step.step.to_dict()["run"]["max_retries"]
 
+    def __get_restart(self):
+        """
+        Set the restart property ensuring that restart is false
+        """
+        return self.__restart
+
+    def __set_restart(self, val):
+        """
+        Set the restart property ensuring that restart is false
+        """
+        self.__restart = val
+
+    restart = property(__get_restart, __set_restart)
+
     def needs_merlin_expansion(self, labels):
         """
         :return : True if the cmd has any of the default keywords or spec
             specified sample column labels.
         """
         needs_expansion = False
+
         cmd = self.get_cmd()
         for label in labels + [
             "MERLIN_SAMPLE_ID",
@@ -132,6 +147,19 @@ class Step:
         ]:
             if f"$({label})" in cmd:
                 needs_expansion = True
+
+        # The restart may need expansion while the cmd does not.
+        restart_cmd = self.get_restart_cmd()
+        if not needs_expansion and restart_cmd:
+            for label in labels + [
+                "MERLIN_SAMPLE_ID",
+                "MERLIN_SAMPLE_PATH",
+                "merlin_sample_id",
+                "merlin_sample_path",
+            ]:
+                if f"$({label})" in restart_cmd:
+                    needs_expansion = True
+
         return needs_expansion
 
     def get_workspace(self):
