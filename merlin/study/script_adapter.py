@@ -69,7 +69,8 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "cores per task": "-c",
             "gpus per task": "-g",
         }
-        new_unsupported = [
+
+        self._unsupported = {
             "cmd",
             "ntasks",
             "nodes",
@@ -82,8 +83,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "pre",
             "post",
             "depends",
-        ]
-        self._unsupported = set(new_unsupported)
+        }
 
     def get_header(self, step):
         """
