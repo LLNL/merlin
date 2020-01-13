@@ -53,20 +53,20 @@ class Step:
         """
         :param maestro_step_record: The StepRecord object.
         """
-        self.step = maestro_step_record
+        self.mstep = maestro_step_record
         self.restart = False
 
     def get_cmd(self):
         """
         get the run command text body"
         """
-        return self.step.step.to_dict()["run"]["cmd"]
+        return self.mstep.step.to_dict()["run"]["cmd"]
 
     def get_restart_cmd(self):
         """
         get the restart command text body, else return None"
         """
-        return self.step.step.to_dict()["run"]["restart"]
+        return self.mstep.step.to_dict()["run"]["restart"]
 
     def clone_changing_workspace_and_cmd(
         self, new_cmd=None, cmd_replacement_pairs=None, new_workspace=None
@@ -81,18 +81,21 @@ class Step:
         :param new_workspace : (Optional) the workspace for the new step.
         """
         LOG.debug(f"clone called with new_workspace {new_workspace}")
-        step_dict = deepcopy(self.step.step.to_dict())
+        step_dict = deepcopy(self.mstep.step.to_dict())
+
         if new_cmd is not None:
             step_dict["run"]["cmd"] = new_cmd
+
         if cmd_replacement_pairs is not None:
             for str1, str2 in cmd_replacement_pairs:
                 cmd = step_dict["run"]["cmd"]
                 step_dict["run"]["cmd"] = re.sub(re.escape(str1), str2, cmd, flags=re.I)
-                restart_cmd = self.get_restart_cmd()
+
+                restart_cmd = step_dict["run"]["restart"]
                 if restart_cmd:
                     step_dict["run"]["restart"] = re.sub(
-                        re.escape(str1), str2, restart_cmd, flags=re.I
-                    )
+                        re.escape(str1), str2, restart_cmd, flags=re.I)
+
         if new_workspace is None:
             new_workspace = self.get_workspace()
         LOG.debug(f"cloned step with workspace {new_workspace}")
@@ -100,7 +103,7 @@ class Step:
 
     def get_task_queue(self):
         """ Retrieve the task queue for the Step."""
-        return self.get_task_queue_from_dict(self.step.step.to_dict())
+        return self.get_task_queue_from_dict(self.mstep.step.to_dict())
 
     @staticmethod
     def get_task_queue_from_dict(step_dict):
@@ -117,7 +120,7 @@ class Step:
         """
         Returns the max number of retries for this step.
         """
-        return self.step.step.to_dict()["run"]["max_retries"]
+        return self.mstep.step.to_dict()["run"]["max_retries"]
 
     def __get_restart(self):
         """
@@ -168,15 +171,15 @@ class Step:
         """
         :return : The workspace this step is to be executed in.
         """
-        return self.step.workspace.value
+        return self.mstep.workspace.value
 
     def name(self):
         """
         :return : The step name.
         """
-        return self.step.step.to_dict()["name"]
+        return self.mstep.step.to_dict()["name"]
 
-    def execute(self, adapter_config):
+    def execute(self, adapter_config, exec_restart=False):
         """
         Execute the step.
 
@@ -189,7 +192,7 @@ class Step:
 
         # Update shell if the task overrides the default value from the batch section
         default_shell = adapter_config.pop("shell")
-        shell = self.step.step.run.pop("shell", default_shell)
+        shell = self.mstep.step.run.pop("shell", default_shell)
         adapter_config.update({"shell": shell})
 
         # Update batch type if the task overrides the default value from the batch section
@@ -197,7 +200,7 @@ class Step:
         # Set batch_type to default if unset
         adapter_config.update({"batch_type": default_batch_type})
         # Override the default batch: type: from the step config
-        batch = self.step.step.run.pop("batch", None)
+        batch = self.mstep.step.run.pop("batch", None)
         if batch:
             batch_type = batch.pop("type", default_batch_type)
             adapter_config.update({"batch_type": batch_type})
@@ -210,8 +213,8 @@ class Step:
         # Preserve the default batch type if the step batch type is different
         adapter_config.update({"batch_type": default_batch_type})
 
-        self.step.setup_workspace()
-        self.step.generate_script(adapter)
+        self.mstep.setup_workspace()
+        self.mstep.generate_script(adapter)
         step_name = self.name()
         step_dir = self.get_workspace()
 
@@ -228,4 +231,9 @@ class Step:
         # at that point, we can drop the use of MerlinScriptAdapter above, and
         # go back to using the adapter specified by the adapter_config['type']
         # above
-        return ReturnCode(self.step.execute(adapter))
+        # If the above is done, then merlin_step in tasks.py can be changed to 
+        # calls to the step execute and restart functions.
+        if exec_restart:
+            return ReturnCode(self.mstep.restart(adapter))
+        else:
+            return ReturnCode(self.mstep.execute(adapter))
