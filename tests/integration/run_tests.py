@@ -45,6 +45,8 @@ from subprocess import (
     Popen,
 )
 
+from merlin.utils import get_flux_cmd
+
 
 OUTPUT_DIR = "cli_test_studies"
 
@@ -445,7 +447,11 @@ def define_tests():
         "dry launch flux": (
             f"{run} {flux} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
             StepFileContainsCond(
-                "runs", "*/runs.slurm.sh", "flux_test", OUTPUT_DIR, "flux wreckrun "
+                "runs",
+                "*/runs.slurm.sh",
+                "flux_test",
+                OUTPUT_DIR,
+                get_flux_cmd("flux", no_errors=True),
             ),
         ),
         "local override feature_demo": (
