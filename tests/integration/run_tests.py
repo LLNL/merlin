@@ -294,8 +294,6 @@ class StepFileContainsCond(StudyCond):
     """
     A StudyCond that checks that a particular file contains a regex.
     """
-
-    # slurm_test_20200114-095602/runs/0/4/runs.slurm.sh
     def __init__(self, step, filename, study_name, output_path, regex):
         """
         :param `step`: the name of a step
@@ -310,10 +308,13 @@ class StepFileContainsCond(StudyCond):
 
     def contains(self):
         glob_string = f"{self.dirpath_glob}/{self.step}/*/{self.filename}"
+        print("glob_string: " + glob_string)
         try:
             filename = self.glob(glob_string)
+            print("filename: " + filename)
             with open(filename, "r") as textfile:
                 filetext = textfile.read()
+            print("filetext: " + filetext)
             return self.is_within(filetext)
         except Exception:
             return False
