@@ -233,7 +233,7 @@ class Step:
         # above
         # If the above is done, then merlin_step in tasks.py can be changed to 
         # calls to the step execute and restart functions.
-        if self.restart:
+        if self.restart and self.get_restart_cmd():
             return ReturnCode(self.mstep.restart(adapter))
         else:
             return ReturnCode(self.mstep.execute(adapter))

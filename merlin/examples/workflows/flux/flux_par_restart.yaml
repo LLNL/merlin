@@ -22,6 +22,58 @@ study:
   name: runs 
   run:
     cmd: |
+      if [ -e flux_run.out ]; then
+       touch flux_restart.out
+       exit $(MERLIN_SUCCESS)
+      fi
+      if [  ! -z ${FLUX_PMI_LIBRARY_PATH+x} ]; then
+          FPMI2LIB=`dirname ${FLUX_PMI_LIBRARY_PATH}`/libpmi2.so
+          if [ -e ${FPMI2LIB} ]; then 
+            if [  ! -z ${LD_PRELOAD+x} ]; then
+              export LD_PRELOAD=${LD_PRELOAD}:${FPMI2LIB}
+            else
+              export LD_PRELOAD=${FPMI2LIB}
+            fi
+          fi
+      fi
+      $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > flux_run.out
+      # This is to test the re-run of cmd if no restart is given
+      exit $(MERLIN_RESTART)
+    depends: [build]
+    task_queue: flux_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+- description: Echo the params
+  name: runs_rt 
+  run:
+    cmd: |
+      if [ -e flux_run.out ]; then
+       touch flux_retry.out
+       exit $(MERLIN_SUCCESS)
+      fi
+      if [  ! -z ${FLUX_PMI_LIBRARY_PATH+x} ]; then
+          FPMI2LIB=`dirname ${FLUX_PMI_LIBRARY_PATH}`/libpmi2.so
+          if [ -e ${FPMI2LIB} ]; then 
+            if [  ! -z ${LD_PRELOAD+x} ]; then
+              export LD_PRELOAD=${LD_PRELOAD}:${FPMI2LIB}
+            else
+              export LD_PRELOAD=${FPMI2LIB}
+            fi
+          fi
+      fi
+      $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > flux_run.out
+      # This is to test the re-run of cmd if no restart is given
+      exit $(MERLIN_RETRY)
+    depends: [build]
+    task_queue: flux_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+- description: Echo the params using restart
+  name: runs_rs 
+  run:
+    cmd: |
       ln -s $(build.workspace)/mpi_hello .
       exit $(MERLIN_RESTART)
     depends: [build]
@@ -50,7 +102,7 @@ study:
   run:
     cmd: |
       flux kvs dir lwj.0.0.5 >& flux_kvs.out
-    depends: [runs*]
+    depends: [runs*, runs_rs*, runs_rt*]
     task_queue: flux_par
 
 global.parameters:
