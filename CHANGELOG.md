@@ -4,6 +4,16 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Allow for the maestro $(LAUNCHER) syntax in tasks, this requires the 
+  nodes and procs variables in the task just as in maestro. The LAUNCHER keyword
+  is implmented for flux, lsf, slurm and local types.  The lsf type
+  will use the LLNL srun wrapper for jsrun. The flux version will
+  be checked to determine the proper format of the parallel launch call.
+
+
 ## [1.1.2] - 2020-01-09
 
 ### Added
