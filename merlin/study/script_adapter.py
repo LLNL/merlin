@@ -222,22 +222,17 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
 
         :param **kwargs: A dictionary with default settings for the adapter.
         """
-        flux_version = kwargs.pop("flux_version", "0.13.0")
+        flux_command = kwargs.pop("flux_command", "flux mini run")
         super(MerlinFluxScriptAdapter, self).__init__(**kwargs)
 
         #  "cmd": "flux mini run",
         self._cmd_flags = {
-            "cmd": "flux mini run",
+            "cmd": flux_command,
             "ntasks": "-n",
             "nodes": "-N",
             "cores per task": "-c",
             "gpus per task": "-g",
         }
-
-        # Flux versions before 0.13 had a different run command
-        vers = [int(n) for n in flux_version.split(".")]
-        if vers[0] == 0 and vers[1] < 13:
-            self._cmd_flags["cmd"] = "flux wreckrun"
 
         new_unsupported = [
             "cmd",
