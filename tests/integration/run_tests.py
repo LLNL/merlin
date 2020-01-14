@@ -40,10 +40,7 @@ import time
 from contextlib import suppress
 from glob import glob
 from re import search
-from subprocess import (
-    PIPE,
-    Popen,
-)
+from subprocess import PIPE, Popen
 
 
 OUTPUT_DIR = "cli_test_studies"
@@ -290,6 +287,45 @@ class StepFileExistsCond(StudyCond):
         return self.file_exists()
 
 
+class StepFileContainsCond(StudyCond):
+    """
+    A StudyCond that checks that a particular file contains a regex.
+    """
+
+    # slurm_test_20200114-095602/runs/0/4/runs.slurm.sh
+    def __init__(self, step, filename, study_name, output_path, regex):
+        """
+        :param `step`: the name of a step
+        :param `filename`: name of file to search for in step's workspace directory
+        :param `study_name`: the name of a study
+        :param `output_path`: the $(OUTPUT_PATH) of a study
+        """
+        super().__init__(study_name, output_path)
+        self.step = step
+        self.filename = filename
+        self.regex = regex
+
+    def contains(self):
+        glob_string = f"{self.dirpath_glob}/{self.step}/*/{self.filename}"
+        try:
+            filename = self.glob(glob_string)
+            with open(filename, "r") as textfile:
+                filetext = textfile.read()
+            return self.is_within(filetext)
+        except Exception:
+            return False
+
+    def is_within(self, text):
+        """
+        :param `text`: text in which to search for a regex match
+        """
+        return search(self.regex, text) is not None
+
+    @property
+    def passes(self):
+        return self.contains()
+
+
 class ProvenanceCond(RegexCond):
     """
     A condition that a Merlin provenance yaml spec
@@ -397,6 +433,18 @@ def define_tests():
         #    f"{restart} --local $(find studies/ -type d -name 'simple_chain_*')",
         #    [ReturnCodeCond(), NoStderrCond()],
         # ),
+        "dry launch slurm": (
+            f"{run} {slurm} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs", "*/runs.slurm.sh", "slurm_test", OUTPUT_DIR, "srun "
+            ),
+        ),
+        "dry launch flux": (
+            f"{run} {flux} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs", "*/runs.slurm.sh", "flux_test", OUTPUT_DIR, "flux wreckrun "
+            ),
+        ),
         "local override feature_demo": (
             f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
