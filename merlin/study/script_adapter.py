@@ -133,7 +133,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
         for key in supported:
             value = kwargs.get(key)
             if key not in self._cmd_flags:
-                LOGGER.warning("'%s' is not supported -- ommitted.", key)
+                LOG.warning("'%s' is not supported -- ommitted.", key)
                 continue
             if value:
                 args += [
@@ -184,6 +184,25 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             the parameter step.
         """
         return "#!{}".format(self._exec)
+
+
+class MerlinLSFSrunScriptAdapter(MerlinSlurmScriptAdapter):
+    """
+    A SchedulerScriptAdapter class for lsf blocking parallel launches, using the srun wrapper
+    """
+
+    key = "merlin-lsf-srun"
+
+    def __init__(self, **kwargs):
+        """
+        Initialize an instance of the MerinLSFSrunScriptAdapter.
+        The MerlinLSFSrunScriptAdapter is the adapter that is used for workflows that
+        will execute LSF parallel jobs in a celery worker with an srun wrapper. The only 
+        configurable aspect to this adapter is the shell that scripts are executed in.
+
+        :param **kwargs: A dictionary with default settings for the adapter.
+        """
+        super(MerlinLSFSrunScriptAdapter, self).__init__(**kwargs)
 
 
 class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
@@ -328,6 +347,7 @@ class MerlinScriptAdapterFactory(object):
     factories = {
         "merlin-flux": MerlinFluxScriptAdapter,
         "merlin-lsf": MerlinLSFScriptAdapter,
+        "merlin-lsf-srun": MerlinLSFSrunScriptAdapter,
         "merlin-slurm": MerlinSlurmScriptAdapter,
         "merlin-local": MerlinScriptAdapter,
     }
@@ -339,7 +359,7 @@ class MerlinScriptAdapterFactory(object):
                 "Adapter '{0}' not found. Specify an adapter that exists "
                 "or implement a new one mapping to the '{0}'".format(str(adapter_id))
             )
-            LOGGER.error(msg)
+            LOG.error(msg)
             raise Exception(msg)
 
         return cls.factories[adapter_id]
