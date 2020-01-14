@@ -294,6 +294,7 @@ class StepFileContainsCond(StudyCond):
     """
     A StudyCond that checks that a particular file contains a regex.
     """
+
     def __init__(self, step, filename, study_name, output_path, regex):
         """
         :param `step`: the name of a step
