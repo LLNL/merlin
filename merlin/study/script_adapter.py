@@ -55,7 +55,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
         """
         Initialize an instance of the MerinLSFScriptAdapter.
         The MerlinLSFScriptAdapter is the adapter that is used for workflows that
-        will execute flux parallel jobs in a celery worker. The only configurable aspect to
+        will execute LSF parallel jobs in a celery worker. The only configurable aspect to
         this adapter is the shell that scripts are executed in.
 
         :param **kwargs: A dictionary with default settings for the adapter.
@@ -63,11 +63,15 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
         super(MerlinLSFScriptAdapter, self).__init__(**kwargs)
 
         self._cmd_flags = {
-            "cmd": "srun",
-            "ntasks": "-n",
-            "nodes": "-N",
+            "cmd": "jsrun",
+            "ntasks": "--np",
+            "nodes": "--nrs",
             "cores per task": "-c",
             "gpus per task": "-g",
+            "num resource set": "--nrs",
+            "bind": "-b",
+            "launch_distribution": "-d",
+            "exit_on_error": "-X",
         }
 
         self._unsupported = {
@@ -95,6 +99,50 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
         """
         return "#!{}".format(self._exec)
 
+    def get_parallelize_command(self, procs, nodes=None, **kwargs):
+        """
+        Generate the LSF parallelization segement of the command line.
+        :param procs: Number of processors to allocate to the parallel call.
+        :param nodes: Number of nodes to allocate to the parallel call
+            (default = 1).
+        :returns: A string of the parallelize command configured using nodes
+            and procs.
+        """
+        if not nodes:
+            nodes = 1
+
+        args = [
+            # SLURM srun command
+            self._cmd_flags["cmd"],
+            # Processors segment
+            self._cmd_flags["ntasks"],
+            str(procs),
+            # Resource segment
+            self._cmd_flags["nodes"],
+            str(nodes)
+        ]
+        
+        args += [self._cmd_flags["bind"], kwargs.pop("bind", "rs") ]
+
+        plane_cpus = int(int(procs)/int(nodes))
+        args += [self._cmd_flags["launch_distribution"], kwargs.pop("launch_distribution", f"plane:{plane_cpus}")] 
+
+        args += [self._cmd_flags["exit_on_error"], kwargs.pop("exit_on_error", "1") ]
+
+        supported = set(kwargs.keys()) - self._unsupported
+        for key in supported:
+            value = kwargs.get(key)
+            if key not in self._cmd_flags:
+                LOGGER.warning("'%s' is not supported -- ommitted.", key)
+                continue
+            if value:
+                args += [
+                    self._cmd_flags[key],
+                    "{}".format(str(value))
+                ]
+
+        return " ".join(args)
+
 
 class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
     """
@@ -108,7 +156,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         """
         Initialize an instance of the MerinSlurmScriptAdapter.
         The MerlinSlurmScriptAdapter is the adapter that is used for workflows that
-        will execute flux parallel jobs in a celery worker. The only configurable aspect to
+        will execute SLURM parallel jobs in a celery worker. The only configurable aspect to
         this adapter is the shell that scripts are executed in.
 
         :param **kwargs: A dictionary with default settings for the adapter.
