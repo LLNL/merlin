@@ -383,6 +383,7 @@ def define_tests():
     simple = f"{examples}/simple_chain/simple_chain.yaml"
     slurm = f"{examples}/slurm/slurm_test.yaml"
     flux = f"{examples}/flux/flux_test.yaml"
+    lsf = f"{examples}/lsf/lsf_par.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
 
@@ -446,6 +447,12 @@ def define_tests():
             f"{run} {flux} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
             StepFileContainsCond(
                 "runs", "*/runs.slurm.sh", "flux_test", OUTPUT_DIR, "flux wreckrun "
+            ),
+        ),
+        "dry launch lsf": (
+            f"{run} {lsf} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "
             ),
         ),
         "local override feature_demo": (
