@@ -382,15 +382,15 @@ def get_flux_version(flux_path, no_errors=False):
             cmd, stdout=subprocess.PIPE, encoding="utf8"
         ).communicate()
     except FileNotFoundError as e:
-        LOG.error(f"The flux path {flux_path} canot be found")
         if not no_errors:
+            LOG.error(f"The flux path {flux_path} canot be found")
             raise e
 
     try:
         flux_ver = re.search(r"\s*([\d.]+)", ps[0]).group(1)
     except (ValueError, TypeError) as e:
-        LOG.error(f"The flux version canot be determined")
         if not no_errors:
+            LOG.error(f"The flux version canot be determined")
             raise e
         else:
             flux_ver = DEFAULT_FLUX_VERSION
