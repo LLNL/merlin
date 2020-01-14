@@ -52,7 +52,7 @@ from merlin.spec.override import (
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
 from merlin.utils import (
-    get_flux_version,
+    get_flux_cmd,
     load_array_file,
 )
 
@@ -351,14 +351,14 @@ class MerlinStudy:
         return MerlinSpec.load_specification(self.expanded_filepath)
 
     @cached_property
-    def flux_version(self):
+    def flux_command(self):
         """
         Returns a the flux version
         """
         flux_bin = "flux"
         if "flux_path" in self.expanded_spec.batch.keys():
             flux_bin = os.path.join(self.expanded_spec.batch["flux_path"], "flux")
-        return get_flux_version(flux_bin, no_errors=self.no_errors)
+        return get_flux_cmd(flux_bin, no_errors=self.no_errors)
 
     def generate_samples(self):
         """
@@ -446,7 +446,7 @@ class MerlinStudy:
 
         # Add the version if using flux to switch the command in the step
         if adapter_config["batch_type"] == "flux":
-            adapter_config["flux_version"] = self.flux_version
+            adapter_config["flux_command"] = self.flux_command
 
         LOG.debug(f"Adapter config = {adapter_config}")
         return adapter_config
