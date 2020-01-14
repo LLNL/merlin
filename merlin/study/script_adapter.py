@@ -119,15 +119,18 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             str(procs),
             # Resource segment
             self._cmd_flags["nodes"],
-            str(nodes)
+            str(nodes),
         ]
-        
-        args += [self._cmd_flags["bind"], kwargs.pop("bind", "rs") ]
 
-        plane_cpus = int(int(procs)/int(nodes))
-        args += [self._cmd_flags["launch_distribution"], kwargs.pop("launch_distribution", f"plane:{plane_cpus}")] 
+        args += [self._cmd_flags["bind"], kwargs.pop("bind", "rs")]
 
-        args += [self._cmd_flags["exit_on_error"], kwargs.pop("exit_on_error", "1") ]
+        plane_cpus = int(int(procs) / int(nodes))
+        args += [
+            self._cmd_flags["launch_distribution"],
+            kwargs.pop("launch_distribution", f"plane:{plane_cpus}"),
+        ]
+
+        args += [self._cmd_flags["exit_on_error"], kwargs.pop("exit_on_error", "1")]
 
         supported = set(kwargs.keys()) - self._unsupported
         for key in supported:
@@ -136,10 +139,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
                 LOG.warning("'%s' is not supported -- ommitted.", key)
                 continue
             if value:
-                args += [
-                    self._cmd_flags[key],
-                    "{}".format(str(value))
-                ]
+                args += [self._cmd_flags[key], "{}".format(str(value))]
 
         return " ".join(args)
 
