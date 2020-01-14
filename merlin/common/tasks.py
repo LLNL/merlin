@@ -116,7 +116,7 @@ def merlin_step(self, *args, **kwargs):
             LOG.info(f"Skipping step '{step_name}' in '{step_dir}'.")
             result = ReturnCode.OK
         else:
-            result = step.execute(config, exec_restart=step.restart)
+            result = step.execute(config)
         if result == ReturnCode.OK:
             LOG.info(f"Step '{step_name}' in '{step_dir}' finished successfully.")
             # touch a file indicating we're done with this step

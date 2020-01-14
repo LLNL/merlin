@@ -179,7 +179,7 @@ class Step:
         """
         return self.mstep.step.to_dict()["name"]
 
-    def execute(self, adapter_config, exec_restart=False):
+    def execute(self, adapter_config):
         """
         Execute the step.
 
@@ -233,7 +233,7 @@ class Step:
         # above
         # If the above is done, then merlin_step in tasks.py can be changed to 
         # calls to the step execute and restart functions.
-        if exec_restart:
+        if self.restart:
             return ReturnCode(self.mstep.restart(adapter))
         else:
             return ReturnCode(self.mstep.execute(adapter))
