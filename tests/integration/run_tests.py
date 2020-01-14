@@ -308,13 +308,10 @@ class StepFileContainsCond(StudyCond):
 
     def contains(self):
         glob_string = f"{self.dirpath_glob}/{self.step}/*/{self.filename}"
-        print("glob_string: " + glob_string)
         try:
             filename = self.glob(glob_string)
-            print("filename: " + filename)
             with open(filename, "r") as textfile:
                 filetext = textfile.read()
-            print("filetext: " + filetext)
             return self.is_within(filetext)
         except Exception:
             return False
@@ -447,7 +444,7 @@ def define_tests():
         "dry launch flux": (
             f"{run} {flux} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
             StepFileContainsCond(
-                "runs", "*/runs.slurm.sh", "flux_test", OUTPUT_DIR, "flux wreckrun "
+                "runs", "*/runs.slurm.sh", "flux_test", OUTPUT_DIR, "flux "
             ),
         ),
         "dry launch lsf": (
