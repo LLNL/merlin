@@ -367,7 +367,6 @@ def nested_namespace_to_dicts(ns):
     return recurse(new_ns)
 
 
-
 def get_flux_version(flux_path, no_errors=False):
     """
     Return the flux version as a string
