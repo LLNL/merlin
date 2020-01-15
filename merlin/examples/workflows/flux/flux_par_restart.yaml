@@ -10,6 +10,7 @@ batch:
 
 env:
   variables:
+    OUTPUT_PATH: ./studies
     N_SAMPLES: 10
 
 study:
