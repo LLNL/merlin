@@ -17,11 +17,3 @@ script:
 - python tests/integration/run_tests.py --verbose --ids 1 2 3 4 5 6 7 8 9 12 13 14
   15 16 17 18 23 24 25
 - if [ "$TRAVIS_BRANCH" = "master" ]; then ./tests/integration/version_test.sh; fi
-deploy:
-  provider: pypi
-  user: __token__
-  password:
-    secure: BMxgzsEZ4FmDRIBQFFohy5acUU8Z4KkQruIyfoiyuS7aBbx58fRGYwYaHeXLmTb7pzXCML70YMUuD94uuqiAmQd0JPFbcJHWDcqKrVpPzRTOgjce6URgMqUPGaY2RN8P8FLDoagn4fgoEKbB+V6heCmo8A8MIFgZ/W2sC9d57Y9E1m1y9eECOCUAPqbdmyYZaeLjMDJ/+Z2JpVjVoWhC1Zoqyyd0NoiMZAVp5bhFViAKcU/JoO3HzIts5T2oGPsp4OJwD6fNq62oHrCjC7K0+lKzWAey1ZSeG0f5sgqty29miaQEVflPZT7YE4LO9Rh5nISAyJBumMsbLID4UMraFjmOUJDq7RwU68S4xf6rNbHmWoHfMe+wfFtPv/mum3MiAAQPVji/LQ0pM1DRlyxNp5+gyoRgygz1mXNvRofYjULT0Q/js7g+eFKeyuEzkErbggjPZyGoLNABu7VXdtlcDD5Fuorz/S6FGlCyyXcu1MWpBg/7QHQNgK8FUDs2B1CU1zc+Eai19im+iZIPwU2IxBZpf7WttmSdUZKZx1R1eZ7id6pAnOFTakozBlDCDdSmZMNZ4wN2zm9ywzLrEPSkP2uGFgmRi0slYNk3GjUu5+/PKfanCq5Of5E1V2sZCM1BGZrMy5dMuVqWOW+yJs0rGpd5znVHxKonH45C8FEKNQE=
-  on:
-    tags: false
-    branch: develop
