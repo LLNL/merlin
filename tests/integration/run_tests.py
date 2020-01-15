@@ -465,13 +465,21 @@ def define_tests():
         "dry launch slurm restart": (
             f"{run} {slurm_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
             StepFileContainsCond(
-                "runs", "*/runs.restart.slurm.sh", "slurm_par_restart", OUTPUT_DIR, "srun "
+                "runs",
+                "*/runs.restart.slurm.sh",
+                "slurm_par_restart",
+                OUTPUT_DIR,
+                "srun ",
             ),
         ),
         "dry launch flux restart": (
             f"{run} {flux_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
             StepFileContainsCond(
-                "runs_rs", "*/runs_rs.restart.slurm.sh", "flux_par_restart", OUTPUT_DIR, "flux "
+                "runs_rs",
+                "*/runs_rs.restart.slurm.sh",
+                "flux_par_restart",
+                OUTPUT_DIR,
+                "flux ",
             ),
         ),
         "local override feature_demo": (
