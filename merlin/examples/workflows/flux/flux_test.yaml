@@ -7,7 +7,6 @@ batch:
   nodes: 1
   queue: pbatch
   flux_start_opts: -o,-S,log-filename=flux_test.out
-  flux_path: /a/b/c/d
 
 env:
   variables:
