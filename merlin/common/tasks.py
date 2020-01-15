@@ -38,7 +38,6 @@ import logging
 import os
 
 from celery import (
-    Task,
     chain,
     chord,
     group,
