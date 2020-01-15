@@ -319,10 +319,14 @@ class MerlinScriptAdapter(LocalScriptAdapter):
             LOG.debug("Execution returned status OK.")
         elif retcode == ReturnCode.RESTART:
             LOG.debug("Execution returned status RESTART.")
+            step.restart = True
         elif retcode == ReturnCode.SOFT_FAIL:
             LOG.warning("Execution returned status SOFT_FAIL. ")
         elif retcode == ReturnCode.HARD_FAIL:
             LOG.warning("Execution returned status HARD_FAIL. ")
+        elif retcode == ReturnCode.RETRY:
+            LOG.debug("Execution returned status RETRY.")
+            step.restart = False
         else:
             LOG.warning(
                 f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL"

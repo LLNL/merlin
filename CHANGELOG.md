@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   will use the LLNL srun wrapper for jsrun. The flux version will
   be checked to determine the proper format of the parallel launch call.
 - Local CLI tests for the above $(LAUNCHER) feature.
+- Added the capbility to run the restart command of a step. This command
+  will be run when merlin receives a MERLIN_RESTART exception. If no
+  restart command is present in the step, the cmd command will be re-run.
+  A new exception, MERLIN_RETRY, is added to re-run the cmd command.
 
 ### Fixed
 - A bug in the `flux_test` example workflow.
