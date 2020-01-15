@@ -445,13 +445,7 @@ def expand_tasks_with_samples(
         sample_index.name = ""
         LOG.debug(f"queuing merlin expansion task")
         sig = add_merlin_expanded_chain_to_chord.s(
-            task_type,
-            steps,
-            samples,
-            labels,
-            sample_index,
-            adapter_config,
-            0,
+            task_type, steps, samples, labels, sample_index, adapter_config, 0,
         )
         sig.set(queue=steps[0].get_task_queue())
         if self.request.is_eager:

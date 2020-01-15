@@ -94,7 +94,8 @@ class Step:
                 restart_cmd = step_dict["run"]["restart"]
                 if restart_cmd:
                     step_dict["run"]["restart"] = re.sub(
-                        re.escape(str1), str2, restart_cmd, flags=re.I)
+                        re.escape(str1), str2, restart_cmd, flags=re.I
+                    )
 
         if new_workspace is None:
             new_workspace = self.get_workspace()
@@ -231,7 +232,7 @@ class Step:
         # at that point, we can drop the use of MerlinScriptAdapter above, and
         # go back to using the adapter specified by the adapter_config['type']
         # above
-        # If the above is done, then merlin_step in tasks.py can be changed to 
+        # If the above is done, then merlin_step in tasks.py can be changed to
         # calls to the step execute and restart functions.
         if self.restart and self.get_restart_cmd():
             return ReturnCode(self.mstep.restart(adapter))
