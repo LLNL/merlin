@@ -115,7 +115,10 @@ see :doc:`./merlin_variables`.
   # name: step name
   # description: what the step does
   # run:
-  #   cmd: the command to run for multilines use cmd: |
+  #   cmd: the command to run for multilines use cmd: | 
+  #        The $(LAUNCHER) macro can be used to substitute a parallel launcher 
+  #        based on the batch:type:.
+  #        It will use the nodes and procs values for the task.
   #   task_queue: the queue to assign the step to (optional. default: merlin)
   #   shell: the shell to use for the command (eg /bin/bash /usr/bin/env python)
   #          (optional. default: /bin/bash)
@@ -125,7 +128,7 @@ see :doc:`./merlin_variables`.
     - name: runs1
       description: Run on alloc1
       run:
-       cmd: echo "$(VAR1) $(VAR2)" > simrun.out
+       cmd: $(LAUNCHER) echo "$(VAR1) $(VAR2)" > simrun.out
        nodes: 1
        procs: 1
        task_queue: queue1
@@ -152,6 +155,8 @@ see :doc:`./merlin_variables`.
         nodes: 1
         procs: 1
         task_queue: lqueue
+        batch:
+          type: <override the default batch type>
 
     - name: monitor
       description: Monitor on alloc1
@@ -248,7 +253,9 @@ see :doc:`./merlin_variables`.
               # An optional batch section in the worker can override the
               # main batch config. This is useful if other workers are running
               # flux, but some component of the workflow requires the native
-              # scheduler or cannot run under flux.
+              # scheduler or cannot run under flux. Another possibility is to 
+              # have the default type as local and workers needed for flux or
+              # slurm steps.
               batch:
                  type: local
               machines: [host3]

@@ -151,6 +151,7 @@ def process_run(args):
         override_vars=variables_dict,
         samples_file=samples_file,
         dry_run=args.dry,
+        no_errors=args.no_errors,
     )
     router.run_task_server(study, args.run_mode)
 
@@ -355,6 +356,13 @@ def setup_argparse():
         dest="dry",
         default=False,
         help="Flag to dry-run a workflow, which sets up the workspace but does not launch tasks.",
+    )
+    run.add_argument(
+        "--no-errors",
+        action="store_true",
+        dest="no_errors",
+        default=False,
+        help="Flag to ignore some errors for testing.",
     )
 
     # merlin restart
