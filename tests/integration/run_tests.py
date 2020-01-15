@@ -479,7 +479,7 @@ def define_tests():
                 "*/runs_rs.restart.slurm.sh",
                 "flux_par_restart",
                 OUTPUT_DIR,
-                "flux ",
+                get_flux_cmd("flux", no_errors=True),
             ),
         ),
         "local override feature_demo": (
