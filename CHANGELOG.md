@@ -3,17 +3,6 @@ All notable changes to Merlin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [Unreleased]
-
-### Added
-- Development dependencies install via pip: `pip install "merlinwf[dev]"`
-- `merlin status <yaml spec>` that returns queues, number of connected
-  workers and number of unused tasks in each of those queues
-- The machines keyword was added to the merlin workers section. This allows
-  the user to assign steps to a given machine. 
-  All of the machines must have access to the OUTPUT_PATH and the
-  steps list is mandatory for all workers.
-
 
 ## [Unreleased]
 
@@ -26,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   will use the LLNL srun wrapper for jsrun. The flux version will
   be checked to determine the proper format of the parallel launch call.
 - Local CLI tests for the above $(LAUNCHER) feature.
+- `machines` keyword, in the `merlin.resources.workers.<name>` section. This allows
+  the user to assign workers (and thence, steps) to a given machine. 
+  All of the machines must have access to the `OUTPUT_PATH`, The
+  steps list is mandatory for all workers. Once the machines are added, then only
+  the workers for the given set of steps on the specific machine will start. The
+  workers must be individually started on all of the listed machines separately by
+  the user (`merlin run-workers`).
 
 ### Fixed
 - A bug in the `flux_test` example workflow.
