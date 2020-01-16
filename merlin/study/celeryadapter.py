@@ -33,6 +33,7 @@ This module provides an adapter to the Celery Distributed Task Queue.
 """
 import logging
 import os
+import socket
 import subprocess
 import time
 from contextlib import suppress
@@ -42,6 +43,7 @@ from merlin.study.batch import (
     batch_worker_launch,
 )
 from merlin.utils import (
+    check_machines,
     get_procs,
     get_yaml_var,
     is_running,
@@ -203,6 +205,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
                 args: -O fair --prefetch-multiplier 1 -E -l info --concurrency 4
                 steps: [run, data]
                 nodes: 1 
+                machine: [hostA, hostB]
     """
     if not just_return_command:
         LOG.info("Starting celery workers")
@@ -212,6 +215,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
 
     senv = spec.environment
     spenv = os.environ.copy()
+    yenv = None
     if senv:
         yenv = get_yaml_var(senv, "variables", {})
         for k, v in yenv.items():
@@ -223,6 +227,25 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
     local_queues = []
 
     for worker_name, worker_val in workers.items():
+        worker_machines = get_yaml_var(worker_val, "machines", None)
+        if worker_machines:
+            LOG.debug("check machines = ", check_machines(worker_machines))
+            if not check_machines(worker_machines):
+                continue
+
+            if yenv:
+                output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
+                if output_path and not os.path.exists(output_path):
+                    hostname = socket.gethostname()
+                    LOG.error(
+                        f"The output path, {output_path}, is not accessible on this host, {hostname}"
+                    )
+            else:
+                LOG.warning(
+                    "The env:variables section does not have an OUTPUT_PATH"
+                    "specified, multi-machine checks cannot be performed."
+                )
+
         worker_args = get_yaml_var(worker_val, "args", celery_args)
         with suppress(KeyError):
             if worker_val["args"] is None:

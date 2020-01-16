@@ -3,6 +3,17 @@ All notable changes to Merlin will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [Unreleased]
+
+### Added
+- Development dependencies install via pip: `pip install "merlinwf[dev]"`
+- `merlin status <yaml spec>` that returns queues, number of connected
+  workers and number of unused tasks in each of those queues
+- The machines keyword was added to the merlin workers section. This allows
+  the user to assign steps to a given machine. 
+  All of the machines must have access to the OUTPUT_PATH and the
+  steps list is mandatory for all workers.
+
 
 ## [Unreleased]
 
