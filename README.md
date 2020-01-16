@@ -1,5 +1,10 @@
 ![Merlin](https://raw.githubusercontent.com/LLNL/merlin/master/docs/images/merlin.png)
 
+![Python versions](https://img.shields.io/pypi/pyversions/merlinwf)
+[![License](https://img.shields.io/pypi/l/merlinwf)](https://pypi.org/project/merlinwf/)
+![Activity](https://img.shields.io/github/commit-activity/m/LLNL/merlin)
+[![Issues](https://img.shields.io/github/issues-pr/LLNL/merlin)](https://github.com/LLNL/merlin/issues)
+
 ## A brief introduction to Merlin
 Merlin is a tool for running machine learning based workflows. The goal of
 Merlin is to make it easy to build, run, and process the kinds of large
