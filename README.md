@@ -1,5 +1,8 @@
 ![Merlin](https://raw.githubusercontent.com/LLNL/merlin/master/docs/images/merlin.png)
 
+[![Travis](https://img.shields.io/travis/LLNL/merlin/master.svg?label=Travis%20CI)](
+    https://travis-ci.org/LLNL/merlin)
+
 ## A brief introduction to Merlin
 Merlin is a tool for running machine learning based workflows. The goal of
 Merlin is to make it easy to build, run, and process the kinds of large
