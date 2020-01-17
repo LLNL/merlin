@@ -91,15 +91,6 @@ See `Maestro's GitHub page
 <https://github.com/LLNL/maestrowf>`_
 for more details.
 
-.. _flux:
-
-What is flux?
-~~~~~~~~~~~~~
-Flux is a hierarchical scheduler and launcher for parallel simulations. It allows the user
-to specify the same launch command that will work on different HPC clusters with different 
-default schedulers such as SLURM or LSF.
-More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
-
 Designing and Building Workflows
 --------------------------------
 :doc:`yaml specification file <./merlin_specification>`
@@ -245,9 +236,34 @@ You might also have rogue workers. To find out, try ``merlin query-workers``.
 Where do tasks get run?
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+.. _slurm:
+
+What is Slurm?
+~~~~~~~~~~~~~~
+A job scheduler. See `Slurm documentation
+<https://slurm.schedmd.com/documentation.html>`_
+.
+
+.. _lsf:
+
+What is LSF?
+~~~~~~~~~~~~
+Another job scheduler. See `IBM's LSF documentation
+<https://www.ibm.com/support/knowledgecenter/en/SSWRJV_10.1.0/lsf_welcome/lsf_welcome.html>`_
+.
+
+.. _flux:
+
+What is flux?
+~~~~~~~~~~~~~
+Flux is a hierarchical scheduler and launcher for parallel simulations. It allows the user
+to specify the same launch command that will work on different HPC clusters with different 
+default schedulers such as SLURM or LSF.
+More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
+
 What is ``LAUNCHER``?
 ~~~~~~~~~~~~~~~~~
-``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with schedulers like Slurm and :ref:`flux`.
+``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with parellel schedulers like :ref:`slurm`, :ref:`lsf`, and :ref:`flux`.
 
 How do I use ``LAUNCHER``?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
