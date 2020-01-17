@@ -116,8 +116,8 @@ Step return variables
            echo "hello, world!"
            exit $(MERLIN_SUCCESS)
 
-   * - ``$(MERLIN_RESTART)``
-     - Restart this step. The default maximum number of retries for any given step
+   * - ``$(MERLIN_RETRY)``
+     - Retry this step. The default maximum number of retries for any given step
        is 30. You can override this by adding a max_retries field under the run 
        field in the specification. 
      -
@@ -127,8 +127,24 @@ Step return variables
             cmd: |
                touch my_file.txt
                echo "hi mom!" >> my_file.txt
+               exit $(MERLIN_RETRY)
+            max_retries: 23
+
+   * - ``$(MERLIN_RESTART)``
+     - Restart this step using the <step>.restart value. The same retries
+       iformation as in MERLIN_RETRY applies in this case. In no restart
+       command exists in the step, the cmd command will be called.
+       -
+       ::
+
+          run:
+            cmd: |
+               touch my_file.txt
+               echo "hi mom!" >> my_file.txt
                exit $(MERLIN_RESTART)
             max_retries: 23
+            restart: |
+               echo "The restart command was called."
 
    * - ``$(merlin_soft_fail)``
      - Mark this step as a failure, note in the warning log but keep going.

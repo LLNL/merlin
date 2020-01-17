@@ -163,6 +163,9 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         """
         super(MerlinSlurmScriptAdapter, self).__init__(**kwargs)
 
+        self._cmd_flags["bind"] = "--mpibind"
+        self._cmd_flags["exclusive"] = "--exclusive"
+
         new_unsupported = [
             "task_queue",
             "max_retries",
