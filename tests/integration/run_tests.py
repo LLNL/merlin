@@ -383,7 +383,9 @@ def define_tests():
     demo = f"{examples}/feature_demo/feature_demo.yaml"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
     slurm = f"{examples}/slurm/slurm_test.yaml"
+    slurm_restart = f"{examples}/slurm/slurm_par_restart.yaml"
     flux = f"{examples}/flux/flux_test.yaml"
+    flux_restart = f"{examples}/flux/flux_par_restart.yaml"
     lsf = f"{examples}/lsf/lsf_par.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
@@ -458,6 +460,26 @@ def define_tests():
             f"{run} {lsf} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
             StepFileContainsCond(
                 "runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "
+            ),
+        ),
+        "dry launch slurm restart": (
+            f"{run} {slurm_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs",
+                "*/runs.restart.slurm.sh",
+                "slurm_par_restart",
+                OUTPUT_DIR,
+                "srun ",
+            ),
+        ),
+        "dry launch flux restart": (
+            f"{run} {flux_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs_rs",
+                "*/runs_rs.restart.slurm.sh",
+                "flux_par_restart",
+                OUTPUT_DIR,
+                get_flux_cmd("flux", no_errors=True),
             ),
         ),
         "local override feature_demo": (
