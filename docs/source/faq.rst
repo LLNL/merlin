@@ -162,16 +162,22 @@ Steps have a ``name``, ``description``, and ``run`` field, as shown below.
 
 .. code:: yaml
 
-    name: ...
-    description: ...
+    name: <string>
+    description: <string>
     run:
-        cmd: ...
-        depends: ...
-        task_queue: ...
-        shell: ...
-        max_retries: ...
+        cmd: <shell command for this step>
 
-Optional fields are ``depends``, ``task_queue``, and ``shell``.
+Also under ``run``, the following fields are optional:
+
+.. code:: yaml
+
+    run:
+        depends: <list of step names>
+        task_queue: <task queue name for this step>
+        shell: <e.g., /bin/bash, /usr/bin/env python3>
+        max_retries: <integer>
+        nodes: <integer>
+        procs: <integer>
 
 How do I specify the language used in a step?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
