@@ -91,6 +91,8 @@ See `Maestro's GitHub page
 <https://github.com/LLNL/maestrowf>`_
 for more details.
 
+.. _flux:
+
 What is flux?
 ~~~~~~~~~~~~~
 Flux is a hierarchical scheduler and launcher for parallel simulations. It allows the user
@@ -245,7 +247,7 @@ Where do tasks get run?
 
 What is ``LAUNCHER``?
 ~~~~~~~~~~~~~~~~~
-``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with schedulers like Slurm and Flux.
+``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with schedulers like Slurm and :ref:`flux`.
 
 How do I use ``LAUNCHER``?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
