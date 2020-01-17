@@ -243,6 +243,31 @@ You might also have rogue workers. To find out, try ``merlin query-workers``.
 Where do tasks get run?
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+What is ``LAUNCHER``?
+~~~~~~~~~~~~~~~~~
+``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with schedulers like Slurm and Flux.
+
+How do I use ``LAUNCHER``?
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Instead of this:
+
+.. code:: yaml
+
+    run:
+        cmd: srun -N 1 -n 3 python script.py
+
+Do something like this:
+
+.. code:: yaml
+
+    batch:
+        type: slurm
+
+    run:
+        cmd: $(LAUNCHER) python script.py
+        nodes: 1
+        procs: 3
+
 Where can I learn more about merlin?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Check out our (paper)[https://arxiv.org/abs/1912.02892] on arXiv.
