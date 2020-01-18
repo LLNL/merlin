@@ -141,8 +141,6 @@ Step return variables
                echo "hi mom!" >> my_file.txt
                exit $(MERLIN_RETRY)
             max_retries: 23
-            restart: |
-               echo "The restart command was called."
 
    * - ``$(merlin_soft_fail)``
      - Mark this step as a failure, note in the warning log but keep going.
