@@ -87,6 +87,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "pre",
             "post",
             "depends",
+            "exclusive",
         }
 
     def get_header(self, step):
@@ -250,6 +251,8 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "pre",
             "post",
             "depends",
+            "bind",
+            "exclusive",
         ]
         self._unsupported = set(new_unsupported)
 
