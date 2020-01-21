@@ -35,6 +35,7 @@ import getpass
 import logging
 import os
 import re
+import socket
 import subprocess
 from contextlib import (
     contextmanager,
@@ -417,3 +418,22 @@ def get_flux_cmd(flux_path, no_errors=False):
         flux_cmd = "flux wreckrun"
 
     return flux_cmd
+
+
+def check_machines(machines):
+    """
+    Return a True if the current machine is in the list of machines.
+
+    :param `machines`: A single machine or list of machines to compare
+                       with the current machine.
+    """
+    local_hostname = socket.gethostname()
+
+    if not isinstance(machines, (list, tuple)):
+        machines = [machines]
+
+    for mach in machines:
+        if mach in local_hostname:
+            return True
+
+    return False
