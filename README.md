@@ -1,3 +1,9 @@
+![Python versions](https://img.shields.io/pypi/pyversions/merlinwf)
+[![License](https://img.shields.io/pypi/l/merlinwf)](https://pypi.org/project/merlinwf/)
+![Activity](https://img.shields.io/github/commit-activity/m/LLNL/merlin)
+[![Issues](https://img.shields.io/github/issues/LLNL/merlin)](https://github.com/LLNL/merlin/issues)
+[![Pull requests](https://img.shields.io/github/issues-pr/LLNL/merlin)](https://github.com/LLNL/merlin/pulls)
+
 ![Merlin](https://raw.githubusercontent.com/LLNL/merlin/master/docs/images/merlin.png)
 
 ## A brief introduction to Merlin

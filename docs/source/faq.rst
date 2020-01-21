@@ -91,13 +91,6 @@ See `Maestro's GitHub page
 <https://github.com/LLNL/maestrowf>`_
 for more details.
 
-What is flux?
-~~~~~~~~~~~~~
-Flux is a hierarchical scheduler and launcher for parallel simulations. It allows the user
-to specify the same launch command that will work on different HPC clusters with different 
-default schedulers such as SLURM or LSF.
-More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
-
 Designing and Building Workflows
 --------------------------------
 :doc:`yaml specification file <./merlin_specification>`
@@ -165,16 +158,22 @@ Steps have a ``name``, ``description``, and ``run`` field, as shown below.
 
 .. code:: yaml
 
-    name: ...
-    description: ...
+    name: <string>
+    description: <string>
     run:
-        cmd: ...
-        depends: ...
-        task_queue: ...
-        shell: ...
-        max_retries: ...
+        cmd: <shell command for this step>
 
-Optional fields are ``depends``, ``task_queue``, and ``shell``.
+Also under ``run``, the following fields are optional:
+
+.. code:: yaml
+
+    run:
+        depends: <list of step names>
+        task_queue: <task queue name for this step>
+        shell: <e.g., /bin/bash, /usr/bin/env python3>
+        max_retries: <integer>
+        nodes: <integer>
+        procs: <integer>
 
 How do I specify the language used in a step?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -239,6 +238,56 @@ You might also have rogue workers. To find out, try ``merlin query-workers``.
 
 Where do tasks get run?
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _slurm:
+
+What is Slurm?
+~~~~~~~~~~~~~~
+A job scheduler. See `Slurm documentation
+<https://slurm.schedmd.com/documentation.html>`_
+.
+
+.. _lsf:
+
+What is LSF?
+~~~~~~~~~~~~
+Another job scheduler. See `IBM's LSF documentation
+<https://www.ibm.com/support/knowledgecenter/en/SSWRJV_10.1.0/lsf_welcome/lsf_welcome.html>`_
+.
+
+.. _flux:
+
+What is flux?
+~~~~~~~~~~~~~
+Flux is a hierarchical scheduler and launcher for parallel simulations. It allows the user
+to specify the same launch command that will work on different HPC clusters with different 
+default schedulers such as SLURM or LSF.
+More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
+
+What is ``LAUNCHER``?
+~~~~~~~~~~~~~~~~~
+``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with parellel schedulers like :ref:`slurm`, :ref:`lsf`, and :ref:`flux`.
+
+How do I use ``LAUNCHER``?
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Instead of this:
+
+.. code:: yaml
+
+    run:
+        cmd: srun -N 1 -n 3 python script.py
+
+Do something like this:
+
+.. code:: yaml
+
+    batch:
+        type: slurm
+
+    run:
+        cmd: $(LAUNCHER) python script.py
+        nodes: 1
+        procs: 3
 
 Where can I learn more about merlin?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
