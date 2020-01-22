@@ -93,10 +93,7 @@ study:
             fi
           fi
        fi
-       # There is a bug in maestro which does not replace the 
-       # $(build.workspace) in a restart step value.
-       #$(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > flux_run.out
-       $(LAUNCHER) ./mpi_hello $(V1) $(V2) > flux_run.out
+       $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > flux_run.out
 
 - description: Dump flux info
   name: data
