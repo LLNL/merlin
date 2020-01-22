@@ -239,6 +239,20 @@ You might also have rogue workers. To find out, try ``merlin query-workers``.
 Where do tasks get run?
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+Can I run different steps from my workflow on different machines?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Yes. Under the ``merlin`` block you can specify which machines your workers are allowed on.
+In order for this to work, you must then use ``merlin run-workers`` seperately on each of
+the specified machines.
+
+.. code:: yaml
+
+   merlin:
+      resources:
+         workers:
+            worker_name:
+               machines: [hostA, hostB, hostC]
+
 .. _slurm:
 
 What is Slurm?
