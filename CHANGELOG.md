@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `version_tests.sh`, for CI checking that the merlin version is incremented
   before changes are merged into master.
-- Allow for the maestro $(LAUNCHER) syntax in tasks, this requires the 
+- Allow for the maestro `$(LAUNCHER)` syntax in tasks, this requires the 
   nodes and procs variables in the task just as in maestro. The LAUNCHER keyword
   is implmented for flux, lsf, slurm and local types.  The lsf type
   will use the LLNL srun wrapper for jsrun. The flux version will
