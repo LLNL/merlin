@@ -1,6 +1,6 @@
 description:
   description: Run a scan through Merlin/Maestro
-  name: FLUXLOCALMERLIN
+  name: flux_local
 
 batch:
   type: local

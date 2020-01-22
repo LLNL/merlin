@@ -87,6 +87,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "pre",
             "post",
             "depends",
+            "exclusive",
         }
 
     def get_header(self, step):
@@ -162,6 +163,9 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         :param **kwargs: A dictionary with default settings for the adapter.
         """
         super(MerlinSlurmScriptAdapter, self).__init__(**kwargs)
+
+        self._cmd_flags["bind"] = "--mpibind"
+        self._cmd_flags["exclusive"] = "--exclusive"
 
         new_unsupported = [
             "task_queue",
@@ -247,6 +251,8 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "pre",
             "post",
             "depends",
+            "bind",
+            "exclusive",
         ]
         self._unsupported = set(new_unsupported)
 
@@ -319,10 +325,14 @@ class MerlinScriptAdapter(LocalScriptAdapter):
             LOG.debug("Execution returned status OK.")
         elif retcode == ReturnCode.RESTART:
             LOG.debug("Execution returned status RESTART.")
+            step.restart = True
         elif retcode == ReturnCode.SOFT_FAIL:
             LOG.warning("Execution returned status SOFT_FAIL. ")
         elif retcode == ReturnCode.HARD_FAIL:
             LOG.warning("Execution returned status HARD_FAIL. ")
+        elif retcode == ReturnCode.RETRY:
+            LOG.debug("Execution returned status RETRY.")
+            step.restart = False
         else:
             LOG.warning(
                 f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL"

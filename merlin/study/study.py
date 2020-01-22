@@ -111,6 +111,7 @@ class MerlinStudy:
             "MERLIN_RESTART": str(int(ReturnCode.RESTART)),
             "MERLIN_SOFT_FAIL": str(int(ReturnCode.SOFT_FAIL)),
             "MERLIN_HARD_FAIL": str(int(ReturnCode.HARD_FAIL)),
+            "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
         }
         self.dag = None
         self.load_dag()

@@ -12,9 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow for the maestro `$(LAUNCHER)` syntax in tasks, this requires the 
   nodes and procs variables in the task just as in maestro. The LAUNCHER keyword
   is implmented for flux, lsf, slurm and local types.  The lsf type
-  will use the LLNL srun wrapper for jsrun. The flux version will
-  be checked to determine the proper format of the parallel launch call.
-- Local CLI tests for the above $(LAUNCHER) feature.
+  will use the LLNL srun wrapper for jsrun when the lsf-srun batch type 
+  is used. The flux version will be checked to determine the proper format 
+  of the parallel launch call.
+- Local CLI tests for the above `$(LAUNCHER)` feature.
 - `machines` keyword, in the `merlin.resources.workers.<name>` section. This allows
   the user to assign workers (and thence, steps) to a given machine. 
   All of the machines must have access to the `OUTPUT_PATH`, The
@@ -22,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the workers for the given set of steps on the specific machine will start. The
   workers must be individually started on all of the listed machines separately by
   the user (`merlin run-workers`).
+- New step field `restart`. This command runs when merlin receives a
+  `$(MERLIN_RESTART)` exception. If no `restart` field is found, the `cmd`
+  command re-runs instead.
 
 ### Fixed
 - A bug in the `flux_test` example workflow.
@@ -30,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved the `fix-style` dev Makefile target.
 - Improved the `version` dev Makefile target.
 - Updated travis logic.
+- `MERLIN_RESTART` (which re-ran the `cmd` of a step) has been renamed to `MERLIN_RETRY`.
+
 
 ## [1.1.1] - 2020-01-09
 

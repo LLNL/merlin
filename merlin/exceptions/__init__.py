@@ -32,7 +32,12 @@
 Module of all Merlin-specific exception types.
 """
 
-__all__ = ("RetryException", "SoftFailException", "HardFailException")
+__all__ = (
+    "RetryException",
+    "SoftFailException",
+    "HardFailException",
+    "RestartException",
+)
 
 
 class RetryException(Exception):
@@ -72,3 +77,13 @@ class InvalidChainException(Exception):
 
     def __init__(self):
         super(HardFailException, self).__init__()
+
+
+class RestartException(Exception):
+    """
+    Exception to signal that a step needs to call
+    the restart command if present , else retry.
+    """
+
+    def __init__(self):
+        super(RestartException, self).__init__()

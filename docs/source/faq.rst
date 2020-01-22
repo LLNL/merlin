@@ -124,16 +124,19 @@ You probably can gain much of the functionality you want by combining a DAG with
 
 How do I implement workflow looping / iteration?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Combining ``exit $(MERLIN_RESTART)`` with ``max_retries`` can allow you to loop a single step.
+Combining ``exit $(MERLIN_RETRY)`` with ``max_retries`` can allow you to loop a single step.
 Entire workflow looping / iteration can be accomplished by finishing off your DAG with a final step that makes another call to ``merlin run``.
 
 
 Can steps be restarted?
 ~~~~~~~~~~~~~~~~~~~~~~~
-Yes. To build this into a workflow, use ``exit $(MERLIN_RESTART)`` within a step to restart it.
-To restart failed steps after a workflow has run, see :ref:`restart`.
-
+Yes. To build this into a workflow, use ``exit $(MERLIN_RETRY)`` within a step to retry a failed ``cmd`` section.
 The max number of retries in given step can be specified with the ``max_retries`` field.
+
+Alternatively, use ``exit $(MERLIN_RESTART)`` to run the optional ``<step>.run.restart`` section.
+
+To restart failed steps after a workflow is done running, see :ref:`restart`.
+
 
 How do I mark a step failure?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
