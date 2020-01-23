@@ -91,14 +91,14 @@ To install Merlin and its dependencies, run:
 
     $ pip3 install merlinwf
     
-Create a merlin application config file:
+Create an application config file:
 
     $ merlin config
 
 That's it.
 
 To run something a little more like what you're interested in,
-namely a demo workflow that has simulation and machine-learning,
+namely a demo workflow that has simulation and machine learning,
 first generate an example workflow:
 
     $ merlin example feature_demo
