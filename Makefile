@@ -167,7 +167,7 @@ version:
 	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	# do git tag
-	git tag $(VER)
+	#git tag $(VER)
 	# remind user to use git push --tags
-	echo "Remember to use git push --tags"
+	#echo "Remember to use git push --tags"
 
