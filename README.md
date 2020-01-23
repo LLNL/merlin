@@ -90,6 +90,10 @@ Note: Merlin supports Python 3.6+.
 To install Merlin and its dependencies, run:
 
     $ pip3 install merlinwf
+    
+Create a merlin application config file:
+
+    $ merlin config
 
 That's it.
 
