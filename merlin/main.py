@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.1.1.
+# This file is part of Merlin, Version: 1.2.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -151,6 +151,7 @@ def process_run(args):
         override_vars=variables_dict,
         samples_file=samples_file,
         dry_run=args.dry,
+        no_errors=args.no_errors,
     )
     router.run_task_server(study, args.run_mode)
 
@@ -356,6 +357,13 @@ def setup_argparse():
         default=False,
         help="Flag to dry-run a workflow, which sets up the workspace but does not launch tasks.",
     )
+    run.add_argument(
+        "--no-errors",
+        action="store_true",
+        dest="no_errors",
+        default=False,
+        help="Flag to ignore some errors for testing.",
+    )
 
     # merlin restart
     restart = subparsers.add_parser(
@@ -531,7 +539,7 @@ def setup_argparse():
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
     status.add_argument(
-        "--csv", type=str, help="csv file to dump status report to", default=None,
+        "--csv", type=str, help="csv file to dump status report to", default=None
     )
 
     # merlin info

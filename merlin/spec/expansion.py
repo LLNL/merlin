@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.1.1.
+# This file is part of Merlin, Version: 1.2.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -58,6 +58,7 @@ PROVENANCE_REPLACE = {
     "MERLIN_RESTART",
     "MERLIN_SOFT_FAIL",
     "MERLIN_HARD_FAIL",
+    "MERLIN_RETRY",
 }
 MERLIN_RESERVED = STEP_AWARE | PROVENANCE_REPLACE
 RESERVED = MAESTRO_RESERVED | MERLIN_RESERVED
@@ -185,6 +186,7 @@ def parameter_substitutions_for_cmd(glob_path, sample_paths):
     substitutions.append(("$(MERLIN_RESTART)", str(int(ReturnCode.RESTART))))
     substitutions.append(("$(MERLIN_SOFT_FAIL)", str(int(ReturnCode.SOFT_FAIL))))
     substitutions.append(("$(MERLIN_HARD_FAIL)", str(int(ReturnCode.HARD_FAIL))))
+    substitutions.append(("$(MERLIN_RETRY)", str(int(ReturnCode.RETRY))))
     return substitutions
 
 

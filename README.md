@@ -1,3 +1,9 @@
+![Python versions](https://img.shields.io/pypi/pyversions/merlinwf)
+[![License](https://img.shields.io/pypi/l/merlinwf)](https://pypi.org/project/merlinwf/)
+![Activity](https://img.shields.io/github/commit-activity/m/LLNL/merlin)
+[![Issues](https://img.shields.io/github/issues/LLNL/merlin)](https://github.com/LLNL/merlin/issues)
+[![Pull requests](https://img.shields.io/github/issues-pr/LLNL/merlin)](https://github.com/LLNL/merlin/pulls)
+
 ![Merlin](https://raw.githubusercontent.com/LLNL/merlin/master/docs/images/merlin.png)
 
 ## A brief introduction to Merlin
@@ -84,11 +90,15 @@ Note: Merlin supports Python 3.6+.
 To install Merlin and its dependencies, run:
 
     $ pip3 install merlinwf
+    
+Create an application config file:
+
+    $ merlin config
 
 That's it.
 
 To run something a little more like what you're interested in,
-namely a demo workflow that has simulation and machine-learning,
+namely a demo workflow that has simulation and machine learning,
 first generate an example workflow:
 
     $ merlin example feature_demo
