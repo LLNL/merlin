@@ -91,7 +91,7 @@ To install Merlin and its dependencies, run:
 
     $ pip3 install merlinwf
     
-Create an application config file:
+Create your application config file:
 
     $ merlin config
 
