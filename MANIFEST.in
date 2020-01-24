@@ -1,4 +1,3 @@
-include workflows/*
 include merlin/data/*
 include merlin/examples/workflows/*
 include requirements.txt
