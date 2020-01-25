@@ -503,7 +503,6 @@ def define_tests():
                 OUTPUT_DIR,
                 get_flux_cmd("flux", no_errors=True),
             ),
-            #"local",
         ),
         "local override feature_demo": (
             f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
