@@ -75,7 +75,7 @@ install-dev: virtualenv
 
 # this only works outside the venv
 virtualenv:
-	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages
+	$(PYTHON) -m venv $(VENV) --prompt $(PENV)
 	$(PIP) install --upgrade pip
 
 

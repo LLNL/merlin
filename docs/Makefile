@@ -14,6 +14,18 @@ help:
 
 .PHONY: help Makefile
 
+
+check-permission:
+	if id -nG $(USER) | grep -qw "merlin" ; then printf "You are in group: merlin\n" ; else printf "Permission error: must be in group 'merlin', for merlin developers\n" ; false ; fi
+
+
+deploy: check-permission html
+	rm -rf $(MERLIN_WWW_INSTALL_PATH)/*
+	cp -a ./build/html/. $(MERLIN_WWW_INSTALL_PATH)
+	chgrp -R merlin $(MERLIN_WWW_INSTALL_PATH)/*
+	find $(MERLIN_WWW_INSTALL_PATH) -type d -exec chmod 775 {} \;
+	find $(MERLIN_WWW_INSTALL_PATH) -type f -exec chmod 664 {} \;
+
 code-docs:
 	sphinx-apidoc -f -o source/ ../merlin/
 
@@ -25,3 +37,4 @@ view: code-docs html
 %: Makefile
 	echo $(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+

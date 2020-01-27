@@ -16,7 +16,7 @@ from datetime import date
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('../../..'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 MERLIN_VERSION = __import__("merlin").VERSION
 
@@ -25,7 +25,7 @@ MERLIN_VERSION = __import__("merlin").VERSION
 _year = date.today().year
 
 project = u'Merlin'
-copyright = f'{_year}, MLSI'
+copyright = '{}, MLSI'.format(_year)
 author = u'MLSI'
 
 # The short X.Y version
