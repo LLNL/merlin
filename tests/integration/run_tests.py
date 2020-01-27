@@ -40,10 +40,7 @@ import time
 from contextlib import suppress
 from glob import glob
 from re import search
-from subprocess import (
-    PIPE,
-    Popen,
-)
+from subprocess import PIPE, Popen
 
 from merlin.utils import get_flux_cmd
 
@@ -503,6 +500,7 @@ def define_tests():
                 OUTPUT_DIR,
                 get_flux_cmd("flux", no_errors=True),
             ),
+            "local",
         ),
         "local override feature_demo": (
             f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
@@ -515,17 +513,17 @@ def define_tests():
                     "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
                 ),
             ],
-            "local",
+            # "local",
         ),
         "local csv feature_demo": (
             f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samples foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [RegexCond("1 sample loaded."), ReturnCodeCond()],
-            "local",
+            # "local",
         ),
         "local tab feature_demo": (
             f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samples foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
             [RegexCond("2 samples loaded."), ReturnCodeCond()],
-            "local",
+            # "local",
         ),
         "distributed feature_demo": (
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
