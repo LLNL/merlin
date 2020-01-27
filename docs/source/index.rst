@@ -72,6 +72,7 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    :maxdepth: 1
    :caption: Contents:
 
+   tutorial
    getting_started
    faq
    merlin_commands
@@ -84,7 +85,6 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    testing
    spack
    merlin_developer
-   merlin
 
 
 Indices and tables
