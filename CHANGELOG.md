@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cli test flag `--local`, which can be used in place of listing out the id of each
   local cli test.
 
+## [1.2.3] 2020-01-27
+
+### Changed
+- Adjusted `maestrowf` requirement to `maestrowf>=1.1.7dev0`.
+
 ## [1.2.2] 2020-01-24
 
 ### Removed
