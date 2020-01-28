@@ -5,4 +5,4 @@ flake8
 isort
 pytest
 sphinx
-sphinx-rtd-theme
+alabaster
