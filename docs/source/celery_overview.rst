@@ -1,5 +1,5 @@
-Celery Overview
-===============
+Celery
+======
 
 Merlin uses `Celery <http://www.celeryproject.org>`_, a Python based
 distributed task management system. Merlin uses Celery to queue work which

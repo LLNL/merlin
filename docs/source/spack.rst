@@ -14,22 +14,14 @@ Checkout spack
 **************
 
 
-Get the latest version of spack from Github. This is independent from merlin so
-make sure merlin and spack are in separate directories.
+Get the latest version of spack from Github. This is independent from 
+merlin so make sure merlin and spack are in separate directories.
 
 .. code:: bash
 
   git clone https://github.com/spack/spack.git
-
-
-The merlin addition to spack is currently in pull requests, you can clone a 
-branch that has all of the PR changes here:
-
-.. code:: bash
-
-  git clone https://github.com/koning/spack.git
-  cd spack
-  git checkout feature/koning/merlinwf
+  # The merlin spack package is in the develop branch
+  git checkout develop
 
 
 Setup spack
@@ -37,9 +29,9 @@ Setup spack
 
 cd to spack directory
 
-Source the ``setup-env.sh`` or ``setup-env.csh``. This will put spack in your
-path and setup module access for later use. This should be done every time
-the modules are used.
+Source the ``setup-env.sh`` or ``setup-env.csh``. This will put spack in
+your path and setup module access for later use. This should be done every
+time the modules are used.
 
 .. code:: bash
 
@@ -68,24 +60,18 @@ build python and all python modules merlin needs including numpy.
 
     spack install py-merlinwf
 
-Currently we are using the develop branch so the command should be:
 
-.. code:: bash
-
-    spack install py-merlinwf@develop
-
-
-The build will be done with the default compiler, in general this is the newest
-gcc compiler. You can choose a different compiler by using the ``%`` syntax,
-this will create an entirely separate build and module.
+The build will be done with the default compiler, in general this is the 
+newest gcc compiler. You can choose a different compiler by using the ``%``
+syntax, this will create an entirely separate build and module.
 
 .. code:: bash
 
     spack install py-merlinwf%gcc@7.1.0
 
 
-A different python version can be specified as part of the package config. To
-build merlin with python-3.6.8 you would type:
+A different python version can be specified as part of the package config. 
+To build merlin with python-3.6.8 you would type:
 
 .. code:: bash
 
@@ -132,8 +118,8 @@ will only work if you have sourced the setup-env.sh or setup-env.csh.
        python-3.6.8-gcc-8.1.0-4ilk3kn (L)
 
 
-This will give you a list, the spack version will have a long hash associated
-with the name.
+This will give you a list, the spack version will have a long hash
+associated with the name.
 
 .. code:: bash
 
@@ -141,5 +127,5 @@ with the name.
     e.g.
     module load python-3.6.8-gcc-8.1.0-4ilk3kn
 
-At this point the module specific python, merlin, maestro and celery will all
-be in your path.
+At this point the module specific python, merlin, maestro and celery will 
+all be in your path.

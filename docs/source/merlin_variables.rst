@@ -1,5 +1,5 @@
-Merlin Variables
-================
+Variables
+=========
 
 There are a number of variables which can be placed in a merlin input .yaml
 file that can control workflow execution, such as via string expansion and
