@@ -14,13 +14,14 @@ Checkout spack
 **************
 
 
-Get the latest version of spack from Github. This is independent from merlin so make sure merlin and spack are in separate directories.
+Get the latest version of spack from Github. This is independent from 
+merlin so make sure merlin and spack are in separate directories.
 
 .. code:: bash
 
   git clone https://github.com/spack/spack.git
   # The merlin spack package is in the develop branch
-  git co develop
+  git ccheckout develop
 
 
 Setup spack
@@ -69,7 +70,8 @@ syntax, this will create an entirely separate build and module.
     spack install py-merlinwf%gcc@7.1.0
 
 
-A different python version can be specified as part of the package config. To build merlin with python-3.6.8 you would type:
+A different python version can be specified as part of the package config. 
+To build merlin with python-3.6.8 you would type:
 
 .. code:: bash
 
