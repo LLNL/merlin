@@ -91,6 +91,7 @@ html_theme_options = {
     "description": "Machine learning for HPC workflows",
     "github_user": "LLNL",
     "github_repo": "merlin",
+    "fixed_sidebar": True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

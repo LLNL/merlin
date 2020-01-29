@@ -66,6 +66,7 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    getting_started
    faq
