@@ -21,7 +21,7 @@ merlin so make sure merlin and spack are in separate directories.
 
   git clone https://github.com/spack/spack.git
   # The merlin spack package is in the develop branch
-  git ccheckout develop
+  git checkout develop
 
 
 Setup spack
