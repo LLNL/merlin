@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -35,8 +35,12 @@ import getpass
 import logging
 import os
 import re
+import socket
 import subprocess
-from contextlib import contextmanager, suppress
+from contextlib import (
+    contextmanager,
+    suppress,
+)
 from copy import deepcopy
 from types import SimpleNamespace
 
@@ -53,6 +57,7 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 ARRAY_FILE_FORMATS = ".npy, .csv, .tab"
+DEFAULT_FLUX_VERSION = "0.13"
 
 
 def get_user_process_info(user=None, attrs=None):
@@ -239,7 +244,7 @@ def load_array_file(filename, ndmin=2):
                 f"Array in {filename} has fewer than the required \
                        minimum dimensions ({array.ndim} < {ndmin})!"
             )
-    # Make sure text files load as strings with mininum number of dimensions
+    # Make sure text files load as strings with minimum number of dimensions
     elif protocol == "csv":
         array = np.loadtxt(filename, delimiter=",", ndmin=ndmin, dtype=np.str)
     elif protocol == "tab":
@@ -360,3 +365,75 @@ def nested_namespace_to_dicts(ns):
 
     new_ns = deepcopy(ns)
     return recurse(new_ns)
+
+
+def get_flux_version(flux_path, no_errors=False):
+    """
+    Return the flux version as a string
+
+    :param `flux_path`: the full path to the flux bin
+    :param `no_errors`: a flag to determine if this a test run to ignore errors
+    """
+    cmd = [flux_path, "version"]
+
+    ps = None
+
+    try:
+        ps = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, encoding="utf8"
+        ).communicate()
+    except FileNotFoundError as e:
+        if not no_errors:
+            LOG.error(f"The flux path {flux_path} canot be found")
+            raise e
+
+    try:
+        flux_ver = re.search(r"\s*([\d.]+)", ps[0]).group(1)
+    except (ValueError, TypeError) as e:
+        if not no_errors:
+            LOG.error(f"The flux version canot be determined")
+            raise e
+        else:
+            flux_ver = DEFAULT_FLUX_VERSION
+            LOG.warning(f"Using syntax for default version: {flux_ver}")
+
+    return flux_ver
+
+
+def get_flux_cmd(flux_path, no_errors=False):
+    """
+    Return the flux command as string
+
+    :param `flux_path`: the full path to the flux bin
+    :param `no_errors`: a flag to determine if this a test run to ignore errors
+    """
+    # The default is for flux version >= 0.13,
+    # this may change in the future.
+    flux_cmd = "flux mini run"
+
+    flux_ver = get_flux_version(flux_path, no_errors=no_errors)
+
+    vers = [int(n) for n in flux_ver.split(".")]
+    if vers[0] == 0 and vers[1] < 13:
+        flux_cmd = "flux wreckrun"
+
+    return flux_cmd
+
+
+def check_machines(machines):
+    """
+    Return a True if the current machine is in the list of machines.
+
+    :param `machines`: A single machine or list of machines to compare
+                       with the current machine.
+    """
+    local_hostname = socket.gethostname()
+
+    if not isinstance(machines, (list, tuple)):
+        machines = [machines]
+
+    for mach in machines:
+        if mach in local_hostname:
+            return True
+
+    return False

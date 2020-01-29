@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -53,13 +53,20 @@ class Step:
         """
         :param maestro_step_record: The StepRecord object.
         """
-        self.step = maestro_step_record
+        self.mstep = maestro_step_record
+        self.restart = False
 
     def get_cmd(self):
         """
         get the run command text body"
         """
-        return self.step.step.to_dict()["run"]["cmd"]
+        return self.mstep.step.to_dict()["run"]["cmd"]
+
+    def get_restart_cmd(self):
+        """
+        get the restart command text body, else return None"
+        """
+        return self.mstep.step.to_dict()["run"]["restart"]
 
     def clone_changing_workspace_and_cmd(
         self, new_cmd=None, cmd_replacement_pairs=None, new_workspace=None
@@ -74,13 +81,22 @@ class Step:
         :param new_workspace : (Optional) the workspace for the new step.
         """
         LOG.debug(f"clone called with new_workspace {new_workspace}")
-        step_dict = deepcopy(self.step.step.to_dict())
+        step_dict = deepcopy(self.mstep.step.to_dict())
+
         if new_cmd is not None:
             step_dict["run"]["cmd"] = new_cmd
+
         if cmd_replacement_pairs is not None:
             for str1, str2 in cmd_replacement_pairs:
                 cmd = step_dict["run"]["cmd"]
                 step_dict["run"]["cmd"] = re.sub(re.escape(str1), str2, cmd, flags=re.I)
+
+                restart_cmd = step_dict["run"]["restart"]
+                if restart_cmd:
+                    step_dict["run"]["restart"] = re.sub(
+                        re.escape(str1), str2, restart_cmd, flags=re.I
+                    )
+
         if new_workspace is None:
             new_workspace = self.get_workspace()
         LOG.debug(f"cloned step with workspace {new_workspace}")
@@ -88,7 +104,7 @@ class Step:
 
     def get_task_queue(self):
         """ Retrieve the task queue for the Step."""
-        return self.get_task_queue_from_dict(self.step.step.to_dict())
+        return self.get_task_queue_from_dict(self.mstep.step.to_dict())
 
     @staticmethod
     def get_task_queue_from_dict(step_dict):
@@ -105,7 +121,21 @@ class Step:
         """
         Returns the max number of retries for this step.
         """
-        return self.step.step.to_dict()["run"]["max_retries"]
+        return self.mstep.step.to_dict()["run"]["max_retries"]
+
+    def __get_restart(self):
+        """
+        Set the restart property ensuring that restart is false
+        """
+        return self.__restart
+
+    def __set_restart(self, val):
+        """
+        Set the restart property ensuring that restart is false
+        """
+        self.__restart = val
+
+    restart = property(__get_restart, __set_restart)
 
     def needs_merlin_expansion(self, labels):
         """
@@ -113,6 +143,7 @@ class Step:
             specified sample column labels.
         """
         needs_expansion = False
+
         cmd = self.get_cmd()
         for label in labels + [
             "MERLIN_SAMPLE_ID",
@@ -122,19 +153,32 @@ class Step:
         ]:
             if f"$({label})" in cmd:
                 needs_expansion = True
+
+        # The restart may need expansion while the cmd does not.
+        restart_cmd = self.get_restart_cmd()
+        if not needs_expansion and restart_cmd:
+            for label in labels + [
+                "MERLIN_SAMPLE_ID",
+                "MERLIN_SAMPLE_PATH",
+                "merlin_sample_id",
+                "merlin_sample_path",
+            ]:
+                if f"$({label})" in restart_cmd:
+                    needs_expansion = True
+
         return needs_expansion
 
     def get_workspace(self):
         """
         :return : The workspace this step is to be executed in.
         """
-        return self.step.workspace.value
+        return self.mstep.workspace.value
 
     def name(self):
         """
         :return : The step name.
         """
-        return self.step.step.to_dict()["name"]
+        return self.mstep.step.to_dict()["name"]
 
     def execute(self, adapter_config):
         """
@@ -146,15 +190,32 @@ class Step:
         """
         # cls_adapter = ScriptAdapterFactory.get_adapter(adapter_config['type'])
         cls_adapter = MerlinScriptAdapter
+
+        # Update shell if the task overrides the default value from the batch section
         default_shell = adapter_config.pop("shell")
-        shell = self.step.step.run.pop("shell", default_shell)
+        shell = self.mstep.step.run.pop("shell", default_shell)
         adapter_config.update({"shell": shell})
+
+        # Update batch type if the task overrides the default value from the batch section
+        default_batch_type = adapter_config.pop("batch_type", adapter_config["type"])
+        # Set batch_type to default if unset
+        adapter_config.update({"batch_type": default_batch_type})
+        # Override the default batch: type: from the step config
+        batch = self.mstep.step.run.pop("batch", None)
+        if batch:
+            batch_type = batch.pop("type", default_batch_type)
+            adapter_config.update({"batch_type": batch_type})
+
         adapter = cls_adapter(**adapter_config)
         LOG.debug(f"Maestro step config = {adapter_config}")
+
         # Preserve the default shell if the step shell is different
         adapter_config.update({"shell": default_shell})
-        self.step.setup_workspace()
-        self.step.generate_script(adapter)
+        # Preserve the default batch type if the step batch type is different
+        adapter_config.update({"batch_type": default_batch_type})
+
+        self.mstep.setup_workspace()
+        self.mstep.generate_script(adapter)
         step_name = self.name()
         step_dir = self.get_workspace()
 
@@ -171,4 +232,9 @@ class Step:
         # at that point, we can drop the use of MerlinScriptAdapter above, and
         # go back to using the adapter specified by the adapter_config['type']
         # above
-        return ReturnCode(self.step.execute(adapter))
+        # If the above is done, then merlin_step in tasks.py can be changed to
+        # calls to the step execute and restart functions.
+        if self.restart and self.get_restart_cmd():
+            return ReturnCode(self.mstep.restart(adapter))
+        else:
+            return ReturnCode(self.mstep.execute(adapter))

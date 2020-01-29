@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -39,6 +39,7 @@ __all__ = (
     "SOFT_FAIL_VALUE",
     "HARD_FAIL_VALUE",
     "DRY_OK_VALUE",
+    "RETRY_VALUE",
 )
 
 
@@ -52,3 +53,4 @@ class ReturnCode(IntEnum):
     SOFT_FAIL = 101
     HARD_FAIL = 102
     DRY_OK = 103
+    RETRY = 104

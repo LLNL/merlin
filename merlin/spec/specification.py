@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -31,7 +31,7 @@
 """
 This module contains a class, MerlinSpec, which holds the unchanged
 data from the Merlin specification file.
-To see an example of a yaml specification, run `merlin-templates`.
+To see examples of yaml specifications, run `merlin example`.
 """
 import logging
 import os
@@ -101,7 +101,7 @@ class MerlinSpec(YAMLSpecification):
             merlin_block = {}
             LOG.warning(
                 f"Workflow specification missing \n "
-                f"encouraged 'merlin' section! Run 'merlin-templates' for an example.\n"
+                f"encouraged 'merlin' section! Run 'merlin example' for examples.\n"
                 f"Using default configuration with no sampling."
             )
         return merlin_block
@@ -176,11 +176,11 @@ class MerlinSpec(YAMLSpecification):
                 queues[step.name] = step.run["task_queue"]
         return queues
 
-    def make_queue_string(self, steps):
+    def get_queue_list(self, steps):
         """
-        Return a unique queue string for the steps
+        Return a sorted list of queues corresponding to spec steps
 
-        param steps: a list of step names
+        param steps: a list of step names or 'all'
         """
         queues = self.get_task_queues()
         if steps[0] == "all":
@@ -197,4 +197,12 @@ class MerlinSpec(YAMLSpecification):
                     f"Invalid steps '{steps}'! Try one of these (or 'all'):\n{nl.join(queues.keys())}"
                 )
                 raise
-        return ",".join(set(task_queues))
+        return sorted(set(task_queues))
+
+    def make_queue_string(self, steps):
+        """
+        Return a unique queue string for the steps
+
+        param steps: a list of step names
+        """
+        return ",".join(set(self.get_queue_list(steps)))

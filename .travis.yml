@@ -1,25 +1,19 @@
 language: python
-python: 
-  - "3.6"
-  - "3.7"
-  - "3.8"
-install: 
-  - "pip install --upgrade pip"
-  - "pip install cryptography"
-  - "pip install -r requirements.txt"
-  - "pip install -r workflows/feature_demo/requirements.txt"
-  - "pip install -e ."
-  - "pip install -r requirements/mysql.txt"
-  - "pip install --upgrade sphinx"
-script: 
-  - "merlin config"
-  - "python -m pytest tests/"
-  - "python tests/integration/run_tests.py --verbose --ids 1 2 3 4 5 6 7 8 9 12 13 18 19 20"
-deploy:
-  provider: pypi
-  user: "__token__"
-  password:
-    secure: Bd4xw0sEPixUiOwnl+5MYQaSX8SHKc0Dughg2Ls/B/e3NcvmCbYeBEz+2yclByffdNkxrQCTzMI90gZ5i7aKBuzEZ4E/RHXytwoLWOIKw3rE5jun44Vb9anLz2V+hEF6DSZ47fe+5re0D/TKCjtP7KTqLTDDdgg6+f648IbiE2CCmJXXeia48MzkUlLHYRbIuyWXGhaQasZwIoZQ872+xX0n8/3p+bV6BZ415DwJSsEdFmDu/F9drSVLUV6monU4eIfVoveos4HPH76J5WDMlwq6ZMaxF5E88ExiM9JJ4KNrrxBgLFS2I0BZmI92edHqtSs6TWz7Qo4wvW/6emosQjs6EWS8JmhSMdMFyhBos+Mx6HJYqJb4Nxcx9vclcpWSSzKSKUkAKX7bN5+v2Oy5BXfCdLBxWY+et+6ZY7/SzutOfgPmEz7BG7YiC9vZAGYpas4H3C6sOAdIb8y2lvL9Vht1+94GITZ0nFzdmpNGmAN6g9BAPvrEVWnZKdy0qpcBIpS/KW0N5/8jG74D0ouEDRgH5ahV5+RoyzzGrShC2XBHne4bGHb59DHWBRJBo2bS2Df0+gZPsd15kfjOCyZNHUIni2yQ83GgGc7hznLJd/UIvvPTGG42LjppzER5kimGor8BZ3B58dKrHqqFgRyAowOgoVlhd01rMi4a1QwS6ao=
-  on:
-    tags: true
-    branch: master
+python:
+- '3.6'
+- '3.7'
+- '3.8'
+install:
+- pip install --upgrade pip
+- pip install -r requirements.txt
+- pip install -r requirements/dev.txt
+- pip install -r merlin/examples/workflows/feature_demo/requirements.txt
+- pip install -e .
+- pip install -r requirements/mysql.txt
+- pip install --upgrade sphinx
+- merlin config
+script:
+- python -m pytest tests/
+- python tests/integration/run_tests.py --verbose --ids 1 2 3 4 5 6 7 8 9 12 13 14
+  15 16 17 18 19 20 25 26 27
+- if [ "$TRAVIS_BRANCH" = "master" ]; then ./tests/integration/version_test.sh; fi

@@ -3,7 +3,7 @@ celery[redis]>=4.3.0
 coloredlogs
 cryptography
 importlib_resources; python_version < '3.7'
-maestrowf>=1.1.6
+maestrowf>=1.1.7dev0
 numpy
 parse
 psutil>=5.1.0

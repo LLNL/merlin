@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,11 +41,20 @@ from maestrowf.datastructures.core import Study
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import determine_user_variables, expand_line
-from merlin.spec.override import dump_with_overrides, error_override_vars
+from merlin.spec.expansion import (
+    determine_user_variables,
+    expand_line,
+)
+from merlin.spec.override import (
+    dump_with_overrides,
+    error_override_vars,
+)
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
-from merlin.utils import load_array_file
+from merlin.utils import (
+    get_flux_cmd,
+    load_array_file,
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -62,6 +71,8 @@ class MerlinStudy:
         normally.
     :param `samples_file`: File to load samples from. Ignores sample lookup
         and generation in the spec if set.
+    :param `dry_run`: Flag to dry-run a workflow, which sets up the workspace but does not launch tasks.
+    :param `no_errors`: Flag to ignore some errors for testing.
     """
 
     def __init__(
@@ -71,6 +82,7 @@ class MerlinStudy:
         restart_dir=None,
         samples_file=None,
         dry_run=False,
+        no_errors=False,
     ):
         self.spec = MerlinSpec.load_specification(filepath)
         self.override_vars = override_vars
@@ -79,8 +91,9 @@ class MerlinStudy:
         self.samples_file = samples_file
         self.label_clash_error()
         self.dry_run = dry_run
+        self.no_errors = no_errors
 
-        # If we load from a file, record that in the object for provenence
+        # If we load from a file, record that in the object for provenance
         # downstream
         if self.samples_file is not None:
             self.spec.merlin["samples"]["file"] = self.samples_file
@@ -98,6 +111,7 @@ class MerlinStudy:
             "MERLIN_RESTART": str(int(ReturnCode.RESTART)),
             "MERLIN_SOFT_FAIL": str(int(ReturnCode.SOFT_FAIL)),
             "MERLIN_HARD_FAIL": str(int(ReturnCode.HARD_FAIL)),
+            "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
         }
         self.dag = None
         self.load_dag()
@@ -146,7 +160,7 @@ class MerlinStudy:
 
         :param `dest`: destination for fully expanded yaml file
         """
-        # specification text including defaults and overriden user variables
+        # specification text including defaults and overridden user variables
         full_spec = dump_with_overrides(self.spec, self.override_vars)
 
         with open(dest, "w") as dumped_file:
@@ -337,6 +351,16 @@ class MerlinStudy:
 
         return MerlinSpec.load_specification(self.expanded_filepath)
 
+    @cached_property
+    def flux_command(self):
+        """
+        Returns a the flux version
+        """
+        flux_bin = "flux"
+        if "flux_path" in self.expanded_spec.batch.keys():
+            flux_bin = os.path.join(self.expanded_spec.batch["flux_path"], "flux")
+        return get_flux_cmd(flux_bin, no_errors=self.no_errors)
+
     def generate_samples(self):
         """
         Runs the function defined in 'generate' if self.samples_file is not
@@ -408,11 +432,22 @@ class MerlinStudy:
     def get_adapter_config(self, override_type=None):
         spec = MerlinSpec.load_specification(self.spec.path)
         adapter_config = dict(spec.batch)
+
+        if "type" not in adapter_config.keys():
+            adapter_config["type"] = "local"
+
+        # The type may be overriden, preserve the batch type
+        adapter_config["batch_type"] = adapter_config["type"]
+
         if override_type is not None:
             adapter_config["type"] = override_type
 
         # if a dry run was ordered by the yaml spec OR the cli flag, do a dry run.
         adapter_config["dry_run"] = self.dry_run or adapter_config["dry_run"]
+
+        # Add the version if using flux to switch the command in the step
+        if adapter_config["batch_type"] == "flux":
+            adapter_config["flux_command"] = self.flux_command
 
         LOG.debug(f"Adapter config = {adapter_config}")
         return adapter_config

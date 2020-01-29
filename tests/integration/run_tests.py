@@ -40,7 +40,12 @@ import time
 from contextlib import suppress
 from glob import glob
 from re import search
-from subprocess import PIPE, Popen
+from subprocess import (
+    PIPE,
+    Popen,
+)
+
+from merlin.utils import get_flux_cmd
 
 
 OUTPUT_DIR = "cli_test_studies"
@@ -121,7 +126,6 @@ def process_test_result(passed, info, is_verbose, exit):
 def run_tests(args, tests):
     """
     Run all inputted tests.
-
     :param `tests`: a dictionary of
         {"test_name" : ("test_command", [conditions])}
     """
@@ -288,6 +292,44 @@ class StepFileExistsCond(StudyCond):
         return self.file_exists()
 
 
+class StepFileContainsCond(StudyCond):
+    """
+    A StudyCond that checks that a particular file contains a regex.
+    """
+
+    def __init__(self, step, filename, study_name, output_path, regex):
+        """
+        :param `step`: the name of a step
+        :param `filename`: name of file to search for in step's workspace directory
+        :param `study_name`: the name of a study
+        :param `output_path`: the $(OUTPUT_PATH) of a study
+        """
+        super().__init__(study_name, output_path)
+        self.step = step
+        self.filename = filename
+        self.regex = regex
+
+    def contains(self):
+        glob_string = f"{self.dirpath_glob}/{self.step}/*/{self.filename}"
+        try:
+            filename = self.glob(glob_string)
+            with open(filename, "r") as textfile:
+                filetext = textfile.read()
+            return self.is_within(filetext)
+        except Exception:
+            return False
+
+    def is_within(self, text):
+        """
+        :param `text`: text in which to search for a regex match
+        """
+        return search(self.regex, text) is not None
+
+    @property
+    def passes(self):
+        return self.contains()
+
+
 class ProvenanceCond(RegexCond):
     """
     A condition that a Merlin provenance yaml spec
@@ -337,8 +379,14 @@ def define_tests():
     run = "merlin run"
     restart = "merlin restart"
     purge = "merlin purge"
-    demo = "workflows/feature_demo/feature_demo.yaml"
-    simple = "workflows/simple_chain/simple_chain.yaml"
+    examples = "merlin/examples/workflows"
+    demo = f"{examples}/feature_demo/feature_demo.yaml"
+    simple = f"{examples}/simple_chain/simple_chain.yaml"
+    slurm = f"{examples}/slurm/slurm_test.yaml"
+    slurm_restart = f"{examples}/slurm/slurm_par_restart.yaml"
+    flux = f"{examples}/flux/flux_test.yaml"
+    flux_restart = f"{examples}/flux/flux_par_restart.yaml"
+    lsf = f"{examples}/lsf/lsf_par.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
 
@@ -359,11 +407,11 @@ def define_tests():
             [ReturnCodeCond(), RegexCond(celery_regex)],
         ),
         "run-workers echo slurm_test": (
-            f"{workers} workflows/slurm/slurm_test.yaml --echo",
+            f"{workers} {slurm} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
         ),
         "run-workers echo flux_test": (
-            f"{workers} workflows/flux/flux_test.yaml --echo",
+            f"{workers} {flux} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
         ),
         "run-workers echo override feature_demo": (
@@ -383,10 +431,57 @@ def define_tests():
             f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             ReturnCodeCond(),
         ),
+        "example failure": (f"merlin example failure", RegexCond("not found"),),
+        "example simple_chain": (
+            f"merlin example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
+            ReturnCodeCond(),
+        ),
         # "restart local simple_chain": (
         #    f"{restart} --local $(find studies/ -type d -name 'simple_chain_*')",
         #    [ReturnCodeCond(), NoStderrCond()],
         # ),
+        "dry launch slurm": (
+            f"{run} {slurm} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs", "*/runs.slurm.sh", "slurm_test", OUTPUT_DIR, "srun "
+            ),
+        ),
+        "dry launch flux": (
+            f"{run} {flux} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs",
+                "*/runs.slurm.sh",
+                "flux_test",
+                OUTPUT_DIR,
+                get_flux_cmd("flux", no_errors=True),
+            ),
+        ),
+        "dry launch lsf": (
+            f"{run} {lsf} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "
+            ),
+        ),
+        "dry launch slurm restart": (
+            f"{run} {slurm_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs",
+                "*/runs.restart.slurm.sh",
+                "slurm_par_restart",
+                OUTPUT_DIR,
+                "srun ",
+            ),
+        ),
+        "dry launch flux restart": (
+            f"{run} {flux_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs_rs",
+                "*/runs_rs.restart.slurm.sh",
+                "flux_par_restart",
+                OUTPUT_DIR,
+                get_flux_cmd("flux", no_errors=True),
+            ),
+        ),
         "local override feature_demo": (
             f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [

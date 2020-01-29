@@ -31,22 +31,26 @@
 PYTHON?=python3
 PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
-VENV?=venv_merlin_$(SYS_TYPE)_py$(PYV)
-CERT?=/etc/pki/tls/cert.pem
+VENV?=venv_merlin_py$(PYV)
 PIP?=$(VENV)/bin/pip
-MRLN?=merlin/
-TEST?=tests/
+MRLN=merlin/
+TEST=tests/
+WKFW=merlin/examples/workflows/
 MAX_COMPLEXITY?=5
-VENVMOD?=venv
+
+VER?=1.0.0
+VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+
+CHANGELOG_VSTRING="## \[$(VSTRING)\]"
+INIT_VSTRING="__version__ = \"$(VSTRING)\""
 
 PENV=merlin$(PYV)
 
 .PHONY : all
-.PHONY : install
+.PHONY : install-dev
 .PHONY : virtualenv
+.PHONY : install-workflow-deps
 .PHONY : install-pip-mysql
-.PHONY : install-tasks
-.PHONY : install-scipy
+.PHONY : install-merlin
 .PHONY : update
 .PHONY : pull
 .PHONY : clean-output
@@ -59,38 +63,32 @@ PENV=merlin$(PYV)
 .PHONY : check-style
 .PHONY : check-camel-case
 .PHONY : checks
-.PHONY : start-workers
 
 
-all: install install-tasks install-pip-mysql install-sphinx
+all: install-dev install-merlin install-workflow-deps install-pip-mysql
 
 
 # install requirements
-install: virtualenv
-	$(VENV)/bin/easy_install cryptography
-	$(PIP) install --cert $(CERT) -r requirements.txt
+install-dev: virtualenv
+	$(PIP) install -r requirements/dev.txt
 
 
 # this only works outside the venv
 virtualenv:
-	$(PYTHON) -m $(VENVMOD) $(VENV) --prompt $(PENV) --system-site-packages
-	$(PIP) install --cert $(CERT) --upgrade pip
+	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages
+	$(PIP) install --upgrade pip
 
 
-install-sphinx:
-	$(PIP) install --upgrade sphinx
+install-workflow-deps:
+	$(PIP) install -r $(WKFW)feature_demo/requirements.txt
 
 
 install-pip-mysql:
 	$(PIP) install -r requirements/mysql.txt
 
 
-install-tasks:
+install-merlin:
 	$(PIP) install -e .
-
-
-install-scipy:
-	$(PIP) install --cert $(CERT) scipy --ignore-installed
 
 
 # this only works outside the venv
@@ -110,7 +108,6 @@ clean-py:
 # remove all studies/ directories
 clean-output:
 	-find $(MRLN) -name "studies*" -type d -exec rm -rf {} \;
-	-find workflows/ -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "studies*" -type d -exec rm -rf {} \;
 	-find . -maxdepth 1 -name "merlin.log" -type f -exec rm -rf {} \;
 
@@ -136,8 +133,10 @@ tests: unit-tests cli-tests
 fix-style:
 	isort -rc $(MRLN)
 	isort -rc $(TEST)
+	isort *.py
 	black --target-version py36 $(MRLN)
 	black --target-version py36 $(TEST)
+	black --target-version py36 *.py
 
 
 # run code style checks
@@ -157,7 +156,18 @@ check-camel-case: clean-py
 checks: check-style check-camel-case
 
 
-# basic shortcut for starting celery workers
-start-workers:
-	celery worker -A merlin -l INFO
+# Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
+# 	Use like this: make VER=?.?.? verison
+version:
+	# do merlin/__init__.py
+	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
+	# do CHANGELOG.md
+	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
+	# do all file headers (works on linux)
+	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	# do git tag
+	#git tag $(VER)
+	# remind user to use git push --tags
+	#echo "Remember to use git push --tags"
 

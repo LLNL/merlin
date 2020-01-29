@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -60,14 +60,11 @@
 import copy
 
 
-unistr = (unicode, str)
-
-
 class OpenFileList:
     openwas = open
 
     def __new__(cls, files, *v, **kw):
-        if isinstance(files, unistr):
+        if isinstance(files, str):
             return open(files, *v, **kw)
         return super(OpenFileList, cls).__new__(cls)
 

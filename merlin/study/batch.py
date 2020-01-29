@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -128,7 +128,7 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
 
     # A jsrun submission cannot be run under a parent jsrun so
     # all non flux lsf submissions need to be local.
-    if btype == "local" or btype == "lsf":
+    if btype == "local" or "lsf" in btype:
         return com
 
     if nodes is None:

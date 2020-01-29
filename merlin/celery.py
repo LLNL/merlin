@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,7 +29,10 @@
 ###############################################################################
 
 """Updated celery configuration."""
-from __future__ import absolute_import, print_function
+from __future__ import (
+    absolute_import,
+    print_function,
+)
 
 import logging
 import os
@@ -40,7 +43,10 @@ from celery import Celery
 from celery.signals import worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
-from merlin.config import broker, results_backend
+from merlin.config import (
+    broker,
+    results_backend,
+)
 from merlin.log_formatter import FORMATS
 from merlin.router import route_for_task
 

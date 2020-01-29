@@ -91,20 +91,13 @@ See `Maestro's GitHub page
 <https://github.com/LLNL/maestrowf>`_
 for more details.
 
-What is flux?
-~~~~~~~~~~~~~
-Flux is a hierarchical scheduler and launcher for parallel simulations. It allows the user
-to specifiy the same launch command that will work on different HPC clusters with different 
-default schedulers such as SLURM or LSF.
-More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
-
 Designing and Building Workflows
 --------------------------------
 :doc:`yaml specification file <./merlin_specification>`
 
 Where are some example workflows?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin-templates``
+``merlin example --help``
 
 How do I launch a workflow?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,16 +124,19 @@ You probably can gain much of the functionality you want by combining a DAG with
 
 How do I implement workflow looping / iteration?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Combining ``exit $(MERLIN_RESTART)`` with ``max_retries`` can allow you to loop a single step.
+Combining ``exit $(MERLIN_RETRY)`` with ``max_retries`` can allow you to loop a single step.
 Entire workflow looping / iteration can be accomplished by finishing off your DAG with a final step that makes another call to ``merlin run``.
 
 
 Can steps be restarted?
 ~~~~~~~~~~~~~~~~~~~~~~~
-Yes. To build this into a workflow, use ``exit $(MERLIN_RESTART)`` within a step to restart it.
-To restart failed steps after a workflow has run, see :ref:`restart`.
-
+Yes. To build this into a workflow, use ``exit $(MERLIN_RETRY)`` within a step to retry a failed ``cmd`` section.
 The max number of retries in given step can be specified with the ``max_retries`` field.
+
+Alternatively, use ``exit $(MERLIN_RESTART)`` to run the optional ``<step>.run.restart`` section.
+
+To restart failed steps after a workflow is done running, see :ref:`restart`.
+
 
 How do I mark a step failure?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,23 +158,29 @@ Steps have a ``name``, ``description``, and ``run`` field, as shown below.
 
 .. code:: yaml
 
-    name: ...
-    description: ...
+    name: <string>
+    description: <string>
     run:
-        cmd: ...
-        depends: ...
-        task_queue: ...
-        shell: ...
-        max_retries: ...
+        cmd: <shell command for this step>
 
-Optional fields are ``depends``, ``task_queue``, and ``shell``.
+Also under ``run``, the following fields are optional:
+
+.. code:: yaml
+
+    run:
+        depends: <list of step names>
+        task_queue: <task queue name for this step>
+        shell: <e.g., /bin/bash, /usr/bin/env python3>
+        max_retries: <integer>
+        nodes: <integer>
+        procs: <integer>
 
 How do I specify the language used in a step?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 You can add the field ``shell`` under the ``run`` portion of your step
 to change the language you write your step in. The default is ``/bin/bash``,
 but you can do things like ``/usr/bin/env python`` as well.
-See the ``basic_ensemble.yaml`` for an example.
+Use ``merlin example feature_demo`` to see an example of this.
 
 Running Workflows
 -----------------
@@ -236,3 +238,71 @@ You might also have rogue workers. To find out, try ``merlin query-workers``.
 
 Where do tasks get run?
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+Can I run different steps from my workflow on different machines?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Yes. Under the ``merlin`` block you can specify which machines your workers are allowed on.
+In order for this to work, you must then use ``merlin run-workers`` seperately on each of
+the specified machines.
+
+.. code:: yaml
+
+   merlin:
+      resources:
+         workers:
+            worker_name:
+               machines: [hostA, hostB, hostC]
+
+.. _slurm:
+
+What is Slurm?
+~~~~~~~~~~~~~~
+A job scheduler. See `Slurm documentation
+<https://slurm.schedmd.com/documentation.html>`_
+.
+
+.. _lsf:
+
+What is LSF?
+~~~~~~~~~~~~
+Another job scheduler. See `IBM's LSF documentation
+<https://www.ibm.com/support/knowledgecenter/en/SSWRJV_10.1.0/lsf_welcome/lsf_welcome.html>`_
+.
+
+.. _flux:
+
+What is flux?
+~~~~~~~~~~~~~
+Flux is a hierarchical scheduler and launcher for parallel simulations. It allows the user
+to specify the same launch command that will work on different HPC clusters with different 
+default schedulers such as SLURM or LSF.
+More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
+
+What is ``LAUNCHER``?
+~~~~~~~~~~~~~~~~~
+``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with parellel schedulers like :ref:`slurm`, :ref:`lsf`, and :ref:`flux`.
+
+How do I use ``LAUNCHER``?
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Instead of this:
+
+.. code:: yaml
+
+    run:
+        cmd: srun -N 1 -n 3 python script.py
+
+Do something like this:
+
+.. code:: yaml
+
+    batch:
+        type: slurm
+
+    run:
+        cmd: $(LAUNCHER) python script.py
+        nodes: 1
+        procs: 3
+
+Where can I learn more about merlin?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Check out our (paper)[https://arxiv.org/abs/1912.02892] on arXiv.

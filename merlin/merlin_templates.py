@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,90 +29,45 @@
 ###############################################################################
 
 """
-This module handles the CLI for the merlin-templates.
+This module handles the CLI for the deprecated `merlin-templates` command.
 """
 import argparse
 import logging
 import os
 import sys
 
-from merlin import router
 from merlin.ascii_art import banner_small
+from merlin.examples.generator import (
+    list_examples,
+    setup_example,
+)
 from merlin.log_formatter import setup_logging
-from merlin.templates.generator import list_templates
 
 
 LOG = logging.getLogger("merlin-templates")
-DEFAULT_LOG_LEVEL = "INFO"
+DEFAULT_LOG_LEVEL = "ERROR"
 
 
-def setup_template(args):
-
-    print(banner_small)
-
-    outdir = os.getcwd()
-
-    if args.path:
-        output = args.path
-
-    router.templates(args.template, args.path)
-
-
-def template_list(args):
-    print(banner_small)
-    list_templates()
+def process_templates(args):
+    LOG.error(
+        "The command `merlin-templates` has been deprecated in favor of `merlin example`."
+    )
 
 
 def setup_argparse():
     parser = argparse.ArgumentParser(
-        prog="Merlin Templates",
+        prog="Merlin Examples",
         description=banner_small,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="See merlin-templates <command> --help for more info.",
     )
-    subparsers = parser.add_subparsers(dest="subparsers")
-    subparsers.required = True
-
-    parser.add_argument(
-        "-lvl",
-        "--level",
-        action="store",
-        dest="level",
-        type=str,
-        default=DEFAULT_LOG_LEVEL,
-        help="Set the log level. Options: DEBUG, INFO, WARNING, ERROR. "
-        "[Default: %(default)s]",
-    )
-
-    # Naming variable subparser _list to avoid conflict with Python's list
-    # reserved word.
-    _list = subparsers.add_parser("list", help="List available templates.")
-    _list.set_defaults(func=template_list)
-
-    setup = subparsers.add_parser("setup", help="Setup a new template.")
-    setup.add_argument(
-        "template", action="store", type=str, help="The name of the template to setup."
-    )
-    setup.add_argument(
-        "-p",
-        "--path",
-        action="store",
-        type=str,
-        default=os.getcwd(),
-        help="Specify a path to write the workflow to. Defaults to current "
-        "working directory",
-    )
-    setup.set_defaults(func=setup_template)
-
+    parser.set_defaults(func=process_templates)
     return parser
 
 
 def main():
     parser = setup_argparse()
     args = parser.parse_args()
-
-    setup_logging(logger=LOG, log_level=args.level.upper(), colors=True)
-
+    setup_logging(logger=LOG, log_level=DEFAULT_LOG_LEVEL, colors=True)
     args.func(args)
 
 

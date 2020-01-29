@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -66,30 +66,20 @@ def find_config_file(path=None):
     Given a dir path, find and return the path to the merlin application
     config file.
     """
-    filename = APP_FILENAME
-
     if path is None:
-        local_app = os.path.join(os.getcwd(), filename)
-        path_app = os.path.join(MERLIN_HOME, filename)
+        local_app = os.path.join(os.getcwd(), APP_FILENAME)
+        path_app = os.path.join(MERLIN_HOME, APP_FILENAME)
 
         if os.path.isfile(local_app):
             return local_app
         elif os.path.isfile(path_app):
             return path_app
         else:
-            LOG.error(
-                f'Cannot find a config file, run merlin config and " \
-                "edit the file, "{MERLIN_HOME}/{filename}"'
-            )
+            return None
 
-    app_path = os.path.join(path, filename)
+    app_path = os.path.join(path, APP_FILENAME)
     if os.path.exists(app_path):
         return app_path
-
-    LOG.error(
-        f'Cannot find a config file, run merlin config and edit the " \
-        "file, "{MERLIN_HOME}/{filename}"'
-    )
 
     return None
 
@@ -121,7 +111,9 @@ def get_config(path):
     filepath = find_config_file(path)
 
     if filepath is None:
-        raise ValueError("App config file not found.")
+        raise ValueError(
+            f"Cannot find a merlin config file! Run 'merlin config' and edit the file '{MERLIN_HOME}/{APP_FILENAME}'"
+        )
 
     config = load_config(filepath)
     load_default_user_names(config)
