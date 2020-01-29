@@ -7,6 +7,7 @@ RUN \
   cd /merlin && \
   python3.8 -m pip install setuptools -U && \
   python3.8 -m pip install pip -U && \
+  python3.8 -m pip install cffi -U && \
   python3.8 setup.py install
 
 ENTRYPOINT ["/usr/local/bin/merlin"]
