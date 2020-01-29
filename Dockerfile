@@ -13,6 +13,8 @@ RUN \
   python3.8 -m pip install pip -U && \
   python3.8 -m pip install cffi -U && \
   python3.8 setup.py install && \
+  python3.8 -m pip install -r requirements/dev.txt  && \
+  python3.8 -m pip install -r merlin/examples/workflows/feature_demo/requirements.txt  && \
   groupadd -g $UID $USER && \
   useradd -g $USER -u $UID -d /home/$USER -m $USER && \
   sh -c "printf \"$USER ALL= NOPASSWD: ALL\\n\" >> /etc/sudoers" && \
