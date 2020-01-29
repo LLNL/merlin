@@ -33,8 +33,9 @@ PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version
 PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 VENV?=venv_merlin_py$(PYV)
 PIP?=$(VENV)/bin/pip
-MRLN=merlin/
-TEST=tests/
+MRLN=merlin
+TEST=tests
+DOCS=docs
 WKFW=merlin/examples/workflows/
 MAX_COMPLEXITY?=5
 
@@ -112,8 +113,18 @@ clean-output:
 	-find . -maxdepth 1 -name "merlin.log" -type f -exec rm -rf {} \;
 
 
-# clean out unwanted files
-clean: clean-py
+# remove doc build files
+clean-docs:
+	rm -rf $(DOCS)/build
+
+
+clean-dist:
+	rm -rf dist
+	rm -rf build
+
+
+# remove unwanted files
+clean: clean-py clean-docs clean-dist
 
 
 unit-tests:
@@ -122,7 +133,7 @@ unit-tests:
 
 # run CLI tests
 cli-tests:
-	-python $(TEST)integration/run_tests.py
+	-python $(TEST)/integration/run_tests.py
 
 
 # run unit and CLI tests
