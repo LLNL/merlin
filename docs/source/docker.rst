@@ -49,11 +49,9 @@ recommended that a fixed directory be used for the ``--volume`` argument.
   docker run --rm -ti --volume "$HOME/merlinu":/home/merlinu merlin config
 
   # Copy an example to the local dir
-  docker run --rm -ti --volume "$HOME/merlinu":/home/merlinu merlin example slurm_test 
+  docker run --rm -ti --volume "$HOME/merlinu":/home/merlinu merlin example feature_demo
 
-  cd slurm
-
-  docker run --rm -ti --volume "$HOME/merlinu":/home/merlinu merlin slurm_tets.yaml --dry --local
+  docker run --rm -ti --volume "$HOME/merlinu":/home/merlinu merlin feature_demo/feature_demo.yaml --dry --local
 
 
 A script can be created to handle the docker run command, ``merlin.sh``.
