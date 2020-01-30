@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated the Merlin Sphinx web docs.
+- Changed the example workflows to use python3 instead of python.
 
 ### Added
 - A Merlin Dockerfile and some accompanying web documentation.
