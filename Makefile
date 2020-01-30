@@ -52,7 +52,6 @@ PENV=merlin$(PYV)
 .PHONY : install-workflow-deps
 .PHONY : install-pip-mysql
 .PHONY : install-merlin
-.PHONY : update
 .PHONY : pull
 .PHONY : clean-output
 .PHONY : clean-docs
@@ -95,10 +94,6 @@ install-merlin:
 	$(PIP) install -e .
 
 
-# this only works outside the venv
-update: pull install clean
-
-
 pull:
 	git pull
 
@@ -131,16 +126,16 @@ clean: clean-py clean-docs clean-release
 
 
 release:
-	python3 setup.py sdist bdist_wheel
+	$(PYTHON) setup.py sdist bdist_wheel
 
 
 unit-tests:
-	-python -m pytest $(TEST)
+	-$(PYTHON) -m pytest $(TEST)
 
 
 # run CLI tests
 cli-tests:
-	-python $(TEST)/integration/run_tests.py
+	-$(PYTHON) $(TEST)/integration/run_tests.py
 
 
 # run unit and CLI tests
@@ -159,7 +154,7 @@ fix-style:
 
 # run code style checks
 check-style:
-	-python -m flake8 --max-complexity $(MAX_COMPLEXITY) --exclude ascii_art.py $(MRLN)
+	-$(PYTHON) -m flake8 --max-complexity $(MAX_COMPLEXITY) --exclude ascii_art.py $(MRLN)
 	-black --check --target-version py36 $(MRLN)
 
 
