@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - A Merlin Dockerfile and some accompanying web documentation.
+- Makefile target `release`.
+
+### Changed
+- Updated the Merlin Sphinx web docs.
+- `make clean` is more comprehensive, now cleans docs build files and release files.
 
 ## [1.2.3] 2020-01-27
 
