@@ -33,8 +33,9 @@ PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version
 PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 VENV?=venv_merlin_py$(PYV)
 PIP?=$(VENV)/bin/pip
-MRLN=merlin/
-TEST=tests/
+MRLN=merlin
+TEST=tests
+DOCS=docs
 WKFW=merlin/examples/workflows/
 MAX_COMPLEXITY?=5
 
@@ -54,8 +55,11 @@ PENV=merlin$(PYV)
 .PHONY : update
 .PHONY : pull
 .PHONY : clean-output
+.PHONY : clean-docs
+.PHONY : clean-release
 .PHONY : clean-py
 .PHONY : clean
+.PHONY : release
 .PHONY : unit-tests
 .PHONY : cli-tests
 .PHONY : tests
@@ -112,8 +116,22 @@ clean-output:
 	-find . -maxdepth 1 -name "merlin.log" -type f -exec rm -rf {} \;
 
 
-# clean out unwanted files
-clean: clean-py
+# remove doc build files
+clean-docs:
+	rm -rf $(DOCS)/build
+
+
+clean-release:
+	rm -rf dist
+	rm -rf build
+
+
+# remove unwanted files
+clean: clean-py clean-docs clean-release
+
+
+release:
+	python3 setup.py sdist bdist_wheel
 
 
 unit-tests:
@@ -122,7 +140,7 @@ unit-tests:
 
 # run CLI tests
 cli-tests:
-	-python $(TEST)integration/run_tests.py
+	-python $(TEST)/integration/run_tests.py
 
 
 # run unit and CLI tests
@@ -157,7 +175,7 @@ checks: check-style check-camel-case
 
 
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
-# 	Use like this: make VER=?.?.? verison
+# Use like this: make VER=?.?.? verison
 version:
 	# do merlin/__init__.py
 	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
