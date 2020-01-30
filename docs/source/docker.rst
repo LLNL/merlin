@@ -74,7 +74,7 @@ A script can be created to handle the docker run command, ``merlin.sh``.
   docker run --rm -ti --volume "$LWKDIR":/home/merlinu merlin $@
 
 
-The merlin command can be overriden in teh continaer by using a different 
+The merlin command can be overridden in the container by using a different 
 ``--entrypoint`` command. If the user would like to examine the container 
 contents, they can use a shell as the entry pint.
 
