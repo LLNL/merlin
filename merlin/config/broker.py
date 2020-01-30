@@ -157,7 +157,11 @@ def get_connection_string(include_password=True):
     `merlin.yaml` config file.
     """
     broker = CONFIG.broker.name
-    config_path = CONFIG.celery.certs
+    try:
+        config_path = CONFIG.celery.certs
+    except AttributeError:
+        config_path = None
+
 
     if broker not in BROKERS:
         raise ValueError(f"Error: {broker} is not a supported broker.")
