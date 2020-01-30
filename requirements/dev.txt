@@ -4,5 +4,5 @@ dep-license
 flake8
 isort
 pytest
-sphinx
-sphinx_rtd_theme
+sphinx>=2.0.0
+alabaster

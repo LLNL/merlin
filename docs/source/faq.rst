@@ -1,7 +1,7 @@
 .. _faq:
 
-Frequently Asked Questions
-==========================
+FAQ
+===
 .. contents:: FAQs
   :local:
 
