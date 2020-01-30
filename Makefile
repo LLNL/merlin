@@ -131,7 +131,7 @@ clean: clean-py clean-docs clean-release
 
 
 release:
-	python setup.py sdist bdist_wheel
+	python3 setup.py sdist bdist_wheel
 
 
 unit-tests:
