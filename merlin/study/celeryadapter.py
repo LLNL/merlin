@@ -38,10 +38,7 @@ import subprocess
 import time
 from contextlib import suppress
 
-from merlin.study.batch import (
-    batch_check_parallel,
-    batch_worker_launch,
-)
+from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import (
     check_machines,
     get_procs,
@@ -414,7 +411,9 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     """
     from merlin.celery import app
 
-    LOG.debug(f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}")
+    LOG.debug(
+        f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}"
+    )
     active_queues, _ = get_queues(app)
 
     # If not specified, get all the queues
@@ -437,9 +436,9 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     print("spec_worker_names: {spec_worker_names}")
     if spec_worker_names is None and worker_regex is None:
         workers_to_stop = list(all_workers)
-    else:   
+    else:
         workers_to_stop = []
-        if spec_worker_names is not None and len(spec_worker_names) > 0: 
+        if spec_worker_names is not None and len(spec_worker_names) > 0:
             for worker_name in spec_worker_names:
                 workers_to_stop.append(regex_list_filter(worker_name, all_workers))
         if worker_regex is not None:

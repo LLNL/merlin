@@ -43,21 +43,12 @@ from argparse import (
 )
 from contextlib import suppress
 
-from merlin import (
-    VERSION,
-    router,
-)
+from merlin import VERSION, router
 from merlin.ascii_art import banner_small
-from merlin.examples.generator import (
-    list_examples,
-    setup_example,
-)
+from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
+from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
-from merlin.spec.expansion import (
-    RESERVED,
-    get_spec_with_expansion,
-)
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
 
@@ -263,7 +254,9 @@ def stop_workers(args):
         worker_names = spec.get_worker_names()
         for worker_name in worker_names:
             if "$" in worker_name:
-                LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
+                LOG.warning(
+                    f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?"
+                )
     router.stop_workers(args.task_server, worker_names, args.queues, args.workers)
 
 
