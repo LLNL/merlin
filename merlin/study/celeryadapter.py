@@ -414,7 +414,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     """
     from merlin.celery import app
 
-    LOG.debug(f"Sending stop to queues: {queues}, worker_regex: {worker_regex}")
+    LOG.debug(f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}")
     active_queues, _ = get_queues(app)
 
     # If not specified, get all the queues
@@ -434,6 +434,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
 
     LOG.debug(f"Pre-filter worker stop list: {all_workers}")
 
+    print("spec_worker_names: {spec_worker_names}")
     if spec_worker_names is None and worker_regex is None:
         workers_to_stop = list(all_workers)
     else:   

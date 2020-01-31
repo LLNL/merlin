@@ -485,6 +485,7 @@ def setup_argparse():
     stop.add_argument(
         "--spec",
         type=str,
+        default=None,
         help="Path to a Merlin YAML spec file from which to read worker names to stop.",
     )
     stop.add_argument(

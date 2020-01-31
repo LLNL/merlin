@@ -178,8 +178,6 @@ def stop_workers(task_server, spec_worker_names, queues, workers_regex):
     LOG.info(f"Stopping workers...")
 
     if task_server == "celery":
-        if spec is not None:
-            pass
         # Stop workers
         return stop_celery_workers(queues, spec_worker_names, workers_regex)
     else:
