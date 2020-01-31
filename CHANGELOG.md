@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   local cli test.
 - A Merlin Dockerfile and some accompanying web documentation.
 - Makefile target `release`.
+- The merlin config now takes an optional --broker argument, the
+  value can be None, default rabbitmq broker, or redis for a redis
+  local broker.
 
 ### Removed
 - Makefile targets `pull` and `update`.
@@ -22,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated the Merlin Sphinx web docs.
 - `make clean` is more comprehensive, now cleans docs build files and release files.
+- The celery keyword is no longer required in the app.yaml file.
 
 ## [1.2.3] 2020-01-27
 
