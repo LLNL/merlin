@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- cli test flag `--local`, which can be used in place of listing out the id of each
+  local cli test.
 - A Merlin Dockerfile and some accompanying web documentation.
 - Makefile target `release`.
 
