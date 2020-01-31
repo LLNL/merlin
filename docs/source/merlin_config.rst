@@ -1,10 +1,10 @@
-Configuring Merlin
-===================
+Configuration
+=============
 
 This section provides documentation for configuring Merlin's connections with task servers and results backends.
 
 
-Merlin Server Configuration
+Merlin server configuration
 ---------------------------
 
 Merlin works best configuring celery to run with a RabbitMQ_ broker and a redis_ backend.

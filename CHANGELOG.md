@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - cli test flag `--local`, which can be used in place of listing out the id of each
   local cli test.
+- A Merlin Dockerfile and some accompanying web documentation.
+- Makefile target `release`.
+
+### Removed
+- Makefile targets `pull` and `update`.
+
+### Changed
+- Updated the Merlin Sphinx web docs.
+- `make clean` is more comprehensive, now cleans docs build files and release files.
 
 ## [1.2.3] 2020-01-27
 

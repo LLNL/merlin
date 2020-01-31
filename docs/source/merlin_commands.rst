@@ -1,8 +1,5 @@
-Merlin Commands
-===============
-
-Commands
---------
+Command line
+============
 
 The merlin executable defines a number of commands to create tasks,
 launch workers to run the tasks and remove tasks from the task server.
