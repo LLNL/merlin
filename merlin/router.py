@@ -166,19 +166,22 @@ def query_workers(task_server):
         LOG.error("Celery is not specified as the task server!")
 
 
-def stop_workers(task_server, queues, workers):
+def stop_workers(task_server, spec_worker_names, queues, workers_regex):
     """
     Stops workers.
 
     :param `task_server`: The task server from which to stop workers.
+    :param `spec_worker_names`: Worker names to stop, drawn from a spec.
     :param `queues`     : The queues to stop
-    :param `workers`    : Regex for workers to stop
+    :param `workers_regex`    : Regex for workers to stop
     """
     LOG.info(f"Stopping workers...")
 
     if task_server == "celery":
+        if spec is not None:
+            pass
         # Stop workers
-        return stop_celery_workers(queues, workers)
+        return stop_celery_workers(queues, spec_worker_names, workers_regex)
     else:
         LOG.error("Celery is not specified as the task server!")
 

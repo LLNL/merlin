@@ -53,6 +53,7 @@ from merlin.examples.generator import (
     setup_example,
 )
 from merlin.log_formatter import setup_logging
+from merlin.spec.specification import MerlinSpec
 from merlin.spec.expansion import (
     RESERVED,
     get_spec_with_expansion,
@@ -255,7 +256,15 @@ def stop_workers(args):
     :param `args`: parsed CLI arguments
     """
     print(banner_small)
-    router.stop_workers(args.task_server, args.queues, args.workers)
+    worker_names = []
+    if args.spec:
+        spec_path = verify_filepath(args.spec)
+        spec = MerlinSpec.load_specification(spec_path)
+        worker_names = spec.get_worker_names()
+        for worker_name in worker_names:
+            if "$" in worker_name:
+                LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
+    router.stop_workers(args.task_server, worker_names, args.queues, args.workers)
 
 
 def print_info(args):
@@ -474,6 +483,11 @@ def setup_argparse():
     )
     stop.set_defaults(func=stop_workers)
     stop.add_argument(
+        "--spec",
+        type=str,
+        help="Path to a Merlin YAML spec file from which to read worker names to stop.",
+    )
+    stop.add_argument(
         "--task_server",
         type=str,
         default="celery",
@@ -499,7 +513,7 @@ def setup_argparse():
         "--task_server",
         type=str,
         default="celery",
-        help="Task server type from which to stop workers.\
+        help="Task server type from which to query workers.\
                             Default: %(default)s",
     )
 
@@ -525,7 +539,7 @@ def setup_argparse():
         "--task_server",
         type=str,
         default="celery",
-        help="Task server type from which to stop workers.\
+        help="Task server type.\
                             Default: %(default)s",
     )
     status.add_argument(
