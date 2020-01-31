@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Updated the Merlin Sphinx web docs.
+- Changed the example workflows to use python3 instead of python.
+
 ### Added
 - cli test flag `--local`, which can be used in place of listing out the id of each
   local cli test.
