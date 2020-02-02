@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.0.
+# This file is part of Merlin, Version: 1.0.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,6 +41,8 @@ from contextlib import suppress
 from glob import glob
 from re import search
 from subprocess import PIPE, Popen
+
+from merlin.utils import get_flux_cmd
 
 
 OUTPUT_DIR = "cli_test_studies"
@@ -121,13 +123,9 @@ def process_test_result(passed, info, is_verbose, exit):
 def run_tests(args, tests):
     """
     Run all inputted tests.
-
     :param `tests`: a dictionary of
         {"test_name" : ("test_command", [conditions])}
     """
-    total = 0
-    failures = 0
-
     selective = False
     n_to_run = len(tests)
     if args.ids is not None and len(args.ids) > 0:
@@ -135,10 +133,22 @@ def run_tests(args, tests):
             raise ValueError(f"Test ids must be between 1 and {len(tests)}, inclusive.")
         selective = True
         n_to_run = len(args.ids)
+    elif args.local is not None:
+        args.ids = []
+        n_to_run = 0
+        selective = True
+        test_id = 1
+        for _, test in tests.items():
+            if len(test) == 3 and test[2] == "local":
+                args.ids.append(test_id)
+                n_to_run += 1
+            test_id += 1
 
     print(f"Running {n_to_run} integration tests...")
     start_time = time.time()
 
+    total = 0
+    failures = 0
     for test_name, test in tests.items():
         test_label = total + 1
         if selective and test_label not in args.ids:
@@ -288,6 +298,44 @@ class StepFileExistsCond(StudyCond):
         return self.file_exists()
 
 
+class StepFileContainsCond(StudyCond):
+    """
+    A StudyCond that checks that a particular file contains a regex.
+    """
+
+    def __init__(self, step, filename, study_name, output_path, regex):
+        """
+        :param `step`: the name of a step
+        :param `filename`: name of file to search for in step's workspace directory
+        :param `study_name`: the name of a study
+        :param `output_path`: the $(OUTPUT_PATH) of a study
+        """
+        super().__init__(study_name, output_path)
+        self.step = step
+        self.filename = filename
+        self.regex = regex
+
+    def contains(self):
+        glob_string = f"{self.dirpath_glob}/{self.step}/*/{self.filename}"
+        try:
+            filename = self.glob(glob_string)
+            with open(filename, "r") as textfile:
+                filetext = textfile.read()
+            return self.is_within(filetext)
+        except Exception:
+            return False
+
+    def is_within(self, text):
+        """
+        :param `text`: text in which to search for a regex match
+        """
+        return search(self.regex, text) is not None
+
+    @property
+    def passes(self):
+        return self.contains()
+
+
 class ProvenanceCond(RegexCond):
     """
     A condition that a Merlin provenance yaml spec
@@ -337,38 +385,50 @@ def define_tests():
     run = "merlin run"
     restart = "merlin restart"
     purge = "merlin purge"
-    demo = "workflows/feature_demo/feature_demo.yaml"
-    simple = "workflows/simple_chain/simple_chain.yaml"
+    examples = "merlin/examples/workflows"
+    demo = f"{examples}/feature_demo/feature_demo.yaml"
+    simple = f"{examples}/simple_chain/simple_chain.yaml"
+    slurm = f"{examples}/slurm/slurm_test.yaml"
+    slurm_restart = f"{examples}/slurm/slurm_par_restart.yaml"
+    flux = f"{examples}/flux/flux_test.yaml"
+    flux_restart = f"{examples}/flux/flux_par_restart.yaml"
+    lsf = f"{examples}/lsf/lsf_par.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
 
     return {
-        "merlin": ("merlin", ReturnCodeCond(1)),
-        "merlin help": ("merlin --help", ReturnCodeCond()),
-        "merlin version": ("merlin --version", ReturnCodeCond()),
+        "merlin": ("merlin", ReturnCodeCond(1), "local"),
+        "merlin help": ("merlin --help", ReturnCodeCond(), "local"),
+        "merlin version": ("merlin --version", ReturnCodeCond(), "local"),
         "merlin config": (
             f"merlin config -o {config_dir}; rm -rf {config_dir}",
             ReturnCodeCond(),
+            "local",
         ),
         "run-workers echo simple_chain": (
             f"{workers} {simple} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
+            "local",
         ),
         "run-workers echo feature_demo": (
             f"{workers} {demo} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
+            "local",
         ),
         "run-workers echo slurm_test": (
-            f"{workers} workflows/slurm/slurm_test.yaml --echo",
+            f"{workers} {slurm} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
+            "local",
         ),
         "run-workers echo flux_test": (
-            f"{workers} workflows/flux/flux_test.yaml --echo",
+            f"{workers} {flux} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
+            "local",
         ),
         "run-workers echo override feature_demo": (
             f"{workers} {demo} --echo --vars VERIFY_QUEUE=custom_verify_queue",
             [ReturnCodeCond(), RegexCond("custom_verify_queue")],
+            "local",
         ),
         "run feature_demo": (f"{run} {demo}", ReturnCodeCond()),
         "purge feature_demo": (f"{purge} {demo} -f", ReturnCodeCond()),
@@ -378,15 +438,70 @@ def define_tests():
                 StepFileExistsCond("verify", "verify_*.sh", "feature_demo", OUTPUT_DIR),
                 ReturnCodeCond(),
             ],
+            "local",
         ),
         "local simple_chain": (
             f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             ReturnCodeCond(),
+            "local",
+        ),
+        "example failure": (f"merlin example failure", RegexCond("not found"), "local"),
+        "example simple_chain": (
+            f"merlin example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
+            ReturnCodeCond(),
+            "local",
         ),
         # "restart local simple_chain": (
         #    f"{restart} --local $(find studies/ -type d -name 'simple_chain_*')",
         #    [ReturnCodeCond(), NoStderrCond()],
         # ),
+        "dry launch slurm": (
+            f"{run} {slurm} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs", "*/runs.slurm.sh", "slurm_test", OUTPUT_DIR, "srun "
+            ),
+            "local",
+        ),
+        "dry launch flux": (
+            f"{run} {flux} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs",
+                "*/runs.slurm.sh",
+                "flux_test",
+                OUTPUT_DIR,
+                get_flux_cmd("flux", no_errors=True),
+            ),
+            "local",
+        ),
+        "dry launch lsf": (
+            f"{run} {lsf} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "
+            ),
+            "local",
+        ),
+        "dry launch slurm restart": (
+            f"{run} {slurm_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs",
+                "*/runs.restart.slurm.sh",
+                "slurm_par_restart",
+                OUTPUT_DIR,
+                "srun ",
+            ),
+            "local",
+        ),
+        "dry launch flux restart": (
+            f"{run} {flux_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileContainsCond(
+                "runs_rs",
+                "*/runs_rs.restart.slurm.sh",
+                "flux_par_restart",
+                OUTPUT_DIR,
+                get_flux_cmd("flux", no_errors=True),
+            ),
+            "local",
+        ),
         "local override feature_demo": (
             f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
@@ -398,14 +513,17 @@ def define_tests():
                     "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
                 ),
             ],
+            # "local",
         ),
         "local csv feature_demo": (
             f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samples foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [RegexCond("1 sample loaded."), ReturnCodeCond()],
+            # "local",
         ),
         "local tab feature_demo": (
             f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samples foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
             [RegexCond("2 samples loaded."), ReturnCodeCond()],
+            # "local",
         ),
         "distributed feature_demo": (
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
@@ -421,12 +539,12 @@ def define_tests():
                 ),
             ],
         ),
-        "black check merlin": (f"{black} merlin/", ReturnCodeCond()),
-        "black check tests": (f"{black} tests/", ReturnCodeCond()),
+        "black check merlin": (f"{black} merlin/", ReturnCodeCond(), "local"),
+        "black check tests": (f"{black} tests/", ReturnCodeCond(), "local"),
         "deplic no GNU": (
             f"deplic ./",
-            RegexCond("GNU", negate=True),
-            RegexCond("GPL", negate=True),
+            [RegexCond("GNU", negate=True), RegexCond("GPL", negate=True)],
+            "local",
         ),
     }
 
@@ -441,6 +559,7 @@ def setup_argparse():
     parser.add_argument(
         "--verbose", action="store_true", help="Flag for more detailed output messages"
     )
+    parser.add_argument("--local", action="store_true", help="Run only local tests")
     parser.add_argument(
         "--ids",
         action="store",

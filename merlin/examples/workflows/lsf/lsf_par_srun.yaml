@@ -1,0 +1,52 @@
+description:
+  description: A simple ensemble of parallel MPI jobs run by lsf using the srun wrapper (srun).
+  name: lsf_par_srun
+
+batch:
+  type: lsf-srun
+
+env:
+  variables:
+    N_SAMPLES: 10
+
+study:
+- description: Build the code
+  name: build
+  run:
+    cmd: mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c >& build.out
+    task_queue: lsf_par
+- description: Echo the params
+  name: runs 
+  run:
+    cmd: $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > lsf_run.out
+    depends: [build]
+    task_queue: lsf_par
+    nodes: 2
+    procs: 4
+
+- description: Dump lsf info
+  name: data
+  run:
+    cmd: |
+      echo "data" > data.out
+    depends: [runs*]
+    task_queue: lsf_par
+
+global.parameters:
+  STUDY:
+    label: STUDY.%%
+    values:
+    - SLURMTEST
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      simworkers:
+        args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
+        steps: [runs, data]
+  samples:
+    column_labels: [V1, V2]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
