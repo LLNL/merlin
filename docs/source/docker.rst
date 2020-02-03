@@ -49,7 +49,7 @@ redis server.
 A local output directory can be defined 
 by using the ``--volume`` docker arguments. It is
 recommended that a fixed directory be used for the ``--volume`` argument.
-The merlin docker container can be linked to the redis server above using
+The merlin docker container is linked to the redis server above by using
 the ``--link`` option.
 
 .. code:: bash
