@@ -43,20 +43,11 @@ from argparse import (
 )
 from contextlib import suppress
 
-from merlin import (
-    VERSION,
-    router,
-)
+from merlin import VERSION, router
 from merlin.ascii_art import banner_small
-from merlin.examples.generator import (
-    list_examples,
-    setup_example,
-)
+from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
-from merlin.spec.expansion import (
-    RESERVED,
-    get_spec_with_expansion,
-)
+from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
@@ -290,7 +281,7 @@ def config_merlin(args):
     if output_dir is None:
         USER_HOME = os.path.expanduser("~")
         output_dir = os.path.join(USER_HOME, ".merlin")
-    _ = router.create_config(args.task_server, output_dir)
+    _ = router.create_config(args.task_server, output_dir, args.broker)
 
 
 def process_example(args):
@@ -585,6 +576,13 @@ def setup_argparse():
         default=None,
         help="Optional directory to place the default config file.\
                             Default: ~/.merlin",
+    )
+    mconfig.add_argument(
+        "--broker",
+        type=str,
+        default=None,
+        help="Optional broker type, backend will be redis\
+                            Default: rabbitmq",
     )
 
     # merlin example

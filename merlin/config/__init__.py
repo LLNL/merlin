@@ -50,7 +50,10 @@ class Config:
         TODO
         """
         for field in fields:
-            setattr(self, field, nested_dict_to_namespaces(dic[field]))
+            try:
+                setattr(self, field, nested_dict_to_namespaces(dic[field]))
+            except KeyError:
+                pass
 
     def load_app(self, dic):
         """

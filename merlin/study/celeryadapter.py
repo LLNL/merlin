@@ -38,10 +38,7 @@ import subprocess
 import time
 from contextlib import suppress
 
-from merlin.study.batch import (
-    batch_check_parallel,
-    batch_worker_launch,
-)
+from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import (
     check_machines,
     get_procs,
