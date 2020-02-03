@@ -433,6 +433,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
 
     LOG.debug(f"Pre-filter worker stop list: {all_workers}")
 
+    print(f"all_workers: {all_workers}")
     print(f"spec_worker_names: {spec_worker_names}")
     if spec_worker_names is None and worker_regex is None:
         workers_to_stop = list(all_workers)
