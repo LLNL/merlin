@@ -435,7 +435,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
 
     print(f"all_workers: {all_workers}")
     print(f"spec_worker_names: {spec_worker_names}")
-    if spec_worker_names is None and worker_regex is None:
+    if (spec_worker_names is None or len(spec_worker_names) == 0) and worker_regex is None:
         workers_to_stop = list(all_workers)
     else:
         workers_to_stop = []
