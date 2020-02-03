@@ -36,7 +36,7 @@ and ``celery`` commands
   alias merlin="docker exec my-merlin merlin"
   alias celery="docker exec my-merlin celery"
 
-The examples can be run through docker containers by first starting a server
+Examples can be run through docker containers by first starting a server
 for the broker and backend. The server can be a redis or rabbitmq , for this
 demonstration a redis server will be used. The backend will always be a 
 redis server.
@@ -46,8 +46,8 @@ redis server.
   docker pull redis
   docker run -d -p 6379:6379 --name my-redis redis
 
-The output can be written
-to the local file system using the ``--volume`` docker arguments. It is
+A local output directory can be defined 
+by using the ``--volume`` docker arguments. It is
 recommended that a fixed directory be used for the ``--volume`` argument.
 The merlin docker container can be linked to the redis server above using
 the ``--link`` option.
@@ -67,7 +67,7 @@ the ``--link`` option.
   # Create the $HOME/merlinu/.merlin/app.yaml using redis
   merlin config --broker redis
 
-  <edit $HOME/merlinu/.merlin/app.yaml and change the server to my-redis>
+  <edit $HOME/merlinu/.merlin/app.yaml and change the broker and backend server: variables to  my-redis>
 
   # Copy an example to the local dir
   merlin example feature_demo
