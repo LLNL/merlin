@@ -40,7 +40,10 @@ import time
 from contextlib import suppress
 from glob import glob
 from re import search
-from subprocess import PIPE, Popen
+from subprocess import (
+    PIPE,
+    Popen,
+)
 
 from merlin.utils import get_flux_cmd
 

@@ -37,7 +37,10 @@ import os
 import re
 import socket
 import subprocess
-from contextlib import contextmanager, suppress
+from contextlib import (
+    contextmanager,
+    suppress,
+)
 from copy import deepcopy
 from types import SimpleNamespace
 
@@ -173,7 +176,7 @@ def expandvars2(path):
     return re.sub(r"(?<!\\)\$[A-Za-z_][A-Za-z0-9_]*", "", os.path.expandvars(path))
 
 
-def regex_list_filter(regex, list_to_filter):
+def regex_list_filter(regex, list_to_filter, match=True):
     """
     Apply a regex filter to a list
 
@@ -183,7 +186,9 @@ def regex_list_filter(regex, list_to_filter):
     :return `new_list`
     """
     r = re.compile(regex)
-    return list(filter(r.match, list_to_filter))
+    if match:
+        return list(filter(r.match, list_to_filter))
+    return list(filter(r.search, list_to_filter))
 
 
 def load_yaml(filepath):
