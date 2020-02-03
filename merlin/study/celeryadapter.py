@@ -442,7 +442,9 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
         if (spec_worker_names is not None) and len(spec_worker_names) > 0:
             for worker_name in spec_worker_names:
                 print(f"Result of regex_list_filter: {regex_list_filter(worker_name, all_workers)}")
-                workers_to_stop.append(regex_list_filter(worker_name, all_workers))
+                r = re.compile(worker_name)
+                matches = list(filter(r.search, all_workers))
+                workers_to_stop += matches
         if worker_regex is not None:
             workers_to_stop += regex_list_filter(worker_regex, workers_to_stop)
 
