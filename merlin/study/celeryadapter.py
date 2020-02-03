@@ -445,6 +445,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
         if worker_regex is not None:
             workers_to_stop += regex_list_filter(worker_regex, workers_to_stop)
 
+    print(f"workers_to_stop: {workers_to_stop}")
     if workers_to_stop:
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
         return app.control.broadcast("shutdown", destination=workers_to_stop)
