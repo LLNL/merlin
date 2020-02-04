@@ -133,8 +133,8 @@ skip during execution of a workflow.
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
-Run the Celery Workers (run-workers)
-------------------------------------
+Run the Workers (run-workers)
+-----------------------------
 
 The tasks queued on the broker are run by a collection of workers. These
 workers can be run local in the current shell or in parallel on a batch
