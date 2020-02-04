@@ -148,12 +148,12 @@ passwords for the redis server and encryption.
 
   merlin config --broker redis
 
-If you are using local-redis then you are all set look in your ``~/.merlin/app.yaml`` file
+If you are using local-redis then you are all set, look in your ``~/.merlin/app.yaml`` file
 to see the configuration.
 
 If you are using the docker-redis server then the ``~/merlinu/.merlin/app.yaml`` file must be edited to 
-add the server from the redis docker container my-redis. Change the server in both the broker and
-backend config definitions to ``my-redis``, the port will remain the same.
+add the server from the redis docker container my-redis. Change the ``server: localhost`` in both the broker and
+backend config definitions to ``server: my-redis``, the port will remain the same.
 
 
 Checking/Verifying installation
@@ -169,7 +169,8 @@ display the server configs.
   merlin info
 
 
- <FIXME: check>
+<FIXME: check>
+
 The merlin ``check`` command will check the connection to the servers and display status information.
 
 .. code:: bash
