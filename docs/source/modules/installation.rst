@@ -127,7 +127,8 @@ directory in the container.
 
   # define some aliases for the merlin and celery commands (assuming Bourne shell)
   alias merlin="docker exec my-merlin merlin"
-  alias celery"docker exec my-merlin celery"
+  alias celery="docker exec my-merlin celery"
+  alias python3="docker exec my-merlin python3"
 
 
 A shell script is available for all these commands. 
