@@ -1,2 +1,8 @@
 Installation
 ============
+
+Pip
++++
+
+Docker
+++++++
