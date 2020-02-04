@@ -47,13 +47,19 @@ can then be edited for your system configuration.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin config [--task_server]  [--output_dir <dir>]
+    (merlin3_7) $ merlin config [--task_server]  [--output_dir <dir>] [--broker <rabbitmq|redis>]
 
 The ``--task_server`` option will select the appropriate configuration for the
 given task server. Currently only celery is implemented.
 
 The ``--output_dir`` or ``-o`` will output the configuration in the given directory.
 This file can then be edited and copied into ${HOME}/.merlin.
+
+The ``--broker`` command will write the initial ``app.yaml`` config file
+for a ``rabbitmq`` or ``redis`` broker. The default is ``rabbitmq``.
+The backend will be ``redis`` in
+both cases. The redis backend in the ``rabbitmq`` config shows the
+use on encryption for the backend.
 
 Run the workflow
 ----------------
