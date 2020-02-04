@@ -27,7 +27,7 @@ Create a virtualenv using python3 to install merlin.
 
 .. code:: bash
 
-  python3 -m venv -p merlin merlin_venv
+  python3 -m venv --prompt merlin merlin_venv
 
 Activate the virtualenv.
 
@@ -36,6 +36,9 @@ Activate the virtualenv.
   source merlin_venv/bin/activate
   or
   source merlin_venv/bin/activate.csh
+
+
+The ``(merlin) <shell prompt>`` will appear after activating.
 
 Install merlin through pip.
 
