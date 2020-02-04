@@ -5,6 +5,7 @@ Tutorial
 
 .. toctree::
    :maxdepth: 1
+   :numbered:
    :caption: Modules:
 
    modules/introduction
