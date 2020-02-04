@@ -305,4 +305,4 @@ Do something like this:
 
 Where can I learn more about merlin?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Check out our (paper)[https://arxiv.org/abs/1912.02892] on arXiv.
+Check out `our paper <https://arxiv.org/abs/1912.02892>`_ on arXiv.
