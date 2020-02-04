@@ -90,7 +90,7 @@ in the merlin github. See below for instructions.
 
 
 The redis server is used for the broker and backend server in this tutorial,
-so we will start the redis server in detached mode to provide the server. 
+so we will start the redis server in detached mode, ``--detach`` to provide the server. 
 For the server configuration step below this will be referred to as 
 docker-redis.
 
@@ -104,7 +104,7 @@ Next we will start the merlin container and define some aliases to run
 the merlin and celery commands. The merlin docker run has a few new options,
 the ``-t`` option will allocate a pseudo-tty. The ``--link`` option will
 connect the redis server started above to the merlin container. The ``--volume``
-or ``-v`` option will like the local $HOME/merlinu directory to the /home/merlinu
+or ``-v`` option will link the local ``$HOME/merlinu`` directory to the ``/home/merlinu``
 directory in the container.
 
 .. code:: bash
