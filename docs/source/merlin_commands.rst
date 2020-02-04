@@ -200,6 +200,8 @@ This will broadcast a command to all connected workers and print
 the names of any that respond. This is useful for interacting
 with workers, such as via ``merlin stop-workers --workers``.
 
+.. _stop-workers:
+
 Stopping workers
 ----------------
 

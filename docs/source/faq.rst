@@ -200,11 +200,11 @@ How do I see what workers are connected?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ``merlin query-workers``
 
-.. _stop-workers:
-
 How do I stop workers?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin stop-workers``
+``merlin stop-workers``.
+
+For more tricks, see :ref:`stop-workers`.
 
 .. _restart:
 
