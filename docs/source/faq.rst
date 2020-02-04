@@ -2,7 +2,7 @@
 
 FAQ
 ===
-.. contents:: FAQs
+.. contents:: Frequently Asked Questions
   :local:
 
 General
@@ -228,8 +228,8 @@ You need to shut down these workers first:
 
 .. code:: bash
 
-   (merlin3_7) merlin stop-workers
-   (merlin3_7) merlin purge <yaml file>
+   $ merlin stop-workers
+   $ merlin purge <yaml file>
 
 Why am I running old tasks?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

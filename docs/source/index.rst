@@ -67,6 +67,7 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :numbered:
 
    getting_started
    faq
@@ -79,13 +80,5 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    virtualenv
    spack
    merlin_developer
-   merlin
    docker
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
