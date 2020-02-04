@@ -40,6 +40,12 @@ Activate the virtualenv.
 
 The ``(merlin) <shell prompt>`` will appear after activating.
 
+You should upgrade pip and setuptools before proceeding.
+
+.. code:: bash
+
+  pip3 install setuptools pip -U
+
 Install merlin through pip.
 
 .. code:: bash
@@ -73,8 +79,11 @@ can also be used for the broker. This method will be called local-redis.
   # make redis
   make
 
+  # make test (~3.5 minutes)
+  make test
+
   # run redis with default config, server is at localhost port 6379
-  ./scr/redis-server &
+  ./src/redis-server &
 
 Docker
 ++++++
@@ -93,7 +102,7 @@ in the merlin github. See below for instructions.
 
 
 The redis server is used for the broker and backend server in this tutorial,
-so we will start the redis server in detached mode, ``--detach`` to provide the server. 
+so we will start the redis server in detached mode, ``--detach``, to provide the server. 
 For the server configuration step below this will be referred to as 
 docker-redis.
 
