@@ -92,6 +92,7 @@ html_theme_options = {
     "github_user": "LLNL",
     "github_repo": "merlin",
     "fixed_sidebar": True,
+    "show_relbars": True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
