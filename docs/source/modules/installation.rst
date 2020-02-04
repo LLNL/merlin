@@ -1,22 +1,22 @@
 Installation
 ============
 Prerequisites:
-* python3 >= python3.6
-* python3 pip 
-* wget
-* build tools (make, C-compiler for local-redis)
-* docker (optional)
-* file editor is using docker
+  * python3 >= python3.6
+  * python3 pip 
+  * wget
+  * build tools (make, C-compiler for local-redis)
+  * docker (optional)
+  * file editor is using docker
 
 Estimated time: 20 minutes
 
 You will learn:
-* How to install merlin in a virtualenviroment using pip.
-* How to install a local redis server.
-* How to install merlin using docker (optional).
-* how to start teh docker containers, including redis (optional).
-* How to configure merlin.
-* How to test/verify the installation.
+  * How to install merlin in a virtual environment using pip.
+  * How to install a local redis server.
+  * How to install merlin using docker (optional).
+  * How to start the docker containers, including redis (optional).
+  * How to configure merlin.
+  * How to test/verify the installation.
 
 <FIXME: some intro>
 
