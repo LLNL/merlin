@@ -32,7 +32,7 @@ and ``celery`` commands
 
 .. code:: bash
 
-  docker run --rm -ti --name my-merlin -d merlin
+  docker run --rm -td --name my-merlin merlin
   alias merlin="docker exec my-merlin merlin"
   alias celery="docker exec my-merlin celery"
 
@@ -58,8 +58,8 @@ the ``--link`` option.
   mkdir $HOME/merlinu
   cd $HOME/merlinu
 
-  docker pull llnl/redis
-  docker run  --rm -ti -d --name my-merlin --link my-redis --volume "$HOME/merlinu":/home/merlinu llnl/merlin
+  docker pull llnl/merlin
+  docker run --rm -td --name my-merlin --link my-redis --volume "$HOME/merlinu":/home/merlinu llnl/merlin
 
   alias merlin="docker exec my-merlin merlin"
   alias celery="docker exec my-merlin celery"
