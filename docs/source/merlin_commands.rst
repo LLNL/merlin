@@ -70,9 +70,20 @@ them on the task server also called the broker.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin run [--local] <input.yaml>
+    (merlin3_7) $ merlin run [--local] <input.yaml> [--vars <VARIBALES=<VARIABLES>>] [--samplesfile <SAMPLES_FILE>]
 
 The ``--local`` option will run tasks sequentially in your current shell.
+
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'
+
+ The  ``--samplesfile`` will allow the  user to specify a file containing samples. Valid choices: .npy,
+.csv, .tab. Should be given after the input yaml file.
+
+The ``--no-errors`` option is used for testing, it will silence the errors thrown
+when flux is not present.
 
 Dry Run
 ^^^^^^^
@@ -102,6 +113,8 @@ You can also specify dry runs from the workflow specification file:
 
 If you wish to execute a workflow after dry-running it, simply use ``restart``.
 
+
+
 Restart the workflow (restart)
 ------------------------------
 
@@ -120,8 +133,8 @@ skip during execution of a workflow.
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
-Launch Workers (run-workers)
-----------------------------
+Run the Celery Workers (run-workers)
+------------------------------------
 
 The tasks queued on the broker are run by a collection of workers. These
 workers can be run local in the current shell or in parallel on a batch
@@ -140,7 +153,21 @@ To launch workers for your workflow:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin run-workers <input.yaml>
+    (merlin3_7) $ merlin run-workers [--echo]  <input.yaml> [--worker-args <worker args>] [--steps <WORKER_STEPS>] [--vars <VARIBALES=<VARIABLES>>]
+
+The ``--echo`` option will echo the celery workers run command to stdout and not run any workers.
+
+The ``--worker-args`` option will pass the values, in quotes, to the celery workers. Should be given
+after the input yaml file.
+
+The ``--steps`` option is the specific steps in the input yaml file you want to run the corresponding workers.
+The default is 'all' steps. Should be given after the input yaml file.
+
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'
+
 
 An example of launching a simple celery worker using srun:
 
