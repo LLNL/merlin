@@ -97,7 +97,10 @@ Designing and Building Workflows
 
 Where are some example workflows?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin example --help``
+
+.. code:: bash
+
+   $ merlin example --help
 
 How do I launch a workflow?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -184,40 +187,61 @@ Use ``merlin example feature_demo`` to see an example of this.
 
 Running Workflows
 -----------------
-``merlin run <yaml file>``
+
+.. code:: bash
+
+   $ merlin run <yaml file>
 
 For more details, see :doc:`Merlin commands<./merlin_commands>`.
 
 How do I set up a workspace without executing step scripts?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin run --dry <yaml file>``
+
+.. code:: bash
+
+   $ merlin run --dry <yaml file>
 
 How do I start workers?
 ~~~~~~~~~~~~~~~~~~~~~~~
-``merlin run-workers <yaml file>``
+
+.. code:: bash
+
+   $ merlin run-workers <yaml file>
 
 How do I see what workers are connected?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin query-workers``
+
+.. code:: bash
+
+   $ merlin query-workers
 
 .. _stop-workers:
 
 How do I stop workers?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin stop-workers``
+
+.. code:: bash
+
+   $ merlin stop-workers
 
 .. _restart:
 
 How do I re-run failed steps in a workflow?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin restart <spec>``
+
+.. code:: bash
+
+   $ merlin restart <spec>
 
 What tasks are in my queue?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 How do I purge tasks?
 ~~~~~~~~~~~~~~~~~~~~~
-``merlin purge <yaml file>``
+
+.. code:: bash
+
+   $ merlin purge <yaml file>
 
 Why is stuff still running after I purge?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
