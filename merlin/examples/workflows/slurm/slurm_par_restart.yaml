@@ -1,0 +1,56 @@
+description:
+  description: A simple ensemble of parallel MPI jobs run by slurm (srun).
+  name: slurm_par_restart
+
+batch:
+  type: slurm
+
+env:
+  variables:
+    OUTPUT_PATH: ./studies
+    N_SAMPLES: 10
+
+study:
+- description: Build the code
+  name: build
+  run:
+    cmd: mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c >& build.out
+    task_queue: slurm_par
+- description: Echo the params
+  name: runs 
+  run:
+    cmd: |
+      ln -s $(build.workspace)/mpi_hello .
+      exit $(MERLIN_RESTART)
+    restart: $(LAUNCHER) ./mpi_hello $(V1) $(V2) > slurm_run.out
+    depends: [build]
+    task_queue: slurm_par
+    nodes: 1
+    procs: 4
+
+- description: Dump slurm info
+  name: data
+  run:
+    cmd: |
+      echo "data" > data.out
+    depends: [runs*]
+    task_queue: slurm_par
+
+global.parameters:
+  STUDY:
+    label: STUDY.%%
+    values:
+    - SLURMTEST
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      simworkers:
+        args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
+        steps: [runs, data]
+  samples:
+    column_labels: [V1, V2]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

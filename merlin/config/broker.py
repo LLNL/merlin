@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.0.
+# This file is part of Merlin, Version: 1.2.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -157,7 +157,10 @@ def get_connection_string(include_password=True):
     `merlin.yaml` config file.
     """
     broker = CONFIG.broker.name
-    config_path = CONFIG.celery.certs
+    try:
+        config_path = CONFIG.celery.certs
+    except AttributeError:
+        config_path = None
 
     if broker not in BROKERS:
         raise ValueError(f"Error: {broker} is not a supported broker.")

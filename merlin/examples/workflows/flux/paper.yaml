@@ -1,0 +1,75 @@
+description:
+  description: Use flux to run single core MPI jobs and record timings.
+  name: paper_flux
+
+batch:
+  type: flux
+  nodes: 1
+  queue: pbatch
+  flux_start_opts: -o,-S,log-filename=flux_paper.out
+  launch_pre: export FLUX_STRT_TIME=`date -u +%Y-%m-%dT%H:%M:%S.%6NZ`;export FLUX_START_SECONDS=`date +%s.%6N`;
+   
+env:
+  variables:
+    SLEEP_TIME: 10
+    N_SAMPLES: 10
+
+study:
+- description: Build the code
+  name: build
+  run:
+    cmd: |
+      mpicc -o mpi_hello_sleep $(SPECROOT)/scripts/hello_sleep.c >& build.out
+      # Add start time to flux
+      flux wreck setenv FLUX_START_TIME=${FLUX_START_TIME}
+      flux wreck setenv FLUX_START_SECONDS=${FLUX_START_SECONDS}
+    task_queue: flux_paper
+- description: Echo the params
+  name: runs 
+  run:
+    cmd: |
+     if [  ! -z ${FLUX_PMI_LIBRARY_PATH+x} ]; then
+        FPMI2LIB=`dirname ${FLUX_PMI_LIBRARY_PATH}`/libpmi2.so
+        if [ -e ${HPMI2LIB} ]; then 
+          if [  ! -z ${LD_PRELOAD+x} ]; then
+            export LD_PRELOAD=${LD_PRELOAD}:${FPMI2LIB}
+          else
+            export LD_PRELOAD=${FPMI2LIB}
+          fi
+        fi
+      fi
+      $(LAUNCHER) $(build.workspace)/mpi_hello_sleep $(SLEEP_TIME) $(V1) $(V2) > flux_run.out
+      sleep 10
+    depends: [build]
+    task_queue: flux_paper
+    nodes: 1
+    procs: 1
+
+
+- description: Dump flux info
+  name: data
+  run:
+    cmd: |
+      #export PATH=/collab/usr/gapps/merlin/spack/idesign/${SYS_TYPE}/bin:$PATH
+      $(SPECROOT)/scripts/flux_info.py >flux_timings.out
+    depends: [runs*]
+    task_queue: flux_paper
+
+global.parameters:
+  STUDY:
+    label: STUDY.%%
+    values:
+    - FLUXTEST
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      simworkers:
+        args: -l INFO --concurrency 36 --prefetch-multiplier 1 -Ofair
+        steps: [runs, data]
+  samples:
+    column_labels: [V1, V2]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

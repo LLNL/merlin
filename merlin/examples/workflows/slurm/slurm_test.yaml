@@ -1,0 +1,47 @@
+description:
+  description: A simple ensemble of serial jobs run by slurm (srun).
+  name: slurm_test
+
+batch:
+  type: slurm
+
+env:
+  variables:
+    OUTPUT_PATH: ./studies
+    N_SAMPLES: 10
+
+study:
+- description: Echo the params
+  name: runs 
+  run:
+    cmd: $(LAUNCHER)  echo "$(V1) $(V2)" > slurm_run.out
+    task_queue: slurm_test
+    nodes: 1
+    procs: 1
+
+- description: Dump slurm info
+  name: data
+  run:
+    cmd: |
+      echo "data" > slurm_data.out
+    depends: [runs*]
+    task_queue: slurm_test
+
+global.parameters:
+  STUDY:
+    label: STUDY.%%
+    values:
+    - SLURMTEST
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      simworkers:
+        args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
+        steps: [runs, data]
+  samples:
+    column_labels: [V1, V2]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
