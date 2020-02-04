@@ -29,8 +29,8 @@ The Merlin can be output using the ``-v`` argument.
     $ merlin -v
 
 
-Information
------------
+Information (info)
+------------------
 
 Information about the run environment can be printed out using the
 ``info`` command.
@@ -39,15 +39,15 @@ Information about the run environment can be printed out using the
 
     $ merlin info
 
-Config
-------
+Create the Config File (config)
+-------------------------------
 
 Create a default config file in the ${HOME}/.merlin directory using the ``config`` command. This file
 can then be edited for your system configuration.
 
 .. code:: bash
 
-    $ merlin config [--task_server]  [--output_dir <dir>]
+    $ merlin config [--task_server]  [--output_dir <dir>] [--broker <rabbitmq|redis>]
 
 The ``--task_server`` option will select the appropriate configuration for the
 given task server. Currently only celery is implemented.
@@ -55,8 +55,14 @@ given task server. Currently only celery is implemented.
 The ``--output_dir`` or ``-o`` will output the configuration in the given directory.
 This file can then be edited and copied into ${HOME}/.merlin.
 
-Run the workflow
-----------------
+The ``--broker`` command will write the initial ``app.yaml`` config file
+for a ``rabbitmq`` or ``redis`` broker. The default is ``rabbitmq``.
+The backend will be ``redis`` in
+both cases. The redis backend in the ``rabbitmq`` config shows the
+use on encryption for the backend.
+
+Run the workflow (run)
+----------------------
 
 To run the merlin workflow use the  ``run`` command and the path to the
 input yaml file ``<input.yaml>``. This will define the tasks and queue
@@ -64,12 +70,24 @@ them on the task server also called the broker.
 
 .. code:: bash
 
-    $ merlin run [--local] <input.yaml>
+    $ merlin run [--local] <input.yaml> [--vars <VARIABLES=<VARIABLES>>] [--samplesfile <SAMPLES_FILE>]
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+``Example: --vars LEARN=path/to/new_learn.py EPOCHS=3``
+
+The  ``--samplesfile`` will allow the  user to specify a file containing samples. Valid choices: .npy,
+.csv, .tab. Should be given after the input yaml file.
+
+The ``--no-errors`` option is used for testing, it will silence the errors thrown
+when flux is not present.
+
 Dry Run
--------
+^^^^^^^
+
 'Dry run' means telling workers to create a study's workspace and all of its necessary
 subdirectories and scripts (with variables expanded) without actually executing
 the scripts.
@@ -95,8 +113,10 @@ You can also specify dry runs from the workflow specification file:
 
 If you wish to execute a workflow after dry-running it, simply use ``restart``.
 
-Restart the workflow
---------------------
+
+
+Restart the workflow (restart)
+------------------------------
 
 To restart a previously started merlin workflow, use the  ``restart`` command
 and the path to root of the merlin workspace that was generated during the
@@ -113,8 +133,8 @@ skip during execution of a workflow.
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
-Launching Workers
------------------
+Run the Workers (run-workers)
+-----------------------------
 
 The tasks queued on the broker are run by a collection of workers. These
 workers can be run local in the current shell or in parallel on a batch
@@ -133,7 +153,20 @@ To launch workers for your workflow:
 
 .. code:: bash
 
-    $ merlin run-workers <input.yaml>
+    $ merlin run-workers [--echo]  <input.yaml> [--worker-args <worker args>] [--steps <WORKER_STEPS>] [--vars <VARIABLES=<VARIABLES>>]
+
+The ``--echo`` option will echo the celery workers run command to stdout and not run any workers.
+
+The ``--worker-args`` option will pass the values, in quotes, to the celery workers. Should be given
+after the input yaml file.
+
+The ``--steps`` option is the specific steps in the input yaml file you want to run the corresponding workers.
+The default is 'all' steps. Should be given after the input yaml file.
+
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+``Example: --vars LEARN=path/to/new_learn.py EPOCHS=3``
 
 An example of launching a simple celery worker using srun:
 
@@ -186,8 +219,8 @@ shown below.
   # Delay until the allocation is complete to keep the workers running
   sleep inf
 
-Searching for any workers
--------------------------
+Searching for any workers (query-workers)
+-----------------------------------------
 
 If you want to see all workers that are currently connected to
 the task server you can use:
@@ -202,8 +235,8 @@ with workers, such as via ``merlin stop-workers --workers``.
 
 .. _stop-workers:
 
-Stopping workers
-----------------
+Stopping workers (stop-workers)
+-------------------------------
 
 To send out a stop signal to some or all connected workers, use:
 
@@ -241,8 +274,8 @@ whose name matches a regular expression:
    only one might get the signal. In this case, you can send it
    again.
 
-Generate working examples
--------------------------
+Generate working examples (example)
+-----------------------------------
 
 If you want to run an example workflow, use Merlin's ``merlin example``:
 
@@ -269,8 +302,8 @@ If the specified directory does not exist Merlin will automatically create it.
 This will generate the example workflow at the specified location, ready to be run.
 
 
-Purging Tasks
--------------
+Purging Tasks (purge)
+---------------------
 
 Once the merlin run command succeeds, the tasks are now on the task server
 waiting to be run by the workers. If you would like to remove the tasks from

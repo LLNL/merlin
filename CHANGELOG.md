@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The merlin config now takes an optional --broker argument, the
   value can be None, default rabbitmq broker, or redis for a redis
   local broker.
+- Missing doc options for run and run-workers.
 
 ### Removed
 - Makefile targets `pull` and `update`.
