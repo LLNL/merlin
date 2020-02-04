@@ -80,6 +80,7 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    spack
    merlin_developer
    merlin
+   docker
 
 
 Indices and tables
