@@ -303,7 +303,7 @@ default schedulers such as SLURM or LSF.
 More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
 
 What is ``LAUNCHER``?
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 ``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with parellel schedulers like :ref:`slurm`, :ref:`lsf`, and :ref:`flux`.
 
 How do I use ``LAUNCHER``?
