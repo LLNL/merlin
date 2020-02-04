@@ -390,7 +390,7 @@ def purge_celery_tasks(queues, force):
     return subprocess.call(purge_command.split())
 
 
-def stop_celery_workers(queues=None, worker_regex=None):
+def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     """Send a stop command to celery workers.
 
     Default behavior is to stop all connected workers.
@@ -398,6 +398,7 @@ def stop_celery_workers(queues=None, worker_regex=None):
     match a regular expression.
 
     :param list queues: The queues to send stop signals to. If None: stop all
+    :param list spec_worker_names: Worker names read from a spec to stop, in addition to worker_regex matches.
     :param str worker_regex: The regex string to match worker names. If None:
     :return: Return code from stop command
 
@@ -410,7 +411,9 @@ def stop_celery_workers(queues=None, worker_regex=None):
     """
     from merlin.celery import app
 
-    LOG.debug(f"Sending stop to queues: {queues}, worker_regex: {worker_regex}")
+    LOG.debug(
+        f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}"
+    )
     active_queues, _ = get_queues(app)
 
     # If not specified, get all the queues
@@ -418,24 +421,43 @@ def stop_celery_workers(queues=None, worker_regex=None):
         queues = [*active_queues]
 
     # Find the set of all workers attached to all of those queues
-    workers_to_stop = set()
+    all_workers = set()
     for queue in queues:
         try:
-            workers_to_stop.update(active_queues[queue])
+            all_workers.update(active_queues[queue])
             LOG.debug(f"Workers attached to queue {queue}: {active_queues[queue]}")
         except KeyError:
             LOG.warning(f"No workers are connected to queue {queue}")
 
-    workers_to_stop = list(workers_to_stop)
+    all_workers = list(all_workers)
 
-    LOG.debug(f"Pre-filter worker stop list: {workers_to_stop}")
-    # Apply a filter
-    if worker_regex is not None:
-        workers_to_stop = regex_list_filter(worker_regex, workers_to_stop)
+    LOG.debug(f"Pre-filter worker stop list: {all_workers}")
 
+    print(f"all_workers: {all_workers}")
+    print(f"spec_worker_names: {spec_worker_names}")
+    if (
+        spec_worker_names is None or len(spec_worker_names) == 0
+    ) and worker_regex is None:
+        workers_to_stop = list(all_workers)
+    else:
+        workers_to_stop = []
+        if (spec_worker_names is not None) and len(spec_worker_names) > 0:
+            for worker_name in spec_worker_names:
+                print(
+                    f"Result of regex_list_filter: {regex_list_filter(worker_name, all_workers)}"
+                )
+                workers_to_stop += regex_list_filter(
+                    worker_name, all_workers, match=False
+                )
+        if worker_regex is not None:
+            workers_to_stop += regex_list_filter(worker_regex, workers_to_stop)
+
+    print(f"workers_to_stop: {workers_to_stop}")
     if workers_to_stop:
-        LOG.warning(f"Sending stop to these workers: {workers_to_stop}")
+        LOG.info(f"Sending stop to these workers: {workers_to_stop}")
         return app.control.broadcast("shutdown", destination=workers_to_stop)
+    else:
+        LOG.warning("No workers found to stop")
 
 
 def create_celery_config(config_dir, data_file_name, data_file_path):
