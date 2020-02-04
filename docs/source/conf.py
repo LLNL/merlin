@@ -93,7 +93,6 @@ html_theme_options = {
     "github_repo": "merlin",
     "fixed_sidebar": True,
     "show_relbars": True,
-    'prev_next_buttons_location': 'bottom',
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
