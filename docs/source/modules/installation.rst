@@ -6,7 +6,7 @@ Prerequisites:
   * wget
   * build tools (make, C-compiler for local-redis)
   * docker (optional)
-  * file editor is using docker
+  * file editor if using docker
 
 Estimated time: 20 minutes
 
