@@ -215,14 +215,14 @@ How do I see what workers are connected?
 
    $ merlin query-workers
 
-.. _stop-workers:
-
 How do I stop workers?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
 
    $ merlin stop-workers
+
+For more tricks, see :ref:`stop-workers`.
 
 .. _restart:
 

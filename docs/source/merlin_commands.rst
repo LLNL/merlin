@@ -200,6 +200,8 @@ This will broadcast a command to all connected workers and print
 the names of any that respond. This is useful for interacting
 with workers, such as via ``merlin stop-workers --workers``.
 
+.. _stop-workers:
+
 Stopping workers
 ----------------
 
@@ -211,6 +213,12 @@ To send out a stop signal to some or all connected workers, use:
 
 The default behavior will send a stop to all connected workers,
 having them shutdown softly.
+
+You can target only workers named in the ``merlin`` block of a spec file:
+
+.. code:: bash
+
+    $ merlin stop-workers --spec spec.yaml
 
 You can also filter by those connected to certain queues and/or
 whose name matches a regular expression:
