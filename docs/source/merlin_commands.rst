@@ -212,6 +212,12 @@ To send out a stop signal to some or all connected workers, use:
 The default behavior will send a stop to all connected workers,
 having them shutdown softly.
 
+You can target only workers named in the ``merlin`` block of a spec file:
+
+.. code:: bash
+
+    (merlin3_7) $ merlin stop-workers --spec spec.yaml
+
 You can also filter by those connected to certain queues and/or
 whose name matches a regular expression:
 
