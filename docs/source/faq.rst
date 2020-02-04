@@ -2,7 +2,7 @@
 
 FAQ
 ===
-.. contents:: FAQs
+.. contents:: Frequently Asked Questions
   :local:
 
 General
