@@ -29,8 +29,8 @@ The Merlin can be output using the ``-v`` argument.
     (merlin3_7) $ merlin -v
 
 
-Information
------------
+Information (info)
+------------------
 
 Information about the run environment can be printed out using the
 ``info`` command.
@@ -39,15 +39,15 @@ Information about the run environment can be printed out using the
 
     (merlin3_7) $ merlin info
 
-Config
-------
+Create the Config File (config)
+-------------------------------
 
 Create a default config file in the ${HOME}/.merlin directory using the ``config`` command. This file
 can then be edited for your system configuration.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin config [--task_server]  [--output_dir <dir>]
+    (merlin3_7) $ merlin config [--task_server]  [--output_dir <dir>] [--broker <rabbitmq|redis>]
 
 The ``--task_server`` option will select the appropriate configuration for the
 given task server. Currently only celery is implemented.
@@ -55,8 +55,14 @@ given task server. Currently only celery is implemented.
 The ``--output_dir`` or ``-o`` will output the configuration in the given directory.
 This file can then be edited and copied into ${HOME}/.merlin.
 
-Run the workflow
-----------------
+The ``--broker`` command will write the initial ``app.yaml`` config file
+for a ``rabbitmq`` or ``redis`` broker. The default is ``rabbitmq``.
+The backend will be ``redis`` in
+both cases. The redis backend in the ``rabbitmq`` config shows the
+use on encryption for the backend.
+
+Run the workflow (run)
+----------------------
 
 To run the merlin workflow use the  ``run`` command and the path to the
 input yaml file ``<input.yaml>``. This will define the tasks and queue
@@ -69,7 +75,8 @@ them on the task server also called the broker.
 The ``--local`` option will run tasks sequentially in your current shell.
 
 Dry Run
--------
+^^^^^^^
+
 'Dry run' means telling workers to create a study's workspace and all of its necessary
 subdirectories and scripts (with variables expanded) without actually executing
 the scripts.
@@ -95,8 +102,8 @@ You can also specify dry runs from the workflow specification file:
 
 If you wish to execute a workflow after dry-running it, simply use ``restart``.
 
-Restart the workflow
---------------------
+Restart the workflow (restart)
+------------------------------
 
 To restart a previously started merlin workflow, use the  ``restart`` command
 and the path to root of the merlin workspace that was generated during the
@@ -113,8 +120,8 @@ skip during execution of a workflow.
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
-Launching Workers
------------------
+Launch Workers (run-workers)
+----------------------------
 
 The tasks queued on the broker are run by a collection of workers. These
 workers can be run local in the current shell or in parallel on a batch
@@ -186,8 +193,8 @@ shown below.
   # Delay until the allocation is complete to keep the workers running
   sleep inf
 
-Searching for any workers
--------------------------
+Searching for any workers (query-workers)
+-----------------------------------------
 
 If you want to see all workers that are currently connected to
 the task server you can use:
@@ -200,8 +207,8 @@ This will broadcast a command to all connected workers and print
 the names of any that respond. This is useful for interacting
 with workers, such as via ``merlin stop-workers --workers``.
 
-Stopping workers
-----------------
+Stopping workers (stop-workers)
+-------------------------------
 
 To send out a stop signal to some or all connected workers, use:
 
@@ -233,8 +240,8 @@ whose name matches a regular expression:
    only one might get the signal. In this case, you can send it
    again.
 
-Generate working examples
--------------------------
+Generate working examples (example)
+-----------------------------------
 
 If you want to run an example workflow, use Merlin's ``merlin example``:
 
@@ -261,8 +268,8 @@ If the specified directory does not exist Merlin will automatically create it.
 This will generate the example workflow at the specified location, ready to be run.
 
 
-Purging Tasks
--------------
+Purging Tasks (purge)
+---------------------
 
 Once the merlin run command succeeds, the tasks are now on the task server
 waiting to be run by the workers. If you would like to remove the tasks from
