@@ -68,6 +68,7 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    :maxdepth: 1
    :hidden:
 
+   tutorial
    getting_started
    faq
    merlin_commands
@@ -82,3 +83,10 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    merlin
    docker
 
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
