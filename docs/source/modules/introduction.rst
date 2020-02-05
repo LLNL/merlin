@@ -1,5 +1,13 @@
 Introduction
 ============
+Prerequisites:
+  * Curiosity
+
+Estimated time: 30 minutes
+
+You will learn:
+  * What merlin is.
+  * Why you may consider using merlin.
 
 Motivation
 ++++++++++
