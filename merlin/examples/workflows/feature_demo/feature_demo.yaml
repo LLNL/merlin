@@ -27,7 +27,7 @@ study:
          process a sample with hello world
       run:
         cmd: |
-          python $(HELLO) -outfile hello_world_output_$(MERLIN_SAMPLE_ID).json $(X0) $(X1) $(X2)
+          python3 $(HELLO) -outfile hello_world_output_$(MERLIN_SAMPLE_ID).json $(X0) $(X1) $(X2)
         task_queue: hello_queue
         max_retries: 1
 
@@ -39,7 +39,7 @@ study:
              echo $(MERLIN_GLOB_PATH)
              echo $(hello.workspace)
              ls $(hello.workspace)/X2.$(X2)/$(MERLIN_GLOB_PATH)/hello_world_output_*.json > files_to_collect.txt
-             python $(COLLECT) -outfile results.json -instring "$(cat files_to_collect.txt)"
+             python3 $(COLLECT) -outfile results.json -instring "$(cat files_to_collect.txt)"
          depends: [hello_*]
          task_queue: collect_queue
 
@@ -47,7 +47,7 @@ study:
       description: |
          process the output of the hello world samples some more
       run:
-         cmd: python $(TRANSLATE) -input $(collect.workspace)/results.json -output results.npz -schema $(FEATURES)
+         cmd: python3 $(TRANSLATE) -input $(collect.workspace)/results.json -output results.npz -schema $(FEATURES)
          depends: [collect]
          task_queue: translate_queue
 
@@ -55,7 +55,7 @@ study:
       description: |
          train a learner on the results
       run:
-         cmd: python $(LEARN) -infile $(translate.workspace)/results.npz
+         cmd: python3 $(LEARN) -infile $(translate.workspace)/results.npz
          depends: [translate]
          task_queue: learn_queue
 
@@ -63,14 +63,14 @@ study:
       description: |
          make a grid of new samples to pass to the predictor
       run:
-         cmd: python $(MAKE_SAMPLES) -n $(N_NEW) -sample_type grid -outfile grid_$(N_NEW).npy
+         cmd: python3 $(MAKE_SAMPLES) -n $(N_NEW) -sample_type grid -outfile grid_$(N_NEW).npy
          task_queue: make_samples_queue
 
     - name: predict
       description: |
          make a new prediction from new samples
       run:
-         cmd: python $(PREDICT) -infile $(make_new_samples.workspace)/grid_$(N_NEW).npy -outfile prediction_$(N_NEW).npy -reg $(learn.workspace)/random_forest_reg.pkl
+         cmd: python3 $(PREDICT) -infile $(make_new_samples.workspace)/grid_$(N_NEW).npy -outfile prediction_$(N_NEW).npy -reg $(learn.workspace)/random_forest_reg.pkl
          depends: [learn, make_new_samples]
          task_queue: predict_queue
 
@@ -136,7 +136,7 @@ merlin:
                 args: -l INFO --concurrency 3 --prefetch-multiplier 1 -Ofair
     samples:
         generate:
-            cmd: python $(MAKE_SAMPLES) -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
+            cmd: python3 $(MAKE_SAMPLES) -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
         # can be a file glob of numpy sample files.
         file: $(MERLIN_INFO)/samples.npy
         column_labels: [X0, X1]

@@ -80,11 +80,5 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    virtualenv
    spack
    merlin_developer
+   docker
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

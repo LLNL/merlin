@@ -8,9 +8,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated the Merlin Sphinx web docs.
+- Changed the example workflows to use python3 instead of python.
 
 ### Added
+- cli test flag `--local`, which can be used in place of listing out the id of each
+  local cli test.
 - A Merlin Dockerfile and some accompanying web documentation.
+- Makefile target `release`.
+- The merlin config now takes an optional --broker argument, the
+  value can be None, default rabbitmq broker, or redis for a redis
+  local broker.
+- Missing doc options for run and run-workers.
+
+### Removed
+- Makefile targets `pull` and `update`.
+
+### Changed
+- Updated the Merlin Sphinx web docs.
+- `make clean` is more comprehensive, now cleans docs build files and release files.
+- The celery keyword is no longer required in the app.yaml file.
 
 ## [1.2.3] 2020-01-27
 

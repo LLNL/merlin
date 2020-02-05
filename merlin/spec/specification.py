@@ -206,3 +206,9 @@ class MerlinSpec(YAMLSpecification):
         param steps: a list of step names
         """
         return ",".join(set(self.get_queue_list(steps)))
+
+    def get_worker_names(self):
+        result = []
+        for worker in self.merlin["resources"]["workers"]:
+            result.append(worker)
+        return result
