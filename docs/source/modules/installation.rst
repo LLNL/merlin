@@ -11,7 +11,7 @@ Installation
 
 .. admonition:: Estimated time
 
-      * 20 minutes
+      * 25 minutes
 
 .. admonition:: You will learn
 

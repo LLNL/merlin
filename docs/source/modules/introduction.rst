@@ -6,7 +6,7 @@ Introduction
 
 .. admonition:: Estimated time
 
-      * 30 minutes
+      * 20 minutes
 
 .. admonition:: You will learn
 
@@ -19,11 +19,11 @@ Motivation
 Design
 ++++++
 
-High-Level Overview
+High-level overview
 +++++++++++++++++++
 
-Comparisons to Other Systems / When should you consider Merlin
+Comparisons to other systems / When should you consider Merlin
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Example Applications and Performance Analysis
+Example applications and performance analysis
 +++++++++++++++++++++++++++++++++++++++++++++

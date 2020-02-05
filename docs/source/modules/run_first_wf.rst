@@ -1,5 +1,5 @@
-Run Your First Workflow
-=======================
+Hello, World!
+=============
 .. admonition:: Estimated time
 
       * 30 minutes
