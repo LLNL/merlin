@@ -10,10 +10,10 @@ Tutorial
 
    modules/introduction
    modules/installation
-   modules/running_first_wf
-   modules/running_simulation
+   modules/run_first_wf
+   modules/run_simulation
    modules/advanced_topics
-   modules/contributing
+   modules/contribute
    modules/port_your_application
 
 

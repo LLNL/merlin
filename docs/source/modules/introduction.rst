@@ -1,13 +1,17 @@
 Introduction
 ============
-Prerequisites:
-  * Curiosity
+.. admonition:: Prerequisites
 
-Estimated time: 30 minutes
+      * Curiosity
 
-You will learn:
-  * What merlin is.
-  * Why you may consider using merlin.
+.. admonition:: Estimated time
+
+      * 30 minutes
+
+.. admonition:: You will learn
+
+      * What merlin is.
+      * Why you may consider using merlin.
 
 Motivation
 ++++++++++
