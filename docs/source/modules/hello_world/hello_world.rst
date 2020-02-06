@@ -15,6 +15,15 @@ Stuff inside a specification
 
 Central to Merlin is something called a specifiation file, or spec for short.
 
+The spec is formatted in yaml, and defines all aspects of a workflow.
+
+* description
+* batch
+* env
+* study
+* global.parameters
+* merlin
+
 Try it!
 +++++++
 
