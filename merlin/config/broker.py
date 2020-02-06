@@ -88,10 +88,10 @@ def get_rabbit_connection(config_path, include_password):
 
     try:
         port = CONFIG.broker.port
-        LOG.debug(f"Rabbitmq port = {port}")
+        LOG.debug(f"RabbitMQ port = {port}")
     except (AttributeError, KeyError):
         port = 5671
-        LOG.warning(f"Rabbitmq using default port = {port}")
+        LOG.warning(f"RabbitMQ using default port = {port}")
 
     # Test configurations.
     rabbitmq_config = {
