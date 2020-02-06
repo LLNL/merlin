@@ -3,7 +3,7 @@ Run a Real Simulation
 .. admonition:: Prerequisites
 
       * :doc:`Module 2: Installation<installation>`
-      * :doc:`Module 3: Hello World<run_first_wf>`
+      * :doc:`Module 3: Hello World<hello_world/hello_world>`
 
 .. admonition:: Estimated time
 

@@ -8,7 +8,7 @@ Tutorial
     * March 2-6: testing period
     * March 9: ready for use!
 
-.. admonission:: Estimated time
+.. admonition:: Estimated time
 
     * 3 hours
 
@@ -21,7 +21,7 @@ Grab your laptop and coffee, and dive into this 7-module tutorial to become a Me
 
    modules/introduction
    modules/installation
-   modules/run_first_wf
+   modules/hello_world/hello_world
    modules/run_simulation
    modules/advanced_topics
    modules/contribute
