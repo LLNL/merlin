@@ -58,11 +58,14 @@ You should see something like this:
 .. literalinclude :: local_out.txt
     :language: text
 
-Explain what the output means
+< Explain what the output means >
 
-Look inside the outout directories
+< Look inside the output directories >
 
 .. Assuming config is ready
+Run distributed!
+++++++++++++++++
+
 Now, we will run the same workflow, but on our task server:
 
 .. code:: bash
@@ -74,4 +77,27 @@ You should see something like this:
 .. literalinclude :: run_out.txt
    :language: text
 
-That means we have launched our tasks...
+< That means we have launched our tasks... >
+
+< launch workers >
+
+.. literalinclude :: run_workers_out.txt
+   :language: text
+
+< explain >
+
+.. Is this overkill for this section?
+Add samples
++++++++++++
+
+< add merlin section to spec >
+
+< add a make_samples.py script >
+
+Miscellany
+++++++++++
+
+.. ?
+< merlin stop-workers > 
+
+< merlin --help >
