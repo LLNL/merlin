@@ -180,20 +180,9 @@ backend config definitions to ``server: my-redis``, the port will remain the sam
 Checking/Verifying installation
 +++++++++++++++++++++++++++++++
 
-Several commands can be used to test the installation, these are ``info`` and ``check``.
-
-The ``info`` command will check that the configuration file  is installed correctly and
-display the server configs.
+The ``info`` command will check that the configuration file is installed 
+correctly, display the server configs, and check server access.
 
 .. code:: bash
 
   merlin info
-
-
-<FIXME: check>
-
-The merlin ``check`` command will check the connection to the servers and display status information.
-
-.. code:: bash
-
-  merlin check
