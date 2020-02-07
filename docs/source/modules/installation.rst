@@ -243,11 +243,10 @@ of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``.
 Checking/Verifying installation
 +++++++++++++++++++++++++++++++
 
-Several commands can be used to test the installation, these are ``info`` and ``check``.
-
-The ``info`` command will check that the configuration file  is installed correctly and
-display the server configs.
+The ``info`` command will check that the configuration file is installed 
+correctly, display the server configs, and check server access.
 
 .. code:: bash
 
   merlin info
+
