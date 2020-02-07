@@ -9,23 +9,21 @@ study:
     - name: step1 
       description: step 1
       run:
-         cmd: |
-              touch STEP_ONE_RUNNING_$(X2)
-              sleep 5
-              rm STEP_ONE_RUNNING_$(X2)
+          cmd: |
+              touch "$(GREET), world!"
+              sleep 1
 
     - name: step2
-      description: |
-         step 2
+      description: step 2
       run:
-        cmd: |
-          ls $(step1.workspace)
-          sleep 5
-        depends: [step1]
+          cmd: |
+              ls $(step1.workspace)
+              sleep 1
+          depends: [step1]
 
 global.parameters:
-    X2:
-        values : [0.5,.75]
-        label  : X2.%%
+    GREET:
+        values : ["Hello","Bonjour"]
+        label  : GREET.%%
 
 

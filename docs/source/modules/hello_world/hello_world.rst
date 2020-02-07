@@ -17,18 +17,42 @@ Central to Merlin is something called a specifiation file, or spec for short.
 
 The spec is formatted in yaml, and defines all aspects of a workflow.
 
-* description
-* batch
-* env
-* study
-* global.parameters
-* merlin
+We will build our spec piece by piece.
 
-Try it!
-+++++++
+description
+~~~~~~~~~~~
 
-We'll call our spec ``hello.yaml``. Go ahead and make this file, pasting in this text:
+batch
+~~~~~
+
+env
+~~~
+
+study
+~~~~~
+
+global.parameters
+~~~~~~~~~~~~~~~~~
+
+merlin
+~~~~~~
+
+Your complete hello world spec should look like this:
 
 .. literalinclude :: simple_chain.yaml
    :language: yaml
 
+Try it!
++++++++
+
+We'll call our spec ``hello.yaml``. On the command line, run:
+
+.. code:: bash
+
+    $ merlin run hello.yaml
+
+You should see something like this:
+
+...
+
+That means we have launched our tasks...
