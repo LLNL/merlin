@@ -1,7 +1,7 @@
 Installation
 ============
 Prerequisites:
-  * shell (If running on Windows, use a linux container)
+  * shell (bash, csh, etc, if running on Windows, use a linux container)
   * python3 >= python3.6
   * python3 pip 
   * wget
@@ -94,6 +94,11 @@ We will first download all the necessary containers.
 All of this commands are available in a shell script called ``setup_merlin_docker.(c)sh`` 
 in the merlin github. See below for instructions. 
 
+.. note::
+  When using the docker method the celery workers will run inside the merlin container. This
+  means that any workflow tools that are also from docker containers must be installed in the
+  merlin container.
+
 .. code:: bash
 
   docker pull llnl/merlin
@@ -144,12 +149,19 @@ A shell script is available for all these commands.
   wget https:/github.com/LLNL/merlin/tutorial/setup_merlin_docker.csh
   source ./setup_merlin_docker.csh
 
-A rabbitmq server can be started to provide the broker, a redis server will 
-still be required for the backend. This hostname
+A rabbitmq server can be started to provide the broker, the redis server will 
+still be required for the backend. 
+
+The celery rabbitmq server interaction requires ssl for encrypted commincation,
+for this tutorial self-seigned certificates can be used. Information on this process
+can be found here ``provide link``.
+
+The ``hostname`` option provides the server location for the merlin container.
+
 
 .. code:: bash
 
-  docker run -d --hostname my-rabbit --name some-rabbit rabbitmq:3
+  docker run -d --hostname my-rabbit --name some-rabbit -e RABBIT_DEFAULT_USER=merlinu -e RABBIT_DEFAULT_VHOST=merlinu rabbitmq:3
 
 When you are done with the containers you can stop them using ``docker container stop``.
 
@@ -157,6 +169,8 @@ When you are done with the containers you can stop them using ``docker container
 
   docker container stop my-redis
   docker container stop my-merlin
+
+  docker container stop some-rabbit
 
 
 Configuring merlin
@@ -172,9 +186,58 @@ passwords for the redis server and encryption.
 If you are using local-redis then you are all set, look in your ``~/.merlin/app.yaml`` file
 to see the configuration.
 
+.. code:: bash
+    broker:
+        name: redis
+        server: localhost
+        port: 6379
+        db_num: 0
+
+    results_backend:
+        name: redis
+        server: localhost
+        port: 6379
+        db_num: 0
+
 If you are using the docker-redis server then the ``~/merlinu/.merlin/app.yaml`` file must be edited to 
 add the server from the redis docker container my-redis. Change the ``server: localhost`` in both the broker and
 backend config definitions to ``server: my-redis``, the port will remain the same.
+
+.. code:: bash
+    broker:
+        name: redis
+        server: my-redis
+        port: 6379
+        db_num: 0
+
+    results_backend:
+        name: redis
+        server: my-redis
+        port: 6379
+        db_num: 0
+
+
+If you are runing the optional rabbitmq server then the config can be created with the normal
+config command. If you have already run the previous command then remove the ``~/.merlin/app.yaml`` or
+``~/merlinu/.merlin/app.yaml`` file , then run the command below.
+
+.. code:: bash
+
+  merlin config
+
+The app.yaml file will need to be edited to add the rabbitmq settings in the broker section
+of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``.
+
+.. code:: bash
+    broker:
+        name: rabbitmq
+        server: my-rabbit
+
+    results_backend:
+        name: redis
+        server: <localhost | my-redis>
+        port: 6379
+        db_num: 0
 
 
 Checking/Verifying installation
@@ -188,12 +251,3 @@ display the server configs.
 .. code:: bash
 
   merlin info
-
-
-<FIXME: check>
-
-The merlin ``check`` command will check the connection to the servers and display status information.
-
-.. code:: bash
-
-  merlin check
