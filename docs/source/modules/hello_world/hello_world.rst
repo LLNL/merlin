@@ -42,10 +42,28 @@ Your complete hello world spec should look like this:
 .. literalinclude :: simple_chain.yaml
    :language: yaml
 
+We'll call our spec ``hello.yaml``.
+
 Try it!
 +++++++
 
-We'll call our spec ``hello.yaml``. On the command line, run:
+First, we'll run merlin locally. On the command line, run:
+
+.. code:: bash
+
+    $ merlin run --local hello.yaml
+
+You should see something like this:
+
+.. literalinclude :: local_out.txt
+    :language: text
+
+Explain what the output means
+
+Look inside the outout directories
+
+.. Assuming config is ready
+Now, we will run the same workflow, but on our task server:
 
 .. code:: bash
 
@@ -53,6 +71,7 @@ We'll call our spec ``hello.yaml``. On the command line, run:
 
 You should see something like this:
 
-...
+.. literalinclude :: run_out.txt
+   :language: text
 
 That means we have launched our tasks...
