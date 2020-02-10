@@ -1,0 +1,25 @@
+
+
+       *
+   *~~~~~
+  *~~*~~~*      __  __           _ _
+ /   ~~~~~     |  \/  |         | (_)
+     ~~~~~     | \  / | ___ _ __| |_ _ __
+    ~~~~~*     | |\/| |/ _ \ '__| | | '_ \
+   *~~~~~~~    | |  | |  __/ |  | | | | | |
+  ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
+ *~~~~~~~~~~~
+   ~~~*~~~*    Machine Learning for HPC Workflows
+
+
+
+[2020-02-07 13:06:23: WARNING] Workflow specification missing
+ encouraged 'merlin' section! Run 'merlin example' for examples.
+Using default configuration with no sampling.
+[2020-02-07 13:06:23: INFO] Study workspace is 'studies/simple_chain_20200207-130623'.
+[2020-02-07 13:06:24: INFO] Reading app config from file ~/.merlin/app.yaml
+[2020-02-07 13:06:25: INFO] broker: amqps://user:******@broker:5671//user
+[2020-02-07 13:06:25: INFO] backend: redis://user:******@backend:6379/0
+[2020-02-07 13:06:25: INFO] Calculating task groupings from DAG.
+[2020-02-07 13:06:25: INFO] Converting graph to celery tasks.
+[2020-02-07 13:06:25: INFO] Launching tasks.
