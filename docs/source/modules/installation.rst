@@ -217,8 +217,8 @@ to see the configuration.
         db_num: 0
 
 If you are using the docker-redis server then the ``~/merlinu/.merlin/app.yaml`` file must be edited to 
-add the server from the redis docker container my-redis. Change the ``server: localhost`` in both the broker and
-backend config definitions to ``server: my-redis``, the port will remain the same.
+add the server from the redis docker container my-redis. Change the ``server: localhost``, in both the 
+broker and backend config definitions, to ``server: my-redis``, the port will remain the same.
 
 .. code:: bash
     broker:
@@ -234,7 +234,7 @@ backend config definitions to ``server: my-redis``, the port will remain the sam
         db_num: 0
 
 
-If you are runing the optional rabbitmq server then the config can be created with the normal
+If you are running the optional rabbitmq server then the config can be created with the normal
 config command. If you have already run the previous command then remove the ``~/.merlin/app.yaml`` or
 ``~/merlinu/.merlin/app.yaml`` file , then run the command below.
 
