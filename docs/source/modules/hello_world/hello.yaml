@@ -1,0 +1,29 @@
+description:
+    name: hello world workflow
+    description: a very simple merlin workflow
+
+global.parameters:
+    GREET:
+        values : ["Hello","Bonjour"]
+        label  : GREET.%%
+    WORLD:
+        values : ["world","monde"]
+        label  : WORLD.%%
+
+study:
+    - name: step_1
+      description: write a file that says hello
+      run:
+          cmd: |
+              touch "new_file.txt"
+              echo "$(GREET), $(WORLD)!" > "new_file.txt"
+
+    - name: step_2
+      description: look at message from step_1
+      run:
+          cmd: |
+              cat $(step_1.workspace)/new_file.txt
+          depends: [step_1]
+
+
+

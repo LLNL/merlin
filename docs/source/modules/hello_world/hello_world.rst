@@ -1,5 +1,9 @@
 Hello, World!
 =============
+.. admonition:: Prerequisites
+
+    * :doc:`Module 2: Installation<installation>`
+
 .. admonition:: Estimated time
 
       * 30 minutes
@@ -13,36 +17,84 @@ Hello, World!
 Stuff inside a specification
 ++++++++++++++++++++++++++++
 
-Central to Merlin is something called a specifiation file, or spec for short.
+Central to Merlin is something called a specifiation file, or "spec" for short.
+The spec defines all aspects of your workflow.
+The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes). 
 
-The spec is formatted in yaml, and defines all aspects of a workflow.
+Let's build our spec piece by piece.
 
-We will build our spec piece by piece.
 
 description
 ~~~~~~~~~~~
+Just what it sounds like. Name and briefly summarize your workflow.
 
-batch
-~~~~~
+.. code:: yaml
 
-env
-~~~
-
-study
-~~~~~
+    description:
+        name: hello world workflow
+        description: say hello in 3 languages
 
 global.parameters
 ~~~~~~~~~~~~~~~~~
+.. better explanation??
+Global parameters are constants that you want to vary across simulations.
+The whole workflow is run for every combination of parameter values.
 
-merlin
-~~~~~~
+.. code:: yaml
+
+    global.parameters:
+        GREET:
+            values : ["Hello","Bonjour"]
+            label  : GREET.%%
+        WORLD:
+            values : ["world","monde"]
+            label  : WORLD.%%
+
+This would be our parameter value matrix:
+
+.. image:: fig1.png
+    :width: 200
+    :align: center
+
+With these parameters ``GREET`` and ``WORLD``, merlin will run our whole workflow 4 times: once for every combination.
+
+study
+~~~~~
+This is where you define worfklow steps.
+
+.. code:: yaml
+
+    study:
+        - name: step_1
+          description: step 1
+          run:
+              cmd: |
+                  touch "$(GREET), world!"
+
+        - name: step_2
+          description: look at the files in step_1
+          run:
+              cmd: |
+                  ls $(step_1.workspace)
+              depends: [step_1]
+
+Steps must be defined as a DAG, so no cyclical dependencies are allowed.
+Our step DAG currently looks like this:
+
+.. image:: dag1.png
+    :width: 100
+    :align: center
+
+
 
 Your complete hello world spec should look like this:
 
-.. literalinclude :: simple_chain.yaml
+.. literalinclude:: hello.yaml
    :language: yaml
 
-We'll call our spec ``hello.yaml``.
+We'll name it ``hello.yaml``.
+The order of the spec sections doesn't matter.
+
 
 Try it!
 +++++++
@@ -53,14 +105,20 @@ First, we'll run merlin locally. On the command line, run:
 
     $ merlin run --local hello.yaml
 
-You should see something like this:
+If your spec is bugless, you should see a few messages proclaiming successful step completion, like this:
 
 .. literalinclude :: local_out.txt
     :language: text
 
-< Explain what the output means >
+(For now we'll ignore the warning.)
+Great! But what happened? We can inspect the output directory to find out.
 
-< Look inside the output directories >
+Look for a directory named ``hello_world_workflow_<TIMESTAMP>``. That's your output directory.
+Within, there should be a directory for each step of the workflow, plus one called "merlin_info".
+The whole file tree looks like this:
+.. image:: fig2.png
+
+A lot of stuff, right? But that's what merlin does: make lots of stuff.
 
 .. Assuming config is ready
 Run distributed!
@@ -86,7 +144,6 @@ You should see something like this:
 
 < explain >
 
-.. Is this overkill for this section?
 Add samples
 +++++++++++
 
@@ -94,8 +151,15 @@ Add samples
 
 < add a make_samples.py script >
 
+< change to 1000 samples >
+
 Miscellany
 ++++++++++
+Maestro can also run your spec ``hello.yaml``. The primary difference is that it won't understand anything in the ``merlin`` block. To try it, run:
+
+.. code:: bash
+
+    maestro run hello.yaml
 
 .. ?
 < merlin stop-workers > 
