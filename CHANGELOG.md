@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   value can be None, default rabbitmq broker, or redis for a redis
   local broker.
 - Missing doc options for run and run-workers.
+- Check server access when merlin info is run.
 
 ### Removed
 - Makefile targets `pull` and `update`.
