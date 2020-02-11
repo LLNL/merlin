@@ -32,16 +32,20 @@
 Manages formatting for displaying information to the console.
 """
 import pprint
-import redis
 import socket
 import subprocess
 
+import redis
 from kombu import Connection
 from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
-from merlin.config import broker, results_backend
+from merlin.config import (
+    broker,
+    results_backend,
+)
 from merlin.config.configfile import default_config_info
+
 
 def check_server_access(conf, sconf):
     servers = ["broker", "backend"]
@@ -53,12 +57,13 @@ def check_server_access(conf, sconf):
     for s in servers:
         if s in sconf:
             try:
-                conn =Connection(sconf[s])
+                conn = Connection(sconf[s])
                 conn.connect()
                 conn.release()
                 print(f"{s} connection: OK")
             except (socket.error, redis.exceptions.ConnectionError) as e:
                 print(f"{s} connection: Error")
+
 
 def display_config_info():
     """
