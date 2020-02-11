@@ -117,7 +117,8 @@ The first step is to download all the necessary containers.
 The redis server is used for the celery broker and results backend server in this tutorial,
 the redis server will be started  in detached mode, ``--detach``, to provide these servers. 
 For the server configuration step below this will be referred to as 
-docker-redis.
+docker-redis. The ``--publish`` or ``-p`` option will link a localhost port to the docker container port 
+``-p <localhost port>:<docker container port>``.
 
 .. code:: bash
 
