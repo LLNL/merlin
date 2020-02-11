@@ -204,6 +204,7 @@ If you are using local-redis then you are all set, look in your ``~/.merlin/app.
 to see the configuration.
 
 .. code:: bash
+
     broker:
         name: redis
         server: localhost
@@ -221,6 +222,7 @@ add the server from the redis docker container my-redis. Change the ``server: lo
 broker and backend config definitions, to ``server: my-redis``, the port will remain the same.
 
 .. code:: bash
+
     broker:
         name: redis
         server: my-redis
@@ -247,6 +249,7 @@ of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``. The ra
 server be accessed on its TLS port, 5671.
 
 .. code:: bash
+
     broker:
         name: rabbitmq
         server: my-rabbit
