@@ -1,10 +1,10 @@
 description:
-    name: hello world workflow
+    name: hello
     description: a very simple merlin workflow
 
 global.parameters:
     GREET:
-        values : ["Hello","Bonjour"]
+        values : ["hello","bonjour"]
         label  : GREET.%%
     WORLD:
         values : ["world","monde"]
@@ -21,8 +21,7 @@ study:
     - name: step_2
       description: look at message from step_1
       run:
-          cmd: |
-              cat $(step_1.workspace)/new_file.txt
+          cmd: cat $(step_1.workspace)/new_file.txt
           depends: [step_1]
 
 
