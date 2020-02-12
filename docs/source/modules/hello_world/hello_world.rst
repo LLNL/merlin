@@ -94,6 +94,9 @@ Your complete hello world spec should look like this:
 We'll name it ``hello.yaml``.
 The order of the spec sections doesn't matter.
 
+.. note::
+
+    At this point, our spec is both merlin- and maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will add later. If you want to try it, run: ``$ maestro run hello.yaml``
 
 Try it!
 +++++++
@@ -117,7 +120,7 @@ The whole file tree looks like this:
 
 .. image:: fig1.png
 
-A lot of stuff, right? Get used to it.
+A lot of stuff, right? Here's what it means:
 
 * The yaml file inside ``merlin_info/`` is called the provenance spec. It's a copy of the original spec that was run.
 
@@ -133,9 +136,9 @@ A lot of stuff, right? Get used to it.
 Run distributed!
 ++++++++++++++++
 
-.. note::
+.. important::
 
-    Before trying this, make sure you've properly set up your config file ``app.yaml``.
+    Before trying this, make sure you've properly set up your merlin config file ``app.yaml``. Run ``merlin info`` for information on your merlin configuration.
 
 Now we will run the same workflow, but on our task server:
 
@@ -143,19 +146,28 @@ Now we will run the same workflow, but on our task server:
 
     $ merlin run hello.yaml
 
-You should see something like this:
+If your merlin configuration is set up correctly, you should see something like this:
 
 .. literalinclude :: run_out.txt
    :language: text
 
-< That means we have launched our tasks... >
+That means we have launched our tasks! Now we need to launch the workers that will complete those tasks. Run this:
 
-< launch workers >
+.. code:: bash
+
+    $ merlin run-workers hello.yaml
+    
+Here's the expected merlin output message for running workers:
 
 .. literalinclude :: run_workers_out.txt
    :language: text
 
-< explain >
+Immediately after that, this will pop up:
+
+.. literalinclude :: celery.txt
+   :language: text
+
+The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
 
 Add samples
 +++++++++++
@@ -168,11 +180,6 @@ Add samples
 
 Miscellany
 ++++++++++
-Maestro can also run your spec ``hello.yaml``. The primary difference is that it won't understand anything in the ``merlin`` block. To try it, run:
-
-.. code:: bash
-
-    maestro run hello.yaml
 
 .. ?
 < merlin stop-workers > 
