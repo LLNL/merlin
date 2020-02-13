@@ -2,13 +2,14 @@ description:
     name: hello
     description: a very simple merlin workflow
 
+env:
+    variables:
+        NUM_SAMPLES: 3
+
 global.parameters:
     GREET:
         values : ["hello","bonjour"]
         label  : GREET.%%
-    WORLD:
-        values : ["world","monde"]
-        label  : WORLD.%%
 
 study:
     - name: step_1
@@ -21,6 +22,15 @@ study:
     - name: step_2
       description: print a success message
       run:
-          cmd: print("Operation: hello complete.")
+          cmd: print("Operation: hello-$(NUM_SAMPLES) complete.")
           depends: [step_1_*]
           shell: python3
+
+merlin:
+    samples:
+        generate:
+            cmd: |
+                pip install faker
+                foreach i in $(NUM_SAMPLES): echo -e faker --name > $(MERLIN_INFO)/samples.csv
+        file: $(MERLIN_INFO)/samples.csv
+        column_labels: [WORLD]

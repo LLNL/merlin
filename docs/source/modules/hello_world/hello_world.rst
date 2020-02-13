@@ -53,7 +53,7 @@ The whole workflow is run for index of parameter values.
             values : ["world","monde"]
             label  : WORLD.%%
 
-So this will give us an English result, and a French one.
+So this will give us an English result, and a French one. (If you want, you can add as many more langauges as you want, as long as both parameters hold the same number of values).
 
 study
 ~~~~~
@@ -90,13 +90,13 @@ Combined with our global parameters, the DAG is:
     :width: 300
     :align: center
 
-It looks like running ``step_2`` twice is redundant. Instead of doing that, we can add ``_*`` to the end of the step dependency like so: ``depends: [step_1_*]``. Now the DAG looks like this:
+It looks like running ``step_2`` twice is redundant. Instead of doing that, we can collapse it back into a single step, by having it wait for both parameterized versions of ``step_1`` to finish. Add ``_*`` to the end of the step dependency like so: ``depends: [step_1_*]``. Now the DAG looks like this:
 
 .. image:: dag3.png
     :width: 300
     :align: center
 
-Your complete hello world spec should look like this:
+Your full hello world spec should look like this:
 
 .. literalinclude:: hello.yaml
    :language: yaml
@@ -106,7 +106,7 @@ The order of the spec sections doesn't matter.
 
 .. note::
 
-    At this point, our spec is both merlin- and maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will add later. If you want to try it, run: ``$ maestro run hello.yaml``
+    At this point, our spec is still merlin- and maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will add later. If you want to try it, run: ``$ maestro run hello.yaml``
 
 Try it!
 +++++++
@@ -132,6 +132,8 @@ The whole file tree looks like this:
 
 A lot of stuff, right? Here's what it means:
 
+* ``new_file.txt`` is the name of the file we wrote in ``step_1``.
+
 * The yaml file inside ``merlin_info/`` is called the provenance spec. It's a copy of the original spec that was run.
 
 * ``MERLIN_FINISHED`` files indicate that the step ran successfully.
@@ -148,7 +150,7 @@ Run distributed!
 
 .. important::
 
-    Before trying this, make sure you've properly set up your merlin config file ``app.yaml``. Run ``merlin info`` for information on your merlin configuration.
+    Before trying this, make sure you've properly set up your merlin config file ``app.yaml``. Run ``$ merlin info`` for information on your merlin configuration.
 
 Now we will run the same workflow, but on our task server:
 
@@ -179,10 +181,50 @@ Immediately after that, this will pop up:
 
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
 
-Scale samples
+Using samples
 +++++++++++++
+It's a little boring to say "hello world" two different ways. Let's instead say hello to multiple people!
 
-< change to 1000 samples >
+To do this, we'll change ``WORLD`` from a paramter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "monde" to being a randomly-generated name.
+
+First, we remove the global parameter `WORLD`.
+
+Now add this yaml section to your spec:
+
+.. code:: yaml
+
+    merlin:
+        samples:
+            generate:
+                cmd: |
+                    pip install faker
+                    foreach i in $(NUM_SAMPLES): echo -e faker --name > $(MERLIN_INFO)/samples.csv
+            file: $(MERLIN_INFO)/samples.csv
+            column_labels: [WORLD]
+
+This is the merlin block, an exclusively merlin feature. It provides a way to generate samples for your workflow. In this case, a sample is the name of a person.
+
+For simplicity we name it ``WORLD``, just like before.
+
+Since our environment variable ``NUM_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
+
+Here is the new spec:
+
+.. literalinclude:: hello_samples.yaml
+   :language: yaml
+
+
+Run the workflow again!
+
+Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. Run:
+
+.. code:: bash
+
+    $ merlin run --vars NUM_SAMPLES=1000 hello.yaml
+
+    $ merlin run-workers hello.yaml
+
+Congratulations! You concurrently greeted 1000 friends in English and French!
 
 Miscellany
 ++++++++++
