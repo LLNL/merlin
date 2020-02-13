@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `merlin info` to lookup python3 and and pip3.
 - Altered user in Dockerfile and removed build tools.
 - MANIFEST.in now uses recursive-include.
-- Added author and author_email to setup.py.
+- Updated docker docs.
 
 ### Added
 - cli test flag `--local`, which can be used in place of listing out the id of each
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   local broker.
 - Missing doc options for run and run-workers.
 - Add port to rabbitmq config options.
-- Updated docker docs.
+- Added author and author_email to setup.py.
 
 ### Removed
 - Makefile targets `pull` and `update`.
