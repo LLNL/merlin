@@ -36,9 +36,9 @@ import time
 from contextlib import suppress
 from fileinput import FileInput
 
+from cached_property import cached_property
 from maestrowf.datastructures.core import Study
 
-from cached_property import cached_property
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
 from merlin.spec.expansion import determine_user_variables, expand_line

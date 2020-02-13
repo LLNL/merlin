@@ -32,6 +32,7 @@
 Functions for encrypting backend traffic.
 """
 import celery.backends.base
+
 from merlin.common.security import encrypt
 
 

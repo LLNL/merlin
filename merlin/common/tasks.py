@@ -36,6 +36,7 @@ import os
 
 from celery import chain, chord, group, shared_task, signature
 from celery.exceptions import OperationalError, TimeoutError
+
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy

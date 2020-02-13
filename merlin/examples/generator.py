@@ -37,9 +37,9 @@ import logging
 import os
 import shutil
 
+import tabulate
 import yaml
 
-import tabulate
 from merlin.examples import examples
 
 

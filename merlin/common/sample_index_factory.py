@@ -31,9 +31,10 @@
 """
 SampleIndex factory methods
 """
+from parse import parse
+
 from merlin.common.sample_index import MAX_SAMPLE, SampleIndex
 from merlin.utils import cd
-from parse import parse
 
 
 def create_hierarchy(
