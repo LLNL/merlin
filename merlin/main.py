@@ -561,7 +561,8 @@ def setup_argparse():
 
     # merlin info
     info = subparsers.add_parser(
-        "info", help="show pip and python versions and locations"
+        "info",
+        help="display info about the merlin configuration and the python configuration. Useful for debugging.",
     )
     info.set_defaults(func=print_info)
 
