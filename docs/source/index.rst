@@ -79,6 +79,5 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    virtualenv
    spack
    merlin_developer
-   merlin
    docker
 
