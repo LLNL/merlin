@@ -97,7 +97,7 @@ def print_info(args):
     print("Python Configuration")
     print("-" * 25)
     print("")
-    info_calls = ["which python", "python --version", "which pip", "pip --version"]
+    info_calls = ["which python3", "python3 --version", "which pip3", "pip3 --version"]
     info_str = ""
     for x in info_calls:
         info_str += 'echo " $ ' + x + '" && ' + x + "\n"
