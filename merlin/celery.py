@@ -34,12 +34,12 @@ from __future__ import absolute_import, print_function
 import logging
 import os
 
-import billiard
 import psutil
+
+import billiard
+import merlin.common.security.encrypt_backend_traffic
 from celery import Celery
 from celery.signals import worker_process_init
-
-import merlin.common.security.encrypt_backend_traffic
 from merlin.config import broker, results_backend
 from merlin.log_formatter import FORMATS
 from merlin.router import route_for_task
