@@ -84,7 +84,17 @@ Our step DAG currently looks like this:
     :width: 100
     :align: center
 
+Combined with our global parameters, the DAG is:
 
+.. image:: dag2.png
+    :width: 300
+    :align: center
+
+It looks like running ``step_2`` twice is redundant. Instead of doing that, we can add ``_*`` to the end of the step dependency like so: ``depends: [step_1_*]``. Now the DAG looks like this:
+
+.. image:: dag3.png
+    :width: 300
+    :align: center
 
 Your complete hello world spec should look like this:
 
@@ -169,12 +179,8 @@ Immediately after that, this will pop up:
 
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
 
-Add samples
-+++++++++++
-
-< add merlin section to spec >
-
-< add a make_samples.py script >
+Scale samples
++++++++++++++
 
 < change to 1000 samples >
 

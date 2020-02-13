@@ -2,6 +2,10 @@ description:
     name: hello
     description: a very simple merlin workflow
 
+env:
+    variables:
+        N_SAMPLES: 3
+
 global.parameters:
     GREET:
         values : ["hello","bonjour"]
@@ -22,7 +26,6 @@ study:
       description: look at message from step_1
       run:
           cmd: cat $(step_1.workspace)/new_file.txt
-          depends: [step_1]
-
+          depends: [step_1_*]
 
 
