@@ -84,7 +84,7 @@ Our step DAG currently looks like this:
     :width: 100
     :align: center
 
-Combined with our global parameters, the DAG is:
+Since our global parameters have 2 values, this is actually what the DAG looks like:
 
 .. image:: dag2.png
     :width: 300
@@ -129,6 +129,7 @@ Within, there should be a directory for each step of the workflow, plus one call
 The whole file tree looks like this:
 
 .. image:: fig1.png
+    :align: center
 
 A lot of stuff, right? Here's what it means:
 
@@ -152,7 +153,7 @@ Run distributed!
 
     Before trying this, make sure you've properly set up your merlin config file ``app.yaml``. Run ``$ merlin info`` for information on your merlin configuration.
 
-Now we will run the same workflow, but on our task server:
+Now we will run the same workflow, but in parallel on our task server:
 
 .. code:: bash
 
@@ -183,13 +184,19 @@ The terminal you ran workers in is now being taken over by Celery, the powerful 
 
 Using samples
 +++++++++++++
-It's a little boring to say "hello world" two different ways. Let's instead say hello to multiple people!
+It's a little boring to say "hello world" in just two different ways. Let's instead say hello to multiple people!
 
 To do this, we'll change ``WORLD`` from a paramter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "monde" to being a randomly-generated name.
 
 First, we remove the global parameter `WORLD`.
 
-Now add this yaml section to your spec:
+Now add these yaml sections to your spec:
+
+.. code:: yaml
+
+    env:
+        variables:
+            NUM_SAMPLES: 3
 
 .. code:: yaml
 
@@ -208,7 +215,13 @@ For simplicity we name it ``WORLD``, just like before.
 
 Since our environment variable ``NUM_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
 
-Here is the new spec:
+Here's our DAG with samples:
+
+.. image:: dag4.png
+    :width: 400
+    :align: center
+
+Here's the new spec:
 
 .. literalinclude:: hello_samples.yaml
    :language: yaml
