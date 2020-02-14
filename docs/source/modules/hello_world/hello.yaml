@@ -21,6 +21,6 @@ study:
     - name: step_2
       description: print a success message
       run:
-          cmd: print("Operation: hello complete.")
+          cmd: print("Operation: HELLO complete.")
           depends: [step_1_*]
-          shell: python3
+          shell: /usr/bin/env python3

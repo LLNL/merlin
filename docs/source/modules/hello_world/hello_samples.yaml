@@ -1,5 +1,5 @@
 description:
-    name: hello
+    name: hello_samples
     description: a very simple merlin workflow
 
 env:
@@ -22,15 +22,13 @@ study:
     - name: step_2
       description: print a success message
       run:
-          cmd: print("Operation: hello-$(NUM_SAMPLES) complete.")
+          cmd: 'print("Operation: HELLO complete.")'
           depends: [step_1_*]
-          shell: python3
+          shell: /usr/bin/env python3
 
 merlin:
     samples:
         generate:
-            cmd: |
-                pip install faker
-                for i in {1...$(NUM_SAMPLES)}; do faker name > $(MERLIN_INFO)/samples.csv; echo -e "\n" > $(MERLIN_INFO)/samples.csv; done
+            cmd: pip install faker ; for i in {1..$(NUM_SAMPLES)}; do echo $(faker name) >> $(MERLIN_INFO)/samples.csv; done
         file: $(MERLIN_INFO)/samples.csv
         column_labels: [WORLD]
