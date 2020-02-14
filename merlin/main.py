@@ -199,7 +199,7 @@ def launch_workers(args):
     if args.worker_echo_only:
         print(status)
     else:
-        LOG.info(status)
+        LOG.debug(f"celery command: {status}")
 
 
 def purge_tasks(args):
