@@ -31,6 +31,6 @@ merlin:
         generate:
             cmd: |
                 pip install faker
-                foreach i in $(NUM_SAMPLES): echo -e faker --name > $(MERLIN_INFO)/samples.csv
+                for i in {1...$(NUM_SAMPLES)}; do faker name > $(MERLIN_INFO)/samples.csv; echo -e "\n" > $(MERLIN_INFO)/samples.csv; done
         file: $(MERLIN_INFO)/samples.csv
         column_labels: [WORLD]
