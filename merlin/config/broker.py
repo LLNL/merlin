@@ -49,7 +49,7 @@ LOG = logging.getLogger(__name__)
 
 BROKERS = ["rabbitmq", "redis", "redis+socket"]
 
-RABBITMQ_CONNECTION = "amqps://{username}:{password}@{server}:5671//{vhost}"
+RABBITMQ_CONNECTION = "amqps://{username}:{password}@{server}:{port}//{vhost}"
 REDISSOCK_CONNECTION = "redis+socket://{path}?virtual_host={db_num}"
 USER = getpass.getuser()
 
@@ -86,12 +86,20 @@ def get_rabbit_connection(config_path, include_password):
     except IOError:
         raise ValueError(f"RabbitMQ password file {password_filepath} does not exist")
 
+    try:
+        port = CONFIG.broker.port
+        LOG.debug(f"RabbitMQ port = {port}")
+    except (AttributeError, KeyError):
+        port = 5671
+        LOG.debug(f"RabbitMQ using default port = {port}")
+
     # Test configurations.
     rabbitmq_config = {
         "vhost": vhost,
         "username": username,
         "password": "******",
         "server": server,
+        "port": port,
     }
 
     if include_password:
