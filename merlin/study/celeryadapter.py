@@ -144,7 +144,7 @@ def query_celery_workers():
 
     workers = get_workers(app)
     if workers:
-        LOG.info("Found these connected celery workers:")
+        LOG.info("Found these connected workers:")
         for worker in workers:
             LOG.info(worker)
     else:
@@ -208,7 +208,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
                 machine: [hostA, hostB]
     """
     if not just_return_command:
-        LOG.info("Starting celery workers")
+        LOG.info("Starting workers")
 
     overlap = spec.merlin["resources"]["overlap"]
     workers = spec.merlin["resources"]["workers"]

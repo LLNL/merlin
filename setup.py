@@ -94,6 +94,8 @@ def extras_require():
 
 setup(
     name="merlinwf",
+    author="Merlin Dev team",
+    author_email="merlin-dev@llnl.gov",
     version=version,
     description="The building blocks of workflows!",
     long_description=readme(),
