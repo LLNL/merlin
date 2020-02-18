@@ -47,13 +47,13 @@ The whole workflow is run for index of parameter values.
 
     global.parameters:
         GREET:
-            values : ["hello","bonjour"]
+            values : ["hello","olá"]
             label  : GREET.%%
         WORLD:
-            values : ["world","monde"]
+            values : ["world","mundo"]
             label  : WORLD.%%
 
-So this will give us an English result, and a French one. (If you want, you can add as many more langauges as you want, as long as both parameters hold the same number of values).
+So this will give us an English result, and a Portuguese one. (If you want, you can add as many more langauges as you want, as long as both parameters hold the same number of values).
 
 study
 ~~~~~
@@ -186,7 +186,7 @@ Using samples
 +++++++++++++
 It's a little boring to say "hello world" in just two different ways. Let's instead say hello to multiple people!
 
-To do this, we'll change ``WORLD`` from a paramter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "monde" to being a randomly-generated name.
+To do this, we'll change ``WORLD`` from a paramter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "mundo" to being a randomly-generated name.
 
 First, we remove the global parameter `WORLD`.
 
@@ -237,7 +237,7 @@ Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. Ru
 
     $ merlin run-workers hello.yaml
 
-Congratulations! You concurrently greeted 1000 friends in English and French!
+Congratulations! You concurrently greeted 1000 friends in English and Portuguese!
 
 Miscellany
 ++++++++++

@@ -4,10 +4,10 @@ description:
 
 global.parameters:
     GREET:
-        values : ["hello","bonjour"]
+        values : ["hello","olá"]
         label  : GREET.%%
     WORLD:
-        values : ["world","monde"]
+        values : ["world","mundo"]
         label  : WORLD.%%
 
 study:

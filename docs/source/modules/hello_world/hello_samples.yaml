@@ -8,7 +8,7 @@ env:
 
 global.parameters:
     GREET:
-        values : ["hello","bonjour"]
+        values : ["hello","olá"]
         label  : GREET.%%
 
 study:
