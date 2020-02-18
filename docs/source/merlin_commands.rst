@@ -340,6 +340,21 @@ giving a space separated list of steps.
     $ merlin purge <input.yaml> --steps step1 step2
 
 
+Status (`merlin status`)
+------------------------
+.. code:: bash
+
+    $ merlin status <input.yaml> [--steps <steps>] [--vars <VARIABLES=<VARIABLES>>] [--csv <csv file>]
+
+Use the ``--steps`` option to identify specific steps in the specification that you want to query.
+
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+``Example: --vars LEARN=path/to/new_learn.py EPOCHS=3``
+
+The ``--csv`` option takes in a filename, to dump status reports to.
+
 Debug Info
 ----------
 More information can be output by increasing the logging level
