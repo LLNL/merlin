@@ -14,13 +14,10 @@ study:
     - name: step_1
       description: write a file that says hello
       run:
-          cmd: |
-              touch "new_file.txt"
-              echo "$(GREET), $(WORLD)!" > "new_file.txt"
+          cmd: echo "$(GREET), $(WORLD)!"
 
     - name: step_2
       description: print a success message
       run:
-          cmd: print("Operation: HELLO complete.")
+          cmd: echo "Operation HELLO complete."
           depends: [step_1_*]
-          shell: /usr/bin/env python3
