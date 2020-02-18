@@ -53,7 +53,7 @@ The whole workflow is run for index of parameter values.
             values : ["world","mundo"]
             label  : WORLD.%%
 
-So this will give us an English result, and a Portuguese one. (If you want, you can add as many more langauges as you want, as long as both parameters hold the same number of values).
+So this will give us an English result, and a Portuguese one. (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
 
 study
 ~~~~~
@@ -90,13 +90,25 @@ Since our global parameters have 2 values, this is actually what the DAG looks l
     :width: 300
     :align: center
 
-It looks like running ``step_2`` twice is redundant. Instead of doing that, we can collapse it back into a single step, by having it wait for both parameterized versions of ``step_1`` to finish. Add ``_*`` to the end of the step dependency like so: ``depends: [step_1_*]``. Now the DAG looks like this:
+It looks like running ``step_2`` twice is redundant. Instead of doing that, we can collapse it back into a single step, by having it wait for both parameterized versions of ``step_1`` to finish. Add ``_*`` to the end of the step name in ``step_1``'s depend entry. Go from this:
+
+.. code:: yaml
+
+    depends: [step_1]
+
+...to this:
+
+.. code:: yaml
+
+    depends: [step_1_*]
+
+Now the DAG looks like this:
 
 .. image:: dag3.png
     :width: 300
     :align: center
 
-Your full hello world spec should look like this:
+Your full hello world spec should now look like this:
 
 .. literalinclude:: hello.yaml
    :language: yaml
@@ -106,7 +118,7 @@ The order of the spec sections doesn't matter.
 
 .. note::
 
-    At this point, our spec is still merlin- and maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will add later. If you want to try it, run: ``$ maestro run hello.yaml``
+    At this point, our spec is still merlin- and maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will still add later. If you want to try it, run: ``$ maestro run hello.yaml``
 
 Try it!
 +++++++
@@ -184,7 +196,7 @@ The terminal you ran workers in is now being taken over by Celery, the powerful 
 
 Using samples
 +++++++++++++
-It's a little boring to say "hello world" in just two different ways. Let's instead say hello to multiple people!
+It's a little boring to say "hello world" in just two different ways. Let's instead say hello to many people!
 
 To do this, we'll change ``WORLD`` from a paramter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "mundo" to being a randomly-generated name.
 

@@ -29,6 +29,6 @@ study:
 merlin:
     samples:
         generate:
-            cmd: pip install faker ; for i in {1..$(NUM_SAMPLES)}; do echo $(faker name) >> $(MERLIN_INFO)/samples.csv; done
+            cmd: pip install names ; for i in {1..$(NUM_SAMPLES)}; do echo $(names) >> $(MERLIN_INFO)/samples.csv; done
         file: $(MERLIN_INFO)/samples.csv
         column_labels: [WORLD]
