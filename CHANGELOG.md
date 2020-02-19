@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All `INFO`-level logger references to Celery.
 
 ### Changed
-- Updated the Merlin Sphinx web docs.
+- Updated the Merlin Sphinx web docs, including info about command line commands.
 - Example workflows use python3 instead of python.
 - Updated `merlin info` to lookup python3 and and pip3.
 - Altered user in Dockerfile and removed build tools.
