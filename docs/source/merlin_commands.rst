@@ -8,39 +8,39 @@ requested by workers on an allocation to run. The celery python module
 is used to implement the tasks and worker functionality.
 
 
-Help
-----
+Help (``merlin --help``)
+------------------------
 
-Descriptions of the Merlin commands will be output when the ``-h`` or
+Descriptions of the Merlin commands are outputted when the ``-h`` or
 ``--help`` commands are used.
 
 .. code:: bash
 
-    $ merlin -h
+    $ merlin [<command name>] --help
 
 
-Version info
-------------
+Version (``merlin --version``)
+------------------------------
 
-The Merlin can be output using the ``-v`` argument.
+See the version by using the ``--version`` or ``-v`` flag.
 
 .. code:: bash
 
-    $ merlin -v
+    $ merlin --version
 
 
-Information (info)
-------------------
+Information (``merlin info``)
+-----------------------------
 
-Information about the run environment can be printed out using the
-``info`` command.
+Information about your merlin and python configuration can be printed out by using the 
+``info`` command. This is helpful for debugging.
 
 .. code:: bash
 
     $ merlin info
 
-Create the Config File (config)
--------------------------------
+Create the Config File (``merlin config``)
+------------------------------------------
 
 Create a default config file in the ${HOME}/.merlin directory using the ``config`` command. This file
 can then be edited for your system configuration.
@@ -61,8 +61,8 @@ The backend will be ``redis`` in
 both cases. The redis backend in the ``rabbitmq`` config shows the
 use on encryption for the backend.
 
-Run the workflow (run)
-----------------------
+Run the workflow (``merlin run``)
+---------------------------------
 
 To run the merlin workflow use the  ``run`` command and the path to the
 input yaml file ``<input.yaml>``. This will define the tasks and queue
@@ -70,7 +70,7 @@ them on the task server also called the broker.
 
 .. code:: bash
 
-    $ merlin run [--local] <input.yaml> [--vars <VARIABLES=<VARIABLES>>] [--samplesfile <SAMPLES_FILE>]
+    $ merlin run [--local] <input.yaml> [--vars <VARIABLES=<VARIABLES>>] [--samplesfile <SAMPLES_FILE>] [--dry]
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
@@ -92,7 +92,7 @@ Dry Run
 subdirectories and scripts (with variables expanded) without actually executing
 the scripts.
 
-To dry-run a workflow, use:
+To dry-run a workflow, use ``--dry``:
 
 .. code:: bash
 
@@ -115,8 +115,8 @@ If you wish to execute a workflow after dry-running it, simply use ``restart``.
 
 
 
-Restart the workflow (restart)
-------------------------------
+Restart the workflow (``merlin restart``)
+-----------------------------------------
 
 To restart a previously started merlin workflow, use the  ``restart`` command
 and the path to root of the merlin workspace that was generated during the
@@ -133,8 +133,8 @@ skip during execution of a workflow.
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
-Run the Workers (run-workers)
------------------------------
+Run the Workers (``merlin run-workers``)
+----------------------------------------
 
 The tasks queued on the broker are run by a collection of workers. These
 workers can be run local in the current shell or in parallel on a batch
@@ -219,8 +219,8 @@ shown below.
   # Delay until the allocation is complete to keep the workers running
   sleep inf
 
-Searching for any workers (query-workers)
------------------------------------------
+Searching for any workers (``merlin query-workers``)
+----------------------------------------------------
 
 If you want to see all workers that are currently connected to
 the task server you can use:
@@ -235,38 +235,35 @@ with workers, such as via ``merlin stop-workers --workers``.
 
 .. _stop-workers:
 
-Stopping workers (stop-workers)
--------------------------------
+Stopping workers (``merlin stop-workers``)
+------------------------------------------
 
 To send out a stop signal to some or all connected workers, use:
 
 .. code:: bash
 
-    $ merlin stop-workers
+    $ merlin stop-workers [--spec <input.yaml>] [--queues <queues>] [--workers <regex>]
+
 
 The default behavior will send a stop to all connected workers,
 having them shutdown softly.
 
-You can target only workers named in the ``merlin`` block of a spec file:
+The ``--spec`` option targets only workers named in the ``merlin`` block of the spec file.
+
+The ``--queues`` option allows you to pass in the names of specific queues to stop. For example:
 
 .. code:: bash
 
-    $ merlin stop-workers --spec spec.yaml
+    # Stop all workers on these queues, no matter their name
+    $ merlin stop-workers --queues queue1 queue2
 
-You can also filter by those connected to certain queues and/or
-whose name matches a regular expression:
+The ``--workers`` option allows you to pass in a regular expression of names of queues to stop:
 
 .. code:: bash
-
-    # Stop all workers connected to queues 1 and 2 whose name matches the pattern
-    $ merlin stop-workers --queues queue1 queue2 --workers "celery@my_host*"
 
     # Stop all workers whose name matches this pattern, no matter the queue
     # Note the ".*" convention at the start, per regex
     $ merlin stop-workers --workers ".*@my_other_host*"
-
-    # Stop all workers on these queues, no matter their name
-    $ merlin stop-workers --queues queue1 queue2
 
 .. attention::
 
@@ -274,8 +271,8 @@ whose name matches a regular expression:
    only one might get the signal. In this case, you can send it
    again.
 
-Generate working examples (example)
------------------------------------
+Generate working examples (``merlin example``)
+----------------------------------------------
 
 If you want to run an example workflow, use Merlin's ``merlin example``:
 
@@ -302,8 +299,8 @@ If the specified directory does not exist Merlin will automatically create it.
 This will generate the example workflow at the specified location, ready to be run.
 
 
-Purging Tasks (purge)
----------------------
+Purging Tasks (``merlin purge``)
+--------------------------------
 
 Once the merlin run command succeeds, the tasks are now on the task server
 waiting to be run by the workers. If you would like to remove the tasks from
@@ -322,26 +319,22 @@ task server, run:
 
 .. code:: bash
 
-    $ merlin purge <input.yaml>
+    $ merlin purge <input.yaml> [-f] [--steps <steps>]
 
 This will ask you if you would like to remove the tasks, you can use the
 ``-f`` option if you want to skip this.
 
-.. code:: bash
-
-    $ merlin purge -f <input.yaml>
-
 If you have different queues in your workflow yaml file, you can
 choose which queues are purged by using the ``--steps`` argument and
-giving a space separated list of steps.
+giving a space-delimited list of steps.
 
 .. code:: bash
 
     $ merlin purge <input.yaml> --steps step1 step2
 
 
-Status (`merlin status`)
-------------------------
+Status (``merlin status``)
+--------------------------
 .. code:: bash
 
     $ merlin status <input.yaml> [--steps <steps>] [--vars <VARIABLES=<VARIABLES>>] [--csv <csv file>]
@@ -355,15 +348,15 @@ the input yaml file.
 
 The ``--csv`` option takes in a filename, to dump status reports to.
 
-Debug Info
-----------
-More information can be output by increasing the logging level
+Log Level (``merlin -lvl debug``)
+--------------------------------
+More information, generally pertaining to bugs, can be output by increasing the logging level
 using the ``-lvl`` or ``--level`` argument.
 
-Options for the level argument are: DEBUG, INFO, WARNING, ERROR.
+Options for the level argument are: debug, info, warning, error.
 
 .. code:: bash
 
-    $ merlin -lvl DEBUG run <input.yaml>
+    $ merlin -lvl debug run <input.yaml>
 
 
