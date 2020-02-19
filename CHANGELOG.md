@@ -6,11 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- Updated the Merlin Sphinx web docs.
-- Changed the example workflows to use python3 instead of python.
-- Updated `merlin info` to lookup python3 and and pip3.
-
 ### Added
 - cli test flag `--local`, which can be used in place of listing out the id of each
   local cli test.
@@ -22,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Missing doc options for run and run-workers.
 - Check server access when `merlin info` is run.
 - A port option to rabbitmq config options.
+- Author and author_email to setup.py.
 
 ### Removed
 - Makefile targets `pull` and `update`.
@@ -30,8 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated the Merlin Sphinx web docs.
-- `make clean` is more comprehensive, now cleans docs build files and release files.
-- The celery keyword is no longer required in the app.yaml file.
+- Example workflows use python3 instead of python.
+- Updated `merlin info` to lookup python3 and and pip3.
+- Altered user in Dockerfile and removed build tools.
+- MANIFEST.in now uses recursive-include.
+- Updated docker docs.
+- `make clean` is more comprehensive, now cleans docs, build files, and release files.
+- The celery keyword is no longer required in `app.yaml`.
 
 ## [1.2.3] 2020-01-27
 
