@@ -358,7 +358,7 @@ The ``--csv`` option takes in a filename, to dump status reports to.
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
 Log Level (``merlin -lvl debug``)
---------------------------------
+---------------------------------
 More information, generally pertaining to bugs, can be output by increasing the logging level
 using the ``-lvl`` or ``--level`` argument.
 
