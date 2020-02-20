@@ -319,7 +319,7 @@ task server, run:
 
 .. code:: bash
 
-    $ merlin purge <input.yaml> [-f] [--steps <steps>]
+    $ merlin purge <input.yaml> [-f] [--steps <steps>] [--vars <VARIABLES=<VARIABLES>>]
 
 This will ask you if you would like to remove the tasks, you can use the
 ``-f`` option if you want to skip this.
@@ -331,6 +331,11 @@ giving a space-delimited list of steps.
 .. code:: bash
 
     $ merlin purge <input.yaml> --steps step1 step2
+
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+``Example: --vars QUEUE_NAME=new_queue EPOCHS=3``
 
 
 Status (``merlin status``)
