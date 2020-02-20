@@ -32,10 +32,10 @@
 Manages formatting for displaying information to the console.
 """
 import pprint
-import redis
 import socket
 import subprocess
 
+import redis
 from kombu import Connection
 from tabulate import tabulate
 
@@ -79,7 +79,9 @@ def display_config_info():
         conf["broker server"] = "No broker server configured."
 
     try:
-        conf["results server"] = results_backend.get_connection_string(include_password=False)
+        conf["results server"] = results_backend.get_connection_string(
+            include_password=False
+        )
         sconf["results server"] = results_backend.get_connection_string()
     except ValueError:
         conf["results server"] = "No results server configured."
