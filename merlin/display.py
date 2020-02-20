@@ -44,8 +44,8 @@ from merlin.config import broker, results_backend
 from merlin.config.configfile import default_config_info
 
 
-def check_server_access(conf, sconf):
-    servers = ["broker", "backend"]
+def check_server_access(sconf):
+    servers = ["broker server", "results server"]
 
     if sconf.keys():
         print("\nChecking server connections:")
@@ -73,20 +73,20 @@ def display_config_info():
     conf = default_config_info()
     sconf = {}
     try:
-        conf["broker"] = broker.get_connection_string(include_password=False)
-        sconf["broker"] = broker.get_connection_string()
+        conf["broker server"] = broker.get_connection_string(include_password=False)
+        sconf["broker server"] = broker.get_connection_string()
     except ValueError:
-        conf["broker"] = "No broker configured."
+        conf["broker server"] = "No broker server configured."
 
     try:
-        conf["backend"] = results_backend.get_connection_string(include_password=False)
-        sconf["backend"] = results_backend.get_connection_string()
+        conf["results server"] = results_backend.get_connection_string(include_password=False)
+        sconf["results server"] = results_backend.get_connection_string()
     except ValueError:
-        conf["backend"] = "No backend configured."
+        conf["results server"] = "No results server configured."
 
     print(tabulate(conf.items(), tablefmt="presto"))
 
-    check_server_access(conf, sconf)
+    check_server_access(sconf)
 
 
 def display_multiple_configs(files, configs):
