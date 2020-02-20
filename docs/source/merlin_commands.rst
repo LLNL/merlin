@@ -242,7 +242,7 @@ To send out a stop signal to some or all connected workers, use:
 
 .. code:: bash
 
-    $ merlin stop-workers [--spec <input.yaml>] [--queues <queues>] [--workers <regex>] [--task-server celery]
+    $ merlin stop-workers [--spec <input.yaml>] [--queues <queues>] [--workers <regex>] [--task_server celery]
 
 
 The default behavior will send a stop to all connected workers,
@@ -265,7 +265,7 @@ The ``--workers`` option allows you to pass in a regular expression of names of 
     # Note the ".*" convention at the start, per regex
     $ merlin stop-workers --workers ".*@my_other_host*"
 
-The only currently available option for ``--task-server`` is celery, which is the default when this flag is excluded.
+The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
 .. attention::
 
@@ -344,7 +344,7 @@ Status (``merlin status``)
 --------------------------
 .. code:: bash
 
-    $ merlin status <input.yaml> [--steps <steps>] [--vars <VARIABLES=<VARIABLES>>] [--csv <csv file>] [--task-server celery]
+    $ merlin status <input.yaml> [--steps <steps>] [--vars <VARIABLES=<VARIABLES>>] [--csv <csv file>] [--task_server celery]
 
 Use the ``--steps`` option to identify specific steps in the specification that you want to query.
 
@@ -355,7 +355,7 @@ the input yaml file.
 
 The ``--csv`` option takes in a filename, to dump status reports to.
 
-The only currently available option for ``--task-server`` is celery, which is the default when this flag is excluded.
+The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
 Log Level (``merlin -lvl debug``)
 --------------------------------
