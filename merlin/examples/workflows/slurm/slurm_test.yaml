@@ -44,4 +44,4 @@ merlin:
     column_labels: [V1, V2]
     file: $(MERLIN_INFO)/samples.npy
     generate:
-      cmd: python $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
+      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

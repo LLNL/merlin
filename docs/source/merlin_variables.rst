@@ -1,5 +1,5 @@
-Merlin Variables
-================
+Variables
+=========
 
 There are a number of variables which can be placed in a merlin input .yaml
 file that can control workflow execution, such as via string expansion and
@@ -68,7 +68,7 @@ Reserved variables
     - A space delimited string of all of the paths;
       can be used as is in bash for loop for instance with
 
-       ::
+.. code:: bash
 
            for path in $(MERLIN_PATHS_ALL)
            do

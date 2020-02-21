@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -166,19 +166,20 @@ def query_workers(task_server):
         LOG.error("Celery is not specified as the task server!")
 
 
-def stop_workers(task_server, queues, workers):
+def stop_workers(task_server, spec_worker_names, queues, workers_regex):
     """
     Stops workers.
 
     :param `task_server`: The task server from which to stop workers.
+    :param `spec_worker_names`: Worker names to stop, drawn from a spec.
     :param `queues`     : The queues to stop
-    :param `workers`    : Regex for workers to stop
+    :param `workers_regex`    : Regex for workers to stop
     """
     LOG.info(f"Stopping workers...")
 
     if task_server == "celery":
         # Stop workers
-        return stop_celery_workers(queues, workers)
+        return stop_celery_workers(queues, spec_worker_names, workers_regex)
     else:
         LOG.error("Celery is not specified as the task server!")
 
@@ -192,7 +193,7 @@ def route_for_task(name, args, kwargs, options, task=None, **kw):
         return {"queue": queue}
 
 
-def create_config(task_server, config_dir):
+def create_config(task_server, config_dir, broker):
     """
     Create a config for the given task server.
 
@@ -206,7 +207,10 @@ def create_config(task_server, config_dir):
 
     if task_server == "celery":
         config_file = "app.yaml"
-        with resources.path("merlin.data.celery", config_file) as data_file:
+        data_config_file = "app.yaml"
+        if broker == "redis":
+            data_config_file = "app_redis.yaml"
+        with resources.path("merlin.data.celery", data_config_file) as data_file:
             create_celery_config(config_dir, config_file, data_file)
     else:
         LOG.error("Only celery can be configured currently.")

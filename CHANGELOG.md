@@ -4,6 +4,36 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] 2020-02-21
+
+### Added
+- cli test flag `--local`, which can be used in place of listing out the id of each
+  local cli test.
+- A Merlin Dockerfile and some accompanying web documentation.
+- Makefile target `release`.
+- The merlin config now takes an optional --broker argument, the
+  value can be None, default rabbitmq broker, or redis for a redis
+  local broker.
+- Missing doc options for run and run-workers.
+- Check server access when `merlin info` is run.
+- A port option to rabbitmq config options.
+- Author and author_email to setup.py.
+
+### Removed
+- Makefile targets `pull` and `update`.
+- Unneeded variables from `simple_chain.yaml`.
+- All `INFO`-level logger references to Celery.
+
+### Changed
+- Updated the Merlin Sphinx web docs, including info about command line commands.
+- Example workflows use python3 instead of python.
+- Updated `merlin info` to lookup python3 and and pip3.
+- Altered user in Dockerfile and removed build tools.
+- MANIFEST.in now uses recursive-include.
+- Updated docker docs.
+- `make clean` is more comprehensive, now cleans docs, build files, and release files.
+- The celery keyword is no longer required in `app.yaml`.
+
 ## [1.2.3] 2020-01-27
 
 ### Changed

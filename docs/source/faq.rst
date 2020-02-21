@@ -1,8 +1,8 @@
 .. _faq:
 
-Frequently Asked Questions
-==========================
-.. contents:: FAQs
+FAQ
+===
+.. contents:: Frequently Asked Questions
   :local:
 
 General
@@ -97,7 +97,10 @@ Designing and Building Workflows
 
 Where are some example workflows?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin example --help``
+
+.. code:: bash
+
+   $ merlin example --help
 
 How do I launch a workflow?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -184,40 +187,61 @@ Use ``merlin example feature_demo`` to see an example of this.
 
 Running Workflows
 -----------------
-``merlin run <yaml file>``
+
+.. code:: bash
+
+   $ merlin run <yaml file>
 
 For more details, see :doc:`Merlin commands<./merlin_commands>`.
 
 How do I set up a workspace without executing step scripts?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin run --dry <yaml file>``
+
+.. code:: bash
+
+   $ merlin run --dry <yaml file>
 
 How do I start workers?
 ~~~~~~~~~~~~~~~~~~~~~~~
-``merlin run-workers <yaml file>``
+
+.. code:: bash
+
+   $ merlin run-workers <yaml file>
 
 How do I see what workers are connected?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin query-workers``
 
-.. _stop-workers:
+.. code:: bash
+
+   $ merlin query-workers
 
 How do I stop workers?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin stop-workers``
+
+.. code:: bash
+
+   $ merlin stop-workers
+
+For more tricks, see :ref:`stop-workers`.
 
 .. _restart:
 
 How do I re-run failed steps in a workflow?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``merlin restart <spec>``
+
+.. code:: bash
+
+   $ merlin restart <spec>
 
 What tasks are in my queue?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 How do I purge tasks?
 ~~~~~~~~~~~~~~~~~~~~~
-``merlin purge <yaml file>``
+
+.. code:: bash
+
+   $ merlin purge <yaml file>
 
 Why is stuff still running after I purge?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -228,8 +252,8 @@ You need to shut down these workers first:
 
 .. code:: bash
 
-   (merlin3_7) merlin stop-workers
-   (merlin3_7) merlin purge <yaml file>
+   $ merlin stop-workers
+   $ merlin purge <yaml file>
 
 Why am I running old tasks?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -279,7 +303,7 @@ default schedulers such as SLURM or LSF.
 More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
 
 What is ``LAUNCHER``?
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 ``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with parellel schedulers like :ref:`slurm`, :ref:`lsf`, and :ref:`flux`.
 
 How do I use ``LAUNCHER``?
@@ -305,4 +329,4 @@ Do something like this:
 
 Where can I learn more about merlin?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Check out our (paper)[https://arxiv.org/abs/1912.02892] on arXiv.
+Check out `our paper <https://arxiv.org/abs/1912.02892>`_ on arXiv.

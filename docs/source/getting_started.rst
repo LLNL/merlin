@@ -4,6 +4,7 @@ Getting Started
 Quick Start
 ++++++++++++++
 ::
+
     pip3 install merlinwf
     
 All set up? See the :doc:`Merlin Commands <./merlin_commands>` section for using merlin.
@@ -12,9 +13,11 @@ All set up? See the :doc:`Merlin Commands <./merlin_commands>` section for using
 Developer Setup
 ++++++++++++++++++
 To install with the additional developer dependencies, use::
+
     pip3 install "merlinwf[dev]"
     
 or::
+
     pip3 install -e "git+https://github.com/LLNL/merlin.git@develop#egg=merlinwf[dev]"
 
 See the :doc:`Spack <./spack>` section for an alternative method to setup merlin on supercomputers.
@@ -43,7 +46,7 @@ repository::
 
 
 Create a virtualenv
-*********************
+*******************
 
 Merlin uses `virtualenvs <https://virtualenv.pypa.io/en/stable/>`_ to manage
 package dependencies which can be installed via Pip, Python's default 
@@ -52,7 +55,9 @@ package manager.
 More documentation about using Virtualenvs with Merlin can be found at
 :doc:`Using Virtualenvs with Merlin <./virtualenv>`.
 
-To create a new virtualenv and activate it::
+To create a new virtualenv and activate it:
+
+.. code:: bash
 
     $ python3 -m venv venv_merlin_$SYS_TYPE_py3_6
     $ source venv_merlin_$SYS_TYPE_py3/bin/activate  # Or activate.csh for .cshrc
@@ -64,7 +69,9 @@ Install Python Package Dependencies
 Merlin uses Pip to manage Python dependencies. Merlin dependencies can be
 found in the requirements directory in the Merlin repository.
 
-To install the standard set of dependencies run::
+To install the standard set of dependencies run:
+
+.. code:: bash
 
     (merlin3_7) $ pip install -r requirements.txt
 
@@ -75,7 +82,9 @@ development dependencies.
 Installing Merlin
 *******************
 
-Merlin can be installed in editable mode. From within the Merlin repository::
+Merlin can be installed in editable mode. From within the Merlin repository:
+
+.. code:: bash
 
     (merlin3_7) $ pip install -e .
 

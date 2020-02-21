@@ -1,8 +1,5 @@
-Merlin Commands
-===============
-
-Commands
---------
+Command line
+============
 
 The merlin executable defines a number of commands to create tasks,
 launch workers to run the tasks and remove tasks from the task server.
@@ -11,46 +8,46 @@ requested by workers on an allocation to run. The celery python module
 is used to implement the tasks and worker functionality.
 
 
-Help
-----
+Help (``merlin --help``)
+------------------------
 
-Descriptions of the Merlin commands will be output when the ``-h`` or
+Descriptions of the Merlin commands are outputted when the ``-h`` or
 ``--help`` commands are used.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin -h
+    $ merlin [<command name>] --help
 
 
-Version info
-------------
+Version (``merlin --version``)
+------------------------------
 
-The Merlin can be output using the ``-v`` argument.
-
-.. code:: bash
-
-    (merlin3_7) $ merlin -v
-
-
-Information
------------
-
-Information about the run environment can be printed out using the
-``info`` command.
+See the version by using the ``--version`` or ``-v`` flag.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin info
+    $ merlin --version
 
-Config
-------
+
+Information (``merlin info``)
+-----------------------------
+
+Information about your merlin and python configuration can be printed out by using the 
+``info`` command. This is helpful for debugging.
+
+.. code:: bash
+
+    $ merlin info
+
+Create the Config File (``merlin config``)
+------------------------------------------
 
 Create a default config file in the ${HOME}/.merlin directory using the ``config`` command. This file
 can then be edited for your system configuration.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin config [--task_server]  [--output_dir <dir>]
+    $ merlin config [--task_server]  [--output_dir <dir>] [--broker <rabbitmq|redis>]
 
 The ``--task_server`` option will select the appropriate configuration for the
 given task server. Currently only celery is implemented.
@@ -58,8 +55,14 @@ given task server. Currently only celery is implemented.
 The ``--output_dir`` or ``-o`` will output the configuration in the given directory.
 This file can then be edited and copied into ${HOME}/.merlin.
 
-Run the workflow
-----------------
+The ``--broker`` command will write the initial ``app.yaml`` config file
+for a ``rabbitmq`` or ``redis`` broker. The default is ``rabbitmq``.
+The backend will be ``redis`` in
+both cases. The redis backend in the ``rabbitmq`` config shows the
+use on encryption for the backend.
+
+Run the workflow (``merlin run``)
+---------------------------------
 
 To run the merlin workflow use the  ``run`` command and the path to the
 input yaml file ``<input.yaml>``. This will define the tasks and queue
@@ -67,27 +70,39 @@ them on the task server also called the broker.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin run [--local] <input.yaml>
+    $ merlin run [--local] <input.yaml> [--vars <VARIABLES=<VARIABLES>>] [--samplesfile <SAMPLES_FILE>] [--dry]
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+``Example: --vars LEARN=path/to/new_learn.py EPOCHS=3``
+
+The  ``--samplesfile`` will allow the  user to specify a file containing samples. Valid choices: .npy,
+.csv, .tab. Should be given after the input yaml file.
+
+The ``--no-errors`` option is used for testing, it will silence the errors thrown
+when flux is not present.
+
 Dry Run
--------
+^^^^^^^
+
 'Dry run' means telling workers to create a study's workspace and all of its necessary
 subdirectories and scripts (with variables expanded) without actually executing
 the scripts.
 
-To dry-run a workflow, use:
+To dry-run a workflow, use ``--dry``:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin run --local --dry <input.yaml>
+    $ merlin run --local --dry <input.yaml>
 
 In a distributed fashion:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin run --dry <input.yaml> ; merlin run-workers <input.yaml>
+    $ merlin run --dry <input.yaml> ; merlin run-workers <input.yaml>
 
 You can also specify dry runs from the workflow specification file:
 
@@ -98,8 +113,10 @@ You can also specify dry runs from the workflow specification file:
 
 If you wish to execute a workflow after dry-running it, simply use ``restart``.
 
-Restart the workflow
---------------------
+
+
+Restart the workflow (``merlin restart``)
+-----------------------------------------
 
 To restart a previously started merlin workflow, use the  ``restart`` command
 and the path to root of the merlin workspace that was generated during the
@@ -108,7 +125,7 @@ them on the task server also called the broker.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin restart [--local] <path/to/workspace_timestamp>
+    $ merlin restart [--local] <path/to/workspace_timestamp>
 
 Merlin currently writes file called ``MERLIN_FINISHED`` to the directory of each
 step that was finished successfully. It uses this to determine which steps to
@@ -116,8 +133,8 @@ skip during execution of a workflow.
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
-Launching Workers
------------------
+Run the Workers (``merlin run-workers``)
+----------------------------------------
 
 The tasks queued on the broker are run by a collection of workers. These
 workers can be run local in the current shell or in parallel on a batch
@@ -136,13 +153,26 @@ To launch workers for your workflow:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin run-workers <input.yaml>
+    $ merlin run-workers [--echo]  <input.yaml> [--worker-args <worker args>] [--steps <WORKER_STEPS>] [--vars <VARIABLES=<VARIABLES>>]
+
+The ``--echo`` option will echo the celery workers run command to stdout and not run any workers.
+
+The ``--worker-args`` option will pass the values, in quotes, to the celery workers. Should be given
+after the input yaml file.
+
+The ``--steps`` option is the specific steps in the input yaml file you want to run the corresponding workers.
+The default is 'all' steps. Should be given after the input yaml file.
+
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+``Example: --vars LEARN=path/to/new_learn.py EPOCHS=3``
 
 An example of launching a simple celery worker using srun:
 
 .. code:: bash
 
-    (merlin3_7) $ srun -n 1 celery worker -A merlin -l INFO
+    $ srun -n 1 celery worker -A merlin -l INFO
 
 A parallel batch allocation launch is configured to run a single worker
 process per node. This worker process will then launch a number of worker
@@ -189,46 +219,53 @@ shown below.
   # Delay until the allocation is complete to keep the workers running
   sleep inf
 
-Searching for any workers
--------------------------
+Searching for any workers (``merlin query-workers``)
+----------------------------------------------------
 
 If you want to see all workers that are currently connected to
 the task server you can use:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin query-workers
+    $ merlin query-workers
 
 This will broadcast a command to all connected workers and print
 the names of any that respond. This is useful for interacting
 with workers, such as via ``merlin stop-workers --workers``.
 
-Stopping workers
-----------------
+.. _stop-workers:
+
+Stopping workers (``merlin stop-workers``)
+------------------------------------------
 
 To send out a stop signal to some or all connected workers, use:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin stop-workers
+    $ merlin stop-workers [--spec <input.yaml>] [--queues <queues>] [--workers <regex>] [--task_server celery]
+
 
 The default behavior will send a stop to all connected workers,
 having them shutdown softly.
 
-You can also filter by those connected to certain queues and/or
-whose name matches a regular expression:
+The ``--spec`` option targets only workers named in the ``merlin`` block of the spec file.
+
+The ``--queues`` option allows you to pass in the names of specific queues to stop. For example:
 
 .. code:: bash
 
-    # Stop all workers connected to queues 1 and 2 whose name matches the pattern
-    (merlin3_7) $ merlin stop-workers --queues queue1 queue2 --workers "celery@my_host*"
+    # Stop all workers on these queues, no matter their name
+    $ merlin stop-workers --queues queue1 queue2
+
+The ``--workers`` option allows you to pass in a regular expression of names of queues to stop:
+
+.. code:: bash
 
     # Stop all workers whose name matches this pattern, no matter the queue
     # Note the ".*" convention at the start, per regex
-    (merlin3_7) $ merlin stop-workers --workers ".*@my_other_host*"
+    $ merlin stop-workers --workers ".*@my_other_host*"
 
-    # Stop all workers on these queues, no matter their name
-    (merlin3_7) $ merlin stop-workers --queues queue1 queue2
+The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
 .. attention::
 
@@ -236,36 +273,36 @@ whose name matches a regular expression:
    only one might get the signal. In this case, you can send it
    again.
 
-Generate working examples
--------------------------
+Generate working examples (``merlin example``)
+----------------------------------------------
 
 If you want to run an example workflow, use Merlin's ``merlin example``:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin example --help
+    $ merlin example --help
 
 This will list the available example workflows and a description for each one. To
 select one:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin example <example_name>
+    $ merlin example <example_name>
 
 This will copy the example workflow to the current working directory. It is
 possible to specify another path to copy to.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin example <example_name> -p path/to/dir
+    $ merlin example <example_name> -p path/to/dir
 
 If the specified directory does not exist Merlin will automatically create it.
 
 This will generate the example workflow at the specified location, ready to be run.
 
 
-Purging Tasks
--------------
+Purging Tasks (``merlin purge``)
+--------------------------------
 
 Once the merlin run command succeeds, the tasks are now on the task server
 waiting to be run by the workers. If you would like to remove the tasks from
@@ -284,33 +321,51 @@ task server, run:
 
 .. code:: bash
 
-    (merlin3_7) $ merlin purge <input.yaml>
+    $ merlin purge <input.yaml> [-f] [--steps <steps>] [--vars <VARIABLES=<VARIABLES>>]
 
 This will ask you if you would like to remove the tasks, you can use the
 ``-f`` option if you want to skip this.
 
-.. code:: bash
-
-    (merlin3_7) $ merlin purge -f <input.yaml>
-
 If you have different queues in your workflow yaml file, you can
 choose which queues are purged by using the ``--steps`` argument and
-giving a space separated list of steps.
+giving a space-delimited list of steps.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin purge <input.yaml> --steps step1 step2
+    $ merlin purge <input.yaml> --steps step1 step2
+
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+``Example: --vars QUEUE_NAME=new_queue EPOCHS=3``
 
 
-Debug Info
-----------
-More information can be output by increasing the logging level
+Status (``merlin status``)
+--------------------------
+.. code:: bash
+
+    $ merlin status <input.yaml> [--steps <steps>] [--vars <VARIABLES=<VARIABLES>>] [--csv <csv file>] [--task_server celery]
+
+Use the ``--steps`` option to identify specific steps in the specification that you want to query.
+
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+``Example: --vars LEARN=path/to/new_learn.py EPOCHS=3``
+
+The ``--csv`` option takes in a filename, to dump status reports to.
+
+The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
+
+Log Level (``merlin -lvl debug``)
+---------------------------------
+More information, generally pertaining to bugs, can be output by increasing the logging level
 using the ``-lvl`` or ``--level`` argument.
 
-Options for the level argument are: DEBUG, INFO, WARNING, ERROR.
+Options for the level argument are: debug, info, warning, error.
 
 .. code:: bash
 
-    (merlin3_7) $ merlin -lvl DEBUG run <input.yaml>
+    $ merlin -lvl debug run <input.yaml>
 
 

@@ -1,11 +1,7 @@
-Welcome to Merlin's documentation!
-==================================
-
-.. note:: Merlin and this documentation is under active development.
-    Functionality and organization of documentation may change.
-
 .. image:: ../images/merlin.png
 
+Merlin Documentation
+====================
 Merlin is a tool for running machine learning based workflows. The goal of
 Merlin is to make it easy to build, run, and process the kinds of large
 scale HPC workflows needed for cognitive simulation.
@@ -70,7 +66,7 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
+   :hidden:
 
    getting_started
    faq
@@ -81,15 +77,7 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    merlin_variables
    celery_overview
    virtualenv
-   testing
    spack
    merlin_developer
-   merlin
+   docker
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

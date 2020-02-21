@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,25 +29,13 @@
 ###############################################################################
 
 """Test tasks."""
-from __future__ import (
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
 
-from celery import (
-    chain,
-    chord,
-    group,
-    shared_task,
-    signature,
-)
-from celery.exceptions import (
-    OperationalError,
-    TimeoutError,
-)
+from celery import chain, chord, group, shared_task, signature
+from celery.exceptions import OperationalError, TimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
@@ -444,7 +432,7 @@ def expand_tasks_with_samples(
         sample_index.name = ""
         LOG.debug(f"queuing merlin expansion task")
         sig = add_merlin_expanded_chain_to_chord.s(
-            task_type, steps, samples, labels, sample_index, adapter_config, 0,
+            task_type, steps, samples, labels, sample_index, adapter_config, 0
         )
         sig.set(queue=steps[0].get_task_queue())
         if self.request.is_eager:
@@ -484,9 +472,9 @@ def queue_merlin_study(study, adapter):
     egraph = study.dag
     LOG.info("Calculating task groupings from DAG.")
     groups_of_chains = egraph.group_tasks("_source")
+
     # magic to turn graph into celery tasks
-    LOG.info("Converting graph to celery tasks.")
-    level_max_dirs = study.level_max_dirs
+    LOG.info("Converting graph to tasks.")
     celery_dag = chain(
         chord(
             group(
@@ -498,7 +486,7 @@ def queue_merlin_study(study, adapter):
                         sample_labels,
                         merlin_step,
                         adapter,
-                        level_max_dirs,
+                        study.level_max_dirs,
                     ).set(queue=egraph.step(chain_group[0][0]).get_task_queue())
                     for gchain in chain_group
                 ]

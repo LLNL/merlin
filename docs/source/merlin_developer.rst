@@ -1,5 +1,5 @@
-Contributing to Merlin
-======================
+Contributing
+============
 
 Welcome to the Merlin developer documentation! This section provides
 instructions for contributing to Merlin.

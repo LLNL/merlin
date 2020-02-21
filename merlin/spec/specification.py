@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -206,3 +206,9 @@ class MerlinSpec(YAMLSpecification):
         param steps: a list of step names
         """
         return ",".join(set(self.get_queue_list(steps)))
+
+    def get_worker_names(self):
+        result = []
+        for worker in self.merlin["resources"]["workers"]:
+            result.append(worker)
+        return result

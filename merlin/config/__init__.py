@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -50,7 +50,10 @@ class Config:
         TODO
         """
         for field in fields:
-            setattr(self, field, nested_dict_to_namespaces(dic[field]))
+            try:
+                setattr(self, field, nested_dict_to_namespaces(dic[field]))
+            except KeyError:
+                pass
 
     def load_app(self, dic):
         """
