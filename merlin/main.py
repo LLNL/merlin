@@ -43,11 +43,20 @@ from argparse import (
 )
 from contextlib import suppress
 
-from merlin import VERSION, router
+from merlin import (
+    VERSION,
+    router,
+)
 from merlin.ascii_art import banner_small
-from merlin.examples.generator import list_examples, setup_example
+from merlin.examples.generator import (
+    list_examples,
+    setup_example,
+)
 from merlin.log_formatter import setup_logging
-from merlin.spec.expansion import RESERVED, get_spec_with_expansion
+from merlin.spec.expansion import (
+    RESERVED,
+    get_spec_with_expansion,
+)
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
@@ -190,7 +199,7 @@ def launch_workers(args):
     if args.worker_echo_only:
         print(status)
     else:
-        LOG.info(status)
+        LOG.debug(f"celery command: {status}")
 
 
 def purge_tasks(args):
@@ -552,7 +561,8 @@ def setup_argparse():
 
     # merlin info
     info = subparsers.add_parser(
-        "info", help="show pip and python versions and locations"
+        "info",
+        help="display info about the merlin configuration and the python configuration. Useful for debugging.",
     )
     info.set_defaults(func=print_info)
 

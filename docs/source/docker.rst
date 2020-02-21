@@ -27,17 +27,30 @@ collection with a user "merlinu" and a WORKDIR set to /home/merlinu.
 Run the container
 *****************
 
-The container can be run as if merlin were installed on the command line
-by using the docker run command.
+The container can be run in detached mode to provide both the ``merlin``
+and ``celery`` commands
 
 .. code:: bash
 
-  docker run --rm -ti merlin
+  docker run --rm -td --name my-merlin merlin
+  alias merlin="docker exec my-merlin merlin"
+  alias celery="docker exec my-merlin celery"
 
-This is the same as running merlin if it were installed locally. Merlin
-will run using the local container file system. The output can be written
-to the local file system using the ``--volume`` docker arguments. It is
+Examples can be run through docker containers by first starting a server
+for the broker and backend. The server can be a redis or rabbitmq , for this
+demonstration a redis server will be used. The backend will always be a 
+redis server.
+
+.. code:: bash
+
+  docker pull redis
+  docker run -d -p 6379:6379 --name my-redis redis
+
+A local output directory can be defined 
+by using the ``--volume`` docker arguments. It is
 recommended that a fixed directory be used for the ``--volume`` argument.
+The merlin docker container is linked to the redis server above by using
+the ``--link`` option.
 
 .. code:: bash
 
@@ -45,37 +58,36 @@ recommended that a fixed directory be used for the ``--volume`` argument.
   mkdir $HOME/merlinu
   cd $HOME/merlinu
 
-  # Create a config in the local volume
-  docker run --rm -ti --volume "$HOME/merlinu":/home/merlinu merlin config
+  docker pull llnl/merlin
+  docker run --rm -td --name my-merlin --link my-redis --volume "$HOME/merlinu":/home/merlinu llnl/merlin
+
+  alias merlin="docker exec my-merlin merlin"
+  alias celery="docker exec my-merlin celery"
+
+  # Create the $HOME/merlinu/.merlin/app.yaml using redis
+  merlin config --broker redis
+
+  <edit $HOME/merlinu/.merlin/app.yaml and change the broker and backend server: variables to  my-redis>
 
   # Copy an example to the local dir
-  docker run --rm -ti --volume "$HOME/merlinu":/home/merlinu merlin example feature_demo
+  merlin example feature_demo
 
-  docker run --rm -ti --volume "$HOME/merlinu":/home/merlinu merlin feature_demo/feature_demo.yaml --dry --local
+  # Run a test run without workers
+  merlin run feature_demo/feature_demo.yaml --dry --local
 
+  # Define the tasks and load them on the broker
+  merlin run feature_demo/feature_demo.yaml
 
-A script can be created to handle the docker run command, ``merlin.sh``.
-
-.. code:: bash
-
-  #/bin/sh
-  # A script to run the docker merlin
-
-  # Create local working directory if it does not exist
-  LWKDIR=$HOME/merlinu
-  if [ ! -e ${LWKDIR} ] ;then
-    mkdir $LWKDIR
-  fi
-
-  cd $LWKDIR
-
-  docker run --rm -ti --volume "$LWKDIR":/home/merlinu merlin $@
+  # Start workers to pull taks form the server and run them in the container
+  merlin run-workers feature_demo/feature_demo.yaml
 
 
-The merlin command can be overridden in the container by using a different 
+A shell can started in the container by using the
 ``--entrypoint`` command. If the user would like to examine the container 
-contents, they can use a shell as the entry pint.
+contents, they can use a shell as the entry point.
 
 .. code:: bash
 
   docker run --rm -ti --volume "$HOME/merlinu":/home/merlinu --entrypoint="/bin/bash" merlin
+
+

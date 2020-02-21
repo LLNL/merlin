@@ -30,10 +30,16 @@
 
 import logging
 from collections import ChainMap
-from os.path import expanduser, expandvars
+from os.path import (
+    expanduser,
+    expandvars,
+)
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.spec.override import dump_with_overrides, error_override_vars
+from merlin.spec.override import (
+    dump_with_overrides,
+    error_override_vars,
+)
 from merlin.spec.specification import MerlinSpec
 
 

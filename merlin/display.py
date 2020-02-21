@@ -32,13 +32,37 @@
 Manages formatting for displaying information to the console.
 """
 import pprint
+import socket
 import subprocess
 
+import redis
+from kombu import Connection
 from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
-from merlin.config import broker, results_backend
+from merlin.config import (
+    broker,
+    results_backend,
+)
 from merlin.config.configfile import default_config_info
+
+
+def check_server_access(conf, sconf):
+    servers = ["broker", "backend"]
+
+    if sconf.keys():
+        print("\nChecking server connections:")
+        print("-" * 28)
+
+    for s in servers:
+        if s in sconf:
+            try:
+                conn = Connection(sconf[s])
+                conn.connect()
+                conn.release()
+                print(f"{s} connection: OK")
+            except (socket.error, redis.exceptions.ConnectionError) as e:
+                print(f"{s} connection: Error")
 
 
 def display_config_info():
@@ -50,17 +74,22 @@ def display_config_info():
     print("")
 
     conf = default_config_info()
+    sconf = {}
     try:
         conf["broker"] = broker.get_connection_string(include_password=False)
+        sconf["broker"] = broker.get_connection_string()
     except ValueError:
         conf["broker"] = "No broker configured."
 
     try:
         conf["backend"] = results_backend.get_connection_string(include_password=False)
+        sconf["backend"] = results_backend.get_connection_string()
     except ValueError:
         conf["backend"] = "No backend configured."
 
     print(tabulate(conf.items(), tablefmt="presto"))
+
+    check_server_access(conf, sconf)
 
 
 def display_multiple_configs(files, configs):
@@ -97,7 +126,7 @@ def print_info(args):
     print("Python Configuration")
     print("-" * 25)
     print("")
-    info_calls = ["which python", "python --version", "which pip", "pip --version"]
+    info_calls = ["which python3", "python3 --version", "which pip3", "pip3 --version"]
     info_str = ""
     for x in info_calls:
         info_str += 'echo " $ ' + x + '" && ' + x + "\n"

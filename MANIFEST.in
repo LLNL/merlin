@@ -1,4 +1,4 @@
-include merlin/data/*
-include merlin/examples/workflows/*
+recursive-include merlin/data *.yaml *.py
+recursive-include merlin/examples *.py *.yaml *.c *.json *.sbatch *.bsub
 include requirements.txt
 include requirements/*
