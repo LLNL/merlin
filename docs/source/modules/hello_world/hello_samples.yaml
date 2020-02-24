@@ -27,6 +27,6 @@ study:
 merlin:
     samples:
         generate:
-            cmd: pip install names ; for i in {1..$(NUM_SAMPLES)}; do echo $(names) >> $(MERLIN_INFO)/samples.csv; done
-        file: $(MERLIN_INFO)/samples.csv
+            cmd: pip install names ; python3 $(SPECROOT)/make_samples.py --number $(NUM_SAMPLES) --file $(MERLIN_INFO)/samples.csv
+            file: $(MERLIN_INFO)/samples.csv
         column_labels: [WORLD]
