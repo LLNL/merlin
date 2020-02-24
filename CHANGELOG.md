@@ -4,7 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0] 2020-02-21
 
 ### Added
 - cli test flag `--local`, which can be used in place of listing out the id of each
@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   local broker.
 - Missing doc options for run and run-workers.
 - Check server access when `merlin info` is run.
-- Port to rabbitmq config options.
+- A port option to rabbitmq config options.
 - Author and author_email to setup.py.
 
 ### Removed
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All `INFO`-level logger references to Celery.
 
 ### Changed
-- Updated the Merlin Sphinx web docs.
+- Updated the Merlin Sphinx web docs, including info about command line commands.
 - Example workflows use python3 instead of python.
 - Updated `merlin info` to lookup python3 and and pip3.
 - Altered user in Dockerfile and removed build tools.
