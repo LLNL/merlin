@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,20 +41,11 @@ from maestrowf.datastructures.core import Study
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import (
-    determine_user_variables,
-    expand_line,
-)
-from merlin.spec.override import (
-    dump_with_overrides,
-    error_override_vars,
-)
+from merlin.spec.expansion import determine_user_variables, expand_line
+from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
-from merlin.utils import (
-    get_flux_cmd,
-    load_array_file,
-)
+from merlin.utils import get_flux_cmd, load_array_file
 
 
 LOG = logging.getLogger(__name__)

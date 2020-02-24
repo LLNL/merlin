@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,10 +37,7 @@ import os
 import sys
 
 from merlin.ascii_art import banner_small
-from merlin.examples.generator import (
-    list_examples,
-    setup_example,
-)
+from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
 
 
