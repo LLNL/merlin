@@ -164,7 +164,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         """
         super(MerlinSlurmScriptAdapter, self).__init__(**kwargs)
 
-        self._cmd_flags["bind"] = "--mpibind"
+        self._cmd_flags["bind"] = "--mpibind="
         self._cmd_flags["exclusive"] = "--exclusive"
 
         new_unsupported = [
@@ -189,6 +189,47 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         """
         return "#!{}".format(self._exec)
 
+    def get_parallelize_command(self, procs, nodes=None, **kwargs):
+        """
+        Generate the SLURM parallelization segement of the command line.
+        :param procs: Number of processors to allocate to the parallel call.
+        :param nodes: Number of nodes to allocate to the parallel call
+            (default = 1).
+        :returns: A string of the parallelize command configured using nodes
+            and procs.
+        """
+        args = [
+            # SLURM srun command
+            self._cmd_flags["cmd"],
+            # Processors segment
+            self._cmd_flags["ntasks"],
+            str(procs)
+        ]
+
+        if nodes:
+            args += [
+                self._cmd_flags["nodes"],
+                str(nodes),
+            ]
+
+        supported = set(kwargs.keys()) - self._unsupported
+        for key in supported:
+            value = kwargs.get(key)
+            if key not in self._cmd_flags:
+                LOGGER.warning("'%s' is not supported -- ommitted.", key)
+                continue
+            if value:
+                if '=' in self._cmd_flags[key]:
+                    args += [
+                        "{0}{1}".format(self._cmd_flags[key],str(value))
+                    ]
+                else:
+                    args += [
+                        self._cmd_flags[key],
+                        "{}".format(str(value))
+                    ]
+
+        return " ".join(args)
 
 class MerlinLSFSrunScriptAdapter(MerlinSlurmScriptAdapter):
     """
