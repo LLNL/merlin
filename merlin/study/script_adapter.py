@@ -88,6 +88,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "post",
             "depends",
             "exclusive",
+            "signal",
         }
 
     def get_header(self, step):
@@ -164,8 +165,10 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         """
         super(MerlinSlurmScriptAdapter, self).__init__(**kwargs)
 
-        self._cmd_flags["bind"] = "--mpibind="
+        self._cmd_flags["walltime"] = "-t"
         self._cmd_flags["exclusive"] = "--exclusive"
+        self._cmd_flags["bind"] = "--mpibind="
+        self._cmd_flags["signal"] = "--signal="
 
         new_unsupported = [
             "task_queue",
@@ -173,7 +176,6 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             "pre",
             "post",
             "gpus per task",
-            "walltime",
             "gpus",
             "restart",
         ]
@@ -188,6 +190,12 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             the parameter step.
         """
         return "#!{}".format(self._exec)
+
+    def time_format(self, val):
+        """
+        This function assumes the time format is in hh:mm::ss
+        """
+        return val
 
     def get_parallelize_command(self, procs, nodes=None, **kwargs):
         """
@@ -215,19 +223,27 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         supported = set(kwargs.keys()) - self._unsupported
         for key in supported:
             value = kwargs.get(key)
-            if key not in self._cmd_flags:
-                LOGGER.warning("'%s' is not supported -- ommitted.", key)
+            if not value:
                 continue
-            if value:
-                if '=' in self._cmd_flags[key]:
-                    args += [
-                        "{0}{1}".format(self._cmd_flags[key],str(value))
-                    ]
-                else:
-                    args += [
-                        self._cmd_flags[key],
-                        "{}".format(str(value))
-                    ]
+
+            if key not in self._cmd_flags:
+                LOG.warning("'%s' is not supported -- ommitted.", key)
+                continue
+
+            if key == "walltime":
+                args += [
+                    self._cmd_flags[key],
+                    "{}".format(str(self.time_format(value)))
+                ]
+            elif '=' in self._cmd_flags[key]:
+                args += [
+                    "{0}{1}".format(self._cmd_flags[key],str(value))
+                ]
+            else:
+                args += [
+                    self._cmd_flags[key],
+                    "{}".format(str(value))
+                ]
 
         return " ".join(args)
 
@@ -277,14 +293,17 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "nodes": "-N",
             "cores per task": "-c",
             "gpus per task": "-g",
+            "walltime": "-t",
         }
+
+        if "wreck" in flux_command:
+            self._cmd_flags["walltime"] = "-T"
 
         new_unsupported = [
             "cmd",
             "ntasks",
             "nodes",
             "gpus",
-            "walltime",
             "reservation",
             "restart",
             "task_queue",
@@ -294,9 +313,20 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "depends",
             "bind",
             "exclusive",
+            "signal",
         ]
         self._unsupported = set(new_unsupported)
 
+    def time_format(self, val):
+        """
+        This function assumes the time format is in dd:hh:mm::ss
+
+        flux requires a d,h,m,s time designation, so this
+        function will convert the time to minutes
+
+        """
+        _,d,h,m,s = (':0'*10+val).rsplit(':',4)
+        return str(int(d)*24*60+int(h)*60+int(m)+int(s)/60.)+"m" 
 
 class MerlinScriptAdapter(LocalScriptAdapter):
     """
