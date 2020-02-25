@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -47,8 +47,8 @@ from merlin.config import (
 from merlin.config.configfile import default_config_info
 
 
-def check_server_access(conf, sconf):
-    servers = ["broker", "backend"]
+def check_server_access(sconf):
+    servers = ["broker server", "results server"]
 
     if sconf.keys():
         print("\nChecking server connections:")
@@ -76,20 +76,22 @@ def display_config_info():
     conf = default_config_info()
     sconf = {}
     try:
-        conf["broker"] = broker.get_connection_string(include_password=False)
-        sconf["broker"] = broker.get_connection_string()
+        conf["broker server"] = broker.get_connection_string(include_password=False)
+        sconf["broker server"] = broker.get_connection_string()
     except ValueError:
-        conf["broker"] = "No broker configured."
+        conf["broker server"] = "No broker server configured."
 
     try:
-        conf["backend"] = results_backend.get_connection_string(include_password=False)
-        sconf["backend"] = results_backend.get_connection_string()
+        conf["results server"] = results_backend.get_connection_string(
+            include_password=False
+        )
+        sconf["results server"] = results_backend.get_connection_string()
     except ValueError:
-        conf["backend"] = "No backend configured."
+        conf["results server"] = "No results server configured."
 
     print(tabulate(conf.items(), tablefmt="presto"))
 
-    check_server_access(conf, sconf)
+    check_server_access(sconf)
 
 
 def display_multiple_configs(files, configs):
@@ -126,7 +128,7 @@ def print_info(args):
     print("Python Configuration")
     print("-" * 25)
     print("")
-    info_calls = ["which python", "python --version", "which pip", "pip --version"]
+    info_calls = ["which python3", "python3 --version", "which pip3", "pip3 --version"]
     info_str = ""
     for x in info_calls:
         info_str += 'echo " $ ' + x + '" && ' + x + "\n"
