@@ -1,12 +1,21 @@
+import argparse
 import names
 
-result = ""
-names = []
-for i in range(x):
-    names.append(names.get_full_name())
+# argument parsing
+parser = argparse.ArgumentParser(description='Make some samples (names of people).')
+parser.add_argument('--number', type=int, action='store', help='the number of samples you want to make')
+parser.add_argument('--file', type=str, help='output file')
+args = parser.parse_args()
 
-for name in names:
+# sample making
+result = ""
+name_list = []
+for i in range(args.number):
+    name_list.append(names.get_full_name())
+
+for name in name_list:
     result += name + "\n"
 
-with open("samples.csv", "w") as f:
+with open(args.file, "w") as f:
     f.write(result)
+

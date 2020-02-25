@@ -8,7 +8,7 @@ env:
 
 global.parameters:
     GREET:
-        values : ["hello","olá"]
+        values : ["hello","ola"]
         label  : GREET.%%
 
 study:
@@ -27,6 +27,6 @@ study:
 merlin:
     samples:
         generate:
-            cmd: pip install names ; python3 $(SPECROOT)/make_samples.py --number $(NUM_SAMPLES) --file $(MERLIN_INFO)/samples.csv
+            cmd: pip install names ; python3 $(SPECROOT)/make_samples.py --file=$(MERLIN_INFO)/samples.csv --number=$(NUM_SAMPLES)
             file: $(MERLIN_INFO)/samples.csv
         column_labels: [WORLD]
