@@ -138,7 +138,7 @@ see :doc:`./merlin_variables`.
   #   num resource set: Number of resoure sets
   #   launch_distribution : The distribution of respources (default: plane:{procs/nodes})
   #   exit_on_error: Flag to exit on error (default: 1)
-  #   lsf: Verbatim flags only for the srun parallel launch (jsrun ... <lsf>
+  #   lsf: Verbatim flags only for the lsf parallel launch (jsrun ... <lsf>
   #######################################################################
    study:
     - name: runs1
