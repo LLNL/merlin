@@ -198,9 +198,8 @@ add the server from the redis docker container my-redis. Change the ``server: lo
 broker and backend config definitions, to ``server: my-redis``, the port will remain the same. 
 
 .. note::
-  You can use the docker redis server with the local
-  virtualenv merlin by leaving the server locations as localhost
-  and not running the local-redis.
+  You can use the docker redis server, instead of the local-redis server,
+  with the pi installed merlin by leaving the server locations as localhost.
   ``server: localhost``
 
 .. code:: bash
