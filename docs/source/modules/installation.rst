@@ -240,8 +240,8 @@ If everything is set up correctly, you should see (assuming local-redis servers)
   -------------------------
 
    config_file        | <user home>/.merlin/app.yaml
-  is_debug           | False
-   merlin_home        |  <user home>/.merlin
+   is_debug           | False
+   merlin_home        | <user home>/.merlin
    merlin_home_exists | True
    broker server      | redis://localhost:6379/0
    results server     | redis://localhost:6379/0
