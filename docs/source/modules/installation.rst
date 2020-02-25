@@ -98,100 +98,67 @@ can also be used for the celery broker. This method will be called local-redis.
 Docker
 ++++++
 
-The docker containers used in this tutorial are all located on dockerhub.
-
-All of this commands are available in a shell script called ``setup_merlin_docker.(c)sh`` 
-in the merlin github. See below for instructions. 
+Merlin and the servers required by merlin are all available as docker containers on dockerhub.
 
 .. note::
   When using the docker method the celery workers will run inside the merlin container. This
   means that any workflow tools that are also from docker containers must be installed in, or
-  otherwise made available to the merlin container.
+  otherwise made available to, the merlin container.
 
-The first step is to download all the necessary containers.
-
-.. code:: bash
-
-  docker pull llnl/merlin
-  docker pull redis
-  # optional
-  docker pull rabbitmq
-
-
-The redis server is used for the celery broker and results backend server in this tutorial,
-the redis server will be started  in detached mode, ``--detach``, to provide these servers. 
-For the server configuration step below this will be referred to as 
-docker-redis. The ``--publish`` or ``-p`` option will link a localhost port to the docker container port 
-``-p <localhost port>:<docker container port>``.
+To run a merlin docker container with a docker redis server cut
+and paste the commands below in to a ``docker-compose.yml`` file.
 
 .. code:: bash
 
-  docker run --detach --name my-redis -p 6379:6379 redis
-  or
-  docker run -d --name my-redis -p 6379:6379 redis
+  version: '3'
+  
+  networks:
+    mernet:
+      driver: bridge
+  
+  services:
+    redis:
+      image: 'redis:latest'
+      container_name: my-redis
+      ports:
+        - "6379:6379"
+      networks:
+        - mernet
+  
+    merlin:
+      image: 'llnl/merlin'
+      container_name: my-merlin
+      tty: true
+      volumes:
+        - ~/merlinu/:/home/merlinu
+      networks:
+        - mernet
 
-Next we will start the merlin container and define some aliases to run
-the merlin and celery commands. The merlin docker run has a few new options,
-the ``-t`` option will allocate a pseudo-tty. The ``--link`` option will
-connect the redis server started above to the merlin container. The ``--volume``
-or ``-v`` option will link the local ``$HOME/merlinu`` directory to the ``/home/merlinu``
+
+This file can then be run with the ``docker-compose`` command.
+
+.. code:: bash
+
+  docker-compose up -d
+
+The ``volume`` option in the ``docker-compose.yml`` file
+will link the local ``$HOME/merlinu`` directory to the ``/home/merlinu``
 directory in the container.
 
-.. code:: bash
+Some aliases can be defined for convenience.
 
-  docker -dt --name my-merlin --link my-redis --volume "$HOME/merlinu":/home/merlinu llnl/merlin
-  or 
-  docker -dt --name my-merlin --link my-redis -v "$HOME/merlinu":/home/merlinu llnl/merlin
+.. code:: bash
 
   # define some aliases for the merlin and celery commands (assuming Bourne shell)
   alias merlin="docker exec my-merlin merlin"
   alias celery="docker exec my-merlin celery"
   alias python3="docker exec my-merlin python3"
 
-
-A shell script is available for all these commands. 
-
-.. code:: bash
-
-  # Download the setup_merlin_docker.sh file <FIXME: URL>
-  wget https:/github.com/LLNL/merlin/<path>/setup_merlin_docker.sh
-  source ./setup_merlin_docker.sh
-
-  #For (t)csh based shells <FIXME: URL>
-  wget https:/github.com/LLNL/merlin/<path>/setup_merlin_docker.csh
-  source ./setup_merlin_docker.csh
-
-A rabbitmq server can be started to provide the broker, the redis server will 
-still be required for the backend. 
-
-The celery rabbitmq server interaction requires ssl for encrypted communication,
-for this tutorial self-signed certificates can be used. Information on this process
-can be found here ``provide link``.
-
-The ``hostname`` option provides the server location for the merlin container. The
-rabbitmq server must be configured for merlin environment. This entails setting
-the user, vhost and ssl certificates for the connection.
-
+When you are done with the containers you can stop them using ``docker-compose down``.
 
 .. code:: bash
 
-  docker run -d --hostname my-rabbit --name some-rabbit \ 
-        -v "${HOME}/merlinu/cert_rabbitmq:/cert_rabbitmq
-        -e RABBIT_DEFAULT_USER=merlinu \
-        -e RABBIT_DEFAULT_VHOST=merlinu \
-        -e RABBITMQ_SSL_CERTFILE=/cert_rabbitmq/server_cert.pem \
-        -e RABBITMQ_SSL_KEYFILE=/cert_rabbitmq/server_key.pem \
-        -e RABBITMQ_SSL_CACERTFILE=/cert_rabbitmq/ca_cert.pem \
-        rabbitmq:3
-
-When you are done with the containers you can stop them using ``docker container stop``.
-
-.. code:: bash
-
-  docker container stop my-redis
-  docker container stop my-merlin
-
-  docker container stop some-rabbit
+  docker-compose down
 
 
 Configuring merlin
@@ -221,9 +188,16 @@ to see the configuration.
         port: 6379
         db_num: 0
 
-If you are using the docker-redis server then the ``~/merlinu/.merlin/app.yaml`` file must be edited to 
+If you are using the docker-redis server then the 
+``~/merlinu/.merlin/app.yaml`` file must be edited to 
 add the server from the redis docker container my-redis. Change the ``server: localhost``, in both the 
-broker and backend config definitions, to ``server: my-redis``, the port will remain the same.
+broker and backend config definitions, to ``server: my-redis``, the port will remain the same. 
+
+.. note::
+  You can use the docker redis server with the local
+  virtualenv merlin by leaving the server locations as localhost
+  and not running the local-redis.
+  ``server: localhost``
 
 .. code:: bash
 
@@ -240,67 +214,150 @@ broker and backend config definitions, to ``server: my-redis``, the port will re
         db_num: 0
 
 
-If you are running the optional rabbitmq server then the config can be created with the normal
-config command. If you have already run the previous command then remove the ``~/.merlin/app.yaml`` or
-``~/merlinu/.merlin/app.yaml`` file , then run the command below.
+   Checking/Verifying installation
+   +++++++++++++++++++++++++++++++
 
-.. code:: bash
+   The ``info`` command will check that the configuration file is installed 
+   correctly, display the server configuration strings, and check server access.
 
-  merlin config
+   .. code:: bash
 
-The app.yaml file will need to be edited to add the rabbitmq settings in the broker section
-of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``. The rabbitmq will
-server be accessed on its TLS port, 5671.
+     merlin info
 
-.. code:: bash
+   If everything is set up correctly, you should see (assuming local-redis servers):
 
-    broker:
-        name: rabbitmq
-        server: my-rabbit
+   .. code:: bash
 
-    results_backend:
-        name: redis
-        server: <localhost | my-redis>
-        port: 6379
-        db_num: 0
+     .
+     .
+     .
+
+     Merlin Configuration
+     -------------------------
+
+      config_file        | <user home>/.merlin/app.yaml
+      is_debug           | False
+      merlin_home        |  <user home>/.merlin
+      merlin_home_exists | True
+      broker             | redis://localhost:6379/0
+      backend            | redis://localhost:6379/0
+     
+
+     Checking server connections:
+     ----------------------------
+     broker connection: OK
+     backend connection: OK
+
+     Python Configuration
+     -------------------------
+     .
+     .
+     .
 
 
-Checking/Verifying installation
-+++++++++++++++++++++++++++++++
+   Docker Advanced Installation
+   ++++++++++++++++++++++++++++
 
-The ``info`` command will check that the configuration file is installed 
-correctly, display the server configuration strings, and check server access.
+   A rabbitmq server can be started to provide the broker, the redis 
+   server will still be required for the backend. Merlin is configured
+   to use ssl encryption for all communication with the rabbitmq server.
+   This tutorial ca use self-signed certificates . Information on TLS
+   can be found here ``provide link``.
 
-.. code:: bash
+   A set of self-signed keys is created through the ``tls-gen`` package.
+   These keys are then copied to a common directory for use in the rabbitmq
+   server and python.
 
-  merlin info
+   .. code:: bash
 
-If everything is set up correctly, you should see (assuming local-redis servers):
+     git clone https://github.com/michaelklishin/tls-gen.git 
+     cd tls-gen/basic
+     make
+     mkdir -p ${HOME}/merlinu/cert_rabbitmq
+     cp server/*.pem testca/*.pem ${HOME}/merlinu/cert_rabbitmq
 
-.. code:: bash
 
-  .
-  .
-  .
+   The rabbitmq docker microservice can be added to the previous 
+   ``docker-compose.yml`` file.
 
-  Merlin Configuration
-  -------------------------
+   .. code:: bash
 
-   config_file        | <user home>/.merlin/app.yaml
-   is_debug           | False
-   merlin_home        |  <user home>/.merlin
-   merlin_home_exists | True
-   broker             | redis://localhost:6379/0
-   backend            | redis://localhost:6379/0
-  
+     version: '3'
 
-  Checking server connections:
-  ----------------------------
-  broker connection: OK
-  backend connection: OK
+     networks:
+       mernet:
+         driver: bridge
+     
+     services:
+       redis:
+         image: 'redis:latest'
+         container_name: my-redis
+         ports:
+           - "6379:6379"
+         networks:
+           - mernet
+     
+       rabbitmq:
+         image: rabbitmq:3-management
+         container_name: some-rabbit
+         hostname: my-rabbit
+         tty: true
+         ports:
+           - "15672:15672"
+           - "15671:15671"
+           - "5672:5672"
+           - "5671:5671"
+         environment:
+           - RABBITMQ_SSL_CACERTFILE=/cert_rabbitmq/cacert.pem
+           - RABBITMQ_SSL_KEYFILE=/cert_rabbitmq/key.pem
+           - RABBITMQ_SSL_CERTFILE=/cert_rabbitmq/cert.pem
+           - RABBITMQ_DEFAULT_USER=merlinu
+           - RABBITMQ_DEFAULT_VHOST=merlinu
+           - RABBITMQ_DEFAULT_PASS=guest
+         volumes:
+           - ~/merlinu/cert_rabbitmq:/cert_rabbitmq
+         networks:
+           - mernet
+     
+       merlin:
+         image: 'llnl/merlin'
+         container_name: my-merlin
+         tty: true
+         environment:
+           - SSL_CERT_FILE=/home/merlinu/cert_rabbitmq/cert.pem
+           - SSL_CERT_DIR=/home/merlinu/cert_rabbitmq
+           - REQUESTS_CA_BUNDLE=/home/merlinu/cert_rabbitmq/cert.pem
+         volumes:
+           - ~/merlinu/:/home/merlinu
+         networks:
+           - mernet
 
-  Python Configuration
-  -------------------------
-  .
-  .
-  .
+   When running the rabbitmq broker server, the config can be created with 
+   the default ``merlin config`` command.
+   If you have already run the previous command then remove the 
+   ``~/.merlin/app.yaml`` or
+   ``~/merlinu/.merlin/app.yaml`` file , and run the ``merlin config``
+   command again.
+
+   .. code:: bash
+
+     merlin config
+
+   The app.yaml file will need to be edited to add the rabbitmq settings 
+   in the broker section
+   of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``. 
+   The rabbitmq server will be accessed on the default TLS port, 5671.
+
+   .. code:: bash
+
+       broker:
+           name: rabbitmq
+           server: my-rabbit
+
+       results_backend:
+           name: redis
+           server: my-redis
+           port: 6379
+           db_num: 0
+
+   The aliases defined previously can be used with this set of docker containers.
