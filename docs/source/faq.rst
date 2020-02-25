@@ -346,7 +346,7 @@ flux: Verbatim flags for the flux parallel launch (flux mini run <flux>)
 LSF specific run flags:
 num resource set: Number of resoure sets
 launch_distribution : The distribution of respources (default: plane:{procs/nodes})
-lsf: Verbatim flags only for the srun parallel launch (jsrun ... <lsf>
+lsf: Verbatim flags only for the srun parallel launch (jsrun ... <lsf>)
 
 Where can I learn more about merlin?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
