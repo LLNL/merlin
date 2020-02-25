@@ -1,0 +1,23 @@
+description:
+    name: hello
+    description: a very simple merlin workflow
+
+global.parameters:
+    GREET:
+        values : ["hello","olá"]
+        label  : GREET.%%
+    WORLD:
+        values : ["world","mundo"]
+        label  : WORLD.%%
+
+study:
+    - name: step_1
+      description: write a file that says hello
+      run:
+          cmd: echo "$(GREET), $(WORLD)!"
+
+    - name: step_2
+      description: print a success message
+      run:
+          cmd: echo "Operation HELLO complete."
+          depends: [step_1_*]
