@@ -131,10 +131,14 @@ see :doc:`./merlin_variables`.
   #   bind: Flag for MPI binding of tasks on a node (scheduler dependent)
   #   SLURM specific run flags:
   #   exclusive: Command to run exclusively on the node (argument is space: " ")
+  #   slurm: Verbatim flags only for the srun parallel launch (srun -n <nodes> -n <procs> <slurm>)
+  #   FLUX specific run flags:
+  #   flux: Verbatim flags for the flux parallel launch (flux mini run <flux>)
   #   LSF specific run flags:
   #   num resource set: Number of resoure sets
   #   launch_distribution : The distribution of respources (default: plane:{procs/nodes})
   #   exit_on_error: Flag to exit on error (default: 1)
+  #   lsf: Verbatim flags only for the srun parallel launch (jsrun ... <lsf>
   #######################################################################
    study:
     - name: runs1

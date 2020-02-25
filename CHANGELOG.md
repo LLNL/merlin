@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - The walltime keyword is now enabled for the slurm and flux batch types.
 - The signal keyword is now enabled for the slurm batch type.
+- LAUNCHER keywords, (slurm,flux,lsf) for specifying arguments specific
+  to that parallel launcher in the run section.
 
 ## [1.3.0] 2020-02-21
 

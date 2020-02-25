@@ -72,6 +72,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "bind": "-b",
             "launch_distribution": "-d",
             "exit_on_error": "-X",
+            "lsf": ""
         }
 
         self._unsupported = {
@@ -89,6 +90,8 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "depends",
             "exclusive",
             "signal",
+            "slurm",
+            "flux",
         }
 
     def get_header(self, step):
@@ -165,6 +168,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         """
         super(MerlinSlurmScriptAdapter, self).__init__(**kwargs)
 
+        self._cmd_flags["slurm"] = ""
         self._cmd_flags["walltime"] = "-t"
         self._cmd_flags["exclusive"] = "--exclusive"
         self._cmd_flags["bind"] = "--mpibind="
@@ -178,6 +182,8 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             "gpus per task",
             "gpus",
             "restart",
+            "lsf",
+            "flux",
         ]
         self._unsupported = set(list(self._unsupported) + new_unsupported)
 
@@ -290,6 +296,7 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "cores per task": "-c",
             "gpus per task": "-g",
             "walltime": "-t",
+            "flux": "",
         }
 
         if "wreck" in flux_command:
@@ -310,6 +317,8 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "bind",
             "exclusive",
             "signal",
+            "lsf",
+            "slurm",
         ]
         self._unsupported = set(new_unsupported)
 
