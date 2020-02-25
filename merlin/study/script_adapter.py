@@ -72,7 +72,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "bind": "-b",
             "launch_distribution": "-d",
             "exit_on_error": "-X",
-            "lsf": ""
+            "lsf": "",
         }
 
         self._unsupported = {
