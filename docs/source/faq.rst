@@ -340,7 +340,7 @@ SLURM specific run flags:
 exclusive: Command to run exclusively on the node (argument is space: " ")
 slurm: Verbatim flags only for the srun parallel launch (srun -n <nodes> -n <procs> <slurm>)
 
-FLUX:
+FLUX specific run flags:
 flux: Verbatim flags for the flux parallel launch (flux mini run <flux>)
 
 LSF specific run flags:
