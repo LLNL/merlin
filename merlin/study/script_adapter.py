@@ -211,7 +211,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             self._cmd_flags["cmd"],
             # Processors segment
             self._cmd_flags["ntasks"],
-            str(procs)
+            str(procs),
         ]
 
         if nodes:
@@ -233,19 +233,15 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             if key == "walltime":
                 args += [
                     self._cmd_flags[key],
-                    "{}".format(str(self.time_format(value)))
+                    "{}".format(str(self.time_format(value))),
                 ]
-            elif '=' in self._cmd_flags[key]:
-                args += [
-                    "{0}{1}".format(self._cmd_flags[key],str(value))
-                ]
+            elif "=" in self._cmd_flags[key]:
+                args += ["{0}{1}".format(self._cmd_flags[key], str(value))]
             else:
-                args += [
-                    self._cmd_flags[key],
-                    "{}".format(str(value))
-                ]
+                args += [self._cmd_flags[key], "{}".format(str(value))]
 
         return " ".join(args)
+
 
 class MerlinLSFSrunScriptAdapter(MerlinSlurmScriptAdapter):
     """
@@ -325,8 +321,9 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
         function will convert the time to minutes
 
         """
-        _,d,h,m,s = (':0'*10+val).rsplit(':',4)
-        return str(int(d)*24*60+int(h)*60+int(m)+int(s)/60.)+"m" 
+        _, d, h, m, s = (":0" * 10 + val).rsplit(":", 4)
+        return str(int(d) * 24 * 60 + int(h) * 60 + int(m) + int(s) / 60.0) + "m"
+
 
 class MerlinScriptAdapter(LocalScriptAdapter):
     """
