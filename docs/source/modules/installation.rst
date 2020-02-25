@@ -102,9 +102,12 @@ Merlin and the servers required by merlin are all available as docker containers
 
 .. note::
 
-  When using the docker method the celery workers will run inside the merlin container. This
-  means that any workflow tools that are also from docker containers must be installed in, or
+  When using the docker method the celery workers will run inside the
+  merlin container. This
+  means that any workflow tools that are also from docker containers must 
+  be installed in, or
   otherwise made available to, the merlin container.
+
 
 To run a merlin docker container with a docker redis server cut
 and paste the commands below in to a ``docker-compose.yml`` file.
@@ -215,150 +218,150 @@ broker and backend config definitions, to ``server: my-redis``, the port will re
         db_num: 0
 
 
-   Checking/Verifying installation
-   +++++++++++++++++++++++++++++++
+Checking/Verifying installation
++++++++++++++++++++++++++++++++
 
-   The ``info`` command will check that the configuration file is installed 
+The ``info`` command will check that the configuration file is installed 
    correctly, display the server configuration strings, and check server access.
 
-   .. code:: bash
+.. code:: bash
 
-     merlin info
+  merlin info
 
-   If everything is set up correctly, you should see (assuming local-redis servers):
+If everything is set up correctly, you should see (assuming local-redis servers):
 
-   .. code:: bash
+.. code:: bash
 
-     .
-     .
-     .
+  .
+  .
+  .
 
-     Merlin Configuration
-     -------------------------
+  Merlin Configuration
+  -------------------------
 
-      config_file        | <user home>/.merlin/app.yaml
-      is_debug           | False
-      merlin_home        |  <user home>/.merlin
-      merlin_home_exists | True
-      broker             | redis://localhost:6379/0
-      backend            | redis://localhost:6379/0
+   config_file        | <user home>/.merlin/app.yaml
+  is_debug           | False
+   merlin_home        |  <user home>/.merlin
+   merlin_home_exists | True
+   broker server      | redis://localhost:6379/0
+   results server     | redis://localhost:6379/0
      
 
-     Checking server connections:
-     ----------------------------
-     broker connection: OK
-     backend connection: OK
+  Checking server connections:
+  ----------------------------
+  broker server connection: OK
+  results server connection: OK
 
-     Python Configuration
-     -------------------------
-     .
-     .
-     .
-
-
-   Docker Advanced Installation
-   ++++++++++++++++++++++++++++
-
-   A rabbitmq server can be started to provide the broker, the redis 
-   server will still be required for the backend. Merlin is configured
-   to use ssl encryption for all communication with the rabbitmq server.
-   This tutorial ca use self-signed certificates . Information on TLS
-   can be found here ``provide link``.
-
-   A set of self-signed keys is created through the ``tls-gen`` package.
-   These keys are then copied to a common directory for use in the rabbitmq
-   server and python.
-
-   .. code:: bash
-
-     git clone https://github.com/michaelklishin/tls-gen.git 
-     cd tls-gen/basic
-     make
-     mkdir -p ${HOME}/merlinu/cert_rabbitmq
-     cp server/*.pem testca/*.pem ${HOME}/merlinu/cert_rabbitmq
+  Python Configuration
+  -------------------------
+  .
+  .
+  .
 
 
-   The rabbitmq docker microservice can be added to the previous 
-   ``docker-compose.yml`` file.
+Docker Advanced Installation
+++++++++++++++++++++++++++++
 
-   .. code:: bash
+A rabbitmq server can be started to provide the broker, the redis 
+server will still be required for the backend. Merlin is configured
+to use ssl encryption for all communication with the rabbitmq server.
+This tutorial ca use self-signed certificates . Information on TLS
+can be found here ``provide link``.
 
-     version: '3'
+A set of self-signed keys is created through the ``tls-gen`` package.
+These keys are then copied to a common directory for use in the rabbitmq
+server and python.
 
-     networks:
-       mernet:
-         driver: bridge
+.. code:: bash
+
+ git clone https://github.com/michaelklishin/tls-gen.git 
+ cd tls-gen/basic
+ make
+ mkdir -p ${HOME}/merlinu/cert_rabbitmq
+ cp server/*.pem testca/*.pem ${HOME}/merlinu/cert_rabbitmq
+
+
+The rabbitmq docker microservice can be added to the previous 
+``docker-compose.yml`` file.
+
+.. code:: bash
+
+  version: '3'
+
+  networks:
+    mernet:
+      driver: bridge
      
-     services:
-       redis:
-         image: 'redis:latest'
-         container_name: my-redis
-         ports:
-           - "6379:6379"
-         networks:
-           - mernet
+  services:
+    redis:
+      image: 'redis:latest'
+      container_name: my-redis
+      ports:
+        - "6379:6379"
+      networks:
+        - mernet
      
-       rabbitmq:
-         image: rabbitmq:3-management
-         container_name: some-rabbit
-         hostname: my-rabbit
-         tty: true
-         ports:
-           - "15672:15672"
-           - "15671:15671"
-           - "5672:5672"
-           - "5671:5671"
-         environment:
-           - RABBITMQ_SSL_CACERTFILE=/cert_rabbitmq/cacert.pem
-           - RABBITMQ_SSL_KEYFILE=/cert_rabbitmq/key.pem
-           - RABBITMQ_SSL_CERTFILE=/cert_rabbitmq/cert.pem
-           - RABBITMQ_DEFAULT_USER=merlinu
-           - RABBITMQ_DEFAULT_VHOST=merlinu
-           - RABBITMQ_DEFAULT_PASS=guest
-         volumes:
-           - ~/merlinu/cert_rabbitmq:/cert_rabbitmq
-         networks:
-           - mernet
+    rabbitmq:
+      image: rabbitmq:3-management
+      container_name: some-rabbit
+      hostname: my-rabbit
+      tty: true
+      ports:
+        - "15672:15672"
+        - "15671:15671"
+        - "5672:5672"
+        - "5671:5671"
+      environment:
+        - RABBITMQ_SSL_CACERTFILE=/cert_rabbitmq/cacert.pem
+        - RABBITMQ_SSL_KEYFILE=/cert_rabbitmq/key.pem
+        - RABBITMQ_SSL_CERTFILE=/cert_rabbitmq/cert.pem
+        - RABBITMQ_DEFAULT_USER=merlinu
+        - RABBITMQ_DEFAULT_VHOST=merlinu
+        - RABBITMQ_DEFAULT_PASS=guest
+      volumes:
+        - ~/merlinu/cert_rabbitmq:/cert_rabbitmq
+      networks:
+        - mernet
      
-       merlin:
-         image: 'llnl/merlin'
-         container_name: my-merlin
-         tty: true
-         environment:
-           - SSL_CERT_FILE=/home/merlinu/cert_rabbitmq/cert.pem
-           - SSL_CERT_DIR=/home/merlinu/cert_rabbitmq
-           - REQUESTS_CA_BUNDLE=/home/merlinu/cert_rabbitmq/cert.pem
-         volumes:
-           - ~/merlinu/:/home/merlinu
-         networks:
-           - mernet
+    merlin:
+      image: 'llnl/merlin'
+      container_name: my-merlin
+      tty: true
+      environment:
+        - SSL_CERT_FILE=/home/merlinu/cert_rabbitmq/cert.pem
+        - SSL_CERT_DIR=/home/merlinu/cert_rabbitmq
+        - REQUESTS_CA_BUNDLE=/home/merlinu/cert_rabbitmq/cert.pem
+      volumes:
+        - ~/merlinu/:/home/merlinu
+      networks:
+        - mernet
 
-   When running the rabbitmq broker server, the config can be created with 
-   the default ``merlin config`` command.
-   If you have already run the previous command then remove the 
-   ``~/.merlin/app.yaml`` or
-   ``~/merlinu/.merlin/app.yaml`` file , and run the ``merlin config``
-   command again.
+When running the rabbitmq broker server, the config can be created with 
+the default ``merlin config`` command.
+If you have already run the previous command then remove the 
+``~/.merlin/app.yaml`` or
+``~/merlinu/.merlin/app.yaml`` file , and run the ``merlin config``
+command again.
 
-   .. code:: bash
+.. code:: bash
 
-     merlin config
+  merlin config
 
-   The app.yaml file will need to be edited to add the rabbitmq settings 
-   in the broker section
-   of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``. 
-   The rabbitmq server will be accessed on the default TLS port, 5671.
+The app.yaml file will need to be edited to add the rabbitmq settings 
+in the broker section
+of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``. 
+The rabbitmq server will be accessed on the default TLS port, 5671.
 
-   .. code:: bash
+.. code:: bash
 
-       broker:
-           name: rabbitmq
-           server: my-rabbit
+   broker:
+       name: rabbitmq
+       server: my-rabbit
 
-       results_backend:
-           name: redis
-           server: my-redis
-           port: 6379
-           db_num: 0
+   results_backend:
+       name: redis
+       server: my-redis
+       port: 6379
+       db_num: 0
 
-   The aliases defined previously can be used with this set of docker containers.
+The aliases defined previously can be used with this set of docker containers.
