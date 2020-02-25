@@ -101,6 +101,7 @@ Docker
 Merlin and the servers required by merlin are all available as docker containers on dockerhub.
 
 .. note::
+
   When using the docker method the celery workers will run inside the merlin container. This
   means that any workflow tools that are also from docker containers must be installed in, or
   otherwise made available to, the merlin container.
