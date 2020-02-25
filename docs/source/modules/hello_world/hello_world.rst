@@ -47,7 +47,7 @@ The whole workflow is run for index of parameter values.
 
     global.parameters:
         GREET:
-            values : ["hello","olá"]
+            values : ["hello","ola"]
             label  : GREET.%%
         WORLD:
             values : ["world","mundo"]
@@ -241,7 +241,7 @@ Here's the new spec:
 
 Run the workflow again!
 
-Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. Run:
+Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. To do this, you could interally change thevalue in the spec from 3 to 1000. OR you could just this run this:
 
 .. code:: bash
 
