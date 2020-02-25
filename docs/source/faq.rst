@@ -327,7 +327,7 @@ Do something like this:
         nodes: 1
         procs: 3
 
-The arguments the LAUNCHER syntax will take are:
+The arguments the LAUNCHER syntax will use:
 
 procs: The total number of MPI tasks
 nodes: The total number of MPI nodes
