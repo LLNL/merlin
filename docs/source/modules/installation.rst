@@ -221,8 +221,8 @@ broker and backend config definitions, to ``server: my-redis``, the port will re
 Checking/Verifying installation
 +++++++++++++++++++++++++++++++
 
-The ``info`` command will check that the configuration file is installed 
-   correctly, display the server configuration strings, and check server access.
+The ``merlin info`` command will check that the configuration file is 
+installed correctly, display the server configuration strings, and check server access.
 
 .. code:: bash
 
