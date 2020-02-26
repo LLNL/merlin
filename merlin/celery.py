@@ -47,10 +47,12 @@ from merlin.router import route_for_task
 
 LOG = logging.getLogger(__name__)
 
-
+broker_ssl = True
 try:
     BROKER_URI = broker.get_connection_string()
     LOG.info(f"broker: {broker.get_connection_string(include_password=False)}")
+    broker_ssl = broker.get_ssl_config()
+    LOG.info(f"broker_ssl = {borker_ssl}")
     RESULTS_BACKEND_URI = results_backend.get_connection_string()
     LOG.info(
         f"backend: {results_backend.get_connection_string(include_password=False)}"
@@ -62,7 +64,7 @@ except ValueError:
 
 
 app = Celery(
-    "merlin", broker=BROKER_URI, backend=RESULTS_BACKEND_URI, broker_use_ssl=True
+    "merlin", broker=BROKER_URI, backend=RESULTS_BACKEND_URI, broker_use_ssl=broker_ssl
 )
 
 

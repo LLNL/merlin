@@ -91,8 +91,8 @@ def get_backend_password(password_file, certs_path=None):
             line = f.readline().strip()
             password = quote(line, safe="")
 
-    LOG.debug(f"Results backend certs_path = {certs_path}")
-    LOG.debug(f"Results backend password_filepath = {password_filepath}")
+    LOG.debug(f"Results backend: certs_path = {certs_path}")
+    LOG.debug(f"Results backend: password_filepath = {password_filepath}")
 
     return password
 
@@ -105,13 +105,13 @@ def get_redis(certs_path=None, include_password=True):
         port = CONFIG.results_backend.port
     except (KeyError, AttributeError):
         port = 6379
-        LOG.warning(f"Results backend redis using default port = {port}")
+        LOG.warning(f"Results backend: redis using default port = {port}")
 
     try:
         db_num = CONFIG.results_backend.db_num
     except (KeyError, AttributeError):
         db_num = 0
-        LOG.warning(f"Results backend redis using default db_num = {db_num}")
+        LOG.warning(f"Results backend: redis using default db_num = {db_num}")
 
     try:
         username = CONFIG.results_backend.username
@@ -127,11 +127,11 @@ def get_redis(certs_path=None, include_password=True):
             spass = "%s:%s@" % (username, "******")
     except (KeyError, AttributeError):
         spass = ""
-        LOG.warning(f"Results backend redis using default password = {spass}")
+        LOG.warning(f"Results backend: redis using default password = {spass}")
 
-    LOG.debug(f"Results backend password_file = {password_file}")
-    LOG.debug(f"Results backend server = {server}")
-    LOG.debug(f"Results backend certs_path = {certs_path}")
+    LOG.debug(f"Results backend: password_file = {password_file}")
+    LOG.debug(f"Results backend: server = {server}")
+    LOG.debug(f"Results backend: certs_path = {certs_path}")
 
     return "redis://%s%s:%d/%d" % (spass, server, port, db_num)
 
@@ -169,13 +169,13 @@ def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
     # eventually be configured to use a logger. This logic should also
     # eventually be decoupled so we can print debug messages similar to our
     # Python debugging messages.
-    LOG.debug(f"Results backend dbname = {dbname}")
-    LOG.debug(f"Results backend password_file = {password_file}")
-    LOG.debug(f"Results backend server = {server}")
-    LOG.debug(f"Results backend certs_path = {certs_path}")
+    LOG.debug(f"Results backend: dbname = {dbname}")
+    LOG.debug(f"Results backend: password_file = {password_file}")
+    LOG.debug(f"Results backend: server = {server}")
+    LOG.debug(f"Results backend: certs_path = {certs_path}")
 
     if not server:
-        msg = f"Results backend server {server} does not have a configuration"
+        msg = f"Results backend: server {server} does not have a configuration"
         raise Exception(msg)
 
     password = get_backend_password(password_file, certs_path=certs_path)

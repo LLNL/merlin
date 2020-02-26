@@ -34,6 +34,7 @@ from __future__ import print_function
 import getpass
 import logging
 import os
+import ssl
 from os.path import expanduser
 
 from merlin.config.configfile import CONFIG
@@ -76,22 +77,22 @@ def get_rabbit_connection(config_path, include_password):
 
     try:
         password_filepath = CONFIG.broker.password
-        LOG.debug(f"Broker password filepath = {password_filepath}")
+        LOG.debug(f"Broker: password filepath = {password_filepath}")
         password_filepath = os.path.abspath(expanduser(password_filepath))
     except KeyError:
-        raise ValueError("No password provided for RabbitMQ")
+        raise ValueError("Broker: No password provided for RabbitMQ")
 
     try:
         password = read_file(password_filepath)
     except IOError:
-        raise ValueError(f"RabbitMQ password file {password_filepath} does not exist")
+        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist")
 
     try:
         port = CONFIG.broker.port
-        LOG.debug(f"RabbitMQ port = {port}")
+        LOG.debug(f"Broker: RabbitMQ port = {port}")
     except (AttributeError, KeyError):
         port = 5671
-        LOG.debug(f"RabbitMQ using default port = {port}")
+        LOG.debug(f"Broker: RabbitMQ using default port = {port}")
 
     # Test configurations.
     rabbitmq_config = {
@@ -126,14 +127,14 @@ def get_redissock_connection(config_path, include_password):
 
 def get_redis_connection(config_path, include_password):
     server = CONFIG.broker.server
-    LOG.info(f"Broker server = {server}")
+    LOG.info(f"Broker: server = {server}")
 
     try:
         port = CONFIG.broker.port
-        LOG.debug(f"Redis port = {port}")
+        LOG.debug(f"Broker: redis port = {port}")
     except (AttributeError, KeyError):
         port = 6379
-        LOG.warning(f"Redis using default port = {port}")
+        LOG.warning(f"Broker: redis using default port = {port}")
 
     try:
         db_num = CONFIG.broker.db_num
@@ -154,9 +155,12 @@ def get_redis_connection(config_path, include_password):
             spass = "%s:%s@" % (username, "******")
     except (AttributeError, KeyError):
         spass = ""
-        LOG.warning(f"Redis using default password = {spass}")
+        LOG.warning(f"Broker: redis using default password = {spass}")
 
-    return "redis://%s%s:%d/%d" % (spass, server, port, db_num)
+    redis_broker = "redis://%s%s:%d/%d" % (spass, server, port, db_num)
+
+
+    return redis_broker
 
 
 def get_connection_string(include_password=True):
@@ -181,5 +185,55 @@ def get_connection_string(include_password=True):
 
     if broker == "redis":
         return get_redis_connection(config_path, include_password)
+
+    return None
+
+def get_ssl_config():
+    """
+    Return the ssl config based on the configuration specified in the
+    `merlin.yaml` config file.
+    """
+    broker = CONFIG.broker.name
+    try:
+        config_path = CONFIG.celery.certs
+    except AttributeError:
+        config_path = None
+
+    if broker not in BROKERS:
+        raise ValueError(f"Error: {broker} is not a supported broker.")
+
+    broker_ssl = {}
+    try:
+        broker_ssl["keyfile"] = CONFIG.broker.keyfile
+        LOG.debug(f"Broker: ssl keyfile = {broker_ssl['keyfile']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"Broker: ssl keyfile not present")
+    try:
+        broker_ssl["certfile"] = CONFIG.broker.certfile
+        LOG.debug(f"Broker: ssl certfile = {broker_ssl['certfile']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"Broker: ssl certfile not present")
+    try:
+        broker_ssl["ca_certs"] = CONFIG.broker.ca_certs
+        LOG.debug(f"Broker ssl ca_certs = {broker_ssl['ca_certs']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"Broker: ssl ca_certs not present")
+
+    if broker_ssl:
+        broker_ssl["cert_reqs"] = ssl.CERT_REQUIRED
+    else:            
+        broker_ssl = True
+
+
+    if broker == "rabbitmq":
+        return broker_ssl
+
+    if "redis" in broker:
+        try:
+            redis_broker_ssl = {}
+            for k, v in broker_ssl.items():
+                redis_broker_ssl["ssl_"+k] = v
+        except AttributeError:
+            return True
 
     return None

@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add optional ssl files to broker config.
+
 ### Fixed
 - Syntax errors in web doc file `merlin_variables.rst`.
 
