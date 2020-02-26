@@ -17,8 +17,8 @@ Hello, World!
 .. contents::
   :local:
 
-Stuff inside a specification
-++++++++++++++++++++++++++++
+Elements of a specification
++++++++++++++++++++++++++++
 
 Central to Merlin is something called a specifiation file, or a "spec" for short.
 The spec defines all aspects of your workflow.
@@ -47,13 +47,13 @@ The whole workflow is run for index of parameter values.
 
     global.parameters:
         GREET:
-            values : ["hello","olá"]
+            values : ["hello","hola"]
             label  : GREET.%%
         WORLD:
             values : ["world","mundo"]
             label  : WORLD.%%
 
-So this will give us an English result, and a Portuguese one. (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
+So this will give us an English result, and a Spanish one. (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
 
 study
 ~~~~~
@@ -208,7 +208,7 @@ Now add these yaml sections to your spec:
 
     env:
         variables:
-            NUM_SAMPLES: 3
+            N_SAMPLES: 3
 
 .. code:: yaml
 
@@ -217,7 +217,7 @@ Now add these yaml sections to your spec:
             generate:
                 cmd: |
                     pip install faker
-                    foreach i in $(NUM_SAMPLES): echo -e faker --name > $(MERLIN_INFO)/samples.csv
+                    foreach i in $(N_SAMPLES): echo -e faker --name > $(MERLIN_INFO)/samples.csv
             file: $(MERLIN_INFO)/samples.csv
             column_labels: [WORLD]
 
@@ -225,7 +225,7 @@ This is the merlin block, an exclusively merlin feature. It provides a way to ge
 
 For simplicity we name it ``WORLD``, just like before.
 
-Since our environment variable ``NUM_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
+Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
 
 Here's our DAG with samples:
 
@@ -241,20 +241,19 @@ Here's the new spec:
 
 Run the workflow again!
 
-Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. Run:
+Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. To do this, you could interally change thevalue in the spec from 3 to 1000. OR you could just this run this:
 
 .. code:: bash
 
-    $ merlin run --vars NUM_SAMPLES=1000 hello.yaml
+    $ merlin run --vars N_SAMPLES=1000 hello.yaml
 
     $ merlin run-workers hello.yaml
 
-Congratulations! You concurrently greeted 1000 friends in English and Portuguese!
+To send a warm stop signal to your workers, run:
 
-Miscellany
-++++++++++
+.. code:: bash
 
-.. ?
-< merlin stop-workers > 
+    $ merlin stop-workers 
 
-< merlin --help >
+Congratulations! You concurrently greeted 1000 friends in English and Spanish!
+
