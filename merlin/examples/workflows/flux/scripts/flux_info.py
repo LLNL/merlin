@@ -13,10 +13,7 @@ import os
 import sys
 
 import flux
-from flux import (
-    kvs,
-    kz,
-)
+from flux import kvs, kz
 
 
 f = flux.Flux()

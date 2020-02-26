@@ -1,0 +1,32 @@
+description:
+    name: hello_samples
+    description: a very simple merlin workflow
+
+env:
+    variables:
+        NUM_SAMPLES: 3
+
+global.parameters:
+    GREET:
+        values : ["hello","ola"]
+        label  : GREET.%%
+
+study:
+    - name: step_1
+      description: write a file that says hello
+      run:
+          cmd: echo "$(GREET), $(WORLD)!"
+
+    - name: step_2
+      description: print a success message
+      run:
+          cmd: print("Operation HELLO complete.")
+          depends: [step_1_*]
+          shell: /usr/bin/env python3
+
+merlin:
+    samples:
+        generate:
+            cmd: pip install names ; python3 $(SPECROOT)/make_samples.py --file=$(MERLIN_INFO)/samples.csv --number=$(NUM_SAMPLES)
+            file: $(MERLIN_INFO)/samples.csv
+        column_labels: [WORLD]

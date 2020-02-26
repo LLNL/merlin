@@ -67,7 +67,7 @@ PENV=merlin$(PYV)
 .PHONY : checks
 
 
-all: install-dev install-merlin install-workflow-deps install-pip-mysql
+all: install-dev install-merlin install-workflow-deps
 
 
 # install requirements
