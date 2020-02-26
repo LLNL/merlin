@@ -8,7 +8,9 @@ This section provides a quick reference for using
 Creating a virtual environment
 ++++++++++++++++++++++++++++++
 
-To create a new virtual environment::
+To create a new virtual environment:
+
+.. code:: bash
 
     $ python3 -m venv venv
 
@@ -24,7 +26,9 @@ To create a new virtual environment::
 Activating a Virtualenv
 ------------------------
 
-Once the virtual environment is created it can be activated like so::
+Once the virtual environment is created it can be activated like so:
+
+.. code:: bash
 
     $ source venv/bin/activate
     (venv) $
@@ -42,7 +46,9 @@ it is active. Any calls to pip will install to the virtual environment.
 Deactivating a Virtualenv
 ---------------------------
 
-Virtualenvs can be exited via the following::
+Virtualenvs can be exited via the following:
+
+.. code:: bash
 
     (venv) $ deactivate
     $

@@ -14,6 +14,5 @@ install:
 - merlin config
 script:
 - python -m pytest tests/
-- python tests/integration/run_tests.py --verbose --ids 1 2 3 4 5 6 7 8 9 12 13 14
-  15 16 17 18 19 20 25 26 27
+- python tests/integration/run_tests.py --verbose --local
 - if [ "$TRAVIS_BRANCH" = "master" ]; then ./tests/integration/version_test.sh; fi

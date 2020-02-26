@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -43,20 +43,12 @@ from argparse import (
 )
 from contextlib import suppress
 
-from merlin import (
-    VERSION,
-    router,
-)
+from merlin import VERSION, router
 from merlin.ascii_art import banner_small
-from merlin.examples.generator import (
-    list_examples,
-    setup_example,
-)
+from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
-from merlin.spec.expansion import (
-    RESERVED,
-    get_spec_with_expansion,
-)
+from merlin.spec.expansion import RESERVED, get_spec_with_expansion
+from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
 
@@ -198,7 +190,7 @@ def launch_workers(args):
     if args.worker_echo_only:
         print(status)
     else:
-        LOG.info(status)
+        LOG.debug(f"celery command: {status}")
 
 
 def purge_tasks(args):
@@ -255,7 +247,17 @@ def stop_workers(args):
     :param `args`: parsed CLI arguments
     """
     print(banner_small)
-    router.stop_workers(args.task_server, args.queues, args.workers)
+    worker_names = []
+    if args.spec:
+        spec_path = verify_filepath(args.spec)
+        spec = MerlinSpec.load_specification(spec_path)
+        worker_names = spec.get_worker_names()
+        for worker_name in worker_names:
+            if "$" in worker_name:
+                LOG.warning(
+                    f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?"
+                )
+    router.stop_workers(args.task_server, worker_names, args.queues, args.workers)
 
 
 def print_info(args):
@@ -279,7 +281,7 @@ def config_merlin(args):
     if output_dir is None:
         USER_HOME = os.path.expanduser("~")
         output_dir = os.path.join(USER_HOME, ".merlin")
-    _ = router.create_config(args.task_server, output_dir)
+    _ = router.create_config(args.task_server, output_dir, args.broker)
 
 
 def process_example(args):
@@ -474,6 +476,12 @@ def setup_argparse():
     )
     stop.set_defaults(func=stop_workers)
     stop.add_argument(
+        "--spec",
+        type=str,
+        default=None,
+        help="Path to a Merlin YAML spec file from which to read worker names to stop.",
+    )
+    stop.add_argument(
         "--task_server",
         type=str,
         default="celery",
@@ -499,7 +507,7 @@ def setup_argparse():
         "--task_server",
         type=str,
         default="celery",
-        help="Task server type from which to stop workers.\
+        help="Task server type from which to query workers.\
                             Default: %(default)s",
     )
 
@@ -525,7 +533,7 @@ def setup_argparse():
         "--task_server",
         type=str,
         default="celery",
-        help="Task server type from which to stop workers.\
+        help="Task server type.\
                             Default: %(default)s",
     )
     status.add_argument(
@@ -544,7 +552,8 @@ def setup_argparse():
 
     # merlin info
     info = subparsers.add_parser(
-        "info", help="show pip and python versions and locations"
+        "info",
+        help="display info about the merlin configuration and the python configuration. Useful for debugging.",
     )
     info.set_defaults(func=print_info)
 
@@ -568,6 +577,13 @@ def setup_argparse():
         default=None,
         help="Optional directory to place the default config file.\
                             Default: ~/.merlin",
+    )
+    mconfig.add_argument(
+        "--broker",
+        type=str,
+        default=None,
+        help="Optional broker type, backend will be redis\
+                            Default: rabbitmq",
     )
 
     # merlin example

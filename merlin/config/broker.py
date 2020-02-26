@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -49,7 +49,7 @@ LOG = logging.getLogger(__name__)
 
 BROKERS = ["rabbitmq", "redis", "redis+socket"]
 
-RABBITMQ_CONNECTION = "amqps://{username}:{password}@{server}:5671//{vhost}"
+RABBITMQ_CONNECTION = "amqps://{username}:{password}@{server}:{port}//{vhost}"
 REDISSOCK_CONNECTION = "redis+socket://{path}?virtual_host={db_num}"
 USER = getpass.getuser()
 
@@ -86,12 +86,20 @@ def get_rabbit_connection(config_path, include_password):
     except IOError:
         raise ValueError(f"RabbitMQ password file {password_filepath} does not exist")
 
+    try:
+        port = CONFIG.broker.port
+        LOG.debug(f"RabbitMQ port = {port}")
+    except (AttributeError, KeyError):
+        port = 5671
+        LOG.debug(f"RabbitMQ using default port = {port}")
+
     # Test configurations.
     rabbitmq_config = {
         "vhost": vhost,
         "username": username,
         "password": "******",
         "server": server,
+        "port": port,
     }
 
     if include_password:
@@ -157,7 +165,10 @@ def get_connection_string(include_password=True):
     `merlin.yaml` config file.
     """
     broker = CONFIG.broker.name
-    config_path = CONFIG.celery.certs
+    try:
+        config_path = CONFIG.celery.certs
+    except AttributeError:
+        config_path = None
 
     if broker not in BROKERS:
         raise ValueError(f"Error: {broker} is not a supported broker.")

@@ -9,6 +9,7 @@ control flow.
 
 Directory structure context
 ---------------------------
+The directory structure of merlin output looks like this:
 
 .. code::
 
@@ -26,7 +27,7 @@ Directory structure context
             
 
 Reserved variables
--------------------
+------------------
 .. list-table:: Study variables that Merlin uses. May be referenced within a specification file, but not reassigned or overridden.
 
   * - Variable
@@ -66,21 +67,19 @@ Reserved variables
     - ``/\*/\*/\*/\*``
   * - ``$(MERLIN_PATHS_ALL)``
     - A space delimited string of all of the paths;
-      can be used as is in bash for loop for instance with
+      can be used as is in bash for loop for instance with:
+      ::
 
-       ::
-
-           for path in $(MERLIN_PATHS_ALL)
-           do
-             ls $path
-           done
-
+         for path in $(MERLIN_PATHS_ALL)
+         do
+           ls $path
+         done
     - ``0/0/0 0/0/1 0/0/2 0/0/3``
 
 
 User variables
 -------------------
-Variables defined within a specification file, as in this example:
+Variables defined by a specification file in the ``env`` section, as in this example:
 
 .. code-block:: yaml
 
@@ -118,7 +117,8 @@ Step return variables
 
    * - ``$(MERLIN_RESTART)``
      - Run this step's ``restart`` command, or re-run ``cmd`` if ``restart``
-       is absent.      -
+       is absent.      
+     -
        ::
 
           run:
@@ -133,7 +133,7 @@ Step return variables
      - Retry this step's ``cmd`` command. The default maximum number of retries for any given step
        is 30. You can override this by adding a ``max_retries`` field under the run
        field in the specification. Issues a warning.
-       ::
+     - ::
 
           run:
             cmd: |
