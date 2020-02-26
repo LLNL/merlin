@@ -85,7 +85,9 @@ def get_rabbit_connection(config_path, include_password):
     try:
         password = read_file(password_filepath)
     except IOError:
-        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist")
+        raise ValueError(
+            f"Broker: RabbitMQ password file {password_filepath} does not exist"
+        )
 
     try:
         port = CONFIG.broker.port
@@ -159,7 +161,6 @@ def get_redis_connection(config_path, include_password):
 
     redis_broker = "redis://%s%s:%d/%d" % (spass, server, port, db_num)
 
-
     return redis_broker
 
 
@@ -187,6 +188,7 @@ def get_connection_string(include_password=True):
         return get_redis_connection(config_path, include_password)
 
     return None
+
 
 def get_ssl_config():
     """
@@ -221,9 +223,8 @@ def get_ssl_config():
 
     if broker_ssl:
         broker_ssl["cert_reqs"] = ssl.CERT_REQUIRED
-    else:            
+    else:
         broker_ssl = True
-
 
     if broker == "rabbitmq":
         return broker_ssl
@@ -232,7 +233,7 @@ def get_ssl_config():
         try:
             redis_broker_ssl = {}
             for k, v in broker_ssl.items():
-                redis_broker_ssl["ssl_"+k] = v
+                redis_broker_ssl["ssl_" + k] = v
         except AttributeError:
             return True
 

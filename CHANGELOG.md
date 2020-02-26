@@ -11,9 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The signal keyword is now enabled for the slurm batch type.
 - LAUNCHER keywords, (slurm,flux,lsf) for specifying arguments specific
   to that parallel launcher in the run section.
-
-### Added
-- Add optional ssl files to broker config.
+- Optional ssl files for the  broker config.
 
 ### Fixed
 - Syntax errors in web doc file `merlin_variables.rst`.
