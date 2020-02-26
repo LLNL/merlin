@@ -4,7 +4,13 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] 
+
+### Added
+- The walltime keyword is now enabled for the slurm and flux batch types.
+- The signal keyword is now enabled for the slurm batch type.
+- LAUNCHER keywords, (slurm,flux,lsf) for specifying arguments specific
+  to that parallel launcher in the run section.
 
 ### Added
 - Add optional ssl files to broker config.
