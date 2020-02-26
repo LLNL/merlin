@@ -4,7 +4,7 @@ description:
 
 global.parameters:
     GREET:
-        values : ["hello","olá"]
+        values : ["hello","hola"]
         label  : GREET.%%
     WORLD:
         values : ["world","mundo"]
@@ -12,12 +12,13 @@ global.parameters:
 
 study:
     - name: step_1
-      description: write a file that says hello
+      description: say hello
       run:
           cmd: echo "$(GREET), $(WORLD)!"
 
     - name: step_2
       description: print a success message
       run:
-          cmd: echo "Operation HELLO complete."
+          cmd: print("Hurrah, we did it!")
           depends: [step_1_*]
+          shell: /usr/bin/env python3

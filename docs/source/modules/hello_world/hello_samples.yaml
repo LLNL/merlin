@@ -8,19 +8,19 @@ env:
 
 global.parameters:
     GREET:
-        values : ["hello","ola"]
+        values : ["hello","hola"]
         label  : GREET.%%
 
 study:
     - name: step_1
-      description: write a file that says hello
+      description: say hello
       run:
           cmd: echo "$(GREET), $(WORLD)!"
 
     - name: step_2
       description: print a success message
       run:
-          cmd: print("Operation HELLO complete.")
+          cmd: print("Hurrah, we did it!")
           depends: [step_1_*]
           shell: /usr/bin/env python3
 
