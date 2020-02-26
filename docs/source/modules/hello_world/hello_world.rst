@@ -17,8 +17,8 @@ Hello, World!
 .. contents::
   :local:
 
-Stuff inside a specification
-++++++++++++++++++++++++++++
+Elements of a specification
++++++++++++++++++++++++++++
 
 Central to Merlin is something called a specifiation file, or a "spec" for short.
 The spec defines all aspects of your workflow.
