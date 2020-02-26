@@ -14,10 +14,19 @@ Tutorial
 
 Grab your laptop and coffee, and dive into this 7-module tutorial to become a Merlin expert.
 
+..    :doc:`0. Prerequisites<prereqs>`
+
 .. toctree::
    :maxdepth: 1
    :numbered:
-   :caption: Modules:
+   :caption: Before you come:
+
+   modules/prereqs
+
+.. toctree::
+   :maxdepth: 1
+   :numbered:
+   :caption: Tutorial modules:
 
    modules/introduction
    modules/installation

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.2.3.
+# This file is part of Merlin, Version: 1.3.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -30,16 +30,10 @@
 
 import logging
 from collections import ChainMap
-from os.path import (
-    expanduser,
-    expandvars,
-)
+from os.path import expanduser, expandvars
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.spec.override import (
-    dump_with_overrides,
-    error_override_vars,
-)
+from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
 
 

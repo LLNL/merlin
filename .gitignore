@@ -44,7 +44,6 @@ jupyter/.ipynb_checkpoints
 jupyter/testDistributedSamples.py
 
 # Images
-*.png
 *.pdf
 
 # aspell
