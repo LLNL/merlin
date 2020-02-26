@@ -68,9 +68,9 @@ Reserved variables
     - A space delimited string of all of the paths;
       can be used as is in bash for loop for instance with
 
-.. code:: bash
+      .. code-block:: bash
 
-           for path in $(MERLIN_PATHS_ALL)
+         for path in $(MERLIN_PATHS_ALL)
            do
              ls $path
            done
