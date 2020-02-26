@@ -32,7 +32,8 @@ batch allocation. Autonomous workers in different allocations (even
 on different machines) can then connect
 to this server, pull off and execute these tasks asynchronously.
 
-*Why Merlin? What's the need?*
+Why Merlin? What's the need?
+++++++++++++++++++++++++++++
 
 So what? Why would you care to do this?
 
@@ -46,7 +47,20 @@ a few large hero simulations, not many smaller simulations. Naively pushing
 standard HPC workflow tools to hundreds of thousands and millions of simulations
 can lead to some serious problems.
 
-*How does Merlin help solve this?*
+
+Workflows, applications and machines are becoming more complex, but
+subject matter experts need to devote time and attention to their applications
+and often require fine command-line level control. Furthermore,
+they rarely have the time to devote to learning workflow systems.
+
+With the expansion of data-driven computing, the HPC scientist needs to be able
+to run more simulations through complex multi-component workflows. But doing this
+effectively in an unstable bleeding edge HPC environment can be dicey. The tricks
+that work for 100 simulations won't work for 100 million.
+
+
+How does Merlin help solve this?
+++++++++++++++++++++++++++++++++
 
 The good news is that distributed cloud compute technology has really pushed the
 frontier of scalability. Merlin helps bring this tech to traditional scientific HPC.
@@ -178,7 +192,8 @@ These challenges include:
   outages. *Workflows need to be able to restart, retry and rerun failed steps without
   needing to run the entire workflow.*
 
-**So what exactly does Merlin do?**
+So what exactly does Merlin do?
++++++++++++++++++++++++++++++++
 
 Merlin wraps a heavily tested and well used asynchronous task queueing library in
 a skin and syntax that is natural for HPC simulations. In essence, we extend
@@ -228,36 +243,35 @@ to launch a workflow on multiple machines.
 
 .. image:: ../../images/merlin_arch.png
 
-The 
+The scientist describes her workflow with a maestro-like ``<workflow file>``. Her workflow
+consists of two steps:
 
-*Benefit*
+1. Run many parallel CPU-only jobs, varying her simulation parameters of interest
+2. Use a GPU to train a deep learning model on the results of those simulations
 
+She then types ``merlin run <workflow file>``, which translates that maestro file
+into celery commands and
+sends those tasks to two separate queues on a centralized server (one for CPU work and
+one for GPU work).
 
+She then launches a batch allocation on the CPU machine, which contains the command
+``merlin run-workers <workflow file> --steps 1``.
+Workers start up under flux, pull work from the server's CPU queue and call flux to 
+launch the parallel simulations asynchronously. 
 
+She also launches a separate batch request on the GPU machine with 
+``merlin run-workers <workflow file> --steps 2``. These workers connect to the central
+queue associated with the GPU step.
 
-*Competition*
+When the simulations in step 1 finish, step 2 will automatically start. In this fashion,
+Merlin allows the scientist to coordinate a highly scalable asynchronous multi-machine 
+heterogenous workflow.
 
+This is of course a simple example, but it does show how the producer-consumer
+philosophy in HPC workflows can be quite enabling. Merlin's goal is to make it easy
+for HPC-focused subject matter experts to take advantage of the advances in cloud
+computing.
 
-
-Why was it built?
-+++++++++++++++++
-
-* More Data, More Problems
-
-  ML & data-driven science are data hungry, but HPC systems typically
-  target single large jobs, not many smaller jobs. Naively pushing existing
-  solutions to large scales can lead to serious issues.
-
-* Do more with less
-
-  Workflows, applications and machines are becoming more complex.
-  SMEs need to devote time and attention to their applications
-  and often require fine command-line level control. Furthermore,
-  they rarely have the time to devote to learning workflow systems.
-
-* Bring distributed compute to HPC
-
-  Current WF systems target one or the other, but not both
 
 How is it designed?
 +++++++++++++++++++
