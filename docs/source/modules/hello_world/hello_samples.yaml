@@ -4,7 +4,7 @@ description:
 
 env:
     variables:
-        NUM_SAMPLES: 3
+        N_SAMPLES: 3
 
 global.parameters:
     GREET:
@@ -27,6 +27,6 @@ study:
 merlin:
     samples:
         generate:
-            cmd: pip install names ; python3 $(SPECROOT)/make_samples.py --file=$(MERLIN_INFO)/samples.csv --number=$(NUM_SAMPLES)
-            file: $(MERLIN_INFO)/samples.csv
+            cmd: pip3 install names ; python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+        file: $(MERLIN_INFO)/samples.csv
         column_labels: [WORLD]
