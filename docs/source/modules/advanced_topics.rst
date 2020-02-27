@@ -261,6 +261,15 @@ allocations before starting workers, or use Maestro to automate everything:
 
 ...
 
+NOTES: encode virtual envs in the spec/workflow: only the first call to merlin run will
+get the host venv, subsequent ones
+
+RECURSIVE WORKFLOWS: if exit condition isn't working, terminating workers can be difficult
+- have another shell open at least to purge the queues and stop the workers
+
+When running new workflows, be careful with the path: otherwise it will run it in that step
+Can info message spam be reduced?  -> nice to see just the echo/print output in the commands...
+
 Multi-machine workflows
 +++++++++++++++++++++++
 
@@ -306,3 +315,22 @@ Plan:
  - also spawn additional batch allocations with maestro
  - key feature: use maestro param to control iterations
    - each recursive call uses pgen to subtract one from it
+
+Updated plan:
+ - have post step call merlin run again
+ - workers shoudl continue pulling from the same queues
+ - verify that run-workers doesn't need to be called again in the first merlin spec
+ - use restart functionality on the maestro spec to reopen batch allocations
+ - use of exit keys to control the logic?
+ - use command line variable overriding to control iterations, not maestro params
+
+Iterative workflows, such as optimization or machine learning, can be implemented
+in merlin via recursive workflow specifications that use dynamic task queueing.
+The example spec below is a simple implementation of this using an iteration counter
+`$(ITER)` and a predetermined limit, `$(MAX_ITER)` to limit the number of times
+to generate new samples and spawn a new instantiation of the workflow.  The iteration
+counter takes advantage of the ability to override workflow variables on the command line.
+
+.. literalinclude :: faker_demo.yaml
+   :language: yaml
+
