@@ -1,19 +1,20 @@
 description:
-    name: openfoam_study
+    name: openfoam_wf
     description: |
       A parameter study that includes initializing, running,
-      post-processing, collecting, learning and vizualizing runs
+      post-processing, collecting, learning and vizualizing OpenFOAM runs
 
 env:
     variables:
-        OUTPUT_PATH: ./running_simulation_output
+        OUTPUT_PATH: ./openfoam_output
+        SCRIPTS: $(MERLIN_INFO)/scripts
 
         N_SAMPLES: 10
 
 study:
     - name: setup
       description: |
-                Installing necessary python packages and copying files from SPECROOT
+                Installs necessary python packages and copies scripts from SPECROOT
                 to the merlin_info directory
       run:
         cmd: |
@@ -21,8 +22,8 @@ study:
 
             cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
 
-            # Setting up the cavity directory in the MERLIN_INFO directory
-            source $(MERLIN_INFO)/scripts/cavity_setup.sh $(MERLIN_INFO)
+            # Set up the cavity directory in the MERLIN_INFO directory
+            source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
 
         task_queue: setupworkers
 
@@ -39,7 +40,7 @@ study:
             sed -i '' "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
 
             cd ..
-            cp $(MERLIN_INFO)/scripts/run_openfoam .
+            cp $(SCRIPTS)/run_openfoam .
 
             CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
             docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
@@ -48,18 +49,18 @@ study:
         depends: [setup]
 
     - name: combine_outputs
-      description: Combine the outputs of the previous step
+      description: Combines the outputs of the previous step
       run:
         cmd: |
-            python $(MERLIN_INFO)/scripts/combine_outputs.py -data $(sim_runs.workspace) -merlin_paths $(MERLIN_PATHS_ALL)
+            python $(SCRIPTS)/combine_outputs.py -data $(sim_runs.workspace) -merlin_paths $(MERLIN_PATHS_ALL)
         task_queue: learnworkers
         depends: [sim_runs_*]
 
     - name: learn
-      description: Learning the output of the openfoam simulations using input parameters
+      description: Learns the output of the openfoam simulations using input parameters
       run:
         cmd: |
-            python $(MERLIN_INFO)/scripts/learn.py -specroot $(MERLIN_WORKSPACE)
+            python $(SCRIPTS)/learn.py -specroot $(MERLIN_WORKSPACE)
         task_queue: learnworkers
         depends: [combine_outputs]
 
