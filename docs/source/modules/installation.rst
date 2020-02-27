@@ -112,32 +112,8 @@ Merlin and the servers required by merlin are all available as docker containers
 To run a merlin docker container with a docker redis server cut
 and paste the commands below in to a ``docker-compose.yml`` file.
 
-.. code:: bash
-
-  version: '3'
-  
-  networks:
-    mernet:
-      driver: bridge
-  
-  services:
-    redis:
-      image: 'redis:latest'
-      container_name: my-redis
-      ports:
-        - "6379:6379"
-      networks:
-        - mernet
-  
-    merlin:
-      image: 'llnl/merlin'
-      container_name: my-merlin
-      tty: true
-      volumes:
-        - ~/merlinu/:/home/merlinu
-      networks:
-        - mernet
-
+.. literalinclude:: installation/docker-compose.yml
+   :language: yaml
 
 This file can then be run with the ``docker-compose`` command.
 
@@ -178,19 +154,8 @@ passwords for the redis server and encryption.
 If you are using local-redis then you are all set, look in your ``~/.merlin/app.yaml`` file
 to see the configuration.
 
-.. code:: bash
-
-    broker:
-        name: redis
-        server: localhost
-        port: 6379
-        db_num: 0
-
-    results_backend:
-        name: redis
-        server: localhost
-        port: 6379
-        db_num: 0
+.. literalinclude:: installation/app_local_redis.yaml
+   :language: yaml
 
 If you are using the docker-redis server then the 
 ``~/merlinu/.merlin/app.yaml`` file must be edited to 
@@ -202,20 +167,8 @@ broker and backend config definitions, to ``server: my-redis``, the port will re
   with the pi installed merlin by leaving the server locations as localhost.
   ``server: localhost``
 
-.. code:: bash
-
-    broker:
-        name: redis
-        server: my-redis
-        port: 6379
-        db_num: 0
-
-    results_backend:
-        name: redis
-        server: my-redis
-        port: 6379
-        db_num: 0
-
+.. literalinclude:: installation/app_docker_redis.yaml
+   :language: yaml
 
 Checking/Verifying installation
 +++++++++++++++++++++++++++++++
@@ -284,54 +237,9 @@ server and python.
 The rabbitmq docker microservice can be added to the previous 
 ``docker-compose.yml`` file.
 
-.. code:: bash
+.. literalinclude:: installation/docker-compose_rabbit.yml
+   :language: yaml
 
-  version: '3'
-
-  networks:
-    mernet:
-      driver: bridge
-     
-  services:
-    redis:
-      image: 'redis:latest'
-      container_name: my-redis
-      ports:
-        - "6379:6379"
-      networks:
-        - mernet
-     
-    rabbitmq:
-      image: rabbitmq:3-management
-      container_name: my-rabbit
-      tty: true
-      ports:
-        - "15672:15672"
-        - "15671:15671"
-        - "5672:5672"
-        - "5671:5671"
-      environment:
-        - RABBITMQ_SSL_CACERTFILE=/cert_rabbitmq/ca_certificate.pem
-        - RABBITMQ_SSL_KEYFILE=/cert_rabbitmq/server_key.pem
-        - RABBITMQ_SSL_CERTFILE=/cert_rabbitmq/server_certificate.pem
-        - RABBITMQ_SSL_VERIFY=verify_peer
-        - RABBITMQ_SSL_FAIL_IF_NO_PERR_CERT=false
-        - RABBITMQ_DEFAULT_USER=merlinu
-        - RABBITMQ_DEFAULT_VHOST=/merlinu
-        - RABBITMQ_DEFAULT_PASS=guest
-      volumes:
-        - ~/merlinu/cert_rabbitmq:/cert_rabbitmq
-      networks:
-        - mernet
-     
-    merlin:
-      image: 'llnl/merlin'
-      container_name: my-merlin
-      tty: true
-      volumes:
-        - ~/merlinu/:/home/merlinu
-      networks:
-        - mernet
 
 When running the rabbitmq broker server, the config can be created with 
 the default ``merlin config`` command.
@@ -349,16 +257,7 @@ in the broker section
 of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``. 
 The rabbitmq server will be accessed on the default TLS port, 5671.
 
-.. code:: bash
-
-   broker:
-       name: rabbitmq
-       server: my-rabbit
-
-   results_backend:
-       name: redis
-       server: my-redis
-       port: 6379
-       db_num: 0
+.. literalinclude:: installation/app_docker_rabbit.yaml
+   :language: yaml
 
 The aliases defined previously can be used with this set of docker containers.

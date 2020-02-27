@@ -55,7 +55,7 @@ Merlin constructs the following connection string from the relevant options in t
 
 
 Broker: ``redis+socket``
-----------------------
+------------------------
 Merlin constructs the following connection string from the relevant options in the ``broker`` section of the app.yaml file.
 ``"redis+socket://{path}?virtual_host={db_num}"``
 
