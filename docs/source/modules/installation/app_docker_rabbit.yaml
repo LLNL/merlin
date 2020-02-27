@@ -1,6 +1,7 @@
 broker:
     name: rabbitmq
     server: my-rabbit
+    password: ~/.merlin/rabbit.pass
 
 results_backend:
     name: redis

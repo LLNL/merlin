@@ -234,7 +234,7 @@ server and python.
  cp results/* ${HOME}/merlinu/cert_rabbitmq
 
 
-The rabbitmq docker microservice can be added to the previous 
+The rabbitmq docker service can be added to the previous 
 ``docker-compose.yml`` file.
 
 .. literalinclude:: installation/docker-compose_rabbit.yml
@@ -259,5 +259,8 @@ The rabbitmq server will be accessed on the default TLS port, 5671.
 
 .. literalinclude:: installation/app_docker_rabbit.yaml
    :language: yaml
+
+To complete the config create a file ``~/merlinu/.merlin/app.yaml``
+and add the password ``guest``.
 
 The aliases defined previously can be used with this set of docker containers.
