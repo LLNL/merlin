@@ -260,7 +260,7 @@ The rabbitmq server will be accessed on the default TLS port, 5671.
 .. literalinclude:: installation/app_docker_rabbit.yaml
    :language: yaml
 
-To complete the config create a file ``~/merlinu/.merlin/app.yaml``
+To complete the config create a file ``~/merlinu/.merlin/rabbit.pass``
 and add the password ``guest``.
 
 The aliases defined previously can be used with this set of docker containers.
