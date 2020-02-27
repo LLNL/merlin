@@ -1,0 +1,116 @@
+   description:
+      name: Sample HPC specification
+      description: demo batch system and multiple worker configs for HPC workflows
+
+   env:
+     variables:
+       OUTPUT_PATH: ./name_studies_2
+       COLLECT: $(SPECROOT)/sample_collector.py
+       POST_PROC: $(SPECROOT)/sample_processor.py
+       CUM_POST_PROC: $(SPECROOT)/cumulative_sample_processor.py
+       PYTHON: /usr/WS2/white242/merlin_dev_2/venv_merlin_py3_7/bin/python
+       ITER: 1
+       MAX_ITER: 10
+
+   batch:
+      type: flux
+      bank: testbank
+      queue: pdebug
+      shell: /bin/bash
+      nodes: 1
+
+   ########################################
+   # Study definition
+   ########################################
+   study:
+      - name: sample_names
+        description: Collect name samples
+        run:
+           cmd: |
+             $(LAUNCHER) echo "$(NAME)"
+             $(LAUNCHER) echo "$(NAME)" > name_sample.out
+           nodes: 1
+           procs: 1
+           task_queue: name_queue
+  
+      - name: collect
+        description: Collect all samples generated
+        run:
+           cmd: |
+             echo $(MERLIN_GLOB_PATH)
+             echo $(sample_names.workspace)
+             echo "Xargs test"
+             ls $(sample_names.workspace)/$(MERLIN_GLOB_PATH)/name_sample.out | xargs $(PYTHON) $(COLLECT) -out collected_samples.txt
+             
+           nodes: 1
+           procs: 1
+           depends: [sample_names_*]
+           task_queue: post_proc_queue
+
+      - name: post-process
+        description: Post-Process collection of samples
+        run:
+           cmd: |
+             echo $(STUDY)
+             $(PYTHON) $(POST_PROC) $(collect.workspace)/collected_samples.txt --results $(SPECROOT)/$(OUTPUT_PATH)/iter_$(ITER)_results.json
+             
+           nodes: 1
+           procs: 1
+           depends: [collect]
+           task_queue: post_proc_queue
+
+      - name: run-more-samples
+        description: Generate new set of samples if needed
+        run:
+          cmd: |
+            if [ $(ITER) -ge $MAX_ITER ] ; then
+               echo "done"
+               $(PYTHON) $(CUM_POST_PROC) $(SPECROOT)/$(OUTPUT_PATH)/iter_*_results.json --hardcopy $(SPECROOT)/$(OUTPUT_PATH)/cum_results.png
+            else
+               next_iter=$(ITER)
+               ((next_iter=next_iter+1))
+               echo "Starting iteration " $next_iter
+               cd $(SPECROOT)
+               merlin run $(SPECROOT)/faker_demo.yaml --vars ITER=$next_iter
+            fi
+          nodes: 1
+          procs: 1
+          depends: [post-process]
+          task_queue: post_proc_queue
+      
+           
+   ########################################
+   # Worker and sample configuration
+   ########################################  
+   merlin:
+  
+     resources:
+       task_server: celery
+  
+       overlap: False
+  
+       # Customize workers  NOTE: abuse this for scaling study: prefetch mult increase
+       #   - celery->rabbit query overhead for fast jobs
+       workers:
+           nameworkers:
+               args: --concurrency 36 --prefetch-multiplier 1
+               steps: [sample_names]      
+               nodes: 1
+               machines: [borax]      
+
+          # NOTE: specifying wrong step leaves orphaned queue -> purge first!
+          # also, invalid host name appears to fail silently
+           postworkers:
+               args: --concurrency 4 --prefetch-multiplier 2
+               steps: [post-process]
+               nodes: 1 
+               machines: [borax]
+  
+     ###################################################
+     samples:
+       column_labels: [NAME]
+       file: $(MERLIN_INFO)/samples.csv
+       generate:
+         cmd: |
+           /usr/WS2/white242/merlin_dev_2/venv_merlin_py3_7/bin/
+           $(PYTHON) $(SPECROOT)/faker_sample.py -n 100 -outfile=$(MERLIN_INFO)/samples.csv
