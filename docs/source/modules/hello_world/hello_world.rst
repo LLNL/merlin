@@ -111,7 +111,7 @@ Now the DAG looks like this:
 
 Your full hello world spec should now look like this:
 
-.. literalinclude:: hello.yaml
+.. literalinclude:: ../../../../merlin/examples/workflows/hello/hello.yaml
    :language: yaml
 
 We'll name it ``hello.yaml``.
@@ -229,7 +229,7 @@ For simplicity we give ``column_labels`` the name ``WORLD``, just like before.
 
 It's good practice to shift larger chunks of code to external scripts. At the same location of your spec, make a new file called ``make_samples.py``:
 
-.. literalinclude :: make_samples.py
+.. literalinclude :: ../../../../merlin/examples/workflows/hello/make_samples.py
    :language: text
 
 Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
@@ -242,7 +242,7 @@ Here's our DAG with samples:
 
 Here's the new spec:
 
-.. literalinclude:: hello_samples.yaml
+.. literalinclude:: ../../../../merlin/examples/workflows/hello/hello_samples.yaml
    :language: yaml
 
 
