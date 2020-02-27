@@ -323,4 +323,14 @@ Updated plan:
  - use restart functionality on the maestro spec to reopen batch allocations
  - use of exit keys to control the logic?
  - use command line variable overriding to control iterations, not maestro params
-   
+
+Iterative workflows, such as optimization or machine learning, can be implemented
+in merlin via recursive workflow specifications that use dynamic task queueing.
+The example spec below is a simple implementation of this using an iteration counter
+`$(ITER)` and a predetermined limit, `$(MAX_ITER)` to limit the number of times
+to generate new samples and spawn a new instantiation of the workflow.  The iteration
+counter takes advantage of the ability to override workflow variables on the command line.
+
+.. literalinclude :: faker_demo.yaml
+   :language: yaml
+
