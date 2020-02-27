@@ -31,7 +31,7 @@ Grab your laptop and coffee, and dive into this 7-module tutorial to become a Me
    modules/introduction
    modules/installation
    modules/hello_world/hello_world
-   modules/run_simulation
+   modules/run_simulation/run_simulation
    modules/advanced_topics
    modules/contribute
    modules/port_your_application
