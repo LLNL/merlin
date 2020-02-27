@@ -164,8 +164,8 @@ broker and backend config definitions, to ``server: my-redis``, the port will re
 
 .. note::
   You can use the docker redis server, instead of the local-redis server,
-  with the pi installed merlin by leaving the server locations as localhost.
-  ``server: localhost``
+  with the virtualenv installed merlin by using the local-redis 
+  ``app.yaml`` file above.
 
 .. literalinclude:: installation/app_docker_redis.yaml
    :language: yaml
