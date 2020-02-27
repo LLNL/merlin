@@ -2,9 +2,9 @@ Run a Real Simulation
 =====================
 .. admonition:: Prerequisites
 
-      * :doc:`Module 0: Prerequisites<prereqs>`
-      * :doc:`Module 2: Installation<installation>`
-      * :doc:`Module 3: Hello World<hello_world/hello_world>`
+      * :doc:`Module 0: Prerequisites<../prereqs>`
+      * :doc:`Module 2: Installation<../installation>`
+      * :doc:`Module 3: Hello World<../hello_world/hello_world>`
 
 .. admonition:: Estimated time
 
