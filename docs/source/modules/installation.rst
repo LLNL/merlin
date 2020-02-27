@@ -264,8 +264,8 @@ Docker Advanced Installation
 A rabbitmq server can be started to provide the broker, the redis 
 server will still be required for the backend. Merlin is configured
 to use ssl encryption for all communication with the rabbitmq server.
-This tutorial ca use self-signed certificates . Information on TLS
-can be found here ``provide link``.
+This tutorial ca use self-signed certificates . Information on rabbit
+with TLS can be found here: `rabbit TLS <https://www.rabbitmq.com/ssl.html>`_
 
 A set of self-signed keys is created through the ``tls-gen`` package.
 These keys are then copied to a common directory for use in the rabbitmq
@@ -275,9 +275,10 @@ server and python.
 
  git clone https://github.com/michaelklishin/tls-gen.git 
  cd tls-gen/basic
- make
+ make CN=my-rabbit CLIENT_ALT_NAME=my-rabbit SERVER_ALT_NAME=my-rabbit
+ make verify
  mkdir -p ${HOME}/merlinu/cert_rabbitmq
- cp server/*.pem testca/*.pem ${HOME}/merlinu/cert_rabbitmq
+ cp results/* ${HOME}/merlinu/cert_rabbitmq
 
 
 The rabbitmq docker microservice can be added to the previous 
@@ -302,8 +303,7 @@ The rabbitmq docker microservice can be added to the previous
      
     rabbitmq:
       image: rabbitmq:3-management
-      container_name: some-rabbit
-      hostname: my-rabbit
+      container_name: my-rabbit
       tty: true
       ports:
         - "15672:15672"
@@ -311,11 +311,13 @@ The rabbitmq docker microservice can be added to the previous
         - "5672:5672"
         - "5671:5671"
       environment:
-        - RABBITMQ_SSL_CACERTFILE=/cert_rabbitmq/cacert.pem
-        - RABBITMQ_SSL_KEYFILE=/cert_rabbitmq/key.pem
-        - RABBITMQ_SSL_CERTFILE=/cert_rabbitmq/cert.pem
+        - RABBITMQ_SSL_CACERTFILE=/cert_rabbitmq/ca_certificate.pem
+        - RABBITMQ_SSL_KEYFILE=/cert_rabbitmq/server_key.pem
+        - RABBITMQ_SSL_CERTFILE=/cert_rabbitmq/server_certificate.pem
+        - RABBITMQ_SSL_VERIFY=verify_peer
+        - RABBITMQ_SSL_FAIL_IF_NO_PERR_CERT=false
         - RABBITMQ_DEFAULT_USER=merlinu
-        - RABBITMQ_DEFAULT_VHOST=merlinu
+        - RABBITMQ_DEFAULT_VHOST=/merlinu
         - RABBITMQ_DEFAULT_PASS=guest
       volumes:
         - ~/merlinu/cert_rabbitmq:/cert_rabbitmq
@@ -326,10 +328,6 @@ The rabbitmq docker microservice can be added to the previous
       image: 'llnl/merlin'
       container_name: my-merlin
       tty: true
-      environment:
-        - SSL_CERT_FILE=/home/merlinu/cert_rabbitmq/cert.pem
-        - SSL_CERT_DIR=/home/merlinu/cert_rabbitmq
-        - REQUESTS_CA_BUNDLE=/home/merlinu/cert_rabbitmq/cert.pem
       volumes:
         - ~/merlinu/:/home/merlinu
       networks:
