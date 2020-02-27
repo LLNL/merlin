@@ -71,3 +71,33 @@ This module aims to do a parameter study on a  well-known benchmark problem for
 viscous incompressible fluid flow. We will be setting up our inputs, running
 multiple simulations in parallel, combining the outputs, and finally doing some
 predictive modeling and visualization using the outputs of these runs.
+
+Step 1: Setting Up
+~~~~~~~~~~~~~~~~~~
+It is always recommended to copy the scripts from your SPECROOT into the MERLIN_INFO
+file in case you change one of the scripts while merlin is running so we will do that first.
+
+We will also need to download some python packages such as Ofpp and scikit-learn in
+order to run this module.
+
+Finally we will need to copy the lid driven cavity deck from the openfoam docker
+container and adjust the write controls. This last part is scripted already for convenience.
+
+This is how the step should look like by the end:
+
+.. code:: yaml
+
+  study:
+    - name: setup
+      description: |
+                Installs necessary python packages and copies scripts from SPECROOT
+                to the merlin_info directory
+      run:
+        cmd: |
+          cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
+
+          pip install -r $(SPECROOT)/requirements.txt
+
+          # Set up the cavity directory in the MERLIN_INFO directory
+          source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
+        task_queue: setupworkers

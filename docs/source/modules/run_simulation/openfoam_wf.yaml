@@ -18,13 +18,12 @@ study:
                 to the merlin_info directory
       run:
         cmd: |
-            pip install -r $(SPECROOT)/requirements.txt
-
             cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
+
+            pip install -r $(SPECROOT)/requirements.txt
 
             # Set up the cavity directory in the MERLIN_INFO directory
             source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
-
         task_queue: setupworkers
 
     - name: sim_runs
