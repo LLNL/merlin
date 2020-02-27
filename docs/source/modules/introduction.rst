@@ -58,9 +58,12 @@ to run more simulations through complex multi-component workflows. But doing thi
 effectively in an unstable bleeding edge HPC environment can be dicey. The tricks
 that work for 100 simulations won't work for 100 million.
 
+The lessons we've learned from trying to push HPC simulation ensembles 
+to extreme scales became Merlin.
 
-How does Merlin help solve this?
-++++++++++++++++++++++++++++++++
+
+How can Merlin run so many simulations?
++++++++++++++++++++++++++++++++++++++++
 
 The good news is that distributed cloud compute technology has really pushed the
 frontier of scalability. Merlin helps bring this tech to traditional scientific HPC.
@@ -131,7 +134,10 @@ disconnect) to the coordinator.
 
 In Merlin, this *producer-consumer* workflow happens through two commands:
 
-``merlin run <workflow file>`` (producer) and
+``merlin run <workflow file>`` (producer)
+
+and
+
 ``merlin run-worker <workflow file>`` (consumer).
 
 The ``merlin run`` command populates the central queue(s) with work to do
@@ -276,15 +282,87 @@ computing.
 How is it designed?
 +++++++++++++++++++
 
-* Tech under the hood
+Merlin leverages a number of open source technologies, developed and battle-hardened
+in the world of distributed computing, instead of having to build, test and maintain
+stand-alone customized (probably buggy) versions of software that will probably not
+be as fully featured.
+
+There are differing philosophies on how much third-party software to rely upon.
+On the one hand, building our system off ubiquitous open source message passing libraries
+increases the confidence in our
+software stack's performance, especially at scale (for instance,
+celery is robust enough to `keep Instagram running <https://blogs.vmware.com/vfabric/2013/04/how-instagram-feeds-work-celery-and-rabbitmq.html>`_).
+However, doing so means that when something breaks deep down, it can
+be difficult to fix (if at all). Indeed if there's an underlying "feature" that we'd
+like to work around, we could be stuck. Furthermore, the complexity of the software
+stack can be quite large, such that our team couldn't possibly keep track of it all.
+These are valid concerns; however, we've found it much easier to quickly develop a
+portable system with a small team by treating (appropriately chosen) third party
+libraries as underlying infrastructure (sure you *could* build and use your own OS
+or compiler, but *should* you?).
+
+Merlin manages the increased risk that comes with relying on software that is out of
+our control by:
+
+1. Building modular software that can easily be reconfigured / swapped for other tech
+
+
+2. Participating as developers for those third-party packages upon which rely
+(for instance we often kick enhancements and bug fixes to maestro)
+
+
+3. Using continuous integration and testing to catch more errors as they occur
+
+This section talks about some of those underlying technologies, what they are, and
+why they were chosen.
+
+*A brief technical dive into some underlying tech*
+
+Merlin extends `maestro <https://github.com/LLNL/maestrowf>`_ with 
+`celery <https://docs.celeryproject.org/en/latest/index.html>`_, which in turn can
+be configured to interface with a variety of `message queue brokers <https://docs.celeryproject.org/en/latest/getting-started/brokers/index.html#broker-overview>`_ and `results backends <https://docs.celeryproject.org/en/latest/userguide/configuration.html#result-backend>`_. In practice, we like to use
+`RabbitMQ <https://www.rabbitmq.com>`_ and `Redis <https://redis.io>`_ for our broker
+and backend respectively, because of their features and reliability, especially at scale.
+
+The different components interact to populate and drain the message queue broker of
+workflow tasks.
 
 .. image:: ../../images/merlin_run.png
    :width: 75 %
    :align: center
 
+When a call is made to `merlin run`, maestro the workflow description (composed of "steps" with "parameters" and "samples") into a task
+dependency graph. Merlin translates this graph into discrete celery task commands
+(technically it does this by creating celery tasks that will break up the graph into
+subsequent tasks, making this translation asynchronous).
 
-* Components and reasoning
+Calls to `merlin run-worker` cause celery workers to connect to both the message broker
+and results database. The workers pull tasks from the broker and begin to execute
+the instructions therein. The worker turns the abstract task into specific system instructions, moves to a unique directory for that task and executes those instructions
+in a subprocess. When the subprocess exits, the worker posts the results (tasks status
+metadata, such as "SUCCESS" or "FAIL") to the results database.
 
 
 
 
+What is in this Tutorial?
++++++++++++++++++++++++++
+
+This tutorial will show you how to:
+
+1. Install Merlin and test that it works correctly
+
+2. Build a basic workflow and scale it up, introducing you to
+Merlin's syntax and how it differs from maestro.
+
+3. Run a "real" physics simulation based workflow, with post-processing of
+results, visualization and machine learning.
+
+4. Use some of Merlin's advanced features to do things like interface with
+batch systems, distribute a workflow across machines and dynamically add new
+samples to a running workflow.
+
+5. Contribute to Merlin, through code enhancements and bug reports.
+
+6. Get started porting your own application, with tips and tricks for
+building and scaling up workflows.
