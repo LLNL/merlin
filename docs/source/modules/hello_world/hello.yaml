@@ -1,0 +1,24 @@
+description:
+    name: hello
+    description: a very simple merlin workflow
+
+global.parameters:
+    GREET:
+        values : ["hello","hola"]
+        label  : GREET.%%
+    WORLD:
+        values : ["world","mundo"]
+        label  : WORLD.%%
+
+study:
+    - name: step_1
+      description: say hello
+      run:
+          cmd: echo "$(GREET), $(WORLD)!"
+
+    - name: step_2
+      description: print a success message
+      run:
+          cmd: print("Hurrah, we did it!")
+          depends: [step_1_*]
+          shell: /usr/bin/env python3

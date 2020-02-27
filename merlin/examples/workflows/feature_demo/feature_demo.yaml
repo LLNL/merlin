@@ -114,7 +114,7 @@ study:
           stop workers belonging to this workflow
           once all other tasks are finished.
       run:
-          cmd: merlin stop-workers --workers '.*$(WORKER_NAME)*'
+          cmd: sleep 10 ; merlin stop-workers --workers '.*$(WORKER_NAME)*'
           depends: [verify, python3_hello, python2_hello]
           task_queue: stop_workers_queue
 

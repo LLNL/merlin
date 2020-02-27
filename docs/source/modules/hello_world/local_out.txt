@@ -1,0 +1,31 @@
+
+
+       *
+   *~~~~~
+  *~~*~~~*      __  __           _ _
+ /   ~~~~~     |  \/  |         | (_)
+     ~~~~~     | \  / | ___ _ __| |_ _ __
+    ~~~~~*     | |\/| |/ _ \ '__| | | '_ \
+   *~~~~~~~    | |  | |  __/ |  | | | | | |
+  ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
+ *~~~~~~~~~~~
+   ~~~*~~~*    Machine Learning for HPC Workflows
+
+
+
+[2020-02-07 09:35:49: WARNING] Workflow specification missing
+ encouraged 'merlin' section! Run 'merlin example' for examples.
+Using default configuration with no sampling.
+[2020-02-07 09:35:49: INFO] Study workspace is 'hello_20200207-093549'.
+[2020-02-07 09:35:49: INFO] Reading app config from file ~/.merlin/app.yaml
+[2020-02-07 09:35:49: INFO] Calculating task groupings from DAG.
+[2020-02-07 09:35:49: INFO] Converting graph to celery tasks.
+[2020-02-07 09:35:49: INFO] Launching tasks.
+[2020-02-07 09:35:49: INFO] Executing step 'step1_HELLO.hello' in 'hello_20200207-093549/step1/HELLO.hello'...
+[2020-02-07 09:35:54: INFO] Step 'step1_HELLO.hello' in 'hello_20200207-093549/step1/HELLO.hello' finished successfully.
+[2020-02-07 09:35:54: INFO] Executing step 'step2_HELLO.hello' in 'hello_20200207-093549/step2/HELLO.hello'...
+[2020-02-07 09:35:59: INFO] Step 'step2_HELLO.hello' in 'hello_20200207-093549/step2/HELLO.hello' finished successfully.
+[2020-02-07 09:35:59: INFO] Executing step 'step1_HELLO.olá' in 'hello_20200207-093549/step1/HELLO.olá'...
+[2020-02-07 09:36:04: INFO] Step 'step1_HELLO.olá' in 'hello_20200207-093549/step1/HELLO.olá' finished successfully.
+[2020-02-07 09:36:04: INFO] Executing step 'step2_HELLO.olá' in 'hello_20200207-093549/step2/HELLO.olá'...
+[2020-02-07 09:36:09: INFO] Step 'step2_HELLO.olá' in 'hello_20200207-093549/step2/HELLO.olá' finished successfully.
