@@ -35,18 +35,17 @@ to this server, pull off and execute these tasks asynchronously.
 Why Merlin? What's the need?
 ++++++++++++++++++++++++++++
 
-So what? Why would you care to do this?
+That sounds complicated. Why would you care to do this?
 
 The short answer: machine learning
 
 The longer answer: machine learning and data science are becoming
 an integral part of scientific inquiry. The problem is that machine learning
-models are data hungry; it takes lots and lots of simulations to train machine
+models are data hungry: it takes lots and lots of simulations to train machine
 learning models on their outputs. Unfortunately HPC systems were designed to execute
 a few large hero simulations, not many smaller simulations. Naively pushing
 standard HPC workflow tools to hundreds of thousands and millions of simulations
 can lead to some serious problems.
-
 
 Workflows, applications and machines are becoming more complex, but
 subject matter experts need to devote time and attention to their applications
@@ -54,12 +53,44 @@ and often require fine command-line level control. Furthermore,
 they rarely have the time to devote to learning workflow systems.
 
 With the expansion of data-driven computing, the HPC scientist needs to be able
-to run more simulations through complex multi-component workflows. But doing this
-effectively in an unstable bleeding edge HPC environment can be dicey. The tricks
-that work for 100 simulations won't work for 100 million.
+to run more simulations through complex multi-component workflows.
 
-The lessons we've learned from trying to push HPC simulation ensembles 
-to extreme scales became Merlin.
+**Merlin targets HPC workflows that require many simulations**. These include:
+
+
+.. list-table:: Merlin Targeted Use Cases
+  :widths: 25 75
+
+  * - Emulator building
+    - Running enough simulations to build an emulator (or "surrogate model")
+      of an expensive computer code, such as needed for uncertainty quantification
+  * - Iterative sampling
+    - Executing some simulations and then choosing new ones to run
+      based on the results obtained thus far
+  * - Active learning
+    - Iteratively sampling coupled with emulator building to efficiently train
+      a machine learning model
+  * - Design optimization
+    - Using a computer code to optimize a model design, perhaps robustly or under
+      uncertainty
+  * - Reinforcement learning
+    - Building a machine learning model by subsequently exposing it to lots of
+      trials, giving it a reward/penalty for the outcomes of those trials
+  * - Hierarchical simulation
+    - Running low-fidelity simulations to inform which higher fidelity simulations
+      to execute
+  * - Heterogenous workflows
+    - Workflows that require different steps to execute on different hardware and/or
+      systems
+
+Many scientific and engineering problems require running lots of simulations.
+But accomplishing these tasks
+effectively in an unstable bleeding edge HPC environment can be dicey. The tricks
+that work for 100 simulations won't work for 
+`10 thousand <https://doi.org/10.1063/1.4977912>`_, let alone
+`100 million <https://arxiv.org/abs/1912.02892>`_.
+
+We made Merlin to make high-frequency extreme scale computing easy.
 
 
 How can Merlin run so many simulations?
@@ -100,7 +131,7 @@ External coordination can tailor the resources to the task, but cannot easily
 run lots of concurrent simulations (since batch systems usually limit the number
 of jobs a user can queue at once).
 
-**Internal coordination** puts the monitor with a larger batch job that allocates
+**Internal coordination** puts the monitor within a larger batch job that allocates
 resources inside that job for the specific tasks at hand.
 
 Internal coordination can run many more
@@ -132,7 +163,7 @@ ask for and manage HPC resources and tasks, the Merlin coordinator just manages
 tasks. Task-agnostic resources can then independently connect (and
 disconnect) to the coordinator. 
 
-In Merlin, this *producer-consumer* workflow happens through two commands:
+In Merlin, this **producer-consumer workflow** happens through two commands:
 
 ``merlin run <workflow file>`` (producer)
 
@@ -147,14 +178,16 @@ consumer. These consumers can exist on different machines in different
 batch allocations, anywhere that can see the central server. Likewise
 ``merlin run`` can populate the queue from any system that can see the
 queue server, including other workers. In principle, this means a
-research can push new work onto an already running batch allocation of workers,
+researcher can push new work onto an already running batch allocation of workers,
 or re-direct running jobs to work on higher-priority work.
 
 .. admonition:: The benefits of producer-consumer workflows
 
    The increased flexibility that comes from
    decoupling *what* HPC simulations you run from *where* you run them
-   can be extremely enabling. In particular Merlin allows you to
+   can be extremely enabling. 
+
+   Merlin allows you to
 
    * Scale to very large number of simulations by avoiding common HPC bottlenecks
    * Automatically take advantage of free nodes to process your workflow faster
@@ -170,33 +203,43 @@ allow for extremely distributed asynchronous computing.
 
 Many asynchronous task and workflow systems exist, but the majority are
 focused around this microservices model, where a system is set up (and
-managed) by experts that build a single workflow that gets tested and hardened
-and exists as a service for their users (e.g. an event on a website
-triggers a discrete set of tasks.) HPC, and in particular *scientific* HPC
+managed) by experts that build a single workflow. This static workflow
+gets tested and hardened and exists as a service for their users
+(e.g. an event on a website triggers a discrete set of tasks).
+HPC, and in particular *scientific* HPC
 brings its own set of challenges that make a direct application of microservices
 to HPC workflows challenging.
 
-These challenges include:
 
-- Workflows can change from day-to-day as researchers explore new simulations,
-  configurations, and questions.
-  *Workflows need to be dynamic, not static.*
-- Workflow components are usually different executables, 
-  pre- and post-processing scripts and data aggregation steps 
-  written in different languages. 
-  *Workflows need to intuitively support multiple languages.*
-- These components often need command-line-level control of task instructions.
-  *Workflows need to support shell syntax and environment variables.*
-- They frequently require calls to a batch system scheduler for parallel job
-  execution.
-  *Workflows need a natural way to launch parallel jobs that use more resources
-  then a single worker.*
-- Tasks can independently create large quantities of data.
-  *Dataflow models could be bottlenecks. Workflows should take advantage of
-  parallel file systems.*
-- HPC systems (in particular leadership class machines) can experience unforeseen
-  outages. *Workflows need to be able to restart, retry and rerun failed steps without
-  needing to run the entire workflow.*
+.. list-table:: Challenges for bringing microservices to scientific HPC Workflows
+  :widths: 50 50
+  :header-rows: 1
+
+  * - Challenge
+    - Requirement
+  * - Workflows can change from day-to-day as researchers explore new simulations,
+      configurations, and questions.
+    - *Workflows need to be dynamic, not static.*
+  * - Workflow components are usually different executables, 
+      pre- and post-processing scripts and data aggregation steps 
+      written in different languages. 
+    - *Workflows need to intuitively support multiple languages.*
+  * - These components often need command-line-level control of task instructions.
+    - *Workflows need to support shell syntax and environment variables.*
+  * - Components frequently require calls to a batch system scheduler for parallel job
+      execution.
+    - *Workflows need a natural way to launch parallel jobs that use more resources
+      then a single worker.*
+  * - Tasks can independently create large quantities of data.
+    - *Dataflow models could be bottlenecks. Workflows should take advantage of
+      parallel file systems.*
+  * - HPC systems (in particular leadership class machines) can experience unforeseen
+      outages.
+    - *Workflows need to be able to restart, retry and rerun failed steps without
+      needing to run the entire workflow.*
+
+Merlin was built specifically to address the challenges of porting microservices
+to HPC simualtions.
 
 So what exactly does Merlin do?
 +++++++++++++++++++++++++++++++
@@ -210,8 +253,9 @@ discrete celery tasks.
 
 Why not just plain celery?
 
-Celery is extremely powerful, but this power can be a barrier for many
-subject matter experts, who might not be python coders. While this may not be
+Celery is extremely powerful, but this power can be a barrier for many science
+and engineering subject matter experts, 
+who might not be python coders. While this may not be
 an issue for web developers, it presents a serious challenge to many scientists
 who are used to running their code from a shell command line. By wrapping celery
 commands in maestro steps, we not only create a familiar environment for users
@@ -283,7 +327,8 @@ How is it designed?
 +++++++++++++++++++
 
 Merlin leverages a number of open source technologies, developed and battle-hardened
-in the world of distributed computing, instead of having to build, test and maintain
+in the world of distributed computing. We decided to do this instead of
+having to build, test and maintain
 stand-alone customized (probably buggy) versions of software that will probably not
 be as fully featured.
 
@@ -298,19 +343,15 @@ like to work around, we could be stuck. Furthermore, the complexity of the softw
 stack can be quite large, such that our team couldn't possibly keep track of it all.
 These are valid concerns; however, we've found it much easier to quickly develop a
 portable system with a small team by treating (appropriately chosen) third party
-libraries as underlying infrastructure (sure you *could* build and use your own OS
-or compiler, but *should* you?).
+libraries as underlying infrastructure. (Sure you *could* build and use your compiler,
+but *should* you?)
 
 Merlin manages the increased risk that comes with relying on software that is out of
 our control by:
 
 1. Building modular software that can easily be reconfigured / swapped for other tech
-
-
 2. Participating as developers for those third-party packages upon which rely
-(for instance we often kick enhancements and bug fixes to maestro)
-
-
+   (for instance we often kick enhancements and bug fixes to maestro)
 3. Using continuous integration and testing to catch more errors as they occur
 
 This section talks about some of those underlying technologies, what they are, and
@@ -324,25 +365,51 @@ be configured to interface with a variety of `message queue brokers <https://doc
 `RabbitMQ <https://www.rabbitmq.com>`_ and `Redis <https://redis.io>`_ for our broker
 and backend respectively, because of their features and reliability, especially at scale.
 
+.. list-table:: Key Merlin Tech Components
+  :widths: 25 75
+  :header-rows: 1
+
+  * - Component
+    - Reasoning
+  * - `maestro <https://github.com/LLNL/maestrowf>`_
+    - shell-like workflow descriptions, batch system interfaces
+  * - `celery <https://docs.celeryproject.org/en/latest/index.html>`_
+    - highly scalable, supports multiple brokers and backends
+  * - `RabbitMQ <https://www.rabbitmq.com>`_
+    - resilience, support for multiple users and queues
+  * - `Redis <https://redis.io>`_
+    - database speed, scalability
+  * - `cryptography <https://github.com/pyca/cryptography>`_
+    - secure Redis results
+  * - `flux <http://flux-framework.org>`_ (optional)
+    - portability and scalability of HPC resource allocation
+
 The different components interact to populate and drain the message queue broker of
 workflow tasks.
 
 .. image:: ../../images/merlin_run.png
-   :width: 75 %
    :align: center
 
-When a call is made to `merlin run`, maestro the workflow description (composed of "steps" with "parameters" and "samples") into a task
-dependency graph. Merlin translates this graph into discrete celery task commands
-(technically it does this by creating celery tasks that will break up the graph into
-subsequent tasks, making this translation asynchronous).
+When a call is made to ``merlin run``, maestro turns the workflow description (composed of "steps" with "parameters" and "samples") into a task
+dependency graph. Merlin translates this graph into discrete celery task commands [*]_
 
-Calls to `merlin run-worker` cause celery workers to connect to both the message broker
+Calls to ``merlin run-worker`` cause celery workers to connect to both the message broker
 and results database. The workers pull tasks from the broker and begin to execute
-the instructions therein. The worker turns the abstract task into specific system instructions, moves to a unique directory for that task and executes those instructions
-in a subprocess. When the subprocess exits, the worker posts the results (tasks status
-metadata, such as "SUCCESS" or "FAIL") to the results database.
+the instructions therein.
+When finished, a worker posts the results (task status
+metadata, such as "SUCCESS" or "FAIL") to the results database and
+automatically grabs another task from the queue.
+When additional workers come along (through other explicit calls to ``merlin run-worker``),
+they connect to the broker and help out with the workflow. 
 
+*Multiple vs. Single Queues*
 
+RabbitMQ brokers can have multiple distinct queues. To take advantage of this feature,
+Merlin lets you assign workflow steps and workers to different queues. (Steps must be assigned to a single queue, but workers
+can connect to multiple queues at once.) The advantage of a single queue is simplicity,
+both in workflow design and scalability. However, having multiple queues allows for
+prioritization of work (the express checkout lane at the grocery store) and customization
+of workers (specialized assembly line workers tailored for a specific task).
 
 
 What is in this Tutorial?
@@ -351,18 +418,20 @@ What is in this Tutorial?
 This tutorial will show you how to:
 
 1. Install Merlin and test that it works correctly
-
 2. Build a basic workflow and scale it up, introducing you to
-Merlin's syntax and how it differs from maestro.
-
+   Merlin's syntax and how it differs from maestro.
 3. Run a "real" physics simulation based workflow, with post-processing of
-results, visualization and machine learning.
-
+   results, visualization and machine learning.
 4. Use some of Merlin's advanced features to do things like interface with
-batch systems, distribute a workflow across machines and dynamically add new
-samples to a running workflow.
-
+   batch systems, distribute a workflow across machines and dynamically add new
+   samples to a running workflow.
 5. Contribute to Merlin, through code enhancements and bug reports.
-
 6. Get started porting your own application, with tips and tricks for
-building and scaling up workflows.
+   building and scaling up workflows.
+
+
+.. rubric:: Footnotes
+
+.. [*] Technically Merlin creates celery tasks that will break up the graph into
+       subsequent tasks (tasks to create tasks). This improves scalability with parallel
+       task creation.
