@@ -41,14 +41,15 @@ We will need to activate the merlin virtual environment created in :doc:`Module 
 
   source merlin_venv/bin/activate
 
-Docker
-~~~~~~
+Configuring redis
+~~~~~~~~~~~~~~~~~
 When that is done, we will need to set up the redis server using docker.
 This is done by using this command:
 
 .. code:: bash
 
   docker run --detach --name my-redis -p 6379:6379 redis
+  merlin config --broker redis
 
 This sets up the redis server using a docker container without the hassle of
 downloading the tar file and making it.
