@@ -4,12 +4,13 @@
 
    env:
      variables:
-       OUTPUT_PATH: ./name_studies
+       OUTPUT_PATH: ./name_studies_2
        COLLECT: $(SPECROOT)/sample_collector.py
        POST_PROC: $(SPECROOT)/sample_processor.py
+       CUM_POST_PROC: $(SPECROOT)/cumulative_sample_processor.py
        PYTHON: /usr/WS2/white242/merlin_dev_2/venv_merlin_py3_7/bin/python
        ITER: 1
-       MAX_ITER: 5
+       MAX_ITER: 10
 
    batch:
       type: flux
@@ -62,8 +63,9 @@
         description: Generate new set of samples if needed
         run:
           cmd: |
-            if [ $(ITER) -gt $MAX_ITER ] ; then
+            if [ $(ITER) -ge $MAX_ITER ] ; then
                echo "done"
+               $(PYTHON) $(CUM_POST_PROC) $(SPECROOT)/$(OUTPUT_PATH)/iter_*_results.json --hardcopy $(SPECROOT)/$(OUTPUT_PATH)/cum_results.png
             else
                next_iter=$(ITER)
                ((next_iter=next_iter+1))
@@ -75,6 +77,7 @@
           procs: 1
           depends: [post-process]
           task_queue: post_proc_queue
+      
            
    ########################################
    # Worker and sample configuration
