@@ -40,6 +40,7 @@ Just what it sounds like. Name and briefly summarize your workflow.
 global.parameters
 ~~~~~~~~~~~~~~~~~
 .. better explanation??
+
 Global parameters are constants that you want to vary across simulations.
 The whole workflow is run for index of parameter values.
 
@@ -53,7 +54,7 @@ The whole workflow is run for index of parameter values.
             values : ["world","mundo"]
             label  : WORLD.%%
 
-So this will give us an English result, and a Spanish one. (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
+So this will give us an English result, and a Spanish one (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
 
 study
 ~~~~~
@@ -63,21 +64,21 @@ This is where you define worfklow steps.
 
     study:
         - name: step_1
-          description: step 1
+          description: say hello
           run:
-              cmd: |
-                  touch "$(GREET), world!"
+              cmd: echo "$(GREET), $(WORLD)!"
 
         - name: step_2
-          description: look at the files in step_1
+          description: print a success message
           run:
-              cmd: |
-                  ls $(step_1.workspace)
+              cmd: print("Hurrah, we did it!")
               depends: [step_1]
+              shell: /usr/bin/env python3
 
-``$(GREET)`` expands the global parameter ``GREET`` seperately into its two values.
-``$(step_1.workspace)`` gets the path to step_1.
-Steps must be defined as a DAG, so no cyclical dependencies are allowed.
+``$(GREET)`` and ``$(WORLD)`` expand the global parameters seperately into their two values.
+.. ``$(step_1.workspace)`` gets the path to ``step_1``.
+The default value for ``shell`` is ``/bin/bash``. In ``step_2`` we override this to use python instead.
+Steps must be defined as nodes in a DAG, so no cyclical dependencies are allowed.
 Our step DAG currently looks like this:
 
 .. image:: dag1.png
@@ -136,16 +137,16 @@ If your spec is bugless, you should see a few messages proclaiming successful st
 
 Great! But what happened? We can inspect the output directory to find out.
 
-Look for a directory named ``hello_world_workflow_<TIMESTAMP>``. That's your output directory.
+Look for a directory named ``hello_<TIMESTAMP>``. That's your output directory.
 Within, there should be a directory for each step of the workflow, plus one called ``merlin_info``.
 The whole file tree looks like this:
 
-.. image:: fig1.png
+.. image:: merlin_output.png
     :align: center
 
 A lot of stuff, right? Here's what it means:
 
-* ``new_file.txt`` is the name of the file we wrote in ``step_1``.
+.. * ``new_file.txt`` is the name of the file we wrote in ``step_1``.
 
 * The yaml file inside ``merlin_info/`` is called the provenance spec. It's a copy of the original spec that was run.
 
@@ -153,11 +154,12 @@ A lot of stuff, right? Here's what it means:
 
 * ``.sh`` files contain the command for the step.
 
-* ``.out`` files contain the step's stdout.
+* ``.out`` files contain the step's stdout. Look at one of these, and it should contain your "hello" message.
 
-* ``.err`` files contain the step's stderr.
+* ``.err`` files contain the step's stderr. Hopefully empty, and useful for debugging.
 
 .. Assuming config is ready
+
 Run distributed!
 ++++++++++++++++
 
@@ -198,9 +200,9 @@ Using samples
 +++++++++++++
 It's a little boring to say "hello world" in just two different ways. Let's instead say hello to many people!
 
-To do this, we'll change ``WORLD`` from a paramter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "mundo" to being a randomly-generated name.
+To do this, we'll need samples. Specifically, we'll change ``WORLD`` from a global parameter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "mundo" to being a randomly-generated name.
 
-First, we remove the global parameter `WORLD`.
+First, we remove the global parameter ``WORLD``.
 
 Now add these yaml sections to your spec:
 
@@ -210,20 +212,25 @@ Now add these yaml sections to your spec:
         variables:
             N_SAMPLES: 3
 
+This makes ``N_SAMPLES`` into a user-defined variable that you can use elsewhere in your spec.
+
 .. code:: yaml
 
     merlin:
         samples:
             generate:
-                cmd: |
-                    pip install faker
-                    foreach i in $(N_SAMPLES): echo -e faker --name > $(MERLIN_INFO)/samples.csv
+                cmd: pip3 install names ; python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
             file: $(MERLIN_INFO)/samples.csv
             column_labels: [WORLD]
 
 This is the merlin block, an exclusively merlin feature. It provides a way to generate samples for your workflow. In this case, a sample is the name of a person.
 
-For simplicity we name it ``WORLD``, just like before.
+For simplicity we give ``column_labels`` the name ``WORLD``, just like before.
+
+It's good practice to shift larger chunks of code to external scripts. At the same location of your spec, make a new file called ``make_samples.py``:
+
+.. literalinclude :: make_samples.py
+   :language: text
 
 Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
 
@@ -241,6 +248,17 @@ Here's the new spec:
 
 Run the workflow again!
 
+Once finished, this is what the insides of ``step_1`` look like:
+
+.. image:: merlin_output2.png
+    :align: center
+
+
+
+* ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used interally by merlin and doesn't usually require user attention.
+
+* Numerically-named directories like ``0``, ``1``, and ``2`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
+
 Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. To do this, you could interally change thevalue in the spec from 3 to 1000. OR you could just this run this:
 
 .. code:: bash
@@ -257,3 +275,6 @@ To send a warm stop signal to your workers, run:
 
 Congratulations! You concurrently greeted 1000 friends in English and Spanish!
 
+.. note::
+
+    To get a fresh copy of the specs and script from this module, run ``merlin example hello``.
