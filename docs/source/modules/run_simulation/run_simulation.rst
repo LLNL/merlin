@@ -87,20 +87,20 @@ This is how the step should look like by the end:
 
 .. code:: yaml
 
-study:
-  - name: setup
-    description: |
-              Installs necessary python packages and copies scripts from SPECROOT
-              to the merlin_info directory
-    run:
-      cmd: |
-        cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
+  study:
+    - name: setup
+      description: |
+                Installs necessary python packages and copies scripts from SPECROOT
+                to the merlin_info directory
+      run:
+        cmd: |
+          cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
 
-        pip install -r $(SPECROOT)/requirements.txt
+          pip install -r $(SPECROOT)/requirements.txt
 
-        # Set up the cavity directory in the MERLIN_INFO directory
-        source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
-      task_queue: setupworkers
+          # Set up the cavity directory in the MERLIN_INFO directory
+          source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
+        task_queue: setupworkers
 
 
 Running the Simulation
@@ -108,5 +108,5 @@ Running the Simulation
 This is where we specify the input parameters and run each of the simulations.
 
 Sample Generation
-=================
+#################
 Just like in :doc:`Module 2: Installation<installation>`, we
