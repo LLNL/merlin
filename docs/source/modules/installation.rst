@@ -7,8 +7,8 @@ Installation
   * python3 pip 
   * wget
   * build tools (make, C/C++ compiler for local-redis)
-  * docker (optional)
-  * file editor if using docker
+  * docker (required for :doc:`Module 4: Run a Real Simulation<run_simulation>`)
+  * file editor for docker config file editing
 
 .. admonition:: Estimated time
 
