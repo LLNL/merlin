@@ -210,16 +210,24 @@ def get_ssl_config():
         LOG.debug(f"Broker: ssl keyfile = {broker_ssl['keyfile']}")
     except (AttributeError, KeyError):
         LOG.debug(f"Broker: ssl keyfile not present")
+
     try:
         broker_ssl["certfile"] = CONFIG.broker.certfile
         LOG.debug(f"Broker: ssl certfile = {broker_ssl['certfile']}")
     except (AttributeError, KeyError):
         LOG.debug(f"Broker: ssl certfile not present")
+
     try:
         broker_ssl["ca_certs"] = CONFIG.broker.ca_certs
         LOG.debug(f"Broker ssl ca_certs = {broker_ssl['ca_certs']}")
     except (AttributeError, KeyError):
         LOG.debug(f"Broker: ssl ca_certs not present")
+
+    try:
+        broker_ssl["ssl_protocol"] = CONFIG.broker.ssl_protocol
+        LOG.debug(f"Broker ssl_protocol = {broker_ssl['ssl_protocol']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"Broker: ssl ssl_protocol not present")
 
     if broker_ssl:
         broker_ssl["cert_reqs"] = ssl.CERT_REQUIRED
@@ -233,7 +241,11 @@ def get_ssl_config():
         try:
             redis_broker_ssl = {}
             for k, v in broker_ssl.items():
-                redis_broker_ssl["ssl_" + k] = v
+                if not k.startswith("ssl_"):
+                    redis_broker_ssl["ssl_" + k] = v
+                else:
+                    redis_broker_ssl[k] = v
+            return redis_broker_ssl    
         except AttributeError:
             return True
 

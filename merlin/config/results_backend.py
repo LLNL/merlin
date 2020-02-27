@@ -105,13 +105,13 @@ def get_redis(certs_path=None, include_password=True):
         port = CONFIG.results_backend.port
     except (KeyError, AttributeError):
         port = 6379
-        LOG.warning(f"Results backend: redis using default port = {port}")
+        LOG.debug(f"Results backend: redis using default port = {port}")
 
     try:
         db_num = CONFIG.results_backend.db_num
     except (KeyError, AttributeError):
         db_num = 0
-        LOG.warning(f"Results backend: redis using default db_num = {db_num}")
+        LOG.debug(f"Results backend: redis using default db_num = {db_num}")
 
     try:
         username = CONFIG.results_backend.username
@@ -127,7 +127,7 @@ def get_redis(certs_path=None, include_password=True):
             spass = "%s:%s@" % (username, "******")
     except (KeyError, AttributeError):
         spass = ""
-        LOG.warning(f"Results backend: redis using default password = {spass}")
+        LOG.debug(f"Results backend: redis using default password = {spass}")
 
     LOG.debug(f"Results backend: password_file = {password_file}")
     LOG.debug(f"Results backend: server = {server}")
