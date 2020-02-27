@@ -2,20 +2,9 @@ Run a Real Simulation
 =====================
 .. admonition:: Prerequisites
 
+      * :doc:`Module 0: Prerequisites<prereqs>`
       * :doc:`Module 2: Installation<installation>`
       * :doc:`Module 3: Hello World<hello_world/hello_world>`
-      * merlin github repository
-
-      .. code:: bash
-
-        git clone https://github.com/LLNL/merlin.git
-
-      * Redis and OpenFOAM docker images
-
-      .. code:: bash
-
-        docker pull cfdengine/openfoam
-        docker pull redis
 
 .. admonition:: Estimated time
 
@@ -23,9 +12,8 @@ Run a Real Simulation
 
 .. admonition:: You will learn
 
-      * How to run the simulation code OpenFOAM.
-      * How to run OpenFOAM using merlin.
-      * How to use machine learning on your results.
+      * How to run the simulation OpenFOAM, using merlin.
+      * How to use machine learning on OpenFOAM results, using merlin.
 
 .. contents::
   :local:
