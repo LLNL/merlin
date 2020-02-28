@@ -2,7 +2,7 @@ Run a Real Simulation
 =====================
 .. admonition:: Prerequisites
 
-      * :doc:`Module 0: Prerequisites<../prereqs>`
+      * :doc:`Module 0: Before you come<../before>`
       * :doc:`Module 2: Installation<../installation>`
       * :doc:`Module 3: Hello World<../hello_world/hello_world>`
 
@@ -39,18 +39,8 @@ This is done by using this command:
   docker run --detach --name my-redis -p 6379:6379 redis
   merlin config --broker redis
 
-This sets up the redis server using a docker container without the hassle of
-downloading the tar file and making it.
-
-Copying the Module Scripts
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-This module contains scripts that are expected to be cloned in order to avoid
-confusion and debugging non-merlin items. All the required for this module are
-available in the merlin github repository.
-
-.. code:: bash
-
-  cp -r merlin/docs/source/modules/run_simulation .
+This sets up the redis server using a docker container, without the hassle of
+downloading and making the tar file.
 
 Specification File
 ++++++++++++++++++
