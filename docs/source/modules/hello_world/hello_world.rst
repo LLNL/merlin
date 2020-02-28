@@ -7,7 +7,7 @@ Hello, World!
 .. admonition:: Estimated time
 
       * 30 minutes
-    
+
 .. admonition:: You will learn
 
       * The components of a merlin workflow specification.
@@ -22,7 +22,7 @@ Elements of a specification
 
 Central to Merlin is something called a specifiation file, or a "spec" for short.
 The spec defines all aspects of your workflow.
-The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes). 
+The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes).
 
 Let's build our spec piece by piece.
 
@@ -183,7 +183,7 @@ That means we have launched our tasks! Now we need to launch the workers that wi
 .. code:: bash
 
     $ merlin run-workers hello.yaml
-    
+
 Here's the expected merlin output message for running workers:
 
 .. literalinclude :: run_workers_out.txt
@@ -195,6 +195,8 @@ Immediately after that, this will pop up:
    :language: text
 
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
+
+.. _Using Samples:
 
 Using samples
 +++++++++++++
@@ -271,7 +273,7 @@ To send a warm stop signal to your workers, run:
 
 .. code:: bash
 
-    $ merlin stop-workers 
+    $ merlin stop-workers
 
 Congratulations! You concurrently greeted 1000 friends in English and Spanish!
 
