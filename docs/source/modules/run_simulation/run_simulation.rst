@@ -18,34 +18,37 @@ Run a Real Simulation
 .. contents::
   :local:
 
-Setting Up
-++++++++++
+Setup redis
++++++++++++
 
-Merlin
-~~~~~~
-We will need to activate the merlin virtual environment created in :doc:`Module 2: Installation<installation>`
+.. Merlin
+ ~~~~~~
+ We will need to activate the merlin virtual environment created in :doc:`Module 2: Installation<installation>`
+
+.. .. code:: bash
+
+.. source merlin_venv/bin/activate
+
+.. Configuring redis
+ ~~~~~~~~~~~~~~~~~
+We will need to set up the redis server using a docker container.
+This removes the hassle of downloading and making the redis tar file.
+Run:
 
 .. code:: bash
 
-  source merlin_venv/bin/activate
+    docker run --detach --name my-redis -p 6379:6379 redis
 
-Configuring redis
-~~~~~~~~~~~~~~~~~
-When that is done, we will need to set up the redis server using docker.
-This is done by using this command:
+Now configure merlin for redis with:
 
 .. code:: bash
 
-  docker run --detach --name my-redis -p 6379:6379 redis
-  merlin config --broker redis
-
-This sets up the redis server using a docker container, without the hassle of
-downloading and making the tar file.
+    merlin config --broker redis
 
 Specification File
 ++++++++++++++++++
 
-This module aims to do a parameter study on a  well-known benchmark problem for
+This module aims to do a parameter study on a well-known benchmark problem for
 viscous incompressible fluid flow. We will be setting up our inputs, running
 multiple simulations in parallel, combining the outputs, and finally doing some
 predictive modeling and visualization using the outputs of these runs.
