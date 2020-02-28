@@ -8,7 +8,6 @@ env:
     variables:
         OUTPUT_PATH: ./openfoam_wf_output
         SCRIPTS: $(MERLIN_INFO)/scripts
-
         N_SAMPLES: 10
 
 merlin:
