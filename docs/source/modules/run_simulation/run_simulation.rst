@@ -160,7 +160,7 @@ The following steps combine the outputs from the previous step and outputs it in
 
  The two steps should look like:
 
- .. code:: yaml
+.. code:: yaml
 
  - name: combine_outputs
    description: Combines the outputs of the previous step
@@ -181,5 +181,5 @@ The following steps combine the outputs from the previous step and outputs it in
 Putting it all together
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-.. literalinclude:: ../../../../merlin/examples/workflows/openfoam/openfoam_wf.yaml
+.. literalinclude:: ../../../../merlin/examples/workflows/openfoam_wf/openfoam_wf.yaml
    :language: yaml
