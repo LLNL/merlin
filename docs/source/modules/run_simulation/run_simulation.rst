@@ -18,6 +18,11 @@ Run a Real Simulation
 .. contents::
   :local:
 
+This module aims to do a parameter study on a well-known benchmark problem for
+viscous incompressible fluid flow. We will be setting up our inputs, running
+multiple simulations in parallel, combining the outputs, and finally doing some
+predictive modeling and visualization using the outputs of these runs.
+
 Setup redis
 +++++++++++
 
@@ -45,26 +50,56 @@ Now configure merlin for redis with:
 
     merlin config --broker redis
 
-Specification File
+Specification file
 ++++++++++++++++++
 
-This module aims to do a parameter study on a well-known benchmark problem for
-viscous incompressible fluid flow. We will be setting up our inputs, running
-multiple simulations in parallel, combining the outputs, and finally doing some
-predictive modeling and visualization using the outputs of these runs.
+Samples and scripts
+~~~~~~~~~~~~~~~~~~~
+A best practice for merlin is to copy any scripts your workflow may use from your ``SPECROOT`` directory into the ``MERLIN_INFO``
+directory, in case one of the original scripts is modified while merlin is running (which may be a long time).
+We will do that first.
+We will put this in the merlin sample generation section, since it runs before anything else.
 
-Setting Up
-~~~~~~~~~~~~~~~~~~
-It is always recommended to copy the scripts from your SPECROOT into the MERLIN_INFO
-file in case you change one of the scripts while merlin is running so we will do that first.
+Just like in the :ref:`Using Samples` step of the hello world  module, we will be
+generating samples using the merlin block. We are only concerned with how the
+variation of two initial conditions, lid speed and viscosity, affects outputs of the system.
+These are the ``column_labels``.
+The ``make_samples.py`` script is designed to make log uniform random samples.
 
-We will also need to download some python packages such as Ofpp and scikit-learn in
-order to run this module.
+First we specify some variables to make our life easier:
 
-Finally we will need to copy the lid driven cavity deck from the openfoam docker
+.. code:: yaml
+
+  env:
+      variables:
+          OUTPUT_PATH: ./openfoam_wf_output
+          SCRIPTS: $(MERLIN_INFO)/scripts
+          N_SAMPLES: 10
+
+The merlin block should look like the following
+
+.. code:: yaml
+
+  merlin:
+      samples:
+          generate:
+              cmd: |
+                  cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
+                  python $(SCRIPTS)/make_samples.py -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples
+          file: $(MERLIN_INFO)/samples.npy
+          column_labels: [LID_SPEED, VISCOSITY]
+
+Now, we can move on the steps of our workflow.
+
+Setting up
+~~~~~~~~~~
+We will need to download some python packages such as ``Ofpp`` and ``scikit-learn`` in
+order to run this module. They are found in the ``requirements.txt`` file.
+
+We will also need to copy the lid driven cavity deck from the openfoam docker
 container and adjust the write controls. This last part is scripted already for convenience.
 
-This is how the step should look like by the end:
+This is how the ``setup`` step should look like by the end:
 
 .. code:: yaml
 
@@ -84,10 +119,9 @@ This is how the step should look like by the end:
         task_queue: setupworkers
 
 
-Running the Simulation
+Running the simulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This is where we specify the input parameters and run each of the simulations.
-
-Sample Generation
-#################
-Just like in :doc:`Module 2: Installation<installation>`, we
+For OpenFOAM, we simply need to change the values in each of the files related
+to Lidspeed and Viscosity. We then utilize the OpenFOAM docker image to run each
+of these input parameters locally.
