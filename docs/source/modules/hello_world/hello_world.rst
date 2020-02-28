@@ -7,7 +7,7 @@ Hello, World!
 .. admonition:: Estimated time
 
       * 30 minutes
-    
+
 .. admonition:: You will learn
 
       * The components of a merlin workflow specification.
@@ -22,7 +22,7 @@ Elements of a specification
 
 Central to Merlin is something called a specifiation file, or a "spec" for short.
 The spec defines all aspects of your workflow.
-The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes). 
+The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes).
 
 Let's build our spec piece by piece.
 
@@ -111,7 +111,7 @@ Now the DAG looks like this:
 
 Your full hello world spec should now look like this:
 
-.. literalinclude:: hello.yaml
+.. literalinclude:: ../../../../merlin/examples/workflows/hello/hello.yaml
    :language: yaml
 
 We'll name it ``hello.yaml``.
@@ -183,7 +183,7 @@ That means we have launched our tasks! Now we need to launch the workers that wi
 .. code:: bash
 
     $ merlin run-workers hello.yaml
-    
+
 Here's the expected merlin output message for running workers:
 
 .. literalinclude :: run_workers_out.txt
@@ -195,6 +195,8 @@ Immediately after that, this will pop up:
    :language: text
 
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
+
+.. _Using Samples:
 
 Using samples
 +++++++++++++
@@ -229,7 +231,7 @@ For simplicity we give ``column_labels`` the name ``WORLD``, just like before.
 
 It's good practice to shift larger chunks of code to external scripts. At the same location of your spec, make a new file called ``make_samples.py``:
 
-.. literalinclude :: make_samples.py
+.. literalinclude :: ../../../../merlin/examples/workflows/hello/make_samples.py
    :language: text
 
 Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
@@ -242,7 +244,7 @@ Here's our DAG with samples:
 
 Here's the new spec:
 
-.. literalinclude:: hello_samples.yaml
+.. literalinclude:: ../../../../merlin/examples/workflows/hello/hello_samples.yaml
    :language: yaml
 
 
@@ -271,7 +273,7 @@ To send a warm stop signal to your workers, run:
 
 .. code:: bash
 
-    $ merlin stop-workers 
+    $ merlin stop-workers
 
 Congratulations! You concurrently greeted 1000 friends in English and Spanish!
 

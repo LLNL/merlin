@@ -13,6 +13,7 @@ args = parser.parse_args()
 
 training_percent = 0.6
 timestep = -1
+fontsize = 20
 
 SPECROOT = args.specroot
 inputs_dir = SPECROOT + '/merlin_info'
@@ -50,7 +51,8 @@ dump(regr, 'trained_model.joblib')
 
 import matplotlib.pyplot as plt
 fig, ax = plt.subplots(2, 2, figsize=(25, 25), constrained_layout=True)
-plt.rcParams.update({'font.size': 20})
+#ax.tick_params(axis='both', which='major', labelsize=20)
+plt.rcParams.update({'font.size': 25})
 plt.rcParams['lines.linewidth'] = 5
 
 x = np.linspace(-5,8,100)
@@ -62,8 +64,8 @@ ax[0][0].scatter(y_train[:,0], y_pred[:,0], label='Log10 Enstrophy')
 ax[0][0].scatter(y_train[:,1], y_pred[:,1], label='Log10 Energy')
 ax[0][0].set_title('Velocity Magnitude %s'%timestep)
 
-ax[0][0].set_xlabel('Actual')
-ax[0][0].set_ylabel('Predicted')
+ax[0][0].set_xlabel('Actual', fontsize=fontsize)
+ax[0][0].set_ylabel('Predicted', fontsize=fontsize)
 ax[0][0].set_title('Training Data, # Points: %s'%len(y_pred))
 ax[0][0].legend()
 ax[0][0].grid()
@@ -77,8 +79,8 @@ y_pred = regr.predict(X_test)
 ax[0][1].plot(x, y1, '-r', label='y=x',  linewidth=1)
 ax[0][1].scatter(y_test[:,0], y_pred[:,0], label='Log10 Enstrophy')
 ax[0][1].scatter(y_test[:,1], y_pred[:,1], label='Log10 Energy')
-ax[0][1].set_xlabel('Actual')
-ax[0][1].set_ylabel('Predicted')
+ax[0][1].set_xlabel('Actual', fontsize=fontsize)
+ax[0][1].set_ylabel('Predicted', fontsize=fontsize)
 ax[0][1].set_title('Testing Data, # Points: %s'%len(y_pred))
 ax[0][1].legend()
 ax[0][1].grid()
@@ -96,8 +98,8 @@ ax[0][1].set_ylim([y_min, y_max])
 
 y_pred_all = regr.predict(X)
 input_enstrophy = ax[1][0].scatter(X[:,0], X[:,1], c=y[:,0]-y_pred_all[:,0], s=100, cmap=plt.get_cmap('Spectral'))
-ax[1][0].set_xlabel('Lidspeed')
-ax[1][0].set_ylabel("Log10 Reynold's Number")
+ax[1][0].set_xlabel('Lidspeed', fontsize=fontsize)
+ax[1][0].set_ylabel("Log10 Reynold's Number", fontsize=fontsize)
 ax[1][0].set_title('Inputs vs Enstrophy')
 ax[1][0].grid()
 cbar = plt.colorbar(input_enstrophy, ax=ax[1][0])
@@ -105,11 +107,16 @@ cbar.ax.set_ylabel(r'$y_{act} - y_{pred}$', rotation=270, labelpad=20)
 
 
 input_energy = ax[1][1].scatter(X[:,0], X[:,1], c=y[:,1]-y_pred_all[:,1], s=100, cmap=plt.get_cmap('Spectral'))
-ax[1][1].set_xlabel('Lidspeed')
-ax[1][1].set_ylabel("Log10 Reynold's Number")
+ax[1][1].set_xlabel('Lidspeed', fontsize=fontsize)
+ax[1][1].set_ylabel("Log10 Reynold's Number", fontsize=fontsize)
 ax[1][1].set_title('Inputs vs Energy')
 ax[1][1].grid()
 cbar = plt.colorbar(input_energy, ax=ax[1][1])
 cbar.ax.set_ylabel(r'$y_{act} - y_{pred}$', rotation=270, labelpad=20)
+
+ax[0][0].tick_params(axis='both', which='major', labelsize=fontsize)
+ax[0][1].tick_params(axis='both', which='major', labelsize=fontsize)
+ax[1][0].tick_params(axis='both', which='major', labelsize=fontsize)
+ax[1][1].tick_params(axis='both', which='major', labelsize=fontsize)
 
 plt.savefig('prediction.png')
