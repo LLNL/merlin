@@ -77,6 +77,6 @@ study:
       description: Learns the output of the openfoam simulations using input parameters
       run:
           cmd: |
-              python $(SCRIPTS)/learn.py -specroot $(MERLIN_WORKSPACE)
+              python $(SCRIPTS)/learn.py -workspace $(MERLIN_WORKSPACE)
           task_queue: learnworkers
           depends: [combine_outputs]

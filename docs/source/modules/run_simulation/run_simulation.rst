@@ -119,8 +119,41 @@ This is how the step should look like by the end:
 
 
 Running the Simulation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 This is where we specify the input parameters and run each of the simulations.
 For OpenFOAM, we simply need to change the values in each of the files related
 to Lidspeed and Viscosity. We then utilize the OpenFOAM docker image to run each
 of these input parameters locally.
+
+The parameters of interest are the Enstrophy and Kinetic Energy at each cell.
+The enstrophy is calculated through an OpenFOAM post processing of the
+
+This part should look like:
+
+.. code:: yaml
+
+  - name: sim_runs
+    description: |
+                Edits the Lidspeed and viscosity then runs OpenFOAM simulation
+                using the icoFoam solver
+    run:
+        cmd: |
+            cp -r $(MERLIN_INFO)/cavity cavity/
+            cd cavity
+
+            sed -i '' "18s/.*/nu              [0 2 -1 0 0 0 0] $(VISCOSITY);/" constant/transportProperties
+            sed -i '' "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
+
+            cd ..
+            cp $(SCRIPTS)/run_openfoam .
+
+            CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
+            docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
+            docker wait ${CONTAINER_NAME}
+        task_queue: simworkers
+        depends: [setup]
+
+Combining Outputs, Predictive Modeling, and Visualizing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The following steps combine the outputs from the previous step and outputs it into
+ a .npz file for further use in the predictive learning step.

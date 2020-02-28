@@ -7,7 +7,7 @@ import argparse
 descript = """Using parameters to edit OpenFOAM parameters"""
 parser = argparse.ArgumentParser(description=descript)
 
-parser.add_argument('-specroot', help='The DAG spec root')
+parser.add_argument('-workspace', help='The DAG spec root')
 
 args = parser.parse_args()
 
@@ -15,14 +15,13 @@ training_percent = 0.6
 timestep = -1
 fontsize = 20
 
-SPECROOT = args.specroot
-inputs_dir = SPECROOT + '/merlin_info'
-outputs_dir = SPECROOT + '/combine_outputs'
+WORKSPACE = args.workspace
+inputs_dir = WORKSPACE + '/merlin_info'
+outputs_dir = WORKSPACE + '/combine_outputs'
 
 outputs = np.load(outputs_dir + '/data.npz')
 U = outputs['arr_0']
-vorticity = outputs['arr_1']
-enstrophy = outputs['arr_2']
+enstrophy = outputs['arr_1']
 
 energy_byhand = np.sum(np.sum(U**2, axis=3), axis=2)/ U.shape[2] /2
 enstrophy_all = np.sum(enstrophy, axis=2)

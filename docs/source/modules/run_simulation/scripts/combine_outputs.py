@@ -17,18 +17,10 @@ X = args.merlin_paths
 dir_names = [DATA_DIR + '/' + Xi + '/cavity' for Xi in X]
 
 num_of_timesteps = 10
-vorticity = []
-physical_times = []
 U = []
 enstrophy = []
 
 for i, dir_name in enumerate(dir_names):
-    for name in glob.glob(dir_name + '/[0-9]*/vorticity'):
-        if name[-12:]== '/0/vorticity':
-            continue
-        physical_times.append(round(float(name.split('/')[-2]), 2))
-        vorticity.append(Ofpp.parse_internal_field(name))
-
     for name in glob.glob(dir_name + '/[0-9]*/U'):
         if name[-4:]== '/0/U':
             continue
@@ -41,7 +33,6 @@ for i, dir_name in enumerate(dir_names):
 
 resolution = np.array(enstrophy).shape[-1]
 U = np.array(U).reshape(len(dir_names), num_of_timesteps, resolution, 3)
-vorticity = np.array(vorticity).reshape(len(dir_names), num_of_timesteps, resolution, 3)
 enstrophy = np.array(enstrophy).reshape(len(dir_names), num_of_timesteps, resolution)/float(resolution)
 
-np.savez('data.npz', U, vorticity, enstrophy)
+np.savez('data.npz', U, enstrophy)
