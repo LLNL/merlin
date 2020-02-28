@@ -23,33 +23,6 @@ viscous incompressible fluid flow. We will be setting up our inputs, running
 multiple simulations in parallel, combining the outputs, and finally doing some
 predictive modeling and visualization using the outputs of these runs.
 
-Setup redis
-+++++++++++
-
-.. Merlin
- ~~~~~~
- We will need to activate the merlin virtual environment created in :doc:`Module 2: Installation<installation>`
-
-.. .. code:: bash
-
-.. source merlin_venv/bin/activate
-
-.. Configuring redis
- ~~~~~~~~~~~~~~~~~
-We will need to set up the redis server using a docker container.
-This removes the hassle of downloading and making the redis tar file.
-Run:
-
-.. code:: bash
-
-    docker run --detach --name my-redis -p 6379:6379 redis
-
-Now configure merlin for redis with:
-
-.. code:: bash
-
-    merlin config --broker redis
-
 Specification file
 ++++++++++++++++++
 
@@ -183,3 +156,39 @@ Putting it all together
 
 .. literalinclude:: ../../../../merlin/examples/workflows/openfoam_wf/openfoam_wf.yaml
    :language: yaml
+
+Setup redis
++++++++++++
+
+.. Merlin
+ ~~~~~~
+ We will need to activate the merlin virtual environment created in :doc:`Module 2: Installation<installation>`
+
+.. .. code:: bash
+
+.. source merlin_venv/bin/activate
+
+.. Configuring redis
+ ~~~~~~~~~~~~~~~~~
+We will need to set up the redis server using a docker container.
+This removes the hassle of downloading and making the redis tar file.
+Run:
+
+.. code:: bash
+
+    docker run --detach --name my-redis -p 6379:6379 redis
+
+Now configure merlin for redis with:
+
+.. code:: bash
+
+    merlin config --broker redis
+
+Run the workflow
+++++++++++++++++
+
+.. code:: bash
+
+    $ merlin run --vars N_SAMPLES=100 openfoam_wf.yaml
+
+    $ merlin run-workers openfoam_wf.yaml
