@@ -21,7 +21,7 @@ Grab your laptop and coffee, and dive into this 7-module tutorial to become a Me
    :numbered:
    :caption: Before you come:
 
-   modules/prereqs
+   modules/before
 
 .. toctree::
    :maxdepth: 1
