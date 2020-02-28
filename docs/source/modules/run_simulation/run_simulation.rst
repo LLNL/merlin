@@ -157,3 +157,29 @@ Combining Outputs, Predictive Modeling, and Visualizing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The following steps combine the outputs from the previous step and outputs it into
  a .npz file for further use in the predictive learning step.
+
+ The two steps should look like:
+
+ .. code:: yaml
+
+ - name: combine_outputs
+   description: Combines the outputs of the previous step
+   run:
+       cmd: |
+           python $(SCRIPTS)/combine_outputs.py -data $(sim_runs.workspace) -merlin_paths $(MERLIN_PATHS_ALL)
+       task_queue: learnworkers
+       depends: [sim_runs_*]
+
+ - name: learn
+   description: Learns the output of the openfoam simulations using input parameters
+   run:
+       cmd: |
+           python $(SCRIPTS)/learn.py -workspace $(MERLIN_WORKSPACE)
+       task_queue: learnworkers
+       depends: [combine_outputs]
+
+Putting it all together
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. literalinclude:: ../../../../merlin/examples/workflows/openfoam/openfoam_wf.yaml
+   :language: yaml
