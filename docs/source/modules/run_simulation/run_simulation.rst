@@ -76,7 +76,7 @@ First we specify some variables to make our life easier:
           SCRIPTS: $(MERLIN_INFO)/scripts
           N_SAMPLES: 10
 
-The merlin block should look like the following
+The merlin block should look like the following:
 
 .. code:: yaml
 
@@ -106,12 +106,10 @@ This is how the ``setup`` step should look like by the end:
   study:
     - name: setup
       description: |
-                Installs necessary python packages and copies scripts from SPECROOT
-                to the merlin_info directory
+                Installs necessary python packages and imports the cavity directory
+                from the docker container
       run:
         cmd: |
-          cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
-
           pip install -r $(SPECROOT)/requirements.txt
 
           # Set up the cavity directory in the MERLIN_INFO directory
