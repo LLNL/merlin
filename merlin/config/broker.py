@@ -168,8 +168,19 @@ def get_connection_string(include_password=True):
     """
     Return the connection string based on the configuration specified in the
     `merlin.yaml` config file.
+
+    If the url variable is present, return that as the connection string.
     """
-    broker = CONFIG.broker.name
+    try:
+        broker = CONFIG.broker.name
+    except AttributeError:
+        broker = ""
+
+    try:
+        return CONFIG.broker.url
+    except AttributeError:
+        pass
+
     try:
         config_path = CONFIG.celery.certs
     except AttributeError:

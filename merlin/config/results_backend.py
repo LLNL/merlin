@@ -203,8 +203,18 @@ def get_connection_string(include_password=True):
     """
     Given the package configuration determine what results backend to use and
     return the connection string.
+
+    If the url variable is present, return that as the connection string.
     """
-    backend = CONFIG.results_backend.name.lower()
+    try:
+        backend = CONFIG.results_backend.name.lower()
+    except AttributeError:
+        backend = ""
+
+    try:
+        return CONFIG.results_backend.url
+    except AttributeError:
+        pass
 
     if backend not in BACKENDS:
         msg = f"'{backend}' is not a supported results backend"
@@ -220,14 +230,3 @@ def get_connection_string(include_password=True):
         return get_redis(include_password=include_password)
 
     return None
-
-
-def verify_config():
-    """Verifies the backend configurations."""
-    try:
-        results_backend()  # TODO ERROR this function is undefined
-        has_backend = True
-    except ValueError:
-        has_backend = False
-
-    LOG.debug(f"Has Results Backend: {has_backend}")
