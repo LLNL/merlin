@@ -35,7 +35,7 @@ We will put this in the merlin sample generation section, since it runs before a
 
 Just like in the :ref:`Using Samples` step of the hello world  module, we will be
 generating samples using the merlin block. We are only concerned with how the
-variation of two initial conditions, lid speed and viscosity, affects outputs of the system.
+variation of two initial conditions, lid-speed and viscosity, affects outputs of the system.
 These are the ``column_labels``.
 The ``make_samples.py`` script is designed to make log uniform random samples.
 
@@ -49,7 +49,7 @@ First we specify some variables to make our life easier:
           SCRIPTS: $(MERLIN_INFO)/scripts
           N_SAMPLES: 10
 
-The merlin block should look like the following:
+Then we edit the merlin block to look like the following:
 
 .. code:: yaml
 
@@ -62,15 +62,17 @@ The merlin block should look like the following:
           file: $(MERLIN_INFO)/samples.npy
           column_labels: [LID_SPEED, VISCOSITY]
 
-Now, we can move on the steps of our workflow.
+Now, we can move on to the steps of our study block.
 
 Setting up
 ~~~~~~~~~~
-We will need to download some python packages such as ``Ofpp`` and ``scikit-learn`` in
-order to run this module. They are found in the ``requirements.txt`` file.
+Our first step in our study block is concerned with making sure we have all the
+required python packages for this workflow. The specific packages are found in
+the ``requirements.txt`` file.
 
-We will also need to copy the lid driven cavity deck from the openfoam docker
-container and adjust the write controls. This last part is scripted already for convenience.
+We will also need to copy the lid driven cavity deck from the OpenFOAM docker
+container and adjust the write controls. This last part is scripted already for
+convenience.
 
 This is how the ``setup`` step should look like by the end:
 
@@ -93,13 +95,20 @@ This is how the ``setup`` step should look like by the end:
 
 Running the simulation
 ~~~~~~~~~~~~~~~~~~~~~~
-This is where we specify the input parameters and run each of the simulations.
+In this step we specify the input parameters and run each of the simulations.
 For OpenFOAM, we simply need to change the values in each of the files related
-to Lidspeed and Viscosity. We then utilize the OpenFOAM docker image to run each
+to lid-speed and viscosity. We then utilize the OpenFOAM docker image to run each
 of these input parameters locally.
 
-The parameters of interest are the Enstrophy and Kinetic Energy at each cell.
-The enstrophy is calculated through an OpenFOAM post processing of the
+The quantities of interest are the enstrophy and kinetic energy at each cell.
+The enstrophy is calculated through an OpenFOAM post processing of the the flow
+fields while the kinetic energy is manually calculated using the velocity flow
+field that is outputted normally with the lid driven cavity.
+
+The ``run_openfoam`` executable calculates the appropriate ``deltaT`` so that we
+have a Courant number of less than 1. It also uses the ``icoFoam`` solver on the
+cavity decks and gives us VTK files that are helpful for visualizing the flow fields
+using visualization tools such as VisIt or ParaView.
 
 This part should look like:
 
@@ -192,3 +201,8 @@ Run the workflow
     $ merlin run --vars N_SAMPLES=100 openfoam_wf.yaml
 
     $ merlin run-workers openfoam_wf.yaml
+
+.. admonition:: Related articles
+
+    * https://cfd.direct/openfoam/user-guide/v6-cavity/
+    * https://www.cfdengine.com/blog/how-to-install-openfoam-anywhere-with-docker/
