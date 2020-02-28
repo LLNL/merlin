@@ -153,8 +153,8 @@ This part should look like:
         task_queue: simworkers
         depends: [setup]
 
-Combining Outputs, Predictive Modeling, and Visualizing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Combining outputs, predictive modeling, and visualization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The following steps combine the outputs from the previous step and outputs it into
  a .npz file for further use in the predictive learning step.
 
