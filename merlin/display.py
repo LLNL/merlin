@@ -51,6 +51,7 @@ def check_server_access(sconf):
         print("\nChecking server connections:")
         print("-" * 28)
 
+    excpts = {}
     for s in servers:
         if s in sconf:
             try:
@@ -60,6 +61,12 @@ def check_server_access(sconf):
                 print(f"{s} connection: OK")
             except (socket.error, redis.exceptions.ConnectionError) as e:
                 print(f"{s} connection: Error")
+                excpts[s] = e
+
+    if excpts:
+        print("\nExceptions:")
+        for k,v in excpts.items():
+            print(f"{k}: {v}")
 
 
 def display_config_info():
@@ -72,11 +79,13 @@ def display_config_info():
 
     conf = default_config_info()
     sconf = {}
+    excpts = {}
     try:
         conf["broker server"] = broker.get_connection_string(include_password=False)
         sconf["broker server"] = broker.get_connection_string()
     except ValueError:
         conf["broker server"] = "No broker server configured."
+        excpts["broker server"] = e
 
     try:
         conf["results server"] = results_backend.get_connection_string(
@@ -85,8 +94,14 @@ def display_config_info():
         sconf["results server"] = results_backend.get_connection_string()
     except ValueError:
         conf["results server"] = "No results server configured."
+        excpts["results server"] = e
 
     print(tabulate(conf.items(), tablefmt="presto"))
+
+    if excpts:
+        print("\nExceptions:")
+        for k,v in excpts.items():
+            print(f"{k}: {v}")
 
     check_server_access(sconf)
 
