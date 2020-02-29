@@ -38,7 +38,6 @@ do
 
   echo "Running $(getApplication)"
   $(getApplication) > $(getApplication).out
-  postProcess -func 'vorticity'
   postProcess -func 'enstrophy'
   foamToVTK
 done
