@@ -26,6 +26,12 @@ predictive modeling and visualization using the outputs of these runs.
 Specification file
 ++++++++++++++++++
 
+We are going to build a spec file that produces this DAG:
+
+.. image:: openfoam_dag.png
+    :align: center
+
+
 Samples and scripts
 ~~~~~~~~~~~~~~~~~~~
 A best practice for merlin is to copy any scripts your workflow may use from your ``SPECROOT`` directory into the ``MERLIN_INFO``
