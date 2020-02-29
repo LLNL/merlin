@@ -96,9 +96,17 @@ This is how the ``setup`` step should look like by the end:
 
           # Set up the cavity directory in the MERLIN_INFO directory
           source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
-        task_queue: setupworkers
 
+This step does not need to be parallelized so we will assign it to lower concurrency workers
 
+.. code:: yaml
+
+  merlin:
+      resources:
+          workers:
+              nonsimworkers:
+                  args: -l INFO --concurrency 1
+                  steps: [setup]
 
 Running the simulation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -139,15 +147,31 @@ This part should look like:
             CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
             docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
             docker wait ${CONTAINER_NAME}
-        task_queue: simworkers
         depends: [setup]
+        task_queue: simqueue
 
-Combining outputs, predictive modeling, and visualization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The following steps combine the outputs from the previous step and outputs it into
- a .npz file for further use in the predictive learning step.
+This step runs many simulations in parallel so it would run faster if we assign it
+a worker with a higher concurrency.
 
- The two steps should look like:
+.. code:: yaml
+
+  merlin:
+      resources:
+          workers:
+              nonsimworkers:
+                  args: -l INFO --concurrency 1
+                  steps: [setup]
+              simworkers:
+                  args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
+                  steps: [sim_runs]
+
+Combining outputs
+~~~~~~~~~~~~~~~~~
+The script in this step extracts the data from each of the simulation runs from
+the previous step and combines it for future use.
+
+Simply run the combine outputs script to save the data as a .npz file in the
+current step workspace.
 
 .. code:: yaml
 
@@ -156,16 +180,54 @@ The following steps combine the outputs from the previous step and outputs it in
    run:
        cmd: |
            python $(SCRIPTS)/combine_outputs.py -data $(sim_runs.workspace) -merlin_paths $(MERLIN_PATHS_ALL)
-       task_queue: learnworkers
        depends: [sim_runs_*]
+
+This step depends on all the previous step's simulation runs which is why we
+have the star. However, it does not need to be parallelized so we assign it to
+the nonsimworkers
+
+.. code:: yaml
+
+  merlin:
+      resources:
+          workers:
+              setupworkers:
+                  args: -l INFO --concurrency 1
+                  steps: [setup, combine_outputs]
+              simworkers:
+                  args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
+                  steps: [sim_runs]
+
+Machine Learning and visualization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In this step we do some post processing of the data collected in the previous step,
+use the RandomForestRegressor to predict enstrophy and kinetic energy from lid-speed
+and viscosity, and finally, visualize the fit of this regressor and the input regions
+with the highest error.
+
+.. code:: yaml
 
  - name: learn
    description: Learns the output of the openfoam simulations using input parameters
    run:
        cmd: |
            python $(SCRIPTS)/learn.py -workspace $(MERLIN_WORKSPACE)
-       task_queue: learnworkers
        depends: [combine_outputs]
+
+This step is also dependent on the previous step for the .npz file and will only need
+one worker therefore we will:
+
+.. code:: yaml
+
+  merlin:
+      resources:
+          workers:
+              setupworkers:
+                  args: -l INFO --concurrency 1
+                  steps: [setup, combine_outputs, learn]
+              simworkers:
+                  args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
+                  steps: [sim_runs]
 
 Putting it all together
 ~~~~~~~~~~~~~~~~~~~~~~~
