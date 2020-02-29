@@ -31,7 +31,6 @@ We are going to build a spec file that produces this DAG:
 .. image:: openfoam_dag.png
     :align: center
 
-
 Variables
 ~~~~~~~~~
 First we specify some variables to make our life easier:
@@ -264,12 +263,30 @@ Now configure merlin for redis with:
 
 Run the workflow
 ++++++++++++++++
+Now that you know what is inside the OpenFOAM specification, run this command to get a full copy of the workflow with the scripts it needs:
 
 .. code:: bash
 
-    $ merlin run --vars N_SAMPLES=100 openfoam_wf.yaml
+    $ merlin example openfoam_wf
 
-    $ merlin run-workers openfoam_wf.yaml
+Now, run the workflow:
+
+.. code:: bash
+
+    $ merlin run openfoam_wf/openfoam_wf.yaml
+
+    $ merlin run-workers openfoam_wf/openfoam_wf.yaml
+
+With 100 samples instead of 10:
+
+.. code:: bash
+
+    $ merlin run openfoam_wf/openfoam_wf.yaml --vars N_SAMPLES=100
+
+To see your results, look inside the ``learn`` output directory. You should see something like this:
+
+.. image:: prediction.png
+    :align: center
 
 .. admonition:: Related articles
 
