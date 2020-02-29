@@ -72,6 +72,9 @@ def display_config_info():
 
     conf = default_config_info()
     sconf = {}
+    conf["broker server"] = broker.get_connection_string(include_password=False)
+    sconf["broker server"] = broker.get_connection_string()
+    conf["broker ssl"] = broker.get_ssl_config()
     try:
         conf["broker server"] = broker.get_connection_string(include_password=False)
         sconf["broker server"] = broker.get_connection_string()

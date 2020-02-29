@@ -230,3 +230,71 @@ def get_connection_string(include_password=True):
         return get_redis(include_password=include_password)
 
     return None
+
+def get_ssl_config():
+    """
+    Return the ssl config based on the configuration specified in the
+    `merlin.yaml` config file.
+    """
+    try:
+        results_backend = CONFIG.results_backend.name.lower()
+    except AttributeError:
+        results_backend = ""
+
+    try:
+        if CONFIG.results_backend.url:
+            return True
+    except AttributeError:
+        pass
+
+    try:
+        config_path = CONFIG.celery.certs
+    except AttributeError:
+        config_path = None
+
+    if results_backend not in BROKERS:
+        raise ValueError(f"Error: {results_backend} is not a supported results_backend.")
+
+    results_backend_ssl = {}
+    try:
+        results_backend_ssl["keyfile"] = CONFIG.results_backend.keyfile
+        LOG.debug(f"Broker: ssl keyfile = {results_backend_ssl['keyfile']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"Broker: ssl keyfile not present")
+
+    try:
+        results_backend_ssl["certfile"] = CONFIG.results_backend.certfile
+        LOG.debug(f"Broker: ssl certfile = {results_backend_ssl['certfile']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"Broker: ssl certfile not present")
+
+    try:
+        results_backend_ssl["ca_certs"] = CONFIG.results_backend.ca_certs
+        LOG.debug(f"Broker ssl ca_certs = {results_backend_ssl['ca_certs']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"Broker: ssl ca_certs not present")
+
+    try:
+        results_backend_ssl["ssl_protocol"] = CONFIG.results_backend.ssl_protocol
+        LOG.debug(f"Broker ssl_protocol = {results_backend_ssl['ssl_protocol']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"Broker: ssl ssl_protocol not present")
+
+    if results_backend_ssl:
+        results_backend_ssl["cert_reqs"] = ssl.CERT_REQUIRED
+    else:
+        results_backend_ssl = True
+
+    if results_backend is "rediss":
+        try:
+            redis_results_backend_ssl = {}
+            for k, v in results_backend_ssl.items():
+                if not k.startswith("ssl_"):
+                    redis_results_backend_ssl["ssl_" + k] = v
+                else:
+                    redis_results_backend_ssl[k] = v
+            return redis_results_backend_ssl    
+        except AttributeError:
+            return False
+
+    return False

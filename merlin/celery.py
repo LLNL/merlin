@@ -54,6 +54,7 @@ try:
     broker_ssl = broker.get_ssl_config()
     LOG.info(f"broker_ssl = {borker_ssl}")
     RESULTS_BACKEND_URI = results_backend.get_connection_string()
+    results_ssl = results_backend.get_ssl_config()
     LOG.info(
         f"backend: {results_backend.get_connection_string(include_password=False)}"
     )
@@ -64,7 +65,7 @@ except ValueError:
 
 
 app = Celery(
-    "merlin", broker=BROKER_URI, backend=RESULTS_BACKEND_URI, broker_use_ssl=broker_ssl
+    "merlin", broker=BROKER_URI, backend=RESULTS_BACKEND_URI, broker_use_ssl=broker_ssl, redis_backend_use_ssl=results_ssl)
 )
 
 

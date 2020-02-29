@@ -172,7 +172,7 @@ def get_connection_string(include_password=True):
     If the url variable is present, return that as the connection string.
     """
     try:
-        broker = CONFIG.broker.name
+        broker = CONFIG.broker.name.lower()
     except AttributeError:
         broker = ""
 
@@ -206,7 +206,17 @@ def get_ssl_config():
     Return the ssl config based on the configuration specified in the
     `merlin.yaml` config file.
     """
-    broker = CONFIG.broker.name
+    try:
+        broker = CONFIG.broker.name.lower()
+    except AttributeError:
+        broker = ""
+
+    try:
+        if CONFIG.broker.url:
+            return True
+    except AttributeError:
+        pass
+
     try:
         config_path = CONFIG.celery.certs
     except AttributeError:
@@ -260,4 +270,4 @@ def get_ssl_config():
         except AttributeError:
             return True
 
-    return None
+    return False
