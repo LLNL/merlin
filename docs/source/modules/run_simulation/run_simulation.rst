@@ -32,19 +32,8 @@ We are going to build a spec file that produces this DAG:
     :align: center
 
 
-Samples and scripts
-~~~~~~~~~~~~~~~~~~~
-A best practice for merlin is to copy any scripts your workflow may use from your ``SPECROOT`` directory into the ``MERLIN_INFO``
-directory, in case one of the original scripts is modified while merlin is running (which may be a long time).
-We will do that first.
-We will put this in the merlin sample generation section, since it runs before anything else.
-
-Just like in the :ref:`Using Samples` step of the hello world  module, we will be
-generating samples using the merlin block. We are only concerned with how the
-variation of two initial conditions, lid-speed and viscosity, affects outputs of the system.
-These are the ``column_labels``.
-The ``make_samples.py`` script is designed to make log uniform random samples.
-
+Variables
+~~~~~~~~~
 First we specify some variables to make our life easier:
 
 .. code:: yaml
@@ -55,7 +44,14 @@ First we specify some variables to make our life easier:
           SCRIPTS: $(MERLIN_INFO)/scripts
           N_SAMPLES: 10
 
-Then we edit the merlin block to look like the following:
+Samples and scripts
+~~~~~~~~~~~~~~~~~~~
+One merlin best practice is to copy any scripts your workflow may use from your ``SPECROOT`` directory into the ``MERLIN_INFO``
+directory, in case one of the original scripts is modified while merlin is running (which may be a long time).
+We will do that first.
+We will put this in the merlin sample generation section, since it runs before anything else.
+
+Edit the merlin block to look like the following:
 
 .. code:: yaml
 
@@ -68,6 +64,11 @@ Then we edit the merlin block to look like the following:
           file: $(MERLIN_INFO)/samples.npy
           column_labels: [LID_SPEED, VISCOSITY]
 
+Just like in the :ref:`Using Samples` step of the hello world module, we 
+generate samples using the merlin block. We are only concerned with how the
+variation of two initial conditions, lid-speed and viscosity, affects outputs of the system.
+These are the ``column_labels``.
+The ``make_samples.py`` script is designed to make log uniform random samples.
 Now, we can move on to the steps of our study block.
 
 Setting up
