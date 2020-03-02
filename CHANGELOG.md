@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LAUNCHER keywords, (slurm,flux,lsf) for specifying arguments specific
   to that parallel launcher in the run section.
 - Exception messages to `merlin info`.
+- Preliminary tutorial modules for early testers.
 
 ### Fixed
 - Syntax errors in web doc file `merlin_variables.rst`.

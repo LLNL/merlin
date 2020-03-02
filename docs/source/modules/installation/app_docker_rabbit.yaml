@@ -1,0 +1,10 @@
+broker:
+    name: rabbitmq
+    server: my-rabbit
+    password: ~/.merlin/rabbit.pass
+
+results_backend:
+    name: redis
+    server: my-redis
+    port: 6379
+    db_num: 0
