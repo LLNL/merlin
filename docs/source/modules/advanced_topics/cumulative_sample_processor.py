@@ -2,8 +2,44 @@ import os
 import sys
 import argparse
 
+from concurrent.futures import ProcessPoolExecutor
 import matplotlib.pyplot as plt
 import pandas as pd
+
+def iter_df_from_json(json_file):
+    """
+    Reads a single iterations' set of processed samples from json,
+    extracts iteration number from the file name and returns dataframe with
+    processed samples along with an 'Iter' column.
+
+    Parameters
+    ----------
+    json_file: str
+        path to json file with name formatted 'iter_<num>_results.json', with
+        <num> indicating iteration number.
+
+    Returns
+    -------
+    iter_frame: pandas.DataFrame
+        Columns: <Name>, <Count>, <Iter>.
+    """
+    file_parts = os.path.basename(json_file).split('_')
+    iter_num = int(file_parts[1])
+
+    iter_vals = pd.read_json(json_file, orient='values', typ='series')
+    iter_frame = pd.DataFrame(iter_vals, columns=['Count'])
+    iter_frame['Iter'] = iter_num
+
+    return iter_frame
+    
+def load_samples(sample_file_paths, nproc):
+    """Loads all iterations' processed samples into a single pandas DataFrame in parallel"""
+    with ProcessPoolExecutor(max_workers=nproc) as executor:
+        iter_dfs = [iter_frame for iter_frame in executor.map(iter_df_from_json,
+                                                              sample_file_paths)]
+    all_iter_df = pd.concat(iter_dfs)
+
+    return all_iter_df
 
 def setup_argparse():
     parser = argparse.ArgumentParser(
@@ -14,6 +50,11 @@ def setup_argparse():
         "sample_file_paths", help="paths to sample files", default="",
         nargs='+'
     )
+
+    parser.add_argument(
+        "--np", help="number of processors to use", type=int, default=1
+    )
+    
     parser.add_argument("--hardcopy", help="Name of cumulative plot file", default="cum_results.png")
     
     return parser
@@ -24,18 +65,7 @@ def main():
     args = parser.parse_args()
 
     # Load all iterations' data into single pandas dataframe for further analysis
-    iter_dfs = []
-    for sample_file_path in args.sample_file_paths:
-        file_parts = os.path.basename(sample_file_path).split('_')
-        iter_num = int(file_parts[1])
-
-        itervals = pd.read_json(sample_file_path, orient='values', typ='series')
-        iterframe = pd.DataFrame(itervals, columns=['Count'])
-        iterframe['Iter'] = iter_num
-
-        iter_dfs.append(iterframe)
-
-    all_iter_df = pd.concat(iter_dfs)
+    all_iter_df = load_samples(args.sample_file_paths, args.np)
     
     # PLOTS:
     # counts vs index for each iter range (1, [1,2], [1-3], [1-4], ...)
