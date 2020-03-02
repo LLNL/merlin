@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.3.0.
+# This file is part of Merlin, Version: 1.4.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -38,7 +38,10 @@ import subprocess
 import time
 from contextlib import suppress
 
-from merlin.study.batch import batch_check_parallel, batch_worker_launch
+from merlin.study.batch import (
+    batch_check_parallel,
+    batch_worker_launch,
+)
 from merlin.utils import (
     check_machines,
     get_procs,

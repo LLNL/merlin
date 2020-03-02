@@ -1,0 +1,11 @@
+broker:
+    name: redis
+    server: my-redis
+    port: 6379
+    db_num: 0
+
+results_backend:
+    name: redis
+    server: my-redis
+    port: 6379
+    db_num: 0

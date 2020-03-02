@@ -1,0 +1,27 @@
+ -------------- celery@worker_name.%machine770 v4.4.0 (cliffs)
+--- ***** -----
+-- ******* ---- Linux-3.10.0-1062.9.1.1chaos.ch6.x86_64-x86_64-with-redhat-7.7-Maipo 2020-02-12 09:53:10
+- *** --- * ---
+- ** ---------- [config]
+- ** ---------- .> app:         merlin:0x2aaab20619e8
+- ** ---------- .> transport:   amqps://user:**@server:5671//user
+- ** ---------- .> results:     redis://user:**@server:6379/0
+- *** --- * --- .> concurrency: 36 (prefork)
+-- ******* ---- .> task events: OFF (enable -E to monitor tasks in this worker)
+--- ***** -----
+ -------------- [queues]
+                .> merlin           exchange=merlin(direct) key=merlin
+
+
+[tasks]
+  . merlin.common.tasks.add_merlin_expanded_chain_to_chord
+  . merlin.common.tasks.expand_tasks_with_samples
+  . merlin.common.tasks.merlin_step
+  . merlin:chordfinisher
+  . merlin:queue_merlin_study
+
+[2020-02-12 09:53:11,549: INFO] Connected to amqps://user:**@server:5671//user
+[2020-02-12 09:53:11,599: INFO] mingle: searching for neighbors
+[2020-02-12 09:53:12,807: INFO] mingle: sync with 2 nodes
+[2020-02-12 09:53:12,807: INFO] mingle: sync complete
+[2020-02-12 09:53:12,835: INFO] celery@worker_name.%machine770 ready.

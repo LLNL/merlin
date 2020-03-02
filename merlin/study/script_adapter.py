@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.3.0.
+# This file is part of Merlin, Version: 1.4.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -72,6 +72,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "bind": "-b",
             "launch_distribution": "-d",
             "exit_on_error": "-X",
+            "lsf": "",
         }
 
         self._unsupported = {
@@ -87,7 +88,8 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "pre",
             "post",
             "depends",
-            "exclusive",
+            "slurm",
+            "flux",
         }
 
     def get_header(self, step):
@@ -164,8 +166,8 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         """
         super(MerlinSlurmScriptAdapter, self).__init__(**kwargs)
 
-        self._cmd_flags["bind"] = "--mpibind"
-        self._cmd_flags["exclusive"] = "--exclusive"
+        self._cmd_flags["slurm"] = ""
+        self._cmd_flags["walltime"] = "-t"
 
         new_unsupported = [
             "task_queue",
@@ -173,9 +175,11 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             "pre",
             "post",
             "gpus per task",
-            "walltime",
             "gpus",
             "restart",
+            "bind",
+            "lsf",
+            "flux",
         ]
         self._unsupported = set(list(self._unsupported) + new_unsupported)
 
@@ -188,6 +192,57 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             the parameter step.
         """
         return "#!{}".format(self._exec)
+
+    def time_format(self, val):
+        """
+        This function assumes the time format is in hh:mm::ss
+        """
+        return val
+
+    def get_parallelize_command(self, procs, nodes=None, **kwargs):
+        """
+        Generate the SLURM parallelization segement of the command line.
+        :param procs: Number of processors to allocate to the parallel call.
+        :param nodes: Number of nodes to allocate to the parallel call
+            (default = 1).
+        :returns: A string of the parallelize command configured using nodes
+            and procs.
+        """
+        args = [
+            # SLURM srun command
+            self._cmd_flags["cmd"],
+            # Processors segment
+            self._cmd_flags["ntasks"],
+            str(procs),
+        ]
+
+        if nodes:
+            args += [
+                self._cmd_flags["nodes"],
+                str(nodes),
+            ]
+
+        supported = set(kwargs.keys()) - self._unsupported
+        for key in supported:
+            value = kwargs.get(key)
+            if not value:
+                continue
+
+            if key not in self._cmd_flags:
+                LOG.warning("'%s' is not supported -- ommitted.", key)
+                continue
+
+            if key == "walltime":
+                args += [
+                    self._cmd_flags[key],
+                    "{}".format(str(self.time_format(value))),
+                ]
+            elif "=" in self._cmd_flags[key]:
+                args += ["{0}{1}".format(self._cmd_flags[key], str(value))]
+            else:
+                args += [self._cmd_flags[key], "{}".format(str(value))]
+
+        return " ".join(args)
 
 
 class MerlinLSFSrunScriptAdapter(MerlinSlurmScriptAdapter):
@@ -236,14 +291,18 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "nodes": "-N",
             "cores per task": "-c",
             "gpus per task": "-g",
+            "walltime": "-t",
+            "flux": "",
         }
+
+        if "wreck" in flux_command:
+            self._cmd_flags["walltime"] = "-T"
 
         new_unsupported = [
             "cmd",
             "ntasks",
             "nodes",
             "gpus",
-            "walltime",
             "reservation",
             "restart",
             "task_queue",
@@ -252,9 +311,21 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "post",
             "depends",
             "bind",
-            "exclusive",
+            "lsf",
+            "slurm",
         ]
         self._unsupported = set(new_unsupported)
+
+    def time_format(self, val):
+        """
+        This function assumes the time format is in dd:hh:mm::ss
+
+        flux requires a d,h,m,s time designation, so this
+        function will convert the time to minutes
+
+        """
+        _, d, h, m, s = (":0" * 10 + val).rsplit(":", 4)
+        return str(int(d) * 24 * 60 + int(h) * 60 + int(m) + int(s) / 60.0) + "m"
 
 
 class MerlinScriptAdapter(LocalScriptAdapter):
