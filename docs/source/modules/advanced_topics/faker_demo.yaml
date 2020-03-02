@@ -1,13 +1,19 @@
+   # TODO: add venv building to the spec? -> can this be dependency
+   #       add file system cleanup after each iteration
+   #       parallelize the iteration accumulation in cumulative_sample_proc
+
    description:
-      name: Sample HPC specification
-      description: demo batch system and multiple worker configs for HPC workflows
+     name: dynamic_sampling_demo
+     description: Demo dynamic sampling workflow
 
    env:
      variables:
-       OUTPUT_PATH: ./name_studies_2
+       OUTPUT_PATH: ./name_studies
+       ITER_OUTPUT: $(SPECROOT)/$(OUTPUT_PATH)/iter_outputs # Iteration and cumulative results
        COLLECT: $(SPECROOT)/sample_collector.py
-       POST_PROC: $(SPECROOT)/sample_processor.py
-       CUM_POST_PROC: $(SPECROOT)/cumulative_sample_processor.py
+       POST_PROC: $(SPECROOT)/sample_processor.py # Process single iterations' results
+       CUM_POST_PROC: $(SPECROOT)/cumulative_sample_processor.py # Process all iterations
+       POST_NPROCS: 36          # Number of threads for post proc scripts
        PYTHON: /usr/WS2/white242/merlin_dev_2/venv_merlin_py3_7/bin/python
        ITER: 1
        MAX_ITER: 10
@@ -24,7 +30,7 @@
    ########################################
    study:
       - name: sample_names
-        description: Collect name samples
+        description: Record samples from the random name generator
         run:
            cmd: |
              $(LAUNCHER) echo "$(NAME)"
@@ -34,13 +40,13 @@
            task_queue: name_queue
   
       - name: collect
-        description: Collect all samples generated
+        description: Collect all samples generated 
         run:
            cmd: |
              echo $(MERLIN_GLOB_PATH)
              echo $(sample_names.workspace)
-             echo "Xargs test"
-             ls $(sample_names.workspace)/$(MERLIN_GLOB_PATH)/name_sample.out | xargs $(PYTHON) $(COLLECT) -out collected_samples.txt
+
+             ls $(sample_names.workspace)/$(MERLIN_GLOB_PATH)/name_sample.out | xargs $(PYTHON) $(COLLECT) -out collected_samples.txt --np $(POST_NPROCS)
              
            nodes: 1
            procs: 1
@@ -48,11 +54,10 @@
            task_queue: post_proc_queue
 
       - name: post-process
-        description: Post-Process collection of samples
+        description: Post-Process collection of samples, counting occurences of unique names
         run:
            cmd: |
-             echo $(STUDY)
-             $(PYTHON) $(POST_PROC) $(collect.workspace)/collected_samples.txt --results $(SPECROOT)/$(OUTPUT_PATH)/iter_$(ITER)_results.json
+             $(PYTHON) $(POST_PROC) $(collect.workspace)/collected_samples.txt --results $(ITER_OUTPUT)/iter_$(ITER)_results.json
              
            nodes: 1
            procs: 1
@@ -60,12 +65,12 @@
            task_queue: post_proc_queue
 
       - name: run-more-samples
-        description: Generate new set of samples if needed
+        description: Generate new set of samples and rerun, or generate some descriptive plots/statistics
         run:
           cmd: |
-            if [ $(ITER) -ge $MAX_ITER ] ; then
+            if [ $(ITER) -ge $(MAX_ITER) ] ; then
                echo "done"
-               $(PYTHON) $(CUM_POST_PROC) $(SPECROOT)/$(OUTPUT_PATH)/iter_*_results.json --hardcopy $(SPECROOT)/$(OUTPUT_PATH)/cum_results.png
+               $(PYTHON) $(CUM_POST_PROC) $(ITER_OUTPUT)/iter_*_results.json --np $(POST_NPROCS) --hardcopy $(ITER_OUTPUT)/cumulative_results.png
             else
                next_iter=$(ITER)
                ((next_iter=next_iter+1))
@@ -93,18 +98,18 @@
        #   - celery->rabbit query overhead for fast jobs
        workers:
            nameworkers:
-               args: --concurrency 36 --prefetch-multiplier 1
+               args: --concurrency 36 --prefetch-multiplier 3
                steps: [sample_names]      
                nodes: 1
-               machines: [borax]      
+               machines: [borax, quartz]      
 
           # NOTE: specifying wrong step leaves orphaned queue -> purge first!
           # also, invalid host name appears to fail silently
            postworkers:
-               args: --concurrency 4 --prefetch-multiplier 2
+               args: --concurrency 1 --prefetch-multiplier 1
                steps: [post-process]
                nodes: 1 
-               machines: [borax]
+               machines: [borax, quartz]
   
      ###################################################
      samples:
@@ -112,5 +117,4 @@
        file: $(MERLIN_INFO)/samples.csv
        generate:
          cmd: |
-           /usr/WS2/white242/merlin_dev_2/venv_merlin_py3_7/bin/
-           $(PYTHON) $(SPECROOT)/faker_sample.py -n 100 -outfile=$(MERLIN_INFO)/samples.csv
+           $(PYTHON) $(SPECROOT)/faker_sample.py -n 200 -outfile=$(MERLIN_INFO)/samples.csv

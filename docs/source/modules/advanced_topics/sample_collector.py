@@ -1,21 +1,29 @@
 import sys
+import os
 import argparse
+from concurrent.futures import ProcessPoolExecutor
 
-def process_args(args):
-    result = []
+
+def load_samples(sample_file_path):
+    """Read in sample file, returning a flat list of all samples inside"""
     samples = []
-    for path in args.paths:
-        with open(path, "r") as sample_file:
-            for sample in sample_file:
-                sample = sample.strip()
-                samples.append(sample)
+    print("Reading: {}".format(sample_file_path))
+    with open(os.path.abspath(sample_file_path), "r") as sample_file:
+        for sample in sample_file:
+            samples.append(sample.strip())
 
-    print("Samples:")
-    for idx, sample in enumerate(samples):
-        print(sample)
+    return samples
 
-    with open(args.outfile, "w") as outfile:
-        for sample in samples:
+
+def serialize_samples(sample_file_paths, outfile, nproc):
+    """Writes out collection of samples, one entry per line"""
+    with ProcessPoolExecutor(max_workers=nproc) as executor:
+        all_samples = [sample for sample_list in executor.map(load_samples,
+                                                              sample_file_paths)
+                       for sample in sample_list]
+
+    with open(outfile, "w") as outfile:
+        for sample in all_samples:
             outfile.write("{}\n".format(sample))
 
 
@@ -25,8 +33,12 @@ def setup_argparse():
     )
 
     parser.add_argument(
-        "paths", help="paths to sample output files", default="",
+        "sample_file_paths", help="paths to sample output files", default="",
         nargs='+'
+    )
+
+    parser.add_argument(
+        "--np", help="number of processors to use", type=int, default=1
     )
 
     parser.add_argument("-outfile", help="Collected sample outputs", default="all_names.txt")
@@ -36,7 +48,10 @@ def setup_argparse():
 def main():
     parser = setup_argparse()
     args = parser.parse_args()
-    process_args(args)
+
+    # Collect sample files into single file
+    sample_paths = [sample_path for sample_path in args.sample_file_paths]
+    serialize_samples(sample_paths, args.outfile, args.np)
 
 
 if __name__ == "__main__":

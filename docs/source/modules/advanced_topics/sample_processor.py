@@ -1,11 +1,12 @@
-import sys
 import argparse
+import sys
 
 import pandas as pd
 
-def process_args(args):
+def load_samples(sample_file_paths):
+    """Read in processed sample files, returning flat list."""
     samples = []
-    for sample_file_path in args.sample_file_paths:
+    for sample_file_path in sample_file_paths:
         with open(sample_file_path, "r") as sample_file:
             for sample in sample_file:
                 sample = sample.strip()
@@ -22,7 +23,10 @@ def setup_argparse():
         "sample_file_paths", help="paths to sample files", default="",
         nargs='+'
     )
-    parser.add_argument("--results", help="Name of output json file", default="samples.json")
+
+    parser.add_argument("--results",
+                        help="Name of output json file",
+                        default="samples.json")
     
     return parser
 
@@ -30,14 +34,16 @@ def setup_argparse():
 def main():
     parser = setup_argparse()
     args = parser.parse_args()
-    samples = process_args(args)
 
-    # Lets do some statistics on these samples
+    # Collect the samples
+    samples = load_samples(args.sample_file_paths)
+
+    # Count up the occurences
     namesdf = pd.DataFrame({"Name":samples})
 
-    # Count occurences of each name
     names = namesdf["Name"].value_counts()
 
+    # Serialize processed samples
     names.to_json(args.results)
     
 if __name__ == "__main__":
