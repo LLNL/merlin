@@ -5,7 +5,11 @@ Advanced Topics
       * :doc:`Module 2: Installation<installation>`
       * :doc:`Module 3: Hello World<hello_world/hello_world>`
       * :doc:`Module 4: Running a Real Simulation<run_simulation>`
-
+      * Python virtual environment containing the following packages
+        * merlin
+        * pandas
+        * faker
+          
 .. admonition:: Estimated time
 
       * 15 minutes
@@ -14,7 +18,7 @@ Advanced Topics
 
       * Run workflows using HPC batch schedulers
       * Distribute workflows across multiple batch allocations and machines
-      * Spawn new workflows and choose study parameters/samples based upon already executed studies
+      * Setup iterative workflow specs suited for optimization and dynamic sampling applications
 
 Interfacing with HPC systems
 ++++++++++++++++++++++++++++
@@ -334,3 +338,6 @@ counter takes advantage of the ability to override workflow variables on the com
 .. literalinclude :: faker_demo.yaml
    :language: yaml
 
+The workflow itself isn't doing anything practical; it's simply repeatedly sampling from
+a fake name generator in an attempt to count the number of unique names that are possible.
+The figure below shows 5 iterations of 100 samples
