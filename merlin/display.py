@@ -64,7 +64,7 @@ def check_server_access(sconf):
 
     if excpts:
         print("\nExceptions:")
-        for k,v in excpts.items():
+        for k, v in excpts.items():
             print(f"{k}: {v}")
 
 
@@ -99,7 +99,7 @@ def display_config_info():
 
     if excpts:
         print("\nExceptions:")
-        for k,v in excpts.items():
+        for k, v in excpts.items():
             print(f"{k}: {v}")
 
     check_server_access(sconf)
