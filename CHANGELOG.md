@@ -4,12 +4,14 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] 
+## [1.4.0] 2020-03-02
 
 ### Added
 - The walltime keyword is now enabled for the slurm and flux batch types.
 - LAUNCHER keywords, (slurm,flux,lsf) for specifying arguments specific
   to that parallel launcher in the run section.
+- Exception messages to `merlin info`.
+- Preliminary tutorial modules for early testers.
 
 ### Fixed
 - Syntax errors in web doc file `merlin_variables.rst`.

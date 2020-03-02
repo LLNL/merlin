@@ -65,9 +65,9 @@ For more details, check out the rest of the documentation.
 Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
 
 .. toctree::
-   :maxdepth: 1
-   :hidden:
+   :maxdepth: 2
 
+   tutorial
    getting_started
    faq
    merlin_commands
