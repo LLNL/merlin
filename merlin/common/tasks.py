@@ -29,13 +29,25 @@
 ###############################################################################
 
 """Test tasks."""
-from __future__ import absolute_import, unicode_literals
+from __future__ import (
+    absolute_import,
+    unicode_literals,
+)
 
 import logging
 import os
 
-from celery import chain, chord, group, shared_task, signature
-from celery.exceptions import OperationalError, TimeoutError
+from celery import (
+    chain,
+    chord,
+    group,
+    shared_task,
+    signature,
+)
+from celery.exceptions import (
+    OperationalError,
+    TimeoutError,
+)
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories

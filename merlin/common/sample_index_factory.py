@@ -33,7 +33,10 @@ SampleIndex factory methods
 """
 from parse import parse
 
-from merlin.common.sample_index import MAX_SAMPLE, SampleIndex
+from merlin.common.sample_index import (
+    MAX_SAMPLE,
+    SampleIndex,
+)
 from merlin.utils import cd
 
 
