@@ -3,10 +3,12 @@ Tutorial
 
 .. note:: This tutorial is currently under construction!
 
-    * Feb 11: outlines finalized
-    * Feb 28: content finalized
     * March 2-6: testing period
     * March 9: ready for use!
+
+.. note:: Testers 
+
+    We currently only want you to work thru sections 1-4. Thanks!
 
 .. admonition:: Estimated time
 
