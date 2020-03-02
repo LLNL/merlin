@@ -360,6 +360,7 @@ counter takes advantage of the ability to override workflow variables on the com
 
 The workflow itself isn't doing anything practical; it's simply repeatedly sampling from
 a fake name generator in an attempt to count the number of unique names that are possible.
-The figure below shows 5 iterations of 100 samples
+The figure below shows results from running 20 iterations, with the number of unique names
+faker can generate appearing to be slightly more than 300.
 
 .. image:: ./advanced_topics/cumulative_results.png
