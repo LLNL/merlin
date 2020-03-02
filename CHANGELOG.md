@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exception messages to `merlin info`.
 - Preliminary tutorial modules for early testers.
 
+### Removed
+- The problematic step `stop_workers` in `feature_demo.yaml`.
+
 ### Fixed
 - Syntax errors in web doc file `merlin_variables.rst`.
 
