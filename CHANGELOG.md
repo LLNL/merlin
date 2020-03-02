@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Syntax errors in web doc file `merlin_variables.rst`.
 
 ### Removed
-- The exclusive and signal keywords and bind for slurm in a step. The bin
+- The exclusive and signal keywords and bind for slurm in a step. The bind
   keyword is now lsf only.
 
 ## [1.3.0] 2020-02-21
