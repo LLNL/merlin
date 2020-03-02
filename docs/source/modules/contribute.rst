@@ -27,7 +27,7 @@ Questions 🤓
 ------------
 .. note:: 
 
-    Your question may already be answered in the :doc:`FAQ<faq>`.
+    Who knows? Your question may already be answered in the :doc:`FAQ<faq>`.
 
 We encourage questions to be asked in a collaborative setting: on GitHub, direct any questions to `General Questions <https://github.com/LLNL/merlin/issues/new?labels=question&template=question.md&title=%5BQ%2FA%5D+>`_ in Issues.
 
