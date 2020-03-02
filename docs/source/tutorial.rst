@@ -6,7 +6,7 @@ Tutorial
     * March 2-6: testing period
     * March 9: ready for use!
 
-.. note:: Testers 
+.. admonition:: Testers 
 
     We currently only want you to work thru sections 1-4. Thanks!
 
