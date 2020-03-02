@@ -23,6 +23,7 @@ def setup_argparse():
         "sample_file_paths", help="paths to sample files", default="",
         nargs='+'
     )
+
     parser.add_argument("--results",
                         help="Name of output json file",
                         default="samples.json")
