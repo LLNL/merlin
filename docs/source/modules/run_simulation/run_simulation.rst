@@ -1,10 +1,10 @@
 Run a Real Simulation
 =====================
 
-This module aims to do a parameter study on a well-known benchmark problem for
-viscous incompressible fluid flow. We will be setting up our inputs, running
-multiple simulations in parallel, combining the outputs, and finally doing some
-predictive modeling and visualization using the outputs of these runs.
+  This module aims to do a parameter study on a well-known benchmark problem for
+  viscous incompressible fluid flow. We will be setting up our inputs, running
+  multiple simulations in parallel, combining the outputs, and finally doing some
+  predictive modeling and visualization using the outputs of these runs.
 
 .. admonition:: Prerequisites
 
