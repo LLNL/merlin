@@ -356,7 +356,7 @@ The example spec below is a simple implementation of this using an iteration cou
 to generate new samples and spawn a new instantiation of the workflow.  The iteration
 counter takes advantage of the ability to override workflow variables on the command line.
 
-.. literalinclude :: ./advanced_topics/faker_demo.yaml
+.. literalinclude :: ./faker_demo.yaml
    :language: yaml
 
 The workflow itself isn't doing anything practical; it's simply repeatedly sampling from
@@ -364,4 +364,4 @@ a fake name generator in an attempt to count the number of unique names that are
 The figure below shows results from running 20 iterations, with the number of unique names
 faker can generate appearing to be slightly more than 300.
 
-.. image:: ./advanced_topics/cumulative_results.png
+.. image:: ./cumulative_results.png

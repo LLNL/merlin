@@ -7,10 +7,9 @@ It will be helpful to have these steps already completed before you start the tu
  
 __ https://www.python.org/downloads/release/python-360/
 
-* Make sure you have `GNU make tools`__.
-__ https://www.gnu.org/software/make/
-and `compilers`__.
+* Make sure you have `GNU make tools`__ and `compilers`__.
 
+__ https://www.gnu.org/software/make/
 __ https://gcc.gnu.org/
 
 * Install docker

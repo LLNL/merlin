@@ -112,7 +112,7 @@ Merlin and the servers required by merlin are all available as docker containers
 To run a merlin docker container with a docker redis server cut
 and paste the commands below in to a ``docker-compose.yml`` file.
 
-.. literalinclude:: installation/docker-compose.yml
+.. literalinclude:: ./docker-compose.yml
    :language: yaml
 
 This file can then be run with the ``docker-compose`` command.
@@ -154,7 +154,7 @@ passwords for the redis server and encryption.
 If you are using local-redis then you are all set, look in your ``~/.merlin/app.yaml`` file
 to see the configuration.
 
-.. literalinclude:: installation/app_local_redis.yaml
+.. literalinclude:: ./app_local_redis.yaml
    :language: yaml
 
 If you are using the docker-redis server then the 
@@ -167,7 +167,7 @@ broker and backend config definitions, to ``server: my-redis``, the port will re
   with the virtualenv installed merlin by using the local-redis 
   ``app.yaml`` file above.
 
-.. literalinclude:: installation/app_docker_redis.yaml
+.. literalinclude:: ./app_docker_redis.yaml
    :language: yaml
 
 Checking/Verifying installation
@@ -237,7 +237,7 @@ server and python.
 The rabbitmq docker service can be added to the previous 
 ``docker-compose.yml`` file.
 
-.. literalinclude:: installation/docker-compose_rabbit.yml
+.. literalinclude:: ./docker-compose_rabbit.yml
    :language: yaml
 
 
@@ -257,7 +257,7 @@ in the broker section
 of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``. 
 The rabbitmq server will be accessed on the default TLS port, 5671.
 
-.. literalinclude:: installation/app_docker_rabbit.yaml
+.. literalinclude:: ./app_docker_rabbit.yaml
    :language: yaml
 
 To complete the config create a file ``~/merlinu/.merlin/rabbit.pass``
