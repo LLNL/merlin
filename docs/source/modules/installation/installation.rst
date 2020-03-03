@@ -26,9 +26,22 @@ Installation
 
 This section details the steps necessary to install merlin and its dependencies.
 Merlin will then be configured and this configuration checked to ensure a proper installation.
-Merlin can be installed using pip or through docker containers.  The pip method is 
-recommended for this tutorial.
 
+
+Installing merlin
+-----------------
+
+A merlin installation is required for the subsequent modules of this tutorial. You can choose between the pip method or the docker method. Choose one or the other but
+do not use both unless you are familiar with redis servers run locally and through docker,. 
+The pip method is recommended.
+
+Once merlin is installed, it requires servers to operate.
+The pip section will inform you how to setup a
+local redis server to use in merlin.  An alternative method for setting up a
+redis server can be found in the docker section. Only setup one redis server either
+local-redis or docker-redis.
+Your computer/organization  may already have a redis server available, please check
+with your local system administrator.
 
 Pip
 +++
@@ -62,7 +75,8 @@ Install merlin through pip.
 
   pip3 install merlinwf
 
-When you are done with the virtualenv you can deactivate it using ``deactivate``.
+When you are done with the virtualenv you can deactivate it using ``deactivate``,
+but leave the virtualenv activated for the subsequent steps.
 
 .. code:: bash
 
@@ -92,13 +106,24 @@ can also be used for the celery broker. This method will be called local-redis.
   # make test (~3.5 minutes)
   make test
 
+
+The redis server is started by calling the ``redis-server`` command located in 
+the src directory.
+This should be run in a separate terminal in the top-level source 
+directory so the output can be examined.
+The redis server will use the default ``redis.conf`` file in the top-level
+redis directory.
+
+.. code:: bash
+
   # run redis with default config, server is at localhost port 6379
   ./src/redis-server &
 
 Docker
 ++++++
 
-Merlin and the servers required by merlin are all available as docker containers on dockerhub.
+Merlin and the servers required by merlin are all available as docker containers on dockerhub. Do not use this method if you have already set up a virtualenv through
+the pip installation method.
 
 .. note::
 
@@ -109,13 +134,16 @@ Merlin and the servers required by merlin are all available as docker containers
   otherwise made available to, the merlin container.
 
 
-To run a merlin docker container with a docker redis server cut
-and paste the commands below in to a ``docker-compose.yml`` file.
+To run a merlin docker container with a docker redis server, cut
+and paste the commands below into a new file called ``docker-compose.yml``. 
+This file can be placed anywhere in your filesystem but you may want to put it in
+a directory ``merlin_docker_redis``.
 
 .. literalinclude:: ./docker-compose.yml
    :language: yaml
 
-This file can then be run with the ``docker-compose`` command.
+This file can then be run with the ``docker-compose`` command in same directory
+as the ``docker-compose.yml`` file.
 
 .. code:: bash
 
@@ -142,23 +170,37 @@ When you are done with the containers you can stop them using ``docker-compose d
 
 
 Configuring merlin
-++++++++++++++++++
+------------------
+
+Merlin configuration is slightly different between the pip and docker methods.
+The fundamental differences include the app.yaml file location and the server name.
 
 Merlin requires a configuration script for the celery interface and optional
-passwords for the redis server and encryption.
+passwords for the redis server and encryption. Run this configuration method
+to create the ``app.yaml`` configuration file.
 
 .. code:: bash
 
   merlin config --broker redis
 
-If you are using local-redis then you are all set, look in your ``~/.merlin/app.yaml`` file
-to see the configuration.
+Pip
++++
+
+The ``merlin config`` command above will create a file called ``app.yaml``
+in the ``~/.merlin`` directory.
+If you are using local-redis then you are all set, look in the ``~/.merlin/app.yaml`` file
+to see the configuration, it should look like the configuration below.
 
 .. literalinclude:: ./app_local_redis.yaml
    :language: yaml
 
-If you are using the docker-redis server then the 
-``~/merlinu/.merlin/app.yaml`` file must be edited to 
+Docker
+++++++
+
+If you are using the docker merlin with docker-redis server then the 
+``~/merlinu/.merlin/app.yaml`` will be created by the ``merlin config`` 
+command above. 
+This file must be edited to 
 add the server from the redis docker container my-redis. Change the ``server: localhost``, in both the 
 broker and backend config definitions, to ``server: my-redis``, the port will remain the same. 
 
@@ -171,10 +213,11 @@ broker and backend config definitions, to ``server: my-redis``, the port will re
    :language: yaml
 
 Checking/Verifying installation
-+++++++++++++++++++++++++++++++
+-------------------------------
 
 The ``merlin info`` command will check that the configuration file is 
-installed correctly, display the server configuration strings, and check server access.
+installed correctly, display the server configuration strings, and check server 
+access. This command works for both the pip and docker installed merlin.
 
 .. code:: bash
 
@@ -212,12 +255,22 @@ If everything is set up correctly, you should see (assuming local-redis servers)
 
 
 Docker Advanced Installation
-++++++++++++++++++++++++++++
+----------------------------
 
+RabbitMQ server
++++++++++++++++
+
+This optional section details the setup of a rabbitmq server for merlin.
 A rabbitmq server can be started to provide the broker, the redis 
 server will still be required for the backend. Merlin is configured
 to use ssl encryption for all communication with the rabbitmq server.
-This tutorial ca use self-signed certificates . Information on rabbit
+An ssl server requires ssl certificates to encrypt the communication through
+the python ssl module `python ssl <https://docs.python.org/3/library/ssl.html>`_ .
+This tutorial can use self-signed certificates created by the user for use
+in the rabbitmq server. 
+The rabbitmq server uses Transport Layer Security (TLS) 
+(often known as "Secure Sockets Layer"). 
+Information on rabbitmq
 with TLS can be found here: `rabbit TLS <https://www.rabbitmq.com/ssl.html>`_
 
 A set of self-signed keys is created through the ``tls-gen`` package.
