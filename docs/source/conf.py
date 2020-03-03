@@ -25,8 +25,8 @@ MERLIN_VERSION = __import__("merlin").VERSION
 _year = date.today().year
 
 project = u'Merlin'
-copyright = '{}, MLSI'.format(_year)
-author = u'MLSI'
+copyright = '{}, LLNL: 797170'.format(_year)
+author = u'LLNL'
 
 # The short X.Y version
 version = MERLIN_VERSION

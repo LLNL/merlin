@@ -334,16 +334,15 @@ nodes: The total number of MPI nodes
 walltime: The total walltime of the run (hh:mm:ss) (not available in lsf)
 cores per task: The number of hardware threads per MPI task
 gpus per task: The number of GPUs per MPI task
-bind: Flag for MPI binding of tasks on a node (scheduler dependent)
 
 SLURM specific run flags:
-exclusive: Command to run exclusively on the node (argument is space: " ")
 slurm: Verbatim flags only for the srun parallel launch (srun -n <nodes> -n <procs> <slurm>)
 
 FLUX specific run flags:
 flux: Verbatim flags for the flux parallel launch (flux mini run <flux>)
 
 LSF specific run flags:
+bind: Flag for MPI binding of tasks on a node (default: -b rs)
 num resource set: Number of resoure sets
 launch_distribution : The distribution of respources (default: plane:{procs/nodes})
 lsf: Verbatim flags only for the lsf parallel launch (jsrun ... <lsf>)
