@@ -15,7 +15,7 @@ Run a Real Simulation
       * How to run the simulation OpenFOAM, using merlin.
       * How to use machine learning on OpenFOAM results, using merlin.
 
-.. contents::
+.. contents:: Table of Contents:
   :local:
 
 This module aims to do a parameter study on a well-known benchmark problem for
@@ -63,7 +63,7 @@ Edit the merlin block to look like the following:
           file: $(MERLIN_INFO)/samples.npy
           column_labels: [LID_SPEED, VISCOSITY]
 
-Just like in the :ref:`Using Samples` step of the hello world module, we 
+Just like in the :ref:`Using Samples` step of the hello world module, we
 generate samples using the merlin block. We are only concerned with how the
 variation of two initial conditions, lid-speed and viscosity, affects outputs of the system.
 These are the ``column_labels``.
@@ -200,9 +200,9 @@ the nonsimworkers
 Machine Learning and visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In this step we do some post processing of the data collected in the previous step,
-use the RandomForestRegressor to predict enstrophy and kinetic energy from lid-speed
-and viscosity, and finally, visualize the fit of this regressor and the input regions
-with the highest error.
+use the RandomForestRegressor from the sklearn python package to predict enstrophy
+and kinetic energy from lid-speed and viscosity, and finally, visualize the fit
+of this regressor and the input regions with the highest error.
 
 .. code:: yaml
 
@@ -236,6 +236,7 @@ Putting it all together
 
 Setup redis
 +++++++++++
+
 We will need to set up the redis server using a docker container.
 This removes the hassle of downloading and making the redis tar file.
 Run:
@@ -266,7 +267,7 @@ Now, run the workflow:
 
     $ merlin run-workers openfoam_wf/openfoam_wf.yaml
 
-With 100 samples instead of 10:
+With 100 samples instead of 10 (should take about 6 minutes):
 
 .. code:: bash
 

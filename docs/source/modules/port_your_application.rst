@@ -12,5 +12,8 @@ Port Your Own Application
 
 .. admonition:: You will learn
 
-      * 
-      * 
+      *
+      *
+
+.. contents:: Table of Contents:
+  :local:

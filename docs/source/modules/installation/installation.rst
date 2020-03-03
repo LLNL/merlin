@@ -4,7 +4,7 @@ Installation
 
   * shell (bash, csh, etc, if running on Windows, use a linux container)
   * python3 >= python3.6
-  * python3 pip 
+  * pip3
   * wget
   * build tools (make, C/C++ compiler for local-redis)
   * docker (required for :doc:`Module 4: Run a Real Simulation<../run_simulation/run_simulation>`)
@@ -23,6 +23,8 @@ Installation
   * How to configure merlin.
   * How to test/verify the installation.
 
+.. contents:: Table of Contents:
+  :local:
 
 This section details the steps necessary to install merlin and its dependencies.
 Merlin will then be configured and this configuration checked to ensure a proper installation.
@@ -129,7 +131,7 @@ the pip installation method.
 
   When using the docker method the celery workers will run inside the
   merlin container. This
-  means that any workflow tools that are also from docker containers must 
+  means that any workflow tools that are also from docker containers must
   be installed in, or
   otherwise made available to, the merlin container.
 
@@ -206,7 +208,7 @@ broker and backend config definitions, to ``server: my-redis``, the port will re
 
 .. note::
   You can use the docker redis server, instead of the local-redis server,
-  with the virtualenv installed merlin by using the local-redis 
+  with the virtualenv installed merlin by using the local-redis
   ``app.yaml`` file above.
 
 .. literalinclude:: ./app_docker_redis.yaml
@@ -240,7 +242,7 @@ If everything is set up correctly, you should see (assuming local-redis servers)
    merlin_home_exists | True
    broker server      | redis://localhost:6379/0
    results server     | redis://localhost:6379/0
-     
+
 
   Checking server connections:
   ----------------------------
@@ -279,7 +281,7 @@ server and python.
 
 .. code:: bash
 
- git clone https://github.com/michaelklishin/tls-gen.git 
+ git clone https://github.com/michaelklishin/tls-gen.git
  cd tls-gen/basic
  make CN=my-rabbit CLIENT_ALT_NAME=my-rabbit SERVER_ALT_NAME=my-rabbit
  make verify
@@ -287,16 +289,16 @@ server and python.
  cp results/* ${HOME}/merlinu/cert_rabbitmq
 
 
-The rabbitmq docker service can be added to the previous 
+The rabbitmq docker service can be added to the previous
 ``docker-compose.yml`` file.
 
 .. literalinclude:: ./docker-compose_rabbit.yml
    :language: yaml
 
 
-When running the rabbitmq broker server, the config can be created with 
+When running the rabbitmq broker server, the config can be created with
 the default ``merlin config`` command.
-If you have already run the previous command then remove the 
+If you have already run the previous command then remove the
 ``~/.merlin/app.yaml`` or
 ``~/merlinu/.merlin/app.yaml`` file , and run the ``merlin config``
 command again.
@@ -305,9 +307,9 @@ command again.
 
   merlin config
 
-The app.yaml file will need to be edited to add the rabbitmq settings 
+The app.yaml file will need to be edited to add the rabbitmq settings
 in the broker section
-of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``. 
+of the app.yaml file. The ``server:`` should be changed to ``my-rabbit``.
 The rabbitmq server will be accessed on the default TLS port, 5671.
 
 .. literalinclude:: ./app_docker_rabbit.yaml
