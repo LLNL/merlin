@@ -14,7 +14,8 @@ Hello, World!
       * How to run a simple merlin workflow.
       * How to interpret the results of your workflow.
 
-.. contents::
+
+.. contents:: Table of Contents:
   :local:
 
 Elements of a specification

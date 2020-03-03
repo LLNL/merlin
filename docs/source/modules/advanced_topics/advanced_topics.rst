@@ -9,7 +9,7 @@ Advanced Topics
         * merlin
         * pandas
         * faker
-          
+
 .. admonition:: Estimated time
 
       * 15 minutes
@@ -19,6 +19,9 @@ Advanced Topics
       * Run workflows using HPC batch schedulers
       * Distribute workflows across multiple batch allocations and machines
       * Setup iterative workflow specs suited for optimization and dynamic sampling applications
+
+.. contents:: Table of Contents:
+  :local:
 
 Interfacing with HPC systems
 ++++++++++++++++++++++++++++
@@ -35,21 +38,21 @@ will be overridden in the worker config.
 
    batch:
       # Required keys:
-   
+
       type: flux
       bank: testbank
       queue: pbatch
 
-      # Optional keys:   
+      # Optional keys:
       flux_path: <optional path to flux bin>
       flux_start_opts: <optional flux start options>
-      flux_exec_workers: <optional, flux argument to launch workers on 
+      flux_exec_workers: <optional, flux argument to launch workers on
                           all nodes. (True)>
-      
+
       launch_pre: <Any configuration needed before the srun or jsrun launch>
       launch_args: <Optional extra arguments for the parallel launch command>
       worker_launch: <Override the parallel launch defined in merlin>
-      
+
       shell: <the interpreter to use for the script after the shebang>
              # e.g. /bin/bash, /bin/tcsh, python, /usr/bin/env perl, etc.
       nodes: <num nodes> # The number of nodes to use for all workers
@@ -74,7 +77,7 @@ on HPC systems: nodes, procs, and task_queue.  Adding on the actual study steps 
 above batch block specifies the actual resources each steps processes will take.
 
 .. code-block:: yaml
-                
+
    study:
       - name: sim-runs
         description: Run sumulations
@@ -83,7 +86,7 @@ above batch block specifies the actual resources each steps processes will take.
            nodes: 4
            procs: 144
            task_queue: sim_queue
-  
+
       - name: post-process
         description: Post-Process simulations on second allocation
         run:
@@ -130,10 +133,10 @@ interest will be:
 
 ===========================  ===============
 ``--concurrency``            <num_threads>
-                           
+
 ``--prefetch-multiplier``    <num_tasks>
-                           
-``-0 fair``                  
+
+``-0 fair``
 ===========================  ===============
 
 Concurrency can be used to run multiple workers in an allocation, thus is recommended to be
@@ -156,7 +159,7 @@ simulation jobs as well as shorter running post processing tasks that can cohabi
 NOTE: verify this is how the celery args work -> docs show raw celery commands, not yaml spec!!
 
 .. code-block:: yaml
-                
+
   merlin:
 
     resources:
@@ -168,17 +171,17 @@ NOTE: verify this is how the celery args work -> docs show raw celery commands, 
       workers:
           simworkers:
               args: --concurrency 1
-              steps: [sim-runs]      
-              nodes: 4               
-              machines: [host1]      
+              steps: [sim-runs]
+              nodes: 4
+              machines: [host1]
 
           postworkers:
               args: --concurrency 4 --prefetch-multiplier 2
               steps: [post-proc-runs]
-              nodes: 1               
-              machines: [host1]      
+              nodes: 1
+              machines: [host1]
 
-              
+
 NOTE FOR CODE MEETING/ME TO TRY: nodes, either in batch or workers, behaves differently from
 maestro, meaning it's meant to be nodes per step instantiation, not batch allocation size..
 
@@ -189,11 +192,11 @@ Also: what about procs per worker instead of just nodes?
 Putting it all together with the parameter blocks we have an HPC batch enabled study specification
 
 .. code-block:: yaml
-                
+
    description:
      name: hpc_demo
      description: Demo running a workflow on HPC machines
-  
+
    env:
      variables:
        OUTPUT_PATH: ./name_studies
@@ -202,13 +205,13 @@ Putting it all together with the parameter blocks we have an HPC batch enabled s
        COLLECT: $(SPECROOT)/sample_collector.py
 
        # Process single iterations' results
-       POST_PROC: $(SPECROOT)/sample_processor.py 
-       
+       POST_PROC: $(SPECROOT)/sample_processor.py
+
        # Process all iterations
        CUM_POST_PROC: $(SPECROOT)/cumulative_sample_processor.py
-       
+
        # Number of threads for post proc scripts
-       POST_NPROCS: 36          
+       POST_NPROCS: 36
        PYTHON: <INSERT PATH TO VIRTUALENV HERE>
 
    batch:
@@ -231,16 +234,16 @@ Putting it all together with the parameter blocks we have an HPC batch enabled s
            nodes: 1
            procs: 1
            task_queue: name_queue
-  
+
       - name: collect
-        description: Collect all samples generated 
+        description: Collect all samples generated
         run:
            cmd: |
              echo $(MERLIN_GLOB_PATH)
              echo $(sample_names.workspace)
 
              ls $(sample_names.workspace)/$(MERLIN_GLOB_PATH)/name_sample.out | xargs $(PYTHON) $(COLLECT) -out collected_samples.txt --np $(POST_NPROCS)
-             
+
            nodes: 1
            procs: 1
            depends: [sample_names_*]
@@ -251,35 +254,35 @@ Putting it all together with the parameter blocks we have an HPC batch enabled s
         run:
            cmd: |
              $(PYTHON) $(POST_PROC) $(collect.workspace)/collected_samples.txt --results iter_$(ITER)_results.json
-             
+
            nodes: 1
            procs: 1
            depends: [collect]
            task_queue: post_proc_queue
-           
+
    ########################################
    # Worker and sample configuration
-   ########################################  
+   ########################################
    merlin:
-  
+
      resources:
        task_server: celery
-  
+
        overlap: False
-  
+
        workers:
            nameworkers:
                args: --concurrency 36 --prefetch-multiplier 3
-               steps: [sample_names]      
+               steps: [sample_names]
                nodes: 1
-               machines: [borax, quartz]      
+               machines: [borax, quartz]
 
            postworkers:
                args: --concurrency 1 --prefetch-multiplier 1
                steps: [post-process]
-               nodes: 1 
+               nodes: 1
                machines: [borax, quartz]
-  
+
      ###################################################
      samples:
        column_labels: [NAME]
@@ -322,26 +325,26 @@ steps.  In this case you simply need an alloc
 
    ########################################
    # Worker and sample configuration
-   ########################################  
+   ########################################
    merlin:
-  
+
      resources:
        task_server: celery
-  
+
        overlap: False
-  
+
        # Customize workers
        workers:
            simworkers:
                args: --concurrency 1
-               steps: [sim-runs]      
-               nodes: 4               
-               machines: [host1]      
-  
+               steps: [sim-runs]
+               nodes: 4
+               machines: [host1]
+
            postworkers:
                args: --concurrency 4 --prefetch-multiplier 2
                steps: [post-proc-runs]
-               nodes: 1               
+               nodes: 1
                machines: [host2]
 
 
