@@ -178,6 +178,6 @@ texinfo_documents = [
 
 primary_domain = 'py'
 
-highlight_language = 'py'
+highlight_language = 'bash'
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
