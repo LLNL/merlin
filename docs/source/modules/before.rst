@@ -16,12 +16,12 @@ __ https://gcc.gnu.org/
 
 * Download OpenFOAM image with:
 
-.. code:: bash
+.. code-block:: bash
 
     docker pull cfdengine/openfoam
 
 * Download redis image with:
 
-.. code:: bash
+.. code-block:: bash
 
     docker pull redis

@@ -1,5 +1,7 @@
 Hello, World!
 =============
+This hands-on module walks through the steps of building and running a simple merlin workflow.
+
 .. admonition:: Prerequisites
 
     * :doc:`Module 2: Installation<../installation/installation>`
@@ -32,7 +34,7 @@ description
 ~~~~~~~~~~~
 Just what it sounds like. Name and briefly summarize your workflow.
 
-.. code:: yaml
+.. code-block:: yaml
 
     description:
         name: hello world workflow
@@ -45,7 +47,7 @@ global.parameters
 Global parameters are constants that you want to vary across simulations.
 The whole workflow is run for index of parameter values.
 
-.. code:: yaml
+.. code-block:: yaml
 
     global.parameters:
         GREET:
@@ -61,7 +63,7 @@ study
 ~~~~~
 This is where you define worfklow steps.
 
-.. code:: yaml
+.. code-block:: yaml
 
     study:
         - name: step_1
@@ -94,13 +96,13 @@ Since our global parameters have 2 values, this is actually what the DAG looks l
 
 It looks like running ``step_2`` twice is redundant. Instead of doing that, we can collapse it back into a single step, by having it wait for both parameterized versions of ``step_1`` to finish. Add ``_*`` to the end of the step name in ``step_1``'s depend entry. Go from this:
 
-.. code:: yaml
+.. code-block:: yaml
 
     depends: [step_1]
 
 ...to this:
 
-.. code:: yaml
+.. code-block:: yaml
 
     depends: [step_1_*]
 
@@ -127,7 +129,7 @@ Try it!
 
 First, we'll run merlin locally. On the command line, run:
 
-.. code:: bash
+.. code-block:: bash
 
     $ merlin run --local hello.yaml
 
@@ -170,7 +172,7 @@ Run distributed!
 
 Now we will run the same workflow, but in parallel on our task server:
 
-.. code:: bash
+.. code-block:: bash
 
     $ merlin run hello.yaml
 
@@ -181,7 +183,7 @@ If your merlin configuration is set up correctly, you should see something like 
 
 That means we have launched our tasks! Now we need to launch the workers that will complete those tasks. Run this:
 
-.. code:: bash
+.. code-block:: bash
 
     $ merlin run-workers hello.yaml
 
@@ -209,7 +211,7 @@ First, we remove the global parameter ``WORLD``.
 
 Now add these yaml sections to your spec:
 
-.. code:: yaml
+.. code-block:: yaml
 
     env:
         variables:
@@ -217,7 +219,7 @@ Now add these yaml sections to your spec:
 
 This makes ``N_SAMPLES`` into a user-defined variable that you can use elsewhere in your spec.
 
-.. code:: yaml
+.. code-block:: yaml
 
     merlin:
         samples:
@@ -257,14 +259,13 @@ Once finished, this is what the insides of ``step_1`` look like:
     :align: center
 
 
-
 * ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used interally by merlin and doesn't usually require user attention.
 
 * Numerically-named directories like ``0``, ``1``, and ``2`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
 
 Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. To do this, you could interally change thevalue in the spec from 3 to 1000. OR you could just this run this:
 
-.. code:: bash
+.. code-block:: bash
 
     $ merlin run --vars N_SAMPLES=1000 hello.yaml
 
@@ -272,7 +273,7 @@ Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. To
 
 To send a warm stop signal to your workers, run:
 
-.. code:: bash
+.. code-block:: bash
 
     $ merlin stop-workers
 

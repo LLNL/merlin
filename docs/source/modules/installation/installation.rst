@@ -37,13 +37,13 @@ Pip
 
 Create a virtualenv using python3 to install merlin.
 
-.. code:: bash
+.. code-block:: bash
 
   python3 -m venv --prompt merlin merlin_venv
 
 Activate the virtualenv.
 
-.. code:: bash
+.. code-block:: bash
 
   source merlin_venv/bin/activate
   or
@@ -54,19 +54,19 @@ The ``(merlin) <shell prompt>`` will appear after activating.
 
 You should upgrade pip and setuptools before proceeding.
 
-.. code:: bash
+.. code-block:: bash
 
   pip3 install setuptools pip -U
 
 Install merlin through pip.
 
-.. code:: bash
+.. code-block:: bash
 
   pip3 install merlinwf
 
 When you are done with the virtualenv you can deactivate it using ``deactivate``.
 
-.. code:: bash
+.. code-block:: bash
 
   deactivate
 
@@ -77,7 +77,7 @@ redis local server
 A redis server is required for the celery results backend server, this same server
 can also be used for the celery broker. This method will be called local-redis.
 
-.. code:: bash
+.. code-block:: bash
 
   # Download redis
   wget http://download.redis.io/releases/redis-5.0.7.tar.gz
@@ -119,7 +119,7 @@ and paste the commands below in to a ``docker-compose.yml`` file.
 
 This file can then be run with the ``docker-compose`` command.
 
-.. code:: bash
+.. code-block:: bash
 
   docker-compose up -d
 
@@ -129,7 +129,7 @@ directory in the container.
 
 Some aliases can be defined for convenience.
 
-.. code:: bash
+.. code-block:: bash
 
   # define some aliases for the merlin and celery commands (assuming Bourne shell)
   alias merlin="docker exec my-merlin merlin"
@@ -138,7 +138,7 @@ Some aliases can be defined for convenience.
 
 When you are done with the containers you can stop them using ``docker-compose down``.
 
-.. code:: bash
+.. code-block:: bash
 
   docker-compose down
 
@@ -149,7 +149,7 @@ Configuring merlin
 Merlin requires a configuration script for the celery interface and optional
 passwords for the redis server and encryption.
 
-.. code:: bash
+.. code-block:: bash
 
   merlin config --broker redis
 
@@ -178,13 +178,13 @@ Checking/Verifying installation
 The ``merlin info`` command will check that the configuration file is
 installed correctly, display the server configuration strings, and check server access.
 
-.. code:: bash
+.. code-block:: bash
 
   merlin info
 
 If everything is set up correctly, you should see (assuming local-redis servers):
 
-.. code:: bash
+.. code-block:: bash
 
   .
   .
@@ -226,7 +226,7 @@ A set of self-signed keys is created through the ``tls-gen`` package.
 These keys are then copied to a common directory for use in the rabbitmq
 server and python.
 
-.. code:: bash
+.. code-block:: bash
 
  git clone https://github.com/michaelklishin/tls-gen.git
  cd tls-gen/basic
@@ -250,7 +250,7 @@ If you have already run the previous command then remove the
 ``~/merlinu/.merlin/app.yaml`` file , and run the ``merlin config``
 command again.
 
-.. code:: bash
+.. code-block:: bash
 
   merlin config
 
