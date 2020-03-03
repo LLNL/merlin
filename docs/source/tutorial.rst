@@ -6,7 +6,7 @@ Tutorial
     * March 2-6: testing period
     * March 9: ready for use!
 
-.. admonition:: Testers 
+.. admonition:: Testers
 
     We currently only want you to work thru sections 1-4. Thanks!
 
@@ -20,7 +20,6 @@ Grab your laptop and coffee, and dive into this 7-module tutorial to become a Me
 
 .. toctree::
    :maxdepth: 1
-   :numbered:
    :caption: Before you come:
 
    modules/before
@@ -37,5 +36,3 @@ Grab your laptop and coffee, and dive into this 7-module tutorial to become a Me
    modules/advanced_topics/advanced_topics
    modules/contribute
    modules/port_your_application
-
-
