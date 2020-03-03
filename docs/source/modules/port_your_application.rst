@@ -12,5 +12,5 @@ Port Your Own Application
 
 .. admonition:: You will learn
 
-      * 
-      * 
+      *
+      *

@@ -3,7 +3,7 @@ Run a Real Simulation
 .. admonition:: Prerequisites
 
       * :doc:`Module 0: Before you come<../before>`
-      * :doc:`Module 2: Installation<../installation>`
+      * :doc:`Module 2: Installation<../installation/installation>`
       * :doc:`Module 3: Hello World<../hello_world/hello_world>`
 
 .. admonition:: Estimated time
@@ -237,16 +237,6 @@ Putting it all together
 Setup redis
 +++++++++++
 
-.. Merlin
- ~~~~~~
- We will need to activate the merlin virtual environment created in :doc:`Module 2: Installation<installation>`
-
-.. .. code:: bash
-
-.. source merlin_venv/bin/activate
-
-.. Configuring redis
- ~~~~~~~~~~~~~~~~~
 We will need to set up the redis server using a docker container.
 This removes the hassle of downloading and making the redis tar file.
 Run:
