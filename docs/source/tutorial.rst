@@ -31,10 +31,10 @@ Grab your laptop and coffee, and dive into this 7-module tutorial to become a Me
    :caption: Tutorial modules:
 
    modules/introduction
-   modules/installation
+   modules/installation/installation
    modules/hello_world/hello_world
    modules/run_simulation/run_simulation
-   modules/advanced_topics
+   modules/advanced_topics/advanced_topics
    modules/contribute
    modules/port_your_application
 

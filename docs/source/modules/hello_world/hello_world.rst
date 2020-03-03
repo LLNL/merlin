@@ -2,7 +2,7 @@ Hello, World!
 =============
 .. admonition:: Prerequisites
 
-    * :doc:`Module 2: Installation<installation>`
+    * :doc:`Module 2: Installation<../installation/installation>`
 
 .. admonition:: Estimated time
 

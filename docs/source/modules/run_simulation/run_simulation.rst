@@ -3,7 +3,7 @@ Run a Real Simulation
 .. admonition:: Prerequisites
 
       * :doc:`Module 0: Before you come<../before>`
-      * :doc:`Module 2: Installation<../installation>`
+      * :doc:`Module 2: Installation<../installation/installation>`
       * :doc:`Module 3: Hello World<../hello_world/hello_world>`
 
 .. admonition:: Estimated time
