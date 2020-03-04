@@ -312,7 +312,7 @@ Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 sampl
 
 .. code-block:: bash
 
-    $ merlin run my_hello.yaml --vars N_SAMPLES=1000 
+    $ merlin run my_hello.yaml --vars N_SAMPLES=1000
 
     $ merlin run-workers my_hello.yaml
 
