@@ -1,10 +1,10 @@
 Run a Real Simulation
 =====================
 
+.. admonition:: Summary
+
   This module aims to do a parameter study on a well-known benchmark problem for
-  viscous incompressible fluid flow. We will be setting up our inputs, running
-  multiple simulations in parallel, combining the outputs, and finally doing some
-  predictive modeling and visualization using the outputs of these runs.
+  viscous incompressible fluid flow.
 
 .. admonition:: Prerequisites
 
@@ -23,6 +23,24 @@ Run a Real Simulation
 
 .. contents:: Table of Contents:
   :local:
+
+
+Introduction
+++++++++++++
+
+We aim to do a parameter study on the lid-driven cavity problem. We are specifically
+interested in predicting the average velocity squared (as a proxy for energy) as well
+as the average enstrophy of the fluid in steady state from the initial conditions
+lidspeed and fluid viscosity. 
+
+**insert image/image with important details**
+
+We will be going over:
+
+ * Setting up our inputs
+ * Running multiple simulations in parallel
+ * Combining the outputs of these simulations into a an array
+ * Predictive modeling and visualization
 
 Specification file
 ++++++++++++++++++
