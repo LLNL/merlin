@@ -20,15 +20,30 @@ This hands-on module walks through the steps of building and running a simple me
 .. contents:: Table of Contents:
   :local:
 
-Elements of a specification
-+++++++++++++++++++++++++++
+Specification file
+++++++++++++++++++
 
 Central to Merlin is something called a specifiation file, or a "spec" for short.
 The spec defines all aspects of your workflow.
 The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes).
 
-Let's build our spec piece by piece.
+Let's build our spec piece by piece. Run the following command:
 
+.. code-block:: bash
+
+    merlin example hello
+
+This will copy a directory called ``hello`` containing a few files to your current working directory:
+
+* ``my_hello.yaml`` -- this spec file is partially blank. You will fill in the gaps as you follow this module's steps.
+
+* ``hello.yaml`` -- this is a complete spec without samples. You can always reference it as an example.
+
+* ``hello_samples.yaml`` -- same as before, but with samples added.
+
+* ``make_samples.py`` -- this is a small python script that generates samples.
+
+* ``requirements.txt`` -- this is a text file listing this workflow's python dependencies.
 
 description
 ~~~~~~~~~~~
