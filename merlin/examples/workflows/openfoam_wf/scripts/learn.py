@@ -96,7 +96,7 @@ ax[0][1].set_xlim([x_min, x_max])
 ax[0][1].set_ylim([y_min, y_max])
 
 y_pred_all = regr.predict(X)
-input_enstrophy = ax[1][0].scatter(X[:,0], X[:,1], c=y[:,0]-y_pred_all[:,0], s=100, cmap=plt.get_cmap('Spectral'))
+input_enstrophy = ax[1][0].scatter(X[:,0], X[:,1], s=100, edgecolors='black', c=y[:,0]-y_pred_all[:,0], cmap=plt.get_cmap('Spectral'))
 ax[1][0].set_xlabel('Lidspeed', fontsize=fontsize)
 ax[1][0].set_ylabel("Log10 Reynold's Number", fontsize=fontsize)
 ax[1][0].set_title('Inputs vs Enstrophy error')
@@ -105,7 +105,7 @@ cbar = plt.colorbar(input_enstrophy, ax=ax[1][0])
 cbar.ax.set_ylabel(r'$y_{act} - y_{pred}$', rotation=270, labelpad=20)
 
 
-input_energy = ax[1][1].scatter(X[:,0], X[:,1], c=y[:,1]-y_pred_all[:,1], s=100, cmap=plt.get_cmap('Spectral'))
+input_energy = ax[1][1].scatter(X[:,0], X[:,1], s=100, edgecolors='black', c=y[:,1]-y_pred_all[:,1], cmap=plt.get_cmap('Spectral'))
 ax[1][1].set_xlabel('Lidspeed', fontsize=fontsize)
 ax[1][1].set_ylabel("Log10 Reynold's Number", fontsize=fontsize)
 ax[1][1].set_title('Inputs vs Energy error')
