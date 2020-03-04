@@ -22,13 +22,14 @@ This hands-on module walks through the steps of building and running a simple me
 
 Get example files
 +++++++++++++++++
-``merlin example`` is a command line tool that makes it easy to get a basic workflow up and running. Run the following command:
+``merlin example`` is a command line tool that makes it easy to get a basic workflow up and running. Run the following commands:
 
 .. code-block:: bash
 
     merlin example hello
+    cd hello/
 
-This will copy a directory called ``hello`` containing a few files to your current working directory:
+This will create and move into directory called ``hello``, which contains these files:
 
 * ``my_hello.yaml`` -- this spec file is partially blank. You will fill in the gaps as you follow this module's steps.
 
@@ -45,26 +46,34 @@ Specification file
 
 Central to Merlin is something called a specifiation file, or a "spec" for short.
 The spec defines all aspects of your workflow.
-The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes).
+The spec is formatted in yaml.
+If you're unfamilar with yaml, it's worth `reading up on`__ for a few minutes.
+
+__ https://www.tutorialspoint.com/yaml/yaml_quick_guide.htm
+
+.. warning::
+
+    Stray whitespace can break yaml; make sure your indentation is consistent.
 
 Let's build our spec piece by piece. For each spec section listed below, fill in the blank yaml entries of ``my_hello.yaml`` with the given material.
 
-description
-~~~~~~~~~~~
+Section: ``description``
+~~~~~~~~~~~~~~~~~~~~~~~~
 Just what it sounds like. Name and briefly summarize your workflow.
 
 .. code-block:: yaml
 
     description:
         name: hello world workflow
-        description: say hello in 3 languages
+        description: say hello in 2 languages
 
-global.parameters
-~~~~~~~~~~~~~~~~~
+Section: ``global.parameters``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. better explanation??
 
 Global parameters are constants that you want to vary across simulations.
-The whole workflow is run for index of parameter values.
+Steps that contain a global parameter or depend on other steps that contain a global parameter are run for each index over parameter values.
+The label is the pattern for a filename that will be created for each value.
 
 .. code-block:: yaml
 
@@ -76,11 +85,16 @@ The whole workflow is run for index of parameter values.
             values : ["world","mundo"]
             label  : WORLD.%%
 
-So this will give us an English result, and a Spanish one (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
+.. note::
 
-study
-~~~~~
+    ``%%`` is a special token that defines where the value in the label is placed. In this case the parameter labels will be GREET.hello, GREET.hola, etc. The label can take a custom text format, so long as the ``%%`` token is included to be able to substitute the parameter’s value in the appropriate place.
+
+So this will give us 1) an English result, and 2) a Spanish one (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
+
+Section: ``study``
+~~~~~~~~~~~~~~~~~~
 This is where you define worfklow steps.
+While the convention is to list steps as sequentially as possible, the only factor in determning step order is the dependency DAG created by the ``depends`` field.
 
 .. code-block:: yaml
 
@@ -96,6 +110,10 @@ This is where you define worfklow steps.
               cmd: print("Hurrah, we did it!")
               depends: [step_1]
               shell: /usr/bin/env python3
+
+.. note::
+
+    The ``-`` denotes a list item in YAML. To add elements, simply add new elements prefixed with a hyphen
 
 ``$(GREET)`` and ``$(WORLD)`` expand the global parameters seperately into their two values.
 .. ``$(step_1.workspace)`` gets the path to ``step_1``.
@@ -140,7 +158,7 @@ The order of the spec sections doesn't matter.
 
 .. note::
 
-    At this point, our spec is still merlin- and maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will still add later. If you want to try it, run: ``$ maestro run hello.yaml``
+    At this point, ``my_hello.yaml`` is still maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will still add later. If you want to try it, run: ``$ maestro run my_hello.yaml``
 
 Try it!
 +++++++
@@ -166,8 +184,6 @@ The whole file tree looks like this:
     :align: center
 
 A lot of stuff, right? Here's what it means:
-
-.. * ``new_file.txt`` is the name of the file we wrote in ``step_1``.
 
 * The yaml file inside ``merlin_info/`` is called the provenance spec. It's a copy of the original spec that was run.
 
@@ -225,7 +241,14 @@ It's a little boring to say "hello world" in just two different ways. Let's inst
 
 To do this, we'll need samples. Specifically, we'll change ``WORLD`` from a global parameter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "mundo" to being a randomly-generated name.
 
-First, we remove the global parameter ``WORLD``.
+First, we remove the global parameter ``WORLD`` so it does not conflict with our new sample. Parameters now look like this:
+
+.. code-block:: yaml
+
+    global.parameters:
+        GREET:
+            values : ["hello", "hola"]
+            label  : GREET.%%
 
 Now add these yaml sections to your spec:
 
@@ -242,7 +265,7 @@ This makes ``N_SAMPLES`` into a user-defined variable that you can use elsewhere
     merlin:
         samples:
             generate:
-                cmd: pip3 install names ; python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+                cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
             file: $(MERLIN_INFO)/samples.csv
             column_labels: [WORLD]
 
@@ -256,6 +279,12 @@ It's good practice to shift larger chunks of code to external scripts. At the sa
    :language: text
 
 Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
+
+Before we can run this, we must install the script's one external python library dependency ``names`` (a library that generates random names):
+
+.. code-block:: bash
+
+    $ pip3 install names
 
 Here's our DAG with samples:
 
@@ -279,11 +308,11 @@ Once finished, this is what the insides of ``step_1`` look like:
 
 * Numerically-named directories like ``0``, ``1``, and ``2`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
 
-Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. To do this, you could interally change thevalue in the spec from 3 to 1000. OR you could just this run this:
+Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could interally change the value in the spec from 3 to 1000. OR you could just this run this:
 
 .. code-block:: bash
 
-    $ merlin run --vars N_SAMPLES=1000 my_hello.yaml
+    $ merlin run my_hello.yaml --vars N_SAMPLES=1000 
 
     $ merlin run-workers my_hello.yaml
 
