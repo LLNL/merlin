@@ -20,14 +20,9 @@ This hands-on module walks through the steps of building and running a simple me
 .. contents:: Table of Contents:
   :local:
 
-Specification file
-++++++++++++++++++
-
-Central to Merlin is something called a specifiation file, or a "spec" for short.
-The spec defines all aspects of your workflow.
-The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes).
-
-Let's build our spec piece by piece. Run the following command:
+Get example files
++++++++++++++++++
+``merlin example`` is a command line tool that makes it easy to get a basic workflow up and running. Run the following command:
 
 .. code-block:: bash
 
@@ -44,6 +39,15 @@ This will copy a directory called ``hello`` containing a few files to your curre
 * ``make_samples.py`` -- this is a small python script that generates samples.
 
 * ``requirements.txt`` -- this is a text file listing this workflow's python dependencies.
+
+Specification file
+++++++++++++++++++
+
+Central to Merlin is something called a specifiation file, or a "spec" for short.
+The spec defines all aspects of your workflow.
+The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes).
+
+Let's build our spec piece by piece. For each spec section listed below, fill in the blank yaml entries of ``my_hello.yaml`` with the given material.
 
 description
 ~~~~~~~~~~~
@@ -127,12 +131,11 @@ Now the DAG looks like this:
     :width: 300
     :align: center
 
-Your full hello world spec should now look like this:
+Your full hello world spec ``my_hello.yaml`` should now look like this (an exact match of ``hello.yaml``):
 
 .. literalinclude:: ../../../../merlin/examples/workflows/hello/hello.yaml
    :language: yaml
 
-We'll name it ``hello.yaml``.
 The order of the spec sections doesn't matter.
 
 .. note::
@@ -146,7 +149,7 @@ First, we'll run merlin locally. On the command line, run:
 
 .. code-block:: bash
 
-    $ merlin run --local hello.yaml
+    $ merlin run --local my_hello.yaml
 
 If your spec is bugless, you should see a few messages proclaiming successful step completion, like this (for now we'll ignore the warning):
 
@@ -189,7 +192,7 @@ Now we will run the same workflow, but in parallel on our task server:
 
 .. code-block:: bash
 
-    $ merlin run hello.yaml
+    $ merlin run my_hello.yaml
 
 If your merlin configuration is set up correctly, you should see something like this:
 
@@ -260,11 +263,10 @@ Here's our DAG with samples:
     :width: 400
     :align: center
 
-Here's the new spec:
+Here's your new and improved ``my_hello.yaml``, which now should match ``hello_samples.yaml``:
 
 .. literalinclude:: ../../../../merlin/examples/workflows/hello/hello_samples.yaml
    :language: yaml
-
 
 Run the workflow again!
 
@@ -272,7 +274,6 @@ Once finished, this is what the insides of ``step_1`` look like:
 
 .. image:: merlin_output2.png
     :align: center
-
 
 * ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used interally by merlin and doesn't usually require user attention.
 
@@ -282,9 +283,9 @@ Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. To
 
 .. code-block:: bash
 
-    $ merlin run --vars N_SAMPLES=1000 hello.yaml
+    $ merlin run --vars N_SAMPLES=1000 my_hello.yaml
 
-    $ merlin run-workers hello.yaml
+    $ merlin run-workers my_hello.yaml
 
 To send a warm stop signal to your workers, run:
 
@@ -293,7 +294,3 @@ To send a warm stop signal to your workers, run:
     $ merlin stop-workers
 
 Congratulations! You concurrently greeted 1000 friends in English and Spanish!
-
-.. note::
-
-    To get a fresh copy of the specs and script from this module, run ``merlin example hello``.
