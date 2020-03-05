@@ -296,7 +296,7 @@ server and python.
  make CN=my-rabbit CLIENT_ALT_NAME=my-rabbit SERVER_ALT_NAME=my-rabbit
  make verify
  mkdir -p ${HOME}/merlinu/cert_rabbitmq
- cp results/* ${HOME}/merlinu/cert_rabbitmq
+ cp result/* ${HOME}/merlinu/cert_rabbitmq
 
 
 The rabbitmq docker service can be added to the previous
