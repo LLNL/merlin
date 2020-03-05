@@ -121,6 +121,16 @@ redis directory.
   # run redis with default config, server is at localhost port 6379
   ./src/redis-server &
 
+You can shutdown the local-redis server by using the ``redis-cli shutdown`` command
+when you are done with the tutorial.
+
+.. code-block:: bash
+
+  #cd to redis directory
+  cd <path to>/redis*/
+  ./src/redis-cli shutdown
+
+
 Docker
 ++++++
 
@@ -286,7 +296,7 @@ server and python.
  make CN=my-rabbit CLIENT_ALT_NAME=my-rabbit SERVER_ALT_NAME=my-rabbit
  make verify
  mkdir -p ${HOME}/merlinu/cert_rabbitmq
- cp results/* ${HOME}/merlinu/cert_rabbitmq
+ cp result/* ${HOME}/merlinu/cert_rabbitmq
 
 
 The rabbitmq docker service can be added to the previous
