@@ -1,5 +1,8 @@
 Introduction
 ============
+This module introduces you to Merlin, some of the technology behind it,
+and how it works.
+
 .. admonition:: Prerequisites
 
       * Curiosity
@@ -13,6 +16,9 @@ Introduction
       * What Merlin is and why you might consider it
       * Why it was built and what are some target use cases
       * How it is designed and what the underlying tech is
+
+.. contents:: Table of Contents:
+  :local:
 
 What is Merlin?
 +++++++++++++++
@@ -86,7 +92,7 @@ to run more simulations through complex multi-component workflows.
 Many scientific and engineering problems require running lots of simulations.
 But accomplishing these tasks
 effectively in an unstable bleeding edge HPC environment can be dicey. The tricks
-that work for 100 simulations won't work for 
+that work for 100 simulations won't work for
 `10 thousand <https://doi.org/10.1063/1.4977912>`_, let alone
 `100 million <https://arxiv.org/abs/1912.02892>`_.
 
@@ -106,14 +112,14 @@ coordinate the execution of tasks and management of resources one of two ways:
 
 
 .. |int-img| image:: ../../images/internal_coordination.png
-   
+
 .. table:: Traditional HPC Workflow Philosophies
 
    +------------------------------+-------------------------------------------------------+
-   | External Coordination        + - Separate batch jobs for each task                   |                  
+   | External Coordination        + - Separate batch jobs for each task                   |
    | |ext-img|                    + - External daemon tracks dependencies and jobs        |
    |                              + - Progress monitored with periodic polling            |
-   |                              +   (of files or batch system)                          | 
+   |                              +   (of files or batch system)                          |
    +------------------------------+-------------------------------------------------------+
    + Internal Coordination        + - Multiple tasks bundled into larger batch jobs       |
    + |int-img|                    + - Internal daemon tracks dependencies and resources   |
@@ -123,10 +129,10 @@ coordinate the execution of tasks and management of resources one of two ways:
 
 
 
-**External coordination** ties together independent batch jobs each executing workflow 
+**External coordination** ties together independent batch jobs each executing workflow
 sub-tasks with an external monitor. This monitor could be a daemon
 or human that monitors either the batch or file system via periodic polling and orchestrates task launch dependencies.
-   
+
 External coordination can tailor the resources to the task, but cannot easily
 run lots of concurrent simulations (since batch systems usually limit the number
 of jobs a user can queue at once).
@@ -144,7 +150,7 @@ Instead of tying resources to tasks, Merlin does this:
 
 .. |cent-img| image:: ../../images/central_coordination.png
 
-.. table:: Merlin's Workflow Philosophy 
+.. table:: Merlin's Workflow Philosophy
 
 
    +------------------------------+-----------------------------------------------+
@@ -161,7 +167,7 @@ Merlin avoids a command-and-control approach to HPC resource
 management for a workflow. Instead of having the workflow coordinator
 ask for and manage HPC resources and tasks, the Merlin coordinator just manages
 tasks. Task-agnostic resources can then independently connect (and
-disconnect) to the coordinator. 
+disconnect) to the coordinator.
 
 In Merlin, this **producer-consumer workflow** happens through two commands:
 
@@ -184,8 +190,8 @@ or re-direct running jobs to work on higher-priority work.
 .. admonition:: The benefits of producer-consumer workflows
 
    The increased flexibility that comes from
-   decoupling *what* HPC simulations you run from *where* you run them
-   can be extremely enabling. 
+   decoupling *what* HPC applications you run from *where* you run them
+   can be extremely enabling.
 
    Merlin allows you to
 
@@ -220,9 +226,9 @@ to HPC workflows challenging.
   * - Workflows can change from day-to-day as researchers explore new simulations,
       configurations, and questions.
     - *Workflows need to be dynamic, not static.*
-  * - Workflow components are usually different executables, 
-      pre- and post-processing scripts and data aggregation steps 
-      written in different languages. 
+  * - Workflow components are usually different executables,
+      pre- and post-processing scripts and data aggregation steps
+      written in different languages.
     - *Workflows need to intuitively support multiple languages.*
   * - These components often need command-line-level control of task instructions.
     - *Workflows need to support shell syntax and environment variables.*
@@ -249,21 +255,20 @@ a skin and syntax that is natural for HPC simulations. In essence, we extend
 `maestro <https://github.com/LLNL/maestrowf>`_ by hooking it up to
 `celery <https://docs.celeryproject.org/en/latest/index.html>`_. We leverage
 maestro's HPC-friendly workflow description language and translate it to
-discrete celery tasks. 
+discrete celery tasks.
 
 Why not just plain celery?
 
 Celery is extremely powerful, but this power can be a barrier for many science
-and engineering subject matter experts, 
+and engineering subject matter experts,
 who might not be python coders. While this may not be
 an issue for web developers, it presents a serious challenge to many scientists
 who are used to running their code from a shell command line. By wrapping celery
 commands in maestro steps, we not only create a familiar environment for users
 (since maestro steps look like shell commands), but we also create structure
 around celery dependencies. Maestro also has interfaces to common batch schedulers
-(e.g. `flux <http://flux-framework.org>`_ and
-`slurm <https://slurm.schedmd.com/documentation.html>`_) for parallel job
-control.
+(e.g. `slurm <https://slurm.schedmd.com/documentation.html>`_
+and `flux <http://flux-framework.org>`_)[*]_ for parallel job control.
 
 So why Merlin and not just plain maestro?
 
@@ -306,15 +311,15 @@ one for GPU work).
 
 She then launches a batch allocation on the CPU machine, which contains the command
 ``merlin run-workers <workflow file> --steps 1``.
-Workers start up under flux, pull work from the server's CPU queue and call flux to 
-launch the parallel simulations asynchronously. 
+Workers start up under flux, pull work from the server's CPU queue and call flux to
+launch the parallel simulations asynchronously.
 
-She also launches a separate batch request on the GPU machine with 
+She also launches a separate batch request on the GPU machine with
 ``merlin run-workers <workflow file> --steps 2``. These workers connect to the central
 queue associated with the GPU step.
 
 When the simulations in step 1 finish, step 2 will automatically start. In this fashion,
-Merlin allows the scientist to coordinate a highly scalable asynchronous multi-machine 
+Merlin allows the scientist to coordinate a highly scalable asynchronous multi-machine
 heterogenous workflow.
 
 This is of course a simple example, but it does show how the producer-consumer
@@ -343,8 +348,8 @@ like to work around, we could be stuck. Furthermore, the complexity of the softw
 stack can be quite large, such that our team couldn't possibly keep track of it all.
 These are valid concerns; however, we've found it much easier to quickly develop a
 portable system with a small team by treating (appropriately chosen) third party
-libraries as underlying infrastructure. (Sure you *could* build and use your compiler,
-but *should* you?)
+libraries as underlying infrastructure. (Sure you *could* build and use your own
+compiler, but *should* you?)
 
 Merlin manages the increased risk that comes with relying on software that is out of
 our control by:
@@ -359,7 +364,7 @@ why they were chosen.
 
 *A brief technical dive into some underlying tech*
 
-Merlin extends `maestro <https://github.com/LLNL/maestrowf>`_ with 
+Merlin extends `maestro <https://github.com/LLNL/maestrowf>`_ with
 `celery <https://docs.celeryproject.org/en/latest/index.html>`_, which in turn can
 be configured to interface with a variety of `message queue brokers <https://docs.celeryproject.org/en/latest/getting-started/brokers/index.html#broker-overview>`_ and `results backends <https://docs.celeryproject.org/en/latest/userguide/configuration.html#result-backend>`_. In practice, we like to use
 `RabbitMQ <https://www.rabbitmq.com>`_ and `Redis <https://redis.io>`_ for our broker
@@ -400,7 +405,7 @@ When finished, a worker posts the results (task status
 metadata, such as "SUCCESS" or "FAIL") to the results database and
 automatically grabs another task from the queue.
 When additional workers come along (through other explicit calls to ``merlin run-worker``),
-they connect to the broker and help out with the workflow. 
+they connect to the broker and help out with the workflow.
 
 *Multiple vs. Single Queues*
 
@@ -417,21 +422,29 @@ What is in this Tutorial?
 
 This tutorial will show you how to:
 
-1. Install Merlin and test that it works correctly
-2. Build a basic workflow and scale it up, introducing you to
-   Merlin's syntax and how it differs from maestro.
-3. Run a "real" physics simulation based workflow, with post-processing of
-   results, visualization and machine learning.
-4. Use some of Merlin's advanced features to do things like interface with
-   batch systems, distribute a workflow across machines and dynamically add new
-   samples to a running workflow.
-5. Contribute to Merlin, through code enhancements and bug reports.
-6. Get started porting your own application, with tips and tricks for
-   building and scaling up workflows.
+
+* :doc:`Install Merlin<./installation/installation>`
+  and test that it works correctly
+* :doc:`Build a basic workflow<./hello_world/hello_world>`
+  and scale it up, introducing you to
+  Merlin's syntax and how it differs from maestro.
+* :doc:`Run a "real" physics simulation<./run_simulation/run_simulation>`
+  based workflow, with post-processing of results, visualization
+  and machine learning.
+* :doc:`Use Merlin's advanced features<./advanced_topics/advanced_topics>`
+  to do things like interface with batch systems, distribute a workflow across
+  machines and dynamically add new samples to a running workflow.
+* :doc:`Contribute to Merlin<./contribute>`,
+  through code enhancements and bug reports.
+* :doc:`Port your own application<./port_your_application>`,
+  with tips and tricks for building and scaling up workflows.
 
 
 .. rubric:: Footnotes
 
+.. [*] The flux and slurm interfaces used by Merlin differ
+       from the versions bundled with maestro to decouple job launching from
+       batch submission.
 .. [*] Technically Merlin creates celery tasks that will break up the graph into
        subsequent tasks (tasks to create tasks). This improves scalability with parallel
        task creation.

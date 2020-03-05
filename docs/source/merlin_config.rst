@@ -66,6 +66,17 @@ Merlin constructs the following connection string from the relevant options in t
     path: /tmp/username/redis.sock
     db_num: 0
 
+Broker: ``url``
+---------------
+
+A ``url`` option is available to specify the broker connection url, in this
+case the server name is ignored but still required.
+
+::
+
+  broker:
+    name: redis
+    url: redis://localhost:6379/0
 
 Results backend: ``redis``
 --------------------------
@@ -79,6 +90,18 @@ Merlin constructs the following connection string from relevant options in the `
     server: localhost
     port: 6379
 
+
+Results backend: ``url``
+--------------------------
+
+A ``url`` option is available to specify the results connection url, in this
+case the server name is ignored but still required.
+
+::
+
+  results_backend:
+    name: redis
+    url: redis://localhost:6379/0
 
 Resolving password fields
 _________________________
