@@ -288,11 +288,6 @@ Putting it all together with the parameter blocks we have an HPC batch enabled s
          cmd: |
            $(PYTHON) $(SPECROOT)/faker_sample.py -n 200 -outfile=$(MERLIN_INFO)/samples.csv
 
-NOTE FOR ME: replace samples/step cmds with something else that's more interesting
-maybe use faker and use post-process to look at statistics of the names generated off of
-10k samples or something? -> could extend it to multiple sample counts, scaling up until
-repeats start showing up to estimate total number of names in the dict it uses?
-Also could do something with monte carlo methods or fractals?
 
 The actual invocation of this workflow can be handled multiple ways: manually launch batch
 allocations before starting workers, or use Maestro to automate everything:
@@ -348,7 +343,6 @@ steps.  In this case you simply need an alloc
 Dynamic task queueing and sampling
 ++++++++++++++++++++++++++++++++++
 
-<<<<<<< HEAD
 Iterative workflows, such as optimization or machine learning, can be implemented
 in merlin via recursive workflow specifications that use dynamic task queueing.
 The example spec below is a simple implementation of this using an iteration counter
@@ -356,8 +350,15 @@ The example spec below is a simple implementation of this using an iteration cou
 to generate new samples and spawn a new instantiation of the workflow.  The iteration
 counter takes advantage of the ability to override workflow variables on the command line.
 
-.. literalinclude :: ./advanced_topics/faker_demo.yaml
+.. literalinclude:: ./advanced_topics/faker_demo.yaml
    :language: yaml
+
+This workflow specification is intended to be invoke within an allocation of nodes on your
+HPC cluster, e.g. within and sxterm.  The last step to queue up new samples for the next iteration,
+``merlin run faker_demo.yaml ...``, only doesn't need to also call ``run-workers`` since
+the workers from the first instatiation are still alive.  Thus the new samples will
+immediately start processing on the existing allocation.
+
 
 The workflow itself isn't doing anything practical; it's simply repeatedly sampling from
 a fake name generator in an attempt to count the number of unique names that are possible.
@@ -365,3 +366,16 @@ The figure below shows results from running 20 iterations, with the number of un
 faker can generate appearing to be slightly more than 300.
 
 .. image:: ./advanced_topics/cumulative_results.png
+
+Bootstrapping distributed workflows
++++++++++++++++++++++++++++++++++++
+
+There is an alternative to the manual in-allocation workflow instatiation used in the previous
+examples: encode the run-workers calls into batch scripts and submit those, or use a tool such
+as Maestro to write those batch scripts and manage the allocations and worker startup.  This can
+particularly useful for large studies that can't fit into single allocations, or even to split them
+up into smaller allocations to get through the batch queues more quickly.  Here's an example of
+using maestro to do spin up a multi allocation instantiation of the dynamic demo:
+
+.. literalinclude:: ./advanced_topics/maestro_distributed.yaml
+   :language: yaml
