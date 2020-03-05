@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.3.0.
+# This file is part of Merlin, Version: 1.4.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -35,12 +35,14 @@ import pprint
 import socket
 import subprocess
 
-import redis
 from kombu import Connection
 from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
-from merlin.config import broker, results_backend
+from merlin.config import (
+    broker,
+    results_backend,
+)
 from merlin.config.configfile import default_config_info
 
 
@@ -51,6 +53,7 @@ def check_server_access(sconf):
         print("\nChecking server connections:")
         print("-" * 28)
 
+    excpts = {}
     for s in servers:
         if s in sconf:
             try:
@@ -58,8 +61,14 @@ def check_server_access(sconf):
                 conn.connect()
                 conn.release()
                 print(f"{s} connection: OK")
-            except (socket.error, redis.exceptions.ConnectionError) as e:
+            except Exception as e:
                 print(f"{s} connection: Error")
+                excpts[s] = e
+
+    if excpts:
+        print("\nExceptions:")
+        for k, v in excpts.items():
+            print(f"{k}: {v}")
 
 
 def display_config_info():
@@ -72,25 +81,30 @@ def display_config_info():
 
     conf = default_config_info()
     sconf = {}
-    conf["broker server"] = broker.get_connection_string(include_password=False)
-    sconf["broker server"] = broker.get_connection_string()
-    conf["broker ssl"] = broker.get_ssl_config()
+    excpts = {}
     try:
         conf["broker server"] = broker.get_connection_string(include_password=False)
         sconf["broker server"] = broker.get_connection_string()
         conf["broker ssl"] = broker.get_ssl_config()
-    except ValueError:
-        conf["broker server"] = "No broker server configured."
+    except Exception as e:
+        conf["broker server"] = "Broker server error."
+        excpts["broker server"] = e
 
     try:
         conf["results server"] = results_backend.get_connection_string(
             include_password=False
         )
         sconf["results server"] = results_backend.get_connection_string()
-    except ValueError:
-        conf["results server"] = "No results server configured."
+    except Exception as e:
+        conf["results server"] = "No results server configured or error."
+        excpts["results server"] = e
 
     print(tabulate(conf.items(), tablefmt="presto"))
+
+    if excpts:
+        print("\nExceptions:")
+        for k, v in excpts.items():
+            print(f"{k}: {v}")
 
     check_server_access(sconf)
 

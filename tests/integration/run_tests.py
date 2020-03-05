@@ -40,7 +40,10 @@ import time
 from contextlib import suppress
 from glob import glob
 from re import search
-from subprocess import PIPE, Popen
+from subprocess import (
+    PIPE,
+    Popen,
+)
 
 from merlin.utils import get_flux_cmd
 
@@ -539,8 +542,8 @@ def define_tests():
                 ),
             ],
         ),
-        "black check merlin": (f"{black} merlin/", ReturnCodeCond(), "local"),
-        "black check tests": (f"{black} tests/", ReturnCodeCond(), "local"),
+        #"black check merlin": (f"{black} merlin/", ReturnCodeCond(), "local"),
+        #"black check tests": (f"{black} tests/", ReturnCodeCond(), "local"),
         "deplic no GNU": (
             f"deplic ./",
             [RegexCond("GNU", negate=True), RegexCond("GPL", negate=True)],

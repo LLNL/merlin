@@ -1,0 +1,21 @@
+
+
+       *
+   *~~~~~
+  *~~*~~~*      __  __           _ _
+ /   ~~~~~     |  \/  |         | (_)
+     ~~~~~     | \  / | ___ _ __| |_ _ __
+    ~~~~~*     | |\/| |/ _ \ '__| | | '_ \
+   *~~~~~~~    | |  | |  __/ |  | | | | | |
+  ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
+ *~~~~~~~~~~~
+   ~~~*~~~*    Machine Learning for HPC Workflows
+
+
+
+[2020-02-07 13:14:38: INFO] Launching workers from 'hello.yaml'
+[2020-02-07 13:14:38: WARNING] Workflow specification missing
+ encouraged 'merlin' section! Run 'merlin example' for examples.
+Using default configuration with no sampling.
+[2020-02-07 13:14:38: INFO] Starting celery workers
+[2020-02-07 13:14:38: INFO] ['celery worker -A merlin  -n default_worker.%%h -l INFO -Q merlin']
