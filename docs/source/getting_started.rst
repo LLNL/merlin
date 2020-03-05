@@ -6,16 +6,17 @@ Quick Start
 ::
 
     pip3 install merlinwf
-    
+
 All set up? See the :doc:`Merlin Commands <./merlin_commands>` section for using merlin.
 
+Check out the :doc:`Tutorial<./tutorial>`!
 
 Developer Setup
 ++++++++++++++++++
 To install with the additional developer dependencies, use::
 
     pip3 install "merlinwf[dev]"
-    
+
 or::
 
     pip3 install -e "git+https://github.com/LLNL/merlin.git@develop#egg=merlinwf[dev]"
@@ -27,7 +28,7 @@ Configuring Merlin
 *******************
 
 Once Merlin has been installed, the installation needs to be configured.
-Documentation for merlin configuration is in the :doc:`Configuring Merlin <./merlin_config>` section. 
+Documentation for merlin configuration is in the :doc:`Configuring Merlin <./merlin_config>` section.
 
 That's it. To start running Merlin see the :doc:`Merlin Workflows. <./merlin_workflows>`
 
@@ -49,7 +50,7 @@ Create a virtualenv
 *******************
 
 Merlin uses `virtualenvs <https://virtualenv.pypa.io/en/stable/>`_ to manage
-package dependencies which can be installed via Pip, Python's default 
+package dependencies which can be installed via Pip, Python's default
 package manager.
 
 More documentation about using Virtualenvs with Merlin can be found at
