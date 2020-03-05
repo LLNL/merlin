@@ -121,6 +121,16 @@ redis directory.
   # run redis with default config, server is at localhost port 6379
   ./src/redis-server &
 
+You can shutdown the local-redis server by using the ``redis-cli shutdown`` command
+when you are done with the tutorial.
+
+.. code-block:: bash
+
+  #cd to redis directory
+  cd <path to>/redis*/
+  ./src/redis-cli shutdown
+
+
 Docker
 ++++++
 
