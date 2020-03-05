@@ -95,6 +95,7 @@ def display_config_info():
             include_password=False
         )
         sconf["results server"] = results_backend.get_connection_string()
+        conf["results ssl"] = results_backend.get_ssl_config()
     except Exception as e:
         conf["results server"] = "No results server configured or error."
         excpts["results server"] = e
