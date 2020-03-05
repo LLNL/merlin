@@ -1,5 +1,8 @@
 Introduction
 ============
+This module introduces you to Merlin, some of the technology behind it,
+and how it works.
+
 .. admonition:: Prerequisites
 
       * Curiosity
@@ -187,7 +190,7 @@ or re-direct running jobs to work on higher-priority work.
 .. admonition:: The benefits of producer-consumer workflows
 
    The increased flexibility that comes from
-   decoupling *what* HPC simulations you run from *where* you run them
+   decoupling *what* HPC applications you run from *where* you run them
    can be extremely enabling.
 
    Merlin allows you to
@@ -264,9 +267,8 @@ who are used to running their code from a shell command line. By wrapping celery
 commands in maestro steps, we not only create a familiar environment for users
 (since maestro steps look like shell commands), but we also create structure
 around celery dependencies. Maestro also has interfaces to common batch schedulers
-(e.g. `flux <http://flux-framework.org>`_ and
-`slurm <https://slurm.schedmd.com/documentation.html>`_) for parallel job
-control.
+(e.g. `slurm <https://slurm.schedmd.com/documentation.html>`_
+and `flux <http://flux-framework.org>`_)[*]_ for parallel job control.
 
 So why Merlin and not just plain maestro?
 
@@ -346,8 +348,8 @@ like to work around, we could be stuck. Furthermore, the complexity of the softw
 stack can be quite large, such that our team couldn't possibly keep track of it all.
 These are valid concerns; however, we've found it much easier to quickly develop a
 portable system with a small team by treating (appropriately chosen) third party
-libraries as underlying infrastructure. (Sure you *could* build and use your compiler,
-but *should* you?)
+libraries as underlying infrastructure. (Sure you *could* build and use your own
+compiler, but *should* you?)
 
 Merlin manages the increased risk that comes with relying on software that is out of
 our control by:
@@ -420,21 +422,29 @@ What is in this Tutorial?
 
 This tutorial will show you how to:
 
-1. Install Merlin and test that it works correctly
-2. Build a basic workflow and scale it up, introducing you to
-   Merlin's syntax and how it differs from maestro.
-3. Run a "real" physics simulation based workflow, with post-processing of
-   results, visualization and machine learning.
-4. Use some of Merlin's advanced features to do things like interface with
-   batch systems, distribute a workflow across machines and dynamically add new
-   samples to a running workflow.
-5. Contribute to Merlin, through code enhancements and bug reports.
-6. Get started porting your own application, with tips and tricks for
-   building and scaling up workflows.
+
+* :doc:`Install Merlin<./installation/installation>`
+  and test that it works correctly
+* :doc:`Build a basic workflow<./hello_world/hello_world>`
+  and scale it up, introducing you to
+  Merlin's syntax and how it differs from maestro.
+* :doc:`Run a "real" physics simulation<./run_simulation/run_simulation>`
+  based workflow, with post-processing of results, visualization
+  and machine learning.
+* :doc:`Use Merlin's advanced features<./advanced_topics/advanced_topics>`
+  to do things like interface with batch systems, distribute a workflow across
+  machines and dynamically add new samples to a running workflow.
+* :doc:`Contribute to Merlin<./contribute>`,
+  through code enhancements and bug reports.
+* :doc:`Port your own application<./port_your_application>`,
+  with tips and tricks for building and scaling up workflows.
 
 
 .. rubric:: Footnotes
 
+.. [*] The flux and slurm interfaces used by Merlin differ
+       from the versions bundled with maestro to decouple job launching from
+       batch submission.
 .. [*] Technically Merlin creates celery tasks that will break up the graph into
        subsequent tasks (tasks to create tasks). This improves scalability with parallel
        task creation.
