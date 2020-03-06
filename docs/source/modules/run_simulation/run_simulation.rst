@@ -65,17 +65,8 @@ and that redis server is set up using this command:
 
 This is covered more in depth here: :ref:`Verifying installation`
 
-Specification file
-++++++++++++++++++
 
-We are going to build a spec file that produces this DAG:
-
-.. figure:: openfoam_dag.png
-    :align: center
-
-    Fig 3. Module 4 DAG
-
-Use the ``merlin example`` to get the necessary files for this module.
+Then use the ``merlin example`` to get the necessary files for this module.
 
 .. code-block:: bash
 
@@ -86,7 +77,7 @@ In the ``openfoam_wf`` directory you should see the following:
 
 .. figure:: openfoam_wf_output.png
 
-   Fig 4. openfoam_wf directory structure
+   Fig 3. openfoam_wf directory structure
 
 * ``openfoam_wf.yaml`` -- this spec file is partially blank. You will fill in the gaps as you follow this module's steps.
 
@@ -105,6 +96,17 @@ It should look something like this:
 .. literalinclude:: ../../../../merlin/examples/workflows/openfoam_wf/openfoam_wf.yaml
    :language: yaml
    :caption: openfoam_wf.yaml
+
+Specification file
+++++++++++++++++++
+
+We are going to build a spec file that produces this DAG:
+
+.. figure:: openfoam_dag.png
+    :align: center
+
+    Fig 4. Module 4 DAG
+
 
 Variables
 ~~~~~~~~~
