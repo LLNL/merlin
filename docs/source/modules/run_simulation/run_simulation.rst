@@ -28,12 +28,7 @@ Run a Real Simulation
 Introduction
 ++++++++++++
 
-We aim to do a parameter study on the lid-driven cavity problem. We are specifically
-interested in predicting the average velocity squared (as a proxy for energy) as well
-as the average enstrophy of the fluid in steady state from the initial conditions
-lidspeed and fluid viscosity.
-
-**TODO: insert image/image with important details**
+We aim to do a parameter study on the lid-driven cavity problem.
 
 .. list-table::
 
@@ -43,23 +38,17 @@ lidspeed and fluid viscosity.
 
       - .. figure:: lid-driven-stable.png
 
-           Fig 2. Example steady state 
+           Fig 2. Example of a flow in steady state
 
-.. figure:: setup.png
-   :scale: 25 %
-   :alt: alternate text hihihi
+In this problem, we have a viscous fluid within a square cavity that has three non-slip
+walls and one moving wall (moving lid).
+We are interested in learning how varying the viscosity and lid speed affects
+the average enstrophy and kinetic energy of the fluid after it reaches steady state.
+We will be using the velocity squared as a proxy for kinetic energy.
 
-   This png was created using the data from a lid-driven cavity example and VisIt.
+This module will be going over:
 
-.. figure:: lid-driven-stable.png
-   :scale: 25 %
-   :alt: alternate text hihihi
-
-   This png was created using the data from a lid-driven cavity example and VisIt.
-
-We will be going over:
-
- * Setting up our inputs
+ * Setting up our inputs using the merlin block
  * Running multiple simulations in parallel
  * Combining the outputs of these simulations into a an array
  * Predictive modeling and visualization
@@ -81,8 +70,10 @@ Specification file
 
 We are going to build a spec file that produces this DAG:
 
-.. image:: openfoam_dag.png
+.. figure:: openfoam_dag.png
     :align: center
+
+    Fig 3. Module 4 DAG
 
 Use the ``merlin example`` to get the necessary files for this module.
 
@@ -93,7 +84,9 @@ Use the ``merlin example`` to get the necessary files for this module.
 
 In the ``openfoam_wf`` directory you should see the following:
 
-**TODO: insert directory graph**
+.. figure:: openfoam_wf_output.png
+
+   Fig 4. openfoam_wf directory structure
 
 * ``openfoam_wf.yaml`` -- this spec file is partially blank. You will fill in the gaps as you follow this module's steps.
 
@@ -111,6 +104,7 @@ It should look something like this:
 
 .. literalinclude:: ../../../../merlin/examples/workflows/openfoam_wf/openfoam_wf.yaml
    :language: yaml
+   :caption: openfoam_wf.yaml
 
 Variables
 ~~~~~~~~~
