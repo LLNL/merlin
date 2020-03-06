@@ -4,6 +4,7 @@ description:
 
 env:
     variables:
+        OUTPUT_PATH: ./
         N_SAMPLES: 10
 
 study:
@@ -11,14 +12,8 @@ study:
       description: exit immediately
       run:
         cmd: |
-            echo $(SAMPLE)
+            #echo $(SAMPLE)
             exit $(MERLIN_SUCCESS)
-
-    - name: collect_times
-      description: extract the start and end times
-      run:
-        cmd: echo "hi"
-        depends: [null_step_*]
 
 merlin:
     resources:
