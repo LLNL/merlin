@@ -10,7 +10,9 @@ study:
     - name: null_step
       description: exit immediately
       run:
-        cmd: exit $(MERLIN_SUCCESS) # $(SAMPLE)
+        cmd: |
+            echo $(SAMPLE)
+            exit $(MERLIN_SUCCESS)
 
     - name: collect_times
       description: extract the start and end times
@@ -19,8 +21,12 @@ study:
         depends: [null_step_*]
 
 merlin:
+    resources:
+        workers:
+            null_worker:
+                args: -O fair --prefetch-multiplier 1 -E -l info --concurrency 1 --logfile=%%p.log
     samples:
         generate:
-            cmd: echo -e "1\n2\n3" >> $(MERLIN_INFO)/samples.csv
+            cmd: for i in {1..$(N_SAMPLES)} ; do echo $i ; done >> $(MERLIN_INFO)/samples.csv
         file: $(MERLIN_INFO)/samples.csv
         column_labels: [SAMPLE]
