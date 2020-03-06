@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.0.
+# This file is part of Merlin, Version: 1.4.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -38,16 +38,17 @@ decoupled from the logic the tasks are running.
 import logging
 import os
 from contextlib import suppress
+from datetime import datetime
 
 from merlin.study.celeryadapter import (
     create_celery_config,
     purge_celery_tasks,
+    query_celery_queues,
     query_celery_workers,
     run_celery,
     start_celery_workers,
     stop_celery_workers,
 )
-from merlin.templates.generator import setup_template
 
 
 try:
@@ -109,6 +110,47 @@ def purge_tasks(task_server, spec, force, steps):
         LOG.error("Celery is not specified as the task server!")
 
 
+def query_status(task_server, spec, steps):
+    """
+    Queries status of queues in spec file from server.
+
+    :param `task_server`: The task server from which to purge tasks.
+    :param `spec`: A MerlinSpec object
+    :param `steps`: Spaced-separated list of stepnames to query. Default is all
+    """
+    LOG.info(f"Querying queues for steps = {steps}")
+
+    if task_server == "celery":
+        queues = spec.get_queue_list(steps)
+        # Query the queues
+        return query_celery_queues(queues)
+    else:
+        LOG.error("Celery is not specified as the task server!")
+
+
+def dump_status(query_return, csv_file):
+    """
+    Dump the results of a query_status to a csv file.
+
+    :param `query_return`: The output of query_status
+    :param `csv_file`: The csv file to append
+    """
+    if os.path.exists(csv_file):
+        fmode = "a"
+    else:
+        fmode = "w"
+    with open(csv_file, mode=fmode) as f:
+        if f.mode == "w":  # add the header
+            f.write("# time")
+            for name, job, consumer in query_return:
+                f.write(f",{name}:tasks,{name}:consumers")
+            f.write("\n")
+        f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        for name, job, consumer in query_return:
+            f.write(f",{job},{consumer}")
+        f.write("\n")
+
+
 def query_workers(task_server):
     """
     Gets info from workers.
@@ -124,19 +166,20 @@ def query_workers(task_server):
         LOG.error("Celery is not specified as the task server!")
 
 
-def stop_workers(task_server, queues, workers):
+def stop_workers(task_server, spec_worker_names, queues, workers_regex):
     """
     Stops workers.
 
     :param `task_server`: The task server from which to stop workers.
+    :param `spec_worker_names`: Worker names to stop, drawn from a spec.
     :param `queues`     : The queues to stop
-    :param `workers`    : Regex for workers to stop
+    :param `workers_regex`    : Regex for workers to stop
     """
     LOG.info(f"Stopping workers...")
 
     if task_server == "celery":
         # Stop workers
-        return stop_celery_workers(queues, workers)
+        return stop_celery_workers(queues, spec_worker_names, workers_regex)
     else:
         LOG.error("Celery is not specified as the task server!")
 
@@ -150,7 +193,7 @@ def route_for_task(name, args, kwargs, options, task=None, **kw):
         return {"queue": queue}
 
 
-def create_config(task_server, config_dir):
+def create_config(task_server, config_dir, broker):
     """
     Create a config for the given task server.
 
@@ -164,20 +207,10 @@ def create_config(task_server, config_dir):
 
     if task_server == "celery":
         config_file = "app.yaml"
-        with resources.path("merlin.data.celery", config_file) as data_file:
+        data_config_file = "app.yaml"
+        if broker == "redis":
+            data_config_file = "app_redis.yaml"
+        with resources.path("merlin.data.celery", data_config_file) as data_file:
             create_celery_config(config_dir, config_file, data_file)
     else:
         LOG.error("Only celery can be configured currently.")
-
-
-def templates(template_name, outdir):
-    """
-    Setup a Merlin template spec.
-
-    :param template_name: Then name of the template to copy into the workspace.
-    :param outdir: The directory to copy the template to.
-    """
-    with suppress(FileExistsError):
-        os.makedirs(outdir)
-
-    template = setup_template(template_name, outdir)

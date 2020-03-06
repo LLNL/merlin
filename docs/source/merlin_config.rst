@@ -1,10 +1,10 @@
-Configuring Merlin
-===================
+Configuration
+=============
 
 This section provides documentation for configuring Merlin's connections with task servers and results backends.
 
 
-Merlin Server Configuration
+Merlin server configuration
 ---------------------------
 
 Merlin works best configuring celery to run with a RabbitMQ_ broker and a redis_ backend.
@@ -55,7 +55,7 @@ Merlin constructs the following connection string from the relevant options in t
 
 
 Broker: ``redis+socket``
-----------------------
+------------------------
 Merlin constructs the following connection string from the relevant options in the ``broker`` section of the app.yaml file.
 ``"redis+socket://{path}?virtual_host={db_num}"``
 

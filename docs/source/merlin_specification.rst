@@ -11,7 +11,7 @@ The input file can take a number of variables, beyond the examples shown here.
 For a complete list and descriptions of the variables,
 see :doc:`./merlin_variables`.
 
-::
+.. code-block:: yaml
 
   ####################################
   # Description Block (Required)
@@ -115,17 +115,35 @@ see :doc:`./merlin_variables`.
   # name: step name
   # description: what the step does
   # run:
-  #   cmd: the command to run for multilines use cmd: |
+  #   cmd: the command to run for multilines use cmd: | 
+  #        The $(LAUNCHER) macro can be used to substitute a parallel launcher 
+  #        based on the batch:type:.
+  #        It will use the nodes and procs values for the task.
   #   task_queue: the queue to assign the step to (optional. default: merlin)
   #   shell: the shell to use for the command (eg /bin/bash /usr/bin/env python)
   #          (optional. default: /bin/bash)
   #   depends: a list of steps this step depends upon (ie parents)
+  #   procs: The total number of MPI tasks
+  #   nodes: The total number of MPI nodes
+  #   walltime: The total walltime of the run (hh:mm:ss) (not available in lsf)
+  #   cores per task: The number of hardware threads per MPI task
+  #   gpus per task: The number of GPUs per MPI task
+  #   SLURM specific run flags:
+  #   slurm: Verbatim flags only for the srun parallel launch (srun -n <nodes> -n <procs> <slurm>)
+  #   FLUX specific run flags:
+  #   flux: Verbatim flags for the flux parallel launch (flux mini run <flux>)
+  #   LSF specific run flags:
+  #   bind: Flag for MPI binding of tasks on a node
+  #   num resource set: Number of resoure sets
+  #   launch_distribution : The distribution of resources (default: plane:{procs/nodes})
+  #   exit_on_error: Flag to exit on error (default: 1)
+  #   lsf: Verbatim flags only for the lsf parallel launch (jsrun ... <lsf>
   #######################################################################
    study:
     - name: runs1
       description: Run on alloc1
       run:
-       cmd: echo "$(VAR1) $(VAR2)" > simrun.out
+       cmd: $(LAUNCHER) echo "$(VAR1) $(VAR2)" > simrun.out
        nodes: 1
        procs: 1
        task_queue: queue1
@@ -147,11 +165,13 @@ see :doc:`./merlin_variables`.
       run:
         cmd: |
           touch learnrun.out
-          echo "$(VAR1) $(VAR2)" >> learnrun.out
-          exit $(EXIT.RETRY) # some syntax to catch a retry error code
+          $(LAUNCHER) echo "$(VAR1) $(VAR2)" >> learnrun.out
+          exit $(MERLIN_RETRY) # some syntax to send a retry error code
         nodes: 1
         procs: 1
         task_queue: lqueue
+        batch:
+          type: <override the default batch type>
 
     - name: monitor
       description: Monitor on alloc1
@@ -234,6 +254,12 @@ see :doc:`./merlin_variables`.
               args: <celery worker args> <optional>
               steps: [runs1, post-process, monitor]  # [all] when steps is omitted
               nodes: <Number of nodes for this worker or batch num nodes>
+              # A list of machines to run the given steps can be specified
+              # in the machines keyword. <optional>
+              # A full OUTPUT_PATH and the steps argument are required
+              # when using this option. Currently all machines in the
+              # list must have access to the OUTPUT_PATH. 
+              machines: [host1, host2]
 
           learnworkers:
               args: <celery worker args> <optional>
@@ -242,9 +268,12 @@ see :doc:`./merlin_variables`.
               # An optional batch section in the worker can override the
               # main batch config. This is useful if other workers are running
               # flux, but some component of the workflow requires the native
-              # scheduler or cannot run under flux.
+              # scheduler or cannot run under flux. Another possibility is to 
+              # have the default type as local and workers needed for flux or
+              # slurm steps.
               batch:
                  type: local
+              machines: [host3]
 
     ###################################################
     # Sample definitions

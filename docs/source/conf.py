@@ -12,21 +12,26 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+from datetime import date
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../..'))
 
+sys.path.insert(0, os.path.abspath('../..'))
+
+MERLIN_VERSION = __import__("merlin").VERSION
 
 # -- Project information -----------------------------------------------------
 
+_year = date.today().year
+
 project = u'Merlin'
-copyright = u'2018, MLSI'
-author = u'MLSI'
+copyright = '{}, LLNL: LLNL-CODE-797170'.format(_year)
+author = u'Lawrence Livermore National Laboratory'
 
 # The short X.Y version
-version = u'1.0.0'
+version = MERLIN_VERSION
 # The full version, including alpha/beta/rc tags
-release = u'1.0.0'
+release = MERLIN_VERSION
 
 
 # -- General configuration ---------------------------------------------------
@@ -38,10 +43,11 @@ release = u'1.0.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-]
+#extensions = [
+#    'sphinx.ext.autodoc',
+#    'sphinx.ext.intersphinx',
+#]
+extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -76,13 +82,19 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'alabaster'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    "description": "Machine learning for HPC workflows",
+    "github_user": "LLNL",
+    "github_repo": "merlin",
+    "fixed_sidebar": True,
+    "show_relbars": True,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -167,6 +179,11 @@ texinfo_documents = [
 
 primary_domain = 'py'
 
-highlight_language = 'py'
+highlight_language = 'bash'
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+
+def setup(app):
+    app.add_stylesheet('custom.css')
+    app.add_javascript("custom.js")
+    app.add_javascript("https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js")

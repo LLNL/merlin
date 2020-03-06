@@ -1,0 +1,35 @@
+description:
+    name: simple_chain
+    description: test to see that chains are not run in parallel
+
+batch:
+    type: local
+
+env:
+    variables:
+        OUTPUT_PATH: ./studies
+
+study:
+    - name: step1 
+      description: step 1
+      run:
+         cmd: |
+              touch STEP_ONE_RUNNING_$(X2)
+              sleep 5
+              rm STEP_ONE_RUNNING_$(X2)
+
+    - name: step2
+      description: |
+         step 2
+      run:
+        cmd: |
+          ls $(step1.workspace)
+          sleep 5
+        depends: [step1]
+
+global.parameters:
+    X2:
+        values : [0.5,.75]
+        label  : X2.%%
+
+

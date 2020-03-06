@@ -1,4 +1,4 @@
-prune docs
-prune tests
-include workflows/*
-include merlin/data/*
+recursive-include merlin/data *.yaml *.py
+recursive-include merlin/examples *.py *.yaml *.c *.json *.sbatch *.bsub
+include requirements.txt
+include requirements/*

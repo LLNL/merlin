@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.0.
+# This file is part of Merlin, Version: 1.4.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,12 +29,16 @@
 ###############################################################################
 
 import os
-from setuptools import setup
-from setuptools import find_packages
+
+from setuptools import (
+    find_packages,
+    setup,
+)
+
 
 version = __import__("merlin").VERSION
 
-extras = ["mysql"]
+extras = ["mysql", "dev"]
 
 
 def readme():
@@ -90,6 +94,8 @@ def extras_require():
 
 setup(
     name="merlinwf",
+    author="Merlin Dev team",
+    author_email="merlin@llnl.gov",
     version=version,
     description="The building blocks of workflows!",
     long_description=readme(),

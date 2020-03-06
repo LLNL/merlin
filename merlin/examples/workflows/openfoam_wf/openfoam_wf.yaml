@@ -1,0 +1,64 @@
+description:
+    name: openfoam_wf
+    description: |
+      A parameter study that includes initializing, running,
+      post-processing, collecting, learning and vizualizing OpenFOAM runs
+
+
+env:
+    variables:
+        OUTPUT_PATH:
+
+        SCRIPTS:
+        N_SAMPLES:
+
+
+merlin:
+    samples:
+        generate:
+            cmd: |
+
+        file:
+        column_labels:
+    resources:
+        workers:
+            nonsimworkers:
+                args: -l INFO --concurrency <INPUT CONCURRENCY HERE>
+                steps:
+            simworkers:
+                args: -l INFO --concurrency <INPUT CONCURRENCY HERE> --prefetch-multiplier 1 -Ofair
+                steps:
+
+
+
+study:
+    - name: setup
+      description: |
+                Installs necessary python packages and imports the cavity directory
+                from the docker container
+      run:
+          cmd: |
+
+    - name: sim_runs
+      description: |
+                  Edits the Lidspeed and viscosity then runs OpenFOAM simulation
+                  using the icoFoam solver
+      run:
+          cmd: |
+          depends:
+          task_queue: simqueue
+
+    - name: combine_outputs
+      description: |
+                Combines the outputs of the previous step
+      run:
+          cmd: |
+          depends:
+
+    - name: learn
+      description: |
+                Learns the output of the openfoam simulations using input parameters
+                and outputs error visualization from the experiment
+      run:
+          cmd: |
+          depends:

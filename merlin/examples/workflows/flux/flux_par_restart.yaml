@@ -1,0 +1,123 @@
+description:
+  description: A simple ensemble of parallel MPI jobs run by flux.
+  name: flux_par_restart
+
+batch:
+  type: flux
+  nodes: 1
+  queue: pbatch
+  flux_start_opts: -o,-S,log-filename=flux_par.out
+
+env:
+  variables:
+    OUTPUT_PATH: ./studies
+    N_SAMPLES: 10
+
+study:
+- description: Build the code
+  name: build
+  run:
+    cmd: mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c >& build.out
+    task_queue: flux_par
+- description: Echo the params
+  name: runs 
+  run:
+    cmd: |
+      if [ -e flux_run.out ]; then
+       touch flux_restart.out
+       exit $(MERLIN_SUCCESS)
+      fi
+      if [  ! -z ${FLUX_PMI_LIBRARY_PATH+x} ]; then
+          FPMI2LIB=`dirname ${FLUX_PMI_LIBRARY_PATH}`/libpmi2.so
+          if [ -e ${FPMI2LIB} ]; then 
+            if [  ! -z ${LD_PRELOAD+x} ]; then
+              export LD_PRELOAD=${LD_PRELOAD}:${FPMI2LIB}
+            else
+              export LD_PRELOAD=${FPMI2LIB}
+            fi
+          fi
+      fi
+      $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > flux_run.out
+      # This is to test the re-run of cmd if no restart is given
+      exit $(MERLIN_RESTART)
+    depends: [build]
+    task_queue: flux_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+- description: Echo the params
+  name: runs_rt 
+  run:
+    cmd: |
+      if [ -e flux_run.out ]; then
+       touch flux_retry.out
+       exit $(MERLIN_SUCCESS)
+      fi
+      if [  ! -z ${FLUX_PMI_LIBRARY_PATH+x} ]; then
+          FPMI2LIB=`dirname ${FLUX_PMI_LIBRARY_PATH}`/libpmi2.so
+          if [ -e ${FPMI2LIB} ]; then 
+            if [  ! -z ${LD_PRELOAD+x} ]; then
+              export LD_PRELOAD=${LD_PRELOAD}:${FPMI2LIB}
+            else
+              export LD_PRELOAD=${FPMI2LIB}
+            fi
+          fi
+      fi
+      $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > flux_run.out
+      # This is to test the re-run of cmd if no restart is given
+      exit $(MERLIN_RETRY)
+    depends: [build]
+    task_queue: flux_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+- description: Echo the params using restart
+  name: runs_rs 
+  run:
+    cmd: |
+      ln -s $(build.workspace)/mpi_hello .
+      exit $(MERLIN_RESTART)
+    depends: [build]
+    task_queue: flux_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+    restart: |
+       if [  ! -z ${FLUX_PMI_LIBRARY_PATH+x} ]; then
+          FPMI2LIB=`dirname ${FLUX_PMI_LIBRARY_PATH}`/libpmi2.so
+          if [ -e ${FPMI2LIB} ]; then 
+            if [  ! -z ${LD_PRELOAD+x} ]; then
+              export LD_PRELOAD=${LD_PRELOAD}:${FPMI2LIB}
+            else
+              export LD_PRELOAD=${FPMI2LIB}
+            fi
+          fi
+       fi
+       $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > flux_run.out
+
+- description: Dump flux info
+  name: data
+  run:
+    cmd: |
+      flux kvs dir lwj.0.0.5 >& flux_kvs.out
+    depends: [runs*, runs_rs*, runs_rt*]
+    task_queue: flux_par
+
+global.parameters:
+  STUDY:
+    label: STUDY.%%
+    values:
+    - FLUXTEST
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      simworkers:
+        args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
+        steps: [runs, data]
+  samples:
+    column_labels: [V1, V2]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

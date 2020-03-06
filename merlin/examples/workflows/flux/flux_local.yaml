@@ -1,0 +1,71 @@
+description:
+  description: Run a scan through Merlin/Maestro
+  name: flux_local
+
+batch:
+  type: local
+  nodes: 1
+  queue: pbatch
+  flux_start_opts: -o,-S,log-filename=flux_local.out
+
+env:
+  variables:
+    N_SAMPLES: 10
+
+study:
+- description: Build the code
+  name: build
+  run:
+    cmd: mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c >& build.out
+    task_queue: flux_local
+- description: Echo the params
+  name: runs 
+  run:
+    cmd: |
+     if [  ! -z ${FLUX_PMI_LIBRARY_PATH+x} ]; then
+        FPMI2LIB=`dirname ${FLUX_PMI_LIBRARY_PATH}`/libpmi2.so
+        if [ -e ${FPMI2LIB} ]; then 
+          if [  ! -z ${LD_PRELOAD+x} ]; then
+            export LD_PRELOAD=${LD_PRELOAD}:${FPMI2LIB}
+          else
+            export LD_PRELOAD=${FPMI2LIB}
+          fi
+        fi
+     fi
+     $(LAUNCHER) $(build.workspace)/mpi_hello $(V1) $(V2) > flux_run.out
+    depends: [build]
+    task_queue: flux_local
+    nodes: 1
+    procs: 4
+    cores per task: 1
+    batch:
+      type: flux
+
+- description: Dump flux info
+  name: data
+  run:
+    cmd: |
+      flux kvs dir lwj.0.0.5 >& flux_kvs.out
+    depends: [runs*]
+    task_queue: flux_local
+
+global.parameters:
+  STUDY:
+    label: STUDY.%%
+    values:
+    - FLUXTEST
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      simworkers:
+        args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
+        steps: [runs, data]
+        batch:
+          type: flux
+  samples:
+    column_labels: [V1, V2]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

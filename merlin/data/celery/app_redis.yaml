@@ -1,0 +1,38 @@
+broker:
+    # can be redis, redis+sock, or rabbitmq
+    name: redis
+
+    # username: # defaults to your username unless changed here
+    # password: ~/.merlin/rabbit-password
+    
+    # server URL
+    server: localhost
+
+    ### for rabbitmq, redis+sock connections ###
+    #vhost: # defaults to your username unless changed here
+
+    ### for redis+sock connections ###
+    #socketname: the socket name your redis connection can be found on.
+    #path: The path to the socket.
+
+    ### for redis connections ###
+    port: 6379
+    db_num: 0
+
+
+results_backend:
+    # must be redis
+    name: redis
+    # dbname: mlsi
+    # username: mlsi
+    # name of file where redis password is stored.
+    # password: redis.pass
+    server: localhost
+    # merlin will generate this key if it does not exist yet,
+    # and will use it to encrypt all data over the wire to
+    # your redis server.
+    # encryption_key: ~/.merlin/encrypt_data_key
+    port: 6379
+    db_num: 0
+
+
