@@ -13,7 +13,7 @@ your Merlin development environment.
 
 Once your development is setup create a branch:
 
-.. code:: bash
+.. code-block:: bash
 
     $ git checkout -b feature/<username>/description
 
@@ -69,7 +69,7 @@ Testing
 
 All pull requests must pass unit and integration tests. To ensure that they do run
 
-.. code::
+.. code-block:: bash
 
     $ make tests
 
@@ -85,6 +85,6 @@ for docstrings.
 
 Merlin has style checkers configured. They can be run from the Makefile:
 
-.. code::
+.. code-block:: bash
 
     $ make check-style

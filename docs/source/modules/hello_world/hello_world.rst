@@ -1,8 +1,10 @@
 Hello, World!
 =============
+This hands-on module walks through the steps of building and running a simple merlin workflow.
+
 .. admonition:: Prerequisites
 
-    * :doc:`Module 2: Installation<installation>`
+    * :doc:`Module 2: Installation<../installation/installation>`
 
 .. admonition:: Estimated time
 
@@ -14,37 +16,69 @@ Hello, World!
       * How to run a simple merlin workflow.
       * How to interpret the results of your workflow.
 
-.. contents::
+
+.. contents:: Table of Contents:
   :local:
 
-Elements of a specification
-+++++++++++++++++++++++++++
+Get example files
++++++++++++++++++
+``merlin example`` is a command line tool that makes it easy to get a basic workflow up and running. Run the following commands:
+
+.. code-block:: bash
+
+    $ merlin example hello
+
+.. code-block:: bash
+
+    $ cd hello/
+
+This will create and move into directory called ``hello``, which contains these files:
+
+* ``my_hello.yaml`` -- this spec file is partially blank. You will fill in the gaps as you follow this module's steps.
+
+* ``hello.yaml`` -- this is a complete spec without samples. You can always reference it as an example.
+
+* ``hello_samples.yaml`` -- same as before, but with samples added.
+
+* ``make_samples.py`` -- this is a small python script that generates samples.
+
+* ``requirements.txt`` -- this is a text file listing this workflow's python dependencies.
+
+Specification file
+++++++++++++++++++
 
 Central to Merlin is something called a specifiation file, or a "spec" for short.
 The spec defines all aspects of your workflow.
-The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes).
+The spec is formatted in yaml.
+If you're unfamilar with yaml, it's worth `reading up on`__ for a few minutes.
 
-Let's build our spec piece by piece.
+__ https://www.tutorialspoint.com/yaml/yaml_quick_guide.htm
 
+.. warning::
 
-description
-~~~~~~~~~~~
+    Stray whitespace can break yaml; make sure your indentation is consistent.
+
+Let's build our spec piece by piece. For each spec section listed below, fill in the blank yaml entries of ``my_hello.yaml`` with the given material.
+
+Section: ``description``
+~~~~~~~~~~~~~~~~~~~~~~~~
 Just what it sounds like. Name and briefly summarize your workflow.
 
-.. code:: yaml
+.. code-block:: yaml
 
     description:
         name: hello world workflow
-        description: say hello in 3 languages
+        description: say hello in 2 languages
 
-global.parameters
-~~~~~~~~~~~~~~~~~
+Section: ``global.parameters``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. better explanation??
 
 Global parameters are constants that you want to vary across simulations.
-The whole workflow is run for index of parameter values.
+Steps that contain a global parameter or depend on other steps that contain a global parameter are run for each index over parameter values.
+The label is the pattern for a filename that will be created for each value.
 
-.. code:: yaml
+.. code-block:: yaml
 
     global.parameters:
         GREET:
@@ -54,13 +88,18 @@ The whole workflow is run for index of parameter values.
             values : ["world","mundo"]
             label  : WORLD.%%
 
-So this will give us an English result, and a Spanish one (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
+.. note::
 
-study
-~~~~~
+    ``%%`` is a special token that defines where the value in the label is placed. In this case the parameter labels will be GREET.hello, GREET.hola, etc. The label can take a custom text format, so long as the ``%%`` token is included to be able to substitute the parameter’s value in the appropriate place.
+
+So this will give us 1) an English result, and 2) a Spanish one (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
+
+Section: ``study``
+~~~~~~~~~~~~~~~~~~
 This is where you define worfklow steps.
+While the convention is to list steps as sequentially as possible, the only factor in determning step order is the dependency DAG created by the ``depends`` field.
 
-.. code:: yaml
+.. code-block:: yaml
 
     study:
         - name: step_1
@@ -74,6 +113,10 @@ This is where you define worfklow steps.
               cmd: print("Hurrah, we did it!")
               depends: [step_1]
               shell: /usr/bin/env python3
+
+.. note::
+
+    The ``-`` denotes a list item in YAML. To add elements, simply add new elements prefixed with a hyphen
 
 ``$(GREET)`` and ``$(WORLD)`` expand the global parameters seperately into their two values.
 .. ``$(step_1.workspace)`` gets the path to ``step_1``.
@@ -93,13 +136,13 @@ Since our global parameters have 2 values, this is actually what the DAG looks l
 
 It looks like running ``step_2`` twice is redundant. Instead of doing that, we can collapse it back into a single step, by having it wait for both parameterized versions of ``step_1`` to finish. Add ``_*`` to the end of the step name in ``step_1``'s depend entry. Go from this:
 
-.. code:: yaml
+.. code-block:: yaml
 
     depends: [step_1]
 
 ...to this:
 
-.. code:: yaml
+.. code-block:: yaml
 
     depends: [step_1_*]
 
@@ -109,26 +152,25 @@ Now the DAG looks like this:
     :width: 300
     :align: center
 
-Your full hello world spec should now look like this:
+Your full hello world spec ``my_hello.yaml`` should now look like this (an exact match of ``hello.yaml``):
 
 .. literalinclude:: ../../../../merlin/examples/workflows/hello/hello.yaml
    :language: yaml
 
-We'll name it ``hello.yaml``.
 The order of the spec sections doesn't matter.
 
 .. note::
 
-    At this point, our spec is still merlin- and maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will still add later. If you want to try it, run: ``$ maestro run hello.yaml``
+    At this point, ``my_hello.yaml`` is still maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will still add later. If you want to try it, run: ``$ maestro run my_hello.yaml``
 
 Try it!
 +++++++
 
 First, we'll run merlin locally. On the command line, run:
 
-.. code:: bash
+.. code-block:: bash
 
-    $ merlin run --local hello.yaml
+    $ merlin run --local my_hello.yaml
 
 If your spec is bugless, you should see a few messages proclaiming successful step completion, like this (for now we'll ignore the warning):
 
@@ -145,8 +187,6 @@ The whole file tree looks like this:
     :align: center
 
 A lot of stuff, right? Here's what it means:
-
-.. * ``new_file.txt`` is the name of the file we wrote in ``step_1``.
 
 * The yaml file inside ``merlin_info/`` is called the provenance spec. It's a copy of the original spec that was run.
 
@@ -169,9 +209,9 @@ Run distributed!
 
 Now we will run the same workflow, but in parallel on our task server:
 
-.. code:: bash
+.. code-block:: bash
 
-    $ merlin run hello.yaml
+    $ merlin run my_hello.yaml
 
 If your merlin configuration is set up correctly, you should see something like this:
 
@@ -180,7 +220,7 @@ If your merlin configuration is set up correctly, you should see something like 
 
 That means we have launched our tasks! Now we need to launch the workers that will complete those tasks. Run this:
 
-.. code:: bash
+.. code-block:: bash
 
     $ merlin run-workers hello.yaml
 
@@ -196,6 +236,17 @@ Immediately after that, this will pop up:
 
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
 
+Workers are persistent, even after work is done. Send a stop signal to all your workers with this command:
+
+.. code-block:: bash
+
+    $ merlin stop-workers
+
+...and a successful worker stop will look like this, with the name of specific worker(s) reported:
+
+.. literalinclude :: stop_workers.txt
+    :language: text
+
 .. _Using Samples:
 
 Using samples
@@ -204,11 +255,18 @@ It's a little boring to say "hello world" in just two different ways. Let's inst
 
 To do this, we'll need samples. Specifically, we'll change ``WORLD`` from a global parameter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "mundo" to being a randomly-generated name.
 
-First, we remove the global parameter ``WORLD``.
+First, we remove the global parameter ``WORLD`` so it does not conflict with our new sample. Parameters now look like this:
+
+.. code-block:: yaml
+
+    global.parameters:
+        GREET:
+            values : ["hello", "hola"]
+            label  : GREET.%%
 
 Now add these yaml sections to your spec:
 
-.. code:: yaml
+.. code-block:: yaml
 
     env:
         variables:
@@ -216,12 +274,12 @@ Now add these yaml sections to your spec:
 
 This makes ``N_SAMPLES`` into a user-defined variable that you can use elsewhere in your spec.
 
-.. code:: yaml
+.. code-block:: yaml
 
     merlin:
         samples:
             generate:
-                cmd: pip3 install names ; python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+                cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
             file: $(MERLIN_INFO)/samples.csv
             column_labels: [WORLD]
 
@@ -236,17 +294,22 @@ It's good practice to shift larger chunks of code to external scripts. At the sa
 
 Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
 
+Before we can run this, we must install the script's one external python library dependency ``names`` (a library that generates random names):
+
+.. code-block:: bash
+
+    $ pip3 install names
+
 Here's our DAG with samples:
 
 .. image:: dag4.png
     :width: 400
     :align: center
 
-Here's the new spec:
+Here's your new and improved ``my_hello.yaml``, which now should match ``hello_samples.yaml``:
 
 .. literalinclude:: ../../../../merlin/examples/workflows/hello/hello_samples.yaml
    :language: yaml
-
 
 Run the workflow again!
 
@@ -255,28 +318,24 @@ Once finished, this is what the insides of ``step_1`` look like:
 .. image:: merlin_output2.png
     :align: center
 
-
-
 * ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used interally by merlin and doesn't usually require user attention.
 
 * Numerically-named directories like ``0``, ``1``, and ``2`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
 
-Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. To do this, you could interally change thevalue in the spec from 3 to 1000. OR you could just this run this:
+Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could interally change the value in the spec from 3 to 1000. OR you could just run this:
 
-.. code:: bash
+.. code-block:: bash
 
-    $ merlin run --vars N_SAMPLES=1000 hello.yaml
+    $ merlin run my_hello.yaml --vars N_SAMPLES=1000
 
-    $ merlin run-workers hello.yaml
+.. code-block:: bash
 
-To send a warm stop signal to your workers, run:
+    $ merlin run-workers my_hello.yaml
 
-.. code:: bash
+Once again, to send a warm stop signal to your workers, run:
+
+.. code-block:: bash
 
     $ merlin stop-workers
 
 Congratulations! You concurrently greeted 1000 friends in English and Spanish!
-
-.. note::
-
-    To get a fresh copy of the specs and script from this module, run ``merlin example hello``.
