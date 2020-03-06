@@ -542,8 +542,8 @@ def define_tests():
                 ),
             ],
         ),
-        #"black check merlin": (f"{black} merlin/", ReturnCodeCond(), "local"),
-        #"black check tests": (f"{black} tests/", ReturnCodeCond(), "local"),
+        # "black check merlin": (f"{black} merlin/", ReturnCodeCond(), "local"),
+        # "black check tests": (f"{black} tests/", ReturnCodeCond(), "local"),
         "deplic no GNU": (
             f"deplic ./",
             [RegexCond("GNU", negate=True), RegexCond("GPL", negate=True)],
