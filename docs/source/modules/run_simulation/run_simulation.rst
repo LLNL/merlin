@@ -1,5 +1,6 @@
 Run a Real Simulation
 =====================
+<<<<<<< HEAD
 
 .. admonition:: Summary
 
@@ -10,6 +11,12 @@ Run a Real Simulation
 
       * :doc:`Module 0: Before you come<../before>`
       * :doc:`Module 2: Installation<../installation/installation>`
+=======
+.. admonition:: Prerequisites
+
+      * :doc:`Module 0: Before you come<../before>`
+      * :doc:`Module 2: Installation<../installation>`
+>>>>>>> master
       * :doc:`Module 3: Hello World<../hello_world/hello_world>`
 
 .. admonition:: Estimated time
@@ -21,6 +28,7 @@ Run a Real Simulation
       * How to run the simulation OpenFOAM, using merlin.
       * How to use machine learning on OpenFOAM results, using merlin.
 
+<<<<<<< HEAD
 .. contents:: Table of Contents:
   :local:
 
@@ -41,6 +49,15 @@ We will be going over:
  * Running multiple simulations in parallel
  * Combining the outputs of these simulations into a an array
  * Predictive modeling and visualization
+=======
+.. contents::
+  :local:
+
+This module aims to do a parameter study on a well-known benchmark problem for
+viscous incompressible fluid flow. We will be setting up our inputs, running
+multiple simulations in parallel, combining the outputs, and finally doing some
+predictive modeling and visualization using the outputs of these runs.
+>>>>>>> master
 
 Specification file
 ++++++++++++++++++
@@ -54,7 +71,11 @@ Variables
 ~~~~~~~~~
 First we specify some variables to make our life easier:
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
   env:
       variables:
@@ -71,7 +92,11 @@ We will put this in the merlin sample generation section, since it runs before a
 
 Edit the merlin block to look like the following:
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
   merlin:
       samples:
@@ -82,7 +107,11 @@ Edit the merlin block to look like the following:
           file: $(MERLIN_INFO)/samples.npy
           column_labels: [LID_SPEED, VISCOSITY]
 
+<<<<<<< HEAD
 Just like in the :ref:`Using Samples` step of the hello world module, we
+=======
+Just like in the :ref:`Using Samples` step of the hello world module, we 
+>>>>>>> master
 generate samples using the merlin block. We are only concerned with how the
 variation of two initial conditions, lid-speed and viscosity, affects outputs of the system.
 These are the ``column_labels``.
@@ -101,7 +130,11 @@ convenience.
 
 This is how the ``setup`` step should look like by the end:
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
   study:
     - name: setup
@@ -117,7 +150,11 @@ This is how the ``setup`` step should look like by the end:
 
 This step does not need to be parallelized so we will assign it to lower concurrency workers
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
   merlin:
       resources:
@@ -145,7 +182,11 @@ using visualization tools such as VisIt or ParaView.
 
 This part should look like:
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
   - name: sim_runs
     description: |
@@ -171,7 +212,11 @@ This part should look like:
 This step runs many simulations in parallel so it would run faster if we assign it
 a worker with a higher concurrency.
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
   merlin:
       resources:
@@ -191,7 +236,11 @@ the previous step and combines it for future use.
 Simply run the combine outputs script to save the data as a .npz file in the
 current step workspace.
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
  - name: combine_outputs
    description: Combines the outputs of the previous step
@@ -204,7 +253,11 @@ This step depends on all the previous step's simulation runs which is why we
 have the star. However, it does not need to be parallelized so we assign it to
 the nonsimworkers
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
   merlin:
       resources:
@@ -219,11 +272,19 @@ the nonsimworkers
 Machine Learning and visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In this step we do some post processing of the data collected in the previous step,
+<<<<<<< HEAD
 use the RandomForestRegressor from the sklearn python package to predict enstrophy
 and kinetic energy from lid-speed and viscosity, and finally, visualize the fit
 of this regressor and the input regions with the highest error.
 
 .. code-block:: yaml
+=======
+use the RandomForestRegressor to predict enstrophy and kinetic energy from lid-speed
+and viscosity, and finally, visualize the fit of this regressor and the input regions
+with the highest error.
+
+.. code:: yaml
+>>>>>>> master
 
  - name: learn
    description: Learns the output of the openfoam simulations using input parameters
@@ -235,7 +296,11 @@ of this regressor and the input regions with the highest error.
 This step is also dependent on the previous step for the .npz file and will only need
 one worker therefore we will:
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
   merlin:
       resources:
@@ -256,17 +321,38 @@ Putting it all together
 Setup redis
 +++++++++++
 
+<<<<<<< HEAD
+=======
+.. Merlin
+ ~~~~~~
+ We will need to activate the merlin virtual environment created in :doc:`Module 2: Installation<installation>`
+
+.. .. code:: bash
+
+.. source merlin_venv/bin/activate
+
+.. Configuring redis
+ ~~~~~~~~~~~~~~~~~
+>>>>>>> master
 We will need to set up the redis server using a docker container.
 This removes the hassle of downloading and making the redis tar file.
 Run:
 
+<<<<<<< HEAD
 .. code-block:: bash
+=======
+.. code:: bash
+>>>>>>> master
 
     docker run --detach --name my-redis -p 6379:6379 redis
 
 Now configure merlin for redis with:
 
+<<<<<<< HEAD
 .. code-block:: bash
+=======
+.. code:: bash
+>>>>>>> master
 
     merlin config --broker redis
 
@@ -274,21 +360,35 @@ Run the workflow
 ++++++++++++++++
 Now that you know what is inside the OpenFOAM specification, run this command to get a full copy of the workflow with the scripts it needs:
 
+<<<<<<< HEAD
 .. code-block:: bash
+=======
+.. code:: bash
+>>>>>>> master
 
     $ merlin example openfoam_wf
 
 Now, run the workflow:
 
+<<<<<<< HEAD
 .. code-block:: bash
+=======
+.. code:: bash
+>>>>>>> master
 
     $ merlin run openfoam_wf/openfoam_wf.yaml
 
     $ merlin run-workers openfoam_wf/openfoam_wf.yaml
 
+<<<<<<< HEAD
 With 100 samples instead of 10 (should take about 6 minutes):
 
 .. code-block:: bash
+=======
+With 100 samples instead of 10:
+
+.. code:: bash
+>>>>>>> master
 
     $ merlin run openfoam_wf/openfoam_wf.yaml --vars N_SAMPLES=100
 

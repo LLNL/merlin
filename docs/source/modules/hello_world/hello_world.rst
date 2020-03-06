@@ -1,10 +1,16 @@
 Hello, World!
 =============
+<<<<<<< HEAD
 This hands-on module walks through the steps of building and running a simple merlin workflow.
 
 .. admonition:: Prerequisites
 
     * :doc:`Module 2: Installation<../installation/installation>`
+=======
+.. admonition:: Prerequisites
+
+    * :doc:`Module 2: Installation<installation>`
+>>>>>>> master
 
 .. admonition:: Estimated time
 
@@ -16,6 +22,7 @@ This hands-on module walks through the steps of building and running a simple me
       * How to run a simple merlin workflow.
       * How to interpret the results of your workflow.
 
+<<<<<<< HEAD
 
 .. contents:: Table of Contents:
   :local:
@@ -79,6 +86,39 @@ Steps that contain a global parameter or depend on other steps that contain a gl
 The label is the pattern for a filename that will be created for each value.
 
 .. code-block:: yaml
+=======
+.. contents::
+  :local:
+
+Elements of a specification
++++++++++++++++++++++++++++
+
+Central to Merlin is something called a specifiation file, or a "spec" for short.
+The spec defines all aspects of your workflow.
+The spec is formatted in yaml (if you're unfamilar with yaml, it's worth reading up on for a few minutes).
+
+Let's build our spec piece by piece.
+
+
+description
+~~~~~~~~~~~
+Just what it sounds like. Name and briefly summarize your workflow.
+
+.. code:: yaml
+
+    description:
+        name: hello world workflow
+        description: say hello in 3 languages
+
+global.parameters
+~~~~~~~~~~~~~~~~~
+.. better explanation??
+
+Global parameters are constants that you want to vary across simulations.
+The whole workflow is run for index of parameter values.
+
+.. code:: yaml
+>>>>>>> master
 
     global.parameters:
         GREET:
@@ -88,6 +128,7 @@ The label is the pattern for a filename that will be created for each value.
             values : ["world","mundo"]
             label  : WORLD.%%
 
+<<<<<<< HEAD
 .. note::
 
     ``%%`` is a special token that defines where the value in the label is placed. In this case the parameter labels will be GREET.hello, GREET.hola, etc. The label can take a custom text format, so long as the ``%%`` token is included to be able to substitute the parameter’s value in the appropriate place.
@@ -100,6 +141,15 @@ This is where you define worfklow steps.
 While the convention is to list steps as sequentially as possible, the only factor in determning step order is the dependency DAG created by the ``depends`` field.
 
 .. code-block:: yaml
+=======
+So this will give us an English result, and a Spanish one (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
+
+study
+~~~~~
+This is where you define worfklow steps.
+
+.. code:: yaml
+>>>>>>> master
 
     study:
         - name: step_1
@@ -114,10 +164,13 @@ While the convention is to list steps as sequentially as possible, the only fact
               depends: [step_1]
               shell: /usr/bin/env python3
 
+<<<<<<< HEAD
 .. note::
 
     The ``-`` denotes a list item in YAML. To add elements, simply add new elements prefixed with a hyphen
 
+=======
+>>>>>>> master
 ``$(GREET)`` and ``$(WORLD)`` expand the global parameters seperately into their two values.
 .. ``$(step_1.workspace)`` gets the path to ``step_1``.
 The default value for ``shell`` is ``/bin/bash``. In ``step_2`` we override this to use python instead.
@@ -136,13 +189,21 @@ Since our global parameters have 2 values, this is actually what the DAG looks l
 
 It looks like running ``step_2`` twice is redundant. Instead of doing that, we can collapse it back into a single step, by having it wait for both parameterized versions of ``step_1`` to finish. Add ``_*`` to the end of the step name in ``step_1``'s depend entry. Go from this:
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
     depends: [step_1]
 
 ...to this:
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
     depends: [step_1_*]
 
@@ -152,25 +213,43 @@ Now the DAG looks like this:
     :width: 300
     :align: center
 
+<<<<<<< HEAD
 Your full hello world spec ``my_hello.yaml`` should now look like this (an exact match of ``hello.yaml``):
+=======
+Your full hello world spec should now look like this:
+>>>>>>> master
 
 .. literalinclude:: ../../../../merlin/examples/workflows/hello/hello.yaml
    :language: yaml
 
+<<<<<<< HEAD
+=======
+We'll name it ``hello.yaml``.
+>>>>>>> master
 The order of the spec sections doesn't matter.
 
 .. note::
 
+<<<<<<< HEAD
     At this point, ``my_hello.yaml`` is still maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will still add later. If you want to try it, run: ``$ maestro run my_hello.yaml``
+=======
+    At this point, our spec is still merlin- and maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will still add later. If you want to try it, run: ``$ maestro run hello.yaml``
+>>>>>>> master
 
 Try it!
 +++++++
 
 First, we'll run merlin locally. On the command line, run:
 
+<<<<<<< HEAD
 .. code-block:: bash
 
     $ merlin run --local my_hello.yaml
+=======
+.. code:: bash
+
+    $ merlin run --local hello.yaml
+>>>>>>> master
 
 If your spec is bugless, you should see a few messages proclaiming successful step completion, like this (for now we'll ignore the warning):
 
@@ -188,6 +267,11 @@ The whole file tree looks like this:
 
 A lot of stuff, right? Here's what it means:
 
+<<<<<<< HEAD
+=======
+.. * ``new_file.txt`` is the name of the file we wrote in ``step_1``.
+
+>>>>>>> master
 * The yaml file inside ``merlin_info/`` is called the provenance spec. It's a copy of the original spec that was run.
 
 * ``MERLIN_FINISHED`` files indicate that the step ran successfully.
@@ -209,9 +293,15 @@ Run distributed!
 
 Now we will run the same workflow, but in parallel on our task server:
 
+<<<<<<< HEAD
 .. code-block:: bash
 
     $ merlin run my_hello.yaml
+=======
+.. code:: bash
+
+    $ merlin run hello.yaml
+>>>>>>> master
 
 If your merlin configuration is set up correctly, you should see something like this:
 
@@ -220,7 +310,11 @@ If your merlin configuration is set up correctly, you should see something like 
 
 That means we have launched our tasks! Now we need to launch the workers that will complete those tasks. Run this:
 
+<<<<<<< HEAD
 .. code-block:: bash
+=======
+.. code:: bash
+>>>>>>> master
 
     $ merlin run-workers hello.yaml
 
@@ -244,6 +338,7 @@ It's a little boring to say "hello world" in just two different ways. Let's inst
 
 To do this, we'll need samples. Specifically, we'll change ``WORLD`` from a global parameter to a sample. While parameters are static, samples are generated dynamically, and can be more complex data types. In this case, ``WORLD`` will go from being "world" or "mundo" to being a randomly-generated name.
 
+<<<<<<< HEAD
 First, we remove the global parameter ``WORLD`` so it does not conflict with our new sample. Parameters now look like this:
 
 .. code-block:: yaml
@@ -256,6 +351,13 @@ First, we remove the global parameter ``WORLD`` so it does not conflict with our
 Now add these yaml sections to your spec:
 
 .. code-block:: yaml
+=======
+First, we remove the global parameter ``WORLD``.
+
+Now add these yaml sections to your spec:
+
+.. code:: yaml
+>>>>>>> master
 
     env:
         variables:
@@ -263,12 +365,20 @@ Now add these yaml sections to your spec:
 
 This makes ``N_SAMPLES`` into a user-defined variable that you can use elsewhere in your spec.
 
+<<<<<<< HEAD
 .. code-block:: yaml
+=======
+.. code:: yaml
+>>>>>>> master
 
     merlin:
         samples:
             generate:
+<<<<<<< HEAD
                 cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+=======
+                cmd: pip3 install names ; python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+>>>>>>> master
             file: $(MERLIN_INFO)/samples.csv
             column_labels: [WORLD]
 
@@ -283,23 +393,34 @@ It's good practice to shift larger chunks of code to external scripts. At the sa
 
 Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
 
+<<<<<<< HEAD
 Before we can run this, we must install the script's one external python library dependency ``names`` (a library that generates random names):
 
 .. code-block:: bash
 
     $ pip3 install names
 
+=======
+>>>>>>> master
 Here's our DAG with samples:
 
 .. image:: dag4.png
     :width: 400
     :align: center
 
+<<<<<<< HEAD
 Here's your new and improved ``my_hello.yaml``, which now should match ``hello_samples.yaml``:
+=======
+Here's the new spec:
+>>>>>>> master
 
 .. literalinclude:: ../../../../merlin/examples/workflows/hello/hello_samples.yaml
    :language: yaml
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 Run the workflow again!
 
 Once finished, this is what the insides of ``step_1`` look like:
@@ -307,10 +428,16 @@ Once finished, this is what the insides of ``step_1`` look like:
 .. image:: merlin_output2.png
     :align: center
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> master
 * ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used interally by merlin and doesn't usually require user attention.
 
 * Numerically-named directories like ``0``, ``1``, and ``2`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
 
+<<<<<<< HEAD
 Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could interally change the value in the spec from 3 to 1000. OR you could just run this:
 
 .. code-block:: bash
@@ -324,7 +451,27 @@ Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 sampl
 To send a warm stop signal to your workers, run:
 
 .. code-block:: bash
+=======
+Lastly, let's flex merlin's muscle and scale up our workflow to 1000 samples. To do this, you could interally change thevalue in the spec from 3 to 1000. OR you could just this run this:
+
+.. code:: bash
+
+    $ merlin run --vars N_SAMPLES=1000 hello.yaml
+
+    $ merlin run-workers hello.yaml
+
+To send a warm stop signal to your workers, run:
+
+.. code:: bash
+>>>>>>> master
 
     $ merlin stop-workers
 
 Congratulations! You concurrently greeted 1000 friends in English and Spanish!
+<<<<<<< HEAD
+=======
+
+.. note::
+
+    To get a fresh copy of the specs and script from this module, run ``merlin example hello``.
+>>>>>>> master

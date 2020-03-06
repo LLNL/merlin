@@ -1,6 +1,9 @@
 import argparse
+<<<<<<< HEAD
 import os
 import pathlib
+=======
+>>>>>>> master
 import sys
 
 import pandas as pd
@@ -46,12 +49,15 @@ def main():
     names = namesdf["Name"].value_counts()
 
     # Serialize processed samples
+<<<<<<< HEAD
     #  create directory if it doesn't exist already
     abspath = os.path.abspath(args.results)
     absdir = os.path.dirname(abspath)
     if not os.path.isdir(absdir):
         pathlib.Path(absdir).mkdir(parents=True, exist_ok=True)
 
+=======
+>>>>>>> master
     names.to_json(args.results)
     
 if __name__ == "__main__":

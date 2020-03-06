@@ -117,4 +117,8 @@
        file: $(MERLIN_INFO)/samples.csv
        generate:
          cmd: |
+<<<<<<< HEAD
            $(PYTHON) $(SPECROOT)/faker_sample.py -n 200 -outfile=$(MERLIN_INFO)/samples.csv
+=======
+           $(PYTHON) $(SPECROOT)/faker_sample.py -n 200 -outfile=$(MERLIN_INFO)/samples.csv
+>>>>>>> master

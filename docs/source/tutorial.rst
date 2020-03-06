@@ -6,7 +6,11 @@ Tutorial
     * March 2-6: testing period
     * March 9: ready for use!
 
+<<<<<<< HEAD
 .. admonition:: Testers
+=======
+.. admonition:: Testers 
+>>>>>>> master
 
     We currently only want you to work thru sections 1-4. Thanks!
 
@@ -16,6 +20,7 @@ Tutorial
 
 Grab your laptop and coffee, and dive into this 7-module tutorial to become a Merlin expert.
 
+<<<<<<< HEAD
 This hands-on tutorial introduces Merlin
 through some example workflows. In it, you will install Merlin on your local
 machine, stand up a virtual server and run both a simple workflow and a
@@ -25,10 +30,16 @@ visualization and machine learning.
 You'll also learn how to use some advanced features and help make Merlin better.
 Finally we offer some tips and tricks for porting and scaling up your application.
 
+=======
+>>>>>>> master
 ..    :doc:`0. Prerequisites<prereqs>`
 
 .. toctree::
    :maxdepth: 1
+<<<<<<< HEAD
+=======
+   :numbered:
+>>>>>>> master
    :caption: Before you come:
 
    modules/before
@@ -39,9 +50,20 @@ Finally we offer some tips and tricks for porting and scaling up your applicatio
    :caption: Tutorial modules:
 
    modules/introduction
+<<<<<<< HEAD
    modules/installation/installation
    modules/hello_world/hello_world
    modules/run_simulation/run_simulation
    modules/advanced_topics/advanced_topics
    modules/contribute
    modules/port_your_application
+=======
+   modules/installation
+   modules/hello_world/hello_world
+   modules/run_simulation/run_simulation
+   modules/advanced_topics
+   modules/contribute
+   modules/port_your_application
+
+
+>>>>>>> master

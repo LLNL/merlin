@@ -9,12 +9,19 @@ Contribute to Merlin
       * How to post issues to the merlin repo.
       * Guidelines for contributing to merlin.
 
+<<<<<<< HEAD
 .. contents:: Table of Contents:
   :local:
 
 Issues
 ++++++
 Found a bug? Have an idea? Or just want to ask a question?
+=======
+    
+Issues
+++++++
+Found a bug? Have an idea? Or just want to ask a question? 
+>>>>>>> master
 `Create a new issue <https://github.com/LLNL/merlin/issues/new/choose>`_ on GitHub.
 
 Bug Reports 🐛
@@ -27,9 +34,15 @@ We are stil adding new features to merlin. To suggest one, simply navigate to `I
 
 Questions 🤓
 ------------
+<<<<<<< HEAD
 .. note::
 
     Who knows? Your question may already be answered in the :doc:`FAQ<../faq>`.
+=======
+.. note:: 
+
+    Who knows? Your question may already be answered in the :doc:`FAQ<faq>`.
+>>>>>>> master
 
 We encourage questions to be asked in a collaborative setting: on GitHub, direct any questions to `General Questions <https://github.com/LLNL/merlin/issues/new?labels=question&template=question.md&title=%5BQ%2FA%5D+>`_ in Issues.
 
