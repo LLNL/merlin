@@ -115,6 +115,10 @@ def get_redis(certs_path=None, include_password=True):
 
     try:
         username = CONFIG.results_backend.username
+    except (KeyError, AttributeError):
+        username = ""
+
+    try:
         password_file = CONFIG.results_backend.password
         try:
             password = get_backend_password(password_file, certs_path=certs_path)
