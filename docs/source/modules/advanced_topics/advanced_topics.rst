@@ -351,7 +351,6 @@ steps.  In this case you simply need an alloc
 Dynamic task queueing and sampling
 ++++++++++++++++++++++++++++++++++
 
-<<<<<<< HEAD
 Iterative workflows, such as optimization or machine learning, can be implemented
 in merlin via recursive workflow specifications that use dynamic task queueing.
 The example spec below is a simple implementation of this using an iteration counter
