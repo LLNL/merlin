@@ -35,6 +35,7 @@ configurations.
 import getpass
 import logging
 import os
+import ssl
 
 from merlin.config import Config
 from merlin.utils import load_yaml
@@ -138,6 +139,60 @@ def default_config_info():
         "merlin_home_exists": os.path.exists(MERLIN_HOME),
     }
 
+def get_ssl_entries(server_type, server_name, server_config):
+    server_ssl = {}
+    try:
+        server_ssl["keyfile"] = server_config.keyfile
+        LOG.debug(f"{server_type}: ssl keyfile = {server_ssl['keyfile']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"{server_type}: ssl keyfile not present")
+
+    try:
+        server_ssl["certfile"] = server_config.certfile
+        LOG.debug(f"{server_type}: ssl certfile = {server_ssl['certfile']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"{server_type}: ssl certfile not present")
+
+    try:
+        server_ssl["ca_certs"] = server_config.ca_certs
+        LOG.debug(f"{server_type}: ssl ca_certs = {server_ssl['ca_certs']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"{server_type}: ssl ca_certs not present")
+
+    try:
+        if server_config.cert_reqs == "required":
+            server_ssl["cert_reqs"] =  ssl.CERT_REQUIRED
+        elif server_config.cert_reqs == "optional":
+            server_ssl["cert_reqs"] =  ssl.CERT_OPTIONAL
+        elif server_config.cert_reqs == "none":
+            server_ssl["cert_reqs"] =  ssl.CERT_NONE
+        LOG.debug(f"{server_type}: cert_reqs = {server_ssl['cert_reqs']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"{server_type}: ssl cert_reqs not present")
+
+    try:
+        server_ssl["ssl_protocol"] = server_config.ssl_protocol
+        LOG.debug(f"{server_type}: ssl_protocol = {server_ssl['ssl_protocol']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"{server_type}: ssl ssl_protocol not present")
+
+    if server_ssl and "cert_reqs" not in server_ssl.keys():
+        server_ssl["cert_reqs"] = ssl.CERT_REQUIRED
+
+    # The redis server requires key names with ssl_
+    if server_name == "rediss":
+        try:
+            redis_server_ssl = {}
+            for k, v in server_ssl.items():
+                if not k.startswith("ssl_"):
+                    redis_server_ssl["ssl_" + k] = v
+                else:
+                    redis_server_ssl[k] = v
+            return redis_server_ssl    
+        except AttributeError:
+            pass
+
+    return server_ssl
 
 app_config = get_config(None)
 CONFIG = Config(app_config)

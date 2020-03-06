@@ -36,7 +36,7 @@ from __future__ import print_function
 import logging
 import os
 
-from merlin.config.configfile import CONFIG
+from merlin.config.configfile import CONFIG, get_ssl_entries
 
 
 try:
@@ -47,7 +47,7 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 
-BACKENDS = ["sqlite", "mysql", "redis", "none"]
+BACKENDS = ["sqlite", "mysql", "redis", "rediss", "none"]
 
 
 # Default files needed for the package to connect to the Rabbit instance.
@@ -97,9 +97,15 @@ def get_backend_password(password_file, certs_path=None):
     return password
 
 
-def get_redis(certs_path=None, include_password=True):
+def get_redis(certs_path=None, include_password=True, ssl=False):
     server = CONFIG.results_backend.server
     password_file = ""
+
+    urlbase = "redis"
+    ssl_info = None
+    if ssl:
+        urlbase = "rediss"
+        ssl_info = get_ssl_config()
 
     try:
         port = CONFIG.results_backend.port
@@ -133,7 +139,13 @@ def get_redis(certs_path=None, include_password=True):
     LOG.debug(f"Results backend: server = {server}")
     LOG.debug(f"Results backend: certs_path = {certs_path}")
 
-    return "redis://%s%s:%d/%d" % (spass, server, port, db_num)
+    url = "%s://%s%s:%d/%d" % (urlbase, spass, server, port, db_num)
+
+    if hasattr(ssl_info, "keys") and ssl_info:
+        ssl_str  = '&'.join("{!s}={!r}".format(key,val) for (key,val) in ssl_info.items())
+        url = f"{url}?{ssl_str}"
+
+    return url
 
 
 def get_mysql_config(certs_path, mysql_certs):
@@ -207,14 +219,14 @@ def get_connection_string(include_password=True):
     If the url variable is present, return that as the connection string.
     """
     try:
-        backend = CONFIG.results_backend.name.lower()
-    except AttributeError:
-        backend = ""
-
-    try:
         return CONFIG.results_backend.url
     except AttributeError:
         pass
+
+    try:
+        backend = CONFIG.results_backend.name.lower()
+    except AttributeError:
+        backend = ""
 
     if backend not in BACKENDS:
         msg = f"'{backend}' is not a supported results backend"
@@ -229,6 +241,9 @@ def get_connection_string(include_password=True):
     if backend == "redis":
         return get_redis(include_password=include_password)
 
+    if backend == "rediss":
+        return get_redis(include_password=include_password, ssl=True)
+
     return None
 
 def get_ssl_config():
@@ -236,65 +251,41 @@ def get_ssl_config():
     Return the ssl config based on the configuration specified in the
     `merlin.yaml` config file.
     """
+    results_backend = ""
+    try:
+        results_backend = CONFIG.results_backend.url.split(':')[0]
+    except AttributeError:
+        pass
+
     try:
         results_backend = CONFIG.results_backend.name.lower()
     except AttributeError:
-        results_backend = ""
-
-    try:
-        if CONFIG.results_backend.url:
-            return True
-    except AttributeError:
         pass
+
+    if results_backend not in BACKENDS:
+        return False
 
     try:
         config_path = CONFIG.celery.certs
     except AttributeError:
         config_path = None
 
-    if results_backend not in BROKERS:
-        raise ValueError(f"Error: {results_backend} is not a supported results_backend.")
 
-    results_backend_ssl = {}
-    try:
-        results_backend_ssl["keyfile"] = CONFIG.results_backend.keyfile
-        LOG.debug(f"Broker: ssl keyfile = {results_backend_ssl['keyfile']}")
-    except (AttributeError, KeyError):
-        LOG.debug(f"Broker: ssl keyfile not present")
+    results_backend_ssl =  get_ssl_entries("Results Backend", results_backend, CONFIG.results_backend)
 
-    try:
-        results_backend_ssl["certfile"] = CONFIG.results_backend.certfile
-        LOG.debug(f"Broker: ssl certfile = {results_backend_ssl['certfile']}")
-    except (AttributeError, KeyError):
-        LOG.debug(f"Broker: ssl certfile not present")
-
-    try:
-        results_backend_ssl["ca_certs"] = CONFIG.results_backend.ca_certs
-        LOG.debug(f"Broker ssl ca_certs = {results_backend_ssl['ca_certs']}")
-    except (AttributeError, KeyError):
-        LOG.debug(f"Broker: ssl ca_certs not present")
-
-    try:
-        results_backend_ssl["ssl_protocol"] = CONFIG.results_backend.ssl_protocol
-        LOG.debug(f"Broker ssl_protocol = {results_backend_ssl['ssl_protocol']}")
-    except (AttributeError, KeyError):
-        LOG.debug(f"Broker: ssl ssl_protocol not present")
-
-    if results_backend_ssl:
-        results_backend_ssl["cert_reqs"] = ssl.CERT_REQUIRED
-    else:
-        results_backend_ssl = True
-
-    if results_backend is "rediss":
-        try:
-            redis_results_backend_ssl = {}
-            for k, v in results_backend_ssl.items():
-                if not k.startswith("ssl_"):
-                    redis_results_backend_ssl["ssl_" + k] = v
-                else:
-                    redis_results_backend_ssl[k] = v
-            return redis_results_backend_ssl    
-        except AttributeError:
-            return False
+    if results_backend == "rediss":
+        if results_backend_ssl:
+            try:
+                redis_results_backend_ssl = {}
+                for k, v in results_backend_ssl.items():
+                    if not k.startswith("ssl_"):
+                        redis_results_backend_ssl["ssl_" + k] = v
+                    else:
+                        redis_results_backend_ssl[k] = v
+                return redis_results_backend_ssl    
+            except AttributeError:
+                return True
+        else:
+            return True
 
     return False

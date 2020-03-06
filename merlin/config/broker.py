@@ -34,10 +34,9 @@ from __future__ import print_function
 import getpass
 import logging
 import os
-import ssl
 from os.path import expanduser
 
-from merlin.config.configfile import CONFIG
+from merlin.config.configfile import CONFIG, get_ssl_entries
 
 
 try:
@@ -48,7 +47,7 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 
-BROKERS = ["rabbitmq", "redis", "redis+socket"]
+BROKERS = ["rabbitmq", "redis", "rediss", "redis+socket"]
 
 RABBITMQ_CONNECTION = "amqps://{username}:{password}@{server}:{port}//{vhost}"
 REDISSOCK_CONNECTION = "redis+socket://{path}?virtual_host={db_num}"
@@ -172,14 +171,14 @@ def get_connection_string(include_password=True):
     If the url variable is present, return that as the connection string.
     """
     try:
-        broker = CONFIG.broker.name.lower()
-    except AttributeError:
-        broker = ""
-
-    try:
         return CONFIG.broker.url
     except AttributeError:
         pass
+
+    try:
+        broker = CONFIG.broker.name.lower()
+    except AttributeError:
+        broker = ""
 
     try:
         config_path = CONFIG.celery.certs
@@ -206,59 +205,35 @@ def get_ssl_config():
     Return the ssl config based on the configuration specified in the
     `merlin.yaml` config file.
     """
+    broker = ""
+    try:
+        broker = CONFIG.broker.url.split(':')[0]
+    except AttributeError:
+        pass
+
     try:
         broker = CONFIG.broker.name.lower()
     except AttributeError:
-        broker = ""
-
-    try:
-        if CONFIG.broker.url:
-            return True
-    except AttributeError:
         pass
+
+    if broker not in BROKERS:
+        return False
 
     try:
         config_path = CONFIG.celery.certs
     except AttributeError:
         config_path = None
 
-    if broker not in BROKERS:
-        raise ValueError(f"Error: {broker} is not a supported broker.")
 
-    broker_ssl = {}
-    try:
-        broker_ssl["keyfile"] = CONFIG.broker.keyfile
-        LOG.debug(f"Broker: ssl keyfile = {broker_ssl['keyfile']}")
-    except (AttributeError, KeyError):
-        LOG.debug(f"Broker: ssl keyfile not present")
+    broker_ssl = get_ssl_entries("Broker", broker, CONFIG.broker) 
 
-    try:
-        broker_ssl["certfile"] = CONFIG.broker.certfile
-        LOG.debug(f"Broker: ssl certfile = {broker_ssl['certfile']}")
-    except (AttributeError, KeyError):
-        LOG.debug(f"Broker: ssl certfile not present")
-
-    try:
-        broker_ssl["ca_certs"] = CONFIG.broker.ca_certs
-        LOG.debug(f"Broker ssl ca_certs = {broker_ssl['ca_certs']}")
-    except (AttributeError, KeyError):
-        LOG.debug(f"Broker: ssl ca_certs not present")
-
-    try:
-        broker_ssl["ssl_protocol"] = CONFIG.broker.ssl_protocol
-        LOG.debug(f"Broker ssl_protocol = {broker_ssl['ssl_protocol']}")
-    except (AttributeError, KeyError):
-        LOG.debug(f"Broker: ssl ssl_protocol not present")
-
-    if broker_ssl:
-        broker_ssl["cert_reqs"] = ssl.CERT_REQUIRED
-    else:
+    if not broker_ssl:
         broker_ssl = True
 
     if broker == "rabbitmq":
         return broker_ssl
 
-    if "redis" in broker:
+    if broker == "rediss":
         try:
             redis_broker_ssl = {}
             for k, v in broker_ssl.items():

@@ -12,7 +12,7 @@ broker:
     # server URL
     server: server.domain.com
 
-    ### for rabbitmq, redis+sock connections ###
+    ### for rabbitmq connections ###
     #vhost: # defaults to your username unless changed here
 
     ### for redis+sock connections ###
@@ -22,6 +22,14 @@ broker:
     ### for redis connections ###
     #port: The port number redis is listening on (default 6379)
     #db_num: The data base number to connect to.
+     
+    # ssl security
+    #keyfile: /var/ssl/private/client-key.pem
+    #certfile: /var/ssl/amqp-server-cert.pem
+    #ca_certs: /var/ssl/myca.pem
+    # This is optional and can be required, optional or none
+    # (required is the default)
+    #cert_req: required
 
 
 results_backend:
@@ -40,3 +48,10 @@ results_backend:
     port: 6379
     db_num: 0
 
+    # ssl security
+    #keyfile: /var/ssl/private/client-key.pem
+    #certfile: /var/ssl/amqp-server-cert.pem
+    #ca_certs: /var/ssl/myca.pem
+    # This is optional and can be required, optional or none
+    # (required is the default)
+    #cert_req: required
