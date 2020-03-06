@@ -222,7 +222,7 @@ That means we have launched our tasks! Now we need to launch the workers that wi
 
 .. code-block:: bash
 
-    $ merlin run-workers hello.yaml
+    $ merlin run-workers my_hello.yaml
 
 Here's the expected merlin output message for running workers:
 
