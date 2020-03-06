@@ -1,0 +1,24 @@
+$ merlin stop-workers
+
+
+       *
+   *~~~~~
+  *~~*~~~*      __  __           _ _
+ /   ~~~~~     |  \/  |         | (_)
+     ~~~~~     | \  / | ___ _ __| |_ _ __
+    ~~~~~*     | |\/| |/ _ \ '__| | | '_ \
+   *~~~~~~~    | |  | |  __/ |  | | | | | |
+  ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
+ *~~~~~~~~~~~
+   ~~~*~~~*    Machine Learning for HPC Workflows
+
+
+
+[2020-03-06 09:20:08: INFO] Stopping workers...
+[2020-03-06 09:20:08: INFO] Reading app config from file .merlin/app.yaml
+[2020-03-06 09:20:08: INFO] broker: amqps://user:******@server:5671//user
+[2020-03-06 09:20:08: INFO] backend: redis://mlsi:******@server:6379/0
+all_workers: ['celery@default_worker.%machine']
+spec_worker_names: []
+workers_to_stop: ['celery@default_worker.%machine']
+[2020-03-06 09:20:10: INFO] Sending stop to these workers: ['celery@default_worker.%machine']

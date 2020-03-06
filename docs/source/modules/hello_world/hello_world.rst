@@ -236,6 +236,17 @@ Immediately after that, this will pop up:
 
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
 
+Workers are persistent, even after work is done. Send a stop signal to all your workers with this command:
+
+.. code-block:: bash
+
+    $ merlin stop-workers
+
+...and a successful worker stop will look like this, with the name of specific worker(s) reported:
+
+.. literalinclude :: stop_workers.txt
+    :language: text
+
 .. _Using Samples:
 
 Using samples
