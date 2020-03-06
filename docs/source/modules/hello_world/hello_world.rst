@@ -26,8 +26,11 @@ Get example files
 
 .. code-block:: bash
 
-    merlin example hello
-    cd hello/
+    $ merlin example hello
+
+.. code-block:: bash
+
+    $ cd hello/
 
 This will create and move into directory called ``hello``, which contains these files:
 
@@ -233,6 +236,17 @@ Immediately after that, this will pop up:
 
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
 
+Workers are persistent, even after work is done. Send a stop signal to all your workers with this command:
+
+.. code-block:: bash
+
+    $ merlin stop-workers
+
+...and a successful worker stop will look like this, with the name of specific worker(s) reported:
+
+.. literalinclude :: stop_workers.txt
+    :language: text
+
 .. _Using Samples:
 
 Using samples
@@ -308,15 +322,17 @@ Once finished, this is what the insides of ``step_1`` look like:
 
 * Numerically-named directories like ``0``, ``1``, and ``2`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
 
-Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could interally change the value in the spec from 3 to 1000. OR you could just this run this:
+Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could interally change the value in the spec from 3 to 1000. OR you could just run this:
 
 .. code-block:: bash
 
     $ merlin run my_hello.yaml --vars N_SAMPLES=1000
 
+.. code-block:: bash
+
     $ merlin run-workers my_hello.yaml
 
-To send a warm stop signal to your workers, run:
+Once again, to send a warm stop signal to your workers, run:
 
 .. code-block:: bash
 

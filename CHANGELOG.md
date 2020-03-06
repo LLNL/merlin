@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional ssl files for the  broker config.
 - A url keyword in the app.yaml file to override the entire broker or results backend configuration.
 
+## [1.4.1] [2020-03-06]
+
+### Changed
+- Updated various aspects of tutorial documentation.
+
 ## [1.4.0] 2020-03-02
 
 ### Added
