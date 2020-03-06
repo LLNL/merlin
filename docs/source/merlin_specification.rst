@@ -11,7 +11,7 @@ The input file can take a number of variables, beyond the examples shown here.
 For a complete list and descriptions of the variables,
 see :doc:`./merlin_variables`.
 
-::
+.. code-block:: yaml
 
   ####################################
   # Description Block (Required)
