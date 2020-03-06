@@ -332,7 +332,7 @@ Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 sampl
 
     $ merlin run-workers my_hello.yaml
 
-To send a warm stop signal to your workers, run:
+Once again, to send a warm stop signal to your workers, run:
 
 .. code-block:: bash
 
