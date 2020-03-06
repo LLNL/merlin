@@ -143,6 +143,10 @@ def get_redis_connection(config_path, include_password):
 
     try:
         username = CONFIG.broker.username
+    except (AttributeError, KeyError):
+        username = ""
+        
+    try:
         password_filepath = CONFIG.broker.password
         try:
             password = read_file(password_filepath)
