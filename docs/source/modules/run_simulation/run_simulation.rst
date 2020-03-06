@@ -35,6 +35,28 @@ lidspeed and fluid viscosity.
 
 **TODO: insert image/image with important details**
 
+.. list-table::
+
+    * - .. figure:: setup.png
+
+           Fig 1. Lid-driven cavity problem setup
+
+      - .. figure:: lid-driven-stable.png
+
+           Fig 2. Example steady state 
+
+.. figure:: setup.png
+   :scale: 25 %
+   :alt: alternate text hihihi
+
+   This png was created using the data from a lid-driven cavity example and VisIt.
+
+.. figure:: lid-driven-stable.png
+   :scale: 25 %
+   :alt: alternate text hihihi
+
+   This png was created using the data from a lid-driven cavity example and VisIt.
+
 We will be going over:
 
  * Setting up our inputs
