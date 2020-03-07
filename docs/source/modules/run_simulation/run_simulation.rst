@@ -395,7 +395,7 @@ With 100 samples instead of 10 (should take about 6 minutes):
 
 To see your results, look inside the ``learn`` output directory. You should see a png that looks like this:
 
-.. image:: prediction.png
+.. image:: prediction2.png
     :align: center
 
 .. admonition:: Related articles
