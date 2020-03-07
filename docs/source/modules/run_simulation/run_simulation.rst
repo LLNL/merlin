@@ -61,7 +61,7 @@ and that redis server is set up using this command:
 
 .. code:: bash
 
-  merlin info
+  $ merlin info
 
 This is covered more in depth here: :ref:`Verifying installation`
 
@@ -70,8 +70,9 @@ Then use the ``merlin example`` to get the necessary files for this module.
 
 .. code-block:: bash
 
-    merlin example openfoam_wf
-    cd openfoam_wf/
+    $ merlin example openfoam_wf
+
+    $ cd openfoam_wf/
 
 In the ``openfoam_wf`` directory you should see the following:
 
@@ -363,13 +364,13 @@ Run:
 
 .. code-block:: bash
 
-    docker run --detach --name my-redis -p 6379:6379 redis
+    $ docker run --detach --name my-redis -p 6379:6379 redis
 
 Now configure merlin for redis with:
 
 .. code-block:: bash
 
-    merlin config --broker redis
+    $ merlin config --broker redis
 
 Run the workflow
 ++++++++++++++++
