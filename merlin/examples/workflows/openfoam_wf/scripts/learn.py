@@ -61,6 +61,7 @@ print(mean_squared_error(y_test, regr.predict(X_test)))
 dump(regr, "trained_model.joblib")
 
 
+import matplotlib.pyplot as plt
 fig, ax = plt.subplots(3, 2, figsize=(25, 25), constrained_layout=True)
 # ax.tick_params(axis='both', which='major', labelsize=20)
 plt.rcParams.update({"font.size": 25})
@@ -115,6 +116,10 @@ ax[1][1].set_ylabel(r"$Energy$", fontsize=fontsize)
 ax[1][1].set_title("Average Energy Variation with Lidspeed")
 ax[1][1].grid()
 
+ax[1][0].tick_params(axis="both", which="major", labelsize=fontsize)
+ax[1][1].tick_params(axis="both", which="major", labelsize=fontsize)
+ax[1][0].tick_params(axis="both", which="major", labelsize=fontsize)
+ax[1][1].tick_params(axis="both", which="major", labelsize=fontsize)
 
 input_energy = ax[1][0].scatter(
     X[:, 0],

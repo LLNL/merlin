@@ -441,6 +441,8 @@ This tutorial will show you how to:
 
 
 .. rubric:: Footnotes
+Comparisons to other systems / When should you consider Merlin
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. [*] The flux and slurm interfaces used by Merlin differ
        from the versions bundled with maestro to decouple job launching from

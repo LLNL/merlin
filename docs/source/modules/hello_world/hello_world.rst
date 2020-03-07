@@ -163,6 +163,15 @@ The order of the spec sections doesn't matter.
 
     At this point, ``my_hello.yaml`` is still maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will still add later. If you want to try it, run: ``$ maestro run my_hello.yaml``
 
+The spec is formatted in yaml, and defines all aspects of a workflow.
+
+* description
+* batch
+* env
+* study
+* global.parameters
+* merlin
+
 Try it!
 +++++++
 
@@ -317,6 +326,7 @@ Once finished, this is what the insides of ``step_1`` look like:
 
 .. image:: merlin_output2.png
     :align: center
+
 
 * ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used interally by merlin and doesn't usually require user attention.
 
