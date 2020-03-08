@@ -90,7 +90,7 @@ In the ``openfoam_wf`` directory you should see the following:
 
 * ``requirements.txt`` -- this is a text file listing this workflow's python dependencies.
 
-To start, open ``openfoam_wf.yaml`` using your favorite text editor.
+**To start, open** ``openfoam_wf.yaml`` **using your favorite text editor.**
 
 It should look something like this:
 
@@ -225,22 +225,13 @@ Locate the ``resources`` section in the ``merlin`` block and edit the concurrenc
 
 Running the simulation
 ~~~~~~~~~~~~~~~~~~~~~~
-In this step we specify the input parameters and run each of the simulations.
-For OpenFOAM, we simply need to change the values in each of the files related
-to lid-speed and viscosity. We then utilize the OpenFOAM docker container to run each
-of these input parameters locally.
 
-The quantities of interest are the average enstrophy and kinetic energy at each cell.
-The enstrophy is calculated through an OpenFOAM post processing function of the the flow
-fields while the kinetic energy is approximated by calculated using the square of
-the velocity vector at each grid point. The velocity field is normally
-outputted normally as a result of running the default openfoam solver for this
-particular problem.
+Moving on to the ``sim_runs`` step, we want to:
 
-The ``run_openfoam`` executable calculates the appropriate ``deltaT`` so that we
-have a Courant number of less than 1. It also uses the ``icoFoam`` solver on the
-cavity decks and gives us VTK files that are helpful for visualizing the flow fields
-using visualization tools such as VisIt or ParaView.
+  1. Copy the cavity deck from the ``MERLIN_INFO`` directory into each of the current step's subdirectories
+  2. Edit the default input values (lidspeed and viscosity) in these cavity decks using the ``sed`` command
+  3. Run the simulation using the ``run_openfoam`` executable through the OpenFOAM docker container
+  4. Post-process the results (also using the ``run_openfoam`` executable)
 
 This part should look like:
 
@@ -255,7 +246,7 @@ This part should look like:
             cp -r $(MERLIN_INFO)/cavity cavity/
             cd cavity
 
-            ## Replaces default values for viscosity and lidspeed with
+            ## Edits default values for viscosity and lidspeed with
             #  values specified by samples section of the merlin block
             sed -i '' "18s/.*/nu              [0 2 -1 0 0 0 0] $(VISCOSITY);/" constant/transportProperties
             sed -i '' "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
@@ -263,26 +254,38 @@ This part should look like:
             cd ..
             cp $(SCRIPTS)/run_openfoam .
 
+            # Creating a unique OpenFOAM docker container for each sample and using it to run the simulation
             CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
             docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
             docker wait ${CONTAINER_NAME}
         depends: [setup]
         task_queue: simqueue
-
+  .. Why do we need to assign a task_queue for this step and not the rest? Do the rest all have the same queue?
 This step runs many simulations in parallel so it would run faster if we assign it
-a worker with a higher concurrency.
+a worker with a higher concurrency. Navigate back to the ``resources`` section in the ``merlin`` block
 
 .. code-block:: yaml
 
-  merlin:
-      resources:
-          workers:
-              nonsimworkers:
-                  args: -l INFO --concurrency 1
-                  steps: [setup]
-              simworkers:
-                  args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
-                  steps: [sim_runs]
+  resources:
+      workers:
+          nonsimworkers:
+              args: -l INFO --concurrency 1
+              steps: [setup]
+          simworkers:
+              args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
+              steps: [sim_runs]
+
+The quantities of interest are the average enstrophy and kinetic energy at each cell.
+The enstrophy is calculated through an OpenFOAM post processing function of the the flow
+fields while the kinetic energy is approximated by calculated using the square of
+the velocity vector at each grid point. The velocity field is normally
+outputted normally as a result of running the default solver for this
+particular problem.
+
+The ``run_openfoam`` executable calculates the appropriate timestep ``deltaT`` so that we
+have a Courant number of less than 1. It also uses the ``icoFoam`` solver on the
+cavity decks and gives us VTK files that are helpful for visualizing the flow fields
+using visualization tools such as VisIt or ParaView.
 
 Combining outputs
 ~~~~~~~~~~~~~~~~~

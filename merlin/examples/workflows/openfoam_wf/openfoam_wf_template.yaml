@@ -54,6 +54,8 @@ study:
               cp -r $(MERLIN_INFO)/cavity cavity/
               cd cavity
 
+              ## Edits default values for viscosity and lidspeed with
+              #  values specified by samples section of the merlin block
               sed -i '' "18s/.*/nu              [0 2 -1 0 0 0 0] $(VISCOSITY);/" constant/transportProperties
               sed -i '' "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
 
