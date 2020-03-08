@@ -222,7 +222,7 @@ That means we have launched our tasks! Now we need to launch the workers that wi
 
 .. code-block:: bash
 
-    $ merlin run-workers hello.yaml
+    $ merlin run-workers my_hello.yaml
 
 Here's the expected merlin output message for running workers:
 
@@ -294,11 +294,11 @@ It's good practice to shift larger chunks of code to external scripts. At the sa
 
 Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
 
-Before we can run this, we must install the script's one external python library dependency ``names`` (a library that generates random names):
+Before we can run this, we must install the script's external python library dependencies (``names``: a simple package that generates random names, and ``numpy``: a scientific computing package):
 
 .. code-block:: bash
 
-    $ pip3 install names
+    $ pip3 install -r requirements.txt
 
 Here's our DAG with samples:
 
