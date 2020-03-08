@@ -260,7 +260,9 @@ This part should look like:
             docker wait ${CONTAINER_NAME}
         depends: [setup]
         task_queue: simqueue
+
   .. Why do we need to assign a task_queue for this step and not the rest? Do the rest all have the same queue?
+
 This step runs many simulations in parallel so it would run faster if we assign it
 a worker with a higher concurrency. Navigate back to the ``resources`` section in the ``merlin`` block
 
