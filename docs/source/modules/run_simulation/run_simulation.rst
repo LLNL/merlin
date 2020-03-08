@@ -291,11 +291,15 @@ using visualization tools such as VisIt or ParaView.
 
 Combining outputs
 ~~~~~~~~~~~~~~~~~
-The script in this step extracts the data from each of the simulation runs from
-the previous step and combines it for future use.
+Navigate to the next step in our ``study`` block ``combine_outputs``. The purpose
+of this step is to extracts the data from each of the simulation runs from
+the previous step (``sim_runs``) and combines it for future use.
 
-Simply run the combine outputs script to save the data as a .npz file in the
-current step workspace.
+The ``combine_outputs.py`` script in the ``$(SCRIPTS)`` directory is provided for
+convenience. It takes two inputs. The first informs it of the base directory of the
+``sim_runs`` directory and the second specifies the subdirectories for each run.
+The script then goes into each of the directories and combines the velocity and
+enstrophy for each timestep of each run in a .npz file.
 
 .. code-block:: yaml
 
@@ -308,19 +312,14 @@ current step workspace.
 
 This step depends on all the previous step's simulation runs which is why we
 have the star. However, it does not need to be parallelized so we assign it to
-the nonsimworkers
+the ``nonsimworkers`` in the ``workers`` section of the merlin block.
 
 .. code-block:: yaml
 
-  merlin:
-      resources:
-          workers:
-              nonsimworkers:
-                  args: -l INFO --concurrency 1
-                  steps: [setup, combine_outputs]
-              simworkers:
-                  args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
-                  steps: [sim_runs]
+  workers:
+      nonsimworkers:
+          args: -l INFO --concurrency 1
+          steps: [setup, combine_outputs]
 
 Machine Learning and visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
