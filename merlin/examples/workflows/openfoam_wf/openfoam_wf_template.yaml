@@ -62,6 +62,7 @@ study:
               cd ..
               cp $(SCRIPTS)/run_openfoam .
 
+              # Creating a unique OpenFOAM docker container for each sample and using it to run the simulation
               CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
               docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
               docker wait ${CONTAINER_NAME}

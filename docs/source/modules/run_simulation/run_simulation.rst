@@ -179,7 +179,7 @@ and update the merlin block to be:
 
 Just like in the :ref:`Using Samples` step of the hello world module, we
 generate samples using the merlin block. We are only concerned with how the
-variation of two initial conditions, lid-speed and viscosity, affects outputs of the system.
+variation of two initial conditions, lidspeed and viscosity, affects outputs of the system.
 These are the ``column_labels``.
 The ``make_samples.py`` script is designed to make log uniform random samples.
 Now, we can move on to the steps of our study block.
@@ -323,10 +323,14 @@ the ``nonsimworkers`` in the ``workers`` section of the merlin block.
 
 Machine Learning and visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In this step we do some post processing of the data collected in the previous step,
-use the RandomForestRegressor from the sklearn python package to predict enstrophy
-and kinetic energy from lid-speed and viscosity, and finally, visualize the fit
-of this regressor and the input regions with the highest error.
+In the ``learn`` step, we want to:
+
+  1. Post-process the .npz file from the previous step.
+  2. Learn the mapping between our inputs and chosen outputs
+  3. Graph important features
+
+The provided ``learn.py`` script does all the above and outputs the trained
+sklearn model and a png of the graphs plotted in the current directory.
 
 .. code-block:: yaml
 
@@ -342,15 +346,9 @@ one worker therefore we will:
 
 .. code-block:: yaml
 
-  merlin:
-      resources:
-          workers:
-              nonsimworkers:
-                  args: -l INFO --concurrency 1
-                  steps: [setup, combine_outputs, learn]
-              simworkers:
-                  args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
-                  steps: [sim_runs]
+  nonsimworkers:
+      args: -l INFO --concurrency 1
+      steps: [setup, combine_outputs, learn]
 
 Putting it all together
 ~~~~~~~~~~~~~~~~~~~~~~~
