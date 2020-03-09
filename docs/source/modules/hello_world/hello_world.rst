@@ -222,7 +222,7 @@ That means we have launched our tasks! Now we need to launch the workers that wi
 
 .. code-block:: bash
 
-    $ merlin run-workers hello.yaml
+    $ merlin run-workers my_hello.yaml
 
 Here's the expected merlin output message for running workers:
 
@@ -235,6 +235,17 @@ Immediately after that, this will pop up:
    :language: text
 
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
+
+Workers are persistent, even after work is done. Send a stop signal to all your workers with this command:
+
+.. code-block:: bash
+
+    $ merlin stop-workers
+
+...and a successful worker stop will look like this, with the name of specific worker(s) reported:
+
+.. literalinclude :: stop_workers.txt
+    :language: text
 
 .. _Using Samples:
 
@@ -283,11 +294,11 @@ It's good practice to shift larger chunks of code to external scripts. At the sa
 
 Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
 
-Before we can run this, we must install the script's one external python library dependency ``names`` (a library that generates random names):
+Before we can run this, we must install the script's external python library dependencies (``names``: a simple package that generates random names, and ``numpy``: a scientific computing package):
 
 .. code-block:: bash
 
-    $ pip3 install names
+    $ pip3 install -r requirements.txt
 
 Here's our DAG with samples:
 
@@ -321,7 +332,7 @@ Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 sampl
 
     $ merlin run-workers my_hello.yaml
 
-To send a warm stop signal to your workers, run:
+Once again, to send a warm stop signal to your workers, run:
 
 .. code-block:: bash
 
