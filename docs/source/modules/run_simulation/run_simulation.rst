@@ -411,22 +411,6 @@ To see your results, look inside the ``learn`` output directory. You should see 
 .. image:: prediction.png
     :align: center
 
-Setup redis
-+++++++++++
-
-We will need to set up the redis server using a docker container.
-This removes the hassle of downloading and making the redis tar file.
-Run:
-
-.. code-block:: bash
-
-    $ docker run --detach --name my-redis -p 6379:6379 redis
-
-Now configure merlin for redis with:
-
-.. code-block:: bash
-
-    $ merlin config --broker redis
 
 .. admonition:: Related articles
 
