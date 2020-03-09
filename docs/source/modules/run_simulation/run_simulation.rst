@@ -382,7 +382,7 @@ After sending the workers to start on their queues, we need to first stop the wo
 
   $ merlin stop-workers --spec openfoam_wf.yaml
 
-  .. Why does it continue running even after merlin stop-workers?
+.. Why does it continue running even after merlin stop-workers?
 
 .. note::
 
