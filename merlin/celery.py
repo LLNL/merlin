@@ -54,6 +54,7 @@ from merlin.router import route_for_task
 LOG = logging.getLogger(__name__)
 
 broker_ssl = True
+results_ssl = False
 try:
     BROKER_URI = broker.get_connection_string()
     LOG.info(f"broker: {broker.get_connection_string(include_password=False)}")
