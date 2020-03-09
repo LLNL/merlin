@@ -3,10 +3,7 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 
-from joblib import (
-    dump,
-    load,
-)
+from joblib import dump
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
@@ -62,7 +59,6 @@ dump(regr, "trained_model.joblib")
 
 
 fig, ax = plt.subplots(3, 2, figsize=(25, 25), constrained_layout=True)
-# ax.tick_params(axis='both', which='major', labelsize=20)
 plt.rcParams.update({"font.size": 25})
 plt.rcParams["lines.linewidth"] = 5
 

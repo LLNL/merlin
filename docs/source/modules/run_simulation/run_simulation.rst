@@ -28,16 +28,27 @@ Run a Real Simulation
 Introduction
 ++++++++++++
 
-We aim to do a parameter study on the lid-driven cavity problem. We are specifically
-interested in predicting the average velocity squared (as a proxy for energy) as well
-as the average enstrophy of the fluid in steady state from the initial conditions
-lidspeed and fluid viscosity.
+We aim to do a parameter study on the lid-driven cavity problem.
 
-**TODO: insert image/image with important details**
+.. list-table::
 
-We will be going over:
+    * - .. figure:: setup.png
 
- * Setting up our inputs
+           Fig 1. Lid-driven cavity problem setup
+
+      - .. figure:: lid-driven-stable.png
+
+           Fig 2. Example of a flow in steady state
+
+In this problem, we have a viscous fluid within a square cavity that has three non-slip
+walls and one moving wall (moving lid).
+We are interested in learning how varying the viscosity and lid speed affects
+the average enstrophy and kinetic energy of the fluid after it reaches steady state.
+We will be using the velocity squared as a proxy for kinetic energy.
+
+This module will be going over:
+
+ * Setting up our inputs using the merlin block
  * Running multiple simulations in parallel
  * Combining the outputs of these simulations into a an array
  * Predictive modeling and visualization
@@ -50,28 +61,24 @@ and that redis server is set up using this command:
 
 .. code:: bash
 
-  merlin info
+  $ merlin info
 
 This is covered more in depth here: :ref:`Verifying installation`
 
-Specification file
-++++++++++++++++++
 
-We are going to build a spec file that produces this DAG:
-
-.. image:: openfoam_dag.png
-    :align: center
-
-Use the ``merlin example`` to get the necessary files for this module.
+Then use the ``merlin example`` to get the necessary files for this module.
 
 .. code-block:: bash
 
-    merlin example openfoam_wf
-    cd openfoam_wf/
+    $ merlin example openfoam_wf
+
+    $ cd openfoam_wf/
 
 In the ``openfoam_wf`` directory you should see the following:
 
-**TODO: insert directory graph**
+.. figure:: openfoam_wf_output.png
+
+   Fig 3. openfoam_wf directory structure
 
 * ``openfoam_wf.yaml`` -- this spec file is partially blank. You will fill in the gaps as you follow this module's steps.
 
@@ -83,12 +90,24 @@ In the ``openfoam_wf`` directory you should see the following:
 
 * ``requirements.txt`` -- this is a text file listing this workflow's python dependencies.
 
-To start, open ``openfoam_wf.yaml`` using your favorite text editor.
+**To start, open** ``openfoam_wf.yaml`` **using your favorite text editor.**
 
 It should look something like this:
 
 .. literalinclude:: ../../../../merlin/examples/workflows/openfoam_wf/openfoam_wf.yaml
    :language: yaml
+   :caption: openfoam_wf.yaml
+
+Specification file
+++++++++++++++++++
+
+We are going to build a spec file that produces this DAG:
+
+.. figure:: openfoam_dag.png
+    :align: center
+
+    Fig 4. Module 4 DAG
+
 
 Variables
 ~~~~~~~~~
@@ -160,7 +179,7 @@ and update the merlin block to be:
 
 Just like in the :ref:`Using Samples` step of the hello world module, we
 generate samples using the merlin block. We are only concerned with how the
-variation of two initial conditions, lid-speed and viscosity, affects outputs of the system.
+variation of two initial conditions, lidspeed and viscosity, affects outputs of the system.
 These are the ``column_labels``.
 The ``make_samples.py`` script is designed to make log uniform random samples.
 Now, we can move on to the steps of our study block.
@@ -206,22 +225,13 @@ Locate the ``resources`` section in the ``merlin`` block and edit the concurrenc
 
 Running the simulation
 ~~~~~~~~~~~~~~~~~~~~~~
-In this step we specify the input parameters and run each of the simulations.
-For OpenFOAM, we simply need to change the values in each of the files related
-to lid-speed and viscosity. We then utilize the OpenFOAM docker container to run each
-of these input parameters locally.
 
-The quantities of interest are the average enstrophy and kinetic energy at each cell.
-The enstrophy is calculated through an OpenFOAM post processing function of the the flow
-fields while the kinetic energy is approximated by calculated using the square of
-the velocity vector at each grid point. The velocity field is normally
-outputted normally as a result of running the default openfoam solver for this
-particular problem.
+Moving on to the ``sim_runs`` step, we want to:
 
-The ``run_openfoam`` executable calculates the appropriate ``deltaT`` so that we
-have a Courant number of less than 1. It also uses the ``icoFoam`` solver on the
-cavity decks and gives us VTK files that are helpful for visualizing the flow fields
-using visualization tools such as VisIt or ParaView.
+  1. Copy the cavity deck from the ``MERLIN_INFO`` directory into each of the current step's subdirectories
+  2. Edit the default input values (lidspeed and viscosity) in these cavity decks using the ``sed`` command
+  3. Run the simulation using the ``run_openfoam`` executable through the OpenFOAM docker container
+  4. Post-process the results (also using the ``run_openfoam`` executable)
 
 This part should look like:
 
@@ -236,7 +246,7 @@ This part should look like:
             cp -r $(MERLIN_INFO)/cavity cavity/
             cd cavity
 
-            ## Replaces default values for viscosity and lidspeed with
+            ## Edits default values for viscosity and lidspeed with
             #  values specified by samples section of the merlin block
             sed -i '' "18s/.*/nu              [0 2 -1 0 0 0 0] $(VISCOSITY);/" constant/transportProperties
             sed -i '' "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
@@ -244,34 +254,52 @@ This part should look like:
             cd ..
             cp $(SCRIPTS)/run_openfoam .
 
+            # Creating a unique OpenFOAM docker container for each sample and using it to run the simulation
             CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
             docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
             docker wait ${CONTAINER_NAME}
         depends: [setup]
         task_queue: simqueue
 
+  .. Why do we need to assign a task_queue for this step and not the rest? Do the rest all have the same queue?
+
 This step runs many simulations in parallel so it would run faster if we assign it
-a worker with a higher concurrency.
+a worker with a higher concurrency. Navigate back to the ``resources`` section in the ``merlin`` block
 
 .. code-block:: yaml
 
-  merlin:
-      resources:
-          workers:
-              nonsimworkers:
-                  args: -l INFO --concurrency 1
-                  steps: [setup]
-              simworkers:
-                  args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
-                  steps: [sim_runs]
+  resources:
+      workers:
+          nonsimworkers:
+              args: -l INFO --concurrency 1
+              steps: [setup]
+          simworkers:
+              args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
+              steps: [sim_runs]
+
+The quantities of interest are the average enstrophy and kinetic energy at each cell.
+The enstrophy is calculated through an OpenFOAM post processing function of the the flow
+fields while the kinetic energy is approximated by calculated using the square of
+the velocity vector at each grid point. The velocity field is normally
+outputted normally as a result of running the default solver for this
+particular problem.
+
+The ``run_openfoam`` executable calculates the appropriate timestep ``deltaT`` so that we
+have a Courant number of less than 1. It also uses the ``icoFoam`` solver on the
+cavity decks and gives us VTK files that are helpful for visualizing the flow fields
+using visualization tools such as VisIt or ParaView.
 
 Combining outputs
 ~~~~~~~~~~~~~~~~~
-The script in this step extracts the data from each of the simulation runs from
-the previous step and combines it for future use.
+Navigate to the next step in our ``study`` block ``combine_outputs``. The purpose
+of this step is to extracts the data from each of the simulation runs from
+the previous step (``sim_runs``) and combines it for future use.
 
-Simply run the combine outputs script to save the data as a .npz file in the
-current step workspace.
+The ``combine_outputs.py`` script in the ``$(SCRIPTS)`` directory is provided for
+convenience. It takes two inputs. The first informs it of the base directory of the
+``sim_runs`` directory and the second specifies the subdirectories for each run.
+The script then goes into each of the directories and combines the velocity and
+enstrophy for each timestep of each run in a .npz file.
 
 .. code-block:: yaml
 
@@ -284,26 +312,25 @@ current step workspace.
 
 This step depends on all the previous step's simulation runs which is why we
 have the star. However, it does not need to be parallelized so we assign it to
-the nonsimworkers
+the ``nonsimworkers`` in the ``workers`` section of the merlin block.
 
 .. code-block:: yaml
 
-  merlin:
-      resources:
-          workers:
-              nonsimworkers:
-                  args: -l INFO --concurrency 1
-                  steps: [setup, combine_outputs]
-              simworkers:
-                  args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
-                  steps: [sim_runs]
+  workers:
+      nonsimworkers:
+          args: -l INFO --concurrency 1
+          steps: [setup, combine_outputs]
 
 Machine Learning and visualization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In this step we do some post processing of the data collected in the previous step,
-use the RandomForestRegressor from the sklearn python package to predict enstrophy
-and kinetic energy from lid-speed and viscosity, and finally, visualize the fit
-of this regressor and the input regions with the highest error.
+In the ``learn`` step, we want to:
+
+  1. Post-process the .npz file from the previous step.
+  2. Learn the mapping between our inputs and chosen outputs
+  3. Graph important features
+
+The provided ``learn.py`` script does all the above and outputs the trained
+sklearn model and a png of the graphs plotted in the current directory.
 
 .. code-block:: yaml
 
@@ -319,15 +346,9 @@ one worker therefore we will:
 
 .. code-block:: yaml
 
-  merlin:
-      resources:
-          workers:
-              nonsimworkers:
-                  args: -l INFO --concurrency 1
-                  steps: [setup, combine_outputs, learn]
-              simworkers:
-                  args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
-                  steps: [sim_runs]
+  nonsimworkers:
+      args: -l INFO --concurrency 1
+      steps: [setup, combine_outputs, learn]
 
 Putting it all together
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -335,50 +356,61 @@ By the end, your ``openfoam_wf.yaml`` should look like the template version in t
 
 .. literalinclude:: ../../../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml
    :language: yaml
-
-Setup redis
-+++++++++++
-
-We will need to set up the redis server using a docker container.
-This removes the hassle of downloading and making the redis tar file.
-Run:
-
-.. code-block:: bash
-
-    docker run --detach --name my-redis -p 6379:6379 redis
-
-Now configure merlin for redis with:
-
-.. code-block:: bash
-
-    merlin config --broker redis
+   :caption: openfoam_wf_template.yaml
 
 Run the workflow
 ++++++++++++++++
-Now that you know what is inside the OpenFOAM specification, run this command to get a full copy of the workflow with the scripts it needs:
+Now that you are done with the Specification file, use the following commands from inside
+the ``openfoam_wf`` directory to run the workflow on our task server.
+
+.. note::
+
+    Running with fewer samples is the one of the best ways to debug
 
 .. code-block:: bash
 
-    $ merlin example openfoam_wf
+    $ merlin run openfoam_wf.yaml
 
-Now, run the workflow:
+    $ merlin run-workers openfoam_wf.yaml
 
-.. code-block:: bash
+But wait! We realize that 10 samples is not enough to train a good model. We would like
+to restart with 100 samples instead of 10 (should take about 6 minutes):
 
-    $ merlin run openfoam_wf/openfoam_wf.yaml
-
-    $ merlin run-workers openfoam_wf/openfoam_wf.yaml
-
-With 100 samples instead of 10 (should take about 6 minutes):
+After sending the workers to start on their queues, we need to first stop the workers:
 
 .. code-block:: bash
 
-    $ merlin run openfoam_wf/openfoam_wf.yaml --vars N_SAMPLES=100
+  $ merlin stop-workers --spec openfoam_wf.yaml
+
+  .. Why does it continue running even after merlin stop-workers?
+
+.. note::
+
+  * The --spec flag only stops workers from a specfic YAML spec
+
+We stopped these tasks from running but if we were to run the workflow again
+(with 100 samples instead of 10), we would continue running the 10 samples first!
+This is because the queues are still filled with the previous attempt's tasks.
+We need to purge these queues first in order to repopulate them with the appropriate
+tasks. This is where we use the ``merlin purge`` command:
+
+.. code-block:: bash
+
+  $ merlin purge openfoam_wf.yaml
+
+Now we are free to repopulate the queues with the 100 samples:
+
+.. code-block:: bash
+
+    $ merlin run openfoam_wf.yaml --vars N_SAMPLES=100
+
+    $ merlin run-workers openfoam_wf.yaml
 
 To see your results, look inside the ``learn`` output directory. You should see a png that looks like this:
 
 .. image:: prediction.png
     :align: center
+
 
 .. admonition:: Related articles
 
