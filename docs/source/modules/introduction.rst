@@ -121,10 +121,10 @@ coordinate the execution of tasks and management of resources one of two ways:
    |                              + - Progress monitored with periodic polling            |
    |                              +   (of files or batch system)                          |
    +------------------------------+-------------------------------------------------------+
-   + Internal Coordination        + - Multiple tasks bundled into larger batch jobs       |
-   + |int-img|                    + - Internal daemon tracks dependencies and resources   |
-   +                              + - Progress monitored via polling                      |
-   +                              +   (of filesystem or message passing)                  |
+   | Internal Coordination        + - Multiple tasks bundled into larger batch jobs       |
+   | |int-img|                    + - Internal daemon tracks dependencies and resources   |
+   |                              + - Progress monitored via polling                      |
+   |                              +   (of filesystem or message passing)                  |
    +------------------------------+-------------------------------------------------------+
 
 
@@ -287,11 +287,37 @@ But with celery, we can *dynamically* create additional
 tasks. This means that the DAG can get unrolled by the very
 same workers that will execute the tasks, offering a natural parallelism
 (i.e. much less waiting before starting the work).
+
+What does this mean in practice?
+
+*Merlin can quickly queue a lot of simulations.*
+
+How quickly? The figure below shows task queing rates when pushing
+:doc:`a simple workflow<./hello_world/hello_world>` on the
+`Quartz Supercomputer <https://hpc.llnl.gov/hardware/platforms/Quartz>`_
+to 40 million samples. This measures how quickly simulation ensembles of various
+sample sizes can get enqueued.
+
+.. image:: ../../images/task_creation_rate.png
+
+As you can see, by exploiting celery's dynamic task queuing (tasks that create
+tasks), Merlin can enqueue hundreds of thousands of
+simulations per second. These jobs can then be consumed in parallel,
+at a rate that depends on the number of workers you have.
+
 Furthermore, this ability to dynamically add tasks to the queue means
 that workflows can become more flexible and responsive. A worker executing
 a step can launch additional workflows without having to stand up resources
 to execute and monitor the execution of those additional steps.
 
+The only downside to being able to enqueue work this quickly is the inability
+of batch schedulers to keep up. This is why we recommend pairing Merlin with
+`flux <http://flux-framework.org>`_, which results in a scalable but easy-to-use
+workflow system:
+
+- Maestro describes the workflow tasks
+- Merlin orchestrates the task executions
+- Flux schedules the HPC resources
 
 Here's an example of how Merlin, maestro and flux can all work together
 to launch a workflow on multiple machines.
