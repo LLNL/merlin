@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bug that prevented an empty username for results backend and broker when using redis.
 - Bug that prevented `OUTPUT_PATH` from being an integer.
 
+### Added
+- Optional ssl files for the  broker and results beackend config.
+- A url keyword in the app.yaml file to override the entire broker or results backend configuration.
+
 ## [1.4.1] [2020-03-06]
 
 ### Changed

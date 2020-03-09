@@ -6,6 +6,7 @@ Advanced Topics
       * :doc:`Module 3: Hello World<../hello_world/hello_world>`
       * :doc:`Module 4: Running a Real Simulation<../run_simulation/run_simulation>`
       * Python virtual environment containing the following packages
+
         * merlin
         * pandas
         * faker
