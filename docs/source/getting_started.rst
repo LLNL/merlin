@@ -5,7 +5,7 @@ Quick Start
 ++++++++++++++
 ::
 
-    pip3 install merlinwf
+    pip3 install merlin
 
 All set up? See the :doc:`Merlin Commands <./merlin_commands>` section for using merlin.
 
@@ -15,7 +15,7 @@ Developer Setup
 ++++++++++++++++++
 To install with the additional developer dependencies, use::
 
-    pip3 install "merlinwf[dev]"
+    pip3 install "merlin[dev]"
 
 or::
 

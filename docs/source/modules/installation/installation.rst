@@ -75,7 +75,7 @@ Install merlin through pip.
 
 .. code-block:: bash
 
-  pip3 install merlinwf
+  pip3 install merlin
 
 When you are done with the virtualenv you can deactivate it using ``deactivate``,
 but leave the virtualenv activated for the subsequent steps.
