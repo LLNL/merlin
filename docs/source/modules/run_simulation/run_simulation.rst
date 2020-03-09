@@ -356,6 +356,60 @@ By the end, your ``openfoam_wf.yaml`` should look like the template version in t
 
 .. literalinclude:: ../../../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml
    :language: yaml
+   :caption: openfoam_wf_template.yaml
+
+Run the workflow
+++++++++++++++++
+Now that you are done with the Specification file, use the following commands from inside
+the ``openfoam_wf`` directory to run the workflow on our task server.
+
+.. note::
+
+    Running with fewer samples is the one of the best ways to debug
+
+.. code-block:: bash
+
+    $ merlin run openfoam_wf.yaml
+
+    $ merlin run-workers openfoam_wf.yaml
+
+But wait! We realize that 10 samples is not enough to train a good model. We would like
+to restart with 100 samples instead of 10 (should take about 6 minutes):
+
+After sending the workers to start on their queues, we need to first stop the workers:
+
+.. code-block:: bash
+
+  $ merlin stop-workers --spec openfoam_wf.yaml
+
+  .. Why does it continue running even after merlin stop-workers?
+
+.. note::
+
+  * The --spec flag only stops workers from a specfic YAML spec
+
+We stopped these tasks from running but if we were to run the workflow again
+(with 100 samples instead of 10), we would continue running the 10 samples first!
+This is because the queues are still filled with the previous attempt's tasks.
+We need to purge these queues first in order to repopulate them with the appropriate
+tasks. This is where we use the ``merlin purge`` command:
+
+.. code-block:: bash
+
+  $ merlin purge openfoam_wf.yaml
+
+Now we are free to repopulate the queues with the 100 samples:
+
+.. code-block:: bash
+
+    $ merlin run openfoam_wf.yaml --vars N_SAMPLES=100
+
+    $ merlin run-workers openfoam_wf.yaml
+
+To see your results, look inside the ``learn`` output directory. You should see a png that looks like this:
+
+.. image:: prediction.png
+    :align: center
 
 Setup redis
 +++++++++++
@@ -373,33 +427,6 @@ Now configure merlin for redis with:
 .. code-block:: bash
 
     $ merlin config --broker redis
-
-Run the workflow
-++++++++++++++++
-Now that you know what is inside the OpenFOAM specification, run this command to get a full copy of the workflow with the scripts it needs:
-
-.. code-block:: bash
-
-    $ merlin example openfoam_wf
-
-Now, run the workflow:
-
-.. code-block:: bash
-
-    $ merlin run openfoam_wf/openfoam_wf.yaml
-
-    $ merlin run-workers openfoam_wf/openfoam_wf.yaml
-
-With 100 samples instead of 10 (should take about 6 minutes):
-
-.. code-block:: bash
-
-    $ merlin run openfoam_wf/openfoam_wf.yaml --vars N_SAMPLES=100
-
-To see your results, look inside the ``learn`` output directory. You should see a png that looks like this:
-
-.. image:: prediction.png
-    :align: center
 
 .. admonition:: Related articles
 
