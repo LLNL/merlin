@@ -36,7 +36,10 @@ from __future__ import print_function
 import logging
 import os
 
-from merlin.config.configfile import CONFIG, get_ssl_entries
+from merlin.config.configfile import (
+    CONFIG,
+    get_ssl_entries,
+)
 
 
 try:
@@ -71,9 +74,16 @@ SQLITE_CONNECTION_STRING = "db+sqlite:///results.db"
 
 
 def get_backend_password(password_file, certs_path=None):
-    if certs_path is None:
-        certs_path = CONFIG.celery.certs
+    """
+    Check for password in file.
+    If the password is  not found in the given password_file,
+    then the certs_path will be searched for the file,
+    if this file cannot be found, the password value will
+    be returned.
 
+    :param password_file : The file path for the password
+    :param certs_path : The path for ssl certificates and passwords
+    """
     password = None
 
     password_file = os.path.expanduser(password_file)
@@ -91,21 +101,24 @@ def get_backend_password(password_file, certs_path=None):
             line = f.readline().strip()
             password = quote(line, safe="")
 
-    LOG.debug(f"Results backend: certs_path = {certs_path}")
+    LOG.debug(f"Results backend: aux password path (certs_path) = {certs_path}")
     LOG.debug(f"Results backend: password_filepath = {password_filepath}")
 
     return password
 
 
 def get_redis(certs_path=None, include_password=True, ssl=False):
+    """
+    Return the redis or rediss specific connection
+
+    :param certs_path : The path for ssl certificates and passwords
+    :param include_password : Format the connection for ouput by setting this True
+    :param ssl : Flag to use rediss output
+    """
     server = CONFIG.results_backend.server
     password_file = ""
 
-    urlbase = "redis"
-    ssl_info = None
-    if ssl:
-        urlbase = "rediss"
-        ssl_info = get_ssl_config()
+    urlbase = "rediss" if ssl else "redis"
 
     try:
         port = CONFIG.results_backend.port
@@ -139,20 +152,21 @@ def get_redis(certs_path=None, include_password=True, ssl=False):
     LOG.debug(f"Results backend: server = {server}")
     LOG.debug(f"Results backend: certs_path = {certs_path}")
 
-    url = "%s://%s%s:%d/%d" % (urlbase, spass, server, port, db_num)
-
-    if hasattr(ssl_info, "keys") and ssl_info:
-        ssl_str  = '&'.join("{!s}={!r}".format(key,val) for (key,val) in ssl_info.items())
-        url = f"{url}?{ssl_str}"
-
-    return url
+    return f"{urlbase}://{spass}{server}:{port}/{db_num}"
 
 
 def get_mysql_config(certs_path, mysql_certs):
     """
     Determine if all the information for connecting MySQL as the Celery
     results backend exists.
+
+    :param certs_path : The path for ssl certificates and passwords
+    :param mysql_certs : The dict of mysql certificates
     """
+    mysql_ssl = get_ssl_config(celery_check=False)
+    if mysql_ssl:
+        return mysql_ssl
+
     if not os.path.exists(certs_path):
         return False
     files = os.listdir(certs_path)
@@ -169,10 +183,13 @@ def get_mysql_config(certs_path, mysql_certs):
 
 
 def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
-    """Returns the formatted MySQL connection string."""
-    if certs_path is None:
-        certs_path = CONFIG.celery.certs
+    """
+    Returns the formatted MySQL connection string.
 
+    :param certs_path : The path for ssl certificates and passwords
+    :param mysql_certs : The dict of mysql certificates
+    :param include_password : Format the connection for ouput by setting this True
+    """
     dbname = CONFIG.results_backend.dbname
     password_file = CONFIG.results_backend.password
     server = CONFIG.results_backend.server
@@ -198,7 +215,7 @@ def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
     mysql_config = get_mysql_config(certs_path, mysql_certs)
 
     if not mysql_config:
-        msg = "The connection information for MySQL could not be set."
+        msg = f"The connection information for MySQL could not be set, cannot find:\n {mysql_certs}\ncheck the celery/certs path or set the ssl information in the app.yaml file."
         raise Exception(msg)
 
     mysql_config["user"] = CONFIG.results_backend.username
@@ -217,6 +234,9 @@ def get_connection_string(include_password=True):
     return the connection string.
 
     If the url variable is present, return that as the connection string.
+
+    :param config_path : The path for ssl certificates and passwords
+    :param include_password : Format the connection for ouput by setting this True
     """
     try:
         return CONFIG.results_backend.url
@@ -232,28 +252,39 @@ def get_connection_string(include_password=True):
         msg = f"'{backend}' is not a supported results backend"
         raise ValueError(msg)
 
-    if backend == "mysql":
-        return get_mysql(include_password=include_password)
+    try:
+        certs_path = CONFIG.celery.certs
+        certs_path = os.path.abspath(os.path.expanduser(certs_path))
+    except AttributeError:
+        certs_path = None
 
-    if backend == "sqlite":
+    if "mysql" in backend:
+        return get_mysql(certs_path=certs_path, include_password=include_password)
+
+    if "sqlite" in backend:
         return SQLITE_CONNECTION_STRING
 
     if backend == "redis":
-        return get_redis(include_password=include_password)
+        return get_redis(certs_path=certs_path, include_password=include_password)
 
     if backend == "rediss":
-        return get_redis(include_password=include_password, ssl=True)
+        return get_redis(
+            certs_path=certs_path, include_password=include_password, ssl=True
+        )
 
     return None
 
-def get_ssl_config():
+
+def get_ssl_config(celery_check=False):
     """
     Return the ssl config based on the configuration specified in the
-    `merlin.yaml` config file.
+    `app.yaml` config file.
+
+    :param celery_check : Return the proper results ssl setting when configuring celery
     """
     results_backend = ""
     try:
-        results_backend = CONFIG.results_backend.url.split(':')[0]
+        results_backend = CONFIG.results_backend.url.split(":")[0]
     except AttributeError:
         pass
 
@@ -266,26 +297,21 @@ def get_ssl_config():
         return False
 
     try:
-        config_path = CONFIG.celery.certs
+        certs_path = CONFIG.celery.certs
     except AttributeError:
-        config_path = None
+        certs_path = None
 
-
-    results_backend_ssl =  get_ssl_entries("Results Backend", results_backend, CONFIG.results_backend)
+    results_backend_ssl = get_ssl_entries(
+        "Results Backend", results_backend, CONFIG.results_backend, certs_path
+    )
 
     if results_backend == "rediss":
-        if results_backend_ssl:
-            try:
-                redis_results_backend_ssl = {}
-                for k, v in results_backend_ssl.items():
-                    if not k.startswith("ssl_"):
-                        redis_results_backend_ssl["ssl_" + k] = v
-                    else:
-                        redis_results_backend_ssl[k] = v
-                return redis_results_backend_ssl    
-            except AttributeError:
-                return True
-        else:
-            return True
+        if not results_backend_ssl:
+            results_backend_ssl = True
+        return results_backend_ssl
+
+    if results_backend and "mysql" in results_backend:
+        if not celery_check:
+            return results_backend_ssl
 
     return False

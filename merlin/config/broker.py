@@ -36,7 +36,10 @@ import logging
 import os
 from os.path import expanduser
 
-from merlin.config.configfile import CONFIG, get_ssl_entries
+from merlin.config.configfile import (
+    CONFIG,
+    get_ssl_entries,
+)
 
 
 try:
@@ -55,6 +58,7 @@ USER = getpass.getuser()
 
 
 def read_file(filepath):
+    "Safe file read from filepath"
     with open(filepath, "r") as f:
         line = f.readline().strip()
         return quote(line, safe="")
@@ -64,6 +68,9 @@ def get_rabbit_connection(config_path, include_password):
     """
     Given the path to the directory where the broker configurations are stored
     setup and return the RabbitMQ connection string.
+
+    :param config_path : The path for ssl certificates and passwords
+    :param include_password : Format the connection for ouput by setting this True
     """
     vhost = CONFIG.broker.vhost
     LOG.debug(f"Broker: vhost = {vhost}")
@@ -114,6 +121,9 @@ def get_redissock_connection(config_path, include_password):
     """
     Given the path to the directory where the broker configurations are stored
     setup and return the redis+socket connection string.
+
+    :param config_path : The path for ssl certificates and passwords
+    :param include_password : Format the connection for ouput by setting this True
     """
     try:
         db_num = CONFIG.broker.db_num
@@ -126,9 +136,18 @@ def get_redissock_connection(config_path, include_password):
     return REDISSOCK_CONNECTION.format(**redis_config)
 
 
-def get_redis_connection(config_path, include_password):
+def get_redis_connection(config_path, include_password, ssl=False):
+    """
+    Return the redis or rediss specific connection
+
+    :param config_path : The path for ssl certificates and passwords
+    :param include_password : Format the connection for ouput by setting this True
+    :param ssl : Flag to use rediss output
+    """
     server = CONFIG.broker.server
     LOG.info(f"Broker: server = {server}")
+
+    urlbase = "rediss" if ssl else "redis"
 
     try:
         port = CONFIG.broker.port
@@ -158,17 +177,18 @@ def get_redis_connection(config_path, include_password):
         spass = ""
         LOG.warning(f"Broker: redis using default password = {spass}")
 
-    redis_broker = "redis://%s%s:%d/%d" % (spass, server, port, db_num)
-
-    return redis_broker
+    return f"{urlbase}://{spass}{server}:{port}/{db_num}"
 
 
 def get_connection_string(include_password=True):
     """
     Return the connection string based on the configuration specified in the
-    `merlin.yaml` config file.
+    `app.yaml` config file.
 
     If the url variable is present, return that as the connection string.
+
+    :param include_password : The connection can be formatted for output by 
+                              setting this to True
     """
     try:
         return CONFIG.broker.url
@@ -182,6 +202,7 @@ def get_connection_string(include_password=True):
 
     try:
         config_path = CONFIG.celery.certs
+        config_path = os.path.abspath(os.path.expanduser(config_path))
     except AttributeError:
         config_path = None
 
@@ -197,17 +218,20 @@ def get_connection_string(include_password=True):
     if broker == "redis":
         return get_redis_connection(config_path, include_password)
 
+    if broker == "rediss":
+        return get_redis_connection(config_path, include_password, ssl=True)
+
     return None
 
 
 def get_ssl_config():
     """
     Return the ssl config based on the configuration specified in the
-    `merlin.yaml` config file.
+    `app.yaml` config file.
     """
     broker = ""
     try:
-        broker = CONFIG.broker.url.split(':')[0]
+        broker = CONFIG.broker.url.split(":")[0]
     except AttributeError:
         pass
 
@@ -220,29 +244,16 @@ def get_ssl_config():
         return False
 
     try:
-        config_path = CONFIG.celery.certs
+        certs_path = CONFIG.celery.certs
     except AttributeError:
-        config_path = None
+        certs_path = None
 
-
-    broker_ssl = get_ssl_entries("Broker", broker, CONFIG.broker) 
+    broker_ssl = get_ssl_entries("Broker", broker, CONFIG.broker, certs_path)
 
     if not broker_ssl:
         broker_ssl = True
 
-    if broker == "rabbitmq":
+    if broker == "rabbitmq" or broker == "rediss":
         return broker_ssl
-
-    if broker == "rediss":
-        try:
-            redis_broker_ssl = {}
-            for k, v in broker_ssl.items():
-                if not k.startswith("ssl_"):
-                    redis_broker_ssl["ssl_" + k] = v
-                else:
-                    redis_broker_ssl[k] = v
-            return redis_broker_ssl    
-        except AttributeError:
-            return True
 
     return False

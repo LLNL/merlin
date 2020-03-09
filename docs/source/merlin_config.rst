@@ -32,15 +32,31 @@ using a socket.
 
 Broker: ``rabbitmq``
 --------------------
-Merlin constructs the following connection string from the relevant options in the ``broker`` section of the app.yaml file.
+Merlin constructs the following connection string from the relevant options in the 
+``broker`` section of the app.yaml file. If the ``port`` argument is not defined,
+the default rabbitmq TLS port, 5671,  will be used. See the :ref:`broker_rabbitmq_ssl`
+section for more info about security with this broker.
 
-``"amqps://{username}:{password}@{server}:5671//{vhost}"``
 
+| The prototype url for this configuration is:
+| ``amqps://{username}:{password}@{server}:{port}//{vhost}``
+
+::
+
+  broker:
+    name: rabbitmq
+    #username: # defaults to your username unless changed here
+    password: ~/.merlin/rabbit-password
+    # server URL
+    server: server.domain.com
+    #vhost: # defaults to your username unless changed here
 
 Broker: ``redis``
 -----------------
 Merlin constructs the following connection string from the relevant options in the `broker` section of the app.yaml file.
-``"redis://{password}{server}:{port}/{db_num}"``
+
+| The prototype url for this configuration is:
+| ``redis://:{password}@{server}:{port}/{db_num}``
 
 ::
 
@@ -52,8 +68,11 @@ Merlin constructs the following connection string from the relevant options in t
 Broker: ``rediss``
 ------------------
 Newer versions of Redis (version 6 or greater) can be configured with ssl. The
-``rediss`` name is used to enable this support. See the Redis broker security 
+``rediss`` name is used to enable this support. See the :ref:`broker_redis_ssl`
 section for more info.
+
+| The prototype url for this configuration is:
+| ``rediss://:{password}@{server}:{port}/{db_num}``
 
 ::
 
@@ -64,8 +83,11 @@ section for more info.
 
 Broker: ``redis+socket``
 ------------------------
-Merlin constructs the following connection string from the relevant options in the ``broker`` section of the app.yaml file.
-``"redis+socket://{path}?virtual_host={db_num}"``
+Merlin constructs the following connection string from the relevant options in the 
+``broker`` section of the app.yaml file.
+
+| The prototype url for this configuration is:
+| ``redis+socket://{path}?virtual_host={db_num}``
 
 ::
 
@@ -84,6 +106,9 @@ by the ssl processing system.
 Currently the ssl system will only configure the Rabbitmq and Redis
 servers.
 
+| The prototype url for this configuration is:
+| ``{url}``
+
 ::
 
   broker:
@@ -91,6 +116,8 @@ servers.
 
 Broker: Security
 ----------------
+
+.. _broker_rabbitmq_ssl:
 
 Security with RabbitMQ_
 _______________________
@@ -138,8 +165,10 @@ This results in a value for broker_use_ssl given below:
   }
 
 
+.. _broker_redis_ssl:
+
 Security with redis_
---------------------
+____________________
 
 
 The same ssl config and resulting ssl_use_broker can be used with the ``rediss://``
@@ -182,8 +211,11 @@ The resulting ``broker_use_ssl`` configuration for a ``rediss`` server is given 
 
 Results backend: ``redis``
 --------------------------
-Merlin constructs the following connection string from relevant options in the `results_backend` section of the app.yaml file.
-``"redis://{password}{server}:{port}/{db_num}"``
+Merlin constructs the following connection string from relevant options in the 
+`results_backend` section of the app.yaml file.
+
+| The prototype url for this configuration is:
+| ``redis://:{password}{server}:{port}/{db_num}``
 
 ::
 
@@ -192,6 +224,21 @@ Merlin constructs the following connection string from relevant options in the `
     server: localhost
     port: 6379
 
+Results backend: ``rediss``
+---------------------------
+Newer versions of Redis (version 6 or greater) can be configured with ssl. The
+``rediss`` name is used to enable this support. See the :ref:`results_redis_ssl`
+section for more info.
+
+| The prototype url for this configuration is:
+| ``rediss://:{password}{server}:{port}/{db_num}``
+
+::
+
+  results_backend:
+    name: rediss
+    server: localhost
+    port: 6379
 
 Results backend: ``url``
 ------------------------
@@ -200,18 +247,21 @@ A ``url`` option is available to specify the results connection url, in this
 case the server name is ignored. The url must include the entire connection url
 including the ssl configuration.
 
+| The prototype url for this configuration is:
+| ``{url}``
+
 ::
 
   results_backend:
     url: redis://localhost:6379/0
 
-The ``url`` option can also be used to define a server that is not explicetly
+The ``url`` option can also be used to define a server that is not explicitly
 handled by the merlin configuration system.
 
 ::
 
   results_backend:
-    url: db+sqlite:///results.sqlite
+    url: db+postgresql://scott:tiger@localhost/mydatabase
 
 Resolving password fields
 _________________________
@@ -225,6 +275,8 @@ The ``broker/password`` is simply the full path to a file containing your passwo
 Results backend: Security
 -------------------------
 
+.. _results_redis_ssl:
+
 Security with redis_
 ____________________
 
@@ -232,6 +284,16 @@ Redis versions less than 6 do not natively support multiple users or SSL. We add
 redis to encrypt all data it sends to redis and then decrypt anything it receives. Each user should have their own encryption key as defined by 
 ``results_backend/encryption_key`` in the app.yaml file. Merlin will generate a key if that key does not yet exist.
 
-Redis versions
+Redis versions 6 or greater can use the ssl keys as in the broker section. The ssl
+config with redis (``rediss``) in the results backend is the placed in the 
+``redis_backend_use_ssl`` celery argument.
+The values in this argument are the same as the broker.
 
+::
 
+  redis_backend_use_ssl = {
+  'ssl_keyfile': '/var/ssl/private/client-key.pem',
+  'ssl_certfile': '/var/ssl/amqp-server-cert.pem',
+  'ssl_ca_certs': '/var/ssl/myca.pem',
+  'ssl_cert_reqs': ssl.CERT_REQUIRED
+  }

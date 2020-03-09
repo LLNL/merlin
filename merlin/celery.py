@@ -58,12 +58,13 @@ try:
     BROKER_URI = broker.get_connection_string()
     LOG.info(f"broker: {broker.get_connection_string(include_password=False)}")
     broker_ssl = broker.get_ssl_config()
-    LOG.info(f"broker_ssl = {borker_ssl}")
+    LOG.info(f"broker_ssl = {broker_ssl}")
     RESULTS_BACKEND_URI = results_backend.get_connection_string()
-    results_ssl = results_backend.get_ssl_config()
+    results_ssl = results_backend.get_ssl_config(celery_check=True)
     LOG.info(
         f"backend: {results_backend.get_connection_string(include_password=False)}"
     )
+    LOG.info(f"redis_backed_use_ssl = {results_ssl}")
 except ValueError:
     # These variables won't be set if running with '--local'.
     BROKER_URI = None
@@ -71,7 +72,11 @@ except ValueError:
 
 
 app = Celery(
-    "merlin", broker=BROKER_URI, backend=RESULTS_BACKEND_URI, broker_use_ssl=broker_ssl, redis_backend_use_ssl=results_ssl)
+    "merlin",
+    broker=BROKER_URI,
+    backend=RESULTS_BACKEND_URI,
+    broker_use_ssl=broker_ssl,
+    redis_backend_use_ssl=results_ssl,
 )
 
 

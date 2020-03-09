@@ -115,10 +115,10 @@ ax[1][1].set_ylabel(r"$Energy$", fontsize=fontsize)
 ax[1][1].set_title("Average Energy Variation with Lidspeed")
 ax[1][1].grid()
 
-ax[1][0].tick_params(axis='both', which='major', labelsize=fontsize)
-ax[1][1].tick_params(axis='both', which='major', labelsize=fontsize)
-ax[1][0].tick_params(axis='both', which='major', labelsize=fontsize)
-ax[1][1].tick_params(axis='both', which='major', labelsize=fontsize)
+ax[1][0].tick_params(axis="both", which="major", labelsize=fontsize)
+ax[1][1].tick_params(axis="both", which="major", labelsize=fontsize)
+ax[1][0].tick_params(axis="both", which="major", labelsize=fontsize)
+ax[1][1].tick_params(axis="both", which="major", labelsize=fontsize)
 
 input_energy = ax[1][0].scatter(
     X[:, 0],
