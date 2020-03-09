@@ -4,18 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.0] 2020-03-02
-
-### Added
-- The walltime keyword is now enabled for the slurm and flux batch types.
-- LAUNCHER keywords, (slurm,flux,lsf) for specifying arguments specific
-  to that parallel launcher in the run section.
-- Optional ssl files for the  broker config.
-
-### Fixed
-- Syntax errors in web doc file `merlin_variables.rst`.
-
-## [1.3.0] 2020-02-21
+## [Unreleased]
 
 ### Fixed
 - Bug that prevented an empty username for results backend and broker when using redis.
@@ -63,11 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Check server access when `merlin info` is run.
 - A port option to rabbitmq config options.
 - Author and author_email to setup.py.
-
-### Removed
-- Makefile targets `pull` and `update`.
-- Unneeded variables from `simple_chain.yaml`.
-- All `INFO`-level logger references to Celery.
 
 ### Removed
 - Makefile targets `pull` and `update`.

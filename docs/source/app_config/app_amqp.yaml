@@ -33,7 +33,7 @@ broker:
 
 
 results_backend:
-    # Can be redis,rediss, mysql, db+ or memchaced server
+    # Can be redis,rediss, mysql, db+ or memcached server
     # Only a few of these are directly configured by merlin
     name: redis
 

@@ -34,7 +34,7 @@ Installing merlin
 -----------------
 
 A merlin installation is required for the subsequent modules of this tutorial. You can choose between the pip method or the docker method. Choose one or the other but
-do not use both unless you are familiar with redis servers run locally and through docker. 
+do not use both unless you are familiar with redis servers run locally and through docker.
 The pip method is recommended.
 
 Once merlin is installed, it requires servers to operate.
@@ -109,9 +109,9 @@ can also be used for the celery broker. This method will be called local-redis.
   make test
 
 
-The redis server is started by calling the ``redis-server`` command located in 
+The redis server is started by calling the ``redis-server`` command located in
 the src directory.
-This should be run in a separate terminal in the top-level source 
+This should be run in a separate terminal in the top-level source
 directory so the output can be examined.
 The redis server will use the default ``redis.conf`` file in the top-level
 redis directory.
@@ -147,7 +147,7 @@ the pip installation method.
 
 
 To run a merlin docker container with a docker redis server, cut
-and paste the commands below into a new file called ``docker-compose.yml``. 
+and paste the commands below into a new file called ``docker-compose.yml``.
 This file can be placed anywhere in your filesystem but you may want to put it in
 a directory ``merlin_docker_redis``.
 
@@ -218,12 +218,12 @@ to see the configuration, it should look like the configuration below.
 Docker
 ++++++
 
-If you are using the docker merlin with docker-redis server then the 
-``~/merlinu/.merlin/app.yaml`` will be created by the ``merlin config`` 
-command above. 
-This file must be edited to 
-add the server from the redis docker container my-redis. Change the ``server: localhost``, in both the 
-broker and backend config definitions, to ``server: my-redis``, the port will remain the same. 
+If you are using the docker merlin with docker-redis server then the
+``~/merlinu/.merlin/app.yaml`` will be created by the ``merlin config``
+command above.
+This file must be edited to
+add the server from the redis docker container my-redis. Change the ``server: localhost``, in both the
+broker and backend config definitions, to ``server: my-redis``, the port will remain the same.
 
 .. note::
   You can use the docker redis server, instead of the local-redis server,
@@ -233,11 +233,13 @@ broker and backend config definitions, to ``server: my-redis``, the port will re
 .. literalinclude:: ./app_docker_redis.yaml
    :language: yaml
 
+.. _Verifying installation:
+
 Checking/Verifying installation
 -------------------------------
 
-The ``merlin info`` command will check that the configuration file is 
-installed correctly, display the server configuration strings, and check server 
+The ``merlin info`` command will check that the configuration file is
+installed correctly, display the server configuration strings, and check server
 access. This command works for both the pip and docker installed merlin.
 
 .. code-block:: bash
@@ -282,15 +284,15 @@ RabbitMQ server
 +++++++++++++++
 
 This optional section details the setup of a rabbitmq server for merlin.
-A rabbitmq server can be started to provide the broker, the redis 
+A rabbitmq server can be started to provide the broker, the redis
 server will still be required for the backend. Merlin is configured
 to use ssl encryption for all communication with the rabbitmq server.
 An ssl server requires ssl certificates to encrypt the communication through
 the python ssl module `python ssl <https://docs.python.org/3/library/ssl.html>`_ .
 This tutorial can use self-signed certificates created by the user for use
-in the rabbitmq server. 
-The rabbitmq server uses Transport Layer Security (TLS) 
-(often known as "Secure Sockets Layer"). 
+in the rabbitmq server.
+The rabbitmq server uses Transport Layer Security (TLS)
+(often known as "Secure Sockets Layer").
 Information on rabbitmq
 with TLS can be found here: `rabbit TLS <https://www.rabbitmq.com/ssl.html>`_
 
