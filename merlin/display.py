@@ -85,6 +85,7 @@ def display_config_info():
     try:
         conf["broker server"] = broker.get_connection_string(include_password=False)
         sconf["broker server"] = broker.get_connection_string()
+        conf["broker ssl"] = broker.get_ssl_config()
     except Exception as e:
         conf["broker server"] = "Broker server error."
         excpts["broker server"] = e
