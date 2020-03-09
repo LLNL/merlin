@@ -1,6 +1,7 @@
 import argparse
 
 import names
+import numpy as np
 
 
 # argument parsing
@@ -12,13 +13,12 @@ parser.add_argument("--filepath", type=str, help="output file")
 args = parser.parse_args()
 
 # sample making
-result = ""
-name_list = []
-for i in range(args.number):
-    name_list.append(names.get_full_name())
+all_names = np.loadtxt(names.FILES["first:female"], dtype=str, usecols=0)
+selected_names = np.random.choice(all_names, size=args.number)
 
-for name in name_list:
-    result += name + "\n"
+result = ""
+name_list = list(selected_names)
+result = "\n".join(name_list)
 
 with open(args.filepath, "w") as f:
     f.write(result)
