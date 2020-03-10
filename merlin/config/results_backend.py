@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.3.0.
+# This file is part of Merlin, Version: 1.4.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -115,6 +115,10 @@ def get_redis(certs_path=None, include_password=True):
 
     try:
         username = CONFIG.results_backend.username
+    except (KeyError, AttributeError):
+        username = ""
+
+    try:
         password_file = CONFIG.results_backend.password
         try:
             password = get_backend_password(password_file, certs_path=certs_path)

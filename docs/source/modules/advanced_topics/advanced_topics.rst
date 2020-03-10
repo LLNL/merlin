@@ -2,9 +2,9 @@ Advanced Topics
 ===============
 .. admonition:: Prerequisites
 
-      * :doc:`Module 2: Installation<installation>`
-      * :doc:`Module 3: Hello World<hello_world/hello_world>`
-      * :doc:`Module 4: Running a Real Simulation<run_simulation>`
+      * :doc:`Module 2: Installation<../installation/installation>`
+      * :doc:`Module 3: Hello World<../hello_world/hello_world>`
+      * :doc:`Module 4: Running a Real Simulation<../run_simulation/run_simulation>`
       * Python virtual environment containing the following packages
         
         * merlin
@@ -22,6 +22,9 @@ Advanced Topics
       * Distribute workflows across multiple batch allocations and machines
       * Setup iterative workflow specs suited for optimization and dynamic sampling applications
 
+.. contents:: Table of Contents:
+  :local:
+
 Interfacing with HPC systems
 ++++++++++++++++++++++++++++
 
@@ -37,21 +40,21 @@ will be overridden in the worker config.
 
    batch:
       # Required keys:
-   
+
       type: flux
       bank: testbank
       queue: pbatch
 
-      # Optional keys:   
+      # Optional keys:
       flux_path: <optional path to flux bin>
       flux_start_opts: <optional flux start options>
-      flux_exec_workers: <optional, flux argument to launch workers on 
+      flux_exec_workers: <optional, flux argument to launch workers on
                           all nodes. (True)>
-      
+
       launch_pre: <Any configuration needed before the srun or jsrun launch>
       launch_args: <Optional extra arguments for the parallel launch command>
       worker_launch: <Override the parallel launch defined in merlin>
-      
+
       shell: <the interpreter to use for the script after the shebang>
              # e.g. /bin/bash, /bin/tcsh, python, /usr/bin/env perl, etc.
       nodes: <num nodes> # The number of nodes to use for all workers
@@ -76,7 +79,7 @@ on HPC systems: nodes, procs, and task_queue.  Adding on the actual study steps 
 above batch block specifies the actual resources each steps processes will take.
 
 .. code-block:: yaml
-                
+
    study:
       - name: sim-runs
         description: Run sumulations
@@ -85,7 +88,7 @@ above batch block specifies the actual resources each steps processes will take.
            nodes: 4
            procs: 144
            task_queue: sim_queue
-  
+
       - name: post-process
         description: Post-Process simulations on second allocation
         run:
@@ -132,10 +135,10 @@ interest will be:
 
 ===========================  ===============
 ``--concurrency``            <num_threads>
-                           
+
 ``--prefetch-multiplier``    <num_tasks>
-                           
-``-0 fair``                  
+
+``-0 fair``
 ===========================  ===============
 
 Concurrency can be used to run multiple workers in an allocation, thus is recommended to be
@@ -161,7 +164,7 @@ simulation jobs as well as shorter running post processing tasks that can cohabi
 
 
 .. code-block:: yaml
-                
+
   merlin:
 
     resources:
@@ -173,15 +176,16 @@ simulation jobs as well as shorter running post processing tasks that can cohabi
       workers:
           simworkers:
               args: --concurrency 1
-              steps: [sim-runs]      
-              nodes: 4               
-              machines: [host1]      
+              steps: [sim-runs]
+              nodes: 4
+              machines: [host1]
 
           postworkers:
               args: --concurrency 4 --prefetch-multiplier 2
               steps: [post-proc-runs]
-              nodes: 1               
-              machines: [host1]      
+              nodes: 1
+              machines: [host1]
+
 
 ..              
    NOTE FOR CODE MEETING/ME TO TRY: nodes, either in batch or workers, behaves differently from
@@ -194,11 +198,11 @@ simulation jobs as well as shorter running post processing tasks that can cohabi
 Putting it all together with the parameter blocks we have an HPC batch enabled study specification
 
 .. code-block:: yaml
-                
+
    description:
      name: hpc_demo
      description: Demo running a workflow on HPC machines
-  
+
    env:
      variables:
        OUTPUT_PATH: ./name_studies
@@ -207,13 +211,13 @@ Putting it all together with the parameter blocks we have an HPC batch enabled s
        COLLECT: $(SPECROOT)/sample_collector.py
 
        # Process single iterations' results
-       POST_PROC: $(SPECROOT)/sample_processor.py 
-       
+       POST_PROC: $(SPECROOT)/sample_processor.py
+
        # Process all iterations
        CUM_POST_PROC: $(SPECROOT)/cumulative_sample_processor.py
-       
+
        # Number of threads for post proc scripts
-       POST_NPROCS: 36          
+       POST_NPROCS: 36
        PYTHON: <INSERT PATH TO VIRTUALENV HERE>
 
    batch:
@@ -236,16 +240,16 @@ Putting it all together with the parameter blocks we have an HPC batch enabled s
            nodes: 1
            procs: 1
            task_queue: name_queue
-  
+
       - name: collect
-        description: Collect all samples generated 
+        description: Collect all samples generated
         run:
            cmd: |
              echo $(MERLIN_GLOB_PATH)
              echo $(sample_names.workspace)
 
              ls $(sample_names.workspace)/$(MERLIN_GLOB_PATH)/name_sample.out | xargs $(PYTHON) $(COLLECT) -out collected_samples.txt --np $(POST_NPROCS)
-             
+
            nodes: 1
            procs: 1
            depends: [sample_names_*]
@@ -256,35 +260,35 @@ Putting it all together with the parameter blocks we have an HPC batch enabled s
         run:
            cmd: |
              $(PYTHON) $(POST_PROC) $(collect.workspace)/collected_samples.txt --results iter_$(ITER)_results.json
-             
+
            nodes: 1
            procs: 1
            depends: [collect]
            task_queue: post_proc_queue
-           
+
    ########################################
    # Worker and sample configuration
-   ########################################  
+   ########################################
    merlin:
-  
+
      resources:
        task_server: celery
-  
+
        overlap: False
-  
+
        workers:
            nameworkers:
                args: --concurrency 36 --prefetch-multiplier 3
-               steps: [sample_names]      
+               steps: [sample_names]
                nodes: 1
-               machines: [borax, quartz]      
+               machines: [borax, quartz]
 
            postworkers:
                args: --concurrency 1 --prefetch-multiplier 1
                steps: [post-process]
-               nodes: 1 
+               nodes: 1
                machines: [borax, quartz]
-  
+
      ###################################################
      samples:
        column_labels: [NAME]
@@ -316,26 +320,26 @@ on each, with ``run`` only needed once up front to send the tasks to the queue s
 
    ########################################
    # Worker and sample configuration
-   ########################################  
+   ########################################
    merlin:
-  
+
      resources:
        task_server: celery
-  
+
        overlap: False
-  
+
        # Customize workers
        workers:
            simworkers:
                args: --concurrency 1
-               steps: [sim-runs]      
-               nodes: 4               
-               machines: [host1]      
-  
+               steps: [sim-runs]
+               nodes: 4
+               machines: [host1]
+
            postworkers:
                args: --concurrency 4 --prefetch-multiplier 2
                steps: [post-proc-runs]
-               nodes: 1               
+               nodes: 1
                machines: [host2]
 
 
@@ -349,7 +353,7 @@ The example spec below is a simple implementation of this using an iteration cou
 to generate new samples and spawn a new instantiation of the workflow.  The iteration
 counter takes advantage of the ability to override workflow variables on the command line.
 
-.. literalinclude:: ./advanced_topics/faker_demo.yaml
+.. literalinclude :: ./faker_demo.yaml
    :language: yaml
 
 This workflow specification is intended to be invoke within an allocation of nodes on your
@@ -368,7 +372,7 @@ a fake name generator in an attempt to count the number of unique names that are
 The figure below shows results from running 20 iterations, with the number of unique names
 faker can generate appearing to be slightly more than 300.
 
-.. image:: ./advanced_topics/cumulative_results.png
+.. image:: ./cumulative_results.png
 
 Bootstrapping distributed workflows
 +++++++++++++++++++++++++++++++++++

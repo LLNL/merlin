@@ -4,17 +4,36 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] 
+## [Unreleased]
+
+### Fixed
+- Bug that prevented an empty username for results backend and broker when using redis.
+- Bug that prevented `OUTPUT_PATH` from being an integer.
+- Slow sample speed in `hello_samples.yaml` from the hello example.
+
+## [1.4.1] [2020-03-06]
+
+### Changed
+- Updated various aspects of tutorial documentation.
+
+## [1.4.0] 2020-03-02
 
 ### Added
 - The walltime keyword is now enabled for the slurm and flux batch types.
-- The signal keyword is now enabled for the slurm batch type.
 - LAUNCHER keywords, (slurm,flux,lsf) for specifying arguments specific
   to that parallel launcher in the run section.
+- Exception messages to `merlin info`.
 - Preliminary tutorial modules for early testers.
+
+### Removed
+- The problematic step `stop_workers` in `feature_demo.yaml`.
 
 ### Fixed
 - Syntax errors in web doc file `merlin_variables.rst`.
+
+### Removed
+- The exclusive and signal keywords and bind for slurm in a step. The bind
+  keyword is now lsf only.
 
 ## [1.3.0] 2020-02-21
 

@@ -25,8 +25,8 @@ MERLIN_VERSION = __import__("merlin").VERSION
 _year = date.today().year
 
 project = u'Merlin'
-copyright = '{}, MLSI'.format(_year)
-author = u'MLSI'
+copyright = '{}, LLNL: LLNL-CODE-797170'.format(_year)
+author = u'Lawrence Livermore National Laboratory'
 
 # The short X.Y version
 version = MERLIN_VERSION
@@ -43,10 +43,11 @@ release = MERLIN_VERSION
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-]
+#extensions = [
+#    'sphinx.ext.autodoc',
+#    'sphinx.ext.intersphinx',
+#]
+extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -178,6 +179,11 @@ texinfo_documents = [
 
 primary_domain = 'py'
 
-highlight_language = 'py'
+highlight_language = 'bash'
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+
+def setup(app):
+    app.add_stylesheet('custom.css')
+    app.add_javascript("custom.js")
+    app.add_javascript("https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js")

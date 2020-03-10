@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.3.0.
+# This file is part of Merlin, Version: 1.4.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -88,8 +88,6 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "pre",
             "post",
             "depends",
-            "exclusive",
-            "signal",
             "slurm",
             "flux",
         }
@@ -170,9 +168,6 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
 
         self._cmd_flags["slurm"] = ""
         self._cmd_flags["walltime"] = "-t"
-        self._cmd_flags["exclusive"] = "--exclusive"
-        self._cmd_flags["bind"] = "--mpibind="
-        self._cmd_flags["signal"] = "--signal="
 
         new_unsupported = [
             "task_queue",
@@ -182,6 +177,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             "gpus per task",
             "gpus",
             "restart",
+            "bind",
             "lsf",
             "flux",
         ]
@@ -315,8 +311,6 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "post",
             "depends",
             "bind",
-            "exclusive",
-            "signal",
             "lsf",
             "slurm",
         ]

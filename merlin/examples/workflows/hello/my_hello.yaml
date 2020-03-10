@@ -1,0 +1,24 @@
+description:
+    name: 
+    description: 
+
+global.parameters:
+    GREET:
+        values : 
+        label  : 
+    WORLD:
+        values : 
+        label  : 
+
+study:
+    - name: 
+      description: 
+      run:
+          cmd: 
+
+    - name: 
+      description: 
+      run:
+          cmd: 
+          depends: 
+          shell: 

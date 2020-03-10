@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.3.0.
+# This file is part of Merlin, Version: 1.4.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -143,6 +143,10 @@ def get_redis_connection(config_path, include_password):
 
     try:
         username = CONFIG.broker.username
+    except (AttributeError, KeyError):
+        username = ""
+        
+    try:
         password_filepath = CONFIG.broker.password
         try:
             password = read_file(password_filepath)

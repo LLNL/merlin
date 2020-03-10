@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.3.0.
+# This file is part of Merlin, Version: 1.4.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,11 +41,20 @@ from maestrowf.datastructures.core import Study
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import determine_user_variables, expand_line
-from merlin.spec.override import dump_with_overrides, error_override_vars
+from merlin.spec.expansion import (
+    determine_user_variables,
+    expand_line,
+)
+from merlin.spec.override import (
+    dump_with_overrides,
+    error_override_vars,
+)
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
-from merlin.utils import get_flux_cmd, load_array_file
+from merlin.utils import (
+    get_flux_cmd,
+    load_array_file,
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -265,12 +274,12 @@ class MerlinStudy:
             return os.path.abspath(output_path)
 
         else:
-            output_path = self.spec.output_path
+            output_path = str(self.spec.output_path)
 
             if (self.override_vars is not None) and (
                 "OUTPUT_PATH" in self.override_vars
             ):
-                output_path = self.override_vars["OUTPUT_PATH"]
+                output_path = str(self.override_vars["OUTPUT_PATH"])
 
             output_path = expand_line(output_path, self.user_vars)
             output_path = os.path.abspath(output_path)

@@ -11,7 +11,7 @@ The input file can take a number of variables, beyond the examples shown here.
 For a complete list and descriptions of the variables,
 see :doc:`./merlin_variables`.
 
-::
+.. code-block:: yaml
 
   ####################################
   # Description Block (Required)
@@ -128,15 +128,14 @@ see :doc:`./merlin_variables`.
   #   walltime: The total walltime of the run (hh:mm:ss) (not available in lsf)
   #   cores per task: The number of hardware threads per MPI task
   #   gpus per task: The number of GPUs per MPI task
-  #   bind: Flag for MPI binding of tasks on a node (scheduler dependent)
   #   SLURM specific run flags:
-  #   exclusive: Command to run exclusively on the node (argument is space: " ")
   #   slurm: Verbatim flags only for the srun parallel launch (srun -n <nodes> -n <procs> <slurm>)
   #   FLUX specific run flags:
   #   flux: Verbatim flags for the flux parallel launch (flux mini run <flux>)
   #   LSF specific run flags:
+  #   bind: Flag for MPI binding of tasks on a node
   #   num resource set: Number of resoure sets
-  #   launch_distribution : The distribution of respources (default: plane:{procs/nodes})
+  #   launch_distribution : The distribution of resources (default: plane:{procs/nodes})
   #   exit_on_error: Flag to exit on error (default: 1)
   #   lsf: Verbatim flags only for the lsf parallel launch (jsrun ... <lsf>
   #######################################################################

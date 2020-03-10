@@ -109,16 +109,6 @@ study:
           shell: /usr/bin/env python2
           task_queue: pyth2_hello
 
-    - name: stop_workers
-      description: |
-          stop workers belonging to this workflow
-          once all other tasks are finished.
-      run:
-          cmd: sleep 10 ; merlin stop-workers --workers '.*$(WORKER_NAME)*'
-          depends: [verify, python3_hello, python2_hello]
-          task_queue: stop_workers_queue
-
-
 global.parameters:
     X2:
         values : [0.5]
