@@ -145,7 +145,7 @@ Concurrency can be used to run multiple workers in an allocation, thus is recomm
 set to the number of simulations or step work items that fit into the number of nodes in the
 batch allocation in which these workers are spawned.  Note that some schedulers, such as
 ``flux``, can support more jobs than the node has resources for.  This may not impact the
-throughput, but it can prevent oversubscription errors that might otherwise stop the workflow
+throughput, but it can prevent over-subscription errors that might otherwise stop the workflow.
 
 The prefetch multiplier is more related to packing in tasks into the time of the allocation.
 For long running tasks it is recommended to set this to 1.  For short running tasks, this
@@ -159,7 +159,7 @@ allocation.
    just fine without this option.  Is this only needed for simultaneous running, as opposed
    to dependent steps in different queues?
 
-The example block below extends the previous with  workers configured for long running
+The example block below extends the previous with workers configured for long running
 simulation jobs as well as shorter running post processing tasks that can cohabit an allocation
 
 
@@ -195,7 +195,11 @@ simulation jobs as well as shorter running post processing tasks that can cohabi
    pulling from same queues?  is this a requirement for making it work cross machine?
    Also: what about procs per worker instead of just nodes?
 
-Putting it all together with the parameter blocks we have an HPC batch enabled study specification
+Putting it all together with the parameter blocks we have an HPC batch enabled study specification.
+In this demo workflow, ``sample_names`` generates one many single core jobs, with concurrency
+set to 36 for this particular machine that has 36 cores per node.  The ``collect`` step on the
+other hand consists of a single job that uses all cores on the node, and is assigned to a queue
+that has a concurrency of 1.
 
 .. code-block:: yaml
 
@@ -362,7 +366,7 @@ HPC cluster, e.g. within and sxterm.  The last step to queue up new samples for 
 the workers from the first instatiation are still alive.  Thus the new samples will
 immediately start processing on the existing allocation.
 
-Anther change in this workflow relative to the single stage version is managing the workspaces
+Another change in this workflow relative to the single stage version is managing the workspaces
 and outputs.  The strategy used here is to create a new directory for collecting each iterations
 final outputs, ``$(ITER_OUTPUT)``, facilitating collective post processing at the end without
 having to worry about traversing into each iterations' local workspaces.
