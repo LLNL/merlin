@@ -237,9 +237,10 @@ def add_merlin_expanded_chain_to_chord(
     :param min_sample_id: offset to use for the sample_index.
     """
     # Use the index to get a path to each sample
-    LOG.debug(f"recursing with samples {samples}")
+    LOG.debug(f"recursing with {len(samples)} samples {samples}")
     if sample_index.is_grandparent_of_leaf or sample_index.is_parent_of_leaf:
         all_chains = []
+        LOG.debug(f"gathering up {len(samples)} relative paths")
         relative_paths = [
             os.path.dirname(sample_index.get_path_to_sample(sample_id + min_sample_id))
             for sample_id in range(len(samples))
@@ -274,10 +275,13 @@ def add_merlin_expanded_chain_to_chord(
             all_chains.append(new_chain)
         LOG.debug(f"adding chain to chord")
         add_chains_to_chord(self, all_chains)
+        LOG.debug(f"chain added to chord")
     else:
         # recurse down the sample_index hierarchy
+        LOG.debug(f"recursing down sample_index hierarchy")
         for next_index in sample_index.children.values():
             next_index.name = os.path.join(sample_index.name, next_index.name)
+            LOG.debug("generating next step")
             next_step = add_merlin_expanded_chain_to_chord.s(
                 task_type,
                 chain_,
@@ -414,12 +418,15 @@ def expand_tasks_with_samples(
     directory_sizes.append(1)
     glob_path = "*/" * len(directory_sizes)
 
+    LOG.debug("creating sample_index")
     # Write a hierarchy to get the all paths string
     sample_index = create_hierarchy(
-        len(samples), bundle_size=1, directory_sizes=directory_sizes, root=""
-    )
+        len(samples), bundle_size=1, directory_sizes=directory_sizes, root="")
+
+    LOG.debug("creating sample_paths")
     sample_paths = sample_index.make_directory_string()
 
+    LOG.debug("assembling steps")
     # the steps in the chain
     steps = [dag.step(name) for name in chain_]
 
@@ -434,24 +441,38 @@ def expand_tasks_with_samples(
         for step in steps
     ]
 
-    workspaces = [step.get_workspace() for step in steps]
-    LOG.debug(f"workspaces : {workspaces}")
+    #workspaces = [step.get_workspace() for step in steps]
+    #LOG.debug(f"workspaces : {workspaces}")
 
     needs_expansion = is_chain_expandable(steps, labels)
 
+    LOG.debug(f"needs_expansion {needs_expansion}")
+
     if needs_expansion:
-        prepare_chain_workspace(sample_index, steps)
+        #prepare_chain_workspace(sample_index, steps)
         sample_index.name = ""
-        LOG.debug(f"queuing merlin expansion task")
-        sig = add_merlin_expanded_chain_to_chord.s(
-            task_type, steps, samples, labels, sample_index, adapter_config, 0
-        )
-        sig.set(queue=steps[0].get_task_queue())
-        if self.request.is_eager:
-            sig.delay()
-        else:
-            self.add_to_chord(sig, lazy=False)
-        LOG.debug(f"merlin expansion task queued")
+        LOG.debug(f"queuing merlin expansion tasks")
+        for next_index_path, next_index in sample_index.traverse(conditional = lambda c: c.is_great_grandparent_of_leaf):
+            LOG.info(f"generating next step for range {next_index.min}:{next_index.max} {next_index.max-next_index.min}")
+            next_index.name = next_index_path
+
+            sig = add_merlin_expanded_chain_to_chord.s(
+                task_type,
+                steps,
+                samples[next_index.min : next_index.max],
+                labels,
+                next_index,
+                adapter_config,
+                next_index.min,
+            )
+            sig.set(queue=steps[0].get_task_queue())
+
+            if self.request.is_eager:
+                sig.delay()
+            else:
+                LOG.info(f"queuing expansion task {next_index.min}:{next_index.max}")
+                self.add_to_chord(sig, lazy=False)
+            LOG.info(f"merlin expansion task {next_index.min}:{next_index.max} queued")
     else:
         LOG.debug(f"queuing simple chain task")
         add_simple_chain_to_chord(self, task_type, steps, adapter_config)
