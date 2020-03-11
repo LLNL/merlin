@@ -78,7 +78,7 @@ To build merlin with python-3.6.8 you would type:
     spack install py-merlin^python@3.6.8
 
 A tree of all of the packages and their dependencies needed to build the
-merlinwf package can be shown by using the spec keyword.
+merlin package can be shown by using the spec keyword.
 
 .. code:: bash
 

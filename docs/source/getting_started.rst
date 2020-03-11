@@ -19,7 +19,7 @@ To install with the additional developer dependencies, use::
 
 or::
 
-    pip3 install -e "git+https://github.com/LLNL/merlin.git@develop#egg=merlinwf[dev]"
+    pip3 install -e "git+https://github.com/LLNL/merlin.git@develop#egg=merlin[dev]"
 
 See the :doc:`Spack <./spack>` section for an alternative method to setup merlin on supercomputers.
 
