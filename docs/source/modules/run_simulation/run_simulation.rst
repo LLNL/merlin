@@ -173,7 +173,7 @@ and update the merlin block to be:
                   cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
 
                   # Generates the samples
-                  python $(SCRIPTS)/scripts/make_samples.py -n N_SAMPLES -outfile=$(MERLIN_INFO)/samples
+                  python $(SCRIPTS)/make_samples.py -n N_SAMPLES -outfile=$(MERLIN_INFO)/samples
           file: $(MERLIN_INFO)/samples.npy
           column_labels: [LID_SPEED, VISCOSITY]
 
