@@ -1,0 +1,22 @@
+[2020-03-06 15:43:58: INFO] Stopping workers...
+[2020-03-06 15:43:58: INFO] Reading app config from file /g/g13/bay1/.merlin/app.yaml
+[2020-03-06 15:43:59: INFO] broker: amqps://bay1:******@jackalope.llnl.gov:5671//bay1
+[2020-03-06 15:43:59: INFO] backend: redis://mlsi:******@jackalope.llnl.gov:6379/0
+[2020-03-06 15:44:00: WARNING] No workers found to stop
+[2020-03-06 15:44:02: INFO] Purging queues for steps = ['all']
+[2020-03-06 15:44:04: INFO] Purge return = 0 .
+[2020-03-06 15:44:09: INFO] Made dir(s) to output path '/g/g13/bay1/merlin/merlin/examples/workflows/null_spec/10'.
+[2020-03-06 15:44:09: INFO] Study workspace is '/g/g13/bay1/merlin/merlin/examples/workflows/null_spec/10/null_spec_20200306-154409'.
+[2020-03-06 15:44:12: INFO] Reading app config from file /g/g13/bay1/.merlin/app.yaml
+[2020-03-06 15:44:12: INFO] broker: amqps://bay1:******@jackalope.llnl.gov:5671//bay1
+[2020-03-06 15:44:12: INFO] backend: redis://mlsi:******@jackalope.llnl.gov:6379/0
+[2020-03-06 15:44:12: INFO] Generating samples...
+[2020-03-06 15:44:12: INFO] Generating samples complete!
+[2020-03-06 15:44:12: INFO] Loading samples from 'samples.csv'...
+[2020-03-06 15:44:12: INFO] 10 samples loaded.
+[2020-03-06 15:44:12: INFO] Calculating task groupings from DAG.
+[2020-03-06 15:44:12: INFO] Converting graph to tasks.
+[2020-03-06 15:44:12: INFO] Launching tasks.
+[2020-03-06 15:44:15: INFO] Launching workers from '/g/g13/bay1/merlin/merlin/examples/workflows/null_spec/null_spec.yaml'
+[2020-03-06 15:44:15: INFO] Starting workers
+slurmstepd: error: *** JOB 4762978 ON quartz1 CANCELLED AT 2020-03-06T15:49:01 DUE TO TIME LIMIT ***

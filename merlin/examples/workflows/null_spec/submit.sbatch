@@ -13,7 +13,7 @@
 
 YAML_DIR=/g/g13/bay1/merlin/merlin/examples/workflows/null_spec
 YAML_FILE=${YAML_DIR}/null_spec.yaml
-N_SAMPLES=10000
+N_SAMPLES=100
 
 # print message that a new run is starting
 echo "Starting new run: $SLURM_JOBID"

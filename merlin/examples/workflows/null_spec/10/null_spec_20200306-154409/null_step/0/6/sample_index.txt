@@ -1,0 +1,1 @@
+BUNDLE:0.6.0	name:samples6-7.ext	SAMPLES:[6, 7)
