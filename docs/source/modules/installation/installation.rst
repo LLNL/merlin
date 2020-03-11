@@ -35,7 +35,7 @@ Installing merlin
 
 A merlin installation is required for the subsequent modules of this tutorial. You can choose between the pip method or the docker method. Choose one or the other but
 do not use both unless you are familiar with redis servers run locally and through docker.
-The pip method is recommended.
+**The pip method is recommended.**
 
 Once merlin is installed, it requires servers to operate.
 The pip section will inform you how to setup a
@@ -45,8 +45,8 @@ local-redis or docker-redis.
 Your computer/organization  may already have a redis server available, please check
 with your local system administrator.
 
-Pip
-+++
+Pip (Recommended)
++++++++++++++++++
 
 Create a virtualenv using python3 to install merlin.
 
