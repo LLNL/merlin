@@ -75,7 +75,7 @@ Install merlin through pip.
 
 .. code-block:: bash
 
-  pip3 install merlinwf
+  pip3 install merlin
 
 When you are done with the virtualenv you can deactivate it using ``deactivate``,
 but leave the virtualenv activated for the subsequent steps.
@@ -175,11 +175,20 @@ Some aliases can be defined for convenience.
   alias python3="docker exec my-merlin python3"
 
 When you are done with the containers you can stop them using ``docker-compose down``.
+We will be using the containers in the subsequent modules so leave them running.
 
 .. code-block:: bash
 
   docker-compose down
 
+Any required python modules can be installed in the running ``my-merlin`` container
+through ``docker exec``. When using docker-compose, these changes will persist
+if you stop the containers with ``docker-compose down`` and restart them with 
+``docker-compose up -d``.
+
+.. code-block:: bash
+
+  docker exec my-merlin pip3 install pandas faker
 
 Configuring merlin
 ------------------
@@ -331,3 +340,36 @@ To complete the config create a file ``~/merlinu/.merlin/rabbit.pass``
 and add the password ``guest``.
 
 The aliases defined previously can be used with this set of docker containers.
+
+Redis TLS server
+++++++++++++++++
+
+This optional section details the setup of a redis server with TLS for merlin.
+The reddis TLS configuration can be found in the :ref:`broker_redis_ssl` section.
+A newer redis (version 6 or greater) must be used to enable TLS.
+
+A set of self-signed keys is created through the ``tls-gen`` package.
+These keys are then copied to a common directory for use in the redis
+server and python.
+
+.. code-block:: bash
+
+ git clone https://github.com/michaelklishin/tls-gen.git
+ cd tls-gen/basic
+ make CN=my-redis CLIENT_ALT_NAME=my-redis SERVER_ALT_NAME=my-redis
+ make verify
+ mkdir -p ${HOME}/merlinu/cert_redis
+ cp result/* ${HOME}/merlinu/cert_redis
+
+
+The ``redis:6.0-rc2`` docker service is exchanged for the previous
+``redis:latest`` service. The configuration below does not use client
+verfication ``--tls-auth-clients no`` so the ssl files do not need to 
+be defined as shown in the :ref:`broker_redis_ssl` section.
+
+.. literalinclude:: ./docker-compose_rabbit_redis_tls.yml
+   :language: yaml
+
+Once this docker-compose file is run, the merlin ``app.yaml`` file is changed
+to use the redis TLS server ``rediss`` instead of ``redis``
+
