@@ -2,18 +2,18 @@
 
 #SBATCH -N 1
 #SBATCH -J MerlinBaseline
-#SBATCH -t 0:05:00
+#SBATCH -t 0:10:00
 #SBATCH -p pdebug
 #SBATCH -A lbpm
 #SBATCH --output=merlin%j.out
 #SBATCH --error=merlin%j.err
-#SBATCH --signal TERM@600
+#SBATCH --signal TERM@1200
 # Submit this script as:
 #   sbatch submit.sbatch --exclusive
 
 YAML_DIR=/g/g13/bay1/merlin/merlin/examples/workflows/null_spec
 YAML_FILE=${YAML_DIR}/null_spec.yaml
-N_SAMPLES=10
+N_SAMPLES=10000
 
 # print message that a new run is starting
 echo "Starting new run: $SLURM_JOBID"
