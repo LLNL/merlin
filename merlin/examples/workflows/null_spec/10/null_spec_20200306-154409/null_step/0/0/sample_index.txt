@@ -1,0 +1,1 @@
+BUNDLE:0.0.0	name:samples0-1.ext	SAMPLES:[0, 1)

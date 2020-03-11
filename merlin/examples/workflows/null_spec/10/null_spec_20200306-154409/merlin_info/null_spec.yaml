@@ -1,0 +1,47 @@
+description:
+  name: null_spec
+  description: run N_SAMPLES null steps.
+
+batch:
+  type: local
+  dry_run: false
+  shell: /bin/bash
+
+env:
+  variables:
+    OUTPUT_PATH: 10
+    N_SAMPLES: 10
+
+study:
+- name: null_step
+  description: exit immediately
+  run:
+    cmd: '#echo $(SAMPLE)
+
+      exit 0
+
+      '
+    task_queue: merlin
+    shell: /bin/bash
+    max_retries: 30
+
+global.parameters: {}
+
+merlin:
+  resources:
+    workers:
+      null_worker:
+        args: -O fair --prefetch-multiplier 1 -E -l info --concurrency 1 --logfile=%%p.log
+        steps:
+        - all
+        nodes:
+        batch:
+    task_server: celery
+    overlap: false
+  samples:
+    generate:
+      cmd: for i in {1..10} ; do echo $i ; done >> /g/g13/bay1/merlin/merlin/examples/workflows/null_spec/10/null_spec_20200306-154409/merlin_info/samples.csv
+    file: /g/g13/bay1/merlin/merlin/examples/workflows/null_spec/10/null_spec_20200306-154409/merlin_info/samples.csv
+    column_labels:
+    - SAMPLE
+    level_max_dirs: 25
