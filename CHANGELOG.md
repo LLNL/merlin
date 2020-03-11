@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Optional ssl files for the broker and results backend config.
 - A url keyword in the app.yaml file to override the entire broker or results backend configuration.
+- The `all` option to `batch.nodes`.
 
 ### Fixed
 - Bug that prevented an empty username for results backend and broker when using redis.
