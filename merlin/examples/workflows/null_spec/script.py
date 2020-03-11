@@ -51,20 +51,4 @@ for sample in sample_times:
 start_time = sample_timestamps[0][0]
 end_time = sample_timestamps[-1][1]
 
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Data for plotting
-t = np.arange(0, end_time, 1)
-s = 1 + np.sin(2 * np.pi * t)
-
-fig, ax = plt.subplots()
-ax.plot(t, s)
-
-ax.set(xlabel='time (s)', ylabel='voltage (mV)',
-       title='About as simple as it gets, folks')
-ax.grid()
-
-fig.savefig("test.png")
-plt.show()
+print(end_time - start_time)
