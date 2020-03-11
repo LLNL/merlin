@@ -7,7 +7,7 @@ all required modules for a specific set of configuration options.
 These options include the compiler version, system type and python version.
 Merlin will then be installed in this specific version allowing for
 multiple python versions on a single system without the need for a
-virtualenv. The py-merlinwf package builds with python3.6+.
+virtualenv. The py-merlin package builds with python3.6+.
 
 
 Checkout spack
@@ -58,7 +58,7 @@ build python and all python modules merlin needs including numpy.
 
 .. code:: bash
 
-    spack install py-merlinwf
+    spack install py-merlin
 
 
 The build will be done with the default compiler, in general this is the 
@@ -67,7 +67,7 @@ syntax, this will create an entirely separate build and module.
 
 .. code:: bash
 
-    spack install py-merlinwf%gcc@7.1.0
+    spack install py-merlin%gcc@7.1.0
 
 
 A different python version can be specified as part of the package config. 
@@ -75,14 +75,14 @@ To build merlin with python-3.6.8 you would type:
 
 .. code:: bash
 
-    spack install py-merlinwf^python@3.6.8
+    spack install py-merlin^python@3.6.8
 
 A tree of all of the packages and their dependencies needed to build the
 merlinwf package can be shown by using the spec keyword.
 
 .. code:: bash
 
-    spack spec py-merlinwf
+    spack spec py-merlin
 
 
 Activate merlin
@@ -92,15 +92,15 @@ To use merlin you can activate the module.
 
 .. code:: bash
 
-    spack activate py-merlinwf
+    spack activate py-merlin
 
     or
 
-    spack activate py-merlinwf%gcc@7.1.0
+    spack activate py-merlin%gcc@7.1.0
 
     or
 
-    spack activate py-merlinwf^python@3.6.8
+    spack activate py-merlin^python@3.6.8
 
 
 Load python
