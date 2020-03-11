@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `HelpParser`, which automatically prints help messages when command line commands return an error.
+
 ### Fixed
 - Bug that prevented an empty username for results backend and broker when using redis.
 - Bug that prevented `OUTPUT_PATH` from being an integer.
