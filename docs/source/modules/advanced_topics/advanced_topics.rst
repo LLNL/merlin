@@ -25,6 +25,20 @@ Advanced Topics
 .. contents:: Table of Contents:
   :local:
 
+Setup
++++++
+
+The code for the following examples can be obtained from command line, invoking:
+
+.. code-block:: bash
+   merlin example hpc_demo
+
+This will copy the three merlin workflow specifications from this section and the supporting
+python scripts.  Each specification may need some modification to adapt it to the batch
+scheduler you will be using.  In addition, the dynamic sampling workflow will need an
+additional modification to set the path of the virtual environment, which is set as a variable
+in the ``env`` block.
+
 Interfacing with HPC systems
 ++++++++++++++++++++++++++++
 
