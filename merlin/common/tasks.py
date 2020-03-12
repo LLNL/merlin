@@ -78,7 +78,8 @@ retry_exceptions = (
 
 LOG = logging.getLogger(__name__)
 
-STOP_COUNTDOWN=60
+STOP_COUNTDOWN = 60
+
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def merlin_step(self, *args, **kwargs):
@@ -424,8 +425,11 @@ def expand_tasks_with_samples(
 
     # Write a hierarchy to get the all paths string
     sample_index = create_hierarchy(
-        len(samples), bundle_size=1, directory_sizes=directory_sizes, root="",
-        n_digits=len(str(level_max_dirs))
+        len(samples),
+        bundle_size=1,
+        directory_sizes=directory_sizes,
+        root="",
+        n_digits=len(str(level_max_dirs)),
     )
     sample_paths = sample_index.make_directory_string()
 
@@ -467,8 +471,14 @@ def expand_tasks_with_samples(
         LOG.debug(f"simple chain task queued")
 
 
-@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True,
-    acks_late=False, reject_on_worker_lost=False, name="merlin:shutdown_workers")
+@shared_task(
+    bind=True,
+    autoretry_for=retry_exceptions,
+    retry_backoff=True,
+    acks_late=False,
+    reject_on_worker_lost=False,
+    name="merlin:shutdown_workers",
+)
 def shutdown_workers(*args, **kwargs):
     """
     This task issues a call to shutdown workers.
@@ -477,7 +487,8 @@ def shutdown_workers(*args, **kwargs):
     It is acknolwedged right away, so that it will not be requeued when
     executed by a worker.
     """
-    return stop_workers('celery', None, None, None)
+    return stop_workers("celery", None, None, None)
+
 
 @shared_task(
     autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:chordfinisher"
