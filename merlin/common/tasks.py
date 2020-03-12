@@ -415,13 +415,14 @@ def expand_tasks_with_samples(
     directory_sizes = uniform_directories(
         len(samples), bundle_size=1, level_max_dirs=level_max_dirs
     )
-    directory_sizes.append(1)
+
     glob_path = "*/" * len(directory_sizes)
 
     LOG.debug("creating sample_index")
     # Write a hierarchy to get the all paths string
     sample_index = create_hierarchy(
-        len(samples), bundle_size=1, directory_sizes=directory_sizes, root="")
+        len(samples), bundle_size=1, directory_sizes=directory_sizes, root="",
+        n_digits=len(str(level_max_dirs))
 
     LOG.debug("creating sample_paths")
     sample_paths = sample_index.make_directory_string()

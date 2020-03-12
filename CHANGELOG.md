@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional ssl files for the broker and results backend config.
 - A url keyword in the app.yaml file to override the entire broker or results backend configuration.
 - The `all` option to `batch.nodes`.
+- Auto zero-padding of sample directories, e.g. 00/00, 00/01 .. 10/10
 
 ### Fixed
 - Bug that prevented an empty username for results backend and broker when using redis.
 - Bug that prevented `OUTPUT_PATH` from being an integer.
+- Bug that always had sample directory tree start with "0"
 
 ### Changed
 - Updated docs from `pip3 install merlinwf` to `pip3 install merlin`.
