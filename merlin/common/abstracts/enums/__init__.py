@@ -40,6 +40,7 @@ __all__ = (
     "HARD_FAIL_VALUE",
     "DRY_OK_VALUE",
     "RETRY_VALUE",
+    "STOP_WORKERS_VALUE",
 )
 
 
@@ -54,3 +55,4 @@ class ReturnCode(IntEnum):
     HARD_FAIL = 102
     DRY_OK = 103
     RETRY = 104
+    STOP_WORKERS = 105

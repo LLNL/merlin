@@ -78,6 +78,7 @@ retry_exceptions = (
 
 LOG = logging.getLogger(__name__)
 
+STOP_COUNTDOWN=60
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def merlin_step(self, *args, **kwargs):
@@ -145,6 +146,11 @@ def merlin_step(self, *args, **kwargs):
             stop_workers("celery", None, None)
 
             raise HardFailException
+        elif result == ReturnCode.STOP_WORKERS:
+            LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
+            shutdown = shutdown_workers.s()
+            shutdown.set(queue=step.get_task_queue())
+            shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
             LOG.warning(
                 f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow."
@@ -458,6 +464,18 @@ def expand_tasks_with_samples(
         add_simple_chain_to_chord(self, task_type, steps, adapter_config)
         LOG.debug(f"simple chain task queued")
 
+
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True,
+    acks_late=False, reject_on_worker_lost=False, name="merlin:shutdown_workers")
+def shutdown_workers(*args, **kwargs):
+    """
+    This task issues a call to shutdown workers.
+
+    It wraps the stop_celery_workers call as a task.
+    It is acknolwedged right away, so that it will not be requeued when
+    executed by a worker.
+    """
+    return stop_celery_workers('celery', None, None)
 
 @shared_task(
     autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:chordfinisher"
