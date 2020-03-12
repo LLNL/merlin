@@ -404,6 +404,8 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         elif retcode == ReturnCode.RETRY:
             LOG.debug("Execution returned status RETRY.")
             step.restart = False
+        elif retcode == ReturnCode.STOP_WORKERS:
+            LOG.debug("Execution returned status STOP_WORKERS")
         else:
             LOG.warning(
                 f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL"

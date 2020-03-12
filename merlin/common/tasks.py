@@ -143,7 +143,9 @@ def merlin_step(self, *args, **kwargs):
             # router.purge_tasks("celery", ?, force=True)
 
             # stop workers TODO make this more discriminatory, stopping only the relevant workers
-            stop_workers("celery", None, None)
+            shutdown = shutdown_workers.s()
+            shutdown.set(queue=step.get_task_queue())
+            shutdown.apply_async(countdown=STOP_COUNTDOWN)
 
             raise HardFailException
         elif result == ReturnCode.STOP_WORKERS:
@@ -475,7 +477,7 @@ def shutdown_workers(*args, **kwargs):
     It is acknolwedged right away, so that it will not be requeued when
     executed by a worker.
     """
-    return stop_celery_workers('celery', None, None)
+    return stop_workers('celery', None, None, None)
 
 @shared_task(
     autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:chordfinisher"
