@@ -109,6 +109,15 @@ study:
           shell: /usr/bin/env python2
           task_queue: pyth2_hello
 
+    - name: shutdown all workers
+      description: |
+          shutdown all workers
+      run:
+         cmd: |
+            exit $(MERLIN_STOP_WORKERS)
+         depends: [verify, python3_hello, python2_hello]
+         task_queue: $(VERIFY_QUEUE)
+
 global.parameters:
     X2:
         values : [0.5]
