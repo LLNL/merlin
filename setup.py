@@ -93,7 +93,7 @@ def extras_require():
 
 
 setup(
-    name="merlinwf",
+    name="merlin",
     author="Merlin Dev team",
     author_email="merlin@llnl.gov",
     version=version,
