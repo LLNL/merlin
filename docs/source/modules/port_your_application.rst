@@ -25,7 +25,7 @@ Tips for porting your app, building workflows
 
 The first step of building a new workflow, or porting an existing app to a workflow, is to describe it as a set of discrete, and ideally focused steps.  Decoupling the steps and making them generic when possible will facilitate more rapid composition of future workflows.  This will also require mapping out the dependencies and parameters that get passed between/shared across these steps.
 
-Setting up a template using tools such as `cookiecutter <https://github.com/cookiecutter/cookiecutter/>`_ can be useful for more production style workflows that will be frequently reused
+Setting up a template using tools such as `cookiecutter <https://github.com/cookiecutter/cookiecutter/>`_ can be useful for more production style workflows that will be frequently reused.  Additionally make use of the built in examples accessible from the merlin command line.
 .. (machine learning applications on different data sets?)
 
 Use dry runs ``merlin run --dry --local`` to prototype without actually populating task broker's queues.  Similarly, once the dry run prototype looks good, try it on a small number of parameters before throwing millions at it.
@@ -61,5 +61,7 @@ Avoid reliance upon storage at the ``$(SPECROOT)`` level.  This is particularly 
 
 .. some other lines on the board that are hard to read..
    run your sim as ...
+   (mu !) p...    -> need some other eyes on what that's supposed to be in image of notes
    
-   
+.. standard data format discussion?  hdf5?
+   this something we should be in the business of recommending?  a lot will be dictated by what the 'big app' is doing anyway...
