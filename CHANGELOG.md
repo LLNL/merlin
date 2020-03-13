@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A url keyword in the app.yaml file to override the entire broker or results backend configuration.
 - The `all` option to `batch.nodes`.
 - Auto zero-padding of sample directories, e.g. 00/00, 00/01 .. 10/10
+- `$(MERLIN_STOP_WORKERS)` exit code that shuts down all workers
 
 ### Fixed
 - Bug that prevented an empty username for results backend and broker when using redis.
@@ -20,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated docs from `pip3 install merlinwf` to `pip3 install merlin`.
-- Scipt launching uses Merlin submission instead of subclassing maestro submit
+- Script launching uses Merlin submission instead of subclassing maestro submit
+- `$(MERLIN_HARD_FAIL)` now shuts down only workers connected to the bad step's queue
 
 ## [1.4.1] [2020-03-06]
 
