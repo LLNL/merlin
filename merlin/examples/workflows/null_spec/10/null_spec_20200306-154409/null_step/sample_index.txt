@@ -1,1 +1,0 @@
-DIR:0	name:0	SAMPLES:[0, 10)
