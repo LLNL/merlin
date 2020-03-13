@@ -78,6 +78,8 @@ retry_exceptions = (
 
 LOG = logging.getLogger(__name__)
 
+STOP_COUNTDOWN = 60
+
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def merlin_step(self, *args, **kwargs):
@@ -135,16 +137,25 @@ def merlin_step(self, *args, **kwargs):
                 f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow."
             )
         elif result == ReturnCode.HARD_FAIL:
+
+            # stop all workers attached to this queue
+            step_queue = step.get_task_queue()
             LOG.error(
                 f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow."
             )
-            # TODO purge queues? function requires maestro_spec
-            # router.purge_tasks("celery", ?, force=True)
-
-            # stop workers TODO make this more discriminatory, stopping only the relevant workers
-            stop_workers("celery", None, None)
+            LOG.error(
+                f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!"
+            )
+            shutdown = shutdown_workers.s([step_queue])
+            shutdown.set(queue=step_queue)
+            shutdown.apply_async(countdown=STOP_COUNTDOWN)
 
             raise HardFailException
+        elif result == ReturnCode.STOP_WORKERS:
+            LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
+            shutdown = shutdown_workers.s(None)
+            shutdown.set(queue=step.get_task_queue())
+            shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
             LOG.warning(
                 f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow."
@@ -421,9 +432,13 @@ def expand_tasks_with_samples(
     LOG.debug("creating sample_index")
     # Write a hierarchy to get the all paths string
     sample_index = create_hierarchy(
-        len(samples), bundle_size=1, directory_sizes=directory_sizes, root="",
-        n_digits=len(str(level_max_dirs))
-
+        len(samples),
+        bundle_size=1,
+        directory_sizes=directory_sizes,
+        root="",
+        n_digits=len(str(level_max_dirs)),
+    )
+    
     LOG.debug("creating sample_paths")
     sample_paths = sample_index.make_directory_string()
 
@@ -478,6 +493,31 @@ def expand_tasks_with_samples(
         LOG.debug(f"queuing simple chain task")
         add_simple_chain_to_chord(self, task_type, steps, adapter_config)
         LOG.debug(f"simple chain task queued")
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=retry_exceptions,
+    retry_backoff=True,
+    acks_late=False,
+    reject_on_worker_lost=False,
+    name="merlin:shutdown_workers",
+)
+def shutdown_workers(self, shutdown_queues):
+    """
+    This task issues a call to shutdown workers.
+
+    It wraps the stop_celery_workers call as a task.
+    It is acknolwedged right away, so that it will not be requeued when
+    executed by a worker.
+
+    :param: shutdown_queues: The specific queues to shutdown (list)
+    """
+    if shutdown_queues is not None:
+        LOG.warning(f"Shutting down workers in queues {shutdown_queues}!")
+    else:
+        LOG.warning(f"Shutting down workers in all queues!")
+    return stop_workers("celery", None, shutdown_queues, None)
 
 
 @shared_task(
