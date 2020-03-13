@@ -89,6 +89,7 @@ app.autodiscover_tasks(["merlin.common"])
 
 app.conf.update(
     task_acks_late=True,
+    task_reject_on_worker_lost=True,
     task_publish_retry_policy={
         "interval_start": 10,
         "interval_step": 10,

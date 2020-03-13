@@ -438,7 +438,9 @@ def define_tests():
         "dry feature_demo": (
             f"{run} {demo} --local --dry --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             [
-                StepFileExistsCond("verify", "*/verify_*.sh", "feature_demo", OUTPUT_DIR),
+                StepFileExistsCond(
+                    "verify", "*/verify_*.sh", "feature_demo", OUTPUT_DIR
+                ),
                 ReturnCodeCond(),
             ],
             "local",

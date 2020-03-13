@@ -146,10 +146,14 @@ How do I mark a step failure?
 Each step is ultimately designated as:
 * a success ``$(MERLIN_SUCCESS)`` -- writes a ``MERLIN_FINISHED`` file to the step's workspace directory
 * a soft failure ``$(MERLIN_SOFT_FAIL)`` -- allows the workflow to continue
-* a hard failure ``$(MERLIN_HARD_FAIL)`` -- stops the whole workflow
+* a hard failure ``$(MERLIN_HARD_FAIL)`` -- stops the whole workflow by shutting down all workers on that step
 
 Normally this happens behinds the scenes, so you don't need to worry about it.
 To hard-code this into your step logic, use a shell command such as ``exit $(MERLIN_HARD_FAIL)``.
+
+.. note:: ``$(MERLIN_HARD_FAIL)``
+   The ``$(MERLIN_HARD_FAIL)`` exit code will shutdown all workers connected to the queue associated
+   with the failed step. To shutdown *all* workers use the ``$(MERLIN_STOP_WORKERS)`` exit code
 
 To rerun all failed steps in a workflow, see :ref:`restart`.
 If you really want a previously successful step to be re-run, you can first manually remove the ``MERLIN_FINISHED`` file.
@@ -218,9 +222,24 @@ How do I see what workers are connected?
 How do I stop workers?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Interactively outside of a workflow (e.g. at the command line), you can do this with
+
 .. code:: bash
 
    $ merlin stop-workers
+
+This gives you fine control over which kinds of workers to stop, for instance via
+a regex on their name, or the queue names you'd like to stop.
+
+From within a step, you can exit with the ``$(MERLIN_STOP_WORKERS)`` code, which will
+issue a time-delayed call to stop all of the workers, or with the ``$(MERLIN_HARD_FAIL)``
+directive, which will stop all workers connected to the current step. This helps prevent
+the *suicide race condition* where a worker could kill itself before removing the step
+from the workflow, causing the command to be left there for the next worker and creating
+a really bad loop.
+
+You can of course call ``merlin stop-workers`` from within a step, but be careful to make
+sure the worker executing it won't be stopped too.
 
 For more tricks, see :ref:`stop-workers`.
 
