@@ -45,10 +45,11 @@ for sample in sample_times:
     post_timestamp = datetime.datetime.timestamp(post_element) 
     #print(pre_timestamp) 
     #print(post_timestamp) 
-    print(round(post_timestamp - pre_timestamp, 3)) 
+    #print(round(post_timestamp - pre_timestamp, 3)) 
     sample_timestamps.append((pre_timestamp, post_timestamp))
 
 start_time = sample_timestamps[0][0]
 end_time = sample_timestamps[-1][1]
 
-print(end_time - start_time)
+#print(end_time - start_time)
+print(f"{len(sample_timestamps)} samples worked")

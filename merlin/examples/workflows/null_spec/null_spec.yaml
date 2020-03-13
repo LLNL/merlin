@@ -15,11 +15,16 @@ study:
         cmd: |
             #echo $(SAMPLE)
             exit $(MERLIN_SUCCESS)
+    - name: verify
+      description: echo done
+      run:
+        cmd: echo "Done"
+        depends: [null_step_*]
 
 merlin:
     resources:
         workers:
-            null_worker:
+            worker_s$(N_SAMPLES)_c$(CONC):
                 args: -O fair --prefetch-multiplier 1 -E -l info --concurrency $(CONC) --logfile=%%p.log
     samples:
         generate:
