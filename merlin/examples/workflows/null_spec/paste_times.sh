@@ -1,7 +1,6 @@
 
 concurrencies=(1 2 4 8 16 32)
-#samples=(1 10 100 1000)
-samples=(10000)
+samples=(1 10 100 1000 10000)
 
 for c in "${concurrencies[@]}"
     do
