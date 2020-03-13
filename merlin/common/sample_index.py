@@ -54,7 +54,7 @@ def uniform_directories(num_samples=MAX_SAMPLE, bundle_size=1, level_max_dirs=10
     while directory_sizes[0] < num_samples:
         directory_sizes.insert(0, directory_sizes[0] * level_max_dirs)
     # We've gone over the total number of samples, remove the first entry
-    del(directory_sizes[0])
+    del directory_sizes[0]
     return directory_sizes
 
 

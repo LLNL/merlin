@@ -33,9 +33,12 @@ Merlin script adapter module
 """
 
 import logging
+import os
 
+from maestrowf.interfaces.script import SubmissionRecord
 from maestrowf.interfaces.script.localscriptadapter import LocalScriptAdapter
 from maestrowf.interfaces.script.slurmscriptadapter import SlurmScriptAdapter
+from maestrowf.utils import start_process
 
 from merlin.common.abstracts.enums import ReturnCode
 
@@ -388,9 +391,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         LOG.debug("cwd = %s", cwd)
         LOG.debug("Script to execute: %s", path)
         LOG.debug("starting process %s in cwd %s" % (path, cwd))
-        submission_record = super(MerlinScriptAdapter, self).submit(
-            step, path, cwd, job_map, env
-        )
+        submission_record = self._execute_subprocess(step.name, path, cwd, env, False)
         retcode = submission_record.return_code
         if retcode == ReturnCode.OK:
             LOG.debug("Execution returned status OK.")
@@ -404,6 +405,8 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         elif retcode == ReturnCode.RETRY:
             LOG.debug("Execution returned status RETRY.")
             step.restart = False
+        elif retcode == ReturnCode.STOP_WORKERS:
+            LOG.debug("Execution returned status STOP_WORKERS")
         else:
             LOG.warning(
                 f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL"
@@ -417,6 +420,54 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         submission_record._subcode = retcode
 
         return submission_record
+
+    def _execute_subprocess(
+        self, output_name, script_path, cwd, env=None, join_output=False
+    ):
+        """
+        Execute the subprocess script locally.
+        If cwd is specified, the submit method will operate outside of the path
+        specified by the 'cwd' parameter.
+        If env is specified, the submit method will set the environment
+        variables for submission to the specified values. The 'env' parameter
+        should be a dictionary of environment variables.
+
+        :param output_name: Output name for stdout and stderr (output_name.out). If None, don't write.
+        :param script_path: Path to the script to be executed.
+        :param cwd: Path to the current working directory.
+        :param env: A dict containing a modified environment for execution.
+        :param join_output: If True, append stderr to stdout
+        :returns: The return code of the submission command and job identifier (SubmissionRecord).
+        """
+        p = start_process(script_path, shell=False, cwd=cwd, env=env)
+        pid = p.pid
+        output, err = p.communicate()
+        retcode = p.wait()
+
+        # This allows us to save on iNodes by not writing the output,
+        # or by appending error to output
+        if output_name is not None:
+            o_path = os.path.join(cwd, "{}.out".format(output_name))
+
+            with open(o_path, "w") as out:
+                out.write(output)
+
+                if join_output:
+                    out.write("\n####### stderr follows #######\n")
+                    out.write(err)
+
+            if not join_output:
+                e_path = os.path.join(cwd, "{}.err".format(output_name))
+                with open(e_path, "w") as out:
+                    out.write(err)
+
+        if retcode == 0:
+            LOG.info("Execution returned status OK.")
+            return SubmissionRecord(ReturnCode.OK, retcode, pid)
+        else:
+            _record = SubmissionRecord(ReturnCode.ERROR, retcode, pid)
+            _record.add_info("stderr", str(err))
+            return _record
 
 
 class MerlinScriptAdapterFactory(object):
