@@ -170,7 +170,6 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
     worker_cmd = f"{launchs} {com}"
 
     if btype == "flux":
-        flux_sleep = " ; sleep inf"
         flux_path = get_yaml_var(batch, "flux_path", "")
         flux_opts = get_yaml_var(batch, "flux_start_opts", "")
         flux_exec_workers = get_yaml_var(batch, "flux_exec_workers", True)
@@ -187,6 +186,6 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
         launch = (
             f"{launchs} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
         )
-        worker_cmd = f'{launch} "{com} {flux_sleep}"'
+        worker_cmd = f'{launch} "{com}"'
 
     return worker_cmd

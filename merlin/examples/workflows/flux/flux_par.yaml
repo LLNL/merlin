@@ -44,7 +44,15 @@ study:
   run:
     cmd: |
       flux kvs dir lwj.0.0.5 >& flux_kvs.out
-    depends: [runs*]
+    depends: [runs_*]
+    task_queue: flux_par
+
+- description: Stop workers
+  name: stop_workers
+  run:
+    cmd: |
+      exit $(MERLIN_STOP_WORKERS)
+    depends: [data]
     task_queue: flux_par
 
 global.parameters:
