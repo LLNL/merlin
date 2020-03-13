@@ -448,19 +448,18 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         # or by appending error to output
         if output_name is not None:
             o_path = os.path.join(cwd, "{}.out".format(output_name))
-            if join_output:
-                e_path = o_path
-            else:
-                e_path = os.path.join(cwd, "{}.err".format(output_name))
 
             with open(o_path, "w") as out:
                 out.write(output)
 
                 if join_output:
                     out.write("\n####### stderr follows #######\n")
+                    out.write(err)
 
-            with open(e_path, "w") as out:
-                out.write(err)
+            if not join_output:
+                e_path = os.path.join(cwd, "{}.err".format(output_name))
+                with open(e_path, "w") as out:
+                    out.write(err)
 
         if retcode == 0:
             LOG.info("Execution returned status OK.")
