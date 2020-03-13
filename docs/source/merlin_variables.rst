@@ -15,7 +15,7 @@ The directory structure of merlin output looks like this:
 
     SPECROOT
         <spec.yaml>
-    
+
     ...
 
     OUTPUT_PATH
@@ -24,7 +24,7 @@ The directory structure of merlin output looks like this:
                 <provenance_spec.yaml>
             <other_step_name>.workspace
             WORKSPACE
-            
+
 
 Reserved variables
 ------------------
@@ -54,7 +54,7 @@ Reserved variables
   * - ``$(MERLIN_INFO)``
     - Directory within ``MERLIN_WORKSPACE`` that holds a provenance spec.
       Commonly used to hold ``samples.npy``.
-    - ``$(MERLIN_WORKSPACE)/merlin_info/`` 
+    - ``$(MERLIN_WORKSPACE)/merlin_info/``
   * - ``$(MERLIN_SAMPLE_ID)``
     - Sample index in an ensemble
     - ``0`` ``1`` ``2`` ``3``
@@ -123,7 +123,7 @@ Step return variables
 
    * - ``$(MERLIN_RESTART)``
      - Run this step's ``restart`` command, or re-run ``cmd`` if ``restart``
-       is absent.      
+       is absent.
      -
        ::
 
@@ -148,7 +148,7 @@ Step return variables
                exit $(MERLIN_RETRY)
             max_retries: 23
 
-   * - ``$(merlin_soft_fail)``
+   * - ``$(MERLIN_SOFT_FAIL)``
      - Mark this step as a failure, note in the warning log but keep going.
        Unknown return codes get translated to soft fails, so that they can
        be logged.
@@ -160,11 +160,27 @@ Step return variables
 
    * - ``$(MERLIN_HARD_FAIL)``
      - Something went terribly wrong and I need to stop the whole workflow.
-       Raises a ``HardFailException``.
+       Raises a ``HardFailException`` and stops all workers connected to that
+       step. Workers will stop after a 60 second delay to allow the step to
+       be acknowledged by the server.
+
+       .. note::
+          Workers in isolated parts of the
+          workflow not consuming from the bad step will continue. You can stop
+          all workers with ``$(MERLIN_STOP_WORKERS)``.
+
      -
        ::
 
            echo "Oh no, we've created skynet! Abort!"
            exit $(MERLIN_HARD_FAIL)
 
+   * - ``$(MERLIN_STOP_WORKERS)``
+     - Launch a task to stop all active workers. To allow the current task to
+       finish and acknowledge the results to the server, will happen in 60
+       seconds.
+     -
+       ::
 
+          # send a signal to all workers to stop
+          exit $(MERLIN_STOP_WORKERS)

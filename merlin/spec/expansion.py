@@ -59,6 +59,7 @@ PROVENANCE_REPLACE = {
     "MERLIN_SOFT_FAIL",
     "MERLIN_HARD_FAIL",
     "MERLIN_RETRY",
+    "MERLIN_STOP_WORKERS",
 }
 MERLIN_RESERVED = STEP_AWARE | PROVENANCE_REPLACE
 RESERVED = MAESTRO_RESERVED | MERLIN_RESERVED
@@ -187,6 +188,7 @@ def parameter_substitutions_for_cmd(glob_path, sample_paths):
     substitutions.append(("$(MERLIN_SOFT_FAIL)", str(int(ReturnCode.SOFT_FAIL))))
     substitutions.append(("$(MERLIN_HARD_FAIL)", str(int(ReturnCode.HARD_FAIL))))
     substitutions.append(("$(MERLIN_RETRY)", str(int(ReturnCode.RETRY))))
+    substitutions.append(("$(MERLIN_STOP_WORKERS)", str(int(ReturnCode.STOP_WORKERS))))
     return substitutions
 
 
