@@ -35,6 +35,7 @@ from enum import IntEnum
 __all__ = (
     "ReturnCode",
     "OK_VALUE",
+    "ERROR_VALUE",
     "RESTART_VALUE",
     "SOFT_FAIL_VALUE",
     "HARD_FAIL_VALUE",
@@ -50,6 +51,7 @@ class ReturnCode(IntEnum):
     """
 
     OK = 0
+    ERROR = 1
     RESTART = 100
     SOFT_FAIL = 101
     HARD_FAIL = 102

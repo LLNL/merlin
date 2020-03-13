@@ -16,9 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bug that prevented an empty username for results backend and broker when using redis.
 - Bug that prevented `OUTPUT_PATH` from being an integer.
 - Bug that always had sample directory tree start with "0"
+- "Error" message whenever a non-zero return code is given
 
 ### Changed
 - Updated docs from `pip3 install merlinwf` to `pip3 install merlin`.
+- Scipt launching uses Merlin submission instead of subclassing maestro submit
 
 ## [1.4.1] [2020-03-06]
 
