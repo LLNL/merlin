@@ -31,6 +31,9 @@
 """
 This module contains a list of examples that can be used when learning to use
 Merlin, or for setting up new workflows.
+
+Examples are packaged in directories, with the directory name denoting
+the example name.  This must match the name of the merlin specification inside.
 """
 import glob
 import logging
