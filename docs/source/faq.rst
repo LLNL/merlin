@@ -151,9 +151,9 @@ Each step is ultimately designated as:
 Normally this happens behinds the scenes, so you don't need to worry about it.
 To hard-code this into your step logic, use a shell command such as ``exit $(MERLIN_HARD_FAIL)``.
 
-.. note:: HARD_FAIL
-   The ``$(MERLIN_HARD_FAIL)`` exit code will shutdown all workers connected to the queue associated with the failed step.
-   To shutdown *all* workers use the ``$(MERLIN_STOP_WORKERS)`` exit code
+.. note:: ``$(MERLIN_HARD_FAIL)``
+   The ``$(MERLIN_HARD_FAIL)`` exit code will shutdown all workers connected to the queue associated
+   with the failed step. To shutdown *all* workers use the ``$(MERLIN_STOP_WORKERS)`` exit code
 
 To rerun all failed steps in a workflow, see :ref:`restart`.
 If you really want a previously successful step to be re-run, you can first manually remove the ``MERLIN_FINISHED`` file.
