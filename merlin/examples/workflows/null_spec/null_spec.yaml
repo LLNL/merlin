@@ -6,6 +6,7 @@ env:
     variables:
         OUTPUT_PATH: ./
         N_SAMPLES: 10
+        CONC: 1
 
 study:
     - name: null_step
@@ -19,7 +20,7 @@ merlin:
     resources:
         workers:
             null_worker:
-                args: -O fair --prefetch-multiplier 1 -E -l info --concurrency 1 --logfile=%%p.log
+                args: -O fair --prefetch-multiplier 1 -E -l info --concurrency $(CONC) --logfile=%%p.log
     samples:
         generate:
             cmd: for i in {1..$(N_SAMPLES)} ; do echo $i ; done >> $(MERLIN_INFO)/samples.csv
