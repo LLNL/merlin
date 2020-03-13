@@ -137,8 +137,6 @@ def merlin_step(self, *args, **kwargs):
                 f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow."
             )
         elif result == ReturnCode.HARD_FAIL:
-            # TODO purge queues? function requires maestro_spec
-            # router.purge_tasks("celery", ?, force=True)
 
             # stop all workers attached to this queue
             step_queue = step.get_task_queue()

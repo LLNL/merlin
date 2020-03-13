@@ -112,9 +112,14 @@ study:
     - name: shutdown
       description: |
           shutdown all workers attached to this queue
+          this is actually -all- workers on this workflow, since there's only one
+          defined worker and it is attached to this queue
       run:
          cmd: |
+            # Stop only workers attached to $(VERIFY_QUEUE)
             exit $(MERLIN_HARD_FAIL)
+
+            # To stop all workers -everywhere-
             #exit $(MERLIN_STOP_WORKERS)
          depends: [verify, python3_hello, python2_hello]
          task_queue: $(VERIFY_QUEUE)
