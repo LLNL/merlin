@@ -228,7 +228,7 @@ Interactively outside of a workflow (e.g. at the command line), you can do this 
 
    $ merlin stop-workers
 
-This give you fine control over which kinds of workers to stop, for instance via
+This gives you fine control over which kinds of workers to stop, for instance via
 a regex on their name, or the queue names you'd like to stop.
 
 From within a step, you can exit with the ``$(MERLIN_STOP_WORKERS)`` code, which will

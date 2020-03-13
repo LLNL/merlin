@@ -148,14 +148,14 @@ def merlin_step(self, *args, **kwargs):
             LOG.error(
                 f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!"
             )
-            shutdown = shutdown_workers.s(queues=[step_queue])
+            shutdown = shutdown_workers.s([step_queue])
             shutdown.set(queue=step_queue)
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
 
             raise HardFailException
         elif result == ReturnCode.STOP_WORKERS:
             LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
-            shutdown = shutdown_workers.s()
+            shutdown = shutdown_workers.s(None)
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
@@ -483,7 +483,7 @@ def expand_tasks_with_samples(
     reject_on_worker_lost=False,
     name="merlin:shutdown_workers",
 )
-def shutdown_workers(queues=None):
+def shutdown_workers(self, shutdown_queues):
     """
     This task issues a call to shutdown workers.
 
@@ -491,9 +491,13 @@ def shutdown_workers(queues=None):
     It is acknolwedged right away, so that it will not be requeued when
     executed by a worker.
 
-    :param: queues: The specific queues to shutdown
+    :param: shutdown_queues: The specific queues to shutdown (list)
     """
-    return stop_workers("celery", None, queues, None)
+    if shutdown_queues is not None:
+        LOG.warning(f"Shutting down workers in queues {shutdown_queues}!")
+    else:
+        LOG.warning(f"Shutting down workers in all queues!")
+    return stop_workers("celery", None, shutdown_queues, None)
 
 
 @shared_task(

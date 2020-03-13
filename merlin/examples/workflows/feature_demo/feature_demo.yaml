@@ -109,12 +109,13 @@ study:
           shell: /usr/bin/env python2
           task_queue: pyth2_hello
 
-    - name: shutdown all workers
+    - name: shutdown
       description: |
-          shutdown all workers
+          shutdown all workers attached to this queue
       run:
          cmd: |
-            exit $(MERLIN_STOP_WORKERS)
+            exit $(MERLIN_HARD_FAIL)
+            #exit $(MERLIN_STOP_WORKERS)
          depends: [verify, python3_hello, python2_hello]
          task_queue: $(VERIFY_QUEUE)
 
