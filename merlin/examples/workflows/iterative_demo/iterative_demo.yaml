@@ -1,3 +1,14 @@
+# UPDATE THE FOLLOWING TO RUN:
+#  - PYTHON variable: virtual env python path
+#  - batch block: update according to your systems batch scheduler
+#  - concurrency: increase name_queue to match allocations num processors
+#  - POST_NPROCS: increase to match num cores per node in allocation
+#  - queue machine names: set to machine name(s) on which this is running
+#
+#  NOTE: POST_NPROCS used for parallelization that does not span physical
+#  hardware boundaries in its current form (switch from concurrent.futures
+#  to mpi4py based executor if multi-node parallel is desired)
+  
 description:
   name: iterative_demo
   description: Demo of a workflow with self driven iteration/looping
