@@ -3,8 +3,8 @@ import os
 import shutil
 
 submit_path = "/g/g13/bay1/merlin/merlin/examples/workflows/null_spec/submit.sbatch"
-concurrencies = [4,8,16,32]
-samples = [1,10,100,1000]
+concurrencies = [1,2,4,8,16,32]
+samples = [10000]
 for concurrency in concurrencies:
     if not os.path.isdir(f"c_{concurrency}"):
         os.mkdir(f"c_{concurrency}")
