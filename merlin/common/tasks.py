@@ -137,15 +137,19 @@ def merlin_step(self, *args, **kwargs):
                 f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow."
             )
         elif result == ReturnCode.HARD_FAIL:
-            LOG.error(
-                f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow."
-            )
             # TODO purge queues? function requires maestro_spec
             # router.purge_tasks("celery", ?, force=True)
 
-            # stop workers TODO make this more discriminatory, stopping only the relevant workers
-            shutdown = shutdown_workers.s()
-            shutdown.set(queue=step.get_task_queue())
+            # stop all workers attached to this queue
+            step_queue = step.get_task_queue()
+            LOG.error(
+                f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow."
+            )
+            LOG.error(
+                f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!"
+            )
+            shutdown = shutdown_workers.s(queues=[step_queue])
+            shutdown.set(queue=step_queue)
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
 
             raise HardFailException
@@ -479,15 +483,17 @@ def expand_tasks_with_samples(
     reject_on_worker_lost=False,
     name="merlin:shutdown_workers",
 )
-def shutdown_workers(*args, **kwargs):
+def shutdown_workers(queues=None):
     """
     This task issues a call to shutdown workers.
 
     It wraps the stop_celery_workers call as a task.
     It is acknolwedged right away, so that it will not be requeued when
     executed by a worker.
+
+    :param: queues: The specific queues to shutdown
     """
-    return stop_workers("celery", None, None, None)
+    return stop_workers("celery", None, queues, None)
 
 
 @shared_task(

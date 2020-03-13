@@ -160,7 +160,15 @@ Step return variables
 
    * - ``$(MERLIN_HARD_FAIL)``
      - Something went terribly wrong and I need to stop the whole workflow.
-       Raises a ``HardFailException``.
+       Raises a ``HardFailException`` and stops all workers connected to that
+       step. Workers will stop after a 60 second delay to allow the step to
+       be acknowledged by the server.
+
+       .. note::
+          Workers in isolated parts of the
+          workflow not consuming from the bad step will continue. You can stop
+          all workers with ``$(MERLIN_STOP_WORKERS)``.
+
      -
        ::
 
