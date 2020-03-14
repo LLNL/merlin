@@ -438,6 +438,7 @@ def expand_tasks_with_samples(
         root="",
         n_digits=len(str(level_max_dirs)),
     )
+    
     LOG.debug("creating sample_paths")
     sample_paths = sample_index.make_directory_string()
 
