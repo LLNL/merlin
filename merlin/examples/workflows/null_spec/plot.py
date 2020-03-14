@@ -8,7 +8,7 @@ with open('my_data.yaml') as f:
 
 
 c = [1,2,4,8,16,32]
-samples = [1,10,100,1000]
+samples = [1,10,100,1000,10000]
 fig, ax = plt.subplots()
 
 for con in c:
