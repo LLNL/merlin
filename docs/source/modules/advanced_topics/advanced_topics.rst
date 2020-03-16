@@ -6,10 +6,12 @@ Advanced Topics
       * :doc:`Module 3: Hello World<../hello_world/hello_world>`
       * :doc:`Module 4: Running a Real Simulation<../run_simulation/run_simulation>`
       * Python virtual environment containing the following packages
+        
         * merlin
         * pandas
         * faker
-
+        * maestrowf
+          
 .. admonition:: Estimated time
 
       * 15 minutes
@@ -22,6 +24,20 @@ Advanced Topics
 
 .. contents:: Table of Contents:
   :local:
+
+Setup
++++++
+
+The code for the following examples can be obtained from command line, invoking:
+
+.. code-block:: bash
+   merlin example hpc_demo
+
+This will copy the three merlin workflow specifications from this section and the supporting
+python scripts.  Each specification may need some modification to adapt it to the batch
+scheduler you will be using.  In addition, the dynamic sampling workflow will need an
+additional modification to set the path of the virtual environment, which is set as a variable
+in the ``env`` block.
 
 Interfacing with HPC systems
 ++++++++++++++++++++++++++++
@@ -62,15 +78,15 @@ will be overridden in the worker config.
              number of nodes will be set to 1.
 
 
-NOTE FOR CODE MEETING: what is this data management comment in the merlin block header
-in the commented specification file?
+.. NOTE FOR CODE MEETING: what is this data management comment in the merlin block header
+   in the commented specification file?
 
-NOTE FOR CODE MEETING: why not use task queue name in worker resources blocks instead
-of step names -> nominally seem to be different terms for the intended functionality
+   NOTE FOR CODE MEETING: why not use task queue name in worker resources blocks instead
+   of step names -> nominally seem to be different terms for the intended functionality
 
-NOTE FOR ME: test out monitor step type from examnple spec -> anything interesting
-to do here? can this be started first on the command line to enable an actual monitor
-process?
+   NOTE FOR ME: test out monitor step type from examnple spec -> anything interesting
+   to do here? can this be started first on the command line to enable an actual monitor
+   process?
 
 Inside the study step specifications are a few additional keys that become more useful
 on HPC systems: nodes, procs, and task_queue.  Adding on the actual study steps to the
@@ -98,8 +114,8 @@ above batch block specifies the actual resources each steps processes will take.
            depends: [sim-runs]
            task_queue: post_proc_queue
 
-NOTE FOR ME TO TRY: run various post proc scripts, both with concurrent futures
-and mpi4py executors to demo the different calls -> $(LAUNCHER) likely not appropriate here
+.. NOTE FOR ME TO TRY: run various post proc scripts, both with concurrent futures
+   and mpi4py executors to demo the different calls -> $(LAUNCHER) likely not appropriate here
 
 In addition to the ``batch`` block is the ``resources`` section inside the ``merlin`` block.
 This can be used to put together custom celery workers.  Here you can override batch
@@ -143,7 +159,7 @@ Concurrency can be used to run multiple workers in an allocation, thus is recomm
 set to the number of simulations or step work items that fit into the number of nodes in the
 batch allocation in which these workers are spawned.  Note that some schedulers, such as
 ``flux``, can support more jobs than the node has resources for.  This may not impact the
-throughput, but it can prevent oversubscription errors that might otherwise stop the workflow
+throughput, but it can prevent over-subscription errors that might otherwise stop the workflow.
 
 The prefetch multiplier is more related to packing in tasks into the time of the allocation.
 For long running tasks it is recommended to set this to 1.  For short running tasks, this
@@ -153,10 +169,13 @@ tasks at a time from the server.
 The ``-0 fair`` option enables workers running tasks from different queues to run on the same
 allocation.
 
-The example block below extends the previous with  workers configured for long running
+.. NOTE: while there is a warning/info message about this, this workflow seems to work
+   just fine without this option.  Is this only needed for simultaneous running, as opposed
+   to dependent steps in different queues?
+
+The example block below extends the previous with workers configured for long running
 simulation jobs as well as shorter running post processing tasks that can cohabit an allocation
 
-NOTE: verify this is how the celery args work -> docs show raw celery commands, not yaml spec!!
 
 .. code-block:: yaml
 
@@ -182,14 +201,19 @@ NOTE: verify this is how the celery args work -> docs show raw celery commands, 
               machines: [host1]
 
 
-NOTE FOR CODE MEETING/ME TO TRY: nodes, either in batch or workers, behaves differently from
-maestro, meaning it's meant to be nodes per step instantiation, not batch allocation size..
+..              
+   NOTE FOR CODE MEETING/ME TO TRY: nodes, either in batch or workers, behaves differently from
+   maestro, meaning it's meant to be nodes per step instantiation, not batch allocation size..
+   
+   NOTE FOR CODE MEETING: clarify what overlap key does if turned on.  Just multiple named workers
+   pulling from same queues?  is this a requirement for making it work cross machine?
+   Also: what about procs per worker instead of just nodes?
 
-NOTE FOR CODE MEETING: clarify what overlap key does if turned on.  Just multiple named workers
-pulling from same queues?  is this a requirement for making it work cross machine?
-Also: what about procs per worker instead of just nodes?
-
-Putting it all together with the parameter blocks we have an HPC batch enabled study specification
+Putting it all together with the parameter blocks we have an HPC batch enabled study specification.
+In this demo workflow, ``sample_names`` generates one many single core jobs, with concurrency
+set to 36 for this particular machine that has 36 cores per node.  The ``collect`` step on the
+other hand consists of a single job that uses all cores on the node, and is assigned to a queue
+that has a concurrency of 1.
 
 .. code-block:: yaml
 
@@ -291,25 +315,13 @@ Putting it all together with the parameter blocks we have an HPC batch enabled s
          cmd: |
            $(PYTHON) $(SPECROOT)/faker_sample.py -n 200 -outfile=$(MERLIN_INFO)/samples.csv
 
-NOTE FOR ME: replace samples/step cmds with something else that's more interesting
-maybe use faker and use post-process to look at statistics of the names generated off of
-10k samples or something? -> could extend it to multiple sample counts, scaling up until
-repeats start showing up to estimate total number of names in the dict it uses?
-Also could do something with monte carlo methods or fractals?
 
-The actual invocation of this workflow can be handled multiple ways: manually launch batch
-allocations before starting workers, or use Maestro to automate everything:
-
-...
-
-NOTES: encode virtual envs in the spec/workflow: only the first call to merlin run will
-get the host venv, subsequent ones
-
-RECURSIVE WORKFLOWS: if exit condition isn't working, terminating workers can be difficult
-- have another shell open at least to purge the queues and stop the workers
-
-When running new workflows, be careful with the path: otherwise it will run it in that step
-Can info message spam be reduced?  -> nice to see just the echo/print output in the commands...
+..
+   NOTES: encode virtual envs in the spec/workflow: only the first call to merlin run will
+   get the host venv, subsequent ones
+   
+   RECURSIVE WORKFLOWS: if exit condition isn't working, terminating workers can be difficult
+   - have another shell open at least to purge the queues and stop the workers
 
 Multi-machine workflows
 +++++++++++++++++++++++
@@ -319,7 +331,8 @@ simply add additional host names to machines list in the worker config.  The cav
 distribution is that all systems will need to have access to the same workspace/filesystem, as
 well as use the same scheduler types (VERIFY THIS).  The following resource block demonstrates
 using one host for larger simulation steps, and a second host for the smaller post processing
-steps.  In this case you simply need an alloc
+steps.  In this case you simply need an alloc on each host, and can simply execute ``run-workers``
+on each, with ``run`` only needed once up front to send the tasks to the queue server.
 
 .. code-block::yaml
 
@@ -361,9 +374,33 @@ counter takes advantage of the ability to override workflow variables on the com
 .. literalinclude :: ./faker_demo.yaml
    :language: yaml
 
+This workflow specification is intended to be invoke within an allocation of nodes on your
+HPC cluster, e.g. within and sxterm.  The last step to queue up new samples for the next iteration,
+``merlin run faker_demo.yaml ...``, only doesn't need to also call ``run-workers`` since
+the workers from the first instatiation are still alive.  Thus the new samples will
+immediately start processing on the existing allocation.
+
+Another change in this workflow relative to the single stage version is managing the workspaces
+and outputs.  The strategy used here is to create a new directory for collecting each iterations
+final outputs, ``$(ITER_OUTPUT)``, facilitating collective post processing at the end without
+having to worry about traversing into each iterations' local workspaces.
+
 The workflow itself isn't doing anything practical; it's simply repeatedly sampling from
 a fake name generator in an attempt to count the number of unique names that are possible.
 The figure below shows results from running 20 iterations, with the number of unique names
 faker can generate appearing to be slightly more than 300.
 
 .. image:: ./cumulative_results.png
+
+Bootstrapping distributed workflows
++++++++++++++++++++++++++++++++++++
+
+There is an alternative to the manual in-allocation workflow instatiation used in the previous
+examples: encode the run-workers calls into batch scripts and submit those, or use a tool such
+as Maestro to write those batch scripts and manage the allocations and worker startup.  This can
+particularly useful for large studies that can't fit into single allocations, or even to split them
+up into smaller allocations to get through the batch queues more quickly.  Here's an example of
+using maestro to do spin up a multi allocation instantiation of the dynamic demo:
+
+.. literalinclude:: ./advanced_topics/maestro_distributed.yaml
+   :language: yaml

@@ -1,14 +1,9 @@
-"""
-Ideas to play with
- - plotting max count or median max counts as function of samples?
- - also keep track of unique name counts
- - do similar for male and female names, or all at once?
-"""
 import sys
 import argparse
 
 from faker import Faker
 fake = Faker()
+
 
 def process_args(args):
     n_samples = args.n
@@ -38,6 +33,7 @@ def main():
     parser = setup_argparse()
     args = parser.parse_args()
     process_args(args)
+
 
 if __name__ == "__main__":
     sys.exit(main())
