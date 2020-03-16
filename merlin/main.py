@@ -69,10 +69,12 @@ DEFAULT_LOG_LEVEL = "INFO"
 class HelpParser(ArgumentParser):
     """This class overrides the error message of the argument parser to
     print the help message when an error happens."""
+
     def error(self, message):
-        sys.stderr.write('error: %s\n' % message)
+        sys.stderr.write("error: %s\n" % message)
         self.print_help()
         sys.exit(2)
+
 
 def verify_filepath(filepath):
     """

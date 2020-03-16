@@ -4,7 +4,6 @@ import names
 import numpy as np
 
 
-
 # argument parsing
 parser = argparse.ArgumentParser(description="Make some samples (names of people).")
 parser.add_argument(
