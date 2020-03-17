@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `all` option to `batch.nodes`.
 - Auto zero-padding of sample directories, e.g. 00/00, 00/01 .. 10/10
 - `$(MERLIN_STOP_WORKERS)` exit code that shuts down all workers
-- The monitor command which will block while clery workers are running.
+- The `merlin monitor` command, which blocks while celery workers are running.
   This can be used at the end of a batch submission script to keep the
   allocation alive while workers are present.  
 
