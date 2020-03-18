@@ -1,15 +1,6 @@
 Tutorial
 ========
 
-.. note:: This tutorial is currently under construction!
-
-    * March 2-6: testing period
-    * March 9: ready for use!
-
-.. admonition:: Testers
-
-    We currently only want you to work thru sections 1-4. Thanks!
-
 .. admonition:: Estimated time
 
     * 3 hours
