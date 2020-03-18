@@ -8,7 +8,7 @@ Merlin server configuration
 ---------------------------
 
 Merlin works best configuring celery to run with a RabbitMQ_ broker and a redis_ 
-backend. Merlin uses celery chords which require a results backend be configred. The 
+backend. Merlin uses celery chords which require a results backend be configured. The 
 Amqp (rpc Rabbitmq) server does not support chords but the Redis, Database, Memcached 
 and more, support chords.
 

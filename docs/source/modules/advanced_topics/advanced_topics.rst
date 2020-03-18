@@ -69,7 +69,7 @@ in the commented specification file?
 NOTE FOR CODE MEETING: why not use task queue name in worker resources blocks instead
 of step names -> nominally seem to be different terms for the intended functionality
 
-NOTE FOR ME: test out monitor step type from examnple spec -> anything interesting
+NOTE FOR ME: test out monitor step type from example spec -> anything interesting
 to do here? can this be started first on the command line to enable an actual monitor
 process?
 
@@ -81,7 +81,7 @@ above batch block specifies the actual resources each steps processes will take.
 
    study:
       - name: sim-runs
-        description: Run sumulations
+        description: Run simulations
         run:
            cmd: $(LAUNCHER) echo "$(VAR1) $(VAR2)" > simrun.out
            nodes: 4
@@ -104,9 +104,9 @@ and mpi4py executors to demo the different calls -> $(LAUNCHER) likely not appro
 
 In addition to the ``batch`` block is the ``resources`` section inside the ``merlin`` block.
 This can be used to put together custom celery workers.  Here you can override batch
-types and node counts on a per worker basis to accomodate steps with different
+types and node counts on a per worker basis to accommodate steps with different
 resource requirements.  In addition, this is where the ``task_queue`` becomes useful, as
-it groups the different allocaiton types, which can be assigned to each worker here
+it groups the different allocation types, which can be assigned to each worker here
 by specifying step names (why not specify queue instead of step names here?).
 
 .. code-block::yaml
@@ -251,7 +251,7 @@ Putting it all together with the parameter blocks we have an HPC batch enabled s
            task_queue: post_proc_queue
 
       - name: post-process
-        description: Post-Process collection of samples, counting occurences of unique names
+        description: Post-Process collection of samples, counting occurrences of unique names
         run:
            cmd: |
              $(PYTHON) $(POST_PROC) $(collect.workspace)/collected_samples.txt --results iter_$(ITER)_results.json
@@ -349,11 +349,11 @@ steps.  In this case you simply need an alloc
                machines: [host2]
 
 
-Dynamic task queueing and sampling
+Dynamic task queuing and sampling
 ++++++++++++++++++++++++++++++++++
 
 Iterative workflows, such as optimization or machine learning, can be implemented
-in merlin via recursive workflow specifications that use dynamic task queueing.
+in merlin via recursive workflow specifications that use dynamic task queuing.
 The example spec below is a simple implementation of this using an iteration counter
 ``$(ITER)`` and a predetermined limit, ``$(MAX_ITER)`` to limit the number of times
 to generate new samples and spawn a new instantiation of the workflow.  The iteration

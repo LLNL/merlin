@@ -14,10 +14,15 @@ YAML=paper.yaml
 
 export PATH=/collab/usr/gapps/merlin/${SYS_TYPE}/bin:$PATH
 
+
+# Send all tasks to the broker
 merlin run ${YAML}
 
+# Show the workers command
 merlin run-workers ${YAML} --echo
 
+# Start workers to run the tasks in the broker
 merlin run-workers ${YAML}
 
-sleep inf
+# Keep the allocation alive until all workers stop
+merlin monitor
