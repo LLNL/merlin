@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `HelpParser`, which automatically prints help messages when command line commands return an error.
 - Optional ssl files for the broker and results backend config.
 - A url keyword in the app.yaml file to override the entire broker or results backend configuration.
 - The `all` option to `batch.nodes`.
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Bug that prevented an empty username for results backend and broker when using redis.
 - Bug that prevented `OUTPUT_PATH` from being an integer.
+- Slow sample speed in `hello_samples.yaml` from the hello example.
 - Bug that always had sample directory tree start with "0"
 - "Error" message whenever a non-zero return code is given
 
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated docs from `pip3 install merlinwf` to `pip3 install merlin`.
 - Script launching uses Merlin submission instead of subclassing maestro submit
 - `$(MERLIN_HARD_FAIL)` now shuts down only workers connected to the bad step's queue
+- Updated all tutorial modules
 
 ## [1.4.1] [2020-03-06]
 

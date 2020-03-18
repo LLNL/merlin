@@ -222,7 +222,7 @@ That means we have launched our tasks! Now we need to launch the workers that wi
 
 .. code-block:: bash
 
-    $ merlin run-workers hello.yaml
+    $ merlin run-workers my_hello.yaml
 
 Here's the expected merlin output message for running workers:
 
@@ -294,11 +294,11 @@ It's good practice to shift larger chunks of code to external scripts. At the sa
 
 Since our environment variable ``N_SAMPLES`` is set to 3, this sample-generating command should churn out 3 different names.
 
-Before we can run this, we must install the script's one external python library dependency ``names`` (a library that generates random names):
+Before we can run this, we must install the script's external python library dependencies (``names``: a simple package that generates random names, and ``numpy``: a scientific computing package):
 
 .. code-block:: bash
 
-    $ pip3 install names
+    $ pip3 install -r requirements.txt
 
 Here's our DAG with samples:
 
@@ -320,7 +320,7 @@ Once finished, this is what the insides of ``step_1`` look like:
 
 * ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used internally by merlin and doesn't usually require user attention.
 
-* Numerically-named directories like ``0``, ``1``, and ``2`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
+* Numerically-named directories like ``00``, ``01``, and ``02`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
 
 Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could internally change the value in the spec from 3 to 1000. OR you could just run this:
 
