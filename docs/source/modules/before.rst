@@ -13,7 +13,7 @@ __ https://www.python.org/downloads/release/python-360/
 __ https://www.gnu.org/software/make/
 __ https://gcc.gnu.org/
 
-* Install `docker`__
+* Install `docker`__.
 
 __ https://docs.docker.com/install/
 
