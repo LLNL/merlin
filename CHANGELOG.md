@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated docs from `pip3 install merlinwf` to `pip3 install merlin`.
 - Script launching uses Merlin submission instead of subclassing maestro submit
 - `$(MERLIN_HARD_FAIL)` now shuts down only workers connected to the bad step's queue
+- Updated all tutorial modules
 
 ## [1.4.1] [2020-03-06]
 
