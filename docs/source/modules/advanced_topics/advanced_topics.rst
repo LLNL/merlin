@@ -81,10 +81,10 @@ will be overridden in the worker config.
 .. NOTE FOR CODE MEETING: what is this data management comment in the merlin block header
    in the commented specification file?
 
-   NOTE FOR CODE MEETING: why not use task queue name in worker resources blocks instead
+..   NOTE FOR CODE MEETING: why not use task queue name in worker resources blocks instead
    of step names -> nominally seem to be different terms for the intended functionality
 
-   NOTE FOR ME: test out monitor step type from examnple spec -> anything interesting
+..   NOTE FOR ME: test out monitor step type from examnple spec -> anything interesting
    to do here? can this be started first on the command line to enable an actual monitor
    process?
 
