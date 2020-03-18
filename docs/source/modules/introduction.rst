@@ -85,7 +85,7 @@ to run more simulations through complex multi-component workflows.
   * - Hierarchical simulation
     - Running low-fidelity simulations to inform which higher fidelity simulations
       to execute
-  * - Heterogenous workflows
+  * - Heterogeneous workflows
     - Workflows that require different steps to execute on different hardware and/or
       systems
 
@@ -245,12 +245,12 @@ to HPC workflows challenging.
       needing to run the entire workflow.*
 
 Merlin was built specifically to address the challenges of porting microservices
-to HPC simualtions.
+to HPC simulations.
 
 So what exactly does Merlin do?
 +++++++++++++++++++++++++++++++
 
-Merlin wraps a heavily tested and well used asynchronous task queueing library in
+Merlin wraps a heavily tested and well used asynchronous task queuing library in
 a skin and syntax that is natural for HPC simulations. In essence, we extend
 `maestro <https://github.com/LLNL/maestrowf>`_ by hooking it up to
 `celery <https://docs.celeryproject.org/en/latest/index.html>`_. We leverage
@@ -320,7 +320,7 @@ queue associated with the GPU step.
 
 When the simulations in step 1 finish, step 2 will automatically start. In this fashion,
 Merlin allows the scientist to coordinate a highly scalable asynchronous multi-machine
-heterogenous workflow.
+heterogeneous workflow.
 
 This is of course a simple example, but it does show how the producer-consumer
 philosophy in HPC workflows can be quite enabling. Merlin's goal is to make it easy

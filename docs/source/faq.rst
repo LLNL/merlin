@@ -285,7 +285,7 @@ Where do tasks get run?
 Can I run different steps from my workflow on different machines?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Yes. Under the ``merlin`` block you can specify which machines your workers are allowed on.
-In order for this to work, you must then use ``merlin run-workers`` seperately on each of
+In order for this to work, you must then use ``merlin run-workers`` separately on each of
 the specified machines.
 
 .. code:: yaml
@@ -323,7 +323,7 @@ More information can be found at the `Flux web page <http://flux-framework.org/d
 
 What is ``LAUNCHER``?
 ~~~~~~~~~~~~~~~~~~~~~
-``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with parellel schedulers like :ref:`slurm`, :ref:`lsf`, and :ref:`flux`.
+``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with parallel schedulers like :ref:`slurm`, :ref:`lsf`, and :ref:`flux`.
 
 How do I use ``LAUNCHER``?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -362,8 +362,8 @@ flux: Verbatim flags for the flux parallel launch (flux mini run <flux>)
 
 LSF specific run flags:
 bind: Flag for MPI binding of tasks on a node (default: -b rs)
-num resource set: Number of resoure sets
-launch_distribution : The distribution of respources (default: plane:{procs/nodes})
+num resource set: Number of resource sets
+launch_distribution : The distribution of resources (default: plane:{procs/nodes})
 lsf: Verbatim flags only for the lsf parallel launch (jsrun ... <lsf>)
 
 Where can I learn more about merlin?
