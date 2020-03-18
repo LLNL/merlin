@@ -364,7 +364,7 @@ server and python.
 
 The ``redis:6.0-rc2`` docker service is exchanged for the previous
 ``redis:latest`` service. The configuration below does not use client
-verfication ``--tls-auth-clients no`` so the ssl files do not need to 
+verification ``--tls-auth-clients no`` so the ssl files do not need to 
 be defined as shown in the :ref:`broker_redis_ssl` section.
 
 .. literalinclude:: ./docker-compose_rabbit_redis_tls.yml

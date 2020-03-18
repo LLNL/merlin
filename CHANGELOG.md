@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `all` option to `batch.nodes`.
 - Auto zero-padding of sample directories, e.g. 00/00, 00/01 .. 10/10
 - `$(MERLIN_STOP_WORKERS)` exit code that shuts down all workers
-- The monitor command which will block while clery workers are running.
+- The `merlin monitor` command, which blocks while celery workers are running.
   This can be used at the end of a batch submission script to keep the
   allocation alive while workers are present.  
 
@@ -108,7 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before changes are merged into master.
 - Allow for the maestro `$(LAUNCHER)` syntax in tasks, this requires the 
   nodes and procs variables in the task just as in maestro. The LAUNCHER keyword
-  is implmented for flux, lsf, slurm and local types.  The lsf type
+  is implemented for flux, lsf, slurm and local types.  The lsf type
   will use the LLNL srun wrapper for jsrun when the lsf-srun batch type 
   is used. The flux version will be checked to determine the proper format 
   of the parallel launch call.
@@ -146,7 +146,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `merlin status <yaml spec>` that returns queues, number of connected
   workers and number of unused tasks in each of those queues.
 - `merlin example` cli command, which allows users to start running the
-  examples immedately (even after pip-installing).
+  examples immediately (even after pip-installing).
 
 ### Fixed
 - `MANIFEST.in` fixes as required by Spack.

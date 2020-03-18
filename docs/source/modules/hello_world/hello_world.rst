@@ -47,10 +47,10 @@ This will create and move into directory called ``hello``, which contains these 
 Specification file
 ++++++++++++++++++
 
-Central to Merlin is something called a specifiation file, or a "spec" for short.
+Central to Merlin is something called a specification file, or a "spec" for short.
 The spec defines all aspects of your workflow.
 The spec is formatted in yaml.
-If you're unfamilar with yaml, it's worth `reading up on`__ for a few minutes.
+If you're unfamiliar with yaml, it's worth `reading up on`__ for a few minutes.
 
 __ https://www.tutorialspoint.com/yaml/yaml_quick_guide.htm
 
@@ -92,12 +92,12 @@ The label is the pattern for a filename that will be created for each value.
 
     ``%%`` is a special token that defines where the value in the label is placed. In this case the parameter labels will be GREET.hello, GREET.hola, etc. The label can take a custom text format, so long as the ``%%`` token is included to be able to substitute the parameter’s value in the appropriate place.
 
-So this will give us 1) an English result, and 2) a Spanish one (you could add as many more langauges as you want, as long as both parameters hold the same number of values).
+So this will give us 1) an English result, and 2) a Spanish one (you could add as many more languages as you want, as long as both parameters hold the same number of values).
 
 Section: ``study``
 ~~~~~~~~~~~~~~~~~~
-This is where you define worfklow steps.
-While the convention is to list steps as sequentially as possible, the only factor in determning step order is the dependency DAG created by the ``depends`` field.
+This is where you define workflow steps.
+While the convention is to list steps as sequentially as possible, the only factor in determining step order is the dependency DAG created by the ``depends`` field.
 
 .. code-block:: yaml
 
@@ -118,7 +118,7 @@ While the convention is to list steps as sequentially as possible, the only fact
 
     The ``-`` denotes a list item in YAML. To add elements, simply add new elements prefixed with a hyphen
 
-``$(GREET)`` and ``$(WORLD)`` expand the global parameters seperately into their two values.
+``$(GREET)`` and ``$(WORLD)`` expand the global parameters separately into their two values.
 .. ``$(step_1.workspace)`` gets the path to ``step_1``.
 The default value for ``shell`` is ``/bin/bash``. In ``step_2`` we override this to use python instead.
 Steps must be defined as nodes in a DAG, so no cyclical dependencies are allowed.
@@ -318,11 +318,11 @@ Once finished, this is what the insides of ``step_1`` look like:
 .. image:: merlin_output2.png
     :align: center
 
-* ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used interally by merlin and doesn't usually require user attention.
+* ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used internally by merlin and doesn't usually require user attention.
 
 * Numerically-named directories like ``0``, ``1``, and ``2`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
 
-Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could interally change the value in the spec from 3 to 1000. OR you could just run this:
+Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could internally change the value in the spec from 3 to 1000. OR you could just run this:
 
 .. code-block:: bash
 

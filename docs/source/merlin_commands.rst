@@ -105,21 +105,21 @@ Information about your merlin and python configuration can be printed out by usi
 
 Monitor (``merlin monitor``)
 ----------------------------
-The batch submission scripts may not keep the batch allocation alive
+Batch submission scripts may not keep the batch allocation alive
 if there is not a blocking process in the submission script. The
-``merlin monitor`` function provides a blocking process that will
-check for running workers every 60 seconds. If the 
-``$(MERLIN_STOP_WORKERS)`` option is used, or workers are stopped
-through some other mechanism, then this
-command will exit and allow the allocation end. The ``monitor`` command
+``merlin monitor`` command addresses this by providing a blocking process that
+checks for running workers every 60 seconds. If the 
+``$(MERLIN_STOP_WORKERS)`` option is used or when workers are stopped
+through some other mechanism, then the blocking process
+will exit and allow the allocation to end. The ``monitor`` command
 will not exit until all celery workers on the allocation cease.
 
 .. code:: bash
 
     $ merlin monitor [--task_server celery] [--sleep <duration>]
 
-The ``-sleep`` argument is the duration, in seconds, between checks
-for workers.
+The ``--sleep`` argument is the duration in seconds between checks
+for workers. The default is 60 seconds.
 
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
