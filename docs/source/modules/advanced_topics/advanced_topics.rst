@@ -6,7 +6,7 @@ Advanced Topics
       * :doc:`Module 3: Hello World<../hello_world/hello_world>`
       * :doc:`Module 4: Running a Real Simulation<../run_simulation/run_simulation>`
       * Python virtual environment containing the following packages
-        
+
         * merlin
         * pandas
         * faker
@@ -96,7 +96,7 @@ above batch block specifies the actual resources each steps processes will take.
 
    study:
       - name: sim-runs
-        description: Run sumulations
+        description: Run simulations
         run:
            cmd: $(LAUNCHER) echo "$(VAR1) $(VAR2)" > simrun.out
            nodes: 4
@@ -119,9 +119,9 @@ above batch block specifies the actual resources each steps processes will take.
 
 In addition to the ``batch`` block is the ``resources`` section inside the ``merlin`` block.
 This can be used to put together custom celery workers.  Here you can override batch
-types and node counts on a per worker basis to accomodate steps with different
+types and node counts on a per worker basis to accommodate steps with different
 resource requirements.  In addition, this is where the ``task_queue`` becomes useful, as
-it groups the different allocaiton types, which can be assigned to each worker here
+it groups the different allocation types, which can be assigned to each worker here
 by specifying step names (why not specify queue instead of step names here?).
 
 .. code-block::yaml
@@ -274,7 +274,7 @@ that has a concurrency of 1.
            task_queue: post_proc_queue
 
       - name: post-process
-        description: Post-Process collection of samples, counting occurences of unique names
+        description: Post-Process collection of samples, counting occurrences of unique names
         run:
            cmd: |
              $(PYTHON) $(POST_PROC) $(collect.workspace)/collected_samples.txt --results iter_$(ITER)_results.json
@@ -361,11 +361,11 @@ on each, with ``run`` only needed once up front to send the tasks to the queue s
                machines: [host2]
 
 
-Dynamic task queueing and sampling
+Dynamic task queuing and sampling
 ++++++++++++++++++++++++++++++++++
 
 Iterative workflows, such as optimization or machine learning, can be implemented
-in merlin via recursive workflow specifications that use dynamic task queueing.
+in merlin via recursive workflow specifications that use dynamic task queuing.
 The example spec below is a simple implementation of this using an iteration counter
 ``$(ITER)`` and a predetermined limit, ``$(MAX_ITER)`` to limit the number of times
 to generate new samples and spawn a new instantiation of the workflow.  The iteration

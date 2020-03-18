@@ -78,7 +78,7 @@ the ``--link`` option.
   # Define the tasks and load them on the broker
   merlin run feature_demo/feature_demo.yaml
 
-  # Start workers to pull taks form the server and run them in the container
+  # Start workers to pull tasks from the server and run them in the container
   merlin run-workers feature_demo/feature_demo.yaml
 
 

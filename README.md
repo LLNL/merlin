@@ -1,5 +1,5 @@
-![Python versions](https://img.shields.io/pypi/pyversions/merlinwf)
-[![License](https://img.shields.io/pypi/l/merlinwf)](https://pypi.org/project/merlinwf/)
+![Python versions](https://img.shields.io/pypi/pyversions/merlin)
+[![License](https://img.shields.io/pypi/l/merlin)](https://pypi.org/project/merlin/)
 ![Activity](https://img.shields.io/github/commit-activity/m/LLNL/merlin)
 [![Issues](https://img.shields.io/github/issues/LLNL/merlin)](https://github.com/LLNL/merlin/issues)
 [![Pull requests](https://img.shields.io/github/issues-pr/LLNL/merlin)](https://github.com/LLNL/merlin/pulls)
@@ -89,7 +89,7 @@ Note: Merlin supports Python 3.6+.
 
 To install Merlin and its dependencies, run:
 
-    $ pip3 install merlinwf
+    $ pip3 install merlin
     
 Create your application config file:
 

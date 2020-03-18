@@ -308,6 +308,10 @@ def process_example(args):
     setup_example(args.workflow, args.path)
 
 
+def process_monitor(args):
+    router.monitor_workers(args.task_server, args.sleep)
+
+
 def setup_argparse():
     """
     Setup argparse and any CLI options we want available via the package.
@@ -627,6 +631,28 @@ def setup_argparse():
         "working directory",
     )
     example.set_defaults(func=process_example)
+
+    # merlin monitor
+    monitor = subparsers.add_parser(
+        "monitor",
+        help="Check for active workers on an allocation.",
+        formatter_class=RawTextHelpFormatter,
+    )
+    monitor.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type for which to monitor the workers.\
+                              Default: %(default)s",
+    )
+    monitor.add_argument(
+        "--sleep",
+        type=int,
+        default=60,
+        help="Sleep duration between checking for workers.\
+                                    Default: %(default)s",
+    )
+    monitor.set_defaults(func=process_monitor)
 
     return parser
 

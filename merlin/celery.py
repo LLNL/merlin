@@ -53,14 +53,19 @@ from merlin.router import route_for_task
 
 LOG = logging.getLogger(__name__)
 
-
+broker_ssl = True
+results_ssl = False
 try:
     BROKER_URI = broker.get_connection_string()
     LOG.info(f"broker: {broker.get_connection_string(include_password=False)}")
+    broker_ssl = broker.get_ssl_config()
+    LOG.info(f"broker_ssl = {broker_ssl}")
     RESULTS_BACKEND_URI = results_backend.get_connection_string()
+    results_ssl = results_backend.get_ssl_config(celery_check=True)
     LOG.info(
-        f"backend: {results_backend.get_connection_string(include_password=False)}"
+        f"results: {results_backend.get_connection_string(include_password=False)}"
     )
+    LOG.info(f"results: redis_backed_use_ssl = {results_ssl}")
 except ValueError:
     # These variables won't be set if running with '--local'.
     BROKER_URI = None
@@ -68,7 +73,11 @@ except ValueError:
 
 
 app = Celery(
-    "merlin", broker=BROKER_URI, backend=RESULTS_BACKEND_URI, broker_use_ssl=True
+    "merlin",
+    broker=BROKER_URI,
+    backend=RESULTS_BACKEND_URI,
+    broker_use_ssl=broker_ssl,
+    redis_backend_use_ssl=results_ssl,
 )
 
 
@@ -80,6 +89,7 @@ app.autodiscover_tasks(["merlin.common"])
 
 app.conf.update(
     task_acks_late=True,
+    task_reject_on_worker_lost=True,
     task_publish_retry_policy={
         "interval_start": 10,
         "interval_step": 10,
