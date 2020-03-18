@@ -107,7 +107,7 @@ Monitor (``merlin monitor``)
 ----------------------------
 Batch submission scripts may not keep the batch allocation alive
 if there is not a blocking process in the submission script. The
-``merlin monitor`` function address this by providing a blocking process that
+``merlin monitor`` command addresses this by providing a blocking process that
 checks for running workers every 60 seconds. If the 
 ``$(MERLIN_STOP_WORKERS)`` option is used or when workers are stopped
 through some other mechanism, then the blocking process
