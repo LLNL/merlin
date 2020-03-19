@@ -1,7 +1,8 @@
-import sys
 import argparse
+import sys
 
 from faker import Faker
+
 
 fake = Faker()
 

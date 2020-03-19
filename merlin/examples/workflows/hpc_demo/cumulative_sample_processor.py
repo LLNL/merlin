@@ -1,9 +1,10 @@
+import argparse
 import os
 import sys
-import argparse
 
-from concurrent.futures import ProcessPoolExecutor
 import matplotlib.pyplot as plt
+from concurrent.futures import ProcessPoolExecutor
+
 import pandas as pd
 
 
