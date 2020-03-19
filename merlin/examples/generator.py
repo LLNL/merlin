@@ -84,7 +84,13 @@ def list_examples():
         specs = glob.glob(directory + "*.yaml")
         for spec in specs:
             with open(spec) as f:
-                spec_metadata = yaml.safe_load(f)["description"]
+                try:
+                    spec_metadata = yaml.safe_load(f)["description"]
+                except KeyError as e:
+                    LOG.warn(f"{spec} lacks required section 'description'")
+                    continue
+                except TypeError as e:
+                    continue
             rows.append([spec_metadata["name"], spec_metadata["description"]])
     return "\n" + tabulate.tabulate(rows, headers) + "\n"
 
