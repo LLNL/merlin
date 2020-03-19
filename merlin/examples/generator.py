@@ -31,6 +31,9 @@
 """
 This module contains a list of examples that can be used when learning to use
 Merlin, or for setting up new workflows.
+
+Examples are packaged in directories, with the directory name denoting
+the example name.  This must match the name of the merlin specification inside.
 """
 import glob
 import logging
@@ -99,19 +102,24 @@ def setup_example(name, outdir):
         LOG.error(f"Example '{name}' not found.")
         return None
 
-    if outdir is None:
-        outdir = os.getcwd()
-
     # if there is only 1 file in the example, don't bother making a directory for it
     if len(os.listdir(os.path.dirname(spec_path))) == 1:
         src_path = os.path.join(EXAMPLES_DIR, os.path.join(example, example + ".yaml"))
+
     else:
         src_path = os.path.join(EXAMPLES_DIR, example)
 
-        outdir = os.path.join(outdir, example)
+        if outdir:
+            outdir = os.path.join(os.getcwd(), outdir)
+        else:
+            outdir = os.path.join(os.getcwd(), example)
+
         if os.path.exists(outdir):
             LOG.error(f"File '{outdir}' already exists!")
             return None
+
+    if outdir is None:
+        outdir = os.getcwd()
 
     LOG.info(f"Copying example '{name}' to {outdir}")
     write_example(src_path, outdir)

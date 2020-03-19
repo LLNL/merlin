@@ -85,7 +85,7 @@ to run more simulations through complex multi-component workflows.
   * - Hierarchical simulation
     - Running low-fidelity simulations to inform which higher fidelity simulations
       to execute
-  * - Heterogenous workflows
+  * - Heterogeneous workflows
     - Workflows that require different steps to execute on different hardware and/or
       systems
 
@@ -121,10 +121,10 @@ coordinate the execution of tasks and management of resources one of two ways:
    |                              + - Progress monitored with periodic polling            |
    |                              +   (of files or batch system)                          |
    +------------------------------+-------------------------------------------------------+
-   + Internal Coordination        + - Multiple tasks bundled into larger batch jobs       |
-   + |int-img|                    + - Internal daemon tracks dependencies and resources   |
-   +                              + - Progress monitored via polling                      |
-   +                              +   (of filesystem or message passing)                  |
+   | Internal Coordination        + - Multiple tasks bundled into larger batch jobs       |
+   | |int-img|                    + - Internal daemon tracks dependencies and resources   |
+   |                              + - Progress monitored via polling                      |
+   |                              +   (of filesystem or message passing)                  |
    +------------------------------+-------------------------------------------------------+
 
 
@@ -245,12 +245,12 @@ to HPC workflows challenging.
       needing to run the entire workflow.*
 
 Merlin was built specifically to address the challenges of porting microservices
-to HPC simualtions.
+to HPC simulations.
 
 So what exactly does Merlin do?
 +++++++++++++++++++++++++++++++
 
-Merlin wraps a heavily tested and well used asynchronous task queueing library in
+Merlin wraps a heavily tested and well used asynchronous task queuing library in
 a skin and syntax that is natural for HPC simulations. In essence, we extend
 `maestro <https://github.com/LLNL/maestrowf>`_ by hooking it up to
 `celery <https://docs.celeryproject.org/en/latest/index.html>`_. We leverage
@@ -287,11 +287,37 @@ But with celery, we can *dynamically* create additional
 tasks. This means that the DAG can get unrolled by the very
 same workers that will execute the tasks, offering a natural parallelism
 (i.e. much less waiting before starting the work).
+
+What does this mean in practice?
+
+*Merlin can quickly queue a lot of simulations.*
+
+How quickly? The figure below shows task queing rates when pushing
+:doc:`a simple workflow<./hello_world/hello_world>` on the
+`Quartz Supercomputer <https://hpc.llnl.gov/hardware/platforms/Quartz>`_
+to 40 million samples. This measures how quickly simulation ensembles of various
+sample sizes can get enqueued.
+
+.. image:: ../../images/task_creation_rate.png
+
+As you can see, by exploiting celery's dynamic task queuing (tasks that create
+tasks), Merlin can enqueue hundreds of thousands of
+simulations per second. These jobs can then be consumed in parallel,
+at a rate that depends on the number of workers you have.
+
 Furthermore, this ability to dynamically add tasks to the queue means
 that workflows can become more flexible and responsive. A worker executing
 a step can launch additional workflows without having to stand up resources
 to execute and monitor the execution of those additional steps.
 
+The only downside to being able to enqueue work this quickly is the inability
+of batch schedulers to keep up. This is why we recommend pairing Merlin with
+`flux <http://flux-framework.org>`_, which results in a scalable but easy-to-use
+workflow system:
+
+- Maestro describes the workflow tasks
+- Merlin orchestrates the task executions
+- Flux schedules the HPC resources
 
 Here's an example of how Merlin, maestro and flux can all work together
 to launch a workflow on multiple machines.
@@ -320,7 +346,7 @@ queue associated with the GPU step.
 
 When the simulations in step 1 finish, step 2 will automatically start. In this fashion,
 Merlin allows the scientist to coordinate a highly scalable asynchronous multi-machine
-heterogenous workflow.
+heterogeneous workflow.
 
 This is of course a simple example, but it does show how the producer-consumer
 philosophy in HPC workflows can be quite enabling. Merlin's goal is to make it easy
