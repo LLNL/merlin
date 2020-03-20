@@ -134,7 +134,7 @@ see :doc:`./merlin_variables`.
   #   flux: Verbatim flags for the flux parallel launch (flux mini run <flux>)
   #   LSF specific run flags:
   #   bind: Flag for MPI binding of tasks on a node
-  #   num resource set: Number of resoure sets
+  #   num resource set: Number of resource sets
   #   launch_distribution : The distribution of resources (default: plane:{procs/nodes})
   #   exit_on_error: Flag to exit on error (default: 1)
   #   lsf: Verbatim flags only for the lsf parallel launch (jsrun ... <lsf>

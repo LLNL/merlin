@@ -7,16 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `HelpParser`, which automatically prints help messages when command line commands return an error.
 - Optional ssl files for the broker and results backend config.
 - A url keyword in the app.yaml file to override the entire broker or results backend configuration.
 - The `all` option to `batch.nodes`.
+- Auto zero-padding of sample directories, e.g. 00/00, 00/01 .. 10/10
+- `$(MERLIN_STOP_WORKERS)` exit code that shuts down all workers
+- The `merlin monitor` command, which blocks while celery workers are running.
+  This can be used at the end of a batch submission script to keep the
+  allocation alive while workers are present.  
 
 ### Fixed
 - Bug that prevented an empty username for results backend and broker when using redis.
 - Bug that prevented `OUTPUT_PATH` from being an integer.
+- Slow sample speed in `hello_samples.yaml` from the hello example.
+- Bug that always had sample directory tree start with "0"
+- "Error" message whenever a non-zero return code is given
 
 ### Changed
 - Updated docs from `pip3 install merlinwf` to `pip3 install merlin`.
+- Script launching uses Merlin submission instead of subclassing maestro submit
+- `$(MERLIN_HARD_FAIL)` now shuts down only workers connected to the bad step's queue
+- Updated all tutorial modules
 
 ## [1.4.1] [2020-03-06]
 
@@ -99,7 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before changes are merged into master.
 - Allow for the maestro `$(LAUNCHER)` syntax in tasks, this requires the 
   nodes and procs variables in the task just as in maestro. The LAUNCHER keyword
-  is implmented for flux, lsf, slurm and local types.  The lsf type
+  is implemented for flux, lsf, slurm and local types.  The lsf type
   will use the LLNL srun wrapper for jsrun when the lsf-srun batch type 
   is used. The flux version will be checked to determine the proper format 
   of the parallel launch call.
@@ -137,7 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `merlin status <yaml spec>` that returns queues, number of connected
   workers and number of unused tasks in each of those queues.
 - `merlin example` cli command, which allows users to start running the
-  examples immedately (even after pip-installing).
+  examples immediately (even after pip-installing).
 
 ### Fixed
 - `MANIFEST.in` fixes as required by Spack.

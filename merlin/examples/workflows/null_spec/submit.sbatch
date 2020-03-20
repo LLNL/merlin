@@ -23,4 +23,4 @@ date
 merlin run ${YAML_FILE} --vars N_SAMPLES=$1 CONC=$2
 merlin run-workers ${YAML_FILE} --vars N_SAMPLES=$1 CONC=$2
 
-sleep inf
+merlin monitor

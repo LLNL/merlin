@@ -1,0 +1,126 @@
+# UPDATE THE FOLLOWING TO RUN:
+#  - PYTHON variable: virtual env python path
+#  - batch block: update according to your systems batch scheduler
+#  - concurrency: increase name_queue to match allocations num processors
+#  - POST_NPROCS: increase to match num cores per node in allocation
+#  - queue machine names: set to machine name(s) on which this is running
+#
+#  NOTE: POST_NPROCS used for parallelization that does not span physical
+#  hardware boundaries in its current form (switch from concurrent.futures
+#  to mpi4py based executor if multi-node parallel is desired)
+  
+description:
+  name: iterative_demo
+  description: Demo of a workflow with self driven iteration/looping
+
+env:
+  variables:
+    OUTPUT_PATH: ./name_studies
+    ITER_OUTPUT: $(SPECROOT)/$(OUTPUT_PATH)/iter_outputs      # Iteration and cumulative results
+    COLLECT: $(SPECROOT)/sample_collector.py
+    POST_PROC: $(SPECROOT)/sample_processor.py                # Process single iterations' results
+    CUM_POST_PROC: $(SPECROOT)/cumulative_sample_processor.py # Process all iterations
+    POST_NPROCS: 36                                           # Number of threads for post proc scripts
+    PYTHON: <INSERT_PATH_TO_VIRTUALENV_PYTHON>
+    ITER: 1
+    MAX_ITER: 10
+
+batch:
+   type: flux
+   bank: testbank
+   queue: pdebug
+   shell: /bin/bash
+   nodes: 1
+
+########################################
+# Study definition
+########################################
+study:
+   - name: sample_names
+     description: Record samples from the random name generator
+     run:
+        cmd: |
+          $(LAUNCHER) echo "$(NAME)"
+          $(LAUNCHER) echo "$(NAME)" > name_sample.out
+        nodes: 1
+        procs: 1
+        task_queue: name_queue
+
+   - name: collect
+     description: Collect all samples generated 
+     run:
+        cmd: |
+          echo $(MERLIN_GLOB_PATH)
+          echo $(sample_names.workspace)
+
+          ls $(sample_names.workspace)/$(MERLIN_GLOB_PATH)/name_sample.out | xargs $(PYTHON) $(COLLECT) -out collected_samples.txt --np $(POST_NPROCS)
+          
+        nodes: 1
+        procs: 1
+        depends: [sample_names_*]
+        task_queue: post_proc_queue
+
+   - name: post-process
+     description: Post-Process collection of samples, counting occurences of unique names
+     run:
+        cmd: |
+          $(PYTHON) $(POST_PROC) $(collect.workspace)/collected_samples.txt --results $(ITER_OUTPUT)/iter_$(ITER)_results.json
+          
+        nodes: 1
+        procs: 1
+        depends: [collect]
+        task_queue: post_proc_queue
+
+   - name: run-more-samples
+     description: Generate new set of samples and rerun, or generate some descriptive plots/statistics
+     run:
+       cmd: |
+         if [ $(ITER) -ge $(MAX_ITER) ] ; then
+            echo "done"
+            $(PYTHON) $(CUM_POST_PROC) $(ITER_OUTPUT)/iter_*_results.json --np $(POST_NPROCS) --hardcopy $(ITER_OUTPUT)/cumulative_results.png
+         else
+            next_iter=$(ITER)
+            ((next_iter=next_iter+1))
+            echo "Starting iteration " $next_iter
+            cd $(SPECROOT)
+            merlin run $(SPECROOT)/faker_demo.yaml --vars ITER=$next_iter
+         fi
+       nodes: 1
+       procs: 1
+       depends: [post-process]
+       task_queue: post_proc_queue
+   
+        
+########################################
+# Worker and sample configuration
+########################################  
+merlin:
+
+  resources:
+    task_server: celery
+
+    overlap: False
+
+    # Customize workers: ADJUST CONCURRENCY AND MACHINE NAMES
+    workers:
+        nameworkers:
+            args: --concurrency 36 --prefetch-multiplier 3
+            steps: [sample_names]      
+            nodes: 1
+            machines: [borax, quartz]      
+
+       # NOTE: specifying wrong step leaves orphaned queue -> purge first!
+       # also, invalid host name appears to fail silently
+        postworkers:
+            args: --concurrency 1 --prefetch-multiplier 1
+            steps: [post-process]
+            nodes: 1 
+            machines: [borax, quartz]
+
+  ###################################################
+  samples:
+    column_labels: [NAME]
+    file: $(MERLIN_INFO)/samples.csv
+    generate:
+      cmd: |
+        $(PYTHON) $(SPECROOT)/faker_sample.py -n 200 -outfile=$(MERLIN_INFO)/samples.csv

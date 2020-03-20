@@ -289,7 +289,7 @@ class StepFileExistsCond(StudyCond):
         self.filename = filename
 
     def file_exists(self):
-        glob_string = f"{self.dirpath_glob}/{self.step}/*/{self.filename}"
+        glob_string = f"{self.dirpath_glob}/{self.step}/{self.filename}"
         try:
             filename = self.glob(glob_string)
         except IndexError:
@@ -319,7 +319,7 @@ class StepFileContainsCond(StudyCond):
         self.regex = regex
 
     def contains(self):
-        glob_string = f"{self.dirpath_glob}/{self.step}/*/{self.filename}"
+        glob_string = f"{self.dirpath_glob}/{self.step}/{self.filename}"
         try:
             filename = self.glob(glob_string)
             with open(filename, "r") as textfile:
@@ -438,7 +438,9 @@ def define_tests():
         "dry feature_demo": (
             f"{run} {demo} --local --dry --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             [
-                StepFileExistsCond("verify", "verify_*.sh", "feature_demo", OUTPUT_DIR),
+                StepFileExistsCond(
+                    "verify", "*/verify_*.sh", "feature_demo", OUTPUT_DIR
+                ),
                 ReturnCodeCond(),
             ],
             "local",

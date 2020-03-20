@@ -37,6 +37,7 @@ decoupled from the logic the tasks are running.
 """
 import logging
 import os
+import time
 from contextlib import suppress
 from datetime import datetime
 
@@ -49,6 +50,7 @@ from merlin.study.celeryadapter import (
     start_celery_workers,
     stop_celery_workers,
 )
+from merlin.utils import is_running
 
 
 try:
@@ -214,3 +216,16 @@ def create_config(task_server, config_dir, broker):
             create_celery_config(config_dir, config_file, data_file)
     else:
         LOG.error("Only celery can be configured currently.")
+
+
+def monitor_workers(task_server, sleep_duration):
+    """
+    Monitor for running clery workers to keep an allocation alive.
+
+    :param `task_server`: The task server for which to monitor workers.
+    """
+    if task_server == "celery":
+        while is_running("celery worker"):
+            LOG.info("Monitor: celery workers are running.")
+            time.sleep(sleep_duration)
+        LOG.info("Monitor: celery workers are not running.")

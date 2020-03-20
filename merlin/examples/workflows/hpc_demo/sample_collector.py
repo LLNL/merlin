@@ -1,6 +1,7 @@
-import sys
-import os
 import argparse
+import os
+import sys
+
 from concurrent.futures import ProcessPoolExecutor
 
 
@@ -18,9 +19,11 @@ def load_samples(sample_file_path):
 def serialize_samples(sample_file_paths, outfile, nproc):
     """Writes out collection of samples, one entry per line"""
     with ProcessPoolExecutor(max_workers=nproc) as executor:
-        all_samples = [sample for sample_list in executor.map(load_samples,
-                                                              sample_file_paths)
-                       for sample in sample_list]
+        all_samples = [
+            sample
+            for sample_list in executor.map(load_samples, sample_file_paths)
+            for sample in sample_list
+        ]
 
     with open(outfile, "w") as outfile:
         for sample in all_samples:
@@ -33,15 +36,14 @@ def setup_argparse():
     )
 
     parser.add_argument(
-        "sample_file_paths", help="paths to sample output files", default="",
-        nargs='+'
+        "sample_file_paths", help="paths to sample output files", default="", nargs="+"
     )
+
+    parser.add_argument("--np", help="number of processors to use", type=int, default=1)
 
     parser.add_argument(
-        "--np", help="number of processors to use", type=int, default=1
+        "-outfile", help="Collected sample outputs", default="all_names.txt"
     )
-
-    parser.add_argument("-outfile", help="Collected sample outputs", default="all_names.txt")
     return parser
 
 
