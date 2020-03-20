@@ -5,14 +5,17 @@ import shutil
 submit_path = "/g/g13/bay1/merlin/merlin/examples/workflows/null_spec/submit.sbatch"
 concurrencies = [1,2,4,8,16,32]
 samples = [1,10,100,1000,10000]
+output_path = "/g/g13/bay1/null_results"
 for concurrency in concurrencies:
-    if not os.path.isdir(f"c_{concurrency}"):
-        os.mkdir(f"c_{concurrency}")
-    os.chdir(f"c_{concurrency}")
+    c_name = os.path.join(output_path, f"c_{concurrency}")
+    if not os.path.isdir(c_name):
+        os.mkdir(c_name)
+    os.chdir(c_name)
     for sample in samples:
-        if not os.path.isdir(f"s_{sample}"):
-            os.mkdir(f"s_{sample}")
-        os.chdir(f"s_{sample}")
+        s_name = os.path.join(c_name, f"s_{sample}")
+        if not os.path.isdir(s_name):
+            os.mkdir(s_name)
+        os.chdir(s_name)
         command = f"sbatch submit.sbatch {sample} {concurrency}"
         shutil.copyfile(submit_path, "submit.sbatch")
         lines = subprocess.check_output(command, shell=True).decode('ascii')
