@@ -15,11 +15,14 @@ study:
         cmd: |
             #echo $(SAMPLE)
             exit $(MERLIN_SUCCESS)
+      task_queue: merlin_s$(N_SAMPLES)_c$(CONC)
+
     - name: verify
       description: echo done
       run:
         cmd: echo "Done"
         depends: [null_step_*]
+      task_queue: merlin_s$(N_SAMPLES)_c$(CONC)
 
 merlin:
     resources:
