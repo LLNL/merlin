@@ -144,6 +144,9 @@ class MerlinSpec(YAMLSpecification):
 
         recurse(object_to_update, default_dict)
 
+    def warn_unrecognized_keys():
+        pass
+
     def dump(self):
         """
         Dump this MerlinSpec to a yaml string.
