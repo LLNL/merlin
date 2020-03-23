@@ -53,7 +53,7 @@ from merlin.router import route_for_task
 
 LOG = logging.getLogger(__name__)
 
-merlin.common.security.encrypt_backend_traffic.
+merlin.common.security.encrypt_backend_traffic.set_backend_funcs()
 
 broker_ssl = True
 results_ssl = False

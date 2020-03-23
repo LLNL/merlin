@@ -36,7 +36,7 @@ import celery.backends.base
 from merlin.common.security import encrypt
 
 
-encrypt.initialize_key()
+encrypt.init_key()
 
 # remember what the original encode / decode are so we can call it in our
 # wrapper
@@ -60,10 +60,9 @@ def _decrypt_decode(self, payload):
     return old_decode(self, encrypt.decrypt(payload))
 
 
-def set_backend():
+def set_backend_funcs():
     """
     Set the encode / decode to our own encrypt_encode / encrypt_decode.
     """
     celery.backends.base.Backend.encode = _encrypt_encode
     celery.backends.base.Backend.decode = _decrypt_decode
-
