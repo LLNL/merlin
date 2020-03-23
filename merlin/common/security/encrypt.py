@@ -106,6 +106,10 @@ def decrypt(payload):
     return f.decrypt(payload)
 
 
-# initialize the key to disk on import to prevent race conditions later on, or at least drastically reduce
-# the number of corner cases where they could appear.
-Fernet(_get_key())
+def initialize_key():
+    """
+    initialize the key to disk on import to prevent race conditions later on, or at least drastically reduce
+    the number of corner cases where they could appear.
+    """
+    Fernet(_get_key())
+
