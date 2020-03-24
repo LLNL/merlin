@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   This can be used at the end of a batch submission script to keep the
   allocation alive while workers are present.  
 - The ~/.merlin dir will be searched for the results password. 
+- A warning whenever an unrecognized key is found in a Merlin spec; this may
+  help users find small mistakes due to spelling or indentation more quickly.
 
 ### Fixed
 - Bug that prevented an empty username for results backend and broker when using redis.
