@@ -45,7 +45,7 @@ BATCH = {
     "nodes",
 }
 
-ENV = {"variables", "labels"}
+ENV = {"variables", "labels", "sources", "dependencies"}
 
 STUDY_STEP = {"name", "description", "run"}
 
@@ -58,8 +58,17 @@ STUDY_STEP_RUN = {
     "depends",
     "nodes",
     "procs",
-    "cores per node",
+    "cores per task",
+    "gpus per task",
     "batch",
+    "slurm",
+    "lsf",
+    "bind",
+    "num resource set",
+    "launch_distribution",
+    "exit_on_error",
+    "flux",
+    "walltime",
 }
 
 PARAMETER = {"values", "label"}
