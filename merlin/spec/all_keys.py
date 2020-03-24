@@ -30,13 +30,37 @@
 
 DESCRIPTION = {"description", "name"}
 
-BATCH = {"type", "bank", "queue", "dry_run", "shell", "flux_path", "flux_start_opts", "flux_exec_workers", "launch_pre", "launch_args", "worker_launch", "nodes"}
+BATCH = {
+    "type",
+    "bank",
+    "queue",
+    "dry_run",
+    "shell",
+    "flux_path",
+    "flux_start_opts",
+    "flux_exec_workers",
+    "launch_pre",
+    "launch_args",
+    "worker_launch",
+    "nodes",
+}
 
 ENV = {"variables", "labels"}
 
 STUDY_STEP = {"name", "description", "run"}
 
-STUDY_STEP_RUN = {"cmd", "restart", "task_queue", "shell", "max_retries", "depends", "nodes", "procs", "cores per node", "batch"}
+STUDY_STEP_RUN = {
+    "cmd",
+    "restart",
+    "task_queue",
+    "shell",
+    "max_retries",
+    "depends",
+    "nodes",
+    "procs",
+    "cores per node",
+    "batch",
+}
 
 PARAMETER = {"values", "label"}
 
@@ -46,9 +70,4 @@ MERLIN = {"resources", "samples"}
 
 WORKER = {"steps", "nodes", "batch", "args", "machines"}
 
-SAMPLES = {
-    "generate",
-    "level_max_dirs",
-    "file",
-    "column_labels"
-}
+SAMPLES = {"generate", "level_max_dirs", "file", "column_labels"}
