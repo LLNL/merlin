@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `merlin monitor` command, which blocks while celery workers are running.
   This can be used at the end of a batch submission script to keep the
   allocation alive while workers are present.  
+- The ~/.merlin dir will be searched for the results password. 
 
 ### Fixed
 - Bug that prevented an empty username for results backend and broker when using redis.
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Slow sample speed in `hello_samples.yaml` from the hello example.
 - Bug that always had sample directory tree start with "0"
 - "Error" message whenever a non-zero return code is given
+- The explicit results password (when not a file) will be read if certs path is None and it will be stripped of any whitespace.
 
 ### Changed
 - Updated docs from `pip3 install merlinwf` to `pip3 install merlin`.

@@ -11,4 +11,4 @@ for c in "${concurrencies[@]}"
         python3 task_script.py ${read_path}/c_$c/s_$s/*.log >> my_data.yaml
         done
     done
-sed -i 's/ : \n/ : /g' my_data.yaml
+perl -pi -e 's/ : \n/ : /g' my_data.yaml
