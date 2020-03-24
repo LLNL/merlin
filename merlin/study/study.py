@@ -349,7 +349,7 @@ class MerlinStudy:
         if self.restart_dir is None:
             self.write_expanded_spec(self.expanded_filepath)
 
-        return MerlinSpec.load_specification(self.expanded_filepath)
+        return MerlinSpec.load_specification(self.expanded_filepath, suppress_warning=False)
 
     @cached_property
     def flux_command(self):

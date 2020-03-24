@@ -28,30 +28,27 @@
 # SOFTWARE.
 ###############################################################################
 
-DESCRIPTION = {"description": {}}
+DESCRIPTION = {"description", "name"}
 
-BATCH = {"batch": {"type", "bank", "queue", "dry_run", "shell", "flux_path", "flux_start_opts", "flux_exec_workers", "launch_pre", "launch_args", "worker_launch", "nodes"}}
+BATCH = {"type", "bank", "queue", "dry_run", "shell", "flux_path", "flux_start_opts", "flux_exec_workers", "launch_pre", "launch_args", "worker_launch", "nodes"}
 
-ENV = {"env": {"variables": {}}}
+ENV = {"variables", "labels"}
 
 STUDY_STEP = {"name", "description", "run"}
 
 STUDY_STEP_RUN = {"cmd", "restart", "task_queue", "shell", "max_retries", "depends", "nodes", "procs", "cores per node", "batch"}
 
-PARAMETER = {"global.parameters"}
+PARAMETER = {"values", "label"}
 
-SINGLE_PARAMETER = {"values", "label"}
+MERLIN_RESOURCES = {"task_server", "overlap", "workers"}
 
-MERLIN = {
-    "merlin": {
-        "resources": {"task_server", "overlap", "workers"},
-        "samples": None,
-    }
-}
+MERLIN = {"resources", "samples"}
 
 WORKER = {"steps", "nodes", "batch", "args", "machines"}
 
 SAMPLES = {
-    "generate": {"cmd"},
+    "generate",
     "level_max_dirs",
+    "file",
+    "column_labels"
 }

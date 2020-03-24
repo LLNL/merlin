@@ -40,7 +40,7 @@ from io import StringIO
 import yaml
 from maestrowf.datastructures import YAMLSpecification
 
-from merlin.spec import defaults
+from merlin.spec import all_keys, defaults
 
 
 def represent_none(self, _):
@@ -77,12 +77,14 @@ class MerlinSpec(YAMLSpecification):
         super(MerlinSpec, self).__init__()
 
     @classmethod
-    def load_specification(cls, filepath):
+    def load_specification(cls, filepath, suppress_warning=True):
         spec = super(MerlinSpec, cls).load_specification(filepath)
         with open(filepath, "r") as f:
             spec.merlin = MerlinSpec.load_merlin_block(f)
         spec.specroot = os.path.dirname(spec.path)
         spec.process_spec_defaults()
+        if not suppress_warning:
+            spec.warn_unrecognized_keys()
         return spec
 
     @classmethod
@@ -91,6 +93,7 @@ class MerlinSpec(YAMLSpecification):
         spec.merlin = MerlinSpec.load_merlin_block(StringIO(string))
         spec.specroot = None
         spec.process_spec_defaults()
+        #spec.warn_unrecognized_keys()
         return spec
 
     @staticmethod
@@ -144,8 +147,13 @@ class MerlinSpec(YAMLSpecification):
 
         recurse(object_to_update, default_dict)
 
-    def warn_unrecognized_keys():
-        pass
+    def warn_unrecognized_keys(self):
+        diff = set(self.description.keys()).difference(all_keys.DESCRIPTION)
+        print(diff)
+        if len(diff) == 0:
+            print("no diff keys")
+        for extra in diff:
+            LOG.warn(f"Unrecognized key '{extra}' found in spec section 'description'! Check indentation?")
 
     def dump(self):
         """
