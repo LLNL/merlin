@@ -148,12 +148,37 @@ class MerlinSpec(YAMLSpecification):
         recurse(object_to_update, default_dict)
 
     def warn_unrecognized_keys(self):
-        diff = set(self.description.keys()).difference(all_keys.DESCRIPTION)
-        print(diff)
-        if len(diff) == 0:
-            print("no diff keys")
+        # check description
+        MerlinSpec.check_section("description", self.description, all_keys.DESCRIPTION)
+
+        # check batch
+        MerlinSpec.check_section("batch", self.batch, all_keys.BATCH)
+
+        # check env
+        MerlinSpec.check_section("env", self.environment, all_keys.ENV)
+
+        # check parameters
+        for param, contents in self.globals.items():
+            MerlinSpec.check_section("global.parameters", contents, all_keys.PARAMETER)
+
+        # check steps
+        for step in self.study:
+            MerlinSpec.check_section(step["name"], step, all_keys.STUDY_STEP)
+            MerlinSpec.check_section(step["name"]+".run", step["run"], all_keys.STUDY_STEP_RUN)
+
+        # check merlin
+        MerlinSpec.check_section("merlin", self.merlin, all_keys.MERLIN)
+        MerlinSpec.check_section("merlin.resources", self.merlin["resources"], all_keys.MERLIN_RESOURCES)
+        for worker, contents in self.merlin["resources"]["workers"].items():
+            MerlinSpec.check_section("merlin.resources.workers "+worker, contents, all_keys.WORKER)
+        if self.merlin["samples"]:
+            MerlinSpec.check_section("merlin.samples", self.merlin["samples"], all_keys.SAMPLES)
+        
+    @staticmethod
+    def check_section(section_name, section, all_keys):
+        diff = set(section.keys()).difference(all_keys)
         for extra in diff:
-            LOG.warn(f"Unrecognized key '{extra}' found in spec section 'description'! Check indentation?")
+            LOG.warn(f"Unrecognized key '{extra}' found in spec section '{section_name}'.")
 
     def dump(self):
         """
