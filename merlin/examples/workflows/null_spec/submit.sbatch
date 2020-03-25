@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#SBATCH -N 1
+#SBATCH -N 2
 #SBATCH -J MerlinBaseline
 #SBATCH -t 0:10:00
 #SBATCH -p pdebug

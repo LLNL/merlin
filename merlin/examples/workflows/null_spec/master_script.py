@@ -3,11 +3,11 @@ import os
 import shutil
 
 submit_path = "/g/g13/bay1/merlin/merlin/examples/workflows/null_spec/submit.sbatch"
-concurrencies = [1,2,4,8,16,32]
+concurrencies = [32]
 samples = [1,10,100,1000,10000]
 output_path = "/g/g13/bay1/null_results"
 for concurrency in concurrencies:
-    c_name = os.path.join(output_path, f"c_{concurrency}")
+    c_name = os.path.join(output_path, f"c_64")
     if not os.path.isdir(c_name):
         os.mkdir(c_name)
     os.chdir(c_name)
