@@ -8,6 +8,7 @@
 #SBATCH --output=merlin%j.out
 #SBATCH --error=merlin%j.err
 #SBATCH --exclusive
+#SBATCH --mpibind=off
 
 YAML_DIR=/g/g13/bay1/merlin/merlin/examples/workflows/null_spec
 YAML_FILE=${YAML_DIR}/null_spec.yaml
