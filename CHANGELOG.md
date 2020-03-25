@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - "Error" message whenever a non-zero return code is given
 - The explicit results password (when not a file) will be read if certs path is None and it will be stripped of any whitespace.
 - Misleading log message for `merlin run-workers --echo`.
+- A few seconds of lag that occurred in all merlin cli commands; merlin was always searching
+  thru workflow examples, even when user's command had nothing to do with workflow examples.
 
 ### Changed
 - Updated docs from `pip3 install merlinwf` to `pip3 install merlin`.
