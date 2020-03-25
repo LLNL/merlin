@@ -305,8 +305,11 @@ def config_merlin(args):
 
 
 def process_example(args):
-    print(banner_small)
-    setup_example(args.workflow, args.path)
+    if args.workflow == "list":
+        print(list_examples())
+    else:
+        print(banner_small)
+        setup_example(args.workflow, args.path)
 
 
 def process_monitor(args):
@@ -620,7 +623,7 @@ def setup_argparse():
         "workflow",
         action="store",
         type=str,
-        help="The name of the example workflow to setup.\n" + list_examples(),
+        help="The name of the example workflow to setup. Use 'merlin example list' to see available options.",
     )
     example.add_argument(
         "-p",
