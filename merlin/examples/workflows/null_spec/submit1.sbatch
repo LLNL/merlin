@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#SBATCH -N 2
+#SBATCH -N 1
 #SBATCH -J MerlinBaseline
 #SBATCH -t 0:10:00
 #SBATCH -p pdebug
@@ -8,6 +8,7 @@
 #SBATCH --output=merlin%j.out
 #SBATCH --error=merlin%j.err
 #SBATCH --exclusive
+#SBATCH --mpibind=off
 
 YAML_DIR=/g/g13/bay1/merlin/merlin/examples/workflows/null_spec
 YAML_FILE=${YAML_DIR}/null_spec.yaml
