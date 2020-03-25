@@ -87,7 +87,7 @@ def get_backend_password(password_file, certs_path=None):
     password = None
 
     mer_pass = os.path.join(os.path.expanduser("~/.merlin"), password_file)
-    password_file = os.path.expanduser(password_file)   
+    password_file = os.path.expanduser(password_file)
 
     password_filepath = ""
     if os.path.exists(mer_pass):
