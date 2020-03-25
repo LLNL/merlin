@@ -86,16 +86,20 @@ def get_backend_password(password_file, certs_path=None):
     """
     password = None
 
+    mer_pass = os.path.join(os.path.expanduser("~/.merlin"), password_file)
     password_file = os.path.expanduser(password_file)
 
-    if os.path.exists(password_file):
+    password_filepath = ""
+    if os.path.exists(mer_pass):
+        password_filepath = mer_pass
+    elif os.path.exists(password_file):
         password_filepath = password_file
-    else:
+    elif certs_path:
         password_filepath = os.path.join(certs_path, password_file)
 
     if not os.path.exists(password_filepath):
         # The password was given instead of the filepath.
-        password = password_file
+        password = password_file.strip()
     else:
         with open(password_filepath, "r") as f:
             line = f.readline().strip()
