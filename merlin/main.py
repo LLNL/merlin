@@ -200,7 +200,8 @@ def launch_workers(args):
     if not args.worker_echo_only:
         print(banner_small)
     filepath = verify_filepath(args.specification)
-    LOG.info(f"Launching workers from '{filepath}'")
+    if not args.worker_echo_only:
+        LOG.info(f"Launching workers from '{filepath}'")
     variables_dict = parse_override_vars(args.variables)
     spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
     status = router.launch_workers(
@@ -304,8 +305,11 @@ def config_merlin(args):
 
 
 def process_example(args):
-    print(banner_small)
-    setup_example(args.workflow, args.path)
+    if args.workflow == "list":
+        print(list_examples())
+    else:
+        print(banner_small)
+        setup_example(args.workflow, args.path)
 
 
 def process_monitor(args):
@@ -619,7 +623,7 @@ def setup_argparse():
         "workflow",
         action="store",
         type=str,
-        help="The name of the example workflow to setup.\n" + list_examples(),
+        help="The name of the example workflow to setup. Use 'merlin example list' to see available options.",
     )
     example.add_argument(
         "-p",

@@ -21,7 +21,7 @@ date
 #merlin purge ${YAML_FILE} -f ;
 
 # run program
-merlin run ${YAML_FILE} --vars N_SAMPLES=$1 CONC=$2
+time merlin run ${YAML_FILE} --vars N_SAMPLES=$1 CONC=$2
 merlin run-workers ${YAML_FILE} --vars N_SAMPLES=$1 CONC=$2
 
 merlin monitor
