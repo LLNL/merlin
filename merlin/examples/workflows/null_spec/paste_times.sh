@@ -3,6 +3,8 @@ concurrencies=(1 2 4 8 16 32 64)
 samples=(1 10 100 1000 10000)
 read_path="/g/g13/bay1/null_results"
 
+touch my_data.yaml
+
 for c in "${concurrencies[@]}"
     do
     for s in "${samples[@]}"
