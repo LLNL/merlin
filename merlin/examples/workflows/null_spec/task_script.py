@@ -41,7 +41,7 @@ def start_verify_time():
     match = matches[0]
     element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
     timestamp = datetime.datetime.timestamp(element)
-    print("start verify : " + timestamp)
+    print("start verify : " + str(timestamp))
     
 def start_run_workers_time():
     pre_line = subprocess.check_output(f"grep -m1 \"\" {args.logfile}", shell=True).decode('ascii')
@@ -50,7 +50,7 @@ def start_run_workers_time():
     match = matches[0]
     element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
     timestamp = datetime.datetime.timestamp(element)
-    print("start run-workers : "timestamp)
+    print("start run-workers : " + str(timestamp))
     
 def start_sample1_time():
     pre_line = subprocess.check_output(f"grep -m1 \"Executing step 'null_step'\" {args.logfile}", shell=True).decode('ascii')
@@ -59,7 +59,7 @@ def start_sample1_time():
     match = matches[0]
     element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
     timestamp = datetime.datetime.timestamp(element)
-    print("start samp1 : " + timestamp)
+    print("start samp1 : " + str(timestamp))
     
 
 def main():
