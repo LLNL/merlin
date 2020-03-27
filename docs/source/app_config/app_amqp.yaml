@@ -5,27 +5,36 @@ celery:
     certs: /path/to/celery/config
 
 broker:
-    # can be redis, redis+sock, or rabbitmq
+    # can be rabbitmq, redis, rediss, or redis+sock
     name: rabbitmq
     #username: # defaults to your username unless changed here
     password: ~/.merlin/rabbit-password
     # server URL
     server: server.domain.com
 
-    ### for rabbitmq, redis+sock connections ###
+    ### for rabbitmq connections ###
     #vhost: # defaults to your username unless changed here
 
     ### for redis+sock connections ###
     #socketname: the socket name your redis connection can be found on.
     #path: The path to the socket.
 
-    ### for redis connections ###
+    ### for redis/rediss connections ###
     #port: The port number redis is listening on (default 6379)
     #db_num: The data base number to connect to.
+     
+    # ssl security
+    #keyfile: /var/ssl/private/client-key.pem
+    #certfile: /var/ssl/amqp-server-cert.pem
+    #ca_certs: /var/ssl/myca.pem
+    # This is optional and can be required, optional or none
+    # (required is the default)
+    #cert_reqs: required
 
 
 results_backend:
-    # must be redis
+    # Can be redis,rediss, mysql, db+ or memcached server
+    # Only a few of these are directly configured by merlin
     name: redis
 
     dbname: dbname
@@ -40,3 +49,10 @@ results_backend:
     port: 6379
     db_num: 0
 
+    # ssl security
+    #keyfile: /var/ssl/private/client-key.pem
+    #certfile: /var/ssl/amqp-server-cert.pem
+    #ca_certs: /var/ssl/myca.pem
+    # This is optional and can be required, optional or none
+    # (required is the default)
+    #cert_reqs: required

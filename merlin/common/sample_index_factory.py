@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -48,6 +48,7 @@ def create_hierarchy(
     start_sample_id=0,
     start_bundle_id=0,
     address="",
+    n_digits=1,
 ):
     """
     SampleIndex Hierarchy Factory method. Wraps
@@ -60,6 +61,7 @@ def create_hierarchy(
         for - a list, one value for each level in the directory hierarchy.
     :root: The root path of this index. Defaults to ".".
     :start_sample_id: The start of the sample count. Defaults to 0.
+    :n_digits: The number of digits to pad the directories with
     """
     if directory_sizes is None:
         directory_sizes = []
@@ -71,6 +73,7 @@ def create_hierarchy(
         start_bundle_id=start_bundle_id,
         min_sample=start_sample_id,
         address=address,
+        n_digits=n_digits,
     )
 
 
@@ -82,6 +85,7 @@ def create_hierarchy_from_max_sample(
     start_bundle_id=0,
     min_sample=0,
     address="",
+    n_digits=1,
 ):
     """"
     Construct the SampleIndex based off the total number of samples and the
@@ -96,6 +100,7 @@ def create_hierarchy_from_max_sample(
         for - a list, one value for each level in the directory hierarchy.
     :bundle_id: The current bundle_id count.
     :min_sample: The start of the sample count.
+    :n_digits: The number of digits to pad the directories with
     """
     if directory_sizes is None:
         directory_sizes = []
@@ -117,7 +122,9 @@ def create_hierarchy_from_max_sample(
     for i in range(min_sample, max_sample, num_samples_per_child):
         child_min_sample_id = i
         child_max_sample_id = min(i + num_samples_per_child, max_sample)
-        child_address = address_prefix + f"{child_id}"
+
+        child_dir = f"{child_id}".zfill(n_digits)
+        child_address = address_prefix + child_dir
 
         if directory_sizes:
             # Append an SampleIndex sub-hierarchy child.
@@ -125,10 +132,11 @@ def create_hierarchy_from_max_sample(
                 child_max_sample_id,
                 bundle_size,
                 directory_sizes[1:],
-                root=f"{child_id}",
+                root=child_dir,
                 min_sample=child_min_sample_id,
                 start_bundle_id=bundle_id,
                 address=child_address,
+                n_digits=n_digits,
             )
 
             bundle_id += children[child_address].num_bundles

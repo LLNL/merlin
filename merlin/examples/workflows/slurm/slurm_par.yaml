@@ -29,7 +29,15 @@ study:
   run:
     cmd: |
       echo "data" > data.out
-    depends: [runs*]
+    depends: [runs_*]
+    task_queue: slurm_par
+
+- description: Stop workers
+  name: stop_workers
+  run:
+    cmd: |
+      exit $(MERLIN_STOP_WORKERS)
+    depends: [data]
     task_queue: slurm_par
 
 global.parameters:

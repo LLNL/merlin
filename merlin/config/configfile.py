@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -35,6 +35,7 @@ configurations.
 import getpass
 import logging
 import os
+import ssl
 
 from merlin.config import Config
 from merlin.utils import load_yaml
@@ -53,6 +54,8 @@ def load_config(filepath):
     """
     Given the path to the merlin YAML config file, read the file and return
     a dictionary of the contents.
+
+    :param filepath : Read a yaml file given by filepath
     """
     if not os.path.isfile(filepath):
         LOG.info(f"No app config file at {filepath}")
@@ -65,6 +68,8 @@ def find_config_file(path=None):
     """
     Given a dir path, find and return the path to the merlin application
     config file.
+
+    :param path : The path to search for the app.yaml file
     """
     if path is None:
         local_app = os.path.join(os.getcwd(), APP_FILENAME)
@@ -90,6 +95,8 @@ def load_default_user_names(config):
     the current configuration. Doing this here prevents other areas that rely
     on config from needing to know that those fields could not be defined by
     the user.
+
+    :param config : The namespace config object
     """
     try:
         config["broker"]["username"]
@@ -107,6 +114,8 @@ def get_config(path):
     """
     Load a merlin configuration file and return a dictionary of the
     configurations.
+
+    :param path : The path to search for the config file.
     """
     filepath = find_config_file(path)
 
@@ -137,6 +146,107 @@ def default_config_info():
         "merlin_home": MERLIN_HOME,
         "merlin_home_exists": os.path.exists(MERLIN_HOME),
     }
+
+
+def get_cert_file(server_type, config, cert_name, cert_path):
+    """
+    Check if a ssl certificate file is present in the config
+
+    :param server_type : The server type for output (Broker, Results Backend)
+    :param config : The server config
+    :param cert_name : The argument in cert argument name
+    :param cert_path : The optional cert path
+    """
+    cert_file = None
+    try:
+        cert_file = getattr(config, cert_name)
+        cert_file = os.path.abspath(os.path.expanduser(cert_file))
+        if not os.path.exists(cert_file) and cert_path:
+            base_cert_file = os.path.basename(cert_file)
+            new_cert_file = os.path.join(cert_path, base_cert_file)
+            new_cert_file = os.path.abspath(os.path.expanduser(new_cert_file))
+            if os.path.exists(new_cert_file):
+                cert_file = new_cert_file
+            else:
+                LOG.error(
+                    f"{server_type}: The file for {cert_name} does not exist, searched {cert_file} and {new_cert_file}"
+                )
+        LOG.debug(f"{server_type}: {cert_name} = {cert_file}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"{server_type}: {cert_name} not present")
+
+    return cert_file
+
+
+def get_ssl_entries(server_type, server_name, server_config, cert_path):
+    """
+    Check if a ssl certificate file is present in the config
+
+    :param server_type : The server type
+    :param server_name : The server name for output
+    :param server_config : The server config
+    :param cert_path : The optional cert path
+    """
+    server_ssl = {}
+
+    keyfile = get_cert_file(server_type, server_config, "keyfile", cert_path)
+    if keyfile:
+        server_ssl["keyfile"] = keyfile
+
+    certfile = get_cert_file(server_type, server_config, "certfile", cert_path)
+    if certfile:
+        server_ssl["certfile"] = certfile
+
+    ca_certsfile = get_cert_file(server_type, server_config, "ca_certs", cert_path)
+    if ca_certsfile:
+        server_ssl["ca_certs"] = ca_certsfile
+
+    try:
+        if server_config.cert_reqs == "required":
+            server_ssl["cert_reqs"] = ssl.CERT_REQUIRED
+        elif server_config.cert_reqs == "optional":
+            server_ssl["cert_reqs"] = ssl.CERT_OPTIONAL
+        elif server_config.cert_reqs == "none":
+            server_ssl["cert_reqs"] = ssl.CERT_NONE
+        LOG.debug(f"{server_type}: cert_reqs = {server_ssl['cert_reqs']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"{server_type}: ssl cert_reqs not present")
+
+    try:
+        server_ssl["ssl_protocol"] = server_config.ssl_protocol
+        LOG.debug(f"{server_type}: ssl_protocol = {server_ssl['ssl_protocol']}")
+    except (AttributeError, KeyError):
+        LOG.debug(f"{server_type}: ssl ssl_protocol not present")
+
+    if server_ssl and "cert_reqs" not in server_ssl.keys():
+        server_ssl["cert_reqs"] = ssl.CERT_REQUIRED
+
+    ssl_map = {}
+
+    # The redis server requires key names with ssl_
+    if server_name == "rediss":
+        ssl_map = {
+            "keyfile": "ssl_keyfile",
+            "certfile": "ssl_certfile",
+            "ca_certs": "ssl_ca_certs",
+        }
+
+    # The mysql server requires key names with ssl_ and different var names
+    if "mysql" in server_name:
+        ssl_map = {"keyfile": "ssl_key", "certfile": "ssl_cert", "ca_certs": "ssl_ca"}
+
+    if server_ssl and ssl_map:
+        new_server_ssl = {}
+        sk = server_ssl.keys()
+        smk = ssl_map.keys()
+        for k in sk:
+            if k in smk:
+                new_server_ssl[ssl_map[k]] = server_ssl[k]
+            else:
+                new_server_ssl[k] = server_ssl[k]
+        server_ssl = new_server_ssl
+
+    return server_ssl
 
 
 app_config = get_config(None)

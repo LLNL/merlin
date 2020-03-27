@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -93,7 +93,7 @@ def extras_require():
 
 
 setup(
-    name="merlinwf",
+    name="merlin",
     author="Merlin Dev team",
     author_email="merlin@llnl.gov",
     version=version,

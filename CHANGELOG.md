@@ -4,6 +4,39 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0]
+
+### Added
+- `HelpParser`, which automatically prints help messages when command line commands return an error.
+- Optional ssl files for the broker and results backend config.
+- A url keyword in the app.yaml file to override the entire broker or results backend configuration.
+- The `all` option to `batch.nodes`.
+- Auto zero-padding of sample directories, e.g. 00/00, 00/01 .. 10/10
+- `$(MERLIN_STOP_WORKERS)` exit code that shuts down all workers
+- The `merlin monitor` command, which blocks while celery workers are running.
+  This can be used at the end of a batch submission script to keep the
+  allocation alive while workers are present.  
+- The ~/.merlin dir will be searched for the results password. 
+- A warning whenever an unrecognized key is found in a Merlin spec; this may
+  help users find small mistakes due to spelling or indentation more quickly.
+
+### Fixed
+- Bug that prevented an empty username for results backend and broker when using redis.
+- Bug that prevented `OUTPUT_PATH` from being an integer.
+- Slow sample speed in `hello_samples.yaml` from the hello example.
+- Bug that always had sample directory tree start with "0"
+- "Error" message whenever a non-zero return code is given
+- The explicit results password (when not a file) will be read if certs path is None and it will be stripped of any whitespace.
+- Misleading log message for `merlin run-workers --echo`.
+- A few seconds of lag that occurred in all merlin cli commands; merlin was always searching
+  thru workflow examples, even when user's command had nothing to do with workflow examples.
+
+### Changed
+- Updated docs from `pip3 install merlinwf` to `pip3 install merlin`.
+- Script launching uses Merlin submission instead of subclassing maestro submit
+- `$(MERLIN_HARD_FAIL)` now shuts down only workers connected to the bad step's queue
+- Updated all tutorial modules
+
 ## [1.4.1] [2020-03-06]
 
 ### Changed
@@ -85,7 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before changes are merged into master.
 - Allow for the maestro `$(LAUNCHER)` syntax in tasks, this requires the 
   nodes and procs variables in the task just as in maestro. The LAUNCHER keyword
-  is implmented for flux, lsf, slurm and local types.  The lsf type
+  is implemented for flux, lsf, slurm and local types.  The lsf type
   will use the LLNL srun wrapper for jsrun when the lsf-srun batch type 
   is used. The flux version will be checked to determine the proper format 
   of the parallel launch call.
@@ -123,7 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `merlin status <yaml spec>` that returns queues, number of connected
   workers and number of unused tasks in each of those queues.
 - `merlin example` cli command, which allows users to start running the
-  examples immedately (even after pip-installing).
+  examples immediately (even after pip-installing).
 
 ### Fixed
 - `MANIFEST.in` fixes as required by Spack.

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -64,6 +64,16 @@ from merlin.utils import ARRAY_FILE_FORMATS
 
 LOG = logging.getLogger("merlin")
 DEFAULT_LOG_LEVEL = "INFO"
+
+
+class HelpParser(ArgumentParser):
+    """This class overrides the error message of the argument parser to
+    print the help message when an error happens."""
+
+    def error(self, message):
+        sys.stderr.write("error: %s\n" % message)
+        self.print_help()
+        sys.exit(2)
 
 
 def verify_filepath(filepath):
@@ -190,7 +200,8 @@ def launch_workers(args):
     if not args.worker_echo_only:
         print(banner_small)
     filepath = verify_filepath(args.specification)
-    LOG.info(f"Launching workers from '{filepath}'")
+    if not args.worker_echo_only:
+        LOG.info(f"Launching workers from '{filepath}'")
     variables_dict = parse_override_vars(args.variables)
     spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
     status = router.launch_workers(
@@ -294,15 +305,22 @@ def config_merlin(args):
 
 
 def process_example(args):
-    print(banner_small)
-    setup_example(args.workflow, args.path)
+    if args.workflow == "list":
+        print(list_examples())
+    else:
+        print(banner_small)
+        setup_example(args.workflow, args.path)
+
+
+def process_monitor(args):
+    router.monitor_workers(args.task_server, args.sleep)
 
 
 def setup_argparse():
     """
     Setup argparse and any CLI options we want available via the package.
     """
-    parser = ArgumentParser(
+    parser = HelpParser(
         prog="merlin",
         description=banner_small,
         formatter_class=RawDescriptionHelpFormatter,
@@ -605,7 +623,7 @@ def setup_argparse():
         "workflow",
         action="store",
         type=str,
-        help="The name of the example workflow to setup.\n" + list_examples(),
+        help="The name of the example workflow to setup. Use 'merlin example list' to see available options.",
     )
     example.add_argument(
         "-p",
@@ -617,6 +635,28 @@ def setup_argparse():
         "working directory",
     )
     example.set_defaults(func=process_example)
+
+    # merlin monitor
+    monitor = subparsers.add_parser(
+        "monitor",
+        help="Check for active workers on an allocation.",
+        formatter_class=RawTextHelpFormatter,
+    )
+    monitor.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type for which to monitor the workers.\
+                              Default: %(default)s",
+    )
+    monitor.add_argument(
+        "--sleep",
+        type=int,
+        default=60,
+        help="Sleep duration between checking for workers.\
+                                    Default: %(default)s",
+    )
+    monitor.set_defaults(func=process_monitor)
 
     return parser
 

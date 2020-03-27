@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -36,7 +36,10 @@ from __future__ import print_function
 import logging
 import os
 
-from merlin.config.configfile import CONFIG
+from merlin.config.configfile import (
+    CONFIG,
+    get_ssl_entries,
+)
 
 
 try:
@@ -47,7 +50,7 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 
-BACKENDS = ["sqlite", "mysql", "redis", "none"]
+BACKENDS = ["sqlite", "mysql", "redis", "rediss", "none"]
 
 
 # Default files needed for the package to connect to the Rabbit instance.
@@ -71,50 +74,74 @@ SQLITE_CONNECTION_STRING = "db+sqlite:///results.db"
 
 
 def get_backend_password(password_file, certs_path=None):
-    if certs_path is None:
-        certs_path = CONFIG.celery.certs
+    """
+    Check for password in file.
+    If the password is  not found in the given password_file,
+    then the certs_path will be searched for the file,
+    if this file cannot be found, the password value will
+    be returned.
 
+    :param password_file : The file path for the password
+    :param certs_path : The path for ssl certificates and passwords
+    """
     password = None
 
+    mer_pass = os.path.join(os.path.expanduser("~/.merlin"), password_file)
     password_file = os.path.expanduser(password_file)
 
-    if os.path.exists(password_file):
+    password_filepath = ""
+    if os.path.exists(mer_pass):
+        password_filepath = mer_pass
+    elif os.path.exists(password_file):
         password_filepath = password_file
-    else:
+    elif certs_path:
         password_filepath = os.path.join(certs_path, password_file)
 
     if not os.path.exists(password_filepath):
         # The password was given instead of the filepath.
-        password = password_file
+        password = password_file.strip()
     else:
         with open(password_filepath, "r") as f:
             line = f.readline().strip()
             password = quote(line, safe="")
 
-    LOG.debug(f"Results backend certs_path = {certs_path}")
-    LOG.debug(f"Results backend password_filepath = {password_filepath}")
+    LOG.debug(f"Results backend: aux password path (certs_path) = {certs_path}")
+    LOG.debug(f"Results backend: password_filepath = {password_filepath}")
 
     return password
 
 
-def get_redis(certs_path=None, include_password=True):
+def get_redis(certs_path=None, include_password=True, ssl=False):
+    """
+    Return the redis or rediss specific connection
+
+    :param certs_path : The path for ssl certificates and passwords
+    :param include_password : Format the connection for ouput by setting this True
+    :param ssl : Flag to use rediss output
+    """
     server = CONFIG.results_backend.server
     password_file = ""
+
+    urlbase = "rediss" if ssl else "redis"
 
     try:
         port = CONFIG.results_backend.port
     except (KeyError, AttributeError):
         port = 6379
-        LOG.warning(f"Results backend redis using default port = {port}")
+        LOG.debug(f"Results backend: redis using default port = {port}")
 
     try:
         db_num = CONFIG.results_backend.db_num
     except (KeyError, AttributeError):
         db_num = 0
-        LOG.warning(f"Results backend redis using default db_num = {db_num}")
+        LOG.debug(f"Results backend: redis using default db_num = {db_num}")
 
     try:
         username = CONFIG.results_backend.username
+    except (KeyError, AttributeError):
+        username = ""
+
+    try:
         password_file = CONFIG.results_backend.password
         try:
             password = get_backend_password(password_file, certs_path=certs_path)
@@ -127,20 +154,27 @@ def get_redis(certs_path=None, include_password=True):
             spass = "%s:%s@" % (username, "******")
     except (KeyError, AttributeError):
         spass = ""
-        LOG.warning(f"Results backend redis using default password = {spass}")
+        LOG.debug(f"Results backend: redis using default password = {spass}")
 
-    LOG.debug(f"Results backend password_file = {password_file}")
-    LOG.debug(f"Results backend server = {server}")
-    LOG.debug(f"Results backend certs_path = {certs_path}")
+    LOG.debug(f"Results backend: password_file = {password_file}")
+    LOG.debug(f"Results backend: server = {server}")
+    LOG.debug(f"Results backend: certs_path = {certs_path}")
 
-    return "redis://%s%s:%d/%d" % (spass, server, port, db_num)
+    return f"{urlbase}://{spass}{server}:{port}/{db_num}"
 
 
 def get_mysql_config(certs_path, mysql_certs):
     """
     Determine if all the information for connecting MySQL as the Celery
     results backend exists.
+
+    :param certs_path : The path for ssl certificates and passwords
+    :param mysql_certs : The dict of mysql certificates
     """
+    mysql_ssl = get_ssl_config(celery_check=False)
+    if mysql_ssl:
+        return mysql_ssl
+
     if not os.path.exists(certs_path):
         return False
     files = os.listdir(certs_path)
@@ -157,10 +191,13 @@ def get_mysql_config(certs_path, mysql_certs):
 
 
 def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
-    """Returns the formatted MySQL connection string."""
-    if certs_path is None:
-        certs_path = CONFIG.celery.certs
+    """
+    Returns the formatted MySQL connection string.
 
+    :param certs_path : The path for ssl certificates and passwords
+    :param mysql_certs : The dict of mysql certificates
+    :param include_password : Format the connection for ouput by setting this True
+    """
     dbname = CONFIG.results_backend.dbname
     password_file = CONFIG.results_backend.password
     server = CONFIG.results_backend.server
@@ -169,13 +206,13 @@ def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
     # eventually be configured to use a logger. This logic should also
     # eventually be decoupled so we can print debug messages similar to our
     # Python debugging messages.
-    LOG.debug(f"Results backend dbname = {dbname}")
-    LOG.debug(f"Results backend password_file = {password_file}")
-    LOG.debug(f"Results backend server = {server}")
-    LOG.debug(f"Results backend certs_path = {certs_path}")
+    LOG.debug(f"Results backend: dbname = {dbname}")
+    LOG.debug(f"Results backend: password_file = {password_file}")
+    LOG.debug(f"Results backend: server = {server}")
+    LOG.debug(f"Results backend: certs_path = {certs_path}")
 
     if not server:
-        msg = f"Results backend server {server} does not have a configuration"
+        msg = f"Results backend: server {server} does not have a configuration"
         raise Exception(msg)
 
     password = get_backend_password(password_file, certs_path=certs_path)
@@ -186,7 +223,7 @@ def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
     mysql_config = get_mysql_config(certs_path, mysql_certs)
 
     if not mysql_config:
-        msg = "The connection information for MySQL could not be set."
+        msg = f"The connection information for MySQL could not be set, cannot find:\n {mysql_certs}\ncheck the celery/certs path or set the ssl information in the app.yaml file."
         raise Exception(msg)
 
     mysql_config["user"] = CONFIG.results_backend.username
@@ -203,31 +240,86 @@ def get_connection_string(include_password=True):
     """
     Given the package configuration determine what results backend to use and
     return the connection string.
+
+    If the url variable is present, return that as the connection string.
+
+    :param config_path : The path for ssl certificates and passwords
+    :param include_password : Format the connection for ouput by setting this True
     """
-    backend = CONFIG.results_backend.name.lower()
+    try:
+        return CONFIG.results_backend.url
+    except AttributeError:
+        pass
+
+    try:
+        backend = CONFIG.results_backend.name.lower()
+    except AttributeError:
+        backend = ""
 
     if backend not in BACKENDS:
         msg = f"'{backend}' is not a supported results backend"
         raise ValueError(msg)
 
-    if backend == "mysql":
-        return get_mysql(include_password=include_password)
+    try:
+        certs_path = CONFIG.celery.certs
+        certs_path = os.path.abspath(os.path.expanduser(certs_path))
+    except AttributeError:
+        certs_path = None
 
-    if backend == "sqlite":
+    if "mysql" in backend:
+        return get_mysql(certs_path=certs_path, include_password=include_password)
+
+    if "sqlite" in backend:
         return SQLITE_CONNECTION_STRING
 
     if backend == "redis":
-        return get_redis(include_password=include_password)
+        return get_redis(certs_path=certs_path, include_password=include_password)
+
+    if backend == "rediss":
+        return get_redis(
+            certs_path=certs_path, include_password=include_password, ssl=True
+        )
 
     return None
 
 
-def verify_config():
-    """Verifies the backend configurations."""
-    try:
-        results_backend()  # TODO ERROR this function is undefined
-        has_backend = True
-    except ValueError:
-        has_backend = False
+def get_ssl_config(celery_check=False):
+    """
+    Return the ssl config based on the configuration specified in the
+    `app.yaml` config file.
 
-    LOG.debug(f"Has Results Backend: {has_backend}")
+    :param celery_check : Return the proper results ssl setting when configuring celery
+    """
+    results_backend = ""
+    try:
+        results_backend = CONFIG.results_backend.url.split(":")[0]
+    except AttributeError:
+        pass
+
+    try:
+        results_backend = CONFIG.results_backend.name.lower()
+    except AttributeError:
+        pass
+
+    if results_backend not in BACKENDS:
+        return False
+
+    try:
+        certs_path = CONFIG.celery.certs
+    except AttributeError:
+        certs_path = None
+
+    results_backend_ssl = get_ssl_entries(
+        "Results Backend", results_backend, CONFIG.results_backend, certs_path
+    )
+
+    if results_backend == "rediss":
+        if not results_backend_ssl:
+            results_backend_ssl = True
+        return results_backend_ssl
+
+    if results_backend and "mysql" in results_backend:
+        if not celery_check:
+            return results_backend_ssl
+
+    return False

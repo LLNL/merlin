@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -35,11 +35,13 @@ from enum import IntEnum
 __all__ = (
     "ReturnCode",
     "OK_VALUE",
+    "ERROR_VALUE",
     "RESTART_VALUE",
     "SOFT_FAIL_VALUE",
     "HARD_FAIL_VALUE",
     "DRY_OK_VALUE",
     "RETRY_VALUE",
+    "STOP_WORKERS_VALUE",
 )
 
 
@@ -49,8 +51,10 @@ class ReturnCode(IntEnum):
     """
 
     OK = 0
+    ERROR = 1
     RESTART = 100
     SOFT_FAIL = 101
     HARD_FAIL = 102
     DRY_OK = 103
     RETRY = 104
+    STOP_WORKERS = 105

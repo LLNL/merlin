@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -274,12 +274,12 @@ class MerlinStudy:
             return os.path.abspath(output_path)
 
         else:
-            output_path = self.spec.output_path
+            output_path = str(self.spec.output_path)
 
             if (self.override_vars is not None) and (
                 "OUTPUT_PATH" in self.override_vars
             ):
-                output_path = self.override_vars["OUTPUT_PATH"]
+                output_path = str(self.override_vars["OUTPUT_PATH"])
 
             output_path = expand_line(output_path, self.user_vars)
             output_path = os.path.abspath(output_path)
@@ -349,7 +349,9 @@ class MerlinStudy:
         if self.restart_dir is None:
             self.write_expanded_spec(self.expanded_filepath)
 
-        return MerlinSpec.load_specification(self.expanded_filepath)
+        return MerlinSpec.load_specification(
+            self.expanded_filepath, suppress_warning=False
+        )
 
     @cached_property
     def flux_command(self):

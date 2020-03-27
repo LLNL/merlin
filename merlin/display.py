@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -85,6 +85,7 @@ def display_config_info():
     try:
         conf["broker server"] = broker.get_connection_string(include_password=False)
         sconf["broker server"] = broker.get_connection_string()
+        conf["broker ssl"] = broker.get_ssl_config()
     except Exception as e:
         conf["broker server"] = "Broker server error."
         excpts["broker server"] = e
@@ -94,6 +95,7 @@ def display_config_info():
             include_password=False
         )
         sconf["results server"] = results_backend.get_connection_string()
+        conf["results ssl"] = results_backend.get_ssl_config()
     except Exception as e:
         conf["results server"] = "No results server configured or error."
         excpts["results server"] = e

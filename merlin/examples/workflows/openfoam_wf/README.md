@@ -11,7 +11,7 @@ Pre-reqs:
 2. Virtual-env
 ```
   Ofpp==0.11
-  merlinwf==1.1.1
+  merlin==1.4.1
   scikit-learn==0.21.3
   matplotlib==3.1.1
 ```

@@ -1,0 +1,55 @@
+version: '3'
+
+networks:
+  mernet:
+    driver: bridge
+
+services:
+  redis:
+    image: 'redis:6.0-rc2'
+    container_name: my-redis
+    command:
+      - --port 0
+      - --tls-port 6379
+      - --tls-ca-cert-file /cert_redis/ca_certificate.pem
+      - --tls-key-file /cert_redis/server_key.pem
+      - --tls-cert-file /cert_redis/server_certificate.pem
+      - --tls-auth-clients no
+    ports:
+      - "6379:6379"
+    volumes:
+      - ~/merlinu/cert_redis:/cert_redis
+    networks:
+      - mernet
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: my-rabbit
+    tty: true
+    ports:
+      - "15672:15672"
+      - "15671:15671"
+      - "5672:5672"
+      - "5671:5671"
+    environment:
+      - RABBITMQ_SSL_CACERTFILE=/cert_rabbitmq/ca_certificate.pem
+      - RABBITMQ_SSL_KEYFILE=/cert_rabbitmq/server_key.pem
+      - RABBITMQ_SSL_CERTFILE=/cert_rabbitmq/server_certificate.pem
+      - RABBITMQ_SSL_VERIFY=verify_none
+      - RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT=false
+      - RABBITMQ_DEFAULT_USER=merlinu
+      - RABBITMQ_DEFAULT_VHOST=/merlinu
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - ~/merlinu/cert_rabbitmq:/cert_rabbitmq
+    networks:
+      - mernet
+
+  merlin:
+    image: 'llnl/merlin'
+    container_name: my-merlin
+    tty: true
+    volumes:
+      - ~/merlinu/:/home/merlinu
+    networks:
+      - mernet

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -135,9 +135,9 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
         # Use the value in the batch section
         nodes = get_yaml_var(batch, "nodes", None)
 
-        # Get the number of nodes from the environment if unset
-        if nodes is None:
-            nodes = get_node_count(default=1)
+    # Get the number of nodes from the environment if unset
+    if nodes is None or nodes == "all":
+        nodes = get_node_count(default=1)
 
     # bank = get_yaml_var(batch, 'bank', "") #TODO this variable is unused
     queue = get_yaml_var(batch, "queue", "")
@@ -170,7 +170,6 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
     worker_cmd = f"{launchs} {com}"
 
     if btype == "flux":
-        flux_sleep = " ; sleep inf"
         flux_path = get_yaml_var(batch, "flux_path", "")
         flux_opts = get_yaml_var(batch, "flux_start_opts", "")
         flux_exec_workers = get_yaml_var(batch, "flux_exec_workers", True)
@@ -187,6 +186,6 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
         launch = (
             f"{launchs} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
         )
-        worker_cmd = f'{launch} "{com} {flux_sleep}"'
+        worker_cmd = f'{launch} "{com}"'
 
     return worker_cmd

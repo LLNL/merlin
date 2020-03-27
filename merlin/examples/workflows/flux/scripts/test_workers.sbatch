@@ -13,12 +13,19 @@ ulimit -c 0
 
 YAML=flux_test.yaml
 
-export PATH=/collab/usr/gapps/merlin/${SYS_TYPE}/bin:$PATH
+# When using the spack install, set an environment
+# variable called MERLIN_PATH with the path to merlin
+export PATH=${MERLIN_PATH}/$PATH
 
+
+# Send all tasks to the broker
 merlin run ${YAML}
 
+# Show the workers command
 merlin run-workers ${YAML} --echo
 
+# Start workers to run the tasks in the broker
 merlin run-workers ${YAML}
 
-#sleep inf
+# Keep the allocation alive until all workers stop
+merlin monitor
