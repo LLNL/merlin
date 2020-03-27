@@ -1,5 +1,5 @@
 
-runs=(2)
+runs=( 1 )
 concurrencies=(1 2 4 8 16 32 64)
 samples=(1 10 100 1000 10000)
 
