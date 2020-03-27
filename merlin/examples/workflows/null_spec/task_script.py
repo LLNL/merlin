@@ -30,13 +30,41 @@ def single_task_times():
     print(task_durations)
 
 def merlin_run_time():
-    pre_line = subprocess.check_output(f"grep \"real\" {args.errfile}", shell=True).decode('ascii')
-    preline = preline.strip()
-    matches = re.search(r"\d+.\d+s:", line)
+    pre_line = subprocess.check_output(f"grep \"real \" {args.errfile}", shell=True).decode('ascii')
+    pre_line = pre_line.strip()
+    matches = re.search(r"\d+.\d+s:", pre_line)
+
+def start_verify_time():
+    pre_line = subprocess.check_output(f"grep -m1 \"verify\" {args.logfile}", shell=True).decode('ascii')
+    pre_line = pre_line.strip()
+    matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
+    match = matches[0]
+    element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
+    timestamp = datetime.datetime.timestamp(element)
+    print("start verify : " + timestamp)
+    
+def start_run_workers_time():
+    pre_line = subprocess.check_output(f"grep -m1 \"\" {args.logfile}", shell=True).decode('ascii')
+    pre_line = pre_line.strip()
+    matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
+    match = matches[0]
+    element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
+    timestamp = datetime.datetime.timestamp(element)
+    print("start run-workers : "timestamp)
+    
+def start_sample1_time():
+    pre_line = subprocess.check_output(f"grep -m1 \"Executing step 'null_step'\" {args.logfile}", shell=True).decode('ascii')
+    pre_line = pre_line.strip()
+    matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
+    match = matches[0]
+    element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
+    timestamp = datetime.datetime.timestamp(element)
+    print("start samp1 : " + timestamp)
+    
 
 def main():
     single_task_times()
-    merlin_run_time()
+    #merlin_run_time()
     start_verify_time()
     start_run_workers_time()
     start_sample1_time()

@@ -1,0 +1,932 @@
+[2020-03-25 18:18:18,686: INFO] Connected to amqps://bay1:**@jackalope.llnl.gov:5671//bay1
+[2020-03-25 18:18:18,738: INFO] mingle: searching for neighbors
+[2020-03-25 18:18:19,805: INFO] mingle: all alone
+[2020-03-25 18:18:19,847: INFO] celery@worker_s100_c4.%quartz20 ready.
+[2020-03-25 18:18:19,853: INFO] Received task: merlin.common.tasks.expand_tasks_with_samples[d628fd9c-6493-41e5-bb39-4a2609da2e6a]  
+[2020-03-25 18:18:20,609: INFO] Received task: merlin.common.tasks.add_merlin_expanded_chain_to_chord[e80381fc-a960-4e54-a959-c0e2a3c9519e]  
+[2020-03-25 18:18:20,612: INFO] Task merlin.common.tasks.expand_tasks_with_samples[d628fd9c-6493-41e5-bb39-4a2609da2e6a] succeeded in 0.6524600870907307s: None
+[2020-03-25 18:18:20,687: INFO] Received task: merlin.common.tasks.add_merlin_expanded_chain_to_chord[e67c4387-5f63-4cc5-9273-643160348b50]  
+[2020-03-25 18:18:20,748: INFO] Received task: merlin.common.tasks.merlin_step[0ae595d3-bef3-4312-a205-a420fc1a4a08]  
+[2020-03-25 18:18:20,751: INFO] Received task: merlin.common.tasks.add_merlin_expanded_chain_to_chord[e7758f09-f757-451e-82f1-0b736bec619e]  
+[2020-03-25 18:18:20,756: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/00
+[2020-03-25 18:18:20,760: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/00/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:20,761: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/00'...
+[2020-03-25 18:18:20,776: INFO] Execution returned status OK.
+[2020-03-25 18:18:20,777: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/00' finished successfully.
+[2020-03-25 18:18:20,791: INFO] Task merlin.common.tasks.merlin_step[0ae595d3-bef3-4312-a205-a420fc1a4a08] succeeded in 0.03588924091309309s: ReturnCode.OK
+[2020-03-25 18:18:20,803: INFO] Received task: merlin.common.tasks.add_merlin_expanded_chain_to_chord[211d7106-5bce-44ac-8ac4-99c6efb35464]  
+[2020-03-25 18:18:20,864: INFO] Task merlin.common.tasks.add_merlin_expanded_chain_to_chord[e80381fc-a960-4e54-a959-c0e2a3c9519e] succeeded in 0.24613255262374878s: ReturnCode.OK
+[2020-03-25 18:18:20,869: INFO] Received task: merlin.common.tasks.merlin_step[9ef99d33-d02f-4835-b4fc-fba8845783e3]  
+[2020-03-25 18:18:20,872: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/01
+[2020-03-25 18:18:20,876: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/01/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:20,877: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/01'...
+[2020-03-25 18:18:20,891: INFO] Execution returned status OK.
+[2020-03-25 18:18:20,892: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/01' finished successfully.
+[2020-03-25 18:18:20,898: INFO] Task merlin.common.tasks.merlin_step[9ef99d33-d02f-4835-b4fc-fba8845783e3] succeeded in 0.026866652071475983s: ReturnCode.OK
+[2020-03-25 18:18:20,904: INFO] Received task: merlin.common.tasks.merlin_step[a4751aab-9271-4d77-bf65-225829ba3ec3]  
+[2020-03-25 18:18:20,907: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/00
+[2020-03-25 18:18:20,912: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/00/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:20,913: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/00'...
+[2020-03-25 18:18:20,927: INFO] Execution returned status OK.
+[2020-03-25 18:18:20,927: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/00' finished successfully.
+[2020-03-25 18:18:20,933: INFO] Task merlin.common.tasks.merlin_step[a4751aab-9271-4d77-bf65-225829ba3ec3] succeeded in 0.026897492818534374s: ReturnCode.OK
+[2020-03-25 18:18:20,936: INFO] Received task: merlin.common.tasks.merlin_step[093bc911-b014-4cf3-a18d-b0631e1ca734]  
+[2020-03-25 18:18:20,940: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/02
+[2020-03-25 18:18:20,945: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/02/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:20,946: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/02'...
+[2020-03-25 18:18:20,958: INFO] Execution returned status OK.
+[2020-03-25 18:18:20,959: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/02' finished successfully.
+[2020-03-25 18:18:20,964: INFO] Task merlin.common.tasks.merlin_step[093bc911-b014-4cf3-a18d-b0631e1ca734] succeeded in 0.025109522975981236s: ReturnCode.OK
+[2020-03-25 18:18:20,968: INFO] Received task: merlin.common.tasks.add_merlin_expanded_chain_to_chord[90d9f0e0-6a69-4c97-aa19-24475e374346]  
+[2020-03-25 18:18:22,024: INFO] Task merlin.common.tasks.add_merlin_expanded_chain_to_chord[e67c4387-5f63-4cc5-9273-643160348b50] succeeded in 1.3335681483149529s: ReturnCode.OK
+[2020-03-25 18:18:22,028: INFO] Received task: merlin.common.tasks.merlin_step[6ed592eb-c80e-470a-8b61-0d69b1134463]  
+[2020-03-25 18:18:22,031: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/00
+[2020-03-25 18:18:22,036: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/00/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,037: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/00'...
+[2020-03-25 18:18:22,049: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,050: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/00' finished successfully.
+[2020-03-25 18:18:22,055: INFO] Task merlin.common.tasks.merlin_step[6ed592eb-c80e-470a-8b61-0d69b1134463] succeeded in 0.02456261683255434s: ReturnCode.OK
+[2020-03-25 18:18:22,058: INFO] Received task: merlin.common.tasks.merlin_step[64f85b1e-c308-4c39-8537-ec798acd02f4]  
+[2020-03-25 18:18:22,061: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/01
+[2020-03-25 18:18:22,065: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/01/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,066: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/01'...
+[2020-03-25 18:18:22,071: INFO] Task merlin.common.tasks.add_merlin_expanded_chain_to_chord[211d7106-5bce-44ac-8ac4-99c6efb35464] succeeded in 1.2639815965667367s: ReturnCode.OK
+[2020-03-25 18:18:22,073: INFO] Received task: merlin.common.tasks.merlin_step[ebe50781-b543-42f2-ba24-1b2066036ac4]  
+[2020-03-25 18:18:22,077: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/03
+[2020-03-25 18:18:22,078: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,079: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/01' finished successfully.
+[2020-03-25 18:18:22,080: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/03/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,081: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/03'...
+[2020-03-25 18:18:22,084: INFO] Task merlin.common.tasks.merlin_step[64f85b1e-c308-4c39-8537-ec798acd02f4] succeeded in 0.02335051354020834s: ReturnCode.OK
+[2020-03-25 18:18:22,087: INFO] Received task: merlin.common.tasks.merlin_step[e2d2e997-14ae-4640-88d1-8ccc76631f08]  
+[2020-03-25 18:18:22,090: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/01
+[2020-03-25 18:18:22,095: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/01/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,094: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,095: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/01'...
+[2020-03-25 18:18:22,096: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/03' finished successfully.
+[2020-03-25 18:18:22,101: INFO] Task merlin.common.tasks.merlin_step[ebe50781-b543-42f2-ba24-1b2066036ac4] succeeded in 0.025561749935150146s: ReturnCode.OK
+[2020-03-25 18:18:22,104: INFO] Received task: merlin.common.tasks.merlin_step[9372c474-0ec7-48e2-ad7e-2c607d6f1a64]  
+[2020-03-25 18:18:22,106: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,106: INFO] Task merlin.common.tasks.add_merlin_expanded_chain_to_chord[e7758f09-f757-451e-82f1-0b736bec619e] succeeded in 1.3502691704779863s: ReturnCode.OK
+[2020-03-25 18:18:22,107: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/01' finished successfully.
+[2020-03-25 18:18:22,107: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/02
+[2020-03-25 18:18:22,110: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/02/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,109: INFO] Received task: merlin.common.tasks.merlin_step[49e58b89-efb9-4650-9d7a-62f7cef77aab]  
+[2020-03-25 18:18:22,110: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/02'...
+[2020-03-25 18:18:22,112: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/02
+[2020-03-25 18:18:22,112: INFO] Task merlin.common.tasks.merlin_step[e2d2e997-14ae-4640-88d1-8ccc76631f08] succeeded in 0.02241922728717327s: ReturnCode.OK
+[2020-03-25 18:18:22,115: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/02/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,116: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/02'...
+[2020-03-25 18:18:22,117: INFO] Received task: merlin.common.tasks.merlin_step[d019d9a9-e545-40c3-a8c4-c951b4092e4e]  
+[2020-03-25 18:18:22,121: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/04
+[2020-03-25 18:18:22,124: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/04/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,124: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,125: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/04'...
+[2020-03-25 18:18:22,126: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/02' finished successfully.
+[2020-03-25 18:18:22,130: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,131: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/02' finished successfully.
+[2020-03-25 18:18:22,131: INFO] Task merlin.common.tasks.merlin_step[9372c474-0ec7-48e2-ad7e-2c607d6f1a64] succeeded in 0.025197705253958702s: ReturnCode.OK
+[2020-03-25 18:18:22,134: INFO] Received task: merlin.common.tasks.merlin_step[de335b53-5afc-43c6-a403-3e10cdb04a45]  
+[2020-03-25 18:18:22,137: INFO] Task merlin.common.tasks.merlin_step[49e58b89-efb9-4650-9d7a-62f7cef77aab] succeeded in 0.025314919650554657s: ReturnCode.OK
+[2020-03-25 18:18:22,136: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,138: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/04' finished successfully.
+[2020-03-25 18:18:22,138: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/00
+[2020-03-25 18:18:22,139: INFO] Received task: merlin.common.tasks.merlin_step[8be19f93-993e-4c32-8a84-402f85c7a5f5]  
+[2020-03-25 18:18:22,143: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/03
+[2020-03-25 18:18:22,143: INFO] Task merlin.common.tasks.merlin_step[d019d9a9-e545-40c3-a8c4-c951b4092e4e] succeeded in 0.023201416246593s: ReturnCode.OK
+[2020-03-25 18:18:22,146: INFO] Received task: merlin.common.tasks.merlin_step[9d62166a-7d02-4294-95f6-9167aaabc1a1]  
+[2020-03-25 18:18:22,147: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/03/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,148: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/03'...
+[2020-03-25 18:18:22,149: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/03
+[2020-03-25 18:18:22,152: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/00/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,152: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/00'...
+[2020-03-25 18:18:22,153: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/03/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,154: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/03'...
+[2020-03-25 18:18:22,160: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,161: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/03' finished successfully.
+[2020-03-25 18:18:22,165: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,166: INFO] Task merlin.common.tasks.merlin_step[8be19f93-993e-4c32-8a84-402f85c7a5f5] succeeded in 0.0235906932502985s: ReturnCode.OK
+[2020-03-25 18:18:22,166: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/00' finished successfully.
+[2020-03-25 18:18:22,166: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,167: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/03' finished successfully.
+[2020-03-25 18:18:22,171: INFO] Received task: merlin.common.tasks.merlin_step[b05f04a5-4b27-448f-a2aa-216e7375eff0]  
+[2020-03-25 18:18:22,172: INFO] Task merlin.common.tasks.merlin_step[de335b53-5afc-43c6-a403-3e10cdb04a45] succeeded in 0.03522637393325567s: ReturnCode.OK
+[2020-03-25 18:18:22,173: INFO] Task merlin.common.tasks.merlin_step[9d62166a-7d02-4294-95f6-9167aaabc1a1] succeeded in 0.02456676308065653s: ReturnCode.OK
+[2020-03-25 18:18:22,174: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/05
+[2020-03-25 18:18:22,176: INFO] Received task: merlin.common.tasks.merlin_step[2b3d6a43-5e35-4b1d-be31-a72e9c92b82d]  
+[2020-03-25 18:18:22,177: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/05/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,177: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/05'...
+[2020-03-25 18:18:22,178: INFO] Received task: merlin.common.tasks.merlin_step[ba5b4ffa-5535-4024-b422-07fbe070ea84]  
+[2020-03-25 18:18:22,180: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/04
+[2020-03-25 18:18:22,180: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/01
+[2020-03-25 18:18:22,183: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/04/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,183: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/01/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,184: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/04'...
+[2020-03-25 18:18:22,184: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/01'...
+[2020-03-25 18:18:22,189: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,189: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/05' finished successfully.
+[2020-03-25 18:18:22,195: INFO] Task merlin.common.tasks.merlin_step[b05f04a5-4b27-448f-a2aa-216e7375eff0] succeeded in 0.021343117579817772s: ReturnCode.OK
+[2020-03-25 18:18:22,196: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,197: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,197: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/01' finished successfully.
+[2020-03-25 18:18:22,197: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/04' finished successfully.
+[2020-03-25 18:18:22,198: INFO] Received task: merlin.common.tasks.merlin_step[3ee80b42-17d7-4193-b55a-4d579e73374f]  
+[2020-03-25 18:18:22,201: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/04
+[2020-03-25 18:18:22,203: INFO] Task merlin.common.tasks.merlin_step[ba5b4ffa-5535-4024-b422-07fbe070ea84] succeeded in 0.02340770047158003s: ReturnCode.OK
+[2020-03-25 18:18:22,203: INFO] Task merlin.common.tasks.merlin_step[2b3d6a43-5e35-4b1d-be31-a72e9c92b82d] succeeded in 0.02361881732940674s: ReturnCode.OK
+[2020-03-25 18:18:22,204: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/04/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,205: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/04'...
+[2020-03-25 18:18:22,209: INFO] Received task: merlin.common.tasks.merlin_step[fcd61e4f-0add-4688-bcab-c32b63cb3bc4]  
+[2020-03-25 18:18:22,210: INFO] Received task: merlin.common.tasks.merlin_step[02d0e616-c3ee-43d4-afa2-d1bae9276a03]  
+[2020-03-25 18:18:22,213: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/02
+[2020-03-25 18:18:22,213: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/06
+[2020-03-25 18:18:22,217: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/02/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,217: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,217: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/06/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,218: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/02'...
+[2020-03-25 18:18:22,218: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/04' finished successfully.
+[2020-03-25 18:18:22,218: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/06'...
+[2020-03-25 18:18:22,222: INFO] Task merlin.common.tasks.add_merlin_expanded_chain_to_chord[90d9f0e0-6a69-4c97-aa19-24475e374346] succeeded in 1.2503286208957434s: ReturnCode.OK
+[2020-03-25 18:18:22,223: INFO] Task merlin.common.tasks.merlin_step[3ee80b42-17d7-4193-b55a-4d579e73374f] succeeded in 0.023352541029453278s: ReturnCode.OK
+[2020-03-25 18:18:22,225: INFO] Received task: merlin.common.tasks.merlin_step[da7adab2-9508-4d66-b324-e03fa8fb8910]  
+[2020-03-25 18:18:22,229: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/07
+[2020-03-25 18:18:22,229: INFO] Received task: merlin.common.tasks.merlin_step[bb33dd5b-a7f9-4423-b4b0-63403cd2fac1]  
+[2020-03-25 18:18:22,230: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,231: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/02' finished successfully.
+[2020-03-25 18:18:22,231: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,231: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/05
+[2020-03-25 18:18:22,232: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/07/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,231: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/06' finished successfully.
+[2020-03-25 18:18:22,232: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/07'...
+[2020-03-25 18:18:22,235: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/05/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,235: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/05'...
+[2020-03-25 18:18:22,236: INFO] Task merlin.common.tasks.merlin_step[02d0e616-c3ee-43d4-afa2-d1bae9276a03] succeeded in 0.02330071572214365s: ReturnCode.OK
+[2020-03-25 18:18:22,237: INFO] Task merlin.common.tasks.merlin_step[fcd61e4f-0add-4688-bcab-c32b63cb3bc4] succeeded in 0.024943924508988857s: ReturnCode.OK
+[2020-03-25 18:18:22,239: INFO] Received task: merlin.common.tasks.merlin_step[3f77d550-755b-4f31-94af-52308661c4b6]  
+[2020-03-25 18:18:22,242: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/05
+[2020-03-25 18:18:22,242: INFO] Received task: merlin.common.tasks.merlin_step[68f90602-7b51-4dd4-a002-b5c038d06488]  
+[2020-03-25 18:18:22,246: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/05/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,245: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/03
+[2020-03-25 18:18:22,246: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,246: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/05'...
+[2020-03-25 18:18:22,246: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/07' finished successfully.
+[2020-03-25 18:18:22,247: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,248: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/05' finished successfully.
+[2020-03-25 18:18:22,248: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/03/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,249: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/03'...
+[2020-03-25 18:18:22,252: INFO] Task merlin.common.tasks.merlin_step[da7adab2-9508-4d66-b324-e03fa8fb8910] succeeded in 0.023708432912826538s: ReturnCode.OK
+[2020-03-25 18:18:22,253: INFO] Task merlin.common.tasks.merlin_step[bb33dd5b-a7f9-4423-b4b0-63403cd2fac1] succeeded in 0.02211085334420204s: ReturnCode.OK
+[2020-03-25 18:18:22,254: INFO] Received task: merlin.common.tasks.merlin_step[7ba04c46-8526-483d-9391-94945914b991]  
+[2020-03-25 18:18:22,258: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/06
+[2020-03-25 18:18:22,258: INFO] Received task: merlin.common.tasks.merlin_step[992a8e17-52d0-42bd-8eaf-e99159b0107e]  
+[2020-03-25 18:18:22,259: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,260: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/05' finished successfully.
+[2020-03-25 18:18:22,261: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/06
+[2020-03-25 18:18:22,261: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/06/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,261: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,261: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/06'...
+[2020-03-25 18:18:22,262: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/03' finished successfully.
+[2020-03-25 18:18:22,263: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/06/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,265: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/06'...
+[2020-03-25 18:18:22,265: INFO] Task merlin.common.tasks.merlin_step[3f77d550-755b-4f31-94af-52308661c4b6] succeeded in 0.023681560531258583s: ReturnCode.OK
+[2020-03-25 18:18:22,267: INFO] Task merlin.common.tasks.merlin_step[68f90602-7b51-4dd4-a002-b5c038d06488] succeeded in 0.022936295717954636s: ReturnCode.OK
+[2020-03-25 18:18:22,268: INFO] Received task: merlin.common.tasks.merlin_step[e8e1fb04-01f1-499c-9135-60af24afc16e]  
+[2020-03-25 18:18:22,271: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/08
+[2020-03-25 18:18:22,271: INFO] Received task: merlin.common.tasks.merlin_step[67db07c2-a7ac-4836-90c0-5c5068ad28ae]  
+[2020-03-25 18:18:22,275: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/04
+[2020-03-25 18:18:22,274: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,276: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/06' finished successfully.
+[2020-03-25 18:18:22,279: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/04/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,278: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,279: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/06' finished successfully.
+[2020-03-25 18:18:22,279: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/04'...
+[2020-03-25 18:18:22,282: INFO] Task merlin.common.tasks.merlin_step[7ba04c46-8526-483d-9391-94945914b991] succeeded in 0.025010941550135612s: ReturnCode.OK
+[2020-03-25 18:18:22,285: INFO] Task merlin.common.tasks.merlin_step[992a8e17-52d0-42bd-8eaf-e99159b0107e] succeeded in 0.02448125369846821s: ReturnCode.OK
+[2020-03-25 18:18:22,286: INFO] Received task: merlin.common.tasks.merlin_step[8505a45e-1955-429b-81b5-b86e9af533f3]  
+[2020-03-25 18:18:22,289: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/07
+[2020-03-25 18:18:22,289: INFO] Received task: merlin.common.tasks.merlin_step[150c0ac8-cd44-4846-b8d3-ff37b37faa0e]  
+[2020-03-25 18:18:22,289: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/08/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,290: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/08'...
+[2020-03-25 18:18:22,292: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,292: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/07
+[2020-03-25 18:18:22,293: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/07/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,293: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/04' finished successfully.
+[2020-03-25 18:18:22,293: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/07'...
+[2020-03-25 18:18:22,296: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/07/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,296: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/07'...
+[2020-03-25 18:18:22,299: INFO] Task merlin.common.tasks.merlin_step[67db07c2-a7ac-4836-90c0-5c5068ad28ae] succeeded in 0.025307019241154194s: ReturnCode.OK
+[2020-03-25 18:18:22,302: INFO] Received task: merlin.common.tasks.merlin_step[7bc23433-785c-4feb-bcee-4fd99b8c171d]  
+[2020-03-25 18:18:22,302: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,303: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/08' finished successfully.
+[2020-03-25 18:18:22,306: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/09
+[2020-03-25 18:18:22,307: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,308: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/07' finished successfully.
+[2020-03-25 18:18:22,309: INFO] Task merlin.common.tasks.merlin_step[e8e1fb04-01f1-499c-9135-60af24afc16e] succeeded in 0.03806916158646345s: ReturnCode.OK
+[2020-03-25 18:18:22,309: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,310: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/07' finished successfully.
+[2020-03-25 18:18:22,310: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/09/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,311: INFO] Received task: merlin.common.tasks.merlin_step[a7dbe770-e1ce-45a6-90fd-0aa91e297161]  
+[2020-03-25 18:18:22,311: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/09'...
+[2020-03-25 18:18:22,314: INFO] Task merlin.common.tasks.merlin_step[8505a45e-1955-429b-81b5-b86e9af533f3] succeeded in 0.025473088026046753s: ReturnCode.OK
+[2020-03-25 18:18:22,315: INFO] Task merlin.common.tasks.merlin_step[150c0ac8-cd44-4846-b8d3-ff37b37faa0e] succeeded in 0.022937018424272537s: ReturnCode.OK
+[2020-03-25 18:18:22,314: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/08
+[2020-03-25 18:18:22,317: INFO] Received task: merlin.common.tasks.merlin_step[7be1208c-25ea-4547-868d-f19d6d2ec75c]  
+[2020-03-25 18:18:22,319: INFO] Received task: merlin.common.tasks.merlin_step[34b32446-ae20-491c-97aa-07865fd8f49d]  
+[2020-03-25 18:18:22,318: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/08/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,319: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/08'...
+[2020-03-25 18:18:22,321: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/05
+[2020-03-25 18:18:22,321: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/08
+[2020-03-25 18:18:22,322: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,323: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/09' finished successfully.
+[2020-03-25 18:18:22,324: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/05/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,324: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/05'...
+[2020-03-25 18:18:22,325: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/08/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,325: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/08'...
+[2020-03-25 18:18:22,329: INFO] Task merlin.common.tasks.merlin_step[7bc23433-785c-4feb-bcee-4fd99b8c171d] succeeded in 0.02380052302032709s: ReturnCode.OK
+[2020-03-25 18:18:22,331: INFO] Received task: merlin.common.tasks.merlin_step[50f941b4-d4e1-4633-be52-5b86339dfb5f]  
+[2020-03-25 18:18:22,332: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,333: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/08' finished successfully.
+[2020-03-25 18:18:22,334: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/10
+[2020-03-25 18:18:22,338: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/10/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,338: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,338: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,339: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/10'...
+[2020-03-25 18:18:22,339: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/05' finished successfully.
+[2020-03-25 18:18:22,339: INFO] Task merlin.common.tasks.merlin_step[a7dbe770-e1ce-45a6-90fd-0aa91e297161] succeeded in 0.025839272886514664s: ReturnCode.OK
+[2020-03-25 18:18:22,339: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/08' finished successfully.
+[2020-03-25 18:18:22,343: INFO] Received task: merlin.common.tasks.merlin_step[34061014-119f-414f-a8a6-ec20471eaa18]  
+[2020-03-25 18:18:22,345: INFO] Task merlin.common.tasks.merlin_step[34b32446-ae20-491c-97aa-07865fd8f49d] succeeded in 0.024628564715385437s: ReturnCode.OK
+[2020-03-25 18:18:22,346: INFO] Task merlin.common.tasks.merlin_step[7be1208c-25ea-4547-868d-f19d6d2ec75c] succeeded in 0.02542717382311821s: ReturnCode.OK
+[2020-03-25 18:18:22,346: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/09
+[2020-03-25 18:18:22,348: INFO] Received task: merlin.common.tasks.merlin_step[057c6c5d-b41c-4d62-b131-39479e86586b]  
+[2020-03-25 18:18:22,349: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/09/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,351: INFO] Received task: merlin.common.tasks.merlin_step[e5c03b7b-f78f-448c-b734-6e63244f06a1]  
+[2020-03-25 18:18:22,350: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/09'...
+[2020-03-25 18:18:22,351: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/06
+[2020-03-25 18:18:22,352: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,353: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/09
+[2020-03-25 18:18:22,354: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/10' finished successfully.
+[2020-03-25 18:18:22,355: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/06/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,356: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/09/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,356: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/06'...
+[2020-03-25 18:18:22,357: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/09'...
+[2020-03-25 18:18:22,360: INFO] Task merlin.common.tasks.merlin_step[50f941b4-d4e1-4633-be52-5b86339dfb5f] succeeded in 0.026411383412778378s: ReturnCode.OK
+[2020-03-25 18:18:22,362: INFO] Received task: merlin.common.tasks.merlin_step[38b9db61-8ab6-4f25-b0c8-eed9ac03cb66]  
+[2020-03-25 18:18:22,363: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,363: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/09' finished successfully.
+[2020-03-25 18:18:22,365: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/11
+[2020-03-25 18:18:22,368: INFO] Task merlin.common.tasks.merlin_step[34061014-119f-414f-a8a6-ec20471eaa18] succeeded in 0.023186273872852325s: ReturnCode.OK
+[2020-03-25 18:18:22,368: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,368: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/11/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,368: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,369: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/09' finished successfully.
+[2020-03-25 18:18:22,369: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/11'...
+[2020-03-25 18:18:22,369: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/06' finished successfully.
+[2020-03-25 18:18:22,372: INFO] Received task: merlin.common.tasks.merlin_step[97bb8f45-a094-441d-ab1d-104e7436d976]  
+[2020-03-25 18:18:22,374: INFO] Task merlin.common.tasks.merlin_step[e5c03b7b-f78f-448c-b734-6e63244f06a1] succeeded in 0.02185217384248972s: ReturnCode.OK
+[2020-03-25 18:18:22,374: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/07
+[2020-03-25 18:18:22,375: INFO] Task merlin.common.tasks.merlin_step[057c6c5d-b41c-4d62-b131-39479e86586b] succeeded in 0.024317851290106773s: ReturnCode.OK
+[2020-03-25 18:18:22,377: INFO] Received task: merlin.common.tasks.merlin_step[1e79d7a4-bcaa-4507-bf1d-49ec17d5d6e7]  
+[2020-03-25 18:18:22,378: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/07/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,378: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/07'...
+[2020-03-25 18:18:22,380: INFO] Received task: merlin.common.tasks.merlin_step[3803c458-6f59-4e41-a3db-8edf7058ba1c]  
+[2020-03-25 18:18:22,381: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,382: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/11' finished successfully.
+[2020-03-25 18:18:22,382: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/10
+[2020-03-25 18:18:22,382: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/10
+[2020-03-25 18:18:22,386: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/10/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,386: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/10'...
+[2020-03-25 18:18:22,386: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/10/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,387: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/10'...
+[2020-03-25 18:18:22,388: INFO] Task merlin.common.tasks.merlin_step[38b9db61-8ab6-4f25-b0c8-eed9ac03cb66] succeeded in 0.023477762006223202s: ReturnCode.OK
+[2020-03-25 18:18:22,391: INFO] Received task: merlin.common.tasks.merlin_step[b1be8e99-59d0-4530-8c1b-c7af1f609f01]  
+[2020-03-25 18:18:22,392: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,393: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/07' finished successfully.
+[2020-03-25 18:18:22,394: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/12
+[2020-03-25 18:18:22,397: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/12/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,398: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/12'...
+[2020-03-25 18:18:22,398: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,399: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/10' finished successfully.
+[2020-03-25 18:18:22,399: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,399: INFO] Task merlin.common.tasks.merlin_step[97bb8f45-a094-441d-ab1d-104e7436d976] succeeded in 0.0254750968888402s: ReturnCode.OK
+[2020-03-25 18:18:22,400: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/10' finished successfully.
+[2020-03-25 18:18:22,402: INFO] Received task: merlin.common.tasks.merlin_step[04ec3a59-26b4-44a2-936a-e9f707cd2497]  
+[2020-03-25 18:18:22,405: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/11
+[2020-03-25 18:18:22,405: INFO] Task merlin.common.tasks.merlin_step[3803c458-6f59-4e41-a3db-8edf7058ba1c] succeeded in 0.023372452706098557s: ReturnCode.OK
+[2020-03-25 18:18:22,405: INFO] Task merlin.common.tasks.merlin_step[1e79d7a4-bcaa-4507-bf1d-49ec17d5d6e7] succeeded in 0.023536979220807552s: ReturnCode.OK
+[2020-03-25 18:18:22,408: INFO] Received task: merlin.common.tasks.merlin_step[d7c68417-a1c1-4db2-ac95-0dbcd34066f8]  
+[2020-03-25 18:18:22,408: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/11/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,409: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/11'...
+[2020-03-25 18:18:22,410: INFO] Received task: merlin.common.tasks.merlin_step[34be4ee1-ee2d-497b-82eb-89601009b4ba]  
+[2020-03-25 18:18:22,411: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,411: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/12' finished successfully.
+[2020-03-25 18:18:22,413: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/11
+[2020-03-25 18:18:22,413: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/08
+[2020-03-25 18:18:22,416: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/11/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,416: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/08/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,417: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/11'...
+[2020-03-25 18:18:22,417: INFO] Task merlin.common.tasks.merlin_step[b1be8e99-59d0-4530-8c1b-c7af1f609f01] succeeded in 0.023796974681317806s: ReturnCode.OK
+[2020-03-25 18:18:22,417: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/08'...
+[2020-03-25 18:18:22,420: INFO] Received task: merlin.common.tasks.merlin_step[83edc447-8690-4d61-822f-300d58adc4af]  
+[2020-03-25 18:18:22,423: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/13
+[2020-03-25 18:18:22,422: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,423: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/11' finished successfully.
+[2020-03-25 18:18:22,426: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/13/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,427: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/13'...
+[2020-03-25 18:18:22,428: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,429: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/11' finished successfully.
+[2020-03-25 18:18:22,430: INFO] Task merlin.common.tasks.merlin_step[04ec3a59-26b4-44a2-936a-e9f707cd2497] succeeded in 0.02589848916977644s: ReturnCode.OK
+[2020-03-25 18:18:22,431: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,432: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/08' finished successfully.
+[2020-03-25 18:18:22,432: INFO] Received task: merlin.common.tasks.merlin_step[2224a310-1a1b-4d7a-884c-77dc873e3126]  
+[2020-03-25 18:18:22,434: INFO] Task merlin.common.tasks.merlin_step[34be4ee1-ee2d-497b-82eb-89601009b4ba] succeeded in 0.021944166161119938s: ReturnCode.OK
+[2020-03-25 18:18:22,435: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/09
+[2020-03-25 18:18:22,437: INFO] Received task: merlin.common.tasks.merlin_step[28d97dcd-d132-40e7-93df-2cc53536b71d]  
+[2020-03-25 18:18:22,437: INFO] Task merlin.common.tasks.merlin_step[d7c68417-a1c1-4db2-ac95-0dbcd34066f8] succeeded in 0.024715797044336796s: ReturnCode.OK
+[2020-03-25 18:18:22,439: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/09/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,440: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/09'...
+[2020-03-25 18:18:22,440: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,441: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/12
+[2020-03-25 18:18:22,441: INFO] Received task: merlin.common.tasks.merlin_step[2e369b2e-50fa-40cc-8eed-4db5991ff0c0]  
+[2020-03-25 18:18:22,441: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/13' finished successfully.
+[2020-03-25 18:18:22,444: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/12/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,444: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/12
+[2020-03-25 18:18:22,444: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/12'...
+[2020-03-25 18:18:22,446: INFO] Task merlin.common.tasks.merlin_step[83edc447-8690-4d61-822f-300d58adc4af] succeeded in 0.024684136733412743s: ReturnCode.OK
+[2020-03-25 18:18:22,447: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/12/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,448: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/12'...
+[2020-03-25 18:18:22,450: INFO] Received task: merlin.common.tasks.merlin_step[6440da3c-4e40-43cb-80ac-eb92f3ed7b03]  
+[2020-03-25 18:18:22,453: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/14
+[2020-03-25 18:18:22,453: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,454: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/09' finished successfully.
+[2020-03-25 18:18:22,456: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/14/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,457: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,458: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/14'...
+[2020-03-25 18:18:22,458: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/12' finished successfully.
+[2020-03-25 18:18:22,459: INFO] Task merlin.common.tasks.merlin_step[2224a310-1a1b-4d7a-884c-77dc873e3126] succeeded in 0.024456379003822803s: ReturnCode.OK
+[2020-03-25 18:18:22,460: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,461: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/12' finished successfully.
+[2020-03-25 18:18:22,462: INFO] Received task: merlin.common.tasks.merlin_step[c7284f96-c9a9-4e36-87d1-b86eab1f7d4a]  
+[2020-03-25 18:18:22,463: INFO] Task merlin.common.tasks.merlin_step[28d97dcd-d132-40e7-93df-2cc53536b71d] succeeded in 0.02262048050761223s: ReturnCode.OK
+[2020-03-25 18:18:22,465: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/10
+[2020-03-25 18:18:22,467: INFO] Task merlin.common.tasks.merlin_step[2e369b2e-50fa-40cc-8eed-4db5991ff0c0] succeeded in 0.023472413420677185s: ReturnCode.OK
+[2020-03-25 18:18:22,466: INFO] Received task: merlin.common.tasks.merlin_step[11fbed24-2920-45d0-8077-0a6c09ad0159]  
+[2020-03-25 18:18:22,468: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/10/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,469: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/10'...
+[2020-03-25 18:18:22,469: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/13
+[2020-03-25 18:18:22,469: INFO] Received task: merlin.common.tasks.merlin_step[e0f955da-f3ee-4075-9bcf-972a9a93b599]  
+[2020-03-25 18:18:22,469: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,470: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/14' finished successfully.
+[2020-03-25 18:18:22,472: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/13/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,472: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/13
+[2020-03-25 18:18:22,472: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/13'...
+[2020-03-25 18:18:22,475: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/13/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,475: INFO] Task merlin.common.tasks.merlin_step[6440da3c-4e40-43cb-80ac-eb92f3ed7b03] succeeded in 0.023151658475399017s: ReturnCode.OK
+[2020-03-25 18:18:22,476: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/13'...
+[2020-03-25 18:18:22,478: INFO] Received task: merlin.common.tasks.merlin_step[7696ecbb-4ed3-4fe6-957b-539ccc7d1f4f]  
+[2020-03-25 18:18:22,481: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/15
+[2020-03-25 18:18:22,483: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,486: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/15/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,484: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/10' finished successfully.
+[2020-03-25 18:18:22,486: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/15'...
+[2020-03-25 18:18:22,486: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,488: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/13' finished successfully.
+[2020-03-25 18:18:22,489: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,489: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/13' finished successfully.
+[2020-03-25 18:18:22,491: INFO] Task merlin.common.tasks.merlin_step[c7284f96-c9a9-4e36-87d1-b86eab1f7d4a] succeeded in 0.026972428895533085s: ReturnCode.OK
+[2020-03-25 18:18:22,494: INFO] Received task: merlin.common.tasks.merlin_step[c89ac570-475e-4997-a14d-b9fe138e725d]  
+[2020-03-25 18:18:22,494: INFO] Task merlin.common.tasks.merlin_step[11fbed24-2920-45d0-8077-0a6c09ad0159] succeeded in 0.0255163861438632s: ReturnCode.OK
+[2020-03-25 18:18:22,494: INFO] Task merlin.common.tasks.merlin_step[e0f955da-f3ee-4075-9bcf-972a9a93b599] succeeded in 0.022804652340710163s: ReturnCode.OK
+[2020-03-25 18:18:22,496: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/11
+[2020-03-25 18:18:22,497: INFO] Received task: merlin.common.tasks.merlin_step[d9619dd6-ec2a-44e7-848a-05d56eb6a37d]  
+[2020-03-25 18:18:22,497: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,498: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/15' finished successfully.
+[2020-03-25 18:18:22,499: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/11/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,499: INFO] Received task: merlin.common.tasks.merlin_step[904caf7f-ed73-457b-8285-fc5b4cdda48b]  
+[2020-03-25 18:18:22,500: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/11'...
+[2020-03-25 18:18:22,502: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/14
+[2020-03-25 18:18:22,502: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/14
+[2020-03-25 18:18:22,503: INFO] Task merlin.common.tasks.merlin_step[7696ecbb-4ed3-4fe6-957b-539ccc7d1f4f] succeeded in 0.022034069523215294s: ReturnCode.OK
+[2020-03-25 18:18:22,506: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/14/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,507: INFO] Received task: merlin.common.tasks.merlin_step[ad267bb3-12b9-488f-8299-4249beb247d6]  
+[2020-03-25 18:18:22,507: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/14/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,507: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/14'...
+[2020-03-25 18:18:22,507: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/14'...
+[2020-03-25 18:18:22,509: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/12
+[2020-03-25 18:18:22,513: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,514: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/12/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,514: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/11' finished successfully.
+[2020-03-25 18:18:22,514: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/12'...
+[2020-03-25 18:18:22,519: INFO] Task merlin.common.tasks.merlin_step[c89ac570-475e-4997-a14d-b9fe138e725d] succeeded in 0.02336925733834505s: ReturnCode.OK
+[2020-03-25 18:18:22,521: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,521: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,522: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/14' finished successfully.
+[2020-03-25 18:18:22,522: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/14' finished successfully.
+[2020-03-25 18:18:22,522: INFO] Received task: merlin.common.tasks.merlin_step[cf202eaa-72cb-4154-a133-54c389a27630]  
+[2020-03-25 18:18:22,525: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/16
+[2020-03-25 18:18:22,527: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,528: INFO] Task merlin.common.tasks.merlin_step[904caf7f-ed73-457b-8285-fc5b4cdda48b] succeeded in 0.027181227691471577s: ReturnCode.OK
+[2020-03-25 18:18:22,527: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/12' finished successfully.
+[2020-03-25 18:18:22,528: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/16/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,528: INFO] Task merlin.common.tasks.merlin_step[d9619dd6-ec2a-44e7-848a-05d56eb6a37d] succeeded in 0.027321774512529373s: ReturnCode.OK
+[2020-03-25 18:18:22,529: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/16'...
+[2020-03-25 18:18:22,531: INFO] Received task: merlin.common.tasks.merlin_step[70235b68-cd79-43fe-95e2-b65c99931187]  
+[2020-03-25 18:18:22,533: INFO] Received task: merlin.common.tasks.merlin_step[cfdd181d-2844-4b8a-bd8f-7e5b2b60d974]  
+[2020-03-25 18:18:22,533: INFO] Task merlin.common.tasks.merlin_step[ad267bb3-12b9-488f-8299-4249beb247d6] succeeded in 0.02445269748568535s: ReturnCode.OK
+[2020-03-25 18:18:22,536: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/15
+[2020-03-25 18:18:22,537: INFO] Received task: merlin.common.tasks.merlin_step[fb9858e3-7bd3-4b27-9c72-98b7d0639a25]  
+[2020-03-25 18:18:22,536: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/15
+[2020-03-25 18:18:22,540: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/15/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,540: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/15/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,540: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/13
+[2020-03-25 18:18:22,541: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/15'...
+[2020-03-25 18:18:22,541: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/15'...
+[2020-03-25 18:18:22,541: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,542: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/16' finished successfully.
+[2020-03-25 18:18:22,544: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/13/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,544: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/13'...
+[2020-03-25 18:18:22,548: INFO] Task merlin.common.tasks.merlin_step[cf202eaa-72cb-4154-a133-54c389a27630] succeeded in 0.023049212992191315s: ReturnCode.OK
+[2020-03-25 18:18:22,550: INFO] Received task: merlin.common.tasks.merlin_step[11c8bac0-dcca-4b5a-b5ed-fa488bfbcb26]  
+[2020-03-25 18:18:22,554: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/17
+[2020-03-25 18:18:22,553: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,554: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,555: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/15' finished successfully.
+[2020-03-25 18:18:22,555: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/15' finished successfully.
+[2020-03-25 18:18:22,556: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,557: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/17/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,557: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/13' finished successfully.
+[2020-03-25 18:18:22,558: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/17'...
+[2020-03-25 18:18:22,560: INFO] Task merlin.common.tasks.merlin_step[70235b68-cd79-43fe-95e2-b65c99931187] succeeded in 0.025059360079467297s: ReturnCode.OK
+[2020-03-25 18:18:22,561: INFO] Task merlin.common.tasks.merlin_step[cfdd181d-2844-4b8a-bd8f-7e5b2b60d974] succeeded in 0.025391544215381145s: ReturnCode.OK
+[2020-03-25 18:18:22,562: INFO] Task merlin.common.tasks.merlin_step[fb9858e3-7bd3-4b27-9c72-98b7d0639a25] succeeded in 0.023493953049182892s: ReturnCode.OK
+[2020-03-25 18:18:22,563: INFO] Received task: merlin.common.tasks.merlin_step[3eadc869-3134-4529-bf69-56bc6b4b57b5]  
+[2020-03-25 18:18:22,565: INFO] Received task: merlin.common.tasks.merlin_step[bed664f4-d647-4867-8220-1dc202ea78ee]  
+[2020-03-25 18:18:22,568: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/16
+[2020-03-25 18:18:22,568: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/16
+[2020-03-25 18:18:22,568: INFO] Received task: merlin.common.tasks.merlin_step[b148a245-22bc-4d4a-829a-8c1834c3ee63]  
+[2020-03-25 18:18:22,569: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,570: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/17' finished successfully.
+[2020-03-25 18:18:22,572: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/16/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,572: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/14
+[2020-03-25 18:18:22,573: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/16/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,572: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/16'...
+[2020-03-25 18:18:22,573: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/16'...
+[2020-03-25 18:18:22,575: INFO] Task merlin.common.tasks.merlin_step[11c8bac0-dcca-4b5a-b5ed-fa488bfbcb26] succeeded in 0.022367307916283607s: ReturnCode.OK
+[2020-03-25 18:18:22,575: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/14/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,577: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/14'...
+[2020-03-25 18:18:22,578: INFO] Received task: merlin.common.tasks.merlin_step[5bdc45b7-e699-4f2b-9f50-13ce34572179]  
+[2020-03-25 18:18:22,582: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/18
+[2020-03-25 18:18:22,584: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/18/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,583: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,584: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/18'...
+[2020-03-25 18:18:22,585: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/16' finished successfully.
+[2020-03-25 18:18:22,586: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,586: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/16' finished successfully.
+[2020-03-25 18:18:22,588: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,589: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/14' finished successfully.
+[2020-03-25 18:18:22,591: INFO] Task merlin.common.tasks.merlin_step[bed664f4-d647-4867-8220-1dc202ea78ee] succeeded in 0.02321674022823572s: ReturnCode.OK
+[2020-03-25 18:18:22,593: INFO] Task merlin.common.tasks.merlin_step[3eadc869-3134-4529-bf69-56bc6b4b57b5] succeeded in 0.02560970652848482s: ReturnCode.OK
+[2020-03-25 18:18:22,594: INFO] Received task: merlin.common.tasks.merlin_step[a54b6389-c214-4b45-a8be-29c4f9076be9]  
+[2020-03-25 18:18:22,595: INFO] Task merlin.common.tasks.merlin_step[b148a245-22bc-4d4a-829a-8c1834c3ee63] succeeded in 0.023133118636906147s: ReturnCode.OK
+[2020-03-25 18:18:22,596: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,597: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/18' finished successfully.
+[2020-03-25 18:18:22,597: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/17
+[2020-03-25 18:18:22,598: INFO] Received task: merlin.common.tasks.merlin_step[8a730d7a-9668-4dbf-8ffe-364466ba3fae]  
+[2020-03-25 18:18:22,599: INFO] Received task: merlin.common.tasks.merlin_step[85584639-9a8b-4002-a229-31728fc23599]  
+[2020-03-25 18:18:22,600: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/17/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,601: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/17'...
+[2020-03-25 18:18:22,602: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/15
+[2020-03-25 18:18:22,602: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/17
+[2020-03-25 18:18:22,602: INFO] Task merlin.common.tasks.merlin_step[5bdc45b7-e699-4f2b-9f50-13ce34572179] succeeded in 0.021044420078396797s: ReturnCode.OK
+[2020-03-25 18:18:22,605: INFO] Received task: merlin.common.tasks.merlin_step[60105563-6dab-4298-b4f3-73002f79f9af]  
+[2020-03-25 18:18:22,606: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/15/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,605: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/17/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,606: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/15'...
+[2020-03-25 18:18:22,606: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/17'...
+[2020-03-25 18:18:22,607: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/19
+[2020-03-25 18:18:22,611: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/19/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,611: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/19'...
+[2020-03-25 18:18:22,613: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,614: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/17' finished successfully.
+[2020-03-25 18:18:22,619: INFO] Task merlin.common.tasks.merlin_step[a54b6389-c214-4b45-a8be-29c4f9076be9] succeeded in 0.02254570461809635s: ReturnCode.OK
+[2020-03-25 18:18:22,618: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,618: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,620: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/15' finished successfully.
+[2020-03-25 18:18:22,620: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/17' finished successfully.
+[2020-03-25 18:18:22,622: INFO] Received task: merlin.common.tasks.merlin_step[bcbbb36d-4668-4a01-9231-689fa61983f1]  
+[2020-03-25 18:18:22,623: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,624: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/19' finished successfully.
+[2020-03-25 18:18:22,625: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/18
+[2020-03-25 18:18:22,625: INFO] Task merlin.common.tasks.merlin_step[85584639-9a8b-4002-a229-31728fc23599] succeeded in 0.023399410769343376s: ReturnCode.OK
+[2020-03-25 18:18:22,626: INFO] Task merlin.common.tasks.merlin_step[8a730d7a-9668-4dbf-8ffe-364466ba3fae] succeeded in 0.02414961252361536s: ReturnCode.OK
+[2020-03-25 18:18:22,628: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/18/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,628: INFO] Received task: merlin.common.tasks.merlin_step[65c3237e-c65f-45fa-9c6a-b7f3e952290a]  
+[2020-03-25 18:18:22,628: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/18'...
+[2020-03-25 18:18:22,629: INFO] Received task: merlin.common.tasks.merlin_step[7cd934e7-3b5b-48a4-b324-1c5b4794ee78]  
+[2020-03-25 18:18:22,630: INFO] Task merlin.common.tasks.merlin_step[60105563-6dab-4298-b4f3-73002f79f9af] succeeded in 0.023301578126847744s: ReturnCode.OK
+[2020-03-25 18:18:22,633: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/18
+[2020-03-25 18:18:22,633: INFO] Received task: merlin.common.tasks.merlin_step[ea5d260f-3364-4775-bd75-2d7a8578e4cc]  
+[2020-03-25 18:18:22,633: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/19
+[2020-03-25 18:18:22,636: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/16
+[2020-03-25 18:18:22,637: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/19/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,638: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/19'...
+[2020-03-25 18:18:22,640: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/16/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,640: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/16'...
+[2020-03-25 18:18:22,641: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,642: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/18' finished successfully.
+[2020-03-25 18:18:22,644: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/18/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,645: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/18'...
+[2020-03-25 18:18:22,648: INFO] Task merlin.common.tasks.merlin_step[bcbbb36d-4668-4a01-9231-689fa61983f1] succeeded in 0.02352875843644142s: ReturnCode.OK
+[2020-03-25 18:18:22,650: INFO] Received task: merlin.common.tasks.merlin_step[3f94ad4d-e4ac-426e-a8e8-a658b1c22b6f]  
+[2020-03-25 18:18:22,650: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,651: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/19' finished successfully.
+[2020-03-25 18:18:22,651: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,652: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/16' finished successfully.
+[2020-03-25 18:18:22,653: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/20
+[2020-03-25 18:18:22,656: INFO] Task merlin.common.tasks.merlin_step[7cd934e7-3b5b-48a4-b324-1c5b4794ee78] succeeded in 0.02374562993645668s: ReturnCode.OK
+[2020-03-25 18:18:22,656: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,657: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/20/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,657: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/18' finished successfully.
+[2020-03-25 18:18:22,657: INFO] Task merlin.common.tasks.merlin_step[ea5d260f-3364-4775-bd75-2d7a8578e4cc] succeeded in 0.02161789871752262s: ReturnCode.OK
+[2020-03-25 18:18:22,658: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/20'...
+[2020-03-25 18:18:22,659: INFO] Received task: merlin.common.tasks.merlin_step[b23cb9cb-67de-4cb0-b92f-fa89ab447021]  
+[2020-03-25 18:18:22,662: INFO] Received task: merlin.common.tasks.merlin_step[35c997a8-5258-4e7f-afe8-0151f8dbe727]  
+[2020-03-25 18:18:22,662: INFO] Task merlin.common.tasks.merlin_step[65c3237e-c65f-45fa-9c6a-b7f3e952290a] succeeded in 0.030287745408713818s: ReturnCode.OK
+[2020-03-25 18:18:22,664: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/19
+[2020-03-25 18:18:22,665: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/20
+[2020-03-25 18:18:22,665: INFO] Received task: merlin.common.tasks.merlin_step[c548b45d-03e8-43d3-bd09-64a46cc71cc9]  
+[2020-03-25 18:18:22,668: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/21
+[2020-03-25 18:18:22,668: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/19/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,669: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/19'...
+[2020-03-25 18:18:22,669: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/20/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,669: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,669: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/20'...
+[2020-03-25 18:18:22,669: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/20' finished successfully.
+[2020-03-25 18:18:22,671: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/21/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,671: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/21'...
+[2020-03-25 18:18:22,675: INFO] Task merlin.common.tasks.merlin_step[3f94ad4d-e4ac-426e-a8e8-a658b1c22b6f] succeeded in 0.02248399518430233s: ReturnCode.OK
+[2020-03-25 18:18:22,677: INFO] Received task: merlin.common.tasks.merlin_step[ce659de8-50a4-44e1-9583-3b8883757b97]  
+[2020-03-25 18:18:22,679: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,680: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/19' finished successfully.
+[2020-03-25 18:18:22,681: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/17
+[2020-03-25 18:18:22,680: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,681: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/20' finished successfully.
+[2020-03-25 18:18:22,683: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,684: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/21' finished successfully.
+[2020-03-25 18:18:22,684: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/17/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,685: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/17'...
+[2020-03-25 18:18:22,686: INFO] Task merlin.common.tasks.merlin_step[b23cb9cb-67de-4cb0-b92f-fa89ab447021] succeeded in 0.02181831281632185s: ReturnCode.OK
+[2020-03-25 18:18:22,687: INFO] Task merlin.common.tasks.merlin_step[35c997a8-5258-4e7f-afe8-0151f8dbe727] succeeded in 0.02303350158035755s: ReturnCode.OK
+[2020-03-25 18:18:22,689: INFO] Task merlin.common.tasks.merlin_step[c548b45d-03e8-43d3-bd09-64a46cc71cc9] succeeded in 0.022002185694873333s: ReturnCode.OK
+[2020-03-25 18:18:22,689: INFO] Received task: merlin.common.tasks.merlin_step[15f1c67b-6718-4dba-94a6-9e2c85fa6a0b]  
+[2020-03-25 18:18:22,692: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/20
+[2020-03-25 18:18:22,692: INFO] Received task: merlin.common.tasks.merlin_step[b048e952-c46f-4d98-abb0-0fc5cd6d8e01]  
+[2020-03-25 18:18:22,694: INFO] Received task: merlin.common.tasks.merlin_step[976799aa-56ef-442b-a77a-cc9ccb6c989b]  
+[2020-03-25 18:18:22,695: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/20/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,696: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/20'...
+[2020-03-25 18:18:22,696: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,696: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/21
+[2020-03-25 18:18:22,697: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/17' finished successfully.
+[2020-03-25 18:18:22,697: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/22
+[2020-03-25 18:18:22,701: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/21/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,701: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/22/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,702: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/21'...
+[2020-03-25 18:18:22,702: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/22'...
+[2020-03-25 18:18:22,702: INFO] Task merlin.common.tasks.merlin_step[ce659de8-50a4-44e1-9583-3b8883757b97] succeeded in 0.022285726852715015s: ReturnCode.OK
+[2020-03-25 18:18:22,705: INFO] Received task: merlin.common.tasks.merlin_step[321666ac-ebce-4980-936a-907bae3ed97f]  
+[2020-03-25 18:18:22,708: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/18
+[2020-03-25 18:18:22,707: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,709: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/20' finished successfully.
+[2020-03-25 18:18:22,711: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/18/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,712: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/18'...
+[2020-03-25 18:18:22,712: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,713: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/21' finished successfully.
+[2020-03-25 18:18:22,714: INFO] Task merlin.common.tasks.merlin_step[15f1c67b-6718-4dba-94a6-9e2c85fa6a0b] succeeded in 0.02216261439025402s: ReturnCode.OK
+[2020-03-25 18:18:22,713: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,714: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/22' finished successfully.
+[2020-03-25 18:18:22,717: INFO] Received task: merlin.common.tasks.merlin_step[a0b3e447-b0c6-4e7b-abd5-ade0509f9f0e]  
+[2020-03-25 18:18:22,718: INFO] Task merlin.common.tasks.merlin_step[b048e952-c46f-4d98-abb0-0fc5cd6d8e01] succeeded in 0.022267459891736507s: ReturnCode.OK
+[2020-03-25 18:18:22,720: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/21
+[2020-03-25 18:18:22,719: INFO] Task merlin.common.tasks.merlin_step[976799aa-56ef-442b-a77a-cc9ccb6c989b] succeeded in 0.023495780304074287s: ReturnCode.OK
+[2020-03-25 18:18:22,721: INFO] Received task: merlin.common.tasks.merlin_step[ac257895-8ae2-4468-989b-6d32d501d7dd]  
+[2020-03-25 18:18:22,724: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/21/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,724: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,725: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/21'...
+[2020-03-25 18:18:22,725: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/22
+[2020-03-25 18:18:22,725: INFO] Received task: merlin.common.tasks.merlin_step[03bee327-70e0-4ef9-8d98-9730caf4122e]  
+[2020-03-25 18:18:22,725: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/18' finished successfully.
+[2020-03-25 18:18:22,729: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/19
+[2020-03-25 18:18:22,730: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/22/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,730: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/22'...
+[2020-03-25 18:18:22,732: INFO] Task merlin.common.tasks.merlin_step[321666ac-ebce-4980-936a-907bae3ed97f] succeeded in 0.02504946105182171s: ReturnCode.OK
+[2020-03-25 18:18:22,732: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/19/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,733: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/19'...
+[2020-03-25 18:18:22,735: INFO] Received task: merlin.common.tasks.merlin_step[76c71c25-9a1b-43e5-8bc2-abb5bb29fa14]  
+[2020-03-25 18:18:22,736: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,737: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/21' finished successfully.
+[2020-03-25 18:18:22,738: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/23
+[2020-03-25 18:18:22,742: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/23/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,742: INFO] Task merlin.common.tasks.merlin_step[a0b3e447-b0c6-4e7b-abd5-ade0509f9f0e] succeeded in 0.023136445321142673s: ReturnCode.OK
+[2020-03-25 18:18:22,742: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,742: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/23'...
+[2020-03-25 18:18:22,743: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/22' finished successfully.
+[2020-03-25 18:18:22,745: INFO] Received task: merlin.common.tasks.merlin_step[0f56e728-031e-440a-8d65-d30ddcca7d14]  
+[2020-03-25 18:18:22,745: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,745: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/19' finished successfully.
+[2020-03-25 18:18:22,747: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/22
+[2020-03-25 18:18:22,749: INFO] Task merlin.common.tasks.merlin_step[ac257895-8ae2-4468-989b-6d32d501d7dd] succeeded in 0.024723134003579617s: ReturnCode.OK
+[2020-03-25 18:18:22,751: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/22/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,751: INFO] Task merlin.common.tasks.merlin_step[03bee327-70e0-4ef9-8d98-9730caf4122e] succeeded in 0.022424048744142056s: ReturnCode.OK
+[2020-03-25 18:18:22,752: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/22'...
+[2020-03-25 18:18:22,752: INFO] Received task: merlin.common.tasks.merlin_step[cb8f9044-0cfc-49ba-a17e-d024e1f1fda8]  
+[2020-03-25 18:18:22,755: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/24
+[2020-03-25 18:18:22,755: INFO] Received task: merlin.common.tasks.merlin_step[2f1e727e-f3d7-4c81-b108-fde7fe3080e7]  
+[2020-03-25 18:18:22,755: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,757: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/23' finished successfully.
+[2020-03-25 18:18:22,758: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/24/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,758: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/23
+[2020-03-25 18:18:22,758: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/24'...
+[2020-03-25 18:18:22,762: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/23/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,762: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/23'...
+[2020-03-25 18:18:22,762: INFO] Task merlin.common.tasks.merlin_step[76c71c25-9a1b-43e5-8bc2-abb5bb29fa14] succeeded in 0.025277502834796906s: ReturnCode.OK
+[2020-03-25 18:18:22,763: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,764: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/22' finished successfully.
+[2020-03-25 18:18:22,765: INFO] Received task: merlin.common.tasks.merlin_step[5b9a2fe3-116f-4fd0-b106-4f54b88fdb28]  
+[2020-03-25 18:18:22,768: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/20
+[2020-03-25 18:18:22,770: INFO] Task merlin.common.tasks.merlin_step[0f56e728-031e-440a-8d65-d30ddcca7d14] succeeded in 0.0231023533269763s: ReturnCode.OK
+[2020-03-25 18:18:22,771: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,771: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/00/24' finished successfully.
+[2020-03-25 18:18:22,771: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/20/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,771: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/20'...
+[2020-03-25 18:18:22,773: INFO] Received task: merlin.common.tasks.merlin_step[765f86b9-0124-4f2e-a237-cb83574f2e80]  
+[2020-03-25 18:18:22,774: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,774: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/23' finished successfully.
+[2020-03-25 18:18:22,776: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/23
+[2020-03-25 18:18:22,776: INFO] Task merlin.common.tasks.merlin_step[cb8f9044-0cfc-49ba-a17e-d024e1f1fda8] succeeded in 0.021594648249447346s: ReturnCode.OK
+[2020-03-25 18:18:22,780: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/23/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,780: INFO] Task merlin.common.tasks.merlin_step[2f1e727e-f3d7-4c81-b108-fde7fe3080e7] succeeded in 0.022567562758922577s: ReturnCode.OK
+[2020-03-25 18:18:22,780: INFO] Received task: merlin.common.tasks.merlin_step[eced3329-a689-4668-bc68-ce1fc7226677]  
+[2020-03-25 18:18:22,781: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/23'...
+[2020-03-25 18:18:22,783: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/21
+[2020-03-25 18:18:22,784: INFO] Received task: merlin.common.tasks.merlin_step[7617ef80-7def-48f8-99a3-699220d5c063]  
+[2020-03-25 18:18:22,785: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,786: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/20' finished successfully.
+[2020-03-25 18:18:22,786: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/21/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,787: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/21'...
+[2020-03-25 18:18:22,787: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/24
+[2020-03-25 18:18:22,790: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/24/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,790: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/24'...
+[2020-03-25 18:18:22,792: INFO] Task merlin.common.tasks.merlin_step[5b9a2fe3-116f-4fd0-b106-4f54b88fdb28] succeeded in 0.025641544722020626s: ReturnCode.OK
+[2020-03-25 18:18:22,794: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,795: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/23' finished successfully.
+[2020-03-25 18:18:22,796: INFO] Received task: merlin.common.tasks.merlin_step[7e8735ce-56fb-4154-899d-65a427e859c3]  
+[2020-03-25 18:18:22,798: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/24
+[2020-03-25 18:18:22,798: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,799: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/21' finished successfully.
+[2020-03-25 18:18:22,800: INFO] Task merlin.common.tasks.merlin_step[765f86b9-0124-4f2e-a237-cb83574f2e80] succeeded in 0.024464791640639305s: ReturnCode.OK
+[2020-03-25 18:18:22,801: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/24/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,801: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,802: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/24'...
+[2020-03-25 18:18:22,803: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/02/24' finished successfully.
+[2020-03-25 18:18:22,803: INFO] Received task: merlin.common.tasks.merlin_step[15cfa12e-881d-43ac-bacb-1ad68b289bae]  
+[2020-03-25 18:18:22,805: INFO] Task merlin.common.tasks.merlin_step[eced3329-a689-4668-bc68-ce1fc7226677] succeeded in 0.022306633181869984s: ReturnCode.OK
+[2020-03-25 18:18:22,806: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/22
+[2020-03-25 18:18:22,807: INFO] Received task: merlin.common.tasks.merlin_step[3aaf470b-71a0-4b49-bd09-265a35668aeb]  
+[2020-03-25 18:18:22,809: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/22/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,808: INFO] Task merlin.common.tasks.merlin_step[7617ef80-7def-48f8-99a3-699220d5c063] succeeded in 0.021981293335556984s: ReturnCode.OK
+[2020-03-25 18:18:22,809: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/22'...
+[2020-03-25 18:18:22,810: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/23
+[2020-03-25 18:18:22,812: INFO] Received task: merlin.common.tasks.merlin_step[60939db7-8465-444e-826f-f4a55b4c5f60]  
+[2020-03-25 18:18:22,814: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/23/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,815: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/23'...
+[2020-03-25 18:18:22,815: INFO] Generating script for null_step into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/24
+[2020-03-25 18:18:22,817: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,818: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/24/null_step.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:22,818: INFO] Executing step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/24'...
+[2020-03-25 18:18:22,818: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/01/24' finished successfully.
+[2020-03-25 18:18:22,822: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,822: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/22' finished successfully.
+[2020-03-25 18:18:22,824: INFO] Task merlin.common.tasks.merlin_step[7e8735ce-56fb-4154-899d-65a427e859c3] succeeded in 0.026177561841905117s: ReturnCode.OK
+[2020-03-25 18:18:22,826: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,827: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/23' finished successfully.
+[2020-03-25 18:18:22,827: INFO] Task merlin.common.tasks.merlin_step[15cfa12e-881d-43ac-bacb-1ad68b289bae] succeeded in 0.02211297396570444s: ReturnCode.OK
+[2020-03-25 18:18:22,831: INFO] Execution returned status OK.
+[2020-03-25 18:18:22,831: INFO] Step 'null_step' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/null_step/03/24' finished successfully.
+[2020-03-25 18:18:22,832: INFO] Task merlin.common.tasks.merlin_step[3aaf470b-71a0-4b49-bd09-265a35668aeb] succeeded in 0.023101432248950005s: ReturnCode.OK
+[2020-03-25 18:18:22,977: INFO] Received task: merlin:chordfinisher[6f845ffb-d7ce-4f5a-b195-41d94de01c31]  
+[2020-03-25 18:18:22,982: INFO] Task merlin.common.tasks.merlin_step[60939db7-8465-444e-826f-f4a55b4c5f60] succeeded in 0.16754562500864267s: ReturnCode.OK
+[2020-03-25 18:18:23,024: INFO] Received task: merlin.common.tasks.expand_tasks_with_samples[726a0832-56a1-4888-ac40-40e1a72729ca]  
+[2020-03-25 18:18:23,031: INFO] Task merlin:chordfinisher[6f845ffb-d7ce-4f5a-b195-41d94de01c31] succeeded in 0.051107125356793404s: 'SYNC'
+[2020-03-25 18:18:23,072: INFO] Received task: merlin.common.tasks.merlin_step[d177f931-832d-47d8-9c91-f5153da5f887]  
+[2020-03-25 18:18:23,075: INFO] Directory does not exist. Creating directories to /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/verify
+[2020-03-25 18:18:23,077: INFO] Generating script for verify into /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/verify
+[2020-03-25 18:18:23,081: INFO] Script: /g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/verify/verify.sh
+Restart: None
+Scheduled?: True
+[2020-03-25 18:18:23,082: INFO] Task merlin.common.tasks.expand_tasks_with_samples[726a0832-56a1-4888-ac40-40e1a72729ca] succeeded in 0.05582916922867298s: None
+[2020-03-25 18:18:23,082: INFO] Executing step 'verify' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/verify'...
+[2020-03-25 18:18:23,096: INFO] Execution returned status OK.
+[2020-03-25 18:18:23,096: INFO] Step 'verify' in '/g/g13/bay1/null_results/c_4/s_100/null_spec_20200325-181812/verify' finished successfully.
+[2020-03-25 18:18:23,147: INFO] Received task: merlin:chordfinisher[300fbd98-c6b8-4425-bcbf-f785ce5ca4fd]  
+[2020-03-25 18:18:23,150: INFO] Task merlin:chordfinisher[300fbd98-c6b8-4425-bcbf-f785ce5ca4fd] succeeded in 0.0015907585620880127s: 'SYNC'
+[2020-03-25 18:18:23,151: INFO] Task merlin.common.tasks.merlin_step[d177f931-832d-47d8-9c91-f5153da5f887] succeeded in 0.07724842615425587s: ReturnCode.OK
