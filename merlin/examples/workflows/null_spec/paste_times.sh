@@ -12,7 +12,7 @@ for c in "${concurrencies[@]}"
     for s in "${samples[@]}"
         do
         echo "c${c}_s${s} : " >> ${DATA}
-        python3 task_script.py ${read_path}/c_$c/s_$s/*.log >> ${DATA}
+        python3 task_script.py ${read_path}/c_$c/s_$s/*.log ${read_path}/c_$c/s_$s/*.err >> ${DATA}
         done
     done
 perl -pi -e 's/ : \n/ : /g' ${DATA}
