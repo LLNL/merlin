@@ -1,18 +1,22 @@
 
+runs=(1 2)
 concurrencies=(1 2 4 8 16 32 64)
 samples=(1 10 100 1000 10000)
-read_path="/g/g13/bay1/null_results"
-DATA=my_data2.yaml
 
-
-touch ${DATA}
-
-for c in "${concurrencies[@]}"
+for run in "${runs[@]}"
     do
-    for s in "${samples[@]}"
+    read_path="/g/g13/bay1/null_results/run_${run}"
+    DATA=my_data${run}.yaml
+    touch ${DATA}
+
+    for c in "${concurrencies[@]}"
         do
-        echo "c${c}_s${s} : " >> ${DATA}
-        python3 task_script.py ${read_path}/c_$c/s_$s/*.log ${read_path}/c_$c/s_$s/*.err >> ${DATA}
+        for s in "${samples[@]}"
+            do
+            echo "c${c}_s${s} : " >> ${DATA}
+            python3 task_script.py ${read_path}/c_$c/s_$s/*.log ${read_path}/c_$c/s_$s/*.err $c $s >> ${DATA}
+            done
         done
+    perl -pi -e 's/ : \n/ : /g' ${DATA}
     done
-perl -pi -e 's/ : \n/ : /g' ${DATA}
+

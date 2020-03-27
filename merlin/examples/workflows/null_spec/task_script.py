@@ -11,6 +11,8 @@ import os
 parser = argparse.ArgumentParser(description="Make some samples (names of people).")
 parser.add_argument("logfile", type=str, help="celery log file")
 parser.add_argument("errfile", type=str, help="batch err file")
+parser.add_argument("c", type=int, help="concurrency")
+parser.add_argument("s", type=int, help="n of samples")
 args = parser.parse_args()
 
 
@@ -27,7 +29,7 @@ def single_task_times():
             match = float(match.strip("s:"))
             task_durations.append(match)
 
-    print("- " + str(task_durations))
+    print(str(task_durations))
 
 def merlin_run_time():
     pre_line = subprocess.check_output(f"grep \"real \" {args.errfile}", shell=True).decode('ascii')
@@ -42,9 +44,9 @@ def start_verify_time():
         match = matches[0]
         element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
         timestamp = datetime.datetime.timestamp(element)
-        print("- start verify : " + str(timestamp))
+        print(f"c{args.c}_s{args.s} start verify : " + str(timestamp))
     except:
-        print("- start verify : ERROR")
+        print(f"c{args.c}_s{args.s} start verify : ERROR")
     
 def start_run_workers_time():
     pre_line = subprocess.check_output(f"grep -m1 \"\" {args.logfile}", shell=True).decode('ascii')
@@ -53,7 +55,7 @@ def start_run_workers_time():
     match = matches[0]
     element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
     timestamp = datetime.datetime.timestamp(element)
-    print("- start run-workers : " + str(timestamp))
+    print(f"c{args.c}_s{args.s} start run-workers : " + str(timestamp))
     
 def start_sample1_time():
     pre_line = subprocess.check_output(f"grep -m1 \"Executing step 'null_step'\" {args.logfile}", shell=True).decode('ascii')
@@ -62,7 +64,7 @@ def start_sample1_time():
     match = matches[0]
     element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
     timestamp = datetime.datetime.timestamp(element)
-    print("- start samp1 : " + str(timestamp))
+    print(f"c{args.c}_s{args.s} start samp1 : " + str(timestamp))
     
 
 def main():
