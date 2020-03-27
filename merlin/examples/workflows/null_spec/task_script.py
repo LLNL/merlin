@@ -32,9 +32,12 @@ def single_task_times():
     print(str(task_durations))
 
 def merlin_run_time():
-    pre_line = subprocess.check_output(f"grep \"real \" {args.errfile}", shell=True).decode('ascii')
+    pre_line = subprocess.check_output(f"grep \"real\" {args.errfile}", shell=True).decode('ascii')
     pre_line = pre_line.strip()
-    matches = re.search(r"\d+.\d+s:", pre_line)
+    matches = re.search(r"\d\.\d\d\d", pre_line)
+    match = matches[0]
+    result = float(match)
+    print(f"c{args.c}_s{args.s} merlin run" + result)
 
 def start_verify_time():
     try:
@@ -69,7 +72,7 @@ def start_sample1_time():
 
 def main():
     single_task_times()
-    #merlin_run_time()
+    merlin_run_time()
     start_verify_time()
     start_run_workers_time()
     start_sample1_time()

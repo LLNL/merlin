@@ -6,7 +6,7 @@ submit_path = "/g/g13/bay1/merlin/merlin/examples/workflows/null_spec"
 concurrencies = [1,2,4,8,16,32,64]
 nodes =         [1,1,1,1, 1, 1, 2]
 samples = [1,10,100,1000,10000]
-output_path = "/g/g13/bay1/null_results/run_3"
+output_path = "/g/g13/bay1/null_results/run_1"
 #output_path = "/g/g13/bay1/merlin/merlin/examples/workflows/null_spec"
 for i, concurrency in enumerate(concurrencies):
     c_name = os.path.join(output_path, f"c_{concurrency}")
