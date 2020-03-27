@@ -468,27 +468,32 @@ def expand_tasks_with_samples(
         #prepare_chain_workspace(sample_index, steps)
         sample_index.name = ""
         LOG.debug(f"queuing merlin expansion tasks")
-        for next_index_path, next_index in sample_index.traverse(conditional = lambda c: c.is_great_grandparent_of_leaf):
-            LOG.info(f"generating next step for range {next_index.min}:{next_index.max} {next_index.max-next_index.min}")
-            next_index.name = next_index_path
+        found_tasks = False
+        conditions = [lambda c: c.is_great_grandparent_of_leaf, lambda c: c.is_grandparent_of_leaf , lambda c: c.is_parent_of_leaf, lambda c: c.is_leaf]
+        for condition in conditions:
+            if not found_tasks:
+                for next_index_path, next_index in sample_index.traverse(conditional = condition):
+                    LOG.info(f"generating next step for range {next_index.min}:{next_index.max} {next_index.max-next_index.min}")
+                    next_index.name = next_index_path
 
-            sig = add_merlin_expanded_chain_to_chord.s(
-                task_type,
-                steps,
-                samples[next_index.min : next_index.max],
-                labels,
-                next_index,
-                adapter_config,
-                next_index.min,
-            )
-            sig.set(queue=steps[0].get_task_queue())
+                    sig = add_merlin_expanded_chain_to_chord.s(
+                        task_type,
+                        steps,
+                        samples[next_index.min : next_index.max],
+                        labels,
+                        next_index,
+                        adapter_config,
+                        next_index.min,
+                    )
+                    sig.set(queue=steps[0].get_task_queue())
 
-            if self.request.is_eager:
-                sig.delay()
-            else:
-                LOG.info(f"queuing expansion task {next_index.min}:{next_index.max}")
-                self.add_to_chord(sig, lazy=False)
-            LOG.info(f"merlin expansion task {next_index.min}:{next_index.max} queued")
+                    if self.request.is_eager:
+                        sig.delay()
+                    else:
+                        LOG.info(f"queuing expansion task {next_index.min}:{next_index.max}")
+                        self.add_to_chord(sig, lazy=False)
+                    LOG.info(f"merlin expansion task {next_index.min}:{next_index.max} queued")
+                    found_tasks = True
     else:
         LOG.debug(f"queuing simple chain task")
         add_simple_chain_to_chord(self, task_type, steps, adapter_config)
