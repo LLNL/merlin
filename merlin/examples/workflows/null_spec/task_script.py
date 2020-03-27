@@ -27,7 +27,7 @@ def single_task_times():
             match = float(match.strip("s:"))
             task_durations.append(match)
 
-    print("- " + task_durations)
+    print("- " + str(task_durations))
 
 def merlin_run_time():
     pre_line = subprocess.check_output(f"grep \"real \" {args.errfile}", shell=True).decode('ascii')
@@ -35,13 +35,16 @@ def merlin_run_time():
     matches = re.search(r"\d+.\d+s:", pre_line)
 
 def start_verify_time():
-    pre_line = subprocess.check_output(f"grep -m1 \"verify\" {args.logfile}", shell=True).decode('ascii')
-    pre_line = pre_line.strip()
-    matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
-    match = matches[0]
-    element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
-    timestamp = datetime.datetime.timestamp(element)
-    print("- start verify : " + str(timestamp))
+    try:
+        pre_line = subprocess.check_output(f"grep -m1 \"verify\" {args.logfile}", shell=True).decode('ascii')
+        pre_line = pre_line.strip()
+        matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
+        match = matches[0]
+        element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
+        timestamp = datetime.datetime.timestamp(element)
+        print("- start verify : " + str(timestamp))
+    except:
+        print("- start verify : ERROR")
     
 def start_run_workers_time():
     pre_line = subprocess.check_output(f"grep -m1 \"\" {args.logfile}", shell=True).decode('ascii')
