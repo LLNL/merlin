@@ -37,7 +37,7 @@ def merlin_run_time():
     matches = re.search(r"\d\.\d\d\d", pre_line)
     match = matches[0]
     result = float(match)
-    print(f"c{args.c}_s{args.s} merlin run" + result)
+    print(f"c{args.c}_s{args.s} merlin run : " + str(result))
 
 def start_verify_time():
     try:
