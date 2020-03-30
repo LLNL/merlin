@@ -187,6 +187,7 @@ if you stop the containers with ``docker-compose down`` and restart them with
 ``docker-compose up -d``.
 
 .. code-block:: bash
+
      docker exec my-merlin pip3 install pandas faker
 
 Configuring merlin
@@ -352,12 +353,14 @@ These keys are then copied to a common directory for use in the redis
 server and python.
 
 .. code-block:: bash
-    git clone https://github.com/michaelklishin/tls-gen.git
- cd tls-gen/basic
- make CN=my-redis CLIENT_ALT_NAME=my-redis SERVER_ALT_NAME=my-redis
- make verify
- mkdir -p ${HOME}/merlinu/cert_redis
- cp result/* ${HOME}/merlinu/cert_redis
+
+     git clone https://github.com/michaelklishin/tls-gen.git
+     cd tls-gen/basic
+     make CN=my-redis CLIENT_ALT_NAME=my-redis SERVER_ALT_NAME=my-redis
+     make verify
+     mkdir -p ${HOME}/merlinu/cert_redis
+     cp result/* ${HOME}/merlinu/cert_redis
+
 The ``redis:6.0-rc2`` docker service is exchanged for the previous
 ``redis:latest`` service. The configuration below does not use client
 verification ``--tls-auth-clients no`` so the ssl files do not need to 
