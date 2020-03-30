@@ -5,7 +5,8 @@ samples=(1 10 100 1000 10000)
 
 for run in "${runs[@]}"
     do
-    read_path="/g/g13/bay1/null_results/run_${run}"
+    read_path="null_results/run_${run}"
+    touch ${read_path}
     DATA=my_data${run}.yaml
     touch ${DATA}
 

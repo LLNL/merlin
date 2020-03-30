@@ -1,6 +1,6 @@
 description:
     name: null_spec
-    description: run N_SAMPLES null steps.
+    description: run N_SAMPLES null steps at CONC concurrency. May be used to measure overhead in merlin.
 
 env:
     variables:
