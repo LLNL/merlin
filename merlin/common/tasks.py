@@ -438,7 +438,7 @@ def expand_tasks_with_samples(
         root="",
         n_digits=len(str(level_max_dirs)),
     )
-    
+
     LOG.debug("creating sample_paths")
     sample_paths = sample_index.make_directory_string()
 
@@ -457,23 +457,32 @@ def expand_tasks_with_samples(
         for step in steps
     ]
 
-    #workspaces = [step.get_workspace() for step in steps]
-    #LOG.debug(f"workspaces : {workspaces}")
+    # workspaces = [step.get_workspace() for step in steps]
+    # LOG.debug(f"workspaces : {workspaces}")
 
     needs_expansion = is_chain_expandable(steps, labels)
 
     LOG.debug(f"needs_expansion {needs_expansion}")
 
     if needs_expansion:
-        #prepare_chain_workspace(sample_index, steps)
+        # prepare_chain_workspace(sample_index, steps)
         sample_index.name = ""
         LOG.debug(f"queuing merlin expansion tasks")
         found_tasks = False
-        conditions = [lambda c: c.is_great_grandparent_of_leaf, lambda c: c.is_grandparent_of_leaf , lambda c: c.is_parent_of_leaf, lambda c: c.is_leaf]
+        conditions = [
+            lambda c: c.is_great_grandparent_of_leaf,
+            lambda c: c.is_grandparent_of_leaf,
+            lambda c: c.is_parent_of_leaf,
+            lambda c: c.is_leaf,
+        ]
         for condition in conditions:
             if not found_tasks:
-                for next_index_path, next_index in sample_index.traverse(conditional = condition):
-                    LOG.info(f"generating next step for range {next_index.min}:{next_index.max} {next_index.max-next_index.min}")
+                for next_index_path, next_index in sample_index.traverse(
+                    conditional=condition
+                ):
+                    LOG.info(
+                        f"generating next step for range {next_index.min}:{next_index.max} {next_index.max-next_index.min}"
+                    )
                     next_index.name = next_index_path
 
                     sig = add_merlin_expanded_chain_to_chord.s(
@@ -490,9 +499,13 @@ def expand_tasks_with_samples(
                     if self.request.is_eager:
                         sig.delay()
                     else:
-                        LOG.info(f"queuing expansion task {next_index.min}:{next_index.max}")
+                        LOG.info(
+                            f"queuing expansion task {next_index.min}:{next_index.max}"
+                        )
                         self.add_to_chord(sig, lazy=False)
-                    LOG.info(f"merlin expansion task {next_index.min}:{next_index.max} queued")
+                    LOG.info(
+                        f"merlin expansion task {next_index.min}:{next_index.max} queued"
+                    )
                     found_tasks = True
     else:
         LOG.debug(f"queuing simple chain task")

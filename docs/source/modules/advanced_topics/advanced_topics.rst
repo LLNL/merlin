@@ -374,6 +374,11 @@ counter takes advantage of the ability to override workflow variables on the com
 .. literalinclude :: ./faker_demo.yaml
    :language: yaml
 
+.. TODO: add venv building to the spec? -> can this be dependency
+    add file system cleanup after each iteration
+    parallelize the iteration accumulation in cumulative_sample_proc
+
+
 This workflow specification is intended to be invoke within an allocation of nodes on your
 HPC cluster, e.g. within and sxterm.  The last step to queue up new samples for the next iteration,
 ``merlin run faker_demo.yaml ...``, only doesn't need to also call ``run-workers`` since
