@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The task creation bottleneck.
+
+## [1.5.0]
+
 ### Added
 - `HelpParser`, which automatically prints help messages when command line commands return an error.
 - Optional ssl files for the broker and results backend config.

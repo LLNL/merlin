@@ -31,6 +31,7 @@ Setup
 The code for the following examples can be obtained from command line, invoking:
 
 .. code-block:: bash
+
    merlin example hpc_demo
 
 This will copy the three merlin workflow specifications from this section and the supporting
@@ -371,8 +372,13 @@ The example spec below is a simple implementation of this using an iteration cou
 to generate new samples and spawn a new instantiation of the workflow.  The iteration
 counter takes advantage of the ability to override workflow variables on the command line.
 
-.. literalinclude :: ./faker_demo.yaml
+.. literalinclude:: ./faker_demo.yaml
    :language: yaml
+
+.. TODO: add venv building to the spec? -> can this be dependency
+    add file system cleanup after each iteration
+    parallelize the iteration accumulation in cumulative_sample_proc
+
 
 This workflow specification is intended to be invoke within an allocation of nodes on your
 HPC cluster, e.g. within and sxterm.  The last step to queue up new samples for the next iteration,

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.4.1.
+# This file is part of Merlin, Version: 1.5.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -113,18 +113,32 @@ class SampleIndex:
     @property
     def is_parent_of_leaf(self):
         """Returns whether this is the direct parent of a leaf in the graph"""
-        is_parent = False
+        if not self.is_directory:
+            return False
         for child_val in self.children.values():
-            is_parent = is_parent or child_val.is_leaf
-        return self.is_directory and is_parent
+            if child_val.is_leaf:
+                return True
+        return False
 
     @property
     def is_grandparent_of_leaf(self):
         """Returns whether this is the parent of a parent of a leaf in the graph"""
-        is_grandparent = False
+        if not self.is_directory:
+            return False
         for child_val in self.children.values():
-            is_grandparent = is_grandparent or child_val.is_parent_of_leaf
-        return self.is_directory and is_grandparent
+            if child_val.is_parent_of_leaf:
+                return True
+        return False
+
+    @property
+    def is_great_grandparent_of_leaf(self):
+        """Returns whether this is the parent of a parent of a leaf in the graph"""
+        if not self.is_directory:
+            return False
+        for child_val in self.children.values():
+            if child_val.is_grandparent_of_leaf:
+                return True
+        return False
 
     def traverse(
         self, path=None, conditional=lambda c: True, bottom_up=True, top_level=True

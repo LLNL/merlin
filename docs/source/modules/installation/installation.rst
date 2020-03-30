@@ -45,7 +45,7 @@ local-redis or docker-redis.
 Your computer/organization  may already have a redis server available, please check
 with your local system administrator.
 
-Pip (Recommended)
+Pip (recommended)
 +++++++++++++++++
 
 Create a virtualenv using python3 to install merlin.
@@ -188,7 +188,7 @@ if you stop the containers with ``docker-compose down`` and restart them with
 
 .. code-block:: bash
 
-  docker exec my-merlin pip3 install pandas faker
+     docker exec my-merlin pip3 install pandas faker
 
 Configuring merlin
 ------------------
@@ -354,13 +354,12 @@ server and python.
 
 .. code-block:: bash
 
- git clone https://github.com/michaelklishin/tls-gen.git
- cd tls-gen/basic
- make CN=my-redis CLIENT_ALT_NAME=my-redis SERVER_ALT_NAME=my-redis
- make verify
- mkdir -p ${HOME}/merlinu/cert_redis
- cp result/* ${HOME}/merlinu/cert_redis
-
+     git clone https://github.com/michaelklishin/tls-gen.git
+     cd tls-gen/basic
+     make CN=my-redis CLIENT_ALT_NAME=my-redis SERVER_ALT_NAME=my-redis
+     make verify
+     mkdir -p ${HOME}/merlinu/cert_redis
+     cp result/* ${HOME}/merlinu/cert_redis
 
 The ``redis:6.0-rc2`` docker service is exchanged for the previous
 ``redis:latest`` service. The configuration below does not use client
@@ -368,8 +367,8 @@ verification ``--tls-auth-clients no`` so the ssl files do not need to
 be defined as shown in the :ref:`broker_redis_ssl` section.
 
 .. literalinclude:: ./docker-compose_rabbit_redis_tls.yml
-   :language: yaml
+      :language: yaml
 
 Once this docker-compose file is run, the merlin ``app.yaml`` file is changed
-to use the redis TLS server ``rediss`` instead of ``redis``
+to use the redis TLS server ``rediss`` instead of ``redis``.
 
