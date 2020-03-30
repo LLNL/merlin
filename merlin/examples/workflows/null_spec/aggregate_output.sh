@@ -14,7 +14,7 @@ for run in "${runs[@]}"
         for s in "${samples[@]}"
             do
             echo "c${c}_s${s} : " >> ${DATA}
-            python3 task_script.py ${read_path}/c_$c/s_$s/*.log ${read_path}/c_$c/s_$s/*.err $c $s >> ${DATA}
+            python3 read_output.py ${read_path}/c_$c/s_$s/*.log ${read_path}/c_$c/s_$s/*.err $c $s >> ${DATA}
             done
         done
     perl -pi -e 's/ : \n/ : /g' ${DATA}
