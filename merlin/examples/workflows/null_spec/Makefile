@@ -1,5 +1,4 @@
 
-
 clean:
 	-rm *.log
 	-rm *.out

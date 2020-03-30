@@ -10,7 +10,7 @@
 #SBATCH --exclusive
 #SBATCH --mpibind=off
 
-YAML_DIR=/g/g13/bay1/merlin/merlin/examples/workflows/null_spec
+YAML_DIR=./..
 YAML_FILE=${YAML_DIR}/null_spec.yaml
 
 # print message that a new run is starting
