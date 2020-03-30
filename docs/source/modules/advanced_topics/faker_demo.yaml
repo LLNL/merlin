@@ -1,7 +1,3 @@
-   # TODO: add venv building to the spec? -> can this be dependency
-   #       add file system cleanup after each iteration
-   #       parallelize the iteration accumulation in cumulative_sample_proc
-
    description:
      name: dynamic_sampling_demo
      description: Demo dynamic sampling workflow
