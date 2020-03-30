@@ -318,8 +318,6 @@ Once finished, this is what the insides of ``step_1`` look like:
 .. image:: merlin_output2.png
     :align: center
 
-* ``sample_index.txt`` keeps track of samples in its directory. Similarly to ``MERLIN_FINISHED``, this is used internally by merlin and doesn't usually require user attention.
-
 * Numerically-named directories like ``00``, ``01``, and ``02`` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
 
 Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could internally change the value in the spec from 3 to 1000. OR you could just run this:
