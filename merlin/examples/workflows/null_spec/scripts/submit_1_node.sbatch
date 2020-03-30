@@ -10,8 +10,7 @@
 #SBATCH --exclusive
 #SBATCH --mpibind=off
 
-SCRIPTPATH=`pwd`
-YAML_FILE=${SCRIPTPATH}/../../../../../null_spec.yaml
+YAML_FILE=null_spec.yaml
 
 # print message that a new run is starting
 echo "Starting new run: $SLURM_JOBID"
