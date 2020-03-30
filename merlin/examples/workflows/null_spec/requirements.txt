@@ -1,4 +1,3 @@
 matplotlib
-notebook
 numpy
 scipy
