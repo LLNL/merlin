@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 
+
 parser = argparse.ArgumentParser(description="Launch 35 merlin workflow jobs")
 parser.add_argument("run_id", type=int, help="The ID of this run")
 parser.add_argument("output_path", type=str, help="the output path")
