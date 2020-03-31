@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.0.
+# This file is part of Merlin, Version: 1.5.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -390,7 +390,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         """
         LOG.debug("cwd = %s", cwd)
         LOG.debug("Script to execute: %s", path)
-        LOG.debug("starting process %s in cwd %s" % (path, cwd))
+        LOG.debug("starting process %s in cwd %s called %s" % (path, cwd, step.name))
         submission_record = self._execute_subprocess(step.name, path, cwd, env, False)
         retcode = submission_record.return_code
         if retcode == ReturnCode.OK:
@@ -439,6 +439,11 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         :param join_output: If True, append stderr to stdout
         :returns: The return code of the submission command and job identifier (SubmissionRecord).
         """
+        script_bn = os.path.basename(script_path)
+        new_output_name = os.path.splitext(script_bn)[0]
+        LOG.debug(
+            f"script_path={script_path}, output_name={output_name}, new_output_name={new_output_name}"
+        )
         p = start_process(script_path, shell=False, cwd=cwd, env=env)
         pid = p.pid
         output, err = p.communicate()
@@ -447,9 +452,9 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         # This allows us to save on iNodes by not writing the output,
         # or by appending error to output
         if output_name is not None:
-            o_path = os.path.join(cwd, "{}.out".format(output_name))
+            o_path = os.path.join(cwd, "{}.out".format(new_output_name))
 
-            with open(o_path, "w") as out:
+            with open(o_path, "a") as out:
                 out.write(output)
 
                 if join_output:
@@ -457,8 +462,8 @@ class MerlinScriptAdapter(LocalScriptAdapter):
                     out.write(err)
 
             if not join_output:
-                e_path = os.path.join(cwd, "{}.err".format(output_name))
-                with open(e_path, "w") as out:
+                e_path = os.path.join(cwd, "{}.err".format(new_output_name))
+                with open(e_path, "a") as out:
                     out.write(err)
 
         if retcode == 0:
