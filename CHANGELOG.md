@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- merlin example `null_spec`, which may be used to generate overhead data for merlin.
+
 ### Fixed
 - The task creation bottleneck.
 

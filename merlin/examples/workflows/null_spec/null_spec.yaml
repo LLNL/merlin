@@ -1,0 +1,36 @@
+description:
+    name: null_spec
+    description: run N_SAMPLES null steps at CONC concurrency. May be used to measure overhead in merlin.
+
+env:
+    variables:
+        OUTPUT_PATH: ./
+        N_SAMPLES: 10
+        CONC: 1
+
+study:
+    - name: null_step
+      description: exit immediately
+      run:
+        cmd: |
+            #echo $(SAMPLE)
+            exit $(MERLIN_SUCCESS)
+        task_queue: queue_s$(N_SAMPLES)_c$(CONC)
+
+    - name: verify
+      description: echo done
+      run:
+        cmd: echo "Done"
+        depends: [null_step_*]
+        task_queue: queue_s$(N_SAMPLES)_c$(CONC)
+
+merlin:
+    resources:
+        workers:
+            worker_s$(N_SAMPLES)_c$(CONC):
+                args: -O fair --prefetch-multiplier 1 -E -l info --concurrency $(CONC) --logfile=%%p.log
+    samples:
+        generate:
+            cmd: for i in {1..$(N_SAMPLES)} ; do echo $i ; done >> $(MERLIN_INFO)/samples.csv
+        file: $(MERLIN_INFO)/samples.csv
+        column_labels: [SAMPLE]
