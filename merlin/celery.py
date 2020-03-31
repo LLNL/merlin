@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.0.
+# This file is part of Merlin, Version: 1.5.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -52,6 +52,8 @@ from merlin.router import route_for_task
 
 
 LOG = logging.getLogger(__name__)
+
+merlin.common.security.encrypt_backend_traffic.set_backend_funcs()
 
 broker_ssl = True
 results_ssl = False

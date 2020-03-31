@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.0.
+# This file is part of Merlin, Version: 1.5.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -36,6 +36,8 @@ import celery.backends.base
 from merlin.common.security import encrypt
 
 
+encrypt.init_key()
+
 # remember what the original encode / decode are so we can call it in our
 # wrapper
 old_encode = celery.backends.base.Backend.encode
@@ -58,6 +60,9 @@ def _decrypt_decode(self, payload):
     return old_decode(self, encrypt.decrypt(payload))
 
 
-# set the encode / decode to our own encrypt_encode / encrypt_decode
-celery.backends.base.Backend.encode = _encrypt_encode
-celery.backends.base.Backend.decode = _decrypt_decode
+def set_backend_funcs():
+    """
+    Set the encode / decode to our own encrypt_encode / encrypt_decode.
+    """
+    celery.backends.base.Backend.encode = _encrypt_encode
+    celery.backends.base.Backend.decode = _decrypt_decode
