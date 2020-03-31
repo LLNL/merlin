@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated tutorial docs.
+- Relocated code that ran upon import from file body to functions. Added the respective
+  function calls.
 
 ## [1.5.0]
 
@@ -49,8 +51,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Script launching uses Merlin submission instead of subclassing maestro submit
 - `$(MERLIN_HARD_FAIL)` now shuts down only workers connected to the bad step's queue
 - Updated all tutorial modules
-- Relocated code that ran upon import from file body to functions. Added the respective
-  function calls.
 
 ## [1.4.1] [2020-03-06]
 
