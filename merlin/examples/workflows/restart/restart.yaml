@@ -1,0 +1,91 @@
+description:
+  description: A simple ensemble of with restarts.
+  name: restart
+
+batch:
+  type: local
+
+env:
+  variables:
+    OUTPUT_PATH: ./studies
+    N_SAMPLES: 10
+
+study:
+- description: Build the code
+  name: build
+  run:
+    cmd: echo mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c
+    task_queue: trs_par
+- description: Echo the params
+  name: runs 
+  run:
+    cmd: |
+      if [ -e restarted ]; then
+        exit $(MERLIN_SUCCESS)
+      fi
+      echo $(build.workspace)/mpi_hello $(V1) $(V2)
+      # This is to test the re-run of cmd if no restart is given
+      touch restarted
+      exit $(MERLIN_RESTART)
+    depends: [build]
+    task_queue: trs_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+- description: Echo the params
+  name: runs_rt 
+  run:
+    cmd: |
+      if [ -e retried ]; then
+        exit $(MERLIN_SUCCESS)
+      fi
+      echo $(build.workspace)/mpi_hello $(V1) $(V2)
+      touch retried
+      # This is to test the re-run of cmd if no restart is given
+      exit $(MERLIN_RETRY)
+    depends: [build]
+    task_queue: trs_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+- description: Echo the params using restart
+  name: runs_rs 
+  run:
+    cmd: |
+      echo ln -s $(build.workspace)/mpi_hello .
+      exit $(MERLIN_RESTART)
+    depends: [build]
+    task_queue: trs_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+    restart: |
+       echo $(build.workspace)/mpi_hello $(V1) $(V2)
+       exit $(MERLIN_SUCCESS)
+
+- description: Dump flux info
+  name: data
+  run:
+    cmd: |
+      echo flux kvs dir lwj.0.0.5 >& trs_kvs.out
+    depends: [runs*, runs_rs*, runs_rt*]
+    task_queue: trs_par
+
+global.parameters:
+  STUDY:
+    label: STUDY.%%
+    values:
+    - FLUXTEST
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      simworkers:
+        args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
+        steps: [runs, data]
+  samples:
+    column_labels: [V1, V2]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
