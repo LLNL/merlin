@@ -9,7 +9,6 @@ install:
 - pip install -r requirements/dev.txt
 - pip install -r merlin/examples/workflows/feature_demo/requirements.txt
 - pip install -e .
-- pip install -r requirements/mysql.txt
 - pip install --upgrade sphinx
 - merlin config
 script:

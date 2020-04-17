@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Removed mysql dependencies and added sqlalchemy to the celery module.
+- Removed mysql install from travis.
 
 ## [1.5.1]
 
