@@ -1,3 +1,0 @@
-# Packages if using MySQL.
-mysql-connector-python-rf
-pymysql
