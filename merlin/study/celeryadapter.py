@@ -327,7 +327,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
 
             if found:
                 LOG.warning(
-                    f"A Celery worker named {worker_name} is already configured/running for queue(s) = {' '.join(found)}"
+                    f"A Celery worker named '{worker_name}' is already configured/running for queue(s) = {' '.join(found)}"
                 )
                 continue
 
