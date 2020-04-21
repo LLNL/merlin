@@ -123,7 +123,10 @@ This can be used to put together custom celery workers.  Here you can override b
 types and node counts on a per worker basis to accommodate steps with different
 resource requirements.  In addition, this is where the ``task_queue`` becomes useful, as
 it groups the different allocation types, which can be assigned to each worker here
-by specifying step names (why not specify queue instead of step names here?).
+by specifying step names.
+
+.. Q: why not specify queue instead of step names here?
+.. A: idk, that's how it's always been. Maybe as a way of hiding queues under the abstraction of steps?
 
 .. code-block::yaml
 
@@ -328,12 +331,14 @@ Multi-machine workflows
 +++++++++++++++++++++++
 
 Spreading this workflow across multiple machines is a simple modification of the above workflow:
-simply add additional host names to machines list in the worker config.  The caveats for this
-distribution is that all systems will need to have access to the same workspace/filesystem, as
-well as use the same scheduler types (VERIFY THIS).  The following resource block demonstrates
-using one host for larger simulation steps, and a second host for the smaller post processing
+simply add additional host names to the `machines` list in the worker config. A caveat for this
+feature is that all host systems will need to have access to the same workspace/filesystem.
+The following resource block demonstrates
+usage of one host for larger simulation steps, and a second host for the smaller post processing
 steps.  In this case you simply need an alloc on each host, and can simply execute ``run-workers``
 on each, with ``run`` only needed once up front to send the tasks to the queue server.
+
+.. TODO: do all host systems need to use the same scheduler type?
 
 .. code-block::yaml
 
