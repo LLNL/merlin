@@ -386,7 +386,7 @@ After sending the workers to start on their queues, we need to first stop the wo
 
 .. note::
 
-  * The --spec flag only stops workers from a specfic YAML spec
+  * The --spec flag only stops workers from a specific YAML spec
 
 We stopped these tasks from running but if we were to run the workflow again
 (with 100 samples instead of 10), we would continue running the 10 samples first!

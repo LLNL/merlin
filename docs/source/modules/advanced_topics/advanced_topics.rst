@@ -85,7 +85,7 @@ will be overridden in the worker config.
 ..   NOTE FOR CODE MEETING: why not use task queue name in worker resources blocks instead
    of step names -> nominally seem to be different terms for the intended functionality
 
-..   NOTE FOR ME: test out monitor step type from examnple spec -> anything interesting
+..   NOTE FOR ME: test out monitor step type from example spec -> anything interesting
    to do here? can this be started first on the command line to enable an actual monitor
    process?
 
@@ -383,7 +383,7 @@ counter takes advantage of the ability to override workflow variables on the com
 This workflow specification is intended to be invoke within an allocation of nodes on your
 HPC cluster, e.g. within and sxterm.  The last step to queue up new samples for the next iteration,
 ``merlin run faker_demo.yaml ...``, only doesn't need to also call ``run-workers`` since
-the workers from the first instatiation are still alive.  Thus the new samples will
+the workers from the first instantiation are still alive.  Thus the new samples will
 immediately start processing on the existing allocation.
 
 Another change in this workflow relative to the single stage version is managing the workspaces
@@ -398,15 +398,13 @@ faker can generate appearing to be slightly more than 300.
 
 .. image:: ./cumulative_results.png
 
-Bootstrapping distributed workflows
-+++++++++++++++++++++++++++++++++++
-
-There is an alternative to the manual in-allocation workflow instatiation used in the previous
-examples: encode the run-workers calls into batch scripts and submit those, or use a tool such
-as Maestro to write those batch scripts and manage the allocations and worker startup.  This can
-particularly useful for large studies that can't fit into single allocations, or even to split them
-up into smaller allocations to get through the batch queues more quickly.  Here's an example of
-using maestro to do spin up a multi allocation instantiation of the dynamic demo:
-
-.. literalinclude:: ./advanced_topics/maestro_distributed.yaml
-   :language: yaml
+..  Bootstrapping distributed workflows
+    +++++++++++++++++++++++++++++++++++
+    There is an alternative to the manual in-allocation workflow instantiation used in the previous
+    examples: encode the run-workers calls into batch scripts and submit those, or use a tool such
+    as Maestro to write those batch scripts and manage the allocations and worker startup.  This can
+    particularly useful for large studies that can't fit into single allocations, or even to split them
+    up into smaller allocations to get through the batch queues more quickly.  Here's an example of
+    using maestro to do spin up a multi allocation instantiation of the dynamic demo:
+    .. literalinclude:: ./advanced_topics/maestro_distributed.yaml
+       :language: yaml
