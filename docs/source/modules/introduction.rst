@@ -292,7 +292,7 @@ What does this mean in practice?
 
 *Merlin can quickly queue a lot of simulations.*
 
-How quickly? The figure below shows task queing rates when pushing
+How quickly? The figure below shows task queuing rates when pushing
 :doc:`a simple workflow<./hello_world/hello_world>` on the
 `Quartz Supercomputer <https://hpc.llnl.gov/hardware/platforms/Quartz>`_
 to 40 million samples. This measures how quickly simulation ensembles of various

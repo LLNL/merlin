@@ -50,7 +50,7 @@
            task_queue: post_proc_queue
 
       - name: post-process
-        description: Post-Process collection of samples, counting occurences of unique names
+        description: Post-Process collection of samples, counting occurrences of unique names
         run:
            cmd: |
              $(PYTHON) $(POST_PROC) $(collect.workspace)/collected_samples.txt --results $(ITER_OUTPUT)/iter_$(ITER)_results.json
