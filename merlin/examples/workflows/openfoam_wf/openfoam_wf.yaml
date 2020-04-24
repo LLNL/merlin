@@ -2,7 +2,7 @@ description:
     name: openfoam_wf
     description: |
       A parameter study that includes initializing, running,
-      post-processing, collecting, learning and vizualizing OpenFOAM runs
+      post-processing, collecting, learning and visualizing OpenFOAM runs
 
 
 env:

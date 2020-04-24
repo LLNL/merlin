@@ -4,6 +4,18 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- The batch system will now check LSB_MCPU_HOSTS to determine the number
+  of nodes on blueos systems in case LSB_HOSTS is not present.
+- A few typos, partially finished material, and developer comments in the tutorials.
+
+### Changed
+- Removed mysql dependencies and added sqlalchemy to the celery module.
+- Removed mysql install from travis.
+- Improved the celery worker error messages.
+
 ## [1.5.1]
 
 ### Added

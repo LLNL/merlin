@@ -38,7 +38,7 @@ from setuptools import (
 
 version = __import__("merlin").VERSION
 
-extras = ["mysql", "dev"]
+extras = ["dev"]
 
 
 def readme():
