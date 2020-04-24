@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Version of the openfoam workflow that works on LC
+- In 'merlin examples', a version of the openfoam workflow that works on LC.
 
 ### Fixed
 - The batch system will now check LSB_MCPU_HOSTS to determine the number
