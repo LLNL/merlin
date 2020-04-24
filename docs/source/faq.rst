@@ -323,8 +323,8 @@ More information can be found at the `Flux web page <http://flux-framework.org/d
 
 How do I use flux on LC?
 ~~~~~~~~~~~~~~~~~~~~~~~~
-The ``--mpibind=off`` option is currently required when using flux with a slurm launcher on LC systems.
-Set this in the batch section as shown in the example below.
+The ``--mpibind=off`` option is currently required when using flux with a slurm launcher
+on LC toss3 systems. Set this in the batch section as shown in the example below.
 
 .. code:: yaml
 
