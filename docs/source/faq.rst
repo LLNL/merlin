@@ -329,7 +329,7 @@ Set this in the batch section as shown in the example below.
 .. code:: yaml
 
    batch:
-     type: slurm
+     type: flux
      launch_args: --mpibind=off
 
 What is ``LAUNCHER``?
