@@ -10,11 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The batch system will now check LSB_MCPU_HOSTS to determine the number
   of nodes on blueos systems in case LSB_HOSTS is not present.
 - A few typos, partially finished material, and developer comments in the tutorials.
+- Fixed a bug where the batch shell was not overriding the default.
 
 ### Changed
 - Removed mysql dependencies and added sqlalchemy to the celery module.
 - Removed mysql install from travis.
 - Improved the celery worker error messages.
+- The slurm launch for celery workers no longer uses the --pty option,
+  this can be added by setting launch_args in the batch section. 
 
 ## [1.5.1]
 
