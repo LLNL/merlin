@@ -83,7 +83,7 @@ study:
             ((next_iter=next_iter+1))
             echo "Starting iteration " $next_iter
             cd $(SPECROOT)
-            merlin run $(SPECROOT)/faker_demo.yaml --vars ITER=$next_iter
+            merlin run $(SPECROOT)/iterative_demo.yaml --vars ITER=$next_iter
          fi
        nodes: 1
        procs: 1

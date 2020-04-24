@@ -50,7 +50,6 @@ PENV=merlin$(PYV)
 .PHONY : install-dev
 .PHONY : virtualenv
 .PHONY : install-workflow-deps
-.PHONY : install-pip-mysql
 .PHONY : install-merlin
 .PHONY : clean-output
 .PHONY : clean-docs
@@ -83,10 +82,6 @@ virtualenv:
 
 install-workflow-deps:
 	$(PIP) install -r $(WKFW)feature_demo/requirements.txt
-
-
-install-pip-mysql:
-	$(PIP) install -r requirements/mysql.txt
 
 
 install-merlin:
