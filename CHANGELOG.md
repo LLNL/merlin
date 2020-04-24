@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- A faq entry for --mpibin when using slurm on LC.
+
 ### Fixed
 - The batch system will now check LSB_MCPU_HOSTS to determine the number
   of nodes on blueos systems in case LSB_HOSTS is not present.
