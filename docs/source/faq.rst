@@ -321,6 +321,17 @@ to specify the same launch command that will work on different HPC clusters with
 default schedulers such as SLURM or LSF.
 More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
 
+How do I use flux on LC?
+~~~~~~~~~~~~~~~~~~~~~~~~
+The ``--mpibind=off`` option is currently required when using flux with a slurm launcher
+on LC toss3 systems. Set this in the batch section as shown in the example below.
+
+.. code:: yaml
+
+   batch:
+     type: flux
+     launch_args: --mpibind=off
+
 What is ``LAUNCHER``?
 ~~~~~~~~~~~~~~~~~~~~~
 ``$LAUNCHER`` is a reserved word that may be used in a step command. It serves as an abstraction to launch a job with parallel schedulers like :ref:`slurm`, :ref:`lsf`, and :ref:`flux`.
