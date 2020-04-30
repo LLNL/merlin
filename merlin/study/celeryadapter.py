@@ -38,10 +38,7 @@ import subprocess
 import time
 from contextlib import suppress
 
-from merlin.study.batch import (
-    batch_check_parallel,
-    batch_worker_launch,
-)
+from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import (
     check_machines,
     get_procs,
@@ -167,7 +164,7 @@ def query_celery_queues(queues):
                 name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
                 found_queues.append((name, jobs, consumers))
                 LOG.info(f"Found queue {queue}.")
-            except:
+            except BaseException:
                 LOG.warning(f"Cannot find queue {queue} on server.")
     finally:
         connection.close()
@@ -204,7 +201,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
             simworkers:
                 args: -O fair --prefetch-multiplier 1 -E -l info --concurrency 4
                 steps: [run, data]
-                nodes: 1 
+                nodes: 1
                 machine: [hostA, hostB]
     """
     if not just_return_command:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 """This module will collect information on flux jobs from the live kvs
-store and output times for each phase. 
+store and output times for each phase.
 
 create: The time flux registerd the job
 starting: The time the job was created
@@ -10,13 +10,9 @@ complete: The time the job was complete
 walltime: ? Seems to be 0.
 """
 import os
-import sys
 
 import flux
-from flux import (
-    kvs,
-    kz,
-)
+from flux import kvs
 
 
 f = flux.Flux()
@@ -54,7 +50,7 @@ for d in kvs.walk("lwj", flux_handle=f):
                 d[0], create_time, start_time, completing_time, complete_time, wall_time
             )
         )
-    except:
+    except BaseException:
         pass
 
 

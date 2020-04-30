@@ -36,10 +36,7 @@ from __future__ import print_function
 import logging
 import os
 
-from merlin.config.configfile import (
-    CONFIG,
-    get_ssl_entries,
-)
+from merlin.config.configfile import CONFIG, get_ssl_entries
 
 
 try:

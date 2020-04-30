@@ -38,7 +38,6 @@ decoupled from the logic the tasks are running.
 import logging
 import os
 import time
-from contextlib import suppress
 from datetime import datetime
 
 from merlin.study.celeryadapter import (
