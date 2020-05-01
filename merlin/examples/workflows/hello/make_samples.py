@@ -1,8 +1,7 @@
 import argparse
 
-import numpy as np
-
 import names
+import numpy as np
 
 
 # argument parsing
