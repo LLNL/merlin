@@ -158,7 +158,7 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
     launchs = worker_launch
     if not launchs:
         if btype == "slurm" or launcher == "slurm":
-            launchs = f"srun --mpi=none --pty -N {nodes} -n {nodes}"
+            launchs = f"srun --mpi=none -N {nodes} -n {nodes}"
             if queue:
                 launchs += f" -p {queue}"
         if launcher == "lsf":

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- A faq entry for --mpibind when using slurm on LC.
+- Version of the openfoam workflow that works on LC
 - In 'merlin examples', a version of the openfoam workflow that works on LC.
 
 ### Fixed
@@ -14,11 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of nodes on blueos systems in case LSB_HOSTS is not present.
 - A few typos, partially finished material, and developer comments in the tutorials.
 - PEP-8 violations like unused imports, bad formatting, broken code.
+- A bug where the batch shell was not overriding the default.
 
 ### Changed
 - Removed mysql dependencies and added sqlalchemy to the celery module.
 - Removed mysql install from travis.
 - Improved the celery worker error messages.
+- The slurm launch for celery workers no longer uses the --pty option,
+  this can be added by setting launch_args in the batch section. 
 
 ## [1.5.1]
 
