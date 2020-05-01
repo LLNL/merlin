@@ -9,7 +9,7 @@ fake = Faker()
 
 def process_args(args):
     n_samples = args.n
-    n_batches = args.b
+    # n_batches = args.b
     outfile = args.outfile
 
     with open(outfile, "w") as name_file:

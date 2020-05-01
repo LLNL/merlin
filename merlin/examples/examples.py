@@ -222,7 +222,7 @@ merlin:
     column_labels: [VAR1, VAR2]
     file: $(MERLIN_INFO)/samples.csv
     generate:
-      cmd: | 
+      cmd: |
         echo "Generate samples here."
         echo "1.0,1.0" > $(MERLIN_INFO)/samples.csv
         echo "2.0,2.0" >> $(MERLIN_INFO)/samples.csv

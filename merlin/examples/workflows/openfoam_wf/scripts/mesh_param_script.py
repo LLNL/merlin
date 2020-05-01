@@ -1,5 +1,4 @@
 import argparse
-import math
 
 
 def positive_numbers(x):
