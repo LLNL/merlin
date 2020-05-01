@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The batch system will now check LSB_MCPU_HOSTS to determine the number
   of nodes on blueos systems in case LSB_HOSTS is not present.
 - A few typos, partially finished material, and developer comments in the tutorials.
+- PEP-8 violations like unused imports, bad formatting, broken code.
 
 ### Changed
 - Removed mysql dependencies and added sqlalchemy to the celery module.
