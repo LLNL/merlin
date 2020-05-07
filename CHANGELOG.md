@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - A faq entry for --mpibind when using slurm on LC.
-- Version of the openfoam workflow that works on LC
-- In 'merlin examples', a version of the openfoam workflow that works on LC.
+- Version of the openfoam workflow that works without docker.
+- In 'merlin examples', a version of the openfoam workflow that works without docker.
 
 ### Fixed
 - The batch system will now check LSB_MCPU_HOSTS to determine the number
