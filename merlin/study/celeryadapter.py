@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -167,7 +167,7 @@ def query_celery_queues(queues):
                 name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
                 found_queues.append((name, jobs, consumers))
                 LOG.info(f"Found queue {queue}.")
-            except:
+            except BaseException:
                 LOG.warning(f"Cannot find queue {queue} on server.")
     finally:
         connection.close()
@@ -204,7 +204,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
             simworkers:
                 args: -O fair --prefetch-multiplier 1 -E -l info --concurrency 4
                 steps: [run, data]
-                nodes: 1 
+                nodes: 1
                 machine: [hostA, hostB]
     """
     if not just_return_command:
@@ -327,7 +327,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
 
             if found:
                 LOG.warning(
-                    f"{worker_name}: Celery is already configured/running for queue(s) = {' '.join(found)}"
+                    f"A celery worker named '{worker_name}' is already configured/running for queue(s) = {' '.join(found)}"
                 )
                 continue
 
@@ -349,7 +349,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
             worker_list.append(worker_cmd)
 
         except Exception as e:
-            LOG.error(f"Cannot start workers, {e}")
+            LOG.error(f"Cannot start celery workers, {e}")
             raise
 
     # Return a string with the worker commands for logging

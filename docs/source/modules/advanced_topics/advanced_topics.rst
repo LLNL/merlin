@@ -85,7 +85,7 @@ will be overridden in the worker config.
 ..   NOTE FOR CODE MEETING: why not use task queue name in worker resources blocks instead
    of step names -> nominally seem to be different terms for the intended functionality
 
-..   NOTE FOR ME: test out monitor step type from examnple spec -> anything interesting
+..   NOTE FOR ME: test out monitor step type from example spec -> anything interesting
    to do here? can this be started first on the command line to enable an actual monitor
    process?
 
@@ -123,7 +123,10 @@ This can be used to put together custom celery workers.  Here you can override b
 types and node counts on a per worker basis to accommodate steps with different
 resource requirements.  In addition, this is where the ``task_queue`` becomes useful, as
 it groups the different allocation types, which can be assigned to each worker here
-by specifying step names (why not specify queue instead of step names here?).
+by specifying step names.
+
+.. Q: why not specify queue instead of step names here?
+.. A: idk, that's how it's always been. Maybe as a way of hiding queues under the abstraction of steps?
 
 .. code-block::yaml
 
@@ -328,12 +331,14 @@ Multi-machine workflows
 +++++++++++++++++++++++
 
 Spreading this workflow across multiple machines is a simple modification of the above workflow:
-simply add additional host names to machines list in the worker config.  The caveats for this
-distribution is that all systems will need to have access to the same workspace/filesystem, as
-well as use the same scheduler types (VERIFY THIS).  The following resource block demonstrates
-using one host for larger simulation steps, and a second host for the smaller post processing
+simply add additional host names to the `machines` list in the worker config. A caveat for this
+feature is that all host systems will need to have access to the same workspace/filesystem.
+The following resource block demonstrates
+usage of one host for larger simulation steps, and a second host for the smaller post processing
 steps.  In this case you simply need an alloc on each host, and can simply execute ``run-workers``
 on each, with ``run`` only needed once up front to send the tasks to the queue server.
+
+.. TODO: do all host systems need to use the same scheduler type?
 
 .. code-block::yaml
 
@@ -383,7 +388,7 @@ counter takes advantage of the ability to override workflow variables on the com
 This workflow specification is intended to be invoke within an allocation of nodes on your
 HPC cluster, e.g. within and sxterm.  The last step to queue up new samples for the next iteration,
 ``merlin run faker_demo.yaml ...``, only doesn't need to also call ``run-workers`` since
-the workers from the first instatiation are still alive.  Thus the new samples will
+the workers from the first instantiation are still alive.  Thus the new samples will
 immediately start processing on the existing allocation.
 
 Another change in this workflow relative to the single stage version is managing the workspaces
@@ -398,15 +403,13 @@ faker can generate appearing to be slightly more than 300.
 
 .. image:: ./cumulative_results.png
 
-Bootstrapping distributed workflows
-+++++++++++++++++++++++++++++++++++
-
-There is an alternative to the manual in-allocation workflow instatiation used in the previous
-examples: encode the run-workers calls into batch scripts and submit those, or use a tool such
-as Maestro to write those batch scripts and manage the allocations and worker startup.  This can
-particularly useful for large studies that can't fit into single allocations, or even to split them
-up into smaller allocations to get through the batch queues more quickly.  Here's an example of
-using maestro to do spin up a multi allocation instantiation of the dynamic demo:
-
-.. literalinclude:: ./advanced_topics/maestro_distributed.yaml
-   :language: yaml
+..  Bootstrapping distributed workflows
+    +++++++++++++++++++++++++++++++++++
+    There is an alternative to the manual in-allocation workflow instantiation used in the previous
+    examples: encode the run-workers calls into batch scripts and submit those, or use a tool such
+    as Maestro to write those batch scripts and manage the allocations and worker startup.  This can
+    particularly useful for large studies that can't fit into single allocations, or even to split them
+    up into smaller allocations to get through the batch queues more quickly.  Here's an example of
+    using maestro to do spin up a multi allocation instantiation of the dynamic demo:
+    .. literalinclude:: ./advanced_topics/maestro_distributed.yaml
+       :language: yaml

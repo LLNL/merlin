@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -117,6 +117,7 @@ class MerlinSpec(YAMLSpecification):
         MerlinSpec.fill_missing_defaults(self.batch, defaults.BATCH["batch"])
 
         # fill in missing step section defaults within 'run'
+        defaults.STUDY_STEP_RUN["shell"] = self.batch["shell"]
         for step in self.study:
             MerlinSpec.fill_missing_defaults(step["run"], defaults.STUDY_STEP_RUN)
 

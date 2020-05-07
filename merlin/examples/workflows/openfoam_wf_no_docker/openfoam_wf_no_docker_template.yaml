@@ -1,13 +1,15 @@
 description:
-    name: openfoam_wf_template
+    name: openfoam_wf_no_docker_template
     description: |
       A parameter study that includes initializing, running,
-      post-processing, collecting, learning and visualizing OpenFOAM runs
+      post-processing, collecting, learning and vizualizing OpenFOAM runs
 
 
 env:
     variables:
-        OUTPUT_PATH: ./openfoam_wf_output
+        OUTPUT_PATH: ./openfoam_wf_no_docker_template
+        OPENFOAM_PATH: insert/openfoam/path/here
+        SHELL_TYPE: bashrc
 
         SCRIPTS: $(MERLIN_INFO)/scripts
         N_SAMPLES: 100
@@ -43,7 +45,7 @@ study:
               pip install -r $(SPECROOT)/requirements.txt
 
               # Set up the cavity directory in the MERLIN_INFO directory
-              source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
+              source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO) $(OPENFOAM_PATH)
 
     - name: sim_runs
       description: |
@@ -56,16 +58,15 @@ study:
 
               ## Edits default values for viscosity and lidspeed with
               #  values specified by samples section of the merlin block
-              sed -i '' "18s/.*/nu              [0 2 -1 0 0 0 0] $(VISCOSITY);/" constant/transportProperties
-              sed -i '' "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
+              sed -i "18s/.*/nu              [0 2 -1 0 0 0 0] $(VISCOSITY);/" constant/transportProperties
+              sed -i "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
 
               cd ..
               cp $(SCRIPTS)/run_openfoam .
 
-              # Creating a unique OpenFOAM docker container for each sample and using it to run the simulation
-              CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
-              docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
-              docker wait ${CONTAINER_NAME}
+              source run_openfoam $(LID_SPEED) $(OPENFOAM_PATH) $(SHELL_TYPE)
+
+              wait
           depends: [setup]
           task_queue: simqueue
 

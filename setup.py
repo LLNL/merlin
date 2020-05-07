@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -38,7 +38,7 @@ from setuptools import (
 
 version = __import__("merlin").VERSION
 
-extras = ["mysql", "dev"]
+extras = ["dev"]
 
 
 def readme():
