@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved the celery worker error messages.
 - The slurm launch for celery workers no longer uses the --pty option,
   this can be added by setting launch_args in the batch section. 
+- Adjusted wording in openfoam_wf_no_docker example.
 
 ## [1.5.1]
 
