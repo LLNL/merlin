@@ -1,5 +1,5 @@
 description:
-    name: openfoam_wf_lc_template
+    name: openfoam_wf_no_docker_template
     description: |
       A parameter study that includes initializing, running,
       post-processing, collecting, learning and vizualizing OpenFOAM runs
@@ -7,8 +7,8 @@ description:
 
 env:
     variables:
-        OUTPUT_PATH: ./openfoam_wf_lc_template_output
-        OPENFOAM_PATH: /usr/workspace/merlinau/OpenFOAM/toss_3_x86_64_ib
+        OUTPUT_PATH: ./openfoam_wf_no_docker_template
+        OPENFOAM_PATH: insert/openfoam/path/here
         SHELL_TYPE: bashrc
 
         SCRIPTS: $(MERLIN_INFO)/scripts
