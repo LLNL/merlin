@@ -1,13 +1,15 @@
 description:
-    name: openfoam_wf
+    name: openfoam_wf_no_docker
     description: |
       A parameter study that includes initializing, running,
-      post-processing, collecting, learning and visualizing OpenFOAM runs
+      post-processing, collecting, learning and vizualizing OpenFOAM runs
 
 
 env:
     variables:
         OUTPUT_PATH:
+        OPENFOAM_PATH:
+        SHELL_TYPE:
 
         SCRIPTS:
         N_SAMPLES:
@@ -28,7 +30,6 @@ merlin:
             simworkers:
                 args: -l INFO --concurrency <INPUT CONCURRENCY HERE> --prefetch-multiplier 1 -Ofair
                 steps:
-
 
 
 study:

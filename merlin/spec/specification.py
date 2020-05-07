@@ -117,6 +117,7 @@ class MerlinSpec(YAMLSpecification):
         MerlinSpec.fill_missing_defaults(self.batch, defaults.BATCH["batch"])
 
         # fill in missing step section defaults within 'run'
+        defaults.STUDY_STEP_RUN["shell"] = self.batch["shell"]
         for step in self.study:
             MerlinSpec.fill_missing_defaults(step["run"], defaults.STUDY_STEP_RUN)
 

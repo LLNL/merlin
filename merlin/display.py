@@ -32,7 +32,6 @@
 Manages formatting for displaying information to the console.
 """
 import pprint
-import socket
 import subprocess
 
 from kombu import Connection

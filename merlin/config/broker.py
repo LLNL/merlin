@@ -191,7 +191,7 @@ def get_connection_string(include_password=True):
 
     If the url variable is present, return that as the connection string.
 
-    :param include_password : The connection can be formatted for output by 
+    :param include_password : The connection can be formatted for output by
                               setting this to True
     """
     try:

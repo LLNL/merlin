@@ -261,8 +261,6 @@ This part should look like:
         depends: [setup]
         task_queue: simqueue
 
-  .. Why do we need to assign a task_queue for this step and not the rest? Do the rest all have the same queue?
-
 This step runs many simulations in parallel so it would run faster if we assign it
 a worker with a higher concurrency. Navigate back to the ``resources`` section in the ``merlin`` block
 
@@ -386,7 +384,7 @@ After sending the workers to start on their queues, we need to first stop the wo
 
 .. note::
 
-  * The --spec flag only stops workers from a specfic YAML spec
+  * The --spec flag only stops workers from a specific YAML spec
 
 We stopped these tasks from running but if we were to run the workflow again
 (with 100 samples instead of 10), we would continue running the 10 samples first!
