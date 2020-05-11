@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -104,7 +104,7 @@ def get_node_count(default=1):
         return n_batch_nodes
     elif "LSB_MCPU_HOSTS" in os.environ:
         nodes = os.environ["LSB_MCPU_HOSTS"].split()
-        n_batch_nodes = len(nodes)//2 - 1
+        n_batch_nodes = len(nodes) // 2 - 1
         return n_batch_nodes
 
     return default

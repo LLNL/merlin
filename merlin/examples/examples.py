@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -222,7 +222,7 @@ merlin:
     column_labels: [VAR1, VAR2]
     file: $(MERLIN_INFO)/samples.csv
     generate:
-      cmd: | 
+      cmd: |
         echo "Generate samples here."
         echo "1.0,1.0" > $(MERLIN_INFO)/samples.csv
         echo "2.0,2.0" >> $(MERLIN_INFO)/samples.csv

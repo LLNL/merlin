@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -191,7 +191,7 @@ def get_connection_string(include_password=True):
 
     If the url variable is present, return that as the connection string.
 
-    :param include_password : The connection can be formatted for output by 
+    :param include_password : The connection can be formatted for output by
                               setting this to True
     """
     try:

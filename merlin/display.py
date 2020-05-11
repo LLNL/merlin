@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -32,7 +32,6 @@
 Manages formatting for displaying information to the console.
 """
 import pprint
-import socket
 import subprocess
 
 from kombu import Connection

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -220,10 +220,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         ]
 
         if nodes:
-            args += [
-                self._cmd_flags["nodes"],
-                str(nodes),
-            ]
+            args += [self._cmd_flags["nodes"], str(nodes)]
 
         supported = set(kwargs.keys()) - self._unsupported
         for key in supported:
@@ -259,7 +256,7 @@ class MerlinLSFSrunScriptAdapter(MerlinSlurmScriptAdapter):
         """
         Initialize an instance of the MerinLSFSrunScriptAdapter.
         The MerlinLSFSrunScriptAdapter is the adapter that is used for workflows that
-        will execute LSF parallel jobs in a celery worker with an srun wrapper. The only 
+        will execute LSF parallel jobs in a celery worker with an srun wrapper. The only
         configurable aspect to this adapter is the shell that scripts are executed in.
 
         :param **kwargs: A dictionary with default settings for the adapter.

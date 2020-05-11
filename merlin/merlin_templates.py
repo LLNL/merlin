@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -33,14 +33,9 @@ This module handles the CLI for the deprecated `merlin-templates` command.
 """
 import argparse
 import logging
-import os
 import sys
 
 from merlin.ascii_art import banner_small
-from merlin.examples.generator import (
-    list_examples,
-    setup_example,
-)
 from merlin.log_formatter import setup_logging
 
 

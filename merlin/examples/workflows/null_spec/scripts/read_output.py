@@ -1,9 +1,7 @@
 import argparse
 import datetime
-import os
 import re
 import subprocess
-import time
 
 
 # argument parsing
@@ -55,7 +53,7 @@ def start_verify_time():
         element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
         timestamp = datetime.datetime.timestamp(element)
         print(f"c{args.c}_s{args.s} start verify : " + str(timestamp))
-    except:
+    except BaseException:
         print(f"c{args.c}_s{args.s} start verify : ERROR")
 
 

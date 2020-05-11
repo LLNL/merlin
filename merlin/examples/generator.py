@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.1.
+# This file is part of Merlin, Version: 1.5.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -42,8 +42,6 @@ import shutil
 
 import tabulate
 import yaml
-
-from merlin.examples import examples
 
 
 LOG = logging.getLogger(__name__)
@@ -86,10 +84,10 @@ def list_examples():
             with open(spec) as f:
                 try:
                     spec_metadata = yaml.safe_load(f)["description"]
-                except KeyError as e:
+                except KeyError:
                     LOG.warn(f"{spec} lacks required section 'description'")
                     continue
-                except TypeError as e:
+                except TypeError:
                     continue
             rows.append([spec_metadata["name"], spec_metadata["description"]])
     return "\n" + tabulate.tabulate(rows, headers) + "\n"
