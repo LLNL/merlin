@@ -31,6 +31,6 @@ merlin:
                 args: -O fair --prefetch-multiplier 1 -E -l info --concurrency $(CONC) --logfile=%%p.log
     samples:
         generate:
-            cmd: for i in {1..$(N_SAMPLES)} ; do echo $i ; done >> $(MERLIN_INFO)/samples.csv
-        file: $(MERLIN_INFO)/samples.csv
+            cmd: touch $(MERLIN_INFO)/empty_samples_file.csv
+        file: $(MERLIN_INFO)/empty_samples_file.csv
         column_labels: [SAMPLE]
