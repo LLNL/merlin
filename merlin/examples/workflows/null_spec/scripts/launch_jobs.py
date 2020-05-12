@@ -8,10 +8,11 @@ parser = argparse.ArgumentParser(description="Launch 35 merlin workflow jobs")
 parser.add_argument("run_id", type=int, help="The ID of this run")
 parser.add_argument("output_path", type=str, help="the output path")
 parser.add_argument("spec_path", type=str, help="path to the spec to run")
+parser.add_argument("script_path", type=str, help="path to the make samples script")
 args = parser.parse_args()
 
 # launch 35 merlin workflow jobs
-script_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
+submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 concurrencies = [1, 2, 4, 8, 16, 32, 64]
 nodes = [1, 1, 1, 1, 1, 1, 2]
 samples = [1, 10, 100, 1000, 10000]
@@ -29,8 +30,10 @@ for i, concurrency in enumerate(concurrencies):
         os.chdir(s_name)
         submit = f"submit_{nodes[i]}_node.sbatch"
         command = f"sbatch {submit} {sample} {int(concurrency/nodes[i])}"
-        shutil.copyfile(os.path.join(script_path, submit), submit)
+        shutil.copyfile(os.path.join(submit_path, submit), submit)
         shutil.copyfile(args.spec_path, os.path.basename(args.spec_path))
+        os.mkdir("scripts")
+        shutil.copyfile(args.script_path, os.path.join("scripts", "make_samples.py"))
         lines = subprocess.check_output(command, shell=True).decode("ascii")
         os.chdir(f"..")
     os.chdir(f"..")
