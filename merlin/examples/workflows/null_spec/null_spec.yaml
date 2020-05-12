@@ -31,6 +31,6 @@ merlin:
                 args: -O fair --prefetch-multiplier 1 -E -l info --concurrency $(CONC) --logfile=%%p.log
     samples:
         generate:
-            cmd: touch $(MERLIN_INFO)/empty_samples_file.csv
-        file: $(MERLIN_INFO)/empty_samples_file.csv
+            cmd: python3 $(SPECROOT)/scripts/make_samples.py --number $(N_SAMPLES) --filepath $(MERLIN_INFO)/samples_file.npy
+        file: $(MERLIN_INFO)/samples_file.npy
         column_labels: [SAMPLE]
