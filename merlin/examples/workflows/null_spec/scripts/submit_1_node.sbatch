@@ -10,7 +10,7 @@
 #SBATCH --exclusive
 #SBATCH --mpibind=off
 
-YAML_FILE=null_spec.yaml
+YAML_FILE=spec.yaml
 
 # print message that a new run is starting
 echo "Starting new run: $SLURM_JOBID"
