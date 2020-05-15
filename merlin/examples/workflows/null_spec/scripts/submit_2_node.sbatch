@@ -2,7 +2,7 @@
 
 #SBATCH -N 2
 #SBATCH -J MerlinBaseline
-#SBATCH -t 0:10:00
+#SBATCH -t 10
 #SBATCH -p pdebug
 #SBATCH -A lbpm
 #SBATCH --output=merlin%j.out

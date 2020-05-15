@@ -15,7 +15,8 @@ args = parser.parse_args()
 submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 concurrencies = [1, 2, 4, 8, 16, 32, 64]
 nodes = [1, 1, 1, 1, 1, 1, 2]
-times = ["0:01:00", "0:02:00", "0:05:00", "0:10:00", "0:20:00"]
+#times = ["0:01:00", "0:02:00", "0:05:00", "0:10:00", "0:20:00"]
+times = [1, 2, 5, 10, 20]
 samples = [1, 10, 100, 1000, 10000]
 output_path = os.path.join(args.output_path, f"run_{args.run_id}")
 os.makedirs(output_path, exist_ok=True)
@@ -30,7 +31,7 @@ for i, concurrency in enumerate(concurrencies):
             os.mkdir(s_name)
         os.chdir(s_name)
         submit = f"submit_{nodes[i]}_node.sbatch"
-        command = f"sbatch {submit} {sample} {int(concurrency/nodes[i])} --jobname=merlin{args.run_id} --time={times[j]}"
+        command = f"sbatch -J c{concurrency}s{sample}r{args.run_id} --time {times[j]} {submit} {sample} {int(concurrency/nodes[i])}"
         shutil.copyfile(os.path.join(submit_path, submit), submit)
         shutil.copyfile(args.spec_path, "spec.yaml")
         os.mkdir("scripts")
