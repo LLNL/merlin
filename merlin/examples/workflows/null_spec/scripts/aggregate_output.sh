@@ -16,13 +16,7 @@ for run in "${runs[@]}"
             do
             echo "c${c}_s${s} : " >> ${DATA}
             wf_path="${read_path}/c_$c/s_$s"
-
-            echo "${wf_path}/*.log"
-            echo "${wf_path}/*.err"
-            echo "$c"
-            echo "$s"
-    
-            python3 read_output.py --logfile ${wf_path}/*.log --errfile ${wf_path}/*.err --c $c --s $s >> ${DATA}
+            python3 read_output.py ${wf_path}/ $c $s >> ${DATA}
             done
         done
     perl -pi -e 's/ : \n/ : /g' ${DATA}
