@@ -3,6 +3,8 @@ import datetime
 import re
 import subprocess
 import glob
+import os
+import sys
 
 
 # argument parsing
@@ -18,20 +20,23 @@ args.errfile = glob.glob(os.path.join(args.path, "*.err"))
 def single_task_times():
     task_durations = []
     for log in args.logfile:
-        pre_lines = subprocess.check_output(
-            f'grep " succeeded in " {log}', shell=True
-        ).decode("ascii")
+        try:
+            pre_lines = subprocess.check_output(
+                f'grep " succeeded in " {log}', shell=True
+            ).decode("ascii")
 
-        pre_list = pre_lines.strip().split("\n")
+            pre_list = pre_lines.strip().split("\n")
 
-        for line in pre_list:
-            matches = re.search(r"\d+.\d+s:", line)
-            if matches:
-                match = matches.group(0)
-                match = float(match.strip("s:"))
-                task_durations.append(match)
+            for line in pre_list:
+                matches = re.search(r"\d+.\d+s:", line)
+                if matches:
+                    match = matches.group(0)
+                    match = float(match.strip("s:"))
+                    task_durations.append(match)
+        except:
+            continue
 
-    print(str(task_durations), end="")
+    print(str(task_durations))
 
 
 def merlin_run_time():
@@ -93,7 +98,7 @@ def start_sample1_time():
     for log in args.logfile:
         try:
             pre_line = subprocess.check_output(
-                f"grep -m1 \"Executing step 'null_step'\" {args.logfile}", shell=True
+                f"grep -m1 \"Executing step 'null_step'\" {log}", shell=True
             ).decode("ascii")
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
