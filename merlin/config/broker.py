@@ -266,7 +266,7 @@ def get_ssl_config():
     if not broker_ssl:
         broker_ssl = True
 
-    if broker == "rabbitmq" or broker == "rediss" or broker =="amqps":
+    if broker == "rabbitmq" or broker == "rediss" or broker == "amqps":
         return broker_ssl
 
     return False
