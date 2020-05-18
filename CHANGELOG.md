@@ -6,9 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The broker name can now be amqps (with ssl) or amqp (without ssl). 
+
 ### Fixed
 - Added a check for initial running workers when using merlin monitor to
   eliminate race condition.
+  
+### Changed
+- The default rabbitmq vhost is now <user> instead of /<user>.
 
 ## [1.5.3]
 
