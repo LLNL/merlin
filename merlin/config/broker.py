@@ -220,7 +220,7 @@ def get_connection_string(include_password=True):
         raise ValueError(f"Error: {broker} is not a supported broker.")
 
     if broker == "rabbitmq" or broker == "amqps":
-        return get_rabbit_connection(config_path, include_password)
+        return get_rabbit_connection(config_path, include_password, conn="amqps")
 
     elif broker == "amqp":
         return get_rabbit_connection(config_path, include_password, conn="amqp")
