@@ -144,11 +144,11 @@ def get_redissock_connection(config_path, include_password):
 
 def get_redis_connection(config_path, include_password, ssl=False):
     """
-    Return the redis or redis specific connection
+    Return the redis or rediss specific connection
 
     :param config_path : The path for ssl certificates and passwords
     :param include_password : Format the connection for ouput by setting this True
-    :param ssl : Flag to use redis output
+    :param ssl : Flag to use rediss output
     """
     server = CONFIG.broker.server
     LOG.info(f"Broker: server = {server}")
