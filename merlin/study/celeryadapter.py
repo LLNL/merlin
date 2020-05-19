@@ -37,7 +37,6 @@ import socket
 import subprocess
 import time
 from contextlib import suppress
-from merlin.common.security import encrypt
 
 from merlin.study.batch import (
     batch_check_parallel,
@@ -472,11 +471,12 @@ def create_celery_config(config_dir, data_file_name, data_file_path):
     :param `data_file_name`: The name of the config file.
     :param `data_file_path`: The full data file path.
     """
-    encrypt.init_key()
     # This will need to come from the server interface
     MERLIN_CONFIG = os.path.join(config_dir, data_file_name)
 
     if os.path.isfile(MERLIN_CONFIG):
+        from merlin.common.security import encrypt
+        encrypt.init_key()
         LOG.info(f"The config file already exists, {MERLIN_CONFIG}")
         return
 
@@ -487,3 +487,6 @@ def create_celery_config(config_dir, data_file_name, data_file_path):
         LOG.error(f"Cannot create config file {MERLIN_CONFIG}")
 
     LOG.info(f"The file {MERLIN_CONFIG} is ready to be edited for your system.")
+
+    from merlin.common.security import encrypt
+    encrypt.init_key()
