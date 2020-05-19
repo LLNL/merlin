@@ -35,7 +35,6 @@ import subprocess
 import time
 from contextlib import suppress
 from fileinput import FileInput
-import sys
 
 from cached_property import cached_property
 from maestrowf.datastructures.core import Study
@@ -354,19 +353,17 @@ class MerlinStudy:
             self.expanded_filepath, suppress_warning=False
         )
 
-        expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
-        expanded_workspace = os.path.join(self.output_path, f"{result.description['name'].replace(' ', '_')}_{self.timestamp}")
-
-
-        shutil.move(self.expanded_filepath, os.path.join(os.path.dirname(self.expanded_filepath), expanded_name))
-        shutil.move(self.workspace, expanded_workspace)
-        self.workspace = expanded_workspace
-        self.info = os.path.join(self.workspace, "merlin_info")
-        self.expanded_filepath = os.path.join(self.info, expanded_name)
-        result.path = self.expanded_filepath
-        self.spec.path = self.expanded_filepath
-
-        #sys.exit()
+        # expand provenance spec filename
+        if "$(" in self.spec.name:
+            expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
+            expanded_workspace = os.path.join(self.output_path, f"{result.description['name'].replace(' ', '_')}_{self.timestamp}")
+            shutil.move(self.expanded_filepath, os.path.join(os.path.dirname(self.expanded_filepath), expanded_name))
+            shutil.move(self.workspace, expanded_workspace)
+            self.workspace = expanded_workspace
+            self.info = os.path.join(self.workspace, "merlin_info")
+            self.expanded_filepath = os.path.join(self.info, expanded_name)
+            result.path = self.expanded_filepath
+            self.spec.path = self.expanded_filepath
 
         return result
  
