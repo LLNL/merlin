@@ -356,8 +356,14 @@ class MerlinStudy:
         # expand provenance spec filename
         if "$(" in self.spec.name:
             expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
-            expanded_workspace = os.path.join(self.output_path, f"{result.description['name'].replace(' ', '_')}_{self.timestamp}")
-            shutil.move(self.expanded_filepath, os.path.join(os.path.dirname(self.expanded_filepath), expanded_name))
+            expanded_workspace = os.path.join(
+                self.output_path,
+                f"{result.description['name'].replace(' ', '_')}_{self.timestamp}",
+            )
+            shutil.move(
+                self.expanded_filepath,
+                os.path.join(os.path.dirname(self.expanded_filepath), expanded_name),
+            )
             shutil.move(self.workspace, expanded_workspace)
             self.workspace = expanded_workspace
             self.info = os.path.join(self.workspace, "merlin_info")
@@ -366,7 +372,6 @@ class MerlinStudy:
             self.spec.path = self.expanded_filepath
 
         return result
- 
 
     @cached_property
     def flux_command(self):
