@@ -37,6 +37,7 @@ import socket
 import subprocess
 import time
 from contextlib import suppress
+from merlin.common.security import encrypt
 
 from merlin.study.batch import (
     batch_check_parallel,
@@ -471,6 +472,7 @@ def create_celery_config(config_dir, data_file_name, data_file_path):
     :param `data_file_name`: The name of the config file.
     :param `data_file_path`: The full data file path.
     """
+    encrypt.init_key()
     # This will need to come from the server interface
     MERLIN_CONFIG = os.path.join(config_dir, data_file_name)
 
