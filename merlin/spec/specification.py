@@ -96,7 +96,6 @@ class MerlinSpec(YAMLSpecification):
         spec.merlin = MerlinSpec.load_merlin_block(StringIO(string))
         spec.specroot = None
         spec.process_spec_defaults()
-        # spec.warn_unrecognized_keys()
         return spec
 
     @staticmethod

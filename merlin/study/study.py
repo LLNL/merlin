@@ -35,6 +35,7 @@ import subprocess
 import time
 from contextlib import suppress
 from fileinput import FileInput
+import sys
 
 from cached_property import cached_property
 from maestrowf.datastructures.core import Study
@@ -349,9 +350,15 @@ class MerlinStudy:
         if self.restart_dir is None:
             self.write_expanded_spec(self.expanded_filepath)
 
-        return MerlinSpec.load_specification(
+        result = MerlinSpec.load_specification(
             self.expanded_filepath, suppress_warning=False
         )
+
+        expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
+        shutil.move(self.expanded_filepath, os.path.basename(os.path.join(self.expanded_filepath, expanded_name)))
+
+        return result
+ 
 
     @cached_property
     def flux_command(self):
