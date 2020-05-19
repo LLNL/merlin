@@ -355,7 +355,18 @@ class MerlinStudy:
         )
 
         expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
-        shutil.move(self.expanded_filepath, os.path.basename(os.path.join(self.expanded_filepath, expanded_name)))
+        expanded_workspace = os.path.join(self.output_path, f"{result.description['name'].replace(' ', '_')}_{self.timestamp}")
+
+
+        shutil.move(self.expanded_filepath, os.path.join(os.path.dirname(self.expanded_filepath), expanded_name))
+        shutil.move(self.workspace, expanded_workspace)
+        self.workspace = expanded_workspace
+        self.info = os.path.join(self.workspace, "merlin_info")
+        self.expanded_filepath = os.path.join(self.info, expanded_name)
+        result.path = self.expanded_filepath
+        self.spec.path = self.expanded_filepath
+
+        #sys.exit()
 
         return result
  
