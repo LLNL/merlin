@@ -367,8 +367,12 @@ class MerlinStudy:
 
             sample_file = result.merlin["samples"]["file"]
             if sample_file.startswith(self.workspace):
-                new_samples_file = sample_file.replace(self.workspace, expanded_workspace)
-                result.merlin["samples"]["generate"]["cmd"] = result.merlin["samples"]["generate"]["cmd"].replace(result.merlin["samples"]["file"], new_samples_file)
+                new_samples_file = sample_file.replace(
+                    self.workspace, expanded_workspace
+                )
+                result.merlin["samples"]["generate"]["cmd"] = result.merlin["samples"][
+                    "generate"
+                ]["cmd"].replace(result.merlin["samples"]["file"], new_samples_file)
                 result.merlin["samples"]["file"] = new_samples_file
             self.workspace = expanded_workspace
             self.info = os.path.join(self.workspace, "merlin_info")
