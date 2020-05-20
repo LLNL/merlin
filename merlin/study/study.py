@@ -372,7 +372,7 @@ class MerlinStudy:
                 )
                 result.merlin["samples"]["generate"]["cmd"] = result.merlin["samples"][
                     "generate"
-                ]["cmd"].replace(result.merlin["samples"]["file"], new_samples_file)
+                ]["cmd"].replace(sample_file, new_samples_file)
                 result.merlin["samples"]["file"] = new_samples_file
             self.workspace = expanded_workspace
             self.info = os.path.join(self.workspace, "merlin_info")
