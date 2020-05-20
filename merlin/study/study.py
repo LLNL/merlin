@@ -320,7 +320,6 @@ class MerlinStudy:
             shutil.rmtree(workspace)
         os.mkdir(workspace)
 
-        LOG.info(f"Study workspace is '{workspace}'.")
         return workspace
 
     @cached_property
@@ -365,12 +364,23 @@ class MerlinStudy:
                 os.path.join(os.path.dirname(self.expanded_filepath), expanded_name),
             )
             shutil.move(self.workspace, expanded_workspace)
+
+            sample_file = result.merlin["samples"]["file"]
+            if sample_file.startswith(self.workspace):
+                new_samples_file = sample_file.replace(self.workspace, expanded_workspace)
+                result.merlin["samples"]["generate"]["cmd"] = result.merlin["samples"]["generate"]["cmd"].replace(result.merlin["samples"]["file"], new_samples_file)
+                result.merlin["samples"]["file"] = new_samples_file
             self.workspace = expanded_workspace
             self.info = os.path.join(self.workspace, "merlin_info")
+            self.special_vars["MERLIN_INFO"] = self.info
             self.expanded_filepath = os.path.join(self.info, expanded_name)
             result.path = self.expanded_filepath
             self.spec.path = self.expanded_filepath
+            # rewrite provenance spec to correct samples.generate.cmd and samples.file
+            if self.restart_dir is None:
+                self.write_expanded_spec(self.expanded_filepath)
 
+        LOG.info(f"Study workspace is '{self.workspace}'.")
         return result
 
     @cached_property

@@ -1,5 +1,5 @@
 description:
-    name: feature_demo
+    name: $(NAME)
     description: Run 10 hello worlds.
 
 batch:
@@ -11,6 +11,7 @@ env:
         N_SAMPLES: 10
         WORKER_NAME: demo_worker
         VERIFY_QUEUE: default_verify_queue
+        NAME: feature_demo
 
         SCRIPTS: $(SPECROOT)/scripts
         HELLO: $(SCRIPTS)/hello_world.py
