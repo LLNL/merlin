@@ -521,21 +521,21 @@ def define_tests():
             ],
             # "local",
         ),
-        "local restart expand name": (
-            f"{run} {demo} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} NAME=test_demo ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'test_demo_*') --local",
-            [
-                ReturnCodeCond(),
-                ProvenanceCond(
-                    regex="name: test_demo",
-                    name="test_demo",
-                    output_path=OUTPUT_DIR,
-                ),
-                StepFileExistsCond(
-                    "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR
-                ),
-            ],
-            "local",
-        ),
+        #"local restart expand name": (
+        #    f"{run} {demo} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} NAME=test_demo ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'test_demo_*') --local",
+        #    [
+        #        ReturnCodeCond(),
+        #        ProvenanceCond(
+        #            regex="name: test_demo",
+        #            name="test_demo",
+        #            output_path=OUTPUT_DIR,
+        #        ),
+        #        StepFileExistsCond(
+        #            "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR
+        #        ),
+        #    ],
+        #    "local",
+        #),
         "local csv feature_demo": (
             f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samples foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [RegexCond("1 sample loaded."), ReturnCodeCond()],
