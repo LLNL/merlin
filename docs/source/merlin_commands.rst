@@ -123,6 +123,10 @@ for workers. The default is 60 seconds.
 
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
+The ``monitor`` function will check for celery workers for up to
+5*<duration> seconds before monitoring begins to eliminate any race 
+conditions.
+
 Purging Tasks (``merlin purge``)
 --------------------------------
 
