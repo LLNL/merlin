@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.5.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -219,11 +219,24 @@ def create_config(task_server, config_dir, broker):
 
 def monitor_workers(task_server, sleep_duration):
     """
-    Monitor for running clery workers to keep an allocation alive.
+    Monitor for running celery workers to keep an allocation alive.
 
-    :param `task_server`: The task server for which to monitor workers.
+    :param `task_server`: The task server to monitor.
     """
     if task_server == "celery":
+        # Initial check for running servers
+        if not is_running("celery worker"):
+            LOG.info("Monitor: checking for celery workers ...")
+            count = 0
+            max_count = 5
+            while not is_running("celery worker") and count < max_count:
+                count += 1
+                time.sleep(sleep_duration)
+
+            if not is_running("celery worker"):
+                raise Exception("Monitor: cannot find any runnning celery workers")
+
+        # Polling check for running servers
         while is_running("celery worker"):
             LOG.info("Monitor: celery workers are running.")
             time.sleep(sleep_duration)

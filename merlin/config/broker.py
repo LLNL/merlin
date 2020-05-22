@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.5.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -50,9 +50,9 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 
-BROKERS = ["rabbitmq", "redis", "rediss", "redis+socket"]
+BROKERS = ["rabbitmq", "redis", "rediss", "redis+socket", "amqps", "amqp"]
 
-RABBITMQ_CONNECTION = "amqps://{username}:{password}@{server}:{port}//{vhost}"
+RABBITMQ_CONNECTION = "{conn}://{username}:{password}@{server}:{port}/{vhost}"
 REDISSOCK_CONNECTION = "redis+socket://{path}?virtual_host={db_num}"
 USER = getpass.getuser()
 
@@ -64,7 +64,7 @@ def read_file(filepath):
         return quote(line, safe="")
 
 
-def get_rabbit_connection(config_path, include_password):
+def get_rabbit_connection(config_path, include_password, conn="amqps"):
     """
     Given the path to the directory where the broker configurations are stored
     setup and return the RabbitMQ connection string.
@@ -72,6 +72,8 @@ def get_rabbit_connection(config_path, include_password):
     :param config_path : The path for ssl certificates and passwords
     :param include_password : Format the connection for ouput by setting this True
     """
+    LOG.debug(f"Broker: connection = {conn}")
+
     vhost = CONFIG.broker.vhost
     LOG.debug(f"Broker: vhost = {vhost}")
 
@@ -99,11 +101,15 @@ def get_rabbit_connection(config_path, include_password):
         port = CONFIG.broker.port
         LOG.debug(f"Broker: RabbitMQ port = {port}")
     except (AttributeError, KeyError):
-        port = 5671
+        if conn == "amqp":
+            port = 5672
+        else:
+            port = 5671
         LOG.debug(f"Broker: RabbitMQ using default port = {port}")
 
     # Test configurations.
     rabbitmq_config = {
+        "conn": conn,
         "vhost": vhost,
         "username": username,
         "password": "******",
@@ -213,16 +219,19 @@ def get_connection_string(include_password=True):
     if broker not in BROKERS:
         raise ValueError(f"Error: {broker} is not a supported broker.")
 
-    if broker == "rabbitmq":
-        return get_rabbit_connection(config_path, include_password)
+    if broker == "rabbitmq" or broker == "amqps":
+        return get_rabbit_connection(config_path, include_password, conn="amqps")
 
-    if broker == "redis+socket":
+    elif broker == "amqp":
+        return get_rabbit_connection(config_path, include_password, conn="amqp")
+
+    elif broker == "redis+socket":
         return get_redissock_connection(config_path, include_password)
 
-    if broker == "redis":
+    elif broker == "redis":
         return get_redis_connection(config_path, include_password)
 
-    if broker == "rediss":
+    elif broker == "rediss":
         return get_redis_connection(config_path, include_password, ssl=True)
 
     return None
@@ -257,7 +266,7 @@ def get_ssl_config():
     if not broker_ssl:
         broker_ssl = True
 
-    if broker == "rabbitmq" or broker == "rediss":
+    if broker == "rabbitmq" or broker == "rediss" or broker == "amqps":
         return broker_ssl
 
     return False
