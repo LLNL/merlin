@@ -108,7 +108,7 @@ Monitor (``merlin monitor``)
 Batch submission scripts may not keep the batch allocation alive
 if there is not a blocking process in the submission script. The
 ``merlin monitor`` command addresses this by providing a blocking process that
-checks for tasks in the queues every 60 seconds. When the queues are empty, the 
+checks for tasks in the queues every (sleep) seconds. When the queues are empty, the 
 blocking process will exit and allow the allocation to end.
 
 .. code:: bash
