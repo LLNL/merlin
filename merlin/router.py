@@ -42,6 +42,7 @@ from datetime import datetime
 
 from merlin.study.celeryadapter import (
     create_celery_config,
+    get_workers_from_app,
     purge_celery_tasks,
     query_celery_queues,
     query_celery_workers,
@@ -111,7 +112,7 @@ def purge_tasks(task_server, spec, force, steps):
         LOG.error("Celery is not specified as the task server!")
 
 
-def query_status(task_server, spec, steps):
+def query_status(task_server, spec, steps, verbose=True):
     """
     Queries status of queues in spec file from server.
 
@@ -119,7 +120,8 @@ def query_status(task_server, spec, steps):
     :param `spec`: A MerlinSpec object
     :param `steps`: Spaced-separated list of stepnames to query. Default is all
     """
-    LOG.info(f"Querying queues for steps = {steps}")
+    if verbose:
+        LOG.info(f"Querying queues for steps = {steps}")
 
     if task_server == "celery":
         queues = spec.get_queue_list(steps)
@@ -161,8 +163,20 @@ def query_workers(task_server):
     LOG.info(f"Searching for workers...")
 
     if task_server == "celery":
-        # Stop workers
         return query_celery_workers()
+    else:
+        LOG.error("Celery is not specified as the task server!")
+
+
+def get_workers(task_server):
+    """Get all workers.
+
+    :param `task_server`: The task server to query.
+    :return: A list of all connected workers
+    :rtype: list
+    """
+    if task_server == "celery":
+        return get_workers_from_app()
     else:
         LOG.error("Celery is not specified as the task server!")
 
@@ -215,29 +229,3 @@ def create_config(task_server, config_dir, broker):
             create_celery_config(config_dir, config_file, data_file)
     else:
         LOG.error("Only celery can be configured currently.")
-
-
-def monitor_workers(task_server, sleep_duration):
-    """
-    Monitor for running celery workers to keep an allocation alive.
-
-    :param `task_server`: The task server to monitor.
-    """
-    if task_server == "celery":
-        # Initial check for running servers
-        if not is_running("celery worker"):
-            LOG.info("Monitor: checking for celery workers ...")
-            count = 0
-            max_count = 5
-            while not is_running("celery worker") and count < max_count:
-                count += 1
-                time.sleep(sleep_duration)
-
-            if not is_running("celery worker"):
-                raise Exception("Monitor: cannot find any runnning celery workers")
-
-        # Polling check for running servers
-        while is_running("celery worker"):
-            LOG.info("Monitor: celery workers are running.")
-            time.sleep(sleep_duration)
-        LOG.info("Monitor: celery workers are not running.")

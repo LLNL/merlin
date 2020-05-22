@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   
 ### Changed
 - The default rabbitmq vhost is now <user> instead of /<user>.
+- The monitor function will now check the queues to determine when
+  to exit.
 
 ## [1.5.3]
 
