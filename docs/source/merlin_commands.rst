@@ -128,7 +128,7 @@ for workers. The default is 60 seconds.
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
 The ``monitor`` function will check for celery workers for up to
-10*<sleep> seconds before monitoring begins. The loop happens when the 
+10*(sleep) seconds before monitoring begins. The loop happens when the 
 queue(s) in the spec contain tasks, but no running workers are detected.
 This is to protect against a failed worker launch.
 
