@@ -15,7 +15,6 @@ args = parser.parse_args()
 submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 concurrencies = [1, 2, 4, 8, 16, 32, 64]
 nodes = [1, 1, 1, 1, 1, 1, 2]
-# times = [1, 1, 4, 15, 30]
 samples = [1, 10, 100, 1000, 10000]
 output_path = os.path.join(args.output_path, f"run_{args.run_id}")
 os.makedirs(output_path, exist_ok=True)
@@ -45,7 +44,7 @@ for i, concurrency in enumerate(concurrencies):
         partition = "pdebug"
         if real_time > 60:
             partition = "pbatch"
-        submit = f"submit.sbatch"
+        submit = "submit.sbatch"
         command = f"sbatch -J c{concurrency}s{sample}r{args.run_id} --time {real_time} -N {nodes[i]} -p {partition} {submit} {sample} {int(concurrency/nodes[i])} {args.run_id}"
         shutil.copyfile(os.path.join(submit_path, submit), submit)
         shutil.copyfile(args.spec_path, "spec.yaml")
