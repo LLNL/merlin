@@ -1,11 +1,11 @@
 
-runs=( 34 )
+runs=( 37 )
 concurrencies=(1 2 4 8 16 32 64)
 samples=(1 10 100 1000 10000)
 
 for run in "${runs[@]}"
     do
-    read_path="/p/lustre1/bay1/null_results/run_${run}"
+    read_path="/p/lustre2/bay1/null_results/run_${run}"
     DATA=my_data${run}.yaml
     touch ${DATA}
 

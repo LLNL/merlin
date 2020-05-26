@@ -15,7 +15,7 @@ args = parser.parse_args()
 submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 concurrencies = [1, 2, 4, 8, 16, 32, 64]
 nodes = [1, 1, 1, 1, 1, 1, 2]
-times = [1, 1, 4, 15, 30]
+# times = [1, 1, 4, 15, 30]
 samples = [1, 10, 100, 1000, 10000]
 output_path = os.path.join(args.output_path, f"run_{args.run_id}")
 os.makedirs(output_path, exist_ok=True)
@@ -29,11 +29,26 @@ for i, concurrency in enumerate(concurrencies):
         if not os.path.isdir(s_name):
             os.mkdir(s_name)
         os.chdir(s_name)
+        os.mkdir("scripts")
+        samp_per_worker = float(sample) / float(concurrency)
+        #if (samp_per_worker / 60) > times[j]:
+        #    print(f"c{concurrency}_s{sample} : {round(samp_per_worker / 60, 0)}m.\ttime: {times[j]}m.\tdiff: {round((samp_per_worker / 60) - times[j], 0)}m")
+        if (samp_per_worker / 60) < 1.0:
+            real_time = 4
+        elif (samp_per_worker / 60) < 3.0:
+            real_time = 10
+        else:
+            real_time = samp_per_worker / 60
+            real_time *= 2
+            real_time = int(round(real_time, 0))
+        # print(f"c{concurrency}_s{sample} : {real_time}")
+        partition = "pdebug"
+        if real_time > 60:
+            partition = "pbatch"
         submit = f"submit_{nodes[i]}_node.sbatch"
-        command = f"sbatch -J c{concurrency}s{sample}r{args.run_id} --time {times[j]} {submit} {sample} {int(concurrency/nodes[i])}"
+        command = f"sbatch -J c{concurrency}s{sample}r{args.run_id} --time {real_time} -p {partition} {submit} {sample} {int(concurrency/nodes[i])}"
         shutil.copyfile(os.path.join(submit_path, submit), submit)
         shutil.copyfile(args.spec_path, "spec.yaml")
-        os.mkdir("scripts")
         shutil.copyfile(args.script_path, os.path.join("scripts", "make_samples.py"))
         lines = subprocess.check_output(command, shell=True).decode("ascii")
         os.chdir(f"..")
