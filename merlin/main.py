@@ -345,7 +345,7 @@ def check_merlin_status(args, spec):
         count = 0
         max_count = 10
         while count < max_count:
-            # This object will include the worker names and with the host names.
+            # This list will include strings comprised of the worker name with the hostname e.g. worker_name@host.
             worker_status = router.get_workers(args.task_server)
             LOG.info(
                 f"Monitor: checking for workers, running workers = {worker_status} ..."
