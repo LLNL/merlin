@@ -1,5 +1,6 @@
 import argparse
 import os
+import socket
 import shutil
 import subprocess
 
@@ -10,6 +11,12 @@ parser.add_argument("output_path", type=str, help="the output path")
 parser.add_argument("spec_path", type=str, help="path to the spec to run")
 parser.add_argument("script_path", type=str, help="path to the make samples script")
 args = parser.parse_args()
+ 
+machine = socket.gethostbyaddr(socket.gethostname())[0]
+if "quartz" in machine:
+    machine == "quartz"
+elif "pascal" in machine:
+    machine == "pascal"
 
 # launch 35 merlin workflow jobs
 submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
@@ -41,11 +48,16 @@ for i, concurrency in enumerate(concurrencies):
             real_time *= 2
             real_time = int(round(real_time, 0))
         # print(f"c{concurrency}_s{sample} : {real_time}")
-        partition = "pdebug"
+        if machine == "quartz":
+            account = "lbpm"
+            partition = "pdebug"
+        elif machine == "pascal":
+            account = "wbronze"
+            partition = "pvis"
         if real_time > 60:
             partition = "pbatch"
         submit = "submit.sbatch"
-        command = f"sbatch -J c{concurrency}s{sample}r{args.run_id} --time {real_time} -N {nodes[i]} -p {partition} {submit} {sample} {int(concurrency/nodes[i])} {args.run_id}"
+        command = f"sbatch -J c{concurrency}s{sample}r{args.run_id} --time {real_time} -N {nodes[i]} -p {partition} -A {account} {submit} {sample} {int(concurrency/nodes[i])} {args.run_id}"
         shutil.copyfile(os.path.join(submit_path, submit), submit)
         shutil.copyfile(args.spec_path, "spec.yaml")
         shutil.copyfile(args.script_path, os.path.join("scripts", "make_samples.py"))
