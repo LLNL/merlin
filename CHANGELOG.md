@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   
 ### Changed
 - The default rabbitmq vhost is now <user> instead of /<user>.
+- Changed default task timeout from 2 hours to 24 hours.
 
 ## [1.5.3]
 
