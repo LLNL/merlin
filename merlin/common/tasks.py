@@ -559,6 +559,9 @@ def queue_merlin_study(study, adapter):
     """
     Launch a chain of tasks based off of a MerlinStudy.
     """
+    import sys
+    print("DEBUG EXIT")
+    sys.exit()
     samples = study.samples
     sample_labels = study.sample_labels
     egraph = study.dag
