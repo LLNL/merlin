@@ -337,15 +337,15 @@ def check_merlin_status(args, spec):
         total_jobs += jobs
         total_consumers += consumers
 
-    if total_jobs and total_consumers == 0:
-        # Determine is any of the workers are on this allocation
+    if total_jobs > 0 and total_consumers == 0:
+        # Determine if any of the workers are on this allocation
         worker_names = spec.get_worker_names()
 
         # Loop until workers are detected.
         count = 0
         max_count = 10
         while count < max_count:
-            # This object will include the worker names and the host.
+            # This object will include the worker names and with the host names.
             worker_status = router.get_workers(args.task_server)
             LOG.info(
                 f"Monitor: checking for workers, running workers = {worker_status} ..."
