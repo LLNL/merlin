@@ -383,7 +383,7 @@ class MerlinStudy:
             # rewrite provenance spec to correct samples.generate.cmd and samples.file
             if self.restart_dir is None:
                 self.write_expanded_spec(self.expanded_filepath)
-
+        
         LOG.info(f"Study workspace is '{self.workspace}'.")
         return result
 
