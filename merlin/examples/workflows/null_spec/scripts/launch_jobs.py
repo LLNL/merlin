@@ -14,9 +14,9 @@ args = parser.parse_args()
  
 machine = socket.gethostbyaddr(socket.gethostname())[0]
 if "quartz" in machine:
-    machine == "quartz"
+    machine = "quartz"
 elif "pascal" in machine:
-    machine == "pascal"
+    machine = "pascal"
 
 # launch 35 merlin workflow jobs
 submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
