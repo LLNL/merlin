@@ -100,9 +100,9 @@ app.conf.update(
     redis_max_connections=100000,
 )
 
-# Set a one hour timeout to acknowledge a task before it's available to grab
+# Set a 24-hour timeout to acknowledge a task before it's available to grab
 # again.
-app.conf.broker_transport_options = {"visibility_timeout": 7200, "max_connections": 100}
+app.conf.broker_transport_options = {"visibility_timeout": 86400, "max_connections": 100}
 
 app.conf.update(broker_pool_limit=0)
 

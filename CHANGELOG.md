@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - The broker name can now be amqps (with ssl) or amqp (without ssl). 
+- The encryption key will now be created when running merlin config.
 
 ### Fixed
 - Added a check for initial running workers when using merlin monitor to
@@ -15,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   
 ### Changed
 - The default rabbitmq vhost is now <user> instead of /<user>.
+- Changed default task timeout from 2 hours to 24 hours.
 
 ### Fixed
 - A bug that did not change the filename of the output workspace nor of the provenance spec
