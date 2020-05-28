@@ -33,6 +33,7 @@ This module contains a class, MerlinSpec, which holds the unchanged
 data from the Merlin specification file.
 To see examples of yaml specifications, run `merlin example`.
 """
+import json
 import logging
 import os
 from io import StringIO
