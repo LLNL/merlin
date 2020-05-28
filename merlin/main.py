@@ -717,7 +717,7 @@ def setup_argparse():
         type=str,
         dest="steps",
         default=["all"],
-        help="The specific steps in the YAML file you want to query",
+        help="The specific steps (tasks on the server) in the YAML file defining the queues you want to monitor",
     )
     monitor.add_argument(
         "--vars",
