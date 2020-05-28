@@ -56,6 +56,8 @@ for i, concurrency in enumerate(concurrencies):
             partition = "pvis"
         if real_time > 60:
             partition = "pbatch"
+        if real_time > 1440:
+            real_time = 1440
         submit = "submit.sbatch"
         command = f"sbatch -J c{concurrency}s{sample}r{args.run_id} --time {real_time} -N {nodes[i]} -p {partition} -A {account} {submit} {sample} {int(concurrency/nodes[i])} {args.run_id} {concurrency}"
         shutil.copyfile(os.path.join(submit_path, submit), submit)
