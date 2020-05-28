@@ -20,9 +20,9 @@ elif "pascal" in machine:
 
 # launch 35 merlin workflow jobs
 submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
-concurrencies = [1, 2, 4, 8, 16, 32, 64]
-nodes = [1, 1, 1, 1, 1, 1, 2]
-samples = [1, 10, 100, 1000, 10000]
+concurrencies = [2**4, 2**5, 2**6, 2**7]
+nodes = [1, 1, 2, 4]
+samples = [1e1, 1e2, 1e3, 1e4, 1e5, 1e6]
 output_path = os.path.join(args.output_path, f"run_{args.run_id}")
 os.makedirs(output_path, exist_ok=True)
 for i, concurrency in enumerate(concurrencies):
@@ -45,7 +45,7 @@ for i, concurrency in enumerate(concurrencies):
             real_time = 10
         else:
             real_time = samp_per_worker / 60
-            real_time *= 2
+            real_time *= 1.5
             real_time = int(round(real_time, 0))
         # print(f"c{concurrency}_s{sample} : {real_time}")
         if machine == "quartz":
