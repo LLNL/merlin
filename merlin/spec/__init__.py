@@ -27,3 +27,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+import os
+
+
+dirpath = os.path.dirname(os.path.abspath(__file__))
+SCHEMA_PATH = os.path.join(dirpath, "merlin_schemas.json")
