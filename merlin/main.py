@@ -319,54 +319,6 @@ def process_example(args):
         setup_example(args.workflow, args.path)
 
 
-def check_merlin_status(args, spec):
-    """
-    Function to check merlin workers and queues to keep 
-    the allocation alive
-
-    :param `args`: parsed CLI arguments
-    :param `spec`: the parsed spec.yaml
-    """
-    queue_status = router.query_status(
-        args.task_server, spec, args.steps, verbose=False
-    )
-
-    total_jobs = 0
-    total_consumers = 0
-    for name, jobs, consumers in queue_status:
-        total_jobs += jobs
-        total_consumers += consumers
-
-    if total_jobs > 0 and total_consumers == 0:
-        # Determine if any of the workers are on this allocation
-        worker_names = spec.get_worker_names()
-
-        # Loop until workers are detected.
-        count = 0
-        max_count = 10
-        while count < max_count:
-            # This list will include strings comprised of the worker name with the hostname e.g. worker_name@host.
-            worker_status = router.get_workers(args.task_server)
-            LOG.info(
-                f"Monitor: checking for workers, running workers = {worker_status} ..."
-            )
-
-            check = any(
-                any(iwn in iws for iws in worker_status) for iwn in worker_names
-            )
-            if check:
-                break
-
-            count += 1
-            time.sleep(args.sleep)
-
-        if count == max_count:
-            LOG.error("Monitor: no workers available to process the non-empty queue")
-            total_jobs = 0
-
-    return total_jobs
-
-
 def process_monitor(args):
     """
     CLI command to monitor merlin workers and queues to keep 
@@ -376,7 +328,7 @@ def process_monitor(args):
     """
     LOG.info("Monitor: checking queues ...")
     spec, _ = get_merlin_spec_with_override(args)
-    while check_merlin_status(args, spec):
+    while router.check_merlin_status(args, spec):
         LOG.info("Monitor: found tasks in queues")
         time.sleep(args.sleep)
     LOG.info("Monitor: ... stop condition met")
