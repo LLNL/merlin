@@ -55,6 +55,10 @@ yaml.add_representer(type(None), represent_none)
 
 
 LOG = logging.getLogger(__name__)
+dirpath = os.path.dirname(os.path.abspath(__file__))
+schemas_file = os.path.join(dirpath, "merlin_schemas.json")
+with open(schemas_file, "r") as json_file:
+    MERLIN_SCHEMAS = json.load(json_file)
 
 
 class MerlinSpec(YAMLSpecification):
@@ -81,7 +85,7 @@ class MerlinSpec(YAMLSpecification):
 
     @classmethod
     def load_specification(cls, filepath, suppress_warning=True):
-        spec = super(MerlinSpec, cls).load_specification(filepath)
+        spec = super(MerlinSpec, cls, MERLIN_SCHEMAS).load_specification(filepath)
         with open(filepath, "r") as f:
             spec.merlin = MerlinSpec.load_merlin_block(f)
         spec.specroot = os.path.dirname(spec.path)
@@ -92,7 +96,7 @@ class MerlinSpec(YAMLSpecification):
 
     @classmethod
     def load_spec_from_string(cls, string):
-        spec = super(MerlinSpec, cls).load_specification_from_stream(StringIO(string))
+        spec = super(MerlinSpec, cls, MERLIN_SCHEMAS).load_specification_from_stream(StringIO(string))
         spec.merlin = MerlinSpec.load_merlin_block(StringIO(string))
         spec.specroot = None
         spec.process_spec_defaults()
