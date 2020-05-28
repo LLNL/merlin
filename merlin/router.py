@@ -239,9 +239,7 @@ def check_merlin_status(args, spec):
     :param `args`: parsed CLI arguments
     :param `spec`: the parsed spec.yaml
     """
-    queue_status = query_status(
-        args.task_server, spec, args.steps, verbose=False
-    )
+    queue_status = query_status(args.task_server, spec, args.steps, verbose=False)
 
     total_jobs = 0
     total_consumers = 0
