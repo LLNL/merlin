@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The monitor function will now check the queues to determine when
   to exit.
 
+### Fixed
+- A bug that did not change the filename of the output workspace nor of the provenance spec
+  when a user variable was included in the `description.name` field.
+
 ## [1.5.3]
 
 ### Fixed
