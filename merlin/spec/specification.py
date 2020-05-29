@@ -33,7 +33,6 @@ This module contains a class, MerlinSpec, which holds the unchanged
 data from the Merlin specification file.
 To see examples of yaml specifications, run `merlin example`.
 """
-import json
 import logging
 import os
 from io import StringIO
@@ -84,6 +83,8 @@ class MerlinSpec(YAMLSpecification):
     @classmethod
     def load_specification(cls, filepath, suppress_warning=True):
         spec = super(MerlinSpec, cls).load_specification(filepath, schema_path=SCHEMA_PATH)
+        #spec = super(MerlinSpec, cls).load_specification(filepath)
+        print("MADE IT TO 1")
         with open(filepath, "r") as f:
             spec.merlin = MerlinSpec.load_merlin_block(f)
         spec.specroot = os.path.dirname(spec.path)
@@ -95,6 +96,7 @@ class MerlinSpec(YAMLSpecification):
     @classmethod
     def load_spec_from_string(cls, string):
         spec = super(MerlinSpec, cls).load_specification_from_stream(StringIO(string), schema_path=SCHEMA_PATH)
+        #spec = super(MerlinSpec, cls).load_specification_from_stream(StringIO(string))
         spec.merlin = MerlinSpec.load_merlin_block(StringIO(string))
         spec.specroot = None
         spec.process_spec_defaults()

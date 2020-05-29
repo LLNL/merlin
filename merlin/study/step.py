@@ -60,6 +60,9 @@ class Step:
         """
         get the run command text body"
         """
+        print(self)
+        print(self.mstep)
+        print(self.mstep.step)
         return self.mstep.step.to_dict()["run"]["cmd"]
 
     def get_restart_cmd(self):
