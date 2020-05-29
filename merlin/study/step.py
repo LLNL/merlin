@@ -63,6 +63,7 @@ class Step:
         print(self)
         print(self.mstep)
         print(self.mstep.step)
+        print(self.mstep.step.__dict__)
         return self.mstep.step.to_dict()["run"]["cmd"]
 
     def get_restart_cmd(self):
