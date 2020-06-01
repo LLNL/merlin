@@ -47,9 +47,9 @@ from merlin.config import (
     broker,
     results_backend,
 )
+from merlin.config.configfile import CONFIG
 from merlin.log_formatter import FORMATS
 from merlin.router import route_for_task
-from merlin.config.configfile import CONFIG
 
 
 LOG = logging.getLogger(__name__)
