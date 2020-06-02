@@ -64,13 +64,13 @@ class Step:
         print(self.mstep)
         print(self.mstep.step)
         print(self.mstep.step.__dict__)
-        return self.mstep.step.to_dict()["run"]["cmd"]
+        return self.mstep.step.__dict__["run"]["cmd"]
 
     def get_restart_cmd(self):
         """
         get the restart command text body, else return None"
         """
-        return self.mstep.step.to_dict()["run"]["restart"]
+        return self.mstep.step.__dict__["run"]["restart"]
 
     def clone_changing_workspace_and_cmd(
         self, new_cmd=None, cmd_replacement_pairs=None, new_workspace=None
@@ -85,7 +85,7 @@ class Step:
         :param new_workspace : (Optional) the workspace for the new step.
         """
         LOG.debug(f"clone called with new_workspace {new_workspace}")
-        step_dict = deepcopy(self.mstep.step.to_dict())
+        step_dict = deepcopy(self.mstep.step.__dict__)
 
         if new_cmd is not None:
             step_dict["run"]["cmd"] = new_cmd
@@ -108,7 +108,7 @@ class Step:
 
     def get_task_queue(self):
         """ Retrieve the task queue for the Step."""
-        return self.get_task_queue_from_dict(self.mstep.step.to_dict())
+        return self.get_task_queue_from_dict(self.mstep.step.__dict__)
 
     @staticmethod
     def get_task_queue_from_dict(step_dict):
@@ -125,7 +125,7 @@ class Step:
         """
         Returns the max number of retries for this step.
         """
-        return self.mstep.step.to_dict()["run"]["max_retries"]
+        return self.mstep.step.__dict__["run"]["max_retries"]
 
     def __get_restart(self):
         """
@@ -182,7 +182,7 @@ class Step:
         """
         :return : The step name.
         """
-        return self.mstep.step.to_dict()["name"]
+        return self.mstep.step.__dict__["name"]
 
     def execute(self, adapter_config):
         """
