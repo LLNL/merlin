@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Added a check for initial running workers when using merlin monitor to
   eliminate race condition.
+- A bug that did not change the filename of the output workspace nor of the provenance spec
+  when a user variable was included in the `description.name` field.
+- Temporarily locked Celery version at 4.4.2 to avoid fatal bug.
   
 ### Changed
 - The default rabbitmq vhost is now <user> instead of /<user>.
@@ -20,11 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   file.
 - The monitor function will now check the queues to determine when
   to exit.
-- Temporarily locked Celery version at 4.4.2 to avoid fatal bug.
 
 ### Fixed
-- A bug that did not change the filename of the output workspace nor of the provenance spec
-  when a user variable was included in the `description.name` field.
 
 ## [1.5.3]
 
