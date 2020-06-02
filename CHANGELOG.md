@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   file.
 - The monitor function will now check the queues to determine when
   to exit.
+- Temporarily locked Celery version at 4.4.2 to avoid fatal bug.
 
 ### Fixed
 - A bug that did not change the filename of the output workspace nor of the provenance spec
