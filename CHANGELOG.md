@@ -24,8 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The monitor function will now check the queues to determine when
   to exit.
 
-### Fixed
-
 ## [1.5.3]
 
 ### Fixed
