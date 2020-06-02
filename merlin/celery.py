@@ -104,7 +104,7 @@ app.conf.update(
 # Set a timeout to acknowledge a task before it's available to grab
 # again (default 24 hours).
 app.conf.broker_transport_options = {
-    "visibility_timeout": CONFIG.celery.visibility_timeout,
+    "visibility_timeout_seconds": CONFIG.celery.visibility_timeout,
     "max_connections": 100,
 }
 

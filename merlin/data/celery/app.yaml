@@ -1,5 +1,5 @@
 celery:
-    visibility_timeout: 86400
+    visibility_timeout_seconds: 86400
 
 broker:
     # can be redis, redis+sock, or rabbitmq
