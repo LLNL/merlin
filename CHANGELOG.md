@@ -4,6 +4,28 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.4]
+
+### Added
+- The broker name can now be amqps (with ssl) or amqp (without ssl). 
+- The encryption key will now be created when running merlin config.
+- The merlin info connection check will now enforce a minute timeout 
+  check for the server connections.
+
+### Fixed
+- Added a check for initial running workers when using merlin monitor to
+  eliminate race condition.
+- A bug that did not change the filename of the output workspace nor of the provenance spec
+  when a user variable was included in the `description.name` field.
+- Temporarily locked Celery version at 4.4.2 to avoid fatal bug.
+  
+### Changed
+- The default rabbitmq vhost is now <user> instead of /<user>.
+- Changed default visibility timeout from 2 hours to 24 hours. Exposed this in the config
+  file.
+- The monitor function will now check the queues to determine when
+  to exit.
+
 ## [1.5.3]
 
 ### Fixed
