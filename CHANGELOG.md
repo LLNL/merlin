@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - The broker name can now be amqps (with ssl) or amqp (without ssl). 
 - The encryption key will now be created when running merlin config.
+- The merlin info connection check will now enforce a minute timeout 
+  check for the server connections.
 
 ### Fixed
 - Added a check for initial running workers when using merlin monitor to

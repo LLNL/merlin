@@ -96,7 +96,9 @@ Information (``merlin info``)
 -----------------------------
 
 Information about your merlin and python configuration can be printed out by using the 
-``info`` command. This is helpful for debugging.
+``info`` command. This is helpful for debugging. Included in this command
+is a server check which will check for server connections. The connection
+check will timeout after 60 seconds.
 
 .. code:: bash
 
