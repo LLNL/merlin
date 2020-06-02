@@ -16,9 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   
 ### Changed
 - The default rabbitmq vhost is now <user> instead of /<user>.
-- Changed default task timeout from 2 hours to 24 hours.
+- Changed default visibility timeout from 2 hours to 24 hours. Exposed this in the config
+  file.
 - The monitor function will now check the queues to determine when
   to exit.
+- Temporarily locked Celery version at 4.4.2 to avoid fatal bug.
 
 ### Fixed
 - A bug that did not change the filename of the output workspace nor of the provenance spec
