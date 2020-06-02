@@ -4,6 +4,31 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- The broker name can now be amqps (with ssl) or amqp (without ssl). 
+- The encryption key will now be created when running merlin config.
+
+### Fixed
+- Added a check for initial running workers when using merlin monitor to
+  eliminate race condition.
+  
+### Changed
+- The default rabbitmq vhost is now <user> instead of /<user>.
+- Changed default task timeout from 2 hours to 24 hours.
+- The monitor function will now check the queues to determine when
+  to exit.
+
+### Fixed
+- A bug that did not change the filename of the output workspace nor of the provenance spec
+  when a user variable was included in the `description.name` field.
+
+## [1.5.3]
+
+### Fixed
+- Temporarily locked maestro version to avoid fatal bug introduced by maestro v1.1.7.
+
 ## [1.5.2]
 
 ### Added
