@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1]
+
+### Fixed
+- Error if app.yaml does not have visibility timeout seconds
+
 ## [1.6.0]
 
 ### Added
