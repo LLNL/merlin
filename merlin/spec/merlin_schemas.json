@@ -64,7 +64,10 @@
         "minLength": 1
       },
       "flux_exec_workers": {
-        "type": "boolean"
+        "anyOf": [
+          {"type": "boolean"},
+          {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]}
       },
       "launch_pre": {
         "type": "string",
@@ -79,8 +82,10 @@
         "minLength": 1
       },
       "nodes": {
-        "type": "integer"
-      }
+      "anyOf": [
+      {"type": "integer", "minimum": 1},
+      {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+    ]}
     }
   },
   "STUDY_STEP": {
@@ -122,16 +127,28 @@
             "minLength": 1
           },
           "nodes": {
-            "type": "integer"
+            "anyOf": [
+        {"type": "integer", "minimum": 1},
+        {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]}
           },
           "procs": {
-            "type": "integer"
+            "anyOf": [
+        {"type": "integer", "minimum": 1},
+        {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]}
           },
           "gpus": {
-            "type": "integer"
+            "anyOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]}
           },
           "cores per task": {
-            "type": "integer"
+            "anyOf": [
+        {"type": "integer", "minimum": 1},
+        {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]}
           },
           "walltime": {
             "type": "string",
@@ -142,7 +159,10 @@
             "minLength": 1
           },
           "exclusive": {
-            "type": "boolean"
+            "anyof": [
+              {"type": "boolean"},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]}
           },
           "task_queue": {
             "type": "string",
@@ -153,10 +173,16 @@
             "minLength": 1
           },
           "max_retries": {
-            "type": "integer"
+            "anyOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]}
           },
           "gpus per task": {
-            "type": "integer"
+            "anyOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]}
           },
           "batch": {
             "type": "object",
@@ -180,14 +206,20 @@
             "minLength": 1
           },
           "num resource set": {
-            "type": "integer"
+            "anyOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]}
           },
           "launch_distribution": {
             "type": "string",
             "minLength": 1
           },
           "exit_on_error": {
-            "type": "integer"
+            "anyOf": [
+        {"type": "integer", "minimum": 0},
+        {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]}
           },
           "flux": {
             "type": "string",
@@ -304,7 +336,10 @@
             "minLength": 1
           },
           "overlap": {
-            "type": "boolean"
+            "anyOf": [
+              {"type": "boolean"},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]}
           },
           "workers": {
             "type": "object",
@@ -328,7 +363,10 @@
                     ]
                   },
                   "nodes": {
-                    "type": "integer"
+                    "anyOf": [
+                      {"type": "integer", "minimum": 1},
+                      {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+                    ]}
                   },
                   "batch": {
                     "type": "object"
@@ -370,7 +408,10 @@
             }
           },
           "level_max_dirs": {
-            "type": "integer"
+            "anyOf": [
+              {"type": "integer", "minimum": 1},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]}
           },
           "file": {
             "type": "string",
