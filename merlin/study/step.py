@@ -60,10 +60,6 @@ class Step:
         """
         get the run command text body"
         """
-        print(self)
-        print(self.mstep)
-        print(self.mstep.step)
-        print(self.mstep.step.__dict__)
         return self.mstep.step.__dict__["run"]["cmd"]
 
     def get_restart_cmd(self):
@@ -104,7 +100,11 @@ class Step:
         if new_workspace is None:
             new_workspace = self.get_workspace()
         LOG.debug(f"cloned step with workspace {new_workspace}")
-        return Step(_StepRecord(new_workspace, StudyStep.from_dict(step_dict)))
+        study_step = StudyStep()
+        study_step.name = step_dict["name"]
+        study_step.description = step_dict["description"]
+        study_step.run = step_dict["run"]
+        return Step(_StepRecord(new_workspace, study_step))
 
     def get_task_queue(self):
         """ Retrieve the task queue for the Step."""
