@@ -33,12 +33,14 @@ This module contains a class, MerlinSpec, which holds the unchanged
 data from the Merlin specification file.
 To see examples of yaml specifications, run `merlin example`.
 """
+import json
 import logging
 import os
 from io import StringIO
 
+import jsonschema
 import yaml
-from maestrowf.datastructures import YAMLSpecification
+from maestrowf.specification.yamlspecification import YAMLSpecification
 
 from merlin.spec import (
     all_keys,
@@ -82,21 +84,18 @@ class MerlinSpec(YAMLSpecification):
 
     @classmethod
     def load_specification(cls, filepath, suppress_warning=True):
-        spec = super(MerlinSpec, cls).load_specification(filepath, schema_path=SCHEMA_PATH)
-        #spec = super(MerlinSpec, cls).load_specification(filepath)
-        print("MADE IT TO 1")
+        spec = super(MerlinSpec, cls).load_specification(filepath)
         with open(filepath, "r") as f:
             spec.merlin = MerlinSpec.load_merlin_block(f)
         spec.specroot = os.path.dirname(spec.path)
         spec.process_spec_defaults()
-        if not suppress_warning:
-            spec.warn_unrecognized_keys()
+        #if not suppress_warning:
+        #    spec.verify()
         return spec
 
     @classmethod
     def load_spec_from_string(cls, string):
-        spec = super(MerlinSpec, cls).load_specification_from_stream(StringIO(string), schema_path=SCHEMA_PATH)
-        #spec = super(MerlinSpec, cls).load_specification_from_stream(StringIO(string))
+        spec = super(MerlinSpec, cls).load_specification_from_stream(StringIO(string))
         spec.merlin = MerlinSpec.load_merlin_block(StringIO(string))
         spec.specroot = None
         spec.process_spec_defaults()
@@ -153,49 +152,6 @@ class MerlinSpec(YAMLSpecification):
                     recurse(result[key], val)
 
         recurse(object_to_update, default_dict)
-
-    def warn_unrecognized_keys(self):
-        # check description
-        MerlinSpec.check_section("description", self.description, all_keys.DESCRIPTION)
-
-        # check batch
-        MerlinSpec.check_section("batch", self.batch, all_keys.BATCH)
-
-        # check env
-        MerlinSpec.check_section("env", self.environment, all_keys.ENV)
-
-        # check parameters
-        for param, contents in self.globals.items():
-            MerlinSpec.check_section("global.parameters", contents, all_keys.PARAMETER)
-
-        # check steps
-        for step in self.study:
-            MerlinSpec.check_section(step["name"], step, all_keys.STUDY_STEP)
-            MerlinSpec.check_section(
-                step["name"] + ".run", step["run"], all_keys.STUDY_STEP_RUN
-            )
-
-        # check merlin
-        MerlinSpec.check_section("merlin", self.merlin, all_keys.MERLIN)
-        MerlinSpec.check_section(
-            "merlin.resources", self.merlin["resources"], all_keys.MERLIN_RESOURCES
-        )
-        for worker, contents in self.merlin["resources"]["workers"].items():
-            MerlinSpec.check_section(
-                "merlin.resources.workers " + worker, contents, all_keys.WORKER
-            )
-        if self.merlin["samples"]:
-            MerlinSpec.check_section(
-                "merlin.samples", self.merlin["samples"], all_keys.SAMPLES
-            )
-
-    @staticmethod
-    def check_section(section_name, section, all_keys):
-        diff = set(section.keys()).difference(all_keys)
-        for extra in diff:
-            LOG.warn(
-                f"Unrecognized key '{extra}' found in spec section '{section_name}'."
-            )
 
     def dump(self):
         """
@@ -265,3 +221,24 @@ class MerlinSpec(YAMLSpecification):
         for worker in self.merlin["resources"]["workers"]:
             result.append(worker)
         return result
+    
+    def verify(self):
+        """Verify the whole specification."""
+
+        # load the MerlinSpec schema file
+        dirpath = os.path.dirname(os.path.abspath(__file__))
+        schema_path = os.path.join(dirpath, "schemas")
+        schema_path = os.path.join(schema_path, "merlinspec.json")
+        with open(schema_path, "r") as json_file:
+            schemas = json.load(json_file)
+
+        super.validate_schema("description", self.description, schemas["DESCRIPTION"])
+        super.validate_schema("env", self.environment, schemas["ENV"])
+        super.validate_schema("batch", self.batch, schemas["BATCH"])
+        for step in self.study:
+            super.validate_schema("study step {step[\"name\"]}", step, schemas["STUDY_STEP"])
+        for param, contents in self.globals.items():
+            super.validate_schema("global.params", contents, schemas["PARAM"])
+        super.validate_schema("merlin", self.merlin, schemas["MERLIN"])
+
+        LOG.debug("Spec verified. No errors found.")
