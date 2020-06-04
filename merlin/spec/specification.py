@@ -37,6 +37,7 @@ import json
 import logging
 import os
 from io import StringIO
+from contextlib import suppress
 
 import jsonschema
 import yaml
@@ -223,7 +224,7 @@ class MerlinSpec(YAMLSpecification):
         return result
     
     def verify(self):
-        """Verify the whole specification."""
+        """Validate the specification."""
 
         # load the MerlinSpec schema file
         dirpath = os.path.dirname(os.path.abspath(__file__))
@@ -232,13 +233,26 @@ class MerlinSpec(YAMLSpecification):
         with open(schema_path, "r") as json_file:
             schemas = json.load(json_file)
 
-        super.validate_schema("description", self.description, schemas["DESCRIPTION"])
-        super.validate_schema("env", self.environment, schemas["ENV"])
-        super.validate_schema("batch", self.batch, schemas["BATCH"])
+        super().validate_schema("description", self.description, schemas["DESCRIPTION"])
+        super().validate_schema("env", self.environment, schemas["ENV"])
+        super().validate_schema("batch", self.batch, schemas["BATCH"])
         for step in self.study:
-            super.validate_schema("study step {step[\"name\"]}", step, schemas["STUDY_STEP"])
+            super().validate_schema("study step {step[\"name\"]}", step, schemas["STUDY_STEP"])
         for param, contents in self.globals.items():
-            super.validate_schema("global.params", contents, schemas["PARAM"])
-        super.validate_schema("merlin", self.merlin, schemas["MERLIN"])
+            super().validate_schema("global.params", contents, schemas["PARAM"])
 
         LOG.debug("Spec verified. No errors found.")
+
+    def verify_merlin_block(self):
+        """Validate the merlin block."""
+
+        # load the merlin block schema file
+        dirpath = os.path.dirname(os.path.abspath(__file__))
+        schema_path = os.path.join(dirpath, "schemas")
+        schema_path = os.path.join(schema_path, "merlinsection.json")
+        with open(schema_path, "r") as json_file:
+            schemas = json.load(json_file)
+
+        super().validate_schema("merlin", self.merlin, schemas["MERLIN"])
+
+        LOG.debug("Merlin block verified. No errors found.")
