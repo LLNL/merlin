@@ -237,7 +237,7 @@ class MerlinSpec(YAMLSpecification):
         super().validate_schema("env", self.environment, schemas["ENV"])
         super().validate_schema("batch", self.batch, schemas["BATCH"])
         for step in self.study:
-            super().validate_schema("study step {step[\"name\"]}", step, schemas["STUDY_STEP"])
+            super().validate_schema(f"study step {step['name']}", step, schemas["STUDY_STEP"])
         for param, contents in self.globals.items():
             super().validate_schema("global.params", contents, schemas["PARAM"])
 
