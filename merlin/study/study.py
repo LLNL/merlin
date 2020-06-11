@@ -418,7 +418,12 @@ class MerlinStudy:
                     "cmd"
                 ]
                 LOG.info("Generating samples...")
-                sample_process = subprocess.Popen(sample_generate, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+                sample_process = subprocess.Popen(
+                    sample_generate,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True,
+                )
                 stdout, stderr = sample_process.communicate()
                 with open(os.path.join(self.info, "cmd.sh"), "w") as f:
                     f.write(sample_generate)
