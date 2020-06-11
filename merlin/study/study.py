@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.3.
+# This file is part of Merlin, Version: 1.6.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -383,7 +383,7 @@ class MerlinStudy:
             # rewrite provenance spec to correct samples.generate.cmd and samples.file
             if self.restart_dir is None:
                 self.write_expanded_spec(self.expanded_filepath)
-        
+
         LOG.info(f"Study workspace is '{self.workspace}'.")
         return result
 
