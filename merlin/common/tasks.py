@@ -146,14 +146,14 @@ def merlin_step(self, *args, **kwargs):
             LOG.error(
                 f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!"
             )
-            shutdown = shutdown_workers.s([step_queue])
+            shutdown = shutdown_workers.si([step_queue])
             shutdown.set(queue=step_queue)
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
 
             raise HardFailException
         elif result == ReturnCode.STOP_WORKERS:
             LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
-            shutdown = shutdown_workers.s(None)
+            shutdown = shutdown_workers.si(None)
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
@@ -266,7 +266,7 @@ def add_merlin_expanded_chain_to_chord(
             LOG.debug(f"expanding step {step.name()} in workspace {workspace}")
             new_chain = []
             for sample_id, sample in enumerate(samples):
-                new_step = task_type.s(
+                new_step = task_type.si(
                     step.clone_changing_workspace_and_cmd(
                         new_workspace=os.path.join(
                             workspace, relative_paths[sample_id]
@@ -293,7 +293,7 @@ def add_merlin_expanded_chain_to_chord(
         for next_index in sample_index.children.values():
             next_index.name = os.path.join(sample_index.name, next_index.name)
             LOG.debug("generating next step")
-            next_step = add_merlin_expanded_chain_to_chord.s(
+            next_step = add_merlin_expanded_chain_to_chord.si(
                 task_type,
                 chain_,
                 samples[
@@ -339,7 +339,7 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
         # a given sample.
 
         new_steps = [
-            task_type.s(step, adapter_config=adapter_config).set(
+            task_type.si(step, adapter_config=adapter_config).set(
                 queue=step.get_task_queue()
             )
         ]
@@ -399,7 +399,6 @@ def add_chains_to_chord(self, all_chains):
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def expand_tasks_with_samples(
     self,
-    _,
     dag,
     chain_,
     samples,
@@ -485,7 +484,7 @@ def expand_tasks_with_samples(
                     )
                     next_index.name = next_index_path
 
-                    sig = add_merlin_expanded_chain_to_chord.s(
+                    sig = add_merlin_expanded_chain_to_chord.si(
                         task_type,
                         steps,
                         samples[next_index.min : next_index.max],
@@ -571,7 +570,7 @@ def queue_merlin_study(study, adapter):
         chord(
             group(
                 [
-                    expand_tasks_with_samples.s(
+                    expand_tasks_with_samples.si(
                         egraph,
                         gchain,
                         samples,
