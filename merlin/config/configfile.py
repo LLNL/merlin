@@ -129,10 +129,15 @@ def get_config(path):
     return config
 
 def load_default_timeout(config):
+    seconds = 60 * 60 * 24
+    try:
+        config["celery"]
+    except KeyError:
+        config["celery"] = {"visibility_timeout_seconds": seconds}
     try:
         config["celery"]["visibility_timeout_seconds"]
     except KeyError:
-        config["celery"]["visibility_timeout_seconds"] = 86400
+        config["celery"]["visibility_timeout_seconds"] = seconds
 
 def load_defaults(config):
     load_default_user_names(config)
