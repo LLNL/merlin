@@ -161,141 +161,141 @@
                 "pattern": "^\\$\\(\\w+\\)$"
               }
             ]
-          }
-        },
-        "gpus": {
-          "anyOf": [
-            {
-              "type": "integer",
-              "minimum": 0
-            },
-            {
-              "type": "string",
-              "pattern": "^\\$\\(\\w+\\)$"
+          },
+          "gpus": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "string",
+                "pattern": "^\\$\\(\\w+\\)$"
+              }
+            ]
+          },
+          "cores per task": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1
+              },
+              {
+                "type": "string",
+                "pattern": "^\\$\\(\\w+\\)$"
+              }
+            ]
+          },
+          "walltime": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reservation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "exclusive": {
+            "anyof": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "pattern": "^\\$\\(\\w+\\)$"
+              }
+            ]
+          },
+          "task_queue": {
+            "type": "string",
+            "minLength": 1
+          },
+          "shell": {
+            "type": "string",
+            "minLength": 1
+          },
+          "max_retries": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "string",
+                "pattern": "^\\$\\(\\w+\\)$"
+              }
+            ]
+          },
+          "gpus per task": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "string",
+                "pattern": "^\\$\\(\\w+\\)$"
+              }
+            ]
+          },
+          "batch": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 1
+              }
             }
-          ]
-        }
-      },
-      "cores per task": {
-        "anyOf": [
-          {
-            "type": "integer",
-            "minimum": 1
           },
-          {
+          "slurm": {
             "type": "string",
-            "pattern": "^\\$\\(\\w+\\)$"
-          }
-        ]
-      },
-      "walltime": {
-        "type": "string",
-        "minLength": 1
-      },
-      "reservation": {
-        "type": "string",
-        "minLength": 1
-      },
-      "exclusive": {
-        "anyof": [
-          {
-            "type": "boolean"
+            "minLength": 1
           },
-          {
+          "lsf": {
             "type": "string",
-            "pattern": "^\\$\\(\\w+\\)$"
-          }
-        ]
-      },
-      "task_queue": {
-        "type": "string",
-        "minLength": 1
-      },
-      "shell": {
-        "type": "string",
-        "minLength": 1
-      },
-      "max_retries": {
-        "anyOf": [
-          {
-            "type": "integer",
-            "minimum": 0
+            "minLength": 1
           },
-          {
+          "bind": {
             "type": "string",
-            "pattern": "^\\$\\(\\w+\\)$"
-          }
-        ]
-      },
-      "gpus per task": {
-        "anyOf": [
-          {
-            "type": "integer",
-            "minimum": 0
+            "minLength": 1
           },
-          {
+          "num resource set": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "string",
+                "pattern": "^\\$\\(\\w+\\)$"
+              }
+            ]
+          },
+          "launch_distribution": {
             "type": "string",
-            "pattern": "^\\$\\(\\w+\\)$"
-          }
-        ]
-      },
-      "batch": {
-        "type": "object",
-        "properties": {
-          "type": {
+            "minLength": 1
+          },
+          "exit_on_error": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "string",
+                "pattern": "^\\$\\(\\w+\\)$"
+              }
+            ]
+          },
+          "flux": {
             "type": "string",
             "minLength": 1
           }
-        }
-      },
-      "slurm": {
-        "type": "string",
-        "minLength": 1
-      },
-      "lsf": {
-        "type": "string",
-        "minLength": 1
-      },
-      "bind": {
-        "type": "string",
-        "minLength": 1
-      },
-      "num resource set": {
-        "anyOf": [
-          {
-            "type": "integer",
-            "minimum": 0
-          },
-          {
-            "type": "string",
-            "pattern": "^\\$\\(\\w+\\)$"
-          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "cmd"
         ]
-      },
-      "launch_distribution": {
-        "type": "string",
-        "minLength": 1
-      },
-      "exit_on_error": {
-        "anyOf": [
-          {
-            "type": "integer",
-            "minimum": 0
-          },
-          {
-            "type": "string",
-            "pattern": "^\\$\\(\\w+\\)$"
-          }
-        ]
-      },
-      "flux": {
-        "type": "string",
-        "minLength": 1
-      },
-      "additionalProperties": false,
-      "required": [
-        "cmd"
-      ]
+      }
     },
     "additionalProperties": false,
     "required": [
