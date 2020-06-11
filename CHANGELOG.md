@@ -6,10 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Integrated Maestro validation into merlin.
+
 ### Fixed
 - Corrected prior bugfix.
+- Unfroze Maestro version dependency.
 
->>>>>>> 9802ab87bcad46f6d582d5224fee6dc5fe833532
 ## [1.6.1]
 
 ### Fixed
