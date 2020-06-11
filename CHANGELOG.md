@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The sample generation command now logs stdout, stderr, and cmd.sh to merlin_info.
+
 ### Fixed
 - Corrected prior bugfix.
 
