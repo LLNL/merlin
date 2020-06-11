@@ -135,10 +135,6 @@ def load_default_timeout(config):
     except KeyError:
         config["celery"] = {}
     try:
-        config["celery"]
-    except KeyError:
-        config["celery"] = {"visibility_timeout_seconds": 86400}
-    try:
         config["celery"]["visibility_timeout_seconds"]
     except KeyError:
         config["celery"]["visibility_timeout_seconds"] = seconds
