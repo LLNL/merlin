@@ -50,11 +50,21 @@
                       {
                         "type": "string",
                         "pattern": "^\\$\\(\\w+\\)$"
+                      },
+                      {
+                        "type": "null"
                       }
                     ]
                   },
                   "batch": {
-                    "type": "object"
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "args": {
                     "type": "string",
@@ -71,7 +81,6 @@
                 },
                 "additionalProperties": false,
                 "required": [
-                  "args",
                   "steps"
                 ]
               }
@@ -81,42 +90,49 @@
         "additionalProperties": false
       },
       "samples": {
-        "type": "object",
-        "properties": {
-          "generate": {
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
-              "cmd": {
+              "generate": {
+                "type": "object",
+                "properties": {
+                  "cmd": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "level_max_dirs": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^\\$\\(\\w+\\)$"
+                  }
+                ]
+              },
+              "file": {
                 "type": "string",
                 "minLength": 1
-              }
-            }
-          },
-          "level_max_dirs": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "minimum": 1
               },
-              {
-                "type": "string",
-                "pattern": "^\\$\\(\\w+\\)$"
+              "column_labels": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
               }
-            ]
+            },
+            "additionalProperties": false
           },
-          "file": {
-            "type": "string",
-            "minLength": 1
-          },
-          "column_labels": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
+          {
+            "type": "null"
           }
-        },
-        "additionalProperties": false
+        ]
       }
     },
     "additionalProperties": false,

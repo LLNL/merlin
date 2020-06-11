@@ -90,8 +90,8 @@ class MerlinSpec(YAMLSpecification):
             spec.merlin = MerlinSpec.load_merlin_block(f)
         spec.specroot = os.path.dirname(spec.path)
         spec.process_spec_defaults()
-        #if not suppress_warning:
-        #    spec.verify()
+        if not suppress_warning:
+            spec.verify_merlin_block()
         return spec
 
     @classmethod
