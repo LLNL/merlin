@@ -96,7 +96,9 @@ Information (``merlin info``)
 -----------------------------
 
 Information about your merlin and python configuration can be printed out by using the 
-``info`` command. This is helpful for debugging.
+``info`` command. This is helpful for debugging. Included in this command
+is a server check which will check for server connections. The connection
+check will timeout after 60 seconds.
 
 .. code:: bash
 
@@ -108,15 +110,19 @@ Monitor (``merlin monitor``)
 Batch submission scripts may not keep the batch allocation alive
 if there is not a blocking process in the submission script. The
 ``merlin monitor`` command addresses this by providing a blocking process that
-checks for running workers every 60 seconds. If the 
-``$(MERLIN_STOP_WORKERS)`` option is used or when workers are stopped
-through some other mechanism, then the blocking process
-will exit and allow the allocation to end. The ``monitor`` command
-will not exit until all celery workers on the allocation cease.
+checks for tasks in the queues every (sleep) seconds. When the queues are empty, the 
+blocking process will exit and allow the allocation to end.
 
 .. code:: bash
 
-    $ merlin monitor [--task_server celery] [--sleep <duration>]
+    $ merlin monitor <input.yaml> [--steps <steps>] [--vars <VARIABLES=<VARIABLES>>] [--sleep <duration>][--task_server celery]
+
+Use the ``--steps`` option to identify specific steps in the specification that you want to query.
+
+The ``--vars`` option will specify desired Merlin variable values to override
+those found in the specification. The list is space-delimited and should be given after
+the input yaml file.
+``Example: --vars LEARN=path/to/new_learn.py EPOCHS=3``
 
 The ``--sleep`` argument is the duration in seconds between checks
 for workers. The default is 60 seconds.
@@ -124,8 +130,10 @@ for workers. The default is 60 seconds.
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
 The ``monitor`` function will check for celery workers for up to
-5*<duration> seconds before monitoring begins to eliminate any race 
-conditions.
+10*(sleep) seconds before monitoring begins. The loop happens when the 
+queue(s) in the spec contain tasks, but no running workers are detected.
+This is to protect against a failed worker launch.
+
 
 Purging Tasks (``merlin purge``)
 --------------------------------

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.3.
+# This file is part of Merlin, Version: 1.6.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -135,7 +135,7 @@ def get_redissock_connection(config_path, include_password):
         db_num = CONFIG.broker.db_num
     except (AttributeError, KeyError):
         db_num = 0
-        LOG.warning(f"Broker: redis+socket using default db_num = {db_num}")
+        LOG.debug(f"Broker: redis+socket using default db_num = {db_num}")
 
     redis_config = {"db_num": db_num, "path": CONFIG.broker.path}
 
@@ -151,7 +151,7 @@ def get_redis_connection(config_path, include_password, ssl=False):
     :param ssl : Flag to use rediss output
     """
     server = CONFIG.broker.server
-    LOG.info(f"Broker: server = {server}")
+    LOG.debug(f"Broker: server = {server}")
 
     urlbase = "rediss" if ssl else "redis"
 
@@ -160,13 +160,13 @@ def get_redis_connection(config_path, include_password, ssl=False):
         LOG.debug(f"Broker: redis port = {port}")
     except (AttributeError, KeyError):
         port = 6379
-        LOG.warning(f"Broker: redis using default port = {port}")
+        LOG.debug(f"Broker: redis using default port = {port}")
 
     try:
         db_num = CONFIG.broker.db_num
     except (AttributeError, KeyError):
         db_num = 0
-        LOG.warning(f"Broker: redis using default db_num = {db_num}")
+        LOG.debug(f"Broker: redis using default db_num = {db_num}")
 
     try:
         username = CONFIG.broker.username
@@ -185,7 +185,7 @@ def get_redis_connection(config_path, include_password, ssl=False):
             spass = "%s:%s@" % (username, "******")
     except (AttributeError, KeyError):
         spass = ""
-        LOG.warning(f"Broker: redis using default password = {spass}")
+        LOG.debug(f"Broker: redis using default password = {spass}")
 
     return f"{urlbase}://{spass}{server}:{port}/{db_num}"
 
