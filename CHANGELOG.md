@@ -4,14 +4,16 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
 ### Fixed
 - Updated to new celery (4.4.5) syntax for signature return codes.
-
+- Corrected prior bugfix.
 
 ## [1.6.1]
 
 ### Fixed
-- Error if app.yaml does not have visibility timeout seconds
+- Error if app.yaml does not have visibility timeout seconds.
 
 ## [1.6.0]
 
