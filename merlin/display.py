@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.6.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -33,6 +33,8 @@ Manages formatting for displaying information to the console.
 """
 import pprint
 import subprocess
+import time
+from multiprocessing import Process
 
 from kombu import Connection
 from tabulate import tabulate
@@ -53,11 +55,22 @@ def check_server_access(sconf):
         print("-" * 28)
 
     excpts = {}
+    connect_timeout = 60
     for s in servers:
         if s in sconf:
             try:
                 conn = Connection(sconf[s])
-                conn.connect()
+                conn_check = Process(target=conn.connect)
+                conn_check.start()
+                counter = 0
+                while conn_check.is_alive():
+                    time.sleep(1)
+                    counter += 1
+                    if counter > connect_timeout:
+                        conn_check.kill()
+                        raise Exception(
+                            f"Connection was killed due to timeout ({connect_timeout}s)"
+                        )
                 conn.release()
                 print(f"{s} connection: OK")
             except Exception as e:

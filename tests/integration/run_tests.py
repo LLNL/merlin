@@ -445,6 +445,11 @@ def define_tests():
             ],
             "local",
         ),
+        "restart local simple_chain": (
+            f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'simple_chain_*') --local",
+            ReturnCodeCond(),
+            "local",
+        ),
         "local simple_chain": (
             f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             ReturnCodeCond(),
@@ -456,10 +461,6 @@ def define_tests():
             ReturnCodeCond(),
             "local",
         ),
-        # "restart local simple_chain": (
-        #    f"{restart} --local $(find studies/ -type d -name 'simple_chain_*')",
-        #    [ReturnCodeCond(), NoStderrCond()],
-        # ),
         "dry launch slurm": (
             f"{run} {slurm} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
             StepFileContainsCond(
@@ -520,6 +521,21 @@ def define_tests():
             ],
             # "local",
         ),
+        # "local restart expand name": (
+        #    f"{run} {demo} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} NAME=test_demo ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'test_demo_*') --local",
+        #    [
+        #        ReturnCodeCond(),
+        #        ProvenanceCond(
+        #            regex="name: test_demo",
+        #            name="test_demo",
+        #            output_path=OUTPUT_DIR,
+        #        ),
+        #        StepFileExistsCond(
+        #            "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR
+        #        ),
+        #    ],
+        #    "local",
+        # ),
         "local csv feature_demo": (
             f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samples foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [RegexCond("1 sample loaded."), ReturnCodeCond()],

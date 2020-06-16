@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.6.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -34,6 +34,7 @@ import glob
 import logging
 import os
 import sys
+import time
 import traceback
 from argparse import (
     ArgumentDefaultsHelpFormatter,
@@ -145,6 +146,18 @@ def parse_override_vars(variables_list):
     return result
 
 
+def get_merlin_spec_with_override(args):
+    """
+    Shared command to return the spec object.
+
+    :param 'args': parsed CLI arguments
+    """
+    filepath = verify_filepath(args.specification)
+    variables_dict = parse_override_vars(args.variables)
+    spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
+    return spec, filepath
+
+
 def process_run(args):
     """
     CLI command for running a study.
@@ -199,11 +212,9 @@ def launch_workers(args):
     """
     if not args.worker_echo_only:
         print(banner_small)
-    filepath = verify_filepath(args.specification)
+    spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
-    variables_dict = parse_override_vars(args.variables)
-    spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
     status = router.launch_workers(
         spec, args.worker_steps, args.worker_args, args.worker_echo_only
     )
@@ -220,9 +231,7 @@ def purge_tasks(args):
     :param `args`: parsed CLI arguments
     """
     print(banner_small)
-    filepath = verify_filepath(args.specification)
-    variables_dict = parse_override_vars(args.variables)
-    spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
+    spec, _ = get_merlin_spec_with_override(args)
     ret = router.purge_tasks(
         spec.merlin["resources"]["task_server"],
         spec,
@@ -240,9 +249,7 @@ def query_status(args):
     :param 'args': parsed CLI arguments
     """
     print(banner_small)
-    filepath = verify_filepath(args.specification)
-    variables_dict = parse_override_vars(args.variables)
-    spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
+    spec, _ = get_merlin_spec_with_override(args)
     ret = router.query_status(args.task_server, spec, args.steps)
     for name, jobs, consumers in ret:
         print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
@@ -313,7 +320,18 @@ def process_example(args):
 
 
 def process_monitor(args):
-    router.monitor_workers(args.task_server, args.sleep)
+    """
+    CLI command to monitor merlin workers and queues to keep 
+    the allocation alive
+
+    :param `args`: parsed CLI arguments
+    """
+    LOG.info("Monitor: checking queues ...")
+    spec, _ = get_merlin_spec_with_override(args)
+    while router.check_merlin_status(args, spec):
+        LOG.info("Monitor: found tasks in queues")
+        time.sleep(args.sleep)
+    LOG.info("Monitor: ... stop condition met")
 
 
 def setup_argparse():
@@ -641,6 +659,27 @@ def setup_argparse():
         "monitor",
         help="Check for active workers on an allocation.",
         formatter_class=RawTextHelpFormatter,
+    )
+    monitor.add_argument(
+        "specification", type=str, help="Path to a Merlin YAML spec file"
+    )
+    monitor.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="steps",
+        default=["all"],
+        help="The specific steps (tasks on the server) in the YAML file defining the queues you want to monitor",
+    )
+    monitor.add_argument(
+        "--vars",
+        action="store",
+        dest="variables",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
+        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
     monitor.add_argument(
         "--task_server",

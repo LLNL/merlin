@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.6.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -320,7 +320,6 @@ class MerlinStudy:
             shutil.rmtree(workspace)
         os.mkdir(workspace)
 
-        LOG.info(f"Study workspace is '{workspace}'.")
         return workspace
 
     @cached_property
@@ -349,9 +348,44 @@ class MerlinStudy:
         if self.restart_dir is None:
             self.write_expanded_spec(self.expanded_filepath)
 
-        return MerlinSpec.load_specification(
+        result = MerlinSpec.load_specification(
             self.expanded_filepath, suppress_warning=False
         )
+
+        # expand provenance spec filename
+        if "$(" in self.spec.name:
+            expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
+            expanded_workspace = os.path.join(
+                self.output_path,
+                f"{result.description['name'].replace(' ', '_')}_{self.timestamp}",
+            )
+            shutil.move(
+                self.expanded_filepath,
+                os.path.join(os.path.dirname(self.expanded_filepath), expanded_name),
+            )
+            shutil.move(self.workspace, expanded_workspace)
+
+            sample_file = result.merlin["samples"]["file"]
+            if sample_file.startswith(self.workspace):
+                new_samples_file = sample_file.replace(
+                    self.workspace, expanded_workspace
+                )
+                result.merlin["samples"]["generate"]["cmd"] = result.merlin["samples"][
+                    "generate"
+                ]["cmd"].replace(self.workspace, expanded_workspace)
+                result.merlin["samples"]["file"] = new_samples_file
+            self.workspace = expanded_workspace
+            self.info = os.path.join(self.workspace, "merlin_info")
+            self.special_vars["MERLIN_INFO"] = self.info
+            self.expanded_filepath = os.path.join(self.info, expanded_name)
+            result.path = self.expanded_filepath
+            self.spec.path = self.expanded_filepath
+            # rewrite provenance spec to correct samples.generate.cmd and samples.file
+            if self.restart_dir is None:
+                self.write_expanded_spec(self.expanded_filepath)
+
+        LOG.info(f"Study workspace is '{self.workspace}'.")
+        return result
 
     @cached_property
     def flux_command(self):
@@ -384,7 +418,19 @@ class MerlinStudy:
                     "cmd"
                 ]
                 LOG.info("Generating samples...")
-                subprocess.call(sample_generate, shell=True)
+                sample_process = subprocess.Popen(
+                    sample_generate,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True,
+                )
+                stdout, stderr = sample_process.communicate()
+                with open(os.path.join(self.info, "cmd.sh"), "w") as f:
+                    f.write(sample_generate)
+                with open(os.path.join(self.info, "cmd.out"), "wb") as f:
+                    f.write(stdout)
+                with open(os.path.join(self.info, "cmd.err"), "wb") as f:
+                    f.write(stderr)
                 LOG.info("Generating samples complete!")
             return
         except (IndexError, TypeError) as e:

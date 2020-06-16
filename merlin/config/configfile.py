@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.6.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -125,8 +125,25 @@ def get_config(path):
         )
 
     config = load_config(filepath)
-    load_default_user_names(config)
+    load_defaults(config)
     return config
+
+
+def load_default_timeout(config):
+    seconds = 60 * 60 * 24
+    try:
+        config["celery"]
+    except KeyError:
+        config["celery"] = {}
+    try:
+        config["celery"]["visibility_timeout_seconds"]
+    except KeyError:
+        config["celery"]["visibility_timeout_seconds"] = seconds
+
+
+def load_defaults(config):
+    load_default_user_names(config)
+    load_default_timeout(config)
 
 
 def is_debug():

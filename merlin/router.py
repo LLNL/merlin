@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.6.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -42,6 +42,7 @@ from datetime import datetime
 
 from merlin.study.celeryadapter import (
     create_celery_config,
+    get_workers_from_app,
     purge_celery_tasks,
     query_celery_queues,
     query_celery_workers,
@@ -111,7 +112,7 @@ def purge_tasks(task_server, spec, force, steps):
         LOG.error("Celery is not specified as the task server!")
 
 
-def query_status(task_server, spec, steps):
+def query_status(task_server, spec, steps, verbose=True):
     """
     Queries status of queues in spec file from server.
 
@@ -119,7 +120,8 @@ def query_status(task_server, spec, steps):
     :param `spec`: A MerlinSpec object
     :param `steps`: Spaced-separated list of stepnames to query. Default is all
     """
-    LOG.info(f"Querying queues for steps = {steps}")
+    if verbose:
+        LOG.info(f"Querying queues for steps = {steps}")
 
     if task_server == "celery":
         queues = spec.get_queue_list(steps)
@@ -161,8 +163,20 @@ def query_workers(task_server):
     LOG.info(f"Searching for workers...")
 
     if task_server == "celery":
-        # Stop workers
         return query_celery_workers()
+    else:
+        LOG.error("Celery is not specified as the task server!")
+
+
+def get_workers(task_server):
+    """Get all workers.
+
+    :param `task_server`: The task server to query.
+    :return: A list of all connected workers
+    :rtype: list
+    """
+    if task_server == "celery":
+        return get_workers_from_app()
     else:
         LOG.error("Celery is not specified as the task server!")
 
@@ -217,14 +231,47 @@ def create_config(task_server, config_dir, broker):
         LOG.error("Only celery can be configured currently.")
 
 
-def monitor_workers(task_server, sleep_duration):
+def check_merlin_status(args, spec):
     """
-    Monitor for running clery workers to keep an allocation alive.
+    Function to check merlin workers and queues to keep 
+    the allocation alive
 
-    :param `task_server`: The task server for which to monitor workers.
+    :param `args`: parsed CLI arguments
+    :param `spec`: the parsed spec.yaml
     """
-    if task_server == "celery":
-        while is_running("celery worker"):
-            LOG.info("Monitor: celery workers are running.")
-            time.sleep(sleep_duration)
-        LOG.info("Monitor: celery workers are not running.")
+    queue_status = query_status(args.task_server, spec, args.steps, verbose=False)
+
+    total_jobs = 0
+    total_consumers = 0
+    for name, jobs, consumers in queue_status:
+        total_jobs += jobs
+        total_consumers += consumers
+
+    if total_jobs > 0 and total_consumers == 0:
+        # Determine if any of the workers are on this allocation
+        worker_names = spec.get_worker_names()
+
+        # Loop until workers are detected.
+        count = 0
+        max_count = 10
+        while count < max_count:
+            # This list will include strings comprised of the worker name with the hostname e.g. worker_name@host.
+            worker_status = get_workers(args.task_server)
+            LOG.info(
+                f"Monitor: checking for workers, running workers = {worker_status} ..."
+            )
+
+            check = any(
+                any(iwn in iws for iws in worker_status) for iwn in worker_names
+            )
+            if check:
+                break
+
+            count += 1
+            time.sleep(args.sleep)
+
+        if count == max_count:
+            LOG.error("Monitor: no workers available to process the non-empty queue")
+            total_jobs = 0
+
+    return total_jobs

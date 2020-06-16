@@ -1,9 +1,9 @@
 cached_property
-celery[redis,sqlalchemy]>=4.3.0
+celery[redis,sqlalchemy]==4.4.2
 coloredlogs
 cryptography
 importlib_resources; python_version < '3.7'
-maestrowf>=1.1.7dev0
+maestrowf==1.1.7dev0
 numpy
 parse
 psutil>=5.1.0
