@@ -418,7 +418,19 @@ class MerlinStudy:
                     "cmd"
                 ]
                 LOG.info("Generating samples...")
-                subprocess.call(sample_generate, shell=True)
+                sample_process = subprocess.Popen(
+                    sample_generate,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True,
+                )
+                stdout, stderr = sample_process.communicate()
+                with open(os.path.join(self.info, "cmd.sh"), "w") as f:
+                    f.write(sample_generate)
+                with open(os.path.join(self.info, "cmd.out"), "wb") as f:
+                    f.write(stdout)
+                with open(os.path.join(self.info, "cmd.err"), "wb") as f:
+                    f.write(stderr)
                 LOG.info("Generating samples complete!")
             return
         except (IndexError, TypeError) as e:
