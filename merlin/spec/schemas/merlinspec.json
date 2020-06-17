@@ -98,6 +98,10 @@
           "pattern": "^\\$\\(\\w+\\)$"
         }
       ]
+    },
+    "walltime": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "STUDY_STEP": {
