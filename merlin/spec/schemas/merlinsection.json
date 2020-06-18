@@ -1,0 +1,144 @@
+{
+  "MERLIN": {
+    "type": "object",
+    "properties": {
+      "resources": {
+        "type": "object",
+        "properties": {
+          "task_server": {
+            "type": "string",
+            "minLength": 1
+          },
+          "overlap": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string",
+                "pattern": "^\\$\\(\\w+\\)$"
+              }
+            ]
+          },
+          "workers": {
+            "type": "object",
+            "additionalProperties": true,
+            "patternProperties": {
+              ".*": {
+                "type": "object",
+                "properties": {
+                  "steps": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "nodes": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^\\$\\(\\w+\\)$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "batch": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "args": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "machines": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "steps"
+                ]
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "samples": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "generate": {
+                "type": "object",
+                "properties": {
+                  "cmd": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "level_max_dirs": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^\\$\\(\\w+\\)$"
+                  }
+                ]
+              },
+              "file": {
+                "type": "string",
+                "minLength": 1
+              },
+              "column_labels": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "additionalProperties": false,
+    "required": [
+      "samples",
+      "resources"
+    ]
+  }
+}
