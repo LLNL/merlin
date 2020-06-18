@@ -409,6 +409,11 @@ def define_tests():
             ReturnCodeCond(),
             "local",
         ),
+        "local format 0": (
+            f"merlin -lvl debug run {dev_examples}/full_format.yaml --local",
+            [RegexCond("Spec verified. No errors found."), RegexCond("Merlin block verified. No errors found.")],
+            "local",
+        ),
         "local format 1": (
             f"{run} {dev_examples}/bad_format1.yaml --local",
             ReturnCodeCond(expected_code=1),
