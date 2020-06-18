@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The sample generation command now logs stdout, stderr, and cmd.sh to merlin_info.
 - Add the bank and walltime keywords to the batch slurm launch, these
   will not alter the lsf launch.
+- 12 hidden test specs and associated cli tests, for cli tests with specs that we
+  do not want in `merlin examples`.
 
 ### Fixed
 - Corrected prior bugfix.
