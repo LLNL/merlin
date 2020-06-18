@@ -8,7 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Integrated Maestro validation into merlin.
-- The sample `generate.cmd` now logs stdout, stderr, and `cmd.sh` to `merlin_info/`.
+- The sample generation command now logs stdout, stderr, and cmd.sh to merlin_info.
+- Add the bank and walltime keywords to the batch slurm launch, these
+  will not alter the lsf launch.
 
 ### Fixed
 - Corrected prior bugfix.

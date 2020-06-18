@@ -43,6 +43,7 @@ BATCH = {
     "launch_args",
     "worker_launch",
     "nodes",
+    "walltime",
 }
 
 ENV = {"variables", "labels", "sources", "dependencies"}
