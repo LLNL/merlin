@@ -389,6 +389,7 @@ def define_tests():
     restart = "merlin restart"
     purge = "merlin purge"
     examples = "merlin/examples/workflows"
+    dev_examples = "merlin/examples/dev_workflows"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
     slurm = f"{examples}/slurm/slurm_test.yaml"
@@ -406,6 +407,66 @@ def define_tests():
         "merlin config": (
             f"merlin config -o {config_dir}; rm -rf {config_dir}",
             ReturnCodeCond(),
+            "local",
+        ),
+        "local format 0": (
+            f"merlin -lvl debug run {dev_examples}/full_format.yaml --local",
+            [RegexCond("Spec verified. No errors found."), RegexCond("Merlin block verified. No errors found.")],
+            "local",
+        ),
+        "local format 1": (
+            f"{run} {dev_examples}/bad_format1.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 2": (
+            f"{run} {dev_examples}/bad_format2.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 3": (
+            f"{run} {dev_examples}/bad_format3.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 4": (
+            f"{run} {dev_examples}/bad_format4.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 5": (
+            f"{run} {dev_examples}/bad_format5.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 6": (
+            f"{run} {dev_examples}/bad_format6.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 7": (
+            f"{run} {dev_examples}/bad_format7.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 8": (
+            f"{run} {dev_examples}/bad_format8.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 9": (
+            f"{run} {dev_examples}/bad_format9.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 10": (
+            f"{run} {dev_examples}/bad_format10.yaml --local",
+            ReturnCodeCond(expected_code=1),
+            "local",
+        ),
+        "local format 11": (
+            f"{run} {dev_examples}/bad_format11.yaml --local",
+            ReturnCodeCond(expected_code=1),
             "local",
         ),
         "run-workers echo simple_chain": (
