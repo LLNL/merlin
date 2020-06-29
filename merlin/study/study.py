@@ -351,9 +351,6 @@ class MerlinStudy:
         specification.
         """
         # Write expanded yaml spec
-        # self.expanded_filepath = os.path.join(
-        #     self.info, self.original_spec.name.replace(" ", "_") + ".yaml"
-        # )
         self.expanded_filepath = os.path.join(self.info, "expanded.yaml")
 
         # If we are restarting, we don't need to re-expand, just need to read
@@ -503,8 +500,6 @@ class MerlinStudy:
         self.dag = DAG(maestro_dag, labels)
 
     def get_adapter_config(self, override_type=None):
-        # spec = MerlinSpec.load_specification(self.original_spec.path) # TODO
-        # adapter_config = dict(spec.batch)
         adapter_config = dict(self.expanded_spec.batch)
 
         if "type" not in adapter_config.keys():
