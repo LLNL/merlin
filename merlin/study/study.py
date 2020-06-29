@@ -401,7 +401,12 @@ class MerlinStudy:
 
         # write partially-expanded spec
         partial_spec = deepcopy(self.original_spec)
-        partial_spec.environment = complete_spec.environment
+        if "variables" in complete_spec.environment:
+            partial_spec.environment["variables"] = complete_spec.environment[
+                "variables"
+            ]
+        if "labels" in complete_spec.environment:
+            partial_spec.environment["labels"] = complete_spec.environment["labels"]
         partial_spec_path = os.path.join(self.info, "partial.yaml")
         with open(partial_spec_path, "w") as f:
             f.write(partial_spec.dump())
