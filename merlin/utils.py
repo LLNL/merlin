@@ -439,3 +439,12 @@ def check_machines(machines):
             return True
 
     return False
+
+
+def contains_token(string):
+    """
+    Return True if given string contains a token of the form $(STR).
+    """
+    if re.search(r"\$\(\w+\)", string):
+        return True
+    return False
