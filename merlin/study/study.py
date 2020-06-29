@@ -101,6 +101,8 @@ class MerlinStudy:
 
         self.restart_dir = restart_dir
 
+        self.write_original_spec()
+
         self.special_vars = {
             "SPECROOT": self.spec.specroot,
             "MERLIN_TIMESTAMP": self.timestamp,
@@ -115,6 +117,13 @@ class MerlinStudy:
         }
         self.dag = None
         self.load_dag()
+
+    @cached_property
+    def original_spec(self):
+        return os.path.join(self.info, "orig.yaml")
+
+    def write_original_spec(self):
+        shutil.copyfile(self.spec.path,self.original_spec)
 
     def label_clash_error(self):
         """
@@ -339,8 +348,11 @@ class MerlinStudy:
         specification.
         """
         # Write expanded yaml spec
+        # self.expanded_filepath = os.path.join(
+        #     self.info, self.spec.name.replace(" ", "_") + ".yaml"
+        # )
         self.expanded_filepath = os.path.join(
-            self.info, self.spec.name.replace(" ", "_") + ".yaml"
+            self.info, "expanded.yaml"
         )
 
         # If we are restarting, we don't need to re-expand, just need to read
@@ -354,7 +366,8 @@ class MerlinStudy:
 
         # expand provenance spec filename
         if "$(" in self.spec.name:
-            expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
+            # expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
+            expanded_name = "expanded.yaml"
             expanded_workspace = os.path.join(
                 self.output_path,
                 f"{result.description['name'].replace(' ', '_')}_{self.timestamp}",
