@@ -127,7 +127,9 @@ def parse_override_vars(variables_list):
                 )
             key = entry[0]
             if key is None or key == "" or "$" in key:
-                raise ValueError("--vars requires valid variable names.")
+                raise ValueError(
+                    "--vars requires valid variable names comprised of alphanumeric characters and underscores."
+                )
             if key in RESERVED:
                 raise ValueError(
                     f"Cannot override reserved word '{key}'! Reserved words are: {RESERVED}."
