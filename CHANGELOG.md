@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   will not alter the lsf launch.
 - 12 hidden test specs and associated cli tests, for cli tests with specs that we
   do not want in `merlin examples`.
+- Inside `merlin_info`, added provenance specs `orig.yaml`, `expanded.yaml`, and
+  `partial.yaml`, which is identical to the original spec, but with expanded user variables.
 
 ### Fixed
 - Updated to new celery (4.4.5) syntax for signature return codes.
