@@ -188,9 +188,17 @@ def process_restart(args):
     """
     print(banner_small)
     restart_dir = verify_dirpath(args.restart_dir)
-    filepath = os.path.join(args.restart_dir, "merlin_info", "expanded.yaml")
-    if not os.path.exists(filepath):
-        raise ValueError(f"'{filepath}' does not exist, and is necessary for restart.")
+    filepath = os.path.join(args.restart_dir, "merlin_info", "*.expanded.yaml")
+    possible_specs = glob.glob(filepath)
+    if len(possible_specs) == 0:
+        raise ValueError(
+            f"'{filepath}' does not match any provenance spec file to restart from."
+        )
+    elif len(possible_specs) > 1:
+        raise ValueError(
+            f"'{filepath}' matches more than one provenance spec file to restart from."
+        )
+    filepath = verify_filepath(possible_specs[0])
     LOG.info(f"Restarting workflow at '{restart_dir}'")
     study = MerlinStudy(filepath, restart_dir=restart_dir)
     router.run_task_server(study, args.run_mode)

@@ -119,7 +119,8 @@ class MerlinStudy:
 
     @cached_property
     def provenance_original_spec(self):
-        return os.path.join(self.info, "orig.yaml")
+        name = self.original_spec.description["name"].replace(" ", "_")
+        return os.path.join(self.info, name + ".orig.yaml")
 
     def write_original_spec(self):
         shutil.copyfile(self.original_spec.path, self.provenance_original_spec)
@@ -364,8 +365,8 @@ class MerlinStudy:
 
         # expand provenance spec filename
         if "$(" in self.original_spec.name:
-            # expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
-            expanded_name = "expanded.yaml"
+            expanded_name = result.description["name"].replace(" ", "_")
+            expanded_name = expanded_name + ".expanded.yaml"
             expanded_workspace = os.path.join(
                 self.output_path,
                 f"{result.description['name'].replace(' ', '_')}_{self.timestamp}",
@@ -407,7 +408,8 @@ class MerlinStudy:
             ]
         if "labels" in complete_spec.environment:
             partial_spec.environment["labels"] = complete_spec.environment["labels"]
-        partial_spec_path = os.path.join(self.info, "partial.yaml")
+        name = result.description["name"].replace(" ", "_")
+        partial_spec_path = os.path.join(self.info, name + ".partial.yaml")
         with open(partial_spec_path, "w") as f:
             f.write(partial_spec.dump())
 
