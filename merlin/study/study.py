@@ -28,13 +28,13 @@
 # SOFTWARE.
 ###############################################################################
 
-from copy import deepcopy
 import logging
 import os
 import shutil
 import subprocess
 import time
 from contextlib import suppress
+from copy import deepcopy
 from fileinput import FileInput
 
 from cached_property import cached_property
@@ -185,7 +185,6 @@ class MerlinStudy:
         self.write_expand_by_line(dest, MerlinStudy.get_user_vars(new_spec))
         # expand reserved words
         self.write_expand_by_line(dest, self.special_vars)
-
 
     @property
     def samples(self):
@@ -355,9 +354,7 @@ class MerlinStudy:
         # self.expanded_filepath = os.path.join(
         #     self.info, self.original_spec.name.replace(" ", "_") + ".yaml"
         # )
-        self.expanded_filepath = os.path.join(
-            self.info, "expanded.yaml"
-        )
+        self.expanded_filepath = os.path.join(self.info, "expanded.yaml")
 
         # If we are restarting, we don't need to re-expand, just need to read
         # in the previously expanded spec
@@ -408,7 +405,7 @@ class MerlinStudy:
         # write partially-expanded spec
         partial_spec = deepcopy(self.original_spec)
         partial_spec.environment = complete_spec.environment
-        partial_spec_path = os.path.join(self.info,"partial.yaml") 
+        partial_spec_path = os.path.join(self.info, "partial.yaml")
         with open(partial_spec_path, "w") as f:
             f.write(partial_spec.dump())
 
