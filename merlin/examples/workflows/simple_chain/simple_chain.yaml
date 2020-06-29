@@ -15,7 +15,7 @@ study:
       run:
          cmd: |
               touch STEP_ONE_RUNNING_$(X2)
-              sleep 5
+              sleep 1
               rm STEP_ONE_RUNNING_$(X2)
 
     - name: step2
@@ -24,7 +24,7 @@ study:
       run:
         cmd: |
           ls $(step1.workspace)
-          sleep 5
+          sleep 1
         depends: [step1]
 
 global.parameters:
