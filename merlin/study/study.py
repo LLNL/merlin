@@ -42,20 +42,11 @@ from maestrowf.datastructures.core import Study
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import (
-    determine_user_variables,
-    expand_line,
-)
-from merlin.spec.override import (
-    dump_with_overrides,
-    error_override_vars,
-)
+from merlin.spec.expansion import determine_user_variables, expand_line
+from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
-from merlin.utils import (
-    get_flux_cmd,
-    load_array_file,
-)
+from merlin.utils import get_flux_cmd, load_array_file
 
 
 LOG = logging.getLogger(__name__)
@@ -117,13 +108,9 @@ class MerlinStudy:
         self.dag = None
         self.load_dag()
 
-    @cached_property
-    def provenance_original_spec(self):
-        name = self.original_spec.description["name"].replace(" ", "_")
-        return os.path.join(self.info, name + ".orig.yaml")
-
-    def write_original_spec(self):
-        shutil.copyfile(self.original_spec.path, self.provenance_original_spec)
+    def write_original_spec(self, filename):
+        spec_name = os.path.join(self.info, filename + ".orig.yaml")
+        shutil.copyfile(self.original_spec.path, spec_name)
 
     def label_clash_error(self):
         """
@@ -352,7 +339,9 @@ class MerlinStudy:
         specification.
         """
         # Write expanded yaml spec
-        self.expanded_filepath = os.path.join(self.info, "expanded.yaml")
+        self.expanded_filepath = os.path.join(
+            self.info, self.original_spec.name.replace(" ", "_") + ".expanded.yaml"
+        )
 
         # If we are restarting, we don't need to re-expand, just need to read
         # in the previously expanded spec
@@ -389,6 +378,7 @@ class MerlinStudy:
             self.workspace = expanded_workspace
             self.info = os.path.join(self.workspace, "merlin_info")
             self.special_vars["MERLIN_INFO"] = self.info
+            os.remove(self.expanded_filepath)
             self.expanded_filepath = os.path.join(self.info, expanded_name)
             result.path = self.expanded_filepath
             # rewrite provenance spec to correct samples.generate.cmd and samples.file
@@ -396,9 +386,10 @@ class MerlinStudy:
                 self.write_expanded_spec(self.expanded_filepath)
 
         complete_spec = MerlinSpec.load_specification(self.expanded_filepath)
+        name = complete_spec.description["name"].replace(" ", "_")
 
         # write original spec
-        self.write_original_spec()
+        self.write_original_spec(name)
 
         # write partially-expanded spec
         partial_spec = deepcopy(self.original_spec)
@@ -408,7 +399,6 @@ class MerlinStudy:
             ]
         if "labels" in complete_spec.environment:
             partial_spec.environment["labels"] = complete_spec.environment["labels"]
-        name = result.description["name"].replace(" ", "_")
         partial_spec_path = os.path.join(self.info, name + ".partial.yaml")
         with open(partial_spec_path, "w") as f:
             f.write(partial_spec.dump())

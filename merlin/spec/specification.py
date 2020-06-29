@@ -43,11 +43,7 @@ import jsonschema
 import yaml
 from maestrowf.specification.yamlspecification import YAMLSpecification
 
-from merlin.spec import (
-    SCHEMA_PATH,
-    all_keys,
-    defaults,
-)
+from merlin.spec import SCHEMA_PATH, all_keys, defaults
 
 
 def represent_none(self, _):
