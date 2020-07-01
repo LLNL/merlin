@@ -36,17 +36,17 @@ To see examples of yaml specifications, run `merlin example`.
 import json
 import logging
 import os
-from io import StringIO
 from contextlib import suppress
+from io import StringIO
 
 import jsonschema
 import yaml
 from maestrowf.specification.yamlspecification import YAMLSpecification
 
 from merlin.spec import (
+    SCHEMA_PATH,
     all_keys,
     defaults,
-    SCHEMA_PATH
 )
 
 
@@ -222,7 +222,7 @@ class MerlinSpec(YAMLSpecification):
         for worker in self.merlin["resources"]["workers"]:
             result.append(worker)
         return result
-    
+
     def verify(self):
         """Validate the specification."""
 
@@ -237,7 +237,9 @@ class MerlinSpec(YAMLSpecification):
         super().validate_schema("env", self.environment, schemas["ENV"])
         super().validate_schema("batch", self.batch, schemas["BATCH"])
         for step in self.study:
-            super().validate_schema(f"study step {step['name']}", step, schemas["STUDY_STEP"])
+            super().validate_schema(
+                f"study step {step['name']}", step, schemas["STUDY_STEP"]
+            )
         for param, contents in self.globals.items():
             super().validate_schema("global.params", contents, schemas["PARAM"])
 
