@@ -53,6 +53,7 @@ from merlin.spec.override import (
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
 from merlin.utils import (
+    contains_token,
     get_flux_cmd,
     load_array_file,
 )
@@ -362,7 +363,7 @@ class MerlinStudy:
         )
 
         # expand provenance spec filename
-        if "$(" in self.original_spec.name:
+        if contains_token(self.spec.name):
             expanded_name = result.description["name"].replace(" ", "_")
             expanded_name = expanded_name + ".expanded.yaml"
             expanded_workspace = os.path.join(

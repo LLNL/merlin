@@ -41,6 +41,10 @@ from merlin.spec.override import (
     error_override_vars,
 )
 from merlin.spec.specification import MerlinSpec
+from merlin.utils import (
+    contains_shell_ref,
+    contains_token,
+)
 
 
 MAESTRO_RESERVED = {"SPECROOT", "WORKSPACE", "LAUNCHER"}
@@ -74,7 +78,7 @@ def var_ref(string):
     by $(<str>).
     """
     string = string.upper()
-    if "$(" in string:
+    if contains_token(string):
         LOG.warning(f"Bad var_ref usage on string '{string}'.")
         return string
     return f"$({string})"
@@ -86,7 +90,7 @@ def expand_line(line, var_dict):
     and user variables, as well as variables in 'var_dict'.
     """
     line = expandvars(expanduser(line))
-    if "$" not in line:
+    if not contains_token(line):
         return line
     for key, val in var_dict.items():
         line = line.replace(var_ref(key), str(val))
@@ -133,14 +137,14 @@ def determine_user_variables(*user_var_dicts):
                 f"Cannot reassign value of reserved word '{key}'! Reserved words are: {RESERVED}."
             )
         new_val = str(val)
-        if "$(" in new_val:  # change to re
+        if contains_token(new_val):
             for determined_key in determined_results.keys():
                 var_determined_key = var_ref(determined_key)
                 if var_determined_key in new_val:
                     new_val = new_val.replace(
                         var_determined_key, determined_results[determined_key]
                     )
-        if "$" in new_val:  # change to re
+        if contains_shell_ref(new_val):
             new_val = expandvars(new_val)
         determined_results[key.upper()] = new_val
     return determined_results
