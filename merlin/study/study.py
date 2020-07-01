@@ -363,18 +363,13 @@ class MerlinStudy:
         )
 
         # expand provenance spec filename
-        if contains_token(self.spec.name):
+        if contains_token(self.original_spec.name):
             expanded_name = result.description["name"].replace(" ", "_")
             expanded_name = expanded_name + ".expanded.yaml"
             expanded_workspace = os.path.join(
                 self.output_path,
                 f"{result.description['name'].replace(' ', '_')}_{self.timestamp}",
             )
-            shutil.move(
-                self.expanded_filepath,
-                os.path.join(os.path.dirname(self.expanded_filepath), expanded_name),
-            )
-            shutil.move(self.workspace, expanded_workspace)
 
             sample_file = result.merlin["samples"]["file"]
             if sample_file.startswith(self.workspace):
@@ -385,10 +380,14 @@ class MerlinStudy:
                     "generate"
                 ]["cmd"].replace(self.workspace, expanded_workspace)
                 result.merlin["samples"]["file"] = new_samples_file
+
+            shutil.move(self.workspace, expanded_workspace)
             self.workspace = expanded_workspace
             self.info = os.path.join(self.workspace, "merlin_info")
             self.special_vars["MERLIN_INFO"] = self.info
-            os.remove(self.expanded_filepath)
+            temp_path = os.path.join(self.info, os.path.basename(self.expanded_filepath))
+            shutil.move(temp_path, os.path.join(self.info, expanded_name))
+
             self.expanded_filepath = os.path.join(self.info, expanded_name)
             result.path = self.expanded_filepath
             # rewrite provenance spec to correct samples.generate.cmd and samples.file
@@ -398,10 +397,10 @@ class MerlinStudy:
         complete_spec = MerlinSpec.load_specification(self.expanded_filepath)
         name = complete_spec.description["name"].replace(" ", "_")
 
-        # write original spec
+        # write original spec for provenance
         self.write_original_spec(name)
 
-        # write partially-expanded spec
+        # write partially-expanded spec for provenance
         partial_spec = deepcopy(self.original_spec)
         if "variables" in complete_spec.environment:
             partial_spec.environment["variables"] = complete_spec.environment[
