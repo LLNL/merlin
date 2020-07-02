@@ -345,7 +345,7 @@ class ProvenanceCond(RegexCond):
     MUST contain a given regular expression.
     """
 
-    def __init__(self, regex, name, output_path):
+    def __init__(self, regex, name, output_path, provenance_type):
         """
         :param `regex`: a string regex pattern
         :param `name`: the name of a study
@@ -354,6 +354,10 @@ class ProvenanceCond(RegexCond):
         super().__init__(regex)
         self.name = name
         self.output_path = output_path
+        if provenance_type not in ["orig", "partial", "expanded"]:
+            raise ValueError(f"Bad provenance_type '{provenance_type}' in ProvenanceCond!")
+        self.prov_type = provenance_type
+
 
     def is_within(self):
         """
@@ -363,7 +367,7 @@ class ProvenanceCond(RegexCond):
         """
         filepath = (
             f"{self.output_path}/{self.name}"
-            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.yaml"
+            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
         )
         filename = sorted(glob(filepath))[-1]
         with open(filename, "r") as _file:
@@ -577,7 +581,7 @@ def define_tests():
             [
                 ReturnCodeCond(),
                 ProvenanceCond(
-                    regex=" -n 2 -outfile", name="feature_demo", output_path=OUTPUT_DIR
+                    regex=" -n 2 -outfile", name="feature_demo", output_path=OUTPUT_DIR, provenance_type="expanded",
                 ),
                 StepFileExistsCond(
                     "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
@@ -593,6 +597,7 @@ def define_tests():
         #            regex="name: test_demo",
         #            name="test_demo",
         #            output_path=OUTPUT_DIR,
+        #            provenance_type="expanded",
         #        ),
         #        StepFileExistsCond(
         #            "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR
@@ -618,6 +623,7 @@ def define_tests():
                     regex="cli_test_demo_workers:",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
                 ),
                 StepFileExistsCond(
                     "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
