@@ -181,7 +181,7 @@ def process_restart(args):
     """
     print(banner_small)
     restart_dir = verify_dirpath(args.restart_dir)
-    filepath = os.path.join(args.restart_dir, "merlin_info", "*.yaml")
+    filepath = os.path.join(args.restart_dir, "merlin_info", "*.expanded.yaml")
     possible_specs = glob.glob(filepath)
     if len(possible_specs) == 0:
         raise ValueError(
@@ -314,7 +314,7 @@ def process_example(args):
 
 def process_monitor(args):
     """
-    CLI command to monitor merlin workers and queues to keep 
+    CLI command to monitor merlin workers and queues to keep
     the allocation alive
 
     :param `args`: parsed CLI arguments
