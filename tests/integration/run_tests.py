@@ -274,7 +274,7 @@ class StepFileExistsCond(StudyCond):
     A StudyCond that checks for a particular file's existence.
     """
 
-    def __init__(self, step, filename, study_name, output_path):
+    def __init__(self, step, filename, study_name, output_path, params=False):
         """
         :param `step`: the name of a step
         :param `filename`: name of file to search for in step's workspace directory
@@ -284,9 +284,13 @@ class StepFileExistsCond(StudyCond):
         super().__init__(study_name, output_path)
         self.step = step
         self.filename = filename
+        self.params = params
 
     def file_exists(self):
-        glob_string = f"{self.dirpath_glob}/{self.step}/{self.filename}"
+        param_glob = ""
+        if self.params:
+            param_glob = "*/"
+        glob_string = f"{self.dirpath_glob}/{self.step}/{param_glob}{self.filename}"
         try:
             filename = self.glob(glob_string)
         except IndexError:
@@ -436,7 +440,7 @@ def define_tests():
             f"{run} {demo} --local --dry --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             [
                 StepFileExistsCond(
-                    "verify", "*/verify_*.sh", "feature_demo", OUTPUT_DIR
+                    "verify", "verify_*.sh", "feature_demo", OUTPUT_DIR, params=True,
                 ),
                 ReturnCodeCond(),
             ],
@@ -513,10 +517,10 @@ def define_tests():
                     regex=" -n 2 -outfile", name="feature_demo", output_path=OUTPUT_DIR
                 ),
                 StepFileExistsCond(
-                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
+                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR, params=True,
                 ),
             ],
-            # "local",
+            "local",
         ),
         # "local restart expand name": (
         #    f"{run} {demo} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} NAME=test_demo ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'test_demo_*') --local",
@@ -528,7 +532,7 @@ def define_tests():
         #            output_path=OUTPUT_DIR,
         #        ),
         #        StepFileExistsCond(
-        #            "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR
+        #            "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR, params=True,
         #        ),
         #    ],
         #    "local",
@@ -536,12 +540,12 @@ def define_tests():
         "local csv feature_demo": (
             f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samples foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [RegexCond("1 sample loaded."), ReturnCodeCond()],
-            # "local",
+            "local",
         ),
         "local tab feature_demo": (
             f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samples foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
             [RegexCond("2 samples loaded."), ReturnCodeCond()],
-            # "local",
+            "local",
         ),
         "distributed feature_demo": (
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
@@ -553,7 +557,7 @@ def define_tests():
                     output_path=OUTPUT_DIR,
                 ),
                 StepFileExistsCond(
-                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
+                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR, params=True,
                 ),
             ],
         ),
