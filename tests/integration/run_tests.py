@@ -40,10 +40,7 @@ import time
 from contextlib import suppress
 from glob import glob
 from re import search
-from subprocess import (
-    PIPE,
-    Popen,
-)
+from subprocess import PIPE, Popen
 
 from merlin.utils import get_flux_cmd
 
@@ -277,7 +274,7 @@ class StepFileExistsCond(StudyCond):
     A StudyCond that checks for a particular file's existence.
     """
 
-    def __init__(self, step, filename, study_name, output_path):
+    def __init__(self, step, filename, study_name, output_path, params=False):
         """
         :param `step`: the name of a step
         :param `filename`: name of file to search for in step's workspace directory
@@ -287,9 +284,13 @@ class StepFileExistsCond(StudyCond):
         super().__init__(study_name, output_path)
         self.step = step
         self.filename = filename
+        self.params = params
 
     def file_exists(self):
-        glob_string = f"{self.dirpath_glob}/{self.step}/{self.filename}"
+        param_glob = ""
+        if self.params:
+            param_glob = "*/"
+        glob_string = f"{self.dirpath_glob}/{self.step}/{param_glob}{self.filename}"
         try:
             filename = self.glob(glob_string)
         except IndexError:
@@ -393,7 +394,6 @@ def define_tests():
     restart = "merlin restart"
     purge = "merlin purge"
     examples = "merlin/examples/workflows"
-    dev_examples = "merlin/examples/dev_workflows"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
     slurm = f"{examples}/slurm/slurm_test.yaml"
@@ -411,69 +411,6 @@ def define_tests():
         "merlin config": (
             f"merlin config -o {config_dir}; rm -rf {config_dir}",
             ReturnCodeCond(),
-            "local",
-        ),
-        "local format 0": (
-            f"merlin -lvl debug run {dev_examples}/full_format.yaml --local",
-            [
-                RegexCond("Spec verified. No errors found."),
-                RegexCond("Merlin block verified. No errors found."),
-            ],
-            "local",
-        ),
-        "local format 1": (
-            f"{run} {dev_examples}/bad_format1.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 2": (
-            f"{run} {dev_examples}/bad_format2.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 3": (
-            f"{run} {dev_examples}/bad_format3.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 4": (
-            f"{run} {dev_examples}/bad_format4.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 5": (
-            f"{run} {dev_examples}/bad_format5.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 6": (
-            f"{run} {dev_examples}/bad_format6.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 7": (
-            f"{run} {dev_examples}/bad_format7.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 8": (
-            f"{run} {dev_examples}/bad_format8.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 9": (
-            f"{run} {dev_examples}/bad_format9.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 10": (
-            f"{run} {dev_examples}/bad_format10.yaml --local",
-            ReturnCodeCond(expected_code=1),
-            "local",
-        ),
-        "local format 11": (
-            f"{run} {dev_examples}/bad_format11.yaml --local",
-            ReturnCodeCond(expected_code=1),
             "local",
         ),
         "run-workers echo simple_chain": (
@@ -507,7 +444,7 @@ def define_tests():
             f"{run} {demo} --local --dry --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             [
                 StepFileExistsCond(
-                    "verify", "*/verify_*.sh", "feature_demo", OUTPUT_DIR
+                    "verify", "verify_*.sh", "feature_demo", OUTPUT_DIR, params=True,
                 ),
                 ReturnCodeCond(),
             ],
@@ -584,10 +521,10 @@ def define_tests():
                     regex=" -n 2 -outfile", name="feature_demo", output_path=OUTPUT_DIR, provenance_type="expanded",
                 ),
                 StepFileExistsCond(
-                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
+                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR, params=True,
                 ),
             ],
-            # "local",
+            "local",
         ),
         # "local restart expand name": (
         #    f"{run} {demo} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} NAME=test_demo ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'test_demo_*') --local",
@@ -600,7 +537,7 @@ def define_tests():
         #            provenance_type="expanded",
         #        ),
         #        StepFileExistsCond(
-        #            "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR
+        #            "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR, params=True,
         #        ),
         #    ],
         #    "local",
@@ -608,12 +545,12 @@ def define_tests():
         "local csv feature_demo": (
             f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samples foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [RegexCond("1 sample loaded."), ReturnCodeCond()],
-            # "local",
+            "local",
         ),
         "local tab feature_demo": (
             f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samples foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
             [RegexCond("2 samples loaded."), ReturnCodeCond()],
-            # "local",
+            "local",
         ),
         "distributed feature_demo": (
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
@@ -626,7 +563,7 @@ def define_tests():
                     provenance_type="expanded",
                 ),
                 StepFileExistsCond(
-                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
+                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR, params=True,
                 ),
             ],
         ),

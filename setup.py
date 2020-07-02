@@ -30,10 +30,7 @@
 
 import os
 
-from setuptools import (
-    find_packages,
-    setup,
-)
+from setuptools import find_packages, setup
 
 
 version = __import__("merlin").VERSION
