@@ -40,10 +40,7 @@ from io import StringIO
 import yaml
 from maestrowf.datastructures import YAMLSpecification
 
-from merlin.spec import (
-    all_keys,
-    defaults,
-)
+from merlin.spec import all_keys, defaults
 
 
 def represent_none(self, _):
