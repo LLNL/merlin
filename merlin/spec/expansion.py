@@ -84,7 +84,8 @@ def expand_line(line, var_dict):
     if not contains_token(line):
         return line
     for key, val in var_dict.items():
-        line = line.replace(var_ref(key), str(val))
+        if key in line:
+            line = line.replace(var_ref(key), str(val))
     return line
 
 
@@ -93,6 +94,7 @@ def expand_by_line(text, var_dict):
     Given a text (yaml spec), and a dictionary of variable names
     and values, expand variables in the text line by line.
     """
+    text = text.splitlines()
     result = ""
     for line in text:
         expanded_line = expand_line(line, var_dict)
@@ -206,7 +208,7 @@ def expand_spec_no_study(filepath, override_vars=None):
         uvars.append(spec.environment["labels"])
     evaluated_uvars = determine_user_variables(*uvars)
 
-    return expand_by_line(full_spec.split("\n"), evaluated_uvars)
+    return expand_by_line(full_spec, evaluated_uvars)
 
 
 def get_spec_with_expansion(filepath, override_vars=None):

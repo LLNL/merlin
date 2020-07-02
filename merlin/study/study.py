@@ -41,7 +41,7 @@ from maestrowf.datastructures.core import Study
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import determine_user_variables, expand_line
+from merlin.spec.expansion import determine_user_variables, expand_by_line, expand_line
 from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
@@ -142,38 +142,21 @@ class MerlinStudy:
     def user_vars(self):
         return MerlinStudy.get_user_vars(self.original_spec)
 
-    @staticmethod
-    def expand_spec_by_line(text, keywords):
-        """
-        Given a string and keyword dictionary, expand each
-        line of the string and return the expanded result.
-        """
-        lines = text.splitlines()
-        result = ""
-        for line in lines:
-            result += expand_line(line, keywords) + "\n"
-        return result
-
     def get_expanded_spec(self):
         """
         Get a new yaml spec file with defaults, cli overrides, and variable expansions.
         Useful for provenance.
         """
-        # specification text including defaults and overridden user variables
+        # get specification including defaults and cli-overridden user variables
         full_spec_text = dump_with_overrides(self.original_spec, self.override_vars)
-
-        # get spec text with any cli var overrides
-        # TODO skip if overrides is None???
         new_spec = MerlinSpec.load_spec_from_string(full_spec_text)
 
         # expand user variables
-        new_spec_text = MerlinStudy.expand_spec_by_line(
+        new_spec_text = expand_by_line(
             new_spec.dump(), MerlinStudy.get_user_vars(new_spec)
         )
         # expand reserved words
-        new_spec_text = MerlinStudy.expand_spec_by_line(
-            new_spec_text, self.special_vars
-        )
+        new_spec_text = expand_by_line(new_spec_text, self.special_vars)
 
         return MerlinSpec.load_spec_from_string(new_spec_text)
 
