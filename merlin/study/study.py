@@ -341,24 +341,19 @@ class MerlinStudy:
         Determines, writes to yaml, and loads into memory an expanded
         specification.
         """
-        # TODO: FEWER WRITES AND READS HERE (1 read, only 3 writes, 1 per provenance spec)
-
         # If we are restarting, we don't need to re-expand, just need to read
         # in the previously expanded spec
         if self.restart_dir is not None:
             return self.get_expanded_spec()  # TODO is this right???
 
         result = self.get_expanded_spec()
+        expanded_name = result.description["name"].replace(" ", "_") + ".expanded.yaml"
 
         # Set expanded filepath
-        expanded_filepath = os.path.join(
-            self.info, self.original_spec.name.replace(" ", "_") + ".expanded.yaml"
-        )
+        expanded_filepath = os.path.join(self.info, expanded_name)
 
         # expand provenance spec filename
         if contains_token(self.original_spec.name):
-            expanded_name = result.description["name"].replace(" ", "_")
-            expanded_name = expanded_name + ".expanded.yaml"
             expanded_workspace = os.path.join(
                 self.output_path,
                 f"{result.description['name'].replace(' ', '_')}_{self.timestamp}",
@@ -381,27 +376,24 @@ class MerlinStudy:
 
             expanded_filepath = os.path.join(self.info, expanded_name)
             result.path = expanded_filepath
-            # reload provenance spec to correct samples.generate.cmd and samples.file
-            if self.restart_dir is None:
-                complete_spec = self.get_expanded_spec()
 
         # write expanded spec for provanance
         with open(expanded_filepath, "w") as f:
-            f.write(complete_spec.dump())
+            f.write(result.dump())
 
         # write original spec for provenance
-        complete_spec = MerlinSpec.load_spec_from_string(complete_spec.dump())
-        name = complete_spec.description["name"].replace(" ", "_")
+        result = MerlinSpec.load_spec_from_string(result.dump())
+        name = result.description["name"].replace(" ", "_")
         self.write_original_spec(name)
 
         # write partially-expanded spec for provenance
         partial_spec = deepcopy(self.original_spec)
-        if "variables" in complete_spec.environment:
-            partial_spec.environment["variables"] = complete_spec.environment[
+        if "variables" in result.environment:
+            partial_spec.environment["variables"] = result.environment[
                 "variables"
             ]
-        if "labels" in complete_spec.environment:
-            partial_spec.environment["labels"] = complete_spec.environment["labels"]
+        if "labels" in result.environment:
+            partial_spec.environment["labels"] = result.environment["labels"]
         partial_spec_path = os.path.join(self.info, name + ".partial.yaml")
         with open(partial_spec_path, "w") as f:
             f.write(partial_spec.dump())
