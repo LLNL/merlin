@@ -36,10 +36,7 @@ import logging
 import os
 from os.path import expanduser
 
-from merlin.config.configfile import (
-    CONFIG,
-    get_ssl_entries,
-)
+from merlin.config.configfile import CONFIG, get_ssl_entries
 
 
 try:
