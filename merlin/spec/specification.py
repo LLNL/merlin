@@ -78,7 +78,14 @@ class MerlinSpec(YAMLSpecification):
 
     @property
     def sections(self):
-        return [self.description, self.globals, self.environment, self.batch, self.study, self.merlin]
+        return [
+            self.description,
+            self.globals,
+            self.environment,
+            self.batch,
+            self.study,
+            self.merlin,
+        ]
 
     @classmethod
     def load_specification(cls, filepath, suppress_warning=True):

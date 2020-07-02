@@ -32,11 +32,11 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 import time
 from contextlib import suppress
 from copy import deepcopy
 from fileinput import FileInput
-import sys
 
 from cached_property import cached_property
 from maestrowf.datastructures.core import Study
@@ -155,7 +155,7 @@ class MerlinStudy:
         for line in lines:
             result += expand_line(line, keywords) + "\n"
         return result
-            
+
     def get_expanded_spec(self):
         """
         Get a new yaml spec file with defaults, cli overrides, and variable expansions.
@@ -169,9 +169,13 @@ class MerlinStudy:
         new_spec = MerlinSpec.load_spec_from_string(full_spec_text)
 
         # expand user variables
-        new_spec_text = MerlinStudy.expand_spec_by_line(new_spec.dump(), MerlinStudy.get_user_vars(new_spec))
+        new_spec_text = MerlinStudy.expand_spec_by_line(
+            new_spec.dump(), MerlinStudy.get_user_vars(new_spec)
+        )
         # expand reserved words
-        new_spec_text = MerlinStudy.expand_spec_by_line(new_spec_text, self.special_vars)
+        new_spec_text = MerlinStudy.expand_spec_by_line(
+            new_spec_text, self.special_vars
+        )
 
         return MerlinSpec.load_spec_from_string(new_spec_text)
 
@@ -344,7 +348,7 @@ class MerlinStudy:
         # If we are restarting, we don't need to re-expand, just need to read
         # in the previously expanded spec
         if self.restart_dir is not None:
-            return self.get_expanded_spec() # TODO is this right???
+            return self.get_expanded_spec()  # TODO is this right???
 
         result = self.get_expanded_spec()
 
