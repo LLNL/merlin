@@ -314,7 +314,7 @@ def process_example(args):
 
 def process_monitor(args):
     """
-    CLI command to monitor merlin workers and queues to keep 
+    CLI command to monitor merlin workers and queues to keep
     the allocation alive
 
     :param `args`: parsed CLI arguments

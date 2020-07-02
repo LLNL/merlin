@@ -356,9 +356,10 @@ class ProvenanceCond(RegexCond):
         self.name = name
         self.output_path = output_path
         if provenance_type not in ["orig", "partial", "expanded"]:
-            raise ValueError(f"Bad provenance_type '{provenance_type}' in ProvenanceCond!")
+            raise ValueError(
+                f"Bad provenance_type '{provenance_type}' in ProvenanceCond!"
+            )
         self.prov_type = provenance_type
-
 
     def is_within(self):
         """
@@ -518,10 +519,17 @@ def define_tests():
             [
                 ReturnCodeCond(),
                 ProvenanceCond(
-                    regex=" -n 2 -outfile", name="feature_demo", output_path=OUTPUT_DIR, provenance_type="expanded",
+                    regex=" -n 2 -outfile",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
                 ),
                 StepFileExistsCond(
-                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR, params=True,
+                    "verify",
+                    "MERLIN_FINISHED",
+                    "feature_demo",
+                    OUTPUT_DIR,
+                    params=True,
                 ),
             ],
             "local",
@@ -563,7 +571,11 @@ def define_tests():
                     provenance_type="expanded",
                 ),
                 StepFileExistsCond(
-                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR, params=True,
+                    "verify",
+                    "MERLIN_FINISHED",
+                    "feature_demo",
+                    OUTPUT_DIR,
+                    params=True,
                 ),
             ],
         ),
