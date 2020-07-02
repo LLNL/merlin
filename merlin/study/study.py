@@ -32,11 +32,9 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 import time
 from contextlib import suppress
 from copy import deepcopy
-from fileinput import FileInput
 
 from cached_property import cached_property
 from maestrowf.datastructures.core import Study
