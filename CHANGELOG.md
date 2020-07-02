@@ -8,8 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - The sample generation command now logs stdout, stderr, and cmd.sh to merlin_info.
-- Add the bank and walltime keywords to the batch slurm launch, these
-  will not alter the lsf launch.
 - 12 hidden test specs and associated cli tests, for cli tests with specs that we
   do not want in `merlin examples`.
 - Inside `merlin_info/`, added provenance specs `<name>.orig.yaml`, `<name>.expanded.yaml`, and
@@ -18,8 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Updated to new celery (4.4.5) syntax for signature return codes.
 - Corrected prior bugfix.
-- Slightly improved logic by using regex to match variable tokens.
 - Fixed and reactivated 3 cli tests.
+- Added the `bank` and `walltime` keywords to the batch slurm launch, these
+  will not alter the lsf launch.
+
+### Changed
+- Slightly improved logic by using regex to match variable tokens.
+- Reduced instances of I/O, `MerlinStudy` logic is now in-memory to a greater extent.
+
 
 ## [1.6.1]
 
