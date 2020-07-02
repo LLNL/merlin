@@ -76,17 +76,6 @@ class MerlinSpec(YAMLSpecification):
     def __init__(self):
         super(MerlinSpec, self).__init__()
 
-    @property
-    def sections(self):
-        return [
-            self.description,
-            self.globals,
-            self.environment,
-            self.batch,
-            self.study,
-            self.merlin,
-        ]
-
     @classmethod
     def load_specification(cls, filepath, suppress_warning=True):
         spec = super(MerlinSpec, cls).load_specification(filepath)
