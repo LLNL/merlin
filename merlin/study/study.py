@@ -389,9 +389,7 @@ class MerlinStudy:
         # write partially-expanded spec for provenance
         partial_spec = deepcopy(self.original_spec)
         if "variables" in result.environment:
-            partial_spec.environment["variables"] = result.environment[
-                "variables"
-            ]
+            partial_spec.environment["variables"] = result.environment["variables"]
         if "labels" in result.environment:
             partial_spec.environment["labels"] = result.environment["labels"]
         partial_spec_path = os.path.join(self.info, name + ".partial.yaml")
