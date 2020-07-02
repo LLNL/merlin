@@ -157,11 +157,12 @@ class MerlinStudy:
         # specification text including defaults and overridden user variables
         full_spec = dump_with_overrides(self.spec, self.override_vars)
 
-        with open(dest, "w") as dumped_file:
-            dumped_file.write(full_spec)
+        # with open(dest, "w") as dumped_file:
+        #     dumped_file.write(full_spec)
 
         # update spec so that user_vars update will be accurate
-        self.spec = MerlinSpec.load_specification(dest)
+        self.spec = MerlinSpec.load_spec_from_string(full_spec)
+        # self.spec = MerlinSpec.load_specification(dest)
 
         # expand user variables
         self.write_expand_by_line(dest, self.user_vars)
