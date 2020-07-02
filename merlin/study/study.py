@@ -34,7 +34,9 @@ import shutil
 import subprocess
 import time
 from contextlib import suppress
+from copy import deepcopy
 from fileinput import FileInput
+import sys
 
 from cached_property import cached_property
 from maestrowf.datastructures.core import Study
@@ -75,9 +77,9 @@ class MerlinStudy:
         dry_run=False,
         no_errors=False,
     ):
-        self.spec = MerlinSpec.load_specification(filepath)
+        self.original_spec = MerlinSpec.load_specification(filepath)
         self.override_vars = override_vars
-        error_override_vars(self.override_vars, self.spec.path)
+        error_override_vars(self.override_vars, self.original_spec.path)
 
         self.samples_file = samples_file
         self.label_clash_error()
@@ -87,13 +89,13 @@ class MerlinStudy:
         # If we load from a file, record that in the object for provenance
         # downstream
         if self.samples_file is not None:
-            self.spec.merlin["samples"]["file"] = self.samples_file
-            self.spec.merlin["samples"]["generate"]["cmd"] = ""
+            self.original_spec.merlin["samples"]["file"] = self.samples_file
+            self.original_spec.merlin["samples"]["generate"]["cmd"] = ""
 
         self.restart_dir = restart_dir
 
         self.special_vars = {
-            "SPECROOT": self.spec.specroot,
+            "SPECROOT": self.original_spec.specroot,
             "MERLIN_TIMESTAMP": self.timestamp,
             "MERLIN_INFO": self.info,
             "MERLIN_WORKSPACE": self.workspace,
@@ -107,6 +109,10 @@ class MerlinStudy:
         self.dag = None
         self.load_dag()
 
+    def write_original_spec(self, filename):
+        spec_name = os.path.join(self.info, filename + ".orig.yaml")
+        shutil.copyfile(self.original_spec.path, spec_name)
+
     def label_clash_error(self):
         """
         Detect any illegal clashes between merlin's
@@ -114,60 +120,60 @@ class MerlinStudy:
         global.parameters. Raises an error if any such
         clash exists.
         """
-        if self.spec.merlin["samples"]:
-            for label in self.spec.merlin["samples"]["column_labels"]:
-                if label in self.spec.globals:
+        if self.original_spec.merlin["samples"]:
+            for label in self.original_spec.merlin["samples"]["column_labels"]:
+                if label in self.original_spec.globals:
                     raise ValueError(
                         f"column_label {label} cannot also be " "in global.parameters!"
                     )
 
-    @property
-    def user_vars(self):
+    @staticmethod
+    def get_user_vars(spec):
         """
         Using the spec environment, return a dictionary
         of expanded user-defined variables.
         """
         uvars = []
-        if "variables" in self.spec.environment:
-            uvars.append(self.spec.environment["variables"])
-        if "labels" in self.spec.environment:
-            uvars.append(self.spec.environment["labels"])
+        if "variables" in spec.environment:
+            uvars.append(spec.environment["variables"])
+        if "labels" in spec.environment:
+            uvars.append(spec.environment["labels"])
         return determine_user_variables(*uvars)
 
-    def write_expand_by_line(self, filepath, keywords):
-        """
-        Given a destination and keyword dictionary, expand each
-        line of the destination file in-place.
-        """
-        with FileInput(filepath, inplace=True) as _file:
-            for line in _file:
-                expanded_line = expand_line(line, keywords)
-                print(expanded_line, end="")
+    @property
+    def user_vars(self):
+        return MerlinStudy.get_user_vars(self.original_spec)
 
-    def write_expanded_spec(self, dest):
+    @staticmethod
+    def expand_spec_by_line(text, keywords):
         """
-        Write a new yaml spec file with defaults and variable expansions.
+        Given a string and keyword dictionary, expand each
+        line of the string and return the expanded result.
+        """
+        lines = text.splitlines()
+        result = ""
+        for line in lines:
+            result += expand_line(line, keywords) + "\n"
+        return result
+            
+    def get_expanded_spec(self):
+        """
+        Get a new yaml spec file with defaults, cli overrides, and variable expansions.
         Useful for provenance.
-
-        :param `dest`: destination for fully expanded yaml file
         """
-
-        # TODO: FEWER WRITES AND READS HERE (1 read, only 3 writes, 1 per provenance spec)
-
         # specification text including defaults and overridden user variables
-        full_spec = dump_with_overrides(self.spec, self.override_vars)
+        full_spec_text = dump_with_overrides(self.original_spec, self.override_vars)
 
-        # with open(dest, "w") as dumped_file:
-        #     dumped_file.write(full_spec)
-
-        # update spec so that user_vars update will be accurate
-        self.spec = MerlinSpec.load_spec_from_string(full_spec)
-        # self.spec = MerlinSpec.load_specification(dest)
+        # get spec text with any cli var overrides
+        # TODO skip if overrides is None???
+        new_spec = MerlinSpec.load_spec_from_string(full_spec_text)
 
         # expand user variables
-        self.write_expand_by_line(dest, self.user_vars)
+        new_spec_text = MerlinStudy.expand_spec_by_line(new_spec.dump(), MerlinStudy.get_user_vars(new_spec))
         # expand reserved words
-        self.write_expand_by_line(dest, self.special_vars)
+        new_spec_text = MerlinStudy.expand_spec_by_line(new_spec_text, self.special_vars)
+
+        return MerlinSpec.load_spec_from_string(new_spec_text)
 
     @property
     def samples(self):
@@ -269,7 +275,7 @@ class MerlinStudy:
             return os.path.abspath(output_path)
 
         else:
-            output_path = str(self.spec.output_path)
+            output_path = str(self.original_spec.output_path)
 
             if (self.override_vars is not None) and (
                 "OUTPUT_PATH" in self.override_vars
@@ -309,7 +315,7 @@ class MerlinStudy:
                 )
             return os.path.abspath(self.restart_dir)
 
-        workspace_name = f'{self.spec.name.replace(" ", "_")}_{self.timestamp}'
+        workspace_name = f'{self.original_spec.name.replace(" ", "_")}_{self.timestamp}'
         workspace = os.path.join(self.output_path, workspace_name)
         with suppress(FileNotFoundError):
             shutil.rmtree(workspace)
@@ -333,32 +339,32 @@ class MerlinStudy:
         Determines, writes to yaml, and loads into memory an expanded
         specification.
         """
-        # Write expanded yaml spec
-        self.expanded_filepath = os.path.join(
-            self.info, self.spec.name.replace(" ", "_") + ".yaml"
+        # TODO: FEWER WRITES AND READS HERE (1 read, only 3 writes, 1 per provenance spec)
+
+        # Set expanded filepath
+        expanded_filepath = os.path.join(
+            self.info, self.original_spec.name.replace(" ", "_") + ".expanded.yaml"
         )
 
         # If we are restarting, we don't need to re-expand, just need to read
         # in the previously expanded spec
-        if self.restart_dir is None:
-            self.write_expanded_spec(self.expanded_filepath)
+        if self.restart_dir is not None:
+            return self.get_expanded_spec() # TODO is this right???
 
-        result = MerlinSpec.load_specification(
-            self.expanded_filepath, suppress_warning=False
-        )
+        # result = MerlinSpec.load_specification(
+        #     expanded_filepath, suppress_warning=False
+        # )
+
+        result = self.get_expanded_spec()
 
         # expand provenance spec filename
-        if contains_token(self.spec.name):
-            expanded_name = result.description["name"].replace(" ", "_") + ".yaml"
+        if contains_token(self.original_spec.name):
+            expanded_name = result.description["name"].replace(" ", "_")
+            expanded_name = expanded_name + ".expanded.yaml"
             expanded_workspace = os.path.join(
                 self.output_path,
                 f"{result.description['name'].replace(' ', '_')}_{self.timestamp}",
             )
-            shutil.move(
-                self.expanded_filepath,
-                os.path.join(os.path.dirname(self.expanded_filepath), expanded_name),
-            )
-            shutil.move(self.workspace, expanded_workspace)
 
             sample_file = result.merlin["samples"]["file"]
             if sample_file.startswith(self.workspace):
@@ -369,15 +375,40 @@ class MerlinStudy:
                     "generate"
                 ]["cmd"].replace(self.workspace, expanded_workspace)
                 result.merlin["samples"]["file"] = new_samples_file
+
+            shutil.move(self.workspace, expanded_workspace)
             self.workspace = expanded_workspace
             self.info = os.path.join(self.workspace, "merlin_info")
             self.special_vars["MERLIN_INFO"] = self.info
-            self.expanded_filepath = os.path.join(self.info, expanded_name)
-            result.path = self.expanded_filepath
-            self.spec.path = self.expanded_filepath
-            # rewrite provenance spec to correct samples.generate.cmd and samples.file
+            temp_path = os.path.join(self.info, os.path.basename(expanded_filepath))
+            # shutil.move(temp_path, os.path.join(self.info, expanded_name))
+
+            expanded_filepath = os.path.join(self.info, expanded_name)
+            result.path = expanded_filepath
+            # reload provenance spec to correct samples.generate.cmd and samples.file
             if self.restart_dir is None:
-                self.write_expanded_spec(self.expanded_filepath)
+                complete_spec = self.get_expanded_spec()
+
+        # write expanded spec for provanance
+        with open(expanded_filepath, "w") as f:
+            f.write(result.dump())
+
+        # write original spec for provenance
+        complete_spec = MerlinSpec.load_spec_from_string(result.dump())
+        name = complete_spec.description["name"].replace(" ", "_")
+        self.write_original_spec(name)
+
+        # write partially-expanded spec for provenance
+        partial_spec = deepcopy(self.original_spec)
+        if "variables" in complete_spec.environment:
+            partial_spec.environment["variables"] = complete_spec.environment[
+                "variables"
+            ]
+        if "labels" in complete_spec.environment:
+            partial_spec.environment["labels"] = complete_spec.environment["labels"]
+        partial_spec_path = os.path.join(self.info, name + ".partial.yaml")
+        with open(partial_spec_path, "w") as f:
+            f.write(partial_spec.dump())
 
         LOG.info(f"Study workspace is '{self.workspace}'.")
         return result
@@ -473,8 +504,7 @@ class MerlinStudy:
         self.dag = DAG(maestro_dag, labels)
 
     def get_adapter_config(self, override_type=None):
-        spec = MerlinSpec.load_specification(self.spec.path)
-        adapter_config = dict(spec.batch)
+        adapter_config = dict(self.expanded_spec.batch)
 
         if "type" not in adapter_config.keys():
             adapter_config["type"] = "local"

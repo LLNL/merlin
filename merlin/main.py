@@ -181,7 +181,7 @@ def process_restart(args):
     """
     print(banner_small)
     restart_dir = verify_dirpath(args.restart_dir)
-    filepath = os.path.join(args.restart_dir, "merlin_info", "*.yaml")
+    filepath = os.path.join(args.restart_dir, "merlin_info", "*.expanded.yaml")
     possible_specs = glob.glob(filepath)
     if len(possible_specs) == 0:
         raise ValueError(

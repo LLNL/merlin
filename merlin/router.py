@@ -69,7 +69,7 @@ def run_task_server(study, run_mode=None):
     :param `study`: The MerlinStudy object
     :param `run_mode`: The type of run mode, e.g. local, batch
     """
-    if study.spec.merlin["resources"]["task_server"] == "celery":
+    if study.expanded_spec.merlin["resources"]["task_server"] == "celery":
         run_celery(study, run_mode)
     else:
         LOG.error("Celery is not specified as the task server!")
