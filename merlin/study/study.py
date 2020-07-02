@@ -151,6 +151,9 @@ class MerlinStudy:
 
         :param `dest`: destination for fully expanded yaml file
         """
+
+        # TODO: FEWER WRITES AND READS HERE (1 read, only 3 writes, 1 per provenance spec)
+
         # specification text including defaults and overridden user variables
         full_spec = dump_with_overrides(self.spec, self.override_vars)
 
