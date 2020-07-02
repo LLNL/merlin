@@ -341,21 +341,17 @@ class MerlinStudy:
         """
         # TODO: FEWER WRITES AND READS HERE (1 read, only 3 writes, 1 per provenance spec)
 
-        # Set expanded filepath
-        expanded_filepath = os.path.join(
-            self.info, self.original_spec.name.replace(" ", "_") + ".expanded.yaml"
-        )
-
         # If we are restarting, we don't need to re-expand, just need to read
         # in the previously expanded spec
         if self.restart_dir is not None:
             return self.get_expanded_spec() # TODO is this right???
 
-        # result = MerlinSpec.load_specification(
-        #     expanded_filepath, suppress_warning=False
-        # )
-
         result = self.get_expanded_spec()
+
+        # Set expanded filepath
+        expanded_filepath = os.path.join(
+            self.info, self.original_spec.name.replace(" ", "_") + ".expanded.yaml"
+        )
 
         # expand provenance spec filename
         if contains_token(self.original_spec.name):
@@ -380,8 +376,6 @@ class MerlinStudy:
             self.workspace = expanded_workspace
             self.info = os.path.join(self.workspace, "merlin_info")
             self.special_vars["MERLIN_INFO"] = self.info
-            temp_path = os.path.join(self.info, os.path.basename(expanded_filepath))
-            # shutil.move(temp_path, os.path.join(self.info, expanded_name))
 
             expanded_filepath = os.path.join(self.info, expanded_name)
             result.path = expanded_filepath
@@ -391,10 +385,10 @@ class MerlinStudy:
 
         # write expanded spec for provanance
         with open(expanded_filepath, "w") as f:
-            f.write(result.dump())
+            f.write(complete_spec.dump())
 
         # write original spec for provenance
-        complete_spec = MerlinSpec.load_spec_from_string(result.dump())
+        complete_spec = MerlinSpec.load_spec_from_string(complete_spec.dump())
         name = complete_spec.description["name"].replace(" ", "_")
         self.write_original_spec(name)
 
