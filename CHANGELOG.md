@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated to new celery (4.4.5) syntax for signature return codes.
 - Corrected prior bugfix.
 - Slightly improved logic by using regex to match variable tokens.
+- Fixed and reactivated 3 cli tests.
 
 ## [1.6.1]
 
