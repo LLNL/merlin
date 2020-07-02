@@ -7,19 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Integrated Maestro validation into merlin.
 - The sample generation command now logs stdout, stderr, and cmd.sh to merlin_info.
 - Add the bank and walltime keywords to the batch slurm launch, these
   will not alter the lsf launch.
 - 12 hidden test specs and associated cli tests, for cli tests with specs that we
   do not want in `merlin examples`.
-- Inside `merlin_info`, added provenance specs `orig.yaml`, `expanded.yaml`, and
-  `partial.yaml`, which is identical to the original spec, but with expanded user variables.
+- Inside `merlin_info/`, added provenance specs `<name>.orig.yaml`, `<name>.expanded.yaml`, and
+  `<name>.partial.yaml` (identical to the original spec, but with expanded user variables).
 
 ### Fixed
 - Updated to new celery (4.4.5) syntax for signature return codes.
 - Corrected prior bugfix.
-- Unfroze Maestro version dependency.
 
 ## [1.6.1]
 
