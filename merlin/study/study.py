@@ -358,7 +358,6 @@ class MerlinStudy:
             self.special_vars["MERLIN_INFO"] = self.info
 
             expanded_filepath = os.path.join(self.info, expanded_name)
-            result.path = expanded_filepath
 
         # write expanded spec for provanance
         with open(expanded_filepath, "w") as f:
@@ -366,6 +365,7 @@ class MerlinStudy:
 
         # write original spec for provenance
         result = MerlinSpec.load_spec_from_string(result.dump())
+        result.path = expanded_filepath
         name = result.description["name"].replace(" ", "_")
         self.write_original_spec(name)
 
