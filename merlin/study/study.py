@@ -327,7 +327,7 @@ class MerlinStudy:
         # If we are restarting, we don't need to re-expand, just need to read
         # in the previously expanded spec
         if self.restart_dir is not None:
-            return self.get_expanded_spec()  # TODO is this right???
+            return self.get_expanded_spec()
 
         result = self.get_expanded_spec()
         expanded_name = result.description["name"].replace(" ", "_") + ".expanded.yaml"
@@ -358,6 +358,10 @@ class MerlinStudy:
             self.special_vars["MERLIN_INFO"] = self.info
 
             expanded_filepath = os.path.join(self.info, expanded_name)
+            new_spec_text = expand_by_line(
+                result.dump(), MerlinStudy.get_user_vars(result)
+            )
+            result = MerlinSpec.load_spec_from_string(new_spec_text)
 
         # write expanded spec for provanance
         with open(expanded_filepath, "w") as f:
