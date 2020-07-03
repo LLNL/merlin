@@ -572,7 +572,7 @@ def define_tests():
         #            provenance_type="expanded",
         #        ),
         #        StepFileExistsCond(
-        #            "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR, params=True,
+        #            "merlin_info", "test_demo.expanded.yaml", "test_demo", OUTPUT_DIR, params=True,
         #        ),
         #    ],
         #    "local",
