@@ -337,10 +337,12 @@ class MerlinStudy:
 
         # expand provenance spec filename
         if contains_token(self.original_spec.name):
-            expanded_workspace = os.path.join(
-                self.output_path,
-                f"{result.description['name'].replace(' ', '_')}_{self.timestamp}",
-            )
+            name = f"{result.description['name'].replace(' ', '_')}_{self.timestamp}"
+            if "/" in name:
+                raise ValueError(
+                    f"Expanded value '{name}' for field 'name' in section 'description' is not a valid filename."
+                )
+            expanded_workspace = os.path.join(self.output_path, name)
 
             sample_file = result.merlin["samples"]["file"]
             if sample_file.startswith(self.workspace):
