@@ -346,13 +346,13 @@ class ProvenanceCond(RegexCond):
     MUST contain a given regular expression.
     """
 
-    def __init__(self, regex, name, output_path, provenance_type):
+    def __init__(self, regex, name, output_path, provenance_type, negate=False):
         """
         :param `regex`: a string regex pattern
         :param `name`: the name of a study
         :param `output_path`: the $(OUTPUT_PATH) of a study
         """
-        super().__init__(regex)
+        super().__init__(regex, negate=negate)
         self.name = name
         self.output_path = output_path
         if provenance_type not in ["orig", "partial", "expanded"]:
@@ -378,6 +378,8 @@ class ProvenanceCond(RegexCond):
 
     @property
     def passes(self):
+        if self.negate:
+            return not self.is_within()
         return self.is_within()
 
 
@@ -519,10 +521,35 @@ def define_tests():
             [
                 ReturnCodeCond(),
                 ProvenanceCond(
-                    regex=" -n 2 -outfile",
+                    regex="PREDICT: \$\(SCRIPTS\)/predict.py",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="orig",
+                ),
+                ProvenanceCond(
+                    regex="name: \$\(NAME\)",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="partial",
+                ),
+                ProvenanceCond(
+                    regex="studies/feature_demo_",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="partial",
+                ),
+                ProvenanceCond(
+                    regex="name: feature_demo",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
+                ),
+                ProvenanceCond(
+                    regex="\$\(NAME\)",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
+                    negate=True,
                 ),
                 StepFileExistsCond(
                     "verify",
@@ -545,7 +572,7 @@ def define_tests():
         #            provenance_type="expanded",
         #        ),
         #        StepFileExistsCond(
-        #            "merlin_info", "test_demo.yaml", "test_demo", OUTPUT_DIR, params=True,
+        #            "merlin_info", "test_demo.expanded.yaml", "test_demo", OUTPUT_DIR, params=True,
         #        ),
         #    ],
         #    "local",

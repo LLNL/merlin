@@ -327,7 +327,7 @@ class MerlinStudy:
         # If we are restarting, we don't need to re-expand, just need to read
         # in the previously expanded spec
         if self.restart_dir is not None:
-            return self.get_expanded_spec()  # TODO is this right???
+            return self.get_expanded_spec()
 
         result = self.get_expanded_spec()
         expanded_name = result.description["name"].replace(" ", "_") + ".expanded.yaml"
@@ -337,10 +337,12 @@ class MerlinStudy:
 
         # expand provenance spec filename
         if contains_token(self.original_spec.name):
-            expanded_workspace = os.path.join(
-                self.output_path,
-                f"{result.description['name'].replace(' ', '_')}_{self.timestamp}",
-            )
+            name = f"{result.description['name'].replace(' ', '_')}_{self.timestamp}"
+            if "/" in name:
+                raise ValueError(
+                    f"Expanded value '{name}' for field 'name' in section 'description' is not a valid filename."
+                )
+            expanded_workspace = os.path.join(self.output_path, name)
 
             sample_file = result.merlin["samples"]["file"]
             if sample_file.startswith(self.workspace):
@@ -358,7 +360,10 @@ class MerlinStudy:
             self.special_vars["MERLIN_INFO"] = self.info
 
             expanded_filepath = os.path.join(self.info, expanded_name)
-            result.path = expanded_filepath
+            new_spec_text = expand_by_line(
+                result.dump(), MerlinStudy.get_user_vars(result)
+            )
+            result = MerlinSpec.load_spec_from_string(new_spec_text)
 
         # write expanded spec for provanance
         with open(expanded_filepath, "w") as f:
@@ -366,6 +371,7 @@ class MerlinStudy:
 
         # write original spec for provenance
         result = MerlinSpec.load_spec_from_string(result.dump())
+        result.path = expanded_filepath
         name = result.description["name"].replace(" ", "_")
         self.write_original_spec(name)
 
