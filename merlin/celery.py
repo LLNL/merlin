@@ -40,10 +40,11 @@ from celery import Celery
 from celery.signals import worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
-from merlin.config import broker, results_backend
+from merlin.config import broker, results_backend, celeryconfig
 from merlin.config.configfile import CONFIG
 from merlin.log_formatter import FORMATS
 from merlin.router import route_for_task
+from merlin.utils import nested_namespace_to_dicts
 
 
 LOG = logging.getLogger(__name__)
@@ -68,58 +69,27 @@ except ValueError:
     BROKER_URI = None
     RESULTS_BACKEND_URI = None
 
+app = Celery("merlin")
 
-app = Celery(
-    "merlin",
-    broker=BROKER_URI,
-    backend=RESULTS_BACKEND_URI,
-    broker_use_ssl=broker_ssl,
-    redis_backend_use_ssl=results_ssl,
-)
+# load merlin config defaults
+app.config_from_object(celeryconfig)
 
+# load config overrides from app.yaml
+app.conf.update(**nested_namespace_to_dicts(CONFIG.celery.override))
 
+# overwrite config with essential properties
 app.conf.update(
-    task_serializer="pickle", accept_content=["pickle"], result_serializer="pickle"
+    broker = BROKER_URI,
+    backend = RESULTS_BACKEND_URI,
+    broker_use_ssl = broker_ssl,
+    redis_backend_use_ssl = results_ssl,
+    task_routes = (route_for_task,),
+    task_default_queue = "merlin",
+    worker_log_color = True,
+    worker_log_format = FORMATS["DEFAULT"],
+    worker_task_log_format = FORMATS["WORKER"],
 )
-
 app.autodiscover_tasks(["merlin.common"])
-
-app.conf.update(
-    task_acks_late=True,
-    task_reject_on_worker_lost=True,
-    task_publish_retry_policy={
-        "interval_start": 10,
-        "interval_step": 10,
-        "interval_max": 60,
-    },
-    redis_max_connections=100000,
-)
-
-# Set a timeout to acknowledge a task before it's available to grab
-# again (default 24 hours).
-app.conf.broker_transport_options = {
-    "visibility_timeout_seconds": CONFIG.celery.visibility_timeout_seconds,
-    "max_connections": 100,
-}
-
-app.conf.update(broker_pool_limit=0)
-
-#with open("/g/g13/bay1/app.yaml", "w") as f:
-#    for k,v in app.conf.__dict__.items():
-#        f.write(k)
-#        f.write(": " + str(v) + "\n")
-
-# update all keys at once
-# app.conf.update(...)
-
-# Task routing: call our default queue merlin
-app.conf.task_routes = (route_for_task,)
-app.conf.task_default_queue = "merlin"
-
-# Log formatting
-app.conf.worker_log_color = True
-app.conf.worker_log_format = FORMATS["DEFAULT"]
-app.conf.worker_task_log_format = FORMATS["WORKER"]
 
 
 @worker_process_init.connect()
