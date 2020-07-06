@@ -14,7 +14,7 @@ task_publish_retry_policy = {
 }
 redis_max_connections = 100000
 broker_transport_options = {
-    "visibility_timeout_seconds": 60 * 60 * 24,
+    "visibility_timeout": 60 * 60 * 24,
     "max_connections": 100,
 }
 broker_pool_limit = 0
