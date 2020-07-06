@@ -1,127 +1,164 @@
-# See https://docs.celeryproject.org/en/stable/userguide/configuration.html
-
-task_default_queue: merlin
-task_acks_late: True
-task_reject_on_worker_lost: True
-redis_max_connections: 100000
-broker_pool_limit: 0
-task_serializer: pickle
-accept_content: ["pickle"]
-result_serializer: pickle
-task_publish_retry_policy : 
-    interval_start: 10: 
-    interval_step: 10: 
-    interval_max: 60: 
-broker_transport_options: 
-    visibility_timeout_seconds: 86400
-    max_connections: 100
-
-
+accept_content: ['pickle']
+result_accept_content: null
 enable_utc: True
 imports: []
 include: []
-timezone: UTC
+timezone: null
 beat_max_loop_interval: 0
 beat_schedule: {}
-beat_scheduler: celery.beat:PersistentScheduler
-beat_schedule_filename: celerybeat-schedule
+beat_scheduler: 'celery.beat:PersistentScheduler'
+beat_schedule_filename: 'celerybeat-schedule'
 beat_sync_every: 0
-broker_url: amqp://
-broker_transport: 
-broker_connection_timeout: 4.0
+broker_url: redacted
+broker_read_url: null
+broker_write_url: null
+broker_transport: null
+broker_transport_options: {visibility_timeout_seconds: 86400, max_connections: 100}
+broker_connection_timeout: 4
 broker_connection_retry: True
 broker_connection_max_retries: 100
-broker_failover_strategy: round-robin
-broker_heartbeat: 
-broker_login_method: 
-broker_use_ssl: 
-cache_backend: 
-cache_backend_options: 
-cassandra_table: 
-cassandra_entry_ttl: 
-cassandra_keyspace: 
-cassandra_port: 
-cassandra_read_consistency: 
-cassandra_servers: 
-cassandra_write_consistency: 
-cassandra_options: 
-3_: 
-s3_access_key_id: 
-3_: 
-s3_secret_access_key: 
-3_: 
-s3_bucket: 
-3: 
-s3_base_path: 
-3: 
-s3_endpoint_url: 
-3_: 
-s3_region: 
-couchbase_backend_settings: 
-arangodb_backend_settings: 
-mongodb_backend_settings: 
-event_queue_expires: 
-event_queue_ttl: 
-event_queue_prefix: 
-event_serializer: 
-redis_db: 
-redis_host: 
-redis_password: 
-redis_port: 
-redis_backend_use_ssl: 
-result_backend: 
-result_cache_max: 
-result_compression: 
-result_exchange: 
-result_exchange_type: 
-result_expires: 
-result_persistent: 
-se result_backend instead.: 
-database_engine_options: 
-database_short_lived_sessions: 
-database_db_names: 
-security_certificate: 
-security_cert_store: 
-security_key: 
+broker_failover_strategy: null
+broker_heartbeat: 120
+broker_heartbeat_checkrate: 3.0
+broker_login_method: null
+broker_pool_limit: 0
+broker_use_ssl: True
+broker_host: null
+broker_port: null
+broker_user: null
+broker_password: null
+broker_vhost: null
+cache_backend: null
+cache_backend_options: {}
+cassandra_entry_ttl: null
+cassandra_keyspace: null
+cassandra_port: null
+cassandra_read_consistency: null
+cassandra_servers: null
+cassandra_table: null
+cassandra_write_consistency: null
+cassandra_auth_provider: null
+cassandra_auth_kwargs: null
+cassandra_options: {}
+s3_access_key_id: null
+s3_secret_access_key: null
+s3_bucket: null
+s3_base_path: null
+s3_endpoint_url: null
+s3_region: null
+azureblockblob_container_name: 'celery'
+azureblockblob_retry_initial_backoff_sec: 2
+azureblockblob_retry_increment_base: 2
+azureblockblob_retry_max_attempts: 3
+control_queue_ttl: 300.0
+control_queue_expires: 10.0
+control_exchange: 'celery'
+couchbase_backend_settings: null
+arangodb_backend_settings: null
+mongodb_backend_settings: null
+cosmosdbsql_database_name: 'celerydb'
+cosmosdbsql_collection_name: 'celerycol'
+cosmosdbsql_consistency_level: 'Session'
+cosmosdbsql_max_retry_attempts: 9
+cosmosdbsql_max_retry_wait_time: 30
+event_queue_expires: 60.0
+event_queue_ttl: 5.0
+event_queue_prefix: 'celeryev'
+event_serializer: 'json'
+event_exchange: 'celeryev'
+redis_backend_use_ssl: null
+redis_db: null
+redis_host: null
+redis_max_connections: 100000
+redis_password: null
+redis_port: null
+redis_socket_timeout: 120.0
+redis_socket_connect_timeout: null
+redis_retry_on_timeout: False
+redis_socket_keepalive: False
+result_backend: redacted
+result_cache_max: -1
+result_compression: null
+result_exchange: 'celeryresults'
+result_exchange_type: 'direct'
+result_expires: datetime.timedelta(days=1)
+result_persistent: null
+result_extended: False
+result_serializer: 'pickle'
+result_backend_transport_options: {}
+result_chord_retry_interval: 1.0
+result_chord_join_timeout: 3.0
+result_backend_max_sleep_between_retries_ms: 10000
+result_backend_max_retries: inf
+result_backend_base_sleep_between_retries_ms: 10
+result_backend_always_retry: False
+elasticsearch_retry_on_timeout: null
+elasticsearch_max_retries: null
+elasticsearch_timeout: null
+elasticsearch_save_meta_as_text: True
+riak_backend_settings: null
+security_certificate: null
+security_cert_store: null
+security_key: null
+security_digest: 'sha256'
+database_url: null
+database_engine_options: null
+database_short_lived_sessions: False
+database_table_schemas: null
+database_table_names: null
+task_acks_late: True
 task_acks_on_failure_or_timeout: True
 task_always_eager: False
 task_annotations: null
 task_compression: null
 task_create_missing_queues: True
-task_default_delivery_mode: persistent
-task_default_exchange: 
-task_default_exchange_type: direct
-task_default_rate_limit: 
-task_default_routing_key: 
-task_eager_propagates: 
-task_ignore_result: 
-task_publish_retry: 
-task_queues: 
-task_routes: 
-task_send_sent_event: 
-task_soft_time_limit: 
-task_time_limit: 
-task_track_started: 
-worker_agent: 
-worker_autoscaler: 
-worker_concurrency: 
-worker_consumer: 
-worker_direct: 
-worker_disable_rate_limits: 
-worker_enable_remote_control: 
-worker_hijack_root_logger: 
-worker_log_color: 
-worker_log_format: 
-worker_lost_wait: 
-worker_max_tasks_per_child: 
-worker_pool: 
-worker_pool_putlocks: 
-worker_pool_restarts: 
-worker_prefetch_multiplier: 
-worker_redirect_stdouts: 
-worker_redirect_stdouts_level: 
-worker_send_task_events: 
-worker_state_db: 
-worker_task_log_format: 
-worker_timer: 
-worker_timer_precision: 
+task_inherit_parent_priority: False
+task_default_delivery_mode: 2
+task_default_queue: 'celery'
+task_default_exchange: null
+task_default_exchange_type: 'direct'
+task_default_routing_key: null
+task_default_rate_limit: null
+task_default_priority: null
+task_eager_propagates: False
+task_ignore_result: False
+task_protocol: 2
+task_publish_retry: True
+task_publish_retry_policy: {interval_start: 10, interval_step: 10, interval_max: 60}
+task_queues: null
+task_queue_ha_policy: null
+task_queue_max_priority: null
+task_reject_on_worker_lost: True
+task_remote_tracebacks: False
+task_routes: null
+task_send_sent_event: False
+task_serializer: 'pickle'
+task_soft_time_limit: null
+task_time_limit: null
+task_store_errors_even_if_ignored: False
+task_track_started: False
+worker_agent: null
+worker_autoscaler: 'celery.worker.autoscale:Autoscaler'
+worker_concurrency: 0
+worker_consumer: 'celery.worker.consumer:Consumer'
+worker_direct: False
+worker_disable_rate_limits: False
+worker_enable_remote_control: True
+worker_hijack_root_logger: True
+worker_log_color: null
+worker_log_format: '[%(asctime)s: %(levelname)s/%(processName)s] %(message)s'
+worker_lost_wait: 10.0
+worker_max_memory_per_child: null
+worker_max_tasks_per_child: null
+worker_pool: 'prefork'
+worker_pool_putlocks: True
+worker_pool_restarts: False
+worker_proc_alive_timeout: 4.0
+worker_prefetch_multiplier: 4
+worker_redirect_stdouts: True
+worker_redirect_stdouts_level: 'WARNING'
+worker_send_task_events: False
+worker_state_db: null
+worker_task_log_format: '[%(asctime)s: %(levelname)s/%(processName)s] %(task_name)s[%(task_id)s]: %(message)s'
+worker_timer: null
+worker_timer_precision: 1.0

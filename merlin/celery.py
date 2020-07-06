@@ -104,6 +104,11 @@ app.conf.broker_transport_options = {
 
 app.conf.update(broker_pool_limit=0)
 
+#with open("/g/g13/bay1/app.yaml", "w") as f:
+#    for k,v in app.conf.__dict__.items():
+#        f.write(k)
+#        f.write(": " + str(v) + "\n")
+
 # update all keys at once
 # app.conf.update(...)
 
