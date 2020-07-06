@@ -1,0 +1,127 @@
+# See https://docs.celeryproject.org/en/stable/userguide/configuration.html
+
+task_default_queue: merlin
+task_acks_late: True
+task_reject_on_worker_lost: True
+redis_max_connections: 100000
+broker_pool_limit: 0
+task_serializer: pickle
+accept_content: ["pickle"]
+result_serializer: pickle
+task_publish_retry_policy : 
+    interval_start: 10: 
+    interval_step: 10: 
+    interval_max: 60: 
+broker_transport_options: 
+    visibility_timeout_seconds: 86400
+    max_connections: 100
+
+
+enable_utc: True
+imports: []
+include: []
+timezone: UTC
+beat_max_loop_interval: 0
+beat_schedule: {}
+beat_scheduler: celery.beat:PersistentScheduler
+beat_schedule_filename: celerybeat-schedule
+beat_sync_every: 0
+broker_url: amqp://
+broker_transport: 
+broker_connection_timeout: 4.0
+broker_connection_retry: True
+broker_connection_max_retries: 100
+broker_failover_strategy: round-robin
+broker_heartbeat: 
+broker_login_method: 
+broker_use_ssl: 
+cache_backend: 
+cache_backend_options: 
+cassandra_table: 
+cassandra_entry_ttl: 
+cassandra_keyspace: 
+cassandra_port: 
+cassandra_read_consistency: 
+cassandra_servers: 
+cassandra_write_consistency: 
+cassandra_options: 
+3_: 
+s3_access_key_id: 
+3_: 
+s3_secret_access_key: 
+3_: 
+s3_bucket: 
+3: 
+s3_base_path: 
+3: 
+s3_endpoint_url: 
+3_: 
+s3_region: 
+couchbase_backend_settings: 
+arangodb_backend_settings: 
+mongodb_backend_settings: 
+event_queue_expires: 
+event_queue_ttl: 
+event_queue_prefix: 
+event_serializer: 
+redis_db: 
+redis_host: 
+redis_password: 
+redis_port: 
+redis_backend_use_ssl: 
+result_backend: 
+result_cache_max: 
+result_compression: 
+result_exchange: 
+result_exchange_type: 
+result_expires: 
+result_persistent: 
+se result_backend instead.: 
+database_engine_options: 
+database_short_lived_sessions: 
+database_db_names: 
+security_certificate: 
+security_cert_store: 
+security_key: 
+task_acks_on_failure_or_timeout: True
+task_always_eager: False
+task_annotations: null
+task_compression: null
+task_create_missing_queues: True
+task_default_delivery_mode: persistent
+task_default_exchange: 
+task_default_exchange_type: direct
+task_default_rate_limit: 
+task_default_routing_key: 
+task_eager_propagates: 
+task_ignore_result: 
+task_publish_retry: 
+task_queues: 
+task_routes: 
+task_send_sent_event: 
+task_soft_time_limit: 
+task_time_limit: 
+task_track_started: 
+worker_agent: 
+worker_autoscaler: 
+worker_concurrency: 
+worker_consumer: 
+worker_direct: 
+worker_disable_rate_limits: 
+worker_enable_remote_control: 
+worker_hijack_root_logger: 
+worker_log_color: 
+worker_log_format: 
+worker_lost_wait: 
+worker_max_tasks_per_child: 
+worker_pool: 
+worker_pool_putlocks: 
+worker_pool_restarts: 
+worker_prefetch_multiplier: 
+worker_redirect_stdouts: 
+worker_redirect_stdouts_level: 
+worker_send_task_events: 
+worker_state_db: 
+worker_task_log_format: 
+worker_timer: 
+worker_timer_precision: 

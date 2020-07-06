@@ -104,6 +104,9 @@ app.conf.broker_transport_options = {
 
 app.conf.update(broker_pool_limit=0)
 
+# update all keys at once
+# app.conf.update(...)
+
 # Task routing: call our default queue merlin
 app.conf.task_routes = (route_for_task,)
 app.conf.task_default_queue = "merlin"
