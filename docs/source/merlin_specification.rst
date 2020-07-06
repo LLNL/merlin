@@ -60,6 +60,7 @@ see :doc:`./merlin_variables`.
                           If this is unset the number of nodes will be
                           queried from the environment, failing that, the
                           number of nodes will be set to 1.
+     walltime: The total walltime of the batch allocation (hh:mm:ss)
 
 
   #####################################

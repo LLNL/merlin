@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.1.
+# This file is part of Merlin, Version: 1.6.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -36,10 +36,7 @@ import logging
 import os
 from os.path import expanduser
 
-from merlin.config.configfile import (
-    CONFIG,
-    get_ssl_entries,
-)
+from merlin.config.configfile import CONFIG, get_ssl_entries
 
 
 try:

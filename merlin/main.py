@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.1.
+# This file is part of Merlin, Version: 1.6.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -44,20 +44,11 @@ from argparse import (
 )
 from contextlib import suppress
 
-from merlin import (
-    VERSION,
-    router,
-)
+from merlin import VERSION, router
 from merlin.ascii_art import banner_small
-from merlin.examples.generator import (
-    list_examples,
-    setup_example,
-)
+from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
-from merlin.spec.expansion import (
-    RESERVED,
-    get_spec_with_expansion,
-)
+from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
@@ -127,7 +118,9 @@ def parse_override_vars(variables_list):
                 )
             key = entry[0]
             if key is None or key == "" or "$" in key:
-                raise ValueError("--vars requires valid variable names.")
+                raise ValueError(
+                    "--vars requires valid variable names comprised of alphanumeric characters and underscores."
+                )
             if key in RESERVED:
                 raise ValueError(
                     f"Cannot override reserved word '{key}'! Reserved words are: {RESERVED}."
@@ -188,7 +181,7 @@ def process_restart(args):
     """
     print(banner_small)
     restart_dir = verify_dirpath(args.restart_dir)
-    filepath = os.path.join(args.restart_dir, "merlin_info", "*.yaml")
+    filepath = os.path.join(args.restart_dir, "merlin_info", "*.expanded.yaml")
     possible_specs = glob.glob(filepath)
     if len(possible_specs) == 0:
         raise ValueError(
@@ -321,7 +314,7 @@ def process_example(args):
 
 def process_monitor(args):
     """
-    CLI command to monitor merlin workers and queues to keep 
+    CLI command to monitor merlin workers and queues to keep
     the allocation alive
 
     :param `args`: parsed CLI arguments

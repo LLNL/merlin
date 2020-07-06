@@ -1,0 +1,24 @@
+description:
+    name: bad_format4
+    description: a spec that should break
+
+env:
+    variables:
+        OUTPUT_PATH: ./cli_test_studies
+
+study:
+    - name: step1 
+      description: step 1
+      run:
+         cmd: echo "test"
+
+merlin:
+    bad_key: val
+    samples:
+        generate:
+            cmd: |
+                echo -en "sample\n1" > $(MERLIN_INFO)/samples.csv
+        # can be a file glob of numpy sample files.
+        file: $(MERLIN_INFO)/samples.csv
+        column_labels: [X0]
+        level_max_dirs: 25

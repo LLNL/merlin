@@ -1,0 +1,26 @@
+description:
+    name: bad_format8
+    description: a spec that should break
+
+env:
+    variables:
+        OUTPUT_PATH: ./cli_test_studies
+
+study:
+    - name: step1 
+      description: step 1
+      run:
+         cmd: echo "test"
+
+    - name: step2
+      description: step 2
+      run:
+         cmd: echo "test"
+         depends: [step1, step1]
+
+merlin:
+    samples:
+        generate:
+            cmd: echo -en "sample\n1" > $(MERLIN_INFO)/samples.csv
+        file: $(MERLIN_INFO)/samples.csv
+        column_labels: [X0]
