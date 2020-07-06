@@ -1,3 +1,5 @@
+# See https://docs.celeryproject.org/en/stable/userguide/configuration.html
+
 accept_content: ['pickle']
 result_accept_content: null
 enable_utc: True
