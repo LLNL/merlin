@@ -79,7 +79,7 @@ if (
     or (CONFIG.celery.override is None)
     or (len(nested_namespace_to_dicts(CONFIG.celery.override)) == 0)
 ):
-    LOG.info("Skipping celery config override; 'celery.override' field is empty.")
+    LOG.debug("Skipping celery config override; 'celery.override' field is empty.")
 else:
     LOG.info("Overriding default celery config.")
     app.conf.update(**nested_namespace_to_dicts(CONFIG.celery.override))
