@@ -54,15 +54,15 @@ broker_ssl = True
 results_ssl = False
 try:
     BROKER_URI = broker.get_connection_string()
-    LOG.info(f"broker: {broker.get_connection_string(include_password=False)}")
+    LOG.debug(f"broker: {broker.get_connection_string(include_password=False)}")
     broker_ssl = broker.get_ssl_config()
-    LOG.info(f"broker_ssl = {broker_ssl}")
+    LOG.debug(f"broker_ssl = {broker_ssl}")
     RESULTS_BACKEND_URI = results_backend.get_connection_string()
     results_ssl = results_backend.get_ssl_config(celery_check=True)
-    LOG.info(
+    LOG.debug(
         f"results: {results_backend.get_connection_string(include_password=False)}"
     )
-    LOG.info(f"results: redis_backed_use_ssl = {results_ssl}")
+    LOG.debug(f"results: redis_backed_use_ssl = {results_ssl}")
 except ValueError:
     # These variables won't be set if running with '--local'.
     BROKER_URI = None
@@ -74,7 +74,11 @@ app = Celery("merlin")
 app.config_from_object(celeryconfig)
 
 # load config overrides from app.yaml
-app.conf.update(**nested_namespace_to_dicts(CONFIG.celery.override))
+if (not hasattr(CONFIG.celery, "override")) or (CONFIG.celery.override is None) or (len(nested_namespace_to_dicts(CONFIG.celery.override)) == 0):
+    LOG.info("Skipping celery config override; 'celery.override' field is empty.")
+else:
+    LOG.info("Overriding default celery config.")
+    app.conf.update(**nested_namespace_to_dicts(CONFIG.celery.override))
 
 # overwrite config with essential properties
 app.conf.update(
