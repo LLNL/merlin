@@ -71,7 +71,7 @@ except ValueError:
 app = Celery("merlin")
 
 # load merlin config defaults
-app.config_from_object(celeryconfig)
+app.conf.update(**celeryconfig.DICT)
 
 # load config overrides from app.yaml
 if (
