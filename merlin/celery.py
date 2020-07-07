@@ -68,7 +68,15 @@ except ValueError:
     BROKER_URI = None
     RESULTS_BACKEND_URI = None
 
-app = Celery("merlin")
+# initialize app with essential properties
+app = Celery(
+    "merlin",
+    broker=BROKER_URI,
+    backend=RESULTS_BACKEND_URI,
+    broker_use_ssl=broker_ssl,
+    redis_backend_use_ssl=results_ssl,
+    task_routes=(route_for_task,),
+)
 
 # load merlin config defaults
 app.conf.update(**celeryconfig.DICT)
@@ -84,14 +92,7 @@ else:
     LOG.info("Overriding default celery config.")
     app.conf.update(**nested_namespace_to_dicts(CONFIG.celery.override))
 
-# overwrite config with essential properties
-app.conf.update(
-    broker_url=BROKER_URI,
-    result_backend=RESULTS_BACKEND_URI,
-    broker_use_ssl=broker_ssl,
-    redis_backend_use_ssl=results_ssl,
-    task_routes=(route_for_task,),
-)
+# auto-discover tasks
 app.autodiscover_tasks(["merlin.common"])
 
 
