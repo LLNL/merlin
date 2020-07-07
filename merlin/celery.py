@@ -40,7 +40,7 @@ from celery import Celery
 from celery.signals import worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
-from merlin.config import broker, results_backend, celeryconfig
+from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
 from merlin.router import route_for_task
 from merlin.utils import nested_namespace_to_dicts
@@ -74,7 +74,11 @@ app = Celery("merlin")
 app.config_from_object(celeryconfig)
 
 # load config overrides from app.yaml
-if (not hasattr(CONFIG.celery, "override")) or (CONFIG.celery.override is None) or (len(nested_namespace_to_dicts(CONFIG.celery.override)) == 0):
+if (
+    (not hasattr(CONFIG.celery, "override"))
+    or (CONFIG.celery.override is None)
+    or (len(nested_namespace_to_dicts(CONFIG.celery.override)) == 0)
+):
     LOG.info("Skipping celery config override; 'celery.override' field is empty.")
 else:
     LOG.info("Overriding default celery config.")
@@ -82,11 +86,11 @@ else:
 
 # overwrite config with essential properties
 app.conf.update(
-    broker = BROKER_URI,
-    backend = RESULTS_BACKEND_URI,
-    broker_use_ssl = broker_ssl,
-    redis_backend_use_ssl = results_ssl,
-    task_routes = (route_for_task,),
+    broker=BROKER_URI,
+    backend=RESULTS_BACKEND_URI,
+    broker_use_ssl=broker_ssl,
+    redis_backend_use_ssl=results_ssl,
+    task_routes=(route_for_task,),
 )
 app.autodiscover_tasks(["merlin.common"])
 
