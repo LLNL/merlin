@@ -30,12 +30,11 @@
 
 import logging
 from collections import ChainMap
-from os.path import expanduser, expandvars
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
-from merlin.utils import contains_shell_ref, contains_token
+from merlin.utils import contains_token
 
 
 MAESTRO_RESERVED = {"SPECROOT", "WORKSPACE", "LAUNCHER"}
@@ -80,7 +79,6 @@ def expand_line(line, var_dict):
     Expand one line of text by substituting environment
     and user variables, as well as variables in 'var_dict'.
     """
-    line = expandvars(expanduser(line))
     if not contains_token(line):
         return line
     for key, val in var_dict.items():
@@ -137,8 +135,6 @@ def determine_user_variables(*user_var_dicts):
                     new_val = new_val.replace(
                         var_determined_key, determined_results[determined_key]
                     )
-        if contains_shell_ref(new_val):
-            new_val = expandvars(new_val)
         determined_results[key.upper()] = new_val
     return determined_results
 
