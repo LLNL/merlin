@@ -86,8 +86,8 @@ else:
 
 # overwrite config with essential properties
 app.conf.update(
-    broker=BROKER_URI,
-    backend=RESULTS_BACKEND_URI,
+    broker_url=BROKER_URI,
+    result_backend=RESULTS_BACKEND_URI,
     broker_use_ssl=broker_ssl,
     redis_backend_use_ssl=results_ssl,
     task_routes=(route_for_task,),
