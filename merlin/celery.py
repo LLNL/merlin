@@ -42,7 +42,6 @@ from celery.signals import worker_process_init
 import merlin.common.security.encrypt_backend_traffic
 from merlin.config import broker, results_backend, celeryconfig
 from merlin.config.configfile import CONFIG
-from merlin.log_formatter import FORMATS
 from merlin.router import route_for_task
 from merlin.utils import nested_namespace_to_dicts
 
@@ -84,10 +83,6 @@ app.conf.update(
     broker_use_ssl = broker_ssl,
     redis_backend_use_ssl = results_ssl,
     task_routes = (route_for_task,),
-    task_default_queue = "merlin",
-    worker_log_color = True,
-    worker_log_format = FORMATS["DEFAULT"],
-    worker_task_log_format = FORMATS["WORKER"],
 )
 app.autodiscover_tasks(["merlin.common"])
 

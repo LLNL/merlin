@@ -2,6 +2,9 @@
 Default celery configuration for merlin
 """
 
+from merlin.log_formatter import FORMATS
+
+
 task_serializer = "pickle"
 accept_content = ["pickle"]
 result_serializer = "pickle"
@@ -18,3 +21,7 @@ broker_transport_options = {
     "max_connections": 100,
 }
 broker_pool_limit = 0
+task_default_queue = "merlin",
+worker_log_color = True,
+worker_log_format = FORMATS["DEFAULT"],
+worker_task_log_format = FORMATS["WORKER"],
