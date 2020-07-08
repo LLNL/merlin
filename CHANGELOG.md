@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Removed expansion of env variables in provenance specs. This was rarely used,
-  and caused problems for users.
+- Removed expansion of env variables in `cmd` sections of provenance specs. This allows
+  the shell command itself to expand environment variables, and gives users greater
+  flexibility.
 
 ## [1.6.2]
 
