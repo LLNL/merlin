@@ -116,7 +116,7 @@ def expand_env_vars(spec):
             return expandvars(expanduser(section))
         if isinstance(section, dict):
             for k, v in section.items():
-                if k == "cmd":
+                if k in ["cmd", "restart"]:
                     continue
                 section[k] = recurse(v)
         elif isinstance(section, list):

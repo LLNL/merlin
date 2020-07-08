@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed expansion of env variables in `cmd` sections of provenance specs. This allows
   the shell command itself to expand environment variables, and gives users greater
   flexibility.
+- Allowed environment variables to be in study `description.name`.
+- Tilde (~) now properly expands as part of a path in `env` section.
 
 ## [1.6.2]
 
