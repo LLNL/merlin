@@ -30,6 +30,7 @@
 
 import logging
 from collections import ChainMap
+from os.path import expanduser, expandvars
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec.override import dump_with_overrides, error_override_vars
@@ -74,11 +75,13 @@ def var_ref(string):
     return f"$({string})"
 
 
-def expand_line(line, var_dict):
+def expand_line(line, var_dict, expand_env=False):
     """
     Expand one line of text by substituting environment
     and user variables, as well as variables in 'var_dict'.
     """
+    if expand_env:
+        line = expandvars(expanduser(line))
     if not contains_token(line):
         return line
     for key, val in var_dict.items():
@@ -87,7 +90,7 @@ def expand_line(line, var_dict):
     return line
 
 
-def expand_by_line(text, var_dict):
+def expand_by_line(text, var_dict, expand_env=False):
     """
     Given a text (yaml spec), and a dictionary of variable names
     and values, expand variables in the text line by line.
@@ -95,7 +98,7 @@ def expand_by_line(text, var_dict):
     text = text.splitlines()
     result = ""
     for line in text:
-        expanded_line = expand_line(line, var_dict)
+        expanded_line = expand_line(line, var_dict, expand_env)
         result += expanded_line + "\n"
     return result
 
@@ -135,6 +138,7 @@ def determine_user_variables(*user_var_dicts):
                     new_val = new_val.replace(
                         var_determined_key, determined_results[determined_key]
                     )
+        new_val = expandvars(expanduser(new_val))
         determined_results[key.upper()] = new_val
     return determined_results
 
@@ -204,7 +208,7 @@ def expand_spec_no_study(filepath, override_vars=None):
         uvars.append(spec.environment["labels"])
     evaluated_uvars = determine_user_variables(*uvars)
 
-    return expand_by_line(full_spec, evaluated_uvars)
+    return expand_by_line(full_spec, evaluated_uvars)#TODO set expand_env to True for all areas except cmd
 
 
 def get_spec_with_expansion(filepath, override_vars=None):

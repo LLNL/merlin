@@ -153,12 +153,12 @@ class MerlinStudy:
 
         # expand user variables
         new_spec_text = expand_by_line(
-            new_spec.dump(), MerlinStudy.get_user_vars(new_spec)
+            new_spec.dump(), MerlinStudy.get_user_vars(new_spec) #TODO expand_env?
         )
         # expand reserved words
-        new_spec_text = expand_by_line(new_spec_text, self.special_vars)
+        new_spec_text = expand_by_line(new_spec_text, self.special_vars) #TODO expand_env?
 
-        return MerlinSpec.load_spec_from_string(new_spec_text)
+        return MerlinSpec.load_spec_from_string(new_spec_text) # maybe call all-spec besides cmd expand here?
 
     @property
     def samples(self):
@@ -267,7 +267,7 @@ class MerlinStudy:
             ):
                 output_path = str(self.override_vars["OUTPUT_PATH"])
 
-            output_path = expand_line(output_path, self.user_vars)
+            output_path = expand_line(output_path, self.user_vars, expand_env=True)
             output_path = os.path.abspath(output_path)
             if not os.path.isdir(output_path):
                 os.makedirs(output_path)
@@ -361,9 +361,9 @@ class MerlinStudy:
 
             expanded_filepath = os.path.join(self.info, expanded_name)
             new_spec_text = expand_by_line(
-                result.dump(), MerlinStudy.get_user_vars(result)
+                result.dump(), MerlinStudy.get_user_vars(result) #TODO expand_env?
             )
-            result = MerlinSpec.load_spec_from_string(new_spec_text)
+            result = MerlinSpec.load_spec_from_string(new_spec_text) # TODO maybe call env var besides cmd here
 
         # write expanded spec for provanance
         with open(expanded_filepath, "w") as f:
