@@ -41,7 +41,7 @@ from maestrowf.datastructures.core import Study
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import determine_user_variables, expand_by_line, expand_line
+from merlin.spec.expansion import determine_user_variables, expand_by_line, expand_line, expand_env_vars
 from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
@@ -158,7 +158,8 @@ class MerlinStudy:
         # expand reserved words
         new_spec_text = expand_by_line(new_spec_text, self.special_vars) #TODO expand_env?
 
-        return MerlinSpec.load_spec_from_string(new_spec_text) # maybe call all-spec besides cmd expand here?
+        result = MerlinSpec.load_spec_from_string(new_spec_text) # maybe call all-spec besides cmd expand here?
+        return expand_env_vars(result)
 
     @property
     def samples(self):
@@ -364,6 +365,7 @@ class MerlinStudy:
                 result.dump(), MerlinStudy.get_user_vars(result) #TODO expand_env?
             )
             result = MerlinSpec.load_spec_from_string(new_spec_text) # TODO maybe call env var besides cmd here
+            result = expand_env_vars(result)
 
         # write expanded spec for provanance
         with open(expanded_filepath, "w") as f:

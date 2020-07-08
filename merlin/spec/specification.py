@@ -76,6 +76,10 @@ class MerlinSpec(YAMLSpecification):
     def __init__(self):
         super(MerlinSpec, self).__init__()
 
+    @property
+    def sections(self):
+        return {"description": self.description, "batch": self.batch, "environment": self.environment, "study": self.study, "globals": self.globals, "merlin": self.merlin}
+
     @classmethod
     def load_specification(cls, filepath, suppress_warning=True):
         spec = super(MerlinSpec, cls).load_specification(filepath)
@@ -141,6 +145,7 @@ class MerlinSpec(YAMLSpecification):
                 return
             for key, val in defaults.items():
                 if key not in result:
+                    print("result type: " + str(type(result)))
                     result[key] = val
                 else:
                     recurse(result[key], val)

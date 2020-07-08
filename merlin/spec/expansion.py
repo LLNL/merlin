@@ -31,6 +31,7 @@
 import logging
 from collections import ChainMap
 from os.path import expanduser, expandvars
+from copy import deepcopy
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec.override import dump_with_overrides, error_override_vars
@@ -101,6 +102,29 @@ def expand_by_line(text, var_dict, expand_env=False):
         expanded_line = expand_line(line, var_dict, expand_env)
         result += expanded_line + "\n"
     return result
+
+
+def expand_env_vars(spec):
+    def recurse(section):
+        print(section)
+        print("\n")
+        if not isinstance(section, dict) and not isinstance(section, list):
+            return expandvars(expanduser(str(section)))
+        if isinstance(section, dict):
+            for k, v in section.items():
+                if k == "cmd":
+                    continue
+                section[k] = recurse(v)
+        elif isinstance(section, list):
+            for i, elem in enumerate(deepcopy(section)):
+                section[i] = recurse(elem)
+
+        print(section)
+        return section
+
+    for name, section in spec.sections.items():
+        setattr(spec, name, recurse(section))
+    return spec
 
 
 def determine_user_variables(*user_var_dicts):
