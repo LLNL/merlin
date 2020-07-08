@@ -41,7 +41,12 @@ from maestrowf.datastructures.core import Study
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import determine_user_variables, expand_by_line, expand_line, expand_env_vars
+from merlin.spec.expansion import (
+    determine_user_variables,
+    expand_by_line,
+    expand_env_vars,
+    expand_line,
+)
 from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
@@ -153,12 +158,12 @@ class MerlinStudy:
 
         # expand user variables
         new_spec_text = expand_by_line(
-            new_spec.dump(), MerlinStudy.get_user_vars(new_spec) #TODO expand_env?
+            new_spec.dump(), MerlinStudy.get_user_vars(new_spec)
         )
         # expand reserved words
-        new_spec_text = expand_by_line(new_spec_text, self.special_vars) #TODO expand_env?
+        new_spec_text = expand_by_line(new_spec_text, self.special_vars)
 
-        result = MerlinSpec.load_spec_from_string(new_spec_text) # maybe call all-spec besides cmd expand here?
+        result = MerlinSpec.load_spec_from_string(new_spec_text)
         return expand_env_vars(result)
 
     @property
@@ -362,9 +367,9 @@ class MerlinStudy:
 
             expanded_filepath = os.path.join(self.info, expanded_name)
             new_spec_text = expand_by_line(
-                result.dump(), MerlinStudy.get_user_vars(result) #TODO expand_env?
+                result.dump(), MerlinStudy.get_user_vars(result)
             )
-            result = MerlinSpec.load_spec_from_string(new_spec_text) # TODO maybe call env var besides cmd here
+            result = MerlinSpec.load_spec_from_string(new_spec_text)
             result = expand_env_vars(result)
 
         # write expanded spec for provanance

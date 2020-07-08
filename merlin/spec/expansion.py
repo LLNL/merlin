@@ -30,8 +30,8 @@
 
 import logging
 from collections import ChainMap
-from os.path import expanduser, expandvars
 from copy import deepcopy
+from os.path import expanduser, expandvars
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec.override import dump_with_overrides, error_override_vars
@@ -76,13 +76,11 @@ def var_ref(string):
     return f"$({string})"
 
 
-def expand_line(line, var_dict, expand_env=False):
+def expand_line(line, var_dict):
     """
     Expand one line of text by substituting environment
     and user variables, as well as variables in 'var_dict'.
     """
-    if expand_env:
-        line = expandvars(expanduser(line))
     if not contains_token(line):
         return line
     for key, val in var_dict.items():
@@ -91,7 +89,7 @@ def expand_line(line, var_dict, expand_env=False):
     return line
 
 
-def expand_by_line(text, var_dict, expand_env=False):
+def expand_by_line(text, var_dict):
     """
     Given a text (yaml spec), and a dictionary of variable names
     and values, expand variables in the text line by line.
@@ -99,15 +97,13 @@ def expand_by_line(text, var_dict, expand_env=False):
     text = text.splitlines()
     result = ""
     for line in text:
-        expanded_line = expand_line(line, var_dict, expand_env)
+        expanded_line = expand_line(line, var_dict)
         result += expanded_line + "\n"
     return result
 
 
 def expand_env_vars(spec):
     def recurse(section):
-        print(section)
-        print("\n")
         if section is None:
             return section
         if isinstance(section, str):
@@ -120,8 +116,6 @@ def expand_env_vars(spec):
         elif isinstance(section, list):
             for i, elem in enumerate(deepcopy(section)):
                 section[i] = recurse(elem)
-
-        print(section)
         return section
 
     for name, section in spec.sections.items():
@@ -234,7 +228,9 @@ def expand_spec_no_study(filepath, override_vars=None):
         uvars.append(spec.environment["labels"])
     evaluated_uvars = determine_user_variables(*uvars)
 
-    return expand_by_line(full_spec, evaluated_uvars)#TODO set expand_env to True for all areas except cmd
+    return expand_by_line(
+        full_spec, evaluated_uvars
+    )  # TODO set expand_env to True for all areas except cmd
 
 
 def get_spec_with_expansion(filepath, override_vars=None):
