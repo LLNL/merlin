@@ -108,7 +108,9 @@ def expand_env_vars(spec):
     def recurse(section):
         print(section)
         print("\n")
-        if not isinstance(section, dict) and not isinstance(section, list):
+        if section is None:
+            return section
+        if isinstance(section, str):
             return expandvars(expanduser(str(section)))
         if isinstance(section, dict):
             for k, v in section.items():
