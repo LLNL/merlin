@@ -50,7 +50,7 @@ from merlin.spec.expansion import (
 from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
-from merlin.utils import contains_token, get_flux_cmd, load_array_file
+from merlin.utils import contains_token, contains_shell_ref, get_flux_cmd, load_array_file
 
 
 LOG = logging.getLogger(__name__)
@@ -342,23 +342,25 @@ class MerlinStudy:
         expanded_filepath = os.path.join(self.info, expanded_name)
 
         # expand provenance spec filename
-        if contains_token(self.original_spec.name):
+        if contains_token(self.original_spec.name) or contains_shell_ref(self.original_spec.name):
             name = f"{result.description['name'].replace(' ', '_')}_{self.timestamp}"
+            name = expand_line(name, {}, env_vars=True)
             if "/" in name:
                 raise ValueError(
                     f"Expanded value '{name}' for field 'name' in section 'description' is not a valid filename."
                 )
             expanded_workspace = os.path.join(self.output_path, name)
 
-            sample_file = result.merlin["samples"]["file"]
-            if sample_file.startswith(self.workspace):
-                new_samples_file = sample_file.replace(
-                    self.workspace, expanded_workspace
-                )
-                result.merlin["samples"]["generate"]["cmd"] = result.merlin["samples"][
-                    "generate"
-                ]["cmd"].replace(self.workspace, expanded_workspace)
-                result.merlin["samples"]["file"] = new_samples_file
+            if result.merlin["samples"]:
+                sample_file = result.merlin["samples"]["file"]
+                if sample_file.startswith(self.workspace):
+                    new_samples_file = sample_file.replace(
+                        self.workspace, expanded_workspace
+                    )
+                    result.merlin["samples"]["generate"]["cmd"] = result.merlin["samples"][
+                        "generate"
+                    ]["cmd"].replace(self.workspace, expanded_workspace)
+                    result.merlin["samples"]["file"] = new_samples_file
 
             shutil.move(self.workspace, expanded_workspace)
             self.workspace = expanded_workspace
