@@ -273,7 +273,7 @@ class MerlinStudy:
             ):
                 output_path = str(self.override_vars["OUTPUT_PATH"])
 
-            output_path = expand_line(output_path, self.user_vars, expand_env=True)
+            output_path = expand_line(output_path, self.user_vars)
             output_path = os.path.abspath(output_path)
             if not os.path.isdir(output_path):
                 os.makedirs(output_path)

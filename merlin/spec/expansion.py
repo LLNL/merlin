@@ -230,7 +230,7 @@ def expand_spec_no_study(filepath, override_vars=None):
 
     return expand_by_line(
         full_spec, evaluated_uvars
-    )  # TODO set expand_env to True for all areas except cmd
+    )
 
 
 def get_spec_with_expansion(filepath, override_vars=None):
