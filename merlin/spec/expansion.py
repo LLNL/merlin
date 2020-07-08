@@ -36,7 +36,7 @@ from os.path import expanduser, expandvars
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
-from merlin.utils import contains_token
+from merlin.utils import contains_shell_ref, contains_token
 
 
 MAESTRO_RESERVED = {"SPECROOT", "WORKSPACE", "LAUNCHER"}
@@ -76,16 +76,22 @@ def var_ref(string):
     return f"$({string})"
 
 
-def expand_line(line, var_dict):
+def expand_line(line, var_dict, env_vars=False):
     """
     Expand one line of text by substituting environment
     and user variables, as well as variables in 'var_dict'.
     """
-    if not contains_token(line):
+    if (
+        (not contains_token(line))
+        and (not contains_shell_ref(line))
+        and ("~" not in line)
+    ):
         return line
     for key, val in var_dict.items():
         if key in line:
             line = line.replace(var_ref(key), str(val))
+    if env_vars:
+        line = expandvars(expanduser(line))
     return line
 
 
@@ -107,7 +113,7 @@ def expand_env_vars(spec):
         if section is None:
             return section
         if isinstance(section, str):
-            return expandvars(expanduser(str(section)))
+            return expandvars(expanduser(section))
         if isinstance(section, dict):
             for k, v in section.items():
                 if k == "cmd":
@@ -228,9 +234,7 @@ def expand_spec_no_study(filepath, override_vars=None):
         uvars.append(spec.environment["labels"])
     evaluated_uvars = determine_user_variables(*uvars)
 
-    return expand_by_line(
-        full_spec, evaluated_uvars
-    )
+    return expand_by_line(full_spec, evaluated_uvars)
 
 
 def get_spec_with_expansion(filepath, override_vars=None):
