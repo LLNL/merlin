@@ -163,9 +163,8 @@ def process_run(args):
     samples_file = None
     if args.samples_file:
         samples_file = verify_filepath(args.samples_file)
-    params = None
 
-    # Check for pargs without the matching pgen
+    # pgen checks
     if args.pargs and not args.pgen_file:
         raise ValueError(
             "Cannot use the 'pargs' parameter without specifying a 'pgen'!"

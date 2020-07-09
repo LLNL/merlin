@@ -378,7 +378,7 @@ class MerlinStudy:
             env = result.get_study_environment()
             result.globals = self.load_pgen(self.pgen_file, self.pargs, env)
 
-        # write expanded spec for provanance
+        # write expanded spec for provenance
         with open(expanded_filepath, "w") as f:
             f.write(result.dump())
 
