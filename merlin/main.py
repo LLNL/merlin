@@ -415,7 +415,6 @@ def setup_argparse():
         action="store",
         dest="pgen_file",
         type=str,
-        #nargs=1,
         default=None,
         help="Provide a pgen file to override global.parameters.",
     )
