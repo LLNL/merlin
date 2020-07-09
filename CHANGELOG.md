@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - The ability to override any value of the celery configuration thru `app.yaml` in `celery.override`.
-- 2 unit tests for the format of broker url and result backend.
 
 ## [1.6.2]
 
