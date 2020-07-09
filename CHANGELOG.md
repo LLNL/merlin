@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Support for `pgen` with `merlin run --pgen`.
+- Support for `pgen` with `merlin run --pgen` and optional `--parg`.
 
 ## [1.6.2]
 
