@@ -38,6 +38,8 @@ from copy import deepcopy
 
 from cached_property import cached_property
 from maestrowf.datastructures.core import Study
+from maestrowf.maestro import load_parameter_generator
+from maestrowf.utils import create_dictionary
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
@@ -74,7 +76,8 @@ class MerlinStudy:
         samples_file=None,
         dry_run=False,
         no_errors=False,
-        pgen=None,
+        pgen_file=None,
+        pargs=None,
     ):
         self.original_spec = MerlinSpec.load_specification(filepath)
         self.override_vars = override_vars
@@ -106,7 +109,8 @@ class MerlinStudy:
             "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
         }
 
-        self.load_pgen(pgen)
+        self.pgen_file = pgen_file
+        self.pargs = pargs
 
         self.dag = None
         self.load_dag()
@@ -369,6 +373,11 @@ class MerlinStudy:
             )
             result = MerlinSpec.load_spec_from_string(new_spec_text)
 
+        # pgen
+        if self.pgen_file:
+            env = result.get_study_environment()
+            result.globals = self.load_pgen(self.pgen_file, self.pargs, env)
+
         # write expanded spec for provanance
         with open(expanded_filepath, "w") as f:
             f.write(result.dump())
@@ -442,14 +451,18 @@ class MerlinStudy:
             LOG.error(f"Could not generate samples:\n{e}")
             return
 
-    def load_pgen(self, pgen):
-        if pgen:
+    def load_pgen(self, filepath, pargs, env):
+        if filepath:
+            if pargs is None:
+                pargs = []
+            kwargs = create_dictionary(pargs)
+            params = load_parameter_generator(filepath, env, kwargs)
             result = {}
-            for k,v in pgen.labels.items():
+            for k, v in params.labels.items():
                 result[k] = {"values": None, "label": v}
-            for k,v in pgen.parameters.items():
+            for k, v in params.parameters.items():
                 result[k]["values"] = v
-            self.expanded_spec.globals = result
+            return result
 
     def load_dag(self):
         """

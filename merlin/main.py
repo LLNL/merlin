@@ -52,7 +52,6 @@ from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
-from maestrowf.maestro import load_parameter_generator
 
 
 LOG = logging.getLogger("merlin")
@@ -165,8 +164,14 @@ def process_run(args):
     if args.samples_file:
         samples_file = verify_filepath(args.samples_file)
     params = None
+
+    # Check for pargs without the matching pgen
+    if args.pargs and not args.pgen_file:
+        raise ValueError(
+            "Cannot use the 'pargs' parameter without specifying a 'pgen'!"
+        )
     if args.pgen_file:
-        params = load_parameter_generator(args.pgen_file, None, {})
+        verify_filepath(args.pgen_file)
 
     study = MerlinStudy(
         filepath,
@@ -174,7 +179,8 @@ def process_run(args):
         samples_file=samples_file,
         dry_run=args.dry,
         no_errors=args.no_errors,
-        pgen=params,
+        pgen_file=args.pgen_file,
+        pargs=args.pargs,
     )
     router.run_task_server(study, args.run_mode)
 
@@ -417,6 +423,15 @@ def setup_argparse():
         type=str,
         default=None,
         help="Provide a pgen file to override global.parameters.",
+    )
+    run.add_argument(
+        "--pargs",
+        type=str,
+        action="append",
+        default=[],
+        help="A string that represents a single argument to pass "
+        "a custom parameter generation function. Reuse '--parg' "
+        "to pass multiple arguments. [Use with '--pgen']",
     )
 
     # merlin restart
