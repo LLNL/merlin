@@ -74,6 +74,7 @@ class MerlinStudy:
         samples_file=None,
         dry_run=False,
         no_errors=False,
+        pgen=None,
     ):
         self.original_spec = MerlinSpec.load_specification(filepath)
         self.override_vars = override_vars
@@ -104,6 +105,9 @@ class MerlinStudy:
             "MERLIN_HARD_FAIL": str(int(ReturnCode.HARD_FAIL)),
             "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
         }
+
+        self.load_pgen(pgen)
+
         self.dag = None
         self.load_dag()
 
@@ -437,6 +441,15 @@ class MerlinStudy:
         except (IndexError, TypeError) as e:
             LOG.error(f"Could not generate samples:\n{e}")
             return
+
+    def load_pgen(self, pgen):
+        if pgen:
+            result = {}
+            for k,v in pgen.labels.items():
+                result[k] = {"values": None, "label": v}
+            for k,v in pgen.parameters.items():
+                result[k]["values"] = v
+            self.expanded_spec.globals = result
 
     def load_dag(self):
         """
