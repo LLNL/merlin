@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Documentation on `level_max_dirs`.
+
 ### Fixed
 - Removed expansion of env variables in `cmd` sections of provenance specs. This allows
   the shell command itself to expand environment variables, and gives users greater
