@@ -386,6 +386,15 @@ filesystem constraints when working with massive amounts of data.
 
 Defaults to 25.
 
+What is pgen?
+~~~~~~~~~~~~~
+``pgen`` stands for "parameter generator". It's a way to override the parameters in the
+``global.parameters`` spec section, instead generating them programatically with a python script.
+Merlin offers the same pgen functionality as Maestro.
+
+See `this guide <https://maestrowf.readthedocs.io/en/latest/parameters.html#parameter-generator-pgen>`_ for details on using ``pgen``.
+It's a Maestro doc, but the exact same flags can be used in conjunction with ``merlin run``.
+
 Where can I learn more about merlin?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Check out `our paper <https://arxiv.org/abs/1912.02892>`_ on arXiv.
