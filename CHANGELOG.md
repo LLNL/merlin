@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - The ability to override any value of the celery configuration thru `app.yaml` in `celery.override`.
+- Documentation on `level_max_dirs`.
 
 ## [1.6.2]
 
