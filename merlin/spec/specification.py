@@ -190,7 +190,13 @@ class MerlinSpec(YAMLSpecification):
                 f"Unrecognized key '{extra}' found in spec section '{section_name}'."
             )
 
-    def dump(self):
+    def pretty_dump(self):
+        """
+        Dump this MerlinSpec to a pretty yaml string.
+        """
+
+
+    def old_dump(self):
         """
         Dump this MerlinSpec to a yaml string.
         """
