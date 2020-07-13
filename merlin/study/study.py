@@ -118,6 +118,9 @@ class MerlinStudy:
         self.load_dag()
 
     def write_original_spec(self, filename):
+        """
+        Copy the original spec into merlin_info/ as '<name>.orig.yaml'.
+        """
         spec_name = os.path.join(self.info, filename + ".orig.yaml")
         shutil.copyfile(self.original_spec.path, spec_name)
 
@@ -407,7 +410,7 @@ class MerlinStudy:
     @cached_property
     def flux_command(self):
         """
-        Returns a the flux version
+        Returns the flux version.
         """
         flux_bin = "flux"
         if "flux_path" in self.expanded_spec.batch.keys():

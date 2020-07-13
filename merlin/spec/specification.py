@@ -78,6 +78,9 @@ class MerlinSpec(YAMLSpecification):
 
     @property
     def sections(self):
+        """
+        Returns a nested dictionary of all sections of the specification.
+        """
         return {
             "description": self.description,
             "batch": self.batch,

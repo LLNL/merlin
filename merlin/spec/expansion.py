@@ -78,8 +78,8 @@ def var_ref(string):
 
 def expand_line(line, var_dict, env_vars=False):
     """
-    Expand one line of text by substituting environment
-    and user variables, as well as variables in 'var_dict'.
+    Expand one line of text by substituting user variables, 
+    optionally environment variables, as well as variables in 'var_dict'.
     """
     if (
         (not contains_token(line))
@@ -109,6 +109,11 @@ def expand_by_line(text, var_dict):
 
 
 def expand_env_vars(spec):
+    """
+    Expand environment variables for all sections of a spec, except
+    for values with the key 'cmd' or 'restart' (these are executable
+    shell scripts, so environment variable expansion would be redundant).
+    """
     def recurse(section):
         if section is None:
             return section
