@@ -43,14 +43,6 @@ from maestrowf.datastructures import YAMLSpecification
 from merlin.spec import all_keys, defaults
 
 
-def represent_none(self, _):
-    """Allows yaml to dump None as '' instead of 'null'"""
-    return self.represent_scalar("tag:yaml.org,2002:null", "")
-
-
-yaml.add_representer(type(None), represent_none)
-
-
 LOG = logging.getLogger(__name__)
 
 
