@@ -77,6 +77,20 @@ class MerlinSpec(YAMLSpecification):
         super(MerlinSpec, self).__init__()
 
     @property
+    def yaml_sections(self):
+        """
+        Returns a nested dictionary of all sections of the specification.
+        """
+        return {
+            "description": self.description,
+            "batch": self.batch,
+            "env": self.environment,
+            "study": self.study,
+            "global.parameters": self.globals,
+            "merlin": self.merlin,
+        }
+
+    @property
     def sections(self):
         """
         Returns a nested dictionary of all sections of the specification.
@@ -213,15 +227,12 @@ class MerlinSpec(YAMLSpecification):
         from copy import deepcopy
 
         def dict_to_yaml(obj, string, key_stack, newline=True):
-            print(key_stack)
             if obj is None:
                 return ""
             lvl = len(key_stack) - 1
             if isinstance(obj, str):
                 split = obj.splitlines()
                 if len(split) > 1:
-                    # for i in range(len(split)):
-                    #    split[i] = tab*(lvl*1) + split[i]
                     obj = "|\n" + tab * (lvl + 1) + ("\n" + tab * (lvl + 1)).join(split)
                 return obj
             if (not isinstance(obj, list)) and (not isinstance(obj, dict)):
@@ -266,31 +277,9 @@ class MerlinSpec(YAMLSpecification):
                     i += 1
             return string
 
-        result = dict_to_yaml(self.sections, "", [])
-        print(result)
-        return result
-
-    def old_dump(self):
-        """
-        Dump this MerlinSpec to a yaml string.
-        """
-        description = {"description": self.description}
-        batch = {"batch": self.batch}
-        env = {"env": self.environment}
-        study = {"study": self.study}
-        _global = {"global.parameters": self.globals}
-        merlin = {"merlin": self.merlin}
-
-        result = ""
-        result += (
-            yaml.dump(description, default_flow_style=False, sort_keys=False) + "\n"
-        )
-        result += yaml.dump(batch, default_flow_style=False, sort_keys=False) + "\n"
-        result += yaml.dump(env, default_flow_style=False, sort_keys=False) + "\n"
-        result += yaml.dump(study, default_flow_style=False, sort_keys=False) + "\n"
-        result += yaml.dump(_global, default_flow_style=False, sort_keys=False) + "\n"
-        result += yaml.dump(merlin, default_flow_style=False, sort_keys=False)
-
+        result = dict_to_yaml(self.yaml_sections, "", [])
+        while "\n\n\n" in result:
+            result = result.replace("\n\n\n", "\n\n")
         return result
 
     def get_task_queues(self):
