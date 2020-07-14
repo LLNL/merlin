@@ -209,28 +209,22 @@ class MerlinSpec(YAMLSpecification):
         Dump this MerlinSpec to a pretty yaml string.
         """
         tab = "    "
+        list_offset = "  "
         from copy import deepcopy
 
-        def dict_to_yaml(obj, string, key_stack, indent_first=True, tab_add=0):
+        def dict_to_yaml(obj, string, key_stack, newline=True):
             print(key_stack)
-            lvl = len(key_stack) - 1
             if obj is None:
                 return ""
+            lvl = len(key_stack) - 1
             if isinstance(obj, str):
                 split = obj.splitlines()
                 if len(split) > 1:
                     # for i in range(len(split)):
                     #    split[i] = tab*(lvl*1) + split[i]
-                    obj = (
-                        "|\n"
-                        + tab * (lvl + 1)
-                        + tab_add * " "
-                        + ("\n" + tab * (lvl + 1) + tab_add * " ").join(split)
-                    )
+                    obj = "|\n" + tab * (lvl + 1) + ("\n" + tab * (lvl + 1)).join(split)
                 return obj
-            if isinstance(obj, int) or isinstance(obj, float):
-                return obj
-            if isinstance(obj, bool):
+            if (not isinstance(obj, list)) and (not isinstance(obj, dict)):
                 return obj
             if isinstance(obj, list):
                 n = len(obj)
@@ -243,20 +237,11 @@ class MerlinSpec(YAMLSpecification):
                     key_stack.append("elem")
                     if lvl == 0 and key_stack[0] == "study":
                         string += (
-                            tab
-                            + "- "
-                            + str(
-                                dict_to_yaml(
-                                    elem, "", key_stack, indent_first=False, tab_add=2
-                                )
-                            )
-                            + "\n"
+                            tab + "- " + str(dict_to_yaml(elem, "", key_stack)) + "\n"
                         )
                     else:
                         string += str(
-                            dict_to_yaml(
-                                elem, "", key_stack, indent_first=True, tab_add=tab_add
-                            )
+                            dict_to_yaml(elem, "", key_stack, newline=(i != 0))
                         )
                         if n > 1 and i != len(obj) - 1:
                             string += ", "
@@ -270,20 +255,13 @@ class MerlinSpec(YAMLSpecification):
                 for k, v in obj.items():
                     key_stack = deepcopy(key_stack)
                     key_stack.append(k)
-                    if tab_add > 0 and indent_first:
-                        string += tab_add * " "
-                    if indent_first or i > 0:
-                        string += (tab * (lvl + 1)) + (tab_add * " ")
-                    string += (
-                        str(k)
-                        + ": "
-                        + str(
-                            dict_to_yaml(
-                                v, "", key_stack, indent_first=True, tab_add=tab_add
-                            )
-                        )
-                        + "\n"
-                    )
+                    if len(key_stack) > 1 and key_stack[-2] == "elem" and i == 0:
+                        string += ""
+                    elif "elem" in key_stack:
+                        string += list_offset + (tab * lvl)
+                    else:
+                        string += tab * (lvl + 1)
+                    string += str(k) + ": " + str(dict_to_yaml(v, "", key_stack)) + "\n"
                     key_stack.pop()
                     i += 1
             return string
