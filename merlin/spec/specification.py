@@ -76,6 +76,20 @@ class MerlinSpec(YAMLSpecification):
     def __init__(self):
         super(MerlinSpec, self).__init__()
 
+    @property
+    def sections(self):
+        """
+        Returns a nested dictionary of all sections of the specification.
+        """
+        return {
+            "description": self.description,
+            "batch": self.batch,
+            "environment": self.environment,
+            "study": self.study,
+            "globals": self.globals,
+            "merlin": self.merlin,
+        }
+
     @classmethod
     def load_specification(cls, filepath, suppress_warning=True):
         spec = super(MerlinSpec, cls).load_specification(filepath)
@@ -190,11 +204,58 @@ class MerlinSpec(YAMLSpecification):
                 f"Unrecognized key '{extra}' found in spec section '{section_name}'."
             )
 
-    def pretty_dump(self):
+    def dump(self):
         """
         Dump this MerlinSpec to a pretty yaml string.
         """
+        tab = "    "
+        from copy import deepcopy
+        def dict_to_yaml(obj, string, key_stack, indent=True):
+            print(key_stack)
+            if obj is None:
+                return ""
+            if isinstance(obj, str):
+                return obj
+            if isinstance(obj, int) or isinstance(obj, float):
+                return obj
+            if isinstance(obj, bool):
+                return obj
+            lvl = len(key_stack) - 1
+            if isinstance(obj, list):
+                n = len(obj)
+                if lvl != 0 and key_stack[0] != "study":
+                    string += "["
+                else:
+                    string += "\n"
+                for i, elem in enumerate(obj):
+                    key_stack = deepcopy(key_stack)
+                    key_stack.append("elem")
+                    if lvl == 0 and key_stack[0] == "study":
+                        string += tab + "- " + str(dict_to_yaml(elem, "", key_stack, indent=False)) + "\n"
+                    else:
+                        string += str(dict_to_yaml(elem, "", key_stack, indent=True))
+                        if n > 1 and i != len(obj) - 1:
+                            string += ", "
+                    key_stack.pop()
+                if lvl != 0 and key_stack[0] != "study":
+                    string += "]\n"
+            if isinstance(obj, dict):
+                if len(key_stack) > 0 and key_stack[-1] != "elem":
+                    string += "\n"
+                i = 0
+                for k, v in obj.items():
+                    key_stack = deepcopy(key_stack)
+                    key_stack.append(k)
+                    if indent or i > 0:
+                        string += tab*lvl + "  "
+                    string += str(k) + ": " + str(dict_to_yaml(v, "", key_stack, indent=True)) + "\n"
+                    key_stack.pop()
+                    i += 1
+            return string
 
+        result = dict_to_yaml(self.sections, "", [])
+        print(result)
+        return result
 
     def old_dump(self):
         """
