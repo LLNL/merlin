@@ -210,6 +210,7 @@ class MerlinSpec(YAMLSpecification):
         """
         tab = "    "
         from copy import deepcopy
+
         def dict_to_yaml(obj, string, key_stack, indent_first=True, tab_add=0):
             print(key_stack)
             lvl = len(key_stack) - 1
@@ -218,9 +219,14 @@ class MerlinSpec(YAMLSpecification):
             if isinstance(obj, str):
                 split = obj.splitlines()
                 if len(split) > 1:
-                    #for i in range(len(split)):
+                    # for i in range(len(split)):
                     #    split[i] = tab*(lvl*1) + split[i]
-                    obj = "|\n"+ tab*(lvl*1) + tab_add*" " + ("\n" + tab*(lvl*1) + tab_add*" ").join(split)
+                    obj = (
+                        "|\n"
+                        + tab * (lvl * 1)
+                        + tab_add * " "
+                        + ("\n" + tab * (lvl * 1) + tab_add * " ").join(split)
+                    )
                 return obj
             if isinstance(obj, int) or isinstance(obj, float):
                 return obj
@@ -236,9 +242,22 @@ class MerlinSpec(YAMLSpecification):
                     key_stack = deepcopy(key_stack)
                     key_stack.append("elem")
                     if lvl == 0 and key_stack[0] == "study":
-                        string += tab + "- " + str(dict_to_yaml(elem, "", key_stack, indent_first=False, tab_add=2)) + "\n"
+                        string += (
+                            tab
+                            + "- "
+                            + str(
+                                dict_to_yaml(
+                                    elem, "", key_stack, indent_first=False, tab_add=2
+                                )
+                            )
+                            + "\n"
+                        )
                     else:
-                        string += str(dict_to_yaml(elem, "", key_stack, indent_first=True, tab_add=tab_add))
+                        string += str(
+                            dict_to_yaml(
+                                elem, "", key_stack, indent_first=True, tab_add=tab_add
+                            )
+                        )
                         if n > 1 and i != len(obj) - 1:
                             string += ", "
                     key_stack.pop()
@@ -254,8 +273,17 @@ class MerlinSpec(YAMLSpecification):
                     if tab_add > 0 and indent_first:
                         string += "  "
                     if indent_first or i > 0:
-                        string += tab*lvl + tab_add*" "
-                    string += str(k) + ": " + str(dict_to_yaml(v, "", key_stack, indent_first=True, tab_add=tab_add)) + "\n"
+                        string += tab * lvl + tab_add * " "
+                    string += (
+                        str(k)
+                        + ": "
+                        + str(
+                            dict_to_yaml(
+                                v, "", key_stack, indent_first=True, tab_add=tab_add
+                            )
+                        )
+                        + "\n"
+                    )
                     key_stack.pop()
                     i += 1
             return string
