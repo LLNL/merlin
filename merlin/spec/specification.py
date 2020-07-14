@@ -223,9 +223,9 @@ class MerlinSpec(YAMLSpecification):
                     #    split[i] = tab*(lvl*1) + split[i]
                     obj = (
                         "|\n"
-                        + tab * (lvl * 1)
+                        + tab * (lvl + 1)
                         + tab_add * " "
-                        + ("\n" + tab * (lvl * 1) + tab_add * " ").join(split)
+                        + ("\n" + tab * (lvl + 1) + tab_add * " ").join(split)
                     )
                 return obj
             if isinstance(obj, int) or isinstance(obj, float):
@@ -262,7 +262,7 @@ class MerlinSpec(YAMLSpecification):
                             string += ", "
                     key_stack.pop()
                 if lvl != 0 or key_stack[0] != "study":
-                    string += "]\n"
+                    string += "]"
             if isinstance(obj, dict):
                 if len(key_stack) > 0 and key_stack[-1] != "elem":
                     string += "\n"
@@ -271,9 +271,9 @@ class MerlinSpec(YAMLSpecification):
                     key_stack = deepcopy(key_stack)
                     key_stack.append(k)
                     if tab_add > 0 and indent_first:
-                        string += "  "
+                        string += tab_add * " "
                     if indent_first or i > 0:
-                        string += tab * lvl + tab_add * " "
+                        string += (tab * (lvl + 1)) + (tab_add * " ")
                     string += (
                         str(k)
                         + ": "
