@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Documentation on `level_max_dirs`.
+- Easier-to-read provenance specs.
 
 ## [1.6.2]
 
