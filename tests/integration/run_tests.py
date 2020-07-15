@@ -398,6 +398,7 @@ def define_tests():
     purge = "merlin purge"
     examples = "merlin/examples/workflows"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
+    demo_pgen = f"{examples}/feature_demo/scripts/pgen.py"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
     slurm = f"{examples}/slurm/slurm_test.yaml"
     slurm_restart = f"{examples}/slurm/slurm_par_restart.yaml"
@@ -585,6 +586,26 @@ def define_tests():
         "local tab feature_demo": (
             f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samples foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
             [RegexCond("2 samples loaded."), ReturnCodeCond()],
+            "local",
+        ),
+        "local pgen feature_demo": (
+            f"{run} {demo} --pgen {demo_pgen} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local",
+            [
+                ProvenanceCond(
+                    regex="- 0.3333333",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
+                ),
+                ProvenanceCond(
+                    regex="- 0.5",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
+                    negate=True,
+                ),
+                ReturnCodeCond(),
+            ],
             "local",
         ),
         "distributed feature_demo": (
