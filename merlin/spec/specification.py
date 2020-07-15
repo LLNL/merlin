@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.6.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -40,10 +40,7 @@ from io import StringIO
 import yaml
 from maestrowf.datastructures import YAMLSpecification
 
-from merlin.spec import (
-    all_keys,
-    defaults,
-)
+from merlin.spec import all_keys, defaults
 
 
 def represent_none(self, _):
@@ -96,7 +93,6 @@ class MerlinSpec(YAMLSpecification):
         spec.merlin = MerlinSpec.load_merlin_block(StringIO(string))
         spec.specroot = None
         spec.process_spec_defaults()
-        # spec.warn_unrecognized_keys()
         return spec
 
     @staticmethod

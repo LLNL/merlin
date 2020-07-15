@@ -60,6 +60,7 @@ see :doc:`./merlin_variables`.
                           If this is unset the number of nodes will be
                           queried from the environment, failing that, the
                           number of nodes will be set to 1.
+     walltime: The total walltime of the batch allocation (hh:mm:ss)
 
 
   #####################################
@@ -289,3 +290,4 @@ see :doc:`./merlin_variables`.
       generate:
         cmd: |
         python $(SPECROOT)/make_samples.py -dims 2 -n 10 -outfile=$(INPUT_PATH)/samples.npy "[(1.3, 1.3, 'linear'), (3.3, 3.3, 'linear')]"
+      level_max_dirs: 25
