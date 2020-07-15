@@ -71,7 +71,8 @@ class MerlinSpec(YAMLSpecification):
     @property
     def yaml_sections(self):
         """
-        Returns a nested dictionary of all sections of the specification.
+        Returns a nested dictionary of all sections of the specification
+        as used in a yaml spec.
         """
         return {
             "description": self.description,
@@ -85,7 +86,8 @@ class MerlinSpec(YAMLSpecification):
     @property
     def sections(self):
         """
-        Returns a nested dictionary of all sections of the specification.
+        Returns a nested dictionary of all sections of the specification
+        as referenced by Maestro's YAMLSpecification class.
         """
         return {
             "description": self.description,
@@ -227,6 +229,8 @@ class MerlinSpec(YAMLSpecification):
                 if len(split) > 1:
                     obj = "|\n" + tab * (lvl + 1) + ("\n" + tab * (lvl + 1)).join(split)
                 return obj
+            if isinstance(obj, bool):
+                return str(obj).lower()
             if (not isinstance(obj, list)) and (not isinstance(obj, dict)):
                 return obj
             if isinstance(obj, list):
@@ -272,6 +276,10 @@ class MerlinSpec(YAMLSpecification):
         result = dict_to_yaml(self.yaml_sections, "", [])
         while "\n\n\n" in result:
             result = result.replace("\n\n\n", "\n\n")
+        try:
+            yaml.safe_load(result)
+        except BaseException as e:
+            raise ValueError(f"Error parsing provenance spec! {e}")
         return result
 
     def get_task_queues(self):
