@@ -156,8 +156,10 @@ def run_tests(args, tests):
             continue
         try:
             passed, info = run_single_test(test_name, test, test_label)
-        except BaseException:
+        except BaseException as e:
+            print(e)
             passed = False
+            info = None
 
         result = process_test_result(passed, info, args.verbose, args.exit)
         if result is None:
@@ -592,13 +594,13 @@ def define_tests():
             f"{run} {demo} --pgen {demo_pgen} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
                 ProvenanceCond(
-                    regex="- 0.3333333",
+                    regex="\[0.3333333",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
                 ProvenanceCond(
-                    regex="- 0.5",
+                    regex="\[0.5",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
