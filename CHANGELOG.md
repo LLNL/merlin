@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Support and faq entry for `pgen` with `merlin run --pgen` and optional `--parg`.
 - Documentation on `level_max_dirs`.
 - Documentation on the new 3 types of provenance spec.
 
