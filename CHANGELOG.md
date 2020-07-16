@@ -10,11 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation on `level_max_dirs`.
 
 ### Fixed
-- Removed expansion of env variables in `cmd` sections of provenance specs. This allows
-  the shell command itself to expand environment variables, and gives users greater
-  flexibility.
+- Removed expansion of env variables in shell sections (`cmd` and `restart`) of provenance
+  specs. This allows the shell command itself to expand environment variables, and gives
+  users greater flexibility.
 - Allowed environment variables to be properly expanded in study `description.name`.
-- Tilde (~) now properly expands as part of a path in `env` section.
+- Tilde (~) now properly expands as part of a path in non-shell sections.
 
 ## [1.6.2]
 
