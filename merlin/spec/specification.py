@@ -43,14 +43,6 @@ from maestrowf.datastructures import YAMLSpecification
 from merlin.spec import all_keys, defaults
 
 
-def represent_none(self, _):
-    """Allows yaml to dump None as '' instead of 'null'"""
-    return self.represent_scalar("tag:yaml.org,2002:null", "")
-
-
-yaml.add_representer(type(None), represent_none)
-
-
 LOG = logging.getLogger(__name__)
 
 
@@ -75,6 +67,21 @@ class MerlinSpec(YAMLSpecification):
 
     def __init__(self):
         super(MerlinSpec, self).__init__()
+
+    @property
+    def yaml_sections(self):
+        """
+        Returns a nested dictionary of all sections of the specification
+        as used in a yaml spec.
+        """
+        return {
+            "description": self.description,
+            "batch": self.batch,
+            "env": self.environment,
+            "study": self.study,
+            "global.parameters": self.globals,
+            "merlin": self.merlin,
+        }
 
     @property
     def sections(self):
@@ -207,25 +214,75 @@ class MerlinSpec(YAMLSpecification):
 
     def dump(self):
         """
-        Dump this MerlinSpec to a yaml string.
+        Dump this MerlinSpec to a pretty yaml string.
         """
-        description = {"description": self.description}
-        batch = {"batch": self.batch}
-        env = {"env": self.environment}
-        study = {"study": self.study}
-        _global = {"global.parameters": self.globals}
-        merlin = {"merlin": self.merlin}
+        tab = "   "
+        list_offset = "  "
+        from copy import deepcopy
 
-        result = ""
-        result += (
-            yaml.dump(description, default_flow_style=False, sort_keys=False) + "\n"
-        )
-        result += yaml.dump(batch, default_flow_style=False, sort_keys=False) + "\n"
-        result += yaml.dump(env, default_flow_style=False, sort_keys=False) + "\n"
-        result += yaml.dump(study, default_flow_style=False, sort_keys=False) + "\n"
-        result += yaml.dump(_global, default_flow_style=False, sort_keys=False) + "\n"
-        result += yaml.dump(merlin, default_flow_style=False, sort_keys=False)
+        def dict_to_yaml(obj, string, key_stack, newline=True):
+            if obj is None:
+                return ""
+            lvl = len(key_stack) - 1
+            if isinstance(obj, str):
+                split = obj.splitlines()
+                if len(split) > 1:
+                    obj = "|\n" + tab * (lvl + 1) + ("\n" + tab * (lvl + 1)).join(split)
+                return obj
+            if isinstance(obj, bool):
+                return str(obj).lower()
+            if (not isinstance(obj, list)) and (not isinstance(obj, dict)):
+                return obj
+            if isinstance(obj, list):
+                n = len(obj)
+                use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"]
+                if not use_hyphens:
+                    string += "["
+                else:
+                    string += "\n"
+                for i, elem in enumerate(obj):
+                    key_stack = deepcopy(key_stack)
+                    key_stack.append("elem")
+                    if use_hyphens:
+                        string += (
+                            (lvl + 1) * tab + "- " + str(dict_to_yaml(elem, "", key_stack)) + "\n"
+                        )
+                    else:
+                        string += str(
+                            dict_to_yaml(elem, "", key_stack, newline=(i != 0))
+                        )
+                        if n > 1 and i != len(obj) - 1:
+                            string += ", "
+                    key_stack.pop()
+                if not use_hyphens:
+                    string += "]"
+            if isinstance(obj, dict):
+                if len(key_stack) > 0 and key_stack[-1] != "elem":
+                    string += "\n"
+                i = 0
+                for k, v in obj.items():
+                    key_stack = deepcopy(key_stack)
+                    key_stack.append(k)
+                    if len(key_stack) > 1 and key_stack[-2] == "elem" and i == 0:
+                        # string += (tab * (lvl - 1))
+                        string += ""
+                    elif "elem" in key_stack:
+                        string += list_offset + (tab * lvl)
+                    else:
+                        string += tab * (lvl + 1)
+                    string += str(k) + ": " + str(dict_to_yaml(v, "", key_stack)) + "\n"
+                    key_stack.pop()
+                    i += 1
+            return string
 
+        result = dict_to_yaml(self.yaml_sections, "", [])
+        while "\n\n\n" in result:
+            result = result.replace("\n\n\n", "\n\n")
+        print(result)
+        try:
+            yaml.safe_load(result)
+        except BaseException as e:
+            raise ValueError(f"Error parsing provenance spec:\n{e}")
         return result
 
     def get_task_queues(self):

@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Support and faq entry for `pgen` with `merlin run --pgen` and optional `--parg`.
 - Documentation on `level_max_dirs`.
+- Easier-to-read provenance specs.
+- Documentation on the new 3 types of provenance spec.
+
+### Fixed
+- Fixed Docker bug pertaining to Ubuntu.
 
 ### Fixed
 - Removed expansion of env variables in shell sections (`cmd` and `restart`) of provenance
