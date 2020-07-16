@@ -10,6 +10,7 @@ env:
         LABEL: label
     sources: 
         - source1
+        - source2
     dependencies:
         paths:
             - name: name1
@@ -73,10 +74,10 @@ study:
          pre: string
          depends: [step]
 
-global.params:
-    - PARAM:
+global.parameters:
+    PARAM:
         values: [val1, val2]
-        label: label
+        label: LABEL.%%
 
 merlin:
     resources:
