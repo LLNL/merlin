@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Flux test example data collection for new versions of flux.
-- Docker now uses a specific version of ubuntu.
+- Fixed Docker ubuntu version.
 
 ## [1.6.2]
 
