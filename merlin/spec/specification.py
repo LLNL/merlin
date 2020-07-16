@@ -216,7 +216,7 @@ class MerlinSpec(YAMLSpecification):
         """
         Dump this MerlinSpec to a pretty yaml string.
         """
-        tab = "    "
+        tab = "   "
         list_offset = "  "
         from copy import deepcopy
 
@@ -235,7 +235,7 @@ class MerlinSpec(YAMLSpecification):
                 return obj
             if isinstance(obj, list):
                 n = len(obj)
-                use_hyphens = (lvl == 0 and key_stack[0] == "study") or (key_stack[-1] in ["paths", "sources", "git"])
+                use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"]
                 if not use_hyphens:
                     string += "["
                 else:
