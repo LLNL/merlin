@@ -10,6 +10,7 @@ env:
         LABEL: label
     sources: 
         - source1
+        - source2
     dependencies:
         paths:
             - name: name1

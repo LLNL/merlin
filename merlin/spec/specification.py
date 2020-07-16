@@ -235,16 +235,17 @@ class MerlinSpec(YAMLSpecification):
                 return obj
             if isinstance(obj, list):
                 n = len(obj)
-                if lvl != 0 or key_stack[0] != "study":
+                use_hyphens = (lvl == 0 and key_stack[0] == "study") or (key_stack[-1] in ["paths", "sources", "git"])
+                if not use_hyphens:
                     string += "["
                 else:
                     string += "\n"
                 for i, elem in enumerate(obj):
                     key_stack = deepcopy(key_stack)
                     key_stack.append("elem")
-                    if lvl == 0 and key_stack[0] == "study":
+                    if use_hyphens:
                         string += (
-                            tab + "- " + str(dict_to_yaml(elem, "", key_stack)) + "\n"
+                            (lvl + 1) * tab + "- " + str(dict_to_yaml(elem, "", key_stack)) + "\n"
                         )
                     else:
                         string += str(
@@ -253,7 +254,7 @@ class MerlinSpec(YAMLSpecification):
                         if n > 1 and i != len(obj) - 1:
                             string += ", "
                     key_stack.pop()
-                if lvl != 0 or key_stack[0] != "study":
+                if not use_hyphens:
                     string += "]"
             if isinstance(obj, dict):
                 if len(key_stack) > 0 and key_stack[-1] != "elem":
@@ -263,6 +264,7 @@ class MerlinSpec(YAMLSpecification):
                     key_stack = deepcopy(key_stack)
                     key_stack.append(k)
                     if len(key_stack) > 1 and key_stack[-2] == "elem" and i == 0:
+                        # string += (tab * (lvl - 1))
                         string += ""
                     elif "elem" in key_stack:
                         string += list_offset + (tab * lvl)
@@ -276,10 +278,11 @@ class MerlinSpec(YAMLSpecification):
         result = dict_to_yaml(self.yaml_sections, "", [])
         while "\n\n\n" in result:
             result = result.replace("\n\n\n", "\n\n")
+        print(result)
         try:
             yaml.safe_load(result)
         except BaseException as e:
-            raise ValueError(f"Error parsing provenance spec! {e}")
+            raise ValueError(f"Error parsing provenance spec:\n{e}")
         return result
 
     def get_task_queues(self):
