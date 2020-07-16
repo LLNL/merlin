@@ -188,7 +188,7 @@ The whole file tree looks like this:
 
 A lot of stuff, right? Here's what it means:
 
-* The yaml file inside ``merlin_info/`` is called the provenance spec. It's a copy of the original spec that was run.
+* The 3 yaml files inside ``merlin_info/`` are called the provenance specs. They are copies of the original spec that was run, some showing under-the-hood variable expansions.
 
 * ``MERLIN_FINISHED`` files indicate that the step ran successfully.
 

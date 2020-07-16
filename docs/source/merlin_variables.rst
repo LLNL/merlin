@@ -21,8 +21,10 @@ The directory structure of merlin output looks like this:
     OUTPUT_PATH
         MERLIN_WORKSPACE
             MERLIN_INFO
-                <provenance_spec.yaml>
-            <other_step_name>.workspace
+                <name>.orig.yaml
+                <name>.partial.yaml
+                <name>.expanded.yaml
+            <step_name>.workspace
             WORKSPACE
 
 
@@ -52,7 +54,7 @@ Reserved variables
     - The workspace directory for a single step.
     - ``$(OUTPUT_PATH)/ensemble_name_$(MERLIN_TIMESTAMP)/step_name/``
   * - ``$(MERLIN_INFO)``
-    - Directory within ``MERLIN_WORKSPACE`` that holds a provenance spec.
+    - Directory within ``MERLIN_WORKSPACE`` that holds the provenance specs and sample generation results.
       Commonly used to hold ``samples.npy``.
     - ``$(MERLIN_WORKSPACE)/merlin_info/``
   * - ``$(MERLIN_SAMPLE_ID)``
