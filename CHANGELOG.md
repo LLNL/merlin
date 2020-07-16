@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation on `level_max_dirs`.
 - Documentation on the new 3 types of provenance spec.
 
+### Fixed
+- Fixed Docker bug pertaining to Ubuntu.
+
 ## [1.6.2]
 
 ### Added
