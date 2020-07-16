@@ -21,6 +21,7 @@ batch:
 env:
     variables:
         OUTPUT_PATH: ./studies
+        PATH_VAR: $PATH
 
     labels:
         SHARED: $(SPECROOT)/../shared
@@ -264,8 +265,11 @@ class TestMerlinStudy(unittest.TestCase):
         assert not TestMerlinStudy.file_contains_string(
             self.study.expanded_spec.path, "$(OUTPUT_PATH)"
         )
-        assert not TestMerlinStudy.file_contains_string(
+        assert TestMerlinStudy.file_contains_string(
             self.study.expanded_spec.path, "$PATH"
+        )
+        assert not TestMerlinStudy.file_contains_string(
+            self.study.expanded_spec.path, "PATH_VAR: $PATH"
         )
 
     def test_column_label_conflict(self):
