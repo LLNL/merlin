@@ -278,7 +278,6 @@ class MerlinSpec(YAMLSpecification):
         result = dict_to_yaml(self.yaml_sections, "", [])
         while "\n\n\n" in result:
             result = result.replace("\n\n\n", "\n\n")
-        print(result)
         try:
             yaml.safe_load(result)
         except BaseException as e:
