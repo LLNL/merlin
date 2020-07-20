@@ -542,13 +542,11 @@ def chordfinisher(*args, **kwargs):
 @shared_task(
     autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:queue_merlin_study"
 )
-def queue_merlin_study(study, adapter):
+def queue_merlin_study(samples, sample_labels, dag, level_max_dirs, adapter):
     """
     Launch a chain of tasks based off of a MerlinStudy.
     """
-    samples = study.samples
-    sample_labels = study.sample_labels
-    egraph = study.dag
+    egraph = dag
     LOG.info("Calculating task groupings from DAG.")
     groups_of_chains = egraph.group_tasks("_source")
 
@@ -565,7 +563,7 @@ def queue_merlin_study(study, adapter):
                         sample_labels,
                         merlin_step,
                         adapter,
-                        study.level_max_dirs,
+                        level_max_dirs,
                     ).set(queue=egraph.step(chain_group[0][0]).get_task_queue())
                     for gchain in chain_group
                 ]

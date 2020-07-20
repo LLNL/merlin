@@ -60,42 +60,50 @@ try:
             qwall = "{0}.walltime".format(fdir)
             wall_time = kvs.get(f, qwall)
 
-            print(f"Job {d[0]}: create: {create_time} start {start_time} run {start_time} completing {completing_time} complete {complete_time} wall {wall_time}")
+            print(
+                f"Job {d[0]}: create: {create_time} start {start_time} run {start_time} completing {completing_time} complete {complete_time} wall {wall_time}"
+            )
         except BaseException:
             pass
-except :
-    top_dir="job"
+except:
+    top_dir = "job"
 
     def get_data_dict(key):
-        kwargs = {"env": os.environ, "shell": True, "universal_newlines":True, "stdout":subprocess.PIPE,"stderr":subprocess.PIPE}
+        kwargs = {
+            "env": os.environ,
+            "shell": True,
+            "universal_newlines": True,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+        }
         flux_com = f"flux kvs get {key}"
         p = subprocess.Popen(flux_com, **kwargs)
         stdout, stderr = p.communicate()
-  
+
         data = {}
-        for l in stdout.split('/n'):
+        for l in stdout.split("/n"):
             for s in l.strip().split():
                 if "timestamp" in s:
-                    jstring = s.replace("'", "\"")
+                    jstring = s.replace("'", '"')
                     d = json.loads(jstring)
-                    data[d['name']] = d['timestamp']
-  
-        return data
+                    data[d["name"]] = d["timestamp"]
 
+        return data
 
     for d in kvs.walk(top_dir, flux_handle=f):
         if "exec" in d[0]:
             for e in d[2]:
-                key = ".".join([top_dir,d[0],e])
+                key = ".".join([top_dir, d[0], e])
 
-                # This is currently not working gives 
+                # This is currently not working gives
                 # json.decoder.JSONDecodeError
                 # data = kvs.get(f, key)
 
                 data = get_data_dict(key)
 
-                print(f"Job {d[0]}: init: {data['init']} start {data['shell.start']} complete {data['complete']} done {data['done']} ")
-
+                print(
+                    f"Job {d[0]}: init: {data['init']} start {data['shell.start']} complete {data['complete']} done {data['done']} "
+                )
 
 
 # vi: ts=4 sw=4 expandtab

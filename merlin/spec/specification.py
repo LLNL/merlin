@@ -245,7 +245,10 @@ class MerlinSpec(YAMLSpecification):
                     key_stack.append("elem")
                     if use_hyphens:
                         string += (
-                            (lvl + 1) * tab + "- " + str(dict_to_yaml(elem, "", key_stack)) + "\n"
+                            (lvl + 1) * tab
+                            + "- "
+                            + str(dict_to_yaml(elem, "", key_stack))
+                            + "\n"
                         )
                     else:
                         string += str(

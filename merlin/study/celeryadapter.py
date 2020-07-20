@@ -70,7 +70,13 @@ def run_celery(study, run_mode=None):
         app.connection().connect()
 
     # Send the tasks to the server
-    queue_merlin_study(study, adapter_config)
+    queue_merlin_study(
+        study.samples,
+        study.sample_labels,
+        study.dag,
+        study.level_max_dirs,
+        adapter_config,
+    )
 
 
 def get_running_queues():
