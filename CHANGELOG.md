@@ -4,6 +4,77 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Support and faq entry for `pgen` with `merlin run --pgen` and optional `--parg`.
+- Documentation on `level_max_dirs`.
+- Easier-to-read provenance specs.
+- Documentation on the new 3 types of provenance spec.
+
+### Fixed
+- Flux test example data collection for new versions of flux.
+- Fixed Docker ubuntu version.
+
+### Fixed
+- Removed expansion of env variables in shell sections (`cmd` and `restart`) of provenance
+  specs. This allows the shell command itself to expand environment variables, and gives
+  users greater flexibility.
+- Allowed environment variables to be properly expanded in study `description.name`.
+- Tilde (~) now properly expands as part of a path in non-shell sections.
+
+## [1.6.2]
+
+### Added
+- The sample generation command now logs `stdout`, `stderr`, and `cmd.sh` to `merlin_info/`.
+- 12 hidden test specs and associated cli tests, for cli tests with specs that we
+  do not want in `merlin examples`.
+- Inside `merlin_info/`, added provenance specs `<name>.orig.yaml`, `<name>.expanded.yaml`, and
+  `<name>.partial.yaml` (identical to the original spec, but with expanded user variables).
+
+### Fixed
+- Updated to new celery (4.4.5) syntax for signature return codes.
+- Corrected prior visibility timeout bugfix.
+- Fixed and reactivated 3 cli tests.
+- Added the `bank` and `walltime` keywords to the batch slurm launch, these
+  will not alter the lsf launch.
+
+### Changed
+- Slightly improved logic by using regex to match variable tokens.
+- Reduced instances of I/O, `MerlinStudy` logic is now in-memory to a greater extent.
+
+## [1.6.1]
+
+### Fixed
+- Error if app.yaml does not have visibility timeout seconds.
+
+## [1.6.0]
+
+### Added
+- The broker name can now be amqps (with ssl) or amqp (without ssl). 
+- The encryption key will now be created when running merlin config.
+- The merlin info connection check will now enforce a minute timeout 
+  check for the server connections.
+
+### Fixed
+- Added a check for initial running workers when using merlin monitor to
+  eliminate race condition.
+- A bug that did not change the filename of the output workspace nor of the provenance spec
+  when a user variable was included in the `description.name` field.
+- Temporarily locked Celery version at 4.4.2 to avoid fatal bug.
+  
+### Changed
+- The default rabbitmq vhost is now <user> instead of /<user>.
+- Changed default visibility timeout from 2 hours to 24 hours. Exposed this in the config
+  file.
+- The monitor function will now check the queues to determine when
+  to exit.
+
+## [1.5.3]
+
+### Fixed
+- Temporarily locked maestro version to avoid fatal bug introduced by maestro v1.1.7.
+
 ## [1.5.2]
 
 ### Added

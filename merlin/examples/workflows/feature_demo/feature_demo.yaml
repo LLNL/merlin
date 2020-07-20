@@ -1,5 +1,5 @@
 description:
-    name: feature_demo
+    name: $(NAME)
     description: Run 10 hello worlds.
 
 batch:
@@ -11,8 +11,9 @@ env:
         N_SAMPLES: 10
         WORKER_NAME: demo_worker
         VERIFY_QUEUE: default_verify_queue
+        NAME: feature_demo
 
-        SCRIPTS: $(SPECROOT)/scripts
+        SCRIPTS: $(MERLIN_INFO)/scripts
         HELLO: $(SCRIPTS)/hello_world.py
         FEATURES: $(SCRIPTS)/features.json
         TRANSLATE: $(SCRIPTS)/translator.py
@@ -109,21 +110,6 @@ study:
           shell: /usr/bin/env python2
           task_queue: pyth2_hello
 
-    - name: shutdown
-      description: |
-          shutdown all workers attached to this queue
-          this is actually -all- workers on this workflow, since there's only one
-          defined worker and it is attached to this queue
-      run:
-         cmd: |
-            # Stop only workers attached to $(VERIFY_QUEUE)
-            exit $(MERLIN_HARD_FAIL)
-
-            # To stop all workers -everywhere-
-            #exit $(MERLIN_STOP_WORKERS)
-         depends: [verify, python3_hello, python2_hello]
-         task_queue: $(VERIFY_QUEUE)
-
 global.parameters:
     X2:
         values : [0.5]
@@ -141,7 +127,10 @@ merlin:
                 args: -l INFO --concurrency 3 --prefetch-multiplier 1 -Ofair
     samples:
         generate:
-            cmd: python3 $(MAKE_SAMPLES) -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
+            cmd: |
+                cp -r $(SPECROOT)/scripts $(SCRIPTS)
+
+                python3 $(MAKE_SAMPLES) -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
         # can be a file glob of numpy sample files.
         file: $(MERLIN_INFO)/samples.npy
         column_labels: [X0, X1]

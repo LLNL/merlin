@@ -52,7 +52,7 @@ study:
     cmd: |
       #export PATH=/collab/usr/gapps/merlin/spack/idesign/${SYS_TYPE}/bin:$PATH
       $(SPECROOT)/scripts/flux_info.py >flux_timings.out
-    depends: [runs*]
+    depends: [runs_*]
     task_queue: flux_paper
 
 global.parameters:
