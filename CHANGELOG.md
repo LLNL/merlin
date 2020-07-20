@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation on the new 3 types of provenance spec.
 
 ### Fixed
-- Fixed Docker bug pertaining to Ubuntu.
+- Flux test example data collection for new versions of flux.
+- Fixed Docker ubuntu version.
 
 ### Fixed
 - Removed expansion of env variables in shell sections (`cmd` and `restart`) of provenance
