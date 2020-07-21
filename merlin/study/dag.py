@@ -32,9 +32,9 @@
 Holds DAG class. TODO make this an interface, separate from Maestro.
 """
 from collections import OrderedDict
+import json
 
 from merlin.study.step import Step
-
 
 class DAG:
     """
@@ -234,3 +234,45 @@ class DAG:
         groups_of_chains = self.group_by_depth(depths)
 
         return self.find_independent_chains(groups_of_chains)
+
+    def to_json(self):
+        # return json.dumps(self, cls=CustomEncoder)
+        return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=4)
+        # ERROR] 'mappingproxy' object has no attribute '__dict__'
+
+"""
+from maestrowf.datastructures.environment import Variable
+from maestrowf.datastructures.core import ExecutionGraph
+from maestrowf.datastructures.core import StudyStep
+from maestrowf.abstracts.enums import State
+from maestrowf.datastructures.core.executiongraph import _StepRecord
+
+
+    def to_json(self):
+
+    @staticmethod
+    def maestro_dag_to_json(dag):
+        return json.dumps({"adjacency_table": dag.adjacency_table, "values": dag.values})
+
+    def maestro_step_record_to_json(step_record):
+        return json.dumps(step_record.__dict__)
+
+class CustomEncoder(json.JSONEncoder):
+    def default(self, z):
+        print("***HERE")
+        print(z.__dict__)
+        if isinstance(z, DAG):
+            return json.dumps({"dag": z.dag, "backwards_adjacency": z.backwards_adjacency, "labels": z.labels}, cls=CustomEncoder)
+        elif isinstance(z, ExecutionGraph):
+            return json.dumps(z.__dict__, cls=CustomEncoder)
+        elif isinstance(z, _StepRecord):
+            return json.dumps(z.__dict__, cls=CustomEncoder)
+        elif isinstance(z, Variable):
+            return json.dumps(z.__dict__, cls=CustomEncoder)
+        elif isinstance(z, StudyStep):
+            return json.dumps(z.__dict__, cls=CustomEncoder)
+        elif isinstance(z, State):
+            return json.dumps(z.__dict__, cls=CustomEncoder)
+        else:
+            return super().default(z)
+"""
