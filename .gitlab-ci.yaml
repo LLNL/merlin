@@ -1,0 +1,15 @@
+
+job:
+    script:
+        # install dependencies
+        - pip install --upgrade pip
+        - pip install -r requirements.txt
+        - pip install -r requirements/dev.txt
+        - pip install -r merlin/examples/workflows/feature_demo/requirements.txt
+        - pip install -e .
+        - pip install --upgrade sphinx
+        - merlin config
+
+        # run tests
+        - python -m pytest tests/
+        - python tests/integration/run_tests.py --verbose
