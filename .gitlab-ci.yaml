@@ -1,7 +1,12 @@
+stages:
+  - build
+  - test
 
-job:
+image: python:3.8-slim-buster
+
+install:
+    stage: build
     script:
-        # install dependencies
         - pip install --upgrade pip
         - pip install -r requirements.txt
         - pip install -r requirements/dev.txt
@@ -10,6 +15,10 @@ job:
         - pip install --upgrade sphinx
         - merlin config
 
-        # run tests
+unit_tests:
+    stage: test
         - python -m pytest tests/
+
+cli_tests:
+    stage: test
         - python tests/integration/run_tests.py --verbose
