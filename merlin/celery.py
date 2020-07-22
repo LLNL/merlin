@@ -89,8 +89,20 @@ if (
 ):
     LOG.debug("Skipping celery config override; 'celery.override' field is empty.")
 else:
-    LOG.info("Overriding default celery config.")
-    app.conf.update(**nested_namespace_to_dicts(CONFIG.celery.override))
+    override_dict = nested_namespace_to_dicts(CONFIG.celery.override)
+    override_str = ""
+    i = 0
+    for k, v in override_dict.items():
+        if k not in str(app.conf.__dict__):
+            raise ValueError(f"'{k}' is not a celery configuration.")
+        override_str += f"\t{k}:\t{v}"
+        if i != len(override_dict) - 1:
+            override_str += "\n"
+        i += 1
+    LOG.info(
+        f"Overriding default celery config with 'celery.override' in 'app.yaml':\n{override_str}"
+    )
+    app.conf.update(**override_dict)
 
 # auto-discover tasks
 app.autodiscover_tasks(["merlin.common"])
