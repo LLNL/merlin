@@ -10,6 +10,7 @@ batch:
 
 env:
   variables:
+    OUTPUT_PATH: ./studies
     N_SAMPLES: 10
 
 study:
@@ -43,7 +44,7 @@ study:
   name: data
   run:
     cmd: |
-      flux kvs dir lwj.0.0.5 >& flux_kvs.out
+      $(SPECROOT)/scripts/flux_info.py > flux_timings.out
     depends: [runs_*]
     task_queue: flux_par
 

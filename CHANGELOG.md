@@ -10,10 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The ability to override any value of the celery configuration thru `app.yaml` in `celery.override`.
 - Support and faq entry for `pgen` with `merlin run --pgen` and optional `--parg`.
 - Documentation on `level_max_dirs`.
+- Easier-to-read provenance specs.
 - Documentation on the new 3 types of provenance spec.
 
 ### Fixed
-- Fixed Docker bug pertaining to Ubuntu.
+- Flux test example data collection for new versions of flux.
+- Fixed Docker ubuntu version.
+- Removed expansion of env variables in shell sections (`cmd` and `restart`) of provenance
+  specs. This allows the shell command itself to expand environment variables, and gives
+  users greater flexibility.
+- Allowed environment variables to be properly expanded in study `description.name`.
+- Tilde (~) now properly expands as part of a path in non-shell sections.
 
 ## [1.6.2]
 

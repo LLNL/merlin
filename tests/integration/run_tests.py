@@ -156,8 +156,10 @@ def run_tests(args, tests):
             continue
         try:
             passed, info = run_single_test(test_name, test, test_label)
-        except BaseException:
+        except BaseException as e:
+            print(e)
             passed = False
+            info = None
 
         result = process_test_result(passed, info, args.verbose, args.exit)
         if result is None:
@@ -592,13 +594,13 @@ def define_tests():
             f"{run} {demo} --pgen {demo_pgen} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
                 ProvenanceCond(
-                    regex="- 0.3333333",
+                    regex="\[0.3333333",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
                 ProvenanceCond(
-                    regex="- 0.5",
+                    regex="\[0.5",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
@@ -608,6 +610,11 @@ def define_tests():
             ],
             "local",
         ),
+        # "local provenance spec equality": (
+        #     f"{run} {simple} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cp $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml') ./{OUTPUT_DIR}/FILE1 ; rm -rf ./{OUTPUT_DIR}/simple_chain_* ; {run} ./{OUTPUT_DIR}/FILE1 --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cmp ./{OUTPUT_DIR}/FILE1 $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml')",
+        #     ReturnCodeCond(),
+        #     "local",
+        # ),
         "distributed feature_demo": (
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
             [
@@ -647,7 +654,7 @@ def setup_argparse():
     parser.add_argument(
         "--verbose", action="store_true", help="Flag for more detailed output messages"
     )
-    parser.add_argument("--local", action="store_true", help="Run only local tests")
+    parser.add_argument("--local", action="store_true", default=None, help="Run only local tests")
     parser.add_argument(
         "--ids",
         action="store",
