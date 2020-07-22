@@ -1,0 +1,24 @@
+stages:
+  - build
+  - test
+
+image: python:3.8-slim-buster
+
+install:
+    stage: build
+    script:
+        - pip install --upgrade pip
+        - pip install -r requirements.txt
+        - pip install -r requirements/dev.txt
+        - pip install -r merlin/examples/workflows/feature_demo/requirements.txt
+        - pip install -e .
+        - pip install --upgrade sphinx
+        - merlin config
+
+unit_tests:
+    stage: test
+        - python -m pytest tests/
+
+cli_tests:
+    stage: test
+        - python tests/integration/run_tests.py --verbose

@@ -30,16 +30,20 @@ app.yaml file, then the user's ``~/.merlin`` directory is checked.
 using a socket. 
 
 
-Broker: ``rabbitmq``
---------------------
+Broker: ``rabbitmq``, ``amqps``, ``amqp``
+-----------------------------------------
 Merlin constructs the following connection string from the relevant options in the 
 ``broker`` section of the app.yaml file. If the ``port`` argument is not defined,
 the default rabbitmq TLS port, 5671,  will be used. See the :ref:`broker_rabbitmq_ssl`
-section for more info about security with this broker.
+section for more info about security with this broker. When the ``broker``
+is ``amqp``, the default port will be 5672.
 
 
 | The prototype url for this configuration is:
-| ``amqps://{username}:{password}@{server}:{port}//{vhost}``
+| ``{conn}://{username}:{password}@{server}:{port}/{vhost}``
+
+Here ``conn`` is ``amqps`` (with ssl) when ``name`` is ``rabbitmq`` or ``amqps`` and
+``amqp`` (without ssl) when name is ``amqp``.
 
 ::
 

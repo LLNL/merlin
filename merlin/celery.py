@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.6.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,10 +29,7 @@
 ###############################################################################
 
 """Updated celery configuration."""
-from __future__ import (
-    absolute_import,
-    print_function,
-)
+from __future__ import absolute_import, print_function
 
 import logging
 import os
@@ -43,10 +40,8 @@ from celery import Celery
 from celery.signals import worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
-from merlin.config import (
-    broker,
-    results_backend,
-)
+from merlin.config import broker, results_backend
+from merlin.config.configfile import CONFIG
 from merlin.log_formatter import FORMATS
 from merlin.router import route_for_task
 
@@ -100,9 +95,12 @@ app.conf.update(
     redis_max_connections=100000,
 )
 
-# Set a one hour timeout to acknowledge a task before it's available to grab
-# again.
-app.conf.broker_transport_options = {"visibility_timeout": 7200, "max_connections": 100}
+# Set a timeout to acknowledge a task before it's available to grab
+# again (default 24 hours).
+app.conf.broker_transport_options = {
+    "visibility_timeout_seconds": CONFIG.celery.visibility_timeout_seconds,
+    "max_connections": 100,
+}
 
 app.conf.update(broker_pool_limit=0)
 
