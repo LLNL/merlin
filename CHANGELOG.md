@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allowed environment variables to be properly expanded in study `description.name`.
 - Tilde (~) now properly expands as part of a path in non-shell sections.
 
+### Changed
+- Updated tutorial redis version to 6.0.5.
+
 ## [1.6.2]
 
 ### Added
