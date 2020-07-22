@@ -246,6 +246,7 @@ def get_ssl_entries(server_type, server_name, server_config, cert_path):
             "keyfile": "ssl_keyfile",
             "certfile": "ssl_certfile",
             "ca_certs": "ssl_ca_certs",
+            "cert_reqs": "ssl_cert_reqs",
         }
 
     # The mysql server requires key names with ssl_ and different var names
