@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- The ability to override any value of the celery configuration thru `app.yaml` in `celery.override`.
 - Support and faq entry for `pgen` with `merlin run --pgen` and optional `--parg`.
 - Documentation on `level_max_dirs`.
 - Easier-to-read provenance specs.

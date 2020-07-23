@@ -654,7 +654,9 @@ def setup_argparse():
     parser.add_argument(
         "--verbose", action="store_true", help="Flag for more detailed output messages"
     )
-    parser.add_argument("--local", action="store_true", default=None, help="Run only local tests")
+    parser.add_argument(
+        "--local", action="store_true", default=None, help="Run only local tests"
+    )
     parser.add_argument(
         "--ids",
         action="store",

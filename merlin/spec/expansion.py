@@ -114,6 +114,7 @@ def expand_env_vars(spec):
     for values with the key 'cmd' or 'restart' (these are executable
     shell scripts, so environment variable expansion would be redundant).
     """
+
     def recurse(section):
         if section is None:
             return section
