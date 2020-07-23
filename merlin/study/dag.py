@@ -31,8 +31,9 @@
 """
 Holds DAG class. TODO make this an interface, separate from Maestro.
 """
-from collections import OrderedDict
+from collections import OrderedDict, deque
 import json
+import enum
 
 from merlin.study.step import MerlinStep
 
@@ -235,11 +236,10 @@ class MerlinDAG:
         return self.find_independent_chains(groups_of_chains)
 
     def to_json(self):
-        # return json.dumps(self, cls=CustomEncoder)
-        return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=4)
+        return json.dumps(self, cls=CustomEncoder)
+        # return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=4)
         # ERROR] 'mappingproxy' object has no attribute '__dict__'
 
-"""
 from maestrowf.datastructures.environment import Variable
 from maestrowf.datastructures.core import ExecutionGraph
 from maestrowf.datastructures.core import StudyStep
@@ -247,31 +247,40 @@ from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 
 
-    def to_json(self):
+    #@staticmethod
+    #def maestro_dag_to_json(dag):
+    #    return json.dumps({"adjacency_table": dag.adjacency_table, "values": dag.values})
 
-    @staticmethod
-    def maestro_dag_to_json(dag):
-        return json.dumps({"adjacency_table": dag.adjacency_table, "values": dag.values})
-
-    def maestro_step_record_to_json(step_record):
-        return json.dumps(step_record.__dict__)
+    #def maestro_step_record_to_json(step_record):
+    #    return json.dumps(step_record.__dict__)
 
 class CustomEncoder(json.JSONEncoder):
     def default(self, z):
-        print("***HERE")
-        print(z.__dict__)
-        if isinstance(z, DAG):
-            return json.dumps({"dag": z.dag, "backwards_adjacency": z.backwards_adjacency, "labels": z.labels}, cls=CustomEncoder)
-        elif isinstance(z, ExecutionGraph):
-            return json.dumps(z.__dict__, cls=CustomEncoder)
-        elif isinstance(z, _StepRecord):
-            return json.dumps(z.__dict__, cls=CustomEncoder)
-        elif isinstance(z, Variable):
-            return json.dumps(z.__dict__, cls=CustomEncoder)
-        elif isinstance(z, StudyStep):
-            return json.dumps(z.__dict__, cls=CustomEncoder)
-        elif isinstance(z, State):
-            return json.dumps(z.__dict__, cls=CustomEncoder)
-        else:
-            return super().default(z)
-"""
+        try:
+            # print("***HERE")
+            # print(z.__dict__)
+            if isinstance(z, set):
+                return json.dumps(list(z), cls=CustomEncoder)
+            elif isinstance(z, deque):
+                return json.dumps(list(z), cls=CustomEncoder)
+            elif isinstance(z, enum.Enum):
+                return {"__enum__": str(z)}
+                # return json.dumps(int(z), cls=CustomEncoder)
+            elif isinstance(z, MerlinDAG):
+                return json.dumps({"dag": z.dag, "backwards_adjacency": z.backwards_adjacency, "labels": z.labels}, cls=CustomEncoder)
+            elif isinstance(z, ExecutionGraph):
+                return json.dumps(z.__dict__, cls=CustomEncoder)
+            elif isinstance(z, _StepRecord):
+                return json.dumps(z.__dict__, cls=CustomEncoder)
+            elif isinstance(z, Variable):
+                return json.dumps(z.__dict__, cls=CustomEncoder)
+            elif isinstance(z, StudyStep):
+                return json.dumps(z.__dict__, cls=CustomEncoder)
+            elif isinstance(z, State):
+                return json.dumps(z.__dict__, cls=CustomEncoder)
+            else:
+                return super().default(z)
+        except Exception as e:
+            print(f"ERROR! on object of type {type(z)} with contents {z}:\n{e}")
+            print(z)
+            
