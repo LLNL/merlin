@@ -1,5 +1,8 @@
 celery:
-    visibility_timeout_seconds: 86400
+    # see Celery configuration options
+    # https://docs.celeryproject.org/en/stable/userguide/configuration.html
+    override:
+        visibility_timeout: 86400
 
 broker:
     # can be redis, redis+sock, or rabbitmq

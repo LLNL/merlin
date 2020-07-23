@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:18.04
 LABEL maintainer="Joe Koning koning1@llnl.gov"
 
 ARG USER=merlinu

@@ -21,8 +21,10 @@ The directory structure of merlin output looks like this:
     OUTPUT_PATH
         MERLIN_WORKSPACE
             MERLIN_INFO
-                <provenance_spec.yaml>
-            <other_step_name>.workspace
+                <name>.orig.yaml
+                <name>.partial.yaml
+                <name>.expanded.yaml
+            <step_name>.workspace
             WORKSPACE
 
 
@@ -52,7 +54,7 @@ Reserved variables
     - The workspace directory for a single step.
     - ``$(OUTPUT_PATH)/ensemble_name_$(MERLIN_TIMESTAMP)/step_name/``
   * - ``$(MERLIN_INFO)``
-    - Directory within ``MERLIN_WORKSPACE`` that holds a provenance spec.
+    - Directory within ``MERLIN_WORKSPACE`` that holds the provenance specs and sample generation results.
       Commonly used to hold ``samples.npy``.
     - ``$(MERLIN_WORKSPACE)/merlin_info/``
   * - ``$(MERLIN_SAMPLE_ID)``
@@ -91,17 +93,68 @@ Variables defined by a specification file in the ``env`` section, as in this exa
 
     env:
         variables:
+            ID: 42
             EXAMPLE_VAR:    hello
 
+As long as they're defined in order, you can nest user variables like this:
 
-Like all other Merlin variables, these may be used within specification steps as below:
+.. code-block:: yaml
+
+    env:
+        variables:
+            EXAMPLE_VAR:    hello
+            WORKER_NAME: $(EXAMPLE_VAR)_worker
+
+Like all other Merlin variables, user variables may be used anywhere (as a yaml key or value) within a specification as below:
 
 .. code-block:: yaml
 
     cmd: echo "$(EXAMPLE_VAR), world!"
+    ...
+    $(WORKER_NAME):
+        args: ...
 
+If you want to programmatically define the study name, you can include variables
+in the ``description.name`` field as long as it makes a valid filename:
 
+.. code-block:: yaml
 
+    description:
+        name: my_$(EXAMPLE_VAR)_study_$(ID)
+        description: example of programmatic study name
+
+The above would produce a study called ``my_hello_study_42``.
+
+Environment variables
+---------------------
+Merlin expands Unix environment variables for you. The values of the user variables below would be expanded:
+
+.. code-block:: yaml
+
+    env:
+        variables:
+            MY_HOME: ~/
+            MY_PATH: $PATH
+            USERNAME: ${USER}
+
+However, Merlin leaves environment variables found in shell scripts (think ``cmd`` and ``restart``) alone.
+So this step:
+
+.. code-block:: yaml
+
+    - name: step1
+      description: an example
+      run:
+        cmd: echo $PATH ; echo $(MY_PATH)
+
+...would be expanded as:
+
+.. code-block:: yaml
+
+    - name: step1
+      description: an example
+      run:
+        cmd: echo $PATH ; echo /an/example/:/path/string/
 
 Step return variables
 -----------------------------------
