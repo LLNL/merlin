@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.2.
+# This file is part of Merlin, Version: 1.7.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -43,7 +43,7 @@ from merlin.study.script_adapter import MerlinScriptAdapter
 LOG = logging.getLogger(__name__)
 
 
-class Step:
+class MerlinStep:
     """
     This class provides an abstraction for an execution step, which can be
     executed by calling execute.
@@ -104,10 +104,10 @@ class Step:
         study_step.name = step_dict["name"]
         study_step.description = step_dict["description"]
         study_step.run = step_dict["run"]
-        return Step(_StepRecord(new_workspace, study_step))
+        return MerlinStep(_StepRecord(new_workspace, study_step))
 
     def get_task_queue(self):
-        """ Retrieve the task queue for the Step."""
+        """ Retrieve the task queue for the MerlinStep."""
         return self.get_task_queue_from_dict(self.mstep.step.__dict__)
 
     @staticmethod

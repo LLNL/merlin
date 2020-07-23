@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
+
+## [1.7.0]
+
 ### Added
+- The ability to override any value of the celery configuration thru `app.yaml` in `celery.override`.
 - Support and faq entry for `pgen` with `merlin run --pgen` and optional `--parg`.
 - Documentation on `level_max_dirs`.
 - Easier-to-read provenance specs.
@@ -20,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   users greater flexibility.
 - Allowed environment variables to be properly expanded in study `description.name`.
 - Tilde (~) now properly expands as part of a path in non-shell sections.
+- The rediss cert_reqs keyword was changed to ssl_cert_reqs.
+
+### Changed
+- Updated tutorial redis version to 6.0.5.
 
 ## [1.6.2]
 

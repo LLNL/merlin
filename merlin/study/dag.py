@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.2.
+# This file is part of Merlin, Version: 1.7.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -34,9 +34,9 @@ Holds DAG class. TODO make this an interface, separate from Maestro.
 from collections import OrderedDict
 import json
 
-from merlin.study.step import Step
+from merlin.study.step import MerlinStep
 
-class DAG:
+class MerlinDAG:
     """
     This class provides methods on a task graph that Merlin needs for staging
     tasks in celery. It is initialized from am maestro ExecutionGraph, and the
@@ -78,7 +78,7 @@ class DAG:
 
     @staticmethod
     def group_by_depth(depths):
-        """Group DAG tasks by depth.
+        """Group MerlinDAG tasks by depth.
 
         :param `depths`: the dictionary of depths to group by
 
@@ -226,7 +226,6 @@ class DAG:
         Starts from a source node and works down, grouping tasks by
         depth, then identify independent parallel chains in those groups.
 
-        :param dag : The DAG
         :param source_node: The source node.
         """
         depths = {}

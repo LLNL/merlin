@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.2.
+# This file is part of Merlin, Version: 1.7.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -654,7 +654,9 @@ def setup_argparse():
     parser.add_argument(
         "--verbose", action="store_true", help="Flag for more detailed output messages"
     )
-    parser.add_argument("--local", action="store_true", help="Run only local tests")
+    parser.add_argument(
+        "--local", action="store_true", default=None, help="Run only local tests"
+    )
     parser.add_argument(
         "--ids",
         action="store",

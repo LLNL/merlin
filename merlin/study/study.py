@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.2.
+# This file is part of Merlin, Version: 1.7.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -51,7 +51,7 @@ from merlin.spec.expansion import (
 )
 from merlin.spec.override import dump_with_overrides, error_override_vars
 from merlin.spec.specification import MerlinSpec
-from merlin.study.dag import DAG
+from merlin.study.dag import MerlinDAG
 from merlin.utils import (
     contains_shell_ref,
     contains_token,
@@ -521,7 +521,7 @@ class MerlinStudy:
         labels = []
         if self.expanded_spec.merlin["samples"]:
             labels = self.expanded_spec.merlin["samples"]["column_labels"]
-        self.dag = DAG(maestro_dag, labels)
+        self.dag = MerlinDAG(maestro_dag, labels)
         import pprint
         pp = pprint.PrettyPrinter(indent=4)
         print(type(self.dag.dag))
