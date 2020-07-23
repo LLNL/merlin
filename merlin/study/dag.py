@@ -254,18 +254,69 @@ from maestrowf.datastructures.core.executiongraph import _StepRecord
     #def maestro_step_record_to_json(step_record):
     #    return json.dumps(step_record.__dict__)
 
+class ComplexDecoder(json.JSONDecoder):
+    def __init__(self):
+        json.JSONDecoder.__init__(self,
+        object_hook=self.dict_to_object)
+    def dict_to_object(self, dictionary):
+        if ("class" in dictionary.keys() and
+        dictionary["class"] == "complex"):
+            obj = complex(dictionary["a"],
+            dictionary["b"])
+        else:
+            obj = dictionary
+        return obj
+
 class CustomEncoder(json.JSONEncoder):
-    def default(self, z):
+    """
+    Encode Merlin / Maestro objects into json.
+    """
+    def default(self, obj):
         try:
-            # print("***HERE")
-            # print(z.__dict__)
+            # types covered: set, deque, Enum, MerlinDAG, ExecutinGraph, _StepRecord, Variable, StudyStep, State
+            if isinstance(obj, set):
+                return json.dumps(list(obj), cls=CustomEncoder)
+            elif isinstance(obj, deque):
+                return json.dumps(list(obj), cls=CustomEncoder)
+            elif isinstance(obj, enum.Enum):
+                return {"__enum__": str(obj)}
+            elif isinstance(obj, MerlinDAG):
+                print(json.dumps({"dag": obj.dag, "backwards_adjacency": obj.backwards_adjacency, "labels": obj.labels}, cls=CustomEncoder))
+                return json.dumps({"dag": obj.dag, "backwards_adjacency": obj.backwards_adjacency, "labels": obj.labels}, cls=CustomEncoder)
+            elif isinstance(obj, ExecutionGraph):
+                return json.dumps(obj.__dict__, cls=CustomEncoder)
+            elif isinstance(obj, _StepRecord):
+                return json.dumps(obj.__dict__, cls=CustomEncoder)
+            elif isinstance(obj, Variable):
+                return json.dumps(obj.__dict__, cls=CustomEncoder)
+            elif isinstance(obj, StudyStep):
+                return json.dumps(obj.__dict__, cls=CustomEncoder)
+            elif isinstance(obj, State):
+                return json.dumps(obj.__dict__, cls=CustomEncoder)
+            else:
+                return super().default(obj)
+        except Exception as e:
+            print(f"ERROR! on object of type {type(obj)} with contents {obj}:")
+            raise e
+
+class CustomDecoder(json.JSONDecoder):
+    """
+    Decode json objects into Merlin / Maestro objects.
+    """
+    """
+    def __init__(self):
+        json.JSONDecoder.__init__(self, object_hook=self.dict_to_object)
+
+    def dict_to_object(self, d):
+        try:
+            # types covered: set, deque, Enum, MerlinDAG, ExecutinGraph, _StepRecord, Variable, StudyStep, State
             if isinstance(z, set):
                 return json.dumps(list(z), cls=CustomEncoder)
             elif isinstance(z, deque):
                 return json.dumps(list(z), cls=CustomEncoder)
-            elif isinstance(z, enum.Enum):
-                return {"__enum__": str(z)}
-                # return json.dumps(int(z), cls=CustomEncoder)
+            if "__enum__" in d:
+                name, member = d["__enum__"].split(".")
+                return None # TODO
             elif isinstance(z, MerlinDAG):
                 return json.dumps({"dag": z.dag, "backwards_adjacency": z.backwards_adjacency, "labels": z.labels}, cls=CustomEncoder)
             elif isinstance(z, ExecutionGraph):
@@ -284,3 +335,5 @@ class CustomEncoder(json.JSONEncoder):
             print(f"ERROR! on object of type {type(z)} with contents {z}:\n{e}")
             print(z)
             
+    """
+    pass
