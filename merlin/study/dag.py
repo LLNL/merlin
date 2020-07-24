@@ -55,12 +55,12 @@ class MerlinDAG:
         self.labels = labels
 
     def step(self, task_name):
-        """Return a Step object for the given task name
+        """Return a MerlinStep object for the given task name
 
         :param `task_name`: The task name.
         :return: A Merlin Step object.
         """
-        return Step(self.dag.values[task_name])
+        return MerlinStep(self.dag.values[task_name])
 
     def calc_depth(self, node, depths, current_depth=0):
         """Calculate the depth of the given node and its children.

@@ -51,7 +51,7 @@ from merlin.spec.expansion import (
     parameter_substitutions_for_cmd,
     parameter_substitutions_for_sample,
 )
-from merlin.study.step import Step
+from merlin.study.step import MerlinStep
 
 
 retry_exceptions = (
@@ -72,21 +72,21 @@ STOP_COUNTDOWN = 60
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def merlin_step(self, *args, **kwargs):
     """
-    Executes a Merlin Step
-    :param args: The arguments, one of which should be an instance of Step
+    Executes a MerlinStep
+    :param args: The arguments, one of which should be an instance of MerlinStep
     :param kwargs: The optional keyword arguments that describe adapter_config and
                    the next step in the chain, if there is one.
 
     Example kwargs dict:
     {"adapter_config": {'type':'local'},
-     "next_in_chain": <Step object> } # merlin_step will be added to the current chord
+     "next_in_chain": <MerlinStep object> } # merlin_step will be added to the current chord
                                       # with next_in_chain as an argument
     """
     step = None
     LOG.debug(f"args is {len(args)} long")
 
     for a in args:
-        if isinstance(a, Step):
+        if isinstance(a, MerlinStep):
             step = a
         else:
             LOG.debug(f"discard argument {a}")
@@ -169,7 +169,7 @@ def is_chain_expandable(chain_, labels):
     A chain_ is expandable if all the steps are expandable.
     It is not expandable if none of the steps are expandable.
     If neither expandable nor not expandable, we raise an InvalidChainException.
-    :param chain_: A list of Step objects representing chain of dependent steps.
+    :param chain_: A list of MerlinStep objects representing chain of dependent steps.
     :param labels: The labels
 
     """
@@ -197,7 +197,7 @@ def is_chain_expandable(chain_, labels):
 def prepare_chain_workspace(sample_index, chain_):
     """
     Prepares a user's workspace for each step in the given chain.
-    :param chain_: A list of Step objects representing chain of dependent steps.
+    :param chain_: A list of MerlinStep objects representing chain of dependent steps.
     :param labels: The labels
     """
     # TODO: figure out faster way to create these directories (probably using
