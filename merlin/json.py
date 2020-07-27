@@ -2,6 +2,7 @@ import enum
 import json
 from collections import OrderedDict, deque
 
+import numpy as np
 from maestrowf.abstracts import enums as maestro_enums
 from maestrowf.datastructures.core.executiongraph import ExecutionGraph, _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
@@ -51,6 +52,8 @@ class MerlinEncoder(json.JSONEncoder):
             return result
         if isinstance(obj, enum.Enum):
             return {"__enum__": str(obj)}
+        if isinstance(obj, np.ndarray):
+            return {"__ndarray__": obj.tolist()}
         if isinstance(obj, Variable):
             result = {}
             for k, v in obj.__dict__.items():
@@ -120,6 +123,8 @@ class MerlinDecoder(json.JSONDecoder):
         if "__enum__" in dct:
             name, member = dct["__enum__"].split(".")
             return getattr(MAESTRO_ENUMS[name], member)
+        if "__ndarray__" in dct:
+            return np.asarray(dct["__ndarray__"])
         if "__list__" in dct:
             return list(dct["__list__"])
         if "__tuple__" in dct:

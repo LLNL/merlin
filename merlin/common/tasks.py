@@ -72,13 +72,13 @@ STOP_COUNTDOWN = 60
 
 def deserialize(func):
     def wrapper(*args, **kwargs):
-        func_args = []
+        decoded_args = []
         for arg in args:
-            func_args.append(MerlinDecoder().decode(arg))
-        func_kwargs = {}
+            decoded_args.append(MerlinDecoder().decode(arg))
+        decoded_kwargs = {}
         for k, v in kwargs.items():
-            func_args[k] = MerlinDecoder().decode(v)
-        func(func_args, func_kwargs)
+            decoded_kwargs[k] = MerlinDecoder().decode(v)
+        func(*decoded_args, **decoded_kwargs)
 
     return wrapper
 
@@ -148,14 +148,14 @@ def merlin_step(self, *args, **kwargs):
             LOG.error(
                 f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!"
             )
-            shutdown = shutdown_workers.s(MerlinEncoder.encode([step_queue]))
+            shutdown = shutdown_workers.s(MerlinEncoder().encode([step_queue]))
             shutdown.set(queue=step_queue)
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
 
             raise HardFailException
         elif result == ReturnCode.STOP_WORKERS:
             LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
-            shutdown = shutdown_workers.s(MerlinEncoder.encode(None))
+            shutdown = shutdown_workers.s(MerlinEncoder().encode(None))
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
@@ -557,6 +557,7 @@ def chordfinisher(*args, **kwargs):
 @shared_task(
     autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:queue_merlin_study"
 )
+@deserialize
 def queue_merlin_study(samples, sample_labels, egraph, level_max_dirs, adapter):
     """
     Launch a chain of tasks based off of items from a MerlinStudy.
