@@ -42,7 +42,7 @@ from maestrowf.maestro import load_parameter_generator
 from maestrowf.utils import create_dictionary
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.serialize import MerlinEncoder, MerlinDecoder
+from merlin.serialize import MerlinDecoder, MerlinEncoder
 from merlin.spec import defaults
 from merlin.spec.expansion import (
     determine_user_variables,

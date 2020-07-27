@@ -1,6 +1,6 @@
 import enum
 import json
-from collections import deque, OrderedDict
+from collections import OrderedDict, deque
 
 from maestrowf.abstracts import enums as maestro_enums
 from maestrowf.datastructures.core.executiongraph import ExecutionGraph, _StepRecord
@@ -31,70 +31,70 @@ class MerlinEncoder(json.JSONEncoder):
         Makes a Merlin or Maestro object into nested python objects recognized by
         json, such as dict, str, list, int, etc.
         """
-        print(lvl*"  " + str(type(obj)))
+        # print(lvl * "  " + str(type(obj)))
         if obj is None or type(obj) in {str, int, float, bool}:
             return obj
         if type(obj) == list:
             result = []
             for item in obj:
-                result.append(MerlinEncoder.to_dict(item, lvl+1))
+                result.append(MerlinEncoder.to_dict(item, lvl + 1))
             return {"__list__": result}
         if type(obj) == tuple:
             result = []
             for item in obj:
-                result.append(MerlinEncoder.to_dict(item, lvl+1))
+                result.append(MerlinEncoder.to_dict(item, lvl + 1))
             return {"__tuple__": tuple(result)}
         if type(obj) == dict:
             result = {}
             for k, v in obj.items():
-                result[k] = (MerlinEncoder.to_dict(v, lvl+1))
+                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return result
         if isinstance(obj, enum.Enum):
             return {"__enum__": str(obj)}
         if isinstance(obj, Variable):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = (MerlinEncoder.to_dict(v, lvl+1))
+                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"__Variable__": result}
         if isinstance(obj, StudyStep):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = (MerlinEncoder.to_dict(v, lvl+1))
+                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"__StudyStep__": result}
         if isinstance(obj, set):
             result = []
             for item in obj:
-                result.append(MerlinEncoder.to_dict(item, lvl+1))
+                result.append(MerlinEncoder.to_dict(item, lvl + 1))
             return {"__set__": result}
         if isinstance(obj, deque):
             result = []
             for item in obj:
-                result.append(MerlinEncoder.to_dict(item, lvl+1))
+                result.append(MerlinEncoder.to_dict(item, lvl + 1))
             return {"__deque__": result}
         if isinstance(obj, OrderedDict):
             result = {}
             for k, v in obj.items():
-                result[k] = (MerlinEncoder.to_dict(v, lvl+1))
+                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"__OrderedDict__": result}
         if isinstance(obj, _StepRecord):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl+1)
+                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"___StepRecord__": result}
         if isinstance(obj, ExecutionGraph):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl+1)
+                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"__ExecutionGraph__": result}
         if isinstance(obj, MerlinDAG):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl+1)
+                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"__MerlinDAG__": result}
         if isinstance(obj, MerlinStep):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl+1)
+                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"__MerlinStep__": result}
         else:
             raise TypeError(f"Type '{type(obj)}' not supported by MerlinEncoder!")
@@ -106,6 +106,7 @@ class MerlinEncoder(json.JSONEncoder):
         except Exception as e:
             print(f"Broke on object of type {type(obj)}: {obj}")
             raise e
+
 
 class MerlinDecoder(json.JSONDecoder):
     """
