@@ -31,11 +31,17 @@
 """
 Holds DAG class. TODO make this an interface, separate from Maestro.
 """
-from collections import OrderedDict, deque
-import json
 import enum
+import json
+from collections import OrderedDict, deque
+
+from maestrowf.abstracts.enums import State
+from maestrowf.datastructures.core import ExecutionGraph, StudyStep
+from maestrowf.datastructures.core.executiongraph import _StepRecord
+from maestrowf.datastructures.environment import Variable
 
 from merlin.study.step import MerlinStep
+
 
 class MerlinDAG:
     """
@@ -240,37 +246,31 @@ class MerlinDAG:
         # return json.dumps(self.__dict__, default=lambda o: o.__dict__, indent=4)
         # ERROR] 'mappingproxy' object has no attribute '__dict__'
 
-from maestrowf.datastructures.environment import Variable
-from maestrowf.datastructures.core import ExecutionGraph
-from maestrowf.datastructures.core import StudyStep
-from maestrowf.abstracts.enums import State
-from maestrowf.datastructures.core.executiongraph import _StepRecord
-
-
-    #@staticmethod
-    #def maestro_dag_to_json(dag):
+    # @staticmethod
+    # def maestro_dag_to_json(dag):
     #    return json.dumps({"adjacency_table": dag.adjacency_table, "values": dag.values})
 
-    #def maestro_step_record_to_json(step_record):
+    # def maestro_step_record_to_json(step_record):
     #    return json.dumps(step_record.__dict__)
+
 
 class ComplexDecoder(json.JSONDecoder):
     def __init__(self):
-        json.JSONDecoder.__init__(self,
-        object_hook=self.dict_to_object)
+        json.JSONDecoder.__init__(self, object_hook=self.dict_to_object)
+
     def dict_to_object(self, dictionary):
-        if ("class" in dictionary.keys() and
-        dictionary["class"] == "complex"):
-            obj = complex(dictionary["a"],
-            dictionary["b"])
+        if "class" in dictionary.keys() and dictionary["class"] == "complex":
+            obj = complex(dictionary["a"], dictionary["b"])
         else:
             obj = dictionary
         return obj
+
 
 class CustomEncoder(json.JSONEncoder):
     """
     Encode Merlin / Maestro objects into json.
     """
+
     def default(self, obj):
         try:
             # types covered: set, deque, Enum, MerlinDAG, ExecutinGraph, _StepRecord, Variable, StudyStep
@@ -281,8 +281,24 @@ class CustomEncoder(json.JSONEncoder):
             elif isinstance(obj, enum.Enum):
                 return {"__enum__": str(obj)}
             elif isinstance(obj, MerlinDAG):
-                print(json.dumps({"dag": obj.dag, "backwards_adjacency": obj.backwards_adjacency, "labels": obj.labels}, cls=CustomEncoder))
-                return json.dumps({"dag": obj.dag, "backwards_adjacency": obj.backwards_adjacency, "labels": obj.labels}, cls=CustomEncoder)
+                print(
+                    json.dumps(
+                        {
+                            "dag": obj.dag,
+                            "backwards_adjacency": obj.backwards_adjacency,
+                            "labels": obj.labels,
+                        },
+                        cls=CustomEncoder,
+                    )
+                )
+                return json.dumps(
+                    {
+                        "dag": obj.dag,
+                        "backwards_adjacency": obj.backwards_adjacency,
+                        "labels": obj.labels,
+                    },
+                    cls=CustomEncoder,
+                )
             elif isinstance(obj, ExecutionGraph):
                 return json.dumps(obj.__dict__, cls=CustomEncoder)
             elif isinstance(obj, _StepRecord):
@@ -299,10 +315,12 @@ class CustomEncoder(json.JSONEncoder):
             print(f"ERROR! on object of type {type(obj)} with contents {obj}:")
             raise e
 
+
 class CustomDecoder(json.JSONDecoder):
     """
     Decode json objects into Merlin / Maestro objects.
     """
+
     """
     def __init__(self):
         json.JSONDecoder.__init__(self, object_hook=self.dict_to_object)

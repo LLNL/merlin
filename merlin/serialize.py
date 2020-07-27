@@ -1,23 +1,30 @@
-from maestrowf.abstracts import enums
-from maestrowf.datastructures.environment import Variable
-from maestrowf.datastructures.core.study import StudyStep
-from maestrowf.datastructures.core.executiongraph import _StepRecord, ExecutionGraph
-from merlin.study.step import MerlinStep
-from merlin.study.dag import MerlinDAG
+import enum
+import json
 from collections import deque
 
-import enum
+from maestrowf.abstracts import enums
+from maestrowf.datastructures.core.executiongraph import ExecutionGraph, _StepRecord
+from maestrowf.datastructures.core.study import StudyStep
+from maestrowf.datastructures.environment import Variable
 
-import json
+from merlin.study.dag import MerlinDAG
+from merlin.study.step import MerlinStep
 
 
-MAESTRO_ENUMS = {"State": enums.State, "JobStatusCode": enums.JobStatusCode, "SubmissionCode": enums.SubmissionCode, "CancelCode": enums.CancelCode, "StudyStatus": enums.StudyStatus}
+MAESTRO_ENUMS = {
+    "State": enums.State,
+    "JobStatusCode": enums.JobStatusCode,
+    "SubmissionCode": enums.SubmissionCode,
+    "CancelCode": enums.CancelCode,
+    "StudyStatus": enums.StudyStatus,
+}
 
 
 class MerlinEncoder(json.JSONEncoder):
     """
     Encode Merlin / Maestro objects into a json string.
     """
+
     def to_dict(obj):
         """
         Makes a Merlin or Maestro object into nested python objects recognized by
@@ -68,6 +75,7 @@ class MerlinDecoder(json.JSONDecoder):
     """
     Decode Merlin / Maestro objects from json.
     """
+
     def __init__(self):
         json.JSONDecoder.__init__(self, object_hook=self.dict_to_obj)
 
@@ -76,7 +84,7 @@ class MerlinDecoder(json.JSONDecoder):
             name, member = dct["__enum__"].split(".")
             return getattr(MAESTRO_ENUMS[name], member)
         if "__set__" in dct:
-            return set(dct["__set__"]) 
+            return set(dct["__set__"])
         if "__deque__" in dct:
             return deque(dct["__deque__"])
         if "__Variable__" in dct:
@@ -84,7 +92,7 @@ class MerlinDecoder(json.JSONDecoder):
         if "__StudyStep__" in dct:
             dct = dct["__StudyStep__"]
             result = StudyStep()
-            for k,v in dct.items():
+            for k, v in dct.items():
                 setattr(result, k, v)
             result.name = dct["name"]
             result.description = dct["description"]
@@ -94,13 +102,13 @@ class MerlinDecoder(json.JSONDecoder):
             dct = dct["___StepRecord__"]
             dummy_step = StudyStep()
             result = _StepRecord("workspace", dummy_step)
-            for k,v in dct.items():
+            for k, v in dct.items():
                 setattr(result, k, v)
             return result
         if "__ExecutionGraph__" in dct:
             dct = dct["__ExecutionGraph__"]
             result = ExecutionGraph()
-            for k,v in dct.items():
+            for k, v in dct.items():
                 setattr(result, k, v)
             return result
         if "__MerlinStep__" in dct:
@@ -108,13 +116,13 @@ class MerlinDecoder(json.JSONDecoder):
             dummy_step = StudyStep()
             dummy_step_record = _StepRecord("workspace", dummy_step)
             result = MerlinStep(dummy_step_record)
-            for k,v in dct.items():
+            for k, v in dct.items():
                 setattr(result, k, v)
             return result
         if "__MerlinDAG__" in dct:
             dct = dct["__MerlinDAG__"]
             result = MerlinDAG(ExecutionGraph(), None)
-            for k,v in dct.items():
+            for k, v in dct.items():
                 setattr(result, k, v)
             return result
         else:

@@ -523,14 +523,16 @@ class MerlinStudy:
             labels = self.expanded_spec.merlin["samples"]["column_labels"]
         self.dag = MerlinDAG(maestro_dag, labels)
         import pprint
+
         pp = pprint.PrettyPrinter(indent=4)
-        #print(type(self.dag.dag))
-        #pp.pprint(self.dag.__dict__)
-        #pp.pprint(self.dag.dag.__dict__)
+        # print(type(self.dag.dag))
+        # pp.pprint(self.dag.__dict__)
+        # pp.pprint(self.dag.dag.__dict__)
         json = self.dag.to_json()
-        #print(json)
-        #print(type(json))
+        # print(json)
+        # print(type(json))
         import sys
+
         sys.exit()
 
     def get_adapter_config(self, override_type=None):
