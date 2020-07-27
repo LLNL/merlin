@@ -38,7 +38,7 @@ import subprocess
 import time
 from contextlib import suppress
 
-from merlin.serialize import MerlinEncoder
+from merlin.json import MerlinEncoder
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import (
     check_machines,
