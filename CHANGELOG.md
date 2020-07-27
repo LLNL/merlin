@@ -4,6 +4,13 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- `merlin monitor` now works as expected (we hope???).
+
+### Changed
+- Task serialization is now json instead of pickle. This grants security advantages.
 
 ## [1.7.0]
 
