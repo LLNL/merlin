@@ -273,7 +273,7 @@ class CustomEncoder(json.JSONEncoder):
     """
     def default(self, obj):
         try:
-            # types covered: set, deque, Enum, MerlinDAG, ExecutinGraph, _StepRecord, Variable, StudyStep, State
+            # types covered: set, deque, Enum, MerlinDAG, ExecutinGraph, _StepRecord, Variable, StudyStep
             if isinstance(obj, set):
                 return json.dumps(list(obj), cls=CustomEncoder)
             elif isinstance(obj, deque):
