@@ -31,9 +31,24 @@ class MerlinEncoder(json.JSONEncoder):
         Makes a Merlin or Maestro object into nested python objects recognized by
         json, such as dict, str, list, int, etc.
         """
-        if obj is None or type(obj) in {dict, list, tuple, str, int, float, bool}:
-            return obj
         print(lvl*"  " + str(type(obj)))
+        if obj is None or type(obj) in {str, int, float, bool}:
+            return obj
+        if type(obj) == list:
+            result = []
+            for item in obj:
+                result.append(MerlinEncoder.to_dict(item, lvl+1))
+            return {"__list__": result}
+        if type(obj) == tuple:
+            result = []
+            for item in obj:
+                result.append(MerlinEncoder.to_dict(item, lvl+1))
+            return {"__tuple__": tuple(result)}
+        if type(obj) == dict:
+            result = {}
+            for k, v in obj.items():
+                result[k] = (MerlinEncoder.to_dict(v, lvl+1))
+            return result
         if isinstance(obj, enum.Enum):
             return {"__enum__": str(obj)}
         if isinstance(obj, Variable):
@@ -104,6 +119,10 @@ class MerlinDecoder(json.JSONDecoder):
         if "__enum__" in dct:
             name, member = dct["__enum__"].split(".")
             return getattr(MAESTRO_ENUMS[name], member)
+        if "__list__" in dct:
+            return list(dct["__list__"])
+        if "__tuple__" in dct:
+            return tuple(dct["__tuple__"])
         if "__set__" in dct:
             return set(dct["__set__"])
         if "__deque__" in dct:
