@@ -46,8 +46,8 @@ from merlin.exceptions import (
     RestartException,
     RetryException,
 )
+from merlin.json import MerlinDecoder, MerlinEncoder
 from merlin.router import stop_workers
-from merlin.serialize import MerlinDecoder, MerlinEncoder
 from merlin.spec.expansion import (
     parameter_substitutions_for_cmd,
     parameter_substitutions_for_sample,
@@ -84,6 +84,7 @@ def deserialize(func):
 
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
+@deserialize
 def merlin_step(self, *args, **kwargs):
     """
     Executes a MerlinStep
@@ -228,6 +229,7 @@ def prepare_chain_workspace(sample_index, chain_):
 
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
+@deserialize
 def add_merlin_expanded_chain_to_chord(
     self,
     task_type,
@@ -399,6 +401,7 @@ def add_chains_to_chord(self, all_chains):
 
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
+@deserialize
 def expand_tasks_with_samples(
     self,
     dag,
@@ -543,6 +546,7 @@ def shutdown_workers(self, shutdown_queues):
 @shared_task(
     autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:chordfinisher"
 )
+@deserialize
 def chordfinisher(*args, **kwargs):
     """.
     It turns out that chain(group,group) in celery does not execute one group

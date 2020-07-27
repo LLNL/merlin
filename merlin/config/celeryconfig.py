@@ -6,9 +6,9 @@ from merlin.log_formatter import FORMATS
 
 
 DICT = {
-    "task_serializer": "pickle",  # TODO merlin_json
-    "accept_content": ["pickle"],  # TODO merlin_json
-    "result_serializer": "pickle",  # TODO merlin_json
+    "task_serializer": "merlin_json",
+    "accept_content": ["merlin_json"],
+    "result_serializer": "merlin_json",
     "task_acks_late": True,
     "task_reject_on_worker_lost": True,
     "task_publish_retry_policy": {
