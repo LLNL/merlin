@@ -33,12 +33,7 @@ Holds DAG class. TODO make this an interface, separate from Maestro.
 """
 import enum
 import json
-from collections import OrderedDict, deque
-
-from maestrowf.abstracts.enums import State
-from maestrowf.datastructures.core import ExecutionGraph, StudyStep
-from maestrowf.datastructures.core.executiongraph import _StepRecord
-from maestrowf.datastructures.environment import Variable
+from collections import OrderedDict
 
 from merlin.study.step import MerlinStep
 
