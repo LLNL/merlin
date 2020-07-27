@@ -524,12 +524,6 @@ class MerlinStudy:
             labels = self.expanded_spec.merlin["samples"]["column_labels"]
         self.dag = MerlinDAG(maestro_dag, labels)
 
-        json_str = MerlinEncoder().encode(self.dag)
-        self.dag = MerlinDecoder().decode(json_str)
-
-        # import sys
-        # sys.exit()
-
     def get_adapter_config(self, override_type=None):
         adapter_config = dict(self.expanded_spec.batch)
 
