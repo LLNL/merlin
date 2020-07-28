@@ -46,7 +46,7 @@ from merlin.exceptions import (
     RestartException,
     RetryException,
 )
-from merlin.json import MerlinDecoder, MerlinEncoder
+from merlin.merlin_json import decode, encode
 from merlin.router import stop_workers
 from merlin.spec.expansion import (
     parameter_substitutions_for_cmd,
@@ -74,10 +74,10 @@ def deserialize(func):
     def wrapper(*args, **kwargs):
         decoded_args = []
         for arg in args:
-            decoded_args.append(MerlinDecoder().decode(arg))
+            decoded_args.append(decode(arg))
         decoded_kwargs = {}
         for k, v in kwargs.items():
-            decoded_kwargs[k] = MerlinDecoder().decode(v)
+            decoded_kwargs[k] = decode(v)
         func(*decoded_args, **decoded_kwargs)
 
     return wrapper
@@ -149,14 +149,14 @@ def merlin_step(self, *args, **kwargs):
             LOG.error(
                 f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!"
             )
-            shutdown = shutdown_workers.s(MerlinEncoder().encode([step_queue]))
+            shutdown = shutdown_workers.s(encode([step_queue]))
             shutdown.set(queue=step_queue)
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
 
             raise HardFailException
         elif result == ReturnCode.STOP_WORKERS:
             LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
-            shutdown = shutdown_workers.s(MerlinEncoder().encode(None))
+            shutdown = shutdown_workers.s(encode(None))
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:

@@ -38,7 +38,7 @@ import subprocess
 import time
 from contextlib import suppress
 
-from merlin.json import MerlinEncoder
+from merlin.merlin_json import encode
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import (
     check_machines,
@@ -71,13 +71,12 @@ def run_celery(study, run_mode=None):
         app.connection().connect()
 
     # Send the tasks to the server
-    encoder = MerlinEncoder()
     queue_merlin_study(
-        encoder.encode(study.samples),
-        encoder.encode(study.sample_labels),
-        encoder.encode(study.dag),
-        encoder.encode(study.level_max_dirs),
-        encoder.encode(adapter_config),
+        encode(study.samples),
+        encode(study.sample_labels),
+        encode(study.dag),
+        encode(study.level_max_dirs),
+        encode(adapter_config),
     )
 
 

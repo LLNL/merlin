@@ -1,5 +1,6 @@
 import enum
 import json
+import logging
 from collections import OrderedDict, deque
 
 import numpy as np
@@ -19,6 +20,9 @@ MAESTRO_ENUMS = {
     "CancelCode": maestro_enums.CancelCode,
     "StudyStatus": maestro_enums.StudyStatus,
 }
+
+
+LOG = logging.getLogger(__name__)
 
 
 class MerlinEncoder(json.JSONEncoder):
@@ -103,12 +107,15 @@ class MerlinEncoder(json.JSONEncoder):
             raise TypeError(f"Type '{type(obj)}' not supported by MerlinEncoder!")
 
     def encode(self, obj):
-        d = MerlinEncoder.to_dict(obj)
         try:
-            return json.dumps(d, indent=4)
-        except Exception as e:
+            # LOG.info(e1)
+            return json.dumps(obj)
+        except TypeError as e1:
+            dct = MerlinEncoder.to_dict(obj)
+            return json.dumps(dct)
+        except Exception as e2:
             print(f"Broke on object of type {type(obj)}: {obj}")
-            raise e
+            raise e2
 
 
 class MerlinDecoder(json.JSONDecoder):
@@ -175,3 +182,12 @@ class MerlinDecoder(json.JSONDecoder):
             return result
         else:
             return dct
+
+def encode(obj):
+    encoder = MerlinEncoder()
+    return encoder.encode(obj)
+
+def decode(json_str):
+    decoder = MerlinDecoder()
+    return decoder.decode(json_str)
+
