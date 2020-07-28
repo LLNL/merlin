@@ -6,11 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- When using the `--samplesfile` flag, the samples file is now copied to `merlin_info` for
+  provenance.
+
 ### Fixed
 - `merlin monitor` now works as expected (we hope???).
 
 ### Changed
-- Task serialization is now json instead of pickle. This grants security advantages.
+- Task serialization is now done with json instead of pickle. This grants security advantages.
 
 ## [1.7.0]
 

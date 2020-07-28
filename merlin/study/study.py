@@ -397,6 +397,13 @@ class MerlinStudy:
             env = result.get_study_environment()
             result.globals = self.load_pgen(self.pgen_file, self.pargs, env)
 
+        # copy the --samplesfile (if any) into merlin_info
+        if self.samples_file:
+            shutil.copyfile(
+                self.samples_file,
+                os.path.join(self.info, os.path.basename(self.samples_file)),
+            )
+
         # write expanded spec for provenance
         with open(expanded_filepath, "w") as f:
             f.write(result.dump())
