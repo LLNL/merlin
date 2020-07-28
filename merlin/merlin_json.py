@@ -36,7 +36,9 @@ class MerlinEncoder(json.JSONEncoder):
         Makes a Merlin or Maestro object into nested python objects recognized by
         json, such as dict, str, list, int, etc.
         """
-        # print(lvl * "  " + str(type(obj)))
+        print(lvl * "  " + str(type(obj)))
+        if type(obj) == tuple or "celery" in str(type(obj)):
+            print(lvl * "  " + str(obj))
         if obj is None or type(obj) in {str, int, float, bool}:
             return obj
         if type(obj) == list:

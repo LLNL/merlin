@@ -72,11 +72,11 @@ def run_celery(study, run_mode=None):
 
     # Send the tasks to the server
     queue_merlin_study(
-        encode(study.samples),
-        encode(study.sample_labels),
-        encode(study.dag),
-        encode(study.level_max_dirs),
-        encode(adapter_config),
+        study.samples,
+        study.sample_labels,
+        study.dag,
+        study.level_max_dirs,
+        adapter_config,
     )
 
 

@@ -84,7 +84,6 @@ def deserialize(func):
 
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
-@deserialize
 def merlin_step(self, *args, **kwargs):
     """
     Executes a MerlinStep
@@ -229,7 +228,6 @@ def prepare_chain_workspace(sample_index, chain_):
 
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
-@deserialize
 def add_merlin_expanded_chain_to_chord(
     self,
     task_type,
@@ -401,7 +399,6 @@ def add_chains_to_chord(self, all_chains):
 
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
-@deserialize
 def expand_tasks_with_samples(
     self,
     dag,
@@ -525,7 +522,6 @@ def expand_tasks_with_samples(
     reject_on_worker_lost=False,
     name="merlin:shutdown_workers",
 )
-@deserialize
 def shutdown_workers(self, shutdown_queues):
     """
     This task issues a call to shutdown workers.
@@ -546,7 +542,6 @@ def shutdown_workers(self, shutdown_queues):
 @shared_task(
     autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:chordfinisher"
 )
-@deserialize
 def chordfinisher(*args, **kwargs):
     """.
     It turns out that chain(group,group) in celery does not execute one group
@@ -561,12 +556,12 @@ def chordfinisher(*args, **kwargs):
 @shared_task(
     autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:queue_merlin_study"
 )
-@deserialize
 def queue_merlin_study(samples, sample_labels, egraph, level_max_dirs, adapter):
     """
     Launch a chain of tasks based off of items from a MerlinStudy.
     """
     LOG.info("Calculating task groupings from DAG.")
+    print(egraph)
     groups_of_chains = egraph.group_tasks("_source")
 
     # magic to turn graph into celery tasks
