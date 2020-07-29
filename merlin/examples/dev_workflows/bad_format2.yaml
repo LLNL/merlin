@@ -1,0 +1,14 @@
+description:
+    name: bad_format2
+    description: a spec that should break
+
+env:
+    variables:
+        OUTPUT_PATH: ./cli_test_studies
+
+study:
+    - name: step1 
+      bad_key: val
+      description: step 1
+      run:
+         cmd: echo "test"
