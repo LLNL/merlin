@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When using the `--samplesfile` flag, the samples file is now copied to `merlin_info` for
   provenance.
 
+### Fixed
+- Exceptions in connection check sub-process will now be caught.
+
 ## [1.7.0]
 
 ### Added
