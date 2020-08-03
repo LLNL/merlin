@@ -9,6 +9,7 @@ from maestrowf.datastructures.core.executiongraph import ExecutionGraph, _StepRe
 from maestrowf.datastructures.core.study import StudyStep
 from maestrowf.datastructures.environment import Variable
 
+from merlin.common.sample_index import SampleIndex
 from merlin.study.dag import MerlinDAG
 from merlin.study.step import MerlinStep
 
@@ -107,17 +108,33 @@ class MerlinEncoder(json.JSONEncoder):
             for k, v in obj.__dict__.items():
                 result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"__MerlinStep__": result}
+        if isinstance(obj, SampleIndex):
+            result = {}
+            for k, v in obj.__dict__.items():
+                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
+            return {"__SampleIndex__": result}
         else:
-            raise TypeError(f"Type '{type(obj)}' not supported by MerlinEncoder!")
+            try:
+                print(
+                    f"Trying to serialize type '{type(obj)}' (not supported by MerlinEncoder) with regular json..."
+                )
+                # return json.dumps(obj)
+                return obj
+            except TypeError as e:
+                import pickle
+
+                pickle.dump(obj, open("OFFENDING_OBJ.pickle", "wb"))
+                raise TypeError(
+                    f"Type '{type(obj)}' not supported by MerlinEncoder or regular json!"
+                )
 
     def encode(self, obj):
         try:
-            # LOG.info(e1)
             return json.dumps(obj)
-        except TypeError as e1:
+        except TypeError as e:
             dct = MerlinEncoder.to_dict(obj)
             return json.dumps(dct)
-        except Exception as e2:
+        except Exception as e:
             print(f"Broke on object of type {type(obj)}: {obj}")
             raise e2
 
@@ -184,14 +201,21 @@ class MerlinDecoder(json.JSONDecoder):
             for k, v in dct.items():
                 setattr(result, k, v)
             return result
+        if "__SampleIndex__" in dct:
+            dct = dct["__SampleIndex__"]
+            result = SampleIndex(1, 10, {}, "")
+            for k, v in dct.items():
+                setattr(result, k, v)
+            return result
         else:
             return dct
+
 
 def encode(obj):
     encoder = MerlinEncoder()
     return encoder.encode(obj)
 
+
 def decode(json_str):
     decoder = MerlinDecoder()
     return decoder.decode(json_str)
-
