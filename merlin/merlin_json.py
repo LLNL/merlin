@@ -39,6 +39,8 @@ class MerlinEncoder(json.JSONEncoder):
         print(lvl * "  " + str(type(obj)))
         if type(obj) == tuple or "celery" in str(type(obj)):
             print(lvl * "  " + str(obj))
+        if "celery" in str(type(obj)):
+            print(lvl * "  " + str(obj.__dict__))
         if obj is None or type(obj) in {str, int, float, bool}:
             return obj
         if type(obj) == list:
