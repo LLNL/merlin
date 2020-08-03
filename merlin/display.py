@@ -46,7 +46,6 @@ from merlin.config.configfile import default_config_info
 
 
 class ConnProcess(Process):
-
     def __init__(self, *args, **kwargs):
         Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = Pipe()
