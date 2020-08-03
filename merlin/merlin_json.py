@@ -42,7 +42,9 @@ class MerlinEncoder(json.JSONEncoder):
             print(lvl * "  " + str(obj))
         if "celery" in str(type(obj)):
             print(lvl * "  " + str(obj.__dict__))
-        if obj is None or type(obj) in {str, int, float, bool}:
+        if obj is None:
+            return {"__None__": ""}
+        if type(obj) in {str, int, float, bool}:
             return obj
         if type(obj) == list:
             result = []
@@ -114,7 +116,7 @@ class MerlinEncoder(json.JSONEncoder):
                 result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"__SampleIndex__": result}
         else:
-            #f"Trying to serialize type '{type(obj)}' with catch-all hack..."
+            #print(f"Trying to serialize type '{type(obj)}' with catch-all hack...")
             #result = {}
             #for k, v in obj.__dict__.items():
             #    result[k] = MerlinEncoder.to_dict(v, lvl + 1)
@@ -129,7 +131,7 @@ class MerlinEncoder(json.JSONEncoder):
 
                 pickle.dump(obj, open("OFFENDING_OBJ.pickle", "wb"))
                 raise TypeError(
-                    f"Type '{type(obj)}' not supported by MerlinEncoder or regular json!"
+                    f"Type '{type(obj)}' not supported by MerlinEncoder or regular json! Json exception: {e}"
                 )
 
     def encode(self, obj):
@@ -152,6 +154,8 @@ class MerlinDecoder(json.JSONDecoder):
         json.JSONDecoder.__init__(self, object_hook=self.dict_to_obj)
 
     def dict_to_obj(self, dct):
+        if "__None__" in dct:
+            return None
         if "__enum__" in dct:
             name, member = dct["__enum__"].split(".")
             return getattr(MAESTRO_ENUMS[name], member)
