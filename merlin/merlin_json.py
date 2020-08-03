@@ -114,12 +114,16 @@ class MerlinEncoder(json.JSONEncoder):
                 result[k] = MerlinEncoder.to_dict(v, lvl + 1)
             return {"__SampleIndex__": result}
         else:
+            #f"Trying to serialize type '{type(obj)}' with catch-all hack..."
+            #result = {}
+            #for k, v in obj.__dict__.items():
+            #    result[k] = MerlinEncoder.to_dict(v, lvl + 1)
+            #return {f"__{str(type(obj))}__": result}
             try:
                 print(
                     f"Trying to serialize type '{type(obj)}' (not supported by MerlinEncoder) with regular json..."
                 )
-                # return json.dumps(obj)
-                return obj
+                return json.loads(json.dumps(obj))
             except TypeError as e:
                 import pickle
 
