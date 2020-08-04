@@ -419,6 +419,13 @@ def define_tests():
             ReturnCodeCond(),
             "local",
         ),
+        "local minimum_format": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/minimum_format.yaml --local",
+            StepFileExistsCond(
+                "step1", "MERLIN_FINISHED", "minimum_format", OUTPUT_DIR, params=False,
+            ),
+            "local",
+        ),
         "run-workers echo simple_chain": (
             f"{workers} {simple} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],

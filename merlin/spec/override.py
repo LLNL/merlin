@@ -1,8 +1,5 @@
 import logging
-import re
 from copy import deepcopy
-
-import yaml
 
 
 LOG = logging.getLogger(__name__)
