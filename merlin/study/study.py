@@ -498,6 +498,8 @@ class MerlinStudy:
         # TODO move this logic to specification.py
         print(self.expanded_spec.environment)
         for key in ["variables", "labels", "sources", "dependencies"]:
+            if key not in self.expanded_spec.environment:
+                continue
             if self.expanded_spec.environment[key] is None:
                 self.expanded_spec.environment[key] = {}
         environment = self.expanded_spec.get_study_environment()
