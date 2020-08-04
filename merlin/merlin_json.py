@@ -13,6 +13,7 @@ from maestrowf.datastructures.environment import Variable
 from merlin.common.sample_index import SampleIndex
 from merlin.study.dag import MerlinDAG
 from merlin.study.step import MerlinStep
+from merlin.common.tasks import merlin_step
 
 
 MAESTRO_ENUMS = {
@@ -114,6 +115,11 @@ class MerlinEncoder(kombu_JSONEncoder):
             for k, v in obj.__dict__.items():
                 result[k] = self.default(v, lvl + 1)
             return std_json.dumps({"__SampleIndex__": result})
+        if isinstance(obj, merlin_step):
+            result = {}
+            for k, v in obj.__dict__.items():
+                result[k] = self.default(v, lvl + 1)
+            return std_json.dumps({"__merlin_step__": result})
         return kombu_JSONEncoder().default(obj)
 
 
