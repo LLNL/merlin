@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Improved internal logic beyond the crude fixes of the previous 2 patches.
+- Added a developer cli test for the minimum valid spec format.
 
 ## [1.7.3]
 
