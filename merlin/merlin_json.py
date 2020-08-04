@@ -4,6 +4,7 @@ import logging
 from collections import OrderedDict, deque
 
 import numpy as np
+from kombu.utils.json import JSONEncoder as kombu_JSONEncoder
 from maestrowf.abstracts import enums as maestro_enums
 from maestrowf.datastructures.core.executiongraph import ExecutionGraph, _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
@@ -26,101 +27,106 @@ MAESTRO_ENUMS = {
 LOG = logging.getLogger(__name__)
 
 
-class MerlinEncoder(json.JSONEncoder):
+class MerlinEncoder(kombu_JSONEncoder):
     """
     Encode Merlin / Maestro objects into a json string.
     """
 
-    @staticmethod
-    def to_dict(obj, lvl=0):
-        """
-        Makes a Merlin or Maestro object into nested python objects recognized by
-        json, such as dict, str, list, int, etc.
-        """
+    def default(self, obj, lvl=0):
+        reducer = getattr(obj, "__json__", None)
+        if reducer is not None:
+            return reducer()
         print(lvl * "  " + str(type(obj)))
         if type(obj) == tuple or "celery" in str(type(obj)):
             print(lvl * "  " + str(obj))
         if "celery" in str(type(obj)):
             print(lvl * "  " + str(obj.__dict__))
-        if obj is None:
-            return {"__None__": ""}
-        if type(obj) in {str, int, float, bool}:
-            return obj
-        if type(obj) == list:
-            result = []
-            for item in obj:
-                result.append(MerlinEncoder.to_dict(item, lvl + 1))
-            return {"__list__": result}
-        if type(obj) == tuple:
-            result = []
-            for item in obj:
-                result.append(MerlinEncoder.to_dict(item, lvl + 1))
-            return {"__tuple__": tuple(result)}
-        if type(obj) == dict:
-            result = {}
-            for k, v in obj.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            return result
+        # if obj is None:
+        #    return {"__None__": ""}
+        # if type(obj) in {str, int, float, bool}:
+        #    return obj
+        # if type(obj) == list:
+        #    result = []
+        #    for item in obj:
+        #        result.append(self.default(item, lvl + 1))
+        #    return {"__list__": result})
+        # if type(obj) == tuple:
+        #    result = []
+        #    for item in obj:
+        #        result.append(self.default(item, lvl + 1))
+        #    return {"__tuple__": tuple(result)}
+        # if type(obj) == dict:
+        #    result = {}
+        #    for k, v in obj.items():
+        #        result[k] = self.default(v, lvl + 1)
+        #    return result
         if isinstance(obj, enum.Enum):
-            return {"__enum__": str(obj)}
+            return json.dumps({"__enum__": str(obj)})
         if isinstance(obj, np.ndarray):
-            return {"__ndarray__": obj.tolist()}
+            return json.dumps({"__ndarray__": obj.tolist()})
         if isinstance(obj, Variable):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            return {"__Variable__": result}
+                result[k] = self.default(v, lvl + 1)
+            return json.dumps({"__Variable__": result})
         if isinstance(obj, StudyStep):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            return {"__StudyStep__": result}
+                result[k] = self.default(v, lvl + 1)
+            return json.dumps({"__StudyStep__": result})
         if isinstance(obj, set):
             result = []
             for item in obj:
-                result.append(MerlinEncoder.to_dict(item, lvl + 1))
-            return {"__set__": result}
+                result.append(self.default(item, lvl + 1))
+            return json.dumps({"__set__": result})
         if isinstance(obj, deque):
             result = []
             for item in obj:
-                result.append(MerlinEncoder.to_dict(item, lvl + 1))
-            return {"__deque__": result}
+                result.append(self.default(item, lvl + 1))
+            return json.dumps({"__deque__": result})
         if isinstance(obj, OrderedDict):
             result = {}
             for k, v in obj.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            return {"__OrderedDict__": result}
+                result[k] = self.default(v, lvl + 1)
+            return json.dumps({"__OrderedDict__": result})
         if isinstance(obj, _StepRecord):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            return {"___StepRecord__": result}
+                result[k] = self.default(v, lvl + 1)
+            return json.dumps({"___StepRecord__": result})
         if isinstance(obj, ExecutionGraph):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            return {"__ExecutionGraph__": result}
+                result[k] = self.default(v, lvl + 1)
+            return json.dumps({"__ExecutionGraph__": result})
         if isinstance(obj, MerlinDAG):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            return {"__MerlinDAG__": result}
+                result[k] = self.default(v, lvl + 1)
+            return json.dumps({"__MerlinDAG__": result})
         if isinstance(obj, MerlinStep):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            return {"__MerlinStep__": result}
+                result[k] = self.default(v, lvl + 1)
+            return json.dumps({"__MerlinStep__": result})
         if isinstance(obj, SampleIndex):
             result = {}
             for k, v in obj.__dict__.items():
-                result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            return {"__SampleIndex__": result}
+                result[k] = self.default(v, lvl + 1)
+            return json.dumps({"__SampleIndex__": result})
+        return super(MerlinEncoder, self).default(obj)
+
+    """
+    @staticmethod
+    def to_dict(obj, lvl=0):
+        Makes a Merlin or Maestro object into nested python objects recognized by
+        json, such as dict, str, list, int, etc.
         else:
             #print(f"Trying to serialize type '{type(obj)}' with catch-all hack...")
             #result = {}
             #for k, v in obj.__dict__.items():
-            #    result[k] = MerlinEncoder.to_dict(v, lvl + 1)
-            #return {f"__{str(type(obj))}__": result}
+            #    result[k] = self.default(v, lvl + 1)
+            #return {f"__{str(type(obj))}__": result})
             try:
                 print(
                     f"Trying to serialize type '{type(obj)}' (not supported by MerlinEncoder) with regular json..."
@@ -133,16 +139,20 @@ class MerlinEncoder(json.JSONEncoder):
                 raise TypeError(
                     f"Type '{type(obj)}' not supported by MerlinEncoder or regular json! Json exception: {e}"
                 )
+    """
 
-    def encode(self, obj):
-        try:
-            return json.dumps(obj)
-        except TypeError as e:
-            dct = MerlinEncoder.to_dict(obj)
-            return json.dumps(dct)
+
+"""
+    #def encode(self, obj):
+        #try:
+        #    return json.dumps(obj)
+        #except TypeError as e:
+        #    dct = self.default(obj)
+        #    return json.dumps(dct)
         except Exception as e:
             print(f"Broke on object of type {type(obj)}: {obj}")
             raise e2
+"""
 
 
 class MerlinDecoder(json.JSONDecoder):
@@ -219,11 +229,11 @@ class MerlinDecoder(json.JSONDecoder):
             return dct
 
 
-def encode(obj):
+def dumps(obj):
     encoder = MerlinEncoder()
-    return encoder.encode(obj)
+    return json.dumps(obj, cls=MerlinEncoder)
 
 
-def decode(json_str):
+def loads(json_str):
     decoder = MerlinDecoder()
     return decoder.decode(json_str)

@@ -43,7 +43,7 @@ from kombu.serialization import register
 import merlin.common.security.encrypt_backend_traffic
 from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
-from merlin.merlin_json import decode, encode
+from merlin.merlin_json import dumps, loads
 from merlin.router import route_for_task
 from merlin.utils import nested_namespace_to_dicts
 
@@ -112,8 +112,8 @@ app.autodiscover_tasks(["merlin.common"])
 # register custom merlin_json serializer
 register(
     "merlin_json",
-    encode,
-    decode,
+    dumps,
+    loads,
     content_type="application/merlin_json",
     content_encoding="utf-8",
 )
