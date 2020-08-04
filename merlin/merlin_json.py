@@ -1,5 +1,5 @@
 import enum
-import json
+import json as std_json
 import logging
 from collections import OrderedDict, deque
 
@@ -41,127 +41,89 @@ class MerlinEncoder(kombu_JSONEncoder):
             print(lvl * "  " + str(obj))
         if "celery" in str(type(obj)):
             print(lvl * "  " + str(obj.__dict__))
-        # if obj is None:
-        #    return {"__None__": ""}
-        # if type(obj) in {str, int, float, bool}:
-        #    return obj
-        # if type(obj) == list:
-        #    result = []
-        #    for item in obj:
-        #        result.append(self.default(item, lvl + 1))
-        #    return {"__list__": result})
-        # if type(obj) == tuple:
-        #    result = []
-        #    for item in obj:
-        #        result.append(self.default(item, lvl + 1))
-        #    return {"__tuple__": tuple(result)}
-        # if type(obj) == dict:
-        #    result = {}
-        #    for k, v in obj.items():
-        #        result[k] = self.default(v, lvl + 1)
-        #    return result
+        if obj is None:
+            return std_json.dumps({"__None__": ""})
+        if type(obj) in {str, int, float, bool}:
+            return std_json.dumps(obj)
+        if type(obj) == list:
+            result = []
+            for item in obj:
+                result.append(self.default(item, lvl + 1))
+            return std_json.dumps({"__list__": result})
+        if type(obj) == tuple:
+            result = []
+            for item in obj:
+                result.append(self.default(item, lvl + 1))
+            return std_json.dumps({"__tuple__": tuple(result)})
+        if type(obj) == dict:
+            result = {}
+            for k, v in obj.items():
+                result[k] = self.default(v, lvl + 1)
+            return std_json.dumps(result)
         if isinstance(obj, enum.Enum):
-            return json.dumps({"__enum__": str(obj)})
+            return std_json.dumps({"__enum__": str(obj)})
         if isinstance(obj, np.ndarray):
-            return json.dumps({"__ndarray__": obj.tolist()})
+            return std_json.dumps({"__ndarray__": obj.tolist()})
         if isinstance(obj, Variable):
             result = {}
             for k, v in obj.__dict__.items():
                 result[k] = self.default(v, lvl + 1)
-            return json.dumps({"__Variable__": result})
+            return std_json.dumps({"__Variable__": result})
         if isinstance(obj, StudyStep):
             result = {}
             for k, v in obj.__dict__.items():
                 result[k] = self.default(v, lvl + 1)
-            return json.dumps({"__StudyStep__": result})
+            return std_json.dumps({"__StudyStep__": result})
         if isinstance(obj, set):
             result = []
             for item in obj:
                 result.append(self.default(item, lvl + 1))
-            return json.dumps({"__set__": result})
+            return std_json.dumps({"__set__": result})
         if isinstance(obj, deque):
             result = []
             for item in obj:
                 result.append(self.default(item, lvl + 1))
-            return json.dumps({"__deque__": result})
+            return std_json.dumps({"__deque__": result})
         if isinstance(obj, OrderedDict):
             result = {}
             for k, v in obj.items():
                 result[k] = self.default(v, lvl + 1)
-            return json.dumps({"__OrderedDict__": result})
+            return std_json.dumps({"__OrderedDict__": result})
         if isinstance(obj, _StepRecord):
             result = {}
             for k, v in obj.__dict__.items():
                 result[k] = self.default(v, lvl + 1)
-            return json.dumps({"___StepRecord__": result})
+            return std_json.dumps({"___StepRecord__": result})
         if isinstance(obj, ExecutionGraph):
             result = {}
             for k, v in obj.__dict__.items():
                 result[k] = self.default(v, lvl + 1)
-            return json.dumps({"__ExecutionGraph__": result})
+            return std_json.dumps({"__ExecutionGraph__": result})
         if isinstance(obj, MerlinDAG):
             result = {}
             for k, v in obj.__dict__.items():
                 result[k] = self.default(v, lvl + 1)
-            return json.dumps({"__MerlinDAG__": result})
+            return std_json.dumps({"__MerlinDAG__": result})
         if isinstance(obj, MerlinStep):
             result = {}
             for k, v in obj.__dict__.items():
                 result[k] = self.default(v, lvl + 1)
-            return json.dumps({"__MerlinStep__": result})
+            return std_json.dumps({"__MerlinStep__": result})
         if isinstance(obj, SampleIndex):
             result = {}
             for k, v in obj.__dict__.items():
                 result[k] = self.default(v, lvl + 1)
-            return json.dumps({"__SampleIndex__": result})
-        return super(MerlinEncoder, self).default(obj)
-
-    """
-    @staticmethod
-    def to_dict(obj, lvl=0):
-        Makes a Merlin or Maestro object into nested python objects recognized by
-        json, such as dict, str, list, int, etc.
-        else:
-            #print(f"Trying to serialize type '{type(obj)}' with catch-all hack...")
-            #result = {}
-            #for k, v in obj.__dict__.items():
-            #    result[k] = self.default(v, lvl + 1)
-            #return {f"__{str(type(obj))}__": result})
-            try:
-                print(
-                    f"Trying to serialize type '{type(obj)}' (not supported by MerlinEncoder) with regular json..."
-                )
-                return json.loads(json.dumps(obj))
-            except TypeError as e:
-                import pickle
-
-                pickle.dump(obj, open("OFFENDING_OBJ.pickle", "wb"))
-                raise TypeError(
-                    f"Type '{type(obj)}' not supported by MerlinEncoder or regular json! Json exception: {e}"
-                )
-    """
+            return std_json.dumps({"__SampleIndex__": result})
+        return kombu_JSONEncoder().default(obj)
 
 
-"""
-    #def encode(self, obj):
-        #try:
-        #    return json.dumps(obj)
-        #except TypeError as e:
-        #    dct = self.default(obj)
-        #    return json.dumps(dct)
-        except Exception as e:
-            print(f"Broke on object of type {type(obj)}: {obj}")
-            raise e2
-"""
-
-
-class MerlinDecoder(json.JSONDecoder):
+class MerlinDecoder(std_json.JSONDecoder):
     """
     Decode Merlin / Maestro objects from json.
     """
 
     def __init__(self):
-        json.JSONDecoder.__init__(self, object_hook=self.dict_to_obj)
+        std_json.JSONDecoder.__init__(self, object_hook=self.dict_to_obj)
 
     def dict_to_obj(self, dct):
         if "__None__" in dct:
@@ -231,7 +193,7 @@ class MerlinDecoder(json.JSONDecoder):
 
 def dumps(obj):
     encoder = MerlinEncoder()
-    return json.dumps(obj, cls=MerlinEncoder)
+    return std_json.dumps(obj, cls=MerlinEncoder)
 
 
 def loads(json_str):
