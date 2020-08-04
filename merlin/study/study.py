@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.1.
+# This file is part of Merlin, Version: 1.7.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -496,7 +496,6 @@ class MerlinStudy:
         Assigns it to `self.dag`.
         """
         # TODO move this logic to specification.py
-        print(self.expanded_spec.environment)
         for key in ["variables", "labels", "sources", "dependencies"]:
             if key not in self.expanded_spec.environment:
                 continue
