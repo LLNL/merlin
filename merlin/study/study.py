@@ -495,9 +495,17 @@ class MerlinStudy:
         Generates a dag (a directed acyclic execution graph).
         Assigns it to `self.dag`.
         """
+        # TODO move this logic to specification.py
+        print(self.expanded_spec.environment)
+        for key in ["variables", "labels", "sources", "dependencies"]:
+            if self.expanded_spec.environment[key] is None:
+                self.expanded_spec.environment[key] = {}
         environment = self.expanded_spec.get_study_environment()
         steps = self.expanded_spec.get_study_steps()
 
+        # TODO move this logic to specification.py
+        if self.expanded_spec.globals is None:
+            self.expanded_spec.globals = {}
         parameters = self.expanded_spec.get_parameters()
 
         # Setup the study.

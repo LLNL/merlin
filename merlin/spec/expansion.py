@@ -155,7 +155,11 @@ def determine_user_variables(*user_var_dicts):
         {'TARGET': 'target_dir',
         'PATH': '$(SPECROOT)/target_dir'}
     """
-    all_var_dicts = dict(ChainMap(*user_var_dicts))
+    # TODO move this logic to specification.py?
+    try:
+        all_var_dicts = dict(ChainMap(*user_var_dicts))
+    except TypeError:
+        all_var_dicts = {}
     determined_results = {}
     for key, val in all_var_dicts.items():
         if key in RESERVED:
