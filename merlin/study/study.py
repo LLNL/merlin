@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.1.
+# This file is part of Merlin, Version: 1.7.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -495,9 +495,18 @@ class MerlinStudy:
         Generates a dag (a directed acyclic execution graph).
         Assigns it to `self.dag`.
         """
+        # TODO move this logic to specification.py
+        for key in ["variables", "labels", "sources", "dependencies"]:
+            if key not in self.expanded_spec.environment:
+                continue
+            if self.expanded_spec.environment[key] is None:
+                self.expanded_spec.environment[key] = {}
         environment = self.expanded_spec.get_study_environment()
         steps = self.expanded_spec.get_study_steps()
 
+        # TODO move this logic to specification.py
+        if self.expanded_spec.globals is None:
+            self.expanded_spec.globals = {}
         parameters = self.expanded_spec.get_parameters()
 
         # Setup the study.
