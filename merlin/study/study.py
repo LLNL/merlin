@@ -49,7 +49,7 @@ from merlin.spec.expansion import (
     expand_env_vars,
     expand_line,
 )
-from merlin.spec.override import dump_with_overrides, error_override_vars
+from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
 from merlin.utils import (
@@ -169,13 +169,17 @@ class MerlinStudy:
         Useful for provenance.
         """
         # get specification including defaults and cli-overridden user variables
-        full_spec_text = dump_with_overrides(self.original_spec, self.override_vars)
-        new_spec = MerlinSpec.load_spec_from_string(full_spec_text)
+        new_env = replace_override_vars(
+            self.original_spec.environment, self.override_vars
+        )
+        new_spec = deepcopy(self.original_spec)
+        new_spec.environment = new_env
 
         # expand user variables
         new_spec_text = expand_by_line(
             new_spec.dump(), MerlinStudy.get_user_vars(new_spec)
         )
+
         # expand reserved words
         new_spec_text = expand_by_line(new_spec_text, self.special_vars)
 
@@ -495,18 +499,9 @@ class MerlinStudy:
         Generates a dag (a directed acyclic execution graph).
         Assigns it to `self.dag`.
         """
-        # TODO move this logic to specification.py
-        for key in ["variables", "labels", "sources", "dependencies"]:
-            if key not in self.expanded_spec.environment:
-                continue
-            if self.expanded_spec.environment[key] is None:
-                self.expanded_spec.environment[key] = {}
         environment = self.expanded_spec.get_study_environment()
         steps = self.expanded_spec.get_study_steps()
 
-        # TODO move this logic to specification.py
-        if self.expanded_spec.globals is None:
-            self.expanded_spec.globals = {}
         parameters = self.expanded_spec.get_parameters()
 
         # Setup the study.

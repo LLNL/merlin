@@ -32,7 +32,7 @@ DESCRIPTION = {"description": {}}
 
 BATCH = {"batch": {"type": "local", "dry_run": False, "shell": "/bin/bash"}}
 
-ENV = {"env": {"variables": {}}}
+ENV = {"env": {"variables": {}, "sources": {}, "labels": {}, "dependencies": {}}}
 
 STUDY_STEP_RUN = {"task_queue": "merlin", "shell": "/bin/bash", "max_retries": 30}
 
