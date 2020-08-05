@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.1.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -69,7 +69,7 @@ def run_task_server(study, run_mode=None):
     :param `study`: The MerlinStudy object
     :param `run_mode`: The type of run mode, e.g. local, batch
     """
-    if study.spec.merlin["resources"]["task_server"] == "celery":
+    if study.expanded_spec.merlin["resources"]["task_server"] == "celery":
         run_celery(study, run_mode)
     else:
         LOG.error("Celery is not specified as the task server!")
@@ -160,7 +160,7 @@ def query_workers(task_server):
 
     :param `task_server`: The task server to query.
     """
-    LOG.info(f"Searching for workers...")
+    LOG.info("Searching for workers...")
 
     if task_server == "celery":
         return query_celery_workers()
@@ -190,7 +190,7 @@ def stop_workers(task_server, spec_worker_names, queues, workers_regex):
     :param `queues`     : The queues to stop
     :param `workers_regex`    : Regex for workers to stop
     """
-    LOG.info(f"Stopping workers...")
+    LOG.info("Stopping workers...")
 
     if task_server == "celery":
         # Stop workers
@@ -215,7 +215,7 @@ def create_config(task_server, config_dir, broker):
     :param `task_server`: The task server from which to stop workers.
     :param `config_dir`: Optional directory to install the config.
     """
-    LOG.info(f"Creating config ...")
+    LOG.info("Creating config ...")
 
     if not os.path.isdir(config_dir):
         os.makedirs(config_dir)
@@ -233,7 +233,7 @@ def create_config(task_server, config_dir, broker):
 
 def check_merlin_status(args, spec):
     """
-    Function to check merlin workers and queues to keep 
+    Function to check merlin workers and queues to keep
     the allocation alive
 
     :param `args`: parsed CLI arguments

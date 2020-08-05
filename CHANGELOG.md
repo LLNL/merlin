@@ -6,8 +6,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Improved internal logic beyond the crude fixes of the previous 2 patches.
+- Added a developer cli test for the minimum valid spec format.
+
+## [1.7.3]
+
 ### Fixed
-- Corrected prior bugfix.
+- Completed 1.7.2 fix for `merlin run-workers`.
+
+## [1.7.2]
+
+### Fixed
+- Fatal bug triggered by a spec missing the `env` or `global.parameters` sections.
+
+## [1.7.1]
+
+### Added
+- When using the `--samplesfile` flag, the samples file is now copied to `merlin_info` for
+  provenance.
+
+### Fixed
+- Exceptions in connection check sub-process will now be caught.
+
+## [1.7.0]
+
+### Added
+- The ability to override any value of the celery configuration thru `app.yaml` in `celery.override`.
+- Support and faq entry for `pgen` with `merlin run --pgen` and optional `--parg`.
+- Documentation on `level_max_dirs`.
+- Easier-to-read provenance specs.
+- Documentation on the new 3 types of provenance spec.
+
+### Fixed
+- Flux test example data collection for new versions of flux.
+- Fixed Docker ubuntu version.
+- Removed expansion of env variables in shell sections (`cmd` and `restart`) of provenance
+  specs. This allows the shell command itself to expand environment variables, and gives
+  users greater flexibility.
+- Allowed environment variables to be properly expanded in study `description.name`.
+- Tilde (~) now properly expands as part of a path in non-shell sections.
+- The rediss cert_reqs keyword was changed to ssl_cert_reqs.
+
+### Changed
+- Updated tutorial redis version to 6.0.5.
+
+## [1.6.2]
+
+### Added
+- The sample generation command now logs `stdout`, `stderr`, and `cmd.sh` to `merlin_info/`.
+- 12 hidden test specs and associated cli tests, for cli tests with specs that we
+  do not want in `merlin examples`.
+- Inside `merlin_info/`, added provenance specs `<name>.orig.yaml`, `<name>.expanded.yaml`, and
+  `<name>.partial.yaml` (identical to the original spec, but with expanded user variables).
+
+### Fixed
+- Updated to new celery (4.4.5) syntax for signature return codes.
+- Corrected prior visibility timeout bugfix.
+- Fixed and reactivated 3 cli tests.
+- Added the `bank` and `walltime` keywords to the batch slurm launch, these
+  will not alter the lsf launch.
+
+### Changed
+- Slightly improved logic by using regex to match variable tokens.
+- Reduced instances of I/O, `MerlinStudy` logic is now in-memory to a greater extent.
 
 ## [1.6.1]
 

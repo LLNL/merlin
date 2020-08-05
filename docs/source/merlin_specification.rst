@@ -60,6 +60,7 @@ see :doc:`./merlin_variables`.
                           If this is unset the number of nodes will be
                           queried from the environment, failing that, the
                           number of nodes will be set to 1.
+     walltime: The total walltime of the batch allocation (hh:mm:ss)
 
 
   #####################################
@@ -84,16 +85,13 @@ see :doc:`./merlin_variables`.
     # Do not define a variable named "shell" here.
     #-------------------------------
     variables:
-      # set a custom output path for the study workspace. This path is where
+      # Set a custom output path for the study workspace. This path is where
       # Merlin will place all temporary files, state files, and any output.
       # The resulting path is usually a timestamped folder within OUTPUT_PATH
       # and in this case would be
       # './sample_output/merlin/merlin_sample1_<timestamp>'.
       # NOTE: If not specified,
       # OUTPUT_PATH is assumed to be the path where Merlin was launched from.
-      # NOTE: If the '-o' flag is specified for the run subcommand, OUTPUT_PATH
-      # the output path will be taken from there and will not generate a
-      # timestamped path.
       OUTPUT_PATH: ./sample_output/merlin # OUTPUT_PATH is a keyword
                                           # variable that Merlin looks for
                                           # to replace with the study
@@ -289,3 +287,4 @@ see :doc:`./merlin_variables`.
       generate:
         cmd: |
         python $(SPECROOT)/make_samples.py -dims 2 -n 10 -outfile=$(INPUT_PATH)/samples.npy "[(1.3, 1.3, 'linear'), (3.3, 3.3, 'linear')]"
+      level_max_dirs: 25
