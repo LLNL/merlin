@@ -426,6 +426,21 @@ def define_tests():
             ),
             "local",
         ),
+        "local no_description": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/no_description.yaml --local",
+            ReturnCodeCond(1),
+            "local",
+        ),
+        "local no_steps": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/no_steps.yaml --local",
+            ReturnCodeCond(1),
+            "local",
+        ),
+        "local no_study": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/no_study.yaml --local",
+            ReturnCodeCond(1),
+            "local",
+        ),
         "run-workers echo simple_chain": (
             f"{workers} {simple} --echo",
             [ReturnCodeCond(), RegexCond(celery_regex)],
