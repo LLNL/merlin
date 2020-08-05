@@ -214,9 +214,6 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
     yenv = None
     if senv:
         yenv = get_yaml_var(senv, "variables", {})
-        # TODO fix logic in specification.py
-        if yenv is None:
-            yenv = {}
         for k, v in yenv.items():
             spenv[str(k)] = str(v)
             # For expandvars
