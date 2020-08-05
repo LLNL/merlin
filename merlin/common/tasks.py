@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,25 +29,13 @@
 ###############################################################################
 
 """Test tasks."""
-from __future__ import (
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
 
-from celery import (
-    chain,
-    chord,
-    group,
-    shared_task,
-    signature,
-)
-from celery.exceptions import (
-    OperationalError,
-    TimeoutError,
-)
+from celery import chain, chord, group, shared_task, signature
+from celery.exceptions import OperationalError, TimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
@@ -399,7 +387,6 @@ def add_chains_to_chord(self, all_chains):
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def expand_tasks_with_samples(
     self,
-    _,
     dag,
     chain_,
     samples,
@@ -571,7 +558,7 @@ def queue_merlin_study(study, adapter):
         chord(
             group(
                 [
-                    expand_tasks_with_samples.s(
+                    expand_tasks_with_samples.si(
                         egraph,
                         gchain,
                         samples,

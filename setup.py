@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -30,10 +30,7 @@
 
 import os
 
-from setuptools import (
-    find_packages,
-    setup,
-)
+from setuptools import find_packages, setup
 
 
 version = __import__("merlin").VERSION

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -32,7 +32,7 @@ DESCRIPTION = {"description": {}}
 
 BATCH = {"batch": {"type": "local", "dry_run": False, "shell": "/bin/bash"}}
 
-ENV = {"env": {"variables": {}}}
+ENV = {"env": {"variables": {}, "sources": {}, "labels": {}, "dependencies": {}}}
 
 STUDY_STEP_RUN = {"task_queue": "merlin", "shell": "/bin/bash", "max_retries": 30}
 

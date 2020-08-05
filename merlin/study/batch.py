@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -143,9 +143,11 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
     if nodes is None or nodes == "all":
         nodes = get_node_count(default=1)
 
-    # bank = get_yaml_var(batch, 'bank', "") #TODO this variable is unused
+    bank = get_yaml_var(batch, "bank", "")
     queue = get_yaml_var(batch, "queue", "")
     shell = get_yaml_var(batch, "shell", "bash")
+    walltime = get_yaml_var(batch, "walltime", "")
+
     launch_pre = get_yaml_var(batch, "launch_pre", "")
     launch_args = get_yaml_var(batch, "launch_args", "")
     worker_launch = get_yaml_var(batch, "worker_launch", "")
@@ -159,9 +161,14 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
     if not launchs:
         if btype == "slurm" or launcher == "slurm":
             launchs = f"srun --mpi=none -N {nodes} -n {nodes}"
+            if bank:
+                launchs += f" -A {bank}"
             if queue:
                 launchs += f" -p {queue}"
+            if walltime:
+                launchs += f" -t {walltime}"
         if launcher == "lsf":
+            # The jsrun utility does not have a time argument
             launchs = f"jsrun -a 1 -c ALL_CPUS -g ALL_GPUS --bind=none -n {nodes}"
 
     launchs += f" {launch_args}"

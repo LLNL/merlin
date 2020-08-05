@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -43,6 +43,7 @@ BATCH = {
     "launch_args",
     "worker_launch",
     "nodes",
+    "walltime",
 }
 
 ENV = {"variables", "labels", "sources", "dependencies"}

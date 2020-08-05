@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,10 +29,7 @@
 ###############################################################################
 
 """Updated celery configuration."""
-from __future__ import (
-    absolute_import,
-    print_function,
-)
+from __future__ import absolute_import, print_function
 
 import logging
 import os
@@ -43,12 +40,10 @@ from celery import Celery
 from celery.signals import worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
-from merlin.config import (
-    broker,
-    results_backend,
-)
-from merlin.log_formatter import FORMATS
+from merlin.config import broker, celeryconfig, results_backend
+from merlin.config.configfile import CONFIG
 from merlin.router import route_for_task
+from merlin.utils import nested_namespace_to_dicts
 
 
 LOG = logging.getLogger(__name__)
@@ -59,61 +54,58 @@ broker_ssl = True
 results_ssl = False
 try:
     BROKER_URI = broker.get_connection_string()
-    LOG.info(f"broker: {broker.get_connection_string(include_password=False)}")
+    LOG.debug(f"broker: {broker.get_connection_string(include_password=False)}")
     broker_ssl = broker.get_ssl_config()
-    LOG.info(f"broker_ssl = {broker_ssl}")
+    LOG.debug(f"broker_ssl = {broker_ssl}")
     RESULTS_BACKEND_URI = results_backend.get_connection_string()
     results_ssl = results_backend.get_ssl_config(celery_check=True)
-    LOG.info(
+    LOG.debug(
         f"results: {results_backend.get_connection_string(include_password=False)}"
     )
-    LOG.info(f"results: redis_backed_use_ssl = {results_ssl}")
+    LOG.debug(f"results: redis_backed_use_ssl = {results_ssl}")
 except ValueError:
     # These variables won't be set if running with '--local'.
     BROKER_URI = None
     RESULTS_BACKEND_URI = None
 
-
+# initialize app with essential properties
 app = Celery(
     "merlin",
     broker=BROKER_URI,
     backend=RESULTS_BACKEND_URI,
     broker_use_ssl=broker_ssl,
     redis_backend_use_ssl=results_ssl,
+    task_routes=(route_for_task,),
 )
 
+# load merlin config defaults
+app.conf.update(**celeryconfig.DICT)
 
-app.conf.update(
-    task_serializer="pickle", accept_content=["pickle"], result_serializer="pickle"
-)
+# load config overrides from app.yaml
+if (
+    (not hasattr(CONFIG.celery, "override"))
+    or (CONFIG.celery.override is None)
+    or (len(nested_namespace_to_dicts(CONFIG.celery.override)) == 0)
+):
+    LOG.debug("Skipping celery config override; 'celery.override' field is empty.")
+else:
+    override_dict = nested_namespace_to_dicts(CONFIG.celery.override)
+    override_str = ""
+    i = 0
+    for k, v in override_dict.items():
+        if k not in str(app.conf.__dict__):
+            raise ValueError(f"'{k}' is not a celery configuration.")
+        override_str += f"\t{k}:\t{v}"
+        if i != len(override_dict) - 1:
+            override_str += "\n"
+        i += 1
+    LOG.info(
+        f"Overriding default celery config with 'celery.override' in 'app.yaml':\n{override_str}"
+    )
+    app.conf.update(**override_dict)
 
+# auto-discover tasks
 app.autodiscover_tasks(["merlin.common"])
-
-app.conf.update(
-    task_acks_late=True,
-    task_reject_on_worker_lost=True,
-    task_publish_retry_policy={
-        "interval_start": 10,
-        "interval_step": 10,
-        "interval_max": 60,
-    },
-    redis_max_connections=100000,
-)
-
-# Set a one hour timeout to acknowledge a task before it's available to grab
-# again.
-app.conf.broker_transport_options = {"visibility_timeout": 7200, "max_connections": 100}
-
-app.conf.update(broker_pool_limit=0)
-
-# Task routing: call our default queue merlin
-app.conf.task_routes = (route_for_task,)
-app.conf.task_default_queue = "merlin"
-
-# Log formatting
-app.conf.worker_log_color = True
-app.conf.worker_log_format = FORMATS["DEFAULT"]
-app.conf.worker_task_log_format = FORMATS["WORKER"]
 
 
 @worker_process_init.connect()

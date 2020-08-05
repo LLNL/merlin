@@ -1,0 +1,99 @@
+description:
+    name: full_format
+    description: a correctly-formatted but non-functioning spec including every possible field
+    extra_key: this should be allowed for metadata
+
+env:
+    variables:
+        OUTPUT_PATH: ./cli_test_studies
+    labels:
+        LABEL: label
+    sources: 
+        - source1
+        - source2
+    dependencies:
+        paths:
+            - name: name1
+              path: path
+        git:
+            - name: name2
+              path: path
+              url: url
+              tag: tag
+        spack:
+            name: name3
+            package_name: package_name
+
+batch:
+    type: local
+    bank: bank
+    queue: queue
+    dry_run: true
+    shell: /bin/bash
+    flux_path: string
+    flux_start_opts: string
+    flux_exec_workers: true
+    launch_pre: string
+    launch_args: string
+    worker_launch: string
+    nodes: 1
+    walltime: 00:01:00
+
+study:
+    - name: step
+      description: step 0
+      run:
+         cmd: echo "test"
+
+    - name: step1 
+      description: step 1
+      run:
+         cmd: echo "test"
+         slurm: string
+         lsf: string
+         bind: string
+         num resource set: 1
+         launch_distribution: string
+         exit_on_error: 0
+         flux: string
+         batch:
+            type: local
+         gpus per task: 1
+         max_retries: 1
+         shell: string
+         task_queue: string
+         exclusive: true
+         reservation: string
+         walltime: string
+         cores per task: 1
+         gpus: 1
+         procs: 1
+         nodes: 1
+         restart: string
+         post: string
+         pre: string
+         depends: [step]
+
+global.parameters:
+    PARAM:
+        values: [val1, val2]
+        label: LABEL.%%
+
+merlin:
+    resources:
+        task_server: celery
+        overlap: False
+        workers:
+            worker1:
+                args: -l INFO --concurrency 3 --prefetch-multiplier 1 -Ofair
+                steps: [step1]
+                nodes: 1
+                batch:
+                    type: slurm
+                machines: [machine1, machine2]
+    samples:
+        generate:
+            cmd: echo -en "sample\n1" > $(MERLIN_INFO)/samples.csv
+        file: $(MERLIN_INFO)/samples.csv
+        column_labels: [label1]
+        level_max_dirs: 25

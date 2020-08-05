@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.0.5.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -40,10 +40,7 @@ import time
 from contextlib import suppress
 from glob import glob
 from re import search
-from subprocess import (
-    PIPE,
-    Popen,
-)
+from subprocess import PIPE, Popen
 
 from merlin.utils import get_flux_cmd
 
@@ -159,8 +156,10 @@ def run_tests(args, tests):
             continue
         try:
             passed, info = run_single_test(test_name, test, test_label)
-        except BaseException:
+        except BaseException as e:
+            print(e)
             passed = False
+            info = None
 
         result = process_test_result(passed, info, args.verbose, args.exit)
         if result is None:
@@ -277,7 +276,7 @@ class StepFileExistsCond(StudyCond):
     A StudyCond that checks for a particular file's existence.
     """
 
-    def __init__(self, step, filename, study_name, output_path):
+    def __init__(self, step, filename, study_name, output_path, params=False):
         """
         :param `step`: the name of a step
         :param `filename`: name of file to search for in step's workspace directory
@@ -287,9 +286,13 @@ class StepFileExistsCond(StudyCond):
         super().__init__(study_name, output_path)
         self.step = step
         self.filename = filename
+        self.params = params
 
     def file_exists(self):
-        glob_string = f"{self.dirpath_glob}/{self.step}/{self.filename}"
+        param_glob = ""
+        if self.params:
+            param_glob = "*/"
+        glob_string = f"{self.dirpath_glob}/{self.step}/{param_glob}{self.filename}"
         try:
             filename = self.glob(glob_string)
         except IndexError:
@@ -345,15 +348,20 @@ class ProvenanceCond(RegexCond):
     MUST contain a given regular expression.
     """
 
-    def __init__(self, regex, name, output_path):
+    def __init__(self, regex, name, output_path, provenance_type, negate=False):
         """
         :param `regex`: a string regex pattern
         :param `name`: the name of a study
         :param `output_path`: the $(OUTPUT_PATH) of a study
         """
-        super().__init__(regex)
+        super().__init__(regex, negate=negate)
         self.name = name
         self.output_path = output_path
+        if provenance_type not in ["orig", "partial", "expanded"]:
+            raise ValueError(
+                f"Bad provenance_type '{provenance_type}' in ProvenanceCond!"
+            )
+        self.prov_type = provenance_type
 
     def is_within(self):
         """
@@ -363,7 +371,7 @@ class ProvenanceCond(RegexCond):
         """
         filepath = (
             f"{self.output_path}/{self.name}"
-            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.yaml"
+            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
         )
         filename = sorted(glob(filepath))[-1]
         with open(filename, "r") as _file:
@@ -372,6 +380,8 @@ class ProvenanceCond(RegexCond):
 
     @property
     def passes(self):
+        if self.negate:
+            return not self.is_within()
         return self.is_within()
 
 
@@ -389,7 +399,9 @@ def define_tests():
     restart = "merlin restart"
     purge = "merlin purge"
     examples = "merlin/examples/workflows"
+    dev_examples = "merlin/examples/dev_workflows"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
+    demo_pgen = f"{examples}/feature_demo/scripts/pgen.py"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
     slurm = f"{examples}/slurm/slurm_test.yaml"
     slurm_restart = f"{examples}/slurm/slurm_par_restart.yaml"
@@ -406,6 +418,28 @@ def define_tests():
         "merlin config": (
             f"merlin config -o {config_dir}; rm -rf {config_dir}",
             ReturnCodeCond(),
+            "local",
+        ),
+        "local minimum_format": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../{dev_examples}/minimum_format.yaml --local",
+            StepFileExistsCond(
+                "step1", "MERLIN_FINISHED", "minimum_format", OUTPUT_DIR, params=False,
+            ),
+            "local",
+        ),
+        "local no_description": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/no_description.yaml --local",
+            ReturnCodeCond(1),
+            "local",
+        ),
+        "local no_steps": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/no_steps.yaml --local",
+            ReturnCodeCond(1),
+            "local",
+        ),
+        "local no_study": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/no_study.yaml --local",
+            ReturnCodeCond(1),
             "local",
         ),
         "run-workers echo simple_chain": (
@@ -439,10 +473,15 @@ def define_tests():
             f"{run} {demo} --local --dry --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             [
                 StepFileExistsCond(
-                    "verify", "*/verify_*.sh", "feature_demo", OUTPUT_DIR
+                    "verify", "verify_*.sh", "feature_demo", OUTPUT_DIR, params=True,
                 ),
                 ReturnCodeCond(),
             ],
+            "local",
+        ),
+        "restart local simple_chain": (
+            f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'simple_chain_*') --local",
+            ReturnCodeCond(),
             "local",
         ),
         "local simple_chain": (
@@ -456,10 +495,6 @@ def define_tests():
             ReturnCodeCond(),
             "local",
         ),
-        # "restart local simple_chain": (
-        #    f"{restart} --local $(find studies/ -type d -name 'simple_chain_*')",
-        #    [ReturnCodeCond(), NoStderrCond()],
-        # ),
         "dry launch slurm": (
             f"{run} {slurm} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
             StepFileContainsCond(
@@ -512,24 +547,97 @@ def define_tests():
             [
                 ReturnCodeCond(),
                 ProvenanceCond(
-                    regex=" -n 2 -outfile", name="feature_demo", output_path=OUTPUT_DIR
+                    regex="PREDICT: \$\(SCRIPTS\)/predict.py",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="orig",
+                ),
+                ProvenanceCond(
+                    regex="name: \$\(NAME\)",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="partial",
+                ),
+                ProvenanceCond(
+                    regex="studies/feature_demo_",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="partial",
+                ),
+                ProvenanceCond(
+                    regex="name: feature_demo",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
+                ),
+                ProvenanceCond(
+                    regex="\$\(NAME\)",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
+                    negate=True,
                 ),
                 StepFileExistsCond(
-                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
+                    "verify",
+                    "MERLIN_FINISHED",
+                    "feature_demo",
+                    OUTPUT_DIR,
+                    params=True,
                 ),
             ],
-            # "local",
+            "local",
         ),
+        # "local restart expand name": (
+        #    f"{run} {demo} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} NAME=test_demo ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'test_demo_*') --local",
+        #    [
+        #        ReturnCodeCond(),
+        #        ProvenanceCond(
+        #            regex="name: test_demo",
+        #            name="test_demo",
+        #            output_path=OUTPUT_DIR,
+        #            provenance_type="expanded",
+        #        ),
+        #        StepFileExistsCond(
+        #            "merlin_info", "test_demo.expanded.yaml", "test_demo", OUTPUT_DIR, params=True,
+        #        ),
+        #    ],
+        #    "local",
+        # ),
         "local csv feature_demo": (
             f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samples foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [RegexCond("1 sample loaded."), ReturnCodeCond()],
-            # "local",
+            "local",
         ),
         "local tab feature_demo": (
             f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samples foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
             [RegexCond("2 samples loaded."), ReturnCodeCond()],
-            # "local",
+            "local",
         ),
+        "local pgen feature_demo": (
+            f"{run} {demo} --pgen {demo_pgen} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local",
+            [
+                ProvenanceCond(
+                    regex="\[0.3333333",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
+                ),
+                ProvenanceCond(
+                    regex="\[0.5",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
+                    negate=True,
+                ),
+                ReturnCodeCond(),
+            ],
+            "local",
+        ),
+        # "local provenance spec equality": (
+        #     f"{run} {simple} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cp $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml') ./{OUTPUT_DIR}/FILE1 ; rm -rf ./{OUTPUT_DIR}/simple_chain_* ; {run} ./{OUTPUT_DIR}/FILE1 --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cmp ./{OUTPUT_DIR}/FILE1 $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml')",
+        #     ReturnCodeCond(),
+        #     "local",
+        # ),
         "distributed feature_demo": (
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
             [
@@ -538,9 +646,14 @@ def define_tests():
                     regex="cli_test_demo_workers:",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
                 ),
                 StepFileExistsCond(
-                    "verify", "MERLIN_FINISHED", "feature_demo", OUTPUT_DIR
+                    "verify",
+                    "MERLIN_FINISHED",
+                    "feature_demo",
+                    OUTPUT_DIR,
+                    params=True,
                 ),
             ],
         ),
@@ -564,7 +677,9 @@ def setup_argparse():
     parser.add_argument(
         "--verbose", action="store_true", help="Flag for more detailed output messages"
     )
-    parser.add_argument("--local", action="store_true", help="Run only local tests")
+    parser.add_argument(
+        "--local", action="store_true", default=None, help="Run only local tests"
+    )
     parser.add_argument(
         "--ids",
         action="store",

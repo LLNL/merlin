@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,10 +37,7 @@ import os
 import re
 import socket
 import subprocess
-from contextlib import (
-    contextmanager,
-    suppress,
-)
+from contextlib import contextmanager, suppress
 from copy import deepcopy
 from types import SimpleNamespace
 
@@ -438,4 +435,23 @@ def check_machines(machines):
         if mach in local_hostname:
             return True
 
+    return False
+
+
+def contains_token(string):
+    """
+    Return True if given string contains a token of the form $(STR).
+    """
+    if re.search(r"\$\(\w+\)", string):
+        return True
+    return False
+
+
+def contains_shell_ref(string):
+    """
+    Return True if given string contains a shell variable reference
+    of the form $STR or ${STR}.
+    """
+    if re.search(r"\$\w+", string) or re.search(r"\$\{\w+\}", string):
+        return True
     return False

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -34,24 +34,27 @@ import shutil
 import subprocess
 import time
 from contextlib import suppress
-from fileinput import FileInput
+from copy import deepcopy
 
 from cached_property import cached_property
 from maestrowf.datastructures.core import Study
+from maestrowf.maestro import load_parameter_generator
+from maestrowf.utils import create_dictionary
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
 from merlin.spec.expansion import (
     determine_user_variables,
+    expand_by_line,
+    expand_env_vars,
     expand_line,
 )
-from merlin.spec.override import (
-    dump_with_overrides,
-    error_override_vars,
-)
+from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
 from merlin.utils import (
+    contains_shell_ref,
+    contains_token,
     get_flux_cmd,
     load_array_file,
 )
@@ -83,10 +86,12 @@ class MerlinStudy:
         samples_file=None,
         dry_run=False,
         no_errors=False,
+        pgen_file=None,
+        pargs=None,
     ):
-        self.spec = MerlinSpec.load_specification(filepath)
+        self.original_spec = MerlinSpec.load_specification(filepath)
         self.override_vars = override_vars
-        error_override_vars(self.override_vars, self.spec.path)
+        error_override_vars(self.override_vars, self.original_spec.path)
 
         self.samples_file = samples_file
         self.label_clash_error()
@@ -96,13 +101,13 @@ class MerlinStudy:
         # If we load from a file, record that in the object for provenance
         # downstream
         if self.samples_file is not None:
-            self.spec.merlin["samples"]["file"] = self.samples_file
-            self.spec.merlin["samples"]["generate"]["cmd"] = ""
+            self.original_spec.merlin["samples"]["file"] = self.samples_file
+            self.original_spec.merlin["samples"]["generate"]["cmd"] = ""
 
         self.restart_dir = restart_dir
 
         self.special_vars = {
-            "SPECROOT": self.spec.specroot,
+            "SPECROOT": self.original_spec.specroot,
             "MERLIN_TIMESTAMP": self.timestamp,
             "MERLIN_INFO": self.info,
             "MERLIN_WORKSPACE": self.workspace,
@@ -113,8 +118,19 @@ class MerlinStudy:
             "MERLIN_HARD_FAIL": str(int(ReturnCode.HARD_FAIL)),
             "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
         }
+
+        self.pgen_file = pgen_file
+        self.pargs = pargs
+
         self.dag = None
         self.load_dag()
+
+    def write_original_spec(self, filename):
+        """
+        Copy the original spec into merlin_info/ as '<name>.orig.yaml'.
+        """
+        spec_name = os.path.join(self.info, filename + ".orig.yaml")
+        shutil.copyfile(self.original_spec.path, spec_name)
 
     def label_clash_error(self):
         """
@@ -123,56 +139,52 @@ class MerlinStudy:
         global.parameters. Raises an error if any such
         clash exists.
         """
-        if self.spec.merlin["samples"]:
-            for label in self.spec.merlin["samples"]["column_labels"]:
-                if label in self.spec.globals:
+        if self.original_spec.merlin["samples"]:
+            for label in self.original_spec.merlin["samples"]["column_labels"]:
+                if label in self.original_spec.globals:
                     raise ValueError(
                         f"column_label {label} cannot also be " "in global.parameters!"
                     )
 
-    @property
-    def user_vars(self):
+    @staticmethod
+    def get_user_vars(spec):
         """
         Using the spec environment, return a dictionary
         of expanded user-defined variables.
         """
         uvars = []
-        if "variables" in self.spec.environment:
-            uvars.append(self.spec.environment["variables"])
-        if "labels" in self.spec.environment:
-            uvars.append(self.spec.environment["labels"])
+        if "variables" in spec.environment:
+            uvars.append(spec.environment["variables"])
+        if "labels" in spec.environment:
+            uvars.append(spec.environment["labels"])
         return determine_user_variables(*uvars)
 
-    def write_expand_by_line(self, filepath, keywords):
-        """
-        Given a destination and keyword dictionary, expand each
-        line of the destination file in-place.
-        """
-        with FileInput(filepath, inplace=True) as _file:
-            for line in _file:
-                expanded_line = expand_line(line, keywords)
-                print(expanded_line, end="")
+    @property
+    def user_vars(self):
+        return MerlinStudy.get_user_vars(self.original_spec)
 
-    def write_expanded_spec(self, dest):
+    def get_expanded_spec(self):
         """
-        Write a new yaml spec file with defaults and variable expansions.
+        Get a new yaml spec file with defaults, cli overrides, and variable expansions.
         Useful for provenance.
-
-        :param `dest`: destination for fully expanded yaml file
         """
-        # specification text including defaults and overridden user variables
-        full_spec = dump_with_overrides(self.spec, self.override_vars)
-
-        with open(dest, "w") as dumped_file:
-            dumped_file.write(full_spec)
-
-        # update spec so that user_vars update will be accurate
-        self.spec = MerlinSpec.load_specification(dest)
+        # get specification including defaults and cli-overridden user variables
+        new_env = replace_override_vars(
+            self.original_spec.environment, self.override_vars
+        )
+        new_spec = deepcopy(self.original_spec)
+        new_spec.environment = new_env
 
         # expand user variables
-        self.write_expand_by_line(dest, self.user_vars)
+        new_spec_text = expand_by_line(
+            new_spec.dump(), MerlinStudy.get_user_vars(new_spec)
+        )
+
         # expand reserved words
-        self.write_expand_by_line(dest, self.special_vars)
+        new_spec_text = expand_by_line(new_spec_text, self.special_vars)
+
+        result = MerlinSpec.load_spec_from_string(new_spec_text)
+        return expand_env_vars(result)
 
     @property
     def samples(self):
@@ -274,14 +286,14 @@ class MerlinStudy:
             return os.path.abspath(output_path)
 
         else:
-            output_path = str(self.spec.output_path)
+            output_path = str(self.original_spec.output_path)
 
             if (self.override_vars is not None) and (
                 "OUTPUT_PATH" in self.override_vars
             ):
                 output_path = str(self.override_vars["OUTPUT_PATH"])
 
-            output_path = expand_line(output_path, self.user_vars)
+            output_path = expand_line(output_path, self.user_vars, env_vars=True)
             output_path = os.path.abspath(output_path)
             if not os.path.isdir(output_path):
                 os.makedirs(output_path)
@@ -314,13 +326,12 @@ class MerlinStudy:
                 )
             return os.path.abspath(self.restart_dir)
 
-        workspace_name = f'{self.spec.name.replace(" ", "_")}_{self.timestamp}'
+        workspace_name = f'{self.original_spec.name.replace(" ", "_")}_{self.timestamp}'
         workspace = os.path.join(self.output_path, workspace_name)
         with suppress(FileNotFoundError):
             shutil.rmtree(workspace)
         os.mkdir(workspace)
 
-        LOG.info(f"Study workspace is '{workspace}'.")
         return workspace
 
     @cached_property
@@ -339,24 +350,91 @@ class MerlinStudy:
         Determines, writes to yaml, and loads into memory an expanded
         specification.
         """
-        # Write expanded yaml spec
-        self.expanded_filepath = os.path.join(
-            self.info, self.spec.name.replace(" ", "_") + ".yaml"
-        )
-
         # If we are restarting, we don't need to re-expand, just need to read
         # in the previously expanded spec
-        if self.restart_dir is None:
-            self.write_expanded_spec(self.expanded_filepath)
+        if self.restart_dir is not None:
+            return self.get_expanded_spec()
 
-        return MerlinSpec.load_specification(
-            self.expanded_filepath, suppress_warning=False
-        )
+        result = self.get_expanded_spec()
+        expanded_name = result.description["name"].replace(" ", "_") + ".expanded.yaml"
+
+        # Set expanded filepath
+        expanded_filepath = os.path.join(self.info, expanded_name)
+
+        # expand provenance spec filename
+        if contains_token(self.original_spec.name) or contains_shell_ref(
+            self.original_spec.name
+        ):
+            name = f"{result.description['name'].replace(' ', '_')}_{self.timestamp}"
+            name = expand_line(name, {}, env_vars=True)
+            if "/" in name:
+                raise ValueError(
+                    f"Expanded value '{name}' for field 'name' in section 'description' is not a valid filename."
+                )
+            expanded_workspace = os.path.join(self.output_path, name)
+
+            if result.merlin["samples"]:
+                sample_file = result.merlin["samples"]["file"]
+                if sample_file.startswith(self.workspace):
+                    new_samples_file = sample_file.replace(
+                        self.workspace, expanded_workspace
+                    )
+                    result.merlin["samples"]["generate"]["cmd"] = result.merlin[
+                        "samples"
+                    ]["generate"]["cmd"].replace(self.workspace, expanded_workspace)
+                    result.merlin["samples"]["file"] = new_samples_file
+
+            shutil.move(self.workspace, expanded_workspace)
+            self.workspace = expanded_workspace
+            self.info = os.path.join(self.workspace, "merlin_info")
+            self.special_vars["MERLIN_INFO"] = self.info
+
+            expanded_filepath = os.path.join(self.info, expanded_name)
+            new_spec_text = expand_by_line(
+                result.dump(), MerlinStudy.get_user_vars(result)
+            )
+            result = MerlinSpec.load_spec_from_string(new_spec_text)
+            result = expand_env_vars(result)
+
+        # pgen
+        if self.pgen_file:
+            env = result.get_study_environment()
+            result.globals = self.load_pgen(self.pgen_file, self.pargs, env)
+
+        # copy the --samplesfile (if any) into merlin_info
+        if self.samples_file:
+            shutil.copyfile(
+                self.samples_file,
+                os.path.join(self.info, os.path.basename(self.samples_file)),
+            )
+
+        # write expanded spec for provenance
+        with open(expanded_filepath, "w") as f:
+            f.write(result.dump())
+
+        # write original spec for provenance
+        result = MerlinSpec.load_spec_from_string(result.dump())
+        result.path = expanded_filepath
+        name = result.description["name"].replace(" ", "_")
+        self.write_original_spec(name)
+
+        # write partially-expanded spec for provenance
+        partial_spec = deepcopy(self.original_spec)
+        if "variables" in result.environment:
+            partial_spec.environment["variables"] = result.environment["variables"]
+        if "labels" in result.environment:
+            partial_spec.environment["labels"] = result.environment["labels"]
+        partial_spec_path = os.path.join(self.info, name + ".partial.yaml")
+        with open(partial_spec_path, "w") as f:
+            f.write(partial_spec.dump())
+
+        LOG.info(f"Study workspace is '{self.workspace}'.")
+        return result
 
     @cached_property
     def flux_command(self):
         """
-        Returns a the flux version
+        Returns the flux version.
         """
         flux_bin = "flux"
         if "flux_path" in self.expanded_spec.batch.keys():
@@ -384,12 +462,37 @@ class MerlinStudy:
                     "cmd"
                 ]
                 LOG.info("Generating samples...")
-                subprocess.call(sample_generate, shell=True)
+                sample_process = subprocess.Popen(
+                    sample_generate,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True,
+                )
+                stdout, stderr = sample_process.communicate()
+                with open(os.path.join(self.info, "cmd.sh"), "w") as f:
+                    f.write(sample_generate)
+                with open(os.path.join(self.info, "cmd.out"), "wb") as f:
+                    f.write(stdout)
+                with open(os.path.join(self.info, "cmd.err"), "wb") as f:
+                    f.write(stderr)
                 LOG.info("Generating samples complete!")
             return
         except (IndexError, TypeError) as e:
             LOG.error(f"Could not generate samples:\n{e}")
             return
+
+    def load_pgen(self, filepath, pargs, env):
+        if filepath:
+            if pargs is None:
+                pargs = []
+            kwargs = create_dictionary(pargs)
+            params = load_parameter_generator(filepath, env, kwargs)
+            result = {}
+            for k, v in params.labels.items():
+                result[k] = {"values": None, "label": v}
+            for k, v in params.parameters.items():
+                result[k]["values"] = v
+            return result
 
     def load_dag(self):
         """
@@ -432,8 +535,7 @@ class MerlinStudy:
         self.dag = DAG(maestro_dag, labels)
 
     def get_adapter_config(self, override_type=None):
-        spec = MerlinSpec.load_specification(self.spec.path)
-        adapter_config = dict(spec.batch)
+        adapter_config = dict(self.expanded_spec.batch)
 
         if "type" not in adapter_config.keys():
             adapter_config["type"] = "local"

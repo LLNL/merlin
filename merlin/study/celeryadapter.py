@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.5.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -38,10 +38,7 @@ import subprocess
 import time
 from contextlib import suppress
 
-from merlin.study.batch import (
-    batch_check_parallel,
-    batch_worker_launch,
-)
+from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import (
     check_machines,
     get_procs,
@@ -140,9 +137,7 @@ def query_celery_workers():
 
     Send results to the log.
     """
-    from merlin.celery import app
-
-    workers = get_workers(app)
+    workers = get_workers_from_app()
     if workers:
         LOG.info("Found these connected workers:")
         for worker in workers:
@@ -166,7 +161,6 @@ def query_celery_queues(queues):
             try:
                 name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
                 found_queues.append((name, jobs, consumers))
-                LOG.info(f"Found queue {queue}.")
             except BaseException:
                 LOG.warning(f"Cannot find queue {queue} on server.")
     finally:
@@ -174,13 +168,15 @@ def query_celery_queues(queues):
     return found_queues
 
 
-def get_workers(app):
+def get_workers_from_app():
     """Get all workers connected to a celery application.
 
     :param `celery.Celery` app: the celery application
     :return: A list of all connected workers
     :rtype: list
     """
+    from merlin.celery import app
+
     i = app.control.inspect()
     workers = i.ping()
     if workers is None:
@@ -475,6 +471,9 @@ def create_celery_config(config_dir, data_file_name, data_file_path):
     MERLIN_CONFIG = os.path.join(config_dir, data_file_name)
 
     if os.path.isfile(MERLIN_CONFIG):
+        from merlin.common.security import encrypt
+
+        encrypt.init_key()
         LOG.info(f"The config file already exists, {MERLIN_CONFIG}")
         return
 
@@ -485,3 +484,7 @@ def create_celery_config(config_dir, data_file_name, data_file_path):
         LOG.error(f"Cannot create config file {MERLIN_CONFIG}")
 
     LOG.info(f"The file {MERLIN_CONFIG} is ready to be edited for your system.")
+
+    from merlin.common.security import encrypt
+
+    encrypt.init_key()
