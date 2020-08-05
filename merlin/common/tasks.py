@@ -69,17 +69,17 @@ LOG = logging.getLogger(__name__)
 STOP_COUNTDOWN = 60
 
 
-def deserialize(func):
-    def wrapper(*args, **kwargs):
-        decoded_args = []
-        for arg in args:
-            decoded_args.append(decode(arg))
-        decoded_kwargs = {}
-        for k, v in kwargs.items():
-            decoded_kwargs[k] = decode(v)
-        func(*decoded_args, **decoded_kwargs)
-
-    return wrapper
+#def deserialize(func):
+#    def wrapper(*args, **kwargs):
+#        decoded_args = []
+#        for arg in args:
+#            decoded_args.append(decode(arg))
+#        decoded_kwargs = {}
+#        for k, v in kwargs.items():
+#            decoded_kwargs[k] = decode(v)
+#        func(*decoded_args, **decoded_kwargs)
+#
+#    return wrapper
 
 
 @shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
