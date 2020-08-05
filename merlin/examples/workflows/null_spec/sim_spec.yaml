@@ -1,6 +1,6 @@
 description:
-    name: null_spec
-    description: run N_SAMPLES null steps at CONC concurrency. May be used to measure overhead in merlin.
+    name: sim_spec
+    description: run N_SAMPLES 1-second steps at CONC concurrency. May be used to measure overhead in merlin.
 
 batch:
     type: slurm
@@ -16,11 +16,12 @@ env:
         WORKER: worker_s$(N_SAMPLES)_c$(N_WORK)_r$(RUN_ID)
 
 study:
-    - name: null_step
+    - name: one_second_step
       description: exit immediately
       run:
         cmd: |
             #echo $(SAMPLE)
+            sleep 1s
             exit $(MERLIN_SUCCESS)
         task_queue: $(QUEUE)
 
@@ -28,7 +29,7 @@ study:
       description: echo done
       run:
         cmd: echo "Done"
-        depends: [null_step_*]
+        depends: [one_second_step_*]
         task_queue: $(QUEUE)
 
 merlin:
