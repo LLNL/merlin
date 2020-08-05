@@ -115,11 +115,11 @@ class MerlinEncoder(kombu_JSONEncoder):
             for k, v in obj.__dict__.items():
                 result[k] = self.default(v, lvl + 1)
             return std_json.dumps({"__SampleIndex__": result})
-        if isinstance(obj, merlin_step):
-            result = {}
-            for k, v in obj.__dict__.items():
-                result[k] = self.default(v, lvl + 1)
-            return std_json.dumps({"__merlin_step__": result})
+        #if isinstance(obj, merlin_step):
+        #    result = {}
+        #    for k, v in obj.__dict__.items():
+        #        result[k] = self.default(v, lvl + 1)
+        #    return std_json.dumps({"__merlin_step__": result})
         return kombu_JSONEncoder().default(obj)
 
 
@@ -193,6 +193,12 @@ class MerlinDecoder(std_json.JSONDecoder):
             for k, v in dct.items():
                 setattr(result, k, v)
             return result
+        #if "__merlin_step__" in dct:
+        #    dct = dct["__merlin_step__"]
+        #    result = merlin_step()
+        #    for k, v in dct.items():
+        #        setattr(result, k, v)
+        #    return result
         else:
             return dct
 

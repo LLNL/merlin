@@ -46,7 +46,6 @@ from merlin.exceptions import (
     RestartException,
     RetryException,
 )
-from merlin.merlin_json import dumps, loads
 from merlin.router import stop_workers
 from merlin.spec.expansion import (
     parameter_substitutions_for_cmd,
@@ -148,14 +147,14 @@ def merlin_step(self, *args, **kwargs):
             LOG.error(
                 f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!"
             )
-            shutdown = shutdown_workers.s(dumps([step_queue]))
+            shutdown = shutdown_workers.s([step_queue])
             shutdown.set(queue=step_queue)
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
 
             raise HardFailException
         elif result == ReturnCode.STOP_WORKERS:
             LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
-            shutdown = shutdown_workers.s(dumps(None))
+            shutdown = shutdown_workers.s(None)
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
