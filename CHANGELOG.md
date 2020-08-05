@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Users will no longer see the message, "Cannot set the submission time of '<step name>' because it has already been set", when tasks are restarted.
+- Users will no longer see the message, "Cannot set the submission time of '<step name>'
+  because it has already been set", when tasks are restarted.
 
 ### Changed
 - Improved internal logic beyond the crude fixes of the previous 2 patches.
 - Added a developer cli test for the minimum valid spec format.
+- Improvements to the `null_spec` example, used for measuring overhead in merlin.
 
 ## [1.7.3]
 
