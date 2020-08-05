@@ -71,8 +71,7 @@ all: install-dev install-merlin install-workflow-deps
 
 # install requirements
 install-dev: virtualenv
-	#$(PIP) install -r requirements/dev.txt
-	$(PIP) install -r requirements.txt
+	$(PIP) install -r requirements/dev.txt
 
 
 # this only works outside the venv
