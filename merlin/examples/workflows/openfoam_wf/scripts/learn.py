@@ -1,11 +1,11 @@
 import argparse
 
 import numpy as np
+
+import matplotlib.pyplot as plt
 from joblib import dump
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
-
-import matplotlib.pyplot as plt
 
 
 descript = """Using parameters to edit OpenFOAM parameters"""

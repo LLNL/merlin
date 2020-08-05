@@ -399,6 +399,7 @@ def define_tests():
     restart = "merlin restart"
     purge = "merlin purge"
     examples = "merlin/examples/workflows"
+    dev_examples = "merlin/examples/dev_workflows"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
     demo_pgen = f"{examples}/feature_demo/scripts/pgen.py"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
@@ -420,7 +421,7 @@ def define_tests():
             "local",
         ),
         "local minimum_format": (
-            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/minimum_format.yaml --local",
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../{dev_examples}/minimum_format.yaml --local",
             StepFileExistsCond(
                 "step1", "MERLIN_FINISHED", "minimum_format", OUTPUT_DIR, params=False,
             ),
