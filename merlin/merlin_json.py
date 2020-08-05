@@ -11,9 +11,9 @@ from maestrowf.datastructures.core.study import StudyStep
 from maestrowf.datastructures.environment import Variable
 
 from merlin.common.sample_index import SampleIndex
+from merlin.common.tasks import merlin_step
 from merlin.study.dag import MerlinDAG
 from merlin.study.step import MerlinStep
-from merlin.common.tasks import merlin_step
 
 
 MAESTRO_ENUMS = {
