@@ -1,9 +1,9 @@
 import argparse
 import datetime
-import re
-import subprocess
 import glob
 import os
+import re
+import subprocess
 import sys
 
 
@@ -16,6 +16,7 @@ args = parser.parse_args()
 
 args.logfile = glob.glob(os.path.join(args.path, "*.log"))
 args.errfile = glob.glob(os.path.join(args.path, "*.err"))
+
 
 def single_task_times():
     task_durations = []
@@ -42,9 +43,9 @@ def single_task_times():
 def merlin_run_time():
     total = 0
     for err in args.errfile:
-        pre_line = subprocess.check_output(
-            f'grep "real" {err}', shell=True
-        ).decode("ascii")
+        pre_line = subprocess.check_output(f'grep "real" {err}', shell=True).decode(
+            "ascii"
+        )
         pre_line = pre_line.strip()
         matches = re.search(r"\d\.\d\d\d", pre_line)
         match = matches[0]
@@ -78,9 +79,9 @@ def start_run_workers_time():
     all_timestamps = []
     for log in args.logfile:
         try:
-            pre_line = subprocess.check_output(
-                f'grep -m1 "" {log}', shell=True
-            ).decode("ascii")
+            pre_line = subprocess.check_output(f'grep -m1 "" {log}', shell=True).decode(
+                "ascii"
+            )
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
             match = matches[0]

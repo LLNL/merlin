@@ -638,6 +638,13 @@ def define_tests():
         #     ReturnCodeCond(),
         #     "local",
         # ),
+        # "black check merlin": (f"{black} merlin/", ReturnCodeCond(), "local"),
+        # "black check tests": (f"{black} tests/", ReturnCodeCond(), "local"),
+        "deplic no GNU": (
+            f"deplic ./",
+            [RegexCond("GNU", negate=True), RegexCond("GPL", negate=True)],
+            "local",
+        ),
         "distributed feature_demo": (
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
             [
@@ -656,13 +663,6 @@ def define_tests():
                     params=True,
                 ),
             ],
-        ),
-        # "black check merlin": (f"{black} merlin/", ReturnCodeCond(), "local"),
-        # "black check tests": (f"{black} tests/", ReturnCodeCond(), "local"),
-        "deplic no GNU": (
-            f"deplic ./",
-            [RegexCond("GNU", negate=True), RegexCond("GPL", negate=True)],
-            "local",
         ),
     }
 

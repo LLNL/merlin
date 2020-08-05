@@ -1,7 +1,7 @@
 import argparse
 import os
-import socket
 import shutil
+import socket
 import subprocess
 
 
@@ -11,7 +11,7 @@ parser.add_argument("output_path", type=str, help="the output path")
 parser.add_argument("spec_path", type=str, help="path to the spec to run")
 parser.add_argument("script_path", type=str, help="path to the make samples script")
 args = parser.parse_args()
- 
+
 machine = socket.gethostbyaddr(socket.gethostname())[0]
 if "quartz" in machine:
     machine = "quartz"
@@ -23,9 +23,9 @@ submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 # concurrencies = [2**4, 2**5, 2**6, 2**7]
 # nodes = [1, 1, 2, 4]
 # samples = [10**1, 10**2, 10**3, 10**4, 10**5, 10**6]
-concurrencies = [2**7]
+concurrencies = [2 ** 7]
 nodes = [4]
-samples = [10**6]
+samples = [10 ** 6]
 output_path = os.path.join(args.output_path, f"run_{args.run_id}")
 os.makedirs(output_path, exist_ok=True)
 for i, concurrency in enumerate(concurrencies):
@@ -40,7 +40,7 @@ for i, concurrency in enumerate(concurrencies):
         os.chdir(s_name)
         os.mkdir("scripts")
         samp_per_worker = float(sample) / float(concurrency)
-        #if (samp_per_worker / 60) > times[j]:
+        # if (samp_per_worker / 60) > times[j]:
         #    print(f"c{concurrency}_s{sample} : {round(samp_per_worker / 60, 0)}m.\ttime: {times[j]}m.\tdiff: {round((samp_per_worker / 60) - times[j], 0)}m")
         if (samp_per_worker / 60) < 1.0:
             real_time = 4
