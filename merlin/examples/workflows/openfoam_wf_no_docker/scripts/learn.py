@@ -1,8 +1,7 @@
 import argparse
 
-import numpy as np
-
 import matplotlib.pyplot as plt
+import numpy as np
 from joblib import dump
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
