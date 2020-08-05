@@ -32,7 +32,9 @@ import logging
 import re
 from contextlib import suppress
 from copy import deepcopy
+from datetime import datetime
 
+from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
 
@@ -53,16 +55,16 @@ class MerlinStepRecord(_StepRecord):
 
     def mark_submitted(self):
         """Mark the submission time of the record."""
-        LOGGER.debug(
+        LOG.debug(
             "Marking %s as submitted (PENDING) -- previously %s",
             self.name,
             self.status)
         self.status = State.PENDING
         if not self._submit_time:
-            self._submit_time = round_datetime_seconds(datetime.now())
+            self._submit_time = datetime.now()
         else:
-            LOGGER.debug(
-                "Cannot set the submission time of '%s' because it has "
+            LOG.debug(
+                 "Merlin: Cannot set the submission time of '%s' because it has "
                 "already been set.", self.name
             )
 
