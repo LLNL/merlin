@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.1.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -34,7 +34,7 @@ from copy import deepcopy
 from os.path import expanduser, expandvars
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.spec.override import dump_with_overrides, error_override_vars
+from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import contains_shell_ref, contains_token
 
@@ -230,8 +230,8 @@ def expand_spec_no_study(filepath, override_vars=None):
     """
     error_override_vars(override_vars, filepath)
     spec = MerlinSpec.load_specification(filepath)
-    full_spec = dump_with_overrides(spec, override_vars)
-    spec = MerlinSpec.load_spec_from_string(full_spec)
+    spec.environment = replace_override_vars(spec.environment, override_vars)
+    spec_text = spec.dump()
 
     uvars = []
     if "variables" in spec.environment:
@@ -240,7 +240,7 @@ def expand_spec_no_study(filepath, override_vars=None):
         uvars.append(spec.environment["labels"])
     evaluated_uvars = determine_user_variables(*uvars)
 
-    return expand_by_line(full_spec, evaluated_uvars)
+    return expand_by_line(spec_text, evaluated_uvars)
 
 
 def get_spec_with_expansion(filepath, override_vars=None):

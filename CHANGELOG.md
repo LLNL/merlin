@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Task serialization is now done with json instead of pickle. This grants security advantages.
+- Improved internal logic beyond the crude fixes of the previous 2 patches.
+- Added developer cli tests for the minimum valid spec format.
+
+## [1.7.3]
+
+### Fixed
+- Completed 1.7.2 fix for `merlin run-workers`.
+
+## [1.7.2]
+
+### Fixed
+- Fatal bug triggered by a spec missing the `env` or `global.parameters` sections.
 
 ## [1.7.1]
 

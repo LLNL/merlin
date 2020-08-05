@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.1.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -49,7 +49,7 @@ from merlin.spec.expansion import (
     expand_env_vars,
     expand_line,
 )
-from merlin.spec.override import dump_with_overrides, error_override_vars
+from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import MerlinDAG
 from merlin.utils import (
@@ -169,13 +169,17 @@ class MerlinStudy:
         Useful for provenance.
         """
         # get specification including defaults and cli-overridden user variables
-        full_spec_text = dump_with_overrides(self.original_spec, self.override_vars)
-        new_spec = MerlinSpec.load_spec_from_string(full_spec_text)
+        new_env = replace_override_vars(
+            self.original_spec.environment, self.override_vars
+        )
+        new_spec = deepcopy(self.original_spec)
+        new_spec.environment = new_env
 
         # expand user variables
         new_spec_text = expand_by_line(
             new_spec.dump(), MerlinStudy.get_user_vars(new_spec)
         )
+
         # expand reserved words
         new_spec_text = expand_by_line(new_spec_text, self.special_vars)
 

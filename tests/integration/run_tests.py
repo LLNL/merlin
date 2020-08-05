@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.1.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -399,6 +399,7 @@ def define_tests():
     restart = "merlin restart"
     purge = "merlin purge"
     examples = "merlin/examples/workflows"
+    dev_examples = "merlin/examples/dev_workflows"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
     demo_pgen = f"{examples}/feature_demo/scripts/pgen.py"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
@@ -417,6 +418,28 @@ def define_tests():
         "merlin config": (
             f"merlin config -o {config_dir}; rm -rf {config_dir}",
             ReturnCodeCond(),
+            "local",
+        ),
+        "local minimum_format": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../{dev_examples}/minimum_format.yaml --local",
+            StepFileExistsCond(
+                "step1", "MERLIN_FINISHED", "minimum_format", OUTPUT_DIR, params=False,
+            ),
+            "local",
+        ),
+        "local no_description": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/no_description.yaml --local",
+            ReturnCodeCond(1),
+            "local",
+        ),
+        "local no_steps": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/no_steps.yaml --local",
+            ReturnCodeCond(1),
+            "local",
+        ),
+        "local no_study": (
+            f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../merlin/examples/dev_workflows/no_study.yaml --local",
+            ReturnCodeCond(1),
             "local",
         ),
         "run-workers echo simple_chain": (

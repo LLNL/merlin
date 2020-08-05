@@ -1,0 +1,5 @@
+description:
+    name: no_steps
+    description: a spec that should break because there are no steps
+
+study:
