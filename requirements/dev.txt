@@ -1,9 +1,9 @@
 # Development dependencies.
 black
-dep-license
+#dep-license
 flake8
 isort
 pytest
 twine
-sphinx>=2.0.0
-alabaster
+#sphinx>=2.0.0
+#alabaster
