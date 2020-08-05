@@ -43,6 +43,30 @@ from merlin.study.script_adapter import MerlinScriptAdapter
 LOG = logging.getLogger(__name__)
 
 
+class MerlinStepRecord(_StepRecord):
+    """
+    This classs is a wrapper for the Maestro _StepRecord to remove 
+    a re-submit message.
+    """
+    def __init__(self, workspace, step, **kwargs):
+        _StepRecord.__init__(self, workspace, step, **kwargs)
+
+    def mark_submitted(self):
+        """Mark the submission time of the record."""
+        LOGGER.debug(
+            "Marking %s as submitted (PENDING) -- previously %s",
+            self.name,
+            self.status)
+        self.status = State.PENDING
+        if not self._submit_time:
+            self._submit_time = round_datetime_seconds(datetime.now())
+        else:
+            LOGGER.debug(
+                "Cannot set the submission time of '%s' because it has "
+                "already been set.", self.name
+            )
+
+    
 class Step:
     """
     This class provides an abstraction for an execution step, which can be
@@ -104,7 +128,7 @@ class Step:
         study_step.name = step_dict["name"]
         study_step.description = step_dict["description"]
         study_step.run = step_dict["run"]
-        return Step(_StepRecord(new_workspace, study_step))
+        return Step(MerlinStepRecord(new_workspace, study_step))
 
     def get_task_queue(self):
         """ Retrieve the task queue for the Step."""
