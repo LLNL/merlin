@@ -14,8 +14,17 @@ parser.add_argument("c", type=int, help="concurrency")
 parser.add_argument("s", type=int, help="n of samples")
 args = parser.parse_args()
 
-args.logfile = glob.glob(os.path.join(args.path, "*.log"))
-args.errfile = glob.glob(os.path.join(args.path, "*.err"))
+logpattern = os.path.join(args.path, "*.log")
+errpattern = os.path.join(args.path, "*.err")
+args.logfile = glob.glob(logpattern)
+args.errfile = glob.glob(errpattern)
+
+if len(args.logfile) == 0:
+    print(f"{logpattern} returned no glob matches!")
+    sys.exit()
+if len(args.errfile) == 0:
+    print(f"{errpattern} returned no glob matches!")
+    sys.exit()
 
 
 def single_task_times():
@@ -51,8 +60,11 @@ def merlin_run_time():
         match = matches[0]
         result = float(match)
         total += result
-    print(f"c{args.c}_s{args.s} merlin run : " + str(result))
-
+    try:
+        print(f"c{args.c}_s{args.s} merlin run : " + str(result))
+    except:
+        result = None
+        print(f"c{args.c}_s{args.s} merlin run : ERROR -- result={result}, args.errfile={args.errfile}")
 
 def start_verify_time():
     all_timestamps = []
