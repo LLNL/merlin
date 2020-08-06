@@ -20,12 +20,18 @@ elif "pascal" in machine:
 
 # launch 35 merlin workflow jobs
 submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
+concurrencies = [2**0, 2**1, 2**2, 2**3]
+nodes = [1, 1, 1, 1]
+samples = [10**1, 10**2, 10**3, 10**4]
+
 # concurrencies = [2**4, 2**5, 2**6, 2**7]
 # nodes = [1, 1, 2, 4]
 # samples = [10**1, 10**2, 10**3, 10**4, 10**5, 10**6]
-concurrencies = [2 ** 7]
-nodes = [4]
-samples = [10 ** 6]
+
+# concurrencies = [2 ** 7]
+# nodes = [4]
+# samples = [10 ** 6]
+
 output_path = os.path.join(args.output_path, f"run_{args.run_id}")
 os.makedirs(output_path, exist_ok=True)
 for i, concurrency in enumerate(concurrencies):
