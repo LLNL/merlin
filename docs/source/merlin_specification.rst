@@ -290,4 +290,3 @@ see :doc:`./merlin_variables`.
       generate:
         cmd: |
         python $(SPECROOT)/make_samples.py -dims 2 -n 10 -outfile=$(INPUT_PATH)/samples.npy "[(1.3, 1.3, 'linear'), (3.3, 3.3, 'linear')]"
-      level_max_dirs: 25

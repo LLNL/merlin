@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.3.
+# This file is part of Merlin, Version: 1.6.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -214,9 +214,6 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
     yenv = None
     if senv:
         yenv = get_yaml_var(senv, "variables", {})
-        # TODO fix logic in specification.py
-        if yenv is None:
-            yenv = {}
         for k, v in yenv.items():
             spenv[str(k)] = str(v)
             # For expandvars

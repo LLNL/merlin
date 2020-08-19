@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.3.
+# This file is part of Merlin, Version: 1.6.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -129,20 +129,21 @@ def get_config(path):
     return config
 
 
-def load_default_celery(config):
+def load_default_timeout(config):
+    seconds = 60 * 60 * 24
     try:
         config["celery"]
     except KeyError:
         config["celery"] = {}
     try:
-        config["celery"]["override"]
+        config["celery"]["visibility_timeout_seconds"]
     except KeyError:
-        config["celery"]["override"] = None
+        config["celery"]["visibility_timeout_seconds"] = seconds
 
 
 def load_defaults(config):
     load_default_user_names(config)
-    load_default_celery(config)
+    load_default_timeout(config)
 
 
 def is_debug():
@@ -245,7 +246,6 @@ def get_ssl_entries(server_type, server_name, server_config, cert_path):
             "keyfile": "ssl_keyfile",
             "certfile": "ssl_certfile",
             "ca_certs": "ssl_ca_certs",
-            "cert_reqs": "ssl_cert_reqs",
         }
 
     # The mysql server requires key names with ssl_ and different var names
