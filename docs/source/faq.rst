@@ -377,6 +377,24 @@ num resource set: Number of resource sets
 launch_distribution : The distribution of resources (default: plane:{procs/nodes})
 lsf: Verbatim flags only for the lsf parallel launch (jsrun ... <lsf>)
 
+What is level_max_dirs?
+~~~~~~~~~~~~~~~~~~~~~~~
+``level_max_dirs`` is an optional field that goes under the ``merlin.samples`` section
+of a yaml spec. It caps the number of sample directories that can be generated
+at a single level of a study's sample hierarchy. This is useful for getting around
+filesystem constraints when working with massive amounts of data.
+
+Defaults to 25.
+
+What is pgen?
+~~~~~~~~~~~~~
+``pgen`` stands for "parameter generator". It's a way to override the parameters in the
+``global.parameters`` spec section, instead generating them programatically with a python script.
+Merlin offers the same pgen functionality as Maestro.
+
+See `this guide <https://maestrowf.readthedocs.io/en/latest/parameters.html#parameter-generator-pgen>`_ for details on using ``pgen``.
+It's a Maestro doc, but the exact same flags can be used in conjunction with ``merlin run``.
+
 Where can I learn more about merlin?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Check out `our paper <https://arxiv.org/abs/1912.02892>`_ on arXiv.

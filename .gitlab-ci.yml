@@ -1,0 +1,19 @@
+image: python:3.8-slim-buster
+
+job1:
+    script:
+        - python3 -m venv venv
+        - source venv/bin/activate
+        - pip3 install --upgrade pip
+        - pip3 install -r requirements.txt
+        - pip3 install -r requirements/dev.txt
+        - pip3 install -r merlin/examples/workflows/feature_demo/requirements.txt
+        - pip3 install -e .
+        - pip3 install --upgrade sphinx
+        - merlin config
+        
+        - merlin stop-workers
+
+        - python3 -m pytest tests/
+        - python3 tests/integration/run_tests.py --verbose --local
+

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.2.
+# This file is part of Merlin, Version: 1.7.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -34,7 +34,8 @@ Manages formatting for displaying information to the console.
 import pprint
 import subprocess
 import time
-from multiprocessing import Process
+import traceback
+from multiprocessing import Pipe, Process
 
 from kombu import Connection
 from tabulate import tabulate
@@ -42,6 +43,28 @@ from tabulate import tabulate
 from merlin.ascii_art import banner_small
 from merlin.config import broker, results_backend
 from merlin.config.configfile import default_config_info
+
+
+class ConnProcess(Process):
+    def __init__(self, *args, **kwargs):
+        Process.__init__(self, *args, **kwargs)
+        self._pconn, self._cconn = Pipe()
+        self._exception = None
+
+    def run(self):
+        try:
+            Process.run(self)
+            self._cconn.send(None)
+        except Exception as e:
+            tb = traceback.format_exc()
+            self._cconn.send((e, tb))
+            # raise e  # You can still rise this exception if you need to
+
+    @property
+    def exception(self):
+        if self._pconn.poll():
+            self._exception = self._pconn.recv()
+        return self._exception
 
 
 def check_server_access(sconf):
@@ -57,7 +80,7 @@ def check_server_access(sconf):
         if s in sconf:
             try:
                 conn = Connection(sconf[s])
-                conn_check = Process(target=conn.connect)
+                conn_check = ConnProcess(target=conn.connect)
                 conn_check.start()
                 counter = 0
                 while conn_check.is_alive():
@@ -69,10 +92,14 @@ def check_server_access(sconf):
                             f"Connection was killed due to timeout ({connect_timeout}s)"
                         )
                 conn.release()
-                print(f"{s} connection: OK")
+                if conn_check.exception:
+                    error, traceback = conn_check.exception
+                    raise error
             except Exception as e:
                 print(f"{s} connection: Error")
                 excpts[s] = e
+            else:
+                print(f"{s} connection: OK")
 
     if excpts:
         print("\nExceptions:")
