@@ -30,11 +30,9 @@ for c in concurrencies:
         nodes.append(1)
 
 # concurrencies = [2**4, 2**5, 2**6, 2**7]
-# nodes = [1, 1, 2, 4]
 # samples = [10**1, 10**2, 10**3, 10**4, 10**5, 10**6]
 
 # concurrencies = [2 ** 3]
-# nodes = [1]
 # samples = [10 ** 5]
 
 output_path = os.path.join(args.output_path, f"run_{args.run_id}")
