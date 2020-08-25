@@ -45,11 +45,6 @@ for sample in samples:
 sample = samples[0]
 total_time = sum(real_times)
 
-#print(real_times)
-#print(total_time)
-#import sys
-#sys.exit()
-
 if machine == "quartz":
     account = "lbpm"
     partition = "pdebug"
@@ -69,6 +64,6 @@ os.mkdir("scripts")
 submit = "submit_chain.sbatch"
 command = f"sbatch -J c{concurrency}r{args.run_id}_chain --time {total_time} -N {nodes} -p {partition} -A {account} {submit} {sample} {int(concurrency/nodes)} {args.run_id} {concurrency}"
 shutil.copyfile(os.path.join(submit_path, submit), submit)
-shutil.copyfile(args.spec_path, "spec.yaml")
+shutil.copyfile(args.spec_path, "null_chain.yaml")
 shutil.copyfile(args.script_path, os.path.join("scripts", "make_samples.py"))
 lines = subprocess.check_output(command, shell=True).decode("ascii")
