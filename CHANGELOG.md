@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Users will no longer see the message, "Cannot set the submission time of '<step name>'
   because it has already been set", when tasks are restarted.
+- Bug causing `merlin restart` to break.
 
 ### Changed
 - Improved internal logic beyond the crude fixes of the prior 2 patches.
