@@ -12,9 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bug causing `merlin restart` to break.
 
 ### Changed
-- Improved internal logic beyond the crude fixes of the previous 2 patches.
+- Improved internal logic beyond the crude fixes of the prior 2 patches.
 - Added a developer cli test for the minimum valid spec format.
-- Improvements to the `null_spec` example, used for measuring overhead in merlin.
+- Improvements to the `null_spec` example, used for measuring overhead in merlin. Includes
+  a new `null_chain` and removes the now-redundant `sim_spec`.
 
 ## [1.7.3]
 

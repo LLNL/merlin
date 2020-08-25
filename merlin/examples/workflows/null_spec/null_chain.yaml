@@ -1,6 +1,9 @@
 description:
-    name: null_spec
-    description: run N_SAMPLES null steps at CONC concurrency for TIME seconds each. May be used to measure overhead in merlin.
+    name: null_chain
+    description: |
+        Run N_SAMPLES steps of TIME seconds each at CONC concurrency.
+        May be used to measure overhead in merlin.
+        Iterates thru a chain of workflows.
 
 batch:
     type: slurm
@@ -9,7 +12,8 @@ env:
     variables:
         OUTPUT_PATH: ./
         TIME: 1
-        N_SAMPLES: 10
+        N_SAMPLES: 1
+        MAX_SAMPLES: 100000
         CONC: 1
         RUN_ID: 0
         N_WORK: 0
@@ -31,6 +35,21 @@ study:
       run:
         cmd: echo "Done"
         depends: [null_step_*]
+        task_queue: $(QUEUE)
+
+    - name: launch_next
+      description: launch this workflow with different args
+      run:
+        cmd: |
+            NEXT_SAMPLES=$(($(N_SAMPLES)*10))
+            if ((NEXT_SAMPLES <= $(MAX_SAMPLES))) ; then
+                echo "Starting next iteration"
+                cd $(MERLIN_WORKSPACE)/../
+                merlin run $(SPECROOT)/null_chain.yaml --vars N_SAMPLES=$NEXT_SAMPLES CONC=$(CONC) RUN_ID=$(RUN_ID) N_WORK=$(N_WORK) QUEUE=$(QUEUE) TIME=$(TIME) MAX_SAMPLES=$(MAX_SAMPLES)
+            else
+                echo "Chain complete"
+            fi
+        depends: [verify]
         task_queue: $(QUEUE)
 
 merlin:
