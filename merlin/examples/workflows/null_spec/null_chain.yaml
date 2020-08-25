@@ -42,10 +42,10 @@ study:
       run:
         cmd: |
             NEXT_SAMPLES=$(($(N_SAMPLES)*10))
-            if ((NEXT_SAMPLES <= 10000)) ; then
+            if ((NEXT_SAMPLES <= $(MAX_SAMPLES))) ; then
                 echo "Starting next iteration"
                 cd $(MERLIN_WORKSPACE)/../
-                merlin run $(SPECROOT)/null_chain.yaml --local --vars N_SAMPLES=$NEXT_SAMPLES CONC=$(CONC) RUN_ID=$(RUN_ID) N_WORK=$(N_WORK)
+                merlin run $(SPECROOT)/spec.yaml --vars N_SAMPLES=$NEXT_SAMPLES CONC=$(CONC) RUN_ID=$(RUN_ID) N_WORK=$(N_WORK) QUEUE=$(QUEUE)
             else
                 echo "Chain complete"
             fi
