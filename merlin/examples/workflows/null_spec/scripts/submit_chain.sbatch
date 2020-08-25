@@ -22,4 +22,4 @@ merlin run-workers ${YAML_FILE} --echo --vars N_SAMPLES=$1 CONC=$2 RUN_ID=$3 N_W
 merlin run-workers ${YAML_FILE} --vars N_SAMPLES=$1 CONC=$2 RUN_ID=$3 N_WORK=$4 QUEUE=queue_c${4}_r${3}_chain
 
 sleep inf
-#merlin monitor ${YAML_FILE} --vars N_SAMPLES=$1 CONC=$2 RUN_ID=$3 N_WORK=$4
+#merlin monitor ${YAML_FILE} --vars N_SAMPLES=$1 CONC=$2 RUN_ID=$3 N_WORK=$4 QUEUE=queue_c${4}_r${3}_chain
