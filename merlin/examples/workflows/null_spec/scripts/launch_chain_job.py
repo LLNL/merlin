@@ -27,7 +27,7 @@ if concurrency > 32:
     nodes = int(concurrency/32)
 else:
     nodes = 1
-samples = [1, 10, 100, 1000, 10000]
+samples = [1, 10, 100, 1000, 10000, 100000]
 
 # calculate estimated total time, including all samples
 real_times = []
@@ -51,10 +51,10 @@ if machine == "quartz":
 elif machine == "pascal":
     account = "wbronze"
     partition = "pvis"
-if real_time > 60:
+if total_time > 60:
     partition = "pbatch"
-if real_time > 1440:
-    real_time = 1440
+if total_time > 1440:
+    total_time = 1440
 
 output_path = os.path.join(args.output_path, f"run_{args.run_id}")
 os.makedirs(output_path, exist_ok=True)

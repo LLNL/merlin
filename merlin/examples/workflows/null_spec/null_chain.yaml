@@ -13,7 +13,7 @@ env:
         OUTPUT_PATH: ./
         TIME: 1
         N_SAMPLES: 1
-        MAX_SAMPLES: 10000
+        MAX_SAMPLES: 100000
         CONC: 1
         RUN_ID: 0
         N_WORK: 0
@@ -45,7 +45,7 @@ study:
             if ((NEXT_SAMPLES <= $(MAX_SAMPLES))) ; then
                 echo "Starting next iteration"
                 cd $(MERLIN_WORKSPACE)/../
-                merlin run $(SPECROOT)/null_chain.yaml --vars N_SAMPLES=$NEXT_SAMPLES CONC=$(CONC) RUN_ID=$(RUN_ID) N_WORK=$(N_WORK) QUEUE=$(QUEUE) TIME=$(TIME)
+                merlin run $(SPECROOT)/null_chain.yaml --vars N_SAMPLES=$NEXT_SAMPLES CONC=$(CONC) RUN_ID=$(RUN_ID) N_WORK=$(N_WORK) QUEUE=$(QUEUE) TIME=$(TIME) MAX_SAMPLES=$(MAX_SAMPLES)
             else
                 echo "Chain complete"
             fi
