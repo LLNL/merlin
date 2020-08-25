@@ -11,7 +11,7 @@ parser.add_argument("concurrency", type=int, help="The concurrency of this chain
 parser.add_argument("output_path", type=str, help="the output path")
 parser.add_argument("spec_path", type=str, help="path to the spec to run")
 parser.add_argument("script_path", type=str, help="path to the make samples script")
-parser.add_argument("--null", action="store_true", help="path to the make samples script")
+parser.add_argument("seconds", type=int, default=1, help="n seconds to wait per sim")
 args = parser.parse_args()
 
 machine = socket.gethostbyaddr(socket.gethostname())[0]
@@ -62,7 +62,7 @@ os.chdir(output_path)
 os.mkdir("scripts")
 
 submit = "submit_chain.sbatch"
-command = f"sbatch -J c{concurrency}r{args.run_id}_chain --time {total_time} -N {nodes} -p {partition} -A {account} {submit} {sample} {int(concurrency/nodes)} {args.run_id} {concurrency}"
+command = f"sbatch -J c{concurrency}r{args.run_id}_chain --time {total_time} -N {nodes} -p {partition} -A {account} {submit} {sample} {int(concurrency/nodes)} {args.run_id} {concurrency} {args.seconds}"
 shutil.copyfile(os.path.join(submit_path, submit), submit)
 shutil.copyfile(args.spec_path, "null_chain.yaml")
 shutil.copyfile(args.script_path, os.path.join("scripts", "make_samples.py"))
