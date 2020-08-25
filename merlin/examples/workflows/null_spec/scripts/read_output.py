@@ -64,7 +64,10 @@ def merlin_run_time():
         print(f"c{args.c}_s{args.s} merlin run : " + str(result))
     except:
         result = None
-        print(f"c{args.c}_s{args.s} merlin run : ERROR -- result={result}, args.errfile={args.errfile}")
+        print(
+            f"c{args.c}_s{args.s} merlin run : ERROR -- result={result}, args.errfile={args.errfile}"
+        )
+
 
 def start_verify_time():
     all_timestamps = []

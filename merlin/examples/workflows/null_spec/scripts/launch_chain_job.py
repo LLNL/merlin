@@ -24,7 +24,7 @@ elif "pascal" in machine:
 submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
 concurrency = int(args.concurrency)
 if concurrency > 32:
-    nodes = int(concurrency/32)
+    nodes = int(concurrency / 32)
 else:
     nodes = 1
 samples = [1, 10, 100, 1000, 10000, 100000]

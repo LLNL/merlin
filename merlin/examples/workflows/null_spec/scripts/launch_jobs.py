@@ -20,12 +20,12 @@ elif "pascal" in machine:
 
 # launch n_samples * n_conc merlin workflow jobs
 submit_path = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
-concurrencies = [2**0, 2**1, 2**2, 2**3, 2**4, 2**5, 2**6]
-samples = [10**1, 10**2, 10**3, 10**4, 10**5]
+concurrencies = [2 ** 0, 2 ** 1, 2 ** 2, 2 ** 3, 2 ** 4, 2 ** 5, 2 ** 6]
+samples = [10 ** 1, 10 ** 2, 10 ** 3, 10 ** 4, 10 ** 5]
 nodes = []
 for c in concurrencies:
     if c > 32:
-        nodes.append(int(c/32))
+        nodes.append(int(c / 32))
     else:
         nodes.append(1)
 
