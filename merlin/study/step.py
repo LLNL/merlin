@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.3.
+# This file is part of Merlin, Version: 1.7.4.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -32,7 +32,9 @@ import logging
 import re
 from contextlib import suppress
 from copy import deepcopy
+from datetime import datetime
 
+from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
 
@@ -41,6 +43,31 @@ from merlin.study.script_adapter import MerlinScriptAdapter
 
 
 LOG = logging.getLogger(__name__)
+
+
+class MerlinStepRecord(_StepRecord):
+    """
+    This classs is a wrapper for the Maestro _StepRecord to remove 
+    a re-submit message.
+    """
+
+    def __init__(self, workspace, step, **kwargs):
+        _StepRecord.__init__(self, workspace, step, **kwargs)
+
+    def mark_submitted(self):
+        """Mark the submission time of the record."""
+        LOG.debug(
+            "Marking %s as submitted (PENDING) -- previously %s", self.name, self.status
+        )
+        self.status = State.PENDING
+        if not self._submit_time:
+            self._submit_time = datetime.now()
+        else:
+            LOG.debug(
+                "Merlin: Cannot set the submission time of '%s' because it has "
+                "already been set.",
+                self.name,
+            )
 
 
 class Step:
@@ -104,7 +131,7 @@ class Step:
         study_step.name = step_dict["name"]
         study_step.description = step_dict["description"]
         study_step.run = step_dict["run"]
-        return Step(_StepRecord(new_workspace, study_step))
+        return Step(MerlinStepRecord(new_workspace, study_step))
 
     def get_task_queue(self):
         """ Retrieve the task queue for the Step."""

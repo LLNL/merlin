@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.3.
+# This file is part of Merlin, Version: 1.7.4.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -131,8 +131,20 @@ class MerlinSpec(YAMLSpecification):
         return merlin_block
 
     def process_spec_defaults(self):
+        for name, section in self.sections.items():
+            if section is None:
+                setattr(self, name, {})
+
         # fill in missing batch section defaults
         MerlinSpec.fill_missing_defaults(self.batch, defaults.BATCH["batch"])
+
+        # fill in missing env section defaults
+        MerlinSpec.fill_missing_defaults(self.environment, defaults.ENV["env"])
+
+        # fill in missing global parameter section defaults
+        MerlinSpec.fill_missing_defaults(
+            self.globals, defaults.PARAMETER["global.parameters"]
+        )
 
         # fill in missing step section defaults within 'run'
         defaults.STUDY_STEP_RUN["shell"] = self.batch["shell"]
@@ -162,7 +174,9 @@ class MerlinSpec(YAMLSpecification):
             if not isinstance(defaults, dict):
                 return
             for key, val in defaults.items():
-                if key not in result:
+                if (key not in result) or (
+                    (result[key] is None) and (defaults[key] is not None)
+                ):
                     result[key] = val
                 else:
                     recurse(result[key], val)

@@ -1,0 +1,5 @@
+study:
+    - name: step1
+      description: step 1
+      run:
+         cmd: echo "test"

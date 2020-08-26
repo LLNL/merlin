@@ -4,6 +4,19 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4]
+
+### Fixed
+- Users will no longer see the message, "Cannot set the submission time of '<step name>'
+  because it has already been set", when tasks are restarted.
+- Bug causing `merlin restart` to break.
+
+### Changed
+- Improved internal logic beyond the crude fixes of the prior 2 patches.
+- Added a developer cli test for the minimum valid spec format.
+- Improvements to the `null_spec` example, used for measuring overhead in merlin. Includes
+  a new `null_chain` and removes the now-redundant `sim_spec`.
+
 ## [1.7.3]
 
 ### Fixed
