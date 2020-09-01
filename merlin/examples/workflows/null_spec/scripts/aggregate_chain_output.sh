@@ -13,7 +13,8 @@ for run in "${runs[@]}"
     LOGS=( $(find $read_path -type f -name "*.log" -maxdepth 1) )
     DATA_DIR=${ALL_DIR}/my_data${r}
     mkdir ${DATA_DIR}
-    cat $read_path/*.log > ${DATA_DIR}/all_nodes.log
+    cat $read_path/*.log > ${DATA_DIR}/extra_lines.log
+    grep '^\[' ${DATA_DIR}/extra_lines.log > ${DATA_DIR}/all_nodes.log
     sort ${DATA_DIR}/all_nodes.log -o ${DATA_DIR}/all_nodes.log
     csplit -f ${DATA_DIR}/split_log_ -z ${DATA_DIR}/all_nodes.log /"Step 'verify' in "/ '{*}'
 
