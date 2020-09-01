@@ -3,16 +3,17 @@
 
 samples=(1 10 100 1000 10000 100000)
 
-orig_read_path=$read_path
 ALL_DIR=all_data
-mkdir ${ALL_DATA}
-runs=( $(find $read_path -type d -name "run_*" -maxdepth 1) )
+mkdir ${ALL_DIR}
+echo "READ_PATH: ${1}"
+runs=( $(find $1 -type d -name "run_*" -maxdepth 1) )
+echo "RUNS: ${runs}"
 for run in "${runs[@]}"
     do
     r=${run: -1}
     read_path="$1/run_${r}"
     LOGS=( $(find $read_path -type f -name "*.log" -maxdepth 1) )
-    DATA_DIR=${ALL_DATA}/my_data${r}
+    DATA_DIR=${ALL_DIR}/my_data${r}
     mkdir ${DATA_DIR}
     # for each log file, split it into sections based on sample
     i=0
@@ -39,11 +40,11 @@ for run in "${runs[@]}"
     s=1
     i=0
     c=$((2**$(($r-1))))
+    echo "${c}"
     python3 read_output_chain.py ${read_path}/ ${DATA_DIR}/ $c >> ${DATA}
     perl -pi -e 's/ : \n/ : /g' ${DATA}
     done
 
-ALL_DATAS=( $(find $orig_read_path -type d -name "my_data*" -maxdepth 1) )
-cat ${orig_read_path}/my_data*/my_data*.yaml > all_data.yaml
-sort all_data.yaml -o all_data.yaml
+cat all_data/my_data*/my_data*.yaml > all_data/all_data.yaml
+sort all_data/all_data.yaml -o all_data/all_data.yaml
 
