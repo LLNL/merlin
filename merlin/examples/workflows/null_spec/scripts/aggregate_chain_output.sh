@@ -45,29 +45,12 @@ c=2 #make this dynamic
     #s=${samples[${i}]}
 #    echo "c${c}_s${s} : " >> ${DATA}
     #wf_path="${chain}/"
-echo "${read_path}"
-python3 read_output_chain.py ${read_path}/ $c >> ${DATA}
+python3 read_output_chain.py ${read_path}/ ${DATA_DIR}/ $c >> ${DATA}
     #s=$(( $s*10 ))
     #i=$(( $i+1 ))
     #done
 #c=$(( $c*2 ))
 
 
-#c=1
-#for chain in "${NULL_CHAINS[@]}"
-#    do
-
-#    wf_path="${chain}/"
-#    echo ${wf_path}
-
-    #s=1
-    #for s in $samples
-    #    do
-    #    echo "c${c}_s${s} : " >> ${DATA}
-    #    wf_path="${chain}/"
-        python3 read_output_chain.py ${wf_path}/ $c >> ${DATA}
-    #    s=$(( $s*10 ))
-    #    done
-    c=$(( $c*2 ))
-#    done
 perl -pi -e 's/ : \n/ : /g' ${DATA}
+sort ${DATA} -o ${DATA}

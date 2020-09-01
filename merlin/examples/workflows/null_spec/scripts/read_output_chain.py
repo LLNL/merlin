@@ -11,14 +11,13 @@ SAMPLES = [1, 10, 100, 1000, 10000, 100000]
 
 # argument parsing
 parser = argparse.ArgumentParser(description="Make some samples (names of people).")
-parser.add_argument("path", type=str, help="path to spec output")
+parser.add_argument("output_path", type=str, help="path to original output")
+parser.add_argument("split_data_path", type=str, help="path to split data")
 parser.add_argument("c", type=int, help="concurrency")
 args = parser.parse_args()
 
-print(args.path)
-
-logpattern = os.path.join(args.path, "split_log_*")
-errpattern = os.path.join(args.path, "*.err")
+logpattern = os.path.join(args.split_data_path, "split_log_*")
+errpattern = os.path.join(args.output_path, "*.err")
 args.logfile = glob.glob(logpattern)
 args.errfile = glob.glob(errpattern)
 
@@ -29,16 +28,24 @@ if len(args.errfile) == 0:
     print(f"{errpattern} returned no glob matches!")
     sys.exit()
 
+#print("LOGS:")
+#for log in args.logfile:
+#    print(log)
+#sys.exit()
+logmap = {}
+i = 1
 for log in args.logfile:
-    print(log)
-sys.exit()
+    if i == 1000000:
+        break
+    logmap[i] = log
+    i *= 10
 
 def single_task_times():
-    task_durations = []
-    for log in args.logfile:
+    for k,v in logmap.items():
+        task_durations = []
         try:
             pre_lines = subprocess.check_output(
-                f'grep " succeeded in " {log}', shell=True
+                f'grep " succeeded in " {v}', shell=True
             ).decode("ascii")
 
             pre_list = pre_lines.strip().split("\n")
@@ -50,13 +57,13 @@ def single_task_times():
                     match = float(match.strip("s:"))
                     task_durations.append(match)
         except:
+            print(f"c{args.c}_s{k} task times : ERROR")
             continue
 
-    #print("c${c}_s${s} :" + str(task_durations))
-    print("c${args.c}_sall :" + str(task_durations))
+        print(f"c{args.c}_s{k} task times : " + str(task_durations))
 
 
-def merlin_run_time(samp):
+def merlin_run_time():
     total = 0
     for err in args.errfile:
         pre_line = subprocess.check_output(f'grep "real" {err}', shell=True).decode(
@@ -68,20 +75,20 @@ def merlin_run_time(samp):
         result = float(match)
         total += result
     try:
-        print(f"c{args.c}_s{samp} merlin run : " + str(result))
+        print(f"c{args.c} merlin run : " + str(result))
     except:
         result = None
         print(
-            f"c{args.c}_s{samp} merlin run : ERROR -- result={result}, args.errfile={args.errfile}"
+            f"c{args.c} merlin run : ERROR -- result={result}, args.errfile={args.errfile}"
         )
 
 
-def start_verify_time(samp):
-    all_timestamps = []
-    for log in args.logfile:
+def start_verify_time():
+    for k,v in logmap.items():
+        all_timestamps = []
         try:
             pre_line = subprocess.check_output(
-                f'grep -m1 "verify" {log}', shell=True
+                f'grep -m2 "verify" {v} | tail -n1', shell=True
             ).decode("ascii")
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
@@ -90,18 +97,19 @@ def start_verify_time(samp):
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
         except:
+            print(f"c{args.c}_s{k} start verify : ERROR")
             continue
         try:
-            print(f"c{args.c}_s{samp} start verify : " + str(all_timestamps[0]))
+            print(f"c{args.c}_s{k} start verify : " + str(all_timestamps[0]))
         except BaseException:
-            print(f"c{args.c}_s{samp} start verify : ERROR")
+            print(f"c{args.c}_s{k} start verify : ERROR")
 
 
-def start_run_workers_time(samp):
-    all_timestamps = []
-    for log in args.logfile:
+def start_run_workers_time():
+    for k,v in logmap.items():
+        all_timestamps = []
         try:
-            pre_line = subprocess.check_output(f'grep -m1 "" {log}', shell=True).decode(
+            pre_line = subprocess.check_output(f'grep -m1 "" {v}', shell=True).decode(
                 "ascii"
             )
             pre_line = pre_line.strip()
@@ -111,17 +119,18 @@ def start_run_workers_time(samp):
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
         except:
+            print(f"c{args.c}_s{k} start run-workers : ERROR")
             continue
-    earliest = min(all_timestamps)
-    print(f"c{args.c}_s{samp} start run-workers : " + str(earliest))
+        earliest = min(all_timestamps)
+        print(f"c{args.c}_s{k} start run-workers : " + str(earliest))
 
 
-def start_sample1_time(samp):
-    all_timestamps = []
-    for log in args.logfile:
+def start_sample1_time():
+    for k,v in logmap.items():
+        all_timestamps = []
         try:
             pre_line = subprocess.check_output(
-                f"grep -m1 \"Executing step 'null_step'\" {log}", shell=True
+                f"grep -m1 \"Executing step 'null_step'\" {v}", shell=True
             ).decode("ascii")
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
@@ -130,18 +139,18 @@ def start_sample1_time(samp):
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
         except:
+            print(f"c{args.c}_s{k} start samp1 : ERROR")
             continue
-    earliest = min(all_timestamps)
-    print(f"c{args.c}_s{samp} start samp1 : " + str(earliest))
+        earliest = min(all_timestamps)
+        print(f"c{args.c}_s{k} start samp1 : " + str(earliest))
 
 
 def main():
-    for samp in SAMPLES:
-        single_task_times()
-        merlin_run_time(samp)
-        start_verify_time(samp)
-        start_run_workers_time(samp)
-        start_sample1_time(samp)
+    single_task_times()
+    merlin_run_time()
+    start_verify_time()
+    start_run_workers_time()
+    start_sample1_time()
 
 
 if __name__ == "__main__":
