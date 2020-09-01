@@ -38,8 +38,9 @@ for log in args.logfile:
     logmap[i] = log
     i *= 10
 
+
 def single_task_times():
-    for k,v in logmap.items():
+    for k, v in logmap.items():
         task_durations = []
         try:
             pre_lines = subprocess.check_output(
@@ -82,7 +83,7 @@ def merlin_run_time():
 
 
 def start_verify_time():
-    for k,v in logmap.items():
+    for k, v in logmap.items():
         all_timestamps = []
         try:
             pre_line = subprocess.check_output(
@@ -104,7 +105,7 @@ def start_verify_time():
 
 
 def start_run_workers_time():
-    for k,v in logmap.items():
+    for k, v in logmap.items():
         all_timestamps = []
         try:
             pre_line = subprocess.check_output(f'grep -m1 "" {v}', shell=True).decode(
@@ -123,7 +124,7 @@ def start_run_workers_time():
 
 
 def start_sample1_time():
-    for k,v in logmap.items():
+    for k, v in logmap.items():
         all_timestamps = []
         try:
             pre_line = subprocess.check_output(
