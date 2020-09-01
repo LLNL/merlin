@@ -16,6 +16,8 @@ parser.add_argument("split_data_path", type=str, help="path to split data")
 parser.add_argument("c", type=int, help="concurrency")
 args = parser.parse_args()
 
+filled_c = str(args.c).zfill(3)
+
 logpattern = os.path.join(args.split_data_path, "split_log_*")
 errpattern = os.path.join(args.output_path, "*.err")
 args.logfile = glob.glob(logpattern)
@@ -28,10 +30,6 @@ if len(args.errfile) == 0:
     print(f"{errpattern} returned no glob matches!")
     sys.exit()
 
-#print("LOGS:")
-#for log in args.logfile:
-#    print(log)
-#sys.exit()
 logmap = {}
 i = 1
 for log in args.logfile:
@@ -57,10 +55,10 @@ def single_task_times():
                     match = float(match.strip("s:"))
                     task_durations.append(match)
         except:
-            print(f"c{args.c}_s{k} task times : ERROR")
+            print(f"c{filled_c}_s{k} task times : ERROR")
             continue
 
-        print(f"c{args.c}_s{k} task times : " + str(task_durations))
+        print(f"c{filled_c}_s{k} task times : " + str(task_durations))
 
 
 def merlin_run_time():
@@ -75,11 +73,11 @@ def merlin_run_time():
         result = float(match)
         total += result
     try:
-        print(f"c{args.c} merlin run : " + str(result))
+        print(f"c{filled_c} merlin run : " + str(result))
     except:
         result = None
         print(
-            f"c{args.c} merlin run : ERROR -- result={result}, args.errfile={args.errfile}"
+            f"c{filled_c} merlin run : ERROR -- result={result}, args.errfile={args.errfile}"
         )
 
 
@@ -97,12 +95,12 @@ def start_verify_time():
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
         except:
-            print(f"c{args.c}_s{k} start verify : ERROR")
+            print(f"c{filled_c}_s{k} start verify : ERROR")
             continue
         try:
-            print(f"c{args.c}_s{k} start verify : " + str(all_timestamps[0]))
+            print(f"c{filled_c}_s{k} start verify : " + str(all_timestamps[0]))
         except BaseException:
-            print(f"c{args.c}_s{k} start verify : ERROR")
+            print(f"c{filled_c}_s{k} start verify : ERROR")
 
 
 def start_run_workers_time():
@@ -119,10 +117,9 @@ def start_run_workers_time():
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
         except:
-            print(f"c{args.c}_s{k} start run-workers : ERROR")
             continue
         earliest = min(all_timestamps)
-        print(f"c{args.c}_s{k} start run-workers : " + str(earliest))
+        print(f"c{filled_c}_s{k} start run-workers : " + str(earliest))
 
 
 def start_sample1_time():
@@ -139,10 +136,10 @@ def start_sample1_time():
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
         except:
-            print(f"c{args.c}_s{k} start samp1 : ERROR")
+            print(f"c{filled_c}_s{k} start samp1 : ERROR")
             continue
         earliest = min(all_timestamps)
-        print(f"c{args.c}_s{k} start samp1 : " + str(earliest))
+        print(f"c{filled_c}_s{k} start samp1 : " + str(earliest))
 
 
 def main():

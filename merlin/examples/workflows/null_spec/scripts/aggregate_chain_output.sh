@@ -5,9 +5,7 @@ samples=(1 10 100 1000 10000 100000)
 
 ALL_DIR=all_data
 mkdir ${ALL_DIR}
-echo "READ_PATH: ${1}"
 runs=( $(find $1 -type d -name "run_*" -maxdepth 1) )
-echo "RUNS: ${runs}"
 for run in "${runs[@]}"
     do
     r=${run: -1}
@@ -15,14 +13,9 @@ for run in "${runs[@]}"
     LOGS=( $(find $read_path -type f -name "*.log" -maxdepth 1) )
     DATA_DIR=${ALL_DIR}/my_data${r}
     mkdir ${DATA_DIR}
-    # for each log file, split it into sections based on sample
-    i=0
-    for log in "${LOGS[@]}"
-        do
-        echo "${log}"
-        csplit -f ${DATA_DIR}/split_log_${i}_ -z ${log} /"Step 'verify' in "/ '{*}'
-        i=$(( $i+1 ))
-        done
+    cat $read_path/*.log > ${DATA_DIR}/all_nodes.log
+    sort ${DATA_DIR}/all_nodes.log -o ${DATA_DIR}/all_nodes.log
+    csplit -f ${DATA_DIR}/split_log_ -z ${DATA_DIR}/all_nodes.log /"Step 'verify' in "/ '{*}'
 
     SPLIT_LOGS=( $(find $DATA_DIR -type f -name "split_log_*_*" -maxdepth 1) )
     #       samples
