@@ -300,7 +300,7 @@ An example of launching a simple celery worker using srun:
 
 .. code:: bash
 
-    $ srun -n 1 celery worker -A merlin -l INFO
+    $ srun -n 1 celery -A merlin worker -l INFO
 
 A parallel batch allocation launch is configured to run a single worker
 process per node. This worker process will then launch a number of worker
