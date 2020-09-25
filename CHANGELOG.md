@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Further improvements to the `null_spec` example.
+- Now requiring Celery version 5.x.
 
 ## [1.7.4]
 

@@ -391,7 +391,7 @@ def define_tests():
     is the test's name, and the value is a tuple
     of (shell command, condition(s) to satisfy).
     """
-    celery_regex = r"(srun\s+.*)?celery\s+worker\s+(-A|--app)\s+merlin\s+.*"
+    celery_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
 
     # shortcut string variables
     workers = "merlin run-workers"
