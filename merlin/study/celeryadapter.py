@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.2.
+# This file is part of Merlin, Version: 1.7.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -362,7 +362,7 @@ def launch_celery_workers(spec, steps=None, worker_args="", just_return_command=
     just_return_command Don't execute, just return the command
     """
     queues = spec.make_queue_string(steps)
-    worker_command = " ".join(["celery worker -A merlin", worker_args, "-Q", queues])
+    worker_command = " ".join(["celery -A merlin worker", worker_args, "-Q", queues])
     if just_return_command:
         return worker_command
     else:

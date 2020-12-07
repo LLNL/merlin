@@ -1,12 +1,20 @@
 description:
     name: null_spec
-    description: run N_SAMPLES null steps at CONC concurrency. May be used to measure overhead in merlin.
+    description: run N_SAMPLES null steps at CONC concurrency for TIME seconds each. May be used to measure overhead in merlin.
+
+batch:
+    type: slurm
 
 env:
     variables:
         OUTPUT_PATH: ./
+        TIME: 1
         N_SAMPLES: 10
         CONC: 1
+        RUN_ID: 0
+        N_WORK: 0
+        QUEUE: queue_s$(N_SAMPLES)_c$(N_WORK)_r$(RUN_ID)
+        WORKER: worker_s$(N_SAMPLES)_c$(N_WORK)_r$(RUN_ID)
 
 study:
     - name: null_step
@@ -14,23 +22,24 @@ study:
       run:
         cmd: |
             #echo $(SAMPLE)
+            sleep $(TIME)
             exit $(MERLIN_SUCCESS)
-        task_queue: queue_s$(N_SAMPLES)_c$(CONC)
+        task_queue: $(QUEUE)
 
     - name: verify
       description: echo done
       run:
         cmd: echo "Done"
         depends: [null_step_*]
-        task_queue: queue_s$(N_SAMPLES)_c$(CONC)
+        task_queue: $(QUEUE)
 
 merlin:
     resources:
         workers:
-            worker_s$(N_SAMPLES)_c$(CONC):
+            $(WORKER):
                 args: -O fair --prefetch-multiplier 1 -E -l info --concurrency $(CONC) --logfile=%%p.log
     samples:
         generate:
-            cmd: for i in {1..$(N_SAMPLES)} ; do echo $i ; done >> $(MERLIN_INFO)/samples.csv
-        file: $(MERLIN_INFO)/samples.csv
+            cmd: python3 $(SPECROOT)/scripts/make_samples.py --number $(N_SAMPLES) --filepath $(MERLIN_INFO)/samples_file.npy
+        file: $(MERLIN_INFO)/samples_file.npy
         column_labels: [SAMPLE]

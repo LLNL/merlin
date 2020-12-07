@@ -94,7 +94,7 @@ can also be used for the celery broker. This method will be called local-redis.
 .. code-block:: bash
 
   # Download redis
-  wget http://download.redis.io/releases/redis-5.0.7.tar.gz
+  wget http://download.redis.io/releases/redis-6.0.5.tar.gz
 
   # Untar
   tar xvf redis*.tar.gz
@@ -361,8 +361,8 @@ server and python.
      mkdir -p ${HOME}/merlinu/cert_redis
      cp result/* ${HOME}/merlinu/cert_redis
 
-The ``redis:6.0-rc2`` docker service is exchanged for the previous
-``redis:latest`` service. The configuration below does not use client
+
+The configuration below does not use client
 verification ``--tls-auth-clients no`` so the ssl files do not need to 
 be defined as shown in the :ref:`broker_redis_ssl` section.
 

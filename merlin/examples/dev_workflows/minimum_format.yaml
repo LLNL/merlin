@@ -1,0 +1,9 @@
+description:
+    name: minimum_format
+    description: a spec that should not break
+
+study:
+    - name: step1
+      description: step 1
+      run:
+         cmd: echo "test"

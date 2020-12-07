@@ -4,6 +4,66 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.5]
+
+### Changed
+- Now requiring Celery version 5.x.
+- Further improvements to the `null_spec` example.
+
+## [1.7.4]
+
+### Fixed
+- Users will no longer see the message, "Cannot set the submission time of '<step name>'
+  because it has already been set", when tasks are restarted.
+- Bug causing `merlin restart` to break.
+
+### Changed
+- Improved internal logic beyond the crude fixes of the prior 2 patches.
+- Added a developer cli test for the minimum valid spec format.
+- Improvements to the `null_spec` example, used for measuring overhead in merlin. Includes
+  a new `null_chain` and removes the now-redundant `sim_spec`.
+
+## [1.7.3]
+
+### Fixed
+- Completed 1.7.2 fix for `merlin run-workers`.
+
+## [1.7.2]
+
+### Fixed
+- Fatal bug triggered by a spec missing the `env` or `global.parameters` sections.
+
+## [1.7.1]
+
+### Added
+- When using the `--samplesfile` flag, the samples file is now copied to `merlin_info` for
+  provenance.
+
+### Fixed
+- Exceptions in connection check sub-process will now be caught.
+
+## [1.7.0]
+
+### Added
+- The ability to override any value of the celery configuration thru `app.yaml` in `celery.override`.
+- Support and faq entry for `pgen` with `merlin run --pgen` and optional `--parg`.
+- Documentation on `level_max_dirs`.
+- Easier-to-read provenance specs.
+- Documentation on the new 3 types of provenance spec.
+
+### Fixed
+- Flux test example data collection for new versions of flux.
+- Fixed Docker ubuntu version.
+- Removed expansion of env variables in shell sections (`cmd` and `restart`) of provenance
+  specs. This allows the shell command itself to expand environment variables, and gives
+  users greater flexibility.
+- Allowed environment variables to be properly expanded in study `description.name`.
+- Tilde (~) now properly expands as part of a path in non-shell sections.
+- The rediss cert_reqs keyword was changed to ssl_cert_reqs.
+
+### Changed
+- Updated tutorial redis version to 6.0.5.
+
 ## [1.6.2]
 
 ### Added

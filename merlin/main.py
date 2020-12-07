@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.2.
+# This file is part of Merlin, Version: 1.7.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -163,12 +163,23 @@ def process_run(args):
     samples_file = None
     if args.samples_file:
         samples_file = verify_filepath(args.samples_file)
+
+    # pgen checks
+    if args.pargs and not args.pgen_file:
+        raise ValueError(
+            "Cannot use the 'pargs' parameter without specifying a 'pgen'!"
+        )
+    if args.pgen_file:
+        verify_filepath(args.pgen_file)
+
     study = MerlinStudy(
         filepath,
         override_vars=variables_dict,
         samples_file=samples_file,
         dry_run=args.dry,
         no_errors=args.no_errors,
+        pgen_file=args.pgen_file,
+        pargs=args.pargs,
     )
     router.run_task_server(study, args.run_mode)
 
@@ -403,6 +414,23 @@ def setup_argparse():
         dest="no_errors",
         default=False,
         help="Flag to ignore some errors for testing.",
+    )
+    run.add_argument(
+        "--pgen",
+        action="store",
+        dest="pgen_file",
+        type=str,
+        default=None,
+        help="Provide a pgen file to override global.parameters.",
+    )
+    run.add_argument(
+        "--pargs",
+        type=str,
+        action="append",
+        default=[],
+        help="A string that represents a single argument to pass "
+        "a custom parameter generation function. Reuse '--parg' "
+        "to pass multiple arguments. [Use with '--pgen']",
     )
 
     # merlin restart

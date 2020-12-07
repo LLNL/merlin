@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.6.2.
+# This file is part of Merlin, Version: 1.7.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -30,10 +30,11 @@
 
 import logging
 from collections import ChainMap
+from copy import deepcopy
 from os.path import expanduser, expandvars
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.spec.override import dump_with_overrides, error_override_vars
+from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import contains_shell_ref, contains_token
 
@@ -75,17 +76,22 @@ def var_ref(string):
     return f"$({string})"
 
 
-def expand_line(line, var_dict):
+def expand_line(line, var_dict, env_vars=False):
     """
-    Expand one line of text by substituting environment
-    and user variables, as well as variables in 'var_dict'.
+    Expand one line of text by substituting user variables, 
+    optionally environment variables, as well as variables in 'var_dict'.
     """
-    line = expandvars(expanduser(line))
-    if not contains_token(line):
+    if (
+        (not contains_token(line))
+        and (not contains_shell_ref(line))
+        and ("~" not in line)
+    ):
         return line
     for key, val in var_dict.items():
         if key in line:
             line = line.replace(var_ref(key), str(val))
+    if env_vars:
+        line = expandvars(expanduser(line))
     return line
 
 
@@ -100,6 +106,33 @@ def expand_by_line(text, var_dict):
         expanded_line = expand_line(line, var_dict)
         result += expanded_line + "\n"
     return result
+
+
+def expand_env_vars(spec):
+    """
+    Expand environment variables for all sections of a spec, except
+    for values with the key 'cmd' or 'restart' (these are executable
+    shell scripts, so environment variable expansion would be redundant).
+    """
+
+    def recurse(section):
+        if section is None:
+            return section
+        if isinstance(section, str):
+            return expandvars(expanduser(section))
+        if isinstance(section, dict):
+            for k, v in section.items():
+                if k in ["cmd", "restart"]:
+                    continue
+                section[k] = recurse(v)
+        elif isinstance(section, list):
+            for i, elem in enumerate(deepcopy(section)):
+                section[i] = recurse(elem)
+        return section
+
+    for name, section in spec.sections.items():
+        setattr(spec, name, recurse(section))
+    return spec
 
 
 def determine_user_variables(*user_var_dicts):
@@ -137,8 +170,7 @@ def determine_user_variables(*user_var_dicts):
                     new_val = new_val.replace(
                         var_determined_key, determined_results[determined_key]
                     )
-        if contains_shell_ref(new_val):
-            new_val = expandvars(new_val)
+        new_val = expandvars(expanduser(new_val))
         determined_results[key.upper()] = new_val
     return determined_results
 
@@ -198,8 +230,8 @@ def expand_spec_no_study(filepath, override_vars=None):
     """
     error_override_vars(override_vars, filepath)
     spec = MerlinSpec.load_specification(filepath)
-    full_spec = dump_with_overrides(spec, override_vars)
-    spec = MerlinSpec.load_spec_from_string(full_spec)
+    spec.environment = replace_override_vars(spec.environment, override_vars)
+    spec_text = spec.dump()
 
     uvars = []
     if "variables" in spec.environment:
@@ -208,7 +240,7 @@ def expand_spec_no_study(filepath, override_vars=None):
         uvars.append(spec.environment["labels"])
     evaluated_uvars = determine_user_variables(*uvars)
 
-    return expand_by_line(full_spec, evaluated_uvars)
+    return expand_by_line(spec_text, evaluated_uvars)
 
 
 def get_spec_with_expansion(filepath, override_vars=None):
