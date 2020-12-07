@@ -1,0 +1,146 @@
+description:
+  description: Design Optimization Template
+  name: optimizer_template
+
+env:
+  variables:
+
+    N_SAMPLES: 20
+    N_DIMS: 2
+
+    ITER: 1
+    MAX_ITER: 10
+
+    SCRIPTS: $(SPECROOT)/scripts
+    MAKE_SAMPLES: $(SCRIPTS)/make_samples.py
+
+    DIM_1_MIN: -2.0
+    DIM_1_MAX: 2.0
+    DIM_2_MIN: -1.0
+    DIM_2_MAX: 3.0
+
+    BOUNDS_X: "[[$(DIM_1_MIN),$(DIM_1_MAX)],[$(DIM_2_MIN),$(DIM_2_MAX)]]"
+
+study:
+    - name: run_simulation
+      description: Run the desired simulation
+      run:
+        cmd: |-
+          # Important things to add:
+          #
+          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
+          # 2. Adding whether you want to restart or not
+          #
+
+          python3 $(SCRIPTS)/test_functions.py -ID $(MERLIN_SAMPLE_ID) -inputs $(DIM_1) $(DIM_2)
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        task_queue: simulation
+        max_retries: 5
+
+    - name: collector
+      description: Collect the results into a single file and make an npz of some features
+      run:
+        cmd: |-
+          # Important things to add:
+          #
+          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
+          # 2. Adding whether you want to restart or not
+          #
+
+          python3 $(SCRIPTS)/collector.py -sim_dirs "$(run_simulation.workspace)/$(MERLIN_GLOB_PATH)"
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [run_simulation_*]
+        task_queue: simulation_postprocess
+        max_retries: 5
+
+    - name: learner
+      description: Train an ML model on the simulation
+      run:
+        cmd: |-
+          # Important things to add:
+          #
+          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
+          # 2. Adding whether you want to restart or not
+          #
+
+          python3 $(SCRIPTS)/learner.py -collector_dir "$(collector.workspace)"
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [collector]
+        task_queue: learner
+        max_retries: 5
+
+    - name: optimizer
+      description: Optimizer
+      run:
+        cmd: |-
+          # Important things to add:
+          #
+          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
+          # 2. Adding whether you want to restart or not
+          #
+
+          python3 $(SCRIPTS)/optimizer.py -learner_dir "$(learner.workspace)" -collector_dir "$(collector.workspace)"
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [collector, learner]
+        task_queue: learner
+        max_retries: 5
+
+    # - name: pick_new_inputs
+    #   description: Picking new simulations to run in the next iteration
+    #   run:
+    #     cmd: |-
+    #       # Important things to add:
+    #       #
+    #       # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
+    #       # 2. Adding whether you want to restart or not
+    #       #
+    #     cores per task: 1
+    #     nodes: 1
+    #     procs: 1
+    #     depends: [collect_and_translate]
+    #     task_queue: learner
+    #     max_retries: 5
+    #
+    # - name: iterate
+    #   description: Either launches new simulations or iterated with inputs from previous step
+    #   run:
+    #     cmd: |-
+    #       # Important things to add:
+    #       #
+    #       # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
+    #       # 2. Adding whether you want to restart or not
+    #       #
+    #     cores per task: 1
+    #     nodes: 1
+    #     procs: 1
+    #     depends: [pick_new_inputs]
+    #     task_queue: learner
+    #     max_retries: 5
+
+merlin:
+  resources:
+    overlap: true
+    task_server: celery
+    workers:
+      all_workers:
+        args: -O fair --prefetch-multiplier 1 -E -l info --concurrency 20
+        steps: [all]
+  samples:
+    column_labels:
+    - DIM_1
+    - DIM_2
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: |-
+          python3 $(MAKE_SAMPLES) -dims $(N_DIMS) -n $(N_SAMPLES) -sample_type lhs -outfile=$(MERLIN_INFO)/samples.npy -scale "$(BOUNDS_X)"
