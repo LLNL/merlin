@@ -1,5 +1,6 @@
 import numpy as np
 import json
+import ast
 from joblib import dump, load
 from scipy.stats import multivariate_normal
 from scipy.optimize import minimize
@@ -8,7 +9,22 @@ import argparse
 parser = argparse.ArgumentParser("Learn surrogate model form simulation")
 parser.add_argument("-collector_dir", help="Collector directory (.npz file), usually '$(collector.workspace)'")
 parser.add_argument("-learner_dir", help="Learner directory (joblib file), usually '$(learner.workspace)'")
+parser.add_argument( "-bounds",
+        help="ranges to scale results in form '[(min,max,type),(min, max,type)]'")
+parser.add_argument( "-input_uncerts",
+        help="The standard deviation for each input dimension")
+parser.add_argument( "-method",
+        help="The optimizer method", default='trust-constr')
+
 args = parser.parse_args()
+### TODO:
+# add an option for input uncertainty
+# add an option for method
+
+# X_deltas
+# input_uncerts = np.array([0.01, 0.01])
+
+method = args.method
 
 collector_dir = args.collector_dir
 learner_dir = args.learner_dir
@@ -27,6 +43,18 @@ for i in out_data.keys():
 
 existing_X = np.array(X)
 existing_y = np.array(y)
+
+def process_bounds(args):
+    if args.bounds is not None:
+        raw = ast.literal_eval(args.bounds)
+        processed = np.array(raw, dtype=float).tolist()
+        return processed
+
+def process_uncerts(args):
+    if args.input_uncerts is not None:
+        raw = ast.literal_eval(args.input_uncerts)
+        processed = np.array(raw, dtype=float)
+        return processed
 
 def mean_and_std(x0, surrogate, x_deltas):
     predictions = predictions_around(x0, surrogate, x_deltas)
@@ -61,15 +89,19 @@ def prediction_percentile(x0, surrogate, x_deltas, percentile=50):
 
     return np.percentile(predictions, percentile)
 
+bounds = process_bounds(args)
+input_uncerts = process_uncerts(args)
+
+for bound in bounds:
+    print(bound)
+
+print(input_uncerts)
 # Find the best point so far
 
 # Choose the function for minimization and loading the surrogate model
 func = func_percentile
 risk_percentile = 5
-eval_percents = (0,5,25,50,75,95,100)
-
-# X_deltas
-input_uncerts = np.array([0.01, 0.01])
+eval_percents = (0, 5, 25, 50, 75, 95, 100)
 
 x_deltas = get_x_deltas(x_std=input_uncerts, n_samples=existing_X.shape[0])
 
@@ -99,12 +131,6 @@ for d in x_deltas_big:
     best_point_variations[d]['histogram_bins'] = bins.tolist()
 
 # Optimum code
-
-dim_0_range = [-2, 2]
-dim_1_range = [-1, 3]
-
-bounds = [dim_0_range, dim_1_range]
-method = 'trust-constr'
 
 minimizer_args = {'bounds':bounds, 'method':method, 'options':{'disp':True}}
 

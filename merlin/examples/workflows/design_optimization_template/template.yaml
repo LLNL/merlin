@@ -7,6 +7,7 @@ env:
 
     N_SAMPLES: 20
     N_DIMS: 2
+    METHOD: 'trust-constr'
 
     ITER: 1
     MAX_ITER: 10
@@ -18,8 +19,12 @@ env:
     DIM_1_MAX: 2.0
     DIM_2_MIN: -1.0
     DIM_2_MAX: 3.0
+    DIM_1_UNCERT: 0.1
+    DIM_2_UNCERT: 0.1
 
     BOUNDS_X: "[[$(DIM_1_MIN),$(DIM_1_MAX)],[$(DIM_2_MIN),$(DIM_2_MAX)]]"
+    UNCERTS_X: "[$(DIM_1_UNCERT),$(DIM_2_UNCERT)]"
+
 
 study:
     - name: run_simulation
@@ -87,7 +92,7 @@ study:
           # 2. Adding whether you want to restart or not
           #
 
-          python3 $(SCRIPTS)/optimizer.py -learner_dir "$(learner.workspace)" -collector_dir "$(collector.workspace)"
+          python3 $(SCRIPTS)/optimizer.py -learner_dir "$(learner.workspace)" -collector_dir "$(collector.workspace)" -bounds $(BOUNDS_X) -input_uncerts $(UNCERTS_X) -method $(METHOD)
 
         cores per task: 1
         nodes: 1
@@ -96,21 +101,30 @@ study:
         task_queue: learner
         max_retries: 5
 
-    # - name: pick_new_inputs
-    #   description: Picking new simulations to run in the next iteration
-    #   run:
-    #     cmd: |-
-    #       # Important things to add:
-    #       #
-    #       # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
-    #       # 2. Adding whether you want to restart or not
-    #       #
-    #     cores per task: 1
-    #     nodes: 1
-    #     procs: 1
-    #     depends: [collect_and_translate]
-    #     task_queue: learner
-    #     max_retries: 5
+    - name: pick_new_inputs
+      description: Picking new simulations to run in the next iteration
+      run:
+        cmd: |-
+          # Important things to add:
+          #
+          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
+          # 2. Adding whether you want to restart or not
+          #
+
+          python $(MAKE_SAMPLES) -dims $(N_DIMS) -x0 $(optimizer.workspace)/optimum.npy -x1 $(optimizer.workspace)/old_best.npy -n_line $(N_SAMPLES_LINE) -scale_factor $(SEARCH_SCALE) -scale "$(BOUNDS_X)" -n $(N_SAMPLES) -sample_type lhd -outfile new_explore_samples.npy --hard-bounds
+          python $(MAKE_SAMPLES) -dims $(N_DIMS) -x0 $(optimizer.workspace)/optimum.npy -scale_factor 0.05 -scale "$(BOUNDS_X)" -sample_type star -outfile new_explore_star_samples.npy --hard-bounds
+          # Add points near current best too
+          python $(MAKE_SAMPLES) -dims $(N_DIMS) -x0 $(optimizer.workspace)/old_best.npy -scale_factor $(SEARCH_SCALE) -scale "$(BOUNDS_X)" -n $(N_EXPLOIT) -sample_type lhd -outfile new_exploit_samples.npy --hard-bounds
+
+          # combine them
+          python -c "import numpy as np; np.save('new_samples.npy',np.vstack((np.load('new_explore_samples.npy'),np.load('new_exploit_samples.npy'),np.load('new_explore_star_samples.npy'))))"
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [optimizer]
+        task_queue: learner
+        max_retries: 5
     #
     # - name: iterate
     #   description: Either launches new simulations or iterated with inputs from previous step
