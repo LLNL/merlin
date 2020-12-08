@@ -5,12 +5,11 @@ description:
 env:
   variables:
 
-    N_SAMPLES: 20
     N_DIMS: 2
     METHOD: 'trust-constr'
 
     ITER: 1
-    MAX_ITER: 10
+    MAX_ITER: 3
 
     SCRIPTS: $(SPECROOT)/scripts
     MAKE_SAMPLES: $(SCRIPTS)/make_samples.py
@@ -25,19 +24,20 @@ env:
     BOUNDS_X: "[[$(DIM_1_MIN),$(DIM_1_MAX)],[$(DIM_2_MIN),$(DIM_2_MAX)]]"
     UNCERTS_X: "[$(DIM_1_UNCERT),$(DIM_2_UNCERT)]"
 
+    # pick_new_inputs step
+    SEARCH_SCALE: 0.30
+    N_SAMPLES: 5 # Number of new samples per iteration around the predicted new point
+    N_EXPLOIT: 5 # Number of new samples per iteration around the current best
+    N_SAMPLES_LINE: 5 # Number between predicted best and current best
+    N_SAMPLES_START: 20 # Number to initialize
+
 
 study:
     - name: run_simulation
       description: Run the desired simulation
       run:
         cmd: |-
-          # Important things to add:
-          #
-          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
-          # 2. Adding whether you want to restart or not
-          #
-
-          python3 $(SCRIPTS)/test_functions.py -ID $(MERLIN_SAMPLE_ID) -inputs $(DIM_1) $(DIM_2)
+          python3 $(SCRIPTS)/test_functions.py -ID "$(ITER)/$(MERLIN_SAMPLE_ID)" -inputs $(DIM_1) $(DIM_2)
 
         cores per task: 1
         nodes: 1
@@ -49,13 +49,8 @@ study:
       description: Collect the results into a single file and make an npz of some features
       run:
         cmd: |-
-          # Important things to add:
-          #
-          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
-          # 2. Adding whether you want to restart or not
-          #
-
           python3 $(SCRIPTS)/collector.py -sim_dirs "$(run_simulation.workspace)/$(MERLIN_GLOB_PATH)"
+
         cores per task: 1
         nodes: 1
         procs: 1
@@ -67,11 +62,11 @@ study:
       description: Train an ML model on the simulation
       run:
         cmd: |-
-          # Important things to add:
-          #
-          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
-          # 2. Adding whether you want to restart or not
-          #
+          temp=1
+          if [ $(ITER) -ge "$temp" ] ; then
+              echo "Copying the npz file from previous iteration"
+              cp ../../../learner/all_iter_results.npz .
+          fi
 
           python3 $(SCRIPTS)/learner.py -collector_dir "$(collector.workspace)"
 
@@ -86,13 +81,7 @@ study:
       description: Optimizer
       run:
         cmd: |-
-          # Important things to add:
-          #
-          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
-          # 2. Adding whether you want to restart or not
-          #
-
-          python3 $(SCRIPTS)/optimizer.py -learner_dir "$(learner.workspace)" -collector_dir "$(collector.workspace)" -bounds $(BOUNDS_X) -input_uncerts $(UNCERTS_X) -method $(METHOD)
+          python3 $(SCRIPTS)/optimizer.py -learner_dir "$(learner.workspace)" -bounds "$(BOUNDS_X)" -input_uncerts "$(UNCERTS_X)" -method "$(METHOD)"
 
         cores per task: 1
         nodes: 1
@@ -105,19 +94,13 @@ study:
       description: Picking new simulations to run in the next iteration
       run:
         cmd: |-
-          # Important things to add:
-          #
-          # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
-          # 2. Adding whether you want to restart or not
-          #
-
-          python $(MAKE_SAMPLES) -dims $(N_DIMS) -x0 $(optimizer.workspace)/optimum.npy -x1 $(optimizer.workspace)/old_best.npy -n_line $(N_SAMPLES_LINE) -scale_factor $(SEARCH_SCALE) -scale "$(BOUNDS_X)" -n $(N_SAMPLES) -sample_type lhd -outfile new_explore_samples.npy --hard-bounds
-          python $(MAKE_SAMPLES) -dims $(N_DIMS) -x0 $(optimizer.workspace)/optimum.npy -scale_factor 0.05 -scale "$(BOUNDS_X)" -sample_type star -outfile new_explore_star_samples.npy --hard-bounds
+          spellbook make-samples -dims $(N_DIMS) -x0 $(optimizer.workspace)/optimum.npy -x1 $(optimizer.workspace)/old_best.npy -n_line $(N_SAMPLES_LINE) -scale_factor $(SEARCH_SCALE) -scale "$(BOUNDS_X)" -n $(N_SAMPLES) -sample_type lhd -outfile new_explore_samples.npy --hard-bounds
+          spellbook make-samples -dims $(N_DIMS) -x0 $(optimizer.workspace)/optimum.npy -scale_factor 0.05 -scale "$(BOUNDS_X)" -sample_type star -outfile new_explore_star_samples.npy --hard-bounds
           # Add points near current best too
-          python $(MAKE_SAMPLES) -dims $(N_DIMS) -x0 $(optimizer.workspace)/old_best.npy -scale_factor $(SEARCH_SCALE) -scale "$(BOUNDS_X)" -n $(N_EXPLOIT) -sample_type lhd -outfile new_exploit_samples.npy --hard-bounds
+          spellbook make-samples -dims $(N_DIMS) -x0 $(optimizer.workspace)/old_best.npy -scale_factor $(SEARCH_SCALE) -scale "$(BOUNDS_X)" -n $(N_EXPLOIT) -sample_type lhd -outfile new_exploit_samples.npy --hard-bounds
 
           # combine them
-          python -c "import numpy as np; np.save('new_samples.npy',np.vstack((np.load('new_explore_samples.npy'),np.load('new_exploit_samples.npy'),np.load('new_explore_star_samples.npy'))))"
+          python3 -c "import numpy as np; np.save('new_samples.npy',np.vstack((np.load('new_explore_samples.npy'),np.load('new_exploit_samples.npy'),np.load('new_explore_star_samples.npy'))))"
 
         cores per task: 1
         nodes: 1
@@ -125,22 +108,25 @@ study:
         depends: [optimizer]
         task_queue: learner
         max_retries: 5
-    #
-    # - name: iterate
-    #   description: Either launches new simulations or iterated with inputs from previous step
-    #   run:
-    #     cmd: |-
-    #       # Important things to add:
-    #       #
-    #       # 1. Adding whether the simulation worked or not (success, soft_fail, restart)
-    #       # 2. Adding whether you want to restart or not
-    #       #
-    #     cores per task: 1
-    #     nodes: 1
-    #     procs: 1
-    #     depends: [pick_new_inputs]
-    #     task_queue: learner
-    #     max_retries: 5
+
+    - name: iterate
+      description: Either launches new simulations or iterated with inputs from previous step
+      run:
+        cmd: |-
+          if [ $(ITER) -ge $(MAX_ITER) ] ; then
+              echo "done"
+          else
+              next_iter=$(ITER)
+              ((next_iter=next_iter+1))
+              echo "Starting iteration " $next_iter
+              merlin run --local $(MERLIN_INFO)/*partial.yaml --samplesfile $(pick_new_inputs.workspace)/new_samples.npy --vars ITER=$next_iter
+          fi
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [pick_new_inputs]
+        task_queue: learner
+        max_retries: 5
 
 merlin:
   resources:
@@ -157,4 +143,4 @@ merlin:
     file: $(MERLIN_INFO)/samples.npy
     generate:
       cmd: |-
-          python3 $(MAKE_SAMPLES) -dims $(N_DIMS) -n $(N_SAMPLES) -sample_type lhs -outfile=$(MERLIN_INFO)/samples.npy -scale "$(BOUNDS_X)"
+          spellbook make-samples -dims $(N_DIMS) -n $(N_SAMPLES_START) -sample_type lhs -outfile=$(MERLIN_INFO)/samples.npy -scale "$(BOUNDS_X)"

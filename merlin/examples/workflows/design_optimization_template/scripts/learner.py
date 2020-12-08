@@ -8,16 +8,22 @@ parser.add_argument("-collector_dir", help="Collector directory (.npz file), usu
 args = parser.parse_args()
 
 collector_dir = args.collector_dir
-from_file = np.load(f'{collector_dir}/all_results.npz', allow_pickle=True)
+current_iter_npz = np.load(f'{collector_dir}/current_results.npz', allow_pickle=True)
+current_iter_data = current_iter_npz['arr_0'].item()
 
-out_data = from_file['arr_0'].item()
+try:
+    prev_iter_npz = np.load('all_iter_results.npz', allow_pickle=True)
+    prev_iter_data = prev_iter_npz['arr_0'].item()
+    data = dict(prev_iter_data, **current_iter_data)
+except:
+    data = current_iter_data
 
 X = []
 y = []
 
-for i in out_data.keys():
-    X.append(out_data[i]['Inputs'])
-    y.append(out_data[i]['Outputs'])
+for i in data.keys():
+    X.append(data[i]['Inputs'])
+    y.append(data[i]['Outputs'])
 
 X = np.array(X)
 y = np.array(y)
@@ -26,3 +32,4 @@ surrogate = RandomForestRegressor(max_depth=4, random_state=0, n_estimators=100)
 surrogate.fit(X, y)
 
 dump(surrogate, 'surrogate.joblib')
+np.savez('all_iter_results.npz', data)

@@ -17,4 +17,4 @@ for i, sim_output_file in enumerate(sim_output_files):
 
     all_results.update(data)
 
-np.savez('all_results.npz', all_results)
+np.savez('current_results.npz', all_results)

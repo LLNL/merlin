@@ -7,7 +7,6 @@ from scipy.optimize import minimize
 import argparse
 
 parser = argparse.ArgumentParser("Learn surrogate model form simulation")
-parser.add_argument("-collector_dir", help="Collector directory (.npz file), usually '$(collector.workspace)'")
 parser.add_argument("-learner_dir", help="Learner directory (joblib file), usually '$(learner.workspace)'")
 parser.add_argument( "-bounds",
         help="ranges to scale results in form '[(min,max,type),(min, max,type)]'")
@@ -17,29 +16,21 @@ parser.add_argument( "-method",
         help="The optimizer method", default='trust-constr')
 
 args = parser.parse_args()
-### TODO:
-# add an option for input uncertainty
-# add an option for method
-
-# X_deltas
-# input_uncerts = np.array([0.01, 0.01])
 
 method = args.method
-
-collector_dir = args.collector_dir
 learner_dir = args.learner_dir
 
 surrogate = load(f'{learner_dir}/surrogate.joblib')
-from_file = np.load(f'{collector_dir}/all_results.npz', allow_pickle=True)
+from_file = np.load(f'{learner_dir}/all_iter_results.npz', allow_pickle=True)
 
-out_data = from_file['arr_0'].item()
+data = from_file['arr_0'].item()
 
 X = []
 y = []
 
-for i in out_data.keys():
-    X.append(out_data[i]['Inputs'])
-    y.append(out_data[i]['Outputs'])
+for i in data.keys():
+    X.append(data[i]['Inputs'])
+    y.append(data[i]['Outputs'])
 
 existing_X = np.array(X)
 existing_y = np.array(y)
