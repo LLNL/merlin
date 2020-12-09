@@ -2,6 +2,14 @@ description:
   description: Design Optimization Template
   name: optimizer_template
 
+##TODO
+# Step to delete run_sim files
+# Removing the make-samples.py script
+# Ability to change the test function
+  # Need to make sure visualizer step doesn't get affected
+# Ability to change the learner
+# Ability to change optimizer
+
 env:
   variables:
 
@@ -109,6 +117,19 @@ study:
         task_queue: learner
         max_retries: 5
 
+    - name: visualizer
+      description: Either launches new simulations or iterated with inputs from previous step
+      run:
+        cmd: |-
+          # Add an if statment to make sure it is rosenbrock function and 2D
+          python3 $(SCRIPTS)/visualizer.py -study_dir $(MERLIN_WORKSPACE)
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [pick_new_inputs]
+        task_queue: learner
+        max_retries: 5
+
     - name: iterate
       description: Either launches new simulations or iterated with inputs from previous step
       run:
@@ -124,7 +145,7 @@ study:
         cores per task: 1
         nodes: 1
         procs: 1
-        depends: [pick_new_inputs]
+        depends: [visualizer]
         task_queue: learner
         max_retries: 5
 
