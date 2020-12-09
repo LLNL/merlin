@@ -4,7 +4,7 @@ description:
 
 ##TODO
 # Step to delete run_sim files
-# Removing the make-samples.py script
+# DONE: Removing the make-samples.py script
 # Ability to change the test function
   # Need to make sure visualizer step doesn't get affected
 # Ability to change the learner
@@ -20,7 +20,6 @@ env:
     MAX_ITER: 3
 
     SCRIPTS: $(SPECROOT)/scripts
-    MAKE_SAMPLES: $(SCRIPTS)/make_samples.py
 
     DIM_1_MIN: -2.0
     DIM_1_MAX: 2.0
@@ -51,7 +50,6 @@ study:
         nodes: 1
         procs: 1
         task_queue: simulation
-        max_retries: 5
 
     - name: collector
       description: Collect the results into a single file and make an npz of some features
@@ -64,7 +62,18 @@ study:
         procs: 1
         depends: [run_simulation_*]
         task_queue: simulation_postprocess
-        max_retries: 5
+
+    - name: clean_up_simulation
+      description: Cleans up the merlin sample paths of the run_simulation step
+      run:
+        cmd: |-
+          rm -rf $(run_simulation.workspace)/$(MERLIN_SAMPLE_PATH)
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [collector]
+        task_queue: simulation_postprocess
 
     - name: learner
       description: Train an ML model on the simulation
@@ -81,9 +90,8 @@ study:
         cores per task: 1
         nodes: 1
         procs: 1
-        depends: [collector]
+        depends: [clean_up_simulation]
         task_queue: learner
-        max_retries: 5
 
     - name: optimizer
       description: Optimizer
@@ -96,7 +104,6 @@ study:
         procs: 1
         depends: [collector, learner]
         task_queue: learner
-        max_retries: 5
 
     - name: pick_new_inputs
       description: Picking new simulations to run in the next iteration
@@ -115,7 +122,6 @@ study:
         procs: 1
         depends: [optimizer]
         task_queue: learner
-        max_retries: 5
 
     - name: visualizer
       description: Either launches new simulations or iterated with inputs from previous step
@@ -128,7 +134,6 @@ study:
         procs: 1
         depends: [pick_new_inputs]
         task_queue: learner
-        max_retries: 5
 
     - name: iterate
       description: Either launches new simulations or iterated with inputs from previous step
@@ -147,7 +152,6 @@ study:
         procs: 1
         depends: [visualizer]
         task_queue: learner
-        max_retries: 5
 
 merlin:
   resources:
