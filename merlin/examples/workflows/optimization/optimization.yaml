@@ -1,6 +1,6 @@
 description:
+  name: optimization
   description: Design Optimization Template
-  name: optimizer_template
 
 ##TODO
 # DONE Step to delete run_sim files
