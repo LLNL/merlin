@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The first version of an optimization workflow, which can be accessed with
+  `merlin example optimization`.
+
 ### Changed
 - Improved warning and help messages about `no_errors`
 
