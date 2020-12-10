@@ -12,7 +12,7 @@ description:
 
 env:
   variables:
-    EMAIL_ADDRESS: mubarka1@llnl.gov
+    EMAIL_ADDRESS: "enter your email address here, or override this with --vars"
     N_DIMS: 2
     METHOD: 'trust-constr'
 
