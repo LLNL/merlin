@@ -413,7 +413,7 @@ def setup_argparse():
         action="store_true",
         dest="no_errors",
         default=False,
-        help="Flag to ignore some errors for testing.",
+        help="Flag to ignore some flux errors for testing (often used with --dry --local).",
     )
     run.add_argument(
         "--pgen",
