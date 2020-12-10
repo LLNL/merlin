@@ -3,7 +3,7 @@ description:
   name: optimizer_template
 
 ##TODO
-# Step to delete run_sim files
+# DONE Step to delete run_sim files
 # DONE: Removing the make-samples.py script
 # Ability to change the test function
   # Need to make sure visualizer step doesn't get affected
@@ -12,7 +12,7 @@ description:
 
 env:
   variables:
-
+    EMAIL_ADDRESS: mubarka1@llnl.gov
     N_DIMS: 2
     METHOD: 'trust-constr'
 
@@ -139,6 +139,10 @@ study:
       description: Either launches new simulations or iterated with inputs from previous step
       run:
         cmd: |-
+          cp $(optimizer.workspace)/optimization_results.json optimization_results_iter_$(ITER).json
+          cp $(visualizer.workspace)/results.png results_iter_$(ITER).png
+          echo "Done iteration $(ITER) in $(MERLIN_WORKSPACE)" | mail -s "Status $(MERLIN_WORKSPACE)" -a optimization_results_iter_$(ITER).json -a results_iter_$(ITER).png $(EMAIL_ADDRESS)
+
           if [ $(ITER) -ge $(MAX_ITER) ] ; then
               echo "done"
           else
