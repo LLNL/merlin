@@ -62,6 +62,9 @@ jupyter/testDistributedSamples.py
 # IDEs
 *.idea
 
+# Mac
+*.DS_Store
+
 # Misc directories
 dist/
 build/
