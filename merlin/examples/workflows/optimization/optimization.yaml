@@ -13,6 +13,9 @@ description:
 env:
   variables:
     EMAIL_ADDRESS: "enter your email address here, or override this with --vars"
+    # Remove --local for distributed iterations
+    RUN_TYPE: "run --local"
+
     N_DIMS: 2
     METHOD: 'trust-constr'
 
@@ -149,7 +152,7 @@ study:
               next_iter=$(ITER)
               ((next_iter=next_iter+1))
               echo "Starting iteration " $next_iter
-              merlin run --local $(MERLIN_INFO)/*partial.yaml --samplesfile $(pick_new_inputs.workspace)/new_samples.npy --vars ITER=$next_iter
+              merlin $(RUN_TYPE) $(MERLIN_INFO)/*partial.yaml --samplesfile $(pick_new_inputs.workspace)/new_samples.npy --vars ITER=$next_iter
           fi
         cores per task: 1
         nodes: 1
