@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Improved warning and help messages about `no_errors`
+- Began integrating merlin examples with `merlin-spellbook`.
 
 ## [1.7.5]
 
