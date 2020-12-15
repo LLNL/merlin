@@ -111,7 +111,7 @@ class DAG:
         return list_of_groups_of_chains
 
     def children(self, task_name):
-        """ Return the children of the task.
+        """Return the children of the task.
         :param `task_name`: The name of the task to get the children of.
 
         :return: list of children of this task.
@@ -119,7 +119,7 @@ class DAG:
         return self.dag.adjacency_table[task_name]
 
     def num_children(self, task_name):
-        """ Find the number of children for the given task in the dag.
+        """Find the number of children for the given task in the dag.
         :param `task_name`: The name of the task to count the children of.
 
         :return : number of children this task has
@@ -127,7 +127,7 @@ class DAG:
         return len(self.children(task_name))
 
     def parents(self, task_name):
-        """ Return the parents of the task.
+        """Return the parents of the task.
         :param `task_name` : The name of the task to get the parents of.
 
         :return : list of parents of this task"""

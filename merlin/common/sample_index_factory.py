@@ -84,7 +84,7 @@ def create_hierarchy_from_max_sample(
     address="",
     n_digits=1,
 ):
-    """"
+    """ "
     Construct the SampleIndex based off the total number of samples and the
     chunking size at each depth in the hierarchy.
 

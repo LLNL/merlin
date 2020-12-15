@@ -68,8 +68,8 @@ def _gen_key(key_path):
 
 
 def _get_key():
-    """ get a valid encryption key. Loads from CONFIG.results_backend.encryption_key if possible,
-        initializes that key if it does not yet exist."""
+    """get a valid encryption key. Loads from CONFIG.results_backend.encryption_key if possible,
+    initializes that key if it does not yet exist."""
     key_path = _get_key_path()
     try:
         with open(key_path, "rb") as f:

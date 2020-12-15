@@ -185,7 +185,7 @@ def get_workers_from_app():
 
 
 def start_celery_workers(spec, steps, celery_args, just_return_command):
-    """ Start the celery workers on the allocation
+    """Start the celery workers on the allocation
 
     specs       Tuple of (YAMLSpecification, MerlinSpec)
     ...

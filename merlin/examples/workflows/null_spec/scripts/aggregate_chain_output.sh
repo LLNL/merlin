@@ -3,7 +3,7 @@
 
 samples=(1 10 100 1000 10000 100000)
 
-ALL_DIR=all_data
+ALL_DIR=/usr/workspace/wsa/bay1/new_null_results/sleep_1_collected/
 mkdir ${ALL_DIR}
 runs=( $(find $1 -type d -name "run_*" -maxdepth 1) )
 for run in "${runs[@]}"
@@ -39,6 +39,6 @@ for run in "${runs[@]}"
     perl -pi -e 's/ : \n/ : /g' ${DATA}
     done
 
-cat all_data/my_data*/my_data*.yaml > all_data/all_data.yaml
-sort all_data/all_data.yaml -o all_data/all_data.yaml
+cat ${ALL_DIR}/my_data*/my_data*.yaml > ${ALL_DIR}/all_data.yaml
+sort ${ALL_DIR}/all_data.yaml -o ${ALL_DIR}/all_data.yaml
 

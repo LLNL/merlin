@@ -112,13 +112,13 @@ def get_node_count(default=1):
 
 def batch_worker_launch(spec, com, nodes=None, batch=None):
     """
-      The configuration in the batch section of the merlin spec
-      is used to create the worker launch line, which may be
-      different from a simulation launch.
+    The configuration in the batch section of the merlin spec
+    is used to create the worker launch line, which may be
+    different from a simulation launch.
 
-      com (str): The command to launch with batch configuration
-      nodes (int): The number of nodes to use in the batch launch
-      batch (dict): An optional batch override from the worker config
+    com (str): The command to launch with batch configuration
+    nodes (int): The number of nodes to use in the batch launch
+    batch (dict): An optional batch override from the worker config
 
     """
     if batch is None:

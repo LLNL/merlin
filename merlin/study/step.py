@@ -47,7 +47,7 @@ LOG = logging.getLogger(__name__)
 
 class MerlinStepRecord(_StepRecord):
     """
-    This classs is a wrapper for the Maestro _StepRecord to remove 
+    This classs is a wrapper for the Maestro _StepRecord to remove
     a re-submit message.
     """
 

@@ -423,7 +423,11 @@ def define_tests():
         "local minimum_format": (
             f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../{dev_examples}/minimum_format.yaml --local",
             StepFileExistsCond(
-                "step1", "MERLIN_FINISHED", "minimum_format", OUTPUT_DIR, params=False,
+                "step1",
+                "MERLIN_FINISHED",
+                "minimum_format",
+                OUTPUT_DIR,
+                params=False,
             ),
             "local",
         ),
@@ -473,7 +477,11 @@ def define_tests():
             f"{run} {demo} --local --dry --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             [
                 StepFileExistsCond(
-                    "verify", "verify_*.sh", "feature_demo", OUTPUT_DIR, params=True,
+                    "verify",
+                    "verify_*.sh",
+                    "feature_demo",
+                    OUTPUT_DIR,
+                    params=True,
                 ),
                 ReturnCodeCond(),
             ],

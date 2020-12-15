@@ -192,8 +192,8 @@ def read_rows(f, hdr, idx, n=-1, sep=""):
 
 def verify_open(func):  # A wrapper function used by FileSamples.
     """
-      :param func: (function) a class instance method that needs to call
-            _verify_open before doing anything else.
+    :param func: (function) a class instance method that needs to call
+          _verify_open before doing anything else.
     """
 
     def wrapper(self, *v, **kw):

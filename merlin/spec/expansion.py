@@ -78,7 +78,7 @@ def var_ref(string):
 
 def expand_line(line, var_dict, env_vars=False):
     """
-    Expand one line of text by substituting user variables, 
+    Expand one line of text by substituting user variables,
     optionally environment variables, as well as variables in 'var_dict'.
     """
     if (
