@@ -89,7 +89,13 @@ def list_examples():
                     continue
                 except TypeError:
                     continue
-            rows.append([spec_metadata["name"], spec_metadata["description"]])
+            name = spec_metadata["name"]
+            if name is None:
+                continue
+            # if there is a variable reference in the workflow name, instead list the filename (minus the yaml extension).
+            if "$" in name:
+                name = os.path.basename(os.path.normpath(spec)).replace(".yaml", "")
+            rows.append([name, spec_metadata["description"]])
     return "\n" + tabulate.tabulate(rows, headers) + "\n"
 
 

@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The first version of an optimization workflow, which can be accessed with
   `merlin example optimization`.
 
+### Fixed
+- Bug that caused `feature_demo` to be displayed as `$(NAME)` when listed with
+  `merlin example list`.
+
 ### Changed
 - Improved warning and help messages about `no_errors`
 - Began integrating merlin examples with `merlin-spellbook`.
