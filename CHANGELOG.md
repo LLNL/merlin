@@ -9,9 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - The first version of an optimization workflow, which can be accessed with
   `merlin example optimization`.
+- Dev requirement library for finding dependencies (and `make reqlist` target)
 
 ### Changed
 - Improved warning and help messages about `no_errors`
+
+### Fixed
+- Pinned to celery>5.0.3 so that `merlin purge` works again
 
 ## [1.7.5]
 

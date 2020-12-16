@@ -64,6 +64,7 @@ PENV=merlin$(PYV)
 .PHONY : check-style
 .PHONY : check-camel-case
 .PHONY : checks
+.PHONY : reqlist
 
 
 all: install-dev install-merlin install-workflow-deps
@@ -172,3 +173,6 @@ version:
 	find tests/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	find Makefile -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 
+# Make a list of all dependencies/requirements
+reqlist:
+	johnnydep merlin --output-format pinned
