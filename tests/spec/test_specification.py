@@ -107,7 +107,7 @@ class TestMerlinSpec(unittest.TestCase):
     def test_filepath(self):
         """
         Given a Merlin spec with no other configurations to the MerlinSpec
-        object, then the filepath should be set to the path of the yaml file 
+        object, then the filepath should be set to the path of the yaml file
         itself.
         """
         self.assertEqual(self.spec.path, self.merlin_spec_filepath)

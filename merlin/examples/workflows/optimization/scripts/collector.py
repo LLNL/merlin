@@ -1,14 +1,19 @@
+import argparse
 import glob
 import json
+
 import numpy as np
-import argparse
+
 
 parser = argparse.ArgumentParser("Generate some samples!")
-parser.add_argument("-sim_dirs", help="The base simulation directory, usually '$(run_simulation.workspace)/$(MERLIN_GLOB_PATH)'")
+parser.add_argument(
+    "-sim_dirs",
+    help="The base simulation directory, usually '$(run_simulation.workspace)/$(MERLIN_GLOB_PATH)'",
+)
 args = parser.parse_args()
 
 simulation_dirs = args.sim_dirs
-sim_output_files = glob.glob(f'{simulation_dirs}/simulation_results.json')
+sim_output_files = glob.glob(f"{simulation_dirs}/simulation_results.json")
 
 all_results = {}
 for i, sim_output_file in enumerate(sim_output_files):
@@ -17,4 +22,4 @@ for i, sim_output_file in enumerate(sim_output_files):
 
     all_results.update(data)
 
-np.savez('current_results.npz', all_results)
+np.savez("current_results.npz", all_results)

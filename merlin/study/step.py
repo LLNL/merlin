@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.5.
+# This file is part of Merlin, Version: 1.7.6.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -47,7 +47,7 @@ LOG = logging.getLogger(__name__)
 
 class MerlinStepRecord(_StepRecord):
     """
-    This classs is a wrapper for the Maestro _StepRecord to remove 
+    This classs is a wrapper for the Maestro _StepRecord to remove
     a re-submit message.
     """
 

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.5.
+# This file is part of Merlin, Version: 1.7.6.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -84,7 +84,7 @@ def create_hierarchy_from_max_sample(
     address="",
     n_digits=1,
 ):
-    """"
+    """ "
     Construct the SampleIndex based off the total number of samples and the
     chunking size at each depth in the hierarchy.
 

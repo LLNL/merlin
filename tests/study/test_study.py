@@ -249,7 +249,7 @@ class TestMerlinStudy(unittest.TestCase):
         """
         Given a Merlin spec with no other configurations to the MerlinSpec
         object, the MerlinStudy should produce a new spec with all instances
-        of $(OUTPUT_PATH), $(SPECROOT), and env labels and variables expanded. 
+        of $(OUTPUT_PATH), $(SPECROOT), and env labels and variables expanded.
         """
         assert TestMerlinStudy.file_contains_string(
             self.merlin_spec_filepath, "$(SPECROOT)"

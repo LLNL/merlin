@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.5.
+# This file is part of Merlin, Version: 1.7.6.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -330,7 +330,7 @@ def ensure_directory_exists(**kwargs):
 
 def nested_dict_to_namespaces(dic):
     """Code for recursively converting dictionaries of dictionaries
-        into SimpleNamespaces instead.
+    into SimpleNamespaces instead.
     """
 
     def recurse(dic):
@@ -349,7 +349,7 @@ def nested_dict_to_namespaces(dic):
 
 def nested_namespace_to_dicts(ns):
     """Code for recursively converting namespaces of namespaces
-        into dictionaries instead.
+    into dictionaries instead.
     """
 
     def recurse(ns):
