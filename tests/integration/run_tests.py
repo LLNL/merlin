@@ -498,7 +498,7 @@ def define_tests():
             "local",
         ),
         "local restart_shell": (
-            f"{run} merlin/examples/dev_workflows/restart_shell/restart_shell.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            f"{run} merlin/examples/dev_workflows/restart_shell.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             ReturnCodeCond(),
             "local",
         ),
