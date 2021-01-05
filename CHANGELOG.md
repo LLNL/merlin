@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Bug that caused example workflows with a variable reference in their
   name to be listed by `merlin example list` with variable reference notation.
+- Bug that caused `requirements.txt` files to be excluded from generated
+  `merlin example` dirs.
 
 ## [1.7.6]
 
