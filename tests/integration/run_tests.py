@@ -497,6 +497,11 @@ def define_tests():
             ReturnCodeCond(),
             "local",
         ),
+        "local restart_shell": (
+            f"{run} merlin/examples/dev_workflows/restart_shell.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            ReturnCodeCond(),
+            "local",
+        ),
         "example failure": (f"merlin example failure", RegexCond("not found"), "local"),
         "example simple_chain": (
             f"merlin example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
