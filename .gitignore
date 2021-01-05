@@ -65,3 +65,4 @@ jupyter/testDistributedSamples.py
 # Misc directories
 dist/
 build/
+.DS_Store
