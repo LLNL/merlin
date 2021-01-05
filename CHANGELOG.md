@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   name to be listed by `merlin example list` with variable reference notation.
 - Bug that caused `requirements.txt` files to be excluded from generated
   `merlin example` dirs.
+- Bug that causes step restarts to lose alternate shell specification.
 
 ### Changed
 - Default broker server password is now `jackalope-password`, since `rabbit` is

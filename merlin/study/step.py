@@ -240,8 +240,8 @@ class Step:
         adapter = cls_adapter(**adapter_config)
         LOG.debug(f"Maestro step config = {adapter_config}")
 
-        # Preserve the default shell if the step shell is different
-        adapter_config.update({"shell": default_shell})
+        # Preserve the default shell if the step shell is different TODO this caused a bug
+        #adapter_config.update({"shell": default_shell})
         # Preserve the default batch type if the step batch type is different
         adapter_config.update({"batch_type": default_batch_type})
 
