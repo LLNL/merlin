@@ -9,7 +9,7 @@ broker:
     name: redis
 
     # username: # defaults to your username unless changed here
-    # password: ~/.merlin/rabbit-password
+    # password: ~/.merlin/jackalope-password
     
     # server URL
     server: localhost
