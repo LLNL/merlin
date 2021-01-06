@@ -219,9 +219,6 @@ class Step:
             the maestro script adapter, as well as which sort of adapter
             to use.
         """
-        # cls_adapter = ScriptAdapterFactory.get_adapter(adapter_config['type'])
-        cls_adapter = MerlinScriptAdapter
-
         # Update shell if the task overrides the default value from the batch section
         default_shell = adapter_config.get("shell")
         shell = self.mstep.step.run.pop("shell", default_shell)
@@ -237,7 +234,7 @@ class Step:
             batch_type = batch.get("type", default_batch_type)
             adapter_config.update({"batch_type": batch_type})
 
-        adapter = cls_adapter(**adapter_config)
+        adapter = MerlinScriptAdapter(**adapter_config)
         LOG.debug(f"Maestro step config = {adapter_config}")
 
         # Preserve the default shell if the step shell is different
