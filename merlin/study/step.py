@@ -223,25 +223,25 @@ class Step:
         cls_adapter = MerlinScriptAdapter
 
         # Update shell if the task overrides the default value from the batch section
-        default_shell = adapter_config.pop("shell")
-        shell = self.mstep.step.run.pop("shell", default_shell)
+        default_shell = adapter_config.get("shell")
+        shell = self.mstep.step.run.get("shell", default_shell)
         adapter_config.update({"shell": shell})
 
         # Update batch type if the task overrides the default value from the batch section
-        default_batch_type = adapter_config.pop("batch_type", adapter_config["type"])
+        default_batch_type = adapter_config.get("batch_type", adapter_config["type"])
         # Set batch_type to default if unset
         adapter_config.update({"batch_type": default_batch_type})
         # Override the default batch: type: from the step config
-        batch = self.mstep.step.run.pop("batch", None)
+        batch = self.mstep.step.run.get("batch", None)
         if batch:
-            batch_type = batch.pop("type", default_batch_type)
+            batch_type = batch.get("type", default_batch_type)
             adapter_config.update({"batch_type": batch_type})
 
         adapter = cls_adapter(**adapter_config)
         LOG.debug(f"Maestro step config = {adapter_config}")
 
-        # Preserve the default shell if the step shell is different TODO this caused a bug
-        #adapter_config.update({"shell": default_shell})
+        # Preserve the default shell if the step shell is different
+        adapter_config.update({"shell": default_shell})
         # Preserve the default batch type if the step batch type is different
         adapter_config.update({"batch_type": default_batch_type})
 
