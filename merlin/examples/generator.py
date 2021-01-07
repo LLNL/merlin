@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.6.
+# This file is part of Merlin, Version: 1.7.7.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -89,7 +89,13 @@ def list_examples():
                     continue
                 except TypeError:
                     continue
-            rows.append([spec_metadata["name"], spec_metadata["description"]])
+            name = spec_metadata["name"]
+            if name is None:
+                continue
+            # if there is a variable reference in the workflow name, instead list the filename (minus the yaml extension).
+            if "$" in name:
+                name = os.path.basename(os.path.normpath(spec)).replace(".yaml", "")
+            rows.append([name, spec_metadata["description"]])
     return "\n" + tabulate.tabulate(rows, headers) + "\n"
 
 

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.6.
+# This file is part of Merlin, Version: 1.7.7.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -497,6 +497,11 @@ def define_tests():
             ReturnCodeCond(),
             "local",
         ),
+        "local restart_shell": (
+            f"{run} merlin/examples/dev_workflows/restart_shell.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            ReturnCodeCond(),
+            "local",
+        ),
         "example failure": (f"merlin example failure", RegexCond("not found"), "local"),
         "example simple_chain": (
             f"merlin example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
@@ -612,12 +617,12 @@ def define_tests():
         #    "local",
         # ),
         "local csv feature_demo": (
-            f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samples foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
+            f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samplesfile foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [RegexCond("1 sample loaded."), ReturnCodeCond()],
             "local",
         ),
         "local tab feature_demo": (
-            f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samples foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
+            f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samplesfile foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
             [RegexCond("2 samples loaded."), ReturnCodeCond()],
             "local",
         ),
