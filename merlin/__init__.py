@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.6.
+# This file is part of Merlin, Version: 1.7.7.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -38,7 +38,7 @@ import os
 import sys
 
 
-__version__ = "1.7.6"
+__version__ = "1.7.7"
 VERSION = __version__
 PATH_TO_PROJ = os.path.join(os.path.dirname(__file__), "")
 
