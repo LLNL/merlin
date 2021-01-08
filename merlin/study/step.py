@@ -221,7 +221,7 @@ class Step:
         """
         # Update shell if the task overrides the default value from the batch section
         default_shell = adapter_config.get("shell")
-        shell = self.mstep.step.run.pop("shell", default_shell)
+        shell = self.mstep.step.run.get("shell", default_shell)
         adapter_config.update({"shell": shell})
 
         # Update batch type if the task overrides the default value from the batch section

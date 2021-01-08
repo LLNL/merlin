@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- CLI `restart_shell` test.
+- Bug that causes step restarts to lose alternate shell specification, and
+  associated CLI `restart_shell` test.
 
 ## [1.7.7]
 
