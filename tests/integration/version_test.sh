@@ -41,15 +41,15 @@ fi
 
 
 # Ensure CHANGELOG has changed
-if ! [[ $(git diff HEAD..master -- CHANGELOG.md) ]]
+if ! [[ $(git diff HEAD..main -- CHANGELOG.md) ]]
 then
     echo "Error: CHANGELOG.md has not been updated"
     STATUS=1
 fi
 
 
-# Ensure __init__.py has changed (before merging to master)
-if ! [[ $(git diff HEAD..master -- merlin/__init__.py) ]]
+# Ensure __init__.py has changed (before merging to main)
+if ! [[ $(git diff HEAD..main -- merlin/__init__.py) ]]
 then
     echo "Error: merlin/__init__.py has not been updated (version?)"
     STATUS=1

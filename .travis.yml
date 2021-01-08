@@ -14,4 +14,4 @@ install:
 script:
 - python -m pytest tests/
 - python tests/integration/run_tests.py --verbose --local
-- if [ "$TRAVIS_BRANCH" = "master" ]; then ./tests/integration/version_test.sh; fi
+- if [ "$TRAVIS_BRANCH" = "main" ]; then ./tests/integration/version_test.sh; fi
