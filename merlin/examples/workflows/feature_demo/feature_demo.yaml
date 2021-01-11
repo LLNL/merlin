@@ -18,7 +18,6 @@ env:
         FEATURES: $(SCRIPTS)/features.json
         TRANSLATE: $(SCRIPTS)/translator.py
         COLLECT: $(SCRIPTS)/collector.py
-        MAKE_SAMPLES: $(SCRIPTS)/make_samples.py
         LEARN: $(SCRIPTS)/learn.py
         PREDICT: $(SCRIPTS)/predict.py
 
@@ -64,7 +63,7 @@ study:
       description: |
          make a grid of new samples to pass to the predictor
       run:
-         cmd: python3 $(MAKE_SAMPLES) -n $(N_NEW) -sample_type grid -outfile grid_$(N_NEW).npy
+         cmd: spellbook make-samples -n $(N_NEW) -sample_type grid -outfile grid_$(N_NEW).npy
          task_queue: make_samples_queue
 
     - name: predict
@@ -130,7 +129,7 @@ merlin:
             cmd: |
                 cp -r $(SPECROOT)/scripts $(SCRIPTS)
 
-                python3 $(MAKE_SAMPLES) -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
+                spellbook make-samples -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
         # can be a file glob of numpy sample files.
         file: $(MERLIN_INFO)/samples.npy
         column_labels: [X0, X1]
