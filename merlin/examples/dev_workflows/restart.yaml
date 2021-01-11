@@ -12,7 +12,7 @@ env:
 
 study:
 - name: restart_and_sample_step
-  description: runs 
+  description: echo 1 sample and restart
   run:
     cmd: |
       echo "sample: $(V1)"
@@ -22,9 +22,14 @@ study:
 - name: indiv_followup_step
   description: step that can start immedeatly after a sample has finished
   run:
-      cmd: echo "followup complete :)"
+      cmd: echo "$(V1) followup complete :)"
       depends: [restart_and_sample_step]
 
+- name: indiv_followup_step_2
+  description: step that can start immediately after a followup has finished
+  run:
+      cmd: echo "$(V1) followup 2 complete :)"
+      depends: [indiv_followup_step]
 
 - name: bottleneck_step
   description: step that can only start upon complete of all samples in previous step
