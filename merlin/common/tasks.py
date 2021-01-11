@@ -117,13 +117,13 @@ def merlin_step(self, *args, **kwargs):
             step.restart = True
             if self.request.retries < self.max_retries:
                 LOG.info(f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})...")
-                self.retry() #TODO does this work?
+                self.retry()
             else:
                 LOG.warning(
-                    f"*** Step '{step_name}' in '{step_dir}' issued a MERLIN_RESTART command, but has reached its retry limit ({self.max_retries}). Continuing with workflow."
+                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
                 )
         elif result == ReturnCode.RETRY:
-            LOG.warning(f"** Retrying step '{step_name}' in '{step_dir}'.")
+            LOG.warning(f"*** Retrying step '{step_name}' in '{step_dir}'.")
             step.restart = False
             raise RetryException
         elif result == ReturnCode.SOFT_FAIL:
