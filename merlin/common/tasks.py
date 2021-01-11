@@ -113,10 +113,12 @@ def merlin_step(self, *args, **kwargs):
         elif result == ReturnCode.DRY_OK:
             LOG.info(f"Dry-ran step '{step_name}' in '{step_dir}'.")
         elif result == ReturnCode.RESTART:
-            #LOG.info(f"*** Restarting step '{step_name}' in '{step_dir}'.")
+            # LOG.info(f"*** Restarting step '{step_name}' in '{step_dir}'.")
             step.restart = True
             if self.request.retries < self.max_retries:
-                LOG.info(f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})...")
+                LOG.info(
+                    f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})..."
+                )
                 self.retry()
             else:
                 LOG.warning(
