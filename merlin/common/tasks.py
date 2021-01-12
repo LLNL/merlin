@@ -113,7 +113,6 @@ def merlin_step(self, *args, **kwargs):
         elif result == ReturnCode.DRY_OK:
             LOG.info(f"Dry-ran step '{step_name}' in '{step_dir}'.")
         elif result == ReturnCode.RESTART:
-            # LOG.info(f"*** Restarting step '{step_name}' in '{step_dir}'.")
             step.restart = True
             try:
                 LOG.info(
@@ -126,9 +125,17 @@ def merlin_step(self, *args, **kwargs):
                 )
                 result = ReturnCode.SOFT_FAIL
         elif result == ReturnCode.RETRY:
-            LOG.warning(f"*** Retrying step '{step_name}' in '{step_dir}'.")
             step.restart = False
-            raise RetryException
+            try:
+                LOG.info(
+                    f"Step '{step_name}' in '{step_dir}' is being retried ({self.request.retries + 1}/{self.max_retries})..."
+                )
+                self.retry()
+            except MaxRetriesExceededError:
+                LOG.warning(
+                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
+                )
+                result = ReturnCode.SOFT_FAIL
         elif result == ReturnCode.SOFT_FAIL:
             LOG.warning(
                 f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow."
