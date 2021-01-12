@@ -29,7 +29,7 @@ study:
   description: step that can start immediately after a followup has finished
   run:
       cmd: echo "$(V1) followup 2 complete :)"
-      depends: [indiv_followup_step]
+      depends: [indiv_followup_step_*]
 
 - name: bottleneck_step
   description: step that can only start upon complete of all samples in previous step
