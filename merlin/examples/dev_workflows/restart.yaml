@@ -37,7 +37,7 @@ study:
       cmd: echo "bottleneck complete :)"
       depends: [restart_and_sample_step_*]
 
-- name: final_check_for_no_errors
+- name: final_check_for_no_hard_fails
   description: step that succeeds if no prior step hard-failed
   run:
       cmd: echo "check complete :)"

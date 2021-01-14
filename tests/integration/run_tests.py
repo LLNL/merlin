@@ -499,8 +499,12 @@ def define_tests():
         ),
         "local restart": (
             f"{run} {dev_examples}/restart.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
-            RegexCond(
-                "exited with a MERLIN_RESTART command",
+            StepFileExistsCond(
+                "final_check_for_no_hard_fails",
+                "MERLIN_FINISHED",
+                "restart",
+                OUTPUT_DIR,
+                params=False,
             ),
             "local",
         ),
