@@ -47,9 +47,9 @@ merlin:
   resources:
     task_server: celery
     workers:
-      simworkers:
+      all_workers:
         args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
-        steps: [runs, data]
+        steps: [all]
   samples:
     column_labels: [V1]
     file: $(MERLIN_INFO)/samples.npy
