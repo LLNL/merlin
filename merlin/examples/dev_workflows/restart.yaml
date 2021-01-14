@@ -1,0 +1,57 @@
+description:
+  name: restart
+  description: A simple ensemble for testing step restarts.
+
+batch:
+  type: local
+
+env:
+  variables:
+    OUTPUT_PATH: ./studies
+    N_SAMPLES: 10
+
+study:
+- name: restart_and_sample_step
+  description: echo 1 sample and restart
+  run:
+    cmd: |
+      echo "sample: $(V1)"
+      exit $(MERLIN_RESTART)
+    max_retries: 3
+
+- name: indiv_followup_step
+  description: step that can start immedeatly after a sample has finished
+  run:
+      cmd: echo "$(V1) followup complete :)"
+      depends: [restart_and_sample_step]
+
+- name: indiv_followup_step_2
+  description: step that can start immediately after a followup has finished
+  run:
+      cmd: echo "$(V1) followup 2 complete :)"
+      depends: [indiv_followup_step_*]
+
+- name: bottleneck_step
+  description: step that can only start upon complete of all samples in previous step
+  run:
+      cmd: echo "bottleneck complete :)"
+      depends: [restart_and_sample_step_*]
+
+- name: final_check_for_no_hard_fails
+  description: step that succeeds if no prior step hard-failed
+  run:
+      cmd: echo "check complete :)"
+      depends: [bottleneck_step, indiv_followup_step_2]
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      all_workers:
+        args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
+        steps: [all]
+  samples:
+    column_labels: [V1]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: spellbook make-samples -dims 1 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

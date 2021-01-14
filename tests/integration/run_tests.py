@@ -497,8 +497,19 @@ def define_tests():
             ReturnCodeCond(),
             "local",
         ),
+        "local restart": (
+            f"{run} {dev_examples}/restart.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileExistsCond(
+                "final_check_for_no_hard_fails",
+                "MERLIN_FINISHED",
+                "restart",
+                OUTPUT_DIR,
+                params=False,
+            ),
+            "local",
+        ),
         "local restart_shell": (
-            f"{run} merlin/examples/dev_workflows/restart_shell.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            f"{run} {dev_examples}/restart_shell.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             StepFileExistsCond(
                 "step2",
                 "MERLIN_FINISHED",
