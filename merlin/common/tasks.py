@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.8.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -35,7 +35,7 @@ import logging
 import os
 
 from celery import chain, chord, group, shared_task, signature
-from celery.exceptions import OperationalError, TimeoutError
+from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
@@ -113,13 +113,29 @@ def merlin_step(self, *args, **kwargs):
         elif result == ReturnCode.DRY_OK:
             LOG.info(f"Dry-ran step '{step_name}' in '{step_dir}'.")
         elif result == ReturnCode.RESTART:
-            LOG.info(f"** Restarting step '{step_name}' in '{step_dir}'.")
             step.restart = True
-            raise RestartException
+            try:
+                LOG.info(
+                    f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})..."
+                )
+                self.retry()
+            except MaxRetriesExceededError:
+                LOG.warning(
+                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
+                )
+                result = ReturnCode.SOFT_FAIL
         elif result == ReturnCode.RETRY:
-            LOG.warning(f"** Retrying step '{step_name}' in '{step_dir}'.")
             step.restart = False
-            raise RetryException
+            try:
+                LOG.info(
+                    f"Step '{step_name}' in '{step_dir}' is being retried ({self.request.retries + 1}/{self.max_retries})..."
+                )
+                self.retry()
+            except MaxRetriesExceededError:
+                LOG.warning(
+                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
+                )
+                result = ReturnCode.SOFT_FAIL
         elif result == ReturnCode.SOFT_FAIL:
             LOG.warning(
                 f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow."

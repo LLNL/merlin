@@ -4,10 +4,16 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.9]
+
+### Fixed
+- Bug that caused steps to raise a fatal error (instead of soft failing) after maxing
+  out step retries. Occurred if steps were part of a chord.
+
 ## [1.7.8]
 
 ### Fixed
-- Bug that causes step restarts to lose alternate shell specification, and
+- Bug that caused step restarts to lose alternate shell specification, and
   associated CLI `restart_shell` test.
 
 ## [1.7.7]
