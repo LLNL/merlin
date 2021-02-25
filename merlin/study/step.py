@@ -148,6 +148,11 @@ class Step:
         return "merlin"
 
     @property
+    def retry_delay(self):
+        default_retry_delay = 1
+        return self.mstep.step.__dict__["run"].get("retry_delay", default_retry_delay)
+
+    @property
     def max_retries(self):
         """
         Returns the max number of retries for this step.
