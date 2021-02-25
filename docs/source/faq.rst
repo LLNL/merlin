@@ -138,7 +138,17 @@ The max number of retries in given step can be specified with the ``max_retries`
 
 Alternatively, use ``exit $(MERLIN_RESTART)`` to run the optional ``<step>.run.restart`` section.
 
+To delay a retry or restart directive, add the ``retry_delay`` field.
+
 To restart failed steps after a workflow is done running, see :ref:`restart`.
+
+
+My code quits early but needs a restart. Can I delay the restart until the batch job ends?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Yes. Add the ``retry_delay`` field to the step. This specifies how many seconds before the task
+gets run after the restart. Set this value to large enough for your problem to finish.
+
+See the ``merlin example restart_delay`` example for syntax.
 
 
 How do I mark a step failure?
@@ -179,6 +189,7 @@ Also under ``run``, the following fields are optional:
         task_queue: <task queue name for this step>
         shell: <e.g., /bin/bash, /usr/bin/env python3>
         max_retries: <integer>
+        retry_delay: <integer: seconds>
         nodes: <integer>
         procs: <integer>
 
