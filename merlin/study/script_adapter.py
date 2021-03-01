@@ -88,6 +88,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "restart",
             "task_queue",
             "max_retries",
+            "retry_delay",
             "pre",
             "post",
             "depends",
@@ -175,6 +176,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         new_unsupported = [
             "task_queue",
             "max_retries",
+            "retry_delay",
             "pre",
             "post",
             "gpus per task",
@@ -307,6 +309,7 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "restart",
             "task_queue",
             "max_retries",
+            "retry_delay",
             "pre",
             "post",
             "depends",
