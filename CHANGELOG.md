@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `retry_delay` field in a step to specify a countdown in seconds prior to running a
   restart or retry
 
+### Changed
+- `feature_demo` now uses `merlin-spellbook` instead of its own scripts.
+
 ## [1.7.9]
 
 ### Fixed
