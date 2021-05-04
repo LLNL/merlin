@@ -50,7 +50,6 @@ from merlin.study.celeryadapter import (
     start_celery_workers,
     stop_celery_workers,
 )
-from merlin.utils import is_running
 
 
 try:
