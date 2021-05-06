@@ -31,6 +31,7 @@ jobs:
       run: |
         python -m pytest tests/
     - name: Run pytest over integration test suite
+      run: |
 	python tests/integration/run_tests.py --verbose --local
 	# next line preserved for historical purposes
 	# if [ "$TRAVIS_BRANCH" = "main" ]; then ./tests/integration/version_test.sh; fi
