@@ -25,6 +25,7 @@ jobs:
     - name: Install merlin to run unit tests
       run: |
         pip3 install -e .
+        merlin config
 
     - name: Lint with flake8
       run: |
