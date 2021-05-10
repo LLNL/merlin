@@ -23,15 +23,15 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
 
-    - name: Install CLI task dependencies generated from the 'feature demo' workflow
-      run: |
-        merlin example feature_demo
-        pip3 install -r feature_demo/requirements.txt
-
     - name: Install merlin to run unit tests
       run: |
         pip3 install -e .
         merlin config
+
+    - name: Install CLI task dependencies generated from the 'feature demo' workflow
+      run: |
+        merlin example feature_demo
+        pip3 install -r feature_demo/requirements.txt
 
     - name: Lint with flake8
       run: |
