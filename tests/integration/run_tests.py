@@ -572,51 +572,51 @@ def define_tests():
             ),
             "local",
         ),
-        # "local override feature_demo": (
-        #     f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
-        #     [
-        #         ReturnCodeCond(),
-        #         ProvenanceCond(
-        #             regex="PREDICT: \$\(SCRIPTS\)/predict.py",
-        #             name="feature_demo",
-        #             output_path=OUTPUT_DIR,
-        #             provenance_type="orig",
-        #         ),
-        #         ProvenanceCond(
-        #             regex="name: \$\(NAME\)",
-        #             name="feature_demo",
-        #             output_path=OUTPUT_DIR,
-        #             provenance_type="partial",
-        #         ),
-        #         ProvenanceCond(
-        #             regex="studies/feature_demo_",
-        #             name="feature_demo",
-        #             output_path=OUTPUT_DIR,
-        #             provenance_type="partial",
-        #         ),
-        #         ProvenanceCond(
-        #             regex="name: feature_demo",
-        #             name="feature_demo",
-        #             output_path=OUTPUT_DIR,
-        #             provenance_type="expanded",
-        #         ),
-        #         ProvenanceCond(
-        #             regex="\$\(NAME\)",
-        #             name="feature_demo",
-        #             output_path=OUTPUT_DIR,
-        #             provenance_type="expanded",
-        #             negate=True,
-        #         ),
-        #         StepFileExistsCond(
-        #             "verify",
-        #             "MERLIN_FINISHED",
-        #             "feature_demo",
-        #             OUTPUT_DIR,
-        #             params=True,
-        #         ),
-        #     ],
-        #     "local",
-        # ),
+        "local override feature_demo": (
+            f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
+            [
+                ReturnCodeCond(),
+                # ProvenanceCond(
+                #     regex="PREDICT: \$\(SCRIPTS\)/predict.py",
+                #     name="feature_demo",
+                #     output_path=OUTPUT_DIR,
+                #     provenance_type="orig",
+                # ),
+                ProvenanceCond(
+                    regex="name: \$\(NAME\)",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="partial",
+                ),
+                ProvenanceCond(
+                    regex="studies/feature_demo_",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="partial",
+                ),
+                ProvenanceCond(
+                    regex="name: feature_demo",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
+                ),
+                ProvenanceCond(
+                    regex="\$\(NAME\)",
+                    name="feature_demo",
+                    output_path=OUTPUT_DIR,
+                    provenance_type="expanded",
+                    negate=True,
+                ),
+                StepFileExistsCond(
+                    "verify",
+                    "MERLIN_FINISHED",
+                    "feature_demo",
+                    OUTPUT_DIR,
+                    params=True,
+                ),
+            ],
+            "local",
+        ),
         # "local restart expand name": (
         #    f"{run} {demo} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} NAME=test_demo ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'test_demo_*') --local",
         #    [
