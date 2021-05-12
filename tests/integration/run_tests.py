@@ -594,19 +594,19 @@ def define_tests():
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
                 ),
-                # ProvenanceCond(
-                #     regex="name: feature_demo",
-                #     name="feature_demo",
-                #     output_path=OUTPUT_DIR,
-                #     provenance_type="expanded",
-                # ),
                 ProvenanceCond(
-                    regex="\$\(NAME\)",
+                    regex="name: feature_demo",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
-                    negate=True,
                 ),
+                # ProvenanceCond(
+                #     regex="\$\(NAME\)",
+                #     name="feature_demo",
+                #     output_path=OUTPUT_DIR,
+                #     provenance_type="expanded",
+                #     negate=True,
+                # ),
                 StepFileExistsCond(
                     "verify",
                     "MERLIN_FINISHED",
