@@ -576,18 +576,18 @@ def define_tests():
             f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
                 ReturnCodeCond(),
-                # ProvenanceCond(
-                #     regex="PREDICT: \$\(SCRIPTS\)/predict.py",
-                #     name="feature_demo",
-                #     output_path=OUTPUT_DIR,
-                #     provenance_type="orig",
-                # ),
                 ProvenanceCond(
-                    regex="name: \$\(NAME\)",
+                    regex="PREDICT: \$\(SCRIPTS\)/predict.py",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
-                    provenance_type="partial",
+                    provenance_type="orig",
                 ),
+                # ProvenanceCond(
+                #     regex="name: \$\(NAME\)",
+                #     name="feature_demo",
+                #     output_path=OUTPUT_DIR,
+                #     provenance_type="partial",
+                # ),
                 ProvenanceCond(
                     regex="studies/feature_demo_",
                     name="feature_demo",
