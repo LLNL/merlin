@@ -67,9 +67,11 @@ retry_exceptions = (
 LOG = logging.getLogger(__name__)
 
 STOP_COUNTDOWN = 60
+LOW_PRIORITY = 10
+HIGH_PRIORITY = 1
 
 
-@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True, priority=HIGH_PRIORITY)
 def merlin_step(self, *args, **kwargs):
     """
     Executes a Merlin Step
@@ -229,7 +231,7 @@ def prepare_chain_workspace(sample_index, chain_):
         LOG.debug(f"...workspace {workspace} prepared.")
 
 
-@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True, priority=LOW_PRIORITY)
 def add_merlin_expanded_chain_to_chord(
     self,
     task_type,
@@ -400,7 +402,7 @@ def add_chains_to_chord(self, all_chains):
     return ReturnCode.OK
 
 
-@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True, priority=LOW_PRIORITY)
 def expand_tasks_with_samples(
     self,
     dag,
@@ -523,6 +525,7 @@ def expand_tasks_with_samples(
     acks_late=False,
     reject_on_worker_lost=False,
     name="merlin:shutdown_workers",
+    priority=HIGH_PRIORITY,
 )
 def shutdown_workers(self, shutdown_queues):
     """
@@ -542,7 +545,7 @@ def shutdown_workers(self, shutdown_queues):
 
 
 @shared_task(
-    autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:chordfinisher"
+    autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:chordfinisher", priority=LOW_PRIORITY,
 )
 def chordfinisher(*args, **kwargs):
     """.
@@ -556,7 +559,7 @@ def chordfinisher(*args, **kwargs):
 
 
 @shared_task(
-    autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:queue_merlin_study"
+    autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:queue_merlin_study", priority=LOW_PRIORITY,
 )
 def queue_merlin_study(study, adapter):
     """
