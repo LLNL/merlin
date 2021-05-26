@@ -118,7 +118,7 @@ def merlin_step(self, *args, **kwargs):
                 LOG.info(
                     f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})..."
                 )
-                self.retry(countdown = step.retry_delay)
+                self.retry(countdown=step.retry_delay)
             except MaxRetriesExceededError:
                 LOG.warning(
                     f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
@@ -130,7 +130,7 @@ def merlin_step(self, *args, **kwargs):
                 LOG.info(
                     f"Step '{step_name}' in '{step_dir}' is being retried ({self.request.retries + 1}/{self.max_retries})..."
                 )
-                self.retry(countdown = step.retry_delay)
+                self.retry(countdown=step.retry_delay)
             except MaxRetriesExceededError:
                 LOG.warning(
                     f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
