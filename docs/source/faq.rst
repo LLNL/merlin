@@ -356,6 +356,17 @@ to specify the same launch command that will work on different HPC clusters with
 default schedulers such as SLURM or LSF.
 More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
 
+
+Older versions of flux may need the ``--mpi=none`` argument if flux is 
+launched on a system using the SLURM scheduler. This argument can be added
+in the ``launch_args`` ariable in the batch section.
+
+.. code:: yaml
+
+   batch:
+     type: flux
+     launch_args: --mpi=none
+
 How do I use flux on LC?
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The ``--mpibind=off`` option is currently required when using flux with a slurm launcher
