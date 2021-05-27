@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - `feature_demo` now uses `merlin-spellbook` instead of its own scripts.
-- Remove the --mpi=none run default launch argument. This can be added by 
+- Remove the --mpi=none srun default launch argument. This can be added by 
   setting the launch_args argument in the batch section in the spec.
 
 ## [1.7.9]
