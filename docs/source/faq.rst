@@ -359,7 +359,7 @@ More information can be found at the `Flux web page <http://flux-framework.org/d
 
 Older versions of flux may need the ``--mpi=none`` argument if flux is 
 launched on a system using the SLURM scheduler. This argument can be added
-in the ``launch_args`` ariable in the batch section.
+in the ``launch_args`` variable in the batch section.
 
 .. code:: yaml
 
