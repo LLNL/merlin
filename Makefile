@@ -126,7 +126,7 @@ unit-tests:
 
 # run CLI tests
 cli-tests:
-	-$(PYTHON) $(TEST)/integration/run_tests.py
+	-$(PYTHON) $(TEST)/integration/run_tests.py --local
 
 
 # run unit and CLI tests
