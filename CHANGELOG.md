@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `retry_delay` field in a step to specify a countdown in seconds prior to running a
-  restart or retry
+  restart or retry.
+- New merlin example `restart_delay` that demonstrates usage of this feature.
 
 ### Changed
 - `feature_demo` now uses `merlin-spellbook` instead of its own scripts.
+- Remove the `--mpi=none` `srun` default launch argument. This can be added by 
+  setting the `launch_args` argument in the batch section in the spec.
 
 ## [1.7.9]
 
