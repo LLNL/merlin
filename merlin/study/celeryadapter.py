@@ -325,7 +325,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
 
 
 def verify_args(spec, worker_args, worker_name, overlap):
-    """Examines the passed args to a worker for completeness."""
+    """Examines the args passed to a worker for completeness."""
     parallel = batch_check_parallel(spec)
     if parallel:
         if "--concurrency" not in worker_args:
