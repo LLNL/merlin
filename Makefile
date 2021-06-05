@@ -37,7 +37,8 @@ MRLN=merlin
 TEST=tests
 DOCS=docs
 WKFW=merlin/examples/workflows/
-MAX_COMPLEXITY?=5
+MAX_COMPLEXITY?=10
+MAX_LINE_LENGTH=127
 
 VER?=1.0.0
 VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+
@@ -145,7 +146,7 @@ fix-style:
 
 # run code style checks
 check-style:
-	-$(PYTHON) -m flake8 --max-complexity $(MAX_COMPLEXITY) --exclude ascii_art.py $(MRLN)
+	-$(PYTHON) -m flake8 --max-complexity $(MAX_COMPLEXITY) --max-line-length $(MAX_LINE_LENGTH) --exclude ascii_art.py $(MRLN)
 	-black --check --target-version py36 $(MRLN)
 
 
