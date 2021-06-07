@@ -135,7 +135,7 @@ class Step:
 
     def get_task_queue(self):
         """ Retrieve the task queue for the Step."""
-        return self.get_task_queue_from_dict(self.mstep.step.__dict__)
+        return "[merlin]_" + self.get_task_queue_from_dict(self.mstep.step.__dict__)
 
     @staticmethod
     def get_task_queue_from_dict(step_dict):
