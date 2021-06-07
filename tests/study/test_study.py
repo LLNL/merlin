@@ -207,13 +207,13 @@ def test_get_task_queue_None():
 
 
 def test_mastro_task_queue_None_str():
-"""
-Given a steps dictionary where the task_queue is set to the string value
-'None`, return `merlin` as the queue name.
-"""
-steps = {"run": {"task_queue": "None"}}
-queue = Step.get_task_queue_from_dict(steps)
-assert queue == "[merlin]_"
+    """
+    Given a steps dictionary where the task_queue is set to the string value
+    'None`, return `merlin` as the queue name.
+    """
+    steps = {"run": {"task_queue": "None"}}
+    queue = Step.get_task_queue_from_dict(steps)
+    assert queue == "[merlin]_"
 
 
 def test_get_task_queue_none_str():
