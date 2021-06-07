@@ -155,65 +155,65 @@ def test_get_task_queue_default():
     """
     steps = {"run": {"task_queue": "test_queue"}}
     queue = Step.get_task_queue_from_dict(steps)
-        assert queue == "[merlin]_test_queue"
+    assert queue == "[merlin]_test_queue"
 
 
-    def test_get_task_queue_task_queue_missing():
-        """
-        Given a steps dictionary  where the run is set to an empty dictionary
-        return `merlin` as the queue name.
-        """
-        steps = {"run": {}}
-        queue = Step.get_task_queue_from_dict(steps)
-        assert queue == "[merlin]_"
-
-
-    def test_get_task_queue_run_missing():
-        """
-        Given an empty steps dictionary return `merlin` as the queue name.
-        """
-        steps = {}
-        queue = Step.get_task_queue_from_dict(steps)
-        assert queue == "[merlin]_"
-
-
-    def test_get_task_queue_steps_None():
-        """
-        Given the value of None return `merlin` as the queue name.
-        """
-        steps = None
-        queue = Step.get_task_queue_from_dict(steps)
-        assert queue == "[merlin]_"
-
-
-    def test_get_task_queue_run_None():
-        """
-        Given a steps dictionary where the run value is set to None, return
-        `merlin` as the queue name.
-        """
-        steps = {"run": None}
-        queue = Step.get_task_queue_from_dict(steps)
-        assert queue == "[merlin]_"
-
-
-    def test_get_task_queue_None():
-        """
-        Given a steps dictionary where the task_queue is set to None, return
-        `merlin` as the queue name.
-        """
-        steps = {"run": {"task_queue": None}}
-        queue = Step.get_task_queue_from_dict(steps)
-        assert queue == "[merlin]_"
-
-
-    def test_mastro_task_queue_None_str():
+def test_get_task_queue_task_queue_missing():
     """
-    Given a steps dictionary where the task_queue is set to the string value
-    'None`, return `merlin` as the queue name.
+    Given a steps dictionary  where the run is set to an empty dictionary
+    return `merlin` as the queue name.
     """
-    steps = {"run": {"task_queue": "None"}}
+    steps = {"run": {}}
     queue = Step.get_task_queue_from_dict(steps)
     assert queue == "[merlin]_"
+
+
+def test_get_task_queue_run_missing():
+    """
+    Given an empty steps dictionary return `merlin` as the queue name.
+    """
+    steps = {}
+    queue = Step.get_task_queue_from_dict(steps)
+    assert queue == "[merlin]_"
+
+
+def test_get_task_queue_steps_None():
+    """
+    Given the value of None return `merlin` as the queue name.
+    """
+    steps = None
+    queue = Step.get_task_queue_from_dict(steps)
+    assert queue == "[merlin]_"
+
+
+def test_get_task_queue_run_None():
+    """
+    Given a steps dictionary where the run value is set to None, return
+    `merlin` as the queue name.
+    """
+    steps = {"run": None}
+    queue = Step.get_task_queue_from_dict(steps)
+    assert queue == "[merlin]_"
+
+
+def test_get_task_queue_None():
+    """
+    Given a steps dictionary where the task_queue is set to None, return
+    `merlin` as the queue name.
+    """
+    steps = {"run": {"task_queue": None}}
+    queue = Step.get_task_queue_from_dict(steps)
+    assert queue == "[merlin]_"
+
+
+def test_mastro_task_queue_None_str():
+"""
+Given a steps dictionary where the task_queue is set to the string value
+'None`, return `merlin` as the queue name.
+"""
+steps = {"run": {"task_queue": "None"}}
+queue = Step.get_task_queue_from_dict(steps)
+assert queue == "[merlin]_"
 
 
 def test_get_task_queue_none_str():
