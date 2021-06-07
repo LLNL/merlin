@@ -34,7 +34,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 
-from celery import chain, chord, get_priority, group, shared_task, signature
+from celery import chain, chord, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
@@ -52,6 +52,7 @@ from merlin.spec.expansion import (
     parameter_substitutions_for_sample,
 )
 from merlin.study.step import Step
+from merlin.utils import get_priority
 
 
 retry_exceptions = (
