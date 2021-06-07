@@ -67,8 +67,8 @@ retry_exceptions = (
 LOG = logging.getLogger(__name__)
 
 STOP_COUNTDOWN = 60
-LOW_PRIORITY = 10
-HIGH_PRIORITY = 1
+LOW_PRIORITY = 1
+HIGH_PRIORITY = 10
 
 
 @shared_task(
