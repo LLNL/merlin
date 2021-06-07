@@ -78,6 +78,10 @@ app = Celery(
     task_routes=(route_for_task,),
 )
 
+# set task priority defaults to prioritize workflow tasks over task-expansion tasks
+task_priority_defaults = {"task_queue_max_priority": 10, "task_default_priority": 5}
+app.conf.update(**task_priority_defaults)
+
 # load merlin config defaults
 app.conf.update(**celeryconfig.DICT)
 

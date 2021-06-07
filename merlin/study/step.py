@@ -140,12 +140,12 @@ class Step:
     @staticmethod
     def get_task_queue_from_dict(step_dict):
         """ given a maestro step dict, get the task queue"""
+        queue = "[merlin]_"
         with suppress(TypeError, KeyError):
-            queue = step_dict["run"]["task_queue"]
+            queue += step_dict["run"]["task_queue"]
             if queue is None or queue.lower() == "none":
-                queue = "merlin"
-            return queue
-        return "merlin"
+                queue = "[merlin]_"
+        return queue
 
     @property
     def retry_delay(self):
