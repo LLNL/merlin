@@ -43,6 +43,7 @@ from merlin.study.script_adapter import MerlinScriptAdapter
 
 
 LOG = logging.getLogger(__name__)
+QUEUE_TAG = "[merlin]_"
 
 
 class MerlinStepRecord(_StepRecord):
@@ -135,17 +136,16 @@ class Step:
 
     def get_task_queue(self):
         """ Retrieve the task queue for the Step."""
-        return "[merlin]_" + self.get_task_queue_from_dict(self.mstep.step.__dict__)
+        return QUEUE_TAG + self.get_task_queue_from_dict(self.mstep.step.__dict__)
 
     @staticmethod
     def get_task_queue_from_dict(step_dict):
         """ given a maestro step dict, get the task queue"""
-        merlin_tag = "[merlin]_"
-        queue = str(merlin_tag)
+        queue = str(QUEUE_TAG)
         with suppress(TypeError, KeyError):
             queue += step_dict["run"]["task_queue"]
-            if queue is None or queue.lower() == f"{merlin_tag}none":
-                queue = str(merlin_tag)
+            if queue is None or queue.lower() == f"{QUEUE_TAG}none":
+                queue = str(QUEUE_TAG)
         return queue
 
     @property

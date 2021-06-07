@@ -307,7 +307,7 @@ class MerlinSpec(YAMLSpecification):
         queues = {}
         for step in steps:
             if "task_queue" in step.run:
-                queues[step.name] = step.run["task_queue"]
+                queues[step.name] = "[merlin]_" + step.run["task_queue"]
         return queues
 
     def get_queue_list(self, steps):
