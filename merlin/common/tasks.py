@@ -34,7 +34,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 
-from celery import chain, chord, group, shared_task, signature
+from celery import chain, chord, get_priority, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
@@ -67,15 +67,13 @@ retry_exceptions = (
 LOG = logging.getLogger(__name__)
 
 STOP_COUNTDOWN = 60
-LOW_PRIORITY = 1
-HIGH_PRIORITY = 10
 
 
 @shared_task(
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=HIGH_PRIORITY,
+    priority=get_priority(priority="high"),
 )
 def merlin_step(self, *args, **kwargs):
     """
@@ -237,7 +235,10 @@ def prepare_chain_workspace(sample_index, chain_):
 
 
 @shared_task(
-    bind=True, autoretry_for=retry_exceptions, retry_backoff=True, priority=LOW_PRIORITY
+    bind=True,
+    autoretry_for=retry_exceptions,
+    retry_backoff=True,
+    priority=get_priority(priority="low"),
 )
 def add_merlin_expanded_chain_to_chord(
     self,
@@ -410,7 +411,10 @@ def add_chains_to_chord(self, all_chains):
 
 
 @shared_task(
-    bind=True, autoretry_for=retry_exceptions, retry_backoff=True, priority=LOW_PRIORITY
+    bind=True,
+    autoretry_for=retry_exceptions,
+    retry_backoff=True,
+    priority=get_priority(priority="low"),
 )
 def expand_tasks_with_samples(
     self,
@@ -534,7 +538,7 @@ def expand_tasks_with_samples(
     acks_late=False,
     reject_on_worker_lost=False,
     name="merlin:shutdown_workers",
-    priority=HIGH_PRIORITY,
+    priority=get_priority(priority="high"),
 )
 def shutdown_workers(self, shutdown_queues):
     """
@@ -557,7 +561,7 @@ def shutdown_workers(self, shutdown_queues):
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     name="merlin:chordfinisher",
-    priority=LOW_PRIORITY,
+    priority=get_priority(priority="low"),
 )
 def chordfinisher(*args, **kwargs):
     """.
@@ -574,7 +578,7 @@ def chordfinisher(*args, **kwargs):
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     name="merlin:queue_merlin_study",
-    priority=LOW_PRIORITY,
+    priority=get_priority(priority="low"),
 )
 def queue_merlin_study(study, adapter):
     """

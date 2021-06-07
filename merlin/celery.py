@@ -50,6 +50,28 @@ LOG = logging.getLogger(__name__)
 
 merlin.common.security.encrypt_backend_traffic.set_backend_funcs()
 
+
+def get_priority(api="rabbit", priority="low"):
+    apis = ["rabbit", "redis"]
+    if api not in apis:
+        LOG.error(f"Unrecognized api '{api}'! Options: {apis}")
+    priorities = ["high", "mid", "low"]
+    if priority not in priorities:
+        LOG.error(f"Unrecognized priority '{priority}'! Options: {priorities}")
+    if priority == "mid":
+        return 5
+    if api == "rabbit":
+        if priority == "low":
+            return 1
+        if priority == "high":
+            return 10
+    if api == "redis":
+        if priority == "low":
+            return 10
+        if priority == "high":
+            return 1
+
+
 broker_ssl = True
 results_ssl = False
 try:
@@ -79,7 +101,10 @@ app = Celery(
 )
 
 # set task priority defaults to prioritize workflow tasks over task-expansion tasks
-task_priority_defaults = {"task_queue_max_priority": 10, "task_default_priority": 5}
+task_priority_defaults = {
+    "task_queue_max_priority": get_priority(priority="high"),
+    "task_default_priority": get_priority(priority="mid"),
+}
 app.conf.update(**task_priority_defaults)
 
 # load merlin config defaults
