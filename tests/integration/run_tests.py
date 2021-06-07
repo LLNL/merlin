@@ -577,7 +577,7 @@ def define_tests():
             [
                 ReturnCodeCond(),
                 ProvenanceCond(
-                    regex="PREDICT: \$\(SCRIPTS\)/predict.py",
+                    regex="HELLO: \$\(SCRIPTS\)/hello_world.py",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="orig",
