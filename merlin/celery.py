@@ -42,8 +42,9 @@ from celery.signals import worker_process_init
 import merlin.common.security.encrypt_backend_traffic
 from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
+from merlin.config.utils import get_priority
 from merlin.router import route_for_task
-from merlin.utils import get_priority, nested_namespace_to_dicts
+from merlin.utils import nested_namespace_to_dicts
 
 
 LOG = logging.getLogger(__name__)
@@ -81,8 +82,8 @@ app = Celery(
 
 # set task priority defaults to prioritize workflow tasks over task-expansion tasks
 task_priority_defaults = {
-    "task_queue_max_priority": get_priority(priority="high"),
-    "task_default_priority": get_priority(priority="mid"),
+    "task_queue_max_priority": get_priority("high"),
+    "task_default_priority": get_priority("mid"),
 }
 app.conf.update(**task_priority_defaults)
 
