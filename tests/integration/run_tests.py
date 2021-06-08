@@ -577,7 +577,7 @@ def define_tests():
             [
                 ReturnCodeCond(),
                 ProvenanceCond(
-                    regex="PREDICT: \$\(SCRIPTS\)/predict.py",
+                    regex="HELLO: \$\(SCRIPTS\)/hello_world.py",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="orig",
@@ -607,13 +607,13 @@ def define_tests():
                     provenance_type="expanded",
                     negate=True,
                 ),
-                StepFileExistsCond(
-                    "verify",
-                    "MERLIN_FINISHED",
-                    "feature_demo",
-                    OUTPUT_DIR,
-                    params=True,
-                ),
+                # StepFileExistsCond(
+                #     "verify",
+                #     "MERLIN_FINISHED",
+                #     "feature_demo",
+                #     OUTPUT_DIR,
+                #     params=True,
+                # ),
             ],
             "local",
         ),
