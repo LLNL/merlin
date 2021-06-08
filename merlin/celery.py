@@ -85,6 +85,11 @@ task_priority_defaults = {
     "task_queue_max_priority": get_priority(Priority.high),
     "task_default_priority": get_priority(Priority.mid),
 }
+if CONGIG.broker.name.lower() == "redis":
+    app.conf.broker_transport_options = {
+        "priority_steps": list(range(1, 11)),
+        "queue_order_strategy": "priority",
+    }
 app.conf.update(**task_priority_defaults)
 
 # load merlin config defaults
