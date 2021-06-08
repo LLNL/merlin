@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.5.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -185,7 +185,7 @@ def get_workers_from_app():
 
 
 def start_celery_workers(spec, steps, celery_args, just_return_command):
-    """ Start the celery workers on the allocation
+    """Start the celery workers on the allocation
 
     specs       Tuple of (YAMLSpecification, MerlinSpec)
     ...

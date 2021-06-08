@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.5.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -47,7 +47,7 @@ LOG = logging.getLogger(__name__)
 
 class MerlinStepRecord(_StepRecord):
     """
-    This classs is a wrapper for the Maestro _StepRecord to remove 
+    This classs is a wrapper for the Maestro _StepRecord to remove
     a re-submit message.
     """
 
@@ -148,6 +148,11 @@ class Step:
         return "merlin"
 
     @property
+    def retry_delay(self):
+        default_retry_delay = 1
+        return self.mstep.step.__dict__["run"].get("retry_delay", default_retry_delay)
+
+    @property
     def max_retries(self):
         """
         Returns the max number of retries for this step.
@@ -219,25 +224,22 @@ class Step:
             the maestro script adapter, as well as which sort of adapter
             to use.
         """
-        # cls_adapter = ScriptAdapterFactory.get_adapter(adapter_config['type'])
-        cls_adapter = MerlinScriptAdapter
-
         # Update shell if the task overrides the default value from the batch section
-        default_shell = adapter_config.pop("shell")
-        shell = self.mstep.step.run.pop("shell", default_shell)
+        default_shell = adapter_config.get("shell")
+        shell = self.mstep.step.run.get("shell", default_shell)
         adapter_config.update({"shell": shell})
 
         # Update batch type if the task overrides the default value from the batch section
-        default_batch_type = adapter_config.pop("batch_type", adapter_config["type"])
+        default_batch_type = adapter_config.get("batch_type", adapter_config["type"])
         # Set batch_type to default if unset
-        adapter_config.update({"batch_type": default_batch_type})
+        adapter_config.setdefault("batch_type", default_batch_type)
         # Override the default batch: type: from the step config
-        batch = self.mstep.step.run.pop("batch", None)
+        batch = self.mstep.step.run.get("batch", None)
         if batch:
-            batch_type = batch.pop("type", default_batch_type)
+            batch_type = batch.get("type", default_batch_type)
             adapter_config.update({"batch_type": batch_type})
 
-        adapter = cls_adapter(**adapter_config)
+        adapter = MerlinScriptAdapter(**adapter_config)
         LOG.debug(f"Maestro step config = {adapter_config}")
 
         # Preserve the default shell if the step shell is different

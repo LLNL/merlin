@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.5.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -64,6 +64,7 @@ PENV=merlin$(PYV)
 .PHONY : check-style
 .PHONY : check-camel-case
 .PHONY : checks
+.PHONY : reqlist
 
 
 all: install-dev install-merlin install-workflow-deps
@@ -125,7 +126,7 @@ unit-tests:
 
 # run CLI tests
 cli-tests:
-	-$(PYTHON) $(TEST)/integration/run_tests.py
+	-$(PYTHON) $(TEST)/integration/run_tests.py --local
 
 
 # run unit and CLI tests
@@ -172,3 +173,6 @@ version:
 	find tests/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	find Makefile -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 
+# Make a list of all dependencies/requirements
+reqlist:
+	johnnydep merlin --output-format pinned

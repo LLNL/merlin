@@ -1,0 +1,99 @@
+description:
+  description: A simple ensemble of with restart delay times.
+  name: restart_delay
+
+batch:
+  type: local
+
+env:
+  variables:
+    OUTPUT_PATH: ./studies
+    N_SAMPLES: 10
+    STAMP_TIME: touch timings.txt; date +"%r" >> timings.txt
+
+study:
+- description: Build the code
+  name: build
+  run:
+    cmd: echo mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c
+    task_queue: trs_par
+- description: Echo the params
+  name: run_10 
+  run:
+    cmd: |
+      $(STAMP_TIME)
+      if [ -e restarted ]; then
+        exit $(MERLIN_SUCCESS)
+      fi
+      echo $(build.workspace)/mpi_hello $(V1) $(V2)
+      # This is to test the re-run of cmd if no restart is given
+      touch restarted
+      exit $(MERLIN_RESTART)
+    depends: [build]
+    task_queue: trs_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+    retry_delay: 10
+- description: Echo the params
+  name: runs_rt_30 
+  run:
+    cmd: |
+      $(STAMP_TIME)
+      if [ -e retried ]; then
+        exit $(MERLIN_SUCCESS)
+      fi
+      echo $(build.workspace)/mpi_hello $(V1) $(V2)
+      touch retried
+      # This is to test the re-run of cmd if no restart is given
+      exit $(MERLIN_RETRY)
+    depends: [build]
+    task_queue: trs_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+    retry_delay: 30
+- description: Echo the params using restart
+  name: runs_rs_1 
+  run:
+    cmd: |
+      $(STAMP_TIME)
+      echo ln -s $(build.workspace)/mpi_hello .
+      exit $(MERLIN_RESTART)
+    depends: [build]
+    task_queue: trs_par
+    nodes: 1
+    procs: 4
+    cores per task: 1
+    restart: |
+       $(STAMP_TIME)
+       echo $(build.workspace)/mpi_hello $(V1) $(V2)
+       exit $(MERLIN_SUCCESS)
+
+- description: Dump flux info
+  name: data
+  run:
+    cmd: |
+      $(STAMP_TIME)
+      echo flux kvs dir lwj.0.0.5 >& trs_kvs.out
+    depends: [run_10*, runs_rs_1*, runs_rt_30*]
+    task_queue: trs_par
+
+global.parameters:
+  STUDY:
+    label: STUDY.%%
+    values:
+    - FLUXTEST
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      simworkers:
+        args: -l INFO --prefetch-multiplier 1 -Ofair
+        steps: [all]
+  samples:
+    column_labels: [V1, V2]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

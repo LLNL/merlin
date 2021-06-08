@@ -8,7 +8,7 @@ broker:
     # can be redis, redis+sock, or rabbitmq
     name: rabbitmq
     #username: # defaults to your username unless changed here
-    password: ~/.merlin/rabbit-password
+    password: ~/.merlin/jackalope-password
     # server URL
     server: jackalope.llnl.gov
 

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.5.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -330,7 +330,7 @@ def ensure_directory_exists(**kwargs):
 
 def nested_dict_to_namespaces(dic):
     """Code for recursively converting dictionaries of dictionaries
-        into SimpleNamespaces instead.
+    into SimpleNamespaces instead.
     """
 
     def recurse(dic):
@@ -349,7 +349,7 @@ def nested_dict_to_namespaces(dic):
 
 def nested_namespace_to_dicts(ns):
     """Code for recursively converting namespaces of namespaces
-        into dictionaries instead.
+    into dictionaries instead.
     """
 
     def recurse(ns):
@@ -384,6 +384,7 @@ def get_flux_version(flux_path, no_errors=False):
     except FileNotFoundError as e:
         if not no_errors:
             LOG.error(f"The flux path {flux_path} canot be found")
+            LOG.error(f"Suppress this error with no_errors=True")
             raise e
 
     try:
@@ -391,6 +392,7 @@ def get_flux_version(flux_path, no_errors=False):
     except (ValueError, TypeError) as e:
         if not no_errors:
             LOG.error(f"The flux version canot be determined")
+            LOG.error(f"Suppress this error with no_errors=True")
             raise e
         else:
             flux_ver = DEFAULT_FLUX_VERSION

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.5.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -423,7 +423,11 @@ def define_tests():
         "local minimum_format": (
             f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../{dev_examples}/minimum_format.yaml --local",
             StepFileExistsCond(
-                "step1", "MERLIN_FINISHED", "minimum_format", OUTPUT_DIR, params=False,
+                "step1",
+                "MERLIN_FINISHED",
+                "minimum_format",
+                OUTPUT_DIR,
+                params=False,
             ),
             "local",
         ),
@@ -473,7 +477,11 @@ def define_tests():
             f"{run} {demo} --local --dry --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             [
                 StepFileExistsCond(
-                    "verify", "verify_*.sh", "feature_demo", OUTPUT_DIR, params=True,
+                    "verify",
+                    "verify_*.sh",
+                    "feature_demo",
+                    OUTPUT_DIR,
+                    params=True,
                 ),
                 ReturnCodeCond(),
             ],
@@ -487,6 +495,28 @@ def define_tests():
         "local simple_chain": (
             f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
             ReturnCodeCond(),
+            "local",
+        ),
+        "local restart": (
+            f"{run} {dev_examples}/restart.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileExistsCond(
+                "final_check_for_no_hard_fails",
+                "MERLIN_FINISHED",
+                "restart",
+                OUTPUT_DIR,
+                params=False,
+            ),
+            "local",
+        ),
+        "local restart_shell": (
+            f"{run} {dev_examples}/restart_shell.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileExistsCond(
+                "step2",
+                "MERLIN_FINISHED",
+                "restart_shell",
+                OUTPUT_DIR,
+                params=False,
+            ),
             "local",
         ),
         "example failure": (f"merlin example failure", RegexCond("not found"), "local"),
@@ -547,7 +577,7 @@ def define_tests():
             [
                 ReturnCodeCond(),
                 ProvenanceCond(
-                    regex="PREDICT: \$\(SCRIPTS\)/predict.py",
+                    regex="HELLO: \$\(SCRIPTS\)/hello_world.py",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="orig",
@@ -604,12 +634,12 @@ def define_tests():
         #    "local",
         # ),
         "local csv feature_demo": (
-            f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samples foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
+            f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samplesfile foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [RegexCond("1 sample loaded."), ReturnCodeCond()],
             "local",
         ),
         "local tab feature_demo": (
-            f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samples foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
+            f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samplesfile foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
             [RegexCond("2 samples loaded."), ReturnCodeCond()],
             "local",
         ),

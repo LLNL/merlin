@@ -1,7 +1,10 @@
 import argparse
+import ast
 import sys
 
 import numpy as np
+
+from merlin.common.util_sampling import scale_samples
 
 
 def process_args(args):
@@ -15,6 +18,19 @@ def process_args(args):
         temp = [np.linspace(0, 1.0, subdivision) for i in range(n_dims)]
         X = np.meshgrid(*temp)
         x = np.stack([xx.flatten() for xx in X], axis=1)
+
+    if args.scale is not None:
+        limits = []
+        do_log = []
+        scales = ast.literal_eval(args.scale)
+        for scale in scales:
+            limits.append((scale[0], scale[1]))
+            if scale[2] == "log":
+                do_log.append(True)
+            else:
+                do_log.append(False)
+        x = scale_samples(x, limits, do_log=do_log)
+
     np.save(args.outfile, x)
 
 
@@ -26,6 +42,10 @@ def setup_argparse():
         "-sample_type",
         help="type of sampling. options: random, grid. If grid, will try to get close to the correct number of samples",
         default="random",
+    )
+    parser.add_argument(
+        "-scale",
+        help='ranges to scale results in form "[(min,max,type),(min, max,type)]" where type = "linear" or "log"',
     )
     parser.add_argument("-outfile", help="name of output .npy file", default="samples")
     return parser

@@ -1,0 +1,42 @@
+description:
+    name: restart_shell
+    description: reproducer for restart_shell bug
+
+batch:
+    type: local
+
+env:
+    variables:
+        OUTPUT_PATH: ./studies
+
+study:
+    - name: step1
+      description: step 1
+      run:
+         cmd: |
+              RUNDIR=dirname
+              if [ ! -d ${RUNDIR} ] ; then
+                echo "if 1"
+                mkdir ${RUNDIR}
+                exit $(MERLIN_RESTART)
+              else
+                echo "if 2"
+                exit $(MERLIN_SUCCESS)
+              fi
+
+    - name: step2
+      description: step 2
+      run:
+         cmd: |
+              import os
+              import sys
+              rundir = "dirname"
+              if not os.path.isdir(rundir):
+                print("if 1")
+                os.mkdir(rundir)
+                sys.exit($(MERLIN_RESTART))
+              else:
+                print("if 2")
+                sys.exit($(MERLIN_SUCCESS))
+         shell: /usr/bin/env python3
+         depends: [step1]

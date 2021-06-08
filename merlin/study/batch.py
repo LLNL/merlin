@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.5.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -112,13 +112,13 @@ def get_node_count(default=1):
 
 def batch_worker_launch(spec, com, nodes=None, batch=None):
     """
-      The configuration in the batch section of the merlin spec
-      is used to create the worker launch line, which may be
-      different from a simulation launch.
+    The configuration in the batch section of the merlin spec
+    is used to create the worker launch line, which may be
+    different from a simulation launch.
 
-      com (str): The command to launch with batch configuration
-      nodes (int): The number of nodes to use in the batch launch
-      batch (dict): An optional batch override from the worker config
+    com (str): The command to launch with batch configuration
+    nodes (int): The number of nodes to use in the batch launch
+    batch (dict): An optional batch override from the worker config
 
     """
     if batch is None:
@@ -160,7 +160,7 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
     launchs = worker_launch
     if not launchs:
         if btype == "slurm" or launcher == "slurm":
-            launchs = f"srun --mpi=none -N {nodes} -n {nodes}"
+            launchs = f"srun -N {nodes} -n {nodes}"
             if bank:
                 launchs += f" -A {bank}"
             if queue:

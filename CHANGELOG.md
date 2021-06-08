@@ -4,6 +4,57 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `retry_delay` field in a step to specify a countdown in seconds prior to running a
+  restart or retry.
+- New merlin example `restart_delay` that demonstrates usage of this feature.
+
+### Changed
+- `feature_demo` now uses `merlin-spellbook` instead of its own scripts.
+- Remove the `--mpi=none` `srun` default launch argument. This can be added by 
+  setting the `launch_args` argument in the batch section in the spec.
+
+## [1.7.9]
+
+### Fixed
+- Bug that caused steps to raise a fatal error (instead of soft failing) after maxing
+  out step retries. Occurred if steps were part of a chord.
+
+## [1.7.8]
+
+### Fixed
+- Bug that caused step restarts to lose alternate shell specification, and
+  associated CLI `restart_shell` test.
+
+## [1.7.7]
+
+### Fixed
+- Bug that caused example workflows with a variable reference in their
+  name to be listed by `merlin example list` with variable reference notation.
+- Bug that caused `requirements.txt` files to be excluded from generated
+  `merlin example` dirs.
+- Bug that causes step restarts to lose alternate shell specification. Also added
+  CLI test for this case.
+
+### Changed
+- Default broker server password is now `jackalope-password`, since `rabbit` is
+  currently accessed by developers only.
+
+## [1.7.6]
+
+### Added
+- The first version of an optimization workflow, which can be accessed with
+  `merlin example optimization`.
+- Dev requirement library for finding dependencies (and `make reqlist` target)
+
+### Changed
+- Improved warning and help messages about `no_errors`
+
+### Fixed
+- Pinned to celery>5.0.3 so that `merlin purge` works again
+
 ## [1.7.5]
 
 ### Changed
@@ -92,9 +143,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.6.0]
 
 ### Added
-- The broker name can now be amqps (with ssl) or amqp (without ssl). 
+- The broker name can now be amqps (with ssl) or amqp (without ssl).
 - The encryption key will now be created when running merlin config.
-- The merlin info connection check will now enforce a minute timeout 
+- The merlin info connection check will now enforce a minute timeout
   check for the server connections.
 
 ### Fixed
@@ -103,7 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A bug that did not change the filename of the output workspace nor of the provenance spec
   when a user variable was included in the `description.name` field.
 - Temporarily locked Celery version at 4.4.2 to avoid fatal bug.
-  
+
 ### Changed
 - The default rabbitmq vhost is now <user> instead of /<user>.
 - Changed default visibility timeout from 2 hours to 24 hours. Exposed this in the config
@@ -135,7 +186,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed mysql install from travis.
 - Improved the celery worker error messages.
 - The slurm launch for celery workers no longer uses the --pty option,
-  this can be added by setting launch_args in the batch section. 
+  this can be added by setting launch_args in the batch section.
 - Adjusted wording in openfoam_wf_no_docker example.
 
 ## [1.5.1]
@@ -165,7 +216,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `merlin monitor` command, which blocks while celery workers are running.
   This can be used at the end of a batch submission script to keep the
   allocation alive while workers are present.  
-- The ~/.merlin dir will be searched for the results password. 
+- The ~/.merlin dir will be searched for the results password.
 - A warning whenever an unrecognized key is found in a Merlin spec; this may
   help users find small mistakes due to spelling or indentation more quickly.
 
@@ -265,15 +316,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `version_tests.sh`, for CI checking that the merlin version is incremented
   before changes are merged into master.
-- Allow for the maestro `$(LAUNCHER)` syntax in tasks, this requires the 
+- Allow for the maestro `$(LAUNCHER)` syntax in tasks, this requires the
   nodes and procs variables in the task just as in maestro. The LAUNCHER keyword
   is implemented for flux, lsf, slurm and local types.  The lsf type
-  will use the LLNL srun wrapper for jsrun when the lsf-srun batch type 
-  is used. The flux version will be checked to determine the proper format 
+  will use the LLNL srun wrapper for jsrun when the lsf-srun batch type
+  is used. The flux version will be checked to determine the proper format
   of the parallel launch call.
 - Local CLI tests for the above `$(LAUNCHER)` feature.
 - `machines` keyword, in the `merlin.resources.workers.<name>` section. This allows
-  the user to assign workers (and thence, steps) to a given machine. 
+  the user to assign workers (and thence, steps) to a given machine.
   All of the machines must have access to the `OUTPUT_PATH`, The
   steps list is mandatory for all workers. Once the machines are added, then only
   the workers for the given set of steps on the specific machine will start. The
@@ -342,7 +393,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.3] - 2019-12-04
 
 ### Added
-Added the requirements files to the MANIFEST.in file for source 
+Added the requirements files to the MANIFEST.in file for source
 distributions.
 
 ## [1.0.2] - 2019-12-04
@@ -372,7 +423,7 @@ Here are some highlights.
 ```
 - Integration testing `make cli-tests`
 - Style rules (isort and black). See `make check-style` and `make fix-style`
-- Dry-run ability for workflows, which will cause workers to setup workspaces, 
+- Dry-run ability for workflows, which will cause workers to setup workspaces,
 but skip execution (all variables will be expanded). Eg: `merlin run --local --dry-run`.
 - Command line override of variable names. `merlin run --vars OUTPUT_PATH=/run/here/instead`
 
