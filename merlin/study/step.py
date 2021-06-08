@@ -141,12 +141,13 @@ class Step:
     @staticmethod
     def get_task_queue_from_dict(step_dict):
         """ given a maestro step dict, get the task queue"""
+        queue = QUEUE_TAG
         with suppress(TypeError, KeyError):
             val = step_dict["run"]["task_queue"]
             if val is None or val.lower() == "none" or val == "":
-                queue = str(QUEUE_TAG)
+                queue = QUEUE_TAG
             else:
-                queue = str(QUEUE_TAG) + val
+                queue = QUEUE_TAG + val
         return queue
 
     @property
