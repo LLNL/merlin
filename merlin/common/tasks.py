@@ -40,7 +40,7 @@ from celery.exceptions import MaxRetriesExceededError, OperationalError, Timeout
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
-from merlin.config.utils import get_priority
+from merlin.config.utils import Priority, get_priority
 from merlin.exceptions import (
     HardFailException,
     InvalidChainException,
@@ -74,7 +74,7 @@ STOP_COUNTDOWN = 60
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority("high"),
+    priority=get_priority(Priority.high),
 )
 def merlin_step(self, *args, **kwargs):
     """
@@ -239,7 +239,7 @@ def prepare_chain_workspace(sample_index, chain_):
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority("low"),
+    priority=get_priority(Priority.low),
 )
 def add_merlin_expanded_chain_to_chord(
     self,
@@ -415,7 +415,7 @@ def add_chains_to_chord(self, all_chains):
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority("low"),
+    priority=get_priority(Priority.low),
 )
 def expand_tasks_with_samples(
     self,
@@ -539,7 +539,7 @@ def expand_tasks_with_samples(
     acks_late=False,
     reject_on_worker_lost=False,
     name="merlin:shutdown_workers",
-    priority=get_priority("high"),
+    priority=get_priority(Priority.high),
 )
 def shutdown_workers(self, shutdown_queues):
     """
@@ -562,7 +562,7 @@ def shutdown_workers(self, shutdown_queues):
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     name="merlin:chordfinisher",
-    priority=get_priority("low"),
+    priority=get_priority(Priority.low),
 )
 def chordfinisher(*args, **kwargs):
     """.
@@ -579,7 +579,7 @@ def chordfinisher(*args, **kwargs):
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     name="merlin:queue_merlin_study",
-    priority=get_priority("low"),
+    priority=get_priority(Priority.low),
 )
 def queue_merlin_study(study, adapter):
     """
