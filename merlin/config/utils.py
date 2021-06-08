@@ -3,8 +3,6 @@ from merlin.config.configfile import CONFIG
 
 def get_priority(priority):
     broker = CONFIG.broker.name.lower()
-    # if broker not in ["", ""]:
-    #    LOG.error(f"Unrecognized api '{api}'! Options: {apis}")
     priorities = ["high", "mid", "low"]
     if priority not in priorities:
         LOG.error(f"Unrecognized priority '{priority}'! Options: {priorities}")
