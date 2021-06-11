@@ -40,6 +40,7 @@ from io import StringIO
 import yaml
 from maestrowf.datastructures import YAMLSpecification
 
+from merlin.config.configfile import CONFIG
 from merlin.spec import all_keys, defaults
 
 
@@ -306,8 +307,10 @@ class MerlinSpec(YAMLSpecification):
         steps = self.get_study_steps()
         queues = {}
         for step in steps:
-            if "task_queue" in step.run:
-                queues[step.name] = "[merlin]_" + step.run["task_queue"]
+            if "task_queue" in step.run and CONFIG.celery.omit_queue_tag:
+                queues[step.name] = step.run["task_queue"]
+            elif "task_queue" in step.run:
+                queues[step.name] = CONFIG.celery.queue_tag + step.run["task_queue"]
         return queues
 
     def get_queue_list(self, steps):
