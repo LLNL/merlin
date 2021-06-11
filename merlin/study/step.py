@@ -39,13 +39,10 @@ from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.config.configfile import CONFIG
 from merlin.study.script_adapter import MerlinScriptAdapter
 
 
 LOG = logging.getLogger(__name__)
-QUEUE_TAG = CONFIG.celery.queue_tag
-OMIT_TAG = CONFIG.celery.omit_queue_tag
 
 
 class MerlinStepRecord(_StepRecord):
@@ -143,18 +140,21 @@ class Step:
     @staticmethod
     def get_task_queue_from_dict(step_dict):
         """ given a maestro step dict, get the task queue"""
-        if OMIT_TAG:
+        from merlin.config.configfile import CONFIG
+        queue_tag = CONFIG.celery.queue_tag
+        omit_tag = CONFIG.celery.omit_queue_tag
+        if omit_tag:
             queue = "merlin"
         else:
-            queue = QUEUE_TAG
+            queue = queue_tag
 
         with suppress(TypeError, KeyError):
             val = step_dict["run"]["task_queue"]
             if not (val is None or val.lower() == "none" or val == ""):
-                if OMIT_TAG:
+                if omit_tag:
                     queue = val
                 else:
-                    queue = QUEUE_TAG + val
+                    queue = queue_tag + val
         return queue
 
     @property

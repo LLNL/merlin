@@ -40,7 +40,6 @@ from io import StringIO
 import yaml
 from maestrowf.datastructures import YAMLSpecification
 
-from merlin.config.configfile import CONFIG
 from merlin.spec import all_keys, defaults
 
 
@@ -304,6 +303,7 @@ class MerlinSpec(YAMLSpecification):
 
     def get_task_queues(self):
         """Returns a dictionary of steps and their corresponding task queues."""
+        from merlin.config.configfile import CONFIG
         steps = self.get_study_steps()
         queues = {}
         for step in steps:
