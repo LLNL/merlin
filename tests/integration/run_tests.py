@@ -39,7 +39,7 @@ import time
 from contextlib import suppress
 from subprocess import PIPE, Popen
 
-from define import OUTPUT_DIR, define_tests
+from test_definitions import OUTPUT_DIR, define_tests
 
 
 def run_single_test(name, test, test_label="", buffer_length=50):
