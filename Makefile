@@ -35,6 +35,7 @@ VENV?=venv_merlin_py$(PYV)
 PIP?=$(VENV)/bin/pip
 MRLN=merlin
 TEST=tests
+UNIT=$(TEST)/unit
 DOCS=docs
 WKFW=merlin/examples/workflows/
 MAX_COMPLEXITY?=5
@@ -121,7 +122,7 @@ release:
 
 
 unit-tests:
-	-$(PYTHON) -m pytest $(TEST)
+	-$(PYTHON) -m pytest $(UNIT)
 
 
 # run CLI tests
