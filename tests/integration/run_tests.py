@@ -33,12 +33,10 @@ Script for running Merlin command line interface tests.
 Built for 1) manual use and 2) continuous integration.
 """
 import argparse
-import os
 import shutil
 import sys
 import time
 from contextlib import suppress
-from glob import glob
 from subprocess import PIPE, Popen
 
 from define import OUTPUT_DIR, define_tests
