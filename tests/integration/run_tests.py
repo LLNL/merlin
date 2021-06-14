@@ -41,8 +41,7 @@ from contextlib import suppress
 from glob import glob
 from subprocess import PIPE, Popen
 
-#from tests.integration.define import define_tests
-from define import define_tests, OUTPUT_DIR
+from define import OUTPUT_DIR, define_tests
 
 
 def run_single_test(name, test, test_label="", buffer_length=50):

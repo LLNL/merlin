@@ -1,4 +1,11 @@
-from conditions import ReturnCodeCond, StepFileExistsCond, StepFileContainsCond, ProvenanceCond, RegexCond
+from conditions import (
+    ProvenanceCond,
+    RegexCond,
+    ReturnCodeCond,
+    StepFileContainsCond,
+    StepFileExistsCond,
+)
+
 from merlin.utils import get_flux_cmd
 
 
