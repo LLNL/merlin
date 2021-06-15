@@ -38,7 +38,7 @@ def define_tests():
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
 
-    return {
+    basic_checks = {
         "merlin": ("merlin", ReturnCodeCond(1), "local"),
         "merlin help": ("merlin --help", ReturnCodeCond(), "local"),
         "merlin version": ("merlin --version", ReturnCodeCond(), "local"),
@@ -47,6 +47,35 @@ def define_tests():
             ReturnCodeCond(),
             "local",
         ),
+    }
+    run_workers_echo_tests = {
+        "run-workers echo simple_chain": (
+            f"{workers} {simple} --echo",
+            [ReturnCodeCond(), RegexCond(celery_regex)],
+            "local",
+        ),
+        "run-workers echo feature_demo": (
+            f"{workers} {demo} --echo",
+            [ReturnCodeCond(), RegexCond(celery_regex)],
+            "local",
+        ),
+        "run-workers echo slurm_test": (
+            f"{workers} {slurm} --echo",
+            [ReturnCodeCond(), RegexCond(celery_regex)],
+            "local",
+        ),
+        "run-workers echo flux_test": (
+            f"{workers} {flux} --echo",
+            [ReturnCodeCond(), RegexCond(celery_regex)],
+            "local",
+        ),
+        "run-workers echo override feature_demo": (
+            f"{workers} {demo} --echo --vars VERIFY_QUEUE=custom_verify_queue",
+            [ReturnCodeCond(), RegexCond("custom_verify_queue")],
+            "local",
+        ),
+    }
+    wf_format_tests = {
         "local minimum_format": (
             f"mkdir {OUTPUT_DIR} ; cd {OUTPUT_DIR} ; merlin run ../{dev_examples}/minimum_format.yaml --local",
             StepFileExistsCond(
@@ -73,55 +102,25 @@ def define_tests():
             ReturnCodeCond(1),
             "local",
         ),
-        "run-workers echo simple_chain": (
-            f"{workers} {simple} --echo",
-            [ReturnCodeCond(), RegexCond(celery_regex)],
-            "local",
-        ),
-        "run-workers echo feature_demo": (
-            f"{workers} {demo} --echo",
-            [ReturnCodeCond(), RegexCond(celery_regex)],
-            "local",
-        ),
-        "run-workers echo slurm_test": (
-            f"{workers} {slurm} --echo",
-            [ReturnCodeCond(), RegexCond(celery_regex)],
-            "local",
-        ),
-        "run-workers echo flux_test": (
-            f"{workers} {flux} --echo",
-            [ReturnCodeCond(), RegexCond(celery_regex)],
-            "local",
-        ),
-        "run-workers echo override feature_demo": (
-            f"{workers} {demo} --echo --vars VERIFY_QUEUE=custom_verify_queue",
-            [ReturnCodeCond(), RegexCond("custom_verify_queue")],
-            "local",
-        ),
-        "run feature_demo": (f"{run} {demo}", ReturnCodeCond()),
-        "purge feature_demo": (f"{purge} {demo} -f", ReturnCodeCond()),
-        "dry feature_demo": (
-            f"{run} {demo} --local --dry --vars OUTPUT_PATH=./{OUTPUT_DIR}",
-            [
-                StepFileExistsCond(
-                    "verify",
-                    "verify_*.sh",
-                    "feature_demo",
-                    OUTPUT_DIR,
-                    params=True,
-                ),
-                ReturnCodeCond(),
-            ],
-            "local",
-        ),
-        "restart local simple_chain": (
-            f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'simple_chain_*') --local",
+    }
+    example_tests = {
+        "example failure": (f"merlin example failure", RegexCond("not found"), "local"),
+        "example simple_chain": (
+            f"merlin example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
             ReturnCodeCond(),
             "local",
         ),
-        "local simple_chain": (
-            f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
-            ReturnCodeCond(),
+    }
+    restart_step_tests = {
+        "local restart_shell": (
+            f"{run} {dev_examples}/restart_shell.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            StepFileExistsCond(
+                "step2",
+                "MERLIN_FINISHED",
+                "restart_shell",
+                OUTPUT_DIR,
+                params=False,
+            ),
             "local",
         ),
         "local restart": (
@@ -135,21 +134,27 @@ def define_tests():
             ),
             "local",
         ),
-        "local restart_shell": (
-            f"{run} {dev_examples}/restart_shell.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileExistsCond(
-                "step2",
-                "MERLIN_FINISHED",
-                "restart_shell",
-                OUTPUT_DIR,
-                params=False,
-            ),
+    }
+    restart_wf_tests = {
+        "restart local simple_chain": (
+            f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'simple_chain_*') --local",
+            ReturnCodeCond(),
             "local",
         ),
-        "example failure": (f"merlin example failure", RegexCond("not found"), "local"),
-        "example simple_chain": (
-            f"merlin example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
-            ReturnCodeCond(),
+    }
+    dry_run_tests = {
+        "dry feature_demo": (
+            f"{run} {demo} --local --dry --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            [
+                StepFileExistsCond(
+                    "verify",
+                    "verify_*.sh",
+                    "feature_demo",
+                    OUTPUT_DIR,
+                    params=True,
+                ),
+                ReturnCodeCond(),
+            ],
             "local",
         ),
         "dry launch slurm": (
@@ -197,6 +202,13 @@ def define_tests():
                 OUTPUT_DIR,
                 get_flux_cmd("flux", no_errors=True),
             ),
+            "local",
+        ),
+    }
+    other_local_tests = {
+        "local simple_chain": (
+            f"{run} {simple} --local --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            ReturnCodeCond(),
             "local",
         ),
         "local override feature_demo": (
@@ -290,17 +302,29 @@ def define_tests():
             ],
             "local",
         ),
-        # "local provenance spec equality": (
-        #     f"{run} {simple} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cp $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml') ./{OUTPUT_DIR}/FILE1 ; rm -rf ./{OUTPUT_DIR}/simple_chain_* ; {run} ./{OUTPUT_DIR}/FILE1 --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cmp ./{OUTPUT_DIR}/FILE1 $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml')",
-        #     ReturnCodeCond(),
-        #     "local",
-        # ),
-        # "black check merlin": (f"{black} merlin/", ReturnCodeCond(), "local"),
-        # "black check tests": (f"{black} tests/", ReturnCodeCond(), "local"),
+    }
+    provenence_equality_checks = {
+        "local provenance spec equality": (
+            f"{run} {simple} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cp $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml') ./{OUTPUT_DIR}/FILE1 ; rm -rf ./{OUTPUT_DIR}/simple_chain_* ; {run} ./{OUTPUT_DIR}/FILE1 --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cmp ./{OUTPUT_DIR}/FILE1 $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml')",
+            ReturnCodeCond(),
+            "local",
+        ),
+    }
+    style_checks = {
+        "black check merlin": (f"{black} merlin/", ReturnCodeCond(), "local"),
+        "black check tests": (f"{black} tests/", ReturnCodeCond(), "local"),
+    }
+    dependency_checks = {
         "deplic no GNU": (
             f"deplic ./",
             [RegexCond("GNU", negate=True), RegexCond("GPL", negate=True)],
             "local",
+        ),
+    }
+    distributed_tests = {
+        "run and purge feature_demo": (
+            f"{run} {demo} ; {purge} {demo} -f",
+            ReturnCodeCond(),
         ),
         "distributed feature_demo": (
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
@@ -322,3 +346,23 @@ def define_tests():
             ],
         ),
     }
+
+    # combine and return test dictionaries
+    all_tests = {}
+    for test_dict in [
+        basic_checks,
+        run_workers_echo_tests,
+        wf_format_tests,
+        example_tests,
+        restart_step_tests,
+        restart_wf_tests,
+        dry_run_tests,
+        other_local_tests,
+        # provenence_equality_checks, # omitting provenance equality check because it is broken
+        # style_checks, # omitting style checks due to different results on different machines
+        dependency_checks,
+        # distributed_tests, # omitting distributed tests as they are not yet ready
+    ]:
+        all_tests.update(test_dict)
+
+    return all_tests
