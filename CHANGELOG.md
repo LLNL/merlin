@@ -16,7 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove the `--mpi=none` `srun` default launch argument. This can be added by 
   setting the `launch_args` argument in the batch section in the spec.
 - Reorganized the `tests` module. Made `unit` dir alongside `integration` dir. Decomposed
-  `run_tests.py` into 3 files with distinct responsibilities.
+  `run_tests.py` into 3 files with distinct responsibilities. Grouped cli tests by
+  sub-category for easier developer interpretation.
 
 ## [1.7.9]
 
