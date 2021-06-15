@@ -82,7 +82,7 @@ app = Celery(
 
 # set task priority defaults to prioritize workflow tasks over task-expansion tasks
 task_priority_defaults = {
-    "task_queue_max_priority": get_priority(Priority.high),
+    "task_queue_max_priority": 10,
     "task_default_priority": get_priority(Priority.mid),
 }
 if CONFIG.broker.name.lower() == "redis":
