@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `retry_delay` field in a step to specify a countdown in seconds prior to running a
   restart or retry.
 - New merlin example `restart_delay` that demonstrates usage of this feature.
+- Condition failure reporting, to give greater insight into what caused test failure.
 
 ### Changed
 - `feature_demo` now uses `merlin-spellbook` instead of its own scripts.
