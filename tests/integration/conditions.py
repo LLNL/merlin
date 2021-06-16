@@ -1,10 +1,11 @@
 import os
+from abc import ABC, abstractmethod
 from glob import glob
 from re import search
 
 
 # TODO when moving command line tests to pytest, change Condition boolean returns to assertions
-class Condition:
+class Condition(ABC):
     def ingest_info(self, info):
         """
         This function allows child classes of Condition
@@ -13,10 +14,9 @@ class Condition:
         for key, val in info.items():
             setattr(self, key, val)
 
-    @property
+    @abstractmethod
     def passes(self):
-        print("Extend this class!")
-        return False
+        pass
 
 
 class HasReturnCode(Condition):
@@ -31,6 +31,9 @@ class HasReturnCode(Condition):
         """
         self.expected_code = expected_code
 
+    def __str__(self):
+        return f"{__class__.__name__} expected {self.expected_code} but got {self.return_code}"
+
     @property
     def passes(self):
         return self.return_code == self.expected_code
@@ -41,6 +44,9 @@ class HasNoStdErr(Condition):
     A condition that some process have an empty
     stderr string.
     """
+
+    def __str__(self):
+        return f"{__class__.__name__} expected empty stderr but stderr was non-empty (see --verbose)"
 
     @property
     def passes(self):
@@ -59,6 +65,11 @@ class HasRegex(Condition):
         """
         self.regex = regex
         self.negate = negate
+
+    def __str__(self):
+        if self.negate:
+            return f"{__class__.__name__} expected no '{self.regex}' regex match, but match was found."
+        return f"{__class__.__name__} expected '{self.regex}' regex match, but match was not found."
 
     def is_within(self, text):
         """
@@ -111,11 +122,18 @@ class StepFileExists(StudyOutputAware):
         self.filename = filename
         self.params = params
 
-    def file_exists(self):
+    def __str__(self):
+        return f"{__class__.__name__} expected to find file '{glob_string}', but file did not exist"
+
+    @property
+    def glob_string(self):
         param_glob = ""
         if self.params:
             param_glob = "*/"
-        glob_string = f"{self.dirpath_glob}/{self.step}/{param_glob}{self.filename}"
+        return f"{self.dirpath_glob}/{self.step}/{param_glob}{self.filename}"
+
+    def file_exists(self):
+        glob_string = self.glob_string
         try:
             filename = self.glob(glob_string)
         except IndexError:
@@ -144,8 +162,15 @@ class StepFileContains(StudyOutputAware):
         self.filename = filename
         self.regex = regex
 
+    def __str__(self):
+        return f"{__class__.__name__} expected to find '{self.regex}' regex match in file '{self.glob_string}', but match was not found"
+
+    @property
+    def glob_string(self):
+        return f"{self.dirpath_glob}/{self.step}/{self.filename}"
+
     def contains(self):
-        glob_string = f"{self.dirpath_glob}/{self.step}/{self.filename}"
+        glob_string = self.glob_string
         try:
             filename = self.glob(glob_string)
             with open(filename, "r") as textfile:
@@ -186,16 +211,25 @@ class ProvenanceHasRegex(HasRegex):
             )
         self.prov_type = provenance_type
 
+    def __str__(self):
+        if self.negate:
+            return f"{__class__.__name__} expected to find no '{self.regex}' regex match in provenance spec '{self.glob_string}', but match was found"
+        return f"{__class__.__name__} expected to find '{self.regex}' regex match in provenance spec '{self.glob_string}', but match was not found"
+
+    @property
+    def glob_string(self):
+        return (
+            f"{self.output_path}/{self.name}"
+            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
+        )
+
     def is_within(self):
         """
         Uses glob to find the correct provenance yaml spec.
         Returns True if that file contains a match to this
         object's self.regex string.
         """
-        filepath = (
-            f"{self.output_path}/{self.name}"
-            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
-        )
+        filepath = self.glob_string
         filename = sorted(glob(filepath))[-1]
         with open(filename, "r") as _file:
             text = _file.read()
