@@ -28,24 +28,7 @@
 # SOFTWARE.
 ###############################################################################
 
-PYTHON?=python3
-PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
-PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
-VENV?=venv_merlin_py$(PYV)
-PIP?=$(VENV)/bin/pip
-MRLN=merlin
-TEST=tests
-DOCS=docs
-WKFW=merlin/examples/workflows/
-MAX_COMPLEXITY?=10
-MAX_LINE_LENGTH=127
-
-VER?=1.0.0
-VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+
-CHANGELOG_VSTRING="## \[$(VSTRING)\]"
-INIT_VSTRING="__version__ = \"$(VSTRING)\""
-
-PENV=merlin$(PYV)
+include config.mk
 
 .PHONY : all
 .PHONY : install-dev
@@ -66,6 +49,7 @@ PENV=merlin$(PYV)
 .PHONY : check-camel-case
 .PHONY : checks
 .PHONY : reqlist
+.PHONY : check-variables
 
 
 all: install-dev install-merlin install-workflow-deps
@@ -75,6 +59,9 @@ all: install-dev install-merlin install-workflow-deps
 install-dev: virtualenv
 	$(PIP) install -r requirements/dev.txt
 
+
+check-variables:
+	- echo MAX_LINE_LENGTH $(MAX_LINE_LENGTH)
 
 # this only works outside the venv
 virtualenv:
