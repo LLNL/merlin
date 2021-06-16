@@ -3,6 +3,7 @@ from glob import glob
 from re import search
 
 
+# TODO when moving command line tests to pytest, change Condition boolean returns to assertions
 class Condition:
     def ingest_info(self, info):
         """
@@ -18,7 +19,7 @@ class Condition:
         return False
 
 
-class ReturnCodeCond(Condition):
+class HasReturnCode(Condition):
     """
     A condition that some process must return 0
     as its return code.
@@ -35,7 +36,7 @@ class ReturnCodeCond(Condition):
         return self.return_code == self.expected_code
 
 
-class NoStderrCond(Condition):
+class HasNoStdErr(Condition):
     """
     A condition that some process have an empty
     stderr string.
@@ -46,7 +47,7 @@ class NoStderrCond(Condition):
         return self.stderr == ""
 
 
-class RegexCond(Condition):
+class HasRegex(Condition):
     """
     A condition that some body of text MUST match a
     given regular expression. Defaults to stdout.
@@ -72,7 +73,7 @@ class RegexCond(Condition):
         return self.is_within(self.stdout) or self.is_within(self.stderr)
 
 
-class StudyCond(Condition):
+class StudyOutputAware(Condition):
     """
     An abstract condition that is aware of a study's name and output path.
     """
@@ -93,9 +94,9 @@ class StudyCond(Condition):
         return candidates
 
 
-class StepFileExistsCond(StudyCond):
+class StepFileExists(StudyOutputAware):
     """
-    A StudyCond that checks for a particular file's existence.
+    A StudyOutputAware that checks for a particular file's existence.
     """
 
     def __init__(self, step, filename, study_name, output_path, params=False):
@@ -126,9 +127,9 @@ class StepFileExistsCond(StudyCond):
         return self.file_exists()
 
 
-class StepFileContainsCond(StudyCond):
+class StepFileContains(StudyOutputAware):
     """
-    A StudyCond that checks that a particular file contains a regex.
+    A StudyOutputAware that checks that a particular file contains a regex.
     """
 
     def __init__(self, step, filename, study_name, output_path, regex):
@@ -164,7 +165,7 @@ class StepFileContainsCond(StudyCond):
         return self.contains()
 
 
-class ProvenanceCond(RegexCond):
+class ProvenanceHasRegex(HasRegex):
     """
     A condition that a Merlin provenance yaml spec
     MUST contain a given regular expression.
@@ -181,7 +182,7 @@ class ProvenanceCond(RegexCond):
         self.output_path = output_path
         if provenance_type not in ["orig", "partial", "expanded"]:
             raise ValueError(
-                f"Bad provenance_type '{provenance_type}' in ProvenanceCond!"
+                f"Bad provenance_type '{provenance_type}' in ProvenanceHasRegex!"
             )
         self.prov_type = provenance_type
 
