@@ -33,10 +33,15 @@ jobs:
         merlin example feature_demo
         pip3 install -r feature_demo/requirements.txt
 
+
+    - name: Gather configuration variables
+      run: |
+       	echo "MAX_COMPLEXITY=grep 'max-complexity' setup.cfg | cut -d ' ' -f3" >> $GITHUB_ENV
+	echo "MAX_LINE_LENGTH=grep 'max-line-length' setup.cfg | cut -d ' ' -f3" >> $GITHUB_ENV
+        
+
     - name: Lint with flake8
-      env:
-       	MAX_COMPLEXITY: grep 'max-complexity' setup.cfg | cut -d ' ' -f3
-	MAX_LINE_LENGTH: grep 'max-line-length' setup.cfg | cut -d ' ' -f3
+
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
