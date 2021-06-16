@@ -123,7 +123,7 @@ class StepFileExists(StudyOutputAware):
         self.params = params
 
     def __str__(self):
-        return f"{__class__.__name__} expected to find file '{glob_string}', but file did not exist"
+        return f"{__class__.__name__} expected to find file '{self.glob_string}', but file did not exist"
 
     @property
     def glob_string(self):
