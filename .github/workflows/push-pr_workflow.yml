@@ -36,8 +36,8 @@ jobs:
 
     - name: Gather configuration variables
       run: |
-       	echo MAX_COMPLEXITY="grep 'max-complexity' setup.cfg | cut -d ' ' -f3" >> $GITHUB_ENV
-	echo MAX_LINE_LENGTH="grep 'max-line-length' setup.cfg | cut -d ' ' -f3" >> $GITHUB_ENV
+       	echo "MAX_COMPLEXITY=$(grep 'max-complexity' setup.cfg | cut -d ' ' -f3)" >> $GITHUB_ENV
+	echo "MAX_LINE_LENGTH=$(grep 'max-line-length' setup.cfg | cut -d ' ' -f3)" >> $GITHUB_ENV
 
     - name: Lint with flake8
       run: |
