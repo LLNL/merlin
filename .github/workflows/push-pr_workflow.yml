@@ -34,7 +34,7 @@ jobs:
         pip3 install -r feature_demo/requirements.txt
 
     - name: Set configuration variables
-      env:
+      env: |
        	MAX_COMPLEXITY: 15
 	MAX_LINE_LENGTH: 88
 
