@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove the `--mpi=none` `srun` default launch argument. This can be added by
   setting the `launch_args` argument in the batch section in the spec.
 - Merlin CI is now handled by Github Actions.
+- Certain tests and source code have been refactored to abide by Flake8 conventions.
+- Reorganized the `tests` module. Made `unit` dir alongside `integration` dir. Decomposed
+  `run_tests.py` into 3 files with distinct responsibilities.
+- Merlin CI is now handled by Github Actions.
 - Flake8 examination slightly modified for more generous cyclomatic complexity
 	- Certain tests and source code have been refactored to abide by Flake8 conventions.
 

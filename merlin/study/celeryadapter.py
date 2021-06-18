@@ -229,7 +229,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
             if not check_machines(worker_machines):
                 continue
 
-            elif yenv:
+            if yenv:
                 output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
                 if output_path and not os.path.exists(output_path):
                     hostname = socket.gethostname()
@@ -348,7 +348,7 @@ def verify_args(spec, worker_args, worker_name, overlap):
         nhash = ""
         if overlap:
             nhash = time.strftime("%Y%m%d-%H%M%S")
-            # TODO: Once flux fixes their bug, change this back to %h
+        # TODO: Once flux fixes their bug, change this back to %h
         worker_args += f" -n {worker_name}{nhash}.%%h"
 
     if "-l" not in worker_args:
