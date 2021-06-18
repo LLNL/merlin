@@ -2,7 +2,7 @@ import argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
-from joblib import dump, load
+from joblib import load
 
 
 plt.style.use("seaborn-white")

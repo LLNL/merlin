@@ -108,6 +108,7 @@ class StudyOutputAware(Condition):
 class StepFileExists(StudyOutputAware):
     """
     A StudyOutputAware that checks for a particular file's existence.
+
     """
 
     def __init__(self, step, filename, study_name, output_path, params=False):

@@ -55,7 +55,7 @@ def single_task_times():
                     match = matches.group(0)
                     match = float(match.strip("s:"))
                     task_durations.append(match)
-        except:
+        except BaseException:
             print(f"c{filled_c}_s{k} task times : ERROR")
             continue
 
@@ -75,7 +75,7 @@ def merlin_run_time():
         total += result
     try:
         print(f"c{filled_c} merlin run : " + str(result))
-    except:
+    except BaseException:
         result = None
         print(
             f"c{filled_c} merlin run : ERROR -- result={result}, args.errfile={args.errfile}"
@@ -95,7 +95,7 @@ def start_verify_time():
             element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
-        except:
+        except BaseException:
             print(f"c{filled_c}_s{k} start verify : ERROR")
             continue
         try:
@@ -117,7 +117,7 @@ def start_run_workers_time():
             element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
-        except:
+        except BaseException:
             continue
         earliest = min(all_timestamps)
         print(f"c{filled_c}_s{k} start run-workers : " + str(earliest))
@@ -136,7 +136,7 @@ def start_sample1_time():
             element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
-        except:
+        except BaseException:
             print(f"c{filled_c}_s{k} start samp1 : ERROR")
             continue
         earliest = min(all_timestamps)
