@@ -1,9 +1,11 @@
 import os
+from abc import ABC, abstractmethod
 from glob import glob
 from re import search
 
 
-class Condition:
+# TODO when moving command line tests to pytest, change Condition boolean returns to assertions
+class Condition(ABC):
     def ingest_info(self, info):
         """
         This function allows child classes of Condition
@@ -12,13 +14,12 @@ class Condition:
         for key, val in info.items():
             setattr(self, key, val)
 
-    @property
+    @abstractmethod
     def passes(self):
-        print("Extend this class!")
-        return False
+        pass
 
 
-class ReturnCodeCond(Condition):
+class HasReturnCode(Condition):
     """
     A condition that some process must return 0
     as its return code.
@@ -30,23 +31,29 @@ class ReturnCodeCond(Condition):
         """
         self.expected_code = expected_code
 
+    def __str__(self):
+        return f"{__class__.__name__} expected {self.expected_code} but got {self.return_code}"
+
     @property
     def passes(self):
         return self.return_code == self.expected_code
 
 
-class NoStderrCond(Condition):
+class HasNoStdErr(Condition):
     """
     A condition that some process have an empty
     stderr string.
     """
+
+    def __str__(self):
+        return f"{__class__.__name__} expected empty stderr but stderr was non-empty (see --verbose)"
 
     @property
     def passes(self):
         return self.stderr == ""
 
 
-class RegexCond(Condition):
+class HasRegex(Condition):
     """
     A condition that some body of text MUST match a
     given regular expression. Defaults to stdout.
@@ -58,6 +65,11 @@ class RegexCond(Condition):
         """
         self.regex = regex
         self.negate = negate
+
+    def __str__(self):
+        if self.negate:
+            return f"{__class__.__name__} expected no '{self.regex}' regex match, but match was found."
+        return f"{__class__.__name__} expected '{self.regex}' regex match, but match was not found."
 
     def is_within(self, text):
         """
@@ -72,7 +84,7 @@ class RegexCond(Condition):
         return self.is_within(self.stdout) or self.is_within(self.stderr)
 
 
-class StudyCond(Condition):
+class StudyOutputAware(Condition):
     """
     An abstract condition that is aware of a study's name and output path.
     """
@@ -93,9 +105,9 @@ class StudyCond(Condition):
         return candidates
 
 
-class StepFileExistsCond(StudyCond):
+class StepFileExists(StudyOutputAware):
     """
-    A StudyCond that checks for a particular file's existence.
+    A StudyOutputAware that checks for a particular file's existence.
     """
 
     def __init__(self, step, filename, study_name, output_path, params=False):
@@ -110,11 +122,18 @@ class StepFileExistsCond(StudyCond):
         self.filename = filename
         self.params = params
 
-    def file_exists(self):
+    def __str__(self):
+        return f"{__class__.__name__} expected to find file '{self.glob_string}', but file did not exist"
+
+    @property
+    def glob_string(self):
         param_glob = ""
         if self.params:
             param_glob = "*/"
-        glob_string = f"{self.dirpath_glob}/{self.step}/{param_glob}{self.filename}"
+        return f"{self.dirpath_glob}/{self.step}/{param_glob}{self.filename}"
+
+    def file_exists(self):
+        glob_string = self.glob_string
         try:
             filename = self.glob(glob_string)
         except IndexError:
@@ -126,9 +145,9 @@ class StepFileExistsCond(StudyCond):
         return self.file_exists()
 
 
-class StepFileContainsCond(StudyCond):
+class StepFileHasRegex(StudyOutputAware):
     """
-    A StudyCond that checks that a particular file contains a regex.
+    A StudyOutputAware that checks that a particular file contains a regex.
     """
 
     def __init__(self, step, filename, study_name, output_path, regex):
@@ -143,8 +162,15 @@ class StepFileContainsCond(StudyCond):
         self.filename = filename
         self.regex = regex
 
+    def __str__(self):
+        return f"{__class__.__name__} expected to find '{self.regex}' regex match in file '{self.glob_string}', but match was not found"
+
+    @property
+    def glob_string(self):
+        return f"{self.dirpath_glob}/{self.step}/{self.filename}"
+
     def contains(self):
-        glob_string = f"{self.dirpath_glob}/{self.step}/{self.filename}"
+        glob_string = self.glob_string
         try:
             filename = self.glob(glob_string)
             with open(filename, "r") as textfile:
@@ -164,9 +190,9 @@ class StepFileContainsCond(StudyCond):
         return self.contains()
 
 
-class ProvenanceCond(RegexCond):
+class ProvenanceYAMLFileHasRegex(HasRegex):
     """
-    A condition that a Merlin provenance yaml spec
+    A condition that a Merlin provenance yaml spec in the 'merlin_info' directory
     MUST contain a given regular expression.
     """
 
@@ -179,11 +205,24 @@ class ProvenanceCond(RegexCond):
         super().__init__(regex, negate=negate)
         self.name = name
         self.output_path = output_path
-        if provenance_type not in ["orig", "partial", "expanded"]:
+        provenance_types = ["orig", "partial", "expanded"]
+        if provenance_type not in provenance_types:
             raise ValueError(
-                f"Bad provenance_type '{provenance_type}' in ProvenanceCond!"
+                f"Invalid provenance_type '{provenance_type}' in ProvenanceYAMLFileHasRegex! Options: {provenance_types}"
             )
         self.prov_type = provenance_type
+
+    def __str__(self):
+        if self.negate:
+            return f"{__class__.__name__} expected to find no '{self.regex}' regex match in provenance spec '{self.glob_string}', but match was found"
+        return f"{__class__.__name__} expected to find '{self.regex}' regex match in provenance spec '{self.glob_string}', but match was not found"
+
+    @property
+    def glob_string(self):
+        return (
+            f"{self.output_path}/{self.name}"
+            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
+        )
 
     def is_within(self):
         """
@@ -191,10 +230,7 @@ class ProvenanceCond(RegexCond):
         Returns True if that file contains a match to this
         object's self.regex string.
         """
-        filepath = (
-            f"{self.output_path}/{self.name}"
-            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
-        )
+        filepath = self.glob_string
         filename = sorted(glob(filepath))[-1]
         with open(filename, "r") as _file:
             text = _file.read()
