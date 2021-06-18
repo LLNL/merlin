@@ -33,19 +33,13 @@ Script for running Merlin command line interface tests.
 Built for 1) manual use and 2) continuous integration.
 """
 import argparse
-import os
 import shutil
 import sys
 import time
 from contextlib import suppress
-from glob import glob
-from re import search
 from subprocess import PIPE, Popen
 
-from merlin.utils import get_flux_cmd
-
-
-OUTPUT_DIR = "cli_test_studies"
+from test_definitions import OUTPUT_DIR, define_tests
 
 
 def run_single_test(name, test, test_label="", buffer_length=50):

@@ -229,7 +229,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
             if not check_machines(worker_machines):
                 continue
 
-            elif yenv:
+            if yenv:
                 output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
                 if output_path and not os.path.exists(output_path):
                     hostname = socket.gethostname()
