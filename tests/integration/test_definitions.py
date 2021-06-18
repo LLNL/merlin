@@ -21,9 +21,10 @@ def define_tests():
     celery_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
 
     # shortcut string variables
-    workers = "merlin -lvl error run-workers"
-    run = "merlin -lvl error run"
-    restart = "merlin -lvl error restart"
+    err_lvl = "-lvl error"
+    workers = f"merlin {err_lvl} run-workers"
+    run = f"merlin {err_lvl} run"
+    restart = f"merlin {err_lvl} restart"
     purge = "merlin purge"
     examples = "merlin/examples/workflows"
     dev_examples = "merlin/examples/dev_workflows"
@@ -261,12 +262,12 @@ def define_tests():
         #    "local",
         # ),
         "local csv feature_demo": (
-            f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samplesfile foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
+            f"echo 42.0,47.0 > foo_testing_temp.csv; merlin run {demo} --samplesfile foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
             [HasRegex("1 sample loaded."), HasReturnCode()],
             "local",
         ),
         "local tab feature_demo": (
-            f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samplesfile foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
+            f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; merlin run {demo} --samplesfile foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
             [HasRegex("2 samples loaded."), HasReturnCode()],
             "local",
         ),
