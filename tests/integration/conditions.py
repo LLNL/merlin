@@ -145,7 +145,7 @@ class StepFileExists(StudyOutputAware):
         return self.file_exists()
 
 
-class StepFileContains(StudyOutputAware):
+class StepFileHasRegex(StudyOutputAware):
     """
     A StudyOutputAware that checks that a particular file contains a regex.
     """
@@ -190,9 +190,9 @@ class StepFileContains(StudyOutputAware):
         return self.contains()
 
 
-class ProvenanceHasRegex(HasRegex):
+class ProvenanceYAMLFileHasRegex(HasRegex):
     """
-    A condition that a Merlin provenance yaml spec
+    A condition that a Merlin provenance yaml spec in the 'merlin_info' directory
     MUST contain a given regular expression.
     """
 
@@ -205,9 +205,10 @@ class ProvenanceHasRegex(HasRegex):
         super().__init__(regex, negate=negate)
         self.name = name
         self.output_path = output_path
-        if provenance_type not in ["orig", "partial", "expanded"]:
+        provenance_types = ["orig", "partial", "expanded"]
+        if provenance_type not in provenance_types:
             raise ValueError(
-                f"Bad provenance_type '{provenance_type}' in ProvenanceHasRegex!"
+                f"Invalid provenance_type '{provenance_type}' in ProvenanceYAMLFileHasRegex! Options: {provenance_types}"
             )
         self.prov_type = provenance_type
 

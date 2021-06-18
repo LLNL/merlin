@@ -1,9 +1,9 @@
 from conditions import (
     HasRegex,
     HasReturnCode,
-    ProvenanceHasRegex,
-    StepFileContains,
+    ProvenanceYAMLFileHasRegex,
     StepFileExists,
+    StepFileHasRegex,
 )
 
 from merlin.utils import get_flux_cmd
@@ -154,14 +154,14 @@ def define_tests():
         ),
         "dry launch slurm": (
             f"{run} {slurm} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContains(
+            StepFileHasRegex(
                 "runs", "*/runs.slurm.sh", "slurm_test", OUTPUT_DIR, "srun "
             ),
             "local",
         ),
         "dry launch flux": (
             f"{run} {flux} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContains(
+            StepFileHasRegex(
                 "runs",
                 "*/runs.slurm.sh",
                 "flux_test",
@@ -172,14 +172,14 @@ def define_tests():
         ),
         "dry launch lsf": (
             f"{run} {lsf} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContains(
+            StepFileHasRegex(
                 "runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "
             ),
             "local",
         ),
         "dry launch slurm restart": (
             f"{run} {slurm_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContains(
+            StepFileHasRegex(
                 "runs",
                 "*/runs.restart.slurm.sh",
                 "slurm_par_restart",
@@ -190,7 +190,7 @@ def define_tests():
         ),
         "dry launch flux restart": (
             f"{run} {flux_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContains(
+            StepFileHasRegex(
                 "runs_rs",
                 "*/runs_rs.restart.slurm.sh",
                 "flux_par_restart",
@@ -203,31 +203,31 @@ def define_tests():
             f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
                 HasReturnCode(),
-                ProvenanceHasRegex(
+                ProvenanceYAMLFileHasRegex(
                     regex="HELLO: \$\(SCRIPTS\)/hello_world.py",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="orig",
                 ),
-                ProvenanceHasRegex(
+                ProvenanceYAMLFileHasRegex(
                     regex="name: \$\(NAME\)",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
                 ),
-                ProvenanceHasRegex(
+                ProvenanceYAMLFileHasRegex(
                     regex="studies/feature_demo_",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
                 ),
-                ProvenanceHasRegex(
+                ProvenanceYAMLFileHasRegex(
                     regex="name: feature_demo",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
-                ProvenanceHasRegex(
+                ProvenanceYAMLFileHasRegex(
                     regex="\$\(NAME\)",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
@@ -248,7 +248,7 @@ def define_tests():
         #    f"{run} {demo} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} NAME=test_demo ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'test_demo_*') --local",
         #    [
         #        HasReturnCode(),
-        #        ProvenanceHasRegex(
+        #        ProvenanceYAMLFileHasRegex(
         #            regex="name: test_demo",
         #            name="test_demo",
         #            output_path=OUTPUT_DIR,
@@ -273,13 +273,13 @@ def define_tests():
         "local pgen feature_demo": (
             f"{run} {demo} --pgen {demo_pgen} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
-                ProvenanceHasRegex(
+                ProvenanceYAMLFileHasRegex(
                     regex="\[0.3333333",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
-                ProvenanceHasRegex(
+                ProvenanceYAMLFileHasRegex(
                     regex="\[0.5",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
@@ -306,7 +306,7 @@ def define_tests():
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
             [
                 HasReturnCode(),
-                ProvenanceHasRegex(
+                ProvenanceYAMLFileHasRegex(
                     regex="cli_test_demo_workers:",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
