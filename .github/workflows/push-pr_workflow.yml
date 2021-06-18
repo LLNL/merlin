@@ -19,8 +19,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        python -m pip3 install --upgrade pip
+        if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
 
     - name: Install merlin to run unit tests
@@ -42,7 +42,7 @@ jobs:
 
     - name: Run pytest over unit test suite
       run: |
-        python -m pytest tests/
+        python -m pytest tests/unit/
 
     - name: Run integration test suite, locally
       run: |
