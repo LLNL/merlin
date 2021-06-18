@@ -19,7 +19,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip3 install --upgrade pip
+        python3 -m pip3 install --upgrade pip
         if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
 
@@ -42,8 +42,8 @@ jobs:
 
     - name: Run pytest over unit test suite
       run: |
-        python -m pytest tests/unit/
+        python3 -m pytest tests/unit/
 
     - name: Run integration test suite, locally
       run: |
-        python tests/integration/run_tests.py --verbose --local
+        python3 tests/integration/run_tests.py --verbose --local
