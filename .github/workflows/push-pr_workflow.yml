@@ -42,7 +42,7 @@ jobs:
 
     - name: Run pytest over unit test suite
       run: |
-        python -m pytest tests/
+        python -m pytest tests/units
 
     - name: Run integration test suite, locally
       run: |
