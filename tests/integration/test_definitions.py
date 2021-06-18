@@ -21,9 +21,9 @@ def define_tests():
     celery_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
 
     # shortcut string variables
-    workers = "merlin run-workers"
-    run = "merlin run"
-    restart = "merlin restart"
+    workers = "merlin -lvl error run-workers"
+    run = "merlin -lvl error run"
+    restart = "merlin -lvl error restart"
     purge = "merlin purge"
     examples = "merlin/examples/workflows"
     dev_examples = "merlin/examples/dev_workflows"
