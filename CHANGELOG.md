@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   restart or retry.
 - New merlin example `restart_delay` that demonstrates usage of this feature.
 - Condition failure reporting, to give greater insight into what caused test failure.
+- New fields in config file: `celery.omit_queue_tag` and `celery.queue_tag`, for
+  users who wish to have complete control over their queue names. This is a feature 
+  of the task priority change.
 
 ### Changed
 - `feature_demo` now uses `merlin-spellbook` instead of its own scripts.
@@ -18,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   setting the `launch_args` argument in the batch section in the spec.
 - Reorganized the `tests` module. Made `unit` dir alongside `integration` dir. Decomposed
   `run_tests.py` into 3 files with distinct responsibilities. Renamed `Condition` classes.
-  Lowered the command line test log level to "ERROR" to reduce spam in `--verbose` mode.
+- Lowered the command line test log level to "ERROR" to reduce spam in `--verbose` mode.
+- Now prioritizing workflow tasks over task-expansion tasks, enabling improved
+  scalability and server stability.
 - Merlin CI is now handled by Github Actions.
 - Flake8 examination slightly modified for more generous cyclomatic complexity
 	- Certain tests and source code have been refactored to abide by Flake8 conventions.

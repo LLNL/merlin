@@ -5,7 +5,6 @@ from conditions import (
     StepFileExists,
     StepFileHasRegex,
 )
-
 from merlin.utils import get_flux_cmd
 
 
