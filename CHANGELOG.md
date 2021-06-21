@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `retry_delay` field in a step to specify a countdown in seconds prior to running a
   restart or retry.
 - New merlin example `restart_delay` that demonstrates usage of this feature.
+- Condition failure reporting, to give greater insight into what caused test failure.
 - New fields in config file: `celery.omit_queue_tag` and `celery.queue_tag`, for
   users who wish to have complete control over their queue names. This is a feature 
   of the task priority change.
@@ -19,8 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove the `--mpi=none` `srun` default launch argument. This can be added by
   setting the `launch_args` argument in the batch section in the spec.
 - Reorganized the `tests` module. Made `unit` dir alongside `integration` dir. Decomposed
-  `run_tests.py` into 3 files with distinct responsibilities. Grouped cli tests by
-  sub-category for easier developer interpretation.
+  `run_tests.py` into 3 files with distinct responsibilities. Renamed `Condition` classes.
+  Grouped cli tests by sub-category for easier developer interpretation.
+- Lowered the command line test log level to "ERROR" to reduce spam in `--verbose` mode.
 - Now prioritizing workflow tasks over task-expansion tasks, enabling improved
   scalability and server stability.
 - Merlin CI is now handled by Github Actions.

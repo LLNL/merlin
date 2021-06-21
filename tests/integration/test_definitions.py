@@ -1,9 +1,9 @@
 from conditions import (
-    ProvenanceCond,
-    RegexCond,
-    ReturnCodeCond,
-    StepFileContainsCond,
-    StepFileExistsCond,
+    HasRegex,
+    HasReturnCode,
+    ProvenanceYAMLFileHasRegex,
+    StepFileExists,
+    StepFileHasRegex,
 )
 from merlin.utils import get_flux_cmd
 
@@ -20,9 +20,10 @@ def define_tests():
     celery_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
 
     # shortcut string variables
-    workers = "merlin run-workers"
-    run = "merlin run"
-    restart = "merlin restart"
+    err_lvl = "-lvl error"
+    workers = f"merlin {err_lvl} run-workers"
+    run = f"merlin {err_lvl} run"
+    restart = f"merlin {err_lvl} restart"
     purge = "merlin purge"
     examples = "merlin/examples/workflows"
     dev_examples = "merlin/examples/dev_workflows"
@@ -43,34 +44,35 @@ def define_tests():
         "merlin version": ("merlin --version", ReturnCodeCond(), "local"),
         "merlin config": (
             f"merlin config -o {config_dir}; rm -rf {config_dir}",
-            ReturnCodeCond(),
+            HasReturnCode(),
             "local",
         ),
     }
     run_workers_echo_tests = {
+
         "run-workers echo simple_chain": (
             f"{workers} {simple} --echo",
-            [ReturnCodeCond(), RegexCond(celery_regex)],
+            [HasReturnCode(), HasRegex(celery_regex)],
             "local",
         ),
         "run-workers echo feature_demo": (
             f"{workers} {demo} --echo",
-            [ReturnCodeCond(), RegexCond(celery_regex)],
+            [HasReturnCode(), HasRegex(celery_regex)],
             "local",
         ),
         "run-workers echo slurm_test": (
             f"{workers} {slurm} --echo",
-            [ReturnCodeCond(), RegexCond(celery_regex)],
+            [HasReturnCode(), HasRegex(celery_regex)],
             "local",
         ),
         "run-workers echo flux_test": (
             f"{workers} {flux} --echo",
-            [ReturnCodeCond(), RegexCond(celery_regex)],
+            [HasReturnCode(), HasRegex(celery_regex)],
             "local",
         ),
         "run-workers echo override feature_demo": (
             f"{workers} {demo} --echo --vars VERIFY_QUEUE=custom_verify_queue",
-            [ReturnCodeCond(), RegexCond("custom_verify_queue")],
+            [HasReturnCode(), HasRegex("custom_verify_queue")],
             "local",
         ),
     }
@@ -158,14 +160,14 @@ def define_tests():
         ),
         "dry launch slurm": (
             f"{run} {slurm} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContainsCond(
+            StepFileHasRegex(
                 "runs", "*/runs.slurm.sh", "slurm_test", OUTPUT_DIR, "srun "
             ),
             "local",
         ),
         "dry launch flux": (
             f"{run} {flux} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContainsCond(
+            StepFileHasRegex(
                 "runs",
                 "*/runs.slurm.sh",
                 "flux_test",
@@ -176,14 +178,14 @@ def define_tests():
         ),
         "dry launch lsf": (
             f"{run} {lsf} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContainsCond(
+            StepFileHasRegex(
                 "runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "
             ),
             "local",
         ),
         "dry launch slurm restart": (
             f"{run} {slurm_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContainsCond(
+            StepFileHasRegex(
                 "runs",
                 "*/runs.restart.slurm.sh",
                 "slurm_par_restart",
@@ -194,7 +196,7 @@ def define_tests():
         ),
         "dry launch flux restart": (
             f"{run} {flux_restart} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileContainsCond(
+            StepFileHasRegex(
                 "runs_rs",
                 "*/runs_rs.restart.slurm.sh",
                 "flux_par_restart",
@@ -213,39 +215,39 @@ def define_tests():
         "local override feature_demo": (
             f"{run} {demo} --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
-                ReturnCodeCond(),
-                ProvenanceCond(
+                HasReturnCode(),
+                ProvenanceYAMLFileHasRegex(
                     regex="HELLO: \$\(SCRIPTS\)/hello_world.py",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="orig",
                 ),
-                ProvenanceCond(
+                ProvenanceYAMLFileHasRegex(
                     regex="name: \$\(NAME\)",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
                 ),
-                ProvenanceCond(
+                ProvenanceYAMLFileHasRegex(
                     regex="studies/feature_demo_",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
                 ),
-                ProvenanceCond(
+                ProvenanceYAMLFileHasRegex(
                     regex="name: feature_demo",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
-                ProvenanceCond(
+                ProvenanceYAMLFileHasRegex(
                     regex="\$\(NAME\)",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                     negate=True,
                 ),
-                StepFileExistsCond(
+                StepFileExists(
                     "verify",
                     "MERLIN_FINISHED",
                     "feature_demo",
@@ -258,46 +260,46 @@ def define_tests():
         # "local restart expand name": (
         #    f"{run} {demo} --local --vars OUTPUT_PATH=./{OUTPUT_DIR} NAME=test_demo ; {restart} $(find ./{OUTPUT_DIR} -type d -name 'test_demo_*') --local",
         #    [
-        #        ReturnCodeCond(),
-        #        ProvenanceCond(
+        #        HasReturnCode(),
+        #        ProvenanceYAMLFileHasRegex(
         #            regex="name: test_demo",
         #            name="test_demo",
         #            output_path=OUTPUT_DIR,
         #            provenance_type="expanded",
         #        ),
-        #        StepFileExistsCond(
+        #        StepFileExists(
         #            "merlin_info", "test_demo.expanded.yaml", "test_demo", OUTPUT_DIR, params=True,
         #        ),
         #    ],
         #    "local",
         # ),
         "local csv feature_demo": (
-            f"echo 42.0,47.0 > foo_testing_temp.csv; {run} {demo} --samplesfile foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
-            [RegexCond("1 sample loaded."), ReturnCodeCond()],
+            f"echo 42.0,47.0 > foo_testing_temp.csv; merlin run {demo} --samplesfile foo_testing_temp.csv --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.csv",
+            [HasRegex("1 sample loaded."), HasReturnCode()],
             "local",
         ),
         "local tab feature_demo": (
-            f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; {run} {demo} --samplesfile foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
-            [RegexCond("2 samples loaded."), ReturnCodeCond()],
+            f"echo '42.0\t47.0\n7.0 5.3' > foo_testing_temp.tab; merlin run {demo} --samplesfile foo_testing_temp.tab --vars OUTPUT_PATH=./{OUTPUT_DIR} --local; rm -f foo_testing_temp.tab",
+            [HasRegex("2 samples loaded."), HasReturnCode()],
             "local",
         ),
         "local pgen feature_demo": (
             f"{run} {demo} --pgen {demo_pgen} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
-                ProvenanceCond(
+                ProvenanceYAMLFileHasRegex(
                     regex="\[0.3333333",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
-                ProvenanceCond(
+                ProvenanceYAMLFileHasRegex(
                     regex="\[0.5",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                     negate=True,
                 ),
-                ReturnCodeCond(),
+                HasReturnCode(),
             ],
             "local",
         ),
@@ -316,7 +318,7 @@ def define_tests():
     dependency_checks = {
         "deplic no GNU": (
             f"deplic ./",
-            [RegexCond("GNU", negate=True), RegexCond("GPL", negate=True)],
+            [HasRegex("GNU", negate=True), HasRegex("GPL", negate=True)],
             "local",
         ),
     }
@@ -328,14 +330,14 @@ def define_tests():
         "distributed feature_demo": (
             f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
             [
-                ReturnCodeCond(),
-                ProvenanceCond(
+                HasReturnCode(),
+                ProvenanceYAMLFileHasRegex(
                     regex="cli_test_demo_workers:",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
-                StepFileExistsCond(
+                StepFileExists(
                     "verify",
                     "MERLIN_FINISHED",
                     "feature_demo",

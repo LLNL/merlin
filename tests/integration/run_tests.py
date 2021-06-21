@@ -67,13 +67,15 @@ def run_single_test(name, test, test_label="", buffer_length=50):
         "stdout": stdout,
         "stderr": stderr,
         "return_code": return_code,
+        "violated_condition": None,
     }
 
     # ensure all test conditions are satisfied
-    for condition in conditions:
+    for i, condition in enumerate(conditions):
         condition.ingest_info(info)
         passed = condition.passes
         if passed is False:
+            info["violated_condition"] = (condition, i, len(conditions))
             break
 
     return passed, info
@@ -103,6 +105,14 @@ def process_test_result(passed, info, is_verbose, exit):
     else:
         print("pass")
 
+    if info["violated_condition"] is not None:
+        message = info["violated_condition"][0]
+        condition_id = info["violated_condition"][1] + 1
+        n_conditions = info["violated_condition"][2]
+        print(
+            f"\tCondition {condition_id} of {n_conditions}: "
+            + str(info["violated_condition"][0])
+        )
     if is_verbose is True:
         print(f"\tcommand: {info['command']}")
         print(f"\telapsed time: {round(info['total_time'], 2)} s")
@@ -131,12 +141,10 @@ def run_tests(args, tests):
         args.ids = []
         n_to_run = 0
         selective = True
-        test_id = 1
-        for _, test in tests.items():
+        for test_id, test in enumerate(tests.values()):
             if len(test) == 3 and test[2] == "local":
-                args.ids.append(test_id)
+                args.ids.append(test_id + 1)
                 n_to_run += 1
-            test_id += 1
 
     print(f"Running {n_to_run} integration tests...")
     start_time = time.time()
