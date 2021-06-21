@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+include config.mk
 
 PYTHON?=python3
 PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
@@ -67,6 +68,7 @@ PENV=merlin$(PYV)
 .PHONY : check-camel-case
 .PHONY : checks
 .PHONY : reqlist
+.PHONY : check-variables
 
 
 all: install-dev install-merlin install-workflow-deps
@@ -76,6 +78,9 @@ all: install-dev install-merlin install-workflow-deps
 install-dev: virtualenv
 	$(PIP) install -r requirements/dev.txt
 
+
+check-variables:
+	- echo MAX_LINE_LENGTH $(MAX_LINE_LENGTH)
 
 # this only works outside the venv
 virtualenv:

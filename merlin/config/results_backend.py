@@ -108,7 +108,10 @@ def get_backend_password(password_file, certs_path=None):
     return password
 
 
-def get_redis(certs_path=None, include_password=True, ssl=False):
+# flake8 complains about cyclomatic complexity because of all the try-excepts,
+# this isn't so complicated it can't be followed and tucking things in functions
+# would make it less readable, so complexity evaluation is off
+def get_redis(certs_path=None, include_password=True, ssl=False):  # noqa C901
     """
     Return the redis or rediss specific connection
 
@@ -263,21 +266,25 @@ def get_connection_string(include_password=True):
     except AttributeError:
         certs_path = None
 
+    return _resolve_backend_string(backend, certs_path, include_password)
+
+
+def _resolve_backend_string(backend, certs_path, include_password):
     if "mysql" in backend:
         return get_mysql(certs_path=certs_path, include_password=include_password)
 
-    if "sqlite" in backend:
+    elif "sqlite" in backend:
         return SQLITE_CONNECTION_STRING
 
-    if backend == "redis":
+    elif backend == "redis":
         return get_redis(certs_path=certs_path, include_password=include_password)
 
-    if backend == "rediss":
+    elif backend == "rediss":
         return get_redis(
             certs_path=certs_path, include_password=include_password, ssl=True
         )
-
-    return None
+    else:
+        return None
 
 
 def get_ssl_config(celery_check=False):
@@ -290,10 +297,6 @@ def get_ssl_config(celery_check=False):
     results_backend = ""
     try:
         results_backend = CONFIG.results_backend.url.split(":")[0]
-    except AttributeError:
-        pass
-
-    try:
         results_backend = CONFIG.results_backend.name.lower()
     except AttributeError:
         pass

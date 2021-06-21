@@ -347,7 +347,7 @@ def verify_args(spec, worker_args, worker_name, overlap):
         nhash = ""
         if overlap:
             nhash = time.strftime("%Y%m%d-%H%M%S")
-            # TODO: Once flux fixes their bug, change this back to %h
+        # TODO: Once flux fixes their bug, change this back to %h
         worker_args += f" -n {worker_name}{nhash}.%%h"
 
     if "-l" not in worker_args:
