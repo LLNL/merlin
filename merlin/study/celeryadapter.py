@@ -340,8 +340,7 @@ def verify_args(spec, worker_args, worker_name, overlap):
             )
         if "fair" not in worker_args:
             LOG.warning(
-                "The worker arg -O fair is recommended when running "
-                "parallel tasks"
+                "The worker arg -O fair is recommended when running parallel tasks"
             )
 
     if "-n" not in worker_args:

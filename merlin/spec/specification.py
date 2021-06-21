@@ -272,6 +272,7 @@ class MerlinSpec(YAMLSpecification):
         Processes lists and dicts for _dict_to_yaml() in the dump() method.
         """
         from copy import deepcopy
+
         list_offset = 2 * " "
         if isinstance(obj, list):
             n = len(obj)
@@ -314,7 +315,12 @@ class MerlinSpec(YAMLSpecification):
                     string += list_offset + (tab * lvl)
                 else:
                     string += tab * (lvl + 1)
-                string += str(k) + ": " + str(self._dict_to_yaml(v, "", key_stack, tab)) + "\n"
+                string += (
+                    str(k)
+                    + ": "
+                    + str(self._dict_to_yaml(v, "", key_stack, tab))
+                    + "\n"
+                )
                 key_stack.pop()
                 i += 1
         return string
@@ -322,6 +328,7 @@ class MerlinSpec(YAMLSpecification):
     def get_task_queues(self):
         """Returns a dictionary of steps and their corresponding task queues."""
         from merlin.config.configfile import CONFIG
+
         steps = self.get_study_steps()
         queues = {}
         for step in steps:

@@ -141,6 +141,7 @@ class Step:
     def get_task_queue_from_dict(step_dict):
         """ given a maestro step dict, get the task queue"""
         from merlin.config.configfile import CONFIG
+
         queue_tag = CONFIG.celery.queue_tag
         omit_tag = CONFIG.celery.omit_queue_tag
         if omit_tag:
