@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `retry_delay` field in a step to specify a countdown in seconds prior to running a
   restart or retry.
 - New merlin example `restart_delay` that demonstrates usage of this feature.
+- New fields in config file: `celery.omit_queue_tag` and `celery.queue_tag`, for
+  users who wish to have complete control over their queue names. This is a feature 
+  of the task priority change.
 
 ### Changed
 - `feature_demo` now uses `merlin-spellbook` instead of its own scripts.
@@ -17,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   setting the `launch_args` argument in the batch section in the spec.
 - Now prioritizing workflow tasks over task-expansion tasks, enabling improved
   scalability and server stability.
-
 - Reorganized the `tests` module. Made `unit` dir alongside `integration` dir. Decomposed
   `run_tests.py` into 3 files with distinct responsibilities.
 - Merlin CI is now handled by Github Actions.
