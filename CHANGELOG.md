@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   restart or retry.
 - New merlin example `restart_delay` that demonstrates usage of this feature.
 - Condition failure reporting, to give greater insight into what caused test failure.
+- New fields in config file: `celery.omit_queue_tag` and `celery.queue_tag`, for
+  users who wish to have complete control over their queue names. This is a feature 
+  of the task priority change.
 
 ### Changed
 - `feature_demo` now uses `merlin-spellbook` instead of its own scripts.
