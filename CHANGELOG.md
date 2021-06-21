@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   setting the `launch_args` argument in the batch section in the spec.
 - Reorganized the `tests` module. Made `unit` dir alongside `integration` dir. Decomposed
   `run_tests.py` into 3 files with distinct responsibilities. Renamed `Condition` classes.
+- Lowered the command line test log level to "ERROR" to reduce spam in `--verbose` mode.
 - Now prioritizing workflow tasks over task-expansion tasks, enabling improved
   scalability and server stability.
 - Merlin CI is now handled by Github Actions.

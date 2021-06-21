@@ -141,12 +141,10 @@ def run_tests(args, tests):
         args.ids = []
         n_to_run = 0
         selective = True
-        test_id = 1
-        for _, test in tests.items():
+        for test_id, test in enumerate(tests.values()):
             if len(test) == 3 and test[2] == "local":
-                args.ids.append(test_id)
+                args.ids.append(test_id + 1)
                 n_to_run += 1
-            test_id += 1
 
     print(f"Running {n_to_run} integration tests...")
     start_time = time.time()
