@@ -67,13 +67,15 @@ def run_single_test(name, test, test_label="", buffer_length=50):
         "stdout": stdout,
         "stderr": stderr,
         "return_code": return_code,
+        "violated_condition": None,
     }
 
     # ensure all test conditions are satisfied
-    for condition in conditions:
+    for i, condition in enumerate(conditions):
         condition.ingest_info(info)
         passed = condition.passes
         if passed is False:
+            info["violated_condition"] = (condition, i, len(conditions))
             break
 
     return passed, info
@@ -103,6 +105,14 @@ def process_test_result(passed, info, is_verbose, exit):
     else:
         print("pass")
 
+    if info["violated_condition"] is not None:
+        message = info["violated_condition"][0]
+        condition_id = info["violated_condition"][1] + 1
+        n_conditions = info["violated_condition"][2]
+        print(
+            f"\tCondition {condition_id} of {n_conditions}: "
+            + str(info["violated_condition"][0])
+        )
     if is_verbose is True:
         print(f"\tcommand: {info['command']}")
         print(f"\telapsed time: {round(info['total_time'], 2)} s")
