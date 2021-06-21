@@ -164,6 +164,7 @@ def run_tests(args, tests):
             info = None
 
         result = process_test_result(passed, info, args.verbose, args.exit)
+        clear_test_studies_dir()
         if result is None:
             print("Exiting early")
             return 1
@@ -220,7 +221,6 @@ def main():
 
     clear_test_studies_dir()
     result = run_tests(args, tests)
-    clear_test_studies_dir()
     return result
 
 
