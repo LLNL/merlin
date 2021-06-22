@@ -135,6 +135,14 @@ def load_default_celery(config):
     except KeyError:
         config["celery"] = {}
     try:
+        config["celery"]["omit_queue_tag"]
+    except KeyError:
+        config["celery"]["omit_queue_tag"] = False
+    try:
+        config["celery"]["queue_tag"]
+    except KeyError:
+        config["celery"]["queue_tag"] = "[merlin]_"
+    try:
         config["celery"]["override"]
     except KeyError:
         config["celery"]["override"] = None
