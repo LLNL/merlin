@@ -29,6 +29,26 @@
 ###############################################################################
 # include config.mk
 
+PYTHON?=python3
+PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
+PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
+VENV?=venv_merlin_py$(PYV)
+PIP?=$(VENV)/bin/pip
+MRLN=merlin
+TEST=tests
+UNIT=$(TEST)/unit
+DOCS=docs
+WKFW=merlin/examples/workflows/
+MAX_COMPLEXITY?=10
+MAX_LINE_LENGTH=127
+
+VER?=1.0.0
+VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+
+CHANGELOG_VSTRING="## \[$(VSTRING)\]"
+INIT_VSTRING="__version__ = \"$(VSTRING)\""
+
+PENV=merlin$(PYV) 
+
 .PHONY : all
 .PHONY : install-dev
 .PHONY : virtualenv
