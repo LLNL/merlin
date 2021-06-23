@@ -139,9 +139,7 @@ def get_redissock_connection(config_path, include_password):
     return REDISSOCK_CONNECTION.format(**redis_config)
 
 
-# flake8 complains this function is too complex, we don't gain much nesting any of this as a separate function,
-# however, cyclomatic complexity examination is off to get around this
-def get_redis_connection(config_path, include_password, ssl=False):  # noqa C901
+def get_redis_connection(config_path, include_password, ssl=False):
     """
     Return the redis or rediss specific connection
 
