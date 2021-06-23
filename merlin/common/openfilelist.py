@@ -167,10 +167,11 @@ class OpenFileList:
 
 
 if __name__ == "__main__":
-    import unittest
     import os
-    import numpy
+    import unittest
     import uuid
+
+    import numpy
 
     class TestOpenFileList(unittest.TestCase):
         def test_opener(self):

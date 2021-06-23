@@ -346,9 +346,9 @@ __all__ = [
 ]
 
 if __name__ == "__main__":
-    import unittest
     import os
     import sys
+    import unittest
     import uuid
 
     if "-h" in sys.argv:

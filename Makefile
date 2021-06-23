@@ -62,6 +62,7 @@ install-dev: virtualenv
 check-variables:
 	- echo MAX_LINE_LENGTH $(MAX_LINE_LENGTH)
 
+
 # this only works outside the venv
 virtualenv:
 	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages
