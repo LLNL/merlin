@@ -220,8 +220,6 @@ def get_connection_string(include_password=True):
     else:
         return _sort_valid_broker(broker, config_path, include_password)
 
-    return None
-
 
 def _sort_valid_broker(broker, config_path, include_password):
     if broker == "rabbitmq" or broker == "amqps":
