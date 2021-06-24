@@ -27,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lowered the command line test log level to "ERROR" to reduce spam in `--verbose` mode.
 - Now prioritizing workflow tasks over task-expansion tasks, enabling improved
   scalability and server stability.
-- Merlin CI is now handled by Github Actions.
 - Flake8 examination slightly modified for more generous cyclomatic complexity.
 	- Certain tests and source code have been refactored to abide by Flake8 conventions.
 
