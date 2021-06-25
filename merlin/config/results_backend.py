@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -108,10 +108,7 @@ def get_backend_password(password_file, certs_path=None):
     return password
 
 
-# flake8 complains about cyclomatic complexity because of all the try-excepts,
-# this isn't so complicated it can't be followed and tucking things in functions
-# would make it less readable, so complexity evaluation is off
-def get_redis(certs_path=None, include_password=True, ssl=False):  # noqa C901
+def get_redis(certs_path=None, include_password=True, ssl=False):
     """
     Return the redis or rediss specific connection
 
@@ -266,25 +263,21 @@ def get_connection_string(include_password=True):
     except AttributeError:
         certs_path = None
 
-    return _resolve_backend_string(backend, certs_path, include_password)
-
-
-def _resolve_backend_string(backend, certs_path, include_password):
     if "mysql" in backend:
         return get_mysql(certs_path=certs_path, include_password=include_password)
 
-    elif "sqlite" in backend:
+    if "sqlite" in backend:
         return SQLITE_CONNECTION_STRING
 
-    elif backend == "redis":
+    if backend == "redis":
         return get_redis(certs_path=certs_path, include_password=include_password)
 
-    elif backend == "rediss":
+    if backend == "rediss":
         return get_redis(
             certs_path=certs_path, include_password=include_password, ssl=True
         )
-    else:
-        return None
+
+    return None
 
 
 def get_ssl_config(celery_check=False):

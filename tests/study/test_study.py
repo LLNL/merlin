@@ -155,7 +155,7 @@ def test_get_task_queue_default():
     """
     steps = {"run": {"task_queue": "test_queue"}}
     queue = Step.get_task_queue_from_dict(steps)
-    assert queue == "[merlin]_test_queue"
+    assert queue == "test_queue"
 
 
 def test_get_task_queue_task_queue_missing():
@@ -165,7 +165,7 @@ def test_get_task_queue_task_queue_missing():
     """
     steps = {"run": {}}
     queue = Step.get_task_queue_from_dict(steps)
-    assert queue == "[merlin]_"
+    assert queue == "merlin"
 
 
 def test_get_task_queue_run_missing():
@@ -174,7 +174,7 @@ def test_get_task_queue_run_missing():
     """
     steps = {}
     queue = Step.get_task_queue_from_dict(steps)
-    assert queue == "[merlin]_"
+    assert queue == "merlin"
 
 
 def test_get_task_queue_steps_None():
@@ -183,7 +183,7 @@ def test_get_task_queue_steps_None():
     """
     steps = None
     queue = Step.get_task_queue_from_dict(steps)
-    assert queue == "[merlin]_"
+    assert queue == "merlin"
 
 
 def test_get_task_queue_run_None():
@@ -193,7 +193,7 @@ def test_get_task_queue_run_None():
     """
     steps = {"run": None}
     queue = Step.get_task_queue_from_dict(steps)
-    assert queue == "[merlin]_"
+    assert queue == "merlin"
 
 
 def test_get_task_queue_None():
@@ -203,7 +203,7 @@ def test_get_task_queue_None():
     """
     steps = {"run": {"task_queue": None}}
     queue = Step.get_task_queue_from_dict(steps)
-    assert queue == "[merlin]_"
+    assert queue == "merlin"
 
 
 def test_mastro_task_queue_None_str():
@@ -213,7 +213,7 @@ def test_mastro_task_queue_None_str():
     """
     steps = {"run": {"task_queue": "None"}}
     queue = Step.get_task_queue_from_dict(steps)
-    assert queue == "[merlin]_"
+    assert queue == "merlin"
 
 
 def test_get_task_queue_none_str():
@@ -223,7 +223,7 @@ def test_get_task_queue_none_str():
     """
     steps = {"run": {"task_queue": "none"}}
     queue = Step.get_task_queue_from_dict(steps)
-    assert queue == "[merlin]_"
+    assert queue == "merlin"
 
 
 class TestMerlinStudy(unittest.TestCase):

@@ -3,7 +3,7 @@ import ast
 import json
 
 import numpy as np
-from joblib import load
+from joblib import dump, load
 from scipy.optimize import minimize
 from scipy.stats import multivariate_normal
 
