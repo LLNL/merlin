@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -50,7 +50,6 @@ from merlin.study.celeryadapter import (
     start_celery_workers,
     stop_celery_workers,
 )
-from merlin.utils import is_running
 
 
 try:

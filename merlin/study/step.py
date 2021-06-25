@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -140,12 +140,23 @@ class Step:
     @staticmethod
     def get_task_queue_from_dict(step_dict):
         """ given a maestro step dict, get the task queue"""
+        from merlin.config.configfile import CONFIG
+
+        queue_tag = CONFIG.celery.queue_tag
+        omit_tag = CONFIG.celery.omit_queue_tag
+        if omit_tag:
+            queue = "merlin"
+        else:
+            queue = queue_tag
+
         with suppress(TypeError, KeyError):
-            queue = step_dict["run"]["task_queue"]
-            if queue is None or queue.lower() == "none":
-                queue = "merlin"
-            return queue
-        return "merlin"
+            val = step_dict["run"]["task_queue"]
+            if not (val is None or val.lower() == "none" or val == ""):
+                if omit_tag:
+                    queue = val
+                else:
+                    queue = queue_tag + val
+        return queue
 
     @property
     def retry_delay(self):
