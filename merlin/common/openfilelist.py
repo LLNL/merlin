@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 ###############################################################################
 # Copyright (c) 2019, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
@@ -8,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,6 +27,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+
+#!/usr/bin/env python
 
 """
   OpenFileList
@@ -167,11 +167,10 @@ class OpenFileList:
 
 
 if __name__ == "__main__":
-    import os
     import unittest
-    import uuid
-
+    import os
     import numpy
+    import uuid
 
     class TestOpenFileList(unittest.TestCase):
         def test_opener(self):

@@ -176,10 +176,7 @@ Step return variables
 
    * - ``$(MERLIN_RESTART)``
      - Run this step's ``restart`` command, or re-run ``cmd`` if ``restart``
-       is absent. The default maximum number of retries+restarts for any given step
-       is 30. You can override this by adding a ``max_retries`` field under the run
-       field in the specification. Issues a warning. Default will retry in 1 second.
-       To override the delay time, specify ``retry_delay``.
+       is absent.
      -
        ::
 
@@ -190,14 +187,11 @@ Step return variables
                exit $(MERLIN_RESTART)
             restart: |
                echo "bye, mom!" >> my_file.txt
-            max_retries: 23
-            retry_delay: 10
 
    * - ``$(MERLIN_RETRY)``
      - Retry this step's ``cmd`` command. The default maximum number of retries for any given step
        is 30. You can override this by adding a ``max_retries`` field under the run
-       field in the specification. Issues a warning. Default will retry in 1 second. To override
-       the delay time, specify retry_delay.
+       field in the specification. Issues a warning.
      - ::
 
           run:
@@ -206,7 +200,6 @@ Step return variables
                echo "hi mom!" >> my_file.txt
                exit $(MERLIN_RETRY)
             max_retries: 23
-            retry_delay: 10
 
    * - ``$(MERLIN_SOFT_FAIL)``
      - Mark this step as a failure, note in the warning log but keep going.

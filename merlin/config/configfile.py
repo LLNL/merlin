@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -134,14 +134,6 @@ def load_default_celery(config):
         config["celery"]
     except KeyError:
         config["celery"] = {}
-    try:
-        config["celery"]["omit_queue_tag"]
-    except KeyError:
-        config["celery"]["omit_queue_tag"] = False
-    try:
-        config["celery"]["queue_tag"]
-    except KeyError:
-        config["celery"]["queue_tag"] = "[merlin]_"
     try:
         config["celery"]["override"]
     except KeyError:

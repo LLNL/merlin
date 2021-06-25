@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -230,8 +230,69 @@ class MerlinSpec(YAMLSpecification):
         """
         Dump this MerlinSpec to a pretty yaml string.
         """
-        tab = 3 * " "
-        result = self._dict_to_yaml(self.yaml_sections, "", [], tab)
+        tab = "   "
+        list_offset = "  "
+        from copy import deepcopy
+
+        def dict_to_yaml(obj, string, key_stack, newline=True):
+            if obj is None:
+                return ""
+            lvl = len(key_stack) - 1
+            if isinstance(obj, str):
+                split = obj.splitlines()
+                if len(split) > 1:
+                    obj = "|\n" + tab * (lvl + 1) + ("\n" + tab * (lvl + 1)).join(split)
+                return obj
+            if isinstance(obj, bool):
+                return str(obj).lower()
+            if (not isinstance(obj, list)) and (not isinstance(obj, dict)):
+                return obj
+            if isinstance(obj, list):
+                n = len(obj)
+                use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"]
+                if not use_hyphens:
+                    string += "["
+                else:
+                    string += "\n"
+                for i, elem in enumerate(obj):
+                    key_stack = deepcopy(key_stack)
+                    key_stack.append("elem")
+                    if use_hyphens:
+                        string += (
+                            (lvl + 1) * tab
+                            + "- "
+                            + str(dict_to_yaml(elem, "", key_stack))
+                            + "\n"
+                        )
+                    else:
+                        string += str(
+                            dict_to_yaml(elem, "", key_stack, newline=(i != 0))
+                        )
+                        if n > 1 and i != len(obj) - 1:
+                            string += ", "
+                    key_stack.pop()
+                if not use_hyphens:
+                    string += "]"
+            if isinstance(obj, dict):
+                if len(key_stack) > 0 and key_stack[-1] != "elem":
+                    string += "\n"
+                i = 0
+                for k, v in obj.items():
+                    key_stack = deepcopy(key_stack)
+                    key_stack.append(k)
+                    if len(key_stack) > 1 and key_stack[-2] == "elem" and i == 0:
+                        # string += (tab * (lvl - 1))
+                        string += ""
+                    elif "elem" in key_stack:
+                        string += list_offset + (tab * lvl)
+                    else:
+                        string += tab * (lvl + 1)
+                    string += str(k) + ": " + str(dict_to_yaml(v, "", key_stack)) + "\n"
+                    key_stack.pop()
+                    i += 1
+            return string
+
+        result = dict_to_yaml(self.yaml_sections, "", [])
         while "\n\n\n" in result:
             result = result.replace("\n\n\n", "\n\n")
         try:
@@ -240,102 +301,13 @@ class MerlinSpec(YAMLSpecification):
             raise ValueError(f"Error parsing provenance spec:\n{e}")
         return result
 
-    def _dict_to_yaml(self, obj, string, key_stack, tab, newline=True):
-        """
-        The if-else ladder for sorting the yaml string prettification of dump().
-        """
-        if obj is None:
-            return ""
-
-        lvl = len(key_stack) - 1
-
-        if isinstance(obj, str):
-            return self._process_string(obj, lvl, tab)
-        elif isinstance(obj, bool):
-            return str(obj).lower()
-        elif not (isinstance(obj, list) or isinstance(obj, dict)):
-            return obj
-        else:
-            return self._process_dict_or_list(obj, string, key_stack, lvl, tab)
-
-    def _process_string(self, obj, lvl, tab):
-        """
-        Processes strings for _dict_to_yaml() in the dump() method.
-        """
-        split = obj.splitlines()
-        if len(split) > 1:
-            obj = "|\n" + tab * (lvl + 1) + ("\n" + tab * (lvl + 1)).join(split)
-        return obj
-
-    def _process_dict_or_list(self, obj, string, key_stack, lvl, tab):
-        """
-        Processes lists and dicts for _dict_to_yaml() in the dump() method.
-        """
-        from copy import deepcopy
-
-        list_offset = 2 * " "
-        if isinstance(obj, list):
-            n = len(obj)
-            use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"]
-            if not use_hyphens:
-                string += "["
-            else:
-                string += "\n"
-            for i, elem in enumerate(obj):
-                key_stack = deepcopy(key_stack)
-                key_stack.append("elem")
-                if use_hyphens:
-                    string += (
-                        (lvl + 1) * tab
-                        + "- "
-                        + str(self._dict_to_yaml(elem, "", key_stack, tab))
-                        + "\n"
-                    )
-                else:
-                    string += str(
-                        self._dict_to_yaml(elem, "", key_stack, tab, newline=(i != 0))
-                    )
-                    if n > 1 and i != len(obj) - 1:
-                        string += ", "
-                key_stack.pop()
-            if not use_hyphens:
-                string += "]"
-        # must be dict
-        else:
-            if len(key_stack) > 0 and key_stack[-1] != "elem":
-                string += "\n"
-            i = 0
-            for k, v in obj.items():
-                key_stack = deepcopy(key_stack)
-                key_stack.append(k)
-                if len(key_stack) > 1 and key_stack[-2] == "elem" and i == 0:
-                    # string += (tab * (lvl - 1))
-                    string += ""
-                elif "elem" in key_stack:
-                    string += list_offset + (tab * lvl)
-                else:
-                    string += tab * (lvl + 1)
-                string += (
-                    str(k)
-                    + ": "
-                    + str(self._dict_to_yaml(v, "", key_stack, tab))
-                    + "\n"
-                )
-                key_stack.pop()
-                i += 1
-        return string
-
     def get_task_queues(self):
         """Returns a dictionary of steps and their corresponding task queues."""
-        from merlin.config.configfile import CONFIG
-
         steps = self.get_study_steps()
         queues = {}
         for step in steps:
-            if "task_queue" in step.run and CONFIG.celery.omit_queue_tag:
+            if "task_queue" in step.run:
                 queues[step.name] = step.run["task_queue"]
-            elif "task_queue" in step.run:
-                queues[step.name] = CONFIG.celery.queue_tag + step.run["task_queue"]
         return queues
 
     def get_queue_list(self, steps):

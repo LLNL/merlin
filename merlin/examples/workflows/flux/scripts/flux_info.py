@@ -11,14 +11,14 @@ complete: The time the job was complete
 walltime: ? Seems to be 0.
 
 new:
-init:
-starting:
-shell.init:
-shell.start:
-complete:
-cleanup.start:
-cleanup.finish:
-done:
+init: 
+starting: 
+shell.init: 
+shell.start: 
+complete: 
+cleanup.start: 
+cleanup.finish: 
+done: 
 """
 import json
 import os
@@ -65,7 +65,7 @@ try:
             )
         except BaseException:
             pass
-except BaseException:
+except:
     top_dir = "job"
 
     def get_data_dict(key):

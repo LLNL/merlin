@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -42,7 +42,6 @@ from celery.signals import worker_process_init
 import merlin.common.security.encrypt_backend_traffic
 from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
-from merlin.config.utils import Priority, get_priority
 from merlin.router import route_for_task
 from merlin.utils import nested_namespace_to_dicts
 
@@ -50,7 +49,6 @@ from merlin.utils import nested_namespace_to_dicts
 LOG = logging.getLogger(__name__)
 
 merlin.common.security.encrypt_backend_traffic.set_backend_funcs()
-
 
 broker_ssl = True
 results_ssl = False
@@ -79,18 +77,6 @@ app = Celery(
     redis_backend_use_ssl=results_ssl,
     task_routes=(route_for_task,),
 )
-
-# set task priority defaults to prioritize workflow tasks over task-expansion tasks
-task_priority_defaults = {
-    "task_queue_max_priority": 10,
-    "task_default_priority": get_priority(Priority.mid),
-}
-if CONFIG.broker.name.lower() == "redis":
-    app.conf.broker_transport_options = {
-        "priority_steps": list(range(1, 11)),
-        "queue_order_strategy": "priority",
-    }
-app.conf.update(**task_priority_defaults)
 
 # load merlin config defaults
 app.conf.update(**celeryconfig.DICT)
