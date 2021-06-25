@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -160,7 +160,7 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
     launchs = worker_launch
     if not launchs:
         if btype == "slurm" or launcher == "slurm":
-            launchs = f"srun --mpi=none -N {nodes} -n {nodes}"
+            launchs = f"srun -N {nodes} -n {nodes}"
             if bank:
                 launchs += f" -A {bank}"
             if queue:
