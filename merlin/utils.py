@@ -462,12 +462,13 @@ def contains_shell_ref(string):
 
 
 # Time utilities
-def convert_to_timedelta(timestr: str) -> timedelta:
+def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
     """Convert a timestring to a timedelta object.
     Timestring is given in in the format '[days]:[hours]:[minutes]:seconds'
     with days, hours, minutes all optional add ons.
+    If passed as an int, will convert to a string first and interpreted as seconds.
     """
-    # make sure it's a string
+    # make sure it's a string in case we get an int
     timestr = str(timestr)
     nfields = len(timestr.split(":"))
     if nfields > 4:
@@ -484,10 +485,7 @@ def _repr_timedelta_HMS(td: timedelta) -> str:
     hours, remainder = divmod(td.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
     hours, minutes, seconds = int(hours), int(minutes), int(seconds)
-    hours = str(hours).zfill(2)
-    minutes = str(minutes).zfill(2)
-    seconds = str(seconds).zfill(2)
-    return f"{hours}:{minutes}:{seconds}"
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
 def _repr_timedelta_FSD(td: timedelta) -> str:
