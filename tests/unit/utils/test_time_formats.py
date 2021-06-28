@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from merlin.utils import convert_timestring
 
@@ -8,7 +8,7 @@ def _list_all_equal(my_list: List) -> bool:
     return all(item == my_list[0] for item in my_list)
 
 
-def check_all_equal(time_strings: List[str], method: str = "HMS") -> bool:
+def check_all_equal(time_strings: List[Union[str, int]], method: str = "HMS") -> bool:
     """Check that time strings in a list convert to the same for the given converstion method."""
     converted = [convert_timestring(ts) for ts in time_strings]
     all_equal = _list_all_equal(converted)
@@ -18,11 +18,11 @@ def check_all_equal(time_strings: List[str], method: str = "HMS") -> bool:
 def test_convert_timestring_same() -> None:
     """Test that HMS formatted all the same"""
     equal_cases = [
-        ["01:00:00", "1:0:0", "0:60:0", "60:0", "3600"],
-        ["1:0", "0:60", "0:0:60", "60"],
-        ["1:1:1", "61:1", "3661"],
-        ["0:0:0", "0", "00:00:00", "0:00", "00:0:0", "00:00:0"],
-        ["1:00:00:00", "24:0:0", "86400"],
+        ["01:00:00", "1:0:0", "0:60:0", "60:0", "3600", 3600],
+        ["1:0", "0:60", "0:0:60", "60", 60],
+        ["1:1:1", "61:1", "3661", 3661],
+        ["0:0:0", "0", "00:00:00", "0:00", "00:0:0", "00:00:0", 0],
+        ["1:00:00:00", "24:0:0", "86400", 86400],
     ]
     for method in ("HMS", "FSD", None):
         for test_case in equal_cases:
@@ -34,6 +34,8 @@ def test_convert_timestring_different() -> None:
     not_equal_cases = [
         ["60:0", "60:1"],
         ["1:0:0:0", "25:00:00"],
+        [0,1],
+        ['0',1],
     ]
     for method in ("HMS", "FSD", None):
         for test_case in not_equal_cases:
