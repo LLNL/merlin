@@ -44,7 +44,7 @@ LOG = logging.getLogger(__name__)
 
 
 def _get_key_path():
-    """ Loads the redis encryption key path from the file described in config."""
+    """Loads the redis encryption key path from the file described in config."""
     try:
         key_filepath = CONFIG.results_backend.encryption_key
     except AttributeError:
@@ -58,7 +58,7 @@ def _get_key_path():
 
 
 def _gen_key(key_path):
-    """ generates an encryption key and writes it to the given key_path"""
+    """generates an encryption key and writes it to the given key_path"""
     key = Fernet.generate_key()
     parent_dir = os.path.dirname(os.path.normpath(key_path))
     if not os.path.isdir(parent_dir):
