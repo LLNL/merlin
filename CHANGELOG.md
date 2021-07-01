@@ -32,7 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	- Certain tests and source code have been refactored to abide by Flake8 conventions.
 
 ### Fixed
-- Explictly wrap queue string in quotes for robustness
+- For Celery calls, explictly wrapped queue string in quotes for robustness. This fixes
+a bug that occurred on tsch but not bash in which square brackets in the queue name were 
+misinterpreted and caused the command to break.
 
 ## [1.7.9]
 
