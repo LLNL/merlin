@@ -407,7 +407,7 @@ The arguments the LAUNCHER syntax will use:
 
 procs: The total number of MPI tasks
 nodes: The total number of MPI nodes
-walltime: The total walltime of the run (hh:mm:ss) (not available in lsf)
+walltime: The total walltime of the run (hh:mm:ss or mm:ss or ss) (not available in lsf)
 cores per task: The number of hardware threads per MPI task
 gpus per task: The number of GPUs per MPI task
 

@@ -39,7 +39,9 @@ import socket
 import subprocess
 from contextlib import contextmanager, suppress
 from copy import deepcopy
+from datetime import timedelta
 from types import SimpleNamespace
+from typing import Union
 
 import numpy as np
 import psutil
@@ -457,3 +459,73 @@ def contains_shell_ref(string):
     if re.search(r"\$\w+", string) or re.search(r"\$\{\w+\}", string):
         return True
     return False
+
+
+# Time utilities
+def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
+    """Convert a timestring to a timedelta object.
+    Timestring is given in in the format '[days]:[hours]:[minutes]:seconds'
+    with days, hours, minutes all optional add ons.
+    If passed as an int, will convert to a string first and interpreted as seconds.
+    """
+    # make sure it's a string in case we get an int
+    timestr = str(timestr)
+    nfields = len(timestr.split(":"))
+    if nfields > 4:
+        raise ValueError(
+            f"Cannot convert {timestr} to a timedelta. Valid format: days:hours:minutes:seconds."
+        )
+    _, d, h, m, s = (":0" * 10 + timestr).rsplit(":", 4)
+    tdelta = timedelta(days=int(d), hours=int(h), minutes=int(m), seconds=int(s))
+    return tdelta
+
+
+def _repr_timedelta_HMS(td: timedelta) -> str:
+    """Represent a timedelta object as a string in hours:minutes:seconds"""
+    hours, remainder = divmod(td.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    hours, minutes, seconds = int(hours), int(minutes), int(seconds)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
+def _repr_timedelta_FSD(td: timedelta) -> str:
+    """Represent a timedelta as a flux standard duration string, using seconds.
+
+    flux standard duration (FSD) is a floating point number with a single character suffix: s,m,h or d.
+    This uses seconds for simplicity.
+    """
+    fsd = f"{td.total_seconds()}s"
+    return fsd
+
+
+def repr_timedelta(td: timedelta, method: str = "HMS") -> str:
+    """Represent a timedelta object as a string using a particular method.
+
+    method - HMS: 'hours:minutes:seconds'
+    method - FSD: flux standard duration: 'seconds.s'"""
+    if method == "HMS":
+        return _repr_timedelta_HMS(td)
+    elif method == "FSD":
+        return _repr_timedelta_FSD(td)
+    else:
+        raise ValueError(
+            "Invalid method for formatting timedelta! Valid choices: HMS, FSD"
+        )
+
+
+def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") -> str:
+    """Converts a timestring to a different format.
+
+    timestring: -either-
+                a timestring in in the format '[days]:[hours]:[minutes]:seconds'
+                    days, hours, minutes are all optional add ons
+                -or-
+                an integer representing seconds
+    format_method: HMS - 'hours:minutes:seconds'
+                   FSD - 'seconds.s' (flux standard duration)
+
+    """
+    LOG.debug(f"Timestring is: {timestring}")
+    tdelta = convert_to_timedelta(timestring)
+    LOG.debug(f"Timedelta object is: {tdelta}")
+    return repr_timedelta(tdelta, method=format_method)
