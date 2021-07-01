@@ -4,7 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+
 
 ## [1.8.0]
 
@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	- Certain tests and source code have been refactored to abide by Flake8 conventions.
 - `walltime` can be specified in any of hours:minutes:seconds, minutes:seconds or
   seconds format and will be correctly translated for the right batch system syntax
+
+### Fixed
+- For Celery calls, explictly wrapped queue string in quotes for robustness. This fixes
+a bug that occurred on tsch but not bash in which square brackets in the queue name were 
+misinterpreted and caused the command to break.
 
 ## [1.7.9]
 
