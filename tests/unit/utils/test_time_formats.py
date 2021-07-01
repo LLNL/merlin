@@ -1,20 +1,9 @@
+import datetime
 from typing import List, Optional, Union
 
 import pytest
 
-from merlin.utils import convert_timestring
-
-
-def _list_all_equal(my_list: List[str]) -> bool:
-    """Boolean check that all items in the list are the same"""
-    return all(item == my_list[0] for item in my_list)
-
-
-def check_all_equal(time_strings: List[Union[str, int]], method: Optional[str] = "HMS") -> bool:
-    """Check that time strings in a List convert to the same for the given conversion method."""
-    converted: List[str] = [convert_timestring(ts) for ts in time_strings]
-    all_equal: bool = _list_all_equal(converted)
-    return all_equal
+from merlin.utils import convert_timestring, repr_timedelta
 
 
 @pytest.mark.parametrize("time_string, expected_result, method", [
@@ -26,7 +15,7 @@ def check_all_equal(time_strings: List[Union[str, int]], method: Optional[str] =
     ("1", "1.0s", "FSD")]
 )
 def test_convert_explicit(time_string: str, expected_result: str, method: str) -> None:
-    """Test some time strings to make sure they are converted correctly."""
+    """Test some cases to make sure they are converted correctly."""
     converted: str = convert_timestring(time_string, method)
     err_msg: str = f"Failed on time_string '{time_string}' for {method}, result was '{converted}', not '{expected_result}'"
     assert converted == expected_result, err_msg
@@ -45,6 +34,16 @@ def test_convert_explicit(time_string: str, expected_result: str, method: str) -
 )
 @pytest.mark.parametrize("method", ["HMS", "FSD", None])
 def test_convert_timestring_same(test_case: List[Union[str, int]], expected_bool: bool, method: Optional[str]) -> None:
-    """Test that HMS formatted all the same."""
+    """Test that HMS formatted all the same"""
     err_msg: str = f"Failed on test case '{test_case}', expected {expected_bool}, not '{not expected_bool}'"
-    assert check_all_equal(test_case, method=method) == expected_bool, err_msg
+    converted_times: List[str] = [convert_timestring(time_strings) for time_strings in test_case]
+    all_equal: bool = all(time_string == converted[0] for time_string in converted_times)
+    assert all_equal == expected_bool, err_msg
+
+
+def test_invalid_time_format() -> None:
+    """Test that if not provided an appropriate format (HMS, FSD), the appropriate error is thrown."""
+    with pytest.raises(ValueError) as invalid_format:
+        repr_timedelta(datetime.timedelta(1),  "HMD")
+    examination_err_msg: str = "Did not raise correct ValueError for failed repr_timedelta()."
+    assert "Invalid method for formatting timedelta! Valid choices: HMS, FSD" in str(invalid_format.value), examination_err_msg
