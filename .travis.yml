@@ -1,0 +1,17 @@
+language: python
+python:
+- '3.6'
+- '3.7'
+- '3.8'
+install:
+- pip install --upgrade pip
+- pip install -r requirements.txt
+- pip install -r requirements/dev.txt
+- pip install -r merlin/examples/workflows/feature_demo/requirements.txt
+- pip install -e .
+- pip install --upgrade sphinx
+- merlin config
+script:
+- python -m pytest tests/
+- python tests/integration/run_tests.py --verbose --local
+- if [ "$TRAVIS_BRANCH" = "main" ]; then ./tests/integration/version_test.sh; fi

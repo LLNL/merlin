@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.7.9.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -40,7 +40,6 @@ from celery.exceptions import MaxRetriesExceededError, OperationalError, Timeout
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
-from merlin.config.utils import Priority, get_priority
 from merlin.exceptions import (
     HardFailException,
     InvalidChainException,
@@ -70,12 +69,7 @@ LOG = logging.getLogger(__name__)
 STOP_COUNTDOWN = 60
 
 
-@shared_task(
-    bind=True,
-    autoretry_for=retry_exceptions,
-    retry_backoff=True,
-    priority=get_priority(Priority.high),
-)
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def merlin_step(self, *args, **kwargs):
     """
     Executes a Merlin Step
@@ -124,7 +118,7 @@ def merlin_step(self, *args, **kwargs):
                 LOG.info(
                     f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})..."
                 )
-                self.retry(countdown=step.retry_delay)
+                self.retry()
             except MaxRetriesExceededError:
                 LOG.warning(
                     f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
@@ -136,7 +130,7 @@ def merlin_step(self, *args, **kwargs):
                 LOG.info(
                     f"Step '{step_name}' in '{step_dir}' is being retried ({self.request.retries + 1}/{self.max_retries})..."
                 )
-                self.retry(countdown=step.retry_delay)
+                self.retry()
             except MaxRetriesExceededError:
                 LOG.warning(
                     f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
@@ -235,12 +229,7 @@ def prepare_chain_workspace(sample_index, chain_):
         LOG.debug(f"...workspace {workspace} prepared.")
 
 
-@shared_task(
-    bind=True,
-    autoretry_for=retry_exceptions,
-    retry_backoff=True,
-    priority=get_priority(Priority.low),
-)
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def add_merlin_expanded_chain_to_chord(
     self,
     task_type,
@@ -411,12 +400,7 @@ def add_chains_to_chord(self, all_chains):
     return ReturnCode.OK
 
 
-@shared_task(
-    bind=True,
-    autoretry_for=retry_exceptions,
-    retry_backoff=True,
-    priority=get_priority(Priority.low),
-)
+@shared_task(bind=True, autoretry_for=retry_exceptions, retry_backoff=True)
 def expand_tasks_with_samples(
     self,
     dag,
@@ -539,7 +523,6 @@ def expand_tasks_with_samples(
     acks_late=False,
     reject_on_worker_lost=False,
     name="merlin:shutdown_workers",
-    priority=get_priority(Priority.high),
 )
 def shutdown_workers(self, shutdown_queues):
     """
@@ -559,10 +542,7 @@ def shutdown_workers(self, shutdown_queues):
 
 
 @shared_task(
-    autoretry_for=retry_exceptions,
-    retry_backoff=True,
-    name="merlin:chordfinisher",
-    priority=get_priority(Priority.low),
+    autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:chordfinisher"
 )
 def chordfinisher(*args, **kwargs):
     """.
@@ -576,10 +556,7 @@ def chordfinisher(*args, **kwargs):
 
 
 @shared_task(
-    autoretry_for=retry_exceptions,
-    retry_backoff=True,
-    name="merlin:queue_merlin_study",
-    priority=get_priority(Priority.low),
+    autoretry_for=retry_exceptions, retry_backoff=True, name="merlin:queue_merlin_study"
 )
 def queue_merlin_study(study, adapter):
     """
