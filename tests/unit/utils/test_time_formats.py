@@ -37,7 +37,7 @@ def test_convert_timestring_same(test_case: List[Union[str, int]], expected_bool
     """Test that HMS formatted all the same"""
     err_msg: str = f"Failed on test case '{test_case}', expected {expected_bool}, not '{not expected_bool}'"
     converted_times: List[str] = [convert_timestring(time_strings) for time_strings in test_case]
-    all_equal: bool = all(time_string == converted[0] for time_string in converted_times)
+    all_equal: bool = all(time_string == converted_times[0] for time_string in converted_times)
     assert all_equal == expected_bool, err_msg
 
 
