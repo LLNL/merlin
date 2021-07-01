@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -72,7 +72,7 @@ class SampleIndex:
     def __init__(
         self, minid, maxid, children, name, leafid=-1, num_bundles=0, address=""
     ):
-        """ The constructor."""
+        """The constructor."""
 
         # The direct children of this node, generally also of type SampleIndex.
         # A dictionary keyed by the childrens' full addresses.

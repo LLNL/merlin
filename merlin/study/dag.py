@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -155,7 +155,7 @@ class DAG:
         return None
 
     def calc_backwards_adjacency(self):
-        """ initializes our backwards adjacency table """
+        """initializes our backwards adjacency table"""
         for parent in self.dag.adjacency_table:
             for task_name in self.dag.adjacency_table[parent]:
                 if task_name in self.backwards_adjacency:

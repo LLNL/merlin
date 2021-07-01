@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -167,10 +167,11 @@ class OpenFileList:
 
 
 if __name__ == "__main__":
-    import unittest
     import os
-    import numpy
+    import unittest
     import uuid
+
+    import numpy
 
     class TestOpenFileList(unittest.TestCase):
         def test_opener(self):

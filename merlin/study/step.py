@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -134,12 +134,12 @@ class Step:
         return Step(MerlinStepRecord(new_workspace, study_step))
 
     def get_task_queue(self):
-        """ Retrieve the task queue for the Step."""
+        """Retrieve the task queue for the Step."""
         return self.get_task_queue_from_dict(self.mstep.step.__dict__)
 
     @staticmethod
     def get_task_queue_from_dict(step_dict):
-        """ given a maestro step dict, get the task queue"""
+        """given a maestro step dict, get the task queue"""
         from merlin.config.configfile import CONFIG
 
         queue_tag = CONFIG.celery.queue_tag

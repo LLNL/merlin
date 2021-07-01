@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -297,6 +297,10 @@ def get_ssl_config(celery_check=False):
     results_backend = ""
     try:
         results_backend = CONFIG.results_backend.url.split(":")[0]
+    except AttributeError:
+        pass
+
+    try:
         results_backend = CONFIG.results_backend.name.lower()
     except AttributeError:
         pass

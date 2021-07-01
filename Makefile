@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -61,6 +61,7 @@ install-dev: virtualenv
 
 check-variables:
 	- echo MAX_LINE_LENGTH $(MAX_LINE_LENGTH)
+
 
 # this only works outside the venv
 virtualenv:

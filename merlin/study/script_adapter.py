@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,6 +41,7 @@ from maestrowf.interfaces.script.slurmscriptadapter import SlurmScriptAdapter
 from maestrowf.utils import start_process
 
 from merlin.common.abstracts.enums import ReturnCode
+from merlin.utils import convert_timestring
 
 
 LOG = logging.getLogger(__name__)
@@ -200,9 +201,9 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
 
     def time_format(self, val):
         """
-        This function assumes the time format is in hh:mm::ss
+        Convert the timestring to HH:MM:SS
         """
-        return val
+        return convert_timestring(val, format_method="HMS")
 
     def get_parallelize_command(self, procs, nodes=None, **kwargs):
         """
@@ -321,14 +322,9 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
 
     def time_format(self, val):
         """
-        This function assumes the time format is in dd:hh:mm::ss
-
-        flux requires a d,h,m,s time designation, so this
-        function will convert the time to minutes
-
+        Convert a time format to flux standard designation.
         """
-        _, d, h, m, s = (":0" * 10 + val).rsplit(":", 4)
-        return str(int(d) * 24 * 60 + int(h) * 60 + int(m) + int(s) / 60.0) + "m"
+        return convert_timestring(val, format_method="FSD")
 
 
 class MerlinScriptAdapter(LocalScriptAdapter):
