@@ -123,6 +123,7 @@ tests: unit-tests cli-tests
 
 # automatically make python files pep 8-compliant
 fix-style:
+	pip3 install -r requirements/dev.txt -U
 	isort -rc $(MRLN)
 	isort -rc $(TEST)
 	isort *.py
