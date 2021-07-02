@@ -168,6 +168,8 @@ see :doc:`./merlin_variables`.
         nodes: 1
         procs: 1
         task_queue: lqueue
+        max_retries: 3    # maximum number of retries
+        retry_delay: 10   # delay retry for N seconds (default 1)
         batch:
           type: <override the default batch type>
 

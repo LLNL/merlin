@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -139,7 +139,9 @@ def get_redissock_connection(config_path, include_password):
     return REDISSOCK_CONNECTION.format(**redis_config)
 
 
-def get_redis_connection(config_path, include_password, ssl=False):
+# flake8 complains this function is too complex, we don't gain much nesting any of this as a separate function,
+# however, cyclomatic complexity examination is off to get around this
+def get_redis_connection(config_path, include_password, ssl=False):  # noqa C901
     """
     Return the redis or rediss specific connection
 
@@ -219,6 +221,8 @@ def get_connection_string(include_password=True):
         return _sort_valid_broker(broker, config_path, include_password)
     return None
 
+
+def _sort_valid_broker(broker, config_path, include_password):
     if broker == "rabbitmq" or broker == "amqps":
         return get_rabbit_connection(config_path, include_password, conn="amqps")
 
@@ -231,10 +235,8 @@ def get_connection_string(include_password=True):
     elif broker == "redis":
         return get_redis_connection(config_path, include_password)
 
-    elif broker == "rediss":
-        return get_redis_connection(config_path, include_password, ssl=True)
-
-    return None
+    # broker must be rediss
+    return get_redis_connection(config_path, include_password, ssl=True)
 
 
 def get_ssl_config():

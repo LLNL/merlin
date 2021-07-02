@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -89,6 +89,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "restart",
             "task_queue",
             "max_retries",
+            "retry_delay",
             "pre",
             "post",
             "depends",
@@ -176,6 +177,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         new_unsupported = [
             "task_queue",
             "max_retries",
+            "retry_delay",
             "pre",
             "post",
             "gpus per task",
@@ -308,6 +310,7 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "restart",
             "task_queue",
             "max_retries",
+            "retry_delay",
             "pre",
             "post",
             "depends",
