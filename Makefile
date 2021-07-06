@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -27,24 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-
-PYTHON?=python3
-PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
-PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
-VENV?=venv_merlin_py$(PYV)
-PIP?=$(VENV)/bin/pip
-MRLN=merlin
-TEST=tests
-DOCS=docs
-WKFW=merlin/examples/workflows/
-MAX_COMPLEXITY?=5
-
-VER?=1.0.0
-VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+
-CHANGELOG_VSTRING="## \[$(VSTRING)\]"
-INIT_VSTRING="__version__ = \"$(VSTRING)\""
-
-PENV=merlin$(PYV)
+include config.mk
 
 .PHONY : all
 .PHONY : install-dev
@@ -65,6 +48,7 @@ PENV=merlin$(PYV)
 .PHONY : check-camel-case
 .PHONY : checks
 .PHONY : reqlist
+.PHONY : check-variables
 
 
 all: install-dev install-merlin install-workflow-deps
@@ -73,6 +57,10 @@ all: install-dev install-merlin install-workflow-deps
 # install requirements
 install-dev: virtualenv
 	$(PIP) install -r requirements/dev.txt
+
+
+check-variables:
+	- echo MAX_LINE_LENGTH $(MAX_LINE_LENGTH)
 
 
 # this only works outside the venv
@@ -121,12 +109,12 @@ release:
 
 
 unit-tests:
-	-$(PYTHON) -m pytest $(TEST)
+	-$(PYTHON) -m pytest $(UNIT)
 
 
 # run CLI tests
 cli-tests:
-	-$(PYTHON) $(TEST)/integration/run_tests.py
+	-$(PYTHON) $(TEST)/integration/run_tests.py --local
 
 
 # run unit and CLI tests
@@ -135,6 +123,7 @@ tests: unit-tests cli-tests
 
 # automatically make python files pep 8-compliant
 fix-style:
+	pip3 install -r requirements/dev.txt -U
 	isort -rc $(MRLN)
 	isort -rc $(TEST)
 	isort *.py
@@ -145,7 +134,7 @@ fix-style:
 
 # run code style checks
 check-style:
-	-$(PYTHON) -m flake8 --max-complexity $(MAX_COMPLEXITY) --exclude ascii_art.py $(MRLN)
+	-$(PYTHON) -m flake8 --max-complexity $(MAX_COMPLEXITY) --max-line-length $(MAX_LINE_LENGTH) --exclude ascii_art.py $(MRLN)
 	-black --check --target-version py36 $(MRLN)
 
 

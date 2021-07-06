@@ -138,8 +138,42 @@ The max number of retries in given step can be specified with the ``max_retries`
 
 Alternatively, use ``exit $(MERLIN_RESTART)`` to run the optional ``<step>.run.restart`` section.
 
+To delay a retry or restart directive, add the ``retry_delay`` field to the step.
+Note: ``retry_delay`` only works in server mode (ie not ``--local`` mode).
+
 To restart failed steps after a workflow is done running, see :ref:`restart`.
 
+
+How do I put a time delay in before a restart or retry?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Add the ``retry_delay`` field to the step. This specifies how many seconds before the task
+gets run after the restart. Set this value to large enough for your problem to finish.
+
+See the ``merlin example restart_delay`` example for syntax.
+
+Note: ``retry_delay`` only works in server mode (ie not ``--local`` mode).
+
+I have a long running batch task that needs to restart, what should I do?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Before your allocation ends, use ``$(MERLIN_RESTART)`` or ``$(MERLIN_RETRY)`` but
+with a ``retry_delay`` on your step for longer that your allocation has left.
+The server will hold onto the step for that long (in seconds) before releasing it,
+allowing your batch allocation to end without the worker grabbing the step right away.
+
+For instance, your step could look something like this
+
+.. code:: yaml
+
+    name: batch_task
+    description: A long running task that needs to restart
+    run:
+        cmd: |
+            # Run my code, but end 60 seconds before my allocation
+            my_code --end_early 60s
+            if [ -e restart_needed_flag ]; then
+                exit $(MERLIN_RESTART)
+            fi
+        retry_delay: 120 # wait at least 2 minutes before restarting 
 
 How do I mark a step failure?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,6 +213,7 @@ Also under ``run``, the following fields are optional:
         task_queue: <task queue name for this step>
         shell: <e.g., /bin/bash, /usr/bin/env python3>
         max_retries: <integer>
+        retry_delay: <integer: seconds>
         nodes: <integer>
         procs: <integer>
 
@@ -321,6 +356,17 @@ to specify the same launch command that will work on different HPC clusters with
 default schedulers such as SLURM or LSF.
 More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
 
+
+Older versions of flux may need the ``--mpi=none`` argument if flux is 
+launched on a system using the SLURM scheduler. This argument can be added
+in the ``launch_args`` variable in the batch section.
+
+.. code:: yaml
+
+   batch:
+     type: flux
+     launch_args: --mpi=none
+
 How do I use flux on LC?
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The ``--mpibind=off`` option is currently required when using flux with a slurm launcher
@@ -361,7 +407,7 @@ The arguments the LAUNCHER syntax will use:
 
 procs: The total number of MPI tasks
 nodes: The total number of MPI nodes
-walltime: The total walltime of the run (hh:mm:ss) (not available in lsf)
+walltime: The total walltime of the run (hh:mm:ss or mm:ss or ss) (not available in lsf)
 cores per task: The number of hardware threads per MPI task
 gpus per task: The number of GPUs per MPI task
 

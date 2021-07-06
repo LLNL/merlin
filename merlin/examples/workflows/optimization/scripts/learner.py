@@ -1,7 +1,7 @@
 import argparse
 
 import numpy as np
-from joblib import dump, load
+from joblib import dump
 from sklearn.ensemble import RandomForestRegressor
 
 
@@ -20,7 +20,7 @@ try:
     prev_iter_npz = np.load("all_iter_results.npz", allow_pickle=True)
     prev_iter_data = prev_iter_npz["arr_0"].item()
     data = dict(prev_iter_data, **current_iter_data)
-except:
+except BaseException:
     data = current_iter_data
 
 X = []

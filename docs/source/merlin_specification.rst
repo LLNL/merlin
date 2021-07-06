@@ -60,7 +60,7 @@ see :doc:`./merlin_variables`.
                           If this is unset the number of nodes will be
                           queried from the environment, failing that, the
                           number of nodes will be set to 1.
-     walltime: The total walltime of the batch allocation (hh:mm:ss)
+     walltime: The total walltime of the batch allocation (hh:mm:ss or mm:ss or ss)
 
 
   #####################################
@@ -123,7 +123,7 @@ see :doc:`./merlin_variables`.
   #   depends: a list of steps this step depends upon (ie parents)
   #   procs: The total number of MPI tasks
   #   nodes: The total number of MPI nodes
-  #   walltime: The total walltime of the run (hh:mm:ss) (not available in lsf)
+  #   walltime: The total walltime of the run (hh:mm:ss, mm:ss or ss) (not available in lsf)
   #   cores per task: The number of hardware threads per MPI task
   #   gpus per task: The number of GPUs per MPI task
   #   SLURM specific run flags:
@@ -168,6 +168,8 @@ see :doc:`./merlin_variables`.
         nodes: 1
         procs: 1
         task_queue: lqueue
+        max_retries: 3    # maximum number of retries
+        retry_delay: 10   # delay retry for N seconds (default 1)
         batch:
           type: <override the default batch type>
 

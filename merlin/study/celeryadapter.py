@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.7.9.
+# This file is part of Merlin, Version: 1.8.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -255,33 +255,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
         queues = spec.make_queue_string(wsteps).split(",")
 
         # Check for missing arguments
-        parallel = batch_check_parallel(spec)
-        if parallel:
-            if "--concurrency" not in worker_args:
-                LOG.warning(
-                    "The worker arg --concurrency [1-4] is recommended "
-                    "when running parallel tasks"
-                )
-            if "--prefetch-multiplier" not in worker_args:
-                LOG.warning(
-                    "The worker arg --prefetch-multiplier 1 is "
-                    "recommended when running parallel tasks"
-                )
-            if "fair" not in worker_args:
-                LOG.warning(
-                    "The worker arg -O fair is recommended when running "
-                    "parallel tasks"
-                )
-
-        if "-n" not in worker_args:
-            nhash = ""
-            if overlap:
-                nhash = time.strftime("%Y%m%d-%H%M%S")
-            # TODO: Once flux fixes their bug, change this back to %h
-            worker_args += f" -n {worker_name}{nhash}.%%h"
-
-        if "-l" not in worker_args:
-            worker_args += f" -l {logging.getLevelName(LOG.getEffectiveLevel())}"
+        verify_args(spec, worker_args, worker_name, overlap)
 
         # Add a per worker log file (debug)
         if LOG.isEnabledFor(logging.DEBUG):
@@ -310,12 +284,23 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
             LOG.debug(f"worker cmd={worker_cmd}")
             LOG.debug(f"env={spenv}")
 
+            if just_return_command:
+                worker_list = ""
+                print(worker_cmd)
+                continue
+
             found = []
             running_queues = []
 
-            if not just_return_command and not overlap:
-                running_queues.extend(get_running_queues())
             running_queues.extend(local_queues)
+            if not overlap:
+                running_queues.extend(get_running_queues())
+                # Cache the queues from this worker to use to test
+                # for existing queues in any subsequent workers.
+                # If overlap is True, then do not check the local queues.
+                # This will allow multiple workers to pull from the same
+                # queue.
+                local_queues.extend(queues)
 
             for q in queues:
                 if q in running_queues:
@@ -325,19 +310,6 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
                 LOG.warning(
                     f"A celery worker named '{worker_name}' is already configured/running for queue(s) = {' '.join(found)}"
                 )
-                continue
-
-            # Cache the queues from this worker to use to test
-            # for existing queues in any subsequent workers.
-            # If overlap is True, then do not check the local queues.
-            # This will allow multiple workers to pull from the same
-            # queue.
-            if not overlap:
-                local_queues.extend(queues)
-
-            if just_return_command:
-                worker_list = ""
-                print(worker_cmd)
                 continue
 
             _ = subprocess.Popen(worker_cmd, **kwargs)
@@ -350,6 +322,36 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
 
     # Return a string with the worker commands for logging
     return str(worker_list)
+
+
+def verify_args(spec, worker_args, worker_name, overlap):
+    """Examines the args passed to a worker for completeness."""
+    parallel = batch_check_parallel(spec)
+    if parallel:
+        if "--concurrency" not in worker_args:
+            LOG.warning(
+                "The worker arg --concurrency [1-4] is recommended "
+                "when running parallel tasks"
+            )
+        if "--prefetch-multiplier" not in worker_args:
+            LOG.warning(
+                "The worker arg --prefetch-multiplier 1 is "
+                "recommended when running parallel tasks"
+            )
+        if "fair" not in worker_args:
+            LOG.warning(
+                "The worker arg -O fair is recommended when running parallel tasks"
+            )
+
+    if "-n" not in worker_args:
+        nhash = ""
+        if overlap:
+            nhash = time.strftime("%Y%m%d-%H%M%S")
+        # TODO: Once flux fixes their bug, change this back to %h
+        worker_args += f" -n {worker_name}{nhash}.%%h"
+
+    if "-l" not in worker_args:
+        worker_args += f" -l {logging.getLevelName(LOG.getEffectiveLevel())}"
 
 
 def launch_celery_workers(spec, steps=None, worker_args="", just_return_command=False):
