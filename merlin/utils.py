@@ -386,15 +386,15 @@ def get_flux_version(flux_path, no_errors=False):
     except FileNotFoundError as e:
         if not no_errors:
             LOG.error(f"The flux path {flux_path} canot be found")
-            LOG.error(f"Suppress this error with no_errors=True")
+            LOG.error("Suppress this error with no_errors=True")
             raise e
 
     try:
         flux_ver = re.search(r"\s*([\d.]+)", ps[0]).group(1)
     except (ValueError, TypeError) as e:
         if not no_errors:
-            LOG.error(f"The flux version canot be determined")
-            LOG.error(f"Suppress this error with no_errors=True")
+            LOG.error("The flux version cannot be determined")
+            LOG.error("Suppress this error with no_errors=True")
             raise e
         else:
             flux_ver = DEFAULT_FLUX_VERSION

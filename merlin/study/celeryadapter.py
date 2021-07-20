@@ -260,7 +260,11 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
         # Add a per worker log file (debug)
         if LOG.isEnabledFor(logging.DEBUG):
             LOG.debug("Redirecting worker output to individual log files")
-            worker_args += f" --logfile %p.%i"
+            # The linter pointed out this f string currently does nothing, but
+            # this looks like this was swapped between % formatting and f-strings.
+            # Current implementation will just print '%p.%i', if that is not intended
+            # it needs to be updated. Currently skipping linter examination.
+            worker_args += f" --logfile %p.%i"  # noqa: F541
 
         # Get the celery command
         celery_com = launch_celery_workers(

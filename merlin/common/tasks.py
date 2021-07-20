@@ -91,11 +91,11 @@ def merlin_step(self, *args, **kwargs):
     step = None
     LOG.debug(f"args is {len(args)} long")
 
-    for a in args:
-        if isinstance(a, Step):
-            step = a
+    for arg in args:
+        if isinstance(arg, Step):
+            step = arg
         else:
-            LOG.debug(f"discard argument {a}")
+            LOG.debug(f"discard argument {arg}")
 
     config = kwargs.pop("adapter_config", {"type": "local"})
     next_in_chain = kwargs.pop("next_in_chain", None)
@@ -299,12 +299,12 @@ def add_merlin_expanded_chain_to_chord(
                 new_chain.append(new_step)
 
             all_chains.append(new_chain)
-        LOG.debug(f"adding chain to chord")
+        LOG.debug("adding chain to chord")
         add_chains_to_chord(self, all_chains)
-        LOG.debug(f"chain added to chord")
+        LOG.debug("chain added to chord")
     else:
         # recurse down the sample_index hierarchy
-        LOG.debug(f"recursing down sample_index hierarchy")
+        LOG.debug("recursing down sample_index hierarchy")
         for next_index in sample_index.children.values():
             next_index.name = os.path.join(sample_index.name, next_index.name)
             LOG.debug("generating next step")
@@ -486,7 +486,7 @@ def expand_tasks_with_samples(
     if needs_expansion:
         # prepare_chain_workspace(sample_index, steps)
         sample_index.name = ""
-        LOG.debug(f"queuing merlin expansion tasks")
+        LOG.debug("queuing merlin expansion tasks")
         found_tasks = False
         conditions = [
             lambda c: c.is_great_grandparent_of_leaf,
@@ -527,9 +527,9 @@ def expand_tasks_with_samples(
                     )
                     found_tasks = True
     else:
-        LOG.debug(f"queuing simple chain task")
+        LOG.debug("queuing simple chain task")
         add_simple_chain_to_chord(self, task_type, steps, adapter_config)
-        LOG.debug(f"simple chain task queued")
+        LOG.debug("simple chain task queued")
 
 
 @shared_task(
@@ -554,7 +554,7 @@ def shutdown_workers(self, shutdown_queues):
     if shutdown_queues is not None:
         LOG.warning(f"Shutting down workers in queues {shutdown_queues}!")
     else:
-        LOG.warning(f"Shutting down workers in all queues!")
+        LOG.warning("Shutting down workers in all queues!")
     return stop_workers("celery", None, shutdown_queues, None)
 
 

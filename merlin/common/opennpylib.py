@@ -280,8 +280,8 @@ class OpenNPY:
 
 
 class OpenNPYList:
-    def __init__(self, l):
-        self.filenames = l
+    def __init__(self, npyList):
+        self.filenames = npyList
         self.files = [OpenNPY(_) for _ in self.filenames]
         for i in self.files:
             i.load_header()

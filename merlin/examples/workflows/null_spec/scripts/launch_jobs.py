@@ -76,5 +76,5 @@ for i, concurrency in enumerate(concurrencies):
         shutil.copyfile(args.spec_path, "spec.yaml")
         shutil.copyfile(args.script_path, os.path.join("scripts", "make_samples.py"))
         lines = subprocess.check_output(command, shell=True).decode("ascii")
-        os.chdir(f"..")
-    os.chdir(f"..")
+        os.chdir("..")
+    os.chdir("..")

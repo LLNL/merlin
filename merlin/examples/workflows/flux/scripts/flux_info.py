@@ -81,10 +81,10 @@ except BaseException:
         stdout, stderr = p.communicate()
 
         data = {}
-        for l in stdout.split("/n"):
-            for s in l.strip().split():
-                if "timestamp" in s:
-                    jstring = s.replace("'", '"')
+        for line in stdout.split("/n"):
+            for token in line.strip().split():
+                if "timestamp" in token:
+                    jstring = token.replace("'", '"')
                     d = json.loads(jstring)
                     data[d["name"]] = d["timestamp"]
 
