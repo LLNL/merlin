@@ -33,6 +33,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
+from typing import Any, Dict, Optional
 
 from celery import chain, chord, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError
@@ -70,13 +71,13 @@ LOG = logging.getLogger(__name__)
 STOP_COUNTDOWN = 60
 
 
-@shared_task(
+@shared_task(  # noqa: C901
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     priority=get_priority(Priority.high),
-)
-def merlin_step(self, *args, **kwargs):
+)  # noqa: C901
+def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:
     """
     Executes a Merlin Step
     :param args: The arguments, one of which should be an instance of Step
@@ -88,25 +89,27 @@ def merlin_step(self, *args, **kwargs):
      "next_in_chain": <Step object> } # merlin_step will be added to the current chord
                                       # with next_in_chain as an argument
     """
-    step = None
+    step: Optional[Step] = None
     LOG.debug(f"args is {len(args)} long")
 
+    arg: Any
     for arg in args:
         if isinstance(arg, Step):
             step = arg
         else:
-            LOG.debug(f"discard argument {arg}")
+            LOG.debug(f"discard argument {arg}, not of type Step.")
 
-    config = kwargs.pop("adapter_config", {"type": "local"})
-    next_in_chain = kwargs.pop("next_in_chain", None)
+    config: Dict[str, str] = kwargs.pop("adapter_config", {"type": "local"})
+    next_in_chain: Optional[Step] = kwargs.pop("next_in_chain", None)
 
     if step:
         self.max_retries = step.max_retries
-        step_name = step.name()
-        step_dir = step.get_workspace()
+        step_name: str = step.name()
+        step_dir: str = step.get_workspace()
         LOG.debug(f"merlin_step: step_name '{step_name}' step_dir '{step_dir}'")
-        finished_filename = os.path.join(step_dir, "MERLIN_FINISHED")
+        finished_filename: str = os.path.join(step_dir, "MERLIN_FINISHED")
         # if we've already finished this task, skip it
+        result: ReturnCode
         if os.path.exists(finished_filename):
             LOG.info(f"Skipping step '{step_name}' in '{step_dir}'.")
             result = ReturnCode.OK

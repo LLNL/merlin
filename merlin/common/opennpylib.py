@@ -81,6 +81,7 @@ access among all of them.
      print a.dtype      # dtype of array
 
 """
+from typing import List
 
 import numpy as np
 
@@ -280,9 +281,10 @@ class OpenNPY:
 
 
 class OpenNPYList:
-    def __init__(self, npyList):
-        self.filenames = npyList
-        self.files = [OpenNPY(_) for _ in self.filenames]
+    def __init__(self, filename_strs: List[str]):
+        self.filenames = filename_strs
+        self.files: List[OpenNPY] = [OpenNPY(_) for _ in self.filenames]
+        i: OpenNPY
         for i in self.files:
             i.load_header()
         self.shapes = [_.hdr["shape"] for _ in self.files]
