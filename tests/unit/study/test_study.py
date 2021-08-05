@@ -6,6 +6,8 @@ import shutil
 import tempfile
 import unittest
 
+import pytest
+
 from merlin.study.step import Step
 from merlin.study.study import MerlinStudy
 
@@ -277,27 +279,22 @@ class TestMerlinStudy(unittest.TestCase):
         If there is a common key between Maestro's global.parameters and
         Merlin's sample/column_labels, an error should be raised.
         """
-        merlin_spec_conflict = os.path.join(self.tmpdir, "basic_ensemble_conflict.yaml")
+        merlin_spec_conflict: str = os.path.join(self.tmpdir, "basic_ensemble_conflict.yaml")
         with open(merlin_spec_conflict, "w+") as _file:
             _file.write(MERLIN_SPEC_CONFLICT)
-        try:
-            study_conflict = MerlinStudy(merlin_spec_conflict)
-        except ValueError:
-            pass
-        else:
-            assert False
+        # for some reason flake8 doesn't believe variables instantiated inside the try/with context are assigned
+        with pytest.raises(ValueError):
+            study_conflict: MerlinStudy = MerlinStudy(merlin_spec_conflict)  # noqa: F841
 
     def test_no_env(self):
         """
         A MerlinStudy should be able to support a MerlinSpec that does not contain
         the optional `env` section.
         """
-        merlin_spec_no_env_filepath = os.path.join(
-            self.tmpdir, "basic_ensemble_no_env.yaml"
-        )
+        merlin_spec_no_env_filepath: str = os.path.join(self.tmpdir, "basic_ensemble_no_env.yaml")
         with open(merlin_spec_no_env_filepath, "w+") as _file:
             _file.write(MERLIN_SPEC_NO_ENV)
         try:
-            study_no_env = MerlinStudy(merlin_spec_no_env_filepath)
+            study_no_env: MerlinStudy = MerlinStudy(merlin_spec_no_env_filepath)  # noqa: F841
         except Exception as e:
-            assert False
+            assert False, f"Encountered unexpected exception, {e}, for viable MerlinSpec without optional 'env' section."

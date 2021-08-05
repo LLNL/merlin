@@ -217,13 +217,13 @@ def define_tests():
             [
                 HasReturnCode(),
                 ProvenanceYAMLFileHasRegex(
-                    regex="HELLO: \$\(SCRIPTS\)/hello_world.py",
+                    regex=r"HELLO: \$\(SCRIPTS\)/hello_world.py",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="orig",
                 ),
                 ProvenanceYAMLFileHasRegex(
-                    regex="name: \$\(NAME\)",
+                    regex=r"name: \$\(NAME\)",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
@@ -241,7 +241,7 @@ def define_tests():
                     provenance_type="expanded",
                 ),
                 ProvenanceYAMLFileHasRegex(
-                    regex="\$\(NAME\)",
+                    regex=r"\$\(NAME\)",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
@@ -287,13 +287,13 @@ def define_tests():
             f"{run} {demo} --pgen {demo_pgen} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
                 ProvenanceYAMLFileHasRegex(
-                    regex="\[0.3333333",
+                    regex=r"\[0.3333333",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
                 ProvenanceYAMLFileHasRegex(
-                    regex="\[0.5",
+                    regex=r"\[0.5",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
