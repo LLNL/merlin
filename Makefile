@@ -56,7 +56,10 @@ all: install-dev install-merlin install-workflow-deps
 
 # install requirements
 install-dev: virtualenv
+	. $(VENV)/bin/activate
 	$(PIP) install -r requirements/dev.txt
+	pip3 install -e .
+	merlin config
 
 
 check-variables:
@@ -116,8 +119,6 @@ unit-tests:
 
 # run CLI tests
 cli-tests:
-	pip3 install -e .
-	merlin config
 	-$(PYTHON) $(TEST)/integration/run_tests.py --local
 
 
