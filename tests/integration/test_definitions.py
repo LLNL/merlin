@@ -105,7 +105,7 @@ def define_tests():
         ),
     }
     example_tests = {
-        "example failure": (f"merlin example failure", HasRegex("not found"), "local"),
+        "example failure": ("merlin example failure", HasRegex("not found"), "local"),
         "example simple_chain": (
             f"merlin example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
             HasReturnCode(),
@@ -317,7 +317,7 @@ def define_tests():
     }
     dependency_checks = {
         "deplic no GNU": (
-            f"deplic ./",
+            "deplic ./",
             [HasRegex("GNU", negate=True), HasRegex("GPL", negate=True)],
             "local",
         ),
