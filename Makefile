@@ -66,7 +66,9 @@ check-variables:
 # this only works outside the venv
 virtualenv:
 	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages
+	. $(VENV)/bin/activate
 	$(PIP) install --upgrade pip
+	$(PIP) install -r requirements/release.txt
 
 
 install-workflow-deps:
@@ -114,6 +116,8 @@ unit-tests:
 
 # run CLI tests
 cli-tests:
+	pip3 install -e .
+	merlin config
 	-$(PYTHON) $(TEST)/integration/run_tests.py --local
 
 
@@ -134,7 +138,7 @@ fix-style:
 
 # run code style checks
 check-style:
-	-$(PYTHON) -m flake8 --max-complexity $(MAX_COMPLEXITY) --max-line-length $(MAX_LINE_LENGTH) --exclude ascii_art.py $(MRLN)
+	-$(PYTHON) -m flake8 --count
 	-black --check --target-version py36 $(MRLN)
 
 

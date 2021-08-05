@@ -76,7 +76,7 @@ STOP_COUNTDOWN = 60
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     priority=get_priority(Priority.high),
-)  # noqa: C901
+)
 def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:
     """
     Executes a Merlin Step
