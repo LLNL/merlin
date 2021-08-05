@@ -77,7 +77,7 @@ STOP_COUNTDOWN = 60
     retry_backoff=True,
     priority=get_priority(Priority.high),
 )
-def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:
+def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noqa: C901
     """
     Executes a Merlin Step
     :param args: The arguments, one of which should be an instance of Step
