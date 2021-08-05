@@ -304,14 +304,14 @@ def define_tests():
             "local",
         ),
     }
-    provenence_equality_checks = {
+    provenence_equality_checks = {  # noqa: F841
         "local provenance spec equality": (
             f"{run} {simple} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cp $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml') ./{OUTPUT_DIR}/FILE1 ; rm -rf ./{OUTPUT_DIR}/simple_chain_* ; {run} ./{OUTPUT_DIR}/FILE1 --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cmp ./{OUTPUT_DIR}/FILE1 $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml')",
             HasReturnCode(),
             "local",
         ),
     }
-    style_checks = {
+    style_checks = {  # noqa: F841
         "black check merlin": (f"{black} merlin/", HasReturnCode(), "local"),
         "black check tests": (f"{black} tests/", HasReturnCode(), "local"),
     }
@@ -322,7 +322,7 @@ def define_tests():
             "local",
         ),
     }
-    distributed_tests = {
+    distributed_tests = {  # noqa: F841
         "run and purge feature_demo": (
             f"{run} {demo} ; {purge} {demo} -f",
             HasReturnCode(),

@@ -29,11 +29,10 @@
 ###############################################################################
 include config.mk
 
-.PHONY : all
 .PHONY : install-dev
 .PHONY : virtualenv
 .PHONY : install-workflow-deps
-.PHONY : install-merlin
+.PHONY : install-merlin-dev
 .PHONY : clean-output
 .PHONY : clean-docs
 .PHONY : clean-release
@@ -41,7 +40,7 @@ include config.mk
 .PHONY : clean
 .PHONY : release
 .PHONY : unit-tests
-.PHONY : cli-tests
+.PHONY : e2e-tests
 .PHONY : tests
 .PHONY : fix-style
 .PHONY : check-style
@@ -51,15 +50,12 @@ include config.mk
 .PHONY : check-variables
 
 
-all: install-dev install-merlin install-workflow-deps
-
-
 # install requirements
-install-dev: virtualenv
-	. $(VENV)/bin/activate
-	$(PIP) install -r requirements/dev.txt
-	pip3 install -e .
-	merlin config
+install-dev: virtualenv install-workflow-deps
+	( \
+	   . $(VENV)/bin/activate; \
+	   $(PIP) install -r requirements/dev.txt; \
+	)
 
 
 check-variables:
@@ -68,18 +64,28 @@ check-variables:
 
 # this only works outside the venv
 virtualenv:
-	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages
-	. $(VENV)/bin/activate
-	$(PIP) install --upgrade pip
-	$(PIP) install -r requirements/release.txt
+	( \
+	   $(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages; \
+	   . $(VENV)/bin/activate; \
+	   $(PIP) install --upgrade pip; \
+	   $(PIP) install -r requirements/release.txt; \
+	)
 
 
-install-workflow-deps:
-	$(PIP) install -r $(WKFW)feature_demo/requirements.txt
+install-workflow-deps: virtualenv install-merlin-dev
+	( \
+	   . $(VENV)/bin/activate; \
+	   merlin example feature_demo; \
+	   $(PIP) install -r $(WKFW)feature_demo/requirements.txt; \
+	)
 
 
-install-merlin:
-	$(PIP) install -e .
+install-merlin-dev: virtualenv
+	( \
+	   . $(VENV)/bin/activate; \
+	   $(PIP) install -e .; \
+	   merlin config; \
+	)
 
 
 # remove python bytecode files
@@ -113,17 +119,21 @@ release:
 	$(PYTHON) setup.py sdist bdist_wheel
 
 
-unit-tests:
+unit-tests: 
 	-$(PYTHON) -m pytest $(UNIT)
 
 
 # run CLI tests
-cli-tests:
+e2e-tests:
 	-$(PYTHON) $(TEST)/integration/run_tests.py --local
 
 
+e2e-tests-diagnostic:
+	-$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose
+
+
 # run unit and CLI tests
-tests: unit-tests cli-tests
+tests: unit-tests e2e-tests
 
 
 # automatically make python files pep 8-compliant
@@ -139,7 +149,8 @@ fix-style:
 
 # run code style checks
 check-style:
-	-$(PYTHON) -m flake8 --count
+	-$(PYTHON) -m flake8 --count --select=E9,F63,F7,F82 --show-source --statistics
+	-$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127
 	-black --check --target-version py36 $(MRLN)
 
 
