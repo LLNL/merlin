@@ -387,8 +387,9 @@ def purge_celery_tasks(queues, force):
     if force:
         force_com = " -f "
     purge_command = " ".join(["celery -A merlin purge", force_com, "-Q", queues])
+    LOG.debug(queues)
     LOG.debug(purge_command)
-    return subprocess.call(purge_command.split())
+    return subprocess.call(purge_command, shell=True)
 
 
 def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
