@@ -8,6 +8,11 @@ class Priority(enum.Enum):
     mid = 2
     low = 3
 
+def is_rabbit_broker(broker):
+    return broker in ["rabbitmq", "amqps", "amqp"]
+
+def is_redis_broker(broker):
+    return broker in ["redis", "rediss", "redis+socket"]
 
 def get_priority(priority):
     broker = CONFIG.broker.name.lower()
@@ -18,16 +23,16 @@ def get_priority(priority):
         )
     if priority == Priority.mid:
         return 5
-    if broker == "rabbitmq":
+    if is_rabbit_broker(broker):
         if priority == Priority.low:
             return 1
         if priority == Priority.high:
             return 10
-    if broker == "redis":
+    if is_redis_broker(broker):
         if priority == Priority.low:
             return 10
         if priority == Priority.high:
             return 1
     raise ValueError(
-        "Function get_priority has reached unknown state! Check input parameter and broker."
+        f"Function get_priority has reached unknown state! Maybe unsupported broker {broker}?"
     )
