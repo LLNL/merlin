@@ -111,8 +111,8 @@ def get_node_count(default=1):
     return default
 
 
-def batch_worker_launch(spec,
-                        com,
+def batch_worker_launch(spec: Dict,
+                        com: str,
                         nodes: Union[str, Dict] = None,
                         batch=None) -> str:
     """
@@ -120,7 +120,7 @@ def batch_worker_launch(spec,
     is used to create the worker launch line, which may be
     different from a simulation launch.
 
-    : param spec : I don't know
+    : param spec : (dict) workflow specification
     : param com : (str): The command to launch with batch configuration
     : param nodes : (int): The number of nodes to use in the batch launch
     : param batch : (dict): An optional batch override from the worker config

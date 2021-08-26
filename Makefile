@@ -29,7 +29,7 @@
 ###############################################################################
 include config.mk
 
-.PHONY : install-dev
+.PHONY : install-merlin-dev
 .PHONY : virtualenv
 .PHONY : install-workflow-deps
 .PHONY : install-merlin-dev
@@ -47,44 +47,43 @@ include config.mk
 .PHONY : check-camel-case
 .PHONY : checks
 .PHONY : reqlist
-.PHONY : check-variables
+.PHONY : package
+
+
+# this only works outside the venv - there is a minimal check if you are within the default venv this Makefile builds,
+# but if run from inside a custom-named venv, you will break your custom venv.
+virtualenv:
+	(
+            $(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages; \
+	    . $(VENV)/bin/activate; \
+	    $(PIP) install --upgrade pip; \
+	    $(PIP) install -r requirements/release.txt; \
+	    echo "Merlin installed a new venv at $(VENV)"; \
+	 )
+
+
+# install merlin into the virtual environment
+install-merlin: virtualenv
+	( \
+	   . $(VENV)/bin/activate; \
+	   $(PIP) install -e .; \
+	   merlin config; \
+	)
 
 
 # install requirements
-install-dev: virtualenv install-workflow-deps
+install-merlin-dev: virtualenv install-workflow-deps
 	( \
 	   . $(VENV)/bin/activate; \
 	   $(PIP) install -r requirements/dev.txt; \
 	)
 
 
-check-variables:
-	- echo MAX_LINE_LENGTH $(MAX_LINE_LENGTH)
-
-
-# this only works outside the venv
-virtualenv:
-	( \
-	   $(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages; \
-	   . $(VENV)/bin/activate; \
-	   $(PIP) install --upgrade pip; \
-	   $(PIP) install -r requirements/release.txt; \
-	)
-
-
-install-workflow-deps: virtualenv install-merlin-dev
+install-workflow-deps: virtualenv install-merlin
 	( \
 	   . $(VENV)/bin/activate; \
 	   merlin example feature_demo; \
 	   $(PIP) install -r $(WKFW)feature_demo/requirements.txt; \
-	)
-
-
-install-merlin-dev: virtualenv
-	( \
-	   . $(VENV)/bin/activate; \
-	   $(PIP) install -e .; \
-	   merlin config; \
 	)
 
 
@@ -118,12 +117,15 @@ clean: clean-py clean-docs clean-release
 release:
 	$(PYTHON) setup.py sdist bdist_wheel
 
+# tests require a valid dev install of merlin
+unit-tests:
+	( \
+	   . $(VENV)/bin/activate; \
+	   -$(PYTHON) -m pytest $(UNIT); \
+	)
 
-unit-tests: 
-	-$(PYTHON) -m pytest $(UNIT)
 
-
-# run CLI tests
+# run CLI tests - these require an active install of merlin in a venv
 e2e-tests:
 	-$(PYTHON) $(TEST)/integration/run_tests.py --local
 
@@ -166,7 +168,7 @@ checks: check-style check-camel-case
 
 
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
-# Use like this: make VER=?.?.? verison
+# Use like this: make VER=?.?.? version
 version:
 	# do merlin/__init__.py
 	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
@@ -181,3 +183,7 @@ version:
 # Make a list of all dependencies/requirements
 reqlist:
 	johnnydep merlin --output-format pinned
+
+# this does not check that you have the virtualenv or required development setup
+package: tests checks reqlist version
+	python3 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
