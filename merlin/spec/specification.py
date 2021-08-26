@@ -35,6 +35,7 @@ To see examples of yaml specifications, run `merlin example`.
 """
 import logging
 import os
+import shlex
 from io import StringIO
 
 import yaml
@@ -368,7 +369,7 @@ class MerlinSpec(YAMLSpecification):
         param steps: a list of step names
         """
         queues = ",".join(set(self.get_queue_list(steps)))
-        return f'"{queues}"'
+        return shlex.quote(queues)
 
     def get_worker_names(self):
         result = []
