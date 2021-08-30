@@ -29,16 +29,10 @@
 ###############################################################################
 include config.mk
 
-.PHONY : install-merlin-dev
 .PHONY : virtualenv
+.PHONY : install-merlin
 .PHONY : install-workflow-deps
 .PHONY : install-merlin-dev
-.PHONY : clean-output
-.PHONY : clean-docs
-.PHONY : clean-release
-.PHONY : clean-py
-.PHONY : clean
-.PHONY : release
 .PHONY : unit-tests
 .PHONY : e2e-tests
 .PHONY : tests
@@ -47,8 +41,12 @@ include config.mk
 .PHONY : check-camel-case
 .PHONY : checks
 .PHONY : reqlist
-.PHONY : package
-
+.PHONY : release
+.PHONY : clean-release
+.PHONY : clean-output
+.PHONY : clean-docs
+.PHONY : clean-py
+.PHONY : clean
 
 # this only works outside the venv - there is a minimal check if you are within the default venv this Makefile builds,
 # but if run from inside a custom-named venv, you will break your custom venv.
@@ -71,14 +69,6 @@ install-merlin: virtualenv
 	)
 
 
-# install requirements
-install-merlin-dev: virtualenv install-workflow-deps
-	( \
-	   . $(VENV)/bin/activate; \
-	   $(PIP) install -r requirements/dev.txt; \
-	)
-
-
 install-workflow-deps: virtualenv install-merlin
 	( \
 	   . $(VENV)/bin/activate; \
@@ -87,35 +77,13 @@ install-workflow-deps: virtualenv install-merlin
 	)
 
 
-# remove python bytecode files
-clean-py:
-	-find $(MRLN) -name "*.py[cod]" -exec rm -f {} \;
-	-find $(MRLN) -name "__pycache__" -type d -exec rm -rf {} \;
+# install requirements
+install-merlin-dev: virtualenv install-workflow-deps
+	( \
+	   . $(VENV)/bin/activate; \
+	   $(PIP) install -r requirements/dev.txt; \
+	)
 
-
-# remove all studies/ directories
-clean-output:
-	-find $(MRLN) -name "studies*" -type d -exec rm -rf {} \;
-	-find . -maxdepth 1 -name "studies*" -type d -exec rm -rf {} \;
-	-find . -maxdepth 1 -name "merlin.log" -type f -exec rm -rf {} \;
-
-
-# remove doc build files
-clean-docs:
-	rm -rf $(DOCS)/build
-
-
-clean-release:
-	rm -rf dist
-	rm -rf build
-
-
-# remove unwanted files
-clean: clean-py clean-docs clean-release
-
-
-release:
-	$(PYTHON) setup.py sdist bdist_wheel
 
 # tests require a valid dev install of merlin
 unit-tests:
@@ -138,17 +106,6 @@ e2e-tests-diagnostic:
 tests: unit-tests e2e-tests
 
 
-# automatically make python files pep 8-compliant
-fix-style:
-	pip3 install -r requirements/dev.txt -U
-	isort -rc $(MRLN)
-	isort -rc $(TEST)
-	isort *.py
-	black --target-version py36 $(MRLN)
-	black --target-version py36 $(TEST)
-	black --target-version py36 *.py
-
-
 # run code style checks
 check-style:
 	-$(PYTHON) -m flake8 --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -167,6 +124,17 @@ check-camel-case: clean-py
 checks: check-style check-camel-case
 
 
+# automatically make python files pep 8-compliant
+fix-style:
+	pip3 install -r requirements/dev.txt -U
+	isort -rc $(MRLN)
+	isort -rc $(TEST)
+	isort *.py
+	black --target-version py36 $(MRLN)
+	black --target-version py36 $(TEST)
+	black --target-version py36 *.py
+
+
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
 # Use like this: make VER=?.?.? version
 version:
@@ -183,3 +151,34 @@ version:
 # Make a list of all dependencies/requirements
 reqlist:
 	johnnydep merlin --output-format pinned
+
+
+release:
+	$(PYTHON) setup.py sdist bdist_wheel
+
+
+clean-release:
+	rm -rf dist
+	rm -rf build
+
+
+# remove python bytecode files
+clean-py:
+	-find $(MRLN) -name "*.py[cod]" -exec rm -f {} \;
+	-find $(MRLN) -name "__pycache__" -type d -exec rm -rf {} \;
+
+
+# remove all studies/ directories
+clean-output:
+	-find $(MRLN) -name "studies*" -type d -exec rm -rf {} \;
+	-find . -maxdepth 1 -name "studies*" -type d -exec rm -rf {} \;
+	-find . -maxdepth 1 -name "merlin.log" -type f -exec rm -rf {} \;
+
+
+# remove doc build files
+clean-docs:
+	rm -rf $(DOCS)/build
+
+
+# remove unwanted files
+clean: clean-py clean-docs clean-release
