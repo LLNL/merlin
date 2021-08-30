@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Flake8 compliant
 
 
+## [Unreleased]
+
+### Fixed
+- merlin purge queue name conflict & shell quote escape
+- task priority support for amqp, amqps, rediss, redis+socket brokers
 
 ## [1.8.0]
 

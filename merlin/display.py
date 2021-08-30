@@ -190,5 +190,5 @@ def print_info(args):
         info_str += 'echo " $ ' + x + '" && ' + x + "\n"
         info_str += "echo \n"
     info_str += r"echo \"echo \$PYTHONPATH\" && echo $PYTHONPATH"
-    subprocess.call(info_str, shell=True)
+    _ = subprocess.run(info_str, shell=True)
     print("")
