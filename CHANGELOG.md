@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - Flake8 compliant
-- Added additional shells for CI pipeline to examine (bash, zsh, tsch)
 
 
 
