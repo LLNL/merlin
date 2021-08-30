@@ -54,12 +54,12 @@ include config.mk
 # but if run from inside a custom-named venv, you will break your custom venv.
 virtualenv:
 	(
-            $(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages; \
+	    $(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages; \
 	    . $(VENV)/bin/activate; \
 	    $(PIP) install --upgrade pip; \
 	    $(PIP) install -r requirements/release.txt; \
 	    echo "Merlin installed a new venv at $(VENV)"; \
-	 )
+	)
 
 
 # install merlin into the virtual environment
@@ -183,7 +183,3 @@ version:
 # Make a list of all dependencies/requirements
 reqlist:
 	johnnydep merlin --output-format pinned
-
-# this does not check that you have the virtualenv or required development setup
-package: tests checks reqlist version
-	python3 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
