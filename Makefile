@@ -48,15 +48,14 @@ include config.mk
 .PHONY : clean-py
 .PHONY : clean
 
-# this only works outside the venv - there is a minimal check if you are within the default venv this Makefile builds,
-# but if run from inside a custom-named venv, you will break your custom venv.
+# this only works outside the venv - if run from inside a custom venv, or any target that depends on this,
+# you will break your venv.
 virtualenv:
 	(
 	    $(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages; \
 	    . $(VENV)/bin/activate; \
 	    $(PIP) install --upgrade pip; \
 	    $(PIP) install -r requirements/release.txt; \
-	    echo "Merlin installed a new venv at $(VENV)"; \
 	)
 
 
@@ -138,11 +137,11 @@ fix-style:
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
 # Use like this: make VER=?.?.? version
 version:
-	# do merlin/__init__.py
+# do merlin/__init__.py
 	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
-	# do CHANGELOG.md
+# do CHANGELOG.md
 	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
-	# do all file headers (works on linux)
+# do all file headers (works on linux)
 	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	find tests/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
