@@ -69,7 +69,7 @@ try:
 except BaseException:
     top_dir = "job"
 
-    def get_data_dict(key) -> Dict:
+    def get_data_dict(key: str) -> Dict:
         kwargs: Dict[str, Union[str, bool, os.Environ]] = {
             "env": os.environ,
             "shell": True,

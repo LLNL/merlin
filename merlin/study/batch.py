@@ -37,7 +37,7 @@ are implemented.
 """
 import logging
 import os
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 
 from merlin.utils import get_yaml_var
 
@@ -113,17 +113,17 @@ def get_node_count(default=1):
 
 def batch_worker_launch(spec: Dict,
                         com: str,
-                        nodes: Union[str, Dict] = None,
-                        batch=None) -> str:
+                        nodes: Optional[str, int] = None,
+                        batch: Optional[Dict] = None) -> str:
     """
     The configuration in the batch section of the merlin spec
     is used to create the worker launch line, which may be
     different from a simulation launch.
 
-    : param spec : (dict) workflow specification
+    : param spec : (Dict) workflow specification
     : param com : (str): The command to launch with batch configuration
-    : param nodes : (int): The number of nodes to use in the batch launch
-    : param batch : (dict): An optional batch override from the worker config
+    : param nodes : (Optional[str, int]): The number of nodes to use in the batch launch
+    : param batch : (Optional[Dict]): An optional batch override from the worker config
     """
     if batch is None:
         try:
@@ -132,12 +132,13 @@ def batch_worker_launch(spec: Dict,
             LOG.error("The batch section is required in the specification file.")
             raise
 
-    btype: Union[str, Dict] = get_yaml_var(batch, "type", "local")
+    btype: str = get_yaml_var(batch, "type", "local")
 
     # A jsrun submission cannot be run under a parent jsrun so
     # all non flux lsf submissions need to be local.
     if btype == "local" or "lsf" in btype:
         return com
+
 
     if nodes is None:
         # Use the value in the batch section
@@ -146,15 +147,17 @@ def batch_worker_launch(spec: Dict,
     # Get the number of nodes from the environment if unset
     if nodes is None or nodes == "all":
         nodes = get_node_count(default=1)
+    elif not isinstance(nodes, int):
+        raise TypeError("Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all')".)
 
-    shell: Union[str, Dict] = get_yaml_var(batch, "shell", "bash")
+    shell: str = get_yaml_var(batch, "shell", "bash")
 
-    launch_pre: Union[str, Dict] = get_yaml_var(batch, "launch_pre", "")
-    launch_args: Union[str, Dict] = get_yaml_var(batch, "launch_args", "")
+    launch_pre: str = get_yaml_var(batch, "launch_pre", "")
+    launch_args: str = get_yaml_var(batch, "launch_args", "")
     launches: str = get_yaml_var(batch, "worker_launch", "")
 
     if not launches:
-        launches = construct_launches(batch, btype, nodes)
+        launches = construct_worker_launch_command(batch, btype, nodes)
 
     launches += f" {launch_args}"
 
@@ -188,19 +191,19 @@ def batch_worker_launch(spec: Dict,
     return worker_cmd
 
 
-def construct_launches(batch: Dict, btype: Union[str, Dict], nodes: int) -> str:
+def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: int) -> str:
     """
     If no 'worker_launch' is found in the batch yaml, this method constructs the needed data.
 
-    : param batch : (dict): An optional batch override from the worker config
+    : param batch : (Optional[Dict]): An optional batch override from the worker config
     : param btype : (str): The type of batch (flux, local, lsf)
     : param nodes : (int): The number of nodes to use in the batch launch
     """
     launches: str = ""
     launcher: str = get_batch_type()
-    bank: Union[str, Dict] = get_yaml_var(batch, "bank", "")
-    queue: Union[str, Dict] = get_yaml_var(batch, "queue", "")
-    walltime: Union[str, Dict] = get_yaml_var(batch, "walltime", "")
+    bank: str = get_yaml_var(batch, "bank", "")
+    queue: str = get_yaml_var(batch, "queue", "")
+    walltime: str = get_yaml_var(batch, "walltime", "")
     if btype == "slurm" or launcher == "slurm":
         launches = f"srun -N {nodes} -n {nodes}"
         if bank:
