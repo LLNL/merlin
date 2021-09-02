@@ -113,7 +113,7 @@ def get_node_count(default=1):
 
 def batch_worker_launch(spec: Dict,
                         com: str,
-                        nodes: Optional[str, int] = None,
+                        nodes: Optional[Union[str, int]] = None,
                         batch: Optional[Dict] = None) -> str:
     """
     The configuration in the batch section of the merlin spec
@@ -122,7 +122,7 @@ def batch_worker_launch(spec: Dict,
 
     : param spec : (Dict) workflow specification
     : param com : (str): The command to launch with batch configuration
-    : param nodes : (Optional[str, int]): The number of nodes to use in the batch launch
+    : param nodes : (Optional[Union[str, int]]): The number of nodes to use in the batch launch
     : param batch : (Optional[Dict]): An optional batch override from the worker config
     """
     if batch is None:
@@ -148,7 +148,7 @@ def batch_worker_launch(spec: Dict,
     if nodes is None or nodes == "all":
         nodes = get_node_count(default=1)
     elif not isinstance(nodes, int):
-        raise TypeError("Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all')".)
+        raise TypeError("Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all').")
 
     shell: str = get_yaml_var(batch, "shell", "bash")
 
