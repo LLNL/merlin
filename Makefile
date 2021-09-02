@@ -38,6 +38,7 @@ include config.mk
 .PHONY : tests
 .PHONY : fix-style
 .PHONY : check-style
+.PHONY : check-push
 .PHONY : check-camel-case
 .PHONY : checks
 .PHONY : reqlist
@@ -109,6 +110,8 @@ check-style:
 	-$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127
 	-black --check --target-version py36 $(MRLN)
 
+
+check-push: tests check-style
 
 # finds all strings in project that begin with a lowercase letter,
 # contain only letters and numbers, and contain at least one lowercase

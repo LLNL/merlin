@@ -139,7 +139,6 @@ def batch_worker_launch(spec: Dict,
     if btype == "local" or "lsf" in btype:
         return com
 
-
     if nodes is None:
         # Use the value in the batch section
         nodes = get_yaml_var(batch, "nodes", None)
