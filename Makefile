@@ -52,52 +52,40 @@ include config.mk
 # this only works outside the venv - if run from inside a custom venv, or any target that depends on this,
 # you will break your venv.
 virtualenv:
-	(
-	    $(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages; \
-	    . $(VENV)/bin/activate; \
-	    $(PIP) install --upgrade pip; \
-	    $(PIP) install -r requirements/release.txt; \
-	)
-
+	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages; \
+	$(PIP) install --upgrade pip; \
+	$(PIP) install -r requirements/release.txt; \
 
 # install merlin into the virtual environment
 install-merlin: virtualenv
-	( \
-	   . $(VENV)/bin/activate; \
-	   $(PIP) install -e .; \
-	   merlin config; \
-	)
+	$(PIP) install -e .; \
+	merlin config; \
 
 
+# install the example workflow to enable integrated testing
 install-workflow-deps: virtualenv install-merlin
-	( \
-	   . $(VENV)/bin/activate; \
-	   merlin example feature_demo; \
-	   $(PIP) install -r $(WKFW)feature_demo/requirements.txt; \
-	)
+	$(PIP) install -r $(WKFW)feature_demo/requirements.txt; \
 
 
 # install requirements
 install-merlin-dev: virtualenv install-workflow-deps
-	( \
-	   . $(VENV)/bin/activate; \
-	   $(PIP) install -r requirements/dev.txt; \
-	)
+	$(PIP) install -r requirements/dev.txt; \
 
 
 # tests require a valid dev install of merlin
 unit-tests:
-	-$(PYTHON) -m pytest $(UNIT)
-
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m pytest $(UNIT); \
 
 
 # run CLI tests - these require an active install of merlin in a venv
 e2e-tests:
-	-$(PYTHON) $(TEST)/integration/run_tests.py --local
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --local; \
 
 
 e2e-tests-diagnostic:
-	-$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose
+	$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose
 
 
 # run unit and CLI tests
@@ -106,6 +94,7 @@ tests: unit-tests e2e-tests
 
 # run code style checks
 check-style:
+	. $(VENV)/bin/activate
 	-$(PYTHON) -m flake8 --count --select=E9,F63,F7,F82 --show-source --statistics
 	-$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127
 	-black --check --target-version py36 $(MRLN)

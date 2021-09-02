@@ -198,12 +198,12 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
     : param btype : (str): The type of batch (flux, local, lsf)
     : param nodes : (int): The number of nodes to use in the batch launch
     """
-    launch_string: str = ""
-    launcher: str = get_batch_type()
+    launch_command: str = ""
+    workload_manager: str = get_batch_type()
     bank: str = get_yaml_var(batch, "bank", "")
     queue: str = get_yaml_var(batch, "queue", "")
     walltime: str = get_yaml_var(batch, "walltime", "")
-    if btype == "slurm" or launcher == "slurm":
+    if btype == "slurm" or workload_manager == "slurm":
         launch_command = f"srun -N {nodes} -n {nodes}"
         if bank:
             launch_command += f" -A {bank}"
@@ -211,7 +211,7 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
             launch_command += f" -p {queue}"
         if walltime:
             launch_command += f" -t {walltime}"
-    if launcher == "lsf":
+    if workload_manager == "lsf":
         # The jsrun utility does not have a time argument
         launch_command = f"jsrun -a 1 -c ALL_CPUS -g ALL_GPUS --bind=none -n {nodes}"
 
