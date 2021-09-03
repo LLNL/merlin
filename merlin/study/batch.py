@@ -37,7 +37,7 @@ are implemented.
 """
 import logging
 import os
-from typing import Dict, Union, Optional
+from typing import Dict, Optional, Union
 
 from merlin.utils import get_yaml_var
 
@@ -111,10 +111,9 @@ def get_node_count(default=1):
     return default
 
 
-def batch_worker_launch(spec: Dict,
-                        com: str,
-                        nodes: Optional[Union[str, int]] = None,
-                        batch: Optional[Dict] = None) -> str:
+def batch_worker_launch(
+    spec: Dict, com: str, nodes: int = None, batch: Optional[Dict] = None
+) -> str:
     """
     The configuration in the batch section of the merlin spec
     is used to create the worker launch line, which may be
@@ -147,7 +146,9 @@ def batch_worker_launch(spec: Dict,
     if nodes is None or nodes == "all":
         nodes = get_node_count(default=1)
     elif not isinstance(nodes, int):
-        raise TypeError("Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all').")
+        raise TypeError(
+            "Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all')."
+        )
 
     shell: str = get_yaml_var(batch, "shell", "bash")
 
@@ -169,7 +170,9 @@ def batch_worker_launch(spec: Dict,
     if btype == "flux":
         flux_path: str = get_yaml_var(batch, "flux_path", "")
         flux_opts: Union[str, Dict] = get_yaml_var(batch, "flux_start_opts", "")
-        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(batch, "flux_exec_workers", True)
+        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(
+            batch, "flux_exec_workers", True
+        )
 
         flux_exec: str = ""
         if flux_exec_workers:
@@ -180,9 +183,7 @@ def batch_worker_launch(spec: Dict,
 
         flux_exe: str = os.path.join(flux_path, "flux")
 
-        launch: str = (
-            f"{launch_command} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
-        )
+        launch: str = f"{launch_command} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
         worker_cmd = f'{launch} "{com}"'
     else:
         worker_cmd = f"{launch_command} {com}"
@@ -190,7 +191,9 @@ def batch_worker_launch(spec: Dict,
     return worker_cmd
 
 
-def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: int) -> str:
+def construct_worker_launch_command(
+    batch: Optional[Dict], btype: str, nodes: int
+) -> str:
     """
     If no 'worker_launch' is found in the batch yaml, this method constructs the needed launch command.
 

@@ -124,9 +124,11 @@ class MerlinSpec(YAMLSpecification):
             merlin_block = yaml.safe_load(stream)["merlin"]
         except KeyError:
             merlin_block = {}
-            warning_msg: str = ("Workflow specification missing \n "
-                                "encouraged 'merlin' section! Run 'merlin example' for examples.\n"
-                                "Using default configuration with no sampling.")
+            warning_msg: str = (
+                "Workflow specification missing \n "
+                "encouraged 'merlin' section! Run 'merlin example' for examples.\n"
+                "Using default configuration with no sampling."
+            )
             LOG.warning(warning_msg)
         return merlin_block
 

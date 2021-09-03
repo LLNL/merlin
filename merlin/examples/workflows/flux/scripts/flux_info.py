@@ -23,7 +23,7 @@ done:
 import json
 import os
 import subprocess
-from typing import Dict, Union, IO
+from typing import IO, Dict, Union
 
 import flux
 from flux import kvs
