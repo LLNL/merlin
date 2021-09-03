@@ -286,8 +286,7 @@ class TestMerlinStudy(unittest.TestCase):
         with open(merlin_spec_conflict, "w+") as _file:
             _file.write(MERLIN_SPEC_CONFLICT)
         # for some reason flake8 doesn't believe variables instantiated inside the try/with context are assigned
-        no_except_err: str = "study_conflict did not throw an error with a conflicted key between Maestro/Merlin."
-        with pytest.raises(ValueError, message=no_except_err):
+        with pytest.raises(ValueError):
             study_conflict: MerlinStudy = MerlinStudy(
                 merlin_spec_conflict
             )
