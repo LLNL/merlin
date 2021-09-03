@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -36,6 +36,7 @@ import getpass
 import logging
 import os
 import ssl
+from typing import Dict, List, Optional, Union
 
 from merlin.config import Config
 from merlin.utils import load_yaml
@@ -202,7 +203,9 @@ def get_cert_file(server_type, config, cert_name, cert_path):
     return cert_file
 
 
-def get_ssl_entries(server_type, server_name, server_config, cert_path):
+def get_ssl_entries(
+    server_type: str, server_name: str, server_config: Config, cert_path: str
+) -> str:
     """
     Check if a ssl certificate file is present in the config
 
@@ -211,17 +214,23 @@ def get_ssl_entries(server_type, server_name, server_config, cert_path):
     :param server_config : The server config
     :param cert_path : The optional cert path
     """
-    server_ssl = {}
+    server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
 
-    keyfile = get_cert_file(server_type, server_config, "keyfile", cert_path)
+    keyfile: Optional[str] = get_cert_file(
+        server_type, server_config, "keyfile", cert_path
+    )
     if keyfile:
         server_ssl["keyfile"] = keyfile
 
-    certfile = get_cert_file(server_type, server_config, "certfile", cert_path)
+    certfile: Optional[str] = get_cert_file(
+        server_type, server_config, "certfile", cert_path
+    )
     if certfile:
         server_ssl["certfile"] = certfile
 
-    ca_certsfile = get_cert_file(server_type, server_config, "ca_certs", cert_path)
+    ca_certsfile: Optional[str] = get_cert_file(
+        server_type, server_config, "ca_certs", cert_path
+    )
     if ca_certsfile:
         server_ssl["ca_certs"] = ca_certsfile
 
@@ -245,8 +254,21 @@ def get_ssl_entries(server_type, server_name, server_config, cert_path):
     if server_ssl and "cert_reqs" not in server_ssl.keys():
         server_ssl["cert_reqs"] = ssl.CERT_REQUIRED
 
-    ssl_map = {}
+    ssl_map: Dict[str, str] = process_ssl_map(server_name)
 
+    if server_ssl and ssl_map:
+        server_ssl = merge_sslmap(server_ssl, ssl_map)
+
+    return server_ssl
+
+
+def process_ssl_map(server_name: str) -> Optional[Dict[str, str]]:
+    """
+    Process a special map for rediss and mysql.
+
+    :param server_name : The server name for output
+    """
+    ssl_map: Dict[str, str] = {}
     # The redis server requires key names with ssl_
     if server_name == "rediss":
         ssl_map = {
@@ -260,18 +282,29 @@ def get_ssl_entries(server_type, server_name, server_config, cert_path):
     if "mysql" in server_name:
         ssl_map = {"keyfile": "ssl_key", "certfile": "ssl_cert", "ca_certs": "ssl_ca"}
 
-    if server_ssl and ssl_map:
-        new_server_ssl = {}
-        sk = server_ssl.keys()
-        smk = ssl_map.keys()
-        for k in sk:
-            if k in smk:
-                new_server_ssl[ssl_map[k]] = server_ssl[k]
-            else:
-                new_server_ssl[k] = server_ssl[k]
-        server_ssl = new_server_ssl
+    return ssl_map
 
-    return server_ssl
+
+def merge_sslmap(
+    server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dict[str, str]
+) -> Dict:
+    """
+    The different servers have different key var expectations, this updates the keys of the ssl_server dict with keys from
+    the ssl_map if using rediss or mysql.
+
+    : param server_ssl : the dict constructed in get_ssl_entries, here updated with keys from ssl_map
+    : param ssl_map : the dict holding special key:value pairs for rediss and mysql
+    """
+    new_server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
+    sk: List[str] = server_ssl.keys()
+    smk: List[str] = ssl_map.keys()
+    k: str
+    for k in sk:
+        if k in smk:
+            new_server_ssl[ssl_map[k]] = server_ssl[k]
+        else:
+            new_server_ssl[k] = server_ssl[k]
+    server_ssl = new_server_ssl
 
 
 app_config = get_config(None)

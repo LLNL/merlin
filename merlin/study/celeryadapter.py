@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -223,24 +223,9 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
     local_queues = []
 
     for worker_name, worker_val in workers.items():
-        worker_machines = get_yaml_var(worker_val, "machines", None)
-        if worker_machines:
-            LOG.debug("check machines = ", check_machines(worker_machines))
-            if not check_machines(worker_machines):
-                continue
-
-            if yenv:
-                output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
-                if output_path and not os.path.exists(output_path):
-                    hostname = socket.gethostname()
-                    LOG.error(
-                        f"The output path, {output_path}, is not accessible on this host, {hostname}"
-                    )
-            else:
-                LOG.warning(
-                    "The env:variables section does not have an OUTPUT_PATH"
-                    "specified, multi-machine checks cannot be performed."
-                )
+        skip_loop_step: bool = examine_and_log_machines(worker_val, yenv)
+        if skip_loop_step:
+            continue
 
         worker_args = get_yaml_var(worker_val, "args", celery_args)
         with suppress(KeyError):
@@ -260,7 +245,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
         # Add a per worker log file (debug)
         if LOG.isEnabledFor(logging.DEBUG):
             LOG.debug("Redirecting worker output to individual log files")
-            worker_args += f" --logfile %p.%i"
+            worker_args += " --logfile %p.%i"
 
         # Get the celery command
         celery_com = launch_celery_workers(
@@ -322,6 +307,32 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
 
     # Return a string with the worker commands for logging
     return str(worker_list)
+
+
+def examine_and_log_machines(worker_val, yenv) -> bool:
+    """
+    Examines whether a worker should be skipped in a step of start_celery_workers(), logs errors in output path for a celery
+    worker.
+    """
+    worker_machines = get_yaml_var(worker_val, "machines", None)
+    if worker_machines:
+        LOG.debug("check machines = ", check_machines(worker_machines))
+        if not check_machines(worker_machines):
+            return True
+
+        if yenv:
+            output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
+            if output_path and not os.path.exists(output_path):
+                hostname = socket.gethostname()
+                LOG.error(
+                    f"The output path, {output_path}, is not accessible on this host, {hostname}"
+                )
+        else:
+            LOG.warning(
+                "The env:variables section does not have an OUTPUT_PATH"
+                "specified, multi-machine checks cannot be performed."
+            )
+        return False
 
 
 def verify_args(spec, worker_args, worker_name, overlap):
@@ -388,7 +399,7 @@ def purge_celery_tasks(queues, force):
         force_com = " -f "
     purge_command = " ".join(["celery -A merlin purge", force_com, "-Q", queues])
     LOG.debug(purge_command)
-    return subprocess.call(purge_command.split())
+    return subprocess.run(purge_command, shell=True).returncode
 
 
 def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):

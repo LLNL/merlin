@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -190,5 +190,5 @@ def print_info(args):
         info_str += 'echo " $ ' + x + '" && ' + x + "\n"
         info_str += "echo \n"
     info_str += r"echo \"echo \$PYTHONPATH\" && echo $PYTHONPATH"
-    subprocess.call(info_str, shell=True)
+    _ = subprocess.run(info_str, shell=True)
     print("")

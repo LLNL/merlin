@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -35,6 +35,7 @@ To see examples of yaml specifications, run `merlin example`.
 """
 import logging
 import os
+import shlex
 from io import StringIO
 
 import yaml
@@ -123,11 +124,12 @@ class MerlinSpec(YAMLSpecification):
             merlin_block = yaml.safe_load(stream)["merlin"]
         except KeyError:
             merlin_block = {}
-            LOG.warning(
-                f"Workflow specification missing \n "
-                f"encouraged 'merlin' section! Run 'merlin example' for examples.\n"
-                f"Using default configuration with no sampling."
+            warning_msg: str = (
+                "Workflow specification missing \n "
+                "encouraged 'merlin' section! Run 'merlin example' for examples.\n"
+                "Using default configuration with no sampling."
             )
+            LOG.warning(warning_msg)
         return merlin_block
 
     def process_spec_defaults(self):
@@ -368,7 +370,7 @@ class MerlinSpec(YAMLSpecification):
         param steps: a list of step names
         """
         queues = ",".join(set(self.get_queue_list(steps)))
-        return f'"{queues}"'
+        return shlex.quote(queues)
 
     def get_worker_names(self):
         result = []
