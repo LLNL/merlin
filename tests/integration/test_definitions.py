@@ -105,7 +105,7 @@ def define_tests():
         ),
     }
     example_tests = {
-        "example failure": (f"merlin example failure", HasRegex("not found"), "local"),
+        "example failure": ("merlin example failure", HasRegex("not found"), "local"),
         "example simple_chain": (
             f"merlin example simple_chain ; {run} simple_chain.yaml --local --vars OUTPUT_PATH=./{OUTPUT_DIR} ; rm simple_chain.yaml",
             HasReturnCode(),
@@ -217,13 +217,13 @@ def define_tests():
             [
                 HasReturnCode(),
                 ProvenanceYAMLFileHasRegex(
-                    regex="HELLO: \$\(SCRIPTS\)/hello_world.py",
+                    regex=r"HELLO: \$\(SCRIPTS\)/hello_world.py",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="orig",
                 ),
                 ProvenanceYAMLFileHasRegex(
-                    regex="name: \$\(NAME\)",
+                    regex=r"name: \$\(NAME\)",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
@@ -241,7 +241,7 @@ def define_tests():
                     provenance_type="expanded",
                 ),
                 ProvenanceYAMLFileHasRegex(
-                    regex="\$\(NAME\)",
+                    regex=r"\$\(NAME\)",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
@@ -287,13 +287,13 @@ def define_tests():
             f"{run} {demo} --pgen {demo_pgen} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local",
             [
                 ProvenanceYAMLFileHasRegex(
-                    regex="\[0.3333333",
+                    regex=r"\[0.3333333",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
                 ProvenanceYAMLFileHasRegex(
-                    regex="\[0.5",
+                    regex=r"\[0.5",
                     name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
@@ -304,25 +304,25 @@ def define_tests():
             "local",
         ),
     }
-    provenence_equality_checks = {
+    provenence_equality_checks = {  # noqa: F841
         "local provenance spec equality": (
             f"{run} {simple} --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cp $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml') ./{OUTPUT_DIR}/FILE1 ; rm -rf ./{OUTPUT_DIR}/simple_chain_* ; {run} ./{OUTPUT_DIR}/FILE1 --vars OUTPUT_PATH=./{OUTPUT_DIR} --local ; cmp ./{OUTPUT_DIR}/FILE1 $(find ./{OUTPUT_DIR}/simple_chain_*/merlin_info -type f -name 'simple_chain.expanded.yaml')",
             HasReturnCode(),
             "local",
         ),
     }
-    style_checks = {
+    style_checks = {  # noqa: F841
         "black check merlin": (f"{black} merlin/", HasReturnCode(), "local"),
         "black check tests": (f"{black} tests/", HasReturnCode(), "local"),
     }
     dependency_checks = {
         "deplic no GNU": (
-            f"deplic ./",
+            "deplic ./",
             [HasRegex("GNU", negate=True), HasRegex("GPL", negate=True)],
             "local",
         ),
     }
-    distributed_tests = {
+    distributed_tests = {  # noqa: F841
         "run and purge feature_demo": (
             f"{run} {demo} ; {purge} {demo} -f",
             HasReturnCode(),

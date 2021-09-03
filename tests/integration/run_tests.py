@@ -106,13 +106,10 @@ def process_test_result(passed, info, is_verbose, exit):
         print("pass")
 
     if info["violated_condition"] is not None:
-        message = info["violated_condition"][0]
-        condition_id = info["violated_condition"][1] + 1
-        n_conditions = info["violated_condition"][2]
-        print(
-            f"\tCondition {condition_id} of {n_conditions}: "
-            + str(info["violated_condition"][0])
-        )
+        msg: str = str(info["violated_condition"][0])
+        condition_id: str = info["violated_condition"][1] + 1
+        n_conditions: str = info["violated_condition"][2]
+        print(f"\tCondition {condition_id} of {n_conditions}: {msg}")
     if is_verbose is True:
         print(f"\tcommand: {info['command']}")
         print(f"\telapsed time: {round(info['total_time'], 2)} s")

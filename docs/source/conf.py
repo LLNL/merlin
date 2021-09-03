@@ -43,10 +43,10 @@ release = MERLIN_VERSION
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-#extensions = [
+# extensions = [
 #    'sphinx.ext.autodoc',
 #    'sphinx.ext.intersphinx',
-#]
+# ]
 extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
@@ -104,8 +104,8 @@ html_static_path = ['_static']
 html_context = {
     'css_files': [
         '_static/theme_overrides.css',  # override wide tables in RTD theme
-        ],
-     }
+    ],
+}
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -182,6 +182,7 @@ primary_domain = 'py'
 highlight_language = 'bash'
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+
 
 def setup(app):
     app.add_stylesheet('custom.css')

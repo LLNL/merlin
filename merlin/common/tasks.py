@@ -33,6 +33,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
+from typing import Any, Dict, Optional
 
 from celery import chain, chord, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError
@@ -70,13 +71,13 @@ LOG = logging.getLogger(__name__)
 STOP_COUNTDOWN = 60
 
 
-@shared_task(
+@shared_task(  # noqa: C901
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     priority=get_priority(Priority.high),
 )
-def merlin_step(self, *args, **kwargs):
+def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noqa: C901
     """
     Executes a Merlin Step
     :param args: The arguments, one of which should be an instance of Step
@@ -88,25 +89,27 @@ def merlin_step(self, *args, **kwargs):
      "next_in_chain": <Step object> } # merlin_step will be added to the current chord
                                       # with next_in_chain as an argument
     """
-    step = None
+    step: Optional[Step] = None
     LOG.debug(f"args is {len(args)} long")
 
-    for a in args:
-        if isinstance(a, Step):
-            step = a
+    arg: Any
+    for arg in args:
+        if isinstance(arg, Step):
+            step = arg
         else:
-            LOG.debug(f"discard argument {a}")
+            LOG.debug(f"discard argument {arg}, not of type Step.")
 
-    config = kwargs.pop("adapter_config", {"type": "local"})
-    next_in_chain = kwargs.pop("next_in_chain", None)
+    config: Dict[str, str] = kwargs.pop("adapter_config", {"type": "local"})
+    next_in_chain: Optional[Step] = kwargs.pop("next_in_chain", None)
 
     if step:
         self.max_retries = step.max_retries
-        step_name = step.name()
-        step_dir = step.get_workspace()
+        step_name: str = step.name()
+        step_dir: str = step.get_workspace()
         LOG.debug(f"merlin_step: step_name '{step_name}' step_dir '{step_dir}'")
-        finished_filename = os.path.join(step_dir, "MERLIN_FINISHED")
+        finished_filename: str = os.path.join(step_dir, "MERLIN_FINISHED")
         # if we've already finished this task, skip it
+        result: ReturnCode
         if os.path.exists(finished_filename):
             LOG.info(f"Skipping step '{step_name}' in '{step_dir}'.")
             result = ReturnCode.OK
@@ -299,12 +302,12 @@ def add_merlin_expanded_chain_to_chord(
                 new_chain.append(new_step)
 
             all_chains.append(new_chain)
-        LOG.debug(f"adding chain to chord")
+        LOG.debug("adding chain to chord")
         add_chains_to_chord(self, all_chains)
-        LOG.debug(f"chain added to chord")
+        LOG.debug("chain added to chord")
     else:
         # recurse down the sample_index hierarchy
-        LOG.debug(f"recursing down sample_index hierarchy")
+        LOG.debug("recursing down sample_index hierarchy")
         for next_index in sample_index.children.values():
             next_index.name = os.path.join(sample_index.name, next_index.name)
             LOG.debug("generating next step")
@@ -486,7 +489,7 @@ def expand_tasks_with_samples(
     if needs_expansion:
         # prepare_chain_workspace(sample_index, steps)
         sample_index.name = ""
-        LOG.debug(f"queuing merlin expansion tasks")
+        LOG.debug("queuing merlin expansion tasks")
         found_tasks = False
         conditions = [
             lambda c: c.is_great_grandparent_of_leaf,
@@ -527,9 +530,9 @@ def expand_tasks_with_samples(
                     )
                     found_tasks = True
     else:
-        LOG.debug(f"queuing simple chain task")
+        LOG.debug("queuing simple chain task")
         add_simple_chain_to_chord(self, task_type, steps, adapter_config)
-        LOG.debug(f"simple chain task queued")
+        LOG.debug("simple chain task queued")
 
 
 @shared_task(
@@ -554,7 +557,7 @@ def shutdown_workers(self, shutdown_queues):
     if shutdown_queues is not None:
         LOG.warning(f"Shutting down workers in queues {shutdown_queues}!")
     else:
-        LOG.warning(f"Shutting down workers in all queues!")
+        LOG.warning("Shutting down workers in all queues!")
     return stop_workers("celery", None, shutdown_queues, None)
 
 

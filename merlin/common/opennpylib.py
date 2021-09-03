@@ -81,6 +81,7 @@ access among all of them.
      print a.dtype      # dtype of array
 
 """
+from typing import List, Tuple
 
 import numpy as np
 
@@ -280,16 +281,19 @@ class OpenNPY:
 
 
 class OpenNPYList:
-    def __init__(self, l):
-        self.filenames = l
-        self.files = [OpenNPY(_) for _ in self.filenames]
+    def __init__(self, filename_strs: List[str]):
+        self.filenames: List[str] = filename_strs
+        self.files: List[OpenNPY] = [OpenNPY(file_str) for file_str in self.filenames]
+        i: OpenNPY
         for i in self.files:
             i.load_header()
-        self.shapes = [_.hdr["shape"] for _ in self.files]
-        for i in self.shapes[1:]:
+        self.shapes: List[Tuple[int]] = [openNPY_obj.hdr["shape"] for openNPY_obj in self.files]
+        k: Tuple[int]
+        for k in self.shapes[1:]:
             # Match subsequent axes shapes.
-            assert i[1:] == self.shapes[0][1:]
-        self.tells = np.cumsum([_[0] for _ in self.shapes])  # Tell locations.
+            if k[1:] != self.shapes[0][1:]:
+                raise AttributeError(f"Mismatch in subsequent axes shapes: {k[1:]} != {self.shapes[0][1:]}")
+        self.tells: np.ndarray = np.cumsum([arr_shape[0] for arr_shape in self.shapes])  # Tell locations.
         self.tells = np.hstack(([0], self.tells))
 
     def close(self):

@@ -1,4 +1,5 @@
 import enum
+from typing import List
 
 from merlin.config.configfile import CONFIG
 
@@ -8,17 +9,20 @@ class Priority(enum.Enum):
     mid = 2
     low = 3
 
-def is_rabbit_broker(broker):
+
+def is_rabbit_broker(broker: str) -> bool:
     return broker in ["rabbitmq", "amqps", "amqp"]
 
-def is_redis_broker(broker):
+
+def is_redis_broker(broker: str) -> bool:
     return broker in ["redis", "rediss", "redis+socket"]
 
-def get_priority(priority):
-    broker = CONFIG.broker.name.lower()
-    priorities = [Priority.high, Priority.mid, Priority.low]
-    if priority not in priorities:
-        raise ValueError(
+
+def get_priority(priority: Priority) -> int:
+    broker: str = CONFIG.broker.name.lower()
+    priorities: List[Priority] = [Priority.high, Priority.mid, Priority.low]
+    if not isinstance(priority, Priority):
+        raise TypeError(
             f"Unrecognized priority '{priority}'! Priority enum options: {[x.name for x in priorities]}"
         )
     if priority == Priority.mid:

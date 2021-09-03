@@ -37,6 +37,7 @@ are implemented.
 """
 import logging
 import os
+from typing import Dict, Union, Optional
 
 from merlin.utils import get_yaml_var
 
@@ -110,16 +111,19 @@ def get_node_count(default=1):
     return default
 
 
-def batch_worker_launch(spec, com, nodes=None, batch=None):
+def batch_worker_launch(spec: Dict,
+                        com: str,
+                        nodes: Optional[Union[str, int]] = None,
+                        batch: Optional[Dict] = None) -> str:
     """
     The configuration in the batch section of the merlin spec
     is used to create the worker launch line, which may be
     different from a simulation launch.
 
-    com (str): The command to launch with batch configuration
-    nodes (int): The number of nodes to use in the batch launch
-    batch (dict): An optional batch override from the worker config
-
+    : param spec : (Dict) workflow specification
+    : param com : (str): The command to launch with batch configuration
+    : param nodes : (Optional[Union[str, int]]): The number of nodes to use in the batch launch
+    : param batch : (Optional[Dict]): An optional batch override from the worker config
     """
     if batch is None:
         try:
@@ -128,7 +132,7 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
             LOG.error("The batch section is required in the specification file.")
             raise
 
-    btype = get_yaml_var(batch, "type", "local")
+    btype: str = get_yaml_var(batch, "type", "local")
 
     # A jsrun submission cannot be run under a parent jsrun so
     # all non flux lsf submissions need to be local.
@@ -142,61 +146,73 @@ def batch_worker_launch(spec, com, nodes=None, batch=None):
     # Get the number of nodes from the environment if unset
     if nodes is None or nodes == "all":
         nodes = get_node_count(default=1)
+    elif not isinstance(nodes, int):
+        raise TypeError("Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all').")
 
-    bank = get_yaml_var(batch, "bank", "")
-    queue = get_yaml_var(batch, "queue", "")
-    shell = get_yaml_var(batch, "shell", "bash")
-    walltime = get_yaml_var(batch, "walltime", "")
+    shell: str = get_yaml_var(batch, "shell", "bash")
 
-    launch_pre = get_yaml_var(batch, "launch_pre", "")
-    launch_args = get_yaml_var(batch, "launch_args", "")
-    worker_launch = get_yaml_var(batch, "worker_launch", "")
+    launch_pre: str = get_yaml_var(batch, "launch_pre", "")
+    launch_args: str = get_yaml_var(batch, "launch_args", "")
+    launch_command: str = get_yaml_var(batch, "worker_launch", "")
 
-    if btype == "flux":
-        launcher = get_batch_type()
-    else:
-        launcher = get_batch_type()
+    if not launch_command:
+        launch_command = construct_worker_launch_command(batch, btype, nodes)
 
-    launchs = worker_launch
-    if not launchs:
-        if btype == "slurm" or launcher == "slurm":
-            launchs = f"srun -N {nodes} -n {nodes}"
-            if bank:
-                launchs += f" -A {bank}"
-            if queue:
-                launchs += f" -p {queue}"
-            if walltime:
-                launchs += f" -t {walltime}"
-        if launcher == "lsf":
-            # The jsrun utility does not have a time argument
-            launchs = f"jsrun -a 1 -c ALL_CPUS -g ALL_GPUS --bind=none -n {nodes}"
-
-    launchs += f" {launch_args}"
+    launch_command += f" {launch_args}"
 
     # Allow for any pre launch manipulation, e.g. module load
     # hwloc/1.11.10-cuda
     if launch_pre:
-        launchs = f"{launch_pre} {launchs}"
+        launch_command = f"{launch_pre} {launch_command}"
 
-    worker_cmd = f"{launchs} {com}"
-
+    worker_cmd: str = ""
     if btype == "flux":
-        flux_path = get_yaml_var(batch, "flux_path", "")
-        flux_opts = get_yaml_var(batch, "flux_start_opts", "")
-        flux_exec_workers = get_yaml_var(batch, "flux_exec_workers", True)
+        flux_path: str = get_yaml_var(batch, "flux_path", "")
+        flux_opts: Union[str, Dict] = get_yaml_var(batch, "flux_start_opts", "")
+        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(batch, "flux_exec_workers", True)
 
-        flux_exec = ""
+        flux_exec: str = ""
         if flux_exec_workers:
             flux_exec = "flux exec"
 
         if "/" in flux_path:
             flux_path += "/"
 
-        flux_exe = os.path.join(flux_path, "flux")
+        flux_exe: str = os.path.join(flux_path, "flux")
 
-        launch = (
-            f"{launchs} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
+        launch: str = (
+            f"{launch_command} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
         )
         worker_cmd = f'{launch} "{com}"'
+    else:
+        worker_cmd = f"{launch_command} {com}"
 
     return worker_cmd
+
+
+def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: int) -> str:
+    """
+    If no 'worker_launch' is found in the batch yaml, this method constructs the needed launch command.
+
+    : param batch : (Optional[Dict]): An optional batch override from the worker config
+    : param btype : (str): The type of batch (flux, local, lsf)
+    : param nodes : (int): The number of nodes to use in the batch launch
+    """
+    launch_command: str = ""
+    workload_manager: str = get_batch_type()
+    bank: str = get_yaml_var(batch, "bank", "")
+    queue: str = get_yaml_var(batch, "queue", "")
+    walltime: str = get_yaml_var(batch, "walltime", "")
+    if btype == "slurm" or workload_manager == "slurm":
+        launch_command = f"srun -N {nodes} -n {nodes}"
+        if bank:
+            launch_command += f" -A {bank}"
+        if queue:
+            launch_command += f" -p {queue}"
+        if walltime:
+            launch_command += f" -t {walltime}"
+    if workload_manager == "lsf":
+        # The jsrun utility does not have a time argument
+        launch_command = f"jsrun -a 1 -c ALL_CPUS -g ALL_GPUS --bind=none -n {nodes}"
+
+    return launch_command

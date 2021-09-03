@@ -1,6 +1,5 @@
 import os
 import shutil
-import unittest
 from contextlib import suppress
 
 from merlin.common.sample_index_factory import create_hierarchy, read_hierarchy
