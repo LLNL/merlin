@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -203,10 +203,9 @@ def get_cert_file(server_type, config, cert_name, cert_path):
     return cert_file
 
 
-def get_ssl_entries(server_type: str,
-                    server_name: str,
-                    server_config: Config,
-                    cert_path: str) -> str:
+def get_ssl_entries(
+    server_type: str, server_name: str, server_config: Config, cert_path: str
+) -> str:
     """
     Check if a ssl certificate file is present in the config
 
@@ -217,15 +216,21 @@ def get_ssl_entries(server_type: str,
     """
     server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
 
-    keyfile: Optional[str] = get_cert_file(server_type, server_config, "keyfile", cert_path)
+    keyfile: Optional[str] = get_cert_file(
+        server_type, server_config, "keyfile", cert_path
+    )
     if keyfile:
         server_ssl["keyfile"] = keyfile
 
-    certfile: Optional[str] = get_cert_file(server_type, server_config, "certfile", cert_path)
+    certfile: Optional[str] = get_cert_file(
+        server_type, server_config, "certfile", cert_path
+    )
     if certfile:
         server_ssl["certfile"] = certfile
 
-    ca_certsfile: Optional[str] = get_cert_file(server_type, server_config, "ca_certs", cert_path)
+    ca_certsfile: Optional[str] = get_cert_file(
+        server_type, server_config, "ca_certs", cert_path
+    )
     if ca_certsfile:
         server_ssl["ca_certs"] = ca_certsfile
 
@@ -280,8 +285,9 @@ def process_ssl_map(server_name: str) -> Optional[Dict[str, str]]:
     return ssl_map
 
 
-def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]],
-                 ssl_map: Dict[str, str]) -> Dict:
+def merge_sslmap(
+    server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dict[str, str]
+) -> Dict:
     """
     The different servers have different key var expectations, this updates the keys of the ssl_server dict with keys from
     the ssl_map if using rediss or mysql.

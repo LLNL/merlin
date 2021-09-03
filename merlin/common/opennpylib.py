@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -287,13 +287,19 @@ class OpenNPYList:
         i: OpenNPY
         for i in self.files:
             i.load_header()
-        self.shapes: List[Tuple[int]] = [openNPY_obj.hdr["shape"] for openNPY_obj in self.files]
+        self.shapes: List[Tuple[int]] = [
+            openNPY_obj.hdr["shape"] for openNPY_obj in self.files
+        ]
         k: Tuple[int]
         for k in self.shapes[1:]:
             # Match subsequent axes shapes.
             if k[1:] != self.shapes[0][1:]:
-                raise AttributeError(f"Mismatch in subsequent axes shapes: {k[1:]} != {self.shapes[0][1:]}")
-        self.tells: np.ndarray = np.cumsum([arr_shape[0] for arr_shape in self.shapes])  # Tell locations.
+                raise AttributeError(
+                    f"Mismatch in subsequent axes shapes: {k[1:]} != {self.shapes[0][1:]}"
+                )
+        self.tells: np.ndarray = np.cumsum(
+            [arr_shape[0] for arr_shape in self.shapes]
+        )  # Tell locations.
         self.tells = np.hstack(([0], self.tells))
 
     def close(self):
