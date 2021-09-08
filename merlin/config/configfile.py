@@ -42,13 +42,13 @@ from merlin.config import Config
 from merlin.utils import load_yaml
 
 
-LOG = logging.getLogger(__name__)
+LOG: logging.Logger = logging.getLogger(__name__)
 
-APP_FILENAME = "app.yaml"
-CONFIG = None
+APP_FILENAME: str = "app.yaml"
+CONFIG: Optional[Config] = None
 
-USER_HOME = os.path.expanduser("~")
-MERLIN_HOME = os.path.join(USER_HOME, ".merlin")
+USER_HOME: str = os.path.expanduser("~")
+MERLIN_HOME: str = os.path.join(USER_HOME, ".merlin")
 
 
 def load_config(filepath):
@@ -111,21 +111,21 @@ def load_default_user_names(config):
         config["broker"]["vhost"] = vhost
 
 
-def get_config(path):
+def get_config(path: Optional[str]) -> Dict:
     """
     Load a merlin configuration file and return a dictionary of the
     configurations.
 
     :param path : The path to search for the config file.
     """
-    filepath = find_config_file(path)
+    filepath: Optional[str] = find_config_file(path)
 
     if filepath is None:
         raise ValueError(
             f"Cannot find a merlin config file! Run 'merlin config' and edit the file '{MERLIN_HOME}/{APP_FILENAME}'"
         )
 
-    config = load_config(filepath)
+    config: Dict = load_config(filepath)
     load_defaults(config)
     return config
 
@@ -307,5 +307,5 @@ def merge_sslmap(
     server_ssl = new_server_ssl
 
 
-app_config = get_config(None)
+app_config: Dict = get_config(None)
 CONFIG = Config(app_config)
