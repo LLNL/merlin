@@ -40,9 +40,14 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --max-complexity=15 --statistics --max-line-length=127
 
+    - name: Lint with pylint
+      run: |
+        pylint merlin --rcfile=setup.cfg --exit-zero
+        pylint tests --rcfile=setup.cfg --exit-zero
+
     - name: Run pytest over unit test suite
       run: |
-        python3 -m pytest tests/unit/
+        pytest tests/unit/
 
     - name: Run integration test suite, locally
       run: |

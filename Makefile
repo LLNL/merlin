@@ -32,12 +32,15 @@ include config.mk
 .PHONY : virtualenv
 .PHONY : install-merlin
 .PHONY : install-workflow-deps
-.PHONY : install-merlin-dev
+.PHONY : install-dev
 .PHONY : unit-tests
 .PHONY : e2e-tests
 .PHONY : tests
-.PHONY : fix-style
+.PHONY : check-flake8
+.PHONY : check-black
+.PHONY : check-pylint
 .PHONY : check-style
+.PHONY : fix-style
 .PHONY : check-push
 .PHONY : check-camel-case
 .PHONY : checks
@@ -49,6 +52,7 @@ include config.mk
 .PHONY : clean-py
 .PHONY : clean
 
+
 # this only works outside the venv - if run from inside a custom venv, or any target that depends on this,
 # you will break your venv.
 virtualenv:
@@ -56,8 +60,10 @@ virtualenv:
 	$(PIP) install --upgrade pip; \
 	$(PIP) install -r requirements/release.txt; \
 
+
 # install merlin into the virtual environment
 install-merlin: virtualenv
+	. $(VENV)/bin/activate; \
 	$(PIP) install -e .; \
 	merlin config; \
 
@@ -68,7 +74,7 @@ install-workflow-deps: virtualenv install-merlin
 
 
 # install requirements
-install-merlin-dev: virtualenv install-workflow-deps
+install-dev: virtualenv install-workflow-deps
 	$(PIP) install -r requirements/dev.txt; \
 
 
@@ -85,22 +91,41 @@ e2e-tests:
 
 
 e2e-tests-diagnostic:
-	$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose; \
 
 
 # run unit and CLI tests
 tests: unit-tests e2e-tests
 
 
+check-flake8:
+	. $(VENV)/bin/activate; \
+	echo "Flake8 linting for invalid source (bad syntax, undefined variables)..."; \
+	$(PYTHON) -m flake8 --count --select=E9,F63,F7,F82 --show-source --statistics; \
+	echo "Flake8 linting failure for CI..."; \
+	$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127; \
+
+
+check-black:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m black --check --target-version py36 $(MRLN); \
+
+
+check-pylint:
+	. $(VENV)/bin/activate; \
+	echo "PyLinting merlin source..."; \
+	$(PYTHON) -m pylint merlin --rcfile=setup.cfg --ignore-patterns="$(VENV)/" --disable=logging-fstring-interpolation; \
+	echo "PyLinting merlin tests..."; \
+	$(PYTHON) -m pylint tests --rcfile=setup.cfg; \
+
+
 # run code style checks
-check-style:
-	. $(VENV)/bin/activate
-	-$(PYTHON) -m flake8 --count --select=E9,F63,F7,F82 --show-source --statistics
-	-$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127
-	-black --check --target-version py36 $(MRLN)
+check-style: check-flake8 check-black check-pylint
 
 
 check-push: tests check-style
+
 
 # finds all strings in project that begin with a lowercase letter,
 # contain only letters and numbers, and contain at least one lowercase
