@@ -45,10 +45,9 @@ from argparse import (
     RawTextHelpFormatter,
 )
 from contextlib import suppress
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from merlin import VERSION, router
-from merlin import display
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
@@ -139,10 +138,10 @@ def parse_override_vars(
                 val = int(val)
             result[key] = val
 
-        except Exception as excpt:
+        except BaseException as excpt:
             raise ValueError(
                 f"{excpt} Bad '--vars' formatting on command line. See 'merlin run --help' for an example."
-            )
+            ) from excpt
     return result
 
 
@@ -201,7 +200,7 @@ def process_restart(args):
     restart_dir: str = verify_dirpath(args.restart_dir)
     filepath: str = os.path.join(args.restart_dir, "merlin_info", "*.expanded.yaml")
     possible_specs: Optional[List[str]] = glob.glob(filepath)
-    if len(possible_specs) == 0:
+    if not possible_specs:  # len == 0
         raise ValueError(
             f"'{filepath}' does not match any provenance spec file to restart from."
         )
@@ -304,20 +303,23 @@ def print_info(args):
 
     :param `args`: parsed CLI arguments
     """
+    # if this is moved to the toplevel per standard style, merlin is unable to generate the (needed) default config file
+    from merlin import display  # pylint: disable=import-outside-toplevel
+
     display.print_info(args)
 
 
-def config_merlin(args):
+def config_merlin(args: Dict) -> None:
     """
     CLI command to setup default merlin config.
 
     :param `args`: parsed CLI arguments
     """
-    output_dir: str = args.output_dir
+    output_dir: Optional[str] = args.output_dir
     if output_dir is None:
-        USER_HOME = os.path.expanduser("~")
-        output_dir = os.path.join(USER_HOME, ".merlin")
-    _ = router.create_config(args.task_server, output_dir, args.broker)
+        user_home: str = os.path.expanduser("~")
+        output_dir: str = os.path.join(user_home, ".merlin")
+    router.create_config(args.task_server, output_dir, args.broker)
 
 
 def process_example(args) -> None:
@@ -398,7 +400,7 @@ def setup_argparse() -> None:
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
-    # TODO add all supported formats to doc string
+    # TODO add all supported formats to doc string  # pylint: disable=fixme
     run.add_argument(
         "--samplesfile",
         action="store",
@@ -498,52 +500,6 @@ def setup_argparse() -> None:
         "Example: '--vars MY_QUEUE=hello'",
     )
 
-    # merlin status
-    status: ArgumentParser = subparsers.add_parser(
-        "status",
-        help="List server stats (name, number of tasks to do, \
-                              number of connected workers) for a workflow spec.",
-    )
-    status.set_defaults(func=query_status)
-    status.add_argument(
-        "specification", type=str, help="Path to a Merlin YAML spec file"
-    )
-    status.add_argument(
-        "--steps",
-        nargs="+",
-        type=str,
-        dest="steps",
-        default=["all"],
-        help="The specific steps in the YAML file you want to query",
-    )
-    status.add_argument(
-        "--task_server",
-        type=str,
-        default="celery",
-        help="Task server type.\
-                            Default: %(default)s",
-    )
-    status.add_argument(
-        "--vars",
-        action="store",
-        dest="variables",
-        type=str,
-        nargs="+",
-        default=None,
-        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
-    )
-    status.add_argument(
-        "--csv", type=str, help="csv file to dump status report to", default=None
-    )
-
-    # merlin info
-    info: ArgumentParser = subparsers.add_parser(
-        "info",
-        help="display info about the merlin configuration and the python configuration. Useful for debugging.",
-    )
-    info.set_defaults(func=print_info)
-
     mconfig: ArgumentParser = subparsers.add_parser(
         "config",
         help="Create a default merlin server config file in ~/.merlin",
@@ -596,56 +552,15 @@ def setup_argparse() -> None:
     )
     example.set_defaults(func=process_example)
 
-    # merlin monitor
-    monitor: ArgumentParser = subparsers.add_parser(
-        "monitor",
-        help="Check for active workers on an allocation.",
-        formatter_class=RawTextHelpFormatter,
-    )
-    monitor.add_argument(
-        "specification", type=str, help="Path to a Merlin YAML spec file"
-    )
-    monitor.add_argument(
-        "--steps",
-        nargs="+",
-        type=str,
-        dest="steps",
-        default=["all"],
-        help="The specific steps (tasks on the server) in the YAML file defining the queues you want to monitor",
-    )
-    monitor.add_argument(
-        "--vars",
-        action="store",
-        dest="variables",
-        type=str,
-        nargs="+",
-        default=None,
-        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
-    )
-    monitor.add_argument(
-        "--task_server",
-        type=str,
-        default="celery",
-        help="Task server type for which to monitor the workers.\
-                              Default: %(default)s",
-    )
-    monitor.add_argument(
-        "--sleep",
-        type=int,
-        default=60,
-        help="Sleep duration between checking for workers.\
-                                    Default: %(default)s",
-    )
-    monitor.set_defaults(func=process_monitor)
+    generate_worker_touching_parsers(subparsers)
 
-    generate_worker_controlling_parsers(subparsers)
+    generate_diagnostic_parsers(subparsers)
 
     return parser
 
 
-def generate_worker_controlling_parsers(subparsers: ArgumentParser) -> None:
-    """All commands directly controlling or invoking workers are generated here."""
+def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
+    """All CLI arg parsers directly controlling or invoking workers are generated here."""
     # merlin run-workers
     run_workers: ArgumentParser = subparsers.add_parser(
         "run-workers",
@@ -732,6 +647,98 @@ def generate_worker_controlling_parsers(subparsers: ArgumentParser) -> None:
         help="regex match for specific workers to stop",
     )
 
+    # merlin monitor
+    monitor: ArgumentParser = subparsers.add_parser(
+        "monitor",
+        help="Check for active workers on an allocation.",
+        formatter_class=RawTextHelpFormatter,
+    )
+    monitor.add_argument(
+        "specification", type=str, help="Path to a Merlin YAML spec file"
+    )
+    monitor.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="steps",
+        default=["all"],
+        help="The specific steps (tasks on the server) in the YAML file defining the queues you want to monitor",
+    )
+    monitor.add_argument(
+        "--vars",
+        action="store",
+        dest="variables",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
+        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+    )
+    monitor.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type for which to monitor the workers.\
+                              Default: %(default)s",
+    )
+    monitor.add_argument(
+        "--sleep",
+        type=int,
+        default=60,
+        help="Sleep duration between checking for workers.\
+                                    Default: %(default)s",
+    )
+    monitor.set_defaults(func=process_monitor)
+
+
+def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
+    """All CLI arg parsers generally used diagnostically are generated here."""
+    # merlin status
+    status: ArgumentParser = subparsers.add_parser(
+        "status",
+        help="List server stats (name, number of tasks to do, \
+                              number of connected workers) for a workflow spec.",
+    )
+    status.set_defaults(func=query_status)
+    status.add_argument(
+        "specification", type=str, help="Path to a Merlin YAML spec file"
+    )
+    status.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="steps",
+        default=["all"],
+        help="The specific steps in the YAML file you want to query",
+    )
+    status.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type.\
+                            Default: %(default)s",
+    )
+    status.add_argument(
+        "--vars",
+        action="store",
+        dest="variables",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
+        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+    )
+    status.add_argument(
+        "--csv", type=str, help="csv file to dump status report to", default=None
+    )
+
+    # merlin info
+    info: ArgumentParser = subparsers.add_parser(
+        "info",
+        help="display info about the merlin configuration and the python configuration. Useful for debugging.",
+    )
+    info.set_defaults(func=print_info)
+
 
 def main():
     """
@@ -747,10 +754,16 @@ def main():
 
     try:
         args.func(args)
-    except Exception as excpt:
+        # pylint complains that this exception is too broad - being at the literal top of the program stack,
+        # it's ok.
+    except Exception as excpt:  # pylint: disable=broad-except
         LOG.debug(traceback.format_exc())
         LOG.error(str(excpt))
         return 1
+    # All paths in a function ought to return an exit code, or none of them should. Given the
+    # distributed nature of Merlin, maybe it doesn't make sense for it to exit 0 until the work is completed, but
+    # if the work is dispatched with no errors, that is a 'successful' Merlin run - any other failures are runtime.
+    return 0
 
 
 if __name__ == "__main__":

@@ -207,7 +207,7 @@ def route_for_task(name, args, kwargs, options, task=None, **kw):
         return {"queue": queue}
 
 
-def create_config(task_server, config_dir, broker):
+def create_config(task_server: str, config_dir: str, broker: str) -> None:
     """
     Create a config for the given task server.
 
