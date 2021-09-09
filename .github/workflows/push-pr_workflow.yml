@@ -42,8 +42,8 @@ jobs:
 
     - name: Lint with pylint
       run: |
-        python3 pylint merlin --rcfile=setup.cfg --exit-zero
-        python3 pylint tests --rcfile=setup.cfg --exit-zero
+        python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
+        python3 -m pylint tests --rcfile=setup.cfg --exit-zero
 
     - name: Run pytest over unit test suite
       run: |
