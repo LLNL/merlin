@@ -42,12 +42,12 @@ jobs:
 
     - name: Lint with pylint
       run: |
-        pylint merlin --rcfile=setup.cfg --exit-zero
-        pylint tests --rcfile=setup.cfg --exit-zero
+        python3 pylint merlin --rcfile=setup.cfg --exit-zero
+        python3 pylint tests --rcfile=setup.cfg --exit-zero
 
     - name: Run pytest over unit test suite
       run: |
-        pytest tests/unit/
+        python3 pytest tests/unit/
 
     - name: Run integration test suite, locally
       run: |
