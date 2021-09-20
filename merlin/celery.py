@@ -127,9 +127,8 @@ app.autodiscover_tasks(["merlin.common"])
 
 
 # Pylint believes the args are unused, I believe they're used after decoration
-# pylint: disable=W0613
 @worker_process_init.connect()
-def setup(**kwargs):
+def setup(**kwargs):  # pylint: disable=W0613
     """
     Set affinity for the worker on startup (works on toss3 nodes)
 
@@ -142,8 +141,11 @@ def setup(**kwargs):
         process: psutil.Process = psutil.Process()
         # pylint is upset that typing accesses a protected class, ignoring W0212
         # pylint is upset that billiard doesn't have a current_process() method - it does
-        # pylint: disable=W0212, E1101
-        current: billiard.process._MainProcess = billiard.current_process()
-        prefork_id: int = current._identity[0] - 1  # range 0:nworkers-1
+        current: billiard.process._MainProcess = (
+            billiard.current_process()
+        )  # pylint: disable=W0212, E1101
+        prefork_id: int = (
+            current._identity[0] - 1
+        )  # range 0:nworkers-1  # pylint: disable=W0212
         cpu_slot: int = (prefork_id * cpu_skip) % npu
         process.cpu_affinity(list(range(cpu_slot, cpu_slot + cpu_skip)))

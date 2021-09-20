@@ -4,6 +4,12 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+- Added no-exit-fail PyLint pipeline to Github Actions CI.
+- Corrected integration test for dependency to only examine release dependencies.
+- PyLint adherence for: celery.py, opennplib.py, config/__init__.py, broker.py,
+  configfile.py, formatter.py, main.py, router.py
+
 ## [1.8.1]
 
 ### Fixed

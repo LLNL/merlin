@@ -241,10 +241,13 @@ def _sort_valid_broker(broker, config_path, include_password):
     return get_redis_connection(config_path, include_password, ssl=True)
 
 
-def get_ssl_config() -> Union[bool, str]:
+def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:
     """
     Return the ssl config based on the configuration specified in the
     `app.yaml` config file.
+
+    :return: Returns either False if no ssl
+    :rtype: Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]
     """
     broker: Union[bool, str] = ""
     try:
@@ -266,7 +269,7 @@ def get_ssl_config() -> Union[bool, str]:
     except AttributeError:
         certs_path = None
 
-    broker_ssl: Dict[str, Union[str, ssl.VerifyMode]] = get_ssl_entries(
+    broker_ssl: Union[bool, Dict[str, Union[str, ssl.VerifyMode]]] = get_ssl_entries(
         "Broker", broker, CONFIG.broker, certs_path
     )
 

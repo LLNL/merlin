@@ -116,7 +116,7 @@ def get_config(path: Optional[str]) -> Dict:
     Load a merlin configuration file and return a dictionary of the
     configurations.
 
-    :param path : The path to search for the config file.
+    :param [Optional[str]] path : The path to search for the config file.
     """
     filepath: Optional[str] = find_config_file(path)
 
@@ -205,14 +205,16 @@ def get_cert_file(server_type, config, cert_name, cert_path):
 
 def get_ssl_entries(
     server_type: str, server_name: str, server_config: Config, cert_path: str
-) -> str:
+) -> Dict[str, Union[str, ssl.VerifyMode]]:
     """
     Check if a ssl certificate file is present in the config
 
-    :param server_type : The server type
-    :param server_name : The server name for output
-    :param server_config : The server config
-    :param cert_path : The optional cert path
+    :param [str] server_type : The server type
+    :param [str] server_name : The server name for output
+    :param [Config] server_config : The server config
+    :param [str] cert_path : The optional cert path
+    :return : The data needed to manage an ssl certification.
+    :rtype : A Dict.
     """
     server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
 

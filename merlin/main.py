@@ -41,6 +41,7 @@ import traceback
 from argparse import (
     ArgumentDefaultsHelpFormatter,
     ArgumentParser,
+    Namespace,
     RawDescriptionHelpFormatter,
     RawTextHelpFormatter,
 )
@@ -71,25 +72,31 @@ class HelpParser(ArgumentParser):
         sys.exit(2)
 
 
-def verify_filepath(filepath) -> str:
+def verify_filepath(filepath: str) -> str:
     """
     Verify that the filepath argument is a valid
     file.
 
-    :param `filepath`: the path of a file
+    :param [str] `filepath`: the path of a file
+
+    :return: the verified absolute filepath with expanded environment variables.
+    :rtype: str
     """
-    filepath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
+    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
     if not os.path.isfile(filepath):
         raise ValueError(f"'{filepath}' is not a valid filepath")
     return filepath
 
 
-def verify_dirpath(dirpath) -> str:
+def verify_dirpath(dirpath: str) -> str:
     """
     Verify that the dirpath argument is a valid
     directory.
 
-    :param `dirpath`: the path of a directory
+    :param [str] `dirpath`: the path of a directory
+
+    :return: returns the absolute path with expanded environment vars for a given dirpath.
+    :rtype: str
     """
     dirpath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
     if not os.path.isdir(dirpath):
@@ -104,7 +111,10 @@ def parse_override_vars(
     Parse a list of variables from command line syntax
     into a valid dictionary of variable keys and values.
 
-    :param `variables_list`: a list of strings, e.g. ["KEY=val",...]
+    :param [List[str]] `variables_list`: an optional list of strings, e.g. ["KEY=val",...]
+
+    :return: returns either None or a Dict keyed with strs, linked to strs and ints.
+    :rtype: Dict
     """
     if variables_list is None:
         return None
@@ -157,11 +167,11 @@ def get_merlin_spec_with_override(args):
     return spec, filepath
 
 
-def process_run(args):
+def process_run(args: Namespace) -> None:
     """
     CLI command for running a study.
 
-    :param `args`: parsed CLI arguments
+    :param [Namespace] `args`: parsed CLI arguments
     """
     print(banner_small)
     filepath: str = verify_filepath(args.specification)
@@ -190,11 +200,11 @@ def process_run(args):
     router.run_task_server(study, args.run_mode)
 
 
-def process_restart(args):
+def process_restart(args: Namespace) -> None:
     """
     CLI command for restarting a study.
 
-    :param `args`: parsed CLI arguments
+    :param [Namespace] `args`: parsed CLI arguments
     """
     print(banner_small)
     restart_dir: str = verify_dirpath(args.restart_dir)
@@ -309,11 +319,11 @@ def print_info(args):
     display.print_info(args)
 
 
-def config_merlin(args: Dict) -> None:
+def config_merlin(args: Namespace) -> None:
     """
     CLI command to setup default merlin config.
 
-    :param `args`: parsed CLI arguments
+    :param [Namespace] `args`: parsed CLI arguments
     """
     output_dir: Optional[str] = args.output_dir
     if output_dir is None:
@@ -322,8 +332,11 @@ def config_merlin(args: Dict) -> None:
     router.create_config(args.task_server, output_dir, args.broker)
 
 
-def process_example(args) -> None:
-    """Sets the default values for the example subparser. This is passed as a functor."""
+def process_example(args: Namespace) -> None:
+    """Either lists all example workflows, or sets up an example as a workflow to be run at root dir.
+
+    :param [Namespace] `args`: parsed CLI arguments
+    """
     if args.workflow == "list":
         print(list_examples())
     else:
@@ -560,7 +573,11 @@ def setup_argparse() -> None:
 
 
 def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
-    """All CLI arg parsers directly controlling or invoking workers are generated here."""
+    """All CLI arg parsers directly controlling or invoking workers are generated here.
+
+    :param [ArgumentParser] `subparsers`: the subparsers needed for every CLI command that directly controls or invokes
+        workers.
+    """
     # merlin run-workers
     run_workers: ArgumentParser = subparsers.add_parser(
         "run-workers",
@@ -692,7 +709,11 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
 
 
 def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
-    """All CLI arg parsers generally used diagnostically are generated here."""
+    """All CLI arg parsers generally used diagnostically are generated here.
+
+    :param [ArgumentParser] `subparsers`: the subparsers needed for every CLI command that handles diagnostics for a
+        Merlin job.
+    """
     # merlin status
     status: ArgumentParser = subparsers.add_parser(
         "status",

@@ -53,7 +53,7 @@ class Config:
         self.results_backend: Optional[SimpleNamespace]
         self.load_app_into_namespaces(app_dict)
 
-    def load_app_into_namespaces(self, app_dict: Dict):
+    def load_app_into_namespaces(self, app_dict: Dict) -> None:
         """
         Makes the application dictionary into a namespace, sets the attributes of the Config from the namespace values.
         """
