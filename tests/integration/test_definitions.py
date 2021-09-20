@@ -347,25 +347,27 @@ def define_tests():
                 ),
             ],
         ),
-        "stop workers for distributed feature_demo": (
-            f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; sleep 20 ; merlin stop-workers",
-            [
-                HasReturnCode(),
-                ProvenanceYAMLFileHasRegex(
-                    regex="cli_test_demo_workers:",
-                    name="feature_demo",
-                    output_path=OUTPUT_DIR,
-                    provenance_type="expanded",
-                ),
-                StepFileExists(
-                    "verify",
-                    "MERLIN_FINISHED",
-                    "feature_demo",
-                    OUTPUT_DIR,
-                    params=True,
-                ),
-            ],
-        ),
+        # this test is deactivated until the --spec option for stop-workers is active again
+
+        # "stop workers for distributed feature_demo": (
+        #     f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; sleep 20 ; merlin stop-workers --spec {demo}",
+        #     [
+        #         HasReturnCode(),
+        #         ProvenanceYAMLFileHasRegex(
+        #             regex="cli_test_demo_workers:",
+        #             name="feature_demo",
+        #             output_path=OUTPUT_DIR,
+        #             provenance_type="expanded",
+        #         ),
+        #         StepFileExists(
+        #             "verify",
+        #             "MERLIN_FINISHED",
+        #             "feature_demo",
+        #             OUTPUT_DIR,
+        #             params=True,
+        #         ),
+        #     ],
+        # ),
     }
 
     # combine and return test dictionaries
