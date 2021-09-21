@@ -3,7 +3,7 @@ name: Python CI
 on: [push, pull_request]
 
 jobs:
-  setup:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -22,9 +22,6 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
 
-  lint:
-    needs: setup
-    runs-on: ubuntu-latest
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -33,14 +30,23 @@ jobs:
         flake8 . --count --max-complexity=15 --statistics --max-line-length=127
 
   build:
-    needs: setup
     runs-on: ubuntu-latest
-    services:
-      rabbitmq:
-        image: rabbitmq:latest
-        ports:
-          - 5672:5672
-        options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip3 install -r requirements/dev.txt
 
     - name: Install merlin to run unit tests
       run: |
@@ -54,8 +60,8 @@ jobs:
 
     - name: Run pytest over unit test suite
       run: |
-        python3 -m pytest tests/unit/
+        python3 -m pytest tests/unit/ --local
 
     - name: Run integration test suite
       run: |
-        python3 tests/integration/run_tests.py --verbose
+        python3 tests/integration/run_tests.py --verbose --local
