@@ -6,6 +6,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    services:
+      rabbitmq:
+      image: rabbitmq
+        ports:
+          - 5672:5672
+	
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
@@ -44,6 +50,6 @@ jobs:
       run: |
         python3 -m pytest tests/unit/
 
-    - name: Run integration test suite, locally
+    - name: Run integration test suite
       run: |
         python3 tests/integration/run_tests.py --verbose
