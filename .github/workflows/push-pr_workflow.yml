@@ -52,5 +52,7 @@ jobs:
         python3 -m pytest tests/unit/
 
     - name: Run integration test suite
+      env:
+        RABBITMQ_PORT: ${{ job.services.rabbitmq.ports['5672'] }}
       run: |
         python3 tests/integration/run_tests.py --verbose
