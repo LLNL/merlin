@@ -24,6 +24,7 @@ jobs:
 
   lint:
     needs: setup
+    runs-on: ubuntu-latest
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -33,6 +34,7 @@ jobs:
 
   build:
     needs: setup
+    runs-on: ubuntu-latest
     services:
       rabbitmq:
         image: rabbitmq:latest
