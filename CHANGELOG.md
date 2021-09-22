@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - CI now splits linting and testing into different tasks for better utilization of
-  parallel runners, 25% speed gain over previous setup
+  parallel runners, significant and scalable speed gain over previous setup
 - CI now uses caching to restore environment of dependencies, reducing CI runtime
-  another 25% gain beyond the previous improvement. Examines for potential updates to
+  significantly again beyond the previous improvement. Examines for potential updates to
   dependencies so the environment doesn't become stale.
 - CI now examines that the CHANGELOG is updated on PRs.
 
