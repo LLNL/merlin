@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 jobs:
   changelog:
+    name: CHANGELOG.md updated
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 
