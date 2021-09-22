@@ -18,14 +18,12 @@ jobs:
       with:
         path: ~/.cache/pip
         key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
-	restore-keys: |
-          ${{ runner.os }}-pip-
 
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip3 install -r requirements/dev.txt
+        if [ -f requirements.txt ]; then pip install --upgrade -r requirements.txt; fi
+        pip3 install --upgrade -r requirements/dev.txt
 
     - name: Lint with flake8
       run: |
@@ -46,6 +44,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Check cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install dependencies
       run: |
