@@ -85,6 +85,6 @@ jobs:
       run: |
         python3 -m pytest tests/unit/
 
-    - name: Run integration test suite
+    - name: Run integration test suite, locally
       run: |
         python3 tests/integration/run_tests.py --verbose --local
