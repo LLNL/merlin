@@ -117,6 +117,8 @@ def get_config(path: Optional[str]) -> Dict:
     configurations.
 
     :param [Optional[str]] path : The path to search for the config file.
+    :return: the config file to coordinate brokers/results backend/task manager."
+    :rtype: A Dict with all the config data.
     """
     filepath: Optional[str] = find_config_file(path)
 
