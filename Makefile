@@ -102,6 +102,7 @@ check-style:
 
 check-push: tests check-style
 
+
 # finds all strings in project that begin with a lowercase letter,
 # contain only letters and numbers, and contain at least one lowercase
 # letter and at least one uppercase letter.
