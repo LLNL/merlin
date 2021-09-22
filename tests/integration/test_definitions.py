@@ -316,13 +316,13 @@ def define_tests():
         "black check merlin": (f"{black} merlin/", HasReturnCode(), "local"),
         "black check tests": (f"{black} tests/", HasReturnCode(), "local"),
     }
-    dependency_checks = {
-        "deplic no GNU": (
-            "deplic ./",
-            [HasRegex("GNU", negate=True), HasRegex("GPL", negate=True)],
-            "local",
-        ),
-    }
+    # dependency_checks = {
+    #     "deplic no GNU": (
+    #         "deplic ./",
+    #         [HasRegex("GNU", negate=True), HasRegex("GPL", negate=True)],
+    #         "local",
+    #     ),
+    # }
     distributed_tests = {  # noqa: F841
         "run and purge feature_demo": (
             f"{run} {demo} ; {purge} {demo} -f",
