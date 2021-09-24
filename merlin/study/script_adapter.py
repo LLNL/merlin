@@ -34,6 +34,7 @@ Merlin script adapter module
 
 import logging
 import os
+from typing import Dict, List, Set
 
 from maestrowf.interfaces.script import SubmissionRecord
 from maestrowf.interfaces.script.localscriptadapter import LocalScriptAdapter
@@ -66,7 +67,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
         """
         super(MerlinLSFScriptAdapter, self).__init__(**kwargs)
 
-        self._cmd_flags = {
+        self._cmd_flags: Dict[str, str] = {
             "cmd": "jsrun",
             "ntasks": "--np",
             "nodes": "--nrs",
@@ -79,22 +80,23 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "lsf": "",
         }
 
-        self._unsupported = {
+        self._unsupported: Set[str] = {
             "cmd",
-            "ntasks",
-            "nodes",
+            "depends",
+            "flux",
             "gpus",
-            "walltime",
+            "max_retries",
+            "nodes",
+            "ntasks",
+            "post",
+            "pre",
             "reservation",
             "restart",
-            "task_queue",
-            "max_retries",
             "retry_delay",
-            "pre",
-            "post",
-            "depends",
+            "shell",
             "slurm",
-            "flux",
+            "task_queue",
+            "walltime",
         }
 
     def get_header(self, step):
@@ -158,7 +160,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
     the SlurmScriptAdapter uses non-blocking submits.
     """
 
-    key = "merlin-slurm"
+    key: str = "merlin-slurm"
 
     def __init__(self, **kwargs):
         """
@@ -174,20 +176,21 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         self._cmd_flags["slurm"] = ""
         self._cmd_flags["walltime"] = "-t"
 
-        new_unsupported = [
-            "task_queue",
-            "max_retries",
-            "retry_delay",
-            "pre",
-            "post",
+        new_unsupported: List[str] = [
+            "bind",
+            "flux",
             "gpus per task",
             "gpus",
-            "restart",
-            "bind",
             "lsf",
-            "flux",
+            "max_retries",
+            "post",
+            "pre",
+            "restart",
+            "retry_delay",
+            "shell",
+            "task_queue",
         ]
-        self._unsupported = set(list(self._unsupported) + new_unsupported)
+        self._unsupported: Set[str] = set(list(self._unsupported) + new_unsupported)
 
     def get_header(self, step):
         """

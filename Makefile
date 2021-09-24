@@ -64,6 +64,7 @@ virtualenv:
 # install merlin into the virtual environment
 install-merlin: virtualenv
 	$(PIP) install -e .; \
+	. $(VENV)/bin/activate; \
 	merlin config; \
 
 

@@ -16,7 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added PyLint pipeline to Github Actions CI (currently no-fail-exit).
 - Corrected integration test for dependency to only examine release dependencies.
 - PyLint adherence for: celery.py, opennplib.py, config/__init__.py, broker.py,
-  configfile.py, formatter.py, main.py, router.py
+	configfile.py, formatter.py, main.py, router.py
+
+### Fixed
+- 'shell' added to unsupported and new_unsupported lists in script_adapter.py, prevents
+  `'shell' is not supported -- ommitted` message.
+- Makefile target for install-merlin fixed so venv is properly activated to install merlin
 
 ## [1.8.1]
 
