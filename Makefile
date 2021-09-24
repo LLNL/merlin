@@ -139,13 +139,13 @@ checks: check-style check-camel-case
 
 # automatically make python files pep 8-compliant
 fix-style:
-	pip3 install -r requirements/dev.txt -U
-	isort -rc $(MRLN)
-	isort -rc $(TEST)
-	isort *.py
-	black --target-version py36 $(MRLN)
-	black --target-version py36 $(TEST)
-	black --target-version py36 *.py
+	. $(VENV)/bin/activate; \
+	isort --line-length $(MAX_LINE_LENGTH) $(MRLN); \
+	isort --line-length $(MAX_LINE_LENGTH) $(TEST); \
+	isort --line-length $(MAX_LINE_LENGTH) *.py; \
+	black --target-version py36 -l $(MAX_LINE_LENGTH) $(MRLN); \
+	black --target-version py36 -l $(MAX_LINE_LENGTH) $(TEST); \
+	black --target-version py36 -l $(MAX_LINE_LENGTH) *.py; \
 
 
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.

@@ -46,6 +46,18 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --max-complexity=15 --statistics --max-line-length=127
 
+    - name: Lint with isort
+      run: |
+        python3 -m isort --check --line-length 127 merlin
+        python3 -m isort --check --line-length 127 tests
+        python3 -m isort --check --line-length 127 *.py
+
+    - name: Lint with Black
+      run: |
+        python3 -m black --check --line-length 127 --target-version py36 merlin
+        python3 -m black --check --line-length 127 --target-version py36 tests
+        python3 -m black --check --line-length 127 --target-version py36 *.py
+
     - name: Lint with PyLint
       run: |
         python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
