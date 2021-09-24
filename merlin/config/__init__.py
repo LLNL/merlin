@@ -32,6 +32,9 @@
 Used to store the application configuration.
 """
 
+from types import SimpleNamespace
+from typing import Dict, List, Optional
+
 from merlin.utils import nested_dict_to_namespaces
 
 
@@ -43,20 +46,20 @@ class Config:
     """
 
     def __init__(self, app_dict):
-        self.load_app(app_dict)
+        # I think this ends up a SimpleNamespace from load_app_into_namespaces, but it seems like it should be typed as
+        # the app var in celery.py, as celery.app.base.Celery
+        self.celery: Optional[SimpleNamespace]
+        self.broker: Optional[SimpleNamespace]
+        self.results_backend: Optional[SimpleNamespace]
+        self.load_app_into_namespaces(app_dict)
 
-    def load_namespaces(self, dic, fields):
+    def load_app_into_namespaces(self, app_dict: Dict) -> None:
         """
-        TODO
+        Makes the application dictionary into a namespace, sets the attributes of the Config from the namespace values.
         """
+        fields: List[str] = ["celery", "broker", "results_backend"]
         for field in fields:
             try:
-                setattr(self, field, nested_dict_to_namespaces(dic[field]))
+                setattr(self, field, nested_dict_to_namespaces(app_dict[field]))
             except KeyError:
                 pass
-
-    def load_app(self, dic):
-        """
-        Makes the application dictionary into a namespace.
-        """
-        self.load_namespaces(dic, ["celery", "broker", "results_backend"])

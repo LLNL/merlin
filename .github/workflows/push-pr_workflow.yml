@@ -3,7 +3,7 @@ name: Python CI
 on: [push, pull_request]
 
 jobs:
-  changelog:
+  Changelog:
     name: CHANGELOG.md updated
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
@@ -17,7 +17,7 @@ jobs:
         # file with notes on your contribution.
         git diff --name-only $(git merge-base origin/main HEAD) | grep '^CHANGELOG.md$' && echo "Thanks for helping keep our CHANGELOG up-to-date!"
 
-  lint:
+  Lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -46,7 +46,12 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --max-complexity=15 --statistics --max-line-length=127
 
-  build:
+    - name: Lint with PyLint
+      run: |
+        python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
+        python3 -m pylint tests --rcfile=setup.cfg --exit-zero
+
+  Test-suite:
     runs-on: ubuntu-latest
     strategy:
       matrix:

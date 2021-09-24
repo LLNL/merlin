@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   significantly again beyond the previous improvement. Examines for potential updates to
   dependencies so the environment doesn't become stale.
 - CI now examines that the CHANGELOG is updated on PRs.
+- Added PyLint pipeline to Github Actions CI (currently no-fail-exit).
+- Corrected integration test for dependency to only examine release dependencies.
+- PyLint adherence for: celery.py, opennplib.py, config/__init__.py, broker.py,
+  configfile.py, formatter.py, main.py, router.py
 
 ## [1.8.1]
 

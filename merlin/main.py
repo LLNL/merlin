@@ -1,3 +1,5 @@
+"""The top level main function for invoking Merlin."""
+
 ###############################################################################
 # Copyright (c) 2019, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
@@ -39,10 +41,12 @@ import traceback
 from argparse import (
     ArgumentDefaultsHelpFormatter,
     ArgumentParser,
+    Namespace,
     RawDescriptionHelpFormatter,
     RawTextHelpFormatter,
 )
 from contextlib import suppress
+from typing import Dict, List, Optional, Union
 
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
@@ -68,12 +72,15 @@ class HelpParser(ArgumentParser):
         sys.exit(2)
 
 
-def verify_filepath(filepath):
+def verify_filepath(filepath: str) -> str:
     """
     Verify that the filepath argument is a valid
     file.
 
-    :param `filepath`: the path of a file
+    :param [str] `filepath`: the path of a file
+
+    :return: the verified absolute filepath with expanded environment variables.
+    :rtype: str
     """
     filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
     if not os.path.isfile(filepath):
@@ -81,42 +88,51 @@ def verify_filepath(filepath):
     return filepath
 
 
-def verify_dirpath(dirpath):
+def verify_dirpath(dirpath: str) -> str:
     """
     Verify that the dirpath argument is a valid
     directory.
 
-    :param `dirpath`: the path of a directory
+    :param [str] `dirpath`: the path of a directory
+
+    :return: returns the absolute path with expanded environment vars for a given dirpath.
+    :rtype: str
     """
-    dirpath = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
+    dirpath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
     if not os.path.isdir(dirpath):
         raise ValueError(f"'{dirpath}' is not a valid directory path")
     return dirpath
 
 
-def parse_override_vars(variables_list):
+def parse_override_vars(
+    variables_list: Optional[List[str]],
+) -> Optional[Dict[str, Union[str, int]]]:
     """
     Parse a list of variables from command line syntax
     into a valid dictionary of variable keys and values.
 
-    :param `variables_list`: a list of strings, e.g. ["KEY=val",...]
+    :param [List[str]] `variables_list`: an optional list of strings, e.g. ["KEY=val",...]
+
+    :return: returns either None or a Dict keyed with strs, linked to strs and ints.
+    :rtype: Dict
     """
     if variables_list is None:
         return None
     LOG.debug(f"Command line override variables = {variables_list}")
-    result = {}
+    result: Dict[str, Union[str, int]] = {}
+    arg: str
     for arg in variables_list:
         try:
             if "=" not in arg:
                 raise ValueError(
                     "--vars requires '=' operator. See 'merlin run --help' for an example."
                 )
-            entry = arg.split("=")
+            entry: str = arg.split("=")
             if len(entry) != 2:
                 raise ValueError(
                     "--vars requires ONE '=' operator (without spaces) per variable assignment."
                 )
-            key = entry[0]
+            key: str = entry[0]
             if key is None or key == "" or "$" in key:
                 raise ValueError(
                     "--vars requires valid variable names comprised of alphanumeric characters and underscores."
@@ -126,16 +142,16 @@ def parse_override_vars(variables_list):
                     f"Cannot override reserved word '{key}'! Reserved words are: {RESERVED}."
                 )
 
-            val = entry[1]
+            val: Union[str, int] = entry[1]
             with suppress(ValueError):
                 int(val)
                 val = int(val)
             result[key] = val
 
-        except BaseException as e:
+        except BaseException as excpt:
             raise ValueError(
-                f"{e} Bad '--vars' formatting on command line. See 'merlin run --help' for an example."
-            )
+                f"{excpt} Bad '--vars' formatting on command line. See 'merlin run --help' for an example."
+            ) from excpt
     return result
 
 
@@ -151,16 +167,16 @@ def get_merlin_spec_with_override(args):
     return spec, filepath
 
 
-def process_run(args):
+def process_run(args: Namespace) -> None:
     """
     CLI command for running a study.
 
-    :param `args`: parsed CLI arguments
+    :param [Namespace] `args`: parsed CLI arguments
     """
     print(banner_small)
-    filepath = verify_filepath(args.specification)
-    variables_dict = parse_override_vars(args.variables)
-    samples_file = None
+    filepath: str = verify_filepath(args.specification)
+    variables_dict: str = parse_override_vars(args.variables)
+    samples_file: Optional[str] = None
     if args.samples_file:
         samples_file = verify_filepath(args.samples_file)
 
@@ -172,7 +188,7 @@ def process_run(args):
     if args.pgen_file:
         verify_filepath(args.pgen_file)
 
-    study = MerlinStudy(
+    study: MerlinStudy = MerlinStudy(
         filepath,
         override_vars=variables_dict,
         samples_file=samples_file,
@@ -184,27 +200,27 @@ def process_run(args):
     router.run_task_server(study, args.run_mode)
 
 
-def process_restart(args):
+def process_restart(args: Namespace) -> None:
     """
     CLI command for restarting a study.
 
-    :param `args`: parsed CLI arguments
+    :param [Namespace] `args`: parsed CLI arguments
     """
     print(banner_small)
-    restart_dir = verify_dirpath(args.restart_dir)
-    filepath = os.path.join(args.restart_dir, "merlin_info", "*.expanded.yaml")
-    possible_specs = glob.glob(filepath)
-    if len(possible_specs) == 0:
+    restart_dir: str = verify_dirpath(args.restart_dir)
+    filepath: str = os.path.join(args.restart_dir, "merlin_info", "*.expanded.yaml")
+    possible_specs: Optional[List[str]] = glob.glob(filepath)
+    if not possible_specs:  # len == 0
         raise ValueError(
             f"'{filepath}' does not match any provenance spec file to restart from."
         )
-    elif len(possible_specs) > 1:
+    if len(possible_specs) > 1:
         raise ValueError(
             f"'{filepath}' matches more than one provenance spec file to restart from."
         )
-    filepath = verify_filepath(possible_specs[0])
+    filepath: str = verify_filepath(possible_specs[0])
     LOG.info(f"Restarting workflow at '{restart_dir}'")
-    study = MerlinStudy(filepath, restart_dir=restart_dir)
+    study: MerlinStudy = MerlinStudy(filepath, restart_dir=restart_dir)
     router.run_task_server(study, args.run_mode)
 
 
@@ -297,25 +313,30 @@ def print_info(args):
 
     :param `args`: parsed CLI arguments
     """
-    from merlin import display
+    # if this is moved to the toplevel per standard style, merlin is unable to generate the (needed) default config file
+    from merlin import display  # pylint: disable=import-outside-toplevel
 
     display.print_info(args)
 
 
-def config_merlin(args):
+def config_merlin(args: Namespace) -> None:
     """
     CLI command to setup default merlin config.
 
-    :param `args`: parsed CLI arguments
+    :param [Namespace] `args`: parsed CLI arguments
     """
-    output_dir = args.output_dir
+    output_dir: Optional[str] = args.output_dir
     if output_dir is None:
-        USER_HOME = os.path.expanduser("~")
-        output_dir = os.path.join(USER_HOME, ".merlin")
-    _ = router.create_config(args.task_server, output_dir, args.broker)
+        user_home: str = os.path.expanduser("~")
+        output_dir: str = os.path.join(user_home, ".merlin")
+    router.create_config(args.task_server, output_dir, args.broker)
 
 
-def process_example(args):
+def process_example(args: Namespace) -> None:
+    """Either lists all example workflows, or sets up an example as a workflow to be run at root dir.
+
+    :param [Namespace] `args`: parsed CLI arguments
+    """
     if args.workflow == "list":
         print(list_examples())
     else:
@@ -338,18 +359,18 @@ def process_monitor(args):
     LOG.info("Monitor: ... stop condition met")
 
 
-def setup_argparse():
+def setup_argparse() -> None:
     """
     Setup argparse and any CLI options we want available via the package.
     """
-    parser = HelpParser(
+    parser: HelpParser = HelpParser(
         prog="merlin",
         description=banner_small,
         formatter_class=RawDescriptionHelpFormatter,
         epilog="See merlin <command> --help for more info",
     )
     parser.add_argument("-v", "--version", action="version", version=VERSION)
-    subparsers = parser.add_subparsers(dest="subparsers")
+    subparsers: ArgumentParser = parser.add_subparsers(dest="subparsers")
     subparsers.required = True
 
     # merlin --level
@@ -365,7 +386,7 @@ def setup_argparse():
     )
 
     # merlin run
-    run = subparsers.add_parser(
+    run: ArgumentParser = subparsers.add_parser(
         "run",
         help="Run a workflow using a Merlin or Maestro YAML study " "specification.",
         formatter_class=ArgumentDefaultsHelpFormatter,
@@ -392,7 +413,7 @@ def setup_argparse():
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
-    # TODO add all supported formats to doc string
+    # TODO add all supported formats to doc string  # pylint: disable=fixme
     run.add_argument(
         "--samplesfile",
         action="store",
@@ -434,7 +455,7 @@ def setup_argparse():
     )
 
     # merlin restart
-    restart = subparsers.add_parser(
+    restart: ArgumentParser = subparsers.add_parser(
         "restart",
         help="Restart a workflow using an existing Merlin workspace.",
         formatter_class=ArgumentDefaultsHelpFormatter,
@@ -452,8 +473,113 @@ def setup_argparse():
         help="Run locally instead of distributed",
     )
 
+    # merlin purge
+    purge: ArgumentParser = subparsers.add_parser(
+        "purge",
+        help="Remove all tasks from all merlin queues (default).              "
+        "If a user would like to purge only selected queues use:    "
+        "--steps to give a steplist, the queues will be defined from the step list",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    purge.set_defaults(func=purge_tasks)
+    purge.add_argument(
+        "specification", type=str, help="Path to a Merlin YAML spec file"
+    )
+    purge.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        dest="purge_force",
+        default=False,
+        help="Purge the tasks without confirmation",
+    )
+    purge.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="purge_steps",
+        default=["all"],
+        help="The specific steps in the YAML file from which you want to purge the queues. \
+        The input is a space separated list.",
+    )
+    purge.add_argument(
+        "--vars",
+        action="store",
+        dest="variables",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
+        "Example: '--vars MY_QUEUE=hello'",
+    )
+
+    mconfig: ArgumentParser = subparsers.add_parser(
+        "config",
+        help="Create a default merlin server config file in ~/.merlin",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    mconfig.set_defaults(func=config_merlin)
+    mconfig.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type for which to create the config.\
+                            Default: %(default)s",
+    )
+    mconfig.add_argument(
+        "-o",
+        "--output_dir",
+        type=str,
+        default=None,
+        help="Optional directory to place the default config file.\
+                            Default: ~/.merlin",
+    )
+    mconfig.add_argument(
+        "--broker",
+        type=str,
+        default=None,
+        help="Optional broker type, backend will be redis\
+                            Default: rabbitmq",
+    )
+
+    # merlin example
+    example: ArgumentParser = subparsers.add_parser(
+        "example",
+        help="Generate an example merlin workflow.",
+        formatter_class=RawTextHelpFormatter,
+    )
+    example.add_argument(
+        "workflow",
+        action="store",
+        type=str,
+        help="The name of the example workflow to setup. Use 'merlin example list' to see available options.",
+    )
+    example.add_argument(
+        "-p",
+        "--path",
+        action="store",
+        type=str,
+        default=None,
+        help="Specify a path to write the workflow to. Defaults to current "
+        "working directory",
+    )
+    example.set_defaults(func=process_example)
+
+    generate_worker_touching_parsers(subparsers)
+
+    generate_diagnostic_parsers(subparsers)
+
+    return parser
+
+
+def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
+    """All CLI arg parsers directly controlling or invoking workers are generated here.
+
+    :param [ArgumentParser] `subparsers`: the subparsers needed for every CLI command that directly controls or invokes
+        workers.
+    """
     # merlin run-workers
-    run_workers = subparsers.add_parser(
+    run_workers: ArgumentParser = subparsers.add_parser(
         "run-workers",
         help="Run the workers associated with the Merlin YAML study "
         "specification. Does -not- queue tasks, just workers tied "
@@ -497,47 +623,21 @@ def setup_argparse():
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
 
-    # merlin purge
-    purge = subparsers.add_parser(
-        "purge",
-        help="Remove all tasks from all merlin queues (default).              "
-        "If a user would like to purge only selected queues use:    "
-        "--steps to give a steplist, the queues will be defined from the step list",
-        formatter_class=ArgumentDefaultsHelpFormatter,
+    # merlin query-workers
+    query: ArgumentParser = subparsers.add_parser(
+        "query-workers", help="List connected task server workers."
     )
-    purge.set_defaults(func=purge_tasks)
-    purge.add_argument(
-        "specification", type=str, help="Path to a Merlin YAML spec file"
-    )
-    purge.add_argument(
-        "-f",
-        "--force",
-        action="store_true",
-        dest="purge_force",
-        default=False,
-        help="Purge the tasks without confirmation",
-    )
-    purge.add_argument(
-        "--steps",
-        nargs="+",
+    query.set_defaults(func=query_workers)
+    query.add_argument(
+        "--task_server",
         type=str,
-        dest="purge_steps",
-        default=["all"],
-        help="The specific steps in the YAML file from which you want to purge the queues. The input is a space separated list.",
-    )
-    purge.add_argument(
-        "--vars",
-        action="store",
-        dest="variables",
-        type=str,
-        nargs="+",
-        default=None,
-        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars MY_QUEUE=hello'",
+        default="celery",
+        help="Task server type from which to query workers.\
+                            Default: %(default)s",
     )
 
     # merlin stop-workers
-    stop = subparsers.add_parser(
+    stop: ArgumentParser = subparsers.add_parser(
         "stop-workers", help="Attempt to stop all task server workers."
     )
     stop.set_defaults(func=stop_workers)
@@ -564,119 +664,8 @@ def setup_argparse():
         help="regex match for specific workers to stop",
     )
 
-    # merlin query-workers
-    query = subparsers.add_parser(
-        "query-workers", help="List connected task server workers."
-    )
-    query.set_defaults(func=query_workers)
-    query.add_argument(
-        "--task_server",
-        type=str,
-        default="celery",
-        help="Task server type from which to query workers.\
-                            Default: %(default)s",
-    )
-
-    # merlin status
-    status = subparsers.add_parser(
-        "status",
-        help="List server stats (name, number of tasks to do, \
-                              number of connected workers) for a workflow spec.",
-    )
-    status.set_defaults(func=query_status)
-    status.add_argument(
-        "specification", type=str, help="Path to a Merlin YAML spec file"
-    )
-    status.add_argument(
-        "--steps",
-        nargs="+",
-        type=str,
-        dest="steps",
-        default=["all"],
-        help="The specific steps in the YAML file you want to query",
-    )
-    status.add_argument(
-        "--task_server",
-        type=str,
-        default="celery",
-        help="Task server type.\
-                            Default: %(default)s",
-    )
-    status.add_argument(
-        "--vars",
-        action="store",
-        dest="variables",
-        type=str,
-        nargs="+",
-        default=None,
-        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
-    )
-    status.add_argument(
-        "--csv", type=str, help="csv file to dump status report to", default=None
-    )
-
-    # merlin info
-    info = subparsers.add_parser(
-        "info",
-        help="display info about the merlin configuration and the python configuration. Useful for debugging.",
-    )
-    info.set_defaults(func=print_info)
-
-    mconfig = subparsers.add_parser(
-        "config",
-        help="Create a default merlin server config file in ~/.merlin",
-        formatter_class=ArgumentDefaultsHelpFormatter,
-    )
-    mconfig.set_defaults(func=config_merlin)
-    mconfig.add_argument(
-        "--task_server",
-        type=str,
-        default="celery",
-        help="Task server type for which to create the config.\
-                            Default: %(default)s",
-    )
-    mconfig.add_argument(
-        "-o",
-        "--output_dir",
-        type=str,
-        default=None,
-        help="Optional directory to place the default config file.\
-                            Default: ~/.merlin",
-    )
-    mconfig.add_argument(
-        "--broker",
-        type=str,
-        default=None,
-        help="Optional broker type, backend will be redis\
-                            Default: rabbitmq",
-    )
-
-    # merlin example
-    example = subparsers.add_parser(
-        "example",
-        help="Generate an example merlin workflow.",
-        formatter_class=RawTextHelpFormatter,
-    )
-    example.add_argument(
-        "workflow",
-        action="store",
-        type=str,
-        help="The name of the example workflow to setup. Use 'merlin example list' to see available options.",
-    )
-    example.add_argument(
-        "-p",
-        "--path",
-        action="store",
-        type=str,
-        default=None,
-        help="Specify a path to write the workflow to. Defaults to current "
-        "working directory",
-    )
-    example.set_defaults(func=process_example)
-
     # merlin monitor
-    monitor = subparsers.add_parser(
+    monitor: ArgumentParser = subparsers.add_parser(
         "monitor",
         help="Check for active workers on an allocation.",
         formatter_class=RawTextHelpFormatter,
@@ -718,7 +707,58 @@ def setup_argparse():
     )
     monitor.set_defaults(func=process_monitor)
 
-    return parser
+
+def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
+    """All CLI arg parsers generally used diagnostically are generated here.
+
+    :param [ArgumentParser] `subparsers`: the subparsers needed for every CLI command that handles diagnostics for a
+        Merlin job.
+    """
+    # merlin status
+    status: ArgumentParser = subparsers.add_parser(
+        "status",
+        help="List server stats (name, number of tasks to do, \
+                              number of connected workers) for a workflow spec.",
+    )
+    status.set_defaults(func=query_status)
+    status.add_argument(
+        "specification", type=str, help="Path to a Merlin YAML spec file"
+    )
+    status.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="steps",
+        default=["all"],
+        help="The specific steps in the YAML file you want to query",
+    )
+    status.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type.\
+                            Default: %(default)s",
+    )
+    status.add_argument(
+        "--vars",
+        action="store",
+        dest="variables",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
+        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+    )
+    status.add_argument(
+        "--csv", type=str, help="csv file to dump status report to", default=None
+    )
+
+    # merlin info
+    info: ArgumentParser = subparsers.add_parser(
+        "info",
+        help="display info about the merlin configuration and the python configuration. Useful for debugging.",
+    )
+    info.set_defaults(func=print_info)
 
 
 def main():
@@ -735,10 +775,16 @@ def main():
 
     try:
         args.func(args)
-    except Exception as e:
+        # pylint complains that this exception is too broad - being at the literal top of the program stack,
+        # it's ok.
+    except Exception as excpt:  # pylint: disable=broad-except
         LOG.debug(traceback.format_exc())
-        LOG.error(str(e))
+        LOG.error(str(excpt))
         return 1
+    # All paths in a function ought to return an exit code, or none of them should. Given the
+    # distributed nature of Merlin, maybe it doesn't make sense for it to exit 0 until the work is completed, but
+    # if the work is dispatched with no errors, that is a 'successful' Merlin run - any other failures are runtime.
+    return 0
 
 
 if __name__ == "__main__":
