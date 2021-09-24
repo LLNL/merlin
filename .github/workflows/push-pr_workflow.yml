@@ -51,7 +51,7 @@ jobs:
         python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
         python3 -m pylint tests --rcfile=setup.cfg --exit-zero
 
-  Run tests:
+  Test-suite:
     runs-on: ubuntu-latest
     strategy:
       matrix:
