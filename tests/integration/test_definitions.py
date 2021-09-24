@@ -384,7 +384,7 @@ def define_tests():
         other_local_tests,
         # provenence_equality_checks, # omitting provenance equality check because it is broken
         # style_checks, # omitting style checks due to different results on different machines
-        # dependency_checks,
+        dependency_checks,
         distributed_tests
     ]:
         all_tests.update(test_dict)
