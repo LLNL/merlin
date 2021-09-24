@@ -207,14 +207,19 @@ def route_for_task(name, args, kwargs, options, task=None, **kw):
         return {"queue": queue}
 
 
-def create_config(task_server, config_dir, broker):
+def create_config(task_server: str, config_dir: str, broker: str, test: str) -> None:
     """
     Create a config for the given task server.
 
-    :param `task_server`: The task server from which to stop workers.
-    :param `config_dir`: Optional directory to install the config.
+    :param [str] `task_server`: The task server from which to stop workers.
+    :param [str] `config_dir`: Optional directory to install the config.
+    :param [str] `broker`: string indicated the broker, used to check for redis.
+    :param [str] `test`: string indicating if the app.yaml is used for testing.
     """
-    LOG.info("Creating config ...")
+    if test:
+        LOG.info("Creating test config ...")
+    else:
+        LOG.info("Creating config ...")
 
     if not os.path.isdir(config_dir):
         os.makedirs(config_dir)

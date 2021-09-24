@@ -39,6 +39,7 @@ def define_tests():
     lsf = f"{examples}/lsf/lsf_par.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
+    release_dependencies = "./requirements/release.txt"
 
     basic_checks = {
         "merlin": ("merlin", HasReturnCode(1), "local"),
@@ -318,7 +319,7 @@ def define_tests():
     }
     dependency_checks = {
         "deplic no GNU": (
-            "deplic ./",
+            f"deplic {release_dependencies}",
             [HasRegex("GNU", negate=True), HasRegex("GPL", negate=True)],
             "local",
         ),
@@ -383,7 +384,7 @@ def define_tests():
         other_local_tests,
         # provenence_equality_checks, # omitting provenance equality check because it is broken
         # style_checks, # omitting style checks due to different results on different machines
-        dependency_checks,
+        # dependency_checks,
         distributed_tests
     ]:
         all_tests.update(test_dict)

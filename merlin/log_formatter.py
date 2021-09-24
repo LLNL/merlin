@@ -1,3 +1,5 @@
+"""This module handles setting up the extensive logging system in Merlin."""
+
 ###############################################################################
 # Copyright (c) 2019, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
