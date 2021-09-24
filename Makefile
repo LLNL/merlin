@@ -63,7 +63,6 @@ virtualenv:
 
 # install merlin into the virtual environment
 install-merlin: virtualenv
-	. $(VENV)/bin/activate; \
 	$(PIP) install -e .; \
 	merlin config; \
 
@@ -74,7 +73,7 @@ install-workflow-deps: virtualenv install-merlin
 
 
 # install requirements
-install-dev: virtualenv install-workflow-deps
+install-dev: virtualenv install-merlin install-workflow-deps
 	$(PIP) install -r requirements/dev.txt; \
 
 
