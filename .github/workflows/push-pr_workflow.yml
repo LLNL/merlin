@@ -3,8 +3,55 @@ name: Python CI
 on: [push, pull_request]
 
 jobs:
-  build:
+  Changelog:
+    name: CHANGELOG.md updated
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
 
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Check that CHANGELOG has been updated
+      run: |
+        # If this step fails, this means you haven't updated the CHANGELOG.md
+        # file with notes on your contribution.
+        git diff --name-only $(git merge-base origin/main HEAD) | grep '^CHANGELOG.md$' && echo "Thanks for helping keep our CHANGELOG up-to-date!"
+
+  Lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Check cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install --upgrade -r requirements.txt; fi
+        pip3 install --upgrade -r requirements/dev.txt
+
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --max-complexity=15 --statistics --max-line-length=127
+
+    - name: Lint with PyLint
+      run: |
+        python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
+        python3 -m pylint tests --rcfile=setup.cfg --exit-zero
+
+  Test-suite:
     runs-on: ubuntu-latest
     services:
       rabbitmq:
@@ -24,6 +71,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Check cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
@@ -39,13 +92,6 @@ jobs:
       run: |
         merlin example feature_demo
         pip3 install -r feature_demo/requirements.txt
-
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --max-complexity=15 --statistics --max-line-length=127
 
     - name: Run pytest over unit test suite
       run: |

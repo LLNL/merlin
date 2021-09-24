@@ -39,6 +39,7 @@ def define_tests():
     lsf = f"{examples}/lsf/lsf_par.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
+    release_dependencies = "./requirements/release.txt"
 
     basic_checks = {
         "merlin": ("merlin", HasReturnCode(1), "local"),
@@ -316,13 +317,13 @@ def define_tests():
         "black check merlin": (f"{black} merlin/", HasReturnCode(), "local"),
         "black check tests": (f"{black} tests/", HasReturnCode(), "local"),
     }
-    # dependency_checks = {
-    #     "deplic no GNU": (
-    #         "deplic ./",
-    #         [HasRegex("GNU", negate=True), HasRegex("GPL", negate=True)],
-    #         "local",
-    #     ),
-    # }
+    dependency_checks = {
+        "deplic no GNU": (
+            f"deplic {release_dependencies}",
+            [HasRegex("GNU", negate=True), HasRegex("GPL", negate=True)],
+            "local",
+        ),
+    }
     distributed_tests = {  # noqa: F841
         "run and purge feature_demo": (
             f"{run} {demo} ; {purge} {demo} -f",
