@@ -42,17 +42,9 @@ from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
 from merlin.config.utils import Priority, get_priority
-from merlin.exceptions import (
-    HardFailException,
-    InvalidChainException,
-    RestartException,
-    RetryException,
-)
+from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
 from merlin.router import stop_workers
-from merlin.spec.expansion import (
-    parameter_substitutions_for_cmd,
-    parameter_substitutions_for_sample,
-)
+from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
 from merlin.study.step import Step
 
 
@@ -146,19 +138,13 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                 )
                 result = ReturnCode.SOFT_FAIL
         elif result == ReturnCode.SOFT_FAIL:
-            LOG.warning(
-                f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow."
-            )
+            LOG.warning(f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow.")
         elif result == ReturnCode.HARD_FAIL:
 
             # stop all workers attached to this queue
             step_queue = step.get_task_queue()
-            LOG.error(
-                f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow."
-            )
-            LOG.error(
-                f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!"
-            )
+            LOG.error(f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow.")
+            LOG.error(f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!")
             shutdown = shutdown_workers.s([step_queue])
             shutdown.set(queue=step_queue)
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
@@ -170,9 +156,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
-            LOG.warning(
-                f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow."
-            )
+            LOG.warning(f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow.")
         # queue off the next task in a chain while adding it to the current chord so that the chordfinisher actually
         # waits for the next task in the chain
         if next_in_chain is not None:
@@ -271,8 +255,7 @@ def add_merlin_expanded_chain_to_chord(
         all_chains = []
         LOG.debug(f"gathering up {len(samples)} relative paths")
         relative_paths = [
-            os.path.dirname(sample_index.get_path_to_sample(sample_id + min_sample_id))
-            for sample_id in range(len(samples))
+            os.path.dirname(sample_index.get_path_to_sample(sample_id + min_sample_id)) for sample_id in range(len(samples))
         ]
         LOG.debug(f"recursing grandparent with relative paths {relative_paths}")
         for step in chain_:
@@ -286,9 +269,7 @@ def add_merlin_expanded_chain_to_chord(
             for sample_id, sample in enumerate(samples):
                 new_step = task_type.s(
                     step.clone_changing_workspace_and_cmd(
-                        new_workspace=os.path.join(
-                            workspace, relative_paths[sample_id]
-                        ),
+                        new_workspace=os.path.join(workspace, relative_paths[sample_id]),
                         cmd_replacement_pairs=parameter_substitutions_for_sample(
                             sample,
                             labels,
@@ -314,28 +295,20 @@ def add_merlin_expanded_chain_to_chord(
             next_step = add_merlin_expanded_chain_to_chord.s(
                 task_type,
                 chain_,
-                samples[
-                    next_index.min - min_sample_id : next_index.max - min_sample_id
-                ],
+                samples[next_index.min - min_sample_id : next_index.max - min_sample_id],
                 labels,
                 next_index,
                 adapter_config,
                 next_index.min,
             )
             next_step.set(queue=chain_[0].get_task_queue())
-            LOG.debug(
-                f"recursing with range {next_index.min}:{next_index.max}, {next_index.name} {signature(next_step)}"
-            )
-            LOG.debug(
-                f"queuing samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}..."
-            )
+            LOG.debug(f"recursing with range {next_index.min}:{next_index.max}, {next_index.name} {signature(next_step)}")
+            LOG.debug(f"queuing samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}...")
             if self.request.is_eager:
                 next_step.delay()
             else:
                 self.add_to_chord(next_step, lazy=False)
-            LOG.debug(
-                f"queued for samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}"
-            )
+            LOG.debug(f"queued for samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}")
 
     return ReturnCode.OK
 
@@ -356,11 +329,7 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
         # based off of the parameter substitutions and relative_path for
         # a given sample.
 
-        new_steps = [
-            task_type.s(step, adapter_config=adapter_config).set(
-                queue=step.get_task_queue()
-            )
-        ]
+        new_steps = [task_type.s(step, adapter_config=adapter_config).set(queue=step.get_task_queue())]
         all_chains.append(new_steps)
     add_chains_to_chord(self, all_chains)
 
@@ -399,9 +368,7 @@ def add_chains_to_chord(self, all_chains):
             # kwargs.
             for g in reversed(range(len(all_chains))):
                 if g < len(all_chains) - 1:
-                    new_kwargs = signature(all_chains[g][i]).kwargs.update(
-                        {"next_in_chain": all_chains[g + 1][i]}
-                    )
+                    new_kwargs = signature(all_chains[g][i]).kwargs.update({"next_in_chain": all_chains[g + 1][i]})
                     all_chains[g][i] = all_chains[g][i].replace(kwargs=new_kwargs)
             chain_steps.append(all_chains[0][i])
 
@@ -445,9 +412,7 @@ def expand_tasks_with_samples(
     """
     LOG.debug(f"expand_tasks_with_samples called with chain,{chain_}\n")
     # Figure out how many directories there are, make a glob string
-    directory_sizes = uniform_directories(
-        len(samples), bundle_size=1, level_max_dirs=level_max_dirs
-    )
+    directory_sizes = uniform_directories(len(samples), bundle_size=1, level_max_dirs=level_max_dirs)
 
     glob_path = "*/" * len(directory_sizes)
 
@@ -471,11 +436,7 @@ def expand_tasks_with_samples(
     # sub in globs prior to expansion
     # sub the glob command
     steps = [
-        step.clone_changing_workspace_and_cmd(
-            cmd_replacement_pairs=parameter_substitutions_for_cmd(
-                glob_path, sample_paths
-            )
-        )
+        step.clone_changing_workspace_and_cmd(cmd_replacement_pairs=parameter_substitutions_for_cmd(glob_path, sample_paths))
         for step in steps
     ]
 
@@ -499,9 +460,7 @@ def expand_tasks_with_samples(
         ]
         for condition in conditions:
             if not found_tasks:
-                for next_index_path, next_index in sample_index.traverse(
-                    conditional=condition
-                ):
+                for next_index_path, next_index in sample_index.traverse(conditional=condition):
                     LOG.info(
                         f"generating next step for range {next_index.min}:{next_index.max} {next_index.max-next_index.min}"
                     )
@@ -521,13 +480,9 @@ def expand_tasks_with_samples(
                     if self.request.is_eager:
                         sig.delay()
                     else:
-                        LOG.info(
-                            f"queuing expansion task {next_index.min}:{next_index.max}"
-                        )
+                        LOG.info(f"queuing expansion task {next_index.min}:{next_index.max}")
                         self.add_to_chord(sig, lazy=False)
-                    LOG.info(
-                        f"merlin expansion task {next_index.min}:{next_index.max} queued"
-                    )
+                    LOG.info(f"merlin expansion task {next_index.min}:{next_index.max} queued")
                     found_tasks = True
     else:
         LOG.debug("queuing simple chain task")
@@ -612,9 +567,7 @@ def queue_merlin_study(study, adapter):
                     for gchain in chain_group
                 ]
             ),
-            chordfinisher.s().set(
-                queue=egraph.step(chain_group[0][0]).get_task_queue()
-            ),
+            chordfinisher.s().set(queue=egraph.step(chain_group[0][0]).get_task_queue()),
         )
         for chain_group in groups_of_chains[1:]
     )

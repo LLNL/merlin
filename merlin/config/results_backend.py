@@ -60,10 +60,7 @@ MYSQL_CONFIG_FILENAMES = {
 
 
 MYSQL_CONNECTION_STRING = (
-    "db+mysql+mysqldb://{user}:{password}@{server}/mlsi"
-    "?ssl_ca={ssl_ca}"
-    "&ssl_cert={ssl_cert}"
-    "&ssl_key={ssl_key}"
+    "db+mysql+mysqldb://{user}:{password}@{server}/mlsi" "?ssl_ca={ssl_ca}" "&ssl_cert={ssl_cert}" "&ssl_key={ssl_key}"
 )
 
 
@@ -280,9 +277,7 @@ def _resolve_backend_string(backend, certs_path, include_password):
         return get_redis(certs_path=certs_path, include_password=include_password)
 
     elif backend == "rediss":
-        return get_redis(
-            certs_path=certs_path, include_password=include_password, ssl=True
-        )
+        return get_redis(certs_path=certs_path, include_password=include_password, ssl=True)
     else:
         return None
 
@@ -313,9 +308,7 @@ def get_ssl_config(celery_check=False):
     except AttributeError:
         certs_path = None
 
-    results_backend_ssl = get_ssl_entries(
-        "Results Backend", results_backend, CONFIG.results_backend, certs_path
-    )
+    results_backend_ssl = get_ssl_entries("Results Backend", results_backend, CONFIG.results_backend, certs_path)
 
     if results_backend == "rediss":
         if not results_backend_ssl:

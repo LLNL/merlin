@@ -175,9 +175,7 @@ def run_tests(args, tests):
     if failures == 0:
         print(f"Done. {n_to_run} tests passed in {round(total_time, 2)} s.")
         return 0
-    print(
-        f"Done. {failures} tests out of {n_to_run} failed after {round(total_time, 2)} s.\n"
-    )
+    print(f"Done. {failures} tests out of {n_to_run} failed after {round(total_time, 2)} s.\n")
     return 1
 
 
@@ -188,12 +186,8 @@ def setup_argparse():
         action="store_true",
         help="Flag for stopping all testing upon first failure",
     )
-    parser.add_argument(
-        "--verbose", action="store_true", help="Flag for more detailed output messages"
-    )
-    parser.add_argument(
-        "--local", action="store_true", default=None, help="Run only local tests"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Flag for more detailed output messages")
+    parser.add_argument("--local", action="store_true", default=None, help="Run only local tests")
     parser.add_argument(
         "--ids",
         action="store",
@@ -201,8 +195,7 @@ def setup_argparse():
         type=int,
         nargs="+",
         default=None,
-        help="Provide space-delimited ids of tests you want to run."
-        "Example: '--ids 1 5 8 13'",
+        help="Provide space-delimited ids of tests you want to run." "Example: '--ids 1 5 8 13'",
     )
     return parser
 

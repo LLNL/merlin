@@ -257,13 +257,9 @@ def check_merlin_status(args, spec):
         while count < max_count:
             # This list will include strings comprised of the worker name with the hostname e.g. worker_name@host.
             worker_status = get_workers(args.task_server)
-            LOG.info(
-                f"Monitor: checking for workers, running workers = {worker_status} ..."
-            )
+            LOG.info(f"Monitor: checking for workers, running workers = {worker_status} ...")
 
-            check = any(
-                any(iwn in iws for iws in worker_status) for iwn in worker_names
-            )
+            check = any(any(iwn in iws for iws in worker_status) for iwn in worker_names)
             if check:
                 break
 

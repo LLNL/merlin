@@ -8,9 +8,7 @@ from joblib import load
 plt.style.use("seaborn-white")
 
 parser = argparse.ArgumentParser("Learn surrogate model form simulation")
-parser.add_argument(
-    "-study_dir", help="The study directory, usually '$(MERLIN_WORKSPACE)'"
-)
+parser.add_argument("-study_dir", help="The study directory, usually '$(MERLIN_WORKSPACE)'")
 args = parser.parse_args()
 
 study_dir = args.study_dir
@@ -19,9 +17,7 @@ learner_path = f"{study_dir}/learner/surrogate.joblib"
 new_samples_path = f"{study_dir}/pick_new_inputs/new_samples.npy"
 new_exploit_samples_path = f"{study_dir}/pick_new_inputs/new_exploit_samples.npy"
 new_explore_samples_path = f"{study_dir}/pick_new_inputs/new_explore_samples.npy"
-new_explore_star_samples_path = (
-    f"{study_dir}/pick_new_inputs/new_explore_star_samples.npy"
-)
+new_explore_star_samples_path = f"{study_dir}/pick_new_inputs/new_explore_star_samples.npy"
 optimum_path = f"{study_dir}/optimizer/optimum.npy"
 old_best_path = f"{study_dir}/optimizer/old_best.npy"
 
@@ -115,9 +111,7 @@ ax.plot_surface(
     alpha=0.4,
     edgecolor="none",
 )
-ax.scatter(
-    existing_X[:, 0], existing_X[:, 1], np.clip(existing_y, -100, 100), marker="x"
-)
+ax.scatter(existing_X[:, 0], existing_X[:, 1], np.clip(existing_y, -100, 100), marker="x")
 ax.view_init(45, 45)
 ax.set_xlabel("DIM_1")
 ax.set_ylabel("DIM_2")
@@ -134,9 +128,7 @@ ax.plot_surface(
     alpha=0.4,
     edgecolor="none",
 )
-ax.scatter(
-    existing_X[:, 0], existing_X[:, 1], np.clip(existing_y, -100, 100), marker="x"
-)
+ax.scatter(existing_X[:, 0], existing_X[:, 1], np.clip(existing_y, -100, 100), marker="x")
 ax.view_init(45, 45)
 ax.set_xlabel("DIM_1")
 ax.set_ylabel("DIM_2")
@@ -146,9 +138,7 @@ ax = fig.add_subplot(3, 2, 5)
 ax.scatter(existing_X[:, 0], existing_X[:, 1], label="Existing Inputs")
 ax.scatter(new_samples[:, 0], new_samples[:, 1], label="Suggested Inputs")
 ax.annotate("Predicted Optimum", xy=optimum, xytext=(1, 0), arrowprops=dict(width=0.01))
-ax.annotate(
-    "Current Best", xy=old_best, xytext=(-1.5, 1.5), arrowprops=dict(width=0.01)
-)
+ax.annotate("Current Best", xy=old_best, xytext=(-1.5, 1.5), arrowprops=dict(width=0.01))
 ax.annotate("Actual Minimum", xy=(1, 1), xytext=(1.5, 2.5), arrowprops=dict(width=0.01))
 
 ax.set_xlabel("DIM_1")
@@ -158,12 +148,8 @@ ax.legend()
 ax.grid()
 
 ax = fig.add_subplot(3, 2, 6)
-ax.scatter(
-    new_exploit_samples[:, 0], new_exploit_samples[:, 1], label="Exploit Samples"
-)
-ax.scatter(
-    new_explore_samples[:, 0], new_explore_samples[:, 1], label="Explore Samples"
-)
+ax.scatter(new_exploit_samples[:, 0], new_exploit_samples[:, 1], label="Exploit Samples")
+ax.scatter(new_explore_samples[:, 0], new_explore_samples[:, 1], label="Explore Samples")
 ax.scatter(
     new_explore_star_samples[:, 0],
     new_explore_star_samples[:, 1],

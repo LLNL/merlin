@@ -92,9 +92,7 @@ def get_rabbit_connection(config_path, include_password, conn="amqps"):
     try:
         password = read_file(password_filepath)
     except IOError:
-        raise ValueError(
-            f"Broker: RabbitMQ password file {password_filepath} does not exist"
-        )
+        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist")
 
     try:
         port = CONFIG.broker.port

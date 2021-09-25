@@ -27,9 +27,7 @@ def setup_argparse():
     parser = argparse.ArgumentParser("Generate some names!")
     parser.add_argument("-n", help="number of names", default=100, type=int)
     parser.add_argument("-b", help="number of batches of names", default=5, type=int)
-    parser.add_argument(
-        "-outfile", help="name of output .csv file", default="samples.csv"
-    )
+    parser.add_argument("-outfile", help="name of output .csv file", default="samples.csv")
     return parser
 
 
