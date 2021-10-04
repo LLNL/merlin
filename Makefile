@@ -38,6 +38,7 @@ include config.mk
 .PHONY : tests
 .PHONY : check-flake8
 .PHONY : check-black
+.PHONY : check-isort
 .PHONY : check-pylint
 .PHONY : check-style
 .PHONY : fix-style
@@ -111,6 +112,13 @@ check-black:
 	$(PYTHON) -m black --check --target-version py36 $(MRLN); \
 
 
+check-isort:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) merlin; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) tests; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) *.py; \
+
+
 check-pylint:
 	. $(VENV)/bin/activate; \
 	echo "PyLinting merlin source..."; \
@@ -120,7 +128,7 @@ check-pylint:
 
 
 # run code style checks
-check-style: check-flake8 check-black check-pylint
+check-style: check-flake8 check-black check-isort check-pylint
 
 
 check-push: tests check-style

@@ -59,9 +59,14 @@ MYSQL_CONFIG_FILENAMES = {
 }
 
 
+# fmt: off
 MYSQL_CONNECTION_STRING = (
-    "db+mysql+mysqldb://{user}:{password}@{server}/mlsi" "?ssl_ca={ssl_ca}" "&ssl_cert={ssl_cert}" "&ssl_key={ssl_key}"
+    "db+mysql+mysqldb://{user}:{password}@{server}/mlsi"
+    "?ssl_ca={ssl_ca}"
+    "&ssl_cert={ssl_cert}"
+    "&ssl_key={ssl_key}"
 )
+# fmt: on
 
 
 SQLITE_CONNECTION_STRING = "db+sqlite:///results.db"
