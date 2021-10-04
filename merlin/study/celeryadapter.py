@@ -317,7 +317,7 @@ def examine_and_log_machines(worker_val, yenv) -> bool:
                 LOG.error(f"The output path, {output_path}, is not accessible on this host, {hostname}")
         else:
             LOG.warning(
-                "The env:variables section does not have an OUTPUT_PATH" "specified, multi-machine checks cannot be performed."
+                "The env:variables section does not have an OUTPUT_PATH specified, multi-machine checks cannot be performed."
             )
         return False
 
@@ -327,9 +327,9 @@ def verify_args(spec, worker_args, worker_name, overlap):
     parallel = batch_check_parallel(spec)
     if parallel:
         if "--concurrency" not in worker_args:
-            LOG.warning("The worker arg --concurrency [1-4] is recommended " "when running parallel tasks")
+            LOG.warning("The worker arg --concurrency [1-4] is recommended when running parallel tasks")
         if "--prefetch-multiplier" not in worker_args:
-            LOG.warning("The worker arg --prefetch-multiplier 1 is " "recommended when running parallel tasks")
+            LOG.warning("The worker arg --prefetch-multiplier 1 is recommended when running parallel tasks")
         if "fair" not in worker_args:
             LOG.warning("The worker arg -O fair is recommended when running parallel tasks")
 

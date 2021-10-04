@@ -62,7 +62,7 @@ class MerlinStepRecord(_StepRecord):
             self._submit_time = datetime.now()
         else:
             LOG.debug(
-                "Merlin: Cannot set the submission time of '%s' because it has " "already been set.",
+                "Merlin: Cannot set the submission time of '%s' because it has already been set.",
                 self.name,
             )
 

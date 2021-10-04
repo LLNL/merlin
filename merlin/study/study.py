@@ -132,7 +132,7 @@ class MerlinStudy:
         if self.original_spec.merlin["samples"]:
             for label in self.original_spec.merlin["samples"]["column_labels"]:
                 if label in self.original_spec.globals:
-                    raise ValueError(f"column_label {label} cannot also be " "in global.parameters!")
+                    raise ValueError(f"column_label {label} cannot also be in global.parameters!")
 
     @staticmethod
     def get_user_vars(spec):

@@ -195,7 +195,7 @@ def setup_argparse():
         type=int,
         nargs="+",
         default=None,
-        help="Provide space-delimited ids of tests you want to run." "Example: '--ids 1 5 8 13'",
+        help="Provide space-delimited ids of tests you want to run. Example: '--ids 1 5 8 13'",
     )
     return parser
 
