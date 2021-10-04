@@ -109,7 +109,9 @@ check-flake8:
 
 check-black:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) -m black --check --target-version py36 $(MRLN); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(MRLN); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(TEST); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 *.py; \
 
 
 check-isort:

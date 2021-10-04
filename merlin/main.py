@@ -363,7 +363,7 @@ def setup_argparse() -> None:
         dest="level",
         type=str,
         default=DEFAULT_LOG_LEVEL,
-        help="Set the log level. Options: DEBUG, INFO, WARNING, ERROR. [Default: %(default)s]"
+        help="Set the log level. Options: DEBUG, INFO, WARNING, ERROR. [Default: %(default)s]",
     )
 
     # merlin run
@@ -535,7 +535,7 @@ def setup_argparse() -> None:
         action="store",
         type=str,
         default=None,
-        help="Specify a path to write the workflow to. Defaults to current working directory"
+        help="Specify a path to write the workflow to. Defaults to current working directory",
     )
     example.set_defaults(func=process_example)
 
