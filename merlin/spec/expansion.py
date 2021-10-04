@@ -81,7 +81,13 @@ def expand_line(line, var_dict, env_vars=False):
     Expand one line of text by substituting user variables,
     optionally environment variables, as well as variables in 'var_dict'.
     """
-    if (not contains_token(line)) and (not contains_shell_ref(line)) and ("~" not in line):
+    # fmt: off
+    if (
+        (not contains_token(line))
+        and (not contains_shell_ref(line))
+        and ("~" not in line)
+    ):
+    # fmt: on
         return line
     for key, val in var_dict.items():
         if key in line:

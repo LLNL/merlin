@@ -174,7 +174,11 @@ class MerlinSpec(YAMLSpecification):
             if not isinstance(defaults, dict):
                 return
             for key, val in defaults.items():
-                if (key not in result) or ((result[key] is None) and (defaults[key] is not None)):
+                # fmt: off
+                if (key not in result) or (
+                    (result[key] is None) and (defaults[key] is not None)
+                ):
+                # fmt: on
                     result[key] = val
                 else:
                     recurse(result[key], val)

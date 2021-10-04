@@ -300,7 +300,13 @@ class SampleIndex:
 
         """
         if just_leaf_directories:
-            return delimiter.join([path for path, node in self.traverse_directories() if node.is_parent_of_leaf])
+            # fmt: off
+            return delimiter.join(
+                [
+                    path for path, node in self.traverse_directories() if node.is_parent_of_leaf
+                ]
+            )
+        # fmt: on
         return delimiter.join([path for path, _ in self.traverse_directories()])
 
     def __str__(self):

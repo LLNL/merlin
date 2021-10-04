@@ -106,7 +106,14 @@ def _get_npy_info2(f):
         hlen = hlen_char[0] + 256 * hlen_char[1]
     elif major == 2:
         hlen_char = list(map(ord, f.read(4)))
-        hlen = hlen_char[0] + 256 * hlen_char[1] + 65536 * hlen_char[2] + (1 << 24) * hlen_char[3]
+        # fmt: off
+        hlen = (
+            hlen_char[0]
+            + 256 * hlen_char[1]
+            + 65536 * hlen_char[2]
+            + (1 << 24) * hlen_char[3]
+        )
+        # fmt: on
     else:
         raise Exception("unknown .npy format, e.g. not 1 or 2")
     hdr = eval(f.read(hlen))  # TODO remove eval
@@ -130,7 +137,14 @@ def _get_npy_info3(f):
         hlen = hlen_char[0] + 256 * hlen_char[1]
     elif major == 2:
         hlen_char = list(f.read(4))
-        hlen = hlen_char[0] + 256 * hlen_char[1] + 65536 * hlen_char[2] + (1 << 24) * hlen_char[3]
+        # fmt: off
+        hlen = (
+            hlen_char[0]
+            + 256 * hlen_char[1]
+            + 65536 * hlen_char[2]
+            + (1 << 24) * hlen_char[3]
+        )
+        # fmt: on
     else:
         raise Exception("unknown .npy format, e.g. not 1 or 2")
     hdr = eval(f.read(hlen))  # TODO remove eval

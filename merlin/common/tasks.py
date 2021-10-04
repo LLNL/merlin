@@ -368,7 +368,11 @@ def add_chains_to_chord(self, all_chains):
             # kwargs.
             for g in reversed(range(len(all_chains))):
                 if g < len(all_chains) - 1:
-                    new_kwargs = signature(all_chains[g][i]).kwargs.update({"next_in_chain": all_chains[g + 1][i]})
+                    # fmt: off
+                    new_kwargs = signature(all_chains[g][i]).kwargs.update(
+                        {"next_in_chain": all_chains[g + 1][i]}
+                    )
+                    # fmt: on
                     all_chains[g][i] = all_chains[g][i].replace(kwargs=new_kwargs)
             chain_steps.append(all_chains[0][i])
 
