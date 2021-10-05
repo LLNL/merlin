@@ -82,12 +82,6 @@ jobs:
         pip3 install -e .
         merlin config
 
-    - name: "Check file existence"
-      uses: andstor/file-existence-action@v1
-      with:
-        files: "~/.merlin/app.yaml"
-
-
     - name: Install CLI task dependencies generated from the 'feature demo' workflow
       run: |
         merlin example feature_demo
@@ -150,17 +144,12 @@ jobs:
         pip3 install -e .
         merlin config --broker redis
 
-    - name: Check file existence
-      uses: andstor/file-existence-action@v1
-      with:
-        files: "~/.merlin/app.yaml"
-
     - name: Install CLI task dependencies generated from the 'feature demo' workflow
       run: |
         merlin example feature_demo
         pip3 install -r feature_demo/requirements.txt
 
-    - name: Run integration test suite
+    - name: Run integration test suite for Redis
       env:
         REDIS_HOST: redis
         REDIS_PORT: 6379
