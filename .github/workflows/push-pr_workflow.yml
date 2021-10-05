@@ -140,7 +140,7 @@ jobs:
         pushd redis*/
         make
         redis-server &
-	popd
+        popd
 
     - name: Install merlin to run unit tests
       run: |
