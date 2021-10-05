@@ -51,7 +51,7 @@ jobs:
         python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
         python3 -m pylint tests --rcfile=setup.cfg --exit-zero
 
-  Local test-suite:
+  Local-test-suite:
     runs-on: ubuntu-latest
     services:
       rabbitmq:
@@ -101,7 +101,7 @@ jobs:
       run: |
         python3 tests/integration/run_tests.py --verbose --local
 
-  Distributed test-suite:
+  Distributed-test-suite:
     runs-on: ubuntu-latest
     services:
       rabbitmq:
