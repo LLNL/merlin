@@ -299,8 +299,8 @@ class SampleIndex:
         "0/0 0/1 0/2 1/0 1/1 1/2"
 
         """
+        # fmt: off
         if just_leaf_directories:
-            # fmt: off
             return delimiter.join(
                 [
                     path for path, node in self.traverse_directories() if node.is_parent_of_leaf

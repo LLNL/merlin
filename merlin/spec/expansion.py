@@ -87,8 +87,8 @@ def expand_line(line, var_dict, env_vars=False):
         and (not contains_shell_ref(line))
         and ("~" not in line)
     ):
-    # fmt: on
         return line
+    # fmt: on
     for key, val in var_dict.items():
         if key in line:
             line = line.replace(var_ref(key), str(val))

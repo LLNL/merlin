@@ -178,10 +178,10 @@ class MerlinSpec(YAMLSpecification):
                 if (key not in result) or (
                     (result[key] is None) and (defaults[key] is not None)
                 ):
-                # fmt: on
                     result[key] = val
                 else:
                     recurse(result[key], val)
+                # fmt: on
 
         recurse(object_to_update, default_dict)
 
