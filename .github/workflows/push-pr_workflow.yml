@@ -89,8 +89,8 @@ jobs:
         tar xvf redis*.tar.gz
         cd redis*/
         make
-	make test
-	redis-server &
+        make test
+        redis-server &
 
     - name: Install merlin to run unit tests
       run: |
