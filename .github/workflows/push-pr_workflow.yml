@@ -155,3 +155,14 @@ jobs:
         REDIS_PORT: 6379
       run: |
         python3 tests/integration/run_tests.py --verbose --ids 31 32
+
+    - name: Setup rabbitmq config
+      run: |
+        merlin config --broker rabbitmq
+
+    - name: Run integration test suite for rabbitmq
+      env:
+        RABBITMQ_HOST: redis
+        RABBITMQ_PORT: 5672
+      run: |
+        python3 tests/integration/run_tests.py --verbose --ids 31 32
