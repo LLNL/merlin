@@ -85,7 +85,7 @@ jobs:
     - name: "Check file existence"
       uses: andstor/file-existence-action@v1
       with:
-        files: "~/.merlin/app.yaml"
+        files: "app.yaml"
 
 
     - name: Install CLI task dependencies generated from the 'feature demo' workflow
