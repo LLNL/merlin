@@ -119,7 +119,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-	ports:
+        ports:
 	  - 6379:6379
 
     strategy:
@@ -163,6 +163,6 @@ jobs:
     - name: Run integration test suite
       env:
         REDIS_HOST: redis
-	REDIS_PORT: 6379
+        REDIS_PORT: 6379
       run: |
         python3 tests/integration/run_tests.py --verbose --ids 31 32
