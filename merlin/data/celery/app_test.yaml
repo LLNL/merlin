@@ -8,9 +8,13 @@ broker:
     # can be redis, redis+sock, or rabbitmq
     name: rabbitmq
     #username: # defaults to your username unless changed here
+    username: $(RABBITMQ_USER)
     # password:
+    password: $(RABBITMQ_PASS)
     # server URL
     server: $(RABBITMQ_PORT)
+
+    
 
     ### for rabbitmq, redis+sock connections ###
     #vhost: # defaults to your username unless changed here

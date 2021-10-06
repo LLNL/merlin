@@ -167,7 +167,7 @@ jobs:
       env:
         RABBITMQ_PORT: ${{ job.services.rabbitmq.ports['5672'] }}
         AMQP_URL: amqp://localhost:${{ job.services.rabbitmq.ports[5672] }}
-        # RABBITMQ_DEFAULT_USER: Jimmy_Space
-        # RABBITMQ_DEFAULT_PASS: 1234Password
+        RABBITMQ_USER: Jimmy_Space
+        RABBITMQ_PASS: 1234Password
       run: |
         python3 tests/integration/run_tests.py --verbose --ids 31 32
