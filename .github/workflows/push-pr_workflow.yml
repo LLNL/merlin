@@ -161,7 +161,7 @@ jobs:
       run: |
         rm ~/.merlin/app.yaml
         merlin config --test rabbitmq
-	cat ~/.merlin/app.yaml	
+        cat ~/.merlin/app_test.yaml	
 
     - name: Run integration test suite for rabbitmq
       env:
