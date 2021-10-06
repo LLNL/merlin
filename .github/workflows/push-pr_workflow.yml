@@ -143,6 +143,7 @@ jobs:
       run: |
         pip3 install -e .
         merlin config --broker redis
+        cat ~/.merlin/app.yaml
 
     - name: Install CLI task dependencies generated from the 'feature demo' workflow
       run: |
@@ -160,6 +161,7 @@ jobs:
       run: |
         rm ~/.merlin/app.yaml
         merlin config
+        cat ~/.merlin/app.yaml	
 
     - name: Run integration test suite for rabbitmq
       env:
