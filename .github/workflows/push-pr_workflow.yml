@@ -170,7 +170,7 @@ jobs:
         RABBITMQ_USER: Jimmy_Space
         RABBITMQ_PASS: 1234Password
       run: |
-        sed -i 's/$(RABBITMQ_USER)/${{ env.RABBITMQ_USER }}/' .merlin/app_test.yaml
-        sed -i 's/$(RABBITMQ_PASS)/${{ env.RABBITMQ_PASS }}/' .merlin/app_test.yaml
-        sed -i 's/$(RABBITMQ_PORT)/${{ env.RABBITMQ_PORT }}/' .merlin/app_test.yaml
+        sed -i 's/$(RABBITMQ_USER)/${{ env.RABBITMQ_USER }}/' .merlin/app.yaml
+        sed -i 's/$(RABBITMQ_PASS)/${{ env.RABBITMQ_PASS }}/' .merlin/app.yaml
+        sed -i 's/$(RABBITMQ_PORT)/${{ env.RABBITMQ_PORT }}/' .merlin/app.yaml
         python3 tests/integration/run_tests.py --verbose --ids 31 32
