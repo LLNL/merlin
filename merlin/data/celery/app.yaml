@@ -38,5 +38,3 @@ results_backend:
     encryption_key: ~/.merlin/encrypt_data_key
     port: 6379
     db_num: 0
-
-
