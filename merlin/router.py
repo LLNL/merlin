@@ -229,6 +229,8 @@ def create_config(task_server: str, config_dir: str, broker: str, test: str) -> 
         data_config_file = "app.yaml"
         if broker == "redis":
             data_config_file = "app_redis.yaml"
+        elif test:
+            data_config_file = "app_test.yaml"
         with resources.path("merlin.data.celery", data_config_file) as data_file:
             create_celery_config(config_dir, config_file, data_file)
     else:
