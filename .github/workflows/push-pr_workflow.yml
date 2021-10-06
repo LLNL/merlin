@@ -159,11 +159,13 @@ jobs:
     - name: Setup rabbitmq config
       run: |
         rm ~/.merlin/app.yaml
-        merlin config --broker rabbitmq
+        merlin config
 
     - name: Run integration test suite for rabbitmq
       env:
         RABBITMQ_HOST: rabbitmq
         RABBITMQ_PORT: 5672
+        RABBITMQ_DEFAULT_USER: Jimmy_Space
+        RABBITMQ_DEFAULT_PASS: 1234Password
       run: |
         python3 tests/integration/run_tests.py --verbose --ids 31 32
