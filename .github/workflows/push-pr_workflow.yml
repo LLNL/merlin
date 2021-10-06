@@ -98,11 +98,11 @@ jobs:
   Distributed-test-suite:
     runs-on: ubuntu-latest
     services:
-      rabbitmq:
-        image: rabbitmq:latest
-        ports:
-          - 5672:5672
-        options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
+      # rabbitmq:
+      #   image: rabbitmq:latest
+      #   ports:
+      #     - 5672:5672
+      #   options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
       # Label used to access the service container
       redis:
         # Docker Hub image
@@ -143,7 +143,6 @@ jobs:
       run: |
         pip3 install -e .
         merlin config --broker redis
-        cat ~/.merlin/app.yaml
 
     - name: Install CLI task dependencies generated from the 'feature demo' workflow
       run: |
@@ -157,21 +156,16 @@ jobs:
       run: |
         python3 tests/integration/run_tests.py --verbose --ids 31 32
 
-    - name: Setup rabbitmq config
-      run: |
-        rm ~/.merlin/app.yaml
-        merlin config --test rabbitmq
-        cat ~/.merlin/app.yaml
+    # - name: Setup rabbitmq config
+    #   run: |
+    #     merlin config --test rabbitmq
 
-    - name: Run integration test suite for rabbitmq
-      env:
-        RABBITMQ_PORT: ${{ job.services.rabbitmq.ports['5672'] }}
-        AMQP_URL: amqp://localhost:${{ job.services.rabbitmq.ports[5672] }}
-        RABBITMQ_USER: Jimmy_Space
-        RABBITMQ_PASS: 1234Password
-      run: |
-        sed -i 's/$(RABBITMQ_USER)/${{ env.RABBITMQ_USER }}/' ~/.merlin/app.yaml
-        sed -i 's/$(RABBITMQ_PASS)/${{ env.RABBITMQ_PASS }}/' ~/.merlin/app.yaml
-        sed -i 's/$(RABBITMQ_PORT)/${{ env.RABBITMQ_PORT }}/' ~/.merlin/app.yaml
-        cat ~/.merlin/app.yaml
-        python3 tests/integration/run_tests.py --verbose --ids 31 32
+    # - name: Run integration test suite for rabbitmq
+    #   env:
+    #     AMQP_URL: amqp://localhost:${{ job.services.rabbitmq.ports[5672] }}
+    #     RABBITMQ_USER: Jimmy_Space
+    #     RABBITMQ_PASS: Alexander_Rules
+    #   ports:
+    #     - ${{ job.services.rabbitmq.ports['5672'] }}
+    #   run: |
+    #     python3 tests/integration/run_tests.py --verbose --ids 31 32
