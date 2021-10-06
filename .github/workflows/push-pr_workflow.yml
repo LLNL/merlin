@@ -158,7 +158,7 @@ jobs:
 
     - name: Setup rabbitmq config
       run: |
-        rm ./merlin/app.yaml
+        rm ~/.merlin/app.yaml
         merlin config --broker rabbitmq
 
     - name: Run integration test suite for rabbitmq
