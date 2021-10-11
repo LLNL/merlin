@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected integration test for dependency to only examine release dependencies.
 - PyLint adherence for: celery.py, opennplib.py, config/__init__.py, broker.py,
 	configfile.py, formatter.py, main.py, router.py
-
+- Integrated Black and isort into CI
 ### Fixed
 - 'shell' added to unsupported and new_unsupported lists in script_adapter.py, prevents
   `'shell' is not supported -- ommitted` message.

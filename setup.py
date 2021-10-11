@@ -59,10 +59,7 @@ def _pip_requirement(req):
 def _reqs(*f):
     return [
         _pip_requirement(r)
-        for r in (
-            _strip_comments(line)
-            for line in open(os.path.join(os.getcwd(), "requirements", *f)).readlines()
-        )
+        for r in (_strip_comments(line) for line in open(os.path.join(os.getcwd(), "requirements", *f)).readlines())
         if r
     ]
 

@@ -69,9 +69,7 @@ class SampleIndex:
     # Class variable to indicate depth (mostly used for pretty printing).
     depth = -1
 
-    def __init__(
-        self, minid, maxid, children, name, leafid=-1, num_bundles=0, address=""
-    ):
+    def __init__(self, minid, maxid, children, name, leafid=-1, num_bundles=0, address=""):
         """The constructor."""
 
         # The direct children of this node, generally also of type SampleIndex.
@@ -140,9 +138,7 @@ class SampleIndex:
                 return True
         return False
 
-    def traverse(
-        self, path=None, conditional=lambda c: True, bottom_up=True, top_level=True
-    ):
+    def traverse(self, path=None, conditional=lambda c: True, bottom_up=True, top_level=True):
         """
         Yield the full path and associated node for each node that meets the
         conditional
@@ -164,9 +160,7 @@ class SampleIndex:
 
         for child_val in self.children.values():
             child_path = os.path.join(path, child_val.name)
-            for node in child_val.traverse(
-                child_path, conditional, bottom_up=bottom_up, top_level=False
-            ):
+            for node in child_val.traverse(child_path, conditional, bottom_up=bottom_up, top_level=False):
                 if node != "SKIP ME":
                     yield node
 
@@ -181,9 +175,7 @@ class SampleIndex:
         """
         Returns a generator that will traverse all nodes in the SampleIndex.
         """
-        return self.traverse(
-            path=self.name, conditional=lambda c: True, bottom_up=bottom_up
-        )
+        return self.traverse(path=self.name, conditional=lambda c: True, bottom_up=bottom_up)
 
     def traverse_bundles(self):
         """
@@ -197,9 +189,7 @@ class SampleIndex:
         Returns a generator that will traverse all Directories in the
         SampleIndex.
         """
-        return self.traverse(
-            path=self.name, conditional=lambda c: c.is_directory, bottom_up=bottom_up
-        )
+        return self.traverse(path=self.name, conditional=lambda c: c.is_directory, bottom_up=bottom_up)
 
     @staticmethod
     def check_valid_addresses_for_insertion(full_address, sub_tree):
@@ -293,9 +283,7 @@ class SampleIndex:
         if filepath is not None:
             filepaths.append(filepath)
         for child_val in self.children.values():
-            filepaths += child_val.write_multiple_sample_index_files(
-                os.path.join(path, self.name)
-            )
+            filepaths += child_val.write_multiple_sample_index_files(os.path.join(path, self.name))
         return filepaths
 
     def make_directory_string(self, delimiter=" ", just_leaf_directories=True):
@@ -311,29 +299,25 @@ class SampleIndex:
         "0/0 0/1 0/2 1/0 1/1 1/2"
 
         """
+        # fmt: off
         if just_leaf_directories:
             return delimiter.join(
                 [
-                    path
-                    for path, node in self.traverse_directories()
-                    if node.is_parent_of_leaf
+                    path for path, node in self.traverse_directories() if node.is_parent_of_leaf
                 ]
             )
+        # fmt: on
         return delimiter.join([path for path, _ in self.traverse_directories()])
 
     def __str__(self):
         """String representation."""
         SampleIndex.depth = SampleIndex.depth + 1
         if self.is_leaf:
-            result = (
-                ("   " * SampleIndex.depth)
-                + f"{self.address}: BUNDLE {self.leafid} MIN {self.min} MAX {self.max}\n"
-            )
+            result = ("   " * SampleIndex.depth) + f"{self.address}: BUNDLE {self.leafid} MIN {self.min} MAX {self.max}\n"
         else:
             result = (
-                ("   " * SampleIndex.depth)
-                + f"{self.address}: DIRECTORY MIN {self.min} MAX {self.max} NUM_BUNDLES {self.num_bundles}\n"
-            )
+                "   " * SampleIndex.depth
+            ) + f"{self.address}: DIRECTORY MIN {self.min} MAX {self.max} NUM_BUNDLES {self.num_bundles}\n"
             for child_val in self.children.values():
                 result += str(child_val)
         SampleIndex.depth = SampleIndex.depth - 1

@@ -31,9 +31,7 @@ def single_task_times():
     task_durations = []
     for log in args.logfile:
         try:
-            pre_lines = subprocess.check_output(
-                f'grep " succeeded in " {log}', shell=True
-            ).decode("ascii")
+            pre_lines = subprocess.check_output(f'grep " succeeded in " {log}', shell=True).decode("ascii")
 
             pre_list = pre_lines.strip().split("\n")
 
@@ -52,9 +50,7 @@ def single_task_times():
 def merlin_run_time():
     total = 0
     for err in args.errfile:
-        pre_line = subprocess.check_output(f'grep "real" {err}', shell=True).decode(
-            "ascii"
-        )
+        pre_line = subprocess.check_output(f'grep "real" {err}', shell=True).decode("ascii")
         pre_line = pre_line.strip()
         matches = re.search(r"\d\.\d\d\d", pre_line)
         match = matches[0]
@@ -64,18 +60,14 @@ def merlin_run_time():
         print(f"c{args.c}_s{args.s} merlin run : " + str(result))
     except BaseException:
         result = None
-        print(
-            f"c{args.c}_s{args.s} merlin run : ERROR -- result={result}, args.errfile={args.errfile}"
-        )
+        print(f"c{args.c}_s{args.s} merlin run : ERROR -- result={result}, args.errfile={args.errfile}")
 
 
 def start_verify_time():
     all_timestamps = []
     for log in args.logfile:
         try:
-            pre_line = subprocess.check_output(
-                f'grep -m1 "verify" {log}', shell=True
-            ).decode("ascii")
+            pre_line = subprocess.check_output(f'grep -m1 "verify" {log}', shell=True).decode("ascii")
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
             match = matches[0]
@@ -94,9 +86,7 @@ def start_run_workers_time():
     all_timestamps = []
     for log in args.logfile:
         try:
-            pre_line = subprocess.check_output(f'grep -m1 "" {log}', shell=True).decode(
-                "ascii"
-            )
+            pre_line = subprocess.check_output(f'grep -m1 "" {log}', shell=True).decode("ascii")
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
             match = matches[0]
@@ -113,9 +103,7 @@ def start_sample1_time():
     all_timestamps = []
     for log in args.logfile:
         try:
-            pre_line = subprocess.check_output(
-                f"grep -m1 \"Executing step 'null_step'\" {log}", shell=True
-            ).decode("ascii")
+            pre_line = subprocess.check_output(f"grep -m1 \"Executing step 'null_step'\" {log}", shell=True).decode("ascii")
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
             match = matches[0]

@@ -38,6 +38,7 @@ include config.mk
 .PHONY : tests
 .PHONY : check-flake8
 .PHONY : check-black
+.PHONY : check-isort
 .PHONY : check-pylint
 .PHONY : check-style
 .PHONY : fix-style
@@ -109,7 +110,16 @@ check-flake8:
 
 check-black:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) -m black --check --target-version py36 $(MRLN); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(MRLN); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(TEST); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 *.py; \
+
+
+check-isort:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) merlin; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) tests; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) *.py; \
 
 
 check-pylint:
@@ -121,7 +131,7 @@ check-pylint:
 
 
 # run code style checks
-check-style: check-flake8 check-black check-pylint
+check-style: check-flake8 check-black check-isort check-pylint
 
 
 check-push: tests check-style
@@ -140,13 +150,13 @@ checks: check-style check-camel-case
 
 # automatically make python files pep 8-compliant
 fix-style:
-	pip3 install -r requirements/dev.txt -U
-	isort -rc $(MRLN)
-	isort -rc $(TEST)
-	isort *.py
-	black --target-version py36 $(MRLN)
-	black --target-version py36 $(TEST)
-	black --target-version py36 *.py
+	. $(VENV)/bin/activate; \
+	isort --line-length $(MAX_LINE_LENGTH) $(MRLN); \
+	isort --line-length $(MAX_LINE_LENGTH) $(TEST); \
+	isort --line-length $(MAX_LINE_LENGTH) *.py; \
+	black --target-version py36 -l $(MAX_LINE_LENGTH) $(MRLN); \
+	black --target-version py36 -l $(MAX_LINE_LENGTH) $(TEST); \
+	black --target-version py36 -l $(MAX_LINE_LENGTH) *.py; \
 
 
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.

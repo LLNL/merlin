@@ -22,8 +22,6 @@ x = np.empty((N_SAMPLES, 2))
 x[:, 0] = np.random.uniform(LIDSPEED_RANGE[0], LIDSPEED_RANGE[1], size=N_SAMPLES)
 vi_low = np.log10(x[:, 0] / REYNOLD_RANGE[1])
 vi_high = np.log10(x[:, 0] / REYNOLD_RANGE[0])
-x[:, 1] = [
-    loguniform(low=vi_low[i], high=vi_high[i], base=BASE) for i in range(N_SAMPLES)
-]
+x[:, 1] = [loguniform(low=vi_low[i], high=vi_high[i], base=BASE) for i in range(N_SAMPLES)]
 
 np.save(args.outfile, x)

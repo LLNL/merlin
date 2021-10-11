@@ -195,9 +195,7 @@ def get_cert_file(server_type, config, cert_name, cert_path):
             if os.path.exists(new_cert_file):
                 cert_file = new_cert_file
             else:
-                LOG.error(
-                    f"{server_type}: The file for {cert_name} does not exist, searched {cert_file} and {new_cert_file}"
-                )
+                LOG.error(f"{server_type}: The file for {cert_name} does not exist, searched {cert_file} and {new_cert_file}")
         LOG.debug(f"{server_type}: {cert_name} = {cert_file}")
     except (AttributeError, KeyError):
         LOG.debug(f"{server_type}: {cert_name} not present")
@@ -220,21 +218,15 @@ def get_ssl_entries(
     """
     server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
 
-    keyfile: Optional[str] = get_cert_file(
-        server_type, server_config, "keyfile", cert_path
-    )
+    keyfile: Optional[str] = get_cert_file(server_type, server_config, "keyfile", cert_path)
     if keyfile:
         server_ssl["keyfile"] = keyfile
 
-    certfile: Optional[str] = get_cert_file(
-        server_type, server_config, "certfile", cert_path
-    )
+    certfile: Optional[str] = get_cert_file(server_type, server_config, "certfile", cert_path)
     if certfile:
         server_ssl["certfile"] = certfile
 
-    ca_certsfile: Optional[str] = get_cert_file(
-        server_type, server_config, "ca_certs", cert_path
-    )
+    ca_certsfile: Optional[str] = get_cert_file(server_type, server_config, "ca_certs", cert_path)
     if ca_certsfile:
         server_ssl["ca_certs"] = ca_certsfile
 
@@ -289,9 +281,7 @@ def process_ssl_map(server_name: str) -> Optional[Dict[str, str]]:
     return ssl_map
 
 
-def merge_sslmap(
-    server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dict[str, str]
-) -> Dict:
+def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dict[str, str]) -> Dict:
     """
     The different servers have different key var expectations, this updates the keys of the ssl_server dict with keys from
     the ssl_map if using rediss or mysql.

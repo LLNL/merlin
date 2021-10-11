@@ -97,9 +97,7 @@ def _examine_connection(s, sconf, excpts):
             counter += 1
             if counter > connect_timeout:
                 conn_check.kill()
-                raise Exception(
-                    f"Connection was killed due to timeout ({connect_timeout}s)"
-                )
+                raise Exception(f"Connection was killed due to timeout ({connect_timeout}s)")
         conn.release()
         if conn_check.exception:
             error, traceback = conn_check.exception
@@ -131,9 +129,7 @@ def display_config_info():
         excpts["broker server"] = e
 
     try:
-        conf["results server"] = results_backend.get_connection_string(
-            include_password=False
-        )
+        conf["results server"] = results_backend.get_connection_string(include_password=False)
         sconf["results server"] = results_backend.get_connection_string()
         conf["results ssl"] = results_backend.get_ssl_config()
     except Exception as e:

@@ -1,10 +1,4 @@
-from conditions import (
-    HasRegex,
-    HasReturnCode,
-    ProvenanceYAMLFileHasRegex,
-    StepFileExists,
-    StepFileHasRegex,
-)
+from conditions import HasRegex, HasReturnCode, ProvenanceYAMLFileHasRegex, StepFileExists, StepFileHasRegex
 
 from merlin.utils import get_flux_cmd
 
@@ -161,9 +155,7 @@ def define_tests():
         ),
         "dry launch slurm": (
             f"{run} {slurm} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileHasRegex(
-                "runs", "*/runs.slurm.sh", "slurm_test", OUTPUT_DIR, "srun "
-            ),
+            StepFileHasRegex("runs", "*/runs.slurm.sh", "slurm_test", OUTPUT_DIR, "srun "),
             "local",
         ),
         "dry launch flux": (
@@ -179,9 +171,7 @@ def define_tests():
         ),
         "dry launch lsf": (
             f"{run} {lsf} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileHasRegex(
-                "runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "
-            ),
+            StepFileHasRegex("runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "),
             "local",
         ),
         "dry launch slurm restart": (

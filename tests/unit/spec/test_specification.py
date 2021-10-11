@@ -166,13 +166,7 @@ class TestSpecNoMerlin(unittest.TestCase):
     def test_default_merlin_block(self):
         self.assertEqual(self.spec.merlin["resources"]["task_server"], "celery")
         self.assertEqual(self.spec.merlin["resources"]["overlap"], False)
-        self.assertEqual(
-            self.spec.merlin["resources"]["workers"]["default_worker"]["steps"], ["all"]
-        )
-        self.assertEqual(
-            self.spec.merlin["resources"]["workers"]["default_worker"]["batch"], None
-        )
-        self.assertEqual(
-            self.spec.merlin["resources"]["workers"]["default_worker"]["nodes"], None
-        )
+        self.assertEqual(self.spec.merlin["resources"]["workers"]["default_worker"]["steps"], ["all"])
+        self.assertEqual(self.spec.merlin["resources"]["workers"]["default_worker"]["batch"], None)
+        self.assertEqual(self.spec.merlin["resources"]["workers"]["default_worker"]["nodes"], None)
         self.assertEqual(self.spec.merlin["samples"], None)

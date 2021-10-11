@@ -360,9 +360,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         # Using super prevents recursion.
         self.batch_adapter = super(MerlinScriptAdapter, self)
         if self.batch_type != "merlin-local":
-            self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(
-                self.batch_type
-            )(**kwargs)
+            self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(self.batch_type)(**kwargs)
 
     def write_script(self, *args, **kwargs):
         """
@@ -407,9 +405,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         elif retcode == ReturnCode.STOP_WORKERS:
             LOG.debug("Execution returned status STOP_WORKERS")
         else:
-            LOG.warning(
-                f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL"
-            )
+            LOG.warning(f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL")
             submission_record._info["retcode"] = retcode
             retcode = ReturnCode.SOFT_FAIL
 
@@ -420,9 +416,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
 
         return submission_record
 
-    def _execute_subprocess(
-        self, output_name, script_path, cwd, env=None, join_output=False
-    ):
+    def _execute_subprocess(self, output_name, script_path, cwd, env=None, join_output=False):
         """
         Execute the subprocess script locally.
         If cwd is specified, the submit method will operate outside of the path
@@ -440,9 +434,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         """
         script_bn = os.path.basename(script_path)
         new_output_name = os.path.splitext(script_bn)[0]
-        LOG.debug(
-            f"script_path={script_path}, output_name={output_name}, new_output_name={new_output_name}"
-        )
+        LOG.debug(f"script_path={script_path}, output_name={output_name}, new_output_name={new_output_name}")
         p = start_process(script_path, shell=False, cwd=cwd, env=env)
         pid = p.pid
         output, err = p.communicate()

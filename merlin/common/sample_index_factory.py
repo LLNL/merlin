@@ -150,9 +150,7 @@ def create_hierarchy_from_max_sample(
             bundle_id += 1
         child_id += 1
     num_bundles = bundle_id - start_bundle_id
-    return SampleIndex(
-        min_sample, max_sample, children, root, num_bundles=num_bundles, address=address
-    )
+    return SampleIndex(min_sample, max_sample, children, root, num_bundles=num_bundles, address=address)
 
 
 def read_hierarchy(path):
@@ -167,9 +165,7 @@ def read_hierarchy(path):
         with open("sample_index.txt", "r") as _file:
             token = _file.readline()
             while token:
-                parsed_token = parse(
-                    "{type}:{ID}\tname:{name}\tsamples:[{min:d},{max:d})\n", token
-                )
+                parsed_token = parse("{type}:{ID}\tname:{name}\tsamples:[{min:d},{max:d})\n", token)
                 if parsed_token["type"] == "DIR":
                     subhierarchy = read_hierarchy(parsed_token["name"])
                     subhierarchy.address = parsed_token["ID"]
@@ -187,7 +183,5 @@ def read_hierarchy(path):
                 min_sample = min(min_sample, parsed_token["min"])
                 max_sample = max(max_sample, parsed_token["max"])
                 token = _file.readline()
-    top_index = SampleIndex(
-        min_sample, max_sample, children, path, leafid=-1, num_bundles=num_bundles
-    )
+    top_index = SampleIndex(min_sample, max_sample, children, path, leafid=-1, num_bundles=num_bundles)
     return top_index

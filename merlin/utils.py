@@ -79,11 +79,7 @@ def get_user_process_info(user=None, attrs=None):
     if user == "all_users":
         return [p.info for p in psutil.process_iter(attrs=attrs)]
     else:
-        return [
-            p.info
-            for p in psutil.process_iter(attrs=attrs)
-            if user in p.info["username"]
-        ]
+        return [p.info for p in psutil.process_iter(attrs=attrs) if user in p.info["username"]]
 
 
 def check_pid(pid, user=None):
@@ -154,9 +150,7 @@ def is_running(name, all_users=False):
         cmd[1] = "aux"
 
     try:
-        ps = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, encoding="utf8"
-        ).communicate()[0]
+        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()[0]
     except TypeError:
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
 
@@ -380,9 +374,7 @@ def get_flux_version(flux_path, no_errors=False):
     ps = None
 
     try:
-        ps = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, encoding="utf8"
-        ).communicate()
+        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()
     except FileNotFoundError as e:
         if not no_errors:
             LOG.error(f"The flux path {flux_path} canot be found")
@@ -472,9 +464,7 @@ def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
     timestr = str(timestr)
     nfields = len(timestr.split(":"))
     if nfields > 4:
-        raise ValueError(
-            f"Cannot convert {timestr} to a timedelta. Valid format: days:hours:minutes:seconds."
-        )
+        raise ValueError(f"Cannot convert {timestr} to a timedelta. Valid format: days:hours:minutes:seconds.")
     _, d, h, m, s = (":0" * 10 + timestr).rsplit(":", 4)
     tdelta = timedelta(days=int(d), hours=int(h), minutes=int(m), seconds=int(s))
     return tdelta
@@ -508,9 +498,7 @@ def repr_timedelta(td: timedelta, method: str = "HMS") -> str:
     elif method == "FSD":
         return _repr_timedelta_FSD(td)
     else:
-        raise ValueError(
-            "Invalid method for formatting timedelta! Valid choices: HMS, FSD"
-        )
+        raise ValueError("Invalid method for formatting timedelta! Valid choices: HMS, FSD")
 
 
 def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") -> str:
