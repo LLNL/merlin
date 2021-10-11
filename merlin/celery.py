@@ -64,9 +64,7 @@ try:
     LOG.debug("broker_ssl = %s", BROKER_SSL)
     RESULTS_BACKEND_URI = results_backend.get_connection_string()
     RESULTS_SSL = results_backend.get_ssl_config(celery_check=True)
-    LOG.debug(
-        "results: %s", results_backend.get_connection_string(include_password=False)
-    )
+    LOG.debug("results: %s", results_backend.get_connection_string(include_password=False))
     LOG.debug("results: redis_backed_use_ssl = %s", RESULTS_SSL)
 except ValueError:
     # These variables won't be set if running with '--local'.
@@ -141,11 +139,7 @@ def setup(**kwargs):  # pylint: disable=W0613
         process: psutil.Process = psutil.Process()
         # pylint is upset that typing accesses a protected class, ignoring W0212
         # pylint is upset that billiard doesn't have a current_process() method - it does
-        current: billiard.process._MainProcess = (
-            billiard.current_process()  # pylint: disable=W0212, E1101
-        )
-        prefork_id: int = (
-            current._identity[0] - 1  # pylint: disable=W0212
-        )  # range 0:nworkers-1
+        current: billiard.process._MainProcess = billiard.current_process()  # pylint: disable=W0212, E1101
+        prefork_id: int = current._identity[0] - 1  # pylint: disable=W0212  # range 0:nworkers-1
         cpu_slot: int = (prefork_id * cpu_skip) % npu
         process.cpu_affinity(list(range(cpu_slot, cpu_slot + cpu_skip)))

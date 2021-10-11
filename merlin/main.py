@@ -124,23 +124,15 @@ def parse_override_vars(
     for arg in variables_list:
         try:
             if "=" not in arg:
-                raise ValueError(
-                    "--vars requires '=' operator. See 'merlin run --help' for an example."
-                )
+                raise ValueError("--vars requires '=' operator. See 'merlin run --help' for an example.")
             entry: str = arg.split("=")
             if len(entry) != 2:
-                raise ValueError(
-                    "--vars requires ONE '=' operator (without spaces) per variable assignment."
-                )
+                raise ValueError("--vars requires ONE '=' operator (without spaces) per variable assignment.")
             key: str = entry[0]
             if key is None or key == "" or "$" in key:
-                raise ValueError(
-                    "--vars requires valid variable names comprised of alphanumeric characters and underscores."
-                )
+                raise ValueError("--vars requires valid variable names comprised of alphanumeric characters and underscores.")
             if key in RESERVED:
-                raise ValueError(
-                    f"Cannot override reserved word '{key}'! Reserved words are: {RESERVED}."
-                )
+                raise ValueError(f"Cannot override reserved word '{key}'! Reserved words are: {RESERVED}.")
 
             val: Union[str, int] = entry[1]
             with suppress(ValueError):
@@ -182,9 +174,7 @@ def process_run(args: Namespace) -> None:
 
     # pgen checks
     if args.pargs and not args.pgen_file:
-        raise ValueError(
-            "Cannot use the 'pargs' parameter without specifying a 'pgen'!"
-        )
+        raise ValueError("Cannot use the 'pargs' parameter without specifying a 'pgen'!")
     if args.pgen_file:
         verify_filepath(args.pgen_file)
 
@@ -211,13 +201,9 @@ def process_restart(args: Namespace) -> None:
     filepath: str = os.path.join(args.restart_dir, "merlin_info", "*.expanded.yaml")
     possible_specs: Optional[List[str]] = glob.glob(filepath)
     if not possible_specs:  # len == 0
-        raise ValueError(
-            f"'{filepath}' does not match any provenance spec file to restart from."
-        )
+        raise ValueError(f"'{filepath}' does not match any provenance spec file to restart from.")
     if len(possible_specs) > 1:
-        raise ValueError(
-            f"'{filepath}' matches more than one provenance spec file to restart from."
-        )
+        raise ValueError(f"'{filepath}' matches more than one provenance spec file to restart from.")
     filepath: str = verify_filepath(possible_specs[0])
     LOG.info(f"Restarting workflow at '{restart_dir}'")
     study: MerlinStudy = MerlinStudy(filepath, restart_dir=restart_dir)
@@ -235,9 +221,7 @@ def launch_workers(args):
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
-    status = router.launch_workers(
-        spec, args.worker_steps, args.worker_args, args.worker_echo_only
-    )
+    status = router.launch_workers(spec, args.worker_steps, args.worker_args, args.worker_echo_only)
     if args.worker_echo_only:
         print(status)
     else:
@@ -301,9 +285,7 @@ def stop_workers(args):
         worker_names = spec.get_worker_names()
         for worker_name in worker_names:
             if "$" in worker_name:
-                LOG.warning(
-                    f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?"
-                )
+                LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
     router.stop_workers(args.task_server, worker_names, args.queues, args.workers)
 
 
@@ -381,8 +363,7 @@ def setup_argparse() -> None:
         dest="level",
         type=str,
         default=DEFAULT_LOG_LEVEL,
-        help="Set the log level. Options: DEBUG, INFO, WARNING, ERROR. "
-        "[Default: %(default)s]",
+        help="Set the log level. Options: DEBUG, INFO, WARNING, ERROR. [Default: %(default)s]",
     )
 
     # merlin run
@@ -392,9 +373,7 @@ def setup_argparse() -> None:
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     run.set_defaults(func=process_run)
-    run.add_argument(
-        "specification", type=str, help="Path to a Merlin or Maestro YAML file"
-    )
+    run.add_argument("specification", type=str, help="Path to a Merlin or Maestro YAML file")
     run.add_argument(
         "--local",
         action="store_const",
@@ -461,9 +440,7 @@ def setup_argparse() -> None:
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     restart.set_defaults(func=process_restart)
-    restart.add_argument(
-        "restart_dir", type=str, help="Path to an existing Merlin workspace directory"
-    )
+    restart.add_argument("restart_dir", type=str, help="Path to an existing Merlin workspace directory")
     restart.add_argument(
         "--local",
         action="store_const",
@@ -482,9 +459,7 @@ def setup_argparse() -> None:
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     purge.set_defaults(func=purge_tasks)
-    purge.add_argument(
-        "specification", type=str, help="Path to a Merlin YAML spec file"
-    )
+    purge.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
     purge.add_argument(
         "-f",
         "--force",
@@ -560,8 +535,7 @@ def setup_argparse() -> None:
         action="store",
         type=str,
         default=None,
-        help="Specify a path to write the workflow to. Defaults to current "
-        "working directory",
+        help="Specify a path to write the workflow to. Defaults to current working directory",
     )
     example.set_defaults(func=process_example)
 
@@ -587,9 +561,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     run_workers.set_defaults(func=launch_workers)
-    run_workers.add_argument(
-        "specification", type=str, help="Path to a Merlin YAML spec file"
-    )
+    run_workers.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
     run_workers.add_argument(
         "--worker-args",
         type=str,
@@ -624,9 +596,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
     )
 
     # merlin query-workers
-    query: ArgumentParser = subparsers.add_parser(
-        "query-workers", help="List connected task server workers."
-    )
+    query: ArgumentParser = subparsers.add_parser("query-workers", help="List connected task server workers.")
     query.set_defaults(func=query_workers)
     query.add_argument(
         "--task_server",
@@ -637,9 +607,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
     )
 
     # merlin stop-workers
-    stop: ArgumentParser = subparsers.add_parser(
-        "stop-workers", help="Attempt to stop all task server workers."
-    )
+    stop: ArgumentParser = subparsers.add_parser("stop-workers", help="Attempt to stop all task server workers.")
     stop.set_defaults(func=stop_workers)
     stop.add_argument(
         "--spec",
@@ -654,9 +622,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         help="Task server type from which to stop workers.\
                             Default: %(default)s",
     )
-    stop.add_argument(
-        "--queues", type=str, default=None, nargs="+", help="specific queues to stop"
-    )
+    stop.add_argument("--queues", type=str, default=None, nargs="+", help="specific queues to stop")
     stop.add_argument(
         "--workers",
         type=str,
@@ -670,9 +636,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         help="Check for active workers on an allocation.",
         formatter_class=RawTextHelpFormatter,
     )
-    monitor.add_argument(
-        "specification", type=str, help="Path to a Merlin YAML spec file"
-    )
+    monitor.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
     monitor.add_argument(
         "--steps",
         nargs="+",
@@ -721,9 +685,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
                               number of connected workers) for a workflow spec.",
     )
     status.set_defaults(func=query_status)
-    status.add_argument(
-        "specification", type=str, help="Path to a Merlin YAML spec file"
-    )
+    status.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
     status.add_argument(
         "--steps",
         nargs="+",
@@ -749,9 +711,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
-    status.add_argument(
-        "--csv", type=str, help="csv file to dump status report to", default=None
-    )
+    status.add_argument("--csv", type=str, help="csv file to dump status report to", default=None)
 
     # merlin info
     info: ArgumentParser = subparsers.add_parser(

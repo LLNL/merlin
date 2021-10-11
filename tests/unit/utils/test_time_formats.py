@@ -39,17 +39,11 @@ def test_convert_explicit(time_string: str, expected_result: str, method: str) -
     ],
 )
 @pytest.mark.parametrize("method", ["HMS", "FSD", None])
-def test_convert_timestring_same(
-    test_case: List[Union[str, int]], expected_bool: bool, method: Optional[str]
-) -> None:
+def test_convert_timestring_same(test_case: List[Union[str, int]], expected_bool: bool, method: Optional[str]) -> None:
     """Test that HMS formatted all the same"""
     err_msg: str = f"Failed on test case '{test_case}', expected {expected_bool}, not '{not expected_bool}'"
-    converted_times: List[str] = [
-        convert_timestring(time_strings) for time_strings in test_case
-    ]
-    all_equal: bool = all(
-        time_string == converted_times[0] for time_string in converted_times
-    )
+    converted_times: List[str] = [convert_timestring(time_strings) for time_strings in test_case]
+    all_equal: bool = all(time_string == converted_times[0] for time_string in converted_times)
     assert all_equal == expected_bool, err_msg
 
 
@@ -57,9 +51,5 @@ def test_invalid_time_format() -> None:
     """Test that if not provided an appropriate format (HMS, FSD), the appropriate error is thrown."""
     with pytest.raises(ValueError) as invalid_format:
         repr_timedelta(datetime.timedelta(1), "HMD")
-    examination_err_msg: str = (
-        "Did not raise correct ValueError for failed repr_timedelta()."
-    )
-    assert "Invalid method for formatting timedelta! Valid choices: HMS, FSD" in str(
-        invalid_format.value
-    ), examination_err_msg
+    examination_err_msg: str = "Did not raise correct ValueError for failed repr_timedelta()."
+    assert "Invalid method for formatting timedelta! Valid choices: HMS, FSD" in str(invalid_format.value), examination_err_msg

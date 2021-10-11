@@ -37,29 +37,20 @@ def iter_df_from_json(json_file):
 def load_samples(sample_file_paths, nproc):
     """Loads all iterations' processed samples into a single pandas DataFrame in parallel"""
     with ProcessPoolExecutor(max_workers=nproc) as executor:
-        iter_dfs = [
-            iter_frame
-            for iter_frame in executor.map(iter_df_from_json, sample_file_paths)
-        ]
+        iter_dfs = [iter_frame for iter_frame in executor.map(iter_df_from_json, sample_file_paths)]
     all_iter_df = pd.concat(iter_dfs)
 
     return all_iter_df
 
 
 def setup_argparse():
-    parser = argparse.ArgumentParser(
-        description="Read in and analyze samples from plain text file"
-    )
+    parser = argparse.ArgumentParser(description="Read in and analyze samples from plain text file")
 
-    parser.add_argument(
-        "sample_file_paths", help="paths to sample files", default="", nargs="+"
-    )
+    parser.add_argument("sample_file_paths", help="paths to sample files", default="", nargs="+")
 
     parser.add_argument("--np", help="number of processors to use", type=int, default=1)
 
-    parser.add_argument(
-        "--hardcopy", help="Name of cumulative plot file", default="cum_results.png"
-    )
+    parser.add_argument("--hardcopy", help="Name of cumulative plot file", default="cum_results.png")
 
     return parser
 
@@ -89,9 +80,7 @@ def main():
         min_counts.append(all_iter_df[all_iter_df["Iter"] <= it]["Count"].min())
         med_counts.append(all_iter_df[all_iter_df["Iter"] <= it]["Count"].median())
 
-        unique_names.append(
-            len(all_iter_df[all_iter_df["Iter"] <= it].index.value_counts())
-        )
+        unique_names.append(len(all_iter_df[all_iter_df["Iter"] <= it].index.value_counts()))
 
     ax[0].plot(iterations, min_counts, label="Minimum Occurances")
     ax[0].plot(iterations, max_counts, label="Maximum Occurances")
