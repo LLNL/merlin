@@ -1,9 +1,9 @@
 import argparse
 import ast
 import json
+import pickle
 
 import numpy as np
-import pickle
 from scipy.optimize import minimize
 from scipy.stats import multivariate_normal
 
@@ -13,12 +13,8 @@ parser.add_argument(
     "-learner_dir",
     help="Learner directory (joblib file), usually '$(learner.workspace)'",
 )
-parser.add_argument(
-    "-bounds", help="ranges to scale results in form '[(min,max,type),(min, max,type)]'"
-)
-parser.add_argument(
-    "-input_uncerts", help="The standard deviation for each input dimension"
-)
+parser.add_argument("-bounds", help="ranges to scale results in form '[(min,max,type),(min, max,type)]'")
+parser.add_argument("-input_uncerts", help="The standard deviation for each input dimension")
 parser.add_argument("-method", help="The optimizer method", default="trust-constr")
 
 args = parser.parse_args()
@@ -26,7 +22,7 @@ args = parser.parse_args()
 method = args.method
 learner_dir = args.learner_dir
 
-surrogate = pickle.load(open(f"{learner_dir}/surrogate.pkl", 'rb'))
+surrogate = pickle.load(open(f"{learner_dir}/surrogate.pkl", "rb"))
 all_iter_results = np.load(f"{learner_dir}/all_iter_results.npz", allow_pickle=True)
 
 existing_X = all_iter_results["X"]
@@ -57,9 +53,7 @@ def get_x_deltas(x_std=None, n_samples=500):
         return 0
     else:
         x_cov = np.asarray(x_std) ** 2
-        x_deltas = multivariate_normal.rvs(
-            np.zeros(x_cov.shape), cov=x_cov, size=n_samples
-        )
+        x_deltas = multivariate_normal.rvs(np.zeros(x_cov.shape), cov=x_cov, size=n_samples)
         return x_deltas
 
 
@@ -110,9 +104,7 @@ best_f_i = existing_f.argmin()  # min value because minimize!
 best_f_x = existing_X[best_f_i]
 
 old_y_mean, old_y_std = mean_and_std(best_f_x, surrogate, x_deltas)
-old_y_percentiles = prediction_percentile(
-    best_f_x, surrogate, x_deltas, eval_percents
-).tolist()
+old_y_percentiles = prediction_percentile(best_f_x, surrogate, x_deltas, eval_percents).tolist()
 
 delta_mults = [0.0, 0.5, 1.0, 1.5, 2.0]
 x_deltas_big = {}
@@ -124,9 +116,7 @@ for d in x_deltas_big:
     x_samples_big = best_f_x + x_deltas_big[d]
     y_samples_big = surrogate.predict(x_samples_big)
     best_point_variations[d] = {}
-    best_point_variations[d]["percentiles"] = np.percentile(
-        y_samples_big, eval_percents
-    ).tolist()
+    best_point_variations[d]["percentiles"] = np.percentile(y_samples_big, eval_percents).tolist()
 
     counts, bins = np.histogram(y_samples_big, bins=20)
     best_point_variations[d]["histogram_counts"] = counts.tolist()
@@ -147,9 +137,7 @@ init_x = x0.tolist()
 init_y = (start_f).tolist()
 
 opt_y_mean, opt_y_std = mean_and_std(optimum_func.x, surrogate, x_deltas)
-opt_y_percentiles = prediction_percentile(
-    optimum_func.x, surrogate, x_deltas, eval_percents
-).tolist()
+opt_y_percentiles = prediction_percentile(optimum_func.x, surrogate, x_deltas, eval_percents).tolist()
 
 results = {
     "Results": {

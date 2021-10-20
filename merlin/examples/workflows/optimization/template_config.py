@@ -1,5 +1,6 @@
-from jinja2 import Environment, FileSystemLoader, meta
 import yaml
+from jinja2 import Environment, FileSystemLoader, meta
+
 
 # get all variable in template file
 def get_variables(filename):
@@ -8,6 +9,7 @@ def get_variables(filename):
     parsed_content = env.parse(template_source)
 
     return meta.find_undeclared_variables(parsed_content)
+
 
 def get_dict_from_yaml(filename, get_template=True):
     env = Environment(loader=FileSystemLoader("./"))
@@ -18,13 +20,15 @@ def get_dict_from_yaml(filename, get_template=True):
         return yaml.safe_load(outputText), template
     return yaml.safe_load(outputText)
 
+
 def get_bounds_X(test_function):
     return {
         "rosenbrock": str([[-2, 2] for i in range(N_DIMS)]).replace(" ", ""),
         "ackley": str([[-5, 5] for i in range(2)]).replace(" ", ""),
         "rastrigin": str([[-5.12, 5.12] for i in range(N_DIMS)]).replace(" ", ""),
-        "griewank": str([[-10, 10] for i in range(N_DIMS)]).replace(" ", "")
+        "griewank": str([[-10, 10] for i in range(N_DIMS)]).replace(" ", ""),
     }[test_function]
+
 
 filename = "template_optimization.yaml"
 
@@ -36,9 +40,7 @@ DEBUG = workflow_dict["env"]["variables"]["DEBUG"]
 N_DIMS = workflow_dict["env"]["variables"]["N_DIMS"]
 
 if (TEST_FUNCTION == "ackley") and (N_DIMS != 2):
-    raise Exception(
-        "The ackley function only accepts 2 dims, change the N_DIMS variable"
-    )
+    raise Exception("The ackley function only accepts 2 dims, change the N_DIMS variable")
 
 bounds_x = get_bounds_X(TEST_FUNCTION)
 uncerts_x = [0.1 for i in range(N_DIMS)]
@@ -58,9 +60,7 @@ for undefined_variable in undefined_variables:
     if undefined_variable in locals():
         defined_variables[undefined_variable] = globals()[undefined_variable]
     else:
-        print(
-            f"Variable '{undefined_variable}' is not defined, using default specified in yaml file"
-        )
+        print(f"Variable '{undefined_variable}' is not defined, using default specified in yaml file")
 
 # to save the results
 with open("optimization.yaml", "w") as fh:

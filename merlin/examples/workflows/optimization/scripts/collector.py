@@ -22,14 +22,14 @@ for i, sim_output_file in enumerate(sim_output_files):
 
     all_results.update(data)
 
-with open('current_results.json', 'w') as outfile:
+with open("current_results.json", "w") as outfile:
     json.dump(all_results, outfile)
 
 X = []
 y = []
 for key in all_results.keys():
-    X.append(all_results[key]['Inputs'])
-    y.append(all_results[key]['Outputs'])
+    X.append(all_results[key]["Inputs"])
+    y.append(all_results[key]["Outputs"])
 
 X = np.array(X)
 y = np.array(y)
