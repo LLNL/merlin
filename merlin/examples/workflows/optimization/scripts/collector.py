@@ -22,4 +22,21 @@ for i, sim_output_file in enumerate(sim_output_files):
 
     all_results.update(data)
 
-np.savez("current_results.npz", all_results)
+with open('current_results.json', 'w') as outfile:
+    json.dump(all_results, outfile)
+
+X = []
+y = []
+for key in all_results.keys():
+    X.append(all_results[key]['Inputs'])
+    y.append(all_results[key]['Outputs'])
+
+X = np.array(X)
+y = np.array(y)
+
+if len(X.shape) == 1:
+    X = X.reshape(-1, 1)
+if len(y.shape) == 1:
+    y = y.reshape(-1, 1)
+
+np.savez("current_results.npz", X=X, y=y)
