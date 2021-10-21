@@ -311,7 +311,8 @@ def config_merlin(args: Namespace) -> None:
     if output_dir is None:
         user_home: str = os.path.expanduser("~")
         output_dir: str = os.path.join(user_home, ".merlin")
-    router.create_config(args.task_server, output_dir, args.broker)
+
+    router.create_config(args.task_server, output_dir, args.broker, args.test)
 
 
 def process_example(args: Namespace) -> None:
@@ -514,6 +515,13 @@ def setup_argparse() -> None:
         type=str,
         default=None,
         help="Optional broker type, backend will be redis\
+                            Default: rabbitmq",
+    )
+    mconfig.add_argument(
+        "--test",
+        type=str,
+        default=None,
+        help="A config used in the testing suite (or for exemplative purposes).\
                             Default: rabbitmq",
     )
 

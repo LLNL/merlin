@@ -35,6 +35,9 @@ include config.mk
 .PHONY : install-dev
 .PHONY : unit-tests
 .PHONY : e2e-tests
+.PHONY : e2e-tests-diagnostic
+.PHONY : e2e-tests-local
+.PHONY : e2e-tests-local-diagnostic
 .PHONY : tests
 .PHONY : check-flake8
 .PHONY : check-black
@@ -88,12 +91,22 @@ unit-tests:
 # run CLI tests - these require an active install of merlin in a venv
 e2e-tests:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) $(TEST)/integration/run_tests.py --local; \
+	$(PYTHON) $(TEST)/integration/run_tests.py; \
 
 
 e2e-tests-diagnostic:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --verbose
+
+
+e2e-tests-local:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --local; \
+
+
+e2e-tests-local-diagnostic:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose
 
 
 # run unit and CLI tests
