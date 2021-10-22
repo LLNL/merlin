@@ -1,9 +1,9 @@
 import argparse
 import ast
 import json
+import pickle
 
 import numpy as np
-from joblib import load
 from scipy.optimize import minimize
 from scipy.stats import multivariate_normal
 
@@ -22,20 +22,11 @@ args = parser.parse_args()
 method = args.method
 learner_dir = args.learner_dir
 
-surrogate = load(f"{learner_dir}/surrogate.joblib")
-from_file = np.load(f"{learner_dir}/all_iter_results.npz", allow_pickle=True)
+surrogate = pickle.load(open(f"{learner_dir}/surrogate.pkl", "rb"))
+all_iter_results = np.load(f"{learner_dir}/all_iter_results.npz", allow_pickle=True)
 
-data = from_file["arr_0"].item()
-
-X = []
-y = []
-
-for i in data.keys():
-    X.append(data[i]["Inputs"])
-    y.append(data[i]["Outputs"])
-
-existing_X = np.array(X)
-existing_y = np.array(y)
+existing_X = all_iter_results["X"]
+existing_y = all_iter_results["y"]
 
 
 def process_bounds(args):

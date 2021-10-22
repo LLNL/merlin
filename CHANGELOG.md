@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Re-enabled distributed integration testing. Added additional examination to distributed testing.
 
 ### Changed
+- Updated the optimization workflow example with a new python template editor script
 - CI now splits linting and testing into different tasks for better utilization of
   parallel runners, significant and scalable speed gain over previous setup
 - CI now uses caching to restore environment of dependencies, reducing CI runtime
