@@ -3,6 +3,7 @@ import json
 import sys
 from typing import Dict
 
+
 def process_args(args: argparse.Namespace) -> None:
     """
     Writes a json file of the parsed args after doing some trivial math.
@@ -24,18 +25,10 @@ def setup_argparse() -> argparse.ArgumentParser:
     This method sets up the argparser.
     """
     parser: argparse.ArgumentParser = argparse.ArgumentParser(description="Process some integers.")
-    parser.add_argument(
-        "X", metavar="X", type=float, help="The x dimension of the sample."
-    )
-    parser.add_argument(
-        "Y", metavar="Y", type=float, help="The y dimension of the sample."
-    )
-    parser.add_argument(
-        "Z", metavar="Z", type=float, help="The z dimension of the sample."
-    )
-    parser.add_argument(
-        "-outfile", help="Output file name", default="hello_world_output.json"
-    )
+    parser.add_argument("X", metavar="X", type=float, help="The x dimension of the sample.")
+    parser.add_argument("Y", metavar="Y", type=float, help="The y dimension of the sample.")
+    parser.add_argument("Z", metavar="Z", type=float, help="The z dimension of the sample.")
+    parser.add_argument("-outfile", help="Output file name", default="hello_world_output.json")
     return parser
 
 
