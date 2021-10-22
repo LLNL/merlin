@@ -339,7 +339,6 @@ def define_tests():
             ],
         ),
         # this test is deactivated until the --spec option for stop-workers is active again
-
         # "stop workers for distributed feature_demo": (
         #     f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; sleep 20 ; merlin stop-workers --spec {demo}",
         #     [
@@ -375,7 +374,7 @@ def define_tests():
         # provenence_equality_checks, # omitting provenance equality check because it is broken
         # style_checks, # omitting style checks due to different results on different machines
         dependency_checks,
-        distributed_tests
+        distributed_tests,
     ]:
         all_tests.update(test_dict)
 
