@@ -128,9 +128,6 @@ check-black:
 	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 *.py; \
 
 
-check-push: tests check-style
-
-
 check-isort:
 	. $(VENV)/bin/activate; \
 	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) merlin; \
@@ -148,6 +145,9 @@ check-pylint:
 
 # run code style checks
 check-style: check-flake8 check-black check-isort check-pylint
+
+
+check-push: tests check-style
 
 
 # finds all strings in project that begin with a lowercase letter,
