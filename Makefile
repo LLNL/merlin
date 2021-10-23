@@ -121,22 +121,11 @@ check-flake8:
 	$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127; \
 
 
-# run code style checks
-check-style:
-	. $(VENV)/bin/activate
-	-$(PYTHON) -m flake8 --count --select=E9,F63,F7,F82 --show-source --statistics
-	-$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127
-	-black --check --target-version py36 $(MRLN)
-
-
 check-black:
 	. $(VENV)/bin/activate; \
 	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(MRLN); \
 	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(TEST); \
 	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 *.py; \
-
-
-check-push: tests check-style
 
 
 check-isort:
