@@ -81,7 +81,6 @@ access among all of them.
      print a.dtype      # dtype of array
 
 """
-
 from typing import List, Tuple
 
 import numpy as np
