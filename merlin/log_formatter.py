@@ -1,3 +1,5 @@
+"""This module handles setting up the extensive logging system in Merlin."""
+
 ###############################################################################
 # Copyright (c) 2019, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
@@ -6,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #

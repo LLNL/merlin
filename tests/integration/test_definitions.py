@@ -1,10 +1,4 @@
-from conditions import (
-    HasRegex,
-    HasReturnCode,
-    ProvenanceYAMLFileHasRegex,
-    StepFileExists,
-    StepFileHasRegex,
-)
+from conditions import HasRegex, HasReturnCode, ProvenanceYAMLFileHasRegex, StepFileExists, StepFileHasRegex
 
 from merlin.utils import get_flux_cmd
 
@@ -29,6 +23,7 @@ def define_tests():
     examples = "merlin/examples/workflows"
     dev_examples = "merlin/examples/dev_workflows"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
+    remote_demo = f"{examples}/remote_feature_demo/remote_feature_demo.yaml"
     demo_pgen = f"{examples}/feature_demo/scripts/pgen.py"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
     slurm = f"{examples}/slurm/slurm_test.yaml"
@@ -38,6 +33,7 @@ def define_tests():
     lsf = f"{examples}/lsf/lsf_par.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
+    release_dependencies = "./requirements/release.txt"
 
     basic_checks = {
         "merlin": ("merlin", HasReturnCode(1), "local"),
@@ -160,9 +156,7 @@ def define_tests():
         ),
         "dry launch slurm": (
             f"{run} {slurm} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileHasRegex(
-                "runs", "*/runs.slurm.sh", "slurm_test", OUTPUT_DIR, "srun "
-            ),
+            StepFileHasRegex("runs", "*/runs.slurm.sh", "slurm_test", OUTPUT_DIR, "srun "),
             "local",
         ),
         "dry launch flux": (
@@ -178,9 +172,7 @@ def define_tests():
         ),
         "dry launch lsf": (
             f"{run} {lsf} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            StepFileHasRegex(
-                "runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "
-            ),
+            StepFileHasRegex("runs", "*/runs.slurm.sh", "lsf_par", OUTPUT_DIR, "jsrun "),
             "local",
         ),
         "dry launch slurm restart": (
@@ -317,7 +309,7 @@ def define_tests():
     }
     dependency_checks = {
         "deplic no GNU": (
-            "deplic ./",
+            f"deplic {release_dependencies}",
             [HasRegex("GNU", negate=True), HasRegex("GPL", negate=True)],
             "local",
         ),
@@ -327,8 +319,8 @@ def define_tests():
             f"{run} {demo} ; {purge} {demo} -f",
             HasReturnCode(),
         ),
-        "distributed feature_demo": (
-            f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
+        "remote feature_demo": (
+            f"{run} {remote_demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {remote_demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers",
             [
                 HasReturnCode(),
                 ProvenanceYAMLFileHasRegex(
@@ -346,6 +338,26 @@ def define_tests():
                 ),
             ],
         ),
+        # this test is deactivated until the --spec option for stop-workers is active again
+        # "stop workers for distributed feature_demo": (
+        #     f"{run} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; {workers} {demo} --vars OUTPUT_PATH=./{OUTPUT_DIR} WORKER_NAME=cli_test_demo_workers ; sleep 20 ; merlin stop-workers --spec {demo}",
+        #     [
+        #         HasReturnCode(),
+        #         ProvenanceYAMLFileHasRegex(
+        #             regex="cli_test_demo_workers:",
+        #             name="feature_demo",
+        #             output_path=OUTPUT_DIR,
+        #             provenance_type="expanded",
+        #         ),
+        #         StepFileExists(
+        #             "verify",
+        #             "MERLIN_FINISHED",
+        #             "feature_demo",
+        #             OUTPUT_DIR,
+        #             params=True,
+        #         ),
+        #     ],
+        # ),
     }
 
     # combine and return test dictionaries
@@ -362,7 +374,7 @@ def define_tests():
         # provenence_equality_checks, # omitting provenance equality check because it is broken
         # style_checks, # omitting style checks due to different results on different machines
         dependency_checks,
-        # distributed_tests, # omitting distributed tests as they are not yet ready
+        distributed_tests,
     ]:
         all_tests.update(test_dict)
 

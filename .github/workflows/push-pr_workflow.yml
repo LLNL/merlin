@@ -3,9 +3,71 @@ name: Python CI
 on: [push, pull_request]
 
 jobs:
-  build:
-
+  Changelog:
+    name: CHANGELOG.md updated
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Check that CHANGELOG has been updated
+      run: |
+        # If this step fails, this means you haven't updated the CHANGELOG.md file with notes on your contribution.
+        git diff --name-only $(git merge-base origin/main HEAD) | grep '^CHANGELOG.md$' && echo "Thanks for helping keep our CHANGELOG up-to-date!"
+
+  Lint:
+    runs-on: ubuntu-latest
+    env:
+      MAX_LINE_LENGTH: 127
+      MAX_COMPLEXITY: 15
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Check cache
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install --upgrade -r requirements.txt; fi
+        pip3 install --upgrade -r requirements/dev.txt
+
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --max-complexity=$MAX_COMPLEXITY --statistics --max-line-length=$MAX_LINE_LENGTH
+
+    - name: Lint with isort
+      run: |
+        python3 -m isort --check --line-length $MAX_LINE_LENGTH merlin
+        python3 -m isort --check --line-length $MAX_LINE_LENGTH tests
+        python3 -m isort --check --line-length $MAX_LINE_LENGTH *.py
+
+    - name: Lint with Black
+      run: |
+        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 merlin
+        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 tests
+        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 *.py
+
+    - name: Lint with PyLint
+      run: |
+        python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
+        python3 -m pylint tests --rcfile=setup.cfg --exit-zero
+
+  Local-test-suite:
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
@@ -16,6 +78,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Check cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install dependencies
       run: |
@@ -33,17 +101,85 @@ jobs:
         merlin example feature_demo
         pip3 install -r feature_demo/requirements.txt
 
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --max-complexity=15 --statistics --max-line-length=127
-
     - name: Run pytest over unit test suite
       run: |
         python3 -m pytest tests/unit/
 
-    - name: Run integration test suite, locally
+    - name: Run integration test suite
       run: |
         python3 tests/integration/run_tests.py --verbose --local
+
+  Distributed-test-suite:
+    runs-on: ubuntu-latest
+    services:
+      # rabbitmq:
+      #   image: rabbitmq:latest
+      #   ports:
+      #     - 5672:5672
+      #   options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
+      # Label used to access the service container
+      redis:
+        # Docker Hub image
+        image: redis
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Check cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip3 install -r requirements/dev.txt
+
+    - name: Install merlin to run unit tests
+      run: |
+        pip3 install -e .
+        merlin config --broker redis
+
+    - name: Install CLI task dependencies generated from the 'feature demo' workflow
+      run: |
+        merlin example feature_demo
+        pip3 install -r feature_demo/requirements.txt
+
+    - name: Run integration test suite for Redis
+      env:
+        REDIS_HOST: redis
+        REDIS_PORT: 6379
+      run: |
+        python3 tests/integration/run_tests.py --verbose --ids 31 32
+
+    # - name: Setup rabbitmq config
+    #   run: |
+    #     merlin config --test rabbitmq
+
+    # - name: Run integration test suite for rabbitmq
+    #   env:
+    #     AMQP_URL: amqp://localhost:${{ job.services.rabbitmq.ports[5672] }}
+    #     RABBITMQ_USER: Jimmy_Space
+    #     RABBITMQ_PASS: Alexander_Rules
+    #   ports:
+    #     - ${{ job.services.rabbitmq.ports['5672'] }}
+    #   run: |
+    #     python3 tests/integration/run_tests.py --verbose --ids 31 32

@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -83,6 +83,8 @@ access among all of them.
 """
 from typing import List, Tuple
 
+from typing import List, Tuple
+
 import numpy as np
 
 
@@ -105,12 +107,14 @@ def _get_npy_info2(f):
         hlen = hlen_char[0] + 256 * hlen_char[1]
     elif major == 2:
         hlen_char = list(map(ord, f.read(4)))
+        # fmt: off
         hlen = (
             hlen_char[0]
             + 256 * hlen_char[1]
             + 65536 * hlen_char[2]
             + (1 << 24) * hlen_char[3]
         )
+        # fmt: on
     else:
         raise Exception("unknown .npy format, e.g. not 1 or 2")
     hdr = eval(f.read(hlen))  # TODO remove eval
@@ -134,12 +138,14 @@ def _get_npy_info3(f):
         hlen = hlen_char[0] + 256 * hlen_char[1]
     elif major == 2:
         hlen_char = list(f.read(4))
+        # fmt: off
         hlen = (
             hlen_char[0]
             + 256 * hlen_char[1]
             + 65536 * hlen_char[2]
             + (1 << 24) * hlen_char[3]
         )
+        # fmt: on
     else:
         raise Exception("unknown .npy format, e.g. not 1 or 2")
     hdr = eval(f.read(hlen))  # TODO remove eval
@@ -185,9 +191,7 @@ def read_rows(f, hdr, idx, n=-1, sep=""):
     if n < 0:
         n = hdr["shape"][0] - idx
     n = min(hdr["shape"][0] - idx, n)
-    a = np.fromfile(
-        f, dtype=hdr["dtype"], count=n * hdr["rowsize"] // hdr["itemsize"], sep=sep
-    )
+    a = np.fromfile(f, dtype=hdr["dtype"], count=n * hdr["rowsize"] // hdr["itemsize"], sep=sep)
     return np.reshape(a, (n,) + hdr["shape"][1:])
 
 
@@ -215,9 +219,7 @@ class OpenNPY:
 
     def _verify_open(self):
         if self.f is None:
-            self.f, self.hdr = _get_npy_info(
-                self.f if self.f is not None else self.fname
-            )
+            self.f, self.hdr = _get_npy_info(self.f if self.f is not None else self.fname)
 
     @verify_open
     def load_header(self, close=True):
@@ -260,10 +262,7 @@ class OpenNPY:
                 return read_rows(self.f, self.hdr, k.start, k.stop - k.start)
             else:
                 return np.asarray(
-                    [
-                        read_rows(self.f, self.hdr, _, 1)[0]
-                        for _ in range(k.start, k.stop, 1 if k.step is None else k.step)
-                    ]
+                    [read_rows(self.f, self.hdr, _, 1)[0] for _ in range(k.start, k.stop, 1 if k.step is None else k.step)]
                 )
 
     @verify_open
@@ -287,19 +286,13 @@ class OpenNPYList:
         i: OpenNPY
         for i in self.files:
             i.load_header()
-        self.shapes: List[Tuple[int]] = [
-            openNPY_obj.hdr["shape"] for openNPY_obj in self.files
-        ]
+        self.shapes: List[Tuple[int]] = [openNPY_obj.hdr["shape"] for openNPY_obj in self.files]
         k: Tuple[int]
         for k in self.shapes[1:]:
             # Match subsequent axes shapes.
             if k[1:] != self.shapes[0][1:]:
-                raise AttributeError(
-                    f"Mismatch in subsequent axes shapes: {k[1:]} != {self.shapes[0][1:]}"
-                )
-        self.tells: np.ndarray = np.cumsum(
-            [arr_shape[0] for arr_shape in self.shapes]
-        )  # Tell locations.
+                raise AttributeError(f"Mismatch in subsequent axes shapes: {k[1:]} != {self.shapes[0][1:]}")
+        self.tells: np.ndarray = np.cumsum([arr_shape[0] for arr_shape in self.shapes])  # Tell locations.
         self.tells = np.hstack(([0], self.tells))
 
     def close(self):
@@ -324,14 +317,7 @@ class OpenNPYList:
             return self.files[fno - 1][k - self.tells[fno - 1]]
         else:  # Slice indexing.
             # TODO : Implement a faster version.
-            return np.asarray(
-                [
-                    self[_]
-                    for _ in np.arange(
-                        k.start, k.stop, k.step if k.step is not None else 1
-                    )
-                ]
-            )
+            return np.asarray([self[_] for _ in np.arange(k.start, k.stop, k.step if k.step is not None else 1)])
 
     def to_array(self):
         return np.vstack([_.to_array() for _ in self.files])

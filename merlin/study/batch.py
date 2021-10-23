@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -149,9 +149,7 @@ def batch_worker_launch(
     if nodes is None or nodes == "all":
         nodes = get_node_count(default=1)
     elif not isinstance(nodes, int):
-        raise TypeError(
-            "Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all')."
-        )
+        raise TypeError("Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all').")
 
     shell: str = get_yaml_var(batch, "shell", "bash")
 
@@ -173,9 +171,7 @@ def batch_worker_launch(
     if btype == "flux":
         flux_path: str = get_yaml_var(batch, "flux_path", "")
         flux_opts: Union[str, Dict] = get_yaml_var(batch, "flux_start_opts", "")
-        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(
-            batch, "flux_exec_workers", True
-        )
+        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(batch, "flux_exec_workers", True)
 
         flux_exec: str = ""
         if flux_exec_workers:
@@ -194,9 +190,7 @@ def batch_worker_launch(
     return worker_cmd
 
 
-def construct_worker_launch_command(
-    batch: Optional[Dict], btype: str, nodes: int
-) -> str:
+def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: int) -> str:
     """
     If no 'worker_launch' is found in the batch yaml, this method constructs the needed launch command.
 

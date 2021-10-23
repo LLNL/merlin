@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -59,12 +59,14 @@ MYSQL_CONFIG_FILENAMES = {
 }
 
 
+# fmt: off
 MYSQL_CONNECTION_STRING = (
     "db+mysql+mysqldb://{user}:{password}@{server}/mlsi"
     "?ssl_ca={ssl_ca}"
     "&ssl_cert={ssl_cert}"
     "&ssl_key={ssl_key}"
 )
+# fmt: on
 
 
 SQLITE_CONNECTION_STRING = "db+sqlite:///results.db"
@@ -280,9 +282,7 @@ def _resolve_backend_string(backend, certs_path, include_password):
         return get_redis(certs_path=certs_path, include_password=include_password)
 
     elif backend == "rediss":
-        return get_redis(
-            certs_path=certs_path, include_password=include_password, ssl=True
-        )
+        return get_redis(certs_path=certs_path, include_password=include_password, ssl=True)
     else:
         return None
 
@@ -313,9 +313,7 @@ def get_ssl_config(celery_check=False):
     except AttributeError:
         certs_path = None
 
-    results_backend_ssl = get_ssl_entries(
-        "Results Backend", results_backend, CONFIG.results_backend, certs_path
-    )
+    results_backend_ssl = get_ssl_entries("Results Backend", results_backend, CONFIG.results_backend, certs_path)
 
     if results_backend == "rediss":
         if not results_backend_ssl:
