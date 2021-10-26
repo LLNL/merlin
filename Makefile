@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -32,12 +32,19 @@ include config.mk
 .PHONY : virtualenv
 .PHONY : install-merlin
 .PHONY : install-workflow-deps
-.PHONY : install-merlin-dev
+.PHONY : install-dev
 .PHONY : unit-tests
 .PHONY : e2e-tests
+.PHONY : e2e-tests-diagnostic
+.PHONY : e2e-tests-local
+.PHONY : e2e-tests-local-diagnostic
 .PHONY : tests
-.PHONY : fix-style
+.PHONY : check-flake8
+.PHONY : check-black
+.PHONY : check-isort
+.PHONY : check-pylint
 .PHONY : check-style
+.PHONY : fix-style
 .PHONY : check-push
 .PHONY : check-camel-case
 .PHONY : checks
@@ -49,6 +56,7 @@ include config.mk
 .PHONY : clean-py
 .PHONY : clean
 
+
 # this only works outside the venv - if run from inside a custom venv, or any target that depends on this,
 # you will break your venv.
 virtualenv:
@@ -56,9 +64,11 @@ virtualenv:
 	$(PIP) install --upgrade pip; \
 	$(PIP) install -r requirements/release.txt; \
 
+
 # install merlin into the virtual environment
 install-merlin: virtualenv
 	$(PIP) install -e .; \
+	. $(VENV)/bin/activate; \
 	merlin config; \
 
 
@@ -68,7 +78,7 @@ install-workflow-deps: virtualenv install-merlin
 
 
 # install requirements
-install-merlin-dev: virtualenv install-workflow-deps
+install-dev: virtualenv install-merlin install-workflow-deps
 	$(PIP) install -r requirements/dev.txt; \
 
 
@@ -81,10 +91,21 @@ unit-tests:
 # run CLI tests - these require an active install of merlin in a venv
 e2e-tests:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) $(TEST)/integration/run_tests.py --local; \
+	$(PYTHON) $(TEST)/integration/run_tests.py; \
 
 
 e2e-tests-diagnostic:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --verbose
+
+
+e2e-tests-local:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --local; \
+
+
+e2e-tests-local-diagnostic:
+	. $(VENV)/bin/activate; \
 	$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose
 
 
@@ -92,15 +113,42 @@ e2e-tests-diagnostic:
 tests: unit-tests e2e-tests
 
 
+check-flake8:
+	. $(VENV)/bin/activate; \
+	echo "Flake8 linting for invalid source (bad syntax, undefined variables)..."; \
+	$(PYTHON) -m flake8 --count --select=E9,F63,F7,F82 --show-source --statistics; \
+	echo "Flake8 linting failure for CI..."; \
+	$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127; \
+
+
+check-black:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(MRLN); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(TEST); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 *.py; \
+
+
+check-isort:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) merlin; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) tests; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) *.py; \
+
+
+check-pylint:
+	. $(VENV)/bin/activate; \
+	echo "PyLinting merlin source..."; \
+	$(PYTHON) -m pylint merlin --rcfile=setup.cfg --ignore-patterns="$(VENV)/" --disable=logging-fstring-interpolation; \
+	echo "PyLinting merlin tests..."; \
+	$(PYTHON) -m pylint tests --rcfile=setup.cfg; \
+
+
 # run code style checks
-check-style:
-	. $(VENV)/bin/activate
-	-$(PYTHON) -m flake8 --count --select=E9,F63,F7,F82 --show-source --statistics
-	-$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127
-	-black --check --target-version py36 $(MRLN)
+check-style: check-flake8 check-black check-isort check-pylint
 
 
 check-push: tests check-style
+
 
 # finds all strings in project that begin with a lowercase letter,
 # contain only letters and numbers, and contain at least one lowercase
@@ -115,13 +163,13 @@ checks: check-style check-camel-case
 
 # automatically make python files pep 8-compliant
 fix-style:
-	pip3 install -r requirements/dev.txt -U
-	isort -rc $(MRLN)
-	isort -rc $(TEST)
-	isort *.py
-	black --target-version py36 $(MRLN)
-	black --target-version py36 $(TEST)
-	black --target-version py36 *.py
+	. $(VENV)/bin/activate; \
+	isort --line-length $(MAX_LINE_LENGTH) $(MRLN); \
+	isort --line-length $(MAX_LINE_LENGTH) $(TEST); \
+	isort --line-length $(MAX_LINE_LENGTH) *.py; \
+	black --target-version py36 -l $(MAX_LINE_LENGTH) $(MRLN); \
+	black --target-version py36 -l $(MAX_LINE_LENGTH) $(TEST); \
+	black --target-version py36 -l $(MAX_LINE_LENGTH) *.py; \
 
 
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.

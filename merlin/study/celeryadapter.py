@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -39,13 +39,7 @@ import time
 from contextlib import suppress
 
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
-from merlin.utils import (
-    check_machines,
-    get_procs,
-    get_yaml_var,
-    is_running,
-    regex_list_filter,
-)
+from merlin.utils import check_machines, get_procs, get_yaml_var, is_running, regex_list_filter
 
 
 LOG = logging.getLogger(__name__)
@@ -248,15 +242,11 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
             worker_args += " --logfile %p.%i"
 
         # Get the celery command
-        celery_com = launch_celery_workers(
-            spec, steps=wsteps, worker_args=worker_args, just_return_command=True
-        )
+        celery_com = launch_celery_workers(spec, steps=wsteps, worker_args=worker_args, just_return_command=True)
 
         celery_cmd = os.path.expandvars(celery_com)
 
-        worker_cmd = batch_worker_launch(
-            spec, celery_cmd, nodes=worker_nodes, batch=worker_batch
-        )
+        worker_cmd = batch_worker_launch(spec, celery_cmd, nodes=worker_nodes, batch=worker_batch)
 
         worker_cmd = os.path.expandvars(worker_cmd)
 
@@ -324,13 +314,10 @@ def examine_and_log_machines(worker_val, yenv) -> bool:
             output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
             if output_path and not os.path.exists(output_path):
                 hostname = socket.gethostname()
-                LOG.error(
-                    f"The output path, {output_path}, is not accessible on this host, {hostname}"
-                )
+                LOG.error(f"The output path, {output_path}, is not accessible on this host, {hostname}")
         else:
             LOG.warning(
-                "The env:variables section does not have an OUTPUT_PATH"
-                "specified, multi-machine checks cannot be performed."
+                "The env:variables section does not have an OUTPUT_PATH specified, multi-machine checks cannot be performed."
             )
         return False
 
@@ -340,19 +327,11 @@ def verify_args(spec, worker_args, worker_name, overlap):
     parallel = batch_check_parallel(spec)
     if parallel:
         if "--concurrency" not in worker_args:
-            LOG.warning(
-                "The worker arg --concurrency [1-4] is recommended "
-                "when running parallel tasks"
-            )
+            LOG.warning("The worker arg --concurrency [1-4] is recommended when running parallel tasks")
         if "--prefetch-multiplier" not in worker_args:
-            LOG.warning(
-                "The worker arg --prefetch-multiplier 1 is "
-                "recommended when running parallel tasks"
-            )
+            LOG.warning("The worker arg --prefetch-multiplier 1 is recommended when running parallel tasks")
         if "fair" not in worker_args:
-            LOG.warning(
-                "The worker arg -O fair is recommended when running parallel tasks"
-            )
+            LOG.warning("The worker arg -O fair is recommended when running parallel tasks")
 
     if "-n" not in worker_args:
         nhash = ""
@@ -423,9 +402,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     """
     from merlin.celery import app
 
-    LOG.debug(
-        f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}"
-    )
+    LOG.debug(f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}")
     active_queues, _ = get_queues(app)
 
     # If not specified, get all the queues
@@ -447,20 +424,14 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
 
     print(f"all_workers: {all_workers}")
     print(f"spec_worker_names: {spec_worker_names}")
-    if (
-        spec_worker_names is None or len(spec_worker_names) == 0
-    ) and worker_regex is None:
+    if (spec_worker_names is None or len(spec_worker_names) == 0) and worker_regex is None:
         workers_to_stop = list(all_workers)
     else:
         workers_to_stop = []
         if (spec_worker_names is not None) and len(spec_worker_names) > 0:
             for worker_name in spec_worker_names:
-                print(
-                    f"Result of regex_list_filter: {regex_list_filter(worker_name, all_workers)}"
-                )
-                workers_to_stop += regex_list_filter(
-                    worker_name, all_workers, match=False
-                )
+                print(f"Result of regex_list_filter: {regex_list_filter(worker_name, all_workers)}")
+                workers_to_stop += regex_list_filter(worker_name, all_workers, match=False)
         if worker_regex is not None:
             workers_to_stop += regex_list_filter(worker_regex, workers_to_stop)
 

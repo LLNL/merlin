@@ -1,10 +1,14 @@
 import argparse
 import json
 import sys
+from typing import Dict
 
 
-def process_args(args):
-    results = {
+def process_args(args: argparse.Namespace) -> None:
+    """
+    Writes a json file of the parsed args after doing some trivial math.
+    """
+    results: Dict[str, Dict[str, float]] = {
         "inputs": {"X": args.X, "Y": args.Y, "Z": args.Z},
         "outputs": {
             "X+Y+Z": args.X + args.Y + args.Z,
@@ -16,8 +20,11 @@ def process_args(args):
         json.dump(results, f)
 
 
-def setup_argparse():
-    parser = argparse.ArgumentParser(description="Process some integers.")
+def setup_argparse() -> argparse.ArgumentParser:
+    """
+    This method sets up the argparser.
+    """
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(description="Process some integers.")
     parser.add_argument("X", metavar="X", type=float, help="The x dimension of the sample.")
     parser.add_argument("Y", metavar="Y", type=float, help="The y dimension of the sample.")
     parser.add_argument("Z", metavar="Z", type=float, help="The z dimension of the sample.")
@@ -26,8 +33,11 @@ def setup_argparse():
 
 
 def main():
-    parser = setup_argparse()
-    args = parser.parse_args()
+    """
+    Primary coordinating method for collecting args and dumping them to a json file for later examination.
+    """
+    parser: argparse.ArgumentParser = setup_argparse()
+    args: argparse.Namespace = parser.parse_args()
     process_args(args)
 
 

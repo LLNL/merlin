@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -44,9 +44,7 @@ DEFAULT_LOG_LEVEL = "ERROR"
 
 
 def process_templates(args):
-    LOG.error(
-        "The command `merlin-templates` has been deprecated in favor of `merlin example`."
-    )
+    LOG.error("The command `merlin-templates` has been deprecated in favor of `merlin example`.")
 
 
 def setup_argparse():

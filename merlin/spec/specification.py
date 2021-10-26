@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -144,9 +144,7 @@ class MerlinSpec(YAMLSpecification):
         MerlinSpec.fill_missing_defaults(self.environment, defaults.ENV["env"])
 
         # fill in missing global parameter section defaults
-        MerlinSpec.fill_missing_defaults(
-            self.globals, defaults.PARAMETER["global.parameters"]
-        )
+        MerlinSpec.fill_missing_defaults(self.globals, defaults.PARAMETER["global.parameters"])
 
         # fill in missing step section defaults within 'run'
         defaults.STUDY_STEP_RUN["shell"] = self.batch["shell"]
@@ -176,12 +174,14 @@ class MerlinSpec(YAMLSpecification):
             if not isinstance(defaults, dict):
                 return
             for key, val in defaults.items():
+                # fmt: off
                 if (key not in result) or (
                     (result[key] is None) and (defaults[key] is not None)
                 ):
                     result[key] = val
                 else:
                     recurse(result[key], val)
+                # fmt: on
 
         recurse(object_to_update, default_dict)
 
@@ -202,31 +202,21 @@ class MerlinSpec(YAMLSpecification):
         # check steps
         for step in self.study:
             MerlinSpec.check_section(step["name"], step, all_keys.STUDY_STEP)
-            MerlinSpec.check_section(
-                step["name"] + ".run", step["run"], all_keys.STUDY_STEP_RUN
-            )
+            MerlinSpec.check_section(step["name"] + ".run", step["run"], all_keys.STUDY_STEP_RUN)
 
         # check merlin
         MerlinSpec.check_section("merlin", self.merlin, all_keys.MERLIN)
-        MerlinSpec.check_section(
-            "merlin.resources", self.merlin["resources"], all_keys.MERLIN_RESOURCES
-        )
+        MerlinSpec.check_section("merlin.resources", self.merlin["resources"], all_keys.MERLIN_RESOURCES)
         for worker, contents in self.merlin["resources"]["workers"].items():
-            MerlinSpec.check_section(
-                "merlin.resources.workers " + worker, contents, all_keys.WORKER
-            )
+            MerlinSpec.check_section("merlin.resources.workers " + worker, contents, all_keys.WORKER)
         if self.merlin["samples"]:
-            MerlinSpec.check_section(
-                "merlin.samples", self.merlin["samples"], all_keys.SAMPLES
-            )
+            MerlinSpec.check_section("merlin.samples", self.merlin["samples"], all_keys.SAMPLES)
 
     @staticmethod
     def check_section(section_name, section, all_keys):
         diff = set(section.keys()).difference(all_keys)
         for extra in diff:
-            LOG.warn(
-                f"Unrecognized key '{extra}' found in spec section '{section_name}'."
-            )
+            LOG.warn(f"Unrecognized key '{extra}' found in spec section '{section_name}'.")
 
     def dump(self):
         """
@@ -287,16 +277,9 @@ class MerlinSpec(YAMLSpecification):
                 key_stack = deepcopy(key_stack)
                 key_stack.append("elem")
                 if use_hyphens:
-                    string += (
-                        (lvl + 1) * tab
-                        + "- "
-                        + str(self._dict_to_yaml(elem, "", key_stack, tab))
-                        + "\n"
-                    )
+                    string += (lvl + 1) * tab + "- " + str(self._dict_to_yaml(elem, "", key_stack, tab)) + "\n"
                 else:
-                    string += str(
-                        self._dict_to_yaml(elem, "", key_stack, tab, newline=(i != 0))
-                    )
+                    string += str(self._dict_to_yaml(elem, "", key_stack, tab, newline=(i != 0)))
                     if n > 1 and i != len(obj) - 1:
                         string += ", "
                 key_stack.pop()
@@ -317,12 +300,7 @@ class MerlinSpec(YAMLSpecification):
                     string += list_offset + (tab * lvl)
                 else:
                     string += tab * (lvl + 1)
-                string += (
-                    str(k)
-                    + ": "
-                    + str(self._dict_to_yaml(v, "", key_stack, tab))
-                    + "\n"
-                )
+                string += str(k) + ": " + str(self._dict_to_yaml(v, "", key_stack, tab)) + "\n"
                 key_stack.pop()
                 i += 1
         return string
@@ -357,9 +335,7 @@ class MerlinSpec(YAMLSpecification):
                     task_queues = [queues[steps]]
             except KeyError:
                 nl = "\n"
-                LOG.error(
-                    f"Invalid steps '{steps}'! Try one of these (or 'all'):\n{nl.join(queues.keys())}"
-                )
+                LOG.error(f"Invalid steps '{steps}'! Try one of these (or 'all'):\n{nl.join(queues.keys())}")
                 raise
         return sorted(set(task_queues))
 

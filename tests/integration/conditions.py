@@ -219,10 +219,7 @@ class ProvenanceYAMLFileHasRegex(HasRegex):
 
     @property
     def glob_string(self):
-        return (
-            f"{self.output_path}/{self.name}"
-            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
-        )
+        return f"{self.output_path}/{self.name}" f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
 
     def is_within(self):
         """

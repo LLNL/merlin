@@ -4,6 +4,30 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2]
+
+### Added
+- Re-enabled distributed integration testing. Added additional examination to distributed testing.
+
+### Fixed
+- 'shell' added to unsupported and new_unsupported lists in script_adapter.py, prevents
+  `'shell' is not supported -- ommitted` message.
+- Makefile target for install-merlin fixed so venv is properly activated to install merlin
+
+### Changed
+- Updated the optimization workflow example with a new python template editor script
+- CI now splits linting and testing into different tasks for better utilization of
+  parallel runners, significant and scalable speed gain over previous setup
+- CI now uses caching to restore environment of dependencies, reducing CI runtime
+  significantly again beyond the previous improvement. Examines for potential updates to
+  dependencies so the environment doesn't become stale.
+- CI now examines that the CHANGELOG is updated on PRs.
+- Added PyLint pipeline to Github Actions CI (currently no-fail-exit).
+- Corrected integration test for dependency to only examine release dependencies.
+- PyLint adherence for: celery.py, opennplib.py, config/__init__.py, broker.py,
+	configfile.py, formatter.py, main.py, router.py
+- Integrated Black and isort into CI
+
 ## [1.8.1]
 
 ### Fixed

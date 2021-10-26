@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -34,6 +34,7 @@ Merlin script adapter module
 
 import logging
 import os
+from typing import Dict, List, Set
 
 from maestrowf.interfaces.script import SubmissionRecord
 from maestrowf.interfaces.script.localscriptadapter import LocalScriptAdapter
@@ -66,7 +67,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
         """
         super(MerlinLSFScriptAdapter, self).__init__(**kwargs)
 
-        self._cmd_flags = {
+        self._cmd_flags: Dict[str, str] = {
             "cmd": "jsrun",
             "ntasks": "--np",
             "nodes": "--nrs",
@@ -79,22 +80,23 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "lsf": "",
         }
 
-        self._unsupported = {
+        self._unsupported: Set[str] = {
             "cmd",
-            "ntasks",
-            "nodes",
+            "depends",
+            "flux",
             "gpus",
-            "walltime",
+            "max_retries",
+            "nodes",
+            "ntasks",
+            "post",
+            "pre",
             "reservation",
             "restart",
-            "task_queue",
-            "max_retries",
             "retry_delay",
-            "pre",
-            "post",
-            "depends",
+            "shell",
             "slurm",
-            "flux",
+            "task_queue",
+            "walltime",
         }
 
     def get_header(self, step):
@@ -158,7 +160,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
     the SlurmScriptAdapter uses non-blocking submits.
     """
 
-    key = "merlin-slurm"
+    key: str = "merlin-slurm"
 
     def __init__(self, **kwargs):
         """
@@ -174,20 +176,21 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         self._cmd_flags["slurm"] = ""
         self._cmd_flags["walltime"] = "-t"
 
-        new_unsupported = [
-            "task_queue",
-            "max_retries",
-            "retry_delay",
-            "pre",
-            "post",
+        new_unsupported: List[str] = [
+            "bind",
+            "flux",
             "gpus per task",
             "gpus",
-            "restart",
-            "bind",
             "lsf",
-            "flux",
+            "max_retries",
+            "post",
+            "pre",
+            "restart",
+            "retry_delay",
+            "shell",
+            "task_queue",
         ]
-        self._unsupported = set(list(self._unsupported) + new_unsupported)
+        self._unsupported: Set[str] = set(list(self._unsupported) + new_unsupported)
 
     def get_header(self, step):
         """
@@ -357,9 +360,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         # Using super prevents recursion.
         self.batch_adapter = super(MerlinScriptAdapter, self)
         if self.batch_type != "merlin-local":
-            self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(
-                self.batch_type
-            )(**kwargs)
+            self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(self.batch_type)(**kwargs)
 
     def write_script(self, *args, **kwargs):
         """
@@ -404,9 +405,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         elif retcode == ReturnCode.STOP_WORKERS:
             LOG.debug("Execution returned status STOP_WORKERS")
         else:
-            LOG.warning(
-                f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL"
-            )
+            LOG.warning(f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL")
             submission_record._info["retcode"] = retcode
             retcode = ReturnCode.SOFT_FAIL
 
@@ -417,9 +416,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
 
         return submission_record
 
-    def _execute_subprocess(
-        self, output_name, script_path, cwd, env=None, join_output=False
-    ):
+    def _execute_subprocess(self, output_name, script_path, cwd, env=None, join_output=False):
         """
         Execute the subprocess script locally.
         If cwd is specified, the submit method will operate outside of the path
@@ -437,9 +434,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         """
         script_bn = os.path.basename(script_path)
         new_output_name = os.path.splitext(script_bn)[0]
-        LOG.debug(
-            f"script_path={script_path}, output_name={output_name}, new_output_name={new_output_name}"
-        )
+        LOG.debug(f"script_path={script_path}, output_name={output_name}, new_output_name={new_output_name}")
         p = start_process(script_path, shell=False, cwd=cwd, env=env)
         pid = p.pid
         output, err = p.communicate()

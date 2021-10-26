@@ -22,9 +22,7 @@ def get_priority(priority: Priority) -> int:
     broker: str = CONFIG.broker.name.lower()
     priorities: List[Priority] = [Priority.high, Priority.mid, Priority.low]
     if not isinstance(priority, Priority):
-        raise TypeError(
-            f"Unrecognized priority '{priority}'! Priority enum options: {[x.name for x in priorities]}"
-        )
+        raise TypeError(f"Unrecognized priority '{priority}'! Priority enum options: {[x.name for x in priorities]}")
     if priority == Priority.mid:
         return 5
     if is_rabbit_broker(broker):
@@ -37,6 +35,4 @@ def get_priority(priority: Priority) -> int:
             return 10
         if priority == Priority.high:
             return 1
-    raise ValueError(
-        f"Function get_priority has reached unknown state! Maybe unsupported broker {broker}?"
-    )
+    raise ValueError(f"Function get_priority has reached unknown state! Maybe unsupported broker {broker}?")

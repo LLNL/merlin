@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -56,16 +56,13 @@ class MerlinStepRecord(_StepRecord):
 
     def mark_submitted(self):
         """Mark the submission time of the record."""
-        LOG.debug(
-            "Marking %s as submitted (PENDING) -- previously %s", self.name, self.status
-        )
+        LOG.debug("Marking %s as submitted (PENDING) -- previously %s", self.name, self.status)
         self.status = State.PENDING
         if not self._submit_time:
             self._submit_time = datetime.now()
         else:
             LOG.debug(
-                "Merlin: Cannot set the submission time of '%s' because it has "
-                "already been set.",
+                "Merlin: Cannot set the submission time of '%s' because it has already been set.",
                 self.name,
             )
 
@@ -95,9 +92,7 @@ class Step:
         """
         return self.mstep.step.__dict__["run"]["restart"]
 
-    def clone_changing_workspace_and_cmd(
-        self, new_cmd=None, cmd_replacement_pairs=None, new_workspace=None
-    ):
+    def clone_changing_workspace_and_cmd(self, new_cmd=None, cmd_replacement_pairs=None, new_workspace=None):
         """
         Produces a deep copy of the current step, performing variable
         substitutions as we go
@@ -120,9 +115,7 @@ class Step:
 
                 restart_cmd = step_dict["run"]["restart"]
                 if restart_cmd:
-                    step_dict["run"]["restart"] = re.sub(
-                        re.escape(str1), str2, restart_cmd, flags=re.I
-                    )
+                    step_dict["run"]["restart"] = re.sub(re.escape(str1), str2, restart_cmd, flags=re.I)
 
         if new_workspace is None:
             new_workspace = self.get_workspace()

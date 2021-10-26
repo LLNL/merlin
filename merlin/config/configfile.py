@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.1.
+# This file is part of Merlin, Version: 1.8.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -42,13 +42,13 @@ from merlin.config import Config
 from merlin.utils import load_yaml
 
 
-LOG = logging.getLogger(__name__)
+LOG: logging.Logger = logging.getLogger(__name__)
 
-APP_FILENAME = "app.yaml"
-CONFIG = None
+APP_FILENAME: str = "app.yaml"
+CONFIG: Optional[Config] = None
 
-USER_HOME = os.path.expanduser("~")
-MERLIN_HOME = os.path.join(USER_HOME, ".merlin")
+USER_HOME: str = os.path.expanduser("~")
+MERLIN_HOME: str = os.path.join(USER_HOME, ".merlin")
 
 
 def load_config(filepath):
@@ -111,21 +111,23 @@ def load_default_user_names(config):
         config["broker"]["vhost"] = vhost
 
 
-def get_config(path):
+def get_config(path: Optional[str]) -> Dict:
     """
     Load a merlin configuration file and return a dictionary of the
     configurations.
 
-    :param path : The path to search for the config file.
+    :param [Optional[str]] path : The path to search for the config file.
+    :return: the config file to coordinate brokers/results backend/task manager."
+    :rtype: A Dict with all the config data.
     """
-    filepath = find_config_file(path)
+    filepath: Optional[str] = find_config_file(path)
 
     if filepath is None:
         raise ValueError(
             f"Cannot find a merlin config file! Run 'merlin config' and edit the file '{MERLIN_HOME}/{APP_FILENAME}'"
         )
 
-    config = load_config(filepath)
+    config: Dict = load_config(filepath)
     load_defaults(config)
     return config
 
@@ -193,9 +195,7 @@ def get_cert_file(server_type, config, cert_name, cert_path):
             if os.path.exists(new_cert_file):
                 cert_file = new_cert_file
             else:
-                LOG.error(
-                    f"{server_type}: The file for {cert_name} does not exist, searched {cert_file} and {new_cert_file}"
-                )
+                LOG.error(f"{server_type}: The file for {cert_name} does not exist, searched {cert_file} and {new_cert_file}")
         LOG.debug(f"{server_type}: {cert_name} = {cert_file}")
     except (AttributeError, KeyError):
         LOG.debug(f"{server_type}: {cert_name} not present")
@@ -205,32 +205,28 @@ def get_cert_file(server_type, config, cert_name, cert_path):
 
 def get_ssl_entries(
     server_type: str, server_name: str, server_config: Config, cert_path: str
-) -> str:
+) -> Dict[str, Union[str, ssl.VerifyMode]]:
     """
     Check if a ssl certificate file is present in the config
 
-    :param server_type : The server type
-    :param server_name : The server name for output
-    :param server_config : The server config
-    :param cert_path : The optional cert path
+    :param [str] server_type : The server type
+    :param [str] server_name : The server name for output
+    :param [Config] server_config : The server config
+    :param [str] cert_path : The optional cert path
+    :return : The data needed to manage an ssl certification.
+    :rtype : A Dict.
     """
     server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
 
-    keyfile: Optional[str] = get_cert_file(
-        server_type, server_config, "keyfile", cert_path
-    )
+    keyfile: Optional[str] = get_cert_file(server_type, server_config, "keyfile", cert_path)
     if keyfile:
         server_ssl["keyfile"] = keyfile
 
-    certfile: Optional[str] = get_cert_file(
-        server_type, server_config, "certfile", cert_path
-    )
+    certfile: Optional[str] = get_cert_file(server_type, server_config, "certfile", cert_path)
     if certfile:
         server_ssl["certfile"] = certfile
 
-    ca_certsfile: Optional[str] = get_cert_file(
-        server_type, server_config, "ca_certs", cert_path
-    )
+    ca_certsfile: Optional[str] = get_cert_file(server_type, server_config, "ca_certs", cert_path)
     if ca_certsfile:
         server_ssl["ca_certs"] = ca_certsfile
 
@@ -285,9 +281,7 @@ def process_ssl_map(server_name: str) -> Optional[Dict[str, str]]:
     return ssl_map
 
 
-def merge_sslmap(
-    server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dict[str, str]
-) -> Dict:
+def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dict[str, str]) -> Dict:
     """
     The different servers have different key var expectations, this updates the keys of the ssl_server dict with keys from
     the ssl_map if using rediss or mysql.
@@ -307,5 +301,5 @@ def merge_sslmap(
     server_ssl = new_server_ssl
 
 
-app_config = get_config(None)
+app_config: Dict = get_config(None)
 CONFIG = Config(app_config)
