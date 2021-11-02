@@ -46,7 +46,11 @@ def define_tests():
         ),
     }
     examples_check = {
-        "example list": ("merlin example list", HasReturnCode(), "local")
+        "example list": (
+            "merlin example list", 
+            HasReturnCode(), 
+            "local",
+            ),
     }
     run_workers_echo_tests = {
         "run-workers echo simple_chain": (
