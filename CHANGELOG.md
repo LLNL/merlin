@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added an Unreleased section in the changelog as per the link posted above
+- Unreleased section in the changelog
+- Test for `merlin example list`
 
 ### Fixed
 - The Optimization workflow example now has a ready to use workflow (`optimization_basic.yaml`). This solves the issue faced before with `merlin example list`.
