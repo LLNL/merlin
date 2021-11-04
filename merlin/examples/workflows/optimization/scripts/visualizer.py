@@ -15,7 +15,7 @@ from mpl_toolkits.mplot3d import Axes3D
 plt.style.use("seaborn-white")
 
 
-parser = argparse.ArgumentParser("Learn surrogate model form simulation")
+parser = argparse.ArgumentParser("Visualize the surrogate response surface in comparison to the analytic function")
 parser.add_argument("-study_dir", help="The study directory, usually '$(MERLIN_WORKSPACE)'")
 parser.add_argument(
     "-scale",
