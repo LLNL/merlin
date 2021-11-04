@@ -42,15 +42,13 @@ env:
     OUTPUT_PATH: ~/optimization_runs
     PREV_WORKSPACE_DIR: 0
 
-    PYTHON: /usr/WS2/mubarka1/venvs/forked_merlin/merlin/venv_merlin_py_3_7/bin/python
-
 
 study:
     - name: run_simulation
       description: Run the desired simulation
       run:
         cmd: |-
-          $(PYTHON) $(SCRIPTS)/test_functions.py -function $(TEST_FUNCTION) -ID "$(ITER)_$(MERLIN_SAMPLE_ID)" -inputs  $(INPUT_1)  $(INPUT_2) 
+          python3 $(SCRIPTS)/test_functions.py -function $(TEST_FUNCTION) -ID "$(ITER)_$(MERLIN_SAMPLE_ID)" -inputs  $(INPUT_1)  $(INPUT_2) 
 
         cores per task: 1
         nodes: 1
@@ -61,7 +59,7 @@ study:
       description: Collect the results into a single file and make an npz of some features
       run:
         cmd: |-
-          $(PYTHON) $(SCRIPTS)/collector.py -sim_dirs "$(run_simulation.workspace)/$(MERLIN_GLOB_PATH)"
+          python3 $(SCRIPTS)/collector.py -sim_dirs "$(run_simulation.workspace)/$(MERLIN_GLOB_PATH)"
         nodes: 1
         procs: 1
         depends: [run_simulation_*]
@@ -91,7 +89,7 @@ study:
           else
               cp current_results.npz all_iter_results.npz
           fi
-          $(PYTHON) -c "import numpy as np; all_results_npz=np.load('all_iter_results.npz');np.savez('learner.npz',X=all_results_npz['X'],y=all_results_npz['y'].ravel())"
+          python3 -c "import numpy as np; all_results_npz=np.load('all_iter_results.npz');np.savez('learner.npz',X=all_results_npz['X'],y=all_results_npz['y'].ravel())"
 
           spellbook learn -regressor RandomForestRegressor -infile learner.npz -outfile surrogate.pkl
 
@@ -105,7 +103,7 @@ study:
       description: Optimizer
       run:
         cmd: |-
-          $(PYTHON) $(SCRIPTS)/optimizer.py -learner_dir "$(learner.workspace)" -bounds "$(BOUNDS_X)" -input_uncerts "$(UNCERTS_X)" -method "$(METHOD)"
+          python3 $(SCRIPTS)/optimizer.py -learner_dir "$(learner.workspace)" -bounds "$(BOUNDS_X)" -input_uncerts "$(UNCERTS_X)" -method "$(METHOD)"
 
         cores per task: 1
         nodes: 1
@@ -123,7 +121,7 @@ study:
           spellbook make-samples -dims $(N_DIMS) -x0 $(optimizer.workspace)/old_best.npy -scale_factor $(SEARCH_SCALE) -scale "$(BOUNDS_X)" -n $(N_EXPLOIT) -sample_type lhd -outfile new_exploit_samples.npy -seed $(SEED) --hard-bounds
 
           # combine them
-          $(PYTHON) -c "import numpy as np; np.save('new_samples.npy',np.vstack((np.load('new_explore_samples.npy'),np.load('new_exploit_samples.npy'),np.load('new_explore_star_samples.npy'))))"
+          python3 -c "import numpy as np; np.save('new_samples.npy',np.vstack((np.load('new_explore_samples.npy'),np.load('new_exploit_samples.npy'),np.load('new_explore_star_samples.npy'))))"
 
         cores per task: 1
         nodes: 1
@@ -139,7 +137,7 @@ study:
           if [ $(N_DIMS) -ne "2" ] ; then
               echo "We currently don't have a way of visualizing anything other than 2D"
           else
-              $(PYTHON) $(SCRIPTS)/visualizer.py -study_dir $(MERLIN_WORKSPACE) -scale "$(BOUNDS_X)"
+              python3 $(SCRIPTS)/visualizer.py -study_dir $(MERLIN_WORKSPACE) -scale "$(BOUNDS_X)"
           fi
 
         cores per task: 1
