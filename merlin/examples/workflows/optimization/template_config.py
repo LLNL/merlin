@@ -30,7 +30,7 @@ def get_bounds_X(test_function):
     }[test_function]
 
 
-filename = "template_optimization.yaml"
+filename = "template_optimization.temp"
 
 workflow_dict, template = get_dict_from_yaml(filename)
 undefined_variables = get_variables(filename)

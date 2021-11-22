@@ -45,6 +45,13 @@ def define_tests():
             "local",
         ),
     }
+    examples_check = {
+        "example list": (
+            "merlin example list",
+            HasReturnCode(),
+            "local",
+        ),
+    }
     run_workers_echo_tests = {
         "run-workers echo simple_chain": (
             f"{workers} {simple} --echo",
@@ -364,6 +371,7 @@ def define_tests():
     all_tests = {}
     for test_dict in [
         basic_checks,
+        examples_check,
         run_workers_echo_tests,
         wf_format_tests,
         example_tests,
