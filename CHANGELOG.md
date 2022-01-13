@@ -4,8 +4,18 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.2]
+## [Unreleased]
 
+## [1.8.3]
+### Added
+- Test for `merlin example list`
+- Python 3.10 to testing
+
+### Fixed
+- The Optimization workflow example now has a ready to use workflow (`optimization_basic.yaml`). This solves the issue faced before with `merlin example list`.
+- Redis dependency handled implictly by celery for cross-compatibility
+
+## [1.8.2]
 ### Added
 - Re-enabled distributed integration testing. Added additional examination to distributed testing.
 
