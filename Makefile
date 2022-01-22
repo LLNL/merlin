@@ -191,7 +191,7 @@ reqlist:
 
 
 release:
-	$(PYTHON) setup.py sdist bdist_wheel
+	$(PYTHON) -m build .
 
 
 clean-release:
