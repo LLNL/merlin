@@ -41,6 +41,6 @@ Merlin is an open source project, so contributions are welcome. Contributions ca
 
 Contributing to Merlin is easy! Just `send us a pull request <https://github.com/LLNL/merlin/pulls>`_ from your fork. Before you send it, summarize your change in the ``[Unreleased]`` section of ``CHANGELOG.md`` and make sure develop is the destination branch. We also appreciate `squash commits <https://github.com/LLNL/merlin/wiki/Squash-commits>`_ before pull requests are merged.
 
-Merlin uses a rough approximation of the Git Flow branching model. The develop branch contains the latest contributions, and master is always tagged and points to the latest stable release.
+Merlin uses a rough approximation of the Git Flow branching model. The develop branch contains the latest contributions, and main is always tagged and points to the latest stable release.
 
 If you're a contributor, try to test and run on develop. That's where all the magic is happening (and where we hope bugs stop).
