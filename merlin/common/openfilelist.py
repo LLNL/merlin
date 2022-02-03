@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.3.
+# This file is part of Merlin, Version: 1.8.4.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
