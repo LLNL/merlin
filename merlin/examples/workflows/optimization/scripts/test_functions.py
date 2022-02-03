@@ -17,14 +17,14 @@ def rosenbrock(X):
 def rastrigin(X, A=10):
     first_term = A * len(inputs)
 
-    return first_term + sum([(x ** 2 - A * np.cos(2 * math.pi * x)) for x in X])
+    return first_term + sum([(x**2 - A * np.cos(2 * math.pi * x)) for x in X])
 
 
 def ackley(X):
     firstSum = 0.0
     secondSum = 0.0
     for x in X:
-        firstSum += x ** 2.0
+        firstSum += x**2.0
         secondSum += np.cos(2.0 * np.pi * x)
     n = float(len(X))
 
@@ -32,7 +32,7 @@ def ackley(X):
 
 
 def griewank(X):
-    term_1 = (1.0 / 4000.0) * sum(X ** 2)
+    term_1 = (1.0 / 4000.0) * sum(X**2)
     term_2 = 1.0
     for i, x in enumerate(X):
         term_2 *= np.cos(x) / np.sqrt(i + 1)

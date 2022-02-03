@@ -21,8 +21,8 @@ elif "pascal" in machine:
 
 # launch n_samples * n_conc merlin workflow jobs
 submit_path: str = os.path.abspath(os.path.dirname(os.path.abspath(__file__)))
-concurrencies: List[int] = [2 ** 0, 2 ** 1, 2 ** 2, 2 ** 3, 2 ** 4, 2 ** 5, 2 ** 6]
-samples: List[int] = [10 ** 1, 10 ** 2, 10 ** 3, 10 ** 4, 10 ** 5]
+concurrencies: List[int] = [2**0, 2**1, 2**2, 2**3, 2**4, 2**5, 2**6]
+samples: List[int] = [10**1, 10**2, 10**3, 10**4, 10**5]
 nodes: List = []
 c: int
 for c in concurrencies:
