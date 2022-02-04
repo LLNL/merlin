@@ -26,7 +26,7 @@ outputs = np.load(outputs_dir + "/data.npz")
 U = outputs["arr_0"]
 enstrophy = outputs["arr_1"]
 
-energy_byhand = np.sum(np.sum(U ** 2, axis=3), axis=2) / U.shape[2] / 2
+energy_byhand = np.sum(np.sum(U**2, axis=3), axis=2) / U.shape[2] / 2
 enstrophy_all = np.sum(enstrophy, axis=2)
 
 X = np.load(inputs_dir + "/samples.npy")
