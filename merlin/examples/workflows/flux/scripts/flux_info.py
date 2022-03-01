@@ -39,34 +39,32 @@ try:
     kvs.get(f, "lwj")
 
     for d in kvs.walk("lwj", flux_handle=f):
-        try:
-            # print(type(d))
-            fdir = "lwj.{0}".format(d[0])
+        # print(type(d))
+        fdir = "lwj.{0}".format(d[0])
 
-            qcreate = "{0}.create-time".format(fdir)
-            create_time = kvs.get(f, qcreate)
+        qcreate = "{0}.create-time".format(fdir)
+        create_time = kvs.get(f, qcreate)
 
-            qstart = "{0}.starting-time".format(fdir)
-            start_time = kvs.get(f, qstart)
+        qstart = "{0}.starting-time".format(fdir)
+        start_time = kvs.get(f, qstart)
 
-            qrun = "{0}.running-time".format(fdir)
-            start_time = kvs.get(f, qrun)
+        qrun = "{0}.running-time".format(fdir)
+        start_time = kvs.get(f, qrun)
 
-            qcomplete = "{0}.complete-time".format(fdir)
-            complete_time = kvs.get(f, qcomplete)
+        qcomplete = "{0}.complete-time".format(fdir)
+        complete_time = kvs.get(f, qcomplete)
 
-            qcompleting = "{0}.completing-time".format(fdir)
-            completing_time = kvs.get(f, qcompleting)
+        qcompleting = "{0}.completing-time".format(fdir)
+        completing_time = kvs.get(f, qcompleting)
 
-            qwall = "{0}.walltime".format(fdir)
-            wall_time = kvs.get(f, qwall)
+        qwall = "{0}.walltime".format(fdir)
+        wall_time = kvs.get(f, qwall)
 
-            print(
-                f"Job {d[0]}: create: {create_time} start {start_time} run {start_time} completing {completing_time} complete {complete_time} wall {wall_time}"
-            )
-        except BaseException:
-            pass
-except BaseException:
+        print(
+            f"Job {d[0]}: create: {create_time} start {start_time} run {start_time} completing {completing_time} complete {complete_time} wall {wall_time}"
+        )
+
+except KeyError:
     top_dir = "job"
 
     def get_data_dict(key: str) -> Dict:

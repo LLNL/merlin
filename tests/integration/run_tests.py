@@ -155,7 +155,7 @@ def run_tests(args, tests):
             continue
         try:
             passed, info = run_single_test(test_name, test, test_label)
-        except BaseException as e:
+        except Exception as e:
             print(e)
             passed = False
             info = None
@@ -215,4 +215,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

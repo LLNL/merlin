@@ -103,8 +103,6 @@ ax[0][1].set_xlim([x_min, x_max])
 ax[0][1].set_ylim([y_min, y_max])
 
 
-y_pred_all = regr.predict(X)
-input_enstrophy = ax[1][1].scatter(X[:, 0], 10 ** y[:, 1], s=100, edgecolors="black")
 ax[1][1].set_xlabel(r"Lidspeed ($\frac{m}{s}$)", fontsize=fontsize)
 ax[1][1].set_ylabel(r"$Energy$", fontsize=fontsize)
 ax[1][1].set_title("Average Energy Variation with Lidspeed")

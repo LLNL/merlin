@@ -205,14 +205,15 @@ def get_yaml_var(entry, var, default):
     :param `var`: a yaml key
     :param `default`: default value in the absence of data
     """
-    ret = default
 
-    if isinstance(entry, dict):
-        with suppress(KeyError):
-            ret = entry[var]
-    else:
-        with suppress(AttributeError):
+    try:
+        ret = entry[var]
+    except KeyError:
+        try:
             ret = getattr(entry, var)
+        except AttributeError:
+            ret = default
+
     return ret
 
 

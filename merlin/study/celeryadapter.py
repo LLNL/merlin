@@ -155,8 +155,8 @@ def query_celery_queues(queues):
             try:
                 name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
                 found_queues.append((name, jobs, consumers))
-            except BaseException:
-                LOG.warning(f"Cannot find queue {queue} on server.")
+            except Exception as e:
+                LOG.warning(f"Cannot find queue {queue} on server.{e}")
     finally:
         connection.close()
     return found_queues

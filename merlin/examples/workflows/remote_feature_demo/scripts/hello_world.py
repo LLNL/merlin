@@ -1,6 +1,5 @@
 import argparse
 import json
-import sys
 from typing import Dict
 
 
@@ -42,4 +41,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

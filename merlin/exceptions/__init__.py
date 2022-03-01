@@ -36,6 +36,7 @@ __all__ = (
     "RetryException",
     "SoftFailException",
     "HardFailException",
+    "InvalidChainException",
     "RestartException",
 )
 
@@ -76,7 +77,7 @@ class InvalidChainException(Exception):
     """
 
     def __init__(self):
-        super(HardFailException, self).__init__()
+        super(InvalidChainException, self).__init__()
 
 
 class RestartException(Exception):
