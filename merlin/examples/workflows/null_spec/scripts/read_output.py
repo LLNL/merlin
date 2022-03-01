@@ -41,7 +41,8 @@ def single_task_times():
                     match = matches.group(0)
                     match = float(match.strip("s:"))
                     task_durations.append(match)
-        except BaseException:
+        except Exception as e:
+            print(f"single_task_times Exception= {e}\n")
             continue
 
     print(str(task_durations))
@@ -58,9 +59,9 @@ def merlin_run_time():
         total += result
     try:
         print(f"c{args.c}_s{args.s} merlin run : " + str(result))
-    except BaseException:
+    except Exception as e:
         result = None
-        print(f"c{args.c}_s{args.s} merlin run : ERROR -- result={result}, args.errfile={args.errfile}")
+        print(f"c{args.c}_s{args.s} merlin run : ERROR -- result={result}, args.errfile={args.errfile}\n{e}")
 
 
 def start_verify_time():
@@ -74,12 +75,12 @@ def start_verify_time():
             element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
-        except BaseException:
+        except Exception as e:
             continue
         try:
             print(f"c{args.c}_s{args.s} start verify : " + str(all_timestamps[0]))
-        except BaseException:
-            print(f"c{args.c}_s{args.s} start verify : ERROR")
+        except Exception as e:
+            print(f"c{args.c}_s{args.s} start verify : ERROR\n{e}")
 
 
 def start_run_workers_time():
@@ -93,7 +94,7 @@ def start_run_workers_time():
             element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
-        except BaseException:
+        except Exception:
             continue
     earliest = min(all_timestamps)
     print(f"c{args.c}_s{args.s} start run-workers : " + str(earliest))
@@ -110,7 +111,7 @@ def start_sample1_time():
             element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
-        except BaseException:
+        except Exception:
             continue
     earliest = min(all_timestamps)
     print(f"c{args.c}_s{args.s} start samp1 : " + str(earliest))
