@@ -207,14 +207,12 @@ def get_yaml_var(entry, var, default):
     """
 
     try:
-        ret = entry[var]
+        return entry[var]
     except (TypeError, KeyError):
         try:
-            ret = getattr(entry, var)
+            return getattr(entry, var)
         except AttributeError:
-            ret = default
-
-    return ret
+            return default
 
 
 def load_array_file(filename, ndmin=2):
