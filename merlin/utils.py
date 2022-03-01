@@ -37,7 +37,7 @@ import os
 import re
 import socket
 import subprocess
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import timedelta
 from types import SimpleNamespace
