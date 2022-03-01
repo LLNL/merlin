@@ -208,7 +208,7 @@ def get_yaml_var(entry, var, default):
 
     try:
         ret = entry[var]
-    except KeyError:
+    except (TypeError, KeyError):
         try:
             ret = getattr(entry, var)
         except AttributeError:
