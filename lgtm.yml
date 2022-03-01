@@ -12,7 +12,9 @@
 path_classifiers:
   test:
     # Classify all files in the top-level directories tests/ as test code.
-    - exclude: tests
+    - exclude: 
+    - tests
+    - merlin/examples
 
 #########################################################################################
 # Use the `queries` block to change the default display of query results.               #
