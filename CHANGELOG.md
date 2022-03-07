@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Code updates to satisy lgtm CI security checker
+- Code updates to satisfy lgtm CI security checker
 
 ### Fixed
 - A bug in the ssl config was not returning the proper values
