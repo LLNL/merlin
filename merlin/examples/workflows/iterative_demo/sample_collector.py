@@ -1,6 +1,5 @@
 import argparse
 import os
-import sys
 from concurrent.futures import ProcessPoolExecutor
 
 
@@ -46,4 +45,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.4.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -219,7 +219,6 @@ def get_connection_string(include_password=True):
         raise ValueError(f"Error: {broker} is not a supported broker.")
     else:
         return _sort_valid_broker(broker, config_path, include_password)
-    return None
 
 
 def _sort_valid_broker(broker, config_path, include_password):

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.4.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -228,7 +228,7 @@ class MerlinSpec(YAMLSpecification):
             result = result.replace("\n\n\n", "\n\n")
         try:
             yaml.safe_load(result)
-        except BaseException as e:
+        except Exception as e:
             raise ValueError(f"Error parsing provenance spec:\n{e}")
         return result
 

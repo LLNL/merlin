@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.4.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -298,7 +298,8 @@ def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dic
             new_server_ssl[ssl_map[k]] = server_ssl[k]
         else:
             new_server_ssl[k] = server_ssl[k]
-    server_ssl = new_server_ssl
+
+    return new_server_ssl
 
 
 app_config: Dict = get_config(None)

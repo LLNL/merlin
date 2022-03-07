@@ -1,6 +1,5 @@
 import argparse
 import json
-import sys
 
 
 def process_args(args):
@@ -32,4 +31,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

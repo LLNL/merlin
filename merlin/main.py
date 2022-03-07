@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.4.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -140,7 +140,7 @@ def parse_override_vars(
                 val = int(val)
             result[key] = val
 
-        except BaseException as excpt:
+        except Exception as excpt:
             raise ValueError(
                 f"{excpt} Bad '--vars' formatting on command line. See 'merlin run --help' for an example."
             ) from excpt
@@ -756,4 +756,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
