@@ -33,7 +33,6 @@ This module handles the CLI for the deprecated `merlin-templates` command.
 """
 import argparse
 import logging
-import sys
 
 from merlin.ascii_art import banner_small
 from merlin.log_formatter import setup_logging
@@ -65,4 +64,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -37,7 +37,7 @@ import os
 import re
 import socket
 import subprocess
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import timedelta
 from types import SimpleNamespace
@@ -205,15 +205,14 @@ def get_yaml_var(entry, var, default):
     :param `var`: a yaml key
     :param `default`: default value in the absence of data
     """
-    ret = default
 
-    if isinstance(entry, dict):
-        with suppress(KeyError):
-            ret = entry[var]
-    else:
-        with suppress(AttributeError):
-            ret = getattr(entry, var)
-    return ret
+    try:
+        return entry[var]
+    except (TypeError, KeyError):
+        try:
+            return getattr(entry, var)
+        except AttributeError:
+            return default
 
 
 def load_array_file(filename, ndmin=2):
