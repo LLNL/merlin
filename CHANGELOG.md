@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Code updates to satisy lgtm CI security checker
+
+## [1.8.4]
+### Added
 - Auto-release of pypi packages
 - Workflows Community Initiative metadata file
-- Code updates to satisy lgtm CI security checker
 
 ### Fixed
 - Old references to stale branches
