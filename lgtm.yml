@@ -21,6 +21,10 @@ path_classifiers:
 #########################################################################################
 
 queries:
-  # Specifically hide the results of clear-text-logging-sensitive-data
-  - exclude: py/clear-text-logging-sensitive-data
+  - include: "*"
+  - exclude: "py/clear-text-logging-sensitive-data"
 
+extraction:
+  python:
+    python_setup:
+      version: "3"
