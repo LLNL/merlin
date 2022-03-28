@@ -369,6 +369,21 @@ be defined as shown in the :ref:`broker_redis_ssl` section.
 .. literalinclude:: ./docker-compose_rabbit_redis_tls.yml
       :language: yaml
 
+The ``rabbitmq.conf`` file contains the configuration, including ssl, for
+the rabbitmq server.
+
+.. code-block:: bash
+
+  default_vhost = /merlinu
+  default_user = merlinu
+  default_pass = guest
+  listeners.ssl.default = 5671
+  ssl.options.ccertfile = /cert_rabbitmq/ca_certificate.pem
+  ssl.options.certfile = /cert_rabbitmq/server_certificate.pem
+  ssl.options.keyfile = /cert_rabbitmq/server_key.pem
+  ssl.options.verify = verify_none
+  ssl.options.fail_if_no_peer_cert = false
+
 Once this docker-compose file is run, the merlin ``app.yaml`` file is changed
 to use the redis TLS server ``rediss`` instead of ``redis``.
 
