@@ -1,5 +1,4 @@
 import argparse
-import sys
 
 from faker import Faker
 
@@ -38,4 +37,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.4.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -36,6 +36,7 @@ __all__ = (
     "RetryException",
     "SoftFailException",
     "HardFailException",
+    "InvalidChainException",
     "RestartException",
 )
 
@@ -76,7 +77,7 @@ class InvalidChainException(Exception):
     """
 
     def __init__(self):
-        super(HardFailException, self).__init__()
+        super(InvalidChainException, self).__init__()
 
 
 class RestartException(Exception):
