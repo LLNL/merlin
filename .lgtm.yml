@@ -18,6 +18,8 @@ path_classifiers:
 
 #########################################################################################
 # Use the `queries` block to change the default display of query results.               #
+# The py/clear-text-logging-sensitive-data exclusion is due to cert and password        #
+# keywords being flagged as security leaks.                                             #
 #########################################################################################
 
 queries:
