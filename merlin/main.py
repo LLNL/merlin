@@ -341,6 +341,9 @@ def process_monitor(args):
         time.sleep(args.sleep)
     LOG.info("Monitor: ... stop condition met")
 
+def process_server(args):
+    print(args)
+
 
 def setup_argparse() -> None:
     """
@@ -550,6 +553,41 @@ def setup_argparse() -> None:
     generate_worker_touching_parsers(subparsers)
 
     generate_diagnostic_parsers(subparsers)
+
+    # merlin server
+    server: ArgumentParser = subparsers.add_parser(
+        "server",
+        help="Manage broker and results server for merlin workflow.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    server_commands: ArgumentParser = server.add_subparsers(dest="commands")
+
+    server_status: ArgumentParser = server_commands.add_parser(
+        "status", 
+        help="View status of the current server containers.",
+        description="View status",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_status.set_defaults(func=process_server)
+    
+    server_start: ArgumentParser = server_commands.add_parser(
+        "start", 
+        help="Start a containerized server to be used as an broker and results server.",
+        description="Start server",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_start.set_defaults(func=process_server)
+
+    server_stop: ArgumentParser = server_commands.add_parser(
+        "stop", 
+        help="Stop an instance of redis containers currently running.",
+        description="Stop server.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_stop.set_defaults(func=process_server)
+    
+    #server.set_defaults(func=process_server)
 
     return parser
 
