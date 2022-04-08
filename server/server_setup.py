@@ -7,6 +7,7 @@ import time
 SERVER_DIR = "./merlin_server/"
 IMAGE_NAME = "redis_latest.sif"
 PID_FILE = "merlin_server.pid"
+CONFIG_FILE = "redis.conf"
 
 class SERVER_STATUS(enum.Enum):
     NOT_INITALIZED = 0
@@ -58,17 +59,25 @@ def start_server(server_dir:str = SERVER_DIR, image_name:str = IMAGE_NAME):
         current_status == SERVER_STATUS.MISSING_CONTAINER):
         fetch_server_image(server_dir=server_dir, image_name=image_name)
 
-
+    file_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
     process = subprocess.Popen(
-        ["singularity", "run", server_dir + image_name, ],
+        ["singularity", "run", server_dir + image_name, file_dir + CONFIG_FILE],
         start_new_session=True,
         close_fds=True,
         stdout=subprocess.DEVNULL
     )
+    
+
     with open(server_dir + PID_FILE, "w+") as f:
         f.write(str(process.pid))
     
-    print("Server started with PID " + str(process.pid))
+    time.sleep(1)
+
+    if get_server_status(server_dir=server_dir, image_name=image_name) != SERVER_STATUS.RUNNING:
+        print("Unable to start merlin server.")
+        return False
+    
+    print("Server started with PID", str(process.pid))
     return True
 
 def stop_server(server_dir:str = SERVER_DIR, image_name:str = IMAGE_NAME):
@@ -93,7 +102,7 @@ def stop_server(server_dir:str = SERVER_DIR, image_name:str = IMAGE_NAME):
             print("Unable to get the PID for the current merlin server.")
             return False
         
-        print("Attempting to close merlin server PID ", str(read_pid))
+        print("Attempting to close merlin server PID", str(read_pid))
         subprocess.run(
             ["kill", str(read_pid)],
             stdout=subprocess.PIPE
