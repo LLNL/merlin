@@ -1,3 +1,5 @@
+"""Main functions for instantiating and running Merlin server containers."""
+
 import enum
 import os
 import subprocess
@@ -9,8 +11,8 @@ IMAGE_NAME = "redis_latest.sif"
 PID_FILE = "merlin_server.pid"
 CONFIG_FILE = "redis.conf"
 
-
-class SERVER_STATUS(enum.Enum):
+"""Different states in which the server is in."""
+class ServerStatus(enum.Enum):
     NOT_INITALIZED = 0
     MISSING_CONTAINER = 1
     NOT_RUNNING = 2
@@ -18,7 +20,7 @@ class SERVER_STATUS(enum.Enum):
     ERROR = 4
 
 
-def fetch_server_image(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NAME):
+def fetch_server_image(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
     """
     Fetch the server image using singularity.
 
@@ -36,14 +38,10 @@ def fetch_server_image(server_dir : str = SERVER_DIR, image_name : str = IMAGE_N
         return
 
     print("Fetching redis image from docker://redis.")
-    subprocess.run(
-        ["singularity", "pull", image_loc, "docker://redis"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    subprocess.run(["singularity", "pull", image_loc, "docker://redis"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
-def start_server(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NAME):
+def start_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
     """
     Start a merlin server container using singularity.
 
@@ -52,12 +50,11 @@ def start_server(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NAME):
     """
     current_status = get_server_status(server_dir=server_dir, image_name=image_name)
 
-    if (current_status == SERVER_STATUS.NOT_INITALIZED or
-            current_status == SERVER_STATUS.MISSING_CONTAINER):
+    if current_status == ServerStatus.NOT_INITALIZED or current_status == ServerStatus.MISSING_CONTAINER:
         print("Merlin server has not been initialized. Please run 'merlin server init' first.")
         return False
 
-    if current_status == SERVER_STATUS.RUNNING:
+    if current_status == ServerStatus.RUNNING:
         print("Merlin server already running.")
         print("Stop current server with 'merlin server stop' before attempting to start a new server.")
         return False
@@ -67,7 +64,7 @@ def start_server(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NAME):
         ["singularity", "run", server_dir + image_name, file_dir + CONFIG_FILE],
         start_new_session=True,
         close_fds=True,
-        stdout=subprocess.DEVNULL
+        stdout=subprocess.DEVNULL,
     )
 
     with open(server_dir + PID_FILE, "w+") as f:
@@ -75,7 +72,7 @@ def start_server(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NAME):
 
     time.sleep(1)
 
-    if get_server_status(server_dir=server_dir, image_name=image_name) != SERVER_STATUS.RUNNING:
+    if get_server_status(server_dir=server_dir, image_name=image_name) != ServerStatus.RUNNING:
         print("Unable to start merlin server.")
         return False
 
@@ -83,35 +80,29 @@ def start_server(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NAME):
     return True
 
 
-def stop_server(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NAME):
+def stop_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
     """
     Stop running merlin server containers.
 
     :param `server_dir`: location of all server related files.
     :param `image_name`: name of the image when fetched.
     """
-    if get_server_status(server_dir=server_dir, image_name=image_name) != SERVER_STATUS.RUNNING:
+    if get_server_status(server_dir=server_dir, image_name=image_name) != ServerStatus.RUNNING:
         print("There is no instance of merlin server running.")
         print("Start a merlin server first with 'merlin server start'")
         return False
 
     with open(server_dir + PID_FILE, "r") as f:
         read_pid = f.read()
-        process = subprocess.run(
-            ["pgrep", "-P", str(read_pid)],
-            stdout=subprocess.PIPE
-        )
-        if process.stdout == b'':
+        process = subprocess.run(["pgrep", "-P", str(read_pid)], stdout=subprocess.PIPE)
+        if process.stdout == b"":
             print("Unable to get the PID for the current merlin server.")
             return False
 
         print("Attempting to close merlin server PID", str(read_pid))
-        subprocess.run(
-            ["kill", str(read_pid)],
-            stdout=subprocess.PIPE
-        )
+        subprocess.run(["kill", str(read_pid)], stdout=subprocess.PIPE)
         time.sleep(1)
-        if get_server_status(server_dir=server_dir, image_name=image_name) == SERVER_STATUS.RUNNING:
+        if get_server_status(server_dir=server_dir, image_name=image_name) == ServerStatus.RUNNING:
             print("Unable to kill process.")
             return False
 
@@ -119,7 +110,7 @@ def stop_server(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NAME):
         return True
 
 
-def get_server_status(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NAME):
+def get_server_status(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
     """
     Determine the status of the current server.
     This function can be used to check if the servers
@@ -129,22 +120,19 @@ def get_server_status(server_dir : str = SERVER_DIR, image_name : str = IMAGE_NA
     :param `image_name`: name of the image when fetched.
     """
     if not os.path.exists(server_dir):
-        return SERVER_STATUS.NOT_INITALIZED
+        return ServerStatus.NOT_INITALIZED
 
     if not os.path.exists(server_dir + image_name):
-        return SERVER_STATUS.MISSING_CONTAINER
+        return ServerStatus.MISSING_CONTAINER
 
     if not os.path.exists(server_dir + PID_FILE):
-        return SERVER_STATUS.NOT_RUNNING
+        return ServerStatus.NOT_RUNNING
 
     with open(server_dir + PID_FILE, "r") as f:
         server_pid = f.read()
-        check_process = subprocess.run(
-            ["pgrep", "-P", str(server_pid)],
-            stdout=subprocess.PIPE
-        )
+        check_process = subprocess.run(["pgrep", "-P", str(server_pid)], stdout=subprocess.PIPE)
 
-        if check_process.stdout == b'':
-            return SERVER_STATUS.NOT_RUNNING
+        if check_process.stdout == b"":
+            return ServerStatus.NOT_RUNNING
 
-    return SERVER_STATUS.RUNNING
+    return ServerStatus.RUNNING

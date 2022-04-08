@@ -56,7 +56,7 @@ from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
-from server.server_setup import SERVER_STATUS, fetch_server_image, get_server_status, start_server, stop_server
+from server.server_setup import ServerStatus, fetch_server_image, get_server_status, start_server, stop_server
 
 
 LOG = logging.getLogger("merlin")
@@ -352,15 +352,15 @@ def process_server(args):
         stop_server()
     elif args.commands == "status":
         current_status = get_server_status()
-        if current_status == SERVER_STATUS.NOT_INITALIZED:
+        if current_status == ServerStatus.NOT_INITALIZED:
             print("Merlin server has not been inialized.")
-            print("Please start server by running 'merlin server start'")
-        elif current_status == SERVER_STATUS.MISSING_CONTAINER:
+            print("Please initalize server by running 'merlin server init'")
+        elif current_status == ServerStatus.MISSING_CONTAINER:
             print("Unable to find server image.")
             print("Ensure there is a .sif file in merlin server directory.")
-        elif current_status == SERVER_STATUS.NOT_RUNNING:
+        elif current_status == ServerStatus.NOT_RUNNING:
             print("Merlin server is not running.")
-        elif current_status == SERVER_STATUS.RUNNING:
+        elif current_status == ServerStatus.RUNNING:
             print("Merlin server is running.")
 
 
