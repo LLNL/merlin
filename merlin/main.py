@@ -56,8 +56,8 @@ from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
+from server.server_setup import SERVER_STATUS, fetch_server_image, get_server_status, start_server, stop_server
 
-from server.server_setup import fetch_server_image, start_server, stop_server, get_server_status, SERVER_STATUS
 
 LOG = logging.getLogger("merlin")
 DEFAULT_LOG_LEVEL = "INFO"
@@ -342,6 +342,7 @@ def process_monitor(args):
         time.sleep(args.sleep)
     LOG.info("Monitor: ... stop condition met")
 
+
 def process_server(args):
     if args.commands == "init":
         fetch_server_image()
@@ -351,7 +352,7 @@ def process_server(args):
         stop_server()
     elif args.commands == "status":
         current_status = get_server_status()
-        if  current_status == SERVER_STATUS.NOT_INITALIZED:
+        if current_status == SERVER_STATUS.NOT_INITALIZED:
             print("Merlin server has not been inialized.")
             print("Please start server by running 'merlin server start'")
         elif current_status == SERVER_STATUS.MISSING_CONTAINER:
@@ -361,6 +362,7 @@ def process_server(args):
             print("Merlin server is not running.")
         elif current_status == SERVER_STATUS.RUNNING:
             print("Merlin server is running.")
+
 
 def setup_argparse() -> None:
     """
@@ -581,7 +583,7 @@ def setup_argparse() -> None:
     server_commands: ArgumentParser = server.add_subparsers(dest="commands")
 
     server_init: ArgumentParser = server_commands.add_parser(
-        "init", 
+        "init",
         help="Initialize merlin server resources.",
         description="Initialize merlin server",
         formatter_class=ArgumentDefaultsHelpFormatter,
@@ -589,15 +591,15 @@ def setup_argparse() -> None:
     server_init.set_defaults(func=process_server)
 
     server_status: ArgumentParser = server_commands.add_parser(
-        "status", 
+        "status",
         help="View status of the current server containers.",
         description="View status",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     server_status.set_defaults(func=process_server)
-    
+
     server_start: ArgumentParser = server_commands.add_parser(
-        "start", 
+        "start",
         help="Start a containerized server to be used as an broker and results server.",
         description="Start server",
         formatter_class=ArgumentDefaultsHelpFormatter,
@@ -605,14 +607,12 @@ def setup_argparse() -> None:
     server_start.set_defaults(func=process_server)
 
     server_stop: ArgumentParser = server_commands.add_parser(
-        "stop", 
+        "stop",
         help="Stop an instance of redis containers currently running.",
         description="Stop server.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     server_stop.set_defaults(func=process_server)
-    
-    #server.set_defaults(func=process_server)
 
     return parser
 
