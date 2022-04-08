@@ -57,7 +57,7 @@ from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
 
-from server.server_setup import start_server, stop_server, get_server_status, SERVER_STATUS
+from server.server_setup import fetch_server_image, start_server, stop_server, get_server_status, SERVER_STATUS
 
 LOG = logging.getLogger("merlin")
 DEFAULT_LOG_LEVEL = "INFO"
@@ -343,7 +343,9 @@ def process_monitor(args):
     LOG.info("Monitor: ... stop condition met")
 
 def process_server(args):
-    if args.commands == "start":
+    if args.commands == "init":
+        fetch_server_image()
+    elif args.commands == "start":
         start_server()
     elif args.commands == "stop":
         stop_server()
@@ -577,6 +579,14 @@ def setup_argparse() -> None:
     )
 
     server_commands: ArgumentParser = server.add_subparsers(dest="commands")
+
+    server_init: ArgumentParser = server_commands.add_parser(
+        "init", 
+        help="Initialize merlin server resources.",
+        description="Initialize merlin server",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_init.set_defaults(func=process_server)
 
     server_status: ArgumentParser = server_commands.add_parser(
         "status", 

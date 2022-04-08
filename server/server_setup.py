@@ -34,7 +34,7 @@ def fetch_server_image(server_dir:str = SERVER_DIR, image_name:str = IMAGE_NAME)
         return
     
     print("Fetching redis image from docker://redis.")
-    process = subprocess.run(
+    subprocess.run(
         ["singularity", "pull", image_loc, "docker://redis"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
@@ -50,14 +50,16 @@ def start_server(server_dir:str = SERVER_DIR, image_name:str = IMAGE_NAME):
     :param `image_name`: name of the image when fetched.
     """
     current_status = get_server_status(server_dir=server_dir, image_name=image_name)
-    if current_status == SERVER_STATUS.RUNNING:
-        print("M server already running.")
-        print("Stop current server with 'merlin server stop' before attempting to start a new server.")
-        return False
-    
+
     if (current_status == SERVER_STATUS.NOT_INITALIZED or
         current_status == SERVER_STATUS.MISSING_CONTAINER):
-        fetch_server_image(server_dir=server_dir, image_name=image_name)
+        print("Merlin server has not been initialized. Please run 'merlin server init' first.")
+        return False
+    
+    if current_status == SERVER_STATUS.RUNNING:
+        print("Merlin server already running.")
+        print("Stop current server with 'merlin server stop' before attempting to start a new server.")
+        return False
 
     file_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
     process = subprocess.Popen(
@@ -67,12 +69,11 @@ def start_server(server_dir:str = SERVER_DIR, image_name:str = IMAGE_NAME):
         stdout=subprocess.DEVNULL
     )
     
-
     with open(server_dir + PID_FILE, "w+") as f:
         f.write(str(process.pid))
-    
-    time.sleep(1)
 
+    time.sleep(1)
+    
     if get_server_status(server_dir=server_dir, image_name=image_name) != SERVER_STATUS.RUNNING:
         print("Unable to start merlin server.")
         return False
