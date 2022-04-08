@@ -11,8 +11,10 @@ IMAGE_NAME = "redis_latest.sif"
 PID_FILE = "merlin_server.pid"
 CONFIG_FILE = "redis.conf"
 
-"""Different states in which the server is in."""
 class ServerStatus(enum.Enum):
+    """
+    Different states in which the server can be in.
+    """
     NOT_INITALIZED = 0
     MISSING_CONTAINER = 1
     NOT_RUNNING = 2
