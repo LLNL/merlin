@@ -65,6 +65,7 @@ jobs:
     - name: Lint with PyLint
       run: |
         python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
+        python3 -m pylint server --rcfile=setup.cfg --exit-zero
         python3 -m pylint tests --rcfile=setup.cfg --exit-zero
 
   Local-test-suite:

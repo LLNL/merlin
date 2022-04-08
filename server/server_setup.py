@@ -16,6 +16,7 @@ class ServerStatus(enum.Enum):
     """
     Different states in which the server can be in.
     """
+
     NOT_INITALIZED = 0
     MISSING_CONTAINER = 1
     NOT_RUNNING = 2
