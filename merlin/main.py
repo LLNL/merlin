@@ -57,6 +57,7 @@ from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
 
+from server.server_setup import start_server, stop_server, get_server_status, SERVER_STATUS
 
 LOG = logging.getLogger("merlin")
 DEFAULT_LOG_LEVEL = "INFO"
@@ -342,8 +343,22 @@ def process_monitor(args):
     LOG.info("Monitor: ... stop condition met")
 
 def process_server(args):
-    print(args)
-
+    if args.commands == "start":
+        start_server()
+    elif args.commands == "stop":
+        stop_server()
+    elif args.commands == "status":
+        current_status = get_server_status()
+        if  current_status == SERVER_STATUS.NOT_INITALIZED:
+            print("Merlin server has not been inialized.")
+            print("Please start server by running 'merlin server start'")
+        elif current_status == SERVER_STATUS.MISSING_CONTAINER:
+            print("Unable to find server image.")
+            print("Ensure there is a .sif file in merlin server directory.")
+        elif current_status == SERVER_STATUS.NOT_RUNNING:
+            print("Merlin server is not running.")
+        elif current_status == SERVER_STATUS.RUNNING:
+            print("Merlin server is running.")
 
 def setup_argparse() -> None:
     """
