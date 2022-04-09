@@ -2,6 +2,7 @@
 
 import enum
 import os
+import shutil
 import subprocess
 import time
 
@@ -44,6 +45,9 @@ def fetch_server_image(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAM
     print("Fetching redis image from docker://redis.")
     subprocess.run(["singularity", "pull", image_loc, "docker://redis"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+    print("Copying default redis configuration file.")
+    shutil.copy(os.path.dirname(os.path.abspath(__file__)) + "/" + CONFIG_FILE, server_dir)
+
 
 def start_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
     """
@@ -63,9 +67,8 @@ def start_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
         print("Stop current server with 'merlin server stop' before attempting to start a new server.")
         return False
 
-    file_dir = os.path.dirname(os.path.abspath(__file__)) + "/"
     process = subprocess.Popen(
-        ["singularity", "run", server_dir + image_name, file_dir + CONFIG_FILE],
+        ["singularity", "run", server_dir + image_name, server_dir + CONFIG_FILE],
         start_new_session=True,
         close_fds=True,
         stdout=subprocess.DEVNULL,
