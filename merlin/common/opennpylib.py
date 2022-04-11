@@ -373,7 +373,7 @@ if __name__ == "__main__":
                 en3 = np.asarray(a[1:14])
                 en4 = a.to_array()
                 # test __len__ method
-                self.assertTrue(len(a) == 3 * len(e))
+                self.assertEqual(len(a), 3 * len(e))
             os.unlink(fn)
             # test read slice of whole file
             self.assertTrue((en == e).all())
