@@ -73,7 +73,7 @@ class OpenFileList:
         self.argv, self.argkw = (v, kw)
         if self.files:
             self.fnnow = self.files.pop(0)
-            self.fnow = open(self.fnnow, *v, **kw) if files else None
+            self.fnow = open(self.fnnow, *v, **kw) if files else None  # noqa
             self.atend = False
         else:
             self.fnnow = self.fnow = None
@@ -89,7 +89,7 @@ class OpenFileList:
             self.fnow.close()
             if self.files:
                 self.fnnow = self.files.pop(0)
-                self.fnow = open(self.fnnow, *self.argv, **self.argkw)
+                self.fnow = open(self.fnnow, *self.argv, **self.argkw)  # noqa
             else:
                 self.fnnow = self.fnow = None
                 self.atend = True
