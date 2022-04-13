@@ -1,6 +1,7 @@
 """Main functions for instantiating and running Merlin server containers."""
 
 import enum
+import logging
 import os
 import shutil
 import subprocess
@@ -12,6 +13,8 @@ IMAGE_NAME = "redis_latest.sif"
 PID_FILE = "merlin_server.pid"
 CONFIG_FILE = "redis.conf"
 
+
+LOG = logging.getLogger("merlin")
 
 class ServerStatus(enum.Enum):
     """
@@ -33,19 +36,19 @@ def fetch_server_image(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAM
     :param `image_name`: name of the image when fetched.
     """
     if not os.path.exists(server_dir):
-        print("Creating merlin server directory.")
+        LOG.info("Creating merlin server directory.")
         os.mkdir(server_dir)
 
     image_loc = server_dir + image_name
 
     if os.path.exists(image_loc):
-        print(image_loc + " already exists.")
+        LOG.info(image_loc + " already exists.")
         return
 
-    print("Fetching redis image from docker://redis.")
+    LOG.info("Fetching redis image from docker://redis.")
     subprocess.run(["singularity", "pull", image_loc, "docker://redis"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    print("Copying default redis configuration file.")
+    LOG.info("Copying default redis configuration file.")
     shutil.copy(os.path.dirname(os.path.abspath(__file__)) + "/" + CONFIG_FILE, server_dir)
 
 
@@ -59,12 +62,12 @@ def start_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
     current_status = get_server_status(server_dir=server_dir, image_name=image_name)
 
     if current_status == ServerStatus.NOT_INITALIZED or current_status == ServerStatus.MISSING_CONTAINER:
-        print("Merlin server has not been initialized. Please run 'merlin server init' first.")
+        LOG.info("Merlin server has not been initialized. Please run 'merlin server init' first.")
         return False
 
     if current_status == ServerStatus.RUNNING:
-        print("Merlin server already running.")
-        print("Stop current server with 'merlin server stop' before attempting to start a new server.")
+        LOG.info("Merlin server already running.")
+        LOG.info("Stop current server with 'merlin server stop' before attempting to start a new server.")
         return False
 
     process = subprocess.Popen(
@@ -80,10 +83,10 @@ def start_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
     time.sleep(1)
 
     if get_server_status(server_dir=server_dir, image_name=image_name) != ServerStatus.RUNNING:
-        print("Unable to start merlin server.")
+        LOG.error("Unable to start merlin server.")
         return False
 
-    print("Server started with PID", str(process.pid))
+    LOG.info("Server started with PID " + str(process.pid))
     return True
 
 
@@ -95,25 +98,25 @@ def stop_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
     :param `image_name`: name of the image when fetched.
     """
     if get_server_status(server_dir=server_dir, image_name=image_name) != ServerStatus.RUNNING:
-        print("There is no instance of merlin server running.")
-        print("Start a merlin server first with 'merlin server start'")
+        LOG.info("There is no instance of merlin server running.")
+        LOG.info("Start a merlin server first with 'merlin server start'")
         return False
 
     with open(server_dir + PID_FILE, "r") as f:
         read_pid = f.read()
         process = subprocess.run(["pgrep", "-P", str(read_pid)], stdout=subprocess.PIPE)
         if process.stdout == b"":
-            print("Unable to get the PID for the current merlin server.")
+            LOG.error("Unable to get the PID for the current merlin server.")
             return False
 
-        print("Attempting to close merlin server PID", str(read_pid))
+        LOG.info("Attempting to close merlin server PID " + str(read_pid))
         subprocess.run(["kill", str(read_pid)], stdout=subprocess.PIPE)
         time.sleep(1)
         if get_server_status(server_dir=server_dir, image_name=image_name) == ServerStatus.RUNNING:
-            print("Unable to kill process.")
+            LOG.error("Unable to kill process.")
             return False
 
-        print("Merlin server terminated.")
+        LOG.info("Merlin server terminated.")
         return True
 
 

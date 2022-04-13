@@ -353,15 +353,15 @@ def process_server(args):
     elif args.commands == "status":
         current_status = get_server_status()
         if current_status == ServerStatus.NOT_INITALIZED:
-            print("Merlin server has not been inialized.")
-            print("Please initalize server by running 'merlin server init'")
+            LOG.info("Merlin server has not been inialized.")
+            LOG.info("Please initalize server by running 'merlin server init'")
         elif current_status == ServerStatus.MISSING_CONTAINER:
-            print("Unable to find server image.")
-            print("Ensure there is a .sif file in merlin server directory.")
+            LOG.info("Unable to find server image.")
+            LOG.info("Ensure there is a .sif file in merlin server directory.")
         elif current_status == ServerStatus.NOT_RUNNING:
-            print("Merlin server is not running.")
+            LOG.info("Merlin server is not running.")
         elif current_status == ServerStatus.RUNNING:
-            print("Merlin server is running.")
+            LOG.info("Merlin server is running.")
 
 
 def setup_argparse() -> None:
