@@ -299,7 +299,7 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "gpus per task": "-g",
             "walltime": "-t",
             "flux": "",
-        }
+        }  # noqa
 
         if "wreck" in flux_command:
             self._cmd_flags["walltime"] = "-T"
@@ -321,7 +321,7 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "lsf",
             "slurm",
         ]
-        self._unsupported = set(new_unsupported)
+        self._unsupported = set(new_unsupported)  # noqa
 
     def time_format(self, val):
         """

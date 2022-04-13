@@ -11,7 +11,8 @@ def error_override_vars(override_vars, spec_filepath):
     """
     if override_vars is None:
         return
-    original_text = open(spec_filepath, "r").read()
+    with open(spec_filepath, "r") as ospec:
+        original_text = ospec.read()
     for variable in override_vars.keys():
         if variable not in original_text:
             raise ValueError(f"Command line override variable '{variable}' not found in spec file '{spec_filepath}'.")

@@ -11,10 +11,12 @@
 
 path_classifiers:
   test:
-    # Classify all files in the top-level directories tests/ as test code.
-    - exclude: 
-      - tests
-      - merlin/examples
+    # Exclude all files to ovveride lgtm defaults
+    - exclude: /
+    # Classify all files in the top-level directories tests/ 
+    # and merlin/examples as test code.
+    - tests
+    - merlin/examples
 
 #########################################################################################
 # Use the `queries` block to change the default display of query results.               #
