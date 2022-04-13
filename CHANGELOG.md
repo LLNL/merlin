@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Added
 - Update docker docs for new rabbitmq and redis server versions
+- Added lgtm.com Badge for README.md
+- More fixes for lgtm checks.
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
 

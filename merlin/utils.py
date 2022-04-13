@@ -297,6 +297,7 @@ def get_source_root(filepath):
 
     parent = os.path.dirname(filepath)
     # Walk backwards testing for integers.
+    break_point = parent.split(sep)[-1]  # Initial value for lgtm.com
     for _, _dir in enumerate(parent.split(sep)[::-1]):
         try:
             int(_dir)

@@ -298,11 +298,13 @@ def get_ssl_config(celery_check=False):
     try:
         results_backend = CONFIG.results_backend.url.split(":")[0]
     except AttributeError:
+        # The results_backend may not have a url
         pass
 
     try:
         results_backend = CONFIG.results_backend.name.lower()
     except AttributeError:
+        # The results_backend may not have a name
         pass
 
     if results_backend not in BACKENDS:

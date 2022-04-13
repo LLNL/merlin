@@ -62,4 +62,5 @@ class Config:
             try:
                 setattr(self, field, nested_dict_to_namespaces(app_dict[field]))
             except KeyError:
+                # The keywords are optional
                 pass
