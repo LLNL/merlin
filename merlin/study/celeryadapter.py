@@ -320,6 +320,8 @@ def examine_and_log_machines(worker_val, yenv) -> bool:
                 "The env:variables section does not have an OUTPUT_PATH specified, multi-machine checks cannot be performed."
             )
         return False
+    else:
+        return False
 
 
 def verify_args(spec, worker_args, worker_name, overlap):

@@ -202,6 +202,7 @@ def get_connection_string(include_password=True):
     try:
         return CONFIG.broker.url
     except AttributeError:
+        # The broker may not have a url
         pass
 
     try:
@@ -250,11 +251,13 @@ def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:
     try:
         broker = CONFIG.broker.url.split(":")[0]
     except AttributeError:
+        # The broker may not have a url
         pass
 
     try:
         broker = CONFIG.broker.name.lower()
     except AttributeError:
+        # The broker may not have a name
         pass
 
     if broker not in BROKERS:
