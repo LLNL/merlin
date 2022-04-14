@@ -56,7 +56,14 @@ from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
-from server.server_setup import ServerStatus, fetch_server_image, get_server_status, start_server, stop_server
+from server.server_setup import (
+    ServerStatus,
+    create_server_configuration,
+    fetch_server_image,
+    get_server_status,
+    start_server,
+    stop_server,
+)
 
 
 LOG = logging.getLogger("merlin")
@@ -345,6 +352,8 @@ def process_monitor(args):
 
 def process_server(args):
     if args.commands == "init":
+        if not create_server_configuration():
+            return
         fetch_server_image()
     elif args.commands == "start":
         start_server()

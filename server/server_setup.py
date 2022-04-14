@@ -7,14 +7,20 @@ import shutil
 import subprocess
 import time
 
+from merlin.config.configfile import MERLIN_HOME
+
 
 SERVER_DIR = "./merlin_server/"
 IMAGE_NAME = "redis_latest.sif"
 PID_FILE = "merlin_server.pid"
 CONFIG_FILE = "redis.conf"
+MERLIN_CONFIG_DIR = MERLIN_HOME + "/"
+MERLIN_SERVER_SUBDIR = "server/"
+MERLIN_SERVER_CONFIG = "redis_server.yaml"
 
 
 LOG = logging.getLogger("merlin")
+
 
 class ServerStatus(enum.Enum):
     """
@@ -26,6 +32,46 @@ class ServerStatus(enum.Enum):
     NOT_RUNNING = 2
     RUNNING = 3
     ERROR = 4
+
+
+def create_server_configuration(
+    merlin_config_dir: str = MERLIN_CONFIG_DIR,
+    merlin_server_subdir: str = MERLIN_SERVER_SUBDIR,
+    merlin_server_config: str = MERLIN_SERVER_CONFIG,
+):
+    """
+    Create main configuration file for merlin server in the
+    merlin configuration directory. If a configuration already
+    exists it will not replace the current configuration and exit.
+
+    :param `merlin_config_dir`: location of main merlin configuration.
+    :param `merlin_server_subdir`: subdirectory for storing the server configuration.
+    """
+    if not os.path.exists(merlin_config_dir):
+        LOG.error("Unable to find main merlin configuration directory at " + merlin_config_dir)
+        return False
+
+    if not os.path.exists(merlin_config_dir + merlin_server_subdir):
+        LOG.info("Unable to find exisiting server configuration.")
+        LOG.info("Creating default configuration in " + merlin_config_dir + merlin_server_subdir)
+        try:
+            os.mkdir(merlin_config_dir + merlin_server_subdir)
+        except OSError as err:
+            LOG.error(err)
+            return False
+
+    if os.path.exists(merlin_config_dir + merlin_server_subdir + merlin_server_config):
+        LOG.info("Server configuration already exists.")
+        return True
+    try:
+        shutil.copy(
+            os.path.dirname(os.path.abspath(__file__)) + "/" + merlin_server_config, merlin_config_dir + merlin_server_subdir
+        )
+    except OSError:
+        LOG.error("Destination location " + merlin_config_dir + merlin_server_subdir + " is not writable.")
+        return False
+
+    return True
 
 
 def fetch_server_image(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
@@ -43,13 +89,18 @@ def fetch_server_image(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAM
 
     if os.path.exists(image_loc):
         LOG.info(image_loc + " already exists.")
-        return
+        return False
 
     LOG.info("Fetching redis image from docker://redis.")
     subprocess.run(["singularity", "pull", image_loc, "docker://redis"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     LOG.info("Copying default redis configuration file.")
-    shutil.copy(os.path.dirname(os.path.abspath(__file__)) + "/" + CONFIG_FILE, server_dir)
+    try:
+        shutil.copy(os.path.dirname(os.path.abspath(__file__)) + "/" + CONFIG_FILE, server_dir)
+    except OSError:
+        LOG.error("Destination location " + server_dir + " is not writable.")
+        return False
+    return True
 
 
 def start_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
