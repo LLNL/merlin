@@ -96,7 +96,7 @@ except NameError:
 
 def _get_npy_info2(f):
     if isinstance(f, unistr):
-        f = open(f, "rb")
+        f = open(f, "rb")  # noqa
     magic = f.read(6)  # must be .npy file
     assert magic == npy_magic  # must be .npy file or ELSE
     major, _ = list(map(ord, f.read(2)))
@@ -127,7 +127,7 @@ def _get_npy_info2(f):
 
 def _get_npy_info3(f):
     if isinstance(f, unistr):
-        f = open(f, "rb")
+        f = open(f, "rb")  # noqa
     magic = f.read(6)  # must be .npy file
     assert magic == npy_magic  # must be .npy file or ELSE
     major, _ = list(f.read(2))
@@ -373,7 +373,7 @@ if __name__ == "__main__":
                 en3 = np.asarray(a[1:14])
                 en4 = a.to_array()
                 # test __len__ method
-                self.assertTrue(len(a) == 3 * len(e))
+                self.assertEqual(len(a), 3 * len(e))
             os.unlink(fn)
             # test read slice of whole file
             self.assertTrue((en == e).all())
