@@ -44,6 +44,7 @@ def create_server_configuration(
 
     :param `merlin_config_dir`: location of main merlin configuration.
     :param `merlin_server_subdir`: subdirectory for storing the server configuration.
+    :param `merlin_server_config`: server config file name
     """
     if not os.path.exists(merlin_config_dir):
         LOG.error("Unable to find main merlin configuration directory at " + merlin_config_dir)
