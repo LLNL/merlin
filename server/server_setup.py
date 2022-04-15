@@ -12,7 +12,7 @@ SERVER_DIR = "./merlin_server/"
 IMAGE_NAME = "redis_latest.sif"
 PID_FILE = "merlin_server.pid"
 CONFIG_FILE = "redis.conf"
-MERLIN_CONFIG_DIR = os.path.expanduser("~") + "/"
+MERLIN_CONFIG_DIR = os.path.expanduser("~") + "/.merlin/"
 MERLIN_SERVER_SUBDIR = "server/"
 MERLIN_SERVER_CONFIG = "redis_server.yaml"
 
