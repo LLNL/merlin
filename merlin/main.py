@@ -59,8 +59,8 @@ from merlin.utils import ARRAY_FILE_FORMATS
 from server.server_setup import (
     ServerStatus,
     create_server_configuration,
-    fetch_server_image,
     get_server_status,
+    pull_server_image,
     start_server,
     stop_server,
 )
@@ -354,7 +354,7 @@ def process_server(args):
     if args.commands == "init":
         if not create_server_configuration():
             return
-        fetch_server_image()
+        pull_server_image()
     elif args.commands == "start":
         start_server()
     elif args.commands == "stop":

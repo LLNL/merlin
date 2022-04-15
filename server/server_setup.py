@@ -73,7 +73,7 @@ def create_server_configuration(
     return True
 
 
-def fetch_server_image(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
+def pull_server_image(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
     """
     Fetch the server image using singularity.
 
