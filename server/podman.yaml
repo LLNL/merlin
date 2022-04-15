@@ -1,6 +1,6 @@
 podman:
     command: podman
-    init_command: \{command} .. (optional or default)
-    start_command: \{command} run {image}
-    stop_command: \{command} (optional or kill default)
-    pull_command: \{command} pull {image} {url}
+    # init_command: \{command} .. (optional or default)
+    start_command: \{command} run --name {name} -d {image}
+    stop_command: \{command} stop {name}
+    pull_command: \{command} pull {url}
