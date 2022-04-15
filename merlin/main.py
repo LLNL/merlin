@@ -58,7 +58,7 @@ from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
 from server.server_setup import (
     ServerStatus,
-    create_server_configuration,
+    create_server_config,
     get_server_status,
     pull_server_image,
     start_server,
@@ -352,7 +352,7 @@ def process_monitor(args):
 
 def process_server(args):
     if args.commands == "init":
-        if not create_server_configuration():
+        if not create_server_config():
             return
         pull_server_image()
     elif args.commands == "start":

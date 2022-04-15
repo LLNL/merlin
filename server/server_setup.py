@@ -7,6 +7,8 @@ import shutil
 import subprocess
 import time
 
+import yaml
+
 
 SERVER_DIR = "./merlin_server/"
 IMAGE_NAME = "redis_latest.sif"
@@ -15,6 +17,7 @@ CONFIG_FILE = "redis.conf"
 MERLIN_CONFIG_DIR = os.path.expanduser("~") + "/.merlin/"
 MERLIN_SERVER_SUBDIR = "server/"
 MERLIN_SERVER_CONFIG = "redis_server.yaml"
+CONTAINER_TYPES = ["singularity", "docker", "podman"]
 
 
 LOG = logging.getLogger("merlin")
@@ -32,7 +35,42 @@ class ServerStatus(enum.Enum):
     ERROR = 4
 
 
-def create_server_configuration(
+def pull_server_config(
+    merlin_config_dir: str = MERLIN_CONFIG_DIR,
+    merlin_server_subdir: str = MERLIN_SERVER_SUBDIR,
+    merlin_server_config: str = MERLIN_SERVER_CONFIG,
+) -> dict:
+    """
+    Pull the main configuration file and corresponding format configuration file
+    as well. Returns the values as a dictionary.
+
+    :param `merlin_config_dir`: location of main merlin configuration.
+    :param `merlin_server_subdir`: subdirectory for storing the server configuration.
+    :param `merlin_server_config`: server config file name
+    :return: A dictionary containing the main and corresponding format configuration file
+    """
+    return_data = {}
+    config_dir = os.path.join(merlin_config_dir, merlin_server_subdir)
+    config_path = os.path.join(config_dir, merlin_server_config)
+    if not os.path.exists(config_path):
+        LOG.error("Unable to pull merlin server configuration from " + config_path)
+        return None
+
+    with open(config_path, "r") as cf:
+        container_data = yaml.load(cf, yaml.Loader)
+        return_data.update(container_data)
+
+    if "container" in container_data:
+        if "format" in container_data["container"]:
+            format_file = os.path.join(config_dir, container_data["container"]["format"] + ".yaml")
+            with open(format_file, "r") as ff:
+                format_data = yaml.load(ff, yaml.Loader)
+                return_data.update(format_data)
+
+    return return_data
+
+
+def create_server_config(
     merlin_config_dir: str = MERLIN_CONFIG_DIR,
     merlin_server_subdir: str = MERLIN_SERVER_SUBDIR,
     merlin_server_config: str = MERLIN_SERVER_CONFIG,
@@ -50,26 +88,31 @@ def create_server_configuration(
         LOG.error("Unable to find main merlin configuration directory at " + merlin_config_dir)
         return False
 
-    if not os.path.exists(merlin_config_dir + merlin_server_subdir):
+    config_dir = os.path.join(merlin_config_dir, merlin_server_subdir)
+    if not os.path.exists(config_dir):
         LOG.info("Unable to find exisiting server configuration.")
-        LOG.info("Creating default configuration in " + merlin_config_dir + merlin_server_subdir)
+        LOG.info(f"Creating default configuration in {config_dir}")
         try:
             os.mkdir(merlin_config_dir + merlin_server_subdir)
         except OSError as err:
             LOG.error(err)
             return False
 
-    if os.path.exists(merlin_config_dir + merlin_server_subdir + merlin_server_config):
-        LOG.info("Server configuration already exists.")
-        return True
-    try:
-        shutil.copy(
-            os.path.dirname(os.path.abspath(__file__)) + "/" + merlin_server_config, merlin_config_dir + merlin_server_subdir
-        )
-    except OSError:
-        LOG.error("Destination location " + merlin_config_dir + merlin_server_subdir + " is not writable.")
-        return False
+    files = [i + ".yaml" for i in CONTAINER_TYPES]
+    files.append(merlin_server_config)
+    for file in files:
+        file_path = os.path.join(config_dir, file)
+        if os.path.exists(file_path):
+            LOG.info(f"{file} already exists.")
+            continue
+        LOG.info(f"Copying file {file} to configuration directory.")
+        try:
+            shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), file), config_dir)
+        except OSError:
+            LOG.error(f"Destination location {config_dir} is not writable.")
+            return False
 
+    print(pull_server_config())
     return True
 
 
