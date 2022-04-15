@@ -7,3 +7,5 @@ container:
     url: docker://redis
     # The config file
     config: redis.conf
+    # Subdirectory name to store configurations
+    config_dir: merlin_server/
