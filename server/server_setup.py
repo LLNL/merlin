@@ -127,20 +127,20 @@ def pull_server_image(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME
         LOG.info("Creating merlin server directory.")
         os.mkdir(server_dir)
 
-    image_loc = server_dir + image_name
+    image_path = os.path.join(server_dir, image_name)
 
-    if os.path.exists(image_loc):
-        LOG.info(image_loc + " already exists.")
+    if os.path.exists(image_path):
+        LOG.info(f"{image_path} already exists.")
         return False
 
     LOG.info("Fetching redis image from docker://redis.")
-    subprocess.run(["singularity", "pull", image_loc, "docker://redis"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.run(["singularity", "pull", image_path, "docker://redis"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     LOG.info("Copying default redis configuration file.")
     try:
         shutil.copy(os.path.dirname(os.path.abspath(__file__)) + "/" + CONFIG_FILE, server_dir)
     except OSError:
-        LOG.error("Destination location " + server_dir + " is not writable.")
+        LOG.error(f"Destination location {server_dir} is not writable.")
         return False
     return True
 
@@ -164,7 +164,7 @@ def start_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
         return False
 
     process = subprocess.Popen(
-        ["singularity", "run", server_dir + image_name, server_dir + CONFIG_FILE],
+        ["singularity", "run", os.path.join(server_dir, image_name), os.path.join(server_dir, CONFIG_FILE)],
         start_new_session=True,
         close_fds=True,
         stdout=subprocess.DEVNULL,
@@ -179,7 +179,7 @@ def start_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
         LOG.error("Unable to start merlin server.")
         return False
 
-    LOG.info("Server started with PID " + str(process.pid))
+    LOG.info(f"Server started with PID {str(process.pid)}")
     return True
 
 
@@ -202,7 +202,7 @@ def stop_server(server_dir: str = SERVER_DIR, image_name: str = IMAGE_NAME):
             LOG.error("Unable to get the PID for the current merlin server.")
             return False
 
-        LOG.info("Attempting to close merlin server PID " + str(read_pid))
+        LOG.info(f"Attempting to close merlin server PID {str(read_pid)}")
         subprocess.run(["kill", str(read_pid)], stdout=subprocess.PIPE)
         time.sleep(1)
         if get_server_status(server_dir=server_dir, image_name=image_name) == ServerStatus.RUNNING:
