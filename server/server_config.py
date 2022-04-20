@@ -57,8 +57,8 @@ def pull_server_config() -> dict:
             with open(format_file, "r") as ff:
                 format_data = yaml.load(ff, yaml.Loader)
                 for key in format_needed_keys:
-                    if key not in format_data:
-                        LOG.error(f'Unable to find necessary {key} in format config file')
+                    if key not in format_data[server_config["container"]["format"]]:
+                        LOG.error(f'Unable to find necessary "{key}" value in format config file {format_file}')
                         return None
                 return_data.update(format_data)
         else:
