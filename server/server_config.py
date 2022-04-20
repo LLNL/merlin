@@ -45,12 +45,12 @@ def pull_server_config() -> dict:
         return None
 
     with open(config_path, "r") as cf:
-        container_data = yaml.load(cf, yaml.Loader)
-        return_data.update(container_data)
+        server_config = yaml.load(cf, yaml.Loader)
+        return_data.update(server_config)
 
-    if "container" in container_data:
-        if "format" in container_data["container"]:
-            format_file = os.path.join(config_dir, container_data["container"]["format"] + ".yaml")
+    if "container" in server_config:
+        if "format" in server_config["container"]:
+            format_file = os.path.join(config_dir, server_config["container"]["format"] + ".yaml")
             with open(format_file, "r") as ff:
                 format_data = yaml.load(ff, yaml.Loader)
                 return_data.update(format_data)
@@ -60,5 +60,17 @@ def pull_server_config() -> dict:
     else:
         LOG.error('Unable to find "container" object in ' + MERLIN_SERVER_CONFIG)
         return None
-
+    if not "process" in server_config:
+        LOG.error('Process config not found in ' + MERLIN_SERVER_CONFIG)
+        return None
+    if not server_config["process"]["status"]:
+        LOG.error('Process "status" command config not found in ' + MERLIN_SERVER_CONFIG)
+        return None
+    if not server_config["process"]["kill"]:
+        LOG.error('Process "kill" command config not found in ' + MERLIN_SERVER_CONFIG)
+        return None
+    
     return return_data
+
+def pull_container_config(container_path):
+    pass

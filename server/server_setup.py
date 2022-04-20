@@ -141,7 +141,8 @@ def get_server_status():
 
     with open(os.path.join(config_dir, pid_file), "r") as f:
         server_pid = f.read()
-        check_process = subprocess.run(["pgrep", "-P", str(server_pid)], stdout=subprocess.PIPE)
+
+        check_process = subprocess.run(server_config["process"]["status"].format(pid=server_pid).split(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
         if check_process.stdout == b"":
             return ServerStatus.NOT_RUNNING
@@ -188,7 +189,6 @@ def start_server():
         LOG.error("Unable to find config file at " + config_path)
         return False
 
-    print(image_path, config_path)
     process = subprocess.Popen(
         ["singularity", "run", image_path, config_path],
         start_new_session=True,
@@ -240,13 +240,13 @@ def stop_server():
 
     with open(os.path.join(config_dir, pid_file), "r") as f:
         read_pid = f.read()
-        process = subprocess.run(["pgrep", "-P", str(read_pid)], stdout=subprocess.PIPE)
+        process = subprocess.run(server_config["process"]["status"].format(pid=read_pid).split(), stdout=subprocess.PIPE)
         if process.stdout == b"":
             LOG.error("Unable to get the PID for the current merlin server.")
             return False
 
         LOG.info(f"Attempting to close merlin server PID {str(read_pid)}")
-        subprocess.run(["kill", str(read_pid)], stdout=subprocess.PIPE)
+        subprocess.run(server_config["process"]["kill"].format(pid=read_pid).split(), stdout=subprocess.PIPE)
         time.sleep(1)
         if get_server_status() == ServerStatus.RUNNING:
             LOG.error("Unable to kill process.")

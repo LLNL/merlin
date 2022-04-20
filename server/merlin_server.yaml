@@ -14,6 +14,6 @@ container:
 
 process:
     # Command for determining the process of the command
-    status: ps -e | grep {pid}
+    status: pgrep -P {pid} #ps -e | grep {pid}
     # Command for killing process
     kill: kill {pid}
