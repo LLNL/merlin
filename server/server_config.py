@@ -18,7 +18,7 @@ def parse_redis_output(redis_stdout):
     redis_config = {}
     for line in redis_stdout:
         if not server_init:
-            values = [l for l in line.split() if b"=" in l]
+            values = [ln for ln in line.split() if b"=" in ln]
             for val in values:
                 key, value = val.split(b"=")
                 redis_config[key.decode("utf-8")] = value.strip(b",").decode("utf-8")
