@@ -21,6 +21,7 @@ CONFIG_DIR = "./merlin_server/"
 IMAGE_NAME = "redis_latest.sif"
 PID_FILE = "merlin_server.pid"
 CONFIG_FILE = "redis.conf"
+REDIS_URL = "docker://redis"
 CONTAINER_TYPES = ["singularity", "docker", "podman"]
 
 LOG = logging.getLogger("merlin")
@@ -88,6 +89,7 @@ def pull_server_image():
     config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
     image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
     config_file = container_config["config"] if "config" in container_config else CONFIG_FILE
+    image_url = container_config["url"] if "url" in container_config else REDIS_URL
 
     if not os.path.exists(config_dir):
         LOG.info("Creating merlin server directory.")
@@ -99,8 +101,13 @@ def pull_server_image():
         LOG.info(f"{image_path} already exists.")
         return False
 
-    LOG.info("Fetching redis image from docker://redis.")
-    subprocess.run(["singularity", "pull", image_path, "docker://redis"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    LOG.info(f"Fetching redis image from {image_url}")
+    format_config = server_config[container_config["format"]]
+    subprocess.run(
+        format_config["pull_command"].strip("\\").format(command=format_config["command"], image=image_path, url=image_url).split(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
 
     LOG.info("Copying default redis configuration file.")
     try:
@@ -142,7 +149,11 @@ def get_server_status():
     with open(os.path.join(config_dir, pid_file), "r") as f:
         server_pid = f.read()
 
-        check_process = subprocess.run(server_config["process"]["status"].format(pid=server_pid).split(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        check_process = subprocess.run(
+            server_config["process"]["status"].strip("\\").format(pid=server_pid).split(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL
+        )
 
         if check_process.stdout == b"":
             return ServerStatus.NOT_RUNNING
@@ -189,8 +200,9 @@ def start_server():
         LOG.error("Unable to find config file at " + config_path)
         return False
 
+    format_config = server_config[container_config["format"]]
     process = subprocess.Popen(
-        ["singularity", "run", image_path, config_path],
+        format_config["run_command"].strip("\\").format(command=container_config["format"], image=image_path, config=config_path).split(),
         start_new_session=True,
         close_fds=True,
         stdout=subprocess.PIPE,
@@ -241,15 +253,15 @@ def stop_server():
 
     with open(os.path.join(config_dir, pid_file), "r") as f:
         read_pid = f.read()
-        process = subprocess.run(server_config["process"]["status"].format(pid=read_pid).split(), stdout=subprocess.PIPE)
+        process = subprocess.run(server_config["process"]["status"].strip("\\").format(pid=read_pid).split(), stdout=subprocess.PIPE)
         if process.stdout == b"":
             LOG.error("Unable to get the PID for the current merlin server.")
             return False
 
         format_config = server_config[container_config["format"]]
-        command = server_config["process"]["kill"].format(pid=read_pid).split()
+        command = server_config["process"]["kill"].strip("\\").format(pid=read_pid).split()
         if format_config["stop_command"] != "kill":
-            command = format_config["stop_command"].format(name=image_name).split()
+            command = format_config["stop_command"].strip("\\").format(name=image_name).split()
 
         LOG.info(f"Attempting to close merlin server PID {str(read_pid)}")
 
