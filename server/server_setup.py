@@ -104,9 +104,12 @@ def pull_server_image():
     LOG.info(f"Fetching redis image from {image_url}")
     format_config = server_config[container_config["format"]]
     subprocess.run(
-        format_config["pull_command"].strip("\\").format(command=format_config["command"], image=image_path, url=image_url).split(),
+        format_config["pull_command"]
+        .strip("\\")
+        .format(command=format_config["command"], image=image_path, url=image_url)
+        .split(),
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
     )
 
     LOG.info("Copying default redis configuration file.")
@@ -152,7 +155,7 @@ def get_server_status():
         check_process = subprocess.run(
             server_config["process"]["status"].strip("\\").format(pid=server_pid).split(),
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
         )
 
         if check_process.stdout == b"":
@@ -202,7 +205,10 @@ def start_server():
 
     format_config = server_config[container_config["format"]]
     process = subprocess.Popen(
-        format_config["run_command"].strip("\\").format(command=container_config["format"], image=image_path, config=config_path).split(),
+        format_config["run_command"]
+        .strip("\\")
+        .format(command=container_config["format"], image=image_path, config=config_path)
+        .split(),
         start_new_session=True,
         close_fds=True,
         stdout=subprocess.PIPE,
@@ -253,7 +259,9 @@ def stop_server():
 
     with open(os.path.join(config_dir, pid_file), "r") as f:
         read_pid = f.read()
-        process = subprocess.run(server_config["process"]["status"].strip("\\").format(pid=read_pid).split(), stdout=subprocess.PIPE)
+        process = subprocess.run(
+            server_config["process"]["status"].strip("\\").format(pid=read_pid).split(), stdout=subprocess.PIPE
+        )
         if process.stdout == b"":
             LOG.error("Unable to get the PID for the current merlin server.")
             return False

@@ -38,10 +38,13 @@ def pull_server_config() -> dict:
     :return: A dictionary containing the main and corresponding format configuration file
     """
     return_data = {}
+    format_needed_keys = ["command", "run_command", "stop_command", "pull_command"]
+    process_needed_keys = ["status", "kill"]
+
     config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
     config_path = os.path.join(config_dir, MERLIN_SERVER_CONFIG)
     if not os.path.exists(config_path):
-        LOG.error("Unable to pull merlin server configuration from " + config_path)
+        LOG.error(f'Unable to pull merlin server configuration from {config_path}')
         return None
 
     with open(config_path, "r") as cf:
@@ -53,24 +56,30 @@ def pull_server_config() -> dict:
             format_file = os.path.join(config_dir, server_config["container"]["format"] + ".yaml")
             with open(format_file, "r") as ff:
                 format_data = yaml.load(ff, yaml.Loader)
+                for key in format_needed_keys:
+                    if key not in format_data:
+                        LOG.error(f'Unable to find necessary {key} in format config file')
+                        return None
                 return_data.update(format_data)
         else:
-            LOG.error('Unable to find "format" in ' + MERLIN_SERVER_CONFIG)
+            LOG.error(f'Unable to find "format" in {MERLIN_SERVER_CONFIG}')
             return None
     else:
-        LOG.error('Unable to find "container" object in ' + MERLIN_SERVER_CONFIG)
+        LOG.error(f'Unable to find "container" object in {MERLIN_SERVER_CONFIG}')
         return None
-    if not "process" in server_config:
-        LOG.error('Process config not found in ' + MERLIN_SERVER_CONFIG)
+
+    # Checking for process values that are needed for main functions and defaults
+    if "process" not in server_config:
+        LOG.error("Process config not found in " + MERLIN_SERVER_CONFIG)
         return None
-    if not server_config["process"]["status"]:
-        LOG.error('Process "status" command config not found in ' + MERLIN_SERVER_CONFIG)
-        return None
-    if not server_config["process"]["kill"]:
-        LOG.error('Process "kill" command config not found in ' + MERLIN_SERVER_CONFIG)
-        return None
-    
+
+    for key in process_needed_keys:
+        if key not in server_config["process"]:
+            LOG.error(f'Process necessary "{key}" command configuration not found in {MERLIN_SERVER_CONFIG}')
+            return None
+
     return return_data
+
 
 def pull_container_config(container_path):
     pass
