@@ -237,6 +237,7 @@ def stop_server():
 
     config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
     pid_file = container_config["pfile"] if "pfile" in container_config else PID_FILE
+    image_name = container_config["name"] if "name" in container_config else IMAGE_NAME
 
     with open(os.path.join(config_dir, pid_file), "r") as f:
         read_pid = f.read()
@@ -245,8 +246,14 @@ def stop_server():
             LOG.error("Unable to get the PID for the current merlin server.")
             return False
 
+        format_config = server_config[container_config["format"]]
+        command = server_config["process"]["kill"].format(pid=read_pid).split()
+        if format_config["stop_command"] != "kill":
+            command = format_config["stop_command"].format(name=image_name).split()
+
         LOG.info(f"Attempting to close merlin server PID {str(read_pid)}")
-        subprocess.run(server_config["process"]["kill"].format(pid=read_pid).split(), stdout=subprocess.PIPE)
+
+        subprocess.run(command, stdout=subprocess.PIPE)
         time.sleep(1)
         if get_server_status() == ServerStatus.RUNNING:
             LOG.error("Unable to kill process.")

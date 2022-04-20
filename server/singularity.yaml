@@ -1,6 +1,6 @@
 singularity:
     command: singularity
-    init_command: \{command} .. (optional or default)
+    # init_command: \{command} .. (optional or default)
     start_command: \{command} run {image}
-    stop_command: \{command} (optional or kill default)
+    stop_command: kill # \{command} (optional or kill default)
     pull_command: \{command} pull {image} {url}
