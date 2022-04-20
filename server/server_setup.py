@@ -7,7 +7,14 @@ import shutil
 import subprocess
 import time
 
-from server.server_config import MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR, MERLIN_SERVER_CONFIG, parse_redis_output, pull_server_config
+from server.server_config import (
+    MERLIN_CONFIG_DIR,
+    MERLIN_SERVER_CONFIG,
+    MERLIN_SERVER_SUBDIR,
+    parse_redis_output,
+    pull_server_config,
+)
+
 
 # Default values for configuration
 CONFIG_DIR = "./merlin_server/"
@@ -17,6 +24,7 @@ CONFIG_FILE = "redis.conf"
 CONTAINER_TYPES = ["singularity", "docker", "podman"]
 
 LOG = logging.getLogger("merlin")
+
 
 class ServerStatus(enum.Enum):
     """
@@ -73,9 +81,9 @@ def pull_server_image():
     """
     server_config = pull_server_config()
     if not server_config:
-        LOG.error("Try to run \"merlin server init\" again to reinitialize values.")
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
         return False
-    
+
     container_config = server_config["container"]
     config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
     image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
@@ -102,6 +110,7 @@ def pull_server_image():
         LOG.error(f"Destination location {config_dir} is not writable.")
         return False
     return True
+
 
 def get_server_status():
     """
@@ -139,6 +148,7 @@ def get_server_status():
 
     return ServerStatus.RUNNING
 
+
 def start_server():
     """
     Start a merlin server container using singularity.
@@ -156,10 +166,10 @@ def start_server():
         LOG.info("Merlin server already running.")
         LOG.info("Stop current server with 'merlin server stop' before attempting to start a new server.")
         return False
-    
+
     server_config = pull_server_config()
     if not server_config:
-        LOG.error("Try to run \"merlin server init\" again to reinitialize values.")
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
         return False
     container_config = server_config["container"]
 
@@ -192,13 +202,13 @@ def start_server():
 
     if not redis_start:
         LOG.error("Redis is unable to start")
-        LOG.error("Check to see if there is an unresponsive instance of redis with \"ps -e\"")
+        LOG.error('Check to see if there is an unresponsive instance of redis with "ps -e"')
         LOG.error(redis_out.strip("\n"))
         return False
 
     with open(os.path.join(config_dir, pid_file), "w+") as f:
         f.write(str(process.pid))
-        #f.write(redis_config["pid"])
+        # f.write(redis_config["pid"])
 
     if get_server_status() != ServerStatus.RUNNING:
         LOG.error("Unable to start merlin server.")
@@ -218,10 +228,10 @@ def stop_server():
         LOG.info("There is no instance of merlin server running.")
         LOG.info("Start a merlin server first with 'merlin server start'")
         return False
-    
+
     server_config = pull_server_config()
     if not server_config:
-        LOG.error("Try to run \"merlin server init\" again to reinitialize values.")
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
         return False
     container_config = server_config["container"]
 
