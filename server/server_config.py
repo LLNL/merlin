@@ -44,7 +44,7 @@ def pull_server_config() -> dict:
     config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
     config_path = os.path.join(config_dir, MERLIN_SERVER_CONFIG)
     if not os.path.exists(config_path):
-        LOG.error(f'Unable to pull merlin server configuration from {config_path}')
+        LOG.error(f"Unable to pull merlin server configuration from {config_path}")
         return None
 
     with open(config_path, "r") as cf:
@@ -88,12 +88,14 @@ def check_process_file_format(data):
             return False
     return True
 
+
 def pull_process_file(file_path):
     with open(file_path, "r") as f:
         data = yaml.load(f, yaml.Loader)
         if check_process_file_format(data):
             return data
     return None
+
 
 def dump_process_file(data, file_path):
     if not check_process_file_format(data):
