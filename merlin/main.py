@@ -52,10 +52,6 @@ from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
-from merlin.spec.expansion import RESERVED, get_spec_with_expansion
-from merlin.spec.specification import MerlinSpec
-from merlin.study.study import MerlinStudy
-from merlin.utils import ARRAY_FILE_FORMATS
 from merlin.server.server_setup import (
     ServerStatus,
     create_server_config,
@@ -64,6 +60,10 @@ from merlin.server.server_setup import (
     start_server,
     stop_server,
 )
+from merlin.spec.expansion import RESERVED, get_spec_with_expansion
+from merlin.spec.specification import MerlinSpec
+from merlin.study.study import MerlinStudy
+from merlin.utils import ARRAY_FILE_FORMATS
 
 
 LOG = logging.getLogger("merlin")

@@ -51,21 +51,18 @@ jobs:
     - name: Lint with isort
       run: |
         python3 -m isort --check --line-length $MAX_LINE_LENGTH merlin
-        python3 -m isort --check --line-length $MAX_LINE_LENGTH server
         python3 -m isort --check --line-length $MAX_LINE_LENGTH tests
         python3 -m isort --check --line-length $MAX_LINE_LENGTH *.py
 
     - name: Lint with Black
       run: |
         python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 merlin
-        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 server
         python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 tests
         python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 *.py
 
     - name: Lint with PyLint
       run: |
         python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
-        python3 -m pylint server --rcfile=setup.cfg --exit-zero
         python3 -m pylint tests --rcfile=setup.cfg --exit-zero
 
   Local-test-suite:
