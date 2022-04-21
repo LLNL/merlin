@@ -9,9 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update docker docs for new rabbitmq and redis server versions
 - Added lgtm.com Badge for README.md
 - More fixes for lgtm checks.
-- Added merlin server capabilities under server/server_setup.py
+- Added merlin server capabilities under merlin/server/
 - Added merlin server commands to main.py
 - Added redis.conf for default redis configuration for merlin in server/redis.conf
+- Added configurations for merlin server command in merlin/server/*.yaml
 - Included server directory into workflow file for format testing
 ### Changed
 - Rename lgtm.yml to .lgtm.yml

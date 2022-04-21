@@ -56,7 +56,7 @@ from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
-from server.server_setup import (
+from merlin.server.server_setup import (
     ServerStatus,
     create_server_config,
     get_server_status,

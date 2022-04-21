@@ -8,7 +8,7 @@ import socket
 import subprocess
 import time
 
-from server.server_config import (
+from merlin.server.server_config import (
     MERLIN_CONFIG_DIR,
     MERLIN_SERVER_CONFIG,
     MERLIN_SERVER_SUBDIR,
