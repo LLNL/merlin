@@ -21,7 +21,7 @@ def parse_redis_output(redis_stdout):
             values = [ln for ln in line.split() if b"=" in ln]
             for val in values:
                 key, value = val.split(b"=")
-                redis_config[key.decode("utf-8")] = value.strip(b",").decode("utf-8")
+                redis_config[key.decode("utf-8")] = value.strip(b",").strip(b".").decode("utf-8")
             if b"Server initialized" in line:
                 server_init = True
         if b"Ready to accept connections" in line:
@@ -81,5 +81,23 @@ def pull_server_config() -> dict:
     return return_data
 
 
-def pull_container_config(container_path):
-    pass
+def check_process_file_format(data):
+    required_keys = ["parent_pid", "image_pid", "port", "hostname"]
+    for key in required_keys:
+        if key not in data:
+            return False
+    return True
+
+def pull_process_file(file_path):
+    with open(file_path, "r") as f:
+        data = yaml.load(f, yaml.Loader)
+        if check_process_file_format(data):
+            return data
+    return None
+
+def dump_process_file(data, file_path):
+    if not check_process_file_format(data):
+        return False
+    with open(file_path, "w+") as f:
+        yaml.dump(data, f, yaml.Dumper)
+    return True

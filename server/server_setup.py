@@ -4,6 +4,7 @@ import enum
 import logging
 import os
 import shutil
+import socket
 import subprocess
 import time
 
@@ -11,7 +12,9 @@ from server.server_config import (
     MERLIN_CONFIG_DIR,
     MERLIN_SERVER_CONFIG,
     MERLIN_SERVER_SUBDIR,
+    dump_process_file,
     parse_redis_output,
+    pull_process_file,
     pull_server_config,
 )
 
@@ -19,7 +22,7 @@ from server.server_config import (
 # Default values for configuration
 CONFIG_DIR = "./merlin_server/"
 IMAGE_NAME = "redis_latest.sif"
-PID_FILE = "merlin_server.pid"
+PROCESS_FILE = "merlin_server.pf"
 CONFIG_FILE = "redis.conf"
 REDIS_URL = "docker://redis"
 CONTAINER_TYPES = ["singularity", "docker", "podman"]
@@ -138,7 +141,7 @@ def get_server_status():
     container_config = server_config["container"]
     config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
     image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
-    pid_file = container_config["pfile"] if "pfile" in container_config else PID_FILE
+    pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
 
     if not os.path.exists(config_dir):
         return ServerStatus.NOT_INITALIZED
@@ -146,20 +149,20 @@ def get_server_status():
     if not os.path.exists(os.path.join(config_dir, image_name)):
         return ServerStatus.MISSING_CONTAINER
 
-    if not os.path.exists(os.path.join(config_dir, pid_file)):
+    if not os.path.exists(os.path.join(config_dir, pfile)):
         return ServerStatus.NOT_RUNNING
 
-    with open(os.path.join(config_dir, pid_file), "r") as f:
-        server_pid = f.read()
+    pf_data = pull_process_file(os.path.join(config_dir, pfile))
+    parent_pid = pf_data["parent_pid"]
 
-        check_process = subprocess.run(
-            server_config["process"]["status"].strip("\\").format(pid=server_pid).split(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-        )
+    check_process = subprocess.run(
+        server_config["process"]["status"].strip("\\").format(pid=parent_pid).split(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
 
-        if check_process.stdout == b"":
-            return ServerStatus.NOT_RUNNING
+    if check_process.stdout == b"":
+        return ServerStatus.NOT_RUNNING
 
     return ServerStatus.RUNNING
 
@@ -191,7 +194,7 @@ def start_server():
     config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
     config_file = container_config["config"] if "config_dir" in container_config else CONFIG_FILE
     image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
-    pid_file = container_config["pfile"] if "pfile" in container_config else PID_FILE
+    pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
 
     image_path = os.path.join(config_dir, image_name)
     if not os.path.exists(image_path):
@@ -224,15 +227,19 @@ def start_server():
         LOG.error(redis_out.strip("\n"))
         return False
 
-    with open(os.path.join(config_dir, pid_file), "w+") as f:
-        f.write(str(process.pid))
-        # f.write(redis_config["pid"])
+    redis_out["image_pid"] = redis_out.pop("pid")
+    redis_out["parent_pid"] = process.pid
+    redis_out["hostname"] = socket.gethostname()
+    if not dump_process_file(redis_out, os.path.join(config_dir, pfile)):
+        LOG.error("Unable to create process file for container.")
+        return False
 
     if get_server_status() != ServerStatus.RUNNING:
         LOG.error("Unable to start merlin server.")
         return False
 
-    LOG.info(f"Server started with PID {str(process.pid)}")
+    LOG.info(f"Server started with PID {str(process.pid)}.")
+    LOG.info(f'Merlin server operating on "{redis_out["hostname"]}" and port "{redis_out["port"]}".')
 
     return True
 
@@ -254,30 +261,31 @@ def stop_server():
     container_config = server_config["container"]
 
     config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
-    pid_file = container_config["pfile"] if "pfile" in container_config else PID_FILE
+    pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
     image_name = container_config["name"] if "name" in container_config else IMAGE_NAME
 
-    with open(os.path.join(config_dir, pid_file), "r") as f:
-        read_pid = f.read()
-        process = subprocess.run(
-            server_config["process"]["status"].strip("\\").format(pid=read_pid).split(), stdout=subprocess.PIPE
-        )
-        if process.stdout == b"":
-            LOG.error("Unable to get the PID for the current merlin server.")
-            return False
+    pf_data = pull_process_file(os.path.join(config_dir, pfile))
+    read_pid = pf_data["parent_pid"]
 
-        format_config = server_config[container_config["format"]]
-        command = server_config["process"]["kill"].strip("\\").format(pid=read_pid).split()
-        if format_config["stop_command"] != "kill":
-            command = format_config["stop_command"].strip("\\").format(name=image_name).split()
+    process = subprocess.run(
+        server_config["process"]["status"].strip("\\").format(pid=read_pid).split(), stdout=subprocess.PIPE
+    )
+    if process.stdout == b"":
+        LOG.error("Unable to get the PID for the current merlin server.")
+        return False
 
-        LOG.info(f"Attempting to close merlin server PID {str(read_pid)}")
+    format_config = server_config[container_config["format"]]
+    command = server_config["process"]["kill"].strip("\\").format(pid=read_pid).split()
+    if format_config["stop_command"] != "kill":
+        command = format_config["stop_command"].strip("\\").format(name=image_name).split()
 
-        subprocess.run(command, stdout=subprocess.PIPE)
-        time.sleep(1)
-        if get_server_status() == ServerStatus.RUNNING:
-            LOG.error("Unable to kill process.")
-            return False
+    LOG.info(f"Attempting to close merlin server PID {str(read_pid)}")
 
-        LOG.info("Merlin server terminated.")
-        return True
+    subprocess.run(command, stdout=subprocess.PIPE)
+    time.sleep(1)
+    if get_server_status() == ServerStatus.RUNNING:
+        LOG.error("Unable to kill process.")
+        return False
+
+    LOG.info("Merlin server terminated.")
+    return True
