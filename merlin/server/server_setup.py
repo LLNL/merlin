@@ -35,10 +35,10 @@ class ServerStatus(enum.Enum):
     Different states in which the server can be in.
     """
 
-    NOT_INITALIZED = 0
-    MISSING_CONTAINER = 1
-    NOT_RUNNING = 2
-    RUNNING = 3
+    RUNNING = 0
+    NOT_INITALIZED = 1
+    MISSING_CONTAINER = 2
+    NOT_RUNNING = 3
     ERROR = 4
 
 
