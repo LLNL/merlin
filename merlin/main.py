@@ -357,7 +357,7 @@ def process_server(args):
             return
         if pull_server_image():
             LOG.info("New merlin server image fetched")
-        LOG.info("Merlin server initialization successful.")    
+        LOG.info("Merlin server initialization successful.")
     elif args.commands == "start":
         start_server()
         exit(0)

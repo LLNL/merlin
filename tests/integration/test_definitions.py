@@ -47,12 +47,16 @@ def define_tests():
     }
     server_tests = {
         "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
-        "merlin server start/stop": ("merlin server start; merlin server status; merlin server stop",
-        [HasRegex("Server started with PID [0-9]*"),
-        HasRegex("Merlin server is running\."),
-        HasRegex("Merlin server terminated\.")],
-        "local"),
-        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/")
+        "merlin server start/stop": (
+            "merlin server start; merlin server status; merlin server stop",
+            [
+                HasRegex("Server started with PID [0-9]*"),
+                HasRegex("Merlin server is running\."),
+                HasRegex("Merlin server terminated\."),
+            ],
+            "local",
+        ),
+        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/"),
     }
     examples_check = {
         "example list": (
