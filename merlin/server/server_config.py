@@ -2,11 +2,10 @@ import logging
 import os
 import yaml
 
-from merlin.config.configfile import MERLIN_HOME
 
 LOG = logging.getLogger("merlin")
 
-MERLIN_CONFIG_DIR = MERLIN_HOME
+MERLIN_CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".merlin")
 MERLIN_SERVER_SUBDIR = "server/"
 MERLIN_SERVER_CONFIG = "merlin_server.yaml"
 
