@@ -51,8 +51,8 @@ def define_tests():
             "merlin server start; merlin server status; merlin server stop",
             [
                 HasRegex("Server started with PID [0-9]*"),
-                HasRegex("Merlin server is running\."),
-                HasRegex("Merlin server terminated\."),
+                HasRegex("Merlin server is running"),
+                HasRegex("Merlin server terminated"),
             ],
             "local",
         ),
