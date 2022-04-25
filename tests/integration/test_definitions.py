@@ -45,6 +45,15 @@ def define_tests():
             "local",
         ),
     }
+    server_tests = {
+        "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
+        "merlin server start/stop": ("merlin server start; merlin server status; merlin server stop",
+        [HasRegex("Server started with PID [0-9]*"),
+        HasRegex("Merlin server is running\."),
+        HasRegex("Merlin server terminated\.")],
+        "local"),
+        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/")
+    }
     examples_check = {
         "example list": (
             "merlin example list",
@@ -371,6 +380,7 @@ def define_tests():
     all_tests = {}
     for test_dict in [
         basic_checks,
+        server_tests,
         examples_check,
         run_workers_echo_tests,
         wf_format_tests,

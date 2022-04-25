@@ -353,16 +353,20 @@ def process_monitor(args):
 def process_server(args):
     if args.commands == "init":
         if not create_server_config():
+            LOG.info("Merlin server initialization failed.")
             return
-        pull_server_image()
+        if pull_server_image():
+            LOG.info("New merlin server image fetched")
+        LOG.info("Merlin server initialization successful.")    
     elif args.commands == "start":
         start_server()
+        exit(0)
     elif args.commands == "stop":
         stop_server()
     elif args.commands == "status":
         current_status = get_server_status()
         if current_status == ServerStatus.NOT_INITALIZED:
-            LOG.info("Merlin server has not been inialized.")
+            LOG.info("Merlin server has not been initialized.")
             LOG.info("Please initalize server by running 'merlin server init'")
         elif current_status == ServerStatus.MISSING_CONTAINER:
             LOG.info("Unable to find server image.")
