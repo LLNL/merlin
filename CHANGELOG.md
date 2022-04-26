@@ -10,10 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added lgtm.com Badge for README.md
 - More fixes for lgtm checks.
 - Added merlin server capabilities under merlin/server/
-- Added merlin server commands to main.py
+- Added merlin server commands init, start, status, stop to main.py
 - Added redis.conf for default redis configuration for merlin in server/redis.conf
-- Added configurations for merlin server command in merlin/server/*.yaml
-- Included server directory into workflow file for format testing
+- Added default configurations for merlin server command in merlin/server/*.yaml
+- Added documentation page docs/merlin_server.rst, docs/modules/server/configuration.rst, and docs/modules/server/commands.rst
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
 
