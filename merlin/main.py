@@ -360,7 +360,6 @@ def process_server(args):
         LOG.info("Merlin server initialization successful.")
     elif args.commands == "start":
         start_server()
-        exit(0)
     elif args.commands == "stop":
         stop_server()
     elif args.commands == "status":
