@@ -57,7 +57,7 @@ read, so settings can be changed between runs if needed.
 
 Once the merlin server has been initialized in the local directory the user will be allowed
 to run other merlin server commands such as "run, status, stop" to interact with the 
-merlin server. A detailed list of commands can be found in the `Merlin Server Commands <./modules/server/commands.html>`_ page.
+merlin server. A detailed list of commands can be found in the `Merlin Server Commands <./server/commands.html>`_ page.
 
 Note: Running "merlin server init" again will NOT override any exisiting configuration
 that the users might have set or edited. By running this command again any missing files 
@@ -68,5 +68,5 @@ users back up their configuration in case an error occurs where configuration fi
    :maxdepth: 1
    :caption: Merlin Server Settings:
 
-   modules/server/configuration
-   modules/server/commands
+   server/configuration
+   server/commands
