@@ -1,11 +1,13 @@
 Merlin Server
 =============
 The merlin server command allows users easy access to containerized broker 
-and results servers for merlin workflows. The main configuration will be
-stored in the subdirectory called "server/" by default in the main merlin
-configuration "~/.merlin". However different server images can be created
-for different use cases or studies just by simply created a new directory
-to store local configuration files for merlin server instances.
+and results servers for merlin workflows. This allowsusers to run merlin without
+a dedicated external server.
+
+The main configuration will be stored in the subdirectory called "server/" by 
+default in the main merlin configuration "~/.merlin". However different server
+images can be created for different use cases or studies just by simplying creating
+a new directory to store local configuration files for merlin server instances.
 
 Below is an example of how merlin server can be utilized.
 
@@ -17,7 +19,7 @@ configuration for a specific use case or study.
    mkdir study1/
    cd study1/
 
-After wards you can instantiate merlin server in this directory by running
+Afterwards you can instantiate merlin server in this directory by running
 
 .. code-block:: bash
 
@@ -45,22 +47,22 @@ local configuration and its containers. Each container has their own
 configuration file to allow users to be able to switch between different
 containerized services freely.
 
-The local configuration "merlin_server" contains configuration specific to
-a certain use case or run. In the case above you can see that we have a 
+The local configuration "merlin_server" folder contains configuration files 
+specific to a certain use case or run. In the case above you can see that we have a 
 redis singularity container called "redis_latest.sif" with the redis configuration
 file called "redis.conf". This redis configuration will allow the user to
 configurate redis to their specified needs without have to manage or edit
-the redis container. When the server is ran this configuration will be dynamically
+the redis container. When the server is run this configuration will be dynamically
 read, so settings can be changed between runs if needed.
 
-Once merlin server has been initialized in the local directory the user will be allowed
+Once the merlin server has been initialized in the local directory the user will be allowed
 to run other merlin server commands such as "run, status, stop" to interact with the 
-merlin server. A detail list of commands can be found in the `Merlin Server Commands <modules/server/commands.html>`_ page.
+merlin server. A detailed list of commands can be found in the `Merlin Server Commands <./modules/server/commands.html>`_ page.
 
 Note: Running "merlin server init" again will NOT override any exisiting configuration
 that the users might have set or edited. By running this command again any missing files 
 will be created for the users with exisiting defaults. HOWEVER it is highly advised that 
-users back up their configruation in case an error occurs where configuration files are override.
+users back up their configuration in case an error occurs where configuration files are override.
 
 .. toctree::
    :maxdepth: 1
