@@ -21,6 +21,10 @@ jobs:
     env:
       MAX_LINE_LENGTH: 127
       MAX_COMPLEXITY: 15
+      GO_VERSION: 1.18.1
+      SINGULARITY_VERSION: 3.9.9
+      OS: linux
+      ARCH: amd64
 
     steps:
     - uses: actions/checkout@v2
@@ -90,6 +94,27 @@ jobs:
         python3 -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
+    
+    - name: Install singularity
+      run: |
+        sudo apt-get update && sudo apt-get install -y \
+          build-essential \
+          libssl-dev \
+          uuid-dev \
+          libgpgme11-dev \
+          squashfs-tools \
+          libseccomp-dev \
+          pkg-config
+        wget https://go.dev/dl/go$GO_VERSION.$OS-$ARCH.tar.gz
+        sudo tar -C /usr/local -xzvf go$VERSION.$OS-$ARCH.tar.gz
+        rm go$VERSION.$OS-$ARCH.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        wget https://github.com/sylabs/singularity/releases/download/v$SINGULARITY_VERSION/singularity-ce-$SINGULARITY_VERSION.tar.gz
+        tar -xzvf singularity-ce-$SINGULARITY_VERSION.tar.gz
+        cd singularity-ce-$SINGULARITY_VERSION
+        ./mconfig && \
+          make -C ./builddir && \
+          sudo make -C ./builddir install
 
     - name: Install merlin to run unit tests
       run: |
