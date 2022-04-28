@@ -56,9 +56,10 @@ def main():
         parser = setup_argparse()
         args = parser.parse_args()
         process_args(args)
+        sys.exit()
     except Exception as ex:
         print(ex)
-        sys.exit()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -44,9 +44,10 @@ def main():
         # Collect sample files into single file
         sample_paths = [sample_path for sample_path in args.sample_file_paths]
         serialize_samples(sample_paths, args.outfile, args.np)
+        sys.exit()
     except Exception as ex:
         print(ex)
-        sys.exit()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

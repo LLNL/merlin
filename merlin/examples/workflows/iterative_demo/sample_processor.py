@@ -49,9 +49,10 @@ def main():
             pathlib.Path(absdir).mkdir(parents=True, exist_ok=True)
 
         names.to_json(args.results)
+        sys.exit()
     except Exception as ex:
         print(ex)
-        sys.exit()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

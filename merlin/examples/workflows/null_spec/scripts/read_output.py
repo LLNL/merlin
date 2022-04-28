@@ -124,9 +124,10 @@ def main():
         start_verify_time()
         start_run_workers_time()
         start_sample1_time()
+        sys.exit()
     except Exception as ex:
         print(ex)
-        sys.exit()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

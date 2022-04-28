@@ -96,9 +96,10 @@ def main():
         ax[1].plot(iterations, unique_names)
 
         fig.savefig(args.hardcopy, dpi=150)
+        sys.exit()
     except Exception as ex:
         print(ex)
-        sys.exit()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
