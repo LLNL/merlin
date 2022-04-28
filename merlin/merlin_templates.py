@@ -33,6 +33,7 @@ This module handles the CLI for the deprecated `merlin-templates` command.
 """
 import argparse
 import logging
+import sys
 
 from merlin.ascii_art import banner_small
 from merlin.log_formatter import setup_logging
@@ -57,10 +58,15 @@ def setup_argparse():
 
 
 def main():
-    parser = setup_argparse()
-    args = parser.parse_args()
-    setup_logging(logger=LOG, log_level=DEFAULT_LOG_LEVEL, colors=True)
-    args.func(args)
+    try:
+        parser = setup_argparse()
+        args = parser.parse_args()
+        setup_logging(logger=LOG, log_level=DEFAULT_LOG_LEVEL, colors=True)
+        args.func(args)
+        sys.exit()
+    except Exception as ex:
+        print(ex)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

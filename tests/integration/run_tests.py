@@ -211,8 +211,8 @@ def main():
 
     clear_test_studies_dir()
     result = run_tests(args, tests)
-    return result
+    sys.exit(result)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

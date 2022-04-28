@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added documentation page docs/merlin_server.rst, docs/modules/server/configuration.rst, and docs/modules/server/commands.rst
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
+### Fixed
+- Fixed return values from scripts with main() to fix testing errors. 
 
 ## [1.8.5]
 ### Added
