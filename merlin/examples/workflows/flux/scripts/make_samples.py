@@ -51,9 +51,10 @@ def setup_argparse():
 
 
 def main():
-    parser = setup_argparse()
-    args = parser.parse_args()
-    process_args(args)
+    try:
+        parser = setup_argparse()
+        args = parser.parse_args()
+        process_args(args)
 
 
 if __name__ == "__main__":
