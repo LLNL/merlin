@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from concurrent.futures import ProcessPoolExecutor
 
 
@@ -36,12 +37,16 @@ def setup_argparse():
 
 
 def main():
-    parser = setup_argparse()
-    args = parser.parse_args()
+    try:
+        parser = setup_argparse()
+        args = parser.parse_args()
 
-    # Collect sample files into single file
-    sample_paths = [sample_path for sample_path in args.sample_file_paths]
-    serialize_samples(sample_paths, args.outfile, args.np)
+        # Collect sample files into single file
+        sample_paths = [sample_path for sample_path in args.sample_file_paths]
+        serialize_samples(sample_paths, args.outfile, args.np)
+    except Exception as ex:
+        print(ex)
+        sys.exit()
 
 
 if __name__ == "__main__":

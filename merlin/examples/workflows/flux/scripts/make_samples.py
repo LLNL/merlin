@@ -1,5 +1,6 @@
 import argparse
 import ast
+import sys
 
 import numpy as np
 
@@ -55,6 +56,9 @@ def main():
         parser = setup_argparse()
         args = parser.parse_args()
         process_args(args)
+    except Exception as ex:
+        print(ex)
+        sys.exit()
 
 
 if __name__ == "__main__":
