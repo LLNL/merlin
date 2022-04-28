@@ -35,6 +35,7 @@ Built for 1) manual use and 2) continuous integration.
 import argparse
 import shutil
 import time
+import sys
 from contextlib import suppress
 from subprocess import PIPE, Popen
 
@@ -210,7 +211,7 @@ def main():
 
     clear_test_studies_dir()
     result = run_tests(args, tests)
-    return result
+    sys.exit(result)
 
 
 if __name__ == "__main__":

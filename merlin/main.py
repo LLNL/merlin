@@ -748,11 +748,11 @@ def main():
     except Exception as excpt:  # pylint: disable=broad-except
         LOG.debug(traceback.format_exc())
         LOG.error(str(excpt))
-        return 1
+        sys.exit(1)
     # All paths in a function ought to return an exit code, or none of them should. Given the
     # distributed nature of Merlin, maybe it doesn't make sense for it to exit 0 until the work is completed, but
     # if the work is dispatched with no errors, that is a 'successful' Merlin run - any other failures are runtime.
-    return 0
+    sys.exit()
 
 
 if __name__ == "__main__":
