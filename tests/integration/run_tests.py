@@ -34,6 +34,7 @@ Built for 1) manual use and 2) continuous integration.
 """
 import argparse
 import shutil
+import sys
 import time
 from contextlib import suppress
 from subprocess import PIPE, Popen
@@ -214,4 +215,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

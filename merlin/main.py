@@ -52,6 +52,14 @@ from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
+from merlin.server.server_setup import (
+    ServerStatus,
+    create_server_config,
+    get_server_status,
+    pull_server_image,
+    start_server,
+    stop_server,
+)
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
@@ -342,6 +350,32 @@ def process_monitor(args):
     LOG.info("Monitor: ... stop condition met")
 
 
+def process_server(args):
+    if args.commands == "init":
+        if not create_server_config():
+            LOG.info("Merlin server initialization failed.")
+            return
+        if pull_server_image():
+            LOG.info("New merlin server image fetched")
+        LOG.info("Merlin server initialization successful.")
+    elif args.commands == "start":
+        start_server()
+    elif args.commands == "stop":
+        stop_server()
+    elif args.commands == "status":
+        current_status = get_server_status()
+        if current_status == ServerStatus.NOT_INITALIZED:
+            LOG.info("Merlin server has not been initialized.")
+            LOG.info("Please initalize server by running 'merlin server init'")
+        elif current_status == ServerStatus.MISSING_CONTAINER:
+            LOG.info("Unable to find server image.")
+            LOG.info("Ensure there is a .sif file in merlin server directory.")
+        elif current_status == ServerStatus.NOT_RUNNING:
+            LOG.info("Merlin server is not running.")
+        elif current_status == ServerStatus.RUNNING:
+            LOG.info("Merlin server is running.")
+
+
 def setup_argparse() -> None:
     """
     Setup argparse and any CLI options we want available via the package.
@@ -551,6 +585,47 @@ def setup_argparse() -> None:
 
     generate_diagnostic_parsers(subparsers)
 
+    # merlin server
+    server: ArgumentParser = subparsers.add_parser(
+        "server",
+        help="Manage broker and results server for merlin workflow.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    server_commands: ArgumentParser = server.add_subparsers(dest="commands")
+
+    server_init: ArgumentParser = server_commands.add_parser(
+        "init",
+        help="Initialize merlin server resources.",
+        description="Initialize merlin server",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_init.set_defaults(func=process_server)
+
+    server_status: ArgumentParser = server_commands.add_parser(
+        "status",
+        help="View status of the current server containers.",
+        description="View status",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_status.set_defaults(func=process_server)
+
+    server_start: ArgumentParser = server_commands.add_parser(
+        "start",
+        help="Start a containerized server to be used as an broker and results server.",
+        description="Start server",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_start.set_defaults(func=process_server)
+
+    server_stop: ArgumentParser = server_commands.add_parser(
+        "stop",
+        help="Stop an instance of redis containers currently running.",
+        description="Stop server.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_stop.set_defaults(func=process_server)
+
     return parser
 
 
@@ -756,4 +831,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
