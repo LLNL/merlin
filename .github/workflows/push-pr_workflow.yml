@@ -21,10 +21,6 @@ jobs:
     env:
       MAX_LINE_LENGTH: 127
       MAX_COMPLEXITY: 15
-      GO_VERSION: 1.18.1
-      SINGULARITY_VERSION: 3.9.9
-      OS: linux
-      ARCH: amd64
 
     steps:
     - uses: actions/checkout@v2
@@ -71,6 +67,11 @@ jobs:
 
   Local-test-suite:
     runs-on: ubuntu-latest
+    env: 
+      GO_VERSION: 1.18.1
+      SINGULARITY_VERSION: 3.9.9
+      OS: linux
+      ARCH: amd64
 
     strategy:
       matrix:
