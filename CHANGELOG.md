@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More fixes for lgtm checks.
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
+### Fixed
+- Fixed return values from scripts with main() to fix testing errors. 
 
 ## [1.8.5]
 ### Added
