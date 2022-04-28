@@ -107,11 +107,11 @@ jobs:
           libseccomp-dev \
           pkg-config
         wget https://go.dev/dl/go$GO_VERSION.$OS-$ARCH.tar.gz
-        sudo tar -C /usr/local -xzvf go$GO_VERSION.$OS-$ARCH.tar.gz
+        sudo tar -C /usr/local -xzf go$GO_VERSION.$OS-$ARCH.tar.gz
         rm go$GO_VERSION.$OS-$ARCH.tar.gz
         export PATH=$PATH:/usr/local/go/bin
         wget https://github.com/sylabs/singularity/releases/download/v$SINGULARITY_VERSION/singularity-ce-$SINGULARITY_VERSION.tar.gz
-        tar -xzvf singularity-ce-$SINGULARITY_VERSION.tar.gz
+        tar -xzf singularity-ce-$SINGULARITY_VERSION.tar.gz
         cd singularity-ce-$SINGULARITY_VERSION
         ./mconfig && \
           make -C ./builddir && \
