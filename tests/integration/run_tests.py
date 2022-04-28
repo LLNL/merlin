@@ -37,6 +37,7 @@ import shutil
 import time
 from contextlib import suppress
 from subprocess import PIPE, Popen
+import sys
 
 from test_definitions import OUTPUT_DIR, define_tests
 
@@ -214,4 +215,4 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())
