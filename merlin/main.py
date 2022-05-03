@@ -52,7 +52,7 @@ from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
-from merlin.server.server_setup import (
+from merlin.server.server_commands import (
     ServerStatus,
     init_server,
     start_server,
