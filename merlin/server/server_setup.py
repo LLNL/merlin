@@ -3,176 +3,61 @@
 import enum
 import logging
 import os
-import shutil
 import socket
 import subprocess
 import time
 
 from merlin.server.server_config import (
-    MERLIN_CONFIG_DIR,
-    MERLIN_SERVER_CONFIG,
-    MERLIN_SERVER_SUBDIR,
+    CONFIG_DIR,
+    IMAGE_NAME,
+    PROCESS_FILE,
+    CONFIG_FILE,
+    ServerStatus,
+    create_server_config,
     dump_process_file,
+    get_server_status,
     parse_redis_output,
     pull_process_file,
     pull_server_config,
+    pull_server_image,
 )
-
-
-# Default values for configuration
-CONFIG_DIR = "./merlin_server/"
-IMAGE_NAME = "redis_latest.sif"
-PROCESS_FILE = "merlin_server.pf"
-CONFIG_FILE = "redis.conf"
-REDIS_URL = "docker://redis"
-CONTAINER_TYPES = ["singularity", "docker", "podman"]
 
 LOG = logging.getLogger("merlin")
 
-
-class ServerStatus(enum.Enum):
+def init_server():
     """
-    Different states in which the server can be in.
+    Initialize merlin server by checking and initializing main configuration directory 
+    and local server configuration.
     """
 
-    RUNNING = 0
-    NOT_INITALIZED = 1
-    MISSING_CONTAINER = 2
-    NOT_RUNNING = 3
-    ERROR = 4
+    if not create_server_config():
+        LOG.info("Merlin server initialization failed.")
+        return
+    if pull_server_image():
+        LOG.info("New merlin server image fetched")
+    LOG.info("Merlin server initialization successful.")
 
 
-def create_server_config():
+def status_server():
     """
-    Create main configuration file for merlin server in the
-    merlin configuration directory. If a configuration already
-    exists it will not replace the current configuration and exit.
+    Get the server status of the any current running containers for merlin server
     """
-    if not os.path.exists(MERLIN_CONFIG_DIR):
-        LOG.error("Unable to find main merlin configuration directory at " + MERLIN_CONFIG_DIR)
-        return False
-
-    config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
-    if not os.path.exists(config_dir):
-        LOG.info("Unable to find exisiting server configuration.")
-        LOG.info(f"Creating default configuration in {config_dir}")
-        try:
-            os.mkdir(config_dir)
-        except OSError as err:
-            LOG.error(err)
-            return False
-
-    files = [i + ".yaml" for i in CONTAINER_TYPES]
-    files.append(MERLIN_SERVER_CONFIG)
-    for file in files:
-        file_path = os.path.join(config_dir, file)
-        if os.path.exists(file_path):
-            LOG.info(f"{file} already exists.")
-            continue
-        LOG.info(f"Copying file {file} to configuration directory.")
-        try:
-            shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), file), config_dir)
-        except OSError:
-            LOG.error(f"Destination location {config_dir} is not writable.")
-            return False
-
-    return True
-
-
-def pull_server_image():
-    """
-    Fetch the server image using singularity.
-    """
-    server_config = pull_server_config()
-    if not server_config:
-        LOG.error('Try to run "merlin server init" again to reinitialize values.')
-        return False
-
-    container_config = server_config["container"]
-    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
-    image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
-    config_file = container_config["config"] if "config" in container_config else CONFIG_FILE
-    image_url = container_config["url"] if "url" in container_config else REDIS_URL
-
-    if not os.path.exists(config_dir):
-        LOG.info("Creating merlin server directory.")
-        os.mkdir(config_dir)
-
-    image_path = os.path.join(config_dir, image_name)
-
-    if os.path.exists(image_path):
-        LOG.info(f"{image_path} already exists.")
-        return False
-
-    LOG.info(f"Fetching redis image from {image_url}")
-    format_config = server_config[container_config["format"]]
-    subprocess.run(
-        format_config["pull_command"]
-        .strip("\\")
-        .format(command=format_config["command"], image=image_path, url=image_url)
-        .split(),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-
-    LOG.info("Copying default redis configuration file.")
-    try:
-        file_dir = os.path.dirname(os.path.abspath(__file__))
-        shutil.copy(os.path.join(file_dir, config_file), config_dir)
-    except OSError:
-        LOG.error(f"Destination location {config_dir} is not writable.")
-        return False
-    return True
-
-
-def get_server_status():
-    """
-    Determine the status of the current server.
-    This function can be used to check if the servers
-    have been initalized, started, or stopped.
-
-    :param `server_dir`: location of all server related files.
-    :param `image_name`: name of the image when fetched.
-    """
-    server_config = pull_server_config()
-    if not server_config:
-        return ServerStatus.NOT_INITALIZED
-
-    container_config = server_config["container"]
-    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
-    image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
-    pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
-
-    if not os.path.exists(config_dir):
-        return ServerStatus.NOT_INITALIZED
-
-    if not os.path.exists(os.path.join(config_dir, image_name)):
-        return ServerStatus.MISSING_CONTAINER
-
-    if not os.path.exists(os.path.join(config_dir, pfile)):
-        return ServerStatus.NOT_RUNNING
-
-    pf_data = pull_process_file(os.path.join(config_dir, pfile))
-    parent_pid = pf_data["parent_pid"]
-
-    check_process = subprocess.run(
-        server_config["process"]["status"].strip("\\").format(pid=parent_pid).split(),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-    )
-
-    if check_process.stdout == b"":
-        return ServerStatus.NOT_RUNNING
-
-    return ServerStatus.RUNNING
+    current_status = get_server_status()
+    if current_status == ServerStatus.NOT_INITALIZED:
+        LOG.info("Merlin server has not been initialized.")
+        LOG.info("Please initalize server by running 'merlin server init'")
+    elif current_status == ServerStatus.MISSING_CONTAINER:
+        LOG.info("Unable to find server image.")
+        LOG.info("Ensure there is a .sif file in merlin server directory.")
+    elif current_status == ServerStatus.NOT_RUNNING:
+        LOG.info("Merlin server is not running.")
+    elif current_status == ServerStatus.RUNNING:
+        LOG.info("Merlin server is running.")
 
 
 def start_server():
     """
     Start a merlin server container using singularity.
-
-    :param `server_dir`: location of all server related files.
-    :param `image_name`: name of the image when fetched.
     """
     current_status = get_server_status()
 
@@ -247,7 +132,6 @@ def start_server():
 def stop_server():
     """
     Stop running merlin server containers.
-
     """
     if get_server_status() != ServerStatus.RUNNING:
         LOG.info("There is no instance of merlin server running.")
