@@ -1,7 +1,9 @@
 import enum
 import logging
 import os
+import random
 import shutil
+import string
 import subprocess
 import yaml
 
@@ -20,6 +22,8 @@ PROCESS_FILE = "merlin_server.pf"
 CONFIG_FILE = "redis.conf"
 REDIS_URL = "docker://redis"
 
+PASSWORD_LENGTH = 256
+
 class ServerStatus(enum.Enum):
     """
     Different states in which the server can be in.
@@ -30,6 +34,28 @@ class ServerStatus(enum.Enum):
     MISSING_CONTAINER = 2
     NOT_RUNNING = 3
     ERROR = 4
+
+
+def generate_password(length, pass_command:str = None):
+    if pass_command:
+        process = subprocess.run(
+            pass_command.split(),
+            shell=True,
+            stdout=subprocess.PIPE
+        )
+        return process.stdout
+    
+    characters = list(string.ascii_letters + string.digits + "!@#$%^&*()")
+
+    random.shuffle(characters)
+
+    password = []
+    for i in range(length):
+        password.append(random.choice(characters))
+    
+    random.shuffle(password)
+    return "".join(password)
+
 
 
 def parse_redis_output(redis_stdout):
@@ -91,6 +117,36 @@ def create_server_config():
             return False
 
     return True
+
+
+def config_merlin_server():
+    """
+    Configurate the merlin server with configurations such as username password and etc.
+    """
+
+    server_config = pull_server_config()
+
+    if "pass_file" in server_config["container"]:
+        pass_file = os.path.join(MERLIN_CONFIG_DIR, server_config["container"]["pass_file"])
+        if os.path.exists(pass_file):
+            LOG.info("Password file already exists. Skipping password generation step.")
+            return True
+        
+        if "pass_command" in server_config["container"]:
+            password = generate_password(PASSWORD_LENGTH, server_config["container"]["pass_command"])
+        else:
+            password = generate_password(PASSWORD_LENGTH)
+
+        with open(pass_file, "w+") as f:
+            f.write(password)
+        
+        LOG.info("Creating password file for merlin server container.")
+    else:
+        LOG.info("Unable to file pass_file to write output of pass_command to.")
+        return False
+    
+    return True
+
 
 def pull_server_config() -> dict:
     """

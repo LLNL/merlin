@@ -14,6 +14,7 @@ from merlin.server.server_config import (
     CONFIG_FILE,
     ServerStatus,
     create_server_config,
+    config_merlin_server,
     dump_process_file,
     get_server_status,
     parse_redis_output,
@@ -33,6 +34,9 @@ def init_server():
     if not create_server_config():
         LOG.info("Merlin server initialization failed.")
         return
+
+    config_merlin_server()
+
     if pull_server_image():
         LOG.info("New merlin server image fetched")
     LOG.info("Merlin server initialization successful.")

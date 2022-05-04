@@ -14,7 +14,7 @@ container:
     # Password file to be used for accessing container
     pass_file: redis.pass
     # Password command for generating password file
-    pass_command: date +%s | sha256sum
+    # pass_command: date +%s | sha256sum
 
 process:
     # Command for determining the process of the command
