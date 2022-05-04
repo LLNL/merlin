@@ -5,6 +5,7 @@ import random
 import shutil
 import string
 import subprocess
+
 import yaml
 
 
@@ -24,6 +25,7 @@ REDIS_URL = "docker://redis"
 
 PASSWORD_LENGTH = 256
 
+
 class ServerStatus(enum.Enum):
     """
     Different states in which the server can be in.
@@ -36,15 +38,11 @@ class ServerStatus(enum.Enum):
     ERROR = 4
 
 
-def generate_password(length, pass_command:str = None):
+def generate_password(length, pass_command: str = None):
     if pass_command:
-        process = subprocess.run(
-            pass_command.split(),
-            shell=True,
-            stdout=subprocess.PIPE
-        )
+        process = subprocess.run(pass_command.split(), shell=True, stdout=subprocess.PIPE)
         return process.stdout
-    
+
     characters = list(string.ascii_letters + string.digits + "!@#$%^&*()")
 
     random.shuffle(characters)
@@ -52,17 +50,16 @@ def generate_password(length, pass_command:str = None):
     password = []
     for i in range(length):
         password.append(random.choice(characters))
-    
+
     random.shuffle(password)
     return "".join(password)
-
 
 
 def parse_redis_output(redis_stdout):
     """
     Parse the redis output for a the redis container. It will get all the necessary information
     from the output and returns a dictionary of those values.
-    
+
     :return:: two values is_successful, dictionary of values from redis output
     """
     if redis_stdout is None:
@@ -81,6 +78,7 @@ def parse_redis_output(redis_stdout):
             return True, redis_config
         if b"aborting" in line:
             return False, line.decode("utf-8")
+
 
 def create_server_config():
     """
@@ -131,7 +129,7 @@ def config_merlin_server():
         if os.path.exists(pass_file):
             LOG.info("Password file already exists. Skipping password generation step.")
             return True
-        
+
         if "pass_command" in server_config["container"]:
             password = generate_password(PASSWORD_LENGTH, server_config["container"]["pass_command"])
         else:
@@ -139,12 +137,12 @@ def config_merlin_server():
 
         with open(pass_file, "w+") as f:
             f.write(password)
-        
+
         LOG.info("Creating password file for merlin server container.")
     else:
         LOG.info("Unable to file pass_file to write output of pass_command to.")
         return False
-    
+
     return True
 
 

@@ -1,6 +1,5 @@
 """Main functions for instantiating and running Merlin server containers."""
 
-import enum
 import logging
 import os
 import socket
@@ -9,12 +8,12 @@ import time
 
 from merlin.server.server_config import (
     CONFIG_DIR,
+    CONFIG_FILE,
     IMAGE_NAME,
     PROCESS_FILE,
-    CONFIG_FILE,
     ServerStatus,
-    create_server_config,
     config_merlin_server,
+    create_server_config,
     dump_process_file,
     get_server_status,
     parse_redis_output,
@@ -23,11 +22,13 @@ from merlin.server.server_config import (
     pull_server_image,
 )
 
+
 LOG = logging.getLogger("merlin")
+
 
 def init_server():
     """
-    Initialize merlin server by checking and initializing main configuration directory 
+    Initialize merlin server by checking and initializing main configuration directory
     and local server configuration.
     """
 
