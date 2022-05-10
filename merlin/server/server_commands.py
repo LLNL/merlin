@@ -1,5 +1,6 @@
 """Main functions for instantiating and running Merlin server containers."""
 
+from argparse import Namespace
 import logging
 import os
 import socket
@@ -42,6 +43,54 @@ def init_server():
         LOG.info("New merlin server image fetched")
     LOG.info("Merlin server initialization successful.")
 
+def config_server(args : Namespace):
+    if args.ipaddress != None:
+        # Check if ipaddress is valid
+        # Set ip address in redis config
+        print("ipaddress", args.ipaddress)
+    if args.port != None:
+        # Check if port is valid
+        # Set port in redis config
+        print("port", args.port)
+    if args.user != None:
+        # Read user from file and set that as the user
+        print("user", args.user)
+    if args.password != None:
+        # Save the location of the password file in merlin_server_config
+        print("password", args.password)
+    if args.add_user != None:
+        # Create a new user in container
+        # Log the user in a file
+        # Generated an associated password file for user
+        # Return the password file for the user
+        print("add_user", args.add_user)
+    if args.remove_user != None:
+        # Read the user from the list of avaliable users
+        # Remove user from container
+        # Remove user from file
+        print("remove_user", args.remove_user)
+    if args.directory != None:
+        # Validate the directory input
+        # Set the save directory to the redis config
+        print("directory", args.directory)
+    if args.snapshot_seconds != None:
+        # Set the snapshot second in the redis config
+        print("snapshot_seconds", args.snapshot_seconds)
+    if args.snapshot_changes != None:
+        # Set the snapshot changes into the redis config
+        print("snapshot_changes", args.snapshot_changes)
+    if args.snapshot_file != None:
+        # Validate file string
+        # Set the snapshot file in the redis config
+        print("snapshot_file", args.snapshot_file)
+    if args.append_mode != None:
+        # Validate the append mode (always, everysec, no)
+        # Set the append mode in the redis config
+        print("append_mode", args.append_mode)
+    if args.append_file != None:
+        # Validate file string
+        # Set the append filein the redis config
+        print("append_file", args.append_file)
 
 def status_server():
     """
