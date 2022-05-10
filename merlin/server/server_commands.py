@@ -22,6 +22,7 @@ from merlin.server.server_config import (
     pull_server_config,
     pull_server_image,
 )
+from merlin.server.server_util import valid_ipv4
 
 
 LOG = logging.getLogger("merlin")
