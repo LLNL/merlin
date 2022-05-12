@@ -128,22 +128,30 @@ def config_merlin_server():
         pass_file = os.path.join(MERLIN_CONFIG_DIR, server_config["container"]["pass_file"])
         if os.path.exists(pass_file):
             LOG.info("Password file already exists. Skipping password generation step.")
-            return True
-
-        if "pass_command" in server_config["container"]:
-            password = generate_password(PASSWORD_LENGTH, server_config["container"]["pass_command"])
         else:
-            password = generate_password(PASSWORD_LENGTH)
+            if "pass_command" in server_config["container"]:
+                password = generate_password(PASSWORD_LENGTH, server_config["container"]["pass_command"])
+            else:
+                password = generate_password(PASSWORD_LENGTH)
 
-        with open(pass_file, "w+") as f:
-            f.write(password)
+            with open(pass_file, "w+") as f:
+                f.write(password)
 
-        LOG.info("Creating password file for merlin server container.")
+            LOG.info("Creating password file for merlin server container.")
     else:
-        LOG.info("Unable to file pass_file to write output of pass_command to.")
-        return False
+        LOG.info("Unable to find pass_file to write output of pass_command to.")
 
-    return True
+    if "user_file" in server_config["container"]:
+        user_file = os.path.join(MERLIN_CONFIG_DIR, server_config["container"]["user_file"])
+        if os.path.exists(user_file):
+            LOG.info("User file already exists.")
+        else:
+            with open(user_file, "w+") as f:
+               f.write(os.environ.get("USER") + "\n")
+            
+            LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
+    else:
+        LOG.info("Unable to find user_file to store users for merlin server containers")
 
 
 def pull_server_config() -> dict:
@@ -218,28 +226,31 @@ def pull_server_image():
 
     image_path = os.path.join(config_dir, image_name)
 
-    if os.path.exists(image_path):
+    if not os.path.exists(image_path):
+        LOG.info(f"Fetching redis image from {image_url}")
+        format_config = server_config[container_config["format"]]
+        subprocess.run(
+            format_config["pull_command"]
+            .strip("\\")
+            .format(command=format_config["command"], image=image_path, url=image_url)
+            .split(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    else:
         LOG.info(f"{image_path} already exists.")
-        return False
 
-    LOG.info(f"Fetching redis image from {image_url}")
-    format_config = server_config[container_config["format"]]
-    subprocess.run(
-        format_config["pull_command"]
-        .strip("\\")
-        .format(command=format_config["command"], image=image_path, url=image_url)
-        .split(),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    if not os.path.exists(os.path.join(config_dir, config_file)):
+        LOG.info("Copying default redis configuration file.")
+        try:
+            file_dir = os.path.dirname(os.path.abspath(__file__))
+            shutil.copy(os.path.join(file_dir, config_file), config_dir)
+        except OSError:
+            LOG.error(f"Destination location {config_dir} is not writable.")
+            return False
+    else:
+        LOG.info("Redis configuration file already exist.")
 
-    LOG.info("Copying default redis configuration file.")
-    try:
-        file_dir = os.path.dirname(os.path.abspath(__file__))
-        shutil.copy(os.path.join(file_dir, config_file), config_dir)
-    except OSError:
-        LOG.error(f"Destination location {config_dir} is not writable.")
-        return False
     return True
 
 
@@ -307,3 +318,51 @@ def dump_process_file(data, file_path):
     with open(file_path, "w+") as f:
         yaml.dump(data, f, yaml.Dumper)
     return True
+
+class RedisConfig():
+    filename = ""
+    entry_order = []
+    entries = {}
+    comments = {}
+    trailing_comments = ""
+    def __init__(self, filename):
+        self.filename = filename
+        self.parse()
+    
+    def parse(self):
+        self.entries = {}
+        self.comments = {}
+        with open(self.filename, "r+") as f:
+            file_contents = f.read()
+            file_lines = file_contents.split("\n")
+            comments = ""
+            for line in file_lines:
+                if len(line) > 0 and line[0] != "#":
+                    line_contents = line.split(maxsplit=1)
+                    if line_contents[0] in self.entries:
+                        sub_split = line_contents[1].split(maxsplit=1)
+                        line_contents[0] += " " + sub_split[0]
+                        line_contents[1] = sub_split[1]
+                    self.entry_order.append(line_contents[0])
+                    self.entries[line_contents[0]] = line_contents[1]
+                    self.comments[line_contents[0]] = comments
+                    comments = ""
+                else:
+                    comments += line + "\n"
+            self.trailing_comments = comments[:-1]
+    
+    def write(self):
+        with open(self.filename, "w") as f:
+            for entry in self.entry_order:
+                f.write(self.comments[entry])
+                f.write(f"{entry} {self.entries[entry]}\n")
+            f.write(self.trailing_comments)
+
+    def set_filename(self, filename):
+        self.filename = filename
+    
+    def set_config_value(self, key: str, value: str):
+        if not key in self.entries:
+            return False
+        self.entries[key] = value
+        return True

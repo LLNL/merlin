@@ -11,7 +11,9 @@ from merlin.server.server_config import (
     CONFIG_DIR,
     CONFIG_FILE,
     IMAGE_NAME,
+    MERLIN_CONFIG_DIR,
     PROCESS_FILE,
+    RedisConfig,
     ServerStatus,
     config_merlin_server,
     create_server_config,
@@ -22,7 +24,7 @@ from merlin.server.server_config import (
     pull_server_config,
     pull_server_image,
 )
-from merlin.server.server_util import valid_ipv4
+from merlin.server.server_util import valid_ipv4, valid_port
 
 
 LOG = logging.getLogger("merlin")
@@ -40,31 +42,46 @@ def init_server():
 
     config_merlin_server()
 
-    if pull_server_image():
-        LOG.info("New merlin server image fetched")
+    pull_server_image()
     LOG.info("Merlin server initialization successful.")
 
 def config_server(args : Namespace):
+    redis_config = RedisConfig(os.path.join(CONFIG_DIR, CONFIG_FILE))
     if args.ipaddress != None:
         # Check if ipaddress is valid
-        # Set ip address in redis config
+        if valid_ipv4(args.ipaddress):
+            # Set ip address in redis config
+            if not redis_config.set_config_value("bind", args.ipaddress):
+                LOG.error("Unable to set ip address for redis config")
+        else:
+            LOG.error("Invalid IPv4 address given.")
         print("ipaddress", args.ipaddress)
+
     if args.port != None:
         # Check if port is valid
-        # Set port in redis config
+        if valid_port(args.port):
+            # Set port in redis config
+            if not redis_config.set_config_value("port", args.port):
+                LOG.error("Unable to set port for redis config")
+        else:
+            LOG.error("Invalid port given.")
         print("port", args.port)
+
     if args.user != None:
-        # Read user from file and set that as the user
+        # Set the main user for the container
         print("user", args.user)
+
     if args.password != None:
         # Save the location of the password file in merlin_server_config
         print("password", args.password)
+
     if args.add_user != None:
         # Create a new user in container
         # Log the user in a file
         # Generated an associated password file for user
         # Return the password file for the user
         print("add_user", args.add_user)
+
     if args.remove_user != None:
         # Read the user from the list of avaliable users
         # Remove user from container
@@ -92,6 +109,7 @@ def config_server(args : Namespace):
         # Validate file string
         # Set the append filein the redis config
         print("append_file", args.append_file)
+    redis_config.write()
 
 def status_server():
     """
