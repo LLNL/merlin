@@ -366,3 +366,8 @@ class RedisConfig():
             return False
         self.entries[key] = value
         return True
+    
+    def get_config_value(self, key:str):
+        if key in self.entries:
+            return self.entries[key]
+        return None

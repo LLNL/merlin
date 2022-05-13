@@ -72,7 +72,12 @@ def config_server(args : Namespace):
         print("user", args.user)
 
     if args.password != None:
-        # Save the location of the password file in merlin_server_config
+        if os.path.exists(args.password):
+            # Save the location of the password file in merlin_server_config
+            if not redis_config.set_config_value("requirepass", args.password):
+                LOG.error("Unable to set password file for redis config")
+        else:
+            LOG.error(f"Password file {args.password} doesn't exist.")
         print("password", args.password)
 
     if args.add_user != None:
@@ -87,28 +92,69 @@ def config_server(args : Namespace):
         # Remove user from container
         # Remove user from file
         print("remove_user", args.remove_user)
+
     if args.directory != None:
         # Validate the directory input
-        # Set the save directory to the redis config
+        if os.path.exists(args.directory):
+            # Set the save directory to the redis config
+            if not redis_config.set_config_value("dir", args.directory):
+                LOG.error("Unable to set directory for redis config")
+        else:
+            LOG.error("Directory given does not exist.")
         print("directory", args.directory)
+
     if args.snapshot_seconds != None:
         # Set the snapshot second in the redis config
+        value = redis_config.get_config_value("save")
+        if value == None:
+            LOG.error("Unable to get exisiting parameter values for snapshot")
+        else:
+            value = value.split()
+            value[0] = args.snapshot_seconds
+            value = " ".join(value)
+            if not redis_config.set_config_value("save", value):
+                LOG.error("Unable to set snapshot value seconds")
         print("snapshot_seconds", args.snapshot_seconds)
+
     if args.snapshot_changes != None:
         # Set the snapshot changes into the redis config
+        value = redis_config.get_config_value("save")
+        if value == None:
+            LOG.error("Unable to get exisiting parameter values for snapshot")
+        else:
+            value = value.split()
+            value[1] = args.snapshot_changes
+            value = " ".join(value)
+            if not redis_config.set_config_value("save", value):
+                LOG.error("Unable to set snapshot value seconds")
         print("snapshot_changes", args.snapshot_changes)
+
     if args.snapshot_file != None:
-        # Validate file string
         # Set the snapshot file in the redis config
+        if not redis_config.set_config_value("dbfilename", args.snapshot_file):
+            LOG.error("Unable to set snapshot_file name")
+
         print("snapshot_file", args.snapshot_file)
+
     if args.append_mode != None:
+        valid_modes = ["always", "everysec", "no"]
+
         # Validate the append mode (always, everysec, no)
-        # Set the append mode in the redis config
+        if not args.append_mode in valid_modes:
+            # Set the append mode in the redis config
+            if not redis_config.set_config_value("appendfsync", args.append_mode):
+                LOG.error("Unable to set append_mode in redis config")
+        else:
+            LOG.error("Not a valid append_mode(Only valid modes are always, everysec, no)")
+
         print("append_mode", args.append_mode)
+
     if args.append_file != None:
-        # Validate file string
-        # Set the append filein the redis config
+        # Set the append file in the redis config
+        if not redis_config.set_config_value("appendfilename"):
+            LOG.error("Unable to set append filename.")
         print("append_file", args.append_file)
+
     redis_config.write()
 
 def status_server():
