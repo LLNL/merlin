@@ -55,7 +55,7 @@ def config_server(args : Namespace):
                 LOG.error("Unable to set ip address for redis config")
         else:
             LOG.error("Invalid IPv4 address given.")
-        print("ipaddress", args.ipaddress)
+        LOG.info(f"Ipaddress is set to {args.ipaddress}")
 
     if args.port != None:
         # Check if port is valid
@@ -65,13 +65,13 @@ def config_server(args : Namespace):
                 LOG.error("Unable to set port for redis config")
         else:
             LOG.error("Invalid port given.")
-        print("port", args.port)
+        LOG.info(f"Port is set to {args.port}")
 
     if args.master_user != None:
         # Set the main user for the container
         if not redis_config.set_config_value("masteruser", args.master_user):
             LOG.error("Unable to set masteruser.")
-        print("master_user", args.master_user)
+        LOG.info(f"Master user is set to {args.master_user}")
 
     if args.password != None:
         if os.path.exists(args.password):
@@ -80,7 +80,7 @@ def config_server(args : Namespace):
                 LOG.error("Unable to set password file for redis config")
         else:
             LOG.error(f"Password file {args.password} doesn't exist.")
-        print("password", args.password)
+        LOG.info(f"Password file set to {args.password}")
 
     if args.add_user != None:
         # Create a new user in container
@@ -103,7 +103,7 @@ def config_server(args : Namespace):
                 LOG.error("Unable to set directory for redis config")
         else:
             LOG.error("Directory given does not exist.")
-        print("directory", args.directory)
+        LOG.info(f"Directory is set to {args.directory}")
 
     if args.snapshot_seconds != None:
         # Set the snapshot second in the redis config
@@ -116,7 +116,7 @@ def config_server(args : Namespace):
             value = " ".join(value)
             if not redis_config.set_config_value("save", value):
                 LOG.error("Unable to set snapshot value seconds")
-        print("snapshot_seconds", args.snapshot_seconds)
+        LOG.info(f"Snapshot wait time is set to {args.snapshot_seconds} seconds")
 
     if args.snapshot_changes != None:
         # Set the snapshot changes into the redis config
@@ -129,14 +129,14 @@ def config_server(args : Namespace):
             value = " ".join(value)
             if not redis_config.set_config_value("save", value):
                 LOG.error("Unable to set snapshot value seconds")
-        print("snapshot_changes", args.snapshot_changes)
+        LOG.info("Snapshot threshold is set to {args.snapshot_changes} changes")
 
     if args.snapshot_file != None:
         # Set the snapshot file in the redis config
         if not redis_config.set_config_value("dbfilename", args.snapshot_file):
             LOG.error("Unable to set snapshot_file name")
 
-        print("snapshot_file", args.snapshot_file)
+        LOG.info(f"Snapshot file is set to {args.snapshot_file}")
 
     if args.append_mode != None:
         valid_modes = ["always", "everysec", "no"]
@@ -149,13 +149,13 @@ def config_server(args : Namespace):
         else:
             LOG.error("Not a valid append_mode(Only valid modes are always, everysec, no)")
 
-        print("append_mode", args.append_mode)
+        LOG.info(f"Append mode is set to {args.append_mode}")
 
     if args.append_file != None:
         # Set the append file in the redis config
         if not redis_config.set_config_value("appendfilename", args.append_file):
             LOG.error("Unable to set append filename.")
-        print("append_file", args.append_file)
+        LOG.info(f"Append file is set to {args.append_file}")
 
     redis_config.write()
 
