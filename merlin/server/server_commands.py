@@ -159,6 +159,8 @@ def config_server(args : Namespace):
 
     redis_config.write()
 
+    LOG.info("Merlin server has to restart before new configs take effect.")
+
 def status_server():
     """
     Get the server status of the any current running containers for merlin server
