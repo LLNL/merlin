@@ -147,8 +147,8 @@ def config_merlin_server():
             LOG.info("User file already exists.")
         else:
             with open(user_file, "w+") as f:
-               f.write(os.environ.get("USER") + "\n")
-            
+                f.write(os.environ.get("USER") + "\n")
+
             LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
     else:
         LOG.info("Unable to find user_file to store users for merlin server containers")
@@ -319,18 +319,20 @@ def dump_process_file(data, file_path):
         yaml.dump(data, f, yaml.Dumper)
     return True
 
-class RedisConfig():
+
+class RedisConfig:
     filename = ""
     entry_order = []
     entries = {}
     comments = {}
     trailing_comments = ""
     changed = False
+
     def __init__(self, filename):
         self.filename = filename
         self.changed = False
         self.parse()
-    
+
     def parse(self):
         self.entries = {}
         self.comments = {}
@@ -352,7 +354,7 @@ class RedisConfig():
                 else:
                     comments += line + "\n"
             self.trailing_comments = comments[:-1]
-    
+
     def write(self):
         with open(self.filename, "w") as f:
             for entry in self.entry_order:
@@ -362,18 +364,18 @@ class RedisConfig():
 
     def set_filename(self, filename):
         self.filename = filename
-    
+
     def set_config_value(self, key: str, value: str):
         if not key in self.entries:
             return False
         self.entries[key] = value
         self.changed = True
         return True
-    
-    def get_config_value(self, key:str):
+
+    def get_config_value(self, key: str):
         if key in self.entries:
             return self.entries[key]
         return None
-    
+
     def changes_made(self):
         return self.changed

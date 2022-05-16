@@ -52,7 +52,7 @@ from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
-from merlin.server.server_commands import init_server, config_server, restart_server, start_server, status_server, stop_server
+from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
@@ -343,7 +343,7 @@ def process_monitor(args):
     LOG.info("Monitor: ... stop condition met")
 
 
-def process_server(args : Namespace):
+def process_server(args: Namespace):
     if args.commands == "init":
         init_server()
     elif args.commands == "start":
@@ -628,92 +628,82 @@ def setup_argparse() -> None:
         "--ipaddress",
         action="store",
         type=str,
-        #default="127.0.0.1",
-        help="Set the binded IP address for the merlin server container."
+        # default="127.0.0.1",
+        help="Set the binded IP address for the merlin server container.",
     )
     server_config.add_argument(
         "-p",
         "--port",
         action="store",
         type=int,
-        #default=6379,
-        help="Set the binded port for the merlin server container."
+        # default=6379,
+        help="Set the binded port for the merlin server container.",
     )
     server_config.add_argument(
         "-u",
         "--master-user",
         action="store",
         type=str,
-        #default="root",
-        help="Set the username of the master user in the merlin server container."
+        # default="root",
+        help="Set the username of the master user in the merlin server container.",
     )
     server_config.add_argument(
         "-pwd",
         "--password",
         action="store",
         type=str,
-        #default="~/.merlin/redis.pass",
-        help="Set the password file to be used for merlin server container."
+        # default="~/.merlin/redis.pass",
+        help="Set the password file to be used for merlin server container.",
     )
-    server_config.add_argument(
-        "--add-user",
-        action="store",
-        type=str,
-        help="Create a new user for merlin server instance"
-    )
-    server_config.add_argument(
-        "--remove-user",
-        action="store",
-        type=str,
-        help="Remove an exisiting user."
-    )
+    server_config.add_argument("--add-user", action="store", type=str, help="Create a new user for merlin server instance")
+    server_config.add_argument("--remove-user", action="store", type=str, help="Remove an exisiting user.")
     server_config.add_argument(
         "-d",
         "--directory",
         action="store",
         type=str,
-        #default="./",
-        help="Set the working directory of the merlin server container."
+        # default="./",
+        help="Set the working directory of the merlin server container.",
     )
     server_config.add_argument(
         "-ss",
         "--snapshot-seconds",
         action="store",
         type=int,
-        #default=300,
-        help="Set the number of seconds merlin server waits before checking if a snapshot is needed."
+        # default=300,
+        help="Set the number of seconds merlin server waits before checking if a snapshot is needed.",
     )
     server_config.add_argument(
         "-sc",
         "--snapshot-changes",
         action="store",
         type=int,
-        #default=100,
-        help="Set the number of changes that are required to be made to the merlin server before a snapshot is made."
+        # default=100,
+        help="Set the number of changes that are required to be made to the merlin server before a snapshot is made.",
     )
     server_config.add_argument(
         "-df",
         "--snapshot-file",
         action="store",
         type=str,
-        #default="dump.db",
-        help="Set the snapshot filename for database dumps."
+        # default="dump.db",
+        help="Set the snapshot filename for database dumps.",
     )
     server_config.add_argument(
         "-am",
         "--append-mode",
         action="store",
         type=str,
-        #default="everysec",
-        help="The appendonly mode to be set. The avaiable options are always, everysec, no."
+        # default="everysec",
+        help="The appendonly mode to be set. The avaiable options are always, everysec, no.",
     )
     server_config.add_argument(
         "-af",
         "--append-file",
         action="store",
         type=str,
-        #default="appendonly.aof",
-        help="Set append only filename for merlin server container."
+        # default="appendonly.aof",
+        help="Set append only filename for merlin server container.",
     )
 
     return parser

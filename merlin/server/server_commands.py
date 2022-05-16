@@ -1,11 +1,11 @@
 """Main functions for instantiating and running Merlin server containers."""
 
-from argparse import Namespace
 import logging
 import os
 import socket
 import subprocess
 import time
+from argparse import Namespace
 
 from merlin.server.server_config import (
     CONFIG_DIR,
@@ -45,7 +45,8 @@ def init_server():
     pull_server_image()
     LOG.info("Merlin server initialization successful.")
 
-def config_server(args : Namespace):
+
+def config_server(args: Namespace):
     redis_config = RedisConfig(os.path.join(CONFIG_DIR, CONFIG_FILE))
     if args.ipaddress is not None:
         # Check if ipaddress is valid
@@ -164,6 +165,7 @@ def config_server(args : Namespace):
         LOG.info("Run 'merlin server start' to start merlin server instance.")
     else:
         LOG.info("Add changes to config file using flags. Check changable configs with 'merlin server config --help'")
+
 
 def status_server():
     """
@@ -300,6 +302,7 @@ def stop_server():
 
     LOG.info("Merlin server terminated.")
     return True
+
 
 def restart_server():
     if get_server_status() != ServerStatus.RUNNING:
