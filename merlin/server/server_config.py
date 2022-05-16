@@ -325,8 +325,10 @@ class RedisConfig():
     entries = {}
     comments = {}
     trailing_comments = ""
+    changed = False
     def __init__(self, filename):
         self.filename = filename
+        self.changed = False
         self.parse()
     
     def parse(self):
@@ -365,9 +367,13 @@ class RedisConfig():
         if not key in self.entries:
             return False
         self.entries[key] = value
+        self.changed = True
         return True
     
     def get_config_value(self, key:str):
         if key in self.entries:
             return self.entries[key]
         return None
+    
+    def changes_made(self):
+        return self.changed
