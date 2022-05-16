@@ -69,6 +69,8 @@ def config_server(args : Namespace):
 
     if args.user != None:
         # Set the main user for the container
+        if not redis_config.set_config_value("masteruser"):
+            LOG.error("Unable to set masteruser.")
         print("user", args.user)
 
     if args.password != None:
