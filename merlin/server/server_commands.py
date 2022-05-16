@@ -296,3 +296,13 @@ def stop_server():
 
     LOG.info("Merlin server terminated.")
     return True
+
+def restart_server():
+    if get_server_status() != ServerStatus.RUNNING:
+        LOG.info("Merlin server is not currently running.")
+        LOG.info("Please start a merlin server instance first with 'merlin server start'")
+        return False
+    stop_server()
+    time.sleep(1)
+    start_server()
+    return True

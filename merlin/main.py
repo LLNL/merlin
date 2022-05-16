@@ -52,7 +52,7 @@ from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
-from merlin.server.server_commands import init_server, config_server, start_server, status_server, stop_server
+from merlin.server.server_commands import init_server, config_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
@@ -352,6 +352,8 @@ def process_server(args : Namespace):
         stop_server()
     elif args.commands == "status":
         status_server()
+    elif args.commands == "restart":
+        restart_server()
     elif args.commands == "config":
         config_server(args)
 
@@ -603,6 +605,14 @@ def setup_argparse() -> None:
         "stop",
         help="Stop an instance of redis containers currently running.",
         description="Stop server.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_stop.set_defaults(func=process_server)
+
+    server_stop: ArgumentParser = server_commands.add_parser(
+        "restart",
+        help="Restart merlin server instance",
+        description="Restart server.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     server_stop.set_defaults(func=process_server)
