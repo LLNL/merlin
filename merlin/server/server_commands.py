@@ -12,7 +12,6 @@ from merlin.server.server_config import (
     CONFIG_FILE,
     IMAGE_NAME,
     PROCESS_FILE,
-    RedisConfig,
     ServerStatus,
     config_merlin_server,
     create_server_config,
@@ -23,7 +22,7 @@ from merlin.server.server_config import (
     pull_server_config,
     pull_server_image,
 )
-from merlin.server.server_util import valid_ipv4, valid_port
+from merlin.server.server_util import RedisConfig, valid_ipv4, valid_port
 
 
 LOG = logging.getLogger("merlin")
