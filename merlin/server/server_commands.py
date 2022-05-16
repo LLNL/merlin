@@ -11,7 +11,6 @@ from merlin.server.server_config import (
     CONFIG_DIR,
     CONFIG_FILE,
     IMAGE_NAME,
-    MERLIN_CONFIG_DIR,
     PROCESS_FILE,
     RedisConfig,
     ServerStatus,
@@ -143,7 +142,7 @@ def config_server(args: Namespace):
         valid_modes = ["always", "everysec", "no"]
 
         # Validate the append mode (always, everysec, no)
-        if not args.append_mode in valid_modes:
+        if args.append_mode not in valid_modes:
             # Set the append mode in the redis config
             if not redis_config.set_config_value("appendfsync", args.append_mode):
                 LOG.error("Unable to set append_mode in redis config")

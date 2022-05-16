@@ -1,6 +1,3 @@
-import os
-
-
 def valid_ipv4(ip: str):
     if not ip:
         return False

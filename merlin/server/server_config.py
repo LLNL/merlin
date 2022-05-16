@@ -366,7 +366,7 @@ class RedisConfig:
         self.filename = filename
 
     def set_config_value(self, key: str, value: str):
-        if not key in self.entries:
+        if key not in self.entries:
             return False
         self.entries[key] = value
         self.changed = True
