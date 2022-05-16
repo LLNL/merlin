@@ -67,11 +67,11 @@ def config_server(args : Namespace):
             LOG.error("Invalid port given.")
         print("port", args.port)
 
-    if args.user != None:
+    if args.master_user != None:
         # Set the main user for the container
-        if not redis_config.set_config_value("masteruser"):
+        if not redis_config.set_config_value("masteruser", args.master_user):
             LOG.error("Unable to set masteruser.")
-        print("user", args.user)
+        print("master_user", args.master_user)
 
     if args.password != None:
         if os.path.exists(args.password):
@@ -153,7 +153,7 @@ def config_server(args : Namespace):
 
     if args.append_file != None:
         # Set the append file in the redis config
-        if not redis_config.set_config_value("appendfilename"):
+        if not redis_config.set_config_value("appendfilename", args.append_file):
             LOG.error("Unable to set append filename.")
         print("append_file", args.append_file)
 

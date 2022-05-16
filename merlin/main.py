@@ -631,11 +631,11 @@ def setup_argparse() -> None:
     )
     server_config.add_argument(
         "-u",
-        "--user",
+        "--master-user",
         action="store",
         type=str,
-        #default="~/.merlin/redis.user",
-        help="Set the username file to be used for merlin server container."
+        #default="root",
+        help="Set the username of the master user in the merlin server container."
     )
     server_config.add_argument(
         "-pwd",
