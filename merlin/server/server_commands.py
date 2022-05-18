@@ -55,19 +55,6 @@ def config_server(args: Namespace):
 
     redis_config.set_password(args.password)
 
-    if args.add_user is not None:
-        # Create a new user in container
-        # Log the user in a file
-        # Generated an associated password file for user
-        # Return the password file for the user
-        print("add_user", args.add_user)
-
-    if args.remove_user is not None:
-        # Read the user from the list of avaliable users
-        # Remove user from container
-        # Remove user from file
-        print("remove_user", args.remove_user)
-
     redis_config.set_directory(args.directory)
 
     redis_config.set_snapshot_seconds(args.snapshot_seconds)
@@ -87,6 +74,19 @@ def config_server(args: Namespace):
         LOG.info("Run 'merlin server start' to start merlin server instance.")
     else:
         LOG.info("Add changes to config file using flags. Check changable configs with 'merlin server config --help'")
+    
+    if args.add_user is not None:
+        # Create a new user in container
+        # Log the user in a file
+        # Generated an associated password file for user
+        # Return the password file for the user
+        print("add_user", args.add_user)
+
+    if args.remove_user is not None:
+        # Read the user from the list of avaliable users
+        # Remove user from container
+        # Remove user from file
+        print("remove_user", args.remove_user)
 
 
 def status_server():

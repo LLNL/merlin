@@ -1,4 +1,5 @@
 import logging
+import hashlib
 import os
 
 import yaml
@@ -241,6 +242,50 @@ class RedisConfig:
 
 
 class RedisUsers:
+    class User:
+        status = "on"
+        hash_password = hashlib.sha256(b"password").hexdigest()
+        keys = "*"
+        channels = "@all"
+        pattern = None
+        def __init__(self,
+                    status="on",
+                    keys="*",
+                    channels="@all",
+                    password=None,
+                    pattern=None) -> None:
+            self.status = status
+            self.keys = keys
+            self.channels = channels
+            self.pattern = pattern
+            if password is not None:
+                self.set_password(password)
+        
+        def parse_dict(self, dict):
+            self.status = dict["status"]
+            self.keys = dict["keys"]
+            self.channels = dict["channels"]
+            self.hash_password = dict["hash_password"]
+            self.pattern = dict["pattern"]
+
+
+        def get_user_dict(self) -> dict:
+            self.status = "on"
+            return {"status": self.status,
+                    "hash_password": self.hash_password,
+                    "keys": self.keys,
+                    "channels": self.channels,
+                    "pattern": self.pattern}
+        
+        def __repr__(self) -> str:
+            return str(self.get_user())
+        
+        def __str__(self) -> str:
+            self.__repr__()
+
+        def set_password(self, password:str):
+            self.hash_password = hashlib.sha256(bytes(password, 'utf-8')).hexdigest()
+
     filename = ""
     users = {}
 
@@ -250,13 +295,27 @@ class RedisUsers:
     def parse(self):
         with open(self.filename, "r") as f:
             self.users = yaml.load(f, yaml.Loader)
+            for user in self.users:
+                new_user = self.User()
+                new_user.parse_dict(self.users[user])
+                self.users[user] = new_user
 
     def write(self):
+        data = self.users
+        for key in data:
+            data[key] = self.users[key].get_user_dict()
+            print(self.users[key])
         with open(self.filename, "w") as f:
-            yaml.dump(f, yaml.Dumper)
+            yaml.dump(data, f, yaml.Dumper)
 
-    def add_user(self, user, permissions):
-        self.users[user] = permissions
+    def add_user(self,
+                user,
+                status="on",
+                keys="*",
+                channels="@all",
+                password=None,
+                pattern=None):
+        self.users[user] = self.User(status, keys, channels, password, pattern)
 
     def remove_user(self, user):
         del self.users[user]

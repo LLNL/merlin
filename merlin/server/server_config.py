@@ -8,6 +8,8 @@ import subprocess
 
 import yaml
 
+from merlin.server.server_util import RedisUsers
+
 
 LOG = logging.getLogger("merlin")
 
@@ -146,8 +148,11 @@ def config_merlin_server():
         if os.path.exists(user_file):
             LOG.info("User file already exists.")
         else:
-            with open(user_file, "w+") as f:
-                f.write(os.environ.get("USER") + "\n")
+            redis_users = RedisUsers(user_file)
+            redis_users.add_user(os.environ.get("USER"))
+            redis_users.write()
+            # with open(user_file, "w+") as f:
+            #     f.write(os.environ.get("USER") + "\n")
 
             LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
     else:
