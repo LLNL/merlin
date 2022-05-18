@@ -1,3 +1,9 @@
+import logging
+import os
+import yaml
+
+LOG = logging.getLogger("merlin")
+
 def valid_ipv4(ip: str):
     if not ip:
         return False
@@ -85,9 +91,168 @@ class RedisConfig:
 
     def changes_made(self):
         return self.changed
+    
+    def set_ip_address(self, ipaddress):
+        if ipaddress is None:
+            return False
+        # Check if ipaddress is valid
+        if valid_ipv4(ipaddress):
+            # Set ip address in redis config
+            if not self.set_config_value("bind", ipaddress):
+                LOG.error("Unable to set ip address for redis config")
+                return False
+        else:
+            LOG.error("Invalid IPv4 address given.")
+            return False
+        LOG.info(f"Ipaddress is set to {ipaddress}")
+        return True
+    
+    def set_port(self, port):
+        if port is None:
+            return False
+        # Check if port is valid
+        if valid_port(port):
+            # Set port in redis config
+            if not self.set_config_value("port", port):
+                LOG.error("Unable to set port for redis config")
+                return False
+        else:
+            LOG.error("Invalid port given.")
+            return False
+        LOG.info(f"Port is set to {port}")
+        return True
+    
+    def set_master_user(self, master_user):
+        if master_user is None:
+            return False
+        # Set the main user for the container
+        if not self.set_config_value("masteruser", master_user):
+            LOG.error("Unable to set masteruser.")
+            return False
+        LOG.info(f"Master user is set to {master_user}")
+        return True
+    
+    def set_password(self, password):
+        if password is None:
+            return False
+        if os.path.exists(password):
+            # Save the location of the password file in merlin_server_config
+            if not self.set_config_value("requirepass", password):
+                LOG.error("Unable to set password file for redis config")
+                return False
+        else:
+            LOG.error(f"Password file {password} doesn't exist.")
+            return False
+        LOG.info(f"Password file set to {password}")
+        return True
+    
+    def set_directory(self, directory):
+        if directory is None:
+            return False
+        # Validate the directory input
+        if os.path.exists(directory):
+            # Set the save directory to the redis config
+            if not self.set_config_value("dir", directory):
+                LOG.error("Unable to set directory for redis config")
+                return False
+        else:
+            LOG.error("Directory given does not exist.")
+            return False
+        LOG.info(f"Directory is set to {directory}")
+        return True
+    
+    def set_snapshot_seconds(self, seconds):
+        if seconds is None:
+            return False
+        # Set the snapshot second in the redis config
+        value = self.get_config_value("save")
+        if value is None:
+            LOG.error("Unable to get exisiting parameter values for snapshot")
+            return False
+        else:
+            value = value.split()
+            value[0] = str(seconds)
+            value = " ".join(value)
+            if not self.set_config_value("save", value):
+                LOG.error("Unable to set snapshot value seconds")
+                return False
+        LOG.info(f"Snapshot wait time is set to {seconds} seconds")
+        return True
+    
+    def set_snapshot_changes(self, changes):
+        if changes is None:
+            return False
+        # Set the snapshot changes into the redis config
+        value = self.get_config_value("save")
+        if value is None:
+            LOG.error("Unable to get exisiting parameter values for snapshot")
+            return False
+        else:
+            value = value.split()
+            value[1] = str(changes)
+            value = " ".join(value)
+            if not self.set_config_value("save", value):
+                LOG.error("Unable to set snapshot value seconds")
+                return False
+        LOG.info(f"Snapshot threshold is set to {changes} changes")
+        return True
+    
+    def set_snapshot_file(self, file):
+        if file is None:
+            return False
+        # Set the snapshot file in the redis config
+        if not self.set_config_value("dbfilename", file):
+            LOG.error("Unable to set snapshot_file name")
+            return False
+
+        LOG.info(f"Snapshot file is set to {file}")
+        return True
+    
+    def set_append_mode(self, mode):
+        if mode is None:
+            return False
+        valid_modes = ["always", "everysec", "no"]
+
+        # Validate the append mode (always, everysec, no)
+        if mode in valid_modes:
+            # Set the append mode in the redis config
+            if not self.set_config_value("appendfsync", mode):
+                LOG.error("Unable to set append_mode in redis config")
+                return False
+        else:
+            LOG.error("Not a valid append_mode(Only valid modes are always, everysec, no)")
+            return False
+
+        LOG.info(f"Append mode is set to {mode}")
+        return True
+    
+    def set_append_file(self, file):
+        if file is None:
+            return False
+        # Set the append file in the redis config
+        if not self.set_config_value("appendfilename", file):
+            LOG.error("Unable to set append filename.")
+            return False
+        LOG.info(f"Append file is set to {file}")
+        return True
 
 class RedisUsers:
     filename = ""
+    users = {}
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, filename) -> None:
+        self.filename = filename
+    
+    def parse(self):
+        with open(self.filename, "r") as f:
+            self.users = yaml.load(f, yaml.Loader)
+
+    def write(self):
+        with open(self.filename,"w") as f:
+            yaml.dump(f, yaml.Dumper)
+    
+    def add_user(self, user, permissions):
+        self.users[user] = permissions
+
+    def remove_user(self, user):
+        del self.users[user]

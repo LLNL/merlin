@@ -682,7 +682,7 @@ def setup_argparse() -> None:
         help="Set the number of changes that are required to be made to the merlin server before a snapshot is made.",
     )
     server_config.add_argument(
-        "-df",
+        "-sf",
         "--snapshot-file",
         action="store",
         type=str,
