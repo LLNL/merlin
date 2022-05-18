@@ -125,6 +125,8 @@ def config_merlin_server():
     """
 
     server_config = pull_server_config()
+    container_config = server_config["container"]
+    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
 
     if "pass_file" in server_config["container"]:
         pass_file = os.path.join(MERLIN_CONFIG_DIR, server_config["container"]["pass_file"])
@@ -144,7 +146,7 @@ def config_merlin_server():
         LOG.info("Unable to find pass_file to write output of pass_command to.")
 
     if "user_file" in server_config["container"]:
-        user_file = os.path.join(MERLIN_CONFIG_DIR, server_config["container"]["user_file"])
+        user_file = os.path.join(config_dir, server_config["container"]["user_file"])
         if os.path.exists(user_file):
             LOG.info("User file already exists.")
         else:
