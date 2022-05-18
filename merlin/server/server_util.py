@@ -1,8 +1,11 @@
 import logging
 import os
+
 import yaml
 
+
 LOG = logging.getLogger("merlin")
+
 
 def valid_ipv4(ip: str):
     if not ip:
@@ -91,7 +94,7 @@ class RedisConfig:
 
     def changes_made(self):
         return self.changed
-    
+
     def set_ip_address(self, ipaddress):
         if ipaddress is None:
             return False
@@ -106,7 +109,7 @@ class RedisConfig:
             return False
         LOG.info(f"Ipaddress is set to {ipaddress}")
         return True
-    
+
     def set_port(self, port):
         if port is None:
             return False
@@ -121,7 +124,7 @@ class RedisConfig:
             return False
         LOG.info(f"Port is set to {port}")
         return True
-    
+
     def set_master_user(self, master_user):
         if master_user is None:
             return False
@@ -131,7 +134,7 @@ class RedisConfig:
             return False
         LOG.info(f"Master user is set to {master_user}")
         return True
-    
+
     def set_password(self, password):
         if password is None:
             return False
@@ -145,7 +148,7 @@ class RedisConfig:
             return False
         LOG.info(f"Password file set to {password}")
         return True
-    
+
     def set_directory(self, directory):
         if directory is None:
             return False
@@ -160,7 +163,7 @@ class RedisConfig:
             return False
         LOG.info(f"Directory is set to {directory}")
         return True
-    
+
     def set_snapshot_seconds(self, seconds):
         if seconds is None:
             return False
@@ -178,7 +181,7 @@ class RedisConfig:
                 return False
         LOG.info(f"Snapshot wait time is set to {seconds} seconds")
         return True
-    
+
     def set_snapshot_changes(self, changes):
         if changes is None:
             return False
@@ -196,7 +199,7 @@ class RedisConfig:
                 return False
         LOG.info(f"Snapshot threshold is set to {changes} changes")
         return True
-    
+
     def set_snapshot_file(self, file):
         if file is None:
             return False
@@ -207,7 +210,7 @@ class RedisConfig:
 
         LOG.info(f"Snapshot file is set to {file}")
         return True
-    
+
     def set_append_mode(self, mode):
         if mode is None:
             return False
@@ -225,7 +228,7 @@ class RedisConfig:
 
         LOG.info(f"Append mode is set to {mode}")
         return True
-    
+
     def set_append_file(self, file):
         if file is None:
             return False
@@ -236,21 +239,22 @@ class RedisConfig:
         LOG.info(f"Append file is set to {file}")
         return True
 
+
 class RedisUsers:
     filename = ""
     users = {}
 
     def __init__(self, filename) -> None:
         self.filename = filename
-    
+
     def parse(self):
         with open(self.filename, "r") as f:
             self.users = yaml.load(f, yaml.Loader)
 
     def write(self):
-        with open(self.filename,"w") as f:
+        with open(self.filename, "w") as f:
             yaml.dump(f, yaml.Dumper)
-    
+
     def add_user(self, user, permissions):
         self.users[user] = permissions
 
