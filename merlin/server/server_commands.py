@@ -22,7 +22,7 @@ from merlin.server.server_config import (
     pull_server_config,
     pull_server_image,
 )
-from merlin.server.server_util import RedisConfig
+from merlin.server.server_util import RedisConfig, RedisUsers
 
 
 LOG = logging.getLogger("merlin")
@@ -75,17 +75,35 @@ def config_server(args: Namespace):
     else:
         LOG.info("Add changes to config file using flags. Check changable configs with 'merlin server config --help'")
     
+
+    server_config = pull_server_config()
+    container_config = server_config["container"]
+    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
+    if "user_file" in container_config:
+        user_file = os.path.join(config_dir, container_config["user_file"])
+    else:
+        LOG.info("User file not found in merlin server config. Unable to user configuration unavaliable.")
+        return
+
+    # Read the user from the list of avaliable users
+    redis_users = RedisUsers(user_file)
+
     if args.add_user is not None:
-        # Create a new user in container
         # Log the user in a file
-        # Generated an associated password file for user
-        # Return the password file for the user
+        if redis_users.add_user(user=args.add_user[0], password=args.add_user[1]):
+            redis_users.write()
+            # Create a new user in container
+        else:
+            LOG.error(f"User '{args.add_user[0]}' already exisits within current users")
         print("add_user", args.add_user)
 
     if args.remove_user is not None:
-        # Read the user from the list of avaliable users
-        # Remove user from container
         # Remove user from file
+        if redis_users.remove_user(args.remove_user):
+            redis_users.write()
+            # Remove user from container
+        else:
+            LOG.error(f"User '{args.remove_user}' doesn't exist within current users.")
         print("remove_user", args.remove_user)
 
 

@@ -291,6 +291,8 @@ class RedisUsers:
 
     def __init__(self, filename) -> None:
         self.filename = filename
+        if os.path.exists(self.filename):
+            self.parse()
 
     def parse(self):
         with open(self.filename, "r") as f:
@@ -315,7 +317,13 @@ class RedisUsers:
                 channels="@all",
                 password=None,
                 pattern=None):
+        if user in self.users:
+            return False
         self.users[user] = self.User(status, keys, channels, password, pattern)
+        return True
 
     def remove_user(self, user):
-        del self.users[user]
+        if user in self.users:
+            del self.users[user]
+            return True
+        return False

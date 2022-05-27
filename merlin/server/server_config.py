@@ -125,8 +125,11 @@ def config_merlin_server():
     """
 
     server_config = pull_server_config()
-    container_config = server_config["container"]
-    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
+    config_dir = server_config["container"]["config_dir"] if "config_dir" in server_config["container"] else CONFIG_DIR
+
+    if not os.path.exists(config_dir):
+        LOG.info("Creating merlin server directory.")
+        os.mkdir(config_dir)
 
     if "pass_file" in server_config["container"]:
         pass_file = os.path.join(MERLIN_CONFIG_DIR, server_config["container"]["pass_file"])
@@ -153,13 +156,19 @@ def config_merlin_server():
             redis_users = RedisUsers(user_file)
             redis_users.add_user(os.environ.get("USER"))
             redis_users.write()
-            # with open(user_file, "w+") as f:
-            #     f.write(os.environ.get("USER") + "\n")
 
             LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
     else:
         LOG.info("Unable to find user_file to store users for merlin server containers")
 
+
+class ServerConfig:
+
+    def __init__(self, data:dict) -> None:
+        self.parse_from_data(data)
+
+    def parse_from_data(self, data):
+        pass
 
 def pull_server_config() -> dict:
     """
@@ -226,10 +235,6 @@ def pull_server_image():
     image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
     config_file = container_config["config"] if "config" in container_config else CONFIG_FILE
     image_url = container_config["url"] if "url" in container_config else REDIS_URL
-
-    if not os.path.exists(config_dir):
-        LOG.info("Creating merlin server directory.")
-        os.mkdir(config_dir)
 
     image_path = os.path.join(config_dir, image_name)
 

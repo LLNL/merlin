@@ -655,7 +655,13 @@ def setup_argparse() -> None:
         # default="~/.merlin/redis.pass",
         help="Set the password file to be used for merlin server container.",
     )
-    server_config.add_argument("--add-user", action="store", type=str, help="Create a new user for merlin server instance")
+    server_config.add_argument(
+        "--add-user",
+        action="store",
+        nargs=2,
+        type=str,
+        help="Create a new user for merlin server instance. (Provide both username and password)"
+    )
     server_config.add_argument("--remove-user", action="store", type=str, help="Remove an exisiting user.")
     server_config.add_argument(
         "-d",
