@@ -11,6 +11,8 @@ from merlin.server.server_config import (
     CONFIG_DIR,
     CONFIG_FILE,
     IMAGE_NAME,
+    MERLIN_CONFIG_DIR,
+    MERLIN_SERVER_CONFIG,
     PROCESS_FILE,
     ServerStatus,
     config_merlin_server,
@@ -73,12 +75,14 @@ def config_server(args: Namespace):
         LOG.info("Run 'merlin server restart' to restart running merlin server")
         LOG.info("Run 'merlin server start' to start merlin server instance.")
     else:
-        LOG.info("Add changes to config file using flags. Check changable configs with 'merlin server config --help'")
+        LOG.info("Add changes to config file and exisiting containers.")
     
 
     server_config = pull_server_config()
     container_config = server_config["container"]
     config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
+    config_file = container_config["config"] if "config_dir" in container_config else CONFIG_FILE
+    pass_file = os.path.join(MERLIN_CONFIG_DIR, container_config["pass_file"])
     if "user_file" in container_config:
         user_file = os.path.join(config_dir, container_config["user_file"])
     else:
@@ -87,12 +91,15 @@ def config_server(args: Namespace):
 
     # Read the user from the list of avaliable users
     redis_users = RedisUsers(user_file)
+    redis_config = RedisConfig(os.path.join(config_dir, config_file))
 
     if args.add_user is not None:
         # Log the user in a file
         if redis_users.add_user(user=args.add_user[0], password=args.add_user[1]):
             redis_users.write()
             # Create a new user in container
+            if get_server_status() == ServerStatus.RUNNING:
+                redis_users.apply_to_redis("127.0.0.1", 6379, "~/.merlin/redis.pass")
         else:
             LOG.error(f"User '{args.add_user[0]}' already exisits within current users")
         print("add_user", args.add_user)
@@ -102,6 +109,8 @@ def config_server(args: Namespace):
         if redis_users.remove_user(args.remove_user):
             redis_users.write()
             # Remove user from container
+            if get_server_status() == ServerStatus.RUNNING:
+                redis_users.apply_to_redis("127.0.0.1", 6379, "~/.merlin/redis.pass")
         else:
             LOG.error(f"User '{args.remove_user}' doesn't exist within current users.")
         print("remove_user", args.remove_user)
@@ -149,6 +158,9 @@ def start_server():
     config_file = container_config["config"] if "config_dir" in container_config else CONFIG_FILE
     image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
     pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
+    user_file = os.path.join(config_dir, container_config["user_file"]) if "user_file" in container_config else None
+    pass_file = os.path.join(MERLIN_CONFIG_DIR, container_config["pass_file"])
+    
 
     image_path = os.path.join(config_dir, image_name)
     if not os.path.exists(image_path):
@@ -194,6 +206,11 @@ def start_server():
 
     LOG.info(f"Server started with PID {str(process.pid)}.")
     LOG.info(f'Merlin server operating on "{redis_out["hostname"]}" and port "{redis_out["port"]}".')
+
+    if user_file is not None:
+        redis_users = RedisUsers(user_file)
+        redis_config = RedisConfig(os.path.join(config_dir, config_file))
+        redis_users.apply_to_redis("127.0.0.1", 6379, "~/.merlin/redis.pass")
 
     return True
 

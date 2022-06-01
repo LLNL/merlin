@@ -1,7 +1,7 @@
 import logging
 import hashlib
 import os
-
+import redis
 import yaml
 
 
@@ -88,6 +88,9 @@ class RedisConfig:
 
     def changes_made(self):
         return self.changed
+    
+    def get_ip_address(self):
+        return self.get_config_value("bind")
 
     def set_ip_address(self, ipaddress):
         if ipaddress is None:
@@ -103,6 +106,9 @@ class RedisConfig:
             return False
         LOG.info(f"Ipaddress is set to {ipaddress}")
         return True
+
+    def get_port(self):
+        return self.get_config_value("port")
 
     def set_port(self, port):
         if port is None:
@@ -239,27 +245,23 @@ class RedisUsers:
         status = "on"
         hash_password = hashlib.sha256(b"password").hexdigest()
         keys = "*"
-        channels = "@all"
-        pattern = None
+        commands = "@all"
         def __init__(self,
                     status="on",
                     keys="*",
-                    channels="@all",
-                    password=None,
-                    pattern=None) -> None:
+                    commands="@all",
+                    password=None) -> None:
             self.status = status
             self.keys = keys
-            self.channels = channels
-            self.pattern = pattern
+            self.commands = commands
             if password is not None:
                 self.set_password(password)
         
         def parse_dict(self, dict):
             self.status = dict["status"]
             self.keys = dict["keys"]
-            self.channels = dict["channels"]
+            self.commands = dict["commands"]
             self.hash_password = dict["hash_password"]
-            self.pattern = dict["pattern"]
 
 
         def get_user_dict(self) -> dict:
@@ -267,14 +269,14 @@ class RedisUsers:
             return {"status": self.status,
                     "hash_password": self.hash_password,
                     "keys": self.keys,
-                    "channels": self.channels,
-                    "pattern": self.pattern}
+                    "commands": self.commands
+                    }
         
         def __repr__(self) -> str:
-            return str(self.get_user())
+            return str(self.get_user_dict())
         
         def __str__(self) -> str:
-            self.__repr__()
+            return self.__repr__()
 
         def set_password(self, password:str):
             self.hash_password = hashlib.sha256(bytes(password, 'utf-8')).hexdigest()
@@ -296,10 +298,9 @@ class RedisUsers:
                 self.users[user] = new_user
 
     def write(self):
-        data = self.users
+        data = self.users.copy()
         for key in data:
             data[key] = self.users[key].get_user_dict()
-            print(self.users[key])
         with open(self.filename, "w") as f:
             yaml.dump(data, f, yaml.Dumper)
 
@@ -307,12 +308,11 @@ class RedisUsers:
                 user,
                 status="on",
                 keys="*",
-                channels="@all",
-                password=None,
-                pattern=None):
+                commands="@all",
+                password=None):
         if user in self.users:
             return False
-        self.users[user] = self.User(status, keys, channels, password, pattern)
+        self.users[user] = self.User(status, keys, commands, password)
         return True
 
     def remove_user(self, user):
@@ -320,3 +320,21 @@ class RedisUsers:
             del self.users[user]
             return True
         return False
+    
+    def apply_to_redis(self, host, port, password):
+        db = redis.Redis(host=host, port=port, password=password)
+        current_users = db.acl_users()
+        for user in self.users:
+            if user not in current_users:
+                data = self.users[user]
+                db.acl_setuser(username=user,
+                                hashed_passwords=[f"+{data.hash_password}"],
+                                enabled=(data.status == "on"),
+                                keys=data.keys,
+                                commands=[f"+{data.commands}"])
+        
+        for user in current_users:
+            if user not in self.users:
+                db.acl_deluser(user)
+
+
