@@ -660,7 +660,7 @@ def setup_argparse() -> None:
         action="store",
         nargs=2,
         type=str,
-        help="Create a new user for merlin server instance. (Provide both username and password)"
+        help="Create a new user for merlin server instance. (Provide both username and password)",
     )
     server_config.add_argument("--remove-user", action="store", type=str, help="Remove an exisiting user.")
     server_config.add_argument(

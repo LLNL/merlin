@@ -1,8 +1,10 @@
-import logging
 import hashlib
+import logging
 import os
+
 import redis
 import yaml
+
 
 LOG = logging.getLogger("merlin")
 
@@ -10,6 +12,7 @@ CONTAINER_TYPES = ["singularity", "docker", "podman"]
 MERLIN_CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".merlin")
 MERLIN_SERVER_SUBDIR = "server/"
 MERLIN_SERVER_CONFIG = "merlin_server.yaml"
+
 
 def valid_ipv4(ip: str):
     if not ip:
@@ -31,6 +34,7 @@ def valid_port(port: int):
         return True
     return False
 
+
 class ContainerConfig:
     # Default values for configuration
     FORMAT = "singularity"
@@ -50,7 +54,8 @@ class ContainerConfig:
     pfile = PROCESS_FILE
     pass_file = PASSWORD_FILE
     user_file = USERS_FILE
-    def __init__(self, data:dict) -> None:
+
+    def __init__(self, data: dict) -> None:
         self.format = data["format"] if "format" in data else self.FORMAT
         self.image = data["image"] if "image" in data else self.IMAGE_NAME
         self.url = data["url"] if "url" in data else self.REDIS_URL
@@ -59,25 +64,25 @@ class ContainerConfig:
         self.pfile = data["pfile"] if "pfile" in data else self.PROCESS_FILE
         self.pass_file = data["pass_file"] if "pass_file" in data else self.PASSWORD_FILE
         self.user_file = data["user_file"] if "user_file" in data else self.USERS_FILE
-    
+
     def get_format(self):
         return self.format
-    
+
     def get_image(self):
         return self.format
-    
+
     def get_url(self):
         return self.url
-    
+
     def get_config_name(self):
         return self.config
-    
+
     def get_config_path(self):
         return os.path.join(self.config_dir, self.config)
-    
+
     def get_config_dir(self):
         return self.config_dir
-    
+
     def get_pfile_name(self):
         return self.pfile
 
@@ -96,22 +101,22 @@ class ContainerConfig:
     def get_user_file_path(self):
         return os.path.join(self.config_dir, self.user_file)
 
-class ProcessConfig:
 
+class ProcessConfig:
     def __init__(self) -> None:
         pass
 
 
 class ServerConfig:
-    container : ContainerConfig = None
-    process : ProcessConfig = None
+    container: ContainerConfig = None
+    process: ProcessConfig = None
 
     def __init__(self, data: dict) -> None:
         if "container" in data:
             self.container = ContainerConfig(data["container"])
         if "process" in data:
             self.process = ContainerConfig(data["process"])
-    
+
 
 class RedisConfig:
     filename = ""
@@ -172,7 +177,7 @@ class RedisConfig:
 
     def changes_made(self):
         return self.changed
-    
+
     def get_ip_address(self):
         return self.get_config_value("bind")
 
@@ -330,40 +335,32 @@ class RedisUsers:
         hash_password = hashlib.sha256(b"password").hexdigest()
         keys = "*"
         commands = "@all"
-        def __init__(self,
-                    status="on",
-                    keys="*",
-                    commands="@all",
-                    password=None) -> None:
+
+        def __init__(self, status="on", keys="*", commands="@all", password=None) -> None:
             self.status = status
             self.keys = keys
             self.commands = commands
             if password is not None:
                 self.set_password(password)
-        
+
         def parse_dict(self, dict):
             self.status = dict["status"]
             self.keys = dict["keys"]
             self.commands = dict["commands"]
             self.hash_password = dict["hash_password"]
 
-
         def get_user_dict(self) -> dict:
             self.status = "on"
-            return {"status": self.status,
-                    "hash_password": self.hash_password,
-                    "keys": self.keys,
-                    "commands": self.commands
-                    }
-        
+            return {"status": self.status, "hash_password": self.hash_password, "keys": self.keys, "commands": self.commands}
+
         def __repr__(self) -> str:
             return str(self.get_user_dict())
-        
+
         def __str__(self) -> str:
             return self.__repr__()
 
-        def set_password(self, password:str):
-            self.hash_password = hashlib.sha256(bytes(password, 'utf-8')).hexdigest()
+        def set_password(self, password: str):
+            self.hash_password = hashlib.sha256(bytes(password, "utf-8")).hexdigest()
 
     filename = ""
     users = {}
@@ -388,12 +385,7 @@ class RedisUsers:
         with open(self.filename, "w") as f:
             yaml.dump(data, f, yaml.Dumper)
 
-    def add_user(self,
-                user,
-                status="on",
-                keys="*",
-                commands="@all",
-                password=None):
+    def add_user(self, user, status="on", keys="*", commands="@all", password=None):
         if user in self.users:
             return False
         self.users[user] = self.User(status, keys, commands, password)
@@ -404,21 +396,21 @@ class RedisUsers:
             del self.users[user]
             return True
         return False
-    
+
     def apply_to_redis(self, host, port, password):
         db = redis.Redis(host=host, port=port, password=password)
         current_users = db.acl_users()
         for user in self.users:
             if user not in current_users:
                 data = self.users[user]
-                db.acl_setuser(username=user,
-                                hashed_passwords=[f"+{data.hash_password}"],
-                                enabled=(data.status == "on"),
-                                keys=data.keys,
-                                commands=[f"+{data.commands}"])
-        
+                db.acl_setuser(
+                    username=user,
+                    hashed_passwords=[f"+{data.hash_password}"],
+                    enabled=(data.status == "on"),
+                    keys=data.keys,
+                    commands=[f"+{data.commands}"],
+                )
+
         for user in current_users:
             if user not in self.users:
                 db.acl_deluser(user)
-
-

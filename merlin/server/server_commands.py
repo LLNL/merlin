@@ -11,8 +11,6 @@ from merlin.server.server_config import (
     CONFIG_DIR,
     CONFIG_FILE,
     IMAGE_NAME,
-    MERLIN_CONFIG_DIR,
-    MERLIN_SERVER_CONFIG,
     PROCESS_FILE,
     ServerStatus,
     config_merlin_server,
@@ -76,7 +74,6 @@ def config_server(args: Namespace):
         LOG.info("Run 'merlin server start' to start merlin server instance.")
     else:
         LOG.info("Add changes to config file and exisiting containers.")
-    
 
     server_config = pull_server_config()
     container_config = server_config["container"]
@@ -158,7 +155,6 @@ def start_server():
     image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
     pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
     user_file = os.path.join(config_dir, container_config["user_file"]) if "user_file" in container_config else None
-    
 
     image_path = os.path.join(config_dir, image_name)
     if not os.path.exists(image_path):

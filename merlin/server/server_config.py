@@ -5,9 +5,17 @@ import random
 import shutil
 import string
 import subprocess
+
 import yaml
 
-from merlin.server.server_util import CONTAINER_TYPES, MERLIN_CONFIG_DIR, MERLIN_SERVER_CONFIG, MERLIN_SERVER_SUBDIR
+from merlin.server.server_util import (
+    CONTAINER_TYPES,
+    MERLIN_CONFIG_DIR,
+    MERLIN_SERVER_CONFIG,
+    MERLIN_SERVER_SUBDIR,
+    RedisUsers,
+)
+
 
 LOG = logging.getLogger("merlin")
 
@@ -154,6 +162,7 @@ def config_merlin_server():
             LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
     else:
         LOG.info("Unable to find user_file to store users for merlin server containers")
+
 
 def pull_server_config() -> dict:
     """
