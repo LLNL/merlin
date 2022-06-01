@@ -82,7 +82,6 @@ def config_server(args: Namespace):
     container_config = server_config["container"]
     config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
     config_file = container_config["config"] if "config_dir" in container_config else CONFIG_FILE
-    pass_file = os.path.join(MERLIN_CONFIG_DIR, container_config["pass_file"])
     if "user_file" in container_config:
         user_file = os.path.join(config_dir, container_config["user_file"])
     else:
@@ -99,7 +98,7 @@ def config_server(args: Namespace):
             redis_users.write()
             # Create a new user in container
             if get_server_status() == ServerStatus.RUNNING:
-                redis_users.apply_to_redis("127.0.0.1", 6379, "~/.merlin/redis.pass")
+                redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), "merlin_password")
         else:
             LOG.error(f"User '{args.add_user[0]}' already exisits within current users")
         print("add_user", args.add_user)
@@ -110,7 +109,7 @@ def config_server(args: Namespace):
             redis_users.write()
             # Remove user from container
             if get_server_status() == ServerStatus.RUNNING:
-                redis_users.apply_to_redis("127.0.0.1", 6379, "~/.merlin/redis.pass")
+                redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), "merlin_password")
         else:
             LOG.error(f"User '{args.remove_user}' doesn't exist within current users.")
         print("remove_user", args.remove_user)
@@ -159,7 +158,6 @@ def start_server():
     image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
     pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
     user_file = os.path.join(config_dir, container_config["user_file"]) if "user_file" in container_config else None
-    pass_file = os.path.join(MERLIN_CONFIG_DIR, container_config["pass_file"])
     
 
     image_path = os.path.join(config_dir, image_name)
@@ -210,7 +208,7 @@ def start_server():
     if user_file is not None:
         redis_users = RedisUsers(user_file)
         redis_config = RedisConfig(os.path.join(config_dir, config_file))
-        redis_users.apply_to_redis("127.0.0.1", 6379, "~/.merlin/redis.pass")
+        redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_ip_address(), "merlin_password")
 
     return True
 
