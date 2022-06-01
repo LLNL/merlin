@@ -5,18 +5,11 @@ import random
 import shutil
 import string
 import subprocess
-
 import yaml
 
-from merlin.server.server_util import RedisUsers
-
+from merlin.server.server_util import CONTAINER_TYPES, MERLIN_CONFIG_DIR, MERLIN_SERVER_CONFIG, MERLIN_SERVER_SUBDIR
 
 LOG = logging.getLogger("merlin")
-
-CONTAINER_TYPES = ["singularity", "docker", "podman"]
-MERLIN_CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".merlin")
-MERLIN_SERVER_SUBDIR = "server/"
-MERLIN_SERVER_CONFIG = "merlin_server.yaml"
 
 # Default values for configuration
 CONFIG_DIR = "./merlin_server/"
@@ -161,15 +154,6 @@ def config_merlin_server():
             LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
     else:
         LOG.info("Unable to find user_file to store users for merlin server containers")
-
-
-class ServerConfig:
-
-    def __init__(self, data:dict) -> None:
-        self.parse_from_data(data)
-
-    def parse_from_data(self, data):
-        pass
 
 def pull_server_config() -> dict:
     """

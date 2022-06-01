@@ -4,9 +4,12 @@ import os
 import redis
 import yaml
 
-
 LOG = logging.getLogger("merlin")
 
+CONTAINER_TYPES = ["singularity", "docker", "podman"]
+MERLIN_CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".merlin")
+MERLIN_SERVER_SUBDIR = "server/"
+MERLIN_SERVER_CONFIG = "merlin_server.yaml"
 
 def valid_ipv4(ip: str):
     if not ip:
@@ -28,6 +31,87 @@ def valid_port(port: int):
         return True
     return False
 
+class ContainerConfig:
+    # Default values for configuration
+    FORMAT = "singularity"
+    IMAGE_NAME = "redis_latest.sif"
+    REDIS_URL = "docker://redis"
+    CONFIG_FILE = "redis.conf"
+    CONFIG_DIR = "./merlin_server/"
+    PROCESS_FILE = "merlin_server.pf"
+    PASSWORD_FILE = "redis.pass"
+    USERS_FILE = "redis.users"
+
+    format = FORMAT
+    image = IMAGE_NAME
+    url = REDIS_URL
+    config = CONFIG_FILE
+    config_dir = CONFIG_DIR
+    pfile = PROCESS_FILE
+    pass_file = PASSWORD_FILE
+    user_file = USERS_FILE
+    def __init__(self, data:dict) -> None:
+        self.format = data["format"] if "format" in data else self.FORMAT
+        self.image = data["image"] if "image" in data else self.IMAGE_NAME
+        self.url = data["url"] if "url" in data else self.REDIS_URL
+        self.config = data["config"] if "config" in data else self.CONFIG_FILE
+        self.config_dir = data["config_dir"] if "config_dir" in data else self.CONFIG_DIR
+        self.pfile = data["pfile"] if "pfile" in data else self.PROCESS_FILE
+        self.pass_file = data["pass_file"] if "pass_file" in data else self.PASSWORD_FILE
+        self.user_file = data["user_file"] if "user_file" in data else self.USERS_FILE
+    
+    def get_format(self):
+        return self.format
+    
+    def get_image(self):
+        return self.format
+    
+    def get_url(self):
+        return self.url
+    
+    def get_config_name(self):
+        return self.config
+    
+    def get_config_path(self):
+        return os.path.join(self.config_dir, self.config)
+    
+    def get_config_dir(self):
+        return self.config_dir
+    
+    def get_pfile_name(self):
+        return self.pfile
+
+    def get_pfile_path(self):
+        return os.path.join(self.config_dir, self.pass_file)
+
+    def get_pass_file_name(self):
+        return self.pass_file
+
+    def get_pass_file_path(self):
+        return os.path.join(MERLIN_CONFIG_DIR, self.pass_file)
+
+    def get_user_file_name(self):
+        return self.user_file
+
+    def get_user_file_path(self):
+        return os.path.join(self.config_dir, self.user_file)
+
+class ProcessConfig:
+
+    def __init__(self) -> None:
+        pass
+
+
+class ServerConfig:
+    container : ContainerConfig = None
+    process : ProcessConfig = None
+
+    def __init__(self, data: dict) -> None:
+        if "container" in data:
+            self.container = ContainerConfig(data["container"])
+        if "process" in data:
+            self.process = ContainerConfig(data["process"])
+    
 
 class RedisConfig:
     filename = ""
