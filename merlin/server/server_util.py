@@ -103,9 +103,21 @@ class ContainerConfig:
 
 
 class ProcessConfig:
-    def __init__(self) -> None:
-        pass
+    STATUS_COMMAND = "pgrep -P \{pid\}"
+    KILL_COMMAND = "kill \{pid\}"
+    
+    status = STATUS_COMMAND
+    kill = KILL_COMMAND
 
+    def __init__(self, data: dict) -> None:
+        self.status = data["status"] if "status" in data else self.STATUS_COMMAND
+        self.kill = data["kill"] if "kill" in data else self.KILL_COMMAND
+    
+    def get_status_command(self):
+        return self.status
+    
+    def get_kill_command(self):
+        return self.kill
 
 class ServerConfig:
     container: ContainerConfig = None
