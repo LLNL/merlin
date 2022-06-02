@@ -74,7 +74,7 @@ def config_server(args: Namespace):
     server_config = pull_server_config()
 
     # Read the user from the list of avaliable users
-    redis_users = RedisUsers(server_config.container.get_user_file_name())
+    redis_users = RedisUsers(server_config.container.get_user_file_path())
     redis_config = RedisConfig(server_config.container.get_config_path())
 
     if args.add_user is not None:
@@ -86,7 +86,6 @@ def config_server(args: Namespace):
                 redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), "merlin_password")
         else:
             LOG.error(f"User '{args.add_user[0]}' already exisits within current users")
-        print("add_user", args.add_user)
 
     if args.remove_user is not None:
         # Remove user from file
@@ -97,7 +96,6 @@ def config_server(args: Namespace):
                 redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), "merlin_password")
         else:
             LOG.error(f"User '{args.remove_user}' doesn't exist within current users.")
-        print("remove_user", args.remove_user)
 
 
 def status_server():
@@ -183,7 +181,7 @@ def start_server():
 
     redis_users = RedisUsers(server_config.container.get_user_file_path())
     redis_config = RedisConfig(server_config.container.get_config_path())
-    redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), "merlin_password")
+    redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), redis_config.get_password())
 
     return True
 

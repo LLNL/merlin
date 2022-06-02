@@ -104,6 +104,12 @@ class ContainerConfig:
     def get_user_file_path(self):
         return os.path.join(self.config_dir, self.user_file)
 
+    def get_container_password(self):
+        password = None
+        with open(self.get_pass_file_path(), "r") as f:
+            password = f.read()
+        return password
+
 class ContainerFormatConfig:
     COMMAND = "singularity"
     RUN_COMMAND = "\{command\} run \{image\} \{config\}"
@@ -262,6 +268,7 @@ class RedisConfig:
         LOG.info(f"Port is set to {port}")
         return True
 
+
     def set_password(self, password):
         if password is None:
             return False
@@ -275,6 +282,9 @@ class RedisConfig:
             return False
         LOG.info(f"Password file set to {password}")
         return True
+    
+    def get_password(self):
+        return self.get_config_value("requirepass")
 
     def set_directory(self, directory):
         if directory is None:
@@ -438,7 +448,6 @@ class RedisUsers:
     def apply_to_redis(self, host, port, password):
         db = redis.Redis(host=host, port=port, password=password)
         current_users = db.acl_users()
-        print(db.acl_list())
         for user in self.users:
             if user not in current_users:
                 data = self.users[user]

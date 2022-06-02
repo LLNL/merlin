@@ -151,8 +151,8 @@ def config_merlin_server():
         LOG.info("User file already exists.")
     else:
         redis_users = RedisUsers(user_file)
-        redis_users.add_user("default")
-        redis_users.add_user(os.environ.get("USER"))
+        redis_users.add_user(user="default", password=server_config.container.get_container_password())
+        redis_users.add_user(user=os.environ.get("USER"), password=server_config.container.get_container_password())
         redis_users.write()
 
         LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
