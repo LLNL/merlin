@@ -640,14 +640,6 @@ def setup_argparse() -> None:
         help="Set the binded port for the merlin server container.",
     )
     server_config.add_argument(
-        "-u",
-        "--master-user",
-        action="store",
-        type=str,
-        # default="root",
-        help="Set the username of the master user in the merlin server container.",
-    )
-    server_config.add_argument(
         "-pwd",
         "--password",
         action="store",

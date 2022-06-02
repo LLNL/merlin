@@ -262,16 +262,6 @@ class RedisConfig:
         LOG.info(f"Port is set to {port}")
         return True
 
-    def set_master_user(self, master_user):
-        if master_user is None:
-            return False
-        # Set the main user for the container
-        if not self.set_config_value("masteruser", master_user):
-            LOG.error("Unable to set masteruser.")
-            return False
-        LOG.info(f"Master user is set to {master_user}")
-        return True
-
     def set_password(self, password):
         if password is None:
             return False

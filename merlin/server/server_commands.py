@@ -49,8 +49,6 @@ def config_server(args: Namespace):
 
     redis_config.set_port(args.port)
 
-    redis_config.set_master_user(args.master_user)
-
     redis_config.set_password(args.password)
 
     redis_config.set_directory(args.directory)
