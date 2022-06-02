@@ -10,8 +10,6 @@ from argparse import Namespace
 from merlin.server.server_config import (
     CONFIG_DIR,
     CONFIG_FILE,
-    IMAGE_NAME,
-    PROCESS_FILE,
     ServerStatus,
     config_merlin_server,
     create_server_config,
@@ -76,18 +74,10 @@ def config_server(args: Namespace):
         LOG.info("Add changes to config file and exisiting containers.")
 
     server_config = pull_server_config()
-    container_config = server_config["container"]
-    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
-    config_file = container_config["config"] if "config_dir" in container_config else CONFIG_FILE
-    if "user_file" in container_config:
-        user_file = os.path.join(config_dir, container_config["user_file"])
-    else:
-        LOG.info("User file not found in merlin server config. Unable to user configuration unavaliable.")
-        return
 
     # Read the user from the list of avaliable users
-    redis_users = RedisUsers(user_file)
-    redis_config = RedisConfig(os.path.join(config_dir, config_file))
+    redis_users = RedisUsers(server_config.container.get_user_file_name())
+    redis_config = RedisConfig(server_config.container.get_config_path())
 
     if args.add_user is not None:
         # Log the user in a file
@@ -148,29 +138,21 @@ def start_server():
     if not server_config:
         LOG.error('Try to run "merlin server init" again to reinitialize values.')
         return False
-    container_config = server_config["container"]
 
-    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
-    config_file = container_config["config"] if "config_dir" in container_config else CONFIG_FILE
-    image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
-    pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
-    user_file = os.path.join(config_dir, container_config["user_file"]) if "user_file" in container_config else None
-
-    image_path = os.path.join(config_dir, image_name)
+    image_path = server_config.container.get_image_path()
     if not os.path.exists(image_path):
         LOG.error("Unable to find image at " + image_path)
         return False
 
-    config_path = os.path.join(config_dir, config_file)
+    config_path = server_config.container.get_config_path()
     if not os.path.exists(config_path):
         LOG.error("Unable to find config file at " + config_path)
         return False
 
-    format_config = server_config[container_config["format"]]
     process = subprocess.Popen(
-        format_config["run_command"]
+        server_config.container_format.get_run_command()
         .strip("\\")
-        .format(command=container_config["format"], image=image_path, config=config_path)
+        .format(command=server_config.container_format.get_command(), image=image_path, config=config_path)
         .split(),
         start_new_session=True,
         close_fds=True,
@@ -190,7 +172,7 @@ def start_server():
     redis_out["image_pid"] = redis_out.pop("pid")
     redis_out["parent_pid"] = process.pid
     redis_out["hostname"] = socket.gethostname()
-    if not dump_process_file(redis_out, os.path.join(config_dir, pfile)):
+    if not dump_process_file(redis_out, server_config.container.get_pfile_path()):
         LOG.error("Unable to create process file for container.")
         return False
 
@@ -201,10 +183,9 @@ def start_server():
     LOG.info(f"Server started with PID {str(process.pid)}.")
     LOG.info(f'Merlin server operating on "{redis_out["hostname"]}" and port "{redis_out["port"]}".')
 
-    if user_file is not None:
-        redis_users = RedisUsers(user_file)
-        redis_config = RedisConfig(os.path.join(config_dir, config_file))
-        redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_ip_address(), "merlin_password")
+    redis_users = RedisUsers(server_config.container.get_user_file_path())
+    redis_config = RedisConfig(server_config.container.get_config_path())
+    redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), "merlin_password")
 
     return True
 
@@ -222,26 +203,20 @@ def stop_server():
     if not server_config:
         LOG.error('Try to run "merlin server init" again to reinitialize values.')
         return False
-    container_config = server_config["container"]
 
-    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
-    pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
-    image_name = container_config["name"] if "name" in container_config else IMAGE_NAME
-
-    pf_data = pull_process_file(os.path.join(config_dir, pfile))
+    pf_data = pull_process_file(server_config.container.get_pfile_path())
     read_pid = pf_data["parent_pid"]
 
     process = subprocess.run(
-        server_config["process"]["status"].strip("\\").format(pid=read_pid).split(), stdout=subprocess.PIPE
+        server_config.process.get_status_command().strip("\\").format(pid=read_pid).split(), stdout=subprocess.PIPE
     )
     if process.stdout == b"":
         LOG.error("Unable to get the PID for the current merlin server.")
         return False
 
-    format_config = server_config[container_config["format"]]
-    command = server_config["process"]["kill"].strip("\\").format(pid=read_pid).split()
-    if format_config["stop_command"] != "kill":
-        command = format_config["stop_command"].strip("\\").format(name=image_name).split()
+    command = server_config.process.get_kill_command().strip("\\").format(pid=read_pid).split()
+    if server_config.container_format.get_stop_command() != "kill":
+        command = server_config.container_format.get_stop_command().strip("\\").format(name=server_config.container.get_image_name).split()
 
     LOG.info(f"Attempting to close merlin server PID {str(read_pid)}")
 

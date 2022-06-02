@@ -68,11 +68,14 @@ class ContainerConfig:
     def get_format(self):
         return self.format
 
-    def get_image(self):
-        return self.format
+    def get_image_name(self):
+        return self.image
 
-    def get_url(self):
+    def get_image_url(self):
         return self.url
+    
+    def get_image_path(self):
+        return os.path.join(self.config_dir, self.image)
 
     def get_config_name(self):
         return self.config
@@ -101,6 +104,35 @@ class ContainerConfig:
     def get_user_file_path(self):
         return os.path.join(self.config_dir, self.user_file)
 
+class ContainerFormatConfig:
+    COMMAND = "singularity"
+    RUN_COMMAND = "\{command\} run \{image\} \{config\}"
+    STOP_COMMAND = "kill"
+    PULL_COMMAND = "\{command\} pull \{image\} \{url\}"
+
+    command = COMMAND
+    run_command = RUN_COMMAND
+    stop_command = STOP_COMMAND
+    pull_command = PULL_COMMAND
+
+    def __init__(self, data: dict) -> None:
+        self.command = data["command"] if "command" in data else self.COMMAND
+        self.run_command = data["run_command"] if "run_command" in data else self.RUN_COMMAND
+        self.stop_command = data["stop_command"] if "stop_command" in data else self.STOP_COMMAND
+        self.pull_command = data["pull_command"] if "pull_command" in data else self.PULL_COMMAND
+
+    def get_command(self):
+        return self.command
+    
+    def get_run_command(self):
+        return self.run_command
+    
+    def get_stop_command(self):
+        return self.stop_command
+    
+    def get_pull_command(self):
+        return self.pull_command
+
 
 class ProcessConfig:
     STATUS_COMMAND = "pgrep -P \{pid\}"
@@ -122,12 +154,16 @@ class ProcessConfig:
 class ServerConfig:
     container: ContainerConfig = None
     process: ProcessConfig = None
+    container_format: ContainerFormatConfig = None
 
     def __init__(self, data: dict) -> None:
         if "container" in data:
             self.container = ContainerConfig(data["container"])
         if "process" in data:
-            self.process = ContainerConfig(data["process"])
+            self.process = ProcessConfig(data["process"])
+        if self.container.get_format() in data:
+            self.container_format = ContainerFormatConfig(data[self.container.get_format()])
+
 
 
 class RedisConfig:
@@ -412,6 +448,7 @@ class RedisUsers:
     def apply_to_redis(self, host, port, password):
         db = redis.Redis(host=host, port=port, password=password)
         current_users = db.acl_users()
+        print(db.acl_list())
         for user in self.users:
             if user not in current_users:
                 data = self.users[user]

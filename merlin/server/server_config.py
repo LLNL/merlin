@@ -14,6 +14,7 @@ from merlin.server.server_util import (
     MERLIN_SERVER_CONFIG,
     MERLIN_SERVER_SUBDIR,
     RedisUsers,
+    ServerConfig,
 )
 
 
@@ -126,45 +127,38 @@ def config_merlin_server():
     """
 
     server_config = pull_server_config()
-    config_dir = server_config["container"]["config_dir"] if "config_dir" in server_config["container"] else CONFIG_DIR
 
-    if not os.path.exists(config_dir):
+    if not os.path.exists(server_config.container.get_config_dir()):
         LOG.info("Creating merlin server directory.")
-        os.mkdir(config_dir)
+        os.mkdir(server_config.container.get_config_dir())
 
-    if "pass_file" in server_config["container"]:
-        pass_file = os.path.join(MERLIN_CONFIG_DIR, server_config["container"]["pass_file"])
-        if os.path.exists(pass_file):
-            LOG.info("Password file already exists. Skipping password generation step.")
-        else:
-            if "pass_command" in server_config["container"]:
-                password = generate_password(PASSWORD_LENGTH, server_config["container"]["pass_command"])
-            else:
-                password = generate_password(PASSWORD_LENGTH)
-
-            with open(pass_file, "w+") as f:
-                f.write(password)
-
-            LOG.info("Creating password file for merlin server container.")
+    pass_file = server_config.container.get_pass_file_path()
+    if os.path.exists(pass_file):
+        LOG.info("Password file already exists. Skipping password generation step.")
     else:
-        LOG.info("Unable to find pass_file to write output of pass_command to.")
+        # if "pass_command" in server_config["container"]:
+        #     password = generate_password(PASSWORD_LENGTH, server_config["container"]["pass_command"])
+        # else:
+        password = generate_password(PASSWORD_LENGTH)
 
-    if "user_file" in server_config["container"]:
-        user_file = os.path.join(config_dir, server_config["container"]["user_file"])
-        if os.path.exists(user_file):
-            LOG.info("User file already exists.")
-        else:
-            redis_users = RedisUsers(user_file)
-            redis_users.add_user("default")
-            redis_users.add_user(os.environ.get("USER"))
-            redis_users.write()
+        with open(pass_file, "w+") as f:
+            f.write(password)
 
-            LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
+        LOG.info("Creating password file for merlin server container.")
+
+    user_file = server_config.container.get_user_file_path()
+    if os.path.exists(user_file):
+        LOG.info("User file already exists.")
     else:
-        LOG.info("Unable to find user_file to store users for merlin server containers")
+        redis_users = RedisUsers(user_file)
+        redis_users.add_user("default")
+        redis_users.add_user(os.environ.get("USER"))
+        redis_users.write()
+
+        LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
 
 
-def pull_server_config() -> dict:
+def pull_server_config() -> ServerConfig:
     """
     Pull the main configuration file and corresponding format configuration file
     as well. Returns the values as a dictionary.
@@ -212,7 +206,7 @@ def pull_server_config() -> dict:
             LOG.error(f'Process necessary "{key}" command configuration not found in {MERLIN_SERVER_CONFIG}')
             return None
 
-    return return_data
+    return ServerConfig(return_data)
 
 
 def pull_server_image():
@@ -224,21 +218,17 @@ def pull_server_image():
         LOG.error('Try to run "merlin server init" again to reinitialize values.')
         return False
 
-    container_config = server_config["container"]
-    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
-    image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
-    config_file = container_config["config"] if "config" in container_config else CONFIG_FILE
-    image_url = container_config["url"] if "url" in container_config else REDIS_URL
-
-    image_path = os.path.join(config_dir, image_name)
+    config_dir = server_config.container.get_config_dir()
+    config_file = server_config.container.get_config_name()
+    image_url = server_config.container.get_image_url()
+    image_path = server_config.container.get_image_path()
 
     if not os.path.exists(image_path):
         LOG.info(f"Fetching redis image from {image_url}")
-        format_config = server_config[container_config["format"]]
         subprocess.run(
-            format_config["pull_command"]
+            server_config.container_format.get_pull_command()
             .strip("\\")
-            .format(command=format_config["command"], image=image_path, url=image_url)
+            .format(command=server_config.container_format.get_command(), image=image_path, url=image_url)
             .split(),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -273,25 +263,20 @@ def get_server_status():
     if not server_config:
         return ServerStatus.NOT_INITALIZED
 
-    container_config = server_config["container"]
-    config_dir = container_config["config_dir"] if "config_dir" in container_config else CONFIG_DIR
-    image_name = container_config["image"] if "image" in container_config else IMAGE_NAME
-    pfile = container_config["pfile"] if "pfile" in container_config else PROCESS_FILE
-
-    if not os.path.exists(config_dir):
+    if not os.path.exists(server_config.container.get_config_dir()):
         return ServerStatus.NOT_INITALIZED
 
-    if not os.path.exists(os.path.join(config_dir, image_name)):
+    if not os.path.exists(server_config.container.get_image_path()):
         return ServerStatus.MISSING_CONTAINER
 
-    if not os.path.exists(os.path.join(config_dir, pfile)):
+    if not os.path.exists(server_config.container.get_pfile_path()):
         return ServerStatus.NOT_RUNNING
 
-    pf_data = pull_process_file(os.path.join(config_dir, pfile))
+    pf_data = pull_process_file(server_config.container.get_pfile_path())
     parent_pid = pf_data["parent_pid"]
 
     check_process = subprocess.run(
-        server_config["process"]["status"].strip("\\").format(pid=parent_pid).split(),
+        server_config.process.get_status_command().strip("\\").format(pid=parent_pid).split(),
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
     )
