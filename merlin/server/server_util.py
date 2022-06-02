@@ -73,7 +73,7 @@ class ContainerConfig:
 
     def get_image_url(self):
         return self.url
-    
+
     def get_image_path(self):
         return os.path.join(self.config_dir, self.image)
 
@@ -110,6 +110,7 @@ class ContainerConfig:
             password = f.read()
         return password
 
+
 class ContainerFormatConfig:
     COMMAND = "singularity"
     RUN_COMMAND = "\{command\} run \{image\} \{config\}"
@@ -129,13 +130,13 @@ class ContainerFormatConfig:
 
     def get_command(self):
         return self.command
-    
+
     def get_run_command(self):
         return self.run_command
-    
+
     def get_stop_command(self):
         return self.stop_command
-    
+
     def get_pull_command(self):
         return self.pull_command
 
@@ -143,19 +144,20 @@ class ContainerFormatConfig:
 class ProcessConfig:
     STATUS_COMMAND = "pgrep -P \{pid\}"
     KILL_COMMAND = "kill \{pid\}"
-    
+
     status = STATUS_COMMAND
     kill = KILL_COMMAND
 
     def __init__(self, data: dict) -> None:
         self.status = data["status"] if "status" in data else self.STATUS_COMMAND
         self.kill = data["kill"] if "kill" in data else self.KILL_COMMAND
-    
+
     def get_status_command(self):
         return self.status
-    
+
     def get_kill_command(self):
         return self.kill
+
 
 class ServerConfig:
     container: ContainerConfig = None
@@ -169,7 +171,6 @@ class ServerConfig:
             self.process = ProcessConfig(data["process"])
         if self.container.get_format() in data:
             self.container_format = ContainerFormatConfig(data[self.container.get_format()])
-
 
 
 class RedisConfig:
@@ -268,7 +269,6 @@ class RedisConfig:
         LOG.info(f"Port is set to {port}")
         return True
 
-
     def set_password(self, password):
         if password is None:
             return False
@@ -282,7 +282,7 @@ class RedisConfig:
             return False
         LOG.info(f"Password file set to {password}")
         return True
-    
+
     def get_password(self):
         return self.get_config_value("requirepass")
 

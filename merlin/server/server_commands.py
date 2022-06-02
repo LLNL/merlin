@@ -212,7 +212,12 @@ def stop_server():
 
     command = server_config.process.get_kill_command().strip("\\").format(pid=read_pid).split()
     if server_config.container_format.get_stop_command() != "kill":
-        command = server_config.container_format.get_stop_command().strip("\\").format(name=server_config.container.get_image_name).split()
+        command = (
+            server_config.container_format.get_stop_command()
+            .strip("\\")
+            .format(name=server_config.container.get_image_name)
+            .split()
+        )
 
     LOG.info(f"Attempting to close merlin server PID {str(read_pid)}")
 
