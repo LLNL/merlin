@@ -113,9 +113,9 @@ class ContainerConfig:
 
 class ContainerFormatConfig:
     COMMAND = "singularity"
-    RUN_COMMAND = "\{command\} run \{image\} \{config\}"
+    RUN_COMMAND = "{command} run {image} {config}"
     STOP_COMMAND = "kill"
-    PULL_COMMAND = "\{command\} pull \{image\} \{url\}"
+    PULL_COMMAND = "{command} pull {image} {url}"
 
     command = COMMAND
     run_command = RUN_COMMAND
@@ -142,8 +142,8 @@ class ContainerFormatConfig:
 
 
 class ProcessConfig:
-    STATUS_COMMAND = "pgrep -P \{pid\}"
-    KILL_COMMAND = "kill \{pid\}"
+    STATUS_COMMAND = "pgrep -P {pid}"
+    KILL_COMMAND = "kill {pid}"
 
     status = STATUS_COMMAND
     kill = KILL_COMMAND
