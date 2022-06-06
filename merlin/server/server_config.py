@@ -5,6 +5,7 @@ import random
 import shutil
 import string
 import subprocess
+from typing import Tuple
 
 import yaml
 
@@ -34,7 +35,6 @@ class ServerStatus(enum.Enum):
     """
     Different states in which the server can be in.
     """
-
     RUNNING = 0
     NOT_INITALIZED = 1
     MISSING_CONTAINER = 2
@@ -42,7 +42,14 @@ class ServerStatus(enum.Enum):
     ERROR = 4
 
 
-def generate_password(length, pass_command: str = None):
+def generate_password(length, pass_command: str = None) -> str:
+    """
+    Function for generating passwords for redis container. If a specified command is given
+    then a password would be generated with the given command. If not a password will be 
+    created by combining a string a characters based on the given length.
+
+    :return:: string value with given length
+    """
     if pass_command:
         process = subprocess.run(pass_command.split(), shell=True, stdout=subprocess.PIPE)
         return process.stdout
@@ -59,7 +66,7 @@ def generate_password(length, pass_command: str = None):
     return "".join(password)
 
 
-def parse_redis_output(redis_stdout):
+def parse_redis_output(redis_stdout) -> Tuple[bool, str]:
     """
     Parse the redis output for a the redis container. It will get all the necessary information
     from the output and returns a dictionary of those values.
@@ -84,11 +91,13 @@ def parse_redis_output(redis_stdout):
             return False, line.decode("utf-8")
 
 
-def create_server_config():
+def create_server_config() -> bool:
     """
     Create main configuration file for merlin server in the
     merlin configuration directory. If a configuration already
     exists it will not replace the current configuration and exit.
+
+    :return:: True if success and False if fail
     """
     if not os.path.exists(MERLIN_CONFIG_DIR):
         LOG.error("Unable to find main merlin configuration directory at " + MERLIN_CONFIG_DIR)
@@ -163,7 +172,7 @@ def pull_server_config() -> ServerConfig:
     Pull the main configuration file and corresponding format configuration file
     as well. Returns the values as a dictionary.
 
-    :return: A dictionary containing the main and corresponding format configuration file
+    :return: A instance of ServerConfig containing all the necessary configuration values.
     """
     return_data = {}
     format_needed_keys = ["command", "run_command", "stop_command", "pull_command"]
@@ -209,9 +218,11 @@ def pull_server_config() -> ServerConfig:
     return ServerConfig(return_data)
 
 
-def pull_server_image():
+def pull_server_image() -> bool:
     """
     Fetch the server image using singularity.
+
+    :return:: True if success and False if fail
     """
     server_config = pull_server_config()
     if not server_config:
@@ -258,6 +269,7 @@ def get_server_status():
 
     :param `server_dir`: location of all server related files.
     :param `image_name`: name of the image when fetched.
+    :return:: A enum value of ServerStatus describing its current state.
     """
     server_config = pull_server_config()
     if not server_config:
@@ -287,7 +299,11 @@ def get_server_status():
     return ServerStatus.RUNNING
 
 
-def check_process_file_format(data):
+def check_process_file_format(data: dict) -> bool:
+    """
+    Check to see if the process file has the correct format and contains the expected key values.
+    :return:: True if success and False if fail
+    """
     required_keys = ["parent_pid", "image_pid", "port", "hostname"]
     for key in required_keys:
         if key not in data:
@@ -295,7 +311,12 @@ def check_process_file_format(data):
     return True
 
 
-def pull_process_file(file_path):
+def pull_process_file(file_path: str) -> dict:
+    """
+    Pull the data from the process file. If one is found returns the data in a dictionary
+    if not returns None
+    :return:: Data containing in process file.
+    """
     with open(file_path, "r") as f:
         data = yaml.load(f, yaml.Loader)
         if check_process_file_format(data):
@@ -303,7 +324,11 @@ def pull_process_file(file_path):
     return None
 
 
-def dump_process_file(data, file_path):
+def dump_process_file(data: dict, file_path: str):
+    """
+    Dump the process data from the dictionary to the specified file path.
+    :return:: True if success and False if fail
+    """
     if not check_process_file_format(data):
         return False
     with open(file_path, "w+") as f:
