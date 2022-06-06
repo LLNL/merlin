@@ -15,7 +15,7 @@ MERLIN_SERVER_SUBDIR = "server/"
 MERLIN_SERVER_CONFIG = "merlin_server.yaml"
 
 
-def valid_ipv4(ip: str):
+def valid_ipv4(ip: str) -> bool:
     """
     Checks valid ip address
     """
@@ -33,7 +33,7 @@ def valid_ipv4(ip: str):
     return True
 
 
-def valid_port(port: int):
+def valid_port(port: int) -> bool:
     """
     Checks valid network port
     """
@@ -84,46 +84,46 @@ class ContainerConfig:
         self.pass_file = data["pass_file"] if "pass_file" in data else self.PASSWORD_FILE
         self.user_file = data["user_file"] if "user_file" in data else self.USERS_FILE
 
-    def get_format(self):
+    def get_format(self) -> str:
         return self.format
 
-    def get_image_name(self):
+    def get_image_name(self) -> str:
         return self.image
 
-    def get_image_url(self):
+    def get_image_url(self) -> str:
         return self.url
 
-    def get_image_path(self):
+    def get_image_path(self) -> str:
         return os.path.join(self.config_dir, self.image)
 
-    def get_config_name(self):
+    def get_config_name(self) -> str:
         return self.config
 
-    def get_config_path(self):
+    def get_config_path(self) -> str:
         return os.path.join(self.config_dir, self.config)
 
-    def get_config_dir(self):
+    def get_config_dir(self) -> str:
         return self.config_dir
 
-    def get_pfile_name(self):
+    def get_pfile_name(self) -> str:
         return self.pfile
 
-    def get_pfile_path(self):
+    def get_pfile_path(self) -> str:
         return os.path.join(self.config_dir, self.pass_file)
 
-    def get_pass_file_name(self):
+    def get_pass_file_name(self) -> str:
         return self.pass_file
 
-    def get_pass_file_path(self):
+    def get_pass_file_path(self) -> str:
         return os.path.join(MERLIN_CONFIG_DIR, self.pass_file)
 
-    def get_user_file_name(self):
+    def get_user_file_name(self) -> str:
         return self.user_file
 
-    def get_user_file_path(self):
+    def get_user_file_path(self) -> str:
         return os.path.join(self.config_dir, self.user_file)
 
-    def get_container_password(self):
+    def get_container_password(self) -> str:
         password = None
         with open(self.get_pass_file_path(), "r") as f:
             password = f.read()
@@ -153,16 +153,16 @@ class ContainerFormatConfig:
         self.stop_command = data["stop_command"] if "stop_command" in data else self.STOP_COMMAND
         self.pull_command = data["pull_command"] if "pull_command" in data else self.PULL_COMMAND
 
-    def get_command(self):
+    def get_command(self) -> str:
         return self.command
 
-    def get_run_command(self):
+    def get_run_command(self) -> str:
         return self.run_command
 
-    def get_stop_command(self):
+    def get_stop_command(self) -> str:
         return self.stop_command
 
-    def get_pull_command(self):
+    def get_pull_command(self) -> str:
         return self.pull_command
 
 
@@ -183,10 +183,10 @@ class ProcessConfig:
         self.status = data["status"] if "status" in data else self.STATUS_COMMAND
         self.kill = data["kill"] if "kill" in data else self.KILL_COMMAND
 
-    def get_status_command(self):
+    def get_status_command(self) -> str:
         return self.status
 
-    def get_kill_command(self):
+    def get_kill_command(self) -> str:
         return self.kill
 
 
@@ -228,7 +228,7 @@ class RedisConfig:
         self.changed = False
         self.parse()
 
-    def parse(self):
+    def parse(self) -> None:
         self.entries = {}
         self.comments = {}
         with open(self.filename, "r+") as f:
@@ -250,35 +250,35 @@ class RedisConfig:
                     comments += line + "\n"
             self.trailing_comments = comments[:-1]
 
-    def write(self):
+    def write(self) -> None:
         with open(self.filename, "w") as f:
             for entry in self.entry_order:
                 f.write(self.comments[entry])
                 f.write(f"{entry} {self.entries[entry]}\n")
             f.write(self.trailing_comments)
 
-    def set_filename(self, filename):
+    def set_filename(self, filename: str) -> None:
         self.filename = filename
 
-    def set_config_value(self, key: str, value: str):
+    def set_config_value(self, key: str, value: str) -> bool:
         if key not in self.entries:
             return False
         self.entries[key] = value
         self.changed = True
         return True
 
-    def get_config_value(self, key: str):
+    def get_config_value(self, key: str) -> str:
         if key in self.entries:
             return self.entries[key]
         return None
 
-    def changes_made(self):
+    def changes_made(self) -> bool:
         return self.changed
 
-    def get_ip_address(self):
+    def get_ip_address(self) -> str:
         return self.get_config_value("bind")
 
-    def set_ip_address(self, ipaddress):
+    def set_ip_address(self, ipaddress: str) -> bool:
         if ipaddress is None:
             return False
         # Check if ipaddress is valid
@@ -293,10 +293,10 @@ class RedisConfig:
         LOG.info(f"Ipaddress is set to {ipaddress}")
         return True
 
-    def get_port(self):
+    def get_port(self) -> str:
         return self.get_config_value("port")
 
-    def set_port(self, port):
+    def set_port(self, port: str) -> bool:
         if port is None:
             return False
         # Check if port is valid
@@ -311,7 +311,7 @@ class RedisConfig:
         LOG.info(f"Port is set to {port}")
         return True
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> bool:
         if password is None:
             return False
         if os.path.exists(password):
@@ -325,10 +325,10 @@ class RedisConfig:
         LOG.info(f"Password file set to {password}")
         return True
 
-    def get_password(self):
+    def get_password(self) -> str:
         return self.get_config_value("requirepass")
 
-    def set_directory(self, directory):
+    def set_directory(self, directory: str) -> bool:
         if directory is None:
             return False
         # Validate the directory input
@@ -343,7 +343,7 @@ class RedisConfig:
         LOG.info(f"Directory is set to {directory}")
         return True
 
-    def set_snapshot_seconds(self, seconds):
+    def set_snapshot_seconds(self, seconds: int) -> bool:
         if seconds is None:
             return False
         # Set the snapshot second in the redis config
@@ -361,7 +361,7 @@ class RedisConfig:
         LOG.info(f"Snapshot wait time is set to {seconds} seconds")
         return True
 
-    def set_snapshot_changes(self, changes):
+    def set_snapshot_changes(self, changes: int) -> bool:
         if changes is None:
             return False
         # Set the snapshot changes into the redis config
@@ -379,7 +379,7 @@ class RedisConfig:
         LOG.info(f"Snapshot threshold is set to {changes} changes")
         return True
 
-    def set_snapshot_file(self, file):
+    def set_snapshot_file(self, file: str) -> bool:
         if file is None:
             return False
         # Set the snapshot file in the redis config
@@ -390,7 +390,7 @@ class RedisConfig:
         LOG.info(f"Snapshot file is set to {file}")
         return True
 
-    def set_append_mode(self, mode):
+    def set_append_mode(self, mode: str) -> bool:
         if mode is None:
             return False
         valid_modes = ["always", "everysec", "no"]
@@ -408,7 +408,7 @@ class RedisConfig:
         LOG.info(f"Append mode is set to {mode}")
         return True
 
-    def set_append_file(self, file):
+    def set_append_file(self, file: str) -> bool:
         if file is None:
             return False
         # Set the append file in the redis config
@@ -439,7 +439,7 @@ class RedisUsers:
             if password is not None:
                 self.set_password(password)
 
-        def parse_dict(self, dict):
+        def parse_dict(self, dict: dict) -> None:
             self.status = dict["status"]
             self.keys = dict["keys"]
             self.commands = dict["commands"]
@@ -455,7 +455,7 @@ class RedisUsers:
         def __str__(self) -> str:
             return self.__repr__()
 
-        def set_password(self, password: str):
+        def set_password(self, password: str) -> None:
             self.hash_password = hashlib.sha256(bytes(password, "utf-8")).hexdigest()
 
     filename = ""
@@ -466,7 +466,7 @@ class RedisUsers:
         if os.path.exists(self.filename):
             self.parse()
 
-    def parse(self):
+    def parse(self) -> None:
         with open(self.filename, "r") as f:
             self.users = yaml.load(f, yaml.Loader)
             for user in self.users:
@@ -474,26 +474,26 @@ class RedisUsers:
                 new_user.parse_dict(self.users[user])
                 self.users[user] = new_user
 
-    def write(self):
+    def write(self) -> None:
         data = self.users.copy()
         for key in data:
             data[key] = self.users[key].get_user_dict()
         with open(self.filename, "w") as f:
             yaml.dump(data, f, yaml.Dumper)
 
-    def add_user(self, user, status="on", keys="*", commands="@all", password=None):
+    def add_user(self, user, status="on", keys="*", commands="@all", password=None) -> bool:
         if user in self.users:
             return False
         self.users[user] = self.User(status, keys, commands, password)
         return True
 
-    def remove_user(self, user):
+    def remove_user(self, user) -> bool:
         if user in self.users:
             del self.users[user]
             return True
         return False
 
-    def apply_to_redis(self, host, port, password):
+    def apply_to_redis(self, host: str, port: int, password: str) -> None:
         db = redis.Redis(host=host, port=port, password=password)
         current_users = db.acl_users()
         for user in self.users:
