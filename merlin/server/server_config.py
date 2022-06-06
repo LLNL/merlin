@@ -35,6 +35,7 @@ class ServerStatus(enum.Enum):
     """
     Different states in which the server can be in.
     """
+
     RUNNING = 0
     NOT_INITALIZED = 1
     MISSING_CONTAINER = 2
@@ -45,7 +46,7 @@ class ServerStatus(enum.Enum):
 def generate_password(length, pass_command: str = None) -> str:
     """
     Function for generating passwords for redis container. If a specified command is given
-    then a password would be generated with the given command. If not a password will be 
+    then a password would be generated with the given command. If not a password will be
     created by combining a string a characters based on the given length.
 
     :return:: string value with given length
