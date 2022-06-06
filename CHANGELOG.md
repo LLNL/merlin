@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added documentation page docs/merlin_server.rst, docs/modules/server/configuration.rst, and docs/modules/server/commands.rst
 - Added the flux_exec batch argument to allow for flux exec arguments,
   e.g. flux_exec: flux exec -r "0-1" to run celery workers only on
-  ranks 0 and 1 of a multi-rank allocation.
+  ranks 0 and 1 of a multi-rank allocation
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
 ### Fixed
