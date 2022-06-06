@@ -8,6 +8,7 @@ import yaml
 
 LOG = logging.getLogger("merlin")
 
+# Constants for main merlin server configuration values.
 CONTAINER_TYPES = ["singularity", "docker", "podman"]
 MERLIN_CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".merlin")
 MERLIN_SERVER_SUBDIR = "server/"
@@ -15,6 +16,9 @@ MERLIN_SERVER_CONFIG = "merlin_server.yaml"
 
 
 def valid_ipv4(ip: str):
+    """
+    Checks valid ip address
+    """
     if not ip:
         return False
 
@@ -30,12 +34,27 @@ def valid_ipv4(ip: str):
 
 
 def valid_port(port: int):
+    """
+    Checks valid network port
+    """
     if port > 0 and port < 65536:
         return True
     return False
 
 
 class ContainerConfig:
+    """
+    ContainerConfig provides interface for parsing and interacting with the container value specified within
+    the merlin_server.yaml configuration file. Dictionary of the config values should be passed when initialized
+    to parse values. This can be done after parsing yaml to data dictionary.
+    If there are missing values within the configuration it will be populated with default values for
+    singularity container.
+
+    Configuration contains values for setting up containers and storing values specific to each container.
+    Values that are stored consist of things within the local configuration directory as different runs
+    can have differnt configuration values.
+    """
+
     # Default values for configuration
     FORMAT = "singularity"
     IMAGE_NAME = "redis_latest.sif"
@@ -112,6 +131,12 @@ class ContainerConfig:
 
 
 class ContainerFormatConfig:
+    """
+    ContainerFormatConfig provides an interface for parsing and interacting with container specific
+    configuration files <container_name>.yaml. These configuration files contain container specific
+    commands to run containerizers such as singularity, docker, and podman.
+    """
+
     COMMAND = "singularity"
     RUN_COMMAND = "{command} run {image} {config}"
     STOP_COMMAND = "kill"
@@ -142,6 +167,12 @@ class ContainerFormatConfig:
 
 
 class ProcessConfig:
+    """
+    ProcessConfig provides an interface for parsing and interacting with process config specified
+    in merlin_server.yaml configuration. This configuration provide commands for interfacing with
+    host machine while the containers are running.
+    """
+
     STATUS_COMMAND = "pgrep -P {pid}"
     KILL_COMMAND = "kill {pid}"
 
@@ -160,6 +191,11 @@ class ProcessConfig:
 
 
 class ServerConfig:
+    """
+    ServerConfig is an interface for storing all the necessary configuration for merlin server.
+    These configuration container things such as ContainerConfig, ProcessConfig, and ContainerFormatConfig.
+    """
+
     container: ContainerConfig = None
     process: ProcessConfig = None
     container_format: ContainerFormatConfig = None
@@ -174,6 +210,12 @@ class ServerConfig:
 
 
 class RedisConfig:
+    """
+    RedisConfig is an interface for parsing and interacing with redis.conf file that is provided
+    by redis. This allows users to parse the given redis configuration and make edits and allow users
+    to write those changes into a redis readable config file.
+    """
+
     filename = ""
     entry_order = []
     entries = {}
@@ -378,6 +420,12 @@ class RedisConfig:
 
 
 class RedisUsers:
+    """
+    RedisUsers provides an interface for parsing and interacting with redis.users configuration
+    file. Allow users and merlin server to create, remove, and edit users within the redis files.
+    Changes can be sync and push to an exisiting redis server if one is available.
+    """
+
     class User:
         status = "on"
         hash_password = hashlib.sha256(b"password").hexdigest()
