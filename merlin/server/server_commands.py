@@ -26,7 +26,7 @@ from merlin.server.server_util import RedisConfig, RedisUsers
 LOG = logging.getLogger("merlin")
 
 
-def init_server():
+def init_server() -> None:
     """
     Initialize merlin server by checking and initializing main configuration directory
     and local server configuration.
@@ -42,7 +42,11 @@ def init_server():
     LOG.info("Merlin server initialization successful.")
 
 
-def config_server(args: Namespace):
+def config_server(args: Namespace) -> None:
+    """
+    Process the merlin server config flags to make changes and edits to appropriate configurations
+    based on the input passed in by the user.
+    """
     redis_config = RedisConfig(os.path.join(CONFIG_DIR, CONFIG_FILE))
 
     redis_config.set_ip_address(args.ipaddress)
@@ -98,7 +102,7 @@ def config_server(args: Namespace):
             LOG.error(f"User '{args.remove_user}' doesn't exist within current users.")
 
 
-def status_server():
+def status_server() -> None:
     """
     Get the server status of the any current running containers for merlin server
     """
@@ -115,9 +119,10 @@ def status_server():
         LOG.info("Merlin server is running.")
 
 
-def start_server():
+def start_server() -> bool:
     """
     Start a merlin server container using singularity.
+    :return:: True if server was successful started and False if failed.
     """
     current_status = get_server_status()
 
@@ -189,6 +194,7 @@ def start_server():
 def stop_server():
     """
     Stop running merlin server containers.
+    :return:: True if server was stopped successfully and False if failed.
     """
     if get_server_status() != ServerStatus.RUNNING:
         LOG.info("There is no instance of merlin server running.")
@@ -231,7 +237,11 @@ def stop_server():
     return True
 
 
-def restart_server():
+def restart_server() -> bool:
+    """
+    Restart a running merlin server instance.
+    :return:: True if server was restarted successfully and False if failed.
+    """
     if get_server_status() != ServerStatus.RUNNING:
         LOG.info("Merlin server is not currently running.")
         LOG.info("Please start a merlin server instance first with 'merlin server start'")
