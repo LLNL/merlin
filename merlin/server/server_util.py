@@ -109,13 +109,13 @@ class ContainerConfig:
         return self.pfile
 
     def get_pfile_path(self) -> str:
-        return os.path.join(self.config_dir, self.pass_file)
+        return os.path.join(self.config_dir, self.pfile)
 
     def get_pass_file_name(self) -> str:
         return self.pass_file
 
     def get_pass_file_path(self) -> str:
-        return os.path.join(MERLIN_CONFIG_DIR, self.pass_file)
+        return os.path.join(self.config_dir, self.pass_file)
 
     def get_user_file_name(self) -> str:
         return self.user_file
