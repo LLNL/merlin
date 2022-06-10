@@ -87,7 +87,7 @@ def config_server(args: Namespace) -> None:
             redis_users.write()
             # Create a new user in container
             if get_server_status() == ServerStatus.RUNNING:
-                redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), "merlin_password")
+                redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), redis_config.get_password())
         else:
             LOG.error(f"User '{args.add_user[0]}' already exisits within current users")
 
@@ -97,7 +97,7 @@ def config_server(args: Namespace) -> None:
             redis_users.write()
             # Remove user from container
             if get_server_status() == ServerStatus.RUNNING:
-                redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), "merlin_password")
+                redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), redis_config.get_password())
         else:
             LOG.error(f"User '{args.remove_user}' doesn't exist within current users.")
 
