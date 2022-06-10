@@ -8,8 +8,6 @@ import time
 from argparse import Namespace
 
 from merlin.server.server_config import (
-    CONFIG_DIR,
-    CONFIG_FILE,
     ServerStatus,
     config_merlin_server,
     create_server_config,
@@ -47,13 +45,18 @@ def config_server(args: Namespace) -> None:
     Process the merlin server config flags to make changes and edits to appropriate configurations
     based on the input passed in by the user.
     """
-    redis_config = RedisConfig(os.path.join(CONFIG_DIR, CONFIG_FILE))
+    server_config = pull_server_config()
+    redis_config = RedisConfig(server_config.container.get_config_path())
 
     redis_config.set_ip_address(args.ipaddress)
 
     redis_config.set_port(args.port)
 
     redis_config.set_password(args.password)
+    if args.password != None:
+        redis_users = RedisUsers(server_config.container.get_user_file_path())
+        redis_users.set_password("default", args.password)
+        redis_users.write()
 
     redis_config.set_directory(args.directory)
 
