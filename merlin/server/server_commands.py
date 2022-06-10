@@ -91,7 +91,7 @@ def config_server(args: Namespace) -> None:
             LOG.info(f"Added user {args.add_user[0]} to merlin server")
             # Create a new user in container
             if get_server_status() == ServerStatus.RUNNING:
-                LOG.info(f"Adding user to current merlin server instance")
+                LOG.info("Adding user to current merlin server instance")
                 redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), redis_config.get_password())
         else:
             LOG.error(f"User '{args.add_user[0]}' already exisits within current users")
@@ -103,7 +103,7 @@ def config_server(args: Namespace) -> None:
             LOG.info(f"Removed user {args.remove_user} to merlin server")
             # Remove user from container
             if get_server_status() == ServerStatus.RUNNING:
-                LOG.info(f"Removing user to current merlin server instance")
+                LOG.info("Removing user to current merlin server instance")
                 redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), redis_config.get_password())
         else:
             LOG.error(f"User '{args.remove_user}' doesn't exist within current users.")
