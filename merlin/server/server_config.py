@@ -14,6 +14,7 @@ from merlin.server.server_util import (
     MERLIN_CONFIG_DIR,
     MERLIN_SERVER_CONFIG,
     MERLIN_SERVER_SUBDIR,
+    RedisConfig,
     RedisUsers,
     ServerConfig,
 )
@@ -161,7 +162,8 @@ def config_merlin_server():
         LOG.info("User file already exists.")
     else:
         redis_users = RedisUsers(user_file)
-        redis_users.add_user(user="default", password=server_config.container.get_container_password())
+        redis_config = RedisConfig(server_config.container.get_config_path())
+        redis_users.add_user(user="default", password=redis_config.get_password())
         redis_users.add_user(user=os.environ.get("USER"), password=server_config.container.get_container_password())
         redis_users.write()
 

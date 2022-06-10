@@ -35,10 +35,10 @@ def init_server() -> None:
     if not create_server_config():
         LOG.info("Merlin server initialization failed.")
         return
+    pull_server_image()
 
     config_merlin_server()
 
-    pull_server_image()
     LOG.info("Merlin server initialization successful.")
 
 
