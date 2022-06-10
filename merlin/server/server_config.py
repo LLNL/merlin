@@ -128,7 +128,7 @@ def create_server_config() -> bool:
         except OSError:
             LOG.error(f"Destination location {config_dir} is not writable.")
             return False
-    
+
     server_config = pull_server_config()
 
     if not os.path.exists(server_config.container.get_config_dir()):

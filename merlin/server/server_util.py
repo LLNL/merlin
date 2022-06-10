@@ -479,7 +479,7 @@ class RedisUsers:
             return False
         self.users[user] = self.User(status, keys, commands, password)
         return True
-    
+
     def set_password(self, user: str, password: str):
         if user not in self.users:
             return False

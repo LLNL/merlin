@@ -53,7 +53,7 @@ def config_server(args: Namespace) -> None:
     redis_config.set_port(args.port)
 
     redis_config.set_password(args.password)
-    if args.password != None:
+    if args.password is not None:
         redis_users = RedisUsers(server_config.container.get_user_file_path())
         redis_users.set_password("default", args.password)
         redis_users.write()
