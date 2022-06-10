@@ -314,14 +314,7 @@ class RedisConfig:
     def set_password(self, password: str) -> bool:
         if password is None:
             return False
-        if os.path.exists(password):
-            # Save the location of the password file in merlin_server_config
-            if not self.set_config_value("requirepass", password):
-                LOG.error("Unable to set password file for redis config")
-                return False
-        else:
-            LOG.error(f"Password file {password} doesn't exist.")
-            return False
+        self.set_config_value("requirepass", password)
         LOG.info(f"Password file set to {password}")
         return True
 
