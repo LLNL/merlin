@@ -82,6 +82,7 @@ class MerlinSpec(YAMLSpecification):
             "study": self.study,
             "global.parameters": self.globals,
             "merlin": self.merlin,
+            "user": self.user,
         }
 
     @property
@@ -97,6 +98,7 @@ class MerlinSpec(YAMLSpecification):
             "study": self.study,
             "globals": self.globals,
             "merlin": self.merlin,
+            "user": self.user,
         }
 
     @classmethod
@@ -104,6 +106,8 @@ class MerlinSpec(YAMLSpecification):
         spec = super(MerlinSpec, cls).load_specification(filepath)
         with open(filepath, "r") as f:
             spec.merlin = MerlinSpec.load_merlin_block(f)
+        with open(filepath, "r") as f:
+            spec.user = MerlinSpec.load_user_block(f)
         spec.specroot = os.path.dirname(spec.path)
         spec.process_spec_defaults()
         if not suppress_warning:
@@ -114,6 +118,7 @@ class MerlinSpec(YAMLSpecification):
     def load_spec_from_string(cls, string):
         spec = super(MerlinSpec, cls).load_specification_from_stream(StringIO(string))
         spec.merlin = MerlinSpec.load_merlin_block(StringIO(string))
+        spec.user = MerlinSpec.load_user_block(StringIO(string))
         spec.specroot = None
         spec.process_spec_defaults()
         return spec
@@ -131,6 +136,18 @@ class MerlinSpec(YAMLSpecification):
             )
             LOG.warning(warning_msg)
         return merlin_block
+
+    @staticmethod
+    def load_user_block(stream):
+        try:
+            user_block = yaml.safe_load(stream)["user"]
+        except KeyError:
+            user_block = {}
+            warning_msg: str = (
+                "user specification missing"
+            )
+            LOG.warning(warning_msg)
+        return user_block
 
     def process_spec_defaults(self):
         for name, section in self.sections.items():
@@ -160,6 +177,8 @@ class MerlinSpec(YAMLSpecification):
                 MerlinSpec.fill_missing_defaults(vals, defaults.WORKER)
         if self.merlin["samples"] is not None:
             MerlinSpec.fill_missing_defaults(self.merlin["samples"], defaults.SAMPLES)
+
+        # no defaults for user block
 
     @staticmethod
     def fill_missing_defaults(object_to_update, default_dict):
@@ -211,6 +230,8 @@ class MerlinSpec(YAMLSpecification):
             MerlinSpec.check_section("merlin.resources.workers " + worker, contents, all_keys.WORKER)
         if self.merlin["samples"]:
             MerlinSpec.check_section("merlin.samples", self.merlin["samples"], all_keys.SAMPLES)
+
+        # user block is not checked
 
     @staticmethod
     def check_section(section_name, section, all_keys):
