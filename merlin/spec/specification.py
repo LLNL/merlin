@@ -143,10 +143,6 @@ class MerlinSpec(YAMLSpecification):
             user_block = yaml.safe_load(stream)["user"]
         except KeyError:
             user_block = {}
-            warning_msg: str = (
-                "user specification missing"
-            )
-            LOG.warning(warning_msg)
         return user_block
 
     def process_spec_defaults(self):
@@ -289,7 +285,7 @@ class MerlinSpec(YAMLSpecification):
         list_offset = 2 * " "
         if isinstance(obj, list):
             n = len(obj)
-            use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"]
+            use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"] or key_stack[0] in ["user"]
             if not use_hyphens:
                 string += "["
             else:
