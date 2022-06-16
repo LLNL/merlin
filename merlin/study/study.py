@@ -107,7 +107,7 @@ class MerlinStudy:
             "MERLIN_SOFT_FAIL": str(int(ReturnCode.SOFT_FAIL)),
             "MERLIN_HARD_FAIL": str(int(ReturnCode.HARD_FAIL)),
             "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
-            "MERLIN_ALL_SAMPLES": " ".join(self.get_sample_labels(from_spec=self.original_spec)),
+            "MERLIN_ALL_SAMPLES": " ".join([ "$({})".format(k) for k in self.get_sample_labels(from_spec=self.original_spec)]),
             "MERLIN_SPEC": os.path.join(
                     self.info,
                     self.original_spec.description["name"].replace(" ", "_") + ".expanded.yaml"
