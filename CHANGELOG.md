@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added better interface for configuration files(ServerConfig, ContainerConfig, ContainerFormatConfig, and ProcessConfig) with getting configuration values from merlin server config file, with classes.
 - Added merlin server to reapply users based on the saved redis.users config file.
 - Added redis.pass file containing password for default user in main merlin configuration.
+- Added the flux_exec batch argument to allow for flux exec arguments,
+  e.g. flux_exec: flux exec -r "0-1" to run celery workers only on
+  ranks 0 and 1 of a multi-rank allocation
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
 - Changed "default" user password to be "merlin_password" as default.

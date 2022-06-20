@@ -38,6 +38,7 @@ BATCH = {
     "shell",
     "flux_path",
     "flux_start_opts",
+    "flux_exec",
     "flux_exec_workers",
     "launch_pre",
     "launch_args",

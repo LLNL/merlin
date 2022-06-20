@@ -48,6 +48,9 @@ see :doc:`./merlin_variables`.
      queue: pbatch
      flux_path: <optional path to flux bin>
      flux_start_opts: <optional flux start options>
+     flux_exec: <optional, flux exec command to launch workers on 
+                         all nodes if using flux and flux_exec_workers is True
+                         (flux exec) > 
      flux_exec_workers: <optional, flux argument to launch workers on 
                          all nodes. (True)> 
      launch_pre: <Any configuration needed before the srun or jsrun launch>
