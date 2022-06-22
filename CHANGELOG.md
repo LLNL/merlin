@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - user (Set the main user file for container)
   - password (Set the main user password file for container)
   - add-user (Add a user to the container image [outputs an associated password file for user])
-  - remote-user (Remove user from list of added users)
+  - remove-user (Remove user from list of added users)
   - directory (Set the directory of the merlin server container files)
   - snapshot-seconds (Set the number of seconds elapsed before snapshot change condition is checked)
   - snapshot-changes (Set snapshot change condition for a snapshot to be made)
