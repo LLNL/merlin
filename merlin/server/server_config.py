@@ -1,17 +1,80 @@
+import enum
 import logging
 import os
+import random
+import shutil
+import string
+import subprocess
+from typing import Tuple
 
 import yaml
+
+from merlin.server.server_util import (
+    CONTAINER_TYPES,
+    MERLIN_CONFIG_DIR,
+    MERLIN_SERVER_CONFIG,
+    MERLIN_SERVER_SUBDIR,
+    RedisConfig,
+    RedisUsers,
+    ServerConfig,
+)
 
 
 LOG = logging.getLogger("merlin")
 
-MERLIN_CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".merlin")
-MERLIN_SERVER_SUBDIR = "server/"
-MERLIN_SERVER_CONFIG = "merlin_server.yaml"
+# Default values for configuration
+CONFIG_DIR = "./merlin_server/"
+IMAGE_NAME = "redis_latest.sif"
+PROCESS_FILE = "merlin_server.pf"
+CONFIG_FILE = "redis.conf"
+REDIS_URL = "docker://redis"
+
+PASSWORD_LENGTH = 256
 
 
-def parse_redis_output(redis_stdout):
+class ServerStatus(enum.Enum):
+    """
+    Different states in which the server can be in.
+    """
+
+    RUNNING = 0
+    NOT_INITALIZED = 1
+    MISSING_CONTAINER = 2
+    NOT_RUNNING = 3
+    ERROR = 4
+
+
+def generate_password(length, pass_command: str = None) -> str:
+    """
+    Function for generating passwords for redis container. If a specified command is given
+    then a password would be generated with the given command. If not a password will be
+    created by combining a string a characters based on the given length.
+
+    :return:: string value with given length
+    """
+    if pass_command:
+        process = subprocess.run(pass_command.split(), shell=True, stdout=subprocess.PIPE)
+        return process.stdout
+
+    characters = list(string.ascii_letters + string.digits + "!@#$%^&*()")
+
+    random.shuffle(characters)
+
+    password = []
+    for i in range(length):
+        password.append(random.choice(characters))
+
+    random.shuffle(password)
+    return "".join(password)
+
+
+def parse_redis_output(redis_stdout) -> Tuple[bool, str]:
+    """
+    Parse the redis output for a the redis container. It will get all the necessary information
+    from the output and returns a dictionary of those values.
+
+    :return:: two values is_successful, dictionary of values from redis output
+    """
     if redis_stdout is None:
         return False, "None passed as redis output"
     server_init = False
@@ -30,12 +93,91 @@ def parse_redis_output(redis_stdout):
             return False, line.decode("utf-8")
 
 
-def pull_server_config() -> dict:
+def create_server_config() -> bool:
+    """
+    Create main configuration file for merlin server in the
+    merlin configuration directory. If a configuration already
+    exists it will not replace the current configuration and exit.
+
+    :return:: True if success and False if fail
+    """
+    if not os.path.exists(MERLIN_CONFIG_DIR):
+        LOG.error("Unable to find main merlin configuration directory at " + MERLIN_CONFIG_DIR)
+        return False
+
+    config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
+    if not os.path.exists(config_dir):
+        LOG.info("Unable to find exisiting server configuration.")
+        LOG.info(f"Creating default configuration in {config_dir}")
+        try:
+            os.mkdir(config_dir)
+        except OSError as err:
+            LOG.error(err)
+            return False
+
+    files = [i + ".yaml" for i in CONTAINER_TYPES]
+    files.append(MERLIN_SERVER_CONFIG)
+    for file in files:
+        file_path = os.path.join(config_dir, file)
+        if os.path.exists(file_path):
+            LOG.info(f"{file} already exists.")
+            continue
+        LOG.info(f"Copying file {file} to configuration directory.")
+        try:
+            shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), file), config_dir)
+        except OSError:
+            LOG.error(f"Destination location {config_dir} is not writable.")
+            return False
+
+    server_config = pull_server_config()
+
+    if not os.path.exists(server_config.container.get_config_dir()):
+        LOG.info("Creating merlin server directory.")
+        os.mkdir(server_config.container.get_config_dir())
+
+    return True
+
+
+def config_merlin_server():
+    """
+    Configurate the merlin server with configurations such as username password and etc.
+    """
+
+    server_config = pull_server_config()
+
+    pass_file = server_config.container.get_pass_file_path()
+    if os.path.exists(pass_file):
+        LOG.info("Password file already exists. Skipping password generation step.")
+    else:
+        # if "pass_command" in server_config["container"]:
+        #     password = generate_password(PASSWORD_LENGTH, server_config["container"]["pass_command"])
+        # else:
+        password = generate_password(PASSWORD_LENGTH)
+
+        with open(pass_file, "w+") as f:
+            f.write(password)
+
+        LOG.info("Creating password file for merlin server container.")
+
+    user_file = server_config.container.get_user_file_path()
+    if os.path.exists(user_file):
+        LOG.info("User file already exists.")
+    else:
+        redis_users = RedisUsers(user_file)
+        redis_config = RedisConfig(server_config.container.get_config_path())
+        redis_users.add_user(user="default", password=redis_config.get_password())
+        redis_users.add_user(user=os.environ.get("USER"), password=server_config.container.get_container_password())
+        redis_users.write()
+
+        LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
+
+
+def pull_server_config() -> ServerConfig:
     """
     Pull the main configuration file and corresponding format configuration file
     as well. Returns the values as a dictionary.
 
-    :return: A dictionary containing the main and corresponding format configuration file
+    :return: A instance of ServerConfig containing all the necessary configuration values.
     """
     return_data = {}
     format_needed_keys = ["command", "run_command", "stop_command", "pull_command"]
@@ -78,10 +220,95 @@ def pull_server_config() -> dict:
             LOG.error(f'Process necessary "{key}" command configuration not found in {MERLIN_SERVER_CONFIG}')
             return None
 
-    return return_data
+    return ServerConfig(return_data)
 
 
-def check_process_file_format(data):
+def pull_server_image() -> bool:
+    """
+    Fetch the server image using singularity.
+
+    :return:: True if success and False if fail
+    """
+    server_config = pull_server_config()
+    if not server_config:
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
+        return False
+
+    config_dir = server_config.container.get_config_dir()
+    config_file = server_config.container.get_config_name()
+    image_url = server_config.container.get_image_url()
+    image_path = server_config.container.get_image_path()
+
+    if not os.path.exists(image_path):
+        LOG.info(f"Fetching redis image from {image_url}")
+        subprocess.run(
+            server_config.container_format.get_pull_command()
+            .strip("\\")
+            .format(command=server_config.container_format.get_command(), image=image_path, url=image_url)
+            .split(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    else:
+        LOG.info(f"{image_path} already exists.")
+
+    if not os.path.exists(os.path.join(config_dir, config_file)):
+        LOG.info("Copying default redis configuration file.")
+        try:
+            file_dir = os.path.dirname(os.path.abspath(__file__))
+            shutil.copy(os.path.join(file_dir, config_file), config_dir)
+        except OSError:
+            LOG.error(f"Destination location {config_dir} is not writable.")
+            return False
+    else:
+        LOG.info("Redis configuration file already exist.")
+
+    return True
+
+
+def get_server_status():
+    """
+    Determine the status of the current server.
+    This function can be used to check if the servers
+    have been initalized, started, or stopped.
+
+    :param `server_dir`: location of all server related files.
+    :param `image_name`: name of the image when fetched.
+    :return:: A enum value of ServerStatus describing its current state.
+    """
+    server_config = pull_server_config()
+    if not server_config:
+        return ServerStatus.NOT_INITALIZED
+
+    if not os.path.exists(server_config.container.get_config_dir()):
+        return ServerStatus.NOT_INITALIZED
+
+    if not os.path.exists(server_config.container.get_image_path()):
+        return ServerStatus.MISSING_CONTAINER
+
+    if not os.path.exists(server_config.container.get_pfile_path()):
+        return ServerStatus.NOT_RUNNING
+
+    pf_data = pull_process_file(server_config.container.get_pfile_path())
+    parent_pid = pf_data["parent_pid"]
+
+    check_process = subprocess.run(
+        server_config.process.get_status_command().strip("\\").format(pid=parent_pid).split(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
+
+    if check_process.stdout == b"":
+        return ServerStatus.NOT_RUNNING
+
+    return ServerStatus.RUNNING
+
+
+def check_process_file_format(data: dict) -> bool:
+    """
+    Check to see if the process file has the correct format and contains the expected key values.
+    :return:: True if success and False if fail
+    """
     required_keys = ["parent_pid", "image_pid", "port", "hostname"]
     for key in required_keys:
         if key not in data:
@@ -89,7 +316,12 @@ def check_process_file_format(data):
     return True
 
 
-def pull_process_file(file_path):
+def pull_process_file(file_path: str) -> dict:
+    """
+    Pull the data from the process file. If one is found returns the data in a dictionary
+    if not returns None
+    :return:: Data containing in process file.
+    """
     with open(file_path, "r") as f:
         data = yaml.load(f, yaml.Loader)
         if check_process_file_format(data):
@@ -97,7 +329,11 @@ def pull_process_file(file_path):
     return None
 
 
-def dump_process_file(data, file_path):
+def dump_process_file(data: dict, file_path: str):
+    """
+    Dump the process data from the dictionary to the specified file path.
+    :return:: True if success and False if fail
+    """
     if not check_process_file_format(data):
         return False
     with open(file_path, "w+") as f:

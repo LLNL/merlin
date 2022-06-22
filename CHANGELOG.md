@@ -14,11 +14,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added redis.conf for default redis configuration for merlin in server/redis.conf
 - Added default configurations for merlin server command in merlin/server/*.yaml
 - Added documentation page docs/merlin_server.rst, docs/modules/server/configuration.rst, and docs/modules/server/commands.rst
+- Added merlin server config command for editing configuration files.
+- Added server_command.py to store command calls.
+- Added following flags to config subcommand
+  - ipaddress (Set the binded ip address of the container)
+  - port (Set the binded port of the container)
+  - user (Set the main user file for container)
+  - password (Set the main user password file for container)
+  - add-user (Add a user to the container image [outputs an associated password file for user])
+  - remove-user (Remove user from list of added users)
+  - directory (Set the directory of the merlin server container files)
+  - snapshot-seconds (Set the number of seconds elapsed before snapshot change condition is checked)
+  - snapshot-changes (Set snapshot change condition for a snapshot to be made)
+  - snapshot-file (Set the database file that the snapshot will be written to)
+  - append-mode (Set the append mode for redis)
+  - append-file (Set the name of the append only file for redis)
+- Added user_file to merlin server config
+- Added pass_file to merlin server config
+- Added add_user function to add user to exisiting merlin server instance if one is running
+- Added remove_user function to remove user from merlin server instance if one is running
+- Added masteruser in redis config
+- Added requirepass in redis config
+- Added server_util.py file to store utility functions.
+- Created RedisConfig class to interface with redis.conf file
+- Created RedisUsers class to interface with redis.user file
+- Added better interface for configuration files(ServerConfig, ContainerConfig, ContainerFormatConfig, and ProcessConfig) with getting configuration values from merlin server config file, with classes.
+- Added merlin server to reapply users based on the saved redis.users config file.
+- Added redis.pass file containing password for default user in main merlin configuration.
 - Added the flux_exec batch argument to allow for flux exec arguments,
   e.g. flux_exec: flux exec -r "0-1" to run celery workers only on
   ranks 0 and 1 of a multi-rank allocation
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
+- Changed "default" user password to be "merlin_password" as default.
 ### Fixed
 - Fixed return values from scripts with main() to fix testing errors. 
 
