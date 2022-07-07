@@ -508,3 +508,37 @@ class RedisUsers:
         for user in current_users:
             if user not in self.users:
                 db.acl_deluser(user)
+
+class AppYaml:
+    default_filename = os.path.join(MERLIN_CONFIG_DIR, "app.yaml")
+    data = {}
+    broker_name = "broker"
+    results_name = "results_backend"
+
+    def __init__(self, filename:str = default_filename) -> None:
+        if not os.path.exists(filename):
+            filename = self.default_filename
+        self.read(filename)
+    
+    def apply_server_config(self, server_config:ServerConfig):
+        rc = RedisConfig(server_config.container.get_config_path())
+
+        self.data[self.broker_name]["name"] = "redis"
+        self.data[self.broker_name]["username"] = os.environ.get("USER")
+        self.data[self.broker_name]["password"] = server_config.container.get_pass_file_path()
+        self.data[self.broker_name]["server"] = rc.get_ip_address()
+        self.data[self.broker_name]["port"] = rc.get_port()
+        
+        self.data[self.results_name]["name"] = "redis"
+        self.data[self.results_name]["username"] = os.environ.get("USER")
+        self.data[self.results_name]["password"] = server_config.container.get_pass_file_path()
+        self.data[self.results_name]["server"] = rc.get_ip_address()
+        self.data[self.results_name]["port"] = rc.get_port()
+
+    def read(self, filename:str = default_filename):
+        with open(filename, "r") as f:
+            self.data = yaml.load(f, yaml.Loader)
+
+    def write(self, filename:str = default_filename):
+        with open(filename, "w+") as f:
+            yaml.dump(self.data, f, yaml.Dumper)
