@@ -200,7 +200,8 @@ def start_server() -> bool:
     ay.apply_server_config(server_config=server_config)
     ay.write(new_app_yaml)
     LOG.info(f"New app.yaml written to {new_app_yaml}.")
-    LOG.info("Replace app.yaml in ~/.merlin/app.yaml to use merlin server.")
+    LOG.info("Replace app.yaml in ~/.merlin/app.yaml to use merlin server as main configuration.")
+    LOG.info("To use if for local runs move app.yaml into the running directory.")
 
     return True
 
