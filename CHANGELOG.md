@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the flux_exec batch argument to allow for flux exec arguments,
   e.g. flux_exec: flux exec -r "0-1" to run celery workers only on
   ranks 0 and 1 of a multi-rank allocation
+- Added AppYaml class to interface with the main app.yaml config file.
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
 - Changed "default" user password to be "merlin_password" as default.
