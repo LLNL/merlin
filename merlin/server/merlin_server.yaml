@@ -1,6 +1,8 @@
 container:
     # Select the format for the recipe e.g. singularity, docker, podman (currently singularity is the only working option.)
     format: singularity
+    #Type of container that is used
+    image_type: redis
     # The image name
     image: redis_latest.sif
     # The url to pull the image from

@@ -18,7 +18,7 @@ from merlin.server.server_config import (
     pull_server_config,
     pull_server_image,
 )
-from merlin.server.server_util import RedisConfig, RedisUsers
+from merlin.server.server_util import AppYaml, RedisConfig, RedisUsers
 
 
 LOG = logging.getLogger("merlin")
@@ -194,6 +194,13 @@ def start_server() -> bool:
     redis_users = RedisUsers(server_config.container.get_user_file_path())
     redis_config = RedisConfig(server_config.container.get_config_path())
     redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), redis_config.get_password())
+
+    new_app_yaml = os.path.join(server_config.container.get_config_dir(), "app.yaml")
+    ay = AppYaml()
+    ay.apply_server_config(server_config=server_config)
+    ay.write(new_app_yaml)
+    LOG.info(f"New app.yaml written to {new_app_yaml}.")
+    LOG.info(f"Replace app.yaml in ~/.merlin/app.yaml to use merlin server.")
 
     return True
 
