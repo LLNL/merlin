@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added merlin server capabilities under merlin/server/
 - Added merlin server commands init, start, status, stop to main.py
 - Added redis.conf for default redis configuration for merlin in server/redis.conf
-- Added default configurations for merlin server command in merlin/server/*.yaml
+- Added default configurations for merlin server command in `merlin/server/*.yaml`
 - Added documentation page docs/merlin_server.rst, docs/modules/server/configuration.rst, and docs/modules/server/commands.rst
 - Added merlin server config command for editing configuration files.
 - Added server_command.py to store command calls.
@@ -44,11 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the flux_exec batch argument to allow for flux exec arguments,
   e.g. flux_exec: flux exec -r "0-1" to run celery workers only on
   ranks 0 and 1 of a multi-rank allocation
+
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
 - Changed "default" user password to be "merlin_password" as default.
+
 ### Fixed
 - Fixed return values from scripts with main() to fix testing errors. 
+- CI test for CHANGELOG modifcations
 
 ## [1.8.5]
 ### Added
