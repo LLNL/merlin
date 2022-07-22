@@ -78,7 +78,7 @@ class ContainerConfig:
 
     def __init__(self, data: dict) -> None:
         self.format = data["format"] if "format" in data else self.FORMAT
-        self.type = data["image_type"] if "image_type" in data else self.IMAGE_TYPE
+        self.image_type = data["image_type"] if "image_type" in data else self.IMAGE_TYPE
         self.image = data["image"] if "image" in data else self.IMAGE_NAME
         self.url = data["url"] if "url" in data else self.REDIS_URL
         self.config = data["config"] if "config" in data else self.CONFIG_FILE
@@ -91,7 +91,7 @@ class ContainerConfig:
         return self.format
 
     def get_image_type(self) -> str:
-        return self.type
+        return self.image_type
 
     def get_image_name(self) -> str:
         return self.image
