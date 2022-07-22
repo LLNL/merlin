@@ -517,6 +517,11 @@ class RedisUsers:
 
 
 class AppYaml:
+    """
+    AppYaml allows for an structured way to interact with any app.yaml main merlin configuration file.
+    It helps to parse each component of the app.yaml and allow users to edit, configure and write the 
+    file.
+    """
     default_filename = os.path.join(MERLIN_CONFIG_DIR, "app.yaml")
     data = {}
     broker_name = "broker"
