@@ -5,6 +5,8 @@ import os
 import redis
 import yaml
 
+import merlin.utils
+
 
 LOG = logging.getLogger("merlin")
 
@@ -519,9 +521,10 @@ class RedisUsers:
 class AppYaml:
     """
     AppYaml allows for an structured way to interact with any app.yaml main merlin configuration file.
-    It helps to parse each component of the app.yaml and allow users to edit, configure and write the 
+    It helps to parse each component of the app.yaml and allow users to edit, configure and write the
     file.
     """
+
     default_filename = os.path.join(MERLIN_CONFIG_DIR, "app.yaml")
     data = {}
     broker_name = "broker"
@@ -548,8 +551,7 @@ class AppYaml:
         self.data[self.results_name]["port"] = rc.get_port()
 
     def read(self, filename: str = default_filename):
-        with open(filename, "r") as f:
-            self.data = yaml.load(f, yaml.Loader)
+        self.data = merlin.utils.load_yaml(filename)
 
     def write(self, filename: str = default_filename):
         with open(filename, "w+") as f:
