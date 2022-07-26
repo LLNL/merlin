@@ -5,6 +5,8 @@ import os
 import redis
 import yaml
 
+import merlin.utils
+
 
 LOG = logging.getLogger("merlin")
 
@@ -57,6 +59,7 @@ class ContainerConfig:
 
     # Default values for configuration
     FORMAT = "singularity"
+    IMAGE_TYPE = "redis"
     IMAGE_NAME = "redis_latest.sif"
     REDIS_URL = "docker://redis"
     CONFIG_FILE = "redis.conf"
@@ -66,6 +69,7 @@ class ContainerConfig:
     USERS_FILE = "redis.users"
 
     format = FORMAT
+    image_type = IMAGE_TYPE
     image = IMAGE_NAME
     url = REDIS_URL
     config = CONFIG_FILE
@@ -76,6 +80,7 @@ class ContainerConfig:
 
     def __init__(self, data: dict) -> None:
         self.format = data["format"] if "format" in data else self.FORMAT
+        self.image_type = data["image_type"] if "image_type" in data else self.IMAGE_TYPE
         self.image = data["image"] if "image" in data else self.IMAGE_NAME
         self.url = data["url"] if "url" in data else self.REDIS_URL
         self.config = data["config"] if "config" in data else self.CONFIG_FILE
@@ -86,6 +91,9 @@ class ContainerConfig:
 
     def get_format(self) -> str:
         return self.format
+
+    def get_image_type(self) -> str:
+        return self.image_type
 
     def get_image_name(self) -> str:
         return self.image
@@ -508,3 +516,43 @@ class RedisUsers:
         for user in current_users:
             if user not in self.users:
                 db.acl_deluser(user)
+
+
+class AppYaml:
+    """
+    AppYaml allows for an structured way to interact with any app.yaml main merlin configuration file.
+    It helps to parse each component of the app.yaml and allow users to edit, configure and write the
+    file.
+    """
+
+    default_filename = os.path.join(MERLIN_CONFIG_DIR, "app.yaml")
+    data = {}
+    broker_name = "broker"
+    results_name = "results_backend"
+
+    def __init__(self, filename: str = default_filename) -> None:
+        if not os.path.exists(filename):
+            filename = self.default_filename
+        self.read(filename)
+
+    def apply_server_config(self, server_config: ServerConfig):
+        rc = RedisConfig(server_config.container.get_config_path())
+
+        self.data[self.broker_name]["name"] = server_config.container.get_image_type()
+        self.data[self.broker_name]["username"] = os.environ.get("USER")
+        self.data[self.broker_name]["password"] = server_config.container.get_pass_file_path()
+        self.data[self.broker_name]["server"] = rc.get_ip_address()
+        self.data[self.broker_name]["port"] = rc.get_port()
+
+        self.data[self.results_name]["name"] = server_config.container.get_image_type()
+        self.data[self.results_name]["username"] = os.environ.get("USER")
+        self.data[self.results_name]["password"] = server_config.container.get_pass_file_path()
+        self.data[self.results_name]["server"] = rc.get_ip_address()
+        self.data[self.results_name]["port"] = rc.get_port()
+
+    def read(self, filename: str = default_filename):
+        self.data = merlin.utils.load_yaml(filename)
+
+    def write(self, filename: str = default_filename):
+        with open(filename, "w+") as f:
+            yaml.dump(self.data, f, yaml.Dumper)
