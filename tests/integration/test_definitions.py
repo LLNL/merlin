@@ -1,4 +1,4 @@
-from conditions import FileHasRegex, HasRegex, HasReturnCode, ProvenanceYAMLFileHasRegex, StepFileExists, StepFileHasRegex
+from conditions import FileExists, FileHasRegex, HasRegex, HasReturnCode, ProvenanceYAMLFileHasRegex, StepFileExists, StepFileHasRegex
 
 from merlin.utils import get_flux_cmd
 
@@ -74,13 +74,34 @@ def define_tests():
     server_config_tests = {
         "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
         "merlin server config": (
-            "merlin server config -p 8888",
+            "merlin server config -p 8888 -pwd new_password -d ./config_dir -ss 80 -sc 8 -sf new_sf -am always -af new_af.aof",
             [
                 FileHasRegex("merlin_server/redis.conf", "port 8888"),
-                FileHasRegex("merlin_server/redis.conf", "requirepass merlin_password"),
-                FileHasRegex("merlin_server/redis.conf", "dir ./")
+                FileHasRegex("merlin_server/redis.conf", "requirepass new_password"),
+                FileHasRegex("merlin_server/redis.conf", "dir ./config_dir"),
+                FileHasRegex("merlin_server/redis.conf", "save 80 8"),
+                FileHasRegex("merlin_server/redis.conf", "dbfilename new_sf"),
+                FileHasRegex("merlin_server/redis.conf", "appendfsync always"),
+                FileHasRegex("merlin_server/redis.conf", "appendfilename \"new_af.aof\""),
             ],
             "local",
+        ),
+        "merlin server start": (
+            "merlin server start",
+            [
+                FileExists("./config_dir/new_sf"),
+                FileExists("./config_dir/new_af.aof"),
+                HasRegex("Server started with PID [0-9]*"),
+                HasRegex("Merlin server is running"),
+            ],
+            "local"
+        ),
+        "merlin server stop": (
+            "merlin server stop",
+            [
+                HasRegex("Merlin server terminated"),
+            ],
+            "local"
         ),
         "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/"),
     }
