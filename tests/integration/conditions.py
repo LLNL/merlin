@@ -238,3 +238,17 @@ class ProvenanceYAMLFileHasRegex(HasRegex):
         if self.negate:
             return not self.is_within()
         return self.is_within()
+
+class FileHasRegex(Condition):
+    def __init__(self, filename, regex) -> None:
+        self.filename = filename
+        self.regex = regex
+    
+    def contains(self):
+        with open(self.filename, "r") as f:
+            filetext = f.read()
+        return search(self.regex, filetext) is not None
+    
+    @property
+    def passes(self):
+        return self.contains()

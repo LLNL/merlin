@@ -1,4 +1,4 @@
-from conditions import HasRegex, HasReturnCode, ProvenanceYAMLFileHasRegex, StepFileExists, StepFileHasRegex
+from conditions import FileHasRegex, HasRegex, HasReturnCode, ProvenanceYAMLFileHasRegex, StepFileExists, StepFileHasRegex
 
 from merlin.utils import get_flux_cmd
 
@@ -53,6 +53,32 @@ def define_tests():
                 HasRegex("Server started with PID [0-9]*"),
                 HasRegex("Merlin server is running"),
                 HasRegex("Merlin server terminated"),
+            ],
+            "local",
+        ),
+        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/"),
+    }
+    server_restart_test = {
+        "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
+        "merlin server start/stop": (
+            "merlin server start; merlin server restart; merlin server status; merlin server stop",
+            [
+                HasRegex("Server started with PID [0-9]*"),
+                HasRegex("Merlin server is running"),
+                HasRegex("Merlin server terminated"),
+            ],
+            "local",
+        ),
+        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/"),
+    }
+    server_config_tests = {
+        "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
+        "merlin server config": (
+            "merlin server config -p 8888",
+            [
+                FileHasRegex("merlin_server/redis.conf", "port 8888"),
+                FileHasRegex("merlin_server/redis.conf", "requirepass merlin_password"),
+                FileHasRegex("merlin_server/redis.conf", "dir ./")
             ],
             "local",
         ),
@@ -385,6 +411,8 @@ def define_tests():
     for test_dict in [
         basic_checks,
         server_tests,
+        server_restart_test,
+        server_config_tests,
         examples_check,
         run_workers_echo_tests,
         wf_format_tests,
