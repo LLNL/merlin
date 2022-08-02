@@ -416,7 +416,7 @@ class RedisConfig:
         if file is None:
             return False
         # Set the append file in the redis config
-        if not self.set_config_value("appendfilename", file):
+        if not self.set_config_value("appendfilename", f'"{file}"'):
             LOG.error("Unable to set append filename.")
             return False
         LOG.info(f"Append file is set to {file}")
