@@ -1,4 +1,12 @@
-from conditions import FileExists, FileHasRegex, HasRegex, HasReturnCode, ProvenanceYAMLFileHasRegex, StepFileExists, StepFileHasRegex
+from conditions import (
+    FileExists,
+    FileHasRegex,
+    HasRegex,
+    HasReturnCode,
+    ProvenanceYAMLFileHasRegex,
+    StepFileExists,
+    StepFileHasRegex,
+)
 
 from merlin.utils import get_flux_cmd
 
@@ -82,7 +90,7 @@ def define_tests():
                 FileHasRegex("merlin_server/redis.conf", "save 80 8"),
                 FileHasRegex("merlin_server/redis.conf", "dbfilename new_sf"),
                 FileHasRegex("merlin_server/redis.conf", "appendfsync always"),
-                FileHasRegex("merlin_server/redis.conf", "appendfilename \"new_af.aof\""),
+                FileHasRegex("merlin_server/redis.conf", 'appendfilename "new_af.aof"'),
             ],
             "local",
         ),
@@ -95,7 +103,7 @@ def define_tests():
                 HasRegex("Merlin server is running"),
                 HasRegex("Merlin server terminated"),
             ],
-            "local"
+            "local",
         ),
         "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/ config_dir/"),
     }
