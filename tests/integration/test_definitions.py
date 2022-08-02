@@ -97,7 +97,7 @@ def define_tests():
             ],
             "local"
         ),
-        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/"),
+        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/ config_dir/"),
     }
     examples_check = {
         "example list": (

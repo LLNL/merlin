@@ -332,6 +332,9 @@ class RedisConfig:
     def set_directory(self, directory: str) -> bool:
         if directory is None:
             return False
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+            LOG.info(f"Created directory {directory}")
         # Validate the directory input
         if os.path.exists(directory):
             # Set the save directory to the redis config
@@ -339,7 +342,7 @@ class RedisConfig:
                 LOG.error("Unable to set directory for redis config")
                 return False
         else:
-            LOG.error("Directory given does not exist.")
+            LOG.error(f"Directory {directory} given does not exist and could not be created.")
             return False
         LOG.info(f"Directory is set to {directory}")
         return True
