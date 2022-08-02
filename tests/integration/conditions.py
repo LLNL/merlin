@@ -245,7 +245,7 @@ class FileExists(Condition):
         self.filename = filename
 
     def file_exists(self):
-        return os.path.isfile(self.filename)
+        return os.path.exists(self.filename)
 
     @property
     def passes(self):
