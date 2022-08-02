@@ -53,10 +53,13 @@ def define_tests():
             "local",
         ),
     }
-    server_tests = {
+    server_basic_tests = {
         "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
         "merlin server start/stop": (
-            "merlin server start; merlin server status; merlin server stop",
+            """merlin server start;
+            merlin server status;
+            merlin server stop;
+            rm -rf appendonly.aof dump.rdb merlin_server/""",
             [
                 HasRegex("Server started with PID [0-9]*"),
                 HasRegex("Merlin server is running"),
@@ -64,12 +67,13 @@ def define_tests():
             ],
             "local",
         ),
-        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/"),
-    }
-    server_restart_test = {
-        "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
-        "merlin server start/stop": (
-            "merlin server start; merlin server restart; merlin server status; merlin server stop",
+        "merlin server restart": (
+            """merlin server init;
+            merlin server start;
+            merlin server restart;
+            merlin server status;
+            merlin server stop;
+            rm -rf appendonly.aof dump.rdb merlin_server/""",
             [
                 HasRegex("Server started with PID [0-9]*"),
                 HasRegex("Merlin server is running"),
@@ -77,12 +81,14 @@ def define_tests():
             ],
             "local",
         ),
-        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/"),
     }
     server_config_tests = {
-        "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
-        "merlin server config": (
-            "merlin server config -p 8888 -pwd new_password -d ./config_dir -ss 80 -sc 8 -sf new_sf -am always -af new_af.aof",
+        "merlin server change config": (
+            """merlin server init;
+            merlin server config -p 8888 -pwd new_password -d ./config_dir -ss 80 -sc 8 -sf new_sf -am always -af new_af.aof;
+            merlin server start;
+            merlin server stop;
+            rm -rf appendonly.aof dump.rdb merlin_server/ config_dir/""",
             [
                 FileHasRegex("merlin_server/redis.conf", "port 8888"),
                 FileHasRegex("merlin_server/redis.conf", "requirepass new_password"),
@@ -91,21 +97,13 @@ def define_tests():
                 FileHasRegex("merlin_server/redis.conf", "dbfilename new_sf"),
                 FileHasRegex("merlin_server/redis.conf", "appendfsync always"),
                 FileHasRegex("merlin_server/redis.conf", 'appendfilename "new_af.aof"'),
-            ],
-            "local",
-        ),
-        "merlin server start/stop": (
-            "merlin server start; merlin server stop",
-            [
-                # FileExists("./config_dir/new_sf"),
-                # FileExists("./config_dir/new_af.aof"),
+                FileExists("./config_dir/new_sf"),
+                FileExists("./config_dir/new_af.aof"),
                 HasRegex("Server started with PID [0-9]*"),
-                HasRegex("Merlin server is running"),
                 HasRegex("Merlin server terminated"),
             ],
             "local",
         ),
-        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/ config_dir/"),
     }
     examples_check = {
         "example list": (
@@ -433,7 +431,7 @@ def define_tests():
     all_tests = {}
     for test_dict in [
         basic_checks,
-        server_tests,
+        server_basic_tests,
         server_restart_test,
         server_config_tests,
         examples_check,
