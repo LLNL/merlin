@@ -95,10 +95,10 @@ def define_tests():
             "local",
         ),
         "merlin server start/stop": (
-            "merlin server start; merlin server stop; ls",
+            "merlin server start; merlin server stop",
             [
-                FileExists("./config_dir/new_sf"),
-                FileExists("./config_dir/new_af.aof"),
+                # FileExists("./config_dir/new_sf"),
+                # FileExists("./config_dir/new_af.aof"),
                 HasRegex("Server started with PID [0-9]*"),
                 HasRegex("Merlin server is running"),
                 HasRegex("Merlin server terminated"),
