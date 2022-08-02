@@ -432,7 +432,6 @@ def define_tests():
     for test_dict in [
         basic_checks,
         server_basic_tests,
-        server_restart_test,
         server_config_tests,
         examples_check,
         run_workers_echo_tests,
