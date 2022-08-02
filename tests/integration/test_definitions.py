@@ -95,7 +95,7 @@ def define_tests():
             "local",
         ),
         "merlin server start/stop": (
-            "merlin server start; merlin server stop",
+            "merlin server start; merlin server stop; ls",
             [
                 FileExists("./config_dir/new_sf"),
                 FileExists("./config_dir/new_af.aof"),
