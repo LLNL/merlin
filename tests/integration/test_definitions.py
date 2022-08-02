@@ -85,7 +85,8 @@ def define_tests():
             """merlin server init;
             merlin server config -p 8888 -pwd new_password -d ./config_dir -ss 80 -sc 8 -sf new_sf -am always -af new_af.aof;
             merlin server start;
-            merlin server stop;""",
+            merlin server stop;
+            ls 1>&2""",
             [
                 FileHasRegex("merlin_server/redis.conf", "port 8888"),
                 FileHasRegex("merlin_server/redis.conf", "requirepass new_password"),
