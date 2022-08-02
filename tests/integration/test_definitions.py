@@ -58,8 +58,7 @@ def define_tests():
         "merlin server start/stop": (
             """merlin server start;
             merlin server status;
-            merlin server stop;
-            rm -rf appendonly.aof dump.rdb merlin_server/""",
+            merlin server stop;""",
             [
                 HasRegex("Server started with PID [0-9]*"),
                 HasRegex("Merlin server is running"),
@@ -72,8 +71,7 @@ def define_tests():
             merlin server start;
             merlin server restart;
             merlin server status;
-            merlin server stop;
-            rm -rf appendonly.aof dump.rdb merlin_server/""",
+            merlin server stop;""",
             [
                 HasRegex("Server started with PID [0-9]*"),
                 HasRegex("Merlin server is running"),
@@ -87,8 +85,7 @@ def define_tests():
             """merlin server init;
             merlin server config -p 8888 -pwd new_password -d ./config_dir -ss 80 -sc 8 -sf new_sf -am always -af new_af.aof;
             merlin server start;
-            merlin server stop;
-            rm -rf appendonly.aof dump.rdb merlin_server/ config_dir/""",
+            merlin server stop;""",
             [
                 FileHasRegex("merlin_server/redis.conf", "port 8888"),
                 FileHasRegex("merlin_server/redis.conf", "requirepass new_password"),
