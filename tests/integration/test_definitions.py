@@ -1,6 +1,5 @@
 from conditions import (
-    DirExists,
-    FileExists,
+    PathExists,
     FileHasRegex,
     HasRegex,
     HasReturnCode,
@@ -86,8 +85,7 @@ def define_tests():
             """merlin server init;
             merlin server config -p 8888 -pwd new_password -d ./config_dir -ss 80 -sc 8 -sf new_sf -am always -af new_af.aof;
             merlin server start;
-            merlin server stop;
-            ls -r ./config_dir/ 1>&2""",
+            merlin server stop;""",
             [
                 FileHasRegex("merlin_server/redis.conf", "port 8888"),
                 FileHasRegex("merlin_server/redis.conf", "requirepass new_password"),
@@ -96,8 +94,8 @@ def define_tests():
                 FileHasRegex("merlin_server/redis.conf", "dbfilename new_sf"),
                 FileHasRegex("merlin_server/redis.conf", "appendfsync always"),
                 FileHasRegex("merlin_server/redis.conf", 'appendfilename "new_af.aof"'),
-                FileExists("./config_dir/new_sf"),
-                DirExists("./config_dir/appendonlydir"),
+                PathExists("./config_dir/new_sf"),
+                PathExists("./config_dir/appendonlydir"),
                 HasRegex("Server started with PID [0-9]*"),
                 HasRegex("Merlin server terminated"),
             ],

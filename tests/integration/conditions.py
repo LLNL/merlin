@@ -240,27 +240,16 @@ class ProvenanceYAMLFileHasRegex(HasRegex):
         return self.is_within()
 
 
-class FileExists(Condition):
-    def __init__(self, filename) -> None:
-        self.filename = filename
+class PathExists(Condition):
+    def __init__(self, pathname) -> None:
+        self.pathname = pathname
 
-    def file_exists(self):
-        return os.path.exists(self.filename)
-
-    @property
-    def passes(self):
-        return self.file_exists()
-
-class DirExists(Condition):
-    def __init__(self, dirname) -> None:
-        self.dirname = dirname
-
-    def dir_exists(self):
-        return os.path.exists(self.dirname)
+    def path_exists(self):
+        return os.path.exists(self.pathname)
 
     @property
     def passes(self):
-        return self.dir_exists()
+        return self.path_exists()
 
 
 class FileHasRegex(Condition):
