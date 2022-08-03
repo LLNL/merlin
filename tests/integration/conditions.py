@@ -251,6 +251,17 @@ class FileExists(Condition):
     def passes(self):
         return self.file_exists()
 
+class DirExists(Condition):
+    def __init__(self, dirname) -> None:
+        self.dirname = dirname
+
+    def dir_exists(self):
+        return os.path.exists(self.dirname)
+
+    @property
+    def passes(self):
+        return self.dir_exists()
+
 
 class FileHasRegex(Condition):
     def __init__(self, filename, regex) -> None:

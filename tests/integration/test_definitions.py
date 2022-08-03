@@ -1,4 +1,5 @@
 from conditions import (
+    DirExists,
     FileExists,
     FileHasRegex,
     HasRegex,
@@ -96,7 +97,7 @@ def define_tests():
                 FileHasRegex("merlin_server/redis.conf", "appendfsync always"),
                 FileHasRegex("merlin_server/redis.conf", 'appendfilename "new_af.aof"'),
                 FileExists("./config_dir/new_sf"),
-                #FileExists("./config_dir/appendonlydir/new_af.1.base.rdb"),
+                DirExists("./config_dir/appendonlydir"),
                 HasRegex("Server started with PID [0-9]*"),
                 HasRegex("Merlin server terminated"),
             ],
