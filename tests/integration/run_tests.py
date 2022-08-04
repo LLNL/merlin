@@ -78,6 +78,12 @@ def run_single_test(name, test, test_label="", buffer_length=50):
             info["violated_condition"] = (condition, i, len(conditions))
             break
 
+    if len(test) == 4:
+        end_process = Popen(test[3], stdout=PIPE, stderr=PIPE, shell=True)
+        end_stdout, end_stderr = end_process.communicate()
+        info["end_stdout"] = end_stdout
+        info["end_stderr"] = end_stderr
+
     return passed, info
 
 
@@ -139,7 +145,7 @@ def run_tests(args, tests):
         n_to_run = 0
         selective = True
         for test_id, test in enumerate(tests.values()):
-            if len(test) == 3 and test[2] == "local":
+            if len(test) >= 3 and test[2] == "local":
                 args.ids.append(test_id + 1)
                 n_to_run += 1
 

@@ -271,3 +271,14 @@ class FileHasRegex(Condition):
     @property
     def passes(self):
         return self.contains()
+
+class RedisHasUser(Condition):
+    def __init__(self) -> None:
+        return
+    
+    def has_user(self):
+        return
+    
+    @property
+    def passes(self):
+        return self.has_user()

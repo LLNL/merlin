@@ -1,8 +1,8 @@
 from conditions import (
-    PathExists,
     FileHasRegex,
     HasRegex,
     HasReturnCode,
+    PathExists,
     ProvenanceYAMLFileHasRegex,
     StepFileExists,
     StepFileHasRegex,
@@ -54,7 +54,7 @@ def define_tests():
         ),
     }
     server_basic_tests = {
-        "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
+        "merlin server init": ("merlin server init", HasRegex(".*successful"), "local", "rm -rf appendonly.aof dump.rdb merlin_server/"),
         "merlin server start/stop": (
             """merlin server start;
             merlin server status;
@@ -65,6 +65,7 @@ def define_tests():
                 HasRegex("Merlin server terminated"),
             ],
             "local",
+            "rm -rf appendonly.aof dump.rdb merlin_server/"
         ),
         "merlin server restart": (
             """merlin server init;
@@ -78,6 +79,7 @@ def define_tests():
                 HasRegex("Merlin server terminated"),
             ],
             "local",
+            "rm -rf appendonly.aof dump.rdb merlin_server/"
         ),
     }
     server_config_tests = {
@@ -100,7 +102,20 @@ def define_tests():
                 HasRegex("Merlin server terminated"),
             ],
             "local",
+            "rm -rf appendonly.aof dump.rdb merlin_server/"
         ),
+        # "merlin server config add/remove user": (
+        #     """merlin server init;
+        #     merlin server start;
+        #     merlin server config --add-user luc;
+        #     ///check here to seee if container has user
+        #     merlin server stop;
+        #     rm -rf merlin_server/ ...
+        #     """,
+        #     [
+                
+        #     ]
+        # )
     }
     examples_check = {
         "example list": (
