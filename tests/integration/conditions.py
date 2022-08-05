@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 from glob import glob
 from re import search
 
-import redis
-
 
 # TODO when moving command line tests to pytest, change Condition boolean returns to assertions
 class Condition(ABC):
