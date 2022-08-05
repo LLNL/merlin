@@ -55,7 +55,12 @@ def define_tests():
         ),
     }
     server_basic_tests = {
-        "merlin server init": ("merlin server init", HasRegex(".*successful"), "local", "rm -rf appendonly.aof dump.rdb merlin_server/"),
+        "merlin server init": (
+            "merlin server init",
+            HasRegex(".*successful"),
+            "local",
+            "rm -rf appendonly.aof dump.rdb merlin_server/",
+        ),
         "merlin server start/stop": (
             """merlin server init;
             merlin server start;
@@ -67,7 +72,7 @@ def define_tests():
                 HasRegex("Merlin server terminated"),
             ],
             "local",
-            "rm -rf appendonly.aof dump.rdb merlin_server/"
+            "rm -rf appendonly.aof dump.rdb merlin_server/",
         ),
         "merlin server restart": (
             """merlin server init;
@@ -81,7 +86,7 @@ def define_tests():
                 HasRegex("Merlin server terminated"),
             ],
             "local",
-            "rm -rf appendonly.aof dump.rdb merlin_server/"
+            "rm -rf appendonly.aof dump.rdb merlin_server/",
         ),
     }
     server_config_tests = {
@@ -104,7 +109,7 @@ def define_tests():
                 HasRegex("Merlin server terminated"),
             ],
             "local",
-            "rm -rf appendonly.aof dump.rdb merlin_server/ config_dir/"
+            "rm -rf appendonly.aof dump.rdb merlin_server/ config_dir/",
         ),
         "merlin server config add/remove user": (
             """merlin server init;
@@ -118,11 +123,11 @@ def define_tests():
             """,
             [
                 FileHasRegex("./merlin_server/redis.users_new", "new_user"),
-                FileHasNoRegex("./merlin_server/redis.users", "new_user")
+                FileHasNoRegex("./merlin_server/redis.users", "new_user"),
             ],
             "local",
-            """rm -rf appendonly.aof dump.rdb merlin_server/"""
-        )
+            """rm -rf appendonly.aof dump.rdb merlin_server/""",
+        ),
     }
     examples_check = {
         "example list": (

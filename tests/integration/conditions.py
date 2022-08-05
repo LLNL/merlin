@@ -2,6 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from glob import glob
 from re import search
+
 import redis
 
 
@@ -242,10 +243,14 @@ class ProvenanceYAMLFileHasRegex(HasRegex):
 
 
 class PathExists(Condition):
+    """
+    A condition for checking if a path to a file or directory exists
+    """
+
     def __init__(self, pathname) -> None:
         self.pathname = pathname
 
-    def path_exists(self):
+    def path_exists(self) -> bool:
         return os.path.exists(self.pathname)
 
     @property
@@ -254,11 +259,16 @@ class PathExists(Condition):
 
 
 class FileHasRegex(Condition):
+    """
+    A condition that some body of text within a file
+    MUST match a given regular expression.
+    """
+
     def __init__(self, filename, regex) -> None:
         self.filename = filename
         self.regex = regex
 
-    def contains(self):
+    def contains(self) -> bool:
         try:
             with open(self.filename, "r") as f:
                 filetext = f.read()
@@ -273,7 +283,13 @@ class FileHasRegex(Condition):
     def passes(self):
         return self.contains()
 
+
 class FileHasNoRegex(FileHasRegex):
+    """
+    A condition that some body of text within a file
+    MUST NOT match a given regular expression.
+    """
+
     @property
     def passes(self):
         return not self.contains()
