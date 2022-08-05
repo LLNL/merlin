@@ -2,6 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from glob import glob
 from re import search
+import redis
 
 
 # TODO when moving command line tests to pytest, change Condition boolean returns to assertions
@@ -272,13 +273,42 @@ class FileHasRegex(Condition):
     def passes(self):
         return self.contains()
 
+
 class RedisHasUser(Condition):
-    def __init__(self) -> None:
-        return
+    def __init__(self, host, port, username, password, user) -> None:
+        self.user = user
+        self.redis_cli = redis.Redis(host=host, port=port, username=username, password=password)
     
     def has_user(self):
-        return
+        try:
+            user_list = self.redis_cli.acl_list()
+        except redis.ResponseError:
+            return False
+        for entry in user_list:
+            if self.user in entry.split()[1]:
+                return True
+        return False
     
     @property
     def passes(self):
         return self.has_user()
+
+
+class RedisNotHaveUser(Condition):
+    def __init__(self, host, port, username, password, user) -> None:
+        self.user = user
+        self.redis_cli = redis.Redis(host=host, port=port, username=username, password=password)
+    
+    def not_have_user(self):
+        try:
+            user_list = self.redis_cli.acl_list()
+        except redis.ResponseError:
+            return False
+        for entry in user_list:
+            if self.user in entry.split()[1]:
+                return False
+        return True
+    
+    @property
+    def passes(self):
+        return self.not_have_user()

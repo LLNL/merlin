@@ -4,6 +4,7 @@ from conditions import (
     HasReturnCode,
     PathExists,
     ProvenanceYAMLFileHasRegex,
+    RedisHasUser,
     StepFileExists,
     StepFileHasRegex,
 )
@@ -56,7 +57,8 @@ def define_tests():
     server_basic_tests = {
         "merlin server init": ("merlin server init", HasRegex(".*successful"), "local", "rm -rf appendonly.aof dump.rdb merlin_server/"),
         "merlin server start/stop": (
-            """merlin server start;
+            """merlin server init;
+            merlin server start;
             merlin server status;
             merlin server stop;""",
             [
@@ -102,20 +104,19 @@ def define_tests():
                 HasRegex("Merlin server terminated"),
             ],
             "local",
-            "rm -rf appendonly.aof dump.rdb merlin_server/"
+            "rm -rf appendonly.aof dump.rdb merlin_server/ config_dir/"
         ),
-        # "merlin server config add/remove user": (
-        #     """merlin server init;
-        #     merlin server start;
-        #     merlin server config --add-user luc;
-        #     ///check here to seee if container has user
-        #     merlin server stop;
-        #     rm -rf merlin_server/ ...
-        #     """,
-        #     [
-                
-        #     ]
-        # )
+        "merlin server config add/remove user": (
+            """merlin server init;
+            merlin server start;
+            merlin server config --add-user new_user new_password;""",
+            [
+                RedisHasUser("localhost", 6379, "new_user", "new_password", "new_user")
+            ],
+            "local",
+            """merlin server stop;
+            rm -rf appendonly.aof dump.rdb merlin_server/"""
+        )
     }
     examples_check = {
         "example list": (
