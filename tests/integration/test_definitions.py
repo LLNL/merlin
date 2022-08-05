@@ -1,10 +1,10 @@
 from conditions import (
+    FileHasNoRegex,
     FileHasRegex,
     HasRegex,
     HasReturnCode,
     PathExists,
     ProvenanceYAMLFileHasRegex,
-    RedisHasUser,
     StepFileExists,
     StepFileHasRegex,
 )
@@ -109,13 +109,19 @@ def define_tests():
         "merlin server config add/remove user": (
             """merlin server init;
             merlin server start;
-            merlin server config --add-user new_user new_password;""",
+            merlin server config --add-user new_user new_password;
+            merlin server stop;
+            scp ./merlin_server/redis.users ./merlin_server/redis.users_new
+            merlin server start;
+            merlin server config --remove-user new_user;
+            merlin server stop;
+            """,
             [
-                RedisHasUser("localhost", 6379, "new_user", "new_password", "new_user")
+                FileHasRegex("./merlin_server/redis.users_new", "new_user"),
+                FileHasNoRegex("./merlin_server/redis.users", "new_user")
             ],
             "local",
-            """merlin server stop;
-            rm -rf appendonly.aof dump.rdb merlin_server/"""
+            """rm -rf appendonly.aof dump.rdb merlin_server/"""
         )
     }
     examples_check = {

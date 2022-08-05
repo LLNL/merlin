@@ -273,42 +273,7 @@ class FileHasRegex(Condition):
     def passes(self):
         return self.contains()
 
-
-class RedisHasUser(Condition):
-    def __init__(self, host, port, username, password, user) -> None:
-        self.user = user
-        self.redis_cli = redis.Redis(host=host, port=port, username=username, password=password)
-    
-    def has_user(self):
-        try:
-            user_list = self.redis_cli.acl_list()
-        except redis.ResponseError:
-            return False
-        for entry in user_list:
-            if self.user in entry.split()[1]:
-                return True
-        return False
-    
+class FileHasNoRegex(FileHasRegex):
     @property
     def passes(self):
-        return self.has_user()
-
-
-class RedisNotHaveUser(Condition):
-    def __init__(self, host, port, username, password, user) -> None:
-        self.user = user
-        self.redis_cli = redis.Redis(host=host, port=port, username=username, password=password)
-    
-    def not_have_user(self):
-        try:
-            user_list = self.redis_cli.acl_list()
-        except redis.ResponseError:
-            return False
-        for entry in user_list:
-            if self.user in entry.split()[1]:
-                return False
-        return True
-    
-    @property
-    def passes(self):
-        return self.not_have_user()
+        return not self.contains()
