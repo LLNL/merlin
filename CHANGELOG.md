@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added lgtm.com Badge for README.md
 - More fixes for lgtm checks.
 - Added merlin server command as a container option for broker and results_backend servers.
+- Added merlin server unit tests to test exisiting merlin server commands.
 - Added the flux_exec batch argument to allow for flux exec arguments,
   e.g. flux_exec: flux exec -r "0-1" to run celery workers only on
   ranks 0 and 1 of a multi-rank allocation
