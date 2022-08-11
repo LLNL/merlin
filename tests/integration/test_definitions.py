@@ -13,6 +13,7 @@ from merlin.utils import get_flux_cmd
 
 
 OUTPUT_DIR = "cli_test_studies"
+CLEAN_MERLIN_SERVER = "rm -rf appendonly.aof dump.rdb merlin_server/"
 
 
 def define_tests():
@@ -59,7 +60,7 @@ def define_tests():
             "merlin server init",
             HasRegex(".*successful"),
             "local",
-            "rm -rf appendonly.aof dump.rdb merlin_server/",
+            CLEAN_MERLIN_SERVER,
         ),
         "merlin server start/stop": (
             """merlin server init;
@@ -72,7 +73,7 @@ def define_tests():
                 HasRegex("Merlin server terminated"),
             ],
             "local",
-            "rm -rf appendonly.aof dump.rdb merlin_server/",
+            CLEAN_MERLIN_SERVER,
         ),
         "merlin server restart": (
             """merlin server init;
@@ -86,7 +87,7 @@ def define_tests():
                 HasRegex("Merlin server terminated"),
             ],
             "local",
-            "rm -rf appendonly.aof dump.rdb merlin_server/",
+            CLEAN_MERLIN_SERVER,
         ),
     }
     server_config_tests = {
@@ -126,7 +127,7 @@ def define_tests():
                 FileHasNoRegex("./merlin_server/redis.users", "new_user"),
             ],
             "local",
-            """rm -rf appendonly.aof dump.rdb merlin_server/""",
+            CLEAN_MERLIN_SERVER,
         ),
     }
     examples_check = {
