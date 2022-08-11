@@ -251,6 +251,9 @@ class PathExists(Condition):
     def path_exists(self) -> bool:
         return os.path.exists(self.pathname)
 
+    def __str__(self) -> str:
+        return f"{__class__.__name__} expected to find file or directory at {self.pathname}"
+
     @property
     def passes(self):
         return self.path_exists()
@@ -277,6 +280,9 @@ class FileHasRegex(Condition):
     def is_within(self, text):
         return search(self.regex, text) is not None
 
+    def __str__(self) -> str:
+        return f"{__class__.__name__} expected to find {self.regex} regex match within {self.filename} file but no match was found"
+
     @property
     def passes(self):
         return self.contains()
@@ -287,6 +293,9 @@ class FileHasNoRegex(FileHasRegex):
     A condition that some body of text within a file
     MUST NOT match a given regular expression.
     """
+
+    def __str__(self) -> str:
+        return f"{__class__.__name__} expected to find {self.regex} regex to not match within {self.filename} file but a match was found"
 
     @property
     def passes(self):
