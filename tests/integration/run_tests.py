@@ -145,6 +145,10 @@ def run_tests(args, tests):
         n_to_run = 0
         selective = True
         for test_id, test in enumerate(tests.values()):
+            # Ensures that test definitions are atleast size 3.
+            # 'local' variable is stored in 3rd element of the test definitions,
+            # but an optional 4th element can be provided for an ending command
+            # to be ran after all checks have been made.
             if len(test) >= 3 and test[2] == "local":
                 args.ids.append(test_id + 1)
                 n_to_run += 1
