@@ -454,7 +454,13 @@ class RedisUsers:
 
         def get_user_dict(self) -> dict:
             self.status = "on"
-            return {"status": self.status, "hash_password": self.hash_password, "keys": self.keys, "channels": self.channels, "commands": self.commands}
+            return {
+                "status": self.status,
+                "hash_password": self.hash_password,
+                "keys": self.keys,
+                "channels": self.channels,
+                "commands": self.commands,
+            }
 
         def __repr__(self) -> str:
             return str(self.get_user_dict())
