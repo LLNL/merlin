@@ -332,6 +332,9 @@ class RedisConfig:
     def set_directory(self, directory: str) -> bool:
         if directory is None:
             return False
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+            LOG.info(f"Created directory {directory}")
         # Validate the directory input
         if os.path.exists(directory):
             # Set the save directory to the redis config
@@ -339,7 +342,7 @@ class RedisConfig:
                 LOG.error("Unable to set directory for redis config")
                 return False
         else:
-            LOG.error("Directory given does not exist.")
+            LOG.error(f"Directory {directory} given does not exist and could not be created.")
             return False
         LOG.info(f"Directory is set to {directory}")
         return True
@@ -413,7 +416,7 @@ class RedisConfig:
         if file is None:
             return False
         # Set the append file in the redis config
-        if not self.set_config_value("appendfilename", file):
+        if not self.set_config_value("appendfilename", f'"{file}"'):
             LOG.error("Unable to set append filename.")
             return False
         LOG.info(f"Append file is set to {file}")
@@ -431,11 +434,13 @@ class RedisUsers:
         status = "on"
         hash_password = hashlib.sha256(b"password").hexdigest()
         keys = "*"
+        channels = "*"
         commands = "@all"
 
-        def __init__(self, status="on", keys="*", commands="@all", password=None) -> None:
+        def __init__(self, status="on", keys="*", channels="*", commands="@all", password=None) -> None:
             self.status = status
             self.keys = keys
+            self.channels = channels
             self.commands = commands
             if password is not None:
                 self.set_password(password)
@@ -443,12 +448,19 @@ class RedisUsers:
         def parse_dict(self, dict: dict) -> None:
             self.status = dict["status"]
             self.keys = dict["keys"]
+            self.channels = dict["channels"]
             self.commands = dict["commands"]
             self.hash_password = dict["hash_password"]
 
         def get_user_dict(self) -> dict:
             self.status = "on"
-            return {"status": self.status, "hash_password": self.hash_password, "keys": self.keys, "commands": self.commands}
+            return {
+                "status": self.status,
+                "hash_password": self.hash_password,
+                "keys": self.keys,
+                "channels": self.channels,
+                "commands": self.commands,
+            }
 
         def __repr__(self) -> str:
             return str(self.get_user_dict())
@@ -482,10 +494,10 @@ class RedisUsers:
         with open(self.filename, "w") as f:
             yaml.dump(data, f, yaml.Dumper)
 
-    def add_user(self, user, status="on", keys="*", commands="@all", password=None) -> bool:
+    def add_user(self, user, status="on", keys="*", channels="*", commands="@all", password=None) -> bool:
         if user in self.users:
             return False
-        self.users[user] = self.User(status, keys, commands, password)
+        self.users[user] = self.User(status, keys, channels, commands, password)
         return True
 
     def set_password(self, user: str, password: str):
@@ -510,6 +522,7 @@ class RedisUsers:
                     hashed_passwords=[f"+{data.hash_password}"],
                     enabled=(data.status == "on"),
                     keys=data.keys,
+                    channels=data.channels,
                     commands=[f"+{data.commands}"],
                 )
 

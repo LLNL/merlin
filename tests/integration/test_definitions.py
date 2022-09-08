@@ -1,9 +1,19 @@
-from conditions import HasRegex, HasReturnCode, ProvenanceYAMLFileHasRegex, StepFileExists, StepFileHasRegex
+from conditions import (
+    FileHasNoRegex,
+    FileHasRegex,
+    HasRegex,
+    HasReturnCode,
+    PathExists,
+    ProvenanceYAMLFileHasRegex,
+    StepFileExists,
+    StepFileHasRegex,
+)
 
 from merlin.utils import get_flux_cmd
 
 
 OUTPUT_DIR = "cli_test_studies"
+CLEAN_MERLIN_SERVER = "rm -rf appendonly.aof dump.rdb merlin_server/"
 
 
 def define_tests():
@@ -45,18 +55,80 @@ def define_tests():
             "local",
         ),
     }
-    server_tests = {
-        "merlin server init": ("merlin server init", HasRegex(".*successful"), "local"),
+    server_basic_tests = {
+        "merlin server init": (
+            "merlin server init",
+            HasRegex(".*successful"),
+            "local",
+            CLEAN_MERLIN_SERVER,
+        ),
         "merlin server start/stop": (
-            "merlin server start; merlin server status; merlin server stop",
+            """merlin server init;
+            merlin server start;
+            merlin server status;
+            merlin server stop;""",
             [
                 HasRegex("Server started with PID [0-9]*"),
                 HasRegex("Merlin server is running"),
                 HasRegex("Merlin server terminated"),
             ],
             "local",
+            CLEAN_MERLIN_SERVER,
         ),
-        "clean merlin server": ("rm -rf appendonly.aof dump.rdb merlin_server/"),
+        "merlin server restart": (
+            """merlin server init;
+            merlin server start;
+            merlin server restart;
+            merlin server status;
+            merlin server stop;""",
+            [
+                HasRegex("Server started with PID [0-9]*"),
+                HasRegex("Merlin server is running"),
+                HasRegex("Merlin server terminated"),
+            ],
+            "local",
+            CLEAN_MERLIN_SERVER,
+        ),
+    }
+    server_config_tests = {
+        "merlin server change config": (
+            """merlin server init;
+            merlin server config -p 8888 -pwd new_password -d ./config_dir -ss 80 -sc 8 -sf new_sf -am always -af new_af.aof;
+            merlin server start;
+            merlin server stop;""",
+            [
+                FileHasRegex("merlin_server/redis.conf", "port 8888"),
+                FileHasRegex("merlin_server/redis.conf", "requirepass new_password"),
+                FileHasRegex("merlin_server/redis.conf", "dir ./config_dir"),
+                FileHasRegex("merlin_server/redis.conf", "save 80 8"),
+                FileHasRegex("merlin_server/redis.conf", "dbfilename new_sf"),
+                FileHasRegex("merlin_server/redis.conf", "appendfsync always"),
+                FileHasRegex("merlin_server/redis.conf", 'appendfilename "new_af.aof"'),
+                PathExists("./config_dir/new_sf"),
+                PathExists("./config_dir/appendonlydir"),
+                HasRegex("Server started with PID [0-9]*"),
+                HasRegex("Merlin server terminated"),
+            ],
+            "local",
+            "rm -rf appendonly.aof dump.rdb merlin_server/ config_dir/",
+        ),
+        "merlin server config add/remove user": (
+            """merlin server init;
+            merlin server start;
+            merlin server config --add-user new_user new_password;
+            merlin server stop;
+            scp ./merlin_server/redis.users ./merlin_server/redis.users_new
+            merlin server start;
+            merlin server config --remove-user new_user;
+            merlin server stop;
+            """,
+            [
+                FileHasRegex("./merlin_server/redis.users_new", "new_user"),
+                FileHasNoRegex("./merlin_server/redis.users", "new_user"),
+            ],
+            "local",
+            CLEAN_MERLIN_SERVER,
+        ),
     }
     examples_check = {
         "example list": (
@@ -384,7 +456,8 @@ def define_tests():
     all_tests = {}
     for test_dict in [
         basic_checks,
-        server_tests,
+        server_basic_tests,
+        server_config_tests,
         examples_check,
         run_workers_echo_tests,
         wf_format_tests,
