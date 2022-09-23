@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More fixes for lgtm checks.
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
+- New shortcuts in specification file (sample_vector, sample_names, spec_original_template, spec_executed_run, spec_archived_copy)
 
 ## [1.8.5]
 ### Added
