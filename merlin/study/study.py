@@ -108,12 +108,19 @@ class MerlinStudy:
             "MERLIN_HARD_FAIL": str(int(ReturnCode.HARD_FAIL)),
             "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
             # below will be substituted for sample values on execution
-            "MERLIN_SAMPLE_VECTOR": " ".join([ "$({})".format(k) for k in self.get_sample_labels(from_spec=self.original_spec)]),
+            "MERLIN_SAMPLE_VECTOR": " ".join(
+                ["$({})".format(k) for k in self.get_sample_labels(from_spec=self.original_spec)]
+            ),
             "MERLIN_SAMPLE_NAMES": " ".join(self.get_sample_labels(from_spec=self.original_spec)),
-            "MERLIN_SPEC": os.path.join(
-                    self.info,
-                    self.original_spec.description["name"].replace(" ", "_") + ".expanded.yaml"
-            )
+            "MERLIN_SPEC_ORIGINAL_TEMPLATE": os.path.join(
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".original_template.yaml"
+            ),
+            "MERLIN_SPEC_EXECUTED_RUN": os.path.join(
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".executed_run.yaml"
+            ),
+            "MERLIN_SPEC_ARCHIVED_COPY": os.path.join(
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".archived_copy.yaml"
+            ),
         }
 
         self.pgen_file = pgen_file
