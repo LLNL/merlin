@@ -113,13 +113,13 @@ class MerlinStudy:
             ),
             "MERLIN_SAMPLE_NAMES": " ".join(self.get_sample_labels(from_spec=self.original_spec)),
             "MERLIN_SPEC_ORIGINAL_TEMPLATE": os.path.join(
-                self.info, self.original_spec.description["name"].replace(" ", "_") + ".original_template.yaml"
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".orig.yaml"
             ),
             "MERLIN_SPEC_EXECUTED_RUN": os.path.join(
-                self.info, self.original_spec.description["name"].replace(" ", "_") + ".executed_run.yaml"
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".partial.yaml"
             ),
             "MERLIN_SPEC_ARCHIVED_COPY": os.path.join(
-                self.info, self.original_spec.description["name"].replace(" ", "_") + ".archived_copy.yaml"
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".expanded.yaml"
             ),
         }
 
