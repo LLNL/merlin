@@ -118,11 +118,16 @@ def start_sample1_time():
 
 
 def main():
-    single_task_times()
-    merlin_run_time()
-    start_verify_time()
-    start_run_workers_time()
-    start_sample1_time()
+    try:
+        single_task_times()
+        merlin_run_time()
+        start_verify_time()
+        start_run_workers_time()
+        start_sample1_time()
+        sys.exit()
+    except Exception as ex:
+        print(ex)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
