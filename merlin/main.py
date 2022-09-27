@@ -52,6 +52,7 @@ from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
+from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
@@ -342,6 +343,21 @@ def process_monitor(args):
     LOG.info("Monitor: ... stop condition met")
 
 
+def process_server(args: Namespace):
+    if args.commands == "init":
+        init_server()
+    elif args.commands == "start":
+        start_server()
+    elif args.commands == "stop":
+        stop_server()
+    elif args.commands == "status":
+        status_server()
+    elif args.commands == "restart":
+        restart_server()
+    elif args.commands == "config":
+        config_server(args)
+
+
 def setup_argparse() -> None:
     """
     Setup argparse and any CLI options we want available via the package.
@@ -551,6 +567,143 @@ def setup_argparse() -> None:
 
     generate_diagnostic_parsers(subparsers)
 
+    # merlin server
+    server: ArgumentParser = subparsers.add_parser(
+        "server",
+        help="Manage broker and results server for merlin workflow.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server.set_defaults(func=process_server)
+
+    server_commands: ArgumentParser = server.add_subparsers(dest="commands")
+
+    server_init: ArgumentParser = server_commands.add_parser(
+        "init",
+        help="Initialize merlin server resources.",
+        description="Initialize merlin server",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_init.set_defaults(func=process_server)
+
+    server_status: ArgumentParser = server_commands.add_parser(
+        "status",
+        help="View status of the current server containers.",
+        description="View status",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_status.set_defaults(func=process_server)
+
+    server_start: ArgumentParser = server_commands.add_parser(
+        "start",
+        help="Start a containerized server to be used as an broker and results server.",
+        description="Start server",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_start.set_defaults(func=process_server)
+
+    server_stop: ArgumentParser = server_commands.add_parser(
+        "stop",
+        help="Stop an instance of redis containers currently running.",
+        description="Stop server.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_stop.set_defaults(func=process_server)
+
+    server_stop: ArgumentParser = server_commands.add_parser(
+        "restart",
+        help="Restart merlin server instance",
+        description="Restart server.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_stop.set_defaults(func=process_server)
+
+    server_config: ArgumentParser = server_commands.add_parser(
+        "config",
+        help="Making configurations for to the merlin server instance.",
+        description="Config server.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    server_config.add_argument(
+        "-ip",
+        "--ipaddress",
+        action="store",
+        type=str,
+        # default="127.0.0.1",
+        help="Set the binded IP address for the merlin server container.",
+    )
+    server_config.add_argument(
+        "-p",
+        "--port",
+        action="store",
+        type=int,
+        # default=6379,
+        help="Set the binded port for the merlin server container.",
+    )
+    server_config.add_argument(
+        "-pwd",
+        "--password",
+        action="store",
+        type=str,
+        # default="~/.merlin/redis.pass",
+        help="Set the password file to be used for merlin server container.",
+    )
+    server_config.add_argument(
+        "--add-user",
+        action="store",
+        nargs=2,
+        type=str,
+        help="Create a new user for merlin server instance. (Provide both username and password)",
+    )
+    server_config.add_argument("--remove-user", action="store", type=str, help="Remove an exisiting user.")
+    server_config.add_argument(
+        "-d",
+        "--directory",
+        action="store",
+        type=str,
+        # default="./",
+        help="Set the working directory of the merlin server container.",
+    )
+    server_config.add_argument(
+        "-ss",
+        "--snapshot-seconds",
+        action="store",
+        type=int,
+        # default=300,
+        help="Set the number of seconds merlin server waits before checking if a snapshot is needed.",
+    )
+    server_config.add_argument(
+        "-sc",
+        "--snapshot-changes",
+        action="store",
+        type=int,
+        # default=100,
+        help="Set the number of changes that are required to be made to the merlin server before a snapshot is made.",
+    )
+    server_config.add_argument(
+        "-sf",
+        "--snapshot-file",
+        action="store",
+        type=str,
+        # default="dump.db",
+        help="Set the snapshot filename for database dumps.",
+    )
+    server_config.add_argument(
+        "-am",
+        "--append-mode",
+        action="store",
+        type=str,
+        # default="everysec",
+        help="The appendonly mode to be set. The avaiable options are always, everysec, no.",
+    )
+    server_config.add_argument(
+        "-af",
+        "--append-file",
+        action="store",
+        type=str,
+        # default="appendonly.aof",
+        help="Set append only filename for merlin server container.",
+    )
+
     return parser
 
 
@@ -748,11 +901,11 @@ def main():
     except Exception as excpt:  # pylint: disable=broad-except
         LOG.debug(traceback.format_exc())
         LOG.error(str(excpt))
-        return 1
+        sys.exit(1)
     # All paths in a function ought to return an exit code, or none of them should. Given the
     # distributed nature of Merlin, maybe it doesn't make sense for it to exit 0 until the work is completed, but
     # if the work is dispatched with no errors, that is a 'successful' Merlin run - any other failures are runtime.
-    return 0
+    sys.exit()
 
 
 if __name__ == "__main__":

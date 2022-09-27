@@ -9,9 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update docker docs for new rabbitmq and redis server versions
 - Added lgtm.com Badge for README.md
 - More fixes for lgtm checks.
+- Added merlin server command as a container option for broker and results_backend servers.
+- Added merlin server unit tests to test exisiting merlin server commands.
+- Added the flux_exec batch argument to allow for flux exec arguments,
+  e.g. flux_exec: flux exec -r "0-1" to run celery workers only on
+  ranks 0 and 1 of a multi-rank allocation
+- Added additional argument in test definitions to allow for a "cleanup" command
+
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
 - New shortcuts in specification file (sample_vector, sample_names, spec_original_template, spec_executed_run, spec_archived_copy)
+- Changed "default" user password to be "merlin_password" as default.
+- Update requirements to require redis 4.3.4 for acl user channel support
+
+### Fixed
+- Fixed return values from scripts with main() to fix testing errors. 
+- CI test for CHANGELOG modifcations
 
 ## [1.8.5]
 ### Added

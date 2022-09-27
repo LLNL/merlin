@@ -1,6 +1,7 @@
 import argparse
 import os
 import pathlib
+import sys
 
 import pandas as pd
 
@@ -28,25 +29,30 @@ def setup_argparse():
 
 
 def main():
-    parser = setup_argparse()
-    args = parser.parse_args()
+    try:
+        parser = setup_argparse()
+        args = parser.parse_args()
 
-    # Collect the samples
-    samples = load_samples(args.sample_file_paths)
+        # Collect the samples
+        samples = load_samples(args.sample_file_paths)
 
-    # Count up the occurences
-    namesdf = pd.DataFrame({"Name": samples})
+        # Count up the occurences
+        namesdf = pd.DataFrame({"Name": samples})
 
-    names = namesdf["Name"].value_counts()
+        names = namesdf["Name"].value_counts()
 
-    # Serialize processed samples
-    #  create directory if it doesn't exist already
-    abspath = os.path.abspath(args.results)
-    absdir = os.path.dirname(abspath)
-    if not os.path.isdir(absdir):
-        pathlib.Path(absdir).mkdir(parents=True, exist_ok=True)
+        # Serialize processed samples
+        #  create directory if it doesn't exist already
+        abspath = os.path.abspath(args.results)
+        absdir = os.path.dirname(abspath)
+        if not os.path.isdir(absdir):
+            pathlib.Path(absdir).mkdir(parents=True, exist_ok=True)
 
-    names.to_json(args.results)
+        names.to_json(args.results)
+        sys.exit()
+    except Exception as ex:
+        print(ex)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
