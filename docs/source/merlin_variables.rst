@@ -83,6 +83,21 @@ Reserved variables
            ls $path
          done
     - ``0/0/0 0/0/1 0/0/2 0/0/3``
+  * - ``$(MERLIN_SAMPLE_VECTOR)``
+    - Vector of merlin sample values
+    - ``$(SAMPLE_COLUMN_1) $(SAMPLE_COLUMN_2) ...``
+  * - ``$(MERLIN_SAMPLE_NAMES)``
+    - Names of merlin sample values
+    - ``SAMPLE_COLUMN_1 SAMPLE_COLUMN_2 ...``
+  * - ``$(MERLIN_SPEC_ORIGINAL_TEMPLATE)``
+    - Copy of original yaml file passed to ``merlin run``.
+    - ``$(MERLIN_INFO)/*.orig.yaml``
+  * - ``$(MERLIN_SPEC_EXECUTED_RUN)``
+    - Parsed and processed yaml file with command-line variable substitutions included.
+    - ``$(MERLIN_INFO)/*.partial.yaml``
+  * - ``$(MERLIN_SPEC_ARCHIVED_COPY)``
+    - Archive version of ``MERLIN_SPEC_EXECUTED_RUN`` with all variables and paths fully resolved.
+    - ``$(MERLIN_INFO)/*.expanded.yaml``
 
 
 User variables

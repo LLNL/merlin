@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
+- New shortcuts in specification file (sample_vector, sample_names, spec_original_template, spec_executed_run, spec_archived_copy)
 - Changed "default" user password to be "merlin_password" as default.
 - Update requirements to require redis 4.3.4 for acl user channel support
 
