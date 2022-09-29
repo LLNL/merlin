@@ -277,6 +277,14 @@ see :doc:`./merlin_variables`.
               batch:
                  type: local
               machines: [host3]
+  ####################################
+  # Merlin Block (Required)
+  ####################################
+  # The user block allows other variables in the workflow file to be propagated
+  # through to the workflow (including in variables .partial.yaml and .expanded.yaml).
+  #######################################################################
+  user:
+
 
     ###################################################
     # Sample definitions
