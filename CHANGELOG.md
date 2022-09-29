@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fixed return values from scripts with main() to fix testing errors. 
 - CI test for CHANGELOG modifcations
+- Removed emojii from issue templates that was breaking doc builds
 
 ## [1.8.5]
 ### Added
