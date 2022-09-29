@@ -9,3 +9,4 @@ parse
 psutil>=5.1.0
 pyyaml>=5.1.2
 tabulate
+redis>=4.3.4
