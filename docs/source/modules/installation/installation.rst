@@ -17,9 +17,7 @@ Installation
 .. admonition:: You will learn
 
   * How to install merlin in a virtual environment using pip.
-  * How to install a local redis server.
-  * How to install merlin using docker (optional).
-  * How to start the docker containers, including redis (optional).
+  * How to install a container platform eg. singularity, docker, or podman.
   * How to configure merlin.
   * How to test/verify the installation.
 
@@ -33,16 +31,12 @@ Merlin will then be configured and this configuration checked to ensure a proper
 Installing merlin
 -----------------
 
-A merlin installation is required for the subsequent modules of this tutorial. You can choose between the pip method or the docker method. Choose one or the other but
-do not use both unless you are familiar with redis servers run locally and through docker.
-**The pip method is recommended.**
+A merlin installation is required for the subsequent modules of this tutorial.
 
-Once merlin is installed, it requires servers to operate.
-The pip section will inform you how to setup a
-local redis server to use in merlin.  An alternative method for setting up a
-redis server can be found in the docker section. Only setup one redis server either
-local-redis or docker-redis.
-Your computer/organization  may already have a redis server available, please check
+Once merlin is installed, it requires servers to operate. While you are able to host your own server
+we will be using the containerized solution that merlin provides. For the sake of this tutorial we will
+be using redis servers.
+Your computer/organization may already have a redis server available, please check
 with your local system administrator.
 
 Pip (recommended)
@@ -85,117 +79,55 @@ but leave the virtualenv activated for the subsequent steps.
   deactivate
 
 
-redis local server
-^^^^^^^^^^^^^^^^^^
+redis server
+^^^^^^^^^^^^
 
 A redis server is required for the celery results backend server, this same server
-can also be used for the celery broker. This method will be called local-redis.
+can also be used for the celery broker. We will be using merlin's containerized solution
+however we will need to download one of the supported container platforms avaliable. For 
+the purpose of this tutorial we will be using singularity.
 
 .. code-block:: bash
 
   # Download redis
   wget http://download.redis.io/releases/redis-6.0.5.tar.gz
 
-  # Untar
-  tar xvf redis*.tar.gz
+  # Update and install singularity dependencies
+  apt-get update && apt-get install -y \
+    build-essential \
+    libssl-dev \
+    uuid-dev \
+    libgpgme11-dev \
+    squashfs-tools \
+    libseccomp-dev \
+    pkg-config
+  
+  # Download dependency go
+  wget https://go.dev/dl/go1.18.1.linux-amd64.tar.gz
 
-  # cd into redis dir
-  cd redis*/
+  # Extract go into local
+  tar -C /usr/local -xzf go1.18.1.linux-amd64.tar.gz
 
-  # make redis
-  make
+  # Remove go tar file
+  rm go1.18.1.linux-amd64.tar.gz
 
-  # make test (~3.5 minutes)
-  make test
+  # Update PATH to include go
+  export PATH=$PATH:/usr/local/go/bin
 
+  # Download singularity
+  wget https://github.com/sylabs/singularity/releases/download/v3.9.9/singularity-ce-3.9.9.tar.gz
 
-The redis server is started by calling the ``redis-server`` command located in
-the src directory.
-This should be run in a separate terminal in the top-level source
-directory so the output can be examined.
-The redis server will use the default ``redis.conf`` file in the top-level
-redis directory.
+  # Extract singularity
+  tar -xzf singularity-ce-3.9.9.tar.gz
 
-.. code:: bash
-
-  # run redis with default config, server is at localhost port 6379
-  ./src/redis-server &
-
-You can shutdown the local-redis server by using the ``redis-cli shutdown`` command
-when you are done with the tutorial.
-
-.. code-block:: bash
-
-  #cd to redis directory
-  cd <path to>/redis*/
-  ./src/redis-cli shutdown
-
-
-Docker
-++++++
-
-Merlin and the servers required by merlin are all available as docker containers on dockerhub. Do not use this method if you have already set up a virtualenv through
-the pip installation method.
-
-.. note::
-
-  When using the docker method the celery workers will run inside the
-  merlin container. This
-  means that any workflow tools that are also from docker containers must
-  be installed in, or
-  otherwise made available to, the merlin container.
-
-
-To run a merlin docker container with a docker redis server, cut
-and paste the commands below into a new file called ``docker-compose.yml``.
-This file can be placed anywhere in your filesystem but you may want to put it in
-a directory ``merlin_docker_redis``.
-
-.. literalinclude:: ./docker-compose.yml
-   :language: yaml
-
-This file can then be run with the ``docker-compose`` command in same directory
-as the ``docker-compose.yml`` file.
-
-.. code-block:: bash
-
-  docker-compose up -d
-
-The ``volume`` option in the ``docker-compose.yml`` file
-will link the local ``$HOME/merlinu`` directory to the ``/home/merlinu``
-directory in the container.
-
-Some aliases can be defined for convenience.
-
-.. code-block:: bash
-
-  # define some aliases for the merlin and celery commands (assuming Bourne shell)
-  alias merlin="docker exec my-merlin merlin"
-  alias celery="docker exec my-merlin celery"
-  alias python3="docker exec my-merlin python3"
-
-When you are done with the containers you can stop them using ``docker-compose down``.
-We will be using the containers in the subsequent modules so leave them running.
-
-.. code-block:: bash
-
-  docker-compose down
-
-Any required python modules can be installed in the running ``my-merlin`` container
-through ``docker exec``. When using docker-compose, these changes will persist
-if you stop the containers with ``docker-compose down`` and restart them with 
-``docker-compose up -d``.
-
-.. code-block:: bash
-
-     docker exec my-merlin pip3 install pandas faker
+  # Configure and install singularity
+  cd singularity-ce-3.9.9
+  ./mconfig && \
+    make -C ./builddir && \
+    sudo make -C ./builddir install
 
 Configuring merlin
 ------------------
-
-Merlin configuration is slightly different between the pip and docker methods.
-The fundamental differences include the app.yaml file location and the server name.
-
 Merlin requires a configuration script for the celery interface and optional
 passwords for the redis server and encryption. Run this configuration method
 to create the ``app.yaml`` configuration file.
@@ -215,23 +147,6 @@ to see the configuration, it should look like the configuration below.
 .. literalinclude:: ./app_local_redis.yaml
    :language: yaml
 
-Docker
-++++++
-
-If you are using the docker merlin with docker-redis server then the
-``~/merlinu/.merlin/app.yaml`` will be created by the ``merlin config``
-command above.
-This file must be edited to
-add the server from the redis docker container my-redis. Change the ``server: localhost``, in both the
-broker and backend config definitions, to ``server: my-redis``, the port will remain the same.
-
-.. note::
-  You can use the docker redis server, instead of the local-redis server,
-  with the virtualenv installed merlin by using the local-redis
-  ``app.yaml`` file above.
-
-.. literalinclude:: ./app_docker_redis.yaml
-   :language: yaml
 
 .. _Verifying installation:
 
