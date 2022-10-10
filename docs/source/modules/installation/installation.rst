@@ -25,7 +25,8 @@ Installation
   :local:
 
 This section details the steps necessary to install merlin and its dependencies.
-Merlin will then be configured and this configuration checked to ensure a proper installation.
+Merlin will then be configured for the local machine and the configuration 
+will be checked to ensure a proper installation.
 
 
 Installing merlin
@@ -33,9 +34,9 @@ Installing merlin
 
 A merlin installation is required for the subsequent modules of this tutorial.
 
-Once merlin is installed, it requires servers to operate. While you are able to host your own server
-we will be using the containerized solution that merlin provides. For the sake of this tutorial we will
-be using redis servers.
+Once merlin is installed, it requires servers to operate. While you are able to host your own servers,
+we will use merlin's containerized servers in this tutorial. However, if you prefer to host your own servers
+you can host a redis server that is accessible to your current machine.
 Your computer/organization may already have a redis server available you can use, please check
 with your local system administrator.
 
@@ -80,7 +81,7 @@ redis server
 ++++++++++++
 
 A redis server is required for the celery results backend server, this same server
-can also be used for the celery broker. We will be using merlin's containerized solution
+can also be used for the celery broker. We will be using merlin's containerized server
 however we will need to download one of the supported container platforms avaliable. For 
 the purpose of this tutorial we will be using singularity.
 
@@ -125,9 +126,9 @@ the purpose of this tutorial we will be using singularity.
 
 Configuring merlin
 ------------------
-Merlin requires a configuration script for the celery interface and optional
-passwords for the redis server and encryption. Run this configuration method
-to create the ``app.yaml`` configuration file.
+Merlin requires a configuration script for the celery interface. 
+Run this configuration method to create the ``app.yaml`` 
+configuration file.
 
 .. code-block:: bash
 
@@ -135,7 +136,7 @@ to create the ``app.yaml`` configuration file.
 
 The ``merlin config`` command above will create a file called ``app.yaml``
 in the ``~/.merlin`` directory.
-If you are using local-redis then you are all set, look in the ``~/.merlin/app.yaml`` file
+If you are running a redis server locally then you are all set, look in the ``~/.merlin/app.yaml`` file
 to see the configuration, it should look like the configuration below.
 
 .. literalinclude:: ./app_local_redis.yaml
@@ -154,21 +155,22 @@ First launch the merlin server containers by using the ``merlin server`` command
   merlin server init
   merlin server start
 
-A directory called ``merlin_server`` will have been created in the run directory.
-This contains all of the proper configuration for the server containers merlin requires.
+A subdirectory called ``merlin_server/`` will have been created in the current run directory.
+This contains all of the proper configuration for the server containers merlin creates.
 Configuration can be done through the ``merlin server config`` command, however users have
-the flexibility to edit the files directly in the directory. Additionally an additional ``app.yaml``
-file has been created in the ``merlin_server/`` subdirectory that has been configured to utilize
-the merlin server you have just created. To use it locally simply copy it to the run directory with
-a cp command 
+the flexibility to edit the files directly in the directory. Additionally an preconfigured ``app.yaml``
+file has been created in the ``merlin_server/`` subdirectory to utilize the merlin server 
+containers . To use it locally simply copy it to the run directory with a cp command.
 
 .. code-block:: bash
 
   cp ./merlin_server/app.yaml .
 
-You can also make this server you main server configuration by replacing the one located in your home 
+You can also make this server container your main server configuration by replacing the one located in your home 
 directory. Make sure you make back-ups of your current app.yaml file in case you want to use your previous
-configurations.
+configurations. Note: since merlin servers are created locally on your run directory you are allowed to create 
+multiple instances of merlin server with their unique configurations for different studies. Simply create different
+directories for each study and run ``merlin server init`` in each directory to create an instance for each.
 
 .. code-block:: bash
 
@@ -177,13 +179,13 @@ configurations.
 
 The ``merlin info`` command will check that the configuration file is
 installed correctly, display the server configuration strings, and check server
-access. This command works for both the pip and docker installed merlin.
+access.
 
 .. code-block:: bash
 
   merlin info
 
-If everything is set up correctly, you should see (assuming local-redis servers):
+If everything is set up correctly, you should see:
 
 .. code-block:: bash
 
