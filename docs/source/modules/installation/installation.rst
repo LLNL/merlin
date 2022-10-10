@@ -149,6 +149,7 @@ Checking/Verifying installation
 
 First launch the merlin server containers by using the ``merlin server`` commands
 .. code-block:: bash
+
   merlin server init
   merlin server start
 
@@ -160,12 +161,14 @@ file has been created in the ``merlin_server/`` subdirectory that has been confi
 the merlin server you have just created. To use it locally simply copy it to the run directory with
 a cp command 
 .. code-block:: bash
+
   cp ./merlin_server/app.yaml .
 
 You can also make this server you main server configuration by replacing the one located in your home 
 directory. Make sure you make back-ups of your current app.yaml file in case you want to use your previous
 configurations.
 .. code-block:: bash
+  
   mv ~/.merlin/app.yaml ~/.merlin/app.yaml.bak
   cp ./merlin_server/app.yaml ~/.merlin/
 
