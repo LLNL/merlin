@@ -10,15 +10,28 @@ global.parameters:
         values : ["world","mundo"]
         label  : WORLD.%%
 
+user:
+    python3:
+        run: &python3
+            cmd: print("Hurrah, we did it!")
+            shell: /usr/bin/env python3
+    python2:
+        run: &python2
+            cmd: print "Hurrah, we did it!"
+            shell: /usr/bin/env python2
+
 study:
     - name: step_1
       description: say hello
       run:
           cmd: echo "$(GREET), $(WORLD)!"
-
     - name: step_2
       description: print a success message
-      run:
-          cmd: print("Hurrah, we did it!")
+      run: 
+          <<: *python3
           depends: [step_1_*]
-          shell: /usr/bin/env python3
+    - name: step_3
+      description: print a success message
+      run: 
+          <<: *python2
+          depends: [step_2_*]
