@@ -227,7 +227,7 @@ see :doc:`./merlin_variables`.
        label   : ITER.%%
 
   ####################################
-  # Merlin Block (Optional)
+  # Merlin Block (Required)
   ####################################
   # The merlin specific block will add any configuration to
   # the DAG created by the study description.
