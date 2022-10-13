@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
+- New shortcuts in specification file (sample_vector, sample_names, spec_original_template, spec_executed_run, spec_archived_copy)
 - Changed "default" user password to be "merlin_password" as default.
 - Update requirements to require redis 4.3.4 for acl user channel support
 
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed return values from scripts with main() to fix testing errors. 
 - CI test for CHANGELOG modifcations
 - Fix the cert_req typo in the merlin config docs, it should read cert_reqs
+- Removed emoji from issue templates that were breaking doc builds
 
 ## [1.8.5]
 ### Added
