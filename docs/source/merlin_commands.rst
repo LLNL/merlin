@@ -401,6 +401,7 @@ The ``--workers`` option allows you to pass in a regular expression of names of 
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
 Hosting Local Server (``merlin server``)
+----------------------------------------
 
 To create a local server for merlin to connect to. Merlin server creates and configures a server on the current directory.
 This allows multiple instances of merlin server to exist for different studies or uses.
@@ -428,6 +429,8 @@ The ``config`` subcommand edits configurations for the merlin server. There are 
 - The ``-sf SNAPSHOT_FILE, --snapshot-file SNAPSHOT_FILE`` option set the name of snapshots.
 - The ``-am APPEND_MODE, --append-mode APPEND_MODE`` option set the appendonly mode. Options are always, everysec, no.
 - The ``-af APPEND_FILE, --append-file APPEND_FILE`` option set the filename for server append/change file.
+
+More information can be found on :doc:`Merlin Server <./merlin_server>`
 
 .. attention::
 
