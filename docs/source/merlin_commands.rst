@@ -400,6 +400,35 @@ The ``--workers`` option allows you to pass in a regular expression of names of 
 
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
+Hosting Local Server (``merlin server``)
+
+To create a local server for merlin to connect to. Merlin server creates and configures a server on the current directory.
+This allows multiple instances of merlin server to exist for different studies or uses.
+
+The ``init`` subcommand initalizes a new instance of merlin server.
+
+The ``status`` subcommand checks to the status of the merlin server.
+
+The ``start`` subcommand starts the merlin server.
+
+The ``stop`` subcommand stops the merlin server.
+
+The ``restart`` subcommand performs stop command followed by a start command on the merlin server.
+
+The ``config`` subcommand edits configurations for the merlin server. There are multiple flags to allow for different configurations.
+
+- The ``-ip IPADDRESS, --ipaddress IPADDRESS`` option set the binded IP address for merlin server.
+- The ``-p PORT, --port PORT`` option set the binded port for merlin server.
+- The ``-pwd PASSWORD, --password PASSWORD`` option set the password file for merlin server.
+- The ``--add-user USER PASSWORD`` option add a new user for merlin server.
+- The ``--remove-user REMOVE_USER`` option remove an exisiting user from merlin server.
+- The ``-d DIRECTORY, --directory DIRECTORY`` option set the working directory for merlin server.
+- The ``-ss SNAPSHOT_SECONDS, --snapshot-seconds SNAPSHOT_SECONDS`` option set the number of seconds before each snapshot.
+- The ``-sc SNAPSHOT_CHANGES, --snapshot-changes SNAPSHOT_CHANGES`` option set the number of database changes before each snapshot.
+- The ``-sf SNAPSHOT_FILE, --snapshot-file SNAPSHOT_FILE`` option set the name of snapshots.
+- The ``-am APPEND_MODE, --append-mode APPEND_MODE`` option set the appendonly mode. Options are always, everysec, no.
+- The ``-af APPEND_FILE, --append-file APPEND_FILE`` option set the filename for server append/change file.
+
 .. attention::
 
    If you've named workers identically (you shouldn't)
