@@ -400,6 +400,12 @@ The ``--workers`` option allows you to pass in a regular expression of names of 
 
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
+.. attention::
+
+   If you've named workers identically (you shouldn't)
+   only one might get the signal. In this case, you can send it
+   again.
+
 Hosting Local Server (``merlin server``)
 ----------------------------------------
 
@@ -431,11 +437,5 @@ The ``config`` subcommand edits configurations for the merlin server. There are 
 - The ``-af APPEND_FILE, --append-file APPEND_FILE`` option set the filename for server append/change file.
 
 More information can be found on :doc:`Merlin Server <./merlin_server>`
-
-.. attention::
-
-   If you've named workers identically (you shouldn't)
-   only one might get the signal. In this case, you can send it
-   again.
 
 
