@@ -86,10 +86,6 @@ however we will need to download one of the supported container platforms avalia
 the purpose of this tutorial we will be using singularity.
 
 .. code-block:: bash
-
-  # Download redis
-  wget http://download.redis.io/releases/redis-6.0.5.tar.gz
-
   # Update and install singularity dependencies
   apt-get update && apt-get install -y \
     build-essential \
