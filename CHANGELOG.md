@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   e.g. flux_exec: flux exec -r "0-1" to run celery workers only on
   ranks 0 and 1 of a multi-rank allocation
 - Added additional argument in test definitions to allow for a "cleanup" command
+- Capability for non-user block in yaml
 
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
