@@ -88,7 +88,12 @@ def check_server_access(sconf):
 def _examine_connection(s, sconf, excpts):
     connect_timeout = 60
     try:
-        conn = Connection(sconf[s])
+        ssl_conf = None
+        if "broker" in s:
+            ssl_conf = broker.get_ssl_config()
+        if "results" in s:
+            ssl_conf = results_backend.get_ssl_config()
+        conn = Connection(sconf[s], ssl=ssl_conf)
         conn_check = ConnProcess(target=conn.connect)
         conn_check.start()
         counter = 0
