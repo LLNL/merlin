@@ -22,10 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Changed "default" user password to be "merlin_password" as default.
 - Update requirements to require redis 4.3.4 for acl user channel support
 - Updated tutorial documentation to use merlin server over manual redis installation.
+- Added ssl to the broker and results backend server checks when "merlin info" is called
 
 ### Fixed
 - Fixed return values from scripts with main() to fix testing errors. 
 - CI test for CHANGELOG modifcations
+- Fix the cert_req typo in the merlin config docs, it should read cert_reqs
 - Removed emoji from issue templates that were breaking doc builds
 
 ## [1.8.5]
