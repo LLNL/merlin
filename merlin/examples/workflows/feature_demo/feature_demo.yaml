@@ -24,29 +24,6 @@ user:
                 cmd: |
                   python3 $(HELLO) -outfile hello_world_output_$(MERLIN_SAMPLE_ID).json $(X0) $(X1) $(X2)
                 max_retries: 1
-            collect: &collect_run
-                cmd: |
-                  echo $(MERLIN_GLOB_PATH)
-                  echo $(hello.workspace)
-                  ls $(hello.workspace)/X2.$(X2)/$(MERLIN_GLOB_PATH)/hello_world_output_*.json > files_to_collect.txt
-                  spellbook collect -outfile results.json -instring "$(cat files_to_collect.txt)"
-            translate: &translate_run
-                cmd: spellbook translate -input $(collect.workspace)/results.json -output results.npz -schema $(FEATURES)
-            learn: &learn_run
-                cmd: spellbook learn -infile $(translate.workspace)/results.npz
-            make_samples: &make_samples_run
-                cmd: spellbook make-samples -n $(N_NEW) -sample_type grid -outfile grid_$(N_NEW).npy
-            predict: &predict_run
-                cmd: spellbook predict -infile $(make_new_samples.workspace)/grid_$(N_NEW).npy -outfile prediction_$(N_NEW).npy -reg $(learn.workspace)/random_forest_reg.pkl
-            verify: &verify_run
-                cmd: |
-                  if [[ -f $(learn.workspace)/random_forest_reg.pkl && -f $(predict.workspace)/prediction_$(N_NEW).npy ]]
-                  then
-                      touch FINISHED
-                      exit $(MERLIN_SUCCESS)
-                  else
-                      exit $(MERLIN_SOFT_FAIL)
-                  fi
     python3:
         run: &python3_run
             cmd: |
@@ -72,7 +49,11 @@ study:
       description: |
          process the output of the hello world samples, extracting specific features;
       run:
-         <<: *collect_run
+         cmd: |
+             echo $(MERLIN_GLOB_PATH)
+             echo $(hello.workspace)
+             ls $(hello.workspace)/X2.$(X2)/$(MERLIN_GLOB_PATH)/hello_world_output_*.json > files_to_collect.txt
+             spellbook collect -outfile results.json -instring "$(cat files_to_collect.txt)"
          depends: [hello_*]
          task_queue: collect_queue
 
@@ -80,7 +61,7 @@ study:
       description: |
          process the output of the hello world samples some more
       run:
-         <<: *translate_run
+         cmd: spellbook translate -input $(collect.workspace)/results.json -output results.npz -schema $(FEATURES)
          depends: [collect]
          task_queue: translate_queue
 
@@ -88,7 +69,7 @@ study:
       description: |
          train a learner on the results
       run:
-         <<: *learn_run
+         cmd: spellbook learn -infile $(translate.workspace)/results.npz
          depends: [translate]
          task_queue: learn_queue
 
@@ -96,14 +77,14 @@ study:
       description: |
          make a grid of new samples to pass to the predictor
       run:
-         <<: *make_samples_run
+         cmd: spellbook make-samples -n $(N_NEW) -sample_type grid -outfile grid_$(N_NEW).npy
          task_queue: make_samples_queue
 
     - name: predict
       description: |
          make a new prediction from new samples
       run:
-         <<: *predict_run
+         cmd: spellbook predict -infile $(make_new_samples.workspace)/grid_$(N_NEW).npy -outfile prediction_$(N_NEW).npy -reg $(learn.workspace)/random_forest_reg.pkl
          depends: [learn, make_new_samples]
          task_queue: predict_queue
 
@@ -111,7 +92,14 @@ study:
       description: |
          if learn and predict succeeded, output a dir to signal study completion
       run:
-         <<: *verify_run
+         cmd: |
+            if [[ -f $(learn.workspace)/random_forest_reg.pkl && -f $(predict.workspace)/prediction_$(N_NEW).npy ]]
+            then
+                touch FINISHED
+                exit $(MERLIN_SUCCESS)
+            else
+                exit $(MERLIN_SOFT_FAIL)
+            fi
          depends: [learn, predict]
          task_queue: $(VERIFY_QUEUE)
 
@@ -154,3 +142,4 @@ merlin:
         file: $(MERLIN_INFO)/samples.npy
         column_labels: [X0, X1]
         level_max_dirs: 25
+
