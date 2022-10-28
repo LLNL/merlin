@@ -149,7 +149,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'Merlin.tex', u'Merlin Documentation',
-     u'MLSI', 'manual'),
+     u'The Merlin Development Team', 'manual'),
 ]
 
 
