@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI test for CHANGELOG modifcations
 - Fix the cert_req typo in the merlin config docs, it should read cert_reqs
 - Removed emoji from issue templates that were breaking doc builds
+- Including .temp template files in MANIFEST
 
 ## [1.8.5]
 ### Added
