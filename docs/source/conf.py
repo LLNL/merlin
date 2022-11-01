@@ -101,12 +101,9 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_context = {
-    'css_files': [
-        '_static/theme_overrides.css',  # override wide tables in RTD theme
-    ],
-}
+html_css_files = ['custom.css']
 
+#html_context = {"css_files": ["_static/custom.css"]}
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 #
@@ -188,8 +185,8 @@ def setup(app):
     try:
         app.add_javascript("custom.js")
         app.add_javascript("https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js")
-        app.add_stylesheet('custom.css')
+        #app.add_stylesheet('custom.css')
     except AttributeError:
-        app.add_css_file('custom.css')
+        #app.add_css_file('custom.css')
         app.add_js_file("custom.js")
         app.add_js_file("https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js")
