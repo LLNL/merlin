@@ -31,7 +31,6 @@ The directory structure of merlin output looks like this:
 Reserved variables
 ------------------
 .. list-table:: Study variables that Merlin uses. May be referenced within a specification file, but not reassigned or overridden.
-   :widths: 25 50 25
    :header-rows: 1
     
    * - Variable
