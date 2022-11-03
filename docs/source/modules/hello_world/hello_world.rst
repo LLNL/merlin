@@ -20,9 +20,15 @@ This hands-on module walks through the steps of building and running a simple me
 .. contents:: Table of Contents:
   :local:
 
-Get example files
+Get Example Files
 +++++++++++++++++
-``merlin example`` is a command line tool that makes it easy to get a basic workflow up and running. Run the following commands:
+``merlin example`` is a command line tool that makes it easy to get a basic workflow up and running. To see a list of all the examples provided with merlin you can run:
+
+.. code-block:: bash
+
+    $ merlin example list
+
+For this tutorial we will be using the ``hello`` example. Run the following commands:
 
 .. code-block:: bash
 
@@ -44,7 +50,7 @@ This will create and move into directory called ``hello``, which contains these 
 
 * ``requirements.txt`` -- this is a text file listing this workflow's python dependencies.
 
-Specification file
+Specification File
 ++++++++++++++++++
 
 Central to Merlin is something called a specification file, or a "spec" for short.
@@ -97,7 +103,7 @@ So this will give us 1) an English result, and 2) a Spanish one (you could add a
 Section: ``study``
 ~~~~~~~~~~~~~~~~~~
 This is where you define workflow steps.
-While the convention is to list steps as sequentially as possible, the only factor in determining step order is the dependency DAG created by the ``depends`` field.
+While the convention is to list steps as sequentially as possible, the only factor in determining step order is the dependency directed acyclic graph (DAG) created by the ``depends`` field.
 
 .. code-block:: yaml
 
@@ -163,7 +169,7 @@ The order of the spec sections doesn't matter.
 
     At this point, ``my_hello.yaml`` is still maestro-compatible. The primary difference is that maestro won't understand anything in the ``merlin`` block, which we will still add later. If you want to try it, run: ``$ maestro run my_hello.yaml``
 
-Try it!
+Try It!
 +++++++
 
 First, we'll run merlin locally. On the command line, run:
@@ -200,7 +206,7 @@ A lot of stuff, right? Here's what it means:
 
 .. Assuming config is ready
 
-Run distributed!
+Run Distributed!
 ++++++++++++++++
 
 .. important::
@@ -234,6 +240,12 @@ Immediately after that, this will pop up:
 .. literalinclude :: celery.txt
    :language: text
 
+You may not see all of the info logs listed after the Celery C is displayed. If you'd like to see them you can change Merlin's log levels with the ``-lvl`` or ``--level`` tag. For more information on this, you can run:
+
+.. code-block:: bash
+
+    $ merlin --help
+
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
 
 Workers are persistent, even after work is done. Send a stop signal to all your workers with this command:
@@ -249,7 +261,7 @@ Workers are persistent, even after work is done. Send a stop signal to all your 
 
 .. _Using Samples:
 
-Using samples
+Using Samples
 +++++++++++++
 It's a little boring to say "hello world" in just two different ways. Let's instead say hello to many people!
 
@@ -283,9 +295,11 @@ This makes ``N_SAMPLES`` into a user-defined variable that you can use elsewhere
             file: $(MERLIN_INFO)/samples.csv
             column_labels: [WORLD]
 
-This is the merlin block, an exclusively merlin feature. It provides a way to generate samples for your workflow. In this case, a sample is the name of a person.
+This is the merlin block, an exclusively merlin feature. It provides a way to generate samples for your workflow. In this case, a sample is the name of a person. 
 
 For simplicity we give ``column_labels`` the name ``WORLD``, just like before.
+
+It's also important to note that ``$(SPECROOT)`` and ``$(MERLIN_INFO)`` are reserved variables. The ``$(SPECROOT)`` variable is a shorthand for the directory path of the spec file and the ``$(MERLIN_INFO)`` variable is a shorthand for the directory holding the provenance specs and sample generation results. More information on Merlin variables can be found on the :doc:`variables page<../../merlin_variables>`.
 
 It's good practice to shift larger chunks of code to external scripts. At the same location of your spec, make a new file called ``make_samples.py``:
 

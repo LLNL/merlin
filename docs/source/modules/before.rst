@@ -8,23 +8,40 @@ start the tutorial modules:
 
 __ https://www.python.org/downloads/release/python-360/
 
+* Make sure you have `pip`__ version 22.3 or newer.
+
+__ https://www.pypi.org/project/pip/
+    
+    * You can upgrade pip to the latest version with:
+
+    .. code-block:: bash
+
+        pip install --upgrade pip
+
+    * OR you can upgrade to a specific version with:
+
+    .. code-block:: bash
+
+        pip install --upgrade pip==x.y.z 
+
+
 * Make sure you have `GNU make tools`__ and `compilers`__.
 
 __ https://www.gnu.org/software/make/
 __ https://gcc.gnu.org/
 
-* Install `docker`__.
+* (OPTIONAL) Install `docker`__.
 
 __ https://docs.docker.com/install/
 
-* Download OpenFOAM image with:
+    * Download OpenFOAM image with:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    docker pull cfdengine/openfoam
+        docker pull cfdengine/openfoam
 
-* Download redis image with:
+    * Download redis image with:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    docker pull redis
+        docker pull redis

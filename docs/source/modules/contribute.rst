@@ -44,3 +44,5 @@ Contributing to Merlin is easy! Just `send us a pull request <https://github.com
 Merlin uses a rough approximation of the Git Flow branching model. The develop branch contains the latest contributions, and main is always tagged and points to the latest stable release.
 
 If you're a contributor, try to test and run on develop. That's where all the magic is happening (and where we hope bugs stop).
+
+More detailed information on contributing can be found on the :doc:`Contributing page<../merlin_developer>`.

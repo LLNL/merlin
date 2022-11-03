@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added additional argument in test definitions to allow for a "cleanup" command
 - Capability for non-user block in yaml
 - .readthedocs.yaml and requirements.txt files for docs
+- Small modifications to the Tutorial, Getting Started, Command Line, and Contributing pages in the docs
 
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
