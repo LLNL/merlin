@@ -164,6 +164,32 @@ Reserved variables
 
             $(MERLIN_INFO)/*.expanded.yaml
 
+The ``LAUNCHER`` Variable
++++++++++++++++++++++
+
+``$(LAUNCHER)`` is a special case of a reserved variable since it's value *can* be changed.
+It serves as an abstraction to launch a job with parallel schedulers like :ref:`slurm<slurm>`,
+:ref:`lsf<lsf>`, and :ref:`flux<flux>` and it can be used within a step command. For example, 
+say we start with this run cmd inside our step:
+
+.. code:: yaml
+
+    run:
+        cmd: srun -N 1 -n 3 python script.py
+
+We can modify this to use the ``$(LAUNCHER)`` variable like so:
+
+.. code:: yaml
+
+    batch:
+        type: slurm
+
+    run:
+        cmd: $(LAUNCHER) python script.py
+        nodes: 1
+        procs: 3
+
+In other words, the ``$(LAUNCHER)`` variable would become ``srun -N 1 -n 3``.
 
 User variables
 -------------------

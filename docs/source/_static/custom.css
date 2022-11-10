@@ -34,3 +34,6 @@ td {
 		top: 0px;
 	}
 }
+.underline {
+    text-decoration: underline;
+}

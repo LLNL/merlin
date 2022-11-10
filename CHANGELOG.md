@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added additional argument in test definitions to allow for a "cleanup" command
 - Capability for non-user block in yaml
 - .readthedocs.yaml and requirements.txt files for docs
+- Small modifications to the Tutorial, Getting Started, Command Line, and Contributing pages in the docs
+- Compatibility with the newest version of Maestro (v. 1.1.9dev1)
+- JSON schema validation for Merlin spec files
+- New tests related to JSON schema validation
+- Instructions in the "Contributing" page of the docs on how to add new blocks/fields to the spec file
+- Brief explanation of the $(LAUNCHER) variable in the "Variables" page of the docs
 
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
@@ -27,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added ssl to the broker and results backend server checks when "merlin info" is called
 - Removed theme_override.css from docs/_static/ since it is no longer needed with the updated version of sphinx
 - Updated docs/Makefile to include a pip install for requirements and a clean command
+- Changed what is stored in a Merlin DAG
+  - We no longer store the entire Maestro ExecutionGraph object
+  - We now only store the adjacency table and values obtained from the ExecutionGraph object
+- Modified how spec files are verified
+- Updated requirements to require maestrowf 1.9.1dev1 or later
 
 ### Fixed
 - Fixed return values from scripts with main() to fix testing errors. 
@@ -36,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Including .temp template files in MANIFEST
 - Styling in the footer for docs
 - Horizontal scroll overlap in the variables page of the docs
+- Reordered small part of Workflow Specification page in the docs in order to put "samples" back in the merlin block
 
 ## [1.8.5]
 ### Added
