@@ -552,13 +552,13 @@ class AppYaml:
         rc = RedisConfig(server_config.container.get_config_path())
 
         self.data[self.broker_name]["name"] = server_config.container.get_image_type()
-        self.data[self.broker_name]["username"] = os.environ.get("USER")
+        self.data[self.broker_name]["username"] = "default"
         self.data[self.broker_name]["password"] = server_config.container.get_pass_file_path()
         self.data[self.broker_name]["server"] = rc.get_ip_address()
         self.data[self.broker_name]["port"] = rc.get_port()
 
         self.data[self.results_name]["name"] = server_config.container.get_image_type()
-        self.data[self.results_name]["username"] = os.environ.get("USER")
+        self.data[self.results_name]["username"] = "default"
         self.data[self.results_name]["password"] = server_config.container.get_pass_file_path()
         self.data[self.results_name]["server"] = rc.get_ip_address()
         self.data[self.results_name]["port"] = rc.get_port()
