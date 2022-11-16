@@ -69,7 +69,7 @@ def generate_password(length, pass_command: str = None) -> str:
     return "".join(password)
 
 
-def parse_redis_output(redis_stdout : BufferedReader) -> Tuple[bool, str]:
+def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
     """
     Parse the redis output for a the redis container. It will get all the necessary information
     from the output and returns a dictionary of those values.
@@ -80,8 +80,8 @@ def parse_redis_output(redis_stdout : BufferedReader) -> Tuple[bool, str]:
         return False, "None passed as redis output"
     server_init = False
     redis_config = {}
-    currentLine = redis_stdout.readline()
-    while currentLine != "" or currentLine != None:
+    line = redis_stdout.readline()
+    while line != "" or line is not None:
         if not server_init:
             values = [ln for ln in line.split() if b"=" in ln]
             for val in values:
@@ -93,7 +93,7 @@ def parse_redis_output(redis_stdout : BufferedReader) -> Tuple[bool, str]:
             return True, redis_config
         if b"aborting" in line or b"Fatal error" in line:
             return False, line.decode("utf-8")
-        currentLine = redis_stdout.readline()
+        line = redis_stdout.readline()
 
 
 def create_server_config() -> bool:
