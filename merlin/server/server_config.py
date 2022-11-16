@@ -1,11 +1,11 @@
 import enum
-from io import BufferedReader
 import logging
 import os
 import random
 import shutil
 import string
 import subprocess
+from io import BufferedReader
 from typing import Tuple
 
 import yaml
@@ -167,9 +167,11 @@ def config_merlin_server():
     else:
         redis_users = RedisUsers(user_file)
         redis_config = RedisConfig(server_config.container.get_config_path())
-        redis_users.add_user(user="default", password=redis_config.get_password())
+        redis_config.set_password(server_config.container.get_container_password())
+        redis_users.add_user(user="default", password=server_config.container.get_container_password())
         redis_users.add_user(user=os.environ.get("USER"), password=server_config.container.get_container_password())
         redis_users.write()
+        redis_config.write()
 
         LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
 

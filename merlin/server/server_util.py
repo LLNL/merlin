@@ -323,7 +323,7 @@ class RedisConfig:
         if password is None:
             return False
         self.set_config_value("requirepass", password)
-        LOG.info(f"Password file set to {password}")
+        LOG.info("New password set")
         return True
 
     def get_password(self) -> str:
