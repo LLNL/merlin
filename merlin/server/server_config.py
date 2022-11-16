@@ -1,4 +1,5 @@
 import enum
+from io import BufferedReader
 import logging
 import os
 import random
@@ -23,7 +24,7 @@ from merlin.server.server_util import (
 LOG = logging.getLogger("merlin")
 
 # Default values for configuration
-CONFIG_DIR = "./merlin_server/"
+CONFIG_DIR = os.path.abspath("./merlin_server/")
 IMAGE_NAME = "redis_latest.sif"
 PROCESS_FILE = "merlin_server.pf"
 CONFIG_FILE = "redis.conf"
@@ -68,7 +69,7 @@ def generate_password(length, pass_command: str = None) -> str:
     return "".join(password)
 
 
-def parse_redis_output(redis_stdout) -> Tuple[bool, str]:
+def parse_redis_output(redis_stdout : BufferedReader) -> Tuple[bool, str]:
     """
     Parse the redis output for a the redis container. It will get all the necessary information
     from the output and returns a dictionary of those values.
@@ -79,7 +80,8 @@ def parse_redis_output(redis_stdout) -> Tuple[bool, str]:
         return False, "None passed as redis output"
     server_init = False
     redis_config = {}
-    for line in redis_stdout:
+    currentLine = redis_stdout.readline()
+    while currentLine != "" or currentLine != None:
         if not server_init:
             values = [ln for ln in line.split() if b"=" in ln]
             for val in values:
@@ -89,8 +91,9 @@ def parse_redis_output(redis_stdout) -> Tuple[bool, str]:
                 server_init = True
         if b"Ready to accept connections" in line:
             return True, redis_config
-        if b"aborting" in line:
+        if b"aborting" in line or b"Fatal error" in line:
             return False, line.decode("utf-8")
+        currentLine = redis_stdout.readline()
 
 
 def create_server_config() -> bool:
@@ -130,7 +133,6 @@ def create_server_config() -> bool:
             return False
 
     server_config = pull_server_config()
-
     if not os.path.exists(server_config.container.get_config_dir()):
         LOG.info("Creating merlin server directory.")
         os.mkdir(server_config.container.get_config_dir())
