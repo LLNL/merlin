@@ -113,11 +113,6 @@ Reserved variables
        .. code-block:: bash
  
           for path in $(MERLIN_PATHS_ALL)
-            do
-              ls $path
-            done
- 
-          for path in $(MERLIN_PATHS_ALL)
           do
             ls $path
           done
