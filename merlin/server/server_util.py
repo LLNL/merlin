@@ -63,7 +63,7 @@ class ContainerConfig:
     IMAGE_NAME = "redis_latest.sif"
     REDIS_URL = "docker://redis"
     CONFIG_FILE = "redis.conf"
-    CONFIG_DIR = "./merlin_server/"
+    CONFIG_DIR = os.path.abspath("./merlin_server/")
     PROCESS_FILE = "merlin_server.pf"
     PASSWORD_FILE = "redis.pass"
     USERS_FILE = "redis.users"
@@ -84,7 +84,7 @@ class ContainerConfig:
         self.image = data["image"] if "image" in data else self.IMAGE_NAME
         self.url = data["url"] if "url" in data else self.REDIS_URL
         self.config = data["config"] if "config" in data else self.CONFIG_FILE
-        self.config_dir = data["config_dir"] if "config_dir" in data else self.CONFIG_DIR
+        self.config_dir = os.path.abspath(data["config_dir"]) if "config_dir" in data else self.CONFIG_DIR
         self.pfile = data["pfile"] if "pfile" in data else self.PROCESS_FILE
         self.pass_file = data["pass_file"] if "pass_file" in data else self.PASSWORD_FILE
         self.user_file = data["user_file"] if "user_file" in data else self.USERS_FILE
