@@ -160,7 +160,12 @@ def start_server() -> bool:
     process = subprocess.Popen(
         server_config.container_format.get_run_command()
         .strip("\\")
-        .format(command=server_config.container_format.get_command(), image=image_path, config=config_path)
+        .format(
+            command=server_config.container_format.get_command(),
+            home_dir=server_config.container.get_config_dir(),
+            image=image_path,
+            config=config_path,
+        )
         .split(),
         start_new_session=True,
         close_fds=True,
