@@ -15,6 +15,7 @@ from merlin.server.server_util import (
     MERLIN_CONFIG_DIR,
     MERLIN_SERVER_CONFIG,
     MERLIN_SERVER_SUBDIR,
+    AppYaml,
     RedisConfig,
     RedisUsers,
     ServerConfig,
@@ -29,6 +30,7 @@ IMAGE_NAME = "redis_latest.sif"
 PROCESS_FILE = "merlin_server.pf"
 CONFIG_FILE = "redis.conf"
 REDIS_URL = "docker://redis"
+LOCAL_APP_YAML = "./app.yaml"
 
 PASSWORD_LENGTH = 256
 
@@ -119,7 +121,6 @@ def create_server_config() -> bool:
             return False
 
     files = [i + ".yaml" for i in CONTAINER_TYPES]
-    files.append(MERLIN_SERVER_CONFIG)
     for file in files:
         file_path = os.path.join(config_dir, file)
         if os.path.exists(file_path):
@@ -132,7 +133,18 @@ def create_server_config() -> bool:
             LOG.error(f"Destination location {config_dir} is not writable.")
             return False
 
+    # Load Merlin Server Configuration and apply it to app.yaml
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), MERLIN_SERVER_CONFIG)) as f:
+        main_server_config = yaml.load(f, yaml.Loader)
+        filename = LOCAL_APP_YAML if os.path.exists(LOCAL_APP_YAML) else AppYaml.default_filename
+        merlin_app_yaml = AppYaml(filename)
+        merlin_app_yaml.update_data(main_server_config)
+        merlin_app_yaml.write(filename)
+
     server_config = pull_server_config()
+    if not server_config:
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
+        return False
 
     if not os.path.exists(server_config.container.get_config_dir()):
         LOG.info("Creating merlin server directory.")
@@ -147,6 +159,9 @@ def config_merlin_server():
     """
 
     server_config = pull_server_config()
+    if not server_config:
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
+        return False
 
     pass_file = server_config.container.get_pass_file_path()
     if os.path.exists(pass_file):
@@ -188,15 +203,11 @@ def pull_server_config() -> ServerConfig:
     format_needed_keys = ["command", "run_command", "stop_command", "pull_command"]
     process_needed_keys = ["status", "kill"]
 
-    config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
-    config_path = os.path.join(config_dir, MERLIN_SERVER_CONFIG)
-    if not os.path.exists(config_path):
-        LOG.error(f"Unable to pull merlin server configuration from {config_path}")
-        return None
+    merlin_app_yaml = AppYaml(LOCAL_APP_YAML)
+    server_config = merlin_app_yaml.get_data()
+    return_data.update(server_config)
 
-    with open(config_path, "r") as cf:
-        server_config = yaml.load(cf, yaml.Loader)
-        return_data.update(server_config)
+    config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
 
     if "container" in server_config:
         if "format" in server_config["container"]:
@@ -209,20 +220,20 @@ def pull_server_config() -> ServerConfig:
                         return None
                 return_data.update(format_data)
         else:
-            LOG.error(f'Unable to find "format" in {MERLIN_SERVER_CONFIG}')
+            LOG.error(f'Unable to find "format" in {merlin_app_yaml.default_filename}')
             return None
     else:
-        LOG.error(f'Unable to find "container" object in {MERLIN_SERVER_CONFIG}')
+        LOG.error(f'Unable to find "container" object in {merlin_app_yaml.default_filename}')
         return None
 
     # Checking for process values that are needed for main functions and defaults
     if "process" not in server_config:
-        LOG.error("Process config not found in " + MERLIN_SERVER_CONFIG)
+        LOG.error(f"Process config not found in {merlin_app_yaml.default_filename}")
         return None
 
     for key in process_needed_keys:
         if key not in server_config["process"]:
-            LOG.error(f'Process necessary "{key}" command configuration not found in {MERLIN_SERVER_CONFIG}')
+            LOG.error(f'Process necessary "{key}" command configuration not found in {merlin_app_yaml.default_filename}')
             return None
 
     return ServerConfig(return_data)

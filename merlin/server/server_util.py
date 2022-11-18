@@ -563,6 +563,12 @@ class AppYaml:
         self.data[self.results_name]["server"] = rc.get_ip_address()
         self.data[self.results_name]["port"] = rc.get_port()
 
+    def update_data(self, new_data: dict):
+        self.data.update(new_data)
+
+    def get_data(self):
+        return self.data
+
     def read(self, filename: str = default_filename):
         self.data = merlin.utils.load_yaml(filename)
 
