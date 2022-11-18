@@ -133,6 +133,7 @@ def create_server_config() -> bool:
             return False
 
     server_config = pull_server_config()
+
     if not os.path.exists(server_config.container.get_config_dir()):
         LOG.info("Creating merlin server directory.")
         os.mkdir(server_config.container.get_config_dir())
