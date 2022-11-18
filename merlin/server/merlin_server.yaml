@@ -9,8 +9,8 @@ container:
     url: docker://redis
     # The config file
     config: redis.conf
-    # Subdirectory name to store configurations Default: merlin_server/
-    config_dir: merlin_server/
+    # Directory name to store configurations Default: ./merlin_server/
+    config_dir: ./merlin_server/
     # Process file containing information regarding the redis process
     pfile: merlin_server.pf
     # Password file to be used for accessing container

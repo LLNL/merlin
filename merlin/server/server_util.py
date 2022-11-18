@@ -63,7 +63,7 @@ class ContainerConfig:
     IMAGE_NAME = "redis_latest.sif"
     REDIS_URL = "docker://redis"
     CONFIG_FILE = "redis.conf"
-    CONFIG_DIR = "./merlin_server/"
+    CONFIG_DIR = os.path.abspath("./merlin_server/")
     PROCESS_FILE = "merlin_server.pf"
     PASSWORD_FILE = "redis.pass"
     USERS_FILE = "redis.users"
@@ -84,7 +84,7 @@ class ContainerConfig:
         self.image = data["image"] if "image" in data else self.IMAGE_NAME
         self.url = data["url"] if "url" in data else self.REDIS_URL
         self.config = data["config"] if "config" in data else self.CONFIG_FILE
-        self.config_dir = data["config_dir"] if "config_dir" in data else self.CONFIG_DIR
+        self.config_dir = os.path.abspath(data["config_dir"]) if "config_dir" in data else self.CONFIG_DIR
         self.pfile = data["pfile"] if "pfile" in data else self.PROCESS_FILE
         self.pass_file = data["pass_file"] if "pass_file" in data else self.PASSWORD_FILE
         self.user_file = data["user_file"] if "user_file" in data else self.USERS_FILE
@@ -323,7 +323,7 @@ class RedisConfig:
         if password is None:
             return False
         self.set_config_value("requirepass", password)
-        LOG.info(f"Password file set to {password}")
+        LOG.info("New password set")
         return True
 
     def get_password(self) -> str:
@@ -552,16 +552,22 @@ class AppYaml:
         rc = RedisConfig(server_config.container.get_config_path())
 
         self.data[self.broker_name]["name"] = server_config.container.get_image_type()
-        self.data[self.broker_name]["username"] = os.environ.get("USER")
+        self.data[self.broker_name]["username"] = "default"
         self.data[self.broker_name]["password"] = server_config.container.get_pass_file_path()
         self.data[self.broker_name]["server"] = rc.get_ip_address()
         self.data[self.broker_name]["port"] = rc.get_port()
 
         self.data[self.results_name]["name"] = server_config.container.get_image_type()
-        self.data[self.results_name]["username"] = os.environ.get("USER")
+        self.data[self.results_name]["username"] = "default"
         self.data[self.results_name]["password"] = server_config.container.get_pass_file_path()
         self.data[self.results_name]["server"] = rc.get_ip_address()
         self.data[self.results_name]["port"] = rc.get_port()
+
+    def update_data(self, new_data: dict):
+        self.data.update(new_data)
+
+    def get_data(self):
+        return self.data
 
     def read(self, filename: str = default_filename):
         self.data = merlin.utils.load_yaml(filename)

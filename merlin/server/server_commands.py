@@ -46,6 +46,9 @@ def config_server(args: Namespace) -> None:
     based on the input passed in by the user.
     """
     server_config = pull_server_config()
+    if not server_config:
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
+        return False
     redis_config = RedisConfig(server_config.container.get_config_path())
 
     redis_config.set_ip_address(args.ipaddress)
@@ -79,6 +82,9 @@ def config_server(args: Namespace) -> None:
         LOG.info("Add changes to config file and exisiting containers.")
 
     server_config = pull_server_config()
+    if not server_config:
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
+        return False
 
     # Read the user from the list of avaliable users
     redis_users = RedisUsers(server_config.container.get_user_file_path())
@@ -160,7 +166,12 @@ def start_server() -> bool:
     process = subprocess.Popen(
         server_config.container_format.get_run_command()
         .strip("\\")
-        .format(command=server_config.container_format.get_command(), image=image_path, config=config_path)
+        .format(
+            command=server_config.container_format.get_command(),
+            home_dir=server_config.container.get_config_dir(),
+            image=image_path,
+            config=config_path,
+        )
         .split(),
         start_new_session=True,
         close_fds=True,
