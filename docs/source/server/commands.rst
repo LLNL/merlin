@@ -40,16 +40,18 @@ Stopping an exisiting Merlin Server (``merlin server stop``)
 Stop any exisiting container being managed and monitored by merlin server.
 
 Restarting a Merlin Server instance (``merlin server restart``)
-------------------------------------------------------------
+---------------------------------------------------------------
 
 Restarting an existing container that is being managed and monitored by merlin server.
 
 Configurating Merlin Server instance (``merlin server config``)
-------------------------------------------------------------
+---------------------------------------------------------------
 Place holder for information regarding merlin server config command
 
 Possible Flags
-.. code:: none
+
+.. code-block:: none
+
     -ip IPADDRESS, --ipaddress IPADDRESS
                             Set the binded IP address for the merlin server
                             container. (default: None)
@@ -82,3 +84,4 @@ Possible Flags
     -af APPEND_FILE, --append-file APPEND_FILE
                             Set append only filename for merlin server container.
                             (default: None)
+
