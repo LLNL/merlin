@@ -219,10 +219,7 @@ class ProvenanceYAMLFileHasRegex(HasRegex):
 
     @property
     def glob_string(self):
-        return (
-            f"{self.output_path}/{self.name}"
-            f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
-        )
+        return f"{self.output_path}/{self.name}" f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
 
     def is_within(self):
         """
@@ -241,3 +238,65 @@ class ProvenanceYAMLFileHasRegex(HasRegex):
         if self.negate:
             return not self.is_within()
         return self.is_within()
+
+
+class PathExists(Condition):
+    """
+    A condition for checking if a path to a file or directory exists
+    """
+
+    def __init__(self, pathname) -> None:
+        self.pathname = pathname
+
+    def path_exists(self) -> bool:
+        return os.path.exists(self.pathname)
+
+    def __str__(self) -> str:
+        return f"{__class__.__name__} expected to find file or directory at {self.pathname}"
+
+    @property
+    def passes(self):
+        return self.path_exists()
+
+
+class FileHasRegex(Condition):
+    """
+    A condition that some body of text within a file
+    MUST match a given regular expression.
+    """
+
+    def __init__(self, filename, regex) -> None:
+        self.filename = filename
+        self.regex = regex
+
+    def contains(self) -> bool:
+        try:
+            with open(self.filename, "r") as f:
+                filetext = f.read()
+            return self.is_within(filetext)
+        except Exception:
+            return False
+
+    def is_within(self, text):
+        return search(self.regex, text) is not None
+
+    def __str__(self) -> str:
+        return f"{__class__.__name__} expected to find {self.regex} regex match within {self.filename} file but no match was found"
+
+    @property
+    def passes(self):
+        return self.contains()
+
+
+class FileHasNoRegex(FileHasRegex):
+    """
+    A condition that some body of text within a file
+    MUST NOT match a given regular expression.
+    """
+
+    def __str__(self) -> str:
+        return f"{__class__.__name__} expected to find {self.regex} regex to not match within {self.filename} file but a match was found"
+
+    @property
+    def passes(self):
+        return not self.contains()

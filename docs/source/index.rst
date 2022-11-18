@@ -75,9 +75,9 @@ Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
    merlin_specification
    merlin_config
    merlin_variables
+   merlin_server
    celery_overview
    virtualenv
    spack
    merlin_developer
    docker
-

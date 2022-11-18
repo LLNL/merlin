@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -81,12 +81,14 @@ def expand_line(line, var_dict, env_vars=False):
     Expand one line of text by substituting user variables,
     optionally environment variables, as well as variables in 'var_dict'.
     """
+    # fmt: off
     if (
         (not contains_token(line))
         and (not contains_shell_ref(line))
         and ("~" not in line)
     ):
         return line
+    # fmt: on
     for key, val in var_dict.items():
         if key in line:
             line = line.replace(var_ref(key), str(val))
@@ -159,25 +161,19 @@ def determine_user_variables(*user_var_dicts):
     determined_results = {}
     for key, val in all_var_dicts.items():
         if key in RESERVED:
-            raise ValueError(
-                f"Cannot reassign value of reserved word '{key}'! Reserved words are: {RESERVED}."
-            )
+            raise ValueError(f"Cannot reassign value of reserved word '{key}'! Reserved words are: {RESERVED}.")
         new_val = str(val)
         if contains_token(new_val):
             for determined_key in determined_results.keys():
                 var_determined_key = var_ref(determined_key)
                 if var_determined_key in new_val:
-                    new_val = new_val.replace(
-                        var_determined_key, determined_results[determined_key]
-                    )
+                    new_val = new_val.replace(var_determined_key, determined_results[determined_key])
         new_val = expandvars(expanduser(new_val))
         determined_results[key.upper()] = new_val
     return determined_results
 
 
-def parameter_substitutions_for_sample(
-    sample, labels, sample_id, relative_path_to_sample
-):
+def parameter_substitutions_for_sample(sample, labels, sample_id, relative_path_to_sample):
     """
     :param sample : The sample to do substitution for.
     :param labels : The column labels of the sample.

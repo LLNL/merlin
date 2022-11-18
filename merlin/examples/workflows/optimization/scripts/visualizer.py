@@ -1,45 +1,43 @@
 import argparse
 
+import matplotlib
+
+
+matplotlib.use("pdf")
+import ast
+import pickle
+
 import matplotlib.pyplot as plt
 import numpy as np
-from joblib import load
 
 
 plt.style.use("seaborn-white")
 
-parser = argparse.ArgumentParser("Learn surrogate model form simulation")
+
+parser = argparse.ArgumentParser("Visualize the surrogate response surface in comparison to the analytic function")
+parser.add_argument("-study_dir", help="The study directory, usually '$(MERLIN_WORKSPACE)'")
 parser.add_argument(
-    "-study_dir", help="The study directory, usually '$(MERLIN_WORKSPACE)'"
+    "-scale",
+    help="ranges to scale results in form '[(min,max),(min, max)]'",
 )
 args = parser.parse_args()
 
 study_dir = args.study_dir
 npz_path = f"{study_dir}/learner/all_iter_results.npz"
-learner_path = f"{study_dir}/learner/surrogate.joblib"
+learner_path = f"{study_dir}/learner/surrogate.pkl"
 new_samples_path = f"{study_dir}/pick_new_inputs/new_samples.npy"
 new_exploit_samples_path = f"{study_dir}/pick_new_inputs/new_exploit_samples.npy"
 new_explore_samples_path = f"{study_dir}/pick_new_inputs/new_explore_samples.npy"
-new_explore_star_samples_path = (
-    f"{study_dir}/pick_new_inputs/new_explore_star_samples.npy"
-)
+new_explore_star_samples_path = f"{study_dir}/pick_new_inputs/new_explore_star_samples.npy"
 optimum_path = f"{study_dir}/optimizer/optimum.npy"
 old_best_path = f"{study_dir}/optimizer/old_best.npy"
 
-from_file = np.load(npz_path, allow_pickle=True)
+all_iter_results = np.load(npz_path, allow_pickle=True)
 
-data = from_file["arr_0"].item()
+existing_X = all_iter_results["X"]
+existing_y = all_iter_results["y"]
 
-X = []
-y = []
-
-for i in data.keys():
-    X.append(data[i]["Inputs"])
-    y.append(data[i]["Outputs"])
-
-existing_X = np.array(X)
-existing_y = np.array(y)
-
-surrogate = load(learner_path)
+surrogate = pickle.load(open(learner_path, "rb"))
 
 new_samples = np.load(new_samples_path)
 new_exploit_samples = np.load(new_exploit_samples_path)
@@ -49,8 +47,24 @@ optimum = np.load(optimum_path)
 old_best = np.load(old_best_path)
 
 
-def Rosenbrock_mesh():
-    X_mesh_plot = np.array([np.linspace(-2, 2, n_points), np.linspace(-1, 3, n_points)])
+def process_scale(args):
+    if args.scale is not None:
+        raw = ast.literal_eval(args.scale)
+        processed = np.array(raw, dtype=float).tolist()
+        return processed
+
+
+def rosenbrock_mesh():
+    scales = process_scale(args)
+    print("args.scale", args.scale)
+    print("scales", scales)
+    limits = []
+    for scale in scales:
+        limits.append((scale[0], scale[1]))
+
+    X_mesh_plot = np.array(
+        [np.linspace(limits[0][0], limits[0][1], n_points), np.linspace(limits[1][0], limits[1][1], n_points)]
+    )
     X_mesh = np.meshgrid(X_mesh_plot[0], X_mesh_plot[1])
 
     Z_mesh = (1 - X_mesh[0]) ** 2 + 100 * (X_mesh[1] - X_mesh[0] ** 2) ** 2
@@ -61,7 +75,7 @@ def Rosenbrock_mesh():
 # Script for N_dim Rosenbrock function
 n_points = 250
 
-X_mesh, Z_mesh = Rosenbrock_mesh()
+X_mesh, Z_mesh = rosenbrock_mesh()
 
 Z_pred = surrogate.predict(np.c_[X_mesh[0].ravel(), X_mesh[1].ravel()])
 Z_pred = Z_pred.reshape(X_mesh[0].shape)
@@ -115,9 +129,7 @@ ax.plot_surface(
     alpha=0.4,
     edgecolor="none",
 )
-ax.scatter(
-    existing_X[:, 0], existing_X[:, 1], np.clip(existing_y, -100, 100), marker="x"
-)
+ax.scatter(existing_X[:, 0], existing_X[:, 1], np.clip(existing_y, -100, 100), marker="x")
 ax.view_init(45, 45)
 ax.set_xlabel("DIM_1")
 ax.set_ylabel("DIM_2")
@@ -134,9 +146,7 @@ ax.plot_surface(
     alpha=0.4,
     edgecolor="none",
 )
-ax.scatter(
-    existing_X[:, 0], existing_X[:, 1], np.clip(existing_y, -100, 100), marker="x"
-)
+ax.scatter(existing_X[:, 0], existing_X[:, 1], np.clip(existing_y, -100, 100), marker="x")
 ax.view_init(45, 45)
 ax.set_xlabel("DIM_1")
 ax.set_ylabel("DIM_2")
@@ -146,9 +156,7 @@ ax = fig.add_subplot(3, 2, 5)
 ax.scatter(existing_X[:, 0], existing_X[:, 1], label="Existing Inputs")
 ax.scatter(new_samples[:, 0], new_samples[:, 1], label="Suggested Inputs")
 ax.annotate("Predicted Optimum", xy=optimum, xytext=(1, 0), arrowprops=dict(width=0.01))
-ax.annotate(
-    "Current Best", xy=old_best, xytext=(-1.5, 1.5), arrowprops=dict(width=0.01)
-)
+ax.annotate("Current Best", xy=old_best, xytext=(-1.5, 1.5), arrowprops=dict(width=0.01))
 ax.annotate("Actual Minimum", xy=(1, 1), xytext=(1.5, 2.5), arrowprops=dict(width=0.01))
 
 ax.set_xlabel("DIM_1")
@@ -158,12 +166,8 @@ ax.legend()
 ax.grid()
 
 ax = fig.add_subplot(3, 2, 6)
-ax.scatter(
-    new_exploit_samples[:, 0], new_exploit_samples[:, 1], label="Exploit Samples"
-)
-ax.scatter(
-    new_explore_samples[:, 0], new_explore_samples[:, 1], label="Explore Samples"
-)
+ax.scatter(new_exploit_samples[:, 0], new_exploit_samples[:, 1], label="Exploit Samples")
+ax.scatter(new_explore_samples[:, 0], new_explore_samples[:, 1], label="Explore Samples")
 ax.scatter(
     new_explore_star_samples[:, 0],
     new_explore_star_samples[:, 1],

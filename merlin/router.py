@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -207,14 +207,19 @@ def route_for_task(name, args, kwargs, options, task=None, **kw):
         return {"queue": queue}
 
 
-def create_config(task_server, config_dir, broker):
+def create_config(task_server: str, config_dir: str, broker: str, test: str) -> None:
     """
     Create a config for the given task server.
 
-    :param `task_server`: The task server from which to stop workers.
-    :param `config_dir`: Optional directory to install the config.
+    :param [str] `task_server`: The task server from which to stop workers.
+    :param [str] `config_dir`: Optional directory to install the config.
+    :param [str] `broker`: string indicated the broker, used to check for redis.
+    :param [str] `test`: string indicating if the app.yaml is used for testing.
     """
-    LOG.info("Creating config ...")
+    if test:
+        LOG.info("Creating test config ...")
+    else:
+        LOG.info("Creating config ...")
 
     if not os.path.isdir(config_dir):
         os.makedirs(config_dir)
@@ -224,6 +229,8 @@ def create_config(task_server, config_dir, broker):
         data_config_file = "app.yaml"
         if broker == "redis":
             data_config_file = "app_redis.yaml"
+        elif test:
+            data_config_file = "app_test.yaml"
         with resources.path("merlin.data.celery", data_config_file) as data_file:
             create_celery_config(config_dir, config_file, data_file)
     else:
@@ -256,13 +263,9 @@ def check_merlin_status(args, spec):
         while count < max_count:
             # This list will include strings comprised of the worker name with the hostname e.g. worker_name@host.
             worker_status = get_workers(args.task_server)
-            LOG.info(
-                f"Monitor: checking for workers, running workers = {worker_status} ..."
-            )
+            LOG.info(f"Monitor: checking for workers, running workers = {worker_status} ...")
 
-            check = any(
-                any(iwn in iws for iws in worker_status) for iwn in worker_names
-            )
+            check = any(any(iwn in iws for iws in worker_status) for iwn in worker_names)
             if check:
                 break
 

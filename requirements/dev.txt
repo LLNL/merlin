@@ -1,9 +1,11 @@
 # Development dependencies.
+build
 black
 dep-license
 flake8
 isort
 pytest
+pylint
 twine
 sphinx>=2.0.0
 alabaster

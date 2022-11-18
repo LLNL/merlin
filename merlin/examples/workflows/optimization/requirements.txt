@@ -1,6 +1,6 @@
-merlin
 merlin-spellbook
 numpy
-joblib
 scikit-learn
 matplotlib
+Jinja2
+pyDOE

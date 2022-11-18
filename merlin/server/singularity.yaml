@@ -1,0 +1,6 @@
+singularity:
+    command: singularity
+    # init_command: \{command} .. (optional or default)
+    run_command: \{command} run -H {home_dir} {image} {config}
+    stop_command: kill # \{command} (optional or kill default)
+    pull_command: \{command} pull {image} {url}

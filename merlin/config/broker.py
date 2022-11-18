@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -34,7 +34,9 @@ from __future__ import print_function
 import getpass
 import logging
 import os
+import ssl
 from os.path import expanduser
+from typing import Dict, List, Optional, Union
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
 
@@ -45,12 +47,12 @@ except ImportError:
     from urllib.parse import quote
 
 
-LOG = logging.getLogger(__name__)
+LOG: logging.Logger = logging.getLogger(__name__)
 
-BROKERS = ["rabbitmq", "redis", "rediss", "redis+socket", "amqps", "amqp"]
+BROKERS: List[str] = ["rabbitmq", "redis", "rediss", "redis+socket", "amqps", "amqp"]
 
-RABBITMQ_CONNECTION = "{conn}://{username}:{password}@{server}:{port}/{vhost}"
-REDISSOCK_CONNECTION = "redis+socket://{path}?virtual_host={db_num}"
+RABBITMQ_CONNECTION: str = "{conn}://{username}:{password}@{server}:{port}/{vhost}"
+REDISSOCK_CONNECTION: str = "redis+socket://{path}?virtual_host={db_num}"
 USER = getpass.getuser()
 
 
@@ -90,9 +92,7 @@ def get_rabbit_connection(config_path, include_password, conn="amqps"):
     try:
         password = read_file(password_filepath)
     except IOError:
-        raise ValueError(
-            f"Broker: RabbitMQ password file {password_filepath} does not exist"
-        )
+        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist")
 
     try:
         port = CONFIG.broker.port
@@ -202,6 +202,7 @@ def get_connection_string(include_password=True):
     try:
         return CONFIG.broker.url
     except AttributeError:
+        # The broker may not have a url
         pass
 
     try:
@@ -219,7 +220,6 @@ def get_connection_string(include_password=True):
         raise ValueError(f"Error: {broker} is not a supported broker.")
     else:
         return _sort_valid_broker(broker, config_path, include_password)
-    return None
 
 
 def _sort_valid_broker(broker, config_path, include_password):
@@ -239,31 +239,39 @@ def _sort_valid_broker(broker, config_path, include_password):
     return get_redis_connection(config_path, include_password, ssl=True)
 
 
-def get_ssl_config():
+def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:
     """
     Return the ssl config based on the configuration specified in the
     `app.yaml` config file.
+
+    :return: Returns either False if no ssl
+    :rtype: Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]
     """
-    broker = ""
+    broker: Union[bool, str] = ""
     try:
         broker = CONFIG.broker.url.split(":")[0]
     except AttributeError:
+        # The broker may not have a url
         pass
 
     try:
         broker = CONFIG.broker.name.lower()
     except AttributeError:
+        # The broker may not have a name
         pass
 
     if broker not in BROKERS:
         return False
 
+    certs_path: Optional[str]
     try:
         certs_path = CONFIG.celery.certs
     except AttributeError:
         certs_path = None
 
-    broker_ssl = get_ssl_entries("Broker", broker, CONFIG.broker, certs_path)
+    broker_ssl: Union[bool, Dict[str, Union[str, ssl.VerifyMode]]] = get_ssl_entries(
+        "Broker", broker, CONFIG.broker, certs_path
+    )
 
     if not broker_ssl:
         broker_ssl = True

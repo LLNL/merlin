@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -43,21 +43,11 @@ from maestrowf.utils import create_dictionary
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec import defaults
-from merlin.spec.expansion import (
-    determine_user_variables,
-    expand_by_line,
-    expand_env_vars,
-    expand_line,
-)
+from merlin.spec.expansion import determine_user_variables, expand_by_line, expand_env_vars, expand_line
 from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.study.dag import DAG
-from merlin.utils import (
-    contains_shell_ref,
-    contains_token,
-    get_flux_cmd,
-    load_array_file,
-)
+from merlin.utils import contains_shell_ref, contains_token, get_flux_cmd, load_array_file
 
 
 LOG = logging.getLogger(__name__)
@@ -117,6 +107,20 @@ class MerlinStudy:
             "MERLIN_SOFT_FAIL": str(int(ReturnCode.SOFT_FAIL)),
             "MERLIN_HARD_FAIL": str(int(ReturnCode.HARD_FAIL)),
             "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
+            # below will be substituted for sample values on execution
+            "MERLIN_SAMPLE_VECTOR": " ".join(
+                ["$({})".format(k) for k in self.get_sample_labels(from_spec=self.original_spec)]
+            ),
+            "MERLIN_SAMPLE_NAMES": " ".join(self.get_sample_labels(from_spec=self.original_spec)),
+            "MERLIN_SPEC_ORIGINAL_TEMPLATE": os.path.join(
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".orig.yaml"
+            ),
+            "MERLIN_SPEC_EXECUTED_RUN": os.path.join(
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".partial.yaml"
+            ),
+            "MERLIN_SPEC_ARCHIVED_COPY": os.path.join(
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".expanded.yaml"
+            ),
         }
 
         self.pgen_file = pgen_file
@@ -142,9 +146,7 @@ class MerlinStudy:
         if self.original_spec.merlin["samples"]:
             for label in self.original_spec.merlin["samples"]["column_labels"]:
                 if label in self.original_spec.globals:
-                    raise ValueError(
-                        f"column_label {label} cannot also be " "in global.parameters!"
-                    )
+                    raise ValueError(f"column_label {label} cannot also be in global.parameters!")
 
     @staticmethod
     def get_user_vars(spec):
@@ -169,16 +171,12 @@ class MerlinStudy:
         Useful for provenance.
         """
         # get specification including defaults and cli-overridden user variables
-        new_env = replace_override_vars(
-            self.original_spec.environment, self.override_vars
-        )
+        new_env = replace_override_vars(self.original_spec.environment, self.override_vars)
         new_spec = deepcopy(self.original_spec)
         new_spec.environment = new_env
 
         # expand user variables
-        new_spec_text = expand_by_line(
-            new_spec.dump(), MerlinStudy.get_user_vars(new_spec)
-        )
+        new_spec_text = expand_by_line(new_spec.dump(), MerlinStudy.get_user_vars(new_spec))
 
         # expand reserved words
         new_spec_text = expand_by_line(new_spec_text, self.special_vars)
@@ -198,6 +196,11 @@ class MerlinStudy:
             return self.load_samples()
         return []
 
+    def get_sample_labels(self, from_spec):
+        if from_spec.merlin["samples"]:
+            return from_spec.merlin["samples"]["column_labels"]
+        return []
+
     @property
     def sample_labels(self):
         """
@@ -213,9 +216,7 @@ class MerlinStudy:
 
         :return: list of labels (e.g. ["X0", "X1"] )
         """
-        if self.expanded_spec.merlin["samples"]:
-            return self.expanded_spec.merlin["samples"]["column_labels"]
-        return []
+        return self.get_sample_labels(from_spec=self.expanded_spec)
 
     def load_samples(self):
         """
@@ -288,9 +289,7 @@ class MerlinStudy:
         else:
             output_path = str(self.original_spec.output_path)
 
-            if (self.override_vars is not None) and (
-                "OUTPUT_PATH" in self.override_vars
-            ):
+            if (self.override_vars is not None) and ("OUTPUT_PATH" in self.override_vars):
                 output_path = str(self.override_vars["OUTPUT_PATH"])
 
             output_path = expand_line(output_path, self.user_vars, env_vars=True)
@@ -321,9 +320,7 @@ class MerlinStudy:
         """
         if self.restart_dir is not None:
             if not os.path.isdir(self.restart_dir):
-                raise ValueError(
-                    f"Restart directory '{self.restart_dir}' does not exist!"
-                )
+                raise ValueError(f"Restart directory '{self.restart_dir}' does not exist!")
             return os.path.abspath(self.restart_dir)
 
         workspace_name = f'{self.original_spec.name.replace(" ", "_")}_{self.timestamp}'
@@ -362,26 +359,20 @@ class MerlinStudy:
         expanded_filepath = os.path.join(self.info, expanded_name)
 
         # expand provenance spec filename
-        if contains_token(self.original_spec.name) or contains_shell_ref(
-            self.original_spec.name
-        ):
+        if contains_token(self.original_spec.name) or contains_shell_ref(self.original_spec.name):
             name = f"{result.description['name'].replace(' ', '_')}_{self.timestamp}"
             name = expand_line(name, {}, env_vars=True)
             if "/" in name:
-                raise ValueError(
-                    f"Expanded value '{name}' for field 'name' in section 'description' is not a valid filename."
-                )
+                raise ValueError(f"Expanded value '{name}' for field 'name' in section 'description' is not a valid filename.")
             expanded_workspace = os.path.join(self.output_path, name)
 
             if result.merlin["samples"]:
                 sample_file = result.merlin["samples"]["file"]
                 if sample_file.startswith(self.workspace):
-                    new_samples_file = sample_file.replace(
+                    new_samples_file = sample_file.replace(self.workspace, expanded_workspace)
+                    result.merlin["samples"]["generate"]["cmd"] = result.merlin["samples"]["generate"]["cmd"].replace(
                         self.workspace, expanded_workspace
                     )
-                    result.merlin["samples"]["generate"]["cmd"] = result.merlin[
-                        "samples"
-                    ]["generate"]["cmd"].replace(self.workspace, expanded_workspace)
                     result.merlin["samples"]["file"] = new_samples_file
 
             shutil.move(self.workspace, expanded_workspace)
@@ -390,9 +381,7 @@ class MerlinStudy:
             self.special_vars["MERLIN_INFO"] = self.info
 
             expanded_filepath = os.path.join(self.info, expanded_name)
-            new_spec_text = expand_by_line(
-                result.dump(), MerlinStudy.get_user_vars(result)
-            )
+            new_spec_text = expand_by_line(result.dump(), MerlinStudy.get_user_vars(result))
             result = MerlinSpec.load_spec_from_string(new_spec_text)
             result = expand_env_vars(result)
 
@@ -458,9 +447,7 @@ class MerlinStudy:
         """
         try:
             if not os.path.exists(self.samples_file):
-                sample_generate = self.expanded_spec.merlin["samples"]["generate"][
-                    "cmd"
-                ]
+                sample_generate = self.expanded_spec.merlin["samples"]["generate"]["cmd"]
                 LOG.info("Generating samples...")
                 sample_process = subprocess.Popen(
                     sample_generate,

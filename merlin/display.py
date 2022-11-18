@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -88,7 +88,12 @@ def check_server_access(sconf):
 def _examine_connection(s, sconf, excpts):
     connect_timeout = 60
     try:
-        conn = Connection(sconf[s])
+        ssl_conf = None
+        if "broker" in s:
+            ssl_conf = broker.get_ssl_config()
+        if "results" in s:
+            ssl_conf = results_backend.get_ssl_config()
+        conn = Connection(sconf[s], ssl=ssl_conf)
         conn_check = ConnProcess(target=conn.connect)
         conn_check.start()
         counter = 0
@@ -97,9 +102,7 @@ def _examine_connection(s, sconf, excpts):
             counter += 1
             if counter > connect_timeout:
                 conn_check.kill()
-                raise Exception(
-                    f"Connection was killed due to timeout ({connect_timeout}s)"
-                )
+                raise Exception(f"Connection was killed due to timeout ({connect_timeout}s)")
         conn.release()
         if conn_check.exception:
             error, traceback = conn_check.exception
@@ -131,9 +134,7 @@ def display_config_info():
         excpts["broker server"] = e
 
     try:
-        conf["results server"] = results_backend.get_connection_string(
-            include_password=False
-        )
+        conf["results server"] = results_backend.get_connection_string(include_password=False)
         sconf["results server"] = results_backend.get_connection_string()
         conf["results ssl"] = results_backend.get_ssl_config()
     except Exception as e:
@@ -190,5 +191,5 @@ def print_info(args):
         info_str += 'echo " $ ' + x + '" && ' + x + "\n"
         info_str += "echo \n"
     info_str += r"echo \"echo \$PYTHONPATH\" && echo $PYTHONPATH"
-    subprocess.call(info_str, shell=True)
+    _ = subprocess.run(info_str, shell=True)
     print("")

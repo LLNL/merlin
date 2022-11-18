@@ -1,7 +1,7 @@
 PYTHON?=python3
 PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
-VENV?=venv_merlin_py$(PYV)
+VENV?=venv_merlin_py_$(PYV)
 PIP?=$(VENV)/bin/pip
 MRLN=merlin
 TEST=tests

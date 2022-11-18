@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,7 +37,7 @@ import os
 import re
 import socket
 import subprocess
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import timedelta
 from types import SimpleNamespace
@@ -79,11 +79,7 @@ def get_user_process_info(user=None, attrs=None):
     if user == "all_users":
         return [p.info for p in psutil.process_iter(attrs=attrs)]
     else:
-        return [
-            p.info
-            for p in psutil.process_iter(attrs=attrs)
-            if user in p.info["username"]
-        ]
+        return [p.info for p in psutil.process_iter(attrs=attrs) if user in p.info["username"]]
 
 
 def check_pid(pid, user=None):
@@ -154,9 +150,7 @@ def is_running(name, all_users=False):
         cmd[1] = "aux"
 
     try:
-        ps = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, encoding="utf8"
-        ).communicate()[0]
+        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()[0]
     except TypeError:
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
 
@@ -211,15 +205,14 @@ def get_yaml_var(entry, var, default):
     :param `var`: a yaml key
     :param `default`: default value in the absence of data
     """
-    ret = default
 
-    if isinstance(entry, dict):
-        with suppress(KeyError):
-            ret = entry[var]
-    else:
-        with suppress(AttributeError):
-            ret = getattr(entry, var)
-    return ret
+    try:
+        return entry[var]
+    except (TypeError, KeyError):
+        try:
+            return getattr(entry, var)
+        except AttributeError:
+            return default
 
 
 def load_array_file(filename, ndmin=2):
@@ -304,6 +297,7 @@ def get_source_root(filepath):
 
     parent = os.path.dirname(filepath)
     # Walk backwards testing for integers.
+    break_point = parent.split(sep)[-1]  # Initial value for lgtm.com
     for _, _dir in enumerate(parent.split(sep)[::-1]):
         try:
             int(_dir)
@@ -380,21 +374,19 @@ def get_flux_version(flux_path, no_errors=False):
     ps = None
 
     try:
-        ps = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, encoding="utf8"
-        ).communicate()
+        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()
     except FileNotFoundError as e:
         if not no_errors:
             LOG.error(f"The flux path {flux_path} canot be found")
-            LOG.error(f"Suppress this error with no_errors=True")
+            LOG.error("Suppress this error with no_errors=True")
             raise e
 
     try:
         flux_ver = re.search(r"\s*([\d.]+)", ps[0]).group(1)
     except (ValueError, TypeError) as e:
         if not no_errors:
-            LOG.error(f"The flux version canot be determined")
-            LOG.error(f"Suppress this error with no_errors=True")
+            LOG.error("The flux version cannot be determined")
+            LOG.error("Suppress this error with no_errors=True")
             raise e
         else:
             flux_ver = DEFAULT_FLUX_VERSION
@@ -472,9 +464,7 @@ def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
     timestr = str(timestr)
     nfields = len(timestr.split(":"))
     if nfields > 4:
-        raise ValueError(
-            f"Cannot convert {timestr} to a timedelta. Valid format: days:hours:minutes:seconds."
-        )
+        raise ValueError(f"Cannot convert {timestr} to a timedelta. Valid format: days:hours:minutes:seconds.")
     _, d, h, m, s = (":0" * 10 + timestr).rsplit(":", 4)
     tdelta = timedelta(days=int(d), hours=int(h), minutes=int(m), seconds=int(s))
     return tdelta
@@ -508,9 +498,7 @@ def repr_timedelta(td: timedelta, method: str = "HMS") -> str:
     elif method == "FSD":
         return _repr_timedelta_FSD(td)
     else:
-        raise ValueError(
-            "Invalid method for formatting timedelta! Valid choices: HMS, FSD"
-        )
+        raise ValueError("Invalid method for formatting timedelta! Valid choices: HMS, FSD")
 
 
 def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") -> str:

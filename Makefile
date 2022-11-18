@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.4.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,52 +29,174 @@
 ###############################################################################
 include config.mk
 
-.PHONY : all
-.PHONY : install-dev
 .PHONY : virtualenv
-.PHONY : install-workflow-deps
 .PHONY : install-merlin
-.PHONY : clean-output
-.PHONY : clean-docs
-.PHONY : clean-release
-.PHONY : clean-py
-.PHONY : clean
-.PHONY : release
+.PHONY : install-workflow-deps
+.PHONY : install-dev
 .PHONY : unit-tests
-.PHONY : cli-tests
+.PHONY : e2e-tests
+.PHONY : e2e-tests-diagnostic
+.PHONY : e2e-tests-local
+.PHONY : e2e-tests-local-diagnostic
 .PHONY : tests
-.PHONY : fix-style
+.PHONY : check-flake8
+.PHONY : check-black
+.PHONY : check-isort
+.PHONY : check-pylint
 .PHONY : check-style
+.PHONY : fix-style
+.PHONY : check-push
 .PHONY : check-camel-case
 .PHONY : checks
 .PHONY : reqlist
-.PHONY : check-variables
+.PHONY : release
+.PHONY : clean-release
+.PHONY : clean-output
+.PHONY : clean-docs
+.PHONY : clean-py
+.PHONY : clean
 
 
-all: install-dev install-merlin install-workflow-deps
+# this only works outside the venv - if run from inside a custom venv, or any target that depends on this,
+# you will break your venv.
+virtualenv:
+	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages; \
+	$(PIP) install --upgrade pip; \
+	$(PIP) install -r requirements/release.txt; \
+
+
+# install merlin into the virtual environment
+install-merlin: virtualenv
+	$(PIP) install -e .; \
+	. $(VENV)/bin/activate; \
+	merlin config; \
+
+
+# install the example workflow to enable integrated testing
+install-workflow-deps: virtualenv install-merlin
+	$(PIP) install -r $(WKFW)feature_demo/requirements.txt; \
 
 
 # install requirements
-install-dev: virtualenv
-	$(PIP) install -r requirements/dev.txt
+install-dev: virtualenv install-merlin install-workflow-deps
+	$(PIP) install -r requirements/dev.txt; \
 
 
-check-variables:
-	- echo MAX_LINE_LENGTH $(MAX_LINE_LENGTH)
+# tests require a valid dev install of merlin
+unit-tests:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m pytest $(UNIT); \
 
 
-# this only works outside the venv
-virtualenv:
-	$(PYTHON) -m venv $(VENV) --prompt $(PENV) --system-site-packages
-	$(PIP) install --upgrade pip
+# run CLI tests - these require an active install of merlin in a venv
+e2e-tests:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py; \
 
 
-install-workflow-deps:
-	$(PIP) install -r $(WKFW)feature_demo/requirements.txt
+e2e-tests-diagnostic:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --verbose
 
 
-install-merlin:
-	$(PIP) install -e .
+e2e-tests-local:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --local; \
+
+
+e2e-tests-local-diagnostic:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose
+
+
+# run unit and CLI tests
+tests: unit-tests e2e-tests
+
+
+check-flake8:
+	. $(VENV)/bin/activate; \
+	echo "Flake8 linting for invalid source (bad syntax, undefined variables)..."; \
+	$(PYTHON) -m flake8 --count --select=E9,F63,F7,F82 --show-source --statistics; \
+	echo "Flake8 linting failure for CI..."; \
+	$(PYTHON) -m flake8 . --count --max-complexity=15 --statistics --max-line-length=127; \
+
+
+check-black:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(MRLN); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 $(TEST); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py36 *.py; \
+
+
+check-isort:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) merlin; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) tests; \
+	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) *.py; \
+
+
+check-pylint:
+	. $(VENV)/bin/activate; \
+	echo "PyLinting merlin source..."; \
+	$(PYTHON) -m pylint merlin --rcfile=setup.cfg --ignore-patterns="$(VENV)/" --disable=logging-fstring-interpolation; \
+	echo "PyLinting merlin tests..."; \
+	$(PYTHON) -m pylint tests --rcfile=setup.cfg; \
+
+
+# run code style checks
+check-style: check-flake8 check-black check-isort check-pylint
+
+
+check-push: tests check-style
+
+
+# finds all strings in project that begin with a lowercase letter,
+# contain only letters and numbers, and contain at least one lowercase
+# letter and at least one uppercase letter.
+check-camel-case: clean-py
+	grep -rnw --exclude=lbann_pb2.py $(MRLN) -e "[a-z]\([A-Z0-9]*[a-z][a-z0-9]*[A-Z]\|[a-z0-9]*[A-Z][A-Z0-9]*[a-z]\)[A-Za-z0-9]*"
+
+
+# run all checks
+checks: check-style check-camel-case
+
+
+# automatically make python files pep 8-compliant
+fix-style:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m isort --line-length $(MAX_LINE_LENGTH) $(MRLN); \
+	$(PYTHON) -m isort --line-length $(MAX_LINE_LENGTH) $(TEST); \
+	$(PYTHON) -m isort --line-length $(MAX_LINE_LENGTH) *.py; \
+	$(PYTHON) -m black --target-version py36 -l $(MAX_LINE_LENGTH) $(MRLN); \
+	$(PYTHON) -m black --target-version py36 -l $(MAX_LINE_LENGTH) $(TEST); \
+	$(PYTHON) -m black --target-version py36 -l $(MAX_LINE_LENGTH) *.py; \
+
+
+# Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
+# Use like this: make VER=?.?.? version
+version:
+# do merlin/__init__.py
+	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
+# do CHANGELOG.md
+	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
+# do all file headers (works on linux)
+	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	find tests/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	find Makefile -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+
+# Make a list of all dependencies/requirements
+reqlist:
+	johnnydep merlin --output-format pinned
+
+
+release:
+	$(PYTHON) -m build .
+
+
+clean-release:
+	rm -rf dist
+	rm -rf build
 
 
 # remove python bytecode files
@@ -95,73 +217,5 @@ clean-docs:
 	rm -rf $(DOCS)/build
 
 
-clean-release:
-	rm -rf dist
-	rm -rf build
-
-
 # remove unwanted files
 clean: clean-py clean-docs clean-release
-
-
-release:
-	$(PYTHON) setup.py sdist bdist_wheel
-
-
-unit-tests:
-	-$(PYTHON) -m pytest $(UNIT)
-
-
-# run CLI tests
-cli-tests:
-	-$(PYTHON) $(TEST)/integration/run_tests.py --local
-
-
-# run unit and CLI tests
-tests: unit-tests cli-tests
-
-
-# automatically make python files pep 8-compliant
-fix-style:
-	pip3 install -r requirements/dev.txt -U
-	isort -rc $(MRLN)
-	isort -rc $(TEST)
-	isort *.py
-	black --target-version py36 $(MRLN)
-	black --target-version py36 $(TEST)
-	black --target-version py36 *.py
-
-
-# run code style checks
-check-style:
-	-$(PYTHON) -m flake8 --max-complexity $(MAX_COMPLEXITY) --max-line-length $(MAX_LINE_LENGTH) --exclude ascii_art.py $(MRLN)
-	-black --check --target-version py36 $(MRLN)
-
-
-# finds all strings in project that begin with a lowercase letter,
-# contain only letters and numbers, and contain at least one lowercase
-# letter and at least one uppercase letter.
-check-camel-case: clean-py
-	grep -rnw --exclude=lbann_pb2.py $(MRLN) -e "[a-z]\([A-Z0-9]*[a-z][a-z0-9]*[A-Z]\|[a-z0-9]*[A-Z][A-Z0-9]*[a-z]\)[A-Za-z0-9]*"
-
-
-# run all checks
-checks: check-style check-camel-case
-
-
-# Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
-# Use like this: make VER=?.?.? verison
-version:
-	# do merlin/__init__.py
-	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
-	# do CHANGELOG.md
-	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
-	# do all file headers (works on linux)
-	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-	find tests/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-	find Makefile -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-
-# Make a list of all dependencies/requirements
-reqlist:
-	johnnydep merlin --output-format pinned

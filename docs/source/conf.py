@@ -43,10 +43,10 @@ release = MERLIN_VERSION
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-#extensions = [
+# extensions = [
 #    'sphinx.ext.autodoc',
 #    'sphinx.ext.intersphinx',
-#]
+# ]
 extensions = []
 
 # Add any paths that contain templates here, relative to this directory.
@@ -104,8 +104,8 @@ html_static_path = ['_static']
 html_context = {
     'css_files': [
         '_static/theme_overrides.css',  # override wide tables in RTD theme
-        ],
-     }
+    ],
+}
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -149,7 +149,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'Merlin.tex', u'Merlin Documentation',
-     u'MLSI', 'manual'),
+     u'The Merlin Development Team', 'manual'),
 ]
 
 
@@ -183,7 +183,13 @@ highlight_language = 'bash'
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
+
 def setup(app):
-    app.add_stylesheet('custom.css')
-    app.add_javascript("custom.js")
-    app.add_javascript("https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js")
+    try:
+        app.add_javascript("custom.js")
+        app.add_javascript("https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js")
+        app.add_stylesheet('custom.css')
+    except AttributeError:
+        app.add_css_file('custom.css')
+        app.add_js_file("custom.js")
+        app.add_js_file("https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js")

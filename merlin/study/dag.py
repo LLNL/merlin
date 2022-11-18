@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -169,9 +169,7 @@ class DAG:
         """
         step1 = self.step(task1)
         step2 = self.step(task2)
-        return step1.needs_merlin_expansion(
-            self.labels
-        ) == step2.needs_merlin_expansion(self.labels)
+        return step1.needs_merlin_expansion(self.labels) == step2.needs_merlin_expansion(self.labels)
 
     def find_independent_chains(self, list_of_groups_of_chains):
         """
@@ -206,16 +204,11 @@ class DAG:
 
                             if self.compatible_merlin_expansion(child, task_name):
 
-                                self.find_chain(child, list_of_groups_of_chains).remove(
-                                    child
-                                )
+                                self.find_chain(child, list_of_groups_of_chains).remove(child)
 
                                 chain.append(child)
 
-        new_list = [
-            [chain for chain in group if len(chain) > 0]
-            for group in list_of_groups_of_chains
-        ]
+        new_list = [[chain for chain in group if len(chain) > 0] for group in list_of_groups_of_chains]
         new_list_2 = [group for group in new_list if len(group) > 0]
 
         return new_list_2

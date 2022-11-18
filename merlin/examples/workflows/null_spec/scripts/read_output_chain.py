@@ -43,9 +43,7 @@ def single_task_times():
     for k, v in logmap.items():
         task_durations = []
         try:
-            pre_lines = subprocess.check_output(
-                f'grep " succeeded in " {v}', shell=True
-            ).decode("ascii")
+            pre_lines = subprocess.check_output(f'grep " succeeded in " {v}', shell=True).decode("ascii")
 
             pre_list = pre_lines.strip().split("\n")
 
@@ -55,7 +53,7 @@ def single_task_times():
                     match = matches.group(0)
                     match = float(match.strip("s:"))
                     task_durations.append(match)
-        except BaseException:
+        except Exception:
             print(f"c{filled_c}_s{k} task times : ERROR")
             continue
 
@@ -65,9 +63,7 @@ def single_task_times():
 def merlin_run_time():
     total = 0
     for err in args.errfile:
-        pre_line = subprocess.check_output(f'grep "real" {err}', shell=True).decode(
-            "ascii"
-        )
+        pre_line = subprocess.check_output(f'grep "real" {err}', shell=True).decode("ascii")
         pre_line = pre_line.strip()
         matches = re.search(r"\d\.\d\d\d", pre_line)
         match = matches[0]
@@ -75,32 +71,28 @@ def merlin_run_time():
         total += result
     try:
         print(f"c{filled_c} merlin run : " + str(result))
-    except BaseException:
+    except Exception:
         result = None
-        print(
-            f"c{filled_c} merlin run : ERROR -- result={result}, args.errfile={args.errfile}"
-        )
+        print(f"c{filled_c} merlin run : ERROR -- result={result}, args.errfile={args.errfile}")
 
 
 def start_verify_time():
     for k, v in logmap.items():
         all_timestamps = []
         try:
-            pre_line = subprocess.check_output(
-                f'grep -m2 "verify" {v} | tail -n1', shell=True
-            ).decode("ascii")
+            pre_line = subprocess.check_output(f'grep -m2 "verify" {v} | tail -n1', shell=True).decode("ascii")
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
             match = matches[0]
             element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
-        except BaseException:
+        except Exception:
             print(f"c{filled_c}_s{k} start verify : ERROR")
             continue
         try:
             print(f"c{filled_c}_s{k} start verify : " + str(all_timestamps[0]))
-        except BaseException:
+        except Exception:
             print(f"c{filled_c}_s{k} start verify : ERROR")
 
 
@@ -108,16 +100,14 @@ def start_run_workers_time():
     for k, v in logmap.items():
         all_timestamps = []
         try:
-            pre_line = subprocess.check_output(f'grep -m1 "" {v}', shell=True).decode(
-                "ascii"
-            )
+            pre_line = subprocess.check_output(f'grep -m1 "" {v}', shell=True).decode("ascii")
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
             match = matches[0]
             element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
-        except BaseException:
+        except Exception:
             continue
         earliest = min(all_timestamps)
         print(f"c{filled_c}_s{k} start run-workers : " + str(earliest))
@@ -127,16 +117,14 @@ def start_sample1_time():
     for k, v in logmap.items():
         all_timestamps = []
         try:
-            pre_line = subprocess.check_output(
-                f"grep -m1 \"Executing step 'null_step'\" {v}", shell=True
-            ).decode("ascii")
+            pre_line = subprocess.check_output(f"grep -m1 \"Executing step 'null_step'\" {v}", shell=True).decode("ascii")
             pre_line = pre_line.strip()
             matches = re.search(r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d,\d\d\d", pre_line)
             match = matches[0]
             element = datetime.datetime.strptime(match, "%Y-%m-%d %H:%M:%S,%f")
             timestamp = datetime.datetime.timestamp(element)
             all_timestamps.append(timestamp)
-        except BaseException:
+        except Exception:
             print(f"c{filled_c}_s{k} start samp1 : ERROR")
             continue
         earliest = min(all_timestamps)

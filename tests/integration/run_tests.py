@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.4.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -78,6 +78,12 @@ def run_single_test(name, test, test_label="", buffer_length=50):
             info["violated_condition"] = (condition, i, len(conditions))
             break
 
+    if len(test) == 4:
+        end_process = Popen(test[3], stdout=PIPE, stderr=PIPE, shell=True)
+        end_stdout, end_stderr = end_process.communicate()
+        info["end_stdout"] = end_stdout
+        info["end_stderr"] = end_stderr
+
     return passed, info
 
 
@@ -106,13 +112,10 @@ def process_test_result(passed, info, is_verbose, exit):
         print("pass")
 
     if info["violated_condition"] is not None:
-        message = info["violated_condition"][0]
-        condition_id = info["violated_condition"][1] + 1
-        n_conditions = info["violated_condition"][2]
-        print(
-            f"\tCondition {condition_id} of {n_conditions}: "
-            + str(info["violated_condition"][0])
-        )
+        msg: str = str(info["violated_condition"][0])
+        condition_id: str = info["violated_condition"][1] + 1
+        n_conditions: str = info["violated_condition"][2]
+        print(f"\tCondition {condition_id} of {n_conditions}: {msg}")
     if is_verbose is True:
         print(f"\tcommand: {info['command']}")
         print(f"\telapsed time: {round(info['total_time'], 2)} s")
@@ -142,7 +145,11 @@ def run_tests(args, tests):
         n_to_run = 0
         selective = True
         for test_id, test in enumerate(tests.values()):
-            if len(test) == 3 and test[2] == "local":
+            # Ensures that test definitions are atleast size 3.
+            # 'local' variable is stored in 3rd element of the test definitions,
+            # but an optional 4th element can be provided for an ending command
+            # to be ran after all checks have been made.
+            if len(test) >= 3 and test[2] == "local":
                 args.ids.append(test_id + 1)
                 n_to_run += 1
 
@@ -158,7 +165,7 @@ def run_tests(args, tests):
             continue
         try:
             passed, info = run_single_test(test_name, test, test_label)
-        except BaseException as e:
+        except Exception as e:
             print(e)
             passed = False
             info = None
@@ -178,9 +185,7 @@ def run_tests(args, tests):
     if failures == 0:
         print(f"Done. {n_to_run} tests passed in {round(total_time, 2)} s.")
         return 0
-    print(
-        f"Done. {failures} tests out of {n_to_run} failed after {round(total_time, 2)} s.\n"
-    )
+    print(f"Done. {failures} tests out of {n_to_run} failed after {round(total_time, 2)} s.\n")
     return 1
 
 
@@ -191,12 +196,8 @@ def setup_argparse():
         action="store_true",
         help="Flag for stopping all testing upon first failure",
     )
-    parser.add_argument(
-        "--verbose", action="store_true", help="Flag for more detailed output messages"
-    )
-    parser.add_argument(
-        "--local", action="store_true", default=None, help="Run only local tests"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Flag for more detailed output messages")
+    parser.add_argument("--local", action="store_true", default=None, help="Run only local tests")
     parser.add_argument(
         "--ids",
         action="store",
@@ -204,8 +205,7 @@ def setup_argparse():
         type=int,
         nargs="+",
         default=None,
-        help="Provide space-delimited ids of tests you want to run."
-        "Example: '--ids 1 5 8 13'",
+        help="Provide space-delimited ids of tests you want to run. Example: '--ids 1 5 8 13'",
     )
     return parser
 
@@ -221,8 +221,8 @@ def main():
 
     clear_test_studies_dir()
     result = run_tests(args, tests)
-    return result
+    sys.exit(result)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

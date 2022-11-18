@@ -6,6 +6,8 @@ import shutil
 import tempfile
 import unittest
 
+import pytest
+
 from merlin.study.step import Step
 from merlin.study.study import MerlinStudy
 
@@ -148,6 +150,7 @@ merlin:
 """
 
 
+# TODO many of these more resemble integration tests than unit tests, may want to review unit tests to make it more granular.
 def test_get_task_queue_default():
     """
     Given a steps dictionary that sets the task queue to `test_queue` return
@@ -251,53 +254,40 @@ class TestMerlinStudy(unittest.TestCase):
         object, the MerlinStudy should produce a new spec with all instances
         of $(OUTPUT_PATH), $(SPECROOT), and env labels and variables expanded.
         """
-        assert TestMerlinStudy.file_contains_string(
-            self.merlin_spec_filepath, "$(SPECROOT)"
-        )
-        assert TestMerlinStudy.file_contains_string(
-            self.merlin_spec_filepath, "$(OUTPUT_PATH)"
-        )
+        assert TestMerlinStudy.file_contains_string(self.merlin_spec_filepath, "$(SPECROOT)")
+        assert TestMerlinStudy.file_contains_string(self.merlin_spec_filepath, "$(OUTPUT_PATH)")
         assert TestMerlinStudy.file_contains_string(self.merlin_spec_filepath, "$PATH")
 
-        assert not TestMerlinStudy.file_contains_string(
-            self.study.expanded_spec.path, "$(SPECROOT)"
-        )
-        assert not TestMerlinStudy.file_contains_string(
-            self.study.expanded_spec.path, "$(OUTPUT_PATH)"
-        )
-        assert TestMerlinStudy.file_contains_string(
-            self.study.expanded_spec.path, "$PATH"
-        )
-        assert not TestMerlinStudy.file_contains_string(
-            self.study.expanded_spec.path, "PATH_VAR: $PATH"
-        )
+        assert not TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "$(SPECROOT)")
+        assert not TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "$(OUTPUT_PATH)")
+        assert TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "$PATH")
+        assert not TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "PATH_VAR: $PATH")
 
     def test_column_label_conflict(self):
         """
         If there is a common key between Maestro's global.parameters and
         Merlin's sample/column_labels, an error should be raised.
         """
-        merlin_spec_conflict = os.path.join(self.tmpdir, "basic_ensemble_conflict.yaml")
+        merlin_spec_conflict: str = os.path.join(self.tmpdir, "basic_ensemble_conflict.yaml")
         with open(merlin_spec_conflict, "w+") as _file:
             _file.write(MERLIN_SPEC_CONFLICT)
-        try:
-            study_conflict = MerlinStudy(merlin_spec_conflict)
-        except ValueError:
-            pass
-        else:
-            assert False
+        # for some reason flake8 doesn't believe variables instantiated inside the try/with context are assigned
+        with pytest.raises(ValueError):
+            study_conflict: MerlinStudy = MerlinStudy(merlin_spec_conflict)
+            assert not study_conflict, "study_conflict completed construction without raising a ValueError."
 
+    # TODO the pertinent attribute for study_no_env should be examined and asserted to be empty
     def test_no_env(self):
         """
         A MerlinStudy should be able to support a MerlinSpec that does not contain
         the optional `env` section.
         """
-        merlin_spec_no_env_filepath = os.path.join(
-            self.tmpdir, "basic_ensemble_no_env.yaml"
-        )
+        merlin_spec_no_env_filepath: str = os.path.join(self.tmpdir, "basic_ensemble_no_env.yaml")
         with open(merlin_spec_no_env_filepath, "w+") as _file:
             _file.write(MERLIN_SPEC_NO_ENV)
         try:
-            study_no_env = MerlinStudy(merlin_spec_no_env_filepath)
+            study_no_env: MerlinStudy = MerlinStudy(merlin_spec_no_env_filepath)
+            bad_type_err: str = f"study_no_env failed construction, is type {type(study_no_env)}."
+            assert isinstance(study_no_env, MerlinStudy), bad_type_err
         except Exception as e:
-            assert False
+            assert False, f"Encountered unexpected exception, {e}, for viable MerlinSpec without optional 'env' section."

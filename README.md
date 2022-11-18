@@ -3,8 +3,9 @@
 ![Activity](https://img.shields.io/github/commit-activity/m/LLNL/merlin)
 [![Issues](https://img.shields.io/github/issues/LLNL/merlin)](https://github.com/LLNL/merlin/issues)
 [![Pull requests](https://img.shields.io/github/issues-pr/LLNL/merlin)](https://github.com/LLNL/merlin/pulls)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/LLNL/merlin.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/LLNL/merlin/context:python)
 
-![Merlin](https://raw.githubusercontent.com/LLNL/merlin/master/docs/images/merlin.png)
+![Merlin](https://raw.githubusercontent.com/LLNL/merlin/main/docs/images/merlin.png)
 
 ## A brief introduction to Merlin
 Merlin is a tool for running machine learning based workflows. The goal of
@@ -133,6 +134,6 @@ the Merlin community, you agree to abide by its rules.
 
 
 ## License
-Merlin is distributed under the terms of the [MIT LICENSE](https://github.com/LLNL/merlin/blob/master/LICENSE).
+Merlin is distributed under the terms of the [MIT LICENSE](https://github.com/LLNL/merlin/blob/main/LICENSE).
 
 LLNL-CODE-797170

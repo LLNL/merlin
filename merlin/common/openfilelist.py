@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -73,7 +73,7 @@ class OpenFileList:
         self.argv, self.argkw = (v, kw)
         if self.files:
             self.fnnow = self.files.pop(0)
-            self.fnow = open(self.fnnow, *v, **kw) if files else None
+            self.fnow = open(self.fnnow, *v, **kw) if files else None  # noqa
             self.atend = False
         else:
             self.fnnow = self.fnow = None
@@ -89,7 +89,7 @@ class OpenFileList:
             self.fnow.close()
             if self.files:
                 self.fnnow = self.files.pop(0)
-                self.fnow = open(self.fnnow, *self.argv, **self.argkw)
+                self.fnow = open(self.fnnow, *self.argv, **self.argkw)  # noqa
             else:
                 self.fnnow = self.fnow = None
                 self.atend = True

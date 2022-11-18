@@ -48,6 +48,9 @@ see :doc:`./merlin_variables`.
      queue: pbatch
      flux_path: <optional path to flux bin>
      flux_start_opts: <optional flux start options>
+     flux_exec: <optional, flux exec command to launch workers on 
+                         all nodes if using flux and flux_exec_workers is True
+                         (flux exec) > 
      flux_exec_workers: <optional, flux argument to launch workers on 
                          all nodes. (True)> 
      launch_pre: <Any configuration needed before the srun or jsrun launch>
@@ -226,7 +229,7 @@ see :doc:`./merlin_variables`.
   ####################################
   # Merlin Block (Required)
   ####################################
-  # The merlin specific block will add any required configuration to
+  # The merlin specific block will add any configuration to
   # the DAG created by the study description.
   # including task server config, data management and sample definitions.
   #
@@ -274,6 +277,56 @@ see :doc:`./merlin_variables`.
               batch:
                  type: local
               machines: [host3]
+  ####################################
+  # User Block (Optional)
+  ####################################
+  # The user block allows other variables in the workflow file to be propagated
+  # through to the workflow (including in variables .partial.yaml and .expanded.yaml). 
+  # User block uses yaml anchors, which defines a chunk of configuration and use 
+  # their alias to refer to that specific chunk of configuration elsewhere.
+  #######################################################################
+  user:
+    study:
+        run:
+            hello: &hello_run
+                cmd: |
+                  python3 $(HELLO) -outfile hello_world_output_$(MERLIN_SAMPLE_ID).json $(X0) $(X1) $(X2)
+                max_retries: 1
+            collect: &collect_run
+                cmd: |
+                  echo $(MERLIN_GLOB_PATH)
+                  echo $(hello.workspace)
+                  ls $(hello.workspace)/X2.$(X2)/$(MERLIN_GLOB_PATH)/hello_world_output_*.json > files_to_collect.txt
+                  spellbook collect -outfile results.json -instring "$(cat files_to_collect.txt)"
+            translate: &translate_run
+                cmd: spellbook translate -input $(collect.workspace)/results.json -output results.npz -schema $(FEATURES)
+            learn: &learn_run
+                cmd: spellbook learn -infile $(translate.workspace)/results.npz
+            make_samples: &make_samples_run
+                cmd: spellbook make-samples -n $(N_NEW) -sample_type grid -outfile grid_$(N_NEW).npy
+            predict: &predict_run
+                cmd: spellbook predict -infile $(make_new_samples.workspace)/grid_$(N_NEW).npy -outfile prediction_$(N_NEW).npy -reg $(learn.workspace)/random_forest_reg.pkl
+            verify: &verify_run
+                cmd: |
+                  if [[ -f $(learn.workspace)/random_forest_reg.pkl && -f $(predict.workspace)/prediction_$(N_NEW).npy ]]
+                  then
+                      touch FINISHED
+                      exit $(MERLIN_SUCCESS)
+                  else
+                      exit $(MERLIN_SOFT_FAIL)
+                  fi
+    python3:
+        run: &python3_run
+            cmd: |
+              print("OMG is this in python?")
+              print("Variable X2 is $(X2)")
+            shell: /usr/bin/env python3
+    python2:
+        run: &python2_run
+            cmd: |
+              print "OMG is this in python2? Change is bad."
+              print "Variable X2 is $(X2)"
+            shell: /usr/bin/env python2
 
     ###################################################
     # Sample definitions

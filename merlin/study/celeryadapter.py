@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.8.5.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -39,13 +39,7 @@ import time
 from contextlib import suppress
 
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
-from merlin.utils import (
-    check_machines,
-    get_procs,
-    get_yaml_var,
-    is_running,
-    regex_list_filter,
-)
+from merlin.utils import check_machines, get_procs, get_yaml_var, is_running, regex_list_filter
 
 
 LOG = logging.getLogger(__name__)
@@ -161,8 +155,8 @@ def query_celery_queues(queues):
             try:
                 name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
                 found_queues.append((name, jobs, consumers))
-            except BaseException:
-                LOG.warning(f"Cannot find queue {queue} on server.")
+            except Exception as e:
+                LOG.warning(f"Cannot find queue {queue} on server.{e}")
     finally:
         connection.close()
     return found_queues
@@ -223,24 +217,9 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
     local_queues = []
 
     for worker_name, worker_val in workers.items():
-        worker_machines = get_yaml_var(worker_val, "machines", None)
-        if worker_machines:
-            LOG.debug("check machines = ", check_machines(worker_machines))
-            if not check_machines(worker_machines):
-                continue
-
-            if yenv:
-                output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
-                if output_path and not os.path.exists(output_path):
-                    hostname = socket.gethostname()
-                    LOG.error(
-                        f"The output path, {output_path}, is not accessible on this host, {hostname}"
-                    )
-            else:
-                LOG.warning(
-                    "The env:variables section does not have an OUTPUT_PATH"
-                    "specified, multi-machine checks cannot be performed."
-                )
+        skip_loop_step: bool = examine_and_log_machines(worker_val, yenv)
+        if skip_loop_step:
+            continue
 
         worker_args = get_yaml_var(worker_val, "args", celery_args)
         with suppress(KeyError):
@@ -260,18 +239,14 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
         # Add a per worker log file (debug)
         if LOG.isEnabledFor(logging.DEBUG):
             LOG.debug("Redirecting worker output to individual log files")
-            worker_args += f" --logfile %p.%i"
+            worker_args += " --logfile %p.%i"
 
         # Get the celery command
-        celery_com = launch_celery_workers(
-            spec, steps=wsteps, worker_args=worker_args, just_return_command=True
-        )
+        celery_com = launch_celery_workers(spec, steps=wsteps, worker_args=worker_args, just_return_command=True)
 
         celery_cmd = os.path.expandvars(celery_com)
 
-        worker_cmd = batch_worker_launch(
-            spec, celery_cmd, nodes=worker_nodes, batch=worker_batch
-        )
+        worker_cmd = batch_worker_launch(spec, celery_cmd, nodes=worker_nodes, batch=worker_batch)
 
         worker_cmd = os.path.expandvars(worker_cmd)
 
@@ -324,24 +299,41 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
     return str(worker_list)
 
 
+def examine_and_log_machines(worker_val, yenv) -> bool:
+    """
+    Examines whether a worker should be skipped in a step of start_celery_workers(), logs errors in output path for a celery
+    worker.
+    """
+    worker_machines = get_yaml_var(worker_val, "machines", None)
+    if worker_machines:
+        LOG.debug("check machines = ", check_machines(worker_machines))
+        if not check_machines(worker_machines):
+            return True
+
+        if yenv:
+            output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
+            if output_path and not os.path.exists(output_path):
+                hostname = socket.gethostname()
+                LOG.error(f"The output path, {output_path}, is not accessible on this host, {hostname}")
+        else:
+            LOG.warning(
+                "The env:variables section does not have an OUTPUT_PATH specified, multi-machine checks cannot be performed."
+            )
+        return False
+    else:
+        return False
+
+
 def verify_args(spec, worker_args, worker_name, overlap):
     """Examines the args passed to a worker for completeness."""
     parallel = batch_check_parallel(spec)
     if parallel:
         if "--concurrency" not in worker_args:
-            LOG.warning(
-                "The worker arg --concurrency [1-4] is recommended "
-                "when running parallel tasks"
-            )
+            LOG.warning("The worker arg --concurrency [1-4] is recommended when running parallel tasks")
         if "--prefetch-multiplier" not in worker_args:
-            LOG.warning(
-                "The worker arg --prefetch-multiplier 1 is "
-                "recommended when running parallel tasks"
-            )
+            LOG.warning("The worker arg --prefetch-multiplier 1 is recommended when running parallel tasks")
         if "fair" not in worker_args:
-            LOG.warning(
-                "The worker arg -O fair is recommended when running parallel tasks"
-            )
+            LOG.warning("The worker arg -O fair is recommended when running parallel tasks")
 
     if "-n" not in worker_args:
         nhash = ""
@@ -388,7 +380,7 @@ def purge_celery_tasks(queues, force):
         force_com = " -f "
     purge_command = " ".join(["celery -A merlin purge", force_com, "-Q", queues])
     LOG.debug(purge_command)
-    return subprocess.call(purge_command.split())
+    return subprocess.run(purge_command, shell=True).returncode
 
 
 def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
@@ -412,9 +404,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     """
     from merlin.celery import app
 
-    LOG.debug(
-        f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}"
-    )
+    LOG.debug(f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}")
     active_queues, _ = get_queues(app)
 
     # If not specified, get all the queues
@@ -436,20 +426,14 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
 
     print(f"all_workers: {all_workers}")
     print(f"spec_worker_names: {spec_worker_names}")
-    if (
-        spec_worker_names is None or len(spec_worker_names) == 0
-    ) and worker_regex is None:
+    if (spec_worker_names is None or len(spec_worker_names) == 0) and worker_regex is None:
         workers_to_stop = list(all_workers)
     else:
         workers_to_stop = []
         if (spec_worker_names is not None) and len(spec_worker_names) > 0:
             for worker_name in spec_worker_names:
-                print(
-                    f"Result of regex_list_filter: {regex_list_filter(worker_name, all_workers)}"
-                )
-                workers_to_stop += regex_list_filter(
-                    worker_name, all_workers, match=False
-                )
+                print(f"Result of regex_list_filter: {regex_list_filter(worker_name, all_workers)}")
+                workers_to_stop += regex_list_filter(worker_name, all_workers, match=False)
         if worker_regex is not None:
             workers_to_stop += regex_list_filter(worker_regex, workers_to_stop)
 
