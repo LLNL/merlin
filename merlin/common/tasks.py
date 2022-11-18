@@ -65,16 +65,12 @@ LOG = logging.getLogger(__name__)
 STOP_COUNTDOWN = 60
 
 
-<<<<<<< HEAD
 def log_result(result, step_dir, result_file):
     now = datetime.now().strftime("%c")
     cmd = f"flock --timeout 60 {result_file} echo '{now},{step_dir},{result}' >> {result_file}"
     _ = os.system(cmd)
 
 @shared_task(
-=======
-@shared_task(  # noqa: C901
->>>>>>> develop
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
@@ -107,14 +103,9 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
 
     if step:
         self.max_retries = step.max_retries
-<<<<<<< HEAD
         step_name = step.name()
         step_dir = step.get_workspace()
         LOG.error(self.request.id)
-=======
-        step_name: str = step.name()
-        step_dir: str = step.get_workspace()
->>>>>>> develop
         LOG.debug(f"merlin_step: step_name '{step_name}' step_dir '{step_dir}'")
         finished_filename: str = os.path.join(step_dir, "MERLIN_FINISHED")
         # if we've already finished this task, skip it
@@ -349,16 +340,12 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
         # based off of the parameter substitutions and relative_path for
         # a given sample.
 
-<<<<<<< HEAD
         new_steps = [
             task_type.s(step, adapter_config=adapter_config).set(
                 queue=step.get_task_queue(),
                 task_id=step.get_workspace(),
             )
         ]
-=======
-        new_steps = [task_type.s(step, adapter_config=adapter_config).set(queue=step.get_task_queue())]
->>>>>>> develop
         all_chains.append(new_steps)
     add_chains_to_chord(self, all_chains)
 
