@@ -31,10 +31,9 @@
 """Test tasks."""
 from __future__ import absolute_import, unicode_literals
 
-from datetime import datetime
-
 import logging
 import os
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from celery import chain, chord, group, shared_task, signature
@@ -69,6 +68,7 @@ def log_result(result, step_dir, result_file):
     now = datetime.now().strftime("%c")
     cmd = f"flock --timeout 60 {result_file} echo '{now},{step_dir},{result}' >> {result_file}"
     _ = os.system(cmd)
+
 
 @shared_task(
     bind=True,
@@ -115,7 +115,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             result = ReturnCode.OK
         else:
             result = step.execute(config)
-        log_result(result, step_dir, f'{step_dir}/../results_log.txt')
+        log_result(result, step_dir, f"{step_dir}/../results_log.txt")
         if result == ReturnCode.OK:
             LOG.info(f"Step '{step_name}' in '{step_dir}' finished successfully.")
             # touch a file indicating we're done with this step
