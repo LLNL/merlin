@@ -14,7 +14,7 @@ study:
     - name: step_1
       description: say hello
       run:
-          cmd: echo "$(GREET), $(WORLD)!"; exit MERLIN_SOFT_FAIL;
+          cmd: echo "$(GREET), $(WORLD)!"; exit $(MERLIN_SOFT_FAIL);
 
     - name: step_2
       description: print a success message
