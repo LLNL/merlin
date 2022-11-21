@@ -98,7 +98,6 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
         self.max_retries = step.max_retries
         step_name = step.name()
         step_dir = step.get_workspace()
-        LOG.debug(self.request.id)
         LOG.debug(f"merlin_step: step_name '{step_name}' step_dir '{step_dir}'")
         finished_filename: str = os.path.join(step_dir, "MERLIN_FINISHED")
         # if we've already finished this task, skip it
