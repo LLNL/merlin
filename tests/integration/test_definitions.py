@@ -139,7 +139,7 @@ def define_tests():
             merlin run hello/hello.yaml;
             merlin run-workers hello/hello.yaml;
             sleep 2;
-            celery -A merlin result $(pwd)/hello_*/step_1/GREET.hello.WORLD.world
+            celery -A merlin result $(pwd -P)/hello_*/step_1/GREET.hello.WORLD.world;
             merlin server stop;
             """,
             [
@@ -156,7 +156,7 @@ def define_tests():
             merlin run hello/hello_soft_fail.yaml;
             merlin run-workers hello/hello_soft_fail.yaml;
             sleep 2;
-            celery -A merlin result $(pwd)/hello_*/step_1/GREET.hello.WORLD.world
+            celery -A merlin result $(pwd -P)/hello_*/step_1/GREET.hello.WORLD.world;
             merlin server stop;
             """,
             [
