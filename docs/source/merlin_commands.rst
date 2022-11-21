@@ -71,7 +71,7 @@ If you want to run an example workflow, use Merlin's ``merlin example``:
 
 .. code:: bash
 
-    $ merlin example --help
+    $ merlin example list
 
 This will list the available example workflows and a description for each one. To
 select one:

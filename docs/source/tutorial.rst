@@ -20,7 +20,7 @@ Finally we offer some tips and tricks for porting and scaling up your applicatio
 
 .. toctree::
    :maxdepth: 1
-   :caption: Before you come:
+   :caption: Before you begin:
 
    modules/before
 

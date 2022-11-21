@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ranks 0 and 1 of a multi-rank allocation
 - Added additional argument in test definitions to allow for a "cleanup" command
 - Capability for non-user block in yaml
+- .readthedocs.yaml and requirements.txt files for docs
+- Small modifications to the Tutorial, Getting Started, Command Line, and Contributing pages in the docs
 
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
@@ -25,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merlin server uses app.yaml as its main configuration
 - Updated tutorial documentation to use merlin server over manual redis installation.
 - Added ssl to the broker and results backend server checks when "merlin info" is called
+- Removed theme_override.css from docs/_static/ since it is no longer needed with the updated version of sphinx
+- Updated docs/Makefile to include a pip install for requirements and a clean command
 
 ### Fixed
 - Fixed return values from scripts with main() to fix testing errors. 
@@ -32,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the cert_req typo in the merlin config docs, it should read cert_reqs
 - Removed emoji from issue templates that were breaking doc builds
 - Including .temp template files in MANIFEST
+- Styling in the footer for docs
+- Horizontal scroll overlap in the variables page of the docs
 
 ## [1.8.5]
 ### Added
