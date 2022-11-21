@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merlin server uses app.yaml as its main configuration
 - Updated tutorial documentation to use merlin server over manual redis installation.
 - Added ssl to the broker and results backend server checks when "merlin info" is called
+- Celery workers id uses the destination path instead of a random uuid.
 
 ### Fixed
 - Fixed return values from scripts with main() to fix testing errors. 
