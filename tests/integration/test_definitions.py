@@ -13,7 +13,7 @@ from merlin.utils import get_flux_cmd
 
 
 OUTPUT_DIR = "cli_test_studies"
-CLEAN_MERLIN_SERVER = "rm -rf appendonly.aof dump.rdb merlin_server/"
+CLEAN_MERLIN_SERVER = "rm -rf merlin_server/"
 
 
 def define_tests():
@@ -127,7 +127,43 @@ def define_tests():
                 FileHasNoRegex("./merlin_server/redis.users", "new_user"),
             ],
             "local",
-            CLEAN_MERLIN_SERVER,
+            "rm -rf merlin_server/ hello*/",
+        ),
+    }
+    server_integrated_tests = {
+        "celery task id": (
+            """merlin server init:
+            merlin server start;
+            cp ./merlin_server/app.yaml .;
+            merlin example hello;
+            merlin run hello/hello.yaml;
+            merlin run-workers hello/hello.yaml;
+            sleep 2;
+            celery -A merlin result $(pwd)/hello_*/step_1/GREET.hello.WORLD.world
+            merlin server stop;
+            """,
+            [
+                HasRegex("ReturnCode.OK")
+            ],
+            "local",
+            "rm -rf app.yaml merlin_server/ hello*/",
+        ),
+        "celery task id soft fail": (
+            """merlin server init:
+            merlin server start;
+            cp ./merlin_server/app.yaml .;
+            merlin example hello;
+            merlin run hello/hello_soft_fail.yaml;
+            merlin run-workers hello/hello_soft_fail.yaml;
+            sleep 2;
+            celery -A merlin result $(pwd)/hello_*/step_1/GREET.hello.WORLD.world
+            merlin server stop;
+            """,
+            [
+                HasRegex("ReturnCode.SOFT_FAIL")
+            ],
+            "local",
+            "rm -rf app.yaml merlin_server/ hello*/",
         ),
     }
     examples_check = {
@@ -458,6 +494,7 @@ def define_tests():
         basic_checks,
         server_basic_tests,
         server_config_tests,
+        server_integrated_tests,
         examples_check,
         run_workers_echo_tests,
         wf_format_tests,
