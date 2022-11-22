@@ -8,7 +8,7 @@ provides documentation on running these Merlin workflow examples.
 Overview
 --------
 
-List the built-in Merlin workflow examples with ``merlin example --help``.
+List the built-in Merlin workflow examples with ``merlin example list``.
 
 The Merlin team is working on adding a more diverse array of example workflows
 like these.

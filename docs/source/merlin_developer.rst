@@ -43,11 +43,11 @@ To expedite review, please ensure that pull requests
 
 - Are from a meaningful branch name (e.g. ``feature/my_name/cool_thing``)
 
-- Into the `appropriate branch <https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_
+- Are being merged into the `appropriate branch <https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_
 
 - Include testing for any new features
 
-  - unit tests in ``tests/*``
+  - unit tests in ``tests/unit``
   - integration tests in ``tests/integration``
 
 - Include descriptions of the changes
@@ -63,6 +63,8 @@ To expedite review, please ensure that pull requests
 
   - in ``CHANGELOG.md``
   - in ``merlin.__init__.py``
+
+- Have `squashed <https://github.com/LLNL/merlin/wiki/Squash-commits>`_ commits
 
 Testing
 +++++++

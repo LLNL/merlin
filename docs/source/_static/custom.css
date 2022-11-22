@@ -22,3 +22,18 @@ div.sphinxsidebar {
     max-height: 100%;
     overflow-y: auto;
 }
+td {
+	max-width: 300px;
+}
+@media screen and (min-width: 875px) {
+	.sphinxsidebar {
+		background-color: #fff;
+		margin-left: 0;
+		z-index: 1;
+		height: 100vh;
+		top: 0px;
+	}
+}
+.underline {
+    text-decoration: underline;
+}
