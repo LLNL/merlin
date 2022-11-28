@@ -132,39 +132,23 @@ def define_tests():
     }
     server_integrated_tests = {
         "celery task id": (
-            """merlin server init;
-            merlin server start;
-            cp ./merlin_server/app.yaml .;
-            merlin example hello;
-            merlin run hello/hello.yaml;
-            merlin run-workers hello/hello.yaml;
-            sleep 2;
-            celery -A merlin result $(pwd -P)/hello_*/step_1/GREET.hello.WORLD.world;
-            merlin server stop;
-            """,
-            [
-                HasRegex("ReturnCode.OK")
-            ],
-            "local",
-            "rm -rf app.yaml merlin_server/ hello*/",
-        ),
-        "celery task id soft fail": (
-            """merlin server init;
+            f"""merlin server init;
             merlin server start;
             cp ./merlin_server/app.yaml .;
             merlin example hello;
             merlin run hello/hello_soft_fail.yaml;
             merlin run-workers hello/hello_soft_fail.yaml;
-            sleep 2;
             celery -A merlin result $(pwd -P)/hello_*/step_1/GREET.hello.WORLD.world;
             merlin server stop;
-            """,
+            """
+            ,
             [
                 HasRegex("ReturnCode.SOFT_FAIL")
             ],
             "local",
             "rm -rf app.yaml merlin_server/ hello*/",
         ),
+
     }
     examples_check = {
         "example list": (

@@ -22,3 +22,11 @@ study:
           cmd: print("Hurrah, we did it!")
           depends: [step_1_*]
           shell: /usr/bin/env python3
+    
+    - name: stop_workers
+      description: Stop workers
+      run:
+          cmd: |
+             exit $(MERLIN_STOP_WORKERS)
+          depends: [step_2]
+          task_queue: default_verify_queue
