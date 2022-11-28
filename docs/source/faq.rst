@@ -1,5 +1,8 @@
 .. _faq:
 
+.. role:: underline
+   :class: underline
+
 FAQ
 ===
 .. contents:: Frequently Asked Questions
@@ -100,7 +103,7 @@ Where are some example workflows?
 
 .. code:: bash
 
-   $ merlin example --help
+   $ merlin example list
 
 How do I launch a workflow?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,7 +188,7 @@ Each step is ultimately designated as:
 Normally this happens behinds the scenes, so you don't need to worry about it.
 To hard-code this into your step logic, use a shell command such as ``exit $(MERLIN_HARD_FAIL)``.
 
-.. note:: ``$(MERLIN_HARD_FAIL)``
+.. note::
    The ``$(MERLIN_HARD_FAIL)`` exit code will shutdown all workers connected to the queue associated
    with the failed step. To shutdown *all* workers use the ``$(MERLIN_STOP_WORKERS)`` exit code
 
@@ -403,25 +406,35 @@ Do something like this:
         nodes: 1
         procs: 3
 
-The arguments the LAUNCHER syntax will use:
+:underline:`The arguments the LAUNCHER syntax will use`:
 
-procs: The total number of MPI tasks
-nodes: The total number of MPI nodes
-walltime: The total walltime of the run (hh:mm:ss or mm:ss or ss) (not available in lsf)
-cores per task: The number of hardware threads per MPI task
-gpus per task: The number of GPUs per MPI task
+``procs``: The total number of MPI tasks
 
-SLURM specific run flags:
-slurm: Verbatim flags only for the srun parallel launch (srun -n <nodes> -n <procs> <slurm>)
+``nodes``: The total number of MPI nodes
 
-FLUX specific run flags:
-flux: Verbatim flags for the flux parallel launch (flux mini run <flux>)
+``walltime``: The total walltime of the run (hh:mm:ss or mm:ss or ss) (not available in lsf)
 
-LSF specific run flags:
-bind: Flag for MPI binding of tasks on a node (default: -b rs)
-num resource set: Number of resource sets
-launch_distribution : The distribution of resources (default: plane:{procs/nodes})
-lsf: Verbatim flags only for the lsf parallel launch (jsrun ... <lsf>)
+``cores per task``: The number of hardware threads per MPI task
+
+``gpus per task``: The number of GPUs per MPI task
+
+:underline:`SLURM specific run flags`:
+
+``slurm``: Verbatim flags only for the srun parallel launch (srun -n <nodes> -n <procs> <slurm>)
+
+:underline:`FLUX specific run flags`:
+
+``flux``: Verbatim flags for the flux parallel launch (flux mini run <flux>)
+
+:underline:`LSF specific run flags`:
+
+``bind``: Flag for MPI binding of tasks on a node (default: -b rs)
+
+``num resource set``: Number of resource sets
+
+``launch_distribution``: The distribution of resources (default: plane:{procs/nodes})
+
+``lsf``: Verbatim flags only for the lsf parallel launch (jsrun ... <lsf>)
 
 What is level_max_dirs?
 ~~~~~~~~~~~~~~~~~~~~~~~

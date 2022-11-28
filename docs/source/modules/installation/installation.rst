@@ -7,8 +7,8 @@ Installation
   * pip3
   * wget
   * build tools (make, C/C++ compiler)
-  * docker (required for :doc:`Module 4: Run a Real Simulation<../run_simulation/run_simulation>`)
-  * file editor for docker config file editing
+  * (OPTIONAL) docker (required for :doc:`Module 4: Run a Real Simulation<../run_simulation/run_simulation>`)
+  * (OPTIONAL) file editor for docker config file editing
 
 .. admonition:: Estimated time
 
@@ -29,7 +29,7 @@ Merlin will then be configured for the local machine and the configuration
 will be checked to ensure a proper installation.
 
 
-Installing merlin
+Installing Merlin
 -----------------
 
 A merlin installation is required for the subsequent modules of this tutorial.
@@ -69,6 +69,20 @@ Install merlin through pip.
 
   pip3 install merlin
 
+Check to make sure merlin installed correctly.
+
+.. code-block:: bash
+
+  which merlin
+
+You should see that it was installed in your virtualenv, like so:
+
+.. code-block:: bash
+
+  ~/<path_to_virtualenv>/merlin_venv/bin/merlin
+
+If this is not the output you see, you may need to restart your virtualenv and try again. 
+
 When you are done with the virtualenv you can deactivate it using ``deactivate``,
 but leave the virtualenv activated for the subsequent steps.
 
@@ -77,7 +91,7 @@ but leave the virtualenv activated for the subsequent steps.
   deactivate
 
 
-redis server
+Redis Server
 ++++++++++++
 
 A redis server is required for the celery results backend server, this same server
@@ -86,6 +100,7 @@ however we will need to download one of the supported container platforms avalia
 the purpose of this tutorial we will be using singularity.
 
 .. code-block:: bash
+
   # Update and install singularity dependencies
   apt-get update && apt-get install -y \
     build-essential \
@@ -120,7 +135,7 @@ the purpose of this tutorial we will be using singularity.
     make -C ./builddir && \
     sudo make -C ./builddir install
 
-Configuring merlin
+Configuring Merlin
 ------------------
 Merlin requires a configuration script for the celery interface. 
 Run this configuration method to create the ``app.yaml`` 
@@ -138,10 +153,11 @@ to see the configuration, it should look like the configuration below.
 .. literalinclude:: ./app_local_redis.yaml
    :language: yaml
 
+More detailed information on configuring Merlin can be found in the :doc:`configuration section<../../merlin_config>`.
 
 .. _Verifying installation:
 
-Checking/Verifying installation
+Checking/Verifying Installation
 -------------------------------
 
 First launch the merlin server containers by using the ``merlin server`` commands
@@ -212,10 +228,10 @@ If everything is set up correctly, you should see:
   .
 
 
-Docker Advanced Installation
+(OPTIONAL) Docker Advanced Installation
 ----------------------------
 
-RabbitMQ server
+RabbitMQ Server
 +++++++++++++++
 
 This optional section details the setup of a rabbitmq server for merlin.
@@ -276,7 +292,7 @@ and add the password ``guest``.
 
 The aliases defined previously can be used with this set of docker containers.
 
-Redis TLS server
+Redis TLS Server
 ++++++++++++++++
 
 This optional section details the setup of a redis server with TLS for merlin.

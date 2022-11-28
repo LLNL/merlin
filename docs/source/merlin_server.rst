@@ -62,7 +62,7 @@ merlin server. A detailed list of commands can be found in the `Merlin Server Co
 Note: Running "merlin server init" again will NOT override any exisiting configuration
 that the users might have set or edited. By running this command again any missing files 
 will be created for the users with exisiting defaults. HOWEVER it is highly advised that 
-users back up their configuration in case an error occurs where configuration files are override.
+users back up their configuration in case an error occurs where configuration files are overriden.
 
 .. toctree::
    :maxdepth: 1
