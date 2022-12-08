@@ -138,24 +138,26 @@ def define_tests():
             merlin example hello;
             merlin run hello/hello_soft_fail.yaml;
             merlin run-workers hello/hello_soft_fail.yaml;
-            """
-            ,
+            """,
             [
-                StepFileHasRegex("get_celery_return_code",
-                                "GREET.hello.WORLD.world/get_celery_return_code_GREET.hello.WORLD.world.out",
-                                "hello",
-                                ".",
-                                "ReturnCode.SOFT_FAIL"),
-                StepFileHasRegex("get_celery_return_code",
-                                "GREET.hola.WORLD.mundo/get_celery_return_code_GREET.hola.WORLD.mundo.out",
-                                "hello",
-                                ".",
-                                "ReturnCode.SOFT_FAIL"),
+                StepFileHasRegex(
+                    "get_celery_return_code",
+                    "GREET.hello.WORLD.world/get_celery_return_code_GREET.hello.WORLD.world.out",
+                    "hello",
+                    ".",
+                    "ReturnCode.SOFT_FAIL",
+                ),
+                StepFileHasRegex(
+                    "get_celery_return_code",
+                    "GREET.hola.WORLD.mundo/get_celery_return_code_GREET.hola.WORLD.mundo.out",
+                    "hello",
+                    ".",
+                    "ReturnCode.SOFT_FAIL",
+                ),
             ],
             "local",
             "rm -rf app.yaml merlin_server/ hello*/",
         ),
-
     }
     examples_check = {
         "example list": (
@@ -486,7 +488,7 @@ def define_tests():
         server_basic_tests,
         server_config_tests,
         server_integrated_tests,
-         examples_check,
+        examples_check,
         run_workers_echo_tests,
         wf_format_tests,
         example_tests,
