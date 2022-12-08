@@ -132,7 +132,7 @@ def define_tests():
     }
     server_integrated_tests = {
         "celery task id": (
-            f"""merlin server init;
+            """merlin server init;
             merlin server start;
             cp ./merlin_server/app.yaml .;
             merlin example hello;
