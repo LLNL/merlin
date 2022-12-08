@@ -22,11 +22,17 @@ study:
           cmd: print("Hurrah, we did it!")
           depends: [step_1_*]
           shell: /usr/bin/env python3
-    
+
+    - name: get_celery_return_code
+      description: Make a celery call and write the return code to file
+      run:
+          cmd: celery -A merlin result $(step_1.workspace)
+          depends: [step_2]
+
     - name: stop_workers
       description: Stop workers
       run:
-          cmd: |
-             exit $(MERLIN_STOP_WORKERS)
-          depends: [step_2]
+          cmd: exit $(MERLIN_STOP_WORKERS)
+          depends: [get_celery_return_code]
           task_queue: default_verify_queue
+    
