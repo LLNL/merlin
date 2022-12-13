@@ -232,7 +232,7 @@ def load_array_file(filename, ndmin=2):
 
     # Don't change binary-stored numpy arrays; just check dimensions
     if protocol == "npy":
-        array = np.load(filename)
+        array = np.load(filename, allow_pickle=True)
         if array.ndim < ndmin:
             LOG.error(
                 f"Array in {filename} has fewer than the required \
