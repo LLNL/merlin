@@ -240,11 +240,11 @@ Immediately after that, this will pop up:
 .. literalinclude :: celery.txt
    :language: text
 
-You may not see all of the info logs listed after the Celery C is displayed. If you'd like to see them you can change Merlin's log levels with the ``-lvl`` or ``--level`` tag. For more information on this, you can run:
+You may not see all of the info logs listed after the Celery C is displayed. If you'd like to see them you can change the merlin workers' log levels with the ``--worker-args`` tag:
 
 .. code-block:: bash
 
-    $ merlin --help
+    $ merlin run-workers --worker-args "-l INFO" my_hello.yaml
 
 The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
 
