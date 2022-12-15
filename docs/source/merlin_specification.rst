@@ -277,6 +277,23 @@ see :doc:`./merlin_variables`.
               batch:
                  type: local
               machines: [host3]
+    
+    ###################################################
+    # Sample definitions
+    #
+    # samples file can be one of
+    #    .npy (numpy binary)
+    #    .csv (comma delimited: '#' = comment line)
+    #    .tab (tab/space delimited: '#' = comment line)
+    ###################################################
+    samples:
+      column_labels: [VAR1, VAR2]
+      file: $(SPECROOT)/samples.npy
+      generate:
+        cmd: |
+        python $(SPECROOT)/make_samples.py -dims 2 -n 10 -outfile=$(INPUT_PATH)/samples.npy "[(1.3, 1.3, 'linear'), (3.3, 3.3, 'linear')]"
+      level_max_dirs: 25
+      
   ####################################
   # User Block (Optional)
   ####################################
@@ -327,19 +344,3 @@ see :doc:`./merlin_variables`.
               print "OMG is this in python2? Change is bad."
               print "Variable X2 is $(X2)"
             shell: /usr/bin/env python2
-
-    ###################################################
-    # Sample definitions
-    #
-    # samples file can be one of
-    #    .npy (numpy binary)
-    #    .csv (comma delimited: '#' = comment line)
-    #    .tab (tab/space delimited: '#' = comment line)
-    ###################################################
-    samples:
-      column_labels: [VAR1, VAR2]
-      file: $(SPECROOT)/samples.npy
-      generate:
-        cmd: |
-        python $(SPECROOT)/make_samples.py -dims 2 -n 10 -outfile=$(INPUT_PATH)/samples.npy "[(1.3, 1.3, 'linear'), (3.3, 3.3, 'linear')]"
-      level_max_dirs: 25

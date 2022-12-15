@@ -121,7 +121,7 @@ class Step:
             new_workspace = self.get_workspace()
         LOG.debug(f"cloned step with workspace {new_workspace}")
         study_step = StudyStep()
-        study_step.name = step_dict["name"]
+        study_step.name = step_dict["_name"]
         study_step.description = step_dict["description"]
         study_step.run = step_dict["run"]
         return Step(MerlinStepRecord(new_workspace, study_step))
@@ -218,7 +218,7 @@ class Step:
         """
         :return : The step name.
         """
-        return self.mstep.step.__dict__["name"]
+        return self.mstep.step.__dict__["_name"]
 
     def execute(self, adapter_config):
         """

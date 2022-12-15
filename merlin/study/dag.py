@@ -44,11 +44,18 @@ class DAG:
     independent chains of tasks.
     """
 
-    def __init__(self, maestro_dag, labels):
+    def __init__(self, maestro_adjacency_table, maestro_values, labels):
         """
-        :param `maestro_dag`: A maestrowf ExecutionGraph.
+        :param `maestro_adjacency_table`: An ordered dict showing adjacency of nodes. Comes from a maestrowf ExecutionGraph.
+        :param `maestro_values`: An ordered dict of the values at each node. Comes from a maestrowf ExecutionGraph.
+        :param `labels`: A list of labels provided in the spec file.
         """
-        self.dag = maestro_dag
+        # We used to store the entire maestro ExecutionGraph here but now it's
+        # unpacked so we're only storing the 2 attributes from it that we use:
+        # the adjacency table and the values. This had to happen to get pickle
+        # to work for Celery.
+        self.maestro_adjacency_table = maestro_adjacency_table
+        self.maestro_values = maestro_values
         self.backwards_adjacency = {}
         self.calc_backwards_adjacency()
         self.labels = labels
@@ -59,7 +66,7 @@ class DAG:
         :param `task_name`: The task name.
         :return: A Merlin Step object.
         """
-        return Step(self.dag.values[task_name])
+        return Step(self.maestro_values[task_name])
 
     def calc_depth(self, node, depths, current_depth=0):
         """Calculate the depth of the given node and its children.
@@ -116,7 +123,7 @@ class DAG:
 
         :return: list of children of this task.
         """
-        return self.dag.adjacency_table[task_name]
+        return self.maestro_adjacency_table[task_name]
 
     def num_children(self, task_name):
         """Find the number of children for the given task in the dag.
@@ -156,8 +163,8 @@ class DAG:
 
     def calc_backwards_adjacency(self):
         """initializes our backwards adjacency table"""
-        for parent in self.dag.adjacency_table:
-            for task_name in self.dag.adjacency_table[parent]:
+        for parent in self.maestro_adjacency_table:
+            for task_name in self.maestro_adjacency_table[parent]:
                 if task_name in self.backwards_adjacency:
                     self.backwards_adjacency[task_name].append(parent)
                 else:
