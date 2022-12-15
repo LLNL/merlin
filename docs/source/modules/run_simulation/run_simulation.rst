@@ -8,7 +8,7 @@ Run a Real Simulation
 
 .. admonition:: Prerequisites
 
-      * :doc:`Module 0: Before you come<../before>`
+      * :doc:`Module 0: Before you start<../before>`
       * :doc:`Module 2: Installation<../installation/installation>`
       * :doc:`Module 3: Hello World<../hello_world/hello_world>`
 
@@ -53,7 +53,9 @@ This module will be going over:
  * Combining the outputs of these simulations into a an array
  * Predictive modeling and visualization
 
-Before moving on,
+.. _Before Moving On:
+
+Before Moving On
 ~~~~~~~~~~~~~~~~~
 
 check that the virtual environment with merlin installed is activated
@@ -65,14 +67,25 @@ and that redis server is set up using this command:
 
 This is covered more in depth here: :ref:`Verifying installation`
 
-
-Then use the ``merlin example`` to get the necessary files for this module.
-
+There are two ways to do this example: with docker and without docker. To go through the version with docker, get the necessary files for this module by running:
+    
 .. code-block:: bash
 
     $ merlin example openfoam_wf
 
     $ cd openfoam_wf/
+    
+For the version without docker you should run:
+    
+.. code-block:: bash
+
+    $ merlin example openfoam_wf_no_docker
+
+    $ cd openfoam_wf_no_docker/
+
+.. note::
+
+    From here on, this tutorial will focus solely on the docker version of running openfoam. However, the docker version of this tutorial is almost identical to the no docker version. If you're using the no docker version of this tutorial you can still follow along but check the openfoam_no_docker_template.yaml file in each step to see what differs.
 
 In the ``openfoam_wf`` directory you should see the following:
 

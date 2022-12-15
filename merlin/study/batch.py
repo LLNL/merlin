@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.5.
+# This file is part of Merlin, Version: 1.9.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -175,7 +175,7 @@ def batch_worker_launch(
 
         flux_exec: str = ""
         if flux_exec_workers:
-            flux_exec = "flux exec"
+            flux_exec = get_yaml_var(batch, "flux_exec", "flux exec")
 
         if "/" in flux_path:
             flux_path += "/"

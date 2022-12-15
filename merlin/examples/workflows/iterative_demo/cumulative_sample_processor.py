@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from concurrent.futures import ProcessPoolExecutor
 
 import matplotlib.pyplot as plt
@@ -55,45 +56,50 @@ def setup_argparse():
 
 
 def main():
-    parser = setup_argparse()
-    args = parser.parse_args()
+    try:
+        parser = setup_argparse()
+        args = parser.parse_args()
 
-    # Load all iterations' data into single pandas dataframe for further analysis
-    all_iter_df = load_samples(args.sample_file_paths, args.np)
+        # Load all iterations' data into single pandas dataframe for further analysis
+        all_iter_df = load_samples(args.sample_file_paths, args.np)
 
-    # PLOTS:
-    # counts vs index for each iter range (1, [1,2], [1-3], [1-4], ...)
-    # num names vs iter
-    # median, min, max counts vs iter -> same plot
-    fig, ax = plt.subplots(nrows=2, ncols=1, constrained_layout=True, sharex=True)
+        # PLOTS:
+        # counts vs index for each iter range (1, [1,2], [1-3], [1-4], ...)
+        # num names vs iter
+        # median, min, max counts vs iter -> same plot
+        fig, ax = plt.subplots(nrows=2, ncols=1, constrained_layout=True, sharex=True)
 
-    iterations = sorted(all_iter_df.Iter.unique())
+        iterations = sorted(all_iter_df.Iter.unique())
 
-    max_counts = []
-    min_counts = []
-    med_counts = []
-    unique_names = []
+        max_counts = []
+        min_counts = []
+        med_counts = []
+        unique_names = []
 
-    for it in iterations:
-        max_counts.append(all_iter_df[all_iter_df["Iter"] <= it]["Count"].max())
-        min_counts.append(all_iter_df[all_iter_df["Iter"] <= it]["Count"].min())
-        med_counts.append(all_iter_df[all_iter_df["Iter"] <= it]["Count"].median())
+        for it in iterations:
+            max_counts.append(all_iter_df[all_iter_df["Iter"] <= it]["Count"].max())
+            min_counts.append(all_iter_df[all_iter_df["Iter"] <= it]["Count"].min())
+            med_counts.append(all_iter_df[all_iter_df["Iter"] <= it]["Count"].median())
 
-        unique_names.append(len(all_iter_df[all_iter_df["Iter"] <= it].index.value_counts()))
+            unique_names.append(len(all_iter_df[all_iter_df["Iter"] <= it].index.value_counts()))
 
-    ax[0].plot(iterations, min_counts, label="Minimum Occurances")
-    ax[0].plot(iterations, max_counts, label="Maximum Occurances")
+        ax[0].plot(iterations, min_counts, label="Minimum Occurances")
+        ax[0].plot(iterations, max_counts, label="Maximum Occurances")
 
-    ax[0].plot(iterations, med_counts, label="Median Occurances")
+        ax[0].plot(iterations, med_counts, label="Median Occurances")
 
-    ax[0].set_ylabel("Counts")
-    ax[0].legend()
+        ax[0].set_ylabel("Counts")
+        ax[0].legend()
 
-    ax[1].set_xlabel("Iteration")
-    ax[1].set_ylabel("Unique Names")
-    ax[1].plot(iterations, unique_names)
+        ax[1].set_xlabel("Iteration")
+        ax[1].set_ylabel("Unique Names")
+        ax[1].plot(iterations, unique_names)
 
-    fig.savefig(args.hardcopy, dpi=150)
+        fig.savefig(args.hardcopy, dpi=150)
+        sys.exit()
+    except Exception as ex:
+        print(ex)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

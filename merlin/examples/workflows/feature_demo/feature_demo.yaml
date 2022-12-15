@@ -17,15 +17,33 @@ env:
         HELLO: $(SCRIPTS)/hello_world.py
         FEATURES: $(SCRIPTS)/features.json
 
+user:
+    study:
+        run:
+            hello: &hello_run
+                cmd: |
+                  python3 $(HELLO) -outfile hello_world_output_$(MERLIN_SAMPLE_ID).json $(X0) $(X1) $(X2)
+                max_retries: 1
+    python3:
+        run: &python3_run
+            cmd: |
+              print("OMG is this in python?")
+              print("Variable X2 is $(X2)")
+            shell: /usr/bin/env python3
+    python2:
+        run: &python2_run
+            cmd: |
+              print "OMG is this in python2? Change is bad."
+              print "Variable X2 is $(X2)"
+            shell: /usr/bin/env python2
+
 study:
     - name: hello
       description: |
          process a sample with hello world
       run:
-        cmd: |
-          python3 $(HELLO) -outfile hello_world_output_$(MERLIN_SAMPLE_ID).json $(X0) $(X1) $(X2)
+        <<: *hello_run
         task_queue: hello_queue
-        max_retries: 1
 
     - name: collect
       description: |
@@ -89,20 +107,14 @@ study:
       description: |
           do something in python
       run:
-          cmd: |
-            print("OMG is this in python?")
-            print("Variable X2 is $(X2)")
-          shell: /usr/bin/env python3
+          <<: *python3_run
           task_queue: pyth3_q
 
     - name: python2_hello
       description: |
           do something in python2, because change is bad
       run:
-          cmd: |
-            print "OMG is this in python2? Change is bad."
-            print "Variable X2 is $(X2)"
-          shell: /usr/bin/env python2
+          <<: *python2_run
           task_queue: pyth2_hello
 
 global.parameters:
