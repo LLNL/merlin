@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Capability for non-user block in yaml
 - .readthedocs.yaml and requirements.txt files for docs
 - Small modifications to the Tutorial, Getting Started, Command Line, and Contributing pages in the docs
+- Now loads np.arrays of dtype='object'
 
 ### Changed
 - Rename lgtm.yml to .lgtm.yml
