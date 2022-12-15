@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.5.
+# This file is part of Merlin, Version: 1.9.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -33,13 +33,14 @@ This module contains a class, MerlinSpec, which holds the unchanged
 data from the Merlin specification file.
 To see examples of yaml specifications, run `merlin example`.
 """
+import json
 import logging
 import os
 import shlex
 from io import StringIO
 
 import yaml
-from maestrowf.datastructures import YAMLSpecification
+from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
 
@@ -101,27 +102,211 @@ class MerlinSpec(YAMLSpecification):
             "user": self.user,
         }
 
+    def __str__(self):
+        """Magic method to print an instance of our MerlinSpec class."""
+        env = ""
+        globs = ""
+        merlin = ""
+        user = ""
+        if self.environment:
+            env = f"\n\tenvironment: \n\t\t{self.environment}"
+        if self.globals:
+            globs = f"\n\tglobals:\n\t\t{self.globals}"
+        if self.merlin:
+            merlin = f"\n\tmerlin:\n\t\t{self.merlin}"
+        if self.user is not None:
+            user = f"\n\tuser:\n\t\t{self.user}"
+        result = f"""MERLIN SPEC OBJECT:\n\tdescription:\n\t\t{self.description}
+               \n\tbatch:\n\t\t{self.batch}\n\tstudy:\n\t\t{self.study}
+               {env}{globs}{merlin}{user}"""
+
+        return result
+
     @classmethod
     def load_specification(cls, filepath, suppress_warning=True):
-        spec = super(MerlinSpec, cls).load_specification(filepath)
-        with open(filepath, "r") as f:
-            spec.merlin = MerlinSpec.load_merlin_block(f)
-        with open(filepath, "r") as f:
-            spec.user = MerlinSpec.load_user_block(f)
+        LOG.info("Loading specification from path: %s", filepath)
+        try:
+            # Load the YAML spec from the filepath
+            with open(filepath, "r") as data:
+                spec = cls.load_spec_from_string(data, needs_IO=False, needs_verification=True)
+        except Exception as e:
+            LOG.exception(e.args)
+            raise e
+
+        # Path not set in _populate_spec because loading spec with string
+        # does not have a path so we set it here
+        spec.path = filepath
         spec.specroot = os.path.dirname(spec.path)
-        spec.process_spec_defaults()
+
         if not suppress_warning:
             spec.warn_unrecognized_keys()
         return spec
 
     @classmethod
-    def load_spec_from_string(cls, string):
-        spec = super(MerlinSpec, cls).load_specification_from_stream(StringIO(string))
-        spec.merlin = MerlinSpec.load_merlin_block(StringIO(string))
-        spec.user = MerlinSpec.load_user_block(StringIO(string))
+    def load_spec_from_string(cls, string, needs_IO=True, needs_verification=False):
+        LOG.debug("Creating Merlin spec object...")
+        # Create and populate the MerlinSpec object
+        data = StringIO(string) if needs_IO else string
+        spec = cls._populate_spec(data)
         spec.specroot = None
         spec.process_spec_defaults()
+        LOG.debug("Merlin spec object created.")
+
+        # Verify the spec object
+        if needs_verification:
+            LOG.debug("Verifying Merlin spec...")
+            spec.verify()
+            LOG.debug("Merlin spec verified.")
+
         return spec
+
+    @classmethod
+    def _populate_spec(cls, data):
+        """
+        Helper method to load a study spec and populate it's fields.
+
+        NOTE: This is basically a direct copy of YAMLSpecification's
+        load_specification method from Maestro just without the call to verify.
+        The verify method was breaking our code since we have no way of modifying
+        Maestro's schema that they use to verify yaml files. The work around
+        is to load the yaml file ourselves and create our own schema to verify
+        against.
+
+        :param data: Raw text stream to study YAML spec data
+        :returns: A MerlinSpec object containing information from the path
+        """
+        # Read in the spec file
+        try:
+            spec = yaml.load(data, yaml.FullLoader)
+        except AttributeError:
+            LOG.warn(
+                "PyYAML is using an unsafe version with a known "
+                "load vulnerability. Please upgrade your installation "
+                "to a more recent version!"
+            )
+            spec = yaml.load(data)
+        LOG.debug("Successfully loaded specification: \n%s", spec["description"])
+
+        # Load in the parts of the yaml that are the same as Maestro's
+        merlin_spec = cls()
+        merlin_spec.path = None
+        merlin_spec.description = spec.pop("description", {})
+        merlin_spec.environment = spec.pop("env", {"variables": {}, "sources": [], "labels": {}, "dependencies": {}})
+        merlin_spec.batch = spec.pop("batch", {})
+        merlin_spec.study = spec.pop("study", [])
+        merlin_spec.globals = spec.pop("global.parameters", {})
+
+        # Reset the file pointer and load the merlin block
+        data.seek(0)
+        merlin_spec.merlin = MerlinSpec.load_merlin_block(data)
+
+        # Reset the file pointer and load the user block
+        data.seek(0)
+        merlin_spec.user = MerlinSpec.load_user_block(data)
+
+        return merlin_spec
+
+    def verify(self):
+        """
+        Verify the spec against a valid schema. Similar to YAMLSpecification's verify
+        method from Maestro but specific for Merlin yaml specs.
+
+        NOTE: Maestro v2.0 may add the ability to customize the schema files it
+        compares against. If that's the case then we can convert this file back to
+        using Maestro's verification.
+        """
+        # Load the MerlinSpec schema file
+        dir_path = os.path.dirname(os.path.abspath(__file__))
+        schema_path = os.path.join(dir_path, "merlinspec.json")
+        with open(schema_path, "r") as json_file:
+            schema = json.load(json_file)
+
+        # Use Maestro's verification methods for shared sections
+        self.verify_description(schema["DESCRIPTION"])
+        self.verify_environment(schema["ENV"])
+        self.verify_study(schema["STUDY_STEP"])
+        self.verify_parameters(schema["PARAM"])
+
+        # Merlin specific verification
+        self.verify_merlin_block(schema["MERLIN"])
+        self.verify_batch_block(schema["BATCH"])
+
+    def get_study_step_names(self):
+        """
+        Get a list of the names of steps in our study.
+
+        :returns: an unsorted list of study step names
+        """
+        names = []
+        for step in self.study:
+            names.append(step["name"])
+        return names
+
+    def _verify_workers(self):
+        """
+        Helper method to verify the workers section located within the Merlin block
+        of our spec file.
+        """
+        # Retrieve the names of the steps in our study
+        actual_steps = self.get_study_step_names()
+
+        try:
+            # Verify that the steps in merlin block's worker section actually exist
+            for worker, worker_vals in self.merlin["resources"]["workers"].items():
+                error_prefix = f"Problem in Merlin block with worker {worker} --"
+                for step in worker_vals["steps"]:
+                    if step != "all" and step not in actual_steps:
+                        error_msg = (
+                            f"{error_prefix} Step with the name {step}"
+                            " is not defined in the study block of the yaml specification file"
+                        )
+                        raise ValueError(error_msg)
+
+        except Exception:
+            raise
+
+    def verify_merlin_block(self, schema):
+        """
+        Method to verify the merlin section of our spec file.
+
+        :param schema: The section of the predefined schema (merlinspec.json) to check
+                       our spec file against.
+        """
+        # Validate merlin block against the json schema
+        YAMLSpecification.validate_schema("merlin", self.merlin, schema)
+        # Verify the workers section within merlin block
+        self._verify_workers()
+
+    def verify_batch_block(self, schema):
+        """
+        Method to verify the batch section of our spec file.
+
+        :param schema: The section of the predefined schema (merlinspec.json) to check
+                       our spec file against.
+        """
+        # Validate batch block against the json schema
+        YAMLSpecification.validate_schema("batch", self.batch, schema)
+
+        # Additional Walltime checks in case the regex from the schema bypasses an error
+        if "walltime" in self.batch:
+            if self.batch["type"] == "lsf":
+                LOG.warning("The walltime argument is not available in lsf.")
+            else:
+                try:
+                    err_msg = "Walltime must be of the form SS, MM:SS, or HH:MM:SS."
+                    walltime = self.batch["walltime"]
+                    if len(walltime) > 2:
+                        # Walltime must have : if it's not of the form SS
+                        if ":" not in walltime:
+                            raise ValueError(err_msg)
+                        else:
+                            # Walltime must have exactly 2 chars between :
+                            time = walltime.split(":")
+                            for section in time:
+                                if len(section) != 2:
+                                    raise ValueError(err_msg)
+                except Exception:
+                    raise
 
     @staticmethod
     def load_merlin_block(stream):
@@ -200,6 +385,7 @@ class MerlinSpec(YAMLSpecification):
 
         recurse(object_to_update, default_dict)
 
+    # ***Unsure if this method is still needed after adding json schema verification***
     def warn_unrecognized_keys(self):
         # check description
         MerlinSpec.check_section("description", self.description, all_keys.DESCRIPTION)
@@ -232,6 +418,9 @@ class MerlinSpec(YAMLSpecification):
     @staticmethod
     def check_section(section_name, section, all_keys):
         diff = set(section.keys()).difference(all_keys)
+
+        # TODO: Maybe add a check here for required keys
+
         for extra in diff:
             LOG.warn(f"Unrecognized key '{extra}' found in spec section '{section_name}'.")
 
