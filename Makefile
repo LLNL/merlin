@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.4.
+# This file is part of Merlin, Version: 1.9.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -164,12 +164,12 @@ checks: check-style check-camel-case
 # automatically make python files pep 8-compliant
 fix-style:
 	. $(VENV)/bin/activate; \
-	isort --line-length $(MAX_LINE_LENGTH) $(MRLN); \
-	isort --line-length $(MAX_LINE_LENGTH) $(TEST); \
-	isort --line-length $(MAX_LINE_LENGTH) *.py; \
-	black --target-version py36 -l $(MAX_LINE_LENGTH) $(MRLN); \
-	black --target-version py36 -l $(MAX_LINE_LENGTH) $(TEST); \
-	black --target-version py36 -l $(MAX_LINE_LENGTH) *.py; \
+	$(PYTHON) -m isort --line-length $(MAX_LINE_LENGTH) $(MRLN); \
+	$(PYTHON) -m isort --line-length $(MAX_LINE_LENGTH) $(TEST); \
+	$(PYTHON) -m isort --line-length $(MAX_LINE_LENGTH) *.py; \
+	$(PYTHON) -m black --target-version py36 -l $(MAX_LINE_LENGTH) $(MRLN); \
+	$(PYTHON) -m black --target-version py36 -l $(MAX_LINE_LENGTH) $(TEST); \
+	$(PYTHON) -m black --target-version py36 -l $(MAX_LINE_LENGTH) *.py; \
 
 
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.

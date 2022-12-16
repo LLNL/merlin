@@ -26,6 +26,7 @@ Tips for porting your app, building workflows
 The first step of building a new workflow, or porting an existing app to a workflow, is to describe it as a set of discrete, and ideally focused steps.  Decoupling the steps and making them generic when possible will facilitate more rapid composition of future workflows.  This will also require mapping out the dependencies and parameters that get passed between/shared across these steps.
 
 Setting up a template using tools such as `cookiecutter <https://github.com/cookiecutter/cookiecutter/>`_ can be useful for more production style workflows that will be frequently reused.  Additionally, make use of the built-in examples accessible from the merlin command line with ``merlin example``.
+
 .. (machine learning applications on different data sets?)
 
 Use dry runs ``merlin run --dry --local`` to prototype without actually populating task broker's queues.  Similarly, once the dry run prototype looks good, try it on a small number of parameters before throwing millions at it.
@@ -39,7 +40,7 @@ Make use of exit keys such as ``MERLIN_RESTART`` or ``MERLIN_RETRY`` in your ste
 Tips for debugging your workflows
 +++++++++++++++++++++++++++++++++
 
-The scripts defined in the workflow steps are also written to the output directories; this is a useful debugging tool as it can both catch parameter and variable replacement errors, as well as providing a quick way to reproduce, edit, and retry the step offline before fixing the step in the workflow specification.  The ``<stepname>.out`` and ``<stepname>.err`` files log all of the output to catch any runtime errors.  Additionally, you may need to grep for ``'WARNING'`` and ``'ERROR'`` in the worker logs.
+The scripts defined in the workflow steps are also written to the output directories; this is a useful debugging tool as it can both catch parameter and variable replacement errors, as well as provide a quick way to reproduce, edit, and retry the step offline before fixing the step in the workflow specification.  The ``<stepname>.out`` and ``<stepname>.err`` files log all of the output to catch any runtime errors.  Additionally, you may need to grep for ``'WARNING'`` and ``'ERROR'`` in the worker logs.
 
 .. where are the worker logs, and what might show up there that .out and .err won't see? -> these more developer focused output?
 

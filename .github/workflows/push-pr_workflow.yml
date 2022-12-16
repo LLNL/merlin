@@ -14,7 +14,7 @@ jobs:
     - name: Check that CHANGELOG has been updated
       run: |
         # If this step fails, this means you haven't updated the CHANGELOG.md file with notes on your contribution.
-        git diff --name-only $(git merge-base origin/main HEAD) | grep '^CHANGELOG.md$' && echo "Thanks for helping keep our CHANGELOG up-to-date!"
+        git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '^CHANGELOG.md$' && echo "Thanks for helping keep our CHANGELOG up-to-date!"
 
   Lint:
     runs-on: ubuntu-latest
@@ -67,10 +67,15 @@ jobs:
 
   Local-test-suite:
     runs-on: ubuntu-latest
+    env: 
+      GO_VERSION: 1.18.1
+      SINGULARITY_VERSION: 3.9.9
+      OS: linux
+      ARCH: amd64
 
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
 
     steps:
     - uses: actions/checkout@v2
@@ -90,6 +95,27 @@ jobs:
         python3 -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
+    
+    - name: Install singularity
+      run: |
+        sudo apt-get update && sudo apt-get install -y \
+          build-essential \
+          libssl-dev \
+          uuid-dev \
+          libgpgme11-dev \
+          squashfs-tools \
+          libseccomp-dev \
+          pkg-config
+        wget https://go.dev/dl/go$GO_VERSION.$OS-$ARCH.tar.gz
+        sudo tar -C /usr/local -xzf go$GO_VERSION.$OS-$ARCH.tar.gz
+        rm go$GO_VERSION.$OS-$ARCH.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        wget https://github.com/sylabs/singularity/releases/download/v$SINGULARITY_VERSION/singularity-ce-$SINGULARITY_VERSION.tar.gz
+        tar -xzf singularity-ce-$SINGULARITY_VERSION.tar.gz
+        cd singularity-ce-$SINGULARITY_VERSION
+        ./mconfig && \
+          make -C ./builddir && \
+          sudo make -C ./builddir install
 
     - name: Install merlin to run unit tests
       run: |
@@ -132,7 +158,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.6', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
 
     steps:
     - uses: actions/checkout@v2

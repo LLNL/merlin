@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.5.
+# This file is part of Merlin, Version: 1.9.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -107,6 +107,20 @@ class MerlinStudy:
             "MERLIN_SOFT_FAIL": str(int(ReturnCode.SOFT_FAIL)),
             "MERLIN_HARD_FAIL": str(int(ReturnCode.HARD_FAIL)),
             "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
+            # below will be substituted for sample values on execution
+            "MERLIN_SAMPLE_VECTOR": " ".join(
+                ["$({})".format(k) for k in self.get_sample_labels(from_spec=self.original_spec)]
+            ),
+            "MERLIN_SAMPLE_NAMES": " ".join(self.get_sample_labels(from_spec=self.original_spec)),
+            "MERLIN_SPEC_ORIGINAL_TEMPLATE": os.path.join(
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".orig.yaml"
+            ),
+            "MERLIN_SPEC_EXECUTED_RUN": os.path.join(
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".partial.yaml"
+            ),
+            "MERLIN_SPEC_ARCHIVED_COPY": os.path.join(
+                self.info, self.original_spec.description["name"].replace(" ", "_") + ".expanded.yaml"
+            ),
         }
 
         self.pgen_file = pgen_file
@@ -182,6 +196,11 @@ class MerlinStudy:
             return self.load_samples()
         return []
 
+    def get_sample_labels(self, from_spec):
+        if from_spec.merlin["samples"]:
+            return from_spec.merlin["samples"]["column_labels"]
+        return []
+
     @property
     def sample_labels(self):
         """
@@ -197,9 +216,7 @@ class MerlinStudy:
 
         :return: list of labels (e.g. ["X0", "X1"] )
         """
-        if self.expanded_spec.merlin["samples"]:
-            return self.expanded_spec.merlin["samples"]["column_labels"]
-        return []
+        return self.get_sample_labels(from_spec=self.expanded_spec)
 
     def load_samples(self):
         """
@@ -502,7 +519,8 @@ class MerlinStudy:
         labels = []
         if self.expanded_spec.merlin["samples"]:
             labels = self.expanded_spec.merlin["samples"]["column_labels"]
-        self.dag = DAG(maestro_dag, labels)
+        # To avoid pickling issues with _pass_detect_cycle from maestro, we unpack the dag here
+        self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, labels)
 
     def get_adapter_config(self, override_type=None):
         adapter_config = dict(self.expanded_spec.batch)

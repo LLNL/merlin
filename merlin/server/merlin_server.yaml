@@ -1,0 +1,27 @@
+container:
+    # Select the format for the recipe e.g. singularity, docker, podman (currently singularity is the only working option.)
+    format: singularity
+    #Type of container that is used
+    image_type: redis
+    # The image name
+    image: redis_latest.sif
+    # The url to pull the image from
+    url: docker://redis
+    # The config file
+    config: redis.conf
+    # Directory name to store configurations Default: ./merlin_server/
+    config_dir: ./merlin_server/
+    # Process file containing information regarding the redis process
+    pfile: merlin_server.pf
+    # Password file to be used for accessing container
+    pass_file: redis.pass
+    # Password command for generating password file
+    # pass_command: date +%s | sha256sum
+    # Users file to track concurrent users.
+    user_file: redis.users
+
+process:
+    # Command for determining the process of the command
+    status: pgrep -P {pid} #ps -e | grep {pid}
+    # Command for killing process
+    kill: kill {pid}

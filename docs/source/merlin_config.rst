@@ -153,7 +153,7 @@ show below.
     ca_certs: /var/ssl/myca.pem
     # This is optional and can be required, optional or none
     # (required is the default)
-    cert_req: required
+    cert_reqs: required
 
 
 
@@ -197,7 +197,7 @@ url when using a redis server version 6 or greater with ssl_.
     ca_certs: /var/ssl/myca.pem
     # This is optional and can be required, optional or none
     # (required is the default)
-    cert_req: required
+    cert_reqs: required
 
 
 The resulting ``broker_use_ssl`` configuration for a ``rediss`` server is given below.

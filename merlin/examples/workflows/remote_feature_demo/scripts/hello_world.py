@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 from typing import Dict
 
 
@@ -35,9 +36,14 @@ def main():
     """
     Primary coordinating method for collecting args and dumping them to a json file for later examination.
     """
-    parser: argparse.ArgumentParser = setup_argparse()
-    args: argparse.Namespace = parser.parse_args()
-    process_args(args)
+    try:
+        parser: argparse.ArgumentParser = setup_argparse()
+        args: argparse.Namespace = parser.parse_args()
+        process_args(args)
+        sys.exit()
+    except Exception as ex:
+        print(ex)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

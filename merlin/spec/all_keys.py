@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.5.
+# This file is part of Merlin, Version: 1.9.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -38,6 +38,7 @@ BATCH = {
     "shell",
     "flux_path",
     "flux_start_opts",
+    "flux_exec",
     "flux_exec_workers",
     "launch_pre",
     "launch_args",
