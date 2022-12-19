@@ -37,6 +37,7 @@ are implemented.
 """
 import logging
 import os
+import subprocess
 from typing import Dict, Optional, Union
 
 from merlin.utils import get_yaml_var
@@ -63,6 +64,18 @@ def batch_check_parallel(spec):
 
     return parallel
 
+def check_for_flux():
+        p = subprocess.Popen(
+            ["flux", "resource", "info"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        result = p.stdout.readlines()
+        if result and len(result) > 0 and b"Nodes" in result[0]:
+            return True
+        else:
+            return False
 
 def get_batch_type(default=None):
     """
@@ -75,10 +88,14 @@ def get_batch_type(default=None):
     if default is None:
         default = "slurm"
 
+    LOG.debug(f"check for flux = {check_for_flux()}")
+    if check_for_flux():
+        return "flux"
+
     if "SYS_TYPE" not in os.environ:
         return default
 
-    if "toss3" in os.environ["SYS_TYPE"]:
+    if "toss_3" in os.environ["SYS_TYPE"]:
         return "slurm"
 
     if "blueos" in os.environ["SYS_TYPE"]:
@@ -160,29 +177,38 @@ def batch_worker_launch(
     if not launch_command:
         launch_command = construct_worker_launch_command(batch, btype, nodes)
 
-    launch_command += f" {launch_args}"
+    if launch_args:
+        launch_command += f" {launch_args}"
 
     # Allow for any pre launch manipulation, e.g. module load
     # hwloc/1.11.10-cuda
     if launch_pre:
         launch_command = f"{launch_pre} {launch_command}"
 
+    LOG.debug(f"launch_command = {launch_command}")
+
     worker_cmd: str = ""
     if btype == "flux":
         flux_path: str = get_yaml_var(batch, "flux_path", "")
-        flux_opts: Union[str, Dict] = get_yaml_var(batch, "flux_start_opts", "")
-        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(batch, "flux_exec_workers", True)
-
-        flux_exec: str = ""
-        if flux_exec_workers:
-            flux_exec = get_yaml_var(batch, "flux_exec", "flux exec")
-
         if "/" in flux_path:
             flux_path += "/"
 
         flux_exe: str = os.path.join(flux_path, "flux")
 
-        launch: str = f"{launch_command} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
+        flux_opts: Union[str, Dict] = get_yaml_var(batch, "flux_start_opts", "")
+
+        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(batch, "flux_exec_workers", True)
+
+        default_flux_exec = "flux exec" if launch_command else f"{flux_exe} exec"
+        flux_exec: str = ""
+        if flux_exec_workers:
+            flux_exec = get_yaml_var(batch, "flux_exec", default_flux_exec)
+
+
+        if launch_command and "flux" not in launch_command:
+            launch: str = f"{launch_command} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
+        else:
+            launch: str = f"{launch_command} {flux_exec} `which {shell}` -c"
         worker_cmd = f'{launch} "{com}"'
     else:
         worker_cmd = f"{launch_command} {com}"
@@ -214,5 +240,18 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
     if workload_manager == "lsf":
         # The jsrun utility does not have a time argument
         launch_command = f"jsrun -a 1 -c ALL_CPUS -g ALL_GPUS --bind=none -n {nodes}"
+    if workload_manager == "flux":
+        flux_path: str = get_yaml_var(batch, "flux_path", "")
+        if "/" in flux_path:
+            flux_path += "/"
+
+        flux_exe: str = os.path.join(flux_path, "flux")
+        launch_command = f"{flux_exe} mini alloc -o pty -N {nodes} --exclusive --job-name=merlin"
+        if bank:
+            launch_command += f" --setattr=system.bank={bank}"
+        if queue:
+            launch_command += f" --setattr=system.queue={queue}"
+        if walltime:
+            launch_command += f" -t {walltime}"
 
     return launch_command
