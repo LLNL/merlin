@@ -168,9 +168,7 @@ def batch_worker_launch(
     if nodes is None or nodes == "all":
         nodes = get_node_count(default=1)
     elif not isinstance(nodes, int):
-        raise TypeError(
-            "Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all')."
-        )
+        raise TypeError("Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all').")
 
     shell: str = get_yaml_var(batch, "shell", "bash")
 
@@ -201,9 +199,7 @@ def batch_worker_launch(
 
         flux_opts: Union[str, Dict] = get_yaml_var(batch, "flux_start_opts", "")
 
-        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(
-            batch, "flux_exec_workers", True
-        )
+        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(batch, "flux_exec_workers", True)
 
         default_flux_exec = "flux exec" if launch_command else f"{flux_exe} exec"
         flux_exec: str = ""
@@ -221,9 +217,7 @@ def batch_worker_launch(
     return worker_cmd
 
 
-def construct_worker_launch_command(
-    batch: Optional[Dict], btype: str, nodes: int
-) -> str:
+def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: int) -> str:
     """
     If no 'worker_launch' is found in the batch yaml, this method constructs the needed launch command.
 
@@ -253,9 +247,7 @@ def construct_worker_launch_command(
             flux_path += "/"
 
         flux_exe: str = os.path.join(flux_path, "flux")
-        launch_command = (
-            f"{flux_exe} mini alloc -o pty -N {nodes} --exclusive --job-name=merlin"
-        )
+        launch_command = f"{flux_exe} mini alloc -o pty -N {nodes} --exclusive --job-name=merlin"
         if bank:
             launch_command += f" --setattr=system.bank={bank}"
         if queue:
