@@ -64,18 +64,20 @@ def batch_check_parallel(spec):
 
     return parallel
 
-def check_for_flux():
-        p = subprocess.Popen(
-            ["flux", "resource", "info"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
 
-        result = p.stdout.readlines()
-        if result and len(result) > 0 and b"Nodes" in result[0]:
-            return True
-        else:
-            return False
+def check_for_flux():
+    p = subprocess.Popen(
+        ["flux", "resource", "info"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    result = p.stdout.readlines()
+    if result and len(result) > 0 and b"Nodes" in result[0]:
+        return True
+    else:
+        return False
+
 
 def get_batch_type(default=None):
     """
@@ -166,7 +168,9 @@ def batch_worker_launch(
     if nodes is None or nodes == "all":
         nodes = get_node_count(default=1)
     elif not isinstance(nodes, int):
-        raise TypeError("Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all').")
+        raise TypeError(
+            "Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all')."
+        )
 
     shell: str = get_yaml_var(batch, "shell", "bash")
 
@@ -197,13 +201,14 @@ def batch_worker_launch(
 
         flux_opts: Union[str, Dict] = get_yaml_var(batch, "flux_start_opts", "")
 
-        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(batch, "flux_exec_workers", True)
+        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(
+            batch, "flux_exec_workers", True
+        )
 
         default_flux_exec = "flux exec" if launch_command else f"{flux_exe} exec"
         flux_exec: str = ""
         if flux_exec_workers:
             flux_exec = get_yaml_var(batch, "flux_exec", default_flux_exec)
-
 
         if launch_command and "flux" not in launch_command:
             launch: str = f"{launch_command} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
@@ -216,7 +221,9 @@ def batch_worker_launch(
     return worker_cmd
 
 
-def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: int) -> str:
+def construct_worker_launch_command(
+    batch: Optional[Dict], btype: str, nodes: int
+) -> str:
     """
     If no 'worker_launch' is found in the batch yaml, this method constructs the needed launch command.
 
@@ -246,7 +253,9 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
             flux_path += "/"
 
         flux_exe: str = os.path.join(flux_path, "flux")
-        launch_command = f"{flux_exe} mini alloc -o pty -N {nodes} --exclusive --job-name=merlin"
+        launch_command = (
+            f"{flux_exe} mini alloc -o pty -N {nodes} --exclusive --job-name=merlin"
+        )
         if bank:
             launch_command += f" --setattr=system.bank={bank}"
         if queue:
