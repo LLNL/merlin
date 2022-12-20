@@ -13,7 +13,11 @@ from merlin.utils import get_flux_cmd
 
 
 OUTPUT_DIR = "cli_test_studies"
+<<<<<<< HEAD
 CLEAN_MERLIN_SERVER = "rm -rf merlin_server/"
+=======
+CLEAN_MERLIN_SERVER = "rm -rf appendonly.aof dump.rdb merlin_server/"
+>>>>>>> main
 
 
 def define_tests():
@@ -127,6 +131,7 @@ def define_tests():
                 FileHasNoRegex("./merlin_server/redis.users", "new_user"),
             ],
             "local",
+<<<<<<< HEAD
             "rm -rf merlin_server/ hello*/",
         ),
     }
@@ -157,6 +162,9 @@ def define_tests():
             ],
             "local",
             "rm -rf app.yaml merlin_server/ hello*/",
+=======
+            CLEAN_MERLIN_SERVER,
+>>>>>>> main
         ),
     }
     examples_check = {
@@ -487,7 +495,10 @@ def define_tests():
         basic_checks,
         server_basic_tests,
         server_config_tests,
+<<<<<<< HEAD
         server_integrated_tests,
+=======
+>>>>>>> main
         examples_check,
         run_workers_echo_tests,
         wf_format_tests,
