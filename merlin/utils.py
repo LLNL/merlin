@@ -240,9 +240,9 @@ def load_array_file(filename, ndmin=2):
             )
     # Make sure text files load as strings with minimum number of dimensions
     elif protocol == "csv":
-        array = np.loadtxt(filename, delimiter=",", ndmin=ndmin, dtype=np.str_)
+        array = np.loadtxt(filename, delimiter=",", ndmin=ndmin, dtype=np.str)
     elif protocol == "tab":
-        array = np.loadtxt(filename, ndmin=ndmin, dtype=np.str_)
+        array = np.loadtxt(filename, ndmin=ndmin, dtype=np.str)
     else:
         raise TypeError(
             f"{protocol} is not a valid array file extension.\
