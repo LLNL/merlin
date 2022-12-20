@@ -13,11 +13,7 @@ from merlin.utils import get_flux_cmd
 
 
 OUTPUT_DIR = "cli_test_studies"
-<<<<<<< HEAD
-CLEAN_MERLIN_SERVER = "rm -rf merlin_server/"
-=======
 CLEAN_MERLIN_SERVER = "rm -rf appendonly.aof dump.rdb merlin_server/"
->>>>>>> main
 
 
 def define_tests():
