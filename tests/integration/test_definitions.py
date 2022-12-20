@@ -131,7 +131,6 @@ def define_tests():
                 FileHasNoRegex("./merlin_server/redis.users", "new_user"),
             ],
             "local",
-<<<<<<< HEAD
             "rm -rf merlin_server/ hello*/",
         ),
     }
@@ -162,9 +161,6 @@ def define_tests():
             ],
             "local",
             "rm -rf app.yaml merlin_server/ hello*/",
-=======
-            CLEAN_MERLIN_SERVER,
->>>>>>> main
         ),
     }
     examples_check = {
@@ -495,10 +491,7 @@ def define_tests():
         basic_checks,
         server_basic_tests,
         server_config_tests,
-<<<<<<< HEAD
         server_integrated_tests,
-=======
->>>>>>> main
         examples_check,
         run_workers_echo_tests,
         wf_format_tests,
