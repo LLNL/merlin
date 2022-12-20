@@ -32,12 +32,13 @@ import enum
 import logging
 import os
 import random
-import shutil
 import string
 import subprocess
 from io import BufferedReader
 from typing import Tuple
+
 import yaml
+
 
 try:
     import importlib.resources as resources
