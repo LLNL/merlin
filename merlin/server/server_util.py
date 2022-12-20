@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 ###############################################################################
 # Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
@@ -30,7 +28,6 @@
 # SOFTWARE.
 ###############################################################################
 
->>>>>>> main
 import hashlib
 import logging
 import os

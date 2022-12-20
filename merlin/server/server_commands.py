@@ -1,7 +1,5 @@
 """Main functions for instantiating and running Merlin server containers."""
 
-<<<<<<< HEAD
-=======
 ###############################################################################
 # Copyright (c) 2022, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
@@ -32,7 +30,6 @@
 # SOFTWARE.
 ###############################################################################
 
->>>>>>> main
 import logging
 import os
 import socket

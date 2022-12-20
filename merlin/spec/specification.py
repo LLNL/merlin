@@ -124,13 +124,6 @@ class MerlinSpec(YAMLSpecification):
 
     @classmethod
     def load_specification(cls, filepath, suppress_warning=True):
-<<<<<<< HEAD
-        spec = super(MerlinSpec, cls).load_specification(filepath)
-        with open(filepath, "r") as f:
-            spec.merlin = MerlinSpec.load_merlin_block(f)
-        with open(filepath, "r") as f:
-            spec.user = MerlinSpec.load_user_block(f)
-=======
         LOG.info("Loading specification from path: %s", filepath)
         try:
             # Load the YAML spec from the filepath
@@ -143,7 +136,6 @@ class MerlinSpec(YAMLSpecification):
         # Path not set in _populate_spec because loading spec with string
         # does not have a path so we set it here
         spec.path = filepath
->>>>>>> main
         spec.specroot = os.path.dirname(spec.path)
 
         if not suppress_warning:
@@ -151,18 +143,11 @@ class MerlinSpec(YAMLSpecification):
         return spec
 
     @classmethod
-<<<<<<< HEAD
-    def load_spec_from_string(cls, string):
-        spec = super(MerlinSpec, cls).load_specification_from_stream(StringIO(string))
-        spec.merlin = MerlinSpec.load_merlin_block(StringIO(string))
-        spec.user = MerlinSpec.load_user_block(StringIO(string))
-=======
     def load_spec_from_string(cls, string, needs_IO=True, needs_verification=False):
         LOG.debug("Creating Merlin spec object...")
         # Create and populate the MerlinSpec object
         data = StringIO(string) if needs_IO else string
         spec = cls._populate_spec(data)
->>>>>>> main
         spec.specroot = None
         spec.process_spec_defaults()
         LOG.debug("Merlin spec object created.")

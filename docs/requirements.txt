@@ -8,11 +8,7 @@ alabaster==0.7.12
     # via sphinx
 babel==2.10.3
     # via sphinx
-<<<<<<< HEAD
-certifi==2022.9.24
-=======
 certifi==2022.12.7
->>>>>>> main
     # via requests
 charset-normalizer==2.1.1
     # via requests
