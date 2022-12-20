@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Added merlin/spec/merlinspec.json to MANIFEST.in so pip will actually install it when ran
 - Fixed a bug where "from celery import Celery" was failing on python 3.7
+- Numpy error about numpy.str not existing from a new numpy release
 
 ## [1.9.0]
 ### Added
