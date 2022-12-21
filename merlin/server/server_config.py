@@ -32,13 +32,18 @@ import enum
 import logging
 import os
 import random
-import shutil
 import string
 import subprocess
 from io import BufferedReader
 from typing import Tuple
 
 import yaml
+
+
+try:
+    import importlib.resources as resources
+except ImportError:
+    import importlib_resources as resources
 
 from merlin.server.server_util import (
     CONTAINER_TYPES,
@@ -158,18 +163,22 @@ def create_server_config() -> bool:
             continue
         LOG.info(f"Copying file {file} to configuration directory.")
         try:
-            shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), file), config_dir)
+            with resources.path("merlin.server", file) as config_file:
+                with open(file_path, "w") as outfile, open(config_file, "r") as infile:
+                    outfile.write(infile.read())
         except OSError:
             LOG.error(f"Destination location {config_dir} is not writable.")
             return False
 
     # Load Merlin Server Configuration and apply it to app.yaml
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), MERLIN_SERVER_CONFIG)) as f:
-        main_server_config = yaml.load(f, yaml.Loader)
-        filename = LOCAL_APP_YAML if os.path.exists(LOCAL_APP_YAML) else AppYaml.default_filename
-        merlin_app_yaml = AppYaml(filename)
-        merlin_app_yaml.update_data(main_server_config)
-        merlin_app_yaml.write(filename)
+    with resources.path("merlin.server", MERLIN_SERVER_CONFIG) as merlin_server_config:
+        with open(merlin_server_config) as f:
+            main_server_config = yaml.load(f, yaml.Loader)
+            filename = LOCAL_APP_YAML if os.path.exists(LOCAL_APP_YAML) else AppYaml.default_filename
+            merlin_app_yaml = AppYaml(filename)
+            merlin_app_yaml.update_data(main_server_config)
+            merlin_app_yaml.write(filename)
+    LOG.info("Applying merlin server configuration to app.yaml")
 
     server_config = pull_server_config()
     if not server_config:
@@ -301,8 +310,9 @@ def pull_server_image() -> bool:
     if not os.path.exists(os.path.join(config_dir, config_file)):
         LOG.info("Copying default redis configuration file.")
         try:
-            file_dir = os.path.dirname(os.path.abspath(__file__))
-            shutil.copy(os.path.join(file_dir, config_file), config_dir)
+            with resources.path("merlin.server", config_file) as file:
+                with open(os.path.join(config_dir, config_file), "w") as outfile, open(file, "r") as infile:
+                    outfile.write(infile.read())
         except OSError:
             LOG.error(f"Destination location {config_dir} is not writable.")
             return False
