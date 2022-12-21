@@ -10,7 +10,7 @@ Default celery configuration for merlin
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.0.
+# This file is part of Merlin, Version: 1.9.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
