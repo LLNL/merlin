@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Fixed
 - Pip wheel wasn't including .sh files for merlin examples
+### Added
+- Now loads np.arrays of dtype='object', allowing mix-type sample npy
 
 ## [1.9.1]
 ### Fixed
