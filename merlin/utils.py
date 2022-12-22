@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.0.
+# This file is part of Merlin, Version: 1.9.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -240,9 +240,9 @@ def load_array_file(filename, ndmin=2):
             )
     # Make sure text files load as strings with minimum number of dimensions
     elif protocol == "csv":
-        array = np.loadtxt(filename, delimiter=",", ndmin=ndmin, dtype=np.str)
+        array = np.loadtxt(filename, delimiter=",", ndmin=ndmin, dtype=str)
     elif protocol == "tab":
-        array = np.loadtxt(filename, ndmin=ndmin, dtype=np.str)
+        array = np.loadtxt(filename, ndmin=ndmin, dtype=str)
     else:
         raise TypeError(
             f"{protocol} is not a valid array file extension.\
