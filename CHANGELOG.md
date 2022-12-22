@@ -4,6 +4,10 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Added
+- Now loads np.arrays of dtype='object', allowing mix-type sample npy
+
 ## [1.9.1]
 ### Fixed
 - Added merlin/spec/merlinspec.json to MANIFEST.in so pip will actually install it when ran
@@ -31,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New tests related to JSON schema validation
 - Instructions in the "Contributing" page of the docs on how to add new blocks/fields to the spec file
 - Brief explanation of the $(LAUNCHER) variable in the "Variables" page of the docs
-- Now loads np.arrays of dtype='object'
 
 ### Changed
 - Removed support for Python 3.6
