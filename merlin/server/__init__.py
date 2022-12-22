@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.9.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -27,42 +27,3 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-
-"""
-Functions for encrypting backend traffic.
-"""
-import celery.backends.base
-
-from merlin.common.security import encrypt
-
-
-encrypt.init_key()
-
-# remember what the original encode / decode are so we can call it in our
-# wrapper
-old_encode = celery.backends.base.Backend.encode
-old_decode = celery.backends.base.Backend.decode
-
-
-def _encrypt_encode(*args, **kwargs):
-    """
-    Intercept all celery.backends.Backend.encode calls and encrypt them after
-    encoding
-    """
-    return encrypt.encrypt(old_encode(*args, **kwargs))
-
-
-def _decrypt_decode(self, payload):
-    """
-    Intercept all celery.backends.Backend.decode calls and decrypt them before
-    decoding.
-    """
-    return old_decode(self, encrypt.decrypt(payload))
-
-
-def set_backend_funcs():
-    """
-    Set the encode / decode to our own encrypt_encode / encrypt_decode.
-    """
-    celery.backends.base.Backend.encode = _encrypt_encode
-    celery.backends.base.Backend.decode = _decrypt_decode
