@@ -66,16 +66,19 @@ def batch_check_parallel(spec):
 
 
 def check_for_flux():
-    p = subprocess.Popen(
-        ["flux", "resource", "info"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
+    try:
+        p = subprocess.Popen(
+            ["flux", "resource", "info"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
 
-    result = p.stdout.readlines()
-    if result and len(result) > 0 and b"Nodes" in result[0]:
-        return True
-    else:
+        result = p.stdout.readlines()
+        if result and len(result) > 0 and b"Nodes" in result[0]:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
         return False
 
 
