@@ -66,6 +66,9 @@ def batch_check_parallel(spec):
 
 
 def check_for_flux():
+    """
+    Check if flux is the main scheduler for the cluster
+    """
     try:
         p = subprocess.Popen(
             ["flux", "resource", "info"],
