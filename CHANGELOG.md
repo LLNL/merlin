@@ -5,7 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+### Fixed
+- Pip wheel wasn't including .sh files for merlin examples
 ### Added
+- Now loads np.arrays of dtype='object', allowing mix-type sample npy
 - Added flux native worker launch support
 
 ## [1.9.1]
