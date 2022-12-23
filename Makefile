@@ -130,9 +130,9 @@ check-black:
 
 check-isort:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) merlin; \
-	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) tests; \
-	$(PYTHON) -m isort --check --line-length $(MAX_LINE_LENGTH) *.py; \
+	$(PYTHON) -m isort --check -w $(MAX_LINE_LENGTH) merlin; \
+	$(PYTHON) -m isort --check -w $(MAX_LINE_LENGTH) tests; \
+	$(PYTHON) -m isort --check -w $(MAX_LINE_LENGTH) *.py; \
 
 
 check-pylint:
@@ -164,9 +164,9 @@ checks: check-style check-camel-case
 # automatically make python files pep 8-compliant
 fix-style:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) -m isort --line-length $(MAX_LINE_LENGTH) $(MRLN); \
-	$(PYTHON) -m isort --line-length $(MAX_LINE_LENGTH) $(TEST); \
-	$(PYTHON) -m isort --line-length $(MAX_LINE_LENGTH) *.py; \
+	$(PYTHON) -m isort -w $(MAX_LINE_LENGTH) $(MRLN); \
+	$(PYTHON) -m isort -w $(MAX_LINE_LENGTH) $(TEST); \
+	$(PYTHON) -m isort -w $(MAX_LINE_LENGTH) *.py; \
 	$(PYTHON) -m black --target-version py36 -l $(MAX_LINE_LENGTH) $(MRLN); \
 	$(PYTHON) -m black --target-version py36 -l $(MAX_LINE_LENGTH) $(TEST); \
 	$(PYTHON) -m black --target-version py36 -l $(MAX_LINE_LENGTH) *.py; \
