@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Source OpenFOAM BASH profile
+. /opt/openfoam6/etc/bashrc
+
+# Export fix for OPENMPI in a container
+export OMPI_MCA_btl_vader_single_copy_mechanism=none
+cd ${0%/*} || exit 1    # Run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+cavityCases="cavity"
+LID_SPEED=$1
+
+for caseName in $cavityCases
+do
+  cd /$caseName
+
+  blockMesh > blockMesh.out
+
+  echo "***** Setting up control parameters ***** "
+  checkMesh > out
+  MIN_AREA=$(grep -oP '(?<=Minimum face area = )[0-9,.,e,-]+' out)
+  echo MIN_AREA "$MIN_AREA" >> out
+  MIN_AREA=${MIN_AREA::-1}
+  echo MIN_AREA $MIN_AREA >> out
+  DELTA_X=$(awk "BEGIN {printf \"%.30f\n\", sqrt($MIN_AREA)}")
+  echo DELTA_X $DELTA_X >> out
+  DELTA_T=$(awk "BEGIN {printf \"%.30f\n\", $DELTA_X / $LID_SPEED}")
+  echo DELTA_T $DELTA_T >> out
+
+  MIN_DELTA_T=0.05
+  DELTA_T=$(echo ${DELTA_T} ${MIN_DELTA_T} | awk '{if ($1 < $2) print $1; else print $2}')
+
+  echo 'DELTA_T after comparison' $DELTA_T>> out
+  sed -i "28s/.*/deltaT          $DELTA_T;/" system/controlDict
+
+  echo "Running $(getApplication)"
+  $(getApplication) > $(getApplication).out
+  postProcess -func 'enstrophy'
+  foamToVTK
+done
+
+#------------------------------------------------------------------------------
