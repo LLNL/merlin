@@ -3,7 +3,7 @@
 MERLIN_INFO=$1
 
 DOCKER_IMAGE="docker://cfdengine/openfoam"
-#DOCKER_IMAGE="docker://openfoam/openfoam6-paraview"
+#DOCKER_IMAGE="docker://openfoam/openfoam6-paraview56"
 SIF=openfoam6.sif
 CONTAINER_DST="/merlin_openfoam"
 cd $MERLIN_INFO
