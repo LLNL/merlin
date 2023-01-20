@@ -63,6 +63,22 @@ LOG = logging.getLogger(__name__)
 STOP_COUNTDOWN = 60
 
 
+# # NOTE: This might not need to be a task. Maybe just a function we call in merlin_step below?
+# @shared_task(
+#     bind=True,
+#     autoretry_for=retry_exceptions,
+#     retry_backoff=True,
+#     priority=get_priority(Priority.high)
+# )
+# def update_status(self, *args: Any, **kwargs: Any) -> None:
+#     """
+#     Performs a status update as steps in a merlin study are completed. Here we pull the status from
+#     the redis DB and store into a local cache file. The cache file is where the merlin status command
+#     will pull info from.
+#     """
+#     pass
+
+
 @shared_task(  # noqa: C901
     bind=True,
     autoretry_for=retry_exceptions,
@@ -106,8 +122,11 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             LOG.info(f"Skipping step '{step_name}' in '{step_dir}'.")
             result = ReturnCode.OK
         else:
+            # TODO: Update cache file to say in progress
             result = step.execute(config)
+            # TODO: Update cache file to say whatever result was (FINISHED, SOFT_FAIL, etc.)
         if result == ReturnCode.OK:
+            # TODO: Update cache file here instead maybe to say FINISHED?
             LOG.info(f"Step '{step_name}' in '{step_dir}' finished successfully.")
             # touch a file indicating we're done with this step
             with open(finished_filename, "a"):
@@ -139,6 +158,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                 )
                 result = ReturnCode.SOFT_FAIL
         elif result == ReturnCode.SOFT_FAIL:
+            # TODO: Update cache file here instead maybe to say MERLIN_SOFT_FAIL?
             LOG.warning(f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow.")
         elif result == ReturnCode.HARD_FAIL:
 

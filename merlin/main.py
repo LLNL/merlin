@@ -299,6 +299,10 @@ def print_info(args):
     # if this is moved to the toplevel per standard style, merlin is unable to generate the (needed) default config file
     from merlin import display  # pylint: disable=import-outside-toplevel
 
+    if args.queues is not None:
+        # TODO: https://stackoverflow.com/questions/24170615/celery-programmatically-list-queues/24718513#24718513
+        pass
+
     display.print_info(args)
 
 
@@ -880,6 +884,12 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         help="display info about the merlin configuration and the python configuration. Useful for debugging.",
     )
     info.set_defaults(func=print_info)
+    info.add_argument(
+        "--queues",
+        nargs="*",
+        type=str,
+        help="The queues that you want to print info for. If left blank this flag will print the info for all existing queues."
+    )
 
 
 def main():
