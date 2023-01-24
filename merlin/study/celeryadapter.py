@@ -242,7 +242,7 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
             worker_args += " --logfile %p.%i"
 
         # Get the celery command
-        celery_com = launch_celery_workers(spec, steps=wsteps, worker_args=worker_args, just_return_command=True)
+        celery_com = launch_celery_workers(spec, steps=wsteps, worker_name=worker_name, worker_args=worker_args, just_return_command=True)
 
         celery_cmd = os.path.expandvars(celery_com)
 
@@ -346,17 +346,18 @@ def verify_args(spec, worker_args, worker_name, overlap):
         worker_args += f" -l {logging.getLevelName(LOG.getEffectiveLevel())}"
 
 
-def launch_celery_workers(spec, steps=None, worker_args="", just_return_command=False):
+def launch_celery_workers(spec, steps=None, worker_name=None, worker_args="", just_return_command=False):
     """
     Launch celery workers for the specified MerlinStudy.
 
     spec                MerlinSpec object
     steps               The steps in the spec to tie the workers to
+    worker_name         The name of the worker provided via the spec
     worker_args         Optional celery arguments for the workers
     just_return_command Don't execute, just return the command
     """
     queues = spec.make_queue_string(steps)
-    worker_command = " ".join(["celery -A merlin worker", worker_args, "-Q", queues])
+    worker_command = " ".join(["celery -A merlin worker", worker_args, "-Q", queues, "-n", worker_name])
     if just_return_command:
         return worker_command
     else:
