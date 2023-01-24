@@ -5,8 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+### Fixed
+- Fixed the flags associated with the "merlin stop-workers" command (--spec, --queues, --workers)
+
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
+- Added the --queues flag to the "merlin info" command
+
+### Changed
+- In the merlinspec.json file the minimum gpus per task was changed from 1 to 0
 
 ## [1.9.1]
 ### Fixed
