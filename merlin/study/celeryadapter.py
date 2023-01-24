@@ -409,7 +409,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     active_queues, _ = get_queues(app)
 
     # If not specified, get all the queues
-    if queues is None:
+    if queues is None or len(queues) == 0:
         queues = [*active_queues]
 
     # Find the set of all workers attached to all of those queues
@@ -422,23 +422,21 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
             LOG.warning(f"No workers are connected to queue {queue}")
 
     all_workers = list(all_workers)
+    LOG.debug(f"all_workers: {all_workers}")
 
-    LOG.debug(f"Pre-filter worker stop list: {all_workers}")
-
-    print(f"all_workers: {all_workers}")
-    print(f"spec_worker_names: {spec_worker_names}")
     if (spec_worker_names is None or len(spec_worker_names) == 0) and worker_regex is None:
         workers_to_stop = list(all_workers)
     else:
         workers_to_stop = []
         if (spec_worker_names is not None) and len(spec_worker_names) > 0:
             for worker_name in spec_worker_names:
-                print(f"Result of regex_list_filter: {regex_list_filter(worker_name, all_workers)}")
+                LOG.debug(f"Result of regex_list_filter for {worker_name}: {regex_list_filter(worker_name, all_workers, match=False)}")
                 workers_to_stop += regex_list_filter(worker_name, all_workers, match=False)
         if worker_regex is not None:
-            workers_to_stop += regex_list_filter(worker_regex, workers_to_stop)
+            LOG.debug(f"Result of regex_list_filter: {regex_list_filter(worker_regex, all_workers, match=False)}")
+            workers_to_stop += regex_list_filter(worker_regex, all_workers, match=False)
 
-    print(f"workers_to_stop: {workers_to_stop}")
+    LOG.debug(f"workers_to_stop: {workers_to_stop}")
     if workers_to_stop:
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
         return app.control.broadcast("shutdown", destination=workers_to_stop)

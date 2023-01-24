@@ -280,6 +280,8 @@ def stop_workers(args):
     """
     print(banner_small)
     worker_names = []
+
+    # Load in the spec if one was provided via the CLI
     if args.spec:
         spec_path = verify_filepath(args.spec)
         spec = MerlinSpec.load_specification(spec_path)
@@ -287,8 +289,15 @@ def stop_workers(args):
         for worker_name in worker_names:
             if "$" in worker_name:
                 LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
-    router.stop_workers(args.task_server, worker_names, args.queues, args.workers)
 
+    # Celery adds the project name in front of each queue so we add that here
+    queues = []
+    if args.queues:
+        for queue in args.queues:
+            queues.append(f"[merlin]_{queue}")
+
+    # Send stop command to router
+    router.stop_workers(args.task_server, worker_names, queues, args.workers)
 
 def print_info(args):
     """
@@ -298,10 +307,6 @@ def print_info(args):
     """
     # if this is moved to the toplevel per standard style, merlin is unable to generate the (needed) default config file
     from merlin import display  # pylint: disable=import-outside-toplevel
-
-    if args.queues is not None:
-        # TODO: https://stackoverflow.com/questions/24170615/celery-programmatically-list-queues/24718513#24718513
-        pass
 
     display.print_info(args)
 
