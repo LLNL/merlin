@@ -299,6 +299,13 @@ def stop_workers(args):
     # Send stop command to router
     router.stop_workers(args.task_server, worker_names, queues, args.workers)
 
+def get_queue_info(queue_name):
+    from kombu import Connection
+    from merlin.config.broker import get_connection_string, get_ssl_config
+    with Connection(get_connection_string(), ssl=get_ssl_config()) as conn:
+        with conn.channel() as channel:
+            return channel.queue_declare(queue_name, passive=True)
+
 def print_info(args):
     """
     CLI command to print merlin config info.
@@ -308,7 +315,19 @@ def print_info(args):
     # if this is moved to the toplevel per standard style, merlin is unable to generate the (needed) default config file
     from merlin import display  # pylint: disable=import-outside-toplevel
 
-    display.print_info(args)
+    if args.queues is not None:
+        from merlin.celery import app
+        from merlin.study.celeryadapter import get_queues
+        queues, _ = get_queues(app)
+        if len(queues) == 0:
+            LOG.warning(f"No active queues found.")
+        else:
+            queue_names = queues.keys()
+            for name in queue_names:
+                _, message_count, consumer_count = get_queue_info(name)
+                print(f"{name}: {message_count} messages, {consumer_count} consumers")
+    else:
+        display.print_info(args)
 
 
 def config_merlin(args: Namespace) -> None:
