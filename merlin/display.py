@@ -43,6 +43,12 @@ from tabulate import tabulate
 from merlin.ascii_art import banner_small
 from merlin.config import broker, results_backend
 from merlin.config.configfile import default_config_info
+from merlin.study.celeryadapter import get_queues, query_celery_queues
+from merlin.celery import app
+
+import logging
+LOG = logging.getLogger("merlin")
+DEFAULT_LOG_LEVEL = "INFO"
 
 
 class ConnProcess(Process):
@@ -193,3 +199,34 @@ def print_info(args):
     info_str += r"echo \"echo \$PYTHONPATH\" && echo $PYTHONPATH"
     _ = subprocess.run(info_str, shell=True)
     print("")
+
+def print_queue_info(queues):
+    """
+    For each queue provided in the `queues` argument this function will
+    print the name of the queue, the number of tasks attached to it,
+    and the number of workers assigned to it.
+
+    :param `queues`: a list of queue names that we'll print info for
+    """
+    print(banner_small)
+
+    existing_queues, _ = get_queues(app)
+    existing_queue_names = existing_queues.keys()
+    # Case 1: no queues exist
+    if len(existing_queues) == 0:
+        LOG.warning(f"No queues found. Are your workers running this queue yet?")
+        return
+    # Case 2: no specific queue provided, display info for all queues
+    elif len(queues) == 0:
+        # use_channel(print_queue_info, existing_queue_names)
+        found_queues = query_celery_queues(existing_queue_names)
+    # Case 3: specific queue provided, display info for that(those) queue(s)
+    else:
+        full_queue_names = []
+        for queue in queues:
+            full_queue_names.append(f"[merlin]_{queue}")
+
+        found_queues = query_celery_queues(full_queue_names)
+
+    found_queues.insert(0, ("Queue Name", "Task Count", "Worker Count"))
+    print(tabulate(found_queues, headers="firstrow"), "\n")

@@ -298,13 +298,7 @@ def stop_workers(args):
 
     # Send stop command to router
     router.stop_workers(args.task_server, worker_names, queues, args.workers)
-
-def get_queue_info(queue_name):
-    from kombu import Connection
-    from merlin.config.broker import get_connection_string, get_ssl_config
-    with Connection(get_connection_string(), ssl=get_ssl_config()) as conn:
-        with conn.channel() as channel:
-            return channel.queue_declare(queue_name, passive=True)
+        
 
 def print_info(args):
     """
@@ -316,16 +310,7 @@ def print_info(args):
     from merlin import display  # pylint: disable=import-outside-toplevel
 
     if args.queues is not None:
-        from merlin.celery import app
-        from merlin.study.celeryadapter import get_queues
-        queues, _ = get_queues(app)
-        if len(queues) == 0:
-            LOG.warning(f"No active queues found.")
-        else:
-            queue_names = queues.keys()
-            for name in queue_names:
-                _, message_count, consumer_count = get_queue_info(name)
-                print(f"{name}: {message_count} messages, {consumer_count} consumers")
+        display.print_queue_info(args.queues)
     else:
         display.print_info(args)
 
@@ -811,7 +796,13 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         help="Task server type from which to stop workers.\
                             Default: %(default)s",
     )
-    stop.add_argument("--queues", type=str, default=None, nargs="+", help="specific queues to stop")
+    stop.add_argument(
+        "--queues",
+        type=str,
+        default=None,
+        nargs="+",
+        help="specific queues to stop"
+    )
     stop.add_argument(
         "--workers",
         type=str,
@@ -912,7 +903,8 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         "--queues",
         nargs="*",
         type=str,
-        help="The queues that you want to print info for. If left blank this flag will print the info for all existing queues."
+        help="Print the number of tasks and workers attached to the queues provided. If left blank, "
+        "print the number of tasks and workers attached to every existing queue."
     )
 
 

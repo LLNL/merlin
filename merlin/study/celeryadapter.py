@@ -147,18 +147,15 @@ def query_celery_queues(queues):
     """
     from merlin.celery import app
 
-    connection = app.connection()
     found_queues = []
-    try:
-        channel = connection.channel()
-        for queue in queues:
-            try:
-                name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
-                found_queues.append((name, jobs, consumers))
-            except Exception as e:
-                LOG.warning(f"Cannot find queue {queue} on server.{e}")
-    finally:
-        connection.close()
+    with app.connection() as conn:
+        with conn.channel() as channel:
+            for queue in queues:
+                try:
+                    name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
+                    found_queues.append((name, jobs, consumers))
+                except Exception as e:
+                    LOG.warning(f"Cannot find queue {queue} on server.{e}")
     return found_queues
 
 
