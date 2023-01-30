@@ -37,6 +37,7 @@ from datetime import datetime
 from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
+from maestrowf.utils import create_parentdir
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.study.script_adapter import MerlinScriptAdapter
@@ -53,18 +54,84 @@ class MerlinStepRecord(_StepRecord):
 
     def __init__(self, workspace, step, **kwargs):
         _StepRecord.__init__(self, workspace, step, **kwargs)
+        self.status_file = f"{self.workspace.value}/MERLIN_STATUS"
 
     def mark_submitted(self):
-        """Mark the submission time of the record."""
-        LOG.debug("Marking %s as submitted (PENDING) -- previously %s", self.name, self.status)
-        self.status = State.PENDING
-        if not self._submit_time:
-            self._submit_time = datetime.now()
+        """Mark the submission time of the record and update the status file."""
+        LOG.debug(f"Marking {self.name} as submitted (PENDING) -- previously {self.status}")
+        super().mark_submitted()
+
+        # TODO: update step status to say PENDING
+
+    def mark_running(self):
+        """Mark the start time of the record and update the status file."""
+        super().mark_running()
+
+        # TODO: update step status to be RUNNING
+
+    def mark_end(self, state, max_retries=False):
+        """
+        Mark the end time of the record with associated termination state
+        and update the status file.
+        
+        :param `state`: 
+        """
+        # TODO: consider sending Maestro state instead of returncode
+        super().mark_end(state)
+        
+        step_result: str
+        if state == ReturnCode.OK:
+            super().mark_end(State.FINISHED)
+            step_result = f"MERLIN_SUCCESS"
+        elif state == ReturnCode.DRY_OK:
+            step_result = f"DRY_SUCCESS"
+        elif state == ReturnCode.RETRY:
+            step_result = f"MERLIN_RETRY"
+        elif state == ReturnCode.RESTART:
+            step_result = f"MERLIN_RESTART"
+        elif state == ReturnCode.SOFT_FAIL:
+            step_result = f"MERLIN_SOFT_FAIL"
+            if max_retries:
+                step_result += " (MAX RETRIES)"
+        elif state == ReturnCode.HARD_FAIL:
+            step_result = f"MERLIN_HARD_FAIL"
+        elif state == ReturnCode.STOP_WORKERS:
+            step_result = f"MERLIN_STOP_WORKERS"
         else:
-            LOG.debug(
-                "Merlin: Cannot set the submission time of '%s' because it has already been set.",
-                self.name,
-            )
+            step_result = f"UNRECOGNIZED_RETURN_CODE"
+
+        # TODO: update step status to be FINISHED, return code, end time, and complete run time
+        # print(f"status: {self.status}, step result: {step_result}")
+
+    def mark_restart(self):
+        super().mark_restart()
+        # If we want a status entry for each retry then update start time here
+        # Maybe we create an attribute to track if this step is on a restart? Then
+        # we can see if we should append a line to status file or overwrite
+
+    def setup_workspace(self):
+        """Initialize the record's workspace and status file."""
+        create_parentdir(self.workspace.value)
+        try:
+            with open(self.status_file, "x") as f:
+                f.write(str(self.status))
+        except FileExistsError:
+            LOG.warning(f"MERLIN_STATUS file already exists in the '{self.workspace.value}' directory.")
+
+    def update_status_file(self, append=False):
+        mode = "w"
+        if append:
+            mode = "a"
+        try:
+            # STATUS FILE FORMAT
+            # ------------------
+            # step name, step status, return code, elapsed time, run time, dir path, task queue, worker name
+            # TODO: decide what to do with sample vectore
+            with open(self.status_file, mode) as f:
+                # TODO: write an entire line of status
+                pass
+        except FileNotFoundError:
+            LOG.warning(f"Cannot update step status, MERLIN_STATUS file not found.")
 
 
 class Step:

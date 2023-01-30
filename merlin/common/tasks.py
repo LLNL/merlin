@@ -116,15 +116,19 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
         step_dir: str = step.get_workspace()
         LOG.debug(f"merlin_step: step_name '{step_name}' step_dir '{step_dir}'")
         finished_filename: str = os.path.join(step_dir, "MERLIN_FINISHED")
+
         # if we've already finished this task, skip it
         result: ReturnCode
         if os.path.exists(finished_filename):
             LOG.info(f"Skipping step '{step_name}' in '{step_dir}'.")
             result = ReturnCode.OK
+            step.mstep.mark_end(result)
         else:
             # TODO: Update cache file to say in progress
             result = step.execute(config)
+            step.mstep.mark_end(result)
             # TODO: Update cache file to say whatever result was (FINISHED, SOFT_FAIL, etc.)
+        
         if result == ReturnCode.OK:
             # TODO: Update cache file here instead maybe to say FINISHED?
             LOG.info(f"Step '{step_name}' in '{step_dir}' finished successfully.")
@@ -145,6 +149,9 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                     f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
                 )
                 result = ReturnCode.SOFT_FAIL
+                # Need to call mark_end again since we switched from
+                # RESTART to SOFT_FAIL and update the end time
+                step.mstep.mark_end(result, max_retries=True)
         elif result == ReturnCode.RETRY:
             step.restart = False
             try:
@@ -157,11 +164,13 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                     f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
                 )
                 result = ReturnCode.SOFT_FAIL
+                # Need to call mark_end again since we switched from
+                # RETRY to SOFT_FAIL and update the end time
+                step.mstep.mark_end(result, max_retries=True)
         elif result == ReturnCode.SOFT_FAIL:
             # TODO: Update cache file here instead maybe to say MERLIN_SOFT_FAIL?
             LOG.warning(f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow.")
         elif result == ReturnCode.HARD_FAIL:
-
             # stop all workers attached to this queue
             step_queue = step.get_task_queue()
             LOG.error(f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow.")
@@ -169,7 +178,6 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             shutdown = shutdown_workers.s([step_queue])
             shutdown.set(queue=step_queue)
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
-
             raise HardFailException
         elif result == ReturnCode.STOP_WORKERS:
             LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
@@ -178,6 +186,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
             LOG.warning(f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow.")
+        
         # queue off the next task in a chain while adding it to the current chord so that the chordfinisher actually
         # waits for the next task in the chain
         if next_in_chain is not None:
