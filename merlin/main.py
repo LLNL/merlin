@@ -278,6 +278,7 @@ def stop_workers(args):
 
     :param `args`: parsed CLI arguments
     """
+    from merlin.config.configfile import CONFIG
     print(banner_small)
     worker_names = []
 
@@ -290,11 +291,11 @@ def stop_workers(args):
             if "$" in worker_name:
                 LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
 
-    # Celery adds the project name in front of each queue so we add that here
+    # Celery adds the queue tag in front of each queue so we add that here
     queues = []
     if args.queues:
         for queue in args.queues:
-            queues.append(f"[merlin]_{queue}")
+            queues.append(f"{CONFIG.celery.queue_tag}{queue}")
 
     # Send stop command to router
     router.stop_workers(args.task_server, worker_names, queues, args.workers)

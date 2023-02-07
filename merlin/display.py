@@ -42,7 +42,7 @@ from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
 from merlin.config import broker, results_backend
-from merlin.config.configfile import default_config_info
+from merlin.config.configfile import default_config_info, CONFIG
 from merlin.study.celeryadapter import get_queues, query_celery_queues
 from merlin.celery import app
 
@@ -218,13 +218,13 @@ def print_queue_info(queues):
         return
     # Case 2: no specific queue provided, display info for all queues
     elif len(queues) == 0:
-        # use_channel(print_queue_info, existing_queue_names)
         found_queues = query_celery_queues(existing_queue_names)
     # Case 3: specific queue provided, display info for that(those) queue(s)
     else:
         full_queue_names = []
+        
         for queue in queues:
-            full_queue_names.append(f"[merlin]_{queue}")
+            full_queue_names.append(f"{CONFIG.celery.queue_tag}{queue}")
 
         found_queues = query_celery_queues(full_queue_names)
 
