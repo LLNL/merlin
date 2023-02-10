@@ -102,6 +102,25 @@ class MerlinSpec(YAMLSpecification):
             "user": self.user,
         }
 
+    @property
+    def step_worker_map(self):
+        """
+        Creates a dictionary with step names as keys and a list of workers
+        associated with each step as values.
+        """
+        steps = self.get_study_step_names()
+        step_worker_map = {step_name:[] for step_name in steps}
+        for worker_name, worker_val in self.merlin["resources"]["workers"].items():
+            # Case 1: worker doesn't have specific steps
+            if "all" in worker_val["steps"]:
+                for step_name in step_worker_map:
+                        step_worker_map[step_name].append(worker_name)
+            # Case 2: worker has specific steps
+            else:
+                for step in worker_val["steps"]:
+                    step_worker_map[step].append(worker_name)
+        return step_worker_map
+
     def __str__(self):
         """Magic method to print an instance of our MerlinSpec class."""
         env = ""

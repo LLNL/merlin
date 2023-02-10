@@ -74,18 +74,25 @@ def run_task_server(study, run_mode=None):
         LOG.error("Celery is not specified as the task server!")
 
 
-def launch_workers(spec, steps, worker_args="", just_return_command=False):
+def launch_workers(spec, steps, worker_args="", disable_logs=False, just_return_command=False):
     """
     Launches workers for the specified study.
 
     :param `specs`: Tuple of (YAMLSpecification, MerlinSpec)
     :param `steps`: The steps in the spec to tie the workers to
     :param `worker_args`: Optional arguments for the workers
+    :param `disable_logs`: Boolean flag to disable the worker logs from celery
     :param `just_return_command`: Don't execute, just return the command
     """
     if spec.merlin["resources"]["task_server"] == "celery":
         # Start workers
-        cproc = start_celery_workers(spec, steps, worker_args, just_return_command)
+        cproc = start_celery_workers(
+            spec,
+            steps,
+            worker_args,
+            disable_logs,
+            just_return_command
+        )
         return cproc
     else:
         LOG.error("Celery is not specified as the task server!")

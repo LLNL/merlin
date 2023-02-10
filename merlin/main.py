@@ -222,7 +222,13 @@ def launch_workers(args):
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
-    status = router.launch_workers(spec, args.worker_steps, args.worker_args, args.worker_echo_only)
+    status = router.launch_workers(
+            spec,
+            args.worker_steps,
+            args.worker_args,
+            args.disable_logs,
+            args.worker_echo_only
+    )
     if args.worker_echo_only:
         print(status)
     else:
@@ -750,7 +756,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         type=str,
         dest="worker_steps",
         default=["all"],
-        help="The specific steps in the YAML file you want workers for",
+        help="The specific steps in the YAML file you want workers for.",
     )
     run_workers.add_argument(
         "--echo",
@@ -768,6 +774,13 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         default=None,
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+    )
+    run_workers.add_argument(
+        "--disable-logs",
+        action="store_true",
+        default=False,
+        help="Turn off the logs for the celery workers. Note: having the -l flag "
+        "in your workers' args section will overwrite this flag for that worker.",
     )
 
     # merlin query-workers
