@@ -150,12 +150,10 @@ def get_batch_type(default=None):
     Determine which batch scheduler to use.
 
     :param default: (str) The default batch scheduler to use if a scheduler
-        can't be determined. The default is slurm.
-    :returns: (str) The batch name (available options: slurm, flux, lsf).
+        can't be determined. The default is None.
+    :returns: (str) The batch name (available options: slurm, flux, lsf, pbs).
     """
-    if default is None:
-        default = "slurm"
-
+    # Flux should be checked first due to slurm emulation scripts
     LOG.debug(f"check for flux = {check_for_flux()}")
     if check_for_flux():
         return "flux"
@@ -171,9 +169,6 @@ def get_batch_type(default=None):
     LOG.debug(f"check for pbs = {check_for_pbs()}")
     if check_for_pbs():
         return "pbs"
-
-    if "SYS_TYPE" not in os.environ:
-        return default
 
     if "toss_3" in os.environ["SYS_TYPE"]:
         return "slurm"
