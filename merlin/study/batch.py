@@ -336,7 +336,7 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
 
     if workload_manager == "pbs":
         launch_command = f"qsub -l nodes={nodes}"
-        #launch_command = f"qsub -l nodes={nodes} -l procs={nodes}"
+        # launch_command = f"qsub -l nodes={nodes} -l procs={nodes}"
         if bank:
             launch_command += f" -A {bank}"
         # if queue:
