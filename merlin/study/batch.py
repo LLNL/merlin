@@ -339,9 +339,9 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
         #launch_command = f"qsub -l nodes={nodes} -l procs={nodes}"
         if bank:
             launch_command += f" -A {bank}"
-        #if queue:
-        #    launch_command += f" -p {queue}"
-        #if walltime:
-        #    launch_command += f" -l walltime={walltime}"
+        # if queue:
+        #     launch_command += f" -p {queue}"
+        # if walltime:
+        #     launch_command += f" -l walltime={walltime}"
 
     return launch_command
