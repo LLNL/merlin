@@ -67,7 +67,7 @@ def batch_check_parallel(spec):
 
 def check_for_flux():
     """
-    Check if flux is the main scheduler for the cluster
+    Check if FLUX is the main scheduler for the cluster
     """
     try:
         p = subprocess.Popen(
@@ -78,6 +78,66 @@ def check_for_flux():
 
         result = p.stdout.readlines()
         if result and len(result) > 0 and b"Nodes" in result[0]:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        return False
+
+
+def check_for_slurm():
+    """
+    Check if SLURM is the main scheduler for the cluster
+    """
+    try:
+        p = subprocess.Popen(
+            ["sbatch", "--help"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        result = p.stdout.readlines()
+        if result and len(result) > 0 and b"sbatch" in result[0]:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        return False
+
+
+def check_for_lsf():
+    """
+    Check if LSF is the main scheduler for the cluster
+    """
+    try:
+        p = subprocess.Popen(
+            ["jsrun", "--help"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        result = p.stdout.readlines()
+        if result and len(result) > 0 and b"jsrun" in result[0]:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        return False
+
+
+def check_for_pbs():
+    """
+    Check if PBS is the main scheduler for the cluster
+    """
+    try:
+        p = subprocess.Popen(
+            ["qsub", "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        result = p.stdout.readlines()
+        if result and len(result) > 0 and b"pbs_version" in result[0]:
             return True
         else:
             return False
@@ -99,6 +159,18 @@ def get_batch_type(default=None):
     LOG.debug(f"check for flux = {check_for_flux()}")
     if check_for_flux():
         return "flux"
+
+    LOG.debug(f"check for slurm = {check_for_slurm()}")
+    if check_for_slurm():
+        return "slurm"
+
+    LOG.debug(f"check for lsf = {check_for_lsf()}")
+    if check_for_lsf():
+        return "lsf"
+
+    LOG.debug(f"check for pbs = {check_for_pbs()}")
+    if check_for_pbs():
+        return "pbs"
 
     if "SYS_TYPE" not in os.environ:
         return default
@@ -236,6 +308,10 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
     bank: str = get_yaml_var(batch, "bank", "")
     queue: str = get_yaml_var(batch, "queue", "")
     walltime: str = get_yaml_var(batch, "walltime", "")
+
+    if btype == "pbs" and workload_manager == btype:
+        raise Exception("The PBS scheduler is only enabled for 'batch: flux' type")
+
     if btype == "slurm" or workload_manager == "slurm":
         launch_command = f"srun -N {nodes} -n {nodes}"
         if bank:
@@ -244,9 +320,11 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
             launch_command += f" -p {queue}"
         if walltime:
             launch_command += f" -t {walltime}"
+
     if workload_manager == "lsf":
         # The jsrun utility does not have a time argument
         launch_command = f"jsrun -a 1 -c ALL_CPUS -g ALL_GPUS --bind=none -n {nodes}"
+
     if workload_manager == "flux":
         flux_path: str = get_yaml_var(batch, "flux_path", "")
         if "/" in flux_path:
@@ -260,5 +338,15 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
             launch_command += f" --setattr=system.queue={queue}"
         if walltime:
             launch_command += f" -t {walltime}"
+
+    if workload_manager == "pbs":
+        launch_command = f"qsub -l nodes={nodes}"
+        #launch_command = f"qsub -l nodes={nodes} -l procs={nodes}"
+        if bank:
+            launch_command += f" -A {bank}"
+        #if queue:
+        #    launch_command += f" -p {queue}"
+        #if walltime:
+        #    launch_command += f" -l walltime={walltime}"
 
     return launch_command

@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
 - Added flux native worker launch support
+- Added PBS flux launch support
+- Added check_for_flux, check_for_slurm, check_for_lsf, and check_for_pbs utility functions
 
 ## [1.9.1]
 ### Fixed
