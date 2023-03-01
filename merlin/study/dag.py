@@ -44,7 +44,7 @@ class DAG:
     independent chains of tasks.
     """
 
-    def __init__(self, maestro_adjacency_table, maestro_values, labels):
+    def __init__(self, maestro_adjacency_table, maestro_values, labels, study_name):
         """
         :param `maestro_adjacency_table`: An ordered dict showing adjacency of nodes. Comes from a maestrowf ExecutionGraph.
         :param `maestro_values`: An ordered dict of the values at each node. Comes from a maestrowf ExecutionGraph.
@@ -59,6 +59,7 @@ class DAG:
         self.backwards_adjacency = {}
         self.calc_backwards_adjacency()
         self.labels = labels
+        self.study_name = study_name
 
     def step(self, task_name):
         """Return a Step object for the given task name
@@ -66,7 +67,7 @@ class DAG:
         :param `task_name`: The task name.
         :return: A Merlin Step object.
         """
-        return Step(self.maestro_values[task_name])
+        return Step(self.maestro_values[task_name], self.study_name)
 
     def calc_depth(self, node, depths, current_depth=0):
         """Calculate the depth of the given node and its children.

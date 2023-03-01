@@ -520,7 +520,7 @@ class MerlinStudy:
         if self.expanded_spec.merlin["samples"]:
             labels = self.expanded_spec.merlin["samples"]["column_labels"]
         # To avoid pickling issues with _pass_detect_cycle from maestro, we unpack the dag here
-        self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, labels)
+        self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, labels, study.name)
 
     def get_adapter_config(self, override_type=None):
         adapter_config = dict(self.expanded_spec.batch)
