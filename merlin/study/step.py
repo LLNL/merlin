@@ -34,12 +34,16 @@ from contextlib import suppress
 from copy import deepcopy
 from datetime import datetime
 
+from celery import current_task
+
 from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
 from maestrowf.utils import create_parentdir
 
 from merlin.common.abstracts.enums import ReturnCode
+from merlin.common.tasks import update_status
+from merlin.config.configfile import CONFIG
 from merlin.study.script_adapter import MerlinScriptAdapter
 
 
@@ -52,22 +56,37 @@ class MerlinStepRecord(_StepRecord):
     a re-submit message.
     """
 
-    def __init__(self, workspace, step, **kwargs):
-        _StepRecord.__init__(self, workspace, step, **kwargs)
+    def __init__(self, workspace, step, study_name, **kwargs):
+        _StepRecord.__init__(self, workspace, step, status=State.INITIALIZED, **kwargs)
         self.status_file = f"{self.workspace.value}/MERLIN_STATUS"
+        self.study_name = study_name
 
-    def mark_submitted(self):
-        """Mark the submission time of the record and update the status file."""
-        LOG.debug(f"Marking {self.name} as submitted (PENDING) -- previously {self.status}")
-        super().mark_submitted()
+        # Save the task queue and worker name from celery as an attribute here
+        # Wanted to put this logic in merlin.common.tasks in update_status but celery
+        # doesn't have a way to get the parent routing key (queue) and worker name
+        # TODO: this isn't always correct, need to look into this
+        self.celery_task_queue = current_task.request.delivery_info["routing_key"]
+        self.celery_worker_name = current_task.request.hostname
 
-        # TODO: update step status to say PENDING
+    def _execute(self, adapter, script):
+        """
+        Overwrites StepRecord's _execute method from Maestro since self.to_be_scheduled is
+        always true here. Also, if we didn't overwrite this we wouldn't be able to call
+        self.mark_running() for status updates.
+        """
+        self.mark_running()
+        srecord = adapter.submit(self.step, script, self.workspace.value)
+
+        retcode = srecord.submission_code
+        jobid = srecord.job_identifier
+        return retcode, jobid
 
     def mark_running(self):
         """Mark the start time of the record and update the status file."""
+        # TODO: do we need to modify this somehow for restarts? Do we need to reset start time?
         super().mark_running()
 
-        # TODO: update step status to be RUNNING
+        self._update_status_file()
 
     def mark_end(self, state, max_retries=False):
         """
@@ -76,35 +95,41 @@ class MerlinStepRecord(_StepRecord):
         
         :param `state`: 
         """
-        # TODO: consider sending Maestro state instead of returncode
-        super().mark_end(state)
-        
+        # Call to super().mark_end() will mark end time and update self.status for us
         step_result: str
         if state == ReturnCode.OK:
             super().mark_end(State.FINISHED)
             step_result = f"MERLIN_SUCCESS"
         elif state == ReturnCode.DRY_OK:
+            super().mark_end(State.DRY_RUN)
             step_result = f"DRY_SUCCESS"
         elif state == ReturnCode.RETRY:
+            super().mark_end(State.FINISHED)
             step_result = f"MERLIN_RETRY"
         elif state == ReturnCode.RESTART:
+            super().mark_end(State.FINISHED)
             step_result = f"MERLIN_RESTART"
         elif state == ReturnCode.SOFT_FAIL:
+            super().mark_end(State.FAILED)
             step_result = f"MERLIN_SOFT_FAIL"
             if max_retries:
-                step_result += " (MAX RETRIES)"
+                step_result += " (MAX RETRIES REACHED)"
         elif state == ReturnCode.HARD_FAIL:
+            super().mark_end(State.FAILED)
             step_result = f"MERLIN_HARD_FAIL"
         elif state == ReturnCode.STOP_WORKERS:
+            super().mark_end(State.CANCELLED)
             step_result = f"MERLIN_STOP_WORKERS"
         else:
+            super().mark_end(State.UNKNOWN)
             step_result = f"UNRECOGNIZED_RETURN_CODE"
 
-        # TODO: update step status to be FINISHED, return code, end time, and complete run time
-        # print(f"status: {self.status}, step result: {step_result}")
+        self._update_status_file(result=step_result)
 
     def mark_restart(self):
+        # TODO: figure restart out since you haven't thought about it at all yet
         super().mark_restart()
+        self._update_status_file()
         # If we want a status entry for each retry then update start time here
         # Maybe we create an attribute to track if this step is on a restart? Then
         # we can see if we should append a line to status file or overwrite
@@ -112,26 +137,42 @@ class MerlinStepRecord(_StepRecord):
     def setup_workspace(self):
         """Initialize the record's workspace and status file."""
         create_parentdir(self.workspace.value)
-        try:
-            with open(self.status_file, "x") as f:
-                f.write(str(self.status))
-        except FileExistsError:
-            LOG.warning(f"MERLIN_STATUS file already exists in the '{self.workspace.value}' directory.")
+        self._update_status_file()
 
-    def update_status_file(self, append=False):
-        mode = "w"
-        if append:
-            mode = "a"
-        try:
-            # STATUS FILE FORMAT
-            # ------------------
-            # step name, step status, return code, elapsed time, run time, dir path, task queue, worker name
-            # TODO: decide what to do with sample vectore
-            with open(self.status_file, mode) as f:
-                # TODO: write an entire line of status
-                pass
-        except FileNotFoundError:
-            LOG.warning(f"Cannot update step status, MERLIN_STATUS file not found.")
+    def _update_status_file(self, result=None):
+        """
+        Puts together a dictionary full of status info and creates a signature
+        for the update_status celery task. This signature is ran here as well.
+
+        :param str result:  Optional parameter only applied when we've finished running
+                            this step. String representation of a ReturnCode value.
+
+        :side effect: a celery task is created and started
+        """
+        state_translator: Dict[State, str] = {
+            State.INITIALIZED: "INITIALIZED",
+            State.RUNNING: "RUNNING",
+            State.FINISHED: "FINISHED",
+            State.CANCELLED: "CANCELLED",
+            State.DRYRUN: "DRY_RUN",
+            State.FAILED: "FAILED",
+            State.UNKNOWN: "UNKNOWN"
+        }
+
+        status_info = {
+            "name": self.name,
+            "status": state_translator[self.status],
+            "result": result,
+            "elapsed_time": self.elapsed_time,
+            "run_time": self.run_time,
+            "num_restarts": self.restarts,
+            "workspace": self.workspace.value,
+            "queue": self.celery_task_queue,
+            "worker": self.celery_worker_name,
+        }
+        status_updater = update_status.s(status_info=status_info, status_file=self.status_file)
+        status_updater.set(queue=f"{CONFIG.celery.queue_tag}{self.study_name}_status_queue")
+        status_updater.apply_async()
 
 
 class Step:
@@ -140,12 +181,13 @@ class Step:
     executed by calling execute.
     """
 
-    def __init__(self, maestro_step_record):
+    def __init__(self, maestro_step_record, study_name):
         """
         :param maestro_step_record: The StepRecord object.
         """
         self.mstep = maestro_step_record
         self.restart = False
+        self.study_name = study_name
 
     def get_cmd(self):
         """
@@ -191,7 +233,7 @@ class Step:
         study_step.name = step_dict["_name"]
         study_step.description = step_dict["description"]
         study_step.run = step_dict["run"]
-        return Step(MerlinStepRecord(new_workspace, study_step))
+        return Step(MerlinStepRecord(new_workspace, study_step, self.study_name), self.study_name)
 
     def get_task_queue(self):
         """Retrieve the task queue for the Step."""
@@ -200,8 +242,6 @@ class Step:
     @staticmethod
     def get_task_queue_from_dict(step_dict):
         """given a maestro step dict, get the task queue"""
-        from merlin.config.configfile import CONFIG
-
         queue_tag = CONFIG.celery.queue_tag
         omit_tag = CONFIG.celery.omit_queue_tag
         if omit_tag:

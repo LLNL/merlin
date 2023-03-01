@@ -45,7 +45,6 @@ from merlin.config.utils import Priority, get_priority
 from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
 from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
-from merlin.study.step import Step
 
 
 retry_exceptions = (
@@ -63,20 +62,56 @@ LOG = logging.getLogger(__name__)
 STOP_COUNTDOWN = 60
 
 
-# # NOTE: This might not need to be a task. Maybe just a function we call in merlin_step below?
-# @shared_task(
-#     bind=True,
-#     autoretry_for=retry_exceptions,
-#     retry_backoff=True,
-#     priority=get_priority(Priority.high)
-# )
-# def update_status(self, *args: Any, **kwargs: Any) -> None:
-#     """
-#     Performs a status update as steps in a merlin study are completed. Here we pull the status from
-#     the redis DB and store into a local cache file. The cache file is where the merlin status command
-#     will pull info from.
-#     """
-#     pass
+@shared_task(
+    bind=True,
+    autoretry_for=retry_exceptions,
+    retry_backoff=True,
+    priority=get_priority(Priority.high)
+)
+def update_status(*args: Any, **kwargs: Any) -> None:
+    """
+    Performs status updates as steps in a merlin study are ran. We write the status to a local cache
+    file contained within the workspace for the study. The merlin status command will pull from this
+    cache file and display the status info in the order shown below.
+
+    STATUS FILE FORMAT
+    ------------------
+    step name, step status, return code, elapsed time, run time, num restarts, dir path, task queue, worker name
+
+    :param args:    Args given to the celery signature for this task
+    :param kwargs:  Keyword args given to the celery signature for this task
+
+    kwargs should look like:
+    kwargs = {
+        "status_info": <dict of status info>,
+        "status_file": <str representing path to the status file for this step>
+    }
+    """
+    status_info: Dict[str, str] = kwargs.pop("status_info", {})
+    status_file: str = kwargs.pop("status_file", None)
+    if not status_info:
+        LOG.warning("Status info was not obtained. Cannot update status.")
+        return
+    elif not status_file:
+        LOG.warning("Status file path is None. Cannot update status.")
+        return
+
+    # Create the line to write to the status file
+    status_line: str = ""
+    for key, value in status_info.items():
+        if key == "result" and value is None:
+            status_line += "--------"
+        else:
+            status_line += str(value)
+        
+        # Put a space between each status entry unless it's the last entry
+        if key != "worker":
+            status_line += " "
+
+    status_line += "\n"
+
+    with open(status_file, "w") as f:
+        f.write(status_line)
 
 
 @shared_task(  # noqa: C901
@@ -94,9 +129,10 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
 
     Example kwargs dict:
     {"adapter_config": {'type':'local'},
-     "next_in_chain": <Step object> } # merlin_step will be added to the current chord
-                                      # with next_in_chain as an argument
+     "next_in_chain": <Step object>} # merlin_step will be added to the current chord
+                                     # with next_in_chain as an argument
     """
+    from merlin.study.step import Step
     step: Optional[Step] = None
     LOG.debug(f"args is {len(args)} long")
 
@@ -122,16 +158,12 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
         if os.path.exists(finished_filename):
             LOG.info(f"Skipping step '{step_name}' in '{step_dir}'.")
             result = ReturnCode.OK
-            step.mstep.mark_end(result)
         else:
-            # TODO: Update cache file to say in progress
             result = step.execute(config)
-            step.mstep.mark_end(result)
-            # TODO: Update cache file to say whatever result was (FINISHED, SOFT_FAIL, etc.)
         
         if result == ReturnCode.OK:
-            # TODO: Update cache file here instead maybe to say FINISHED?
             LOG.info(f"Step '{step_name}' in '{step_dir}' finished successfully.")
+            step.mstep.mark_end(result)
             # touch a file indicating we're done with this step
             with open(finished_filename, "a"):
                 pass
@@ -143,6 +175,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                 LOG.info(
                     f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})..."
                 )
+                # TODO: call step.mstep.mark_restart here?
                 self.retry(countdown=step.retry_delay)
             except MaxRetriesExceededError:
                 LOG.warning(
@@ -158,6 +191,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                 LOG.info(
                     f"Step '{step_name}' in '{step_dir}' is being retried ({self.request.retries + 1}/{self.max_retries})..."
                 )
+                # TODO: call step.mstep.mark_restart here?
                 self.retry(countdown=step.retry_delay)
             except MaxRetriesExceededError:
                 LOG.warning(
@@ -168,9 +202,10 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                 # RETRY to SOFT_FAIL and update the end time
                 step.mstep.mark_end(result, max_retries=True)
         elif result == ReturnCode.SOFT_FAIL:
-            # TODO: Update cache file here instead maybe to say MERLIN_SOFT_FAIL?
+            step.mstep.mark_end(result)
             LOG.warning(f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow.")
         elif result == ReturnCode.HARD_FAIL:
+            step.mstep.mark_end(result)
             # stop all workers attached to this queue
             step_queue = step.get_task_queue()
             LOG.error(f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow.")
@@ -181,10 +216,12 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             raise HardFailException
         elif result == ReturnCode.STOP_WORKERS:
             LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
+            step.mstep.mark_end(result)
             shutdown = shutdown_workers.s(None)
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
+            step.mstep.mark_end(result)
             LOG.warning(f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow.")
         
         # queue off the next task in a chain while adding it to the current chord so that the chordfinisher actually
