@@ -102,25 +102,6 @@ class MerlinSpec(YAMLSpecification):
             "user": self.user,
         }
 
-    @property
-    def step_worker_map(self):
-        """
-        Creates a dictionary with step names as keys and a list of workers
-        associated with each step as values.
-        """
-        steps = self.get_study_step_names()
-        step_worker_map = {step_name:[] for step_name in steps}
-        for worker_name, worker_val in self.merlin["resources"]["workers"].items():
-            # Case 1: worker doesn't have specific steps
-            if "all" in worker_val["steps"]:
-                for step_name in step_worker_map:
-                        step_worker_map[step_name].append(worker_name)
-            # Case 2: worker has specific steps
-            else:
-                for step in worker_val["steps"]:
-                    step_worker_map[step].append(worker_name)
-        return step_worker_map
-
     def __str__(self):
         """Magic method to print an instance of our MerlinSpec class."""
         env = ""
@@ -530,8 +511,47 @@ class MerlinSpec(YAMLSpecification):
                 i += 1
         return string
 
+    def get_step_worker_map(self):
+        """
+        Creates a dictionary with step names as keys and a list of workers
+        associated with each step as values. The inverse of get_worker_step_map().
+        """
+        steps = self.get_study_step_names()
+        step_worker_map = {step_name: [] for step_name in steps}
+        for worker_name, worker_val in self.merlin["resources"]["workers"].items():
+            # Case 1: worker doesn't have specific steps
+            if "all" in worker_val["steps"]:
+                for step_name in step_worker_map:
+                        step_worker_map[step_name].append(worker_name)
+            # Case 2: worker has specific steps
+            else:
+                for step in worker_val["steps"]:
+                    step_worker_map[step].append(worker_name)
+        return step_worker_map
+
+    def get_worker_step_map(self):
+        """
+        Creates a dictionary with worker names as keys and a list of steps
+        associated with each worker as values. The inverse of get_step_worker_map().
+        """
+        worker_step_map = {}
+        steps = self.get_study_step_names()
+        for worker_name, worker_val in self.merlin["resources"]["workers"].items():
+            # Case 1: worker doesn't have specific steps
+            if "all" in worker_val["steps"]:
+                worker_step_map[worker_name] = steps
+            # Case 2: worker has specific steps
+            else:
+                worker_step_map[worker_name] = []
+                for step in worker_val["steps"]:
+                    worker_step_map[worker_name].append(step)
+        return worker_step_map
+
     def get_task_queues(self):
-        """Returns a dictionary of steps and their corresponding task queues."""
+        """
+        Returns a dictionary of steps and their corresponding task queues.
+        This returns the inverse of get_queue_step_relationship().
+        """
         from merlin.config.configfile import CONFIG
 
         steps = self.get_study_steps()
@@ -542,6 +562,27 @@ class MerlinSpec(YAMLSpecification):
             elif "task_queue" in step.run:
                 queues[step.name] = CONFIG.celery.queue_tag + step.run["task_queue"]
         return queues
+
+    def get_queue_step_relationship(self):
+        """
+        Returns a dictionary of task queues and their associated steps.
+        This returns the inverse of get_task_queues().
+        """
+        from merlin.config.configfile import CONFIG
+
+        steps = self.get_study_steps()
+        relationship_tracker = {}
+
+        for step in steps:
+            if "task_queue" in step.run:
+                queue_name = step.run["task_queue"] if CONFIG.celery.omit_queue_tag else f"{CONFIG.celery.queue_tag}{step.run['task_queue']}"
+                
+                if queue_name in relationship_tracker:
+                    relationship_tracker[queue_name].append(step.name)
+                else:
+                    relationship_tracker[queue_name] = [step.name]
+
+        return relationship_tracker
 
     def get_queue_list(self, steps):
         """

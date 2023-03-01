@@ -259,9 +259,10 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
     steps_provided = False if "all" in steps else True
     if steps_provided:
         workers_to_start = []
+        step_worker_map = spec.get_step_worker_map()
         for step in steps:
             try:
-                workers_to_start.extend(spec.step_worker_map[step])
+                workers_to_start.extend(step_worker_map[step])
             except KeyError:
                 LOG.warning(f"Cannot start workers for step: {step}. This step was not found.")
     
