@@ -48,13 +48,14 @@ from argparse import (
 from contextlib import suppress
 from typing import Dict, List, Optional, Union
 
-from merlin import VERSION, router
+from merlin import display, VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
+from merlin.study import status
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
 
@@ -255,17 +256,48 @@ def purge_tasks(args):
 
 def query_status(args):
     """
-    CLI command for querying queue status.
+    CLI command for querying status of tasks.
 
     :param 'args': parsed CLI arguments
     """
     print(banner_small)
-    spec, _ = get_merlin_spec_with_override(args)
-    ret = router.query_status(args.task_server, spec, args.steps)
-    for name, jobs, consumers in ret:
-        print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
-    if args.csv is not None:
-        router.dump_status(ret, args.csv)
+
+    # Establish whether the argument provided by the user was a spec file
+    # or a study directory
+    spec_display = False
+    try:
+        filepath = verify_filepath(args.spec_or_workspace)
+        spec_display = True
+    except ValueError:
+        try:
+            study_to_check = verify_dirpath(args.spec_or_workspace)
+        except ValueError:
+            LOG.error(f"The file or directory path {args.spec_or_workspace} does not exist.")
+            return
+
+    # Load in the spec file from either the spec provided by the user or the workspace
+    if spec_display:
+        study_to_check, actual_spec = status.load_from_spec(args, filepath)
+    else:
+        actual_spec = status.load_from_workspace(study_to_check)
+
+    # The old merlin status command
+    if args.queue_info:
+        ret = router.query_status("celery", actual_spec, args.steps)
+        for name, jobs, consumers in ret:
+            print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
+        if args.csv is not None:
+            router.dump_status(ret, args.csv)
+        return
+
+    # Get a dict of started and unstarted tasks to display
+    step_tracker = status.get_steps_to_display(study_to_check, actual_spec, args.steps, args.task_queues, args.workers)
+    
+    # Determine whether to display a low level or high level display
+    low_lvl = True if args.task_queues or args.workers or ("all" not in args.steps) else False
+
+    # Display the status
+    display.display_status(study_to_check, step_tracker, low_lvl)
 
 
 def query_workers(args):
@@ -316,8 +348,8 @@ def print_info(args):
     # if this is moved to the toplevel per standard style, merlin is unable to generate the (needed) default config file
     from merlin import display  # pylint: disable=import-outside-toplevel
 
-    if args.queues is not None:
-        display.print_queue_info(args.queues)
+    if args.active_queues is not None:
+        display.print_queue_info(args.active_queues)
     else:
         display.print_info(args)
 
@@ -872,14 +904,12 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
     :param [ArgumentParser] `subparsers`: the subparsers needed for every CLI command that handles diagnostics for a
         Merlin job.
     """
-    # merlin status
     status: ArgumentParser = subparsers.add_parser(
         "status",
-        help="List server stats (name, number of tasks to do, \
-                              number of connected workers) for a workflow spec.",
+        help="Display the status of tasks in a study.",
     )
     status.set_defaults(func=query_status)
-    status.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
+    status.add_argument("spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study")
     status.add_argument(
         "--steps",
         nargs="+",
@@ -889,22 +919,34 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         help="The specific steps in the YAML file you want to query",
     )
     status.add_argument(
-        "--task_server",
+        "--task-queues",
+        nargs="+",
         type=str,
-        default="celery",
-        help="Task server type.\
-                            Default: %(default)s",
+        help="The specific task queues to view the status of tasks for",
     )
     status.add_argument(
-        "--vars",
-        action="store",
-        dest="variables",
-        type=str,
+        "--workers",
         nargs="+",
-        default=None,
-        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+        type=str,
+        help="Display the status of the tasks assigned to these workers",
     )
+    status.add_argument(
+        "--queue-info",
+        action="store_true",
+        default=False,
+        help="List server stats (name, number of tasks to do, \
+            number of connected workers) for a workflow spec. \
+            This is the same behavior as the status command before \
+            Merlin version 1.9.2 was released.",
+    )
+    # TODO: do we want to add flags for filtering by status/return code?
+    # TODO: add flags to bypass prompts in case user wants automation (--no-prompts?)
+    # TODO: add timestamp of when status was called? "Status as of <timestamp>"
+    # TODO: figure out how to dump to csv for both high and low level displays
+    # TODO: fix issue with incorrect task queue/worker being displayed for steps
+    #   - Maybe need to change something in tasks.py
+    # TODO: fix issue where default worker isn't spinning up if workers are defined
+    # TODO: commit current changes to github (try to do it file-by-file or close to if possible)
     status.add_argument("--csv", type=str, help="csv file to dump status report to", default=None)
 
     # merlin info
@@ -914,11 +956,12 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
     )
     info.set_defaults(func=print_info)
     info.add_argument(
-        "--queues",
+        "--active-queues",
         nargs="*",
         type=str,
-        help="Print the number of tasks and workers attached to the queues provided. If left blank, "
-        "print the number of tasks and workers attached to every existing queue."
+        help="Print the number of tasks and workers attached to the active queues provided. If left blank, "
+        "print the number of tasks and workers attached to every existing queue. Note: an active queue is "
+        "a queue with workers running for them."
     )
 
 
