@@ -150,7 +150,7 @@ def get_batch_type(default=None):
     Determine which batch scheduler to use.
 
     :param default: (str) The default batch scheduler to use if a scheduler
-        can't be determined. The default is None.
+                          can't be determined. The default is None.
     :returns: (str) The batch name (available options: slurm, flux, lsf, pbs).
     """
     # Flux should be checked first due to slurm emulation scripts
@@ -158,17 +158,19 @@ def get_batch_type(default=None):
     if check_for_flux():
         return "flux"
 
-    LOG.debug(f"check for slurm = {check_for_slurm()}")
-    if check_for_slurm():
-        return "slurm"
+    # PBS should be checked before slurm for testing
+    LOG.debug(f"check for pbs = {check_for_pbs()}")
+    if check_for_pbs():
+        return "pbs"
 
+    # LSF should be checked before slurm for testing
     LOG.debug(f"check for lsf = {check_for_lsf()}")
     if check_for_lsf():
         return "lsf"
 
-    LOG.debug(f"check for pbs = {check_for_pbs()}")
-    if check_for_pbs():
-        return "pbs"
+    LOG.debug(f"check for slurm = {check_for_slurm()}")
+    if check_for_slurm():
+        return "slurm"
 
     if "toss_3" in os.environ["SYS_TYPE"]:
         return "slurm"
@@ -339,9 +341,10 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
         # launch_command = f"qsub -l nodes={nodes} -l procs={nodes}"
         if bank:
             launch_command += f" -A {bank}"
-        # if queue:
-        #     launch_command += f" -p {queue}"
+        if queue:
+            launch_command += f" -q {queue}"
         # if walltime:
         #     launch_command += f" -l walltime={walltime}"
+        launch_command += " -"  # To read from stdin
 
     return launch_command

@@ -8,7 +8,6 @@ from conditions import (
     StepFileExists,
     StepFileHasRegex,
 )
-
 from merlin.utils import get_flux_cmd
 
 
@@ -24,6 +23,7 @@ def define_tests():
     """
     celery_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
     celery_flux_regex = r"(flux mini alloc\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
+    celery_pbs_regex = r"(qsub\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
 
     # shortcut string variables
     err_lvl = "-lvl error"
@@ -44,6 +44,8 @@ def define_tests():
     flux_native = f"{examples}/flux/flux_par_native_test.yaml"
     flux_native_path = f"{examples}/flux/scripts/flux_test"
     workers_flux = f"""PATH="{flux_native_path}:$PATH";merlin {err_lvl} run-workers"""
+    pbs_path = f"{examples}/flux/scripts/pbs_test"
+    workers_pbs = f"""PATH="{pbs_path}:$PATH";merlin {err_lvl} run-workers"""
     lsf = f"{examples}/lsf/lsf_par.yaml"
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
@@ -165,6 +167,11 @@ def define_tests():
         "run-workers echo flux_native_test": (
             f"{workers_flux} {flux_native} --echo",
             [HasReturnCode(), HasRegex(celery_flux_regex)],
+            "local",
+        ),
+        "run-workers echo pbs_test": (
+            f"{workers_pbs} {flux_native} --echo",
+            [HasReturnCode(), HasRegex(celery_pbs_regex)],
             "local",
         ),
         "run-workers echo override feature_demo": (
