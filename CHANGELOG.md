@@ -7,13 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Fixed
 - Fixed the flags associated with the "merlin stop-workers" command (--spec, --queues, --workers)
+- Fixed the --step flag for the "merlin run-workers" command
 
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
-- Added the --queues flag to the "merlin info" command
+- Added the --active-queues flag to the "merlin info" command similar to old status command but will only show queues with running workers
+- Added the --disable-logs flag to the "merlin run-workers" command
+- New task "update_status" to be called for status changes
+- New worker spun up in the background for tracking statuses
+- 3 new methods to the MerlinSpec object:
+  - get_step_worker_map()
+  - get_worker_step_map()
+  - get_queue_step_relationship()
+- Added task track started to the celery config file in order to monitor when tasks start
+- Study name now stored in the DAG and MerlinStep objects
+- New file status.py dedicated to work relating to the status command
 
 ### Changed
 - In the merlinspec.json file the minimum gpus per task was changed from 1 to 0
+- query_celery_status() in display.py now uses with statements to open connection and channel to ensure they close
+- Reformatted start_celery_workers() in celeryadapter.py file
+- Reformatted the entire "merlin status" command
+  - Now accepts both spec files and workspace directories as arguments
+    - e.g. "merlin status hello.yaml" and "merlin status hello_20230228-111920/" both work
+  - Removed --task-server and --vars flags
+  - Added --task-queues and --workers flags
+  - High Level display:
+    - Shows step_by_step progress bar for tasks
+    - Displays a summary of task statuses below the progress bar
+  - Low Level display:
+    - Shows more in-depth details for each task
+    - Interactive ability to filter
 
 ## [1.9.1]
 ### Fixed
