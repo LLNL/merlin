@@ -172,7 +172,7 @@ def get_batch_type(default=None):
     if check_for_slurm():
         return "slurm"
 
-    SYS_TYPE = os.environ.get("SYS_TYPE","")
+    SYS_TYPE = os.environ.get("SYS_TYPE", "")
     if "toss_3" in SYS_TYPE:
         return "slurm"
 
