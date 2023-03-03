@@ -346,6 +346,6 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
             launch_command += f" -q {queue}"
         # if walltime:
         #     launch_command += f" -l walltime={walltime}"
-        launch_command += " -"  # To read from stdin
+        launch_command += " --"  # To read from stdin
 
     return launch_command
