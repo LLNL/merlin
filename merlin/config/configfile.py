@@ -51,7 +51,7 @@ USER_HOME: str = os.path.expanduser("~")
 MERLIN_HOME: str = os.path.join(USER_HOME, ".merlin")
 
 
-def load_config(filepath):
+def load_config(filepath):  # pylint: disable=R1710
     """
     Given the path to the merlin YAML config file, read the file and return
     a dictionary of the contents.
@@ -78,10 +78,9 @@ def find_config_file(path=None):
 
         if os.path.isfile(local_app):
             return local_app
-        elif os.path.isfile(path_app):
+        if os.path.isfile(path_app):
             return path_app
-        else:
-            return None
+        return None
 
     app_path = os.path.join(path, APP_FILENAME)
     if os.path.exists(app_path):
@@ -133,6 +132,7 @@ def get_config(path: Optional[str]) -> Dict:
 
 
 def load_default_celery(config):
+    """Creates the celery default configuration"""
     try:
         config["celery"]
     except KeyError:
@@ -152,6 +152,7 @@ def load_default_celery(config):
 
 
 def load_defaults(config):
+    """Loads default configuration values"""
     load_default_user_names(config)
     load_default_celery(config)
 
@@ -247,7 +248,7 @@ def get_ssl_entries(
     except (AttributeError, KeyError):
         LOG.debug(f"{server_type}: ssl ssl_protocol not present")
 
-    if server_ssl and "cert_reqs" not in server_ssl.keys():
+    if server_ssl and "cert_reqs" not in server_ssl.keys():  # pylint: disable=C0201
         server_ssl["cert_reqs"] = ssl.CERT_REQUIRED
 
     ssl_map: Dict[str, str] = process_ssl_map(server_name)
@@ -290,7 +291,7 @@ def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dic
     : param ssl_map : the dict holding special key:value pairs for rediss and mysql
     """
     new_server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
-    sk: List[str] = server_ssl.keys()
+    sk: List[str] = server_ssl.keys()  # pylint: disable=C0103
     smk: List[str] = ssl_map.keys()
     k: str
     for k in sk:

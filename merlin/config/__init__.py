@@ -38,7 +38,7 @@ from typing import Dict, List, Optional
 from merlin.utils import nested_dict_to_namespaces
 
 
-class Config:
+class Config:  # pylint: disable=R0903
     """
     The Config class, meant to store all Merlin config settings in one place.
     Regardless of the config data loading method, this class is meant to

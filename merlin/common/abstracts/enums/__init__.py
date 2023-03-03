@@ -32,6 +32,8 @@
 from enum import IntEnum
 
 
+# pylint: disable=undefined-all-variable
+
 __all__ = (
     "ReturnCode",
     "OK_VALUE",

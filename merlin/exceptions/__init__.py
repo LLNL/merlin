@@ -32,6 +32,8 @@
 Module of all Merlin-specific exception types.
 """
 
+# pylint: disable=W0246,R1725
+
 __all__ = (
     "RetryException",
     "SoftFailException",

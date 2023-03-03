@@ -65,22 +65,22 @@ def batch_check_parallel(spec):
     return parallel
 
 
+# TODO: can probably make these next 4 functions into one function
 def check_for_flux():
     """
     Check if FLUX is the main scheduler for the cluster
     """
     try:
-        p = subprocess.Popen(
+        process = subprocess.Popen(  # pylint: disable=R1732
             ["flux", "resource", "info"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
 
-        result = p.stdout.readlines()
-        if result and len(result) > 0 and b"Nodes" in result[0]:
+        result = process.stdout.readlines()
+        if result and len(result) > 0 and b"Nodes" in result[0]:  # pylint: disable=R1703
             return True
-        else:
-            return False
+        return False
     except FileNotFoundError:
         return False
 
@@ -90,17 +90,16 @@ def check_for_slurm():
     Check if SLURM is the main scheduler for the cluster
     """
     try:
-        p = subprocess.Popen(
+        process = subprocess.Popen(  # pylint: disable=R1732
             ["sbatch", "--help"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
 
-        result = p.stdout.readlines()
-        if result and len(result) > 0 and b"sbatch" in result[0]:
+        result = process.stdout.readlines()
+        if result and len(result) > 0 and b"sbatch" in result[0]:  # pylint: disable=R1703
             return True
-        else:
-            return False
+        return False
     except FileNotFoundError:
         return False
 
@@ -110,17 +109,16 @@ def check_for_lsf():
     Check if LSF is the main scheduler for the cluster
     """
     try:
-        p = subprocess.Popen(
+        process = subprocess.Popen(  # pylint: disable=R1732
             ["jsrun", "--help"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
 
-        result = p.stdout.readlines()
-        if result and len(result) > 0 and b"jsrun" in result[0]:
+        result = process.stdout.readlines()
+        if result and len(result) > 0 and b"jsrun" in result[0]:  # pylint: disable=R1703
             return True
-        else:
-            return False
+        return False
     except FileNotFoundError:
         return False
 
@@ -130,22 +128,21 @@ def check_for_pbs():
     Check if PBS is the main scheduler for the cluster
     """
     try:
-        p = subprocess.Popen(
+        process = subprocess.Popen(  # pylint: disable=R1732
             ["qsub", "--version"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
 
-        result = p.stdout.readlines()
-        if result and len(result) > 0 and b"pbs_version" in result[0]:
+        result = process.stdout.readlines()
+        if result and len(result) > 0 and b"pbs_version" in result[0]:  # pylint: disable=R1703
             return True
-        else:
-            return False
+        return False
     except FileNotFoundError:
         return False
 
 
-def get_batch_type(default=None):
+def get_batch_type(default=None):  # pylint: disable=R0911
     """
     Determine which batch scheduler to use.
 
@@ -172,7 +169,7 @@ def get_batch_type(default=None):
     if check_for_slurm():
         return "slurm"
 
-    SYS_TYPE = os.environ.get("SYS_TYPE", "")
+    SYS_TYPE = os.environ.get("SYS_TYPE", "")  # pylint: disable=C0103
     if "toss_3" in SYS_TYPE:
         return "slurm"
 
@@ -198,7 +195,7 @@ def get_node_count(default=1):
         nodes = set(os.environ["LSB_HOSTS"].split())
         n_batch_nodes = len(nodes) - 1
         return n_batch_nodes
-    elif "LSB_MCPU_HOSTS" in os.environ:
+    if "LSB_MCPU_HOSTS" in os.environ:
         nodes = os.environ["LSB_MCPU_HOSTS"].split()
         n_batch_nodes = len(nodes) // 2 - 1
         return n_batch_nodes
@@ -206,7 +203,7 @@ def get_node_count(default=1):
     return default
 
 
-def batch_worker_launch(
+def batch_worker_launch(  # pylint: disable=R0912,R0914
     spec: Dict,
     com: str,
     nodes: Optional[Union[str, int]] = None,
@@ -293,7 +290,7 @@ def batch_worker_launch(
     return worker_cmd
 
 
-def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: int) -> str:
+def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: int) -> str:  # pylint: disable=R0912
     """
     If no 'worker_launch' is found in the batch yaml, this method constructs the needed launch command.
 
@@ -308,7 +305,7 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
     walltime: str = get_yaml_var(batch, "walltime", "")
 
     if btype == "pbs" and workload_manager == btype:
-        raise Exception("The PBS scheduler is only enabled for 'batch: flux' type")
+        raise Exception("The PBS scheduler is only enabled for 'batch: flux' type")  # pylint: disable=W0719
 
     if btype == "slurm" or workload_manager == "slurm":
         launch_command = f"srun -N {nodes} -n {nodes}"

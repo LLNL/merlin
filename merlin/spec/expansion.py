@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module handles expanding variables in the merlin spec"""
 
 import logging
 from collections import ChainMap
@@ -123,10 +124,10 @@ def expand_env_vars(spec):
         if isinstance(section, str):
             return expandvars(expanduser(section))
         if isinstance(section, dict):
-            for k, v in section.items():
-                if k in ["cmd", "restart"]:
+            for key, val in section.items():
+                if key in ["cmd", "restart"]:
                     continue
-                section[k] = recurse(v)
+                section[key] = recurse(val)
         elif isinstance(section, list):
             for i, elem in enumerate(deepcopy(section)):
                 section[i] = recurse(elem)
@@ -164,7 +165,7 @@ def determine_user_variables(*user_var_dicts):
             raise ValueError(f"Cannot reassign value of reserved word '{key}'! Reserved words are: {RESERVED}.")
         new_val = str(val)
         if contains_token(new_val):
-            for determined_key in determined_results.keys():
+            for determined_key in determined_results.keys():  # pylint: disable=C0206,C0201
                 var_determined_key = var_ref(determined_key)
                 if var_determined_key in new_val:
                     new_val = new_val.replace(var_determined_key, determined_results[determined_key])
@@ -217,6 +218,7 @@ def parameter_substitutions_for_cmd(glob_path, sample_paths):
     return substitutions
 
 
+# pylint: disable=duplicate-code
 def expand_spec_no_study(filepath, override_vars=None):
     """
     Get the expanded text of a spec without creating
@@ -237,6 +239,9 @@ def expand_spec_no_study(filepath, override_vars=None):
     evaluated_uvars = determine_user_variables(*uvars)
 
     return expand_by_line(spec_text, evaluated_uvars)
+
+
+# pylint: enable=duplicate-code
 
 
 def get_spec_with_expansion(filepath, override_vars=None):

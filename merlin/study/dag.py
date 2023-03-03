@@ -199,7 +199,7 @@ class DAG:
 
             ([[["task1", "has"],["with","task2"],["Depth 0"]],["Depth 1"]]])
         """
-        for group in list_of_groups_of_chains:
+        for group in list_of_groups_of_chains:  # pylint: disable=R1702
             for chain in group:
                 for task_name in chain:
                     if self.num_children(task_name) == 1 and task_name != "_source":

@@ -36,7 +36,7 @@ import os
 from typing import Any, Dict, Optional
 
 from celery import chain, chord, group, shared_task, signature
-from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError
+from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
@@ -69,7 +69,7 @@ STOP_COUNTDOWN = 60
     retry_backoff=True,
     priority=get_priority(Priority.high),
 )
-def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noqa: C901
+def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noqa: C901 pylint: disable=R0912,R0915
     """
     Executes a Merlin Step
     :param args: The arguments, one of which should be an instance of Step
@@ -123,7 +123,8 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                 self.retry(countdown=step.retry_delay)
             except MaxRetriesExceededError:
                 LOG.warning(
-                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
+                    f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command,
+                    but has already reached its retry limit ({self.max_retries}). Continuing with workflow."""
                 )
                 result = ReturnCode.SOFT_FAIL
         elif result == ReturnCode.RETRY:
@@ -135,7 +136,8 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                 self.retry(countdown=step.retry_delay)
             except MaxRetriesExceededError:
                 LOG.warning(
-                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
+                    f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command,
+                    but has already reached its retry limit ({self.max_retries}). Continuing with workflow."""
                 )
                 result = ReturnCode.SOFT_FAIL
         elif result == ReturnCode.SOFT_FAIL:
@@ -228,7 +230,7 @@ def prepare_chain_workspace(sample_index, chain_):
     retry_backoff=True,
     priority=get_priority(Priority.low),
 )
-def add_merlin_expanded_chain_to_chord(
+def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
     self,
     task_type,
     chain_,
@@ -364,7 +366,7 @@ def add_chains_to_chord(self, all_chains):
             # generates a new task signature, so we need to make
             # sure we are modifying task signatures before adding them to the
             # kwargs.
-            for g in reversed(range(len(all_chains))):
+            for g in reversed(range(len(all_chains))):  # pylint: disable=C0103
                 if g < len(all_chains) - 1:
                     # fmt: off
                     new_kwargs = signature(all_chains[g][i]).kwargs.update(
@@ -389,7 +391,7 @@ def add_chains_to_chord(self, all_chains):
     retry_backoff=True,
     priority=get_priority(Priority.low),
 )
-def expand_tasks_with_samples(
+def expand_tasks_with_samples(  # pylint: disable=R0913,R0914,W0613
     self,
     dag,
     chain_,
@@ -501,7 +503,7 @@ def expand_tasks_with_samples(
     name="merlin:shutdown_workers",
     priority=get_priority(Priority.high),
 )
-def shutdown_workers(self, shutdown_queues):
+def shutdown_workers(self, shutdown_queues):  # pylint: disable=W0613
     """
     This task issues a call to shutdown workers.
 
@@ -524,7 +526,7 @@ def shutdown_workers(self, shutdown_queues):
     name="merlin:chordfinisher",
     priority=get_priority(Priority.low),
 )
-def chordfinisher(*args, **kwargs):
+def chordfinisher(*args, **kwargs):  # pylint: disable=W0613
     """.
     It turns out that chain(group,group) in celery does not execute one group
     after another, but executes the groups as if they were independent from

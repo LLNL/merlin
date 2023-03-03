@@ -84,8 +84,8 @@ def run_single_test(test):
     and information about the test for logging purposes.
     :param `test`: A dictionary that defines the test
     :returns: A tuple of type (bool, dict) where the bool
-              represents if the test passed and the dict
-              contains info about the test.
+                represents if the test passed and the dict
+                contains info about the test.
     """
     # Parse the test definition
     commands = test.pop("cmds", None)

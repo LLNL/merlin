@@ -127,7 +127,7 @@ def _examine_connection(server, sconf, excpts):
             counter += 1
             if counter > connect_timeout:
                 conn_check.kill()
-                raise TimeoutError(f"Connection was killed due to timeout ({connect_timeout}server)")
+                raise TimeoutError(f"Connection was killed due to timeout ({connect_timeout}s)")
         conn.release()
         if conn_check.exception:
             error, _ = conn_check.exception

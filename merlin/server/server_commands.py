@@ -70,7 +70,7 @@ def init_server() -> None:
     LOG.info("Merlin server initialization successful.")
 
 
-def config_server(args: Namespace) -> None:
+def config_server(args: Namespace) -> None:  # pylint: disable=R0912,R1710
     """
     Process the merlin server config flags to make changes and edits to appropriate configurations
     based on the input passed in by the user.
@@ -162,14 +162,14 @@ def status_server() -> None:
         LOG.info("Merlin server is running.")
 
 
-def start_server() -> bool:
+def start_server() -> bool:  # pylint: disable=R0911
     """
     Start a merlin server container using singularity.
     :return:: True if server was successful started and False if failed.
     """
     current_status = get_server_status()
 
-    if current_status == ServerStatus.NOT_INITALIZED or current_status == ServerStatus.MISSING_CONTAINER:
+    if current_status in (ServerStatus.NOT_INITALIZED, ServerStatus.MISSING_CONTAINER):
         LOG.info("Merlin server has not been initialized. Please run 'merlin server init' first.")
         return False
 
@@ -185,15 +185,15 @@ def start_server() -> bool:
 
     image_path = server_config.container.get_image_path()
     if not os.path.exists(image_path):
-        LOG.error("Unable to find image at " + image_path)
+        LOG.error(f"Unable to find image at {image_path}")
         return False
 
     config_path = server_config.container.get_config_path()
     if not os.path.exists(config_path):
-        LOG.error("Unable to find config file at " + config_path)
+        LOG.error(f"Unable to find config file at {config_path}")
         return False
 
-    process = subprocess.Popen(
+    process = subprocess.Popen(  # pylint: disable=R1732
         server_config.container_format.get_run_command()
         .strip("\\")
         .format(
@@ -237,7 +237,7 @@ def start_server() -> bool:
     redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), redis_config.get_password())
 
     new_app_yaml = os.path.join(server_config.container.get_config_dir(), "app.yaml")
-    ay = AppYaml()
+    ay = AppYaml()  # pylint: disable=C0103
     ay.apply_server_config(server_config=server_config)
     ay.write(new_app_yaml)
     LOG.info(f"New app.yaml written to {new_app_yaml}.")

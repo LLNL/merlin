@@ -366,7 +366,7 @@ def process_server(args: Namespace):
         config_server(args)
 
 
-def setup_argparse() -> None:
+def setup_argparse() -> None:  # pylint: disable=R0915
     """
     Setup argparse and any CLI options we want available via the package.
     """

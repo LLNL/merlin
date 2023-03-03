@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module represents all of the logic that goes into a step"""
 
 import logging
 import re
@@ -133,7 +134,7 @@ class Step:
     @staticmethod
     def get_task_queue_from_dict(step_dict):
         """given a maestro step dict, get the task queue"""
-        from merlin.config.configfile import CONFIG
+        from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
         queue_tag = CONFIG.celery.queue_tag
         omit_tag = CONFIG.celery.omit_queue_tag
@@ -153,6 +154,7 @@ class Step:
 
     @property
     def retry_delay(self):
+        """Returns the retry delay (default 1)"""
         default_retry_delay = 1
         return self.mstep.step.__dict__["run"].get("retry_delay", default_retry_delay)
 
@@ -173,7 +175,7 @@ class Step:
         """
         Set the restart property ensuring that restart is false
         """
-        self.__restart = val
+        self.__restart = val  # pylint: disable=W0201
 
     restart = property(__get_restart, __set_restart)
 
@@ -273,5 +275,5 @@ class Step:
         # calls to the step execute and restart functions.
         if self.restart and self.get_restart_cmd():
             return ReturnCode(self.mstep.restart(adapter))
-        else:
-            return ReturnCode(self.mstep.execute(adapter))
+
+        return ReturnCode(self.mstep.execute(adapter))

@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module represents all of the logic for a study"""
 
 import logging
 import os
@@ -53,7 +54,7 @@ from merlin.utils import contains_shell_ref, contains_token, get_flux_cmd, load_
 LOG = logging.getLogger(__name__)
 
 
-class MerlinStudy:
+class MerlinStudy:  # pylint: disable=R0902
     """
     Represents a Merlin study run on a specification. Used for 'merlin run'.
 
@@ -68,7 +69,7 @@ class MerlinStudy:
     :param `no_errors`: Flag to ignore some errors for testing.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=R0913
         self,
         filepath,
         override_vars=None,
@@ -108,9 +109,7 @@ class MerlinStudy:
             "MERLIN_HARD_FAIL": str(int(ReturnCode.HARD_FAIL)),
             "MERLIN_RETRY": str(int(ReturnCode.RETRY)),
             # below will be substituted for sample values on execution
-            "MERLIN_SAMPLE_VECTOR": " ".join(
-                ["$({})".format(k) for k in self.get_sample_labels(from_spec=self.original_spec)]
-            ),
+            "MERLIN_SAMPLE_VECTOR": " ".join([f"$({k})" for k in self.get_sample_labels(from_spec=self.original_spec)]),
             "MERLIN_SAMPLE_NAMES": " ".join(self.get_sample_labels(from_spec=self.original_spec)),
             "MERLIN_SPEC_ORIGINAL_TEMPLATE": os.path.join(
                 self.info,
@@ -151,6 +150,7 @@ class MerlinStudy:
                 if label in self.original_spec.globals:
                     raise ValueError(f"column_label {label} cannot also be in global.parameters!")
 
+    # pylint: disable=duplicate-code
     @staticmethod
     def get_user_vars(spec):
         """
@@ -164,8 +164,11 @@ class MerlinStudy:
             uvars.append(spec.environment["labels"])
         return determine_user_variables(*uvars)
 
+    # pylint: enable=duplicate-code
+
     @property
     def user_vars(self):
+        """Get the user defined variables"""
         return MerlinStudy.get_user_vars(self.original_spec)
 
     def get_expanded_spec(self):
@@ -200,6 +203,7 @@ class MerlinStudy:
         return []
 
     def get_sample_labels(self, from_spec):
+        """Return the column labels of the samples (if any)"""
         if from_spec.merlin["samples"]:
             return from_spec.merlin["samples"]["column_labels"]
         return []
@@ -289,19 +293,18 @@ class MerlinStudy:
                 raise ValueError(f"Restart dir '{self.restart_dir}' does not exist!")
             return os.path.abspath(output_path)
 
-        else:
-            output_path = str(self.original_spec.output_path)
+        output_path = str(self.original_spec.output_path)
 
-            if (self.override_vars is not None) and ("OUTPUT_PATH" in self.override_vars):
-                output_path = str(self.override_vars["OUTPUT_PATH"])
+        if (self.override_vars is not None) and ("OUTPUT_PATH" in self.override_vars):
+            output_path = str(self.override_vars["OUTPUT_PATH"])
 
-            output_path = expand_line(output_path, self.user_vars, env_vars=True)
-            output_path = os.path.abspath(output_path)
-            if not os.path.isdir(output_path):
-                os.makedirs(output_path)
-                LOG.info(f"Made dir(s) to output path '{output_path}'.")
+        output_path = expand_line(output_path, self.user_vars, env_vars=True)
+        output_path = os.path.abspath(output_path)
+        if not os.path.isdir(output_path):
+            os.makedirs(output_path)
+            LOG.info(f"Made dir(s) to output path '{output_path}'.")
 
-            return output_path
+        return output_path
 
     @cached_property
     def timestamp(self):
@@ -314,7 +317,7 @@ class MerlinStudy:
         return time.strftime("%Y%m%d-%H%M%S")
 
     @cached_property
-    def workspace(self):
+    def workspace(self):  # pylint: disable=E0202
         """
         Determines, makes, and returns the path to this study's
         workspace directory. This directory holds workspace directories
@@ -335,7 +338,7 @@ class MerlinStudy:
         return workspace
 
     @cached_property
-    def info(self):
+    def info(self):  # pylint: disable=E0202
         """
         Creates the 'merlin_info' directory inside this study's workspace directory.
         """
@@ -401,7 +404,7 @@ class MerlinStudy:
             )
 
         # write expanded spec for provenance
-        with open(expanded_filepath, "w") as f:
+        with open(expanded_filepath, "w") as f:  # pylint: disable=C0103
             f.write(result.dump())
 
         # write original spec for provenance
@@ -417,7 +420,7 @@ class MerlinStudy:
         if "labels" in result.environment:
             partial_spec.environment["labels"] = result.environment["labels"]
         partial_spec_path = os.path.join(self.info, name + ".partial.yaml")
-        with open(partial_spec_path, "w") as f:
+        with open(partial_spec_path, "w") as f:  # pylint: disable=C0103
             f.write(partial_spec.dump())
 
         LOG.info(f"Study workspace is '{self.workspace}'.")
@@ -452,36 +455,37 @@ class MerlinStudy:
             if not os.path.exists(self.samples_file):
                 sample_generate = self.expanded_spec.merlin["samples"]["generate"]["cmd"]
                 LOG.info("Generating samples...")
-                sample_process = subprocess.Popen(
+                sample_process = subprocess.Popen(  # pylint: disable=R1732
                     sample_generate,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     shell=True,
                 )
                 stdout, stderr = sample_process.communicate()
-                with open(os.path.join(self.info, "cmd.sh"), "w") as f:
+                with open(os.path.join(self.info, "cmd.sh"), "w") as f:  # pylint: disable=C0103
                     f.write(sample_generate)
-                with open(os.path.join(self.info, "cmd.out"), "wb") as f:
+                with open(os.path.join(self.info, "cmd.out"), "wb") as f:  # pylint: disable=C0103
                     f.write(stdout)
-                with open(os.path.join(self.info, "cmd.err"), "wb") as f:
+                with open(os.path.join(self.info, "cmd.err"), "wb") as f:  # pylint: disable=C0103
                     f.write(stderr)
                 LOG.info("Generating samples complete!")
             return
-        except (IndexError, TypeError) as e:
+        except (IndexError, TypeError) as e:  # pylint: disable=C0103
             LOG.error(f"Could not generate samples:\n{e}")
             return
 
-    def load_pgen(self, filepath, pargs, env):
+    def load_pgen(self, filepath, pargs, env):  # pylint: disable=R1710
+        """Creates a dict of variable names and values defined in a pgen script"""
         if filepath:
             if pargs is None:
                 pargs = []
             kwargs = create_dictionary(pargs)
             params = load_parameter_generator(filepath, env, kwargs)
             result = {}
-            for k, v in params.labels.items():
-                result[k] = {"values": None, "label": v}
-            for k, v in params.parameters.items():
-                result[k]["values"] = v
+            for key, val in params.labels.items():
+                result[key] = {"values": None, "label": val}
+            for key, val in params.parameters.items():
+                result[key]["values"] = val
             return result
 
     def load_dag(self):
@@ -526,6 +530,7 @@ class MerlinStudy:
         self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, labels)
 
     def get_adapter_config(self, override_type=None):
+        """Builds and returns the adapter configuration dictionary"""
         adapter_config = dict(self.expanded_spec.batch)
 
         if "type" not in adapter_config.keys():

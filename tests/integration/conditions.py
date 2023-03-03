@@ -50,7 +50,7 @@ class Condition(ABC):
     @abstractmethod
     def passes(self):
         """The method that will check if the test passes or not"""
-        pass
+        pass  # pylint: disable=W0107
 
 
 # pylint: disable=no-member

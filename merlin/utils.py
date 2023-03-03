@@ -76,7 +76,7 @@ def get_user_process_info(user=None, attrs=None):
     if user is None:
         user = getpass.getuser()
 
-    if user == "all_users":
+    if user == "all_users":  # pylint: disable=R1705
         return [p.info for p in psutil.process_iter(attrs=attrs)]
     else:
         return [p.info for p in psutil.process_iter(attrs=attrs) if user in p.info["username"]]
@@ -91,8 +91,8 @@ def check_pid(pid, user=None):
         all processes
     """
     user_processes = get_user_process_info(user=user)
-    for p in user_processes:
-        if int(p["pid"]) == pid:
+    for process in user_processes:
+        if int(process["pid"]) == pid:
             return True
     return False
 
@@ -149,12 +149,14 @@ def is_running(name, all_users=False):
     if all_users:
         cmd[1] = "aux"
 
+    # pylint: disable=consider-using-with
     try:
-        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()[0]
+        process_status = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()[0]
     except TypeError:
-        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+        process_status = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+    # pylint: enable=consider-using-with
 
-    if name in ps:
+    if name in process_status:
         return True
 
     return False
@@ -178,7 +180,7 @@ def regex_list_filter(regex, list_to_filter, match=True):
 
     :return `new_list`
     """
-    r = re.compile(regex)
+    r = re.compile(regex)  # pylint: disable=C0103
     if match:
         return list(filter(r.match, list_to_filter))
     return list(filter(r.search, list_to_filter))
@@ -268,7 +270,7 @@ def determine_protocol(fname):
 
 
 @contextmanager
-def cd(path):
+def cd(path):  # pylint: disable=C0103
     """
     TODO
     """
@@ -282,7 +284,7 @@ def cd(path):
 
 def pickle_data(filepath, content):
     """Dump content to a pickle file"""
-    with open(filepath, "w") as f:
+    with open(filepath, "w") as f:  # pylint: disable=C0103
         pickle.dump(content, f)
 
 
@@ -343,12 +345,12 @@ def nested_dict_to_namespaces(dic):
     return recurse(new_dic)
 
 
-def nested_namespace_to_dicts(ns):
+def nested_namespace_to_dicts(ns):  # pylint: disable=C0103
     """Code for recursively converting namespaces of namespaces
     into dictionaries instead.
     """
 
-    def recurse(ns):
+    def recurse(ns):  # pylint: disable=C0103
         if not isinstance(ns, SimpleNamespace):
             return ns
         for key, val in list(ns.__dict__.items()):
@@ -371,11 +373,11 @@ def get_flux_version(flux_path, no_errors=False):
     """
     cmd = [flux_path, "version"]
 
-    ps = None
+    ps = None  # pylint: disable=C0103
 
     try:
-        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()
-    except FileNotFoundError as e:
+        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()  # pylint: disable=C0103,R1732
+    except FileNotFoundError as e:  # pylint: disable=C0103
         if not no_errors:
             LOG.error(f"The flux path {flux_path} canot be found")
             LOG.error("Suppress this error with no_errors=True")
@@ -383,8 +385,8 @@ def get_flux_version(flux_path, no_errors=False):
 
     try:
         flux_ver = re.search(r"\s*([\d.]+)", ps[0]).group(1)
-    except (ValueError, TypeError) as e:
-        if not no_errors:
+    except (ValueError, TypeError) as e:  # pylint: disable=C0103
+        if not no_errors:  # pylint: disable=R1720
             LOG.error("The flux version cannot be determined")
             LOG.error("Suppress this error with no_errors=True")
             raise e
@@ -465,12 +467,12 @@ def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
     nfields = len(timestr.split(":"))
     if nfields > 4:
         raise ValueError(f"Cannot convert {timestr} to a timedelta. Valid format: days:hours:minutes:seconds.")
-    _, d, h, m, s = (":0" * 10 + timestr).rsplit(":", 4)
+    _, d, h, m, s = (":0" * 10 + timestr).rsplit(":", 4)  # pylint: disable=C0103
     tdelta = timedelta(days=int(d), hours=int(h), minutes=int(m), seconds=int(s))
     return tdelta
 
 
-def _repr_timedelta_HMS(td: timedelta) -> str:
+def _repr_timedelta_HMS(td: timedelta) -> str:  # pylint: disable=C0103
     """Represent a timedelta object as a string in hours:minutes:seconds"""
     hours, remainder = divmod(td.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
@@ -478,7 +480,7 @@ def _repr_timedelta_HMS(td: timedelta) -> str:
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-def _repr_timedelta_FSD(td: timedelta) -> str:
+def _repr_timedelta_FSD(td: timedelta) -> str:  # pylint: disable=C0103
     """Represent a timedelta as a flux standard duration string, using seconds.
 
     flux standard duration (FSD) is a floating point number with a single character suffix: s,m,h or d.
@@ -488,17 +490,16 @@ def _repr_timedelta_FSD(td: timedelta) -> str:
     return fsd
 
 
-def repr_timedelta(td: timedelta, method: str = "HMS") -> str:
+def repr_timedelta(td: timedelta, method: str = "HMS") -> str:  # pylint: disable=C0103
     """Represent a timedelta object as a string using a particular method.
 
     method - HMS: 'hours:minutes:seconds'
     method - FSD: flux standard duration: 'seconds.s'"""
     if method == "HMS":
         return _repr_timedelta_HMS(td)
-    elif method == "FSD":
+    if method == "FSD":
         return _repr_timedelta_FSD(td)
-    else:
-        raise ValueError("Invalid method for formatting timedelta! Valid choices: HMS, FSD")
+    raise ValueError("Invalid method for formatting timedelta! Valid choices: HMS, FSD")
 
 
 def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") -> str:

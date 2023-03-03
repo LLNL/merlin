@@ -37,6 +37,9 @@ from merlin.common.sample_index import MAX_SAMPLE, SampleIndex
 from merlin.utils import cd
 
 
+# pylint: disable=R0913,R0914
+
+
 def create_hierarchy(
     num_samples,
     bundle_size,

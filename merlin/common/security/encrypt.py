@@ -40,6 +40,9 @@ from cryptography.fernet import Fernet
 from merlin.config.configfile import CONFIG
 
 
+# pylint: disable=invalid-name
+
+
 LOG = logging.getLogger(__name__)
 
 
@@ -53,7 +56,7 @@ def _get_key_path():
     try:
         key_filepath = os.path.abspath(os.path.expanduser(key_filepath))
     except KeyError:
-        raise ValueError("Error! No password provided for RabbitMQ")
+        raise ValueError("Error! No password provided for RabbitMQ")  # pylint: disable=W0707
     return key_filepath
 
 

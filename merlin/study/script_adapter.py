@@ -48,7 +48,7 @@ from merlin.utils import convert_timestring
 LOG = logging.getLogger(__name__)
 
 
-class MerlinLSFScriptAdapter(SlurmScriptAdapter):
+class MerlinLSFScriptAdapter(SlurmScriptAdapter):  # pylint: disable=W0223
     """
     A SchedulerScriptAdapter class for slurm blocking parallel launches,
     the LSFScriptAdapter uses non-blocking submits.
@@ -65,7 +65,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
 
         :param **kwargs: A dictionary with default settings for the adapter.
         """
-        super(MerlinLSFScriptAdapter, self).__init__(**kwargs)
+        super(MerlinLSFScriptAdapter, self).__init__(**kwargs)  # pylint: disable=R1725
 
         self._cmd_flags: Dict[str, str] = {
             "cmd": "jsrun",
@@ -107,7 +107,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
         :returns: A string of the header based on internal batch parameters and
             the parameter step.
         """
-        return "#!{}".format(self._exec)
+        return f"#!{self._exec}"
 
     def get_parallelize_command(self, procs, nodes=None, **kwargs):
         """
@@ -149,12 +149,12 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
                 LOG.warning("'%s' is not supported -- ommitted.", key)
                 continue
             if value:
-                args += [self._cmd_flags[key], "{}".format(str(value))]
+                args += [self._cmd_flags[key], f"{str(value)}"]
 
         return " ".join(args)
 
 
-class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
+class MerlinSlurmScriptAdapter(SlurmScriptAdapter):  # pylint: disable=W0223
     """
     A SchedulerScriptAdapter class for slurm blocking parallel launches,
     the SlurmScriptAdapter uses non-blocking submits.
@@ -171,7 +171,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
 
         :param **kwargs: A dictionary with default settings for the adapter.
         """
-        super(MerlinSlurmScriptAdapter, self).__init__(**kwargs)
+        super(MerlinSlurmScriptAdapter, self).__init__(**kwargs)  # pylint: disable=R1725
 
         self._cmd_flags["slurm"] = ""
         self._cmd_flags["walltime"] = "-t"
@@ -200,7 +200,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         :returns: A string of the header based on internal batch parameters and
             the parameter step.
         """
-        return "#!{}".format(self._exec)
+        return f"#!{self._exec}"
 
     def time_format(self, val):
         """
@@ -241,24 +241,24 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             if key == "walltime":
                 args += [
                     self._cmd_flags[key],
-                    "{}".format(str(self.time_format(value))),
+                    f"{str(self.time_format(value))}",
                 ]
             elif "=" in self._cmd_flags[key]:
-                args += ["{0}{1}".format(self._cmd_flags[key], str(value))]
+                args += [f"{self._cmd_flags[key]}{str(value)}"]
             else:
-                args += [self._cmd_flags[key], "{}".format(str(value))]
+                args += [self._cmd_flags[key], f"{str(value)}"]
 
         return " ".join(args)
 
 
-class MerlinLSFSrunScriptAdapter(MerlinSlurmScriptAdapter):
+class MerlinLSFSrunScriptAdapter(MerlinSlurmScriptAdapter):  # pylint: disable=W0223
     """
     A SchedulerScriptAdapter class for lsf blocking parallel launches, using the srun wrapper
     """
 
     key = "merlin-lsf-srun"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):  # pylint: disable=W0246
         """
         Initialize an instance of the MerinLSFSrunScriptAdapter.
         The MerlinLSFSrunScriptAdapter is the adapter that is used for workflows that
@@ -267,10 +267,10 @@ class MerlinLSFSrunScriptAdapter(MerlinSlurmScriptAdapter):
 
         :param **kwargs: A dictionary with default settings for the adapter.
         """
-        super(MerlinLSFSrunScriptAdapter, self).__init__(**kwargs)
+        super(MerlinLSFSrunScriptAdapter, self).__init__(**kwargs)  # pylint: disable=R1725
 
 
-class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
+class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):  # pylint: disable=W0223
     """
     A SchedulerScriptAdapter class for flux blocking parallel launches,
     the FluxScriptAdapter uses non-blocking submits.
@@ -288,7 +288,7 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
         :param **kwargs: A dictionary with default settings for the adapter.
         """
         flux_command = kwargs.pop("flux_command", "flux mini run")
-        super(MerlinFluxScriptAdapter, self).__init__(**kwargs)
+        super(MerlinFluxScriptAdapter, self).__init__(**kwargs)  # pylint: disable=R1725
 
         #  "cmd": "flux mini run",
         self._cmd_flags = {
@@ -346,19 +346,19 @@ class MerlinScriptAdapter(LocalScriptAdapter):
 
         :param **kwargs: A dictionary with default settings for the adapter.
         """
-        super(MerlinScriptAdapter, self).__init__(**kwargs)
+        super(MerlinScriptAdapter, self).__init__(**kwargs)  # pylint: disable=R1725
 
         self.batch_type = "merlin-" + kwargs.get("batch_type", "local")
 
-        if "host" not in kwargs.keys():
+        if "host" not in kwargs:
             kwargs["host"] = "None"
-        if "bank" not in kwargs.keys():
+        if "bank" not in kwargs:
             kwargs["bank"] = "None"
-        if "queue" not in kwargs.keys():
+        if "queue" not in kwargs:
             kwargs["queue"] = "None"
 
         # Using super prevents recursion.
-        self.batch_adapter = super(MerlinScriptAdapter, self)
+        self.batch_adapter = super(MerlinScriptAdapter, self)  # pylint: disable=R1725
         if self.batch_type != "merlin-local":
             self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(self.batch_type)(**kwargs)
 
@@ -369,7 +369,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         _, script, restart_script = self.batch_adapter.write_script(*args, **kwargs)
         return True, script, restart_script
 
-    def submit(self, step, path, cwd, job_map=None, env=None):
+    def submit(self, step, path, cwd, job_map=None, env=None):  # pylint: disable=R0913
         """
         Execute the step locally.
         If cwd is specified, the submit method will operate outside of the path
@@ -387,7 +387,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         """
         LOG.debug("cwd = %s", cwd)
         LOG.debug("Script to execute: %s", path)
-        LOG.debug("starting process %s in cwd %s called %s" % (path, cwd, step.name))
+        LOG.debug(f"starting process {path} in cwd {cwd} called {step.name}")
         submission_record = self._execute_subprocess(step.name, path, cwd, env, False)
         retcode = submission_record.return_code
         if retcode == ReturnCode.OK:
@@ -406,17 +406,17 @@ class MerlinScriptAdapter(LocalScriptAdapter):
             LOG.debug("Execution returned status STOP_WORKERS")
         else:
             LOG.warning(f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL")
-            submission_record._info["retcode"] = retcode
+            submission_record._info["retcode"] = retcode  # pylint: disable=W0212
             retcode = ReturnCode.SOFT_FAIL
 
         # Currently, we use Maestro's execute method, which is returning the
         # submission code we want it to return the return code, so we are
         # setting it in here.
-        submission_record._subcode = retcode
+        submission_record._subcode = retcode  # pylint: disable=W0212
 
         return submission_record
 
-    def _execute_subprocess(self, output_name, script_path, cwd, env=None, join_output=False):
+    def _execute_subprocess(self, output_name, script_path, cwd, env=None, join_output=False):  # pylint: disable=R0913,R0914
         """
         Execute the subprocess script locally.
         If cwd is specified, the submit method will operate outside of the path
@@ -435,15 +435,15 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         script_bn = os.path.basename(script_path)
         new_output_name = os.path.splitext(script_bn)[0]
         LOG.debug(f"script_path={script_path}, output_name={output_name}, new_output_name={new_output_name}")
-        p = start_process(script_path, shell=False, cwd=cwd, env=env)
-        pid = p.pid
-        output, err = p.communicate()
-        retcode = p.wait()
+        process = start_process(script_path, shell=False, cwd=cwd, env=env)
+        pid = process.pid
+        output, err = process.communicate()
+        retcode = process.wait()
 
         # This allows us to save on iNodes by not writing the output,
         # or by appending error to output
         if output_name is not None:
-            o_path = os.path.join(cwd, "{}.out".format(new_output_name))
+            o_path = os.path.join(cwd, f"{new_output_name}.out")
 
             with open(o_path, "a") as out:
                 out.write(output)
@@ -453,20 +453,22 @@ class MerlinScriptAdapter(LocalScriptAdapter):
                     out.write(err)
 
             if not join_output:
-                e_path = os.path.join(cwd, "{}.err".format(new_output_name))
+                e_path = os.path.join(cwd, f"{new_output_name}.err")
                 with open(e_path, "a") as out:
                     out.write(err)
 
         if retcode == 0:
             LOG.info("Execution returned status OK.")
             return SubmissionRecord(ReturnCode.OK, retcode, pid)
-        else:
-            _record = SubmissionRecord(ReturnCode.ERROR, retcode, pid)
-            _record.add_info("stderr", str(err))
-            return _record
+
+        _record = SubmissionRecord(ReturnCode.ERROR, retcode, pid)
+        _record.add_info("stderr", str(err))
+        return _record
 
 
-class MerlinScriptAdapterFactory(object):
+class MerlinScriptAdapterFactory:
+    """This class routes to the correct ScriptAdapter"""
+
     factories = {
         "merlin-flux": MerlinFluxScriptAdapter,
         "merlin-lsf": MerlinLSFScriptAdapter,
@@ -477,16 +479,16 @@ class MerlinScriptAdapterFactory(object):
 
     @classmethod
     def get_adapter(cls, adapter_id):
+        """Returns the appropriate ScriptAdapter to use"""
         if adapter_id.lower() not in cls.factories:
-            msg = (
-                "Adapter '{0}' not found. Specify an adapter that exists "
-                "or implement a new one mapping to the '{0}'".format(str(adapter_id))
-            )
+            msg = f"""Adapter '{str(adapter_id)}' not found. Specify an adapter that exists
+                or implement a new one mapping to the '{str(adapter_id)}'"""
             LOG.error(msg)
-            raise Exception(msg)
+            raise Exception(msg)  # pylint: disable=W0719
 
         return cls.factories[adapter_id]
 
     @classmethod
     def get_valid_adapters(cls):
+        """Returns the valid ScriptAdapters"""
         return cls.factories.keys()

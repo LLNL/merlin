@@ -57,6 +57,9 @@
 
 """
 
+# This file is not currently used so we don't care what pylint has to say
+# pylint: skip-file
+
 import copy
 
 

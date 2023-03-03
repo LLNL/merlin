@@ -49,14 +49,14 @@ LOG = logging.getLogger(__name__)
 EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
 
 
-def gather_example_dirs():
+def gather_example_dirs():  # pylint: disable=C0116
     result = {}
-    for d in os.listdir(EXAMPLES_DIR):
+    for d in os.listdir(EXAMPLES_DIR):  # pylint: disable=C0103
         result[d] = d
     return result
 
 
-def gather_all_examples():
+def gather_all_examples():  # pylint: disable=C0116
     path = os.path.join(os.path.join(EXAMPLES_DIR, ""), os.path.join("*", "*.yaml"))
     return glob.glob(path)
 
@@ -81,11 +81,11 @@ def list_examples():
         directory = os.path.join(os.path.join(EXAMPLES_DIR, example_dir), "")
         specs = glob.glob(directory + "*.yaml")
         for spec in specs:
-            with open(spec) as f:
+            with open(spec) as f:  # pylint: disable=C0103
                 try:
                     spec_metadata = yaml.safe_load(f)["description"]
                 except KeyError:
-                    LOG.warn(f"{spec} lacks required section 'description'")
+                    LOG.warning(f"{spec} lacks required section 'description'")
                     continue
                 except TypeError:
                     continue
@@ -113,7 +113,7 @@ def setup_example(name, outdir):
         return None
 
     # if there is only 1 file in the example, don't bother making a directory for it
-    if len(os.listdir(os.path.dirname(spec_path))) == 1:
+    if len(os.listdir(os.path.dirname(spec_path))) == 1:  # pylint: disable=W0631
         src_path = os.path.join(EXAMPLES_DIR, os.path.join(example, example + ".yaml"))
 
     else:

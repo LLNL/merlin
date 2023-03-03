@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The learn.py script in the openfoam_wf* examples will now create the missing Energy v Lidspeed plot
 - Fixed the flags associated with the `stop-workers` command (--spec, --queues, --workers)
 - Fixed the --step flag for the `run-workers` command
+- Fixed most of the pylint errors that we're showing up when you ran `make check-style`
 
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the --disable-logs flag to the `run-workers` command
 - Merlin will now assign `default_worker` to any step not associated with a worker
 - Added `get_step_worker_map()` as a method in `specification.py`
+- Added `tabulate_info()` function in `display.py` to help with table formatting
 
 ### Changed
 - Changed celery_regex to celery_slurm_regex in test_definitions.py

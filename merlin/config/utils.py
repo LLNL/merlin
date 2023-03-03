@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module contains utilization functions for the config directory"""
 
 import enum
 from typing import List
@@ -34,10 +35,16 @@ from typing import List
 from merlin.config.configfile import CONFIG
 
 
+# pylint: disable=C0115,C0116,C0103
+
+
 class Priority(enum.Enum):
     high = 1
     mid = 2
     low = 3
+
+
+# pylint: enable=C0103
 
 
 def is_rabbit_broker(broker: str) -> bool:

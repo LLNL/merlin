@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""Utils relating to merlin server"""
 
 import hashlib
 import logging
@@ -47,7 +48,7 @@ MERLIN_SERVER_SUBDIR = "server/"
 MERLIN_SERVER_CONFIG = "merlin_server.yaml"
 
 
-def valid_ipv4(ip: str) -> bool:
+def valid_ipv4(ip: str) -> bool:  # pylint: disable=C0103
     """
     Checks valid ip address
     """
@@ -69,12 +70,12 @@ def valid_port(port: int) -> bool:
     """
     Checks valid network port
     """
-    if port > 0 and port < 65536:
+    if 0 < port < 65536:
         return True
     return False
 
 
-class ContainerConfig:
+class ContainerConfig:  # pylint: disable=R0902
     """
     ContainerConfig provides interface for parsing and interacting with the container value specified within
     the merlin_server.yaml configuration file. Dictionary of the config values should be passed when initialized
@@ -119,6 +120,7 @@ class ContainerConfig:
         self.pass_file = data["pass_file"] if "pass_file" in data else self.PASSWORD_FILE
         self.user_file = data["user_file"] if "user_file" in data else self.USERS_FILE
 
+    # pylint: disable=C0116
     def get_format(self) -> str:
         return self.format
 
@@ -163,9 +165,11 @@ class ContainerConfig:
 
     def get_container_password(self) -> str:
         password = None
-        with open(self.get_pass_file_path(), "r") as f:
+        with open(self.get_pass_file_path(), "r") as f:  # pylint: disable=C0103
             password = f.read()
         return password
+
+    # pylint: enable=C0116
 
 
 class ContainerFormatConfig:
@@ -191,6 +195,7 @@ class ContainerFormatConfig:
         self.stop_command = data["stop_command"] if "stop_command" in data else self.STOP_COMMAND
         self.pull_command = data["pull_command"] if "pull_command" in data else self.PULL_COMMAND
 
+    # pylint: disable=C0116
     def get_command(self) -> str:
         return self.command
 
@@ -202,6 +207,8 @@ class ContainerFormatConfig:
 
     def get_pull_command(self) -> str:
         return self.pull_command
+
+    # pylint: enable=C0116
 
 
 class ProcessConfig:
@@ -221,14 +228,17 @@ class ProcessConfig:
         self.status = data["status"] if "status" in data else self.STATUS_COMMAND
         self.kill = data["kill"] if "kill" in data else self.KILL_COMMAND
 
+    # pylint: disable=C0116
     def get_status_command(self) -> str:
         return self.status
 
     def get_kill_command(self) -> str:
         return self.kill
 
+    # pylint: enable=C0116
 
-class ServerConfig:
+
+class ServerConfig:  # pylint: disable=R0903
     """
     ServerConfig is an interface for storing all the necessary configuration for merlin server.
     These configuration container things such as ContainerConfig, ProcessConfig, and ContainerFormatConfig.
@@ -267,9 +277,10 @@ class RedisConfig:
         self.parse()
 
     def parse(self) -> None:
+        """Parses the redis configuration file"""
         self.entries = {}
         self.comments = {}
-        with open(self.filename, "r+") as f:
+        with open(self.filename, "r+") as f:  # pylint: disable=C0103
             file_contents = f.read()
             file_lines = file_contents.split("\n")
             comments = ""
@@ -289,34 +300,37 @@ class RedisConfig:
             self.trailing_comments = comments[:-1]
 
     def write(self) -> None:
-        with open(self.filename, "w") as f:
+        """Writes to the redis configuration file"""
+        with open(self.filename, "w") as f:  # pylint: disable=C0103
             for entry in self.entry_order:
                 f.write(self.comments[entry])
                 f.write(f"{entry} {self.entries[entry]}\n")
             f.write(self.trailing_comments)
 
-    def set_filename(self, filename: str) -> None:
+    def set_filename(self, filename: str) -> None:  # pylint: disable=C0116
         self.filename = filename
 
     def set_config_value(self, key: str, value: str) -> bool:
+        """Changes a configuration value"""
         if key not in self.entries:
             return False
         self.entries[key] = value
         self.changed = True
         return True
 
-    def get_config_value(self, key: str) -> str:
+    def get_config_value(self, key: str) -> str:  # pylint: disable=C0116
         if key in self.entries:
             return self.entries[key]
         return None
 
-    def changes_made(self) -> bool:
+    def changes_made(self) -> bool:  # pylint: disable=C0116
         return self.changed
 
-    def get_ip_address(self) -> str:
+    def get_ip_address(self) -> str:  # pylint: disable=C0116
         return self.get_config_value("bind")
 
     def set_ip_address(self, ipaddress: str) -> bool:
+        """Validates and sets a given ip address"""
         if ipaddress is None:
             return False
         # Check if ipaddress is valid
@@ -331,10 +345,11 @@ class RedisConfig:
         LOG.info(f"Ipaddress is set to {ipaddress}")
         return True
 
-    def get_port(self) -> str:
+    def get_port(self) -> str:  # pylint: disable=C0116
         return self.get_config_value("port")
 
     def set_port(self, port: str) -> bool:
+        """Validates and sets a given port"""
         if port is None:
             return False
         # Check if port is valid
@@ -350,16 +365,21 @@ class RedisConfig:
         return True
 
     def set_password(self, password: str) -> bool:
+        """Changes the password"""
         if password is None:
             return False
         self.set_config_value("requirepass", password)
         LOG.info("New password set")
         return True
 
-    def get_password(self) -> str:
+    def get_password(self) -> str:  # pylint: disable=C0116
         return self.get_config_value("requirepass")
 
     def set_directory(self, directory: str) -> bool:
+        """
+        Sets the save directory in the redis config file.
+        Creates the directory if necessary.
+        """
         if directory is None:
             return False
         if not os.path.exists(directory):
@@ -378,6 +398,7 @@ class RedisConfig:
         return True
 
     def set_snapshot_seconds(self, seconds: int) -> bool:
+        """Sets the snapshot wait time"""
         if seconds is None:
             return False
         # Set the snapshot second in the redis config
@@ -385,17 +406,19 @@ class RedisConfig:
         if value is None:
             LOG.error("Unable to get exisiting parameter values for snapshot")
             return False
-        else:
-            value = value.split()
-            value[0] = str(seconds)
-            value = " ".join(value)
-            if not self.set_config_value("save", value):
-                LOG.error("Unable to set snapshot value seconds")
-                return False
+
+        value = value.split()
+        value[0] = str(seconds)
+        value = " ".join(value)
+        if not self.set_config_value("save", value):
+            LOG.error("Unable to set snapshot value seconds")
+            return False
+
         LOG.info(f"Snapshot wait time is set to {seconds} seconds")
         return True
 
     def set_snapshot_changes(self, changes: int) -> bool:
+        """Sets the snapshot threshold"""
         if changes is None:
             return False
         # Set the snapshot changes into the redis config
@@ -403,17 +426,19 @@ class RedisConfig:
         if value is None:
             LOG.error("Unable to get exisiting parameter values for snapshot")
             return False
-        else:
-            value = value.split()
-            value[1] = str(changes)
-            value = " ".join(value)
-            if not self.set_config_value("save", value):
-                LOG.error("Unable to set snapshot value seconds")
-                return False
+
+        value = value.split()
+        value[1] = str(changes)
+        value = " ".join(value)
+        if not self.set_config_value("save", value):
+            LOG.error("Unable to set snapshot value seconds")
+            return False
+
         LOG.info(f"Snapshot threshold is set to {changes} changes")
         return True
 
     def set_snapshot_file(self, file: str) -> bool:
+        """Sets the snapshot file"""
         if file is None:
             return False
         # Set the snapshot file in the redis config
@@ -425,6 +450,7 @@ class RedisConfig:
         return True
 
     def set_append_mode(self, mode: str) -> bool:
+        """Sets the append mode"""
         if mode is None:
             return False
         valid_modes = ["always", "everysec", "no"]
@@ -443,6 +469,7 @@ class RedisConfig:
         return True
 
     def set_append_file(self, file: str) -> bool:
+        """Sets the append file"""
         if file is None:
             return False
         # Set the append file in the redis config
@@ -461,13 +488,17 @@ class RedisUsers:
     """
 
     class User:
+        """Embedded class to store user specific information"""
+
         status = "on"
         hash_password = hashlib.sha256(b"password").hexdigest()
         keys = "*"
         channels = "*"
         commands = "@all"
 
-        def __init__(self, status="on", keys="*", channels="*", commands="@all", password=None) -> None:
+        def __init__(  # pylint: disable=R0913
+            self, status="on", keys="*", channels="*", commands="@all", password=None
+        ) -> None:
             self.status = status
             self.keys = keys
             self.channels = channels
@@ -475,7 +506,8 @@ class RedisUsers:
             if password is not None:
                 self.set_password(password)
 
-        def parse_dict(self, dict: dict) -> None:
+        # pylint: disable=C0116
+        def parse_dict(self, dict: dict) -> None:  # pylint: disable=W0622
             self.status = dict["status"]
             self.keys = dict["keys"]
             self.channels = dict["channels"]
@@ -501,6 +533,8 @@ class RedisUsers:
         def set_password(self, password: str) -> None:
             self.hash_password = hashlib.sha256(bytes(password, "utf-8")).hexdigest()
 
+        # pylint: enable=C0116
+
     filename = ""
     users = {}
 
@@ -510,7 +544,8 @@ class RedisUsers:
             self.parse()
 
     def parse(self) -> None:
-        with open(self.filename, "r") as f:
+        """Parses the redis user configuration file"""
+        with open(self.filename, "r") as f:  # pylint: disable=C0103
             self.users = yaml.load(f, yaml.Loader)
             for user in self.users:
                 new_user = self.User()
@@ -518,19 +553,23 @@ class RedisUsers:
                 self.users[user] = new_user
 
     def write(self) -> None:
+        """Writes to the redis user configuration file"""
         data = self.users.copy()
         for key in data:
             data[key] = self.users[key].get_user_dict()
-        with open(self.filename, "w") as f:
+        with open(self.filename, "w") as f:  # pylint: disable=C0103
             yaml.dump(data, f, yaml.Dumper)
 
-    def add_user(self, user, status="on", keys="*", channels="*", commands="@all", password=None) -> bool:
+    # pylint: disable=C0116
+    def add_user(  # pylint: disable=R0913
+        self, user, status="on", keys="*", channels="*", commands="@all", password=None
+    ) -> bool:
         if user in self.users:
             return False
         self.users[user] = self.User(status, keys, channels, commands, password)
         return True
 
-    def set_password(self, user: str, password: str):
+    def set_password(self, user: str, password: str):  # pylint: disable=R1710
         if user not in self.users:
             return False
         self.users[user].set_password(password)
@@ -541,8 +580,11 @@ class RedisUsers:
             return True
         return False
 
+    # pylint: enable=C0116
+
     def apply_to_redis(self, host: str, port: int, password: str) -> None:
-        db = redis.Redis(host=host, port=port, password=password)
+        """Apply the changes to users to redis"""
+        db = redis.Redis(host=host, port=port, password=password)  # pylint: disable=C0103
         current_users = db.acl_users()
         for user in self.users:
             if user not in current_users:
@@ -579,7 +621,8 @@ class AppYaml:
         self.read(filename)
 
     def apply_server_config(self, server_config: ServerConfig):
-        rc = RedisConfig(server_config.container.get_config_path())
+        """Store the redis configuration"""
+        rc = RedisConfig(server_config.container.get_config_path())  # pylint: disable=C0103
 
         self.data[self.broker_name]["name"] = server_config.container.get_image_type()
         self.data[self.broker_name]["username"] = "default"
@@ -593,6 +636,7 @@ class AppYaml:
         self.data[self.results_name]["server"] = rc.get_ip_address()
         self.data[self.results_name]["port"] = rc.get_port()
 
+    # pylint: disable=C0116
     def update_data(self, new_data: dict):
         self.data.update(new_data)
 
@@ -603,5 +647,7 @@ class AppYaml:
         self.data = merlin.utils.load_yaml(filename)
 
     def write(self, filename: str = default_filename):
-        with open(filename, "w+") as f:
+        with open(filename, "w+") as f:  # pylint: disable=C0103
             yaml.dump(self.data, f, yaml.Dumper)
+
+    # pylint: enable=C0116
