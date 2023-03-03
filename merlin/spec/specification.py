@@ -37,6 +37,7 @@ import json
 import logging
 import os
 import shlex
+from copy import deepcopy
 from io import StringIO
 
 import yaml
@@ -48,6 +49,7 @@ from merlin.spec import all_keys, defaults
 LOG = logging.getLogger(__name__)
 
 
+# Pylint complains we have too many instance attributes but it's fine
 class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
     """
     This class represents the logic for parsing the Merlin yaml
@@ -67,8 +69,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             column_labels: [X0, X1]
     """
 
+    # Pylint says this call to super is useless but we'll leave it in case we want to add to __init__ in the future
     def __init__(self):  # pylint: disable=W0246
-        super(MerlinSpec, self).__init__()  # pylint: disable=R1725
+        super().__init__()
 
     @property
     def yaml_sections(self):
@@ -123,19 +126,19 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         return result
 
     @classmethod
-    def load_specification(cls, filepath, suppress_warning=True):  # pylint: disable=W0237
+    def load_specification(cls, path, suppress_warning=True):
         """
         Load in a spec file and create a MerlinSpec object based on its' contents.
 
         :param `cls`: The class reference (like self)
-        :param `filepath`: A path to the spec file we're loading in
+        :param `path`: A path to the spec file we're loading in
         :param `suppress_warning`: A bool representing whether to warn the user about unrecognized keys
         :returns: A MerlinSpec object
         """
-        LOG.info("Loading specification from path: %s", filepath)
+        LOG.info("Loading specification from path: %s", path)
         try:
-            # Load the YAML spec from the filepath
-            with open(filepath, "r") as data:
+            # Load the YAML spec from the path
+            with open(path, "r") as data:
                 spec = cls.load_spec_from_string(data, needs_IO=False, needs_verification=True)
         except Exception as e:  # pylint: disable=C0103
             LOG.exception(e.args)
@@ -143,7 +146,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         # Path not set in _populate_spec because loading spec with string
         # does not have a path so we set it here
-        spec.path = filepath
+        spec.path = path
         spec.specroot = os.path.dirname(spec.path)  # pylint: disable=W0201
 
         if not suppress_warning:
@@ -306,24 +309,23 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         YAMLSpecification.validate_schema("batch", self.batch, schema)
 
         # Additional Walltime checks in case the regex from the schema bypasses an error
-        if "walltime" in self.batch:  # pylint: disable=R1702
-            if self.batch["type"] == "lsf":
-                LOG.warning("The walltime argument is not available in lsf.")
-            else:
-                try:
-                    err_msg = "Walltime must be of the form SS, MM:SS, or HH:MM:SS."
-                    walltime = self.batch["walltime"]
-                    if len(walltime) > 2:
-                        # Walltime must have : if it's not of the form SS
-                        if ":" not in walltime:
+        if self.batch["type"] == "lsf" and "walltime" in self.batch:
+            LOG.warning("The walltime argument is not available in lsf.")
+        elif "walltime" in self.batch:
+            try:
+                err_msg = "Walltime must be of the form SS, MM:SS, or HH:MM:SS."
+                walltime = self.batch["walltime"]
+                if len(walltime) > 2:
+                    # Walltime must have : if it's not of the form SS
+                    if ":" not in walltime:
+                        raise ValueError(err_msg)
+                    # Walltime must have exactly 2 chars between :
+                    time = walltime.split(":")
+                    for section in time:
+                        if len(section) != 2:
                             raise ValueError(err_msg)
-                        # Walltime must have exactly 2 chars between :
-                        time = walltime.split(":")
-                        for section in time:
-                            if len(section) != 2:
-                                raise ValueError(err_msg)
-                except Exception:  # pylint: disable=W0706
-                    raise
+            except Exception:  # pylint: disable=W0706
+                raise
 
     @staticmethod
     def load_merlin_block(stream):
@@ -407,13 +409,13 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         existing ones.
         """
 
-        def recurse(result, defaults):  # pylint: disable=W0621
-            if not isinstance(defaults, dict):
+        def recurse(result, recurse_defaults):
+            if not isinstance(recurse_defaults, dict):
                 return
-            for key, val in defaults.items():
+            for key, val in recurse_defaults.items():
                 # fmt: off
                 if (key not in result) or (
-                    (result[key] is None) and (defaults[key] is not None)
+                    (result[key] is None) and (recurse_defaults[key] is not None)
                 ):
                     result[key] = val
                 else:
@@ -454,9 +456,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         # user block is not checked
 
     @staticmethod
-    def check_section(section_name, section, all_keys):  # pylint: disable=W0621
+    def check_section(section_name, section, known_keys):
         """Checks a section of the spec file to see if there are any unrecognized keys"""
-        diff = set(section.keys()).difference(all_keys)
+        diff = set(section.keys()).difference(known_keys)
 
         # TODO: Maybe add a check here for required keys
 
@@ -474,7 +476,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         try:
             yaml.safe_load(result)
         except Exception as e:  # pylint: disable=C0103
-            raise ValueError(f"Error parsing provenance spec:\n{e}")  # pylint: disable=W0707
+            raise ValueError(f"Error parsing provenance spec:\n{e}") from e
         return result
 
     def _dict_to_yaml(self, obj, string, key_stack, tab):
@@ -490,9 +492,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             return self._process_string(obj, lvl, tab)
         if isinstance(obj, bool):
             return str(obj).lower()
-        if not isinstance(obj, (list, dict)):
-            return obj
-        return self._process_dict_or_list(obj, string, key_stack, lvl, tab)
+        if isinstance(obj, list):
+            return self._process_list(obj, string, key_stack, lvl, tab)
+        if isinstance(obj, dict):
+            return self._process_dict(obj, string, key_stack, lvl, tab)
+        return obj
 
     def _process_string(self, obj, lvl, tab):
         """
@@ -503,50 +507,51 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             obj = "|\n" + tab * (lvl + 1) + ("\n" + tab * (lvl + 1)).join(split)
         return obj
 
-    def _process_dict_or_list(self, obj, string, key_stack, lvl, tab):  # pylint: disable=R0912,R0913
+    def _process_list(self, obj, string, key_stack, lvl, tab):  # pylint: disable=R0913
         """
-        Processes lists and dicts for _dict_to_yaml() in the dump() method.
+        Processes lists for _dict_to_yaml() in the dump() method.
         """
-        from copy import deepcopy  # pylint: disable=C0415
-
-        list_offset = 2 * " "
-        if isinstance(obj, list):
-            num_entries = len(obj)
-            use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"] or key_stack[0] in ["user"]
-            if not use_hyphens:
-                string += "["
-            else:
-                string += "\n"
-            for i, elem in enumerate(obj):
-                key_stack = deepcopy(key_stack)
-                key_stack.append("elem")
-                if use_hyphens:
-                    string += (lvl + 1) * tab + "- " + str(self._dict_to_yaml(elem, "", key_stack, tab)) + "\n"
-                else:
-                    string += str(self._dict_to_yaml(elem, "", key_stack, tab))
-                    if num_entries > 1 and i != len(obj) - 1:
-                        string += ", "
-                key_stack.pop()
-            if not use_hyphens:
-                string += "]"
-        # must be dict
+        num_entries = len(obj)
+        use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"] or key_stack[0] in ["user"]
+        if not use_hyphens:
+            string += "["
         else:
-            if len(key_stack) > 0 and key_stack[-1] != "elem":
-                string += "\n"
-            i = 0
-            for key, val in obj.items():
-                key_stack = deepcopy(key_stack)
-                key_stack.append(key)
-                if len(key_stack) > 1 and key_stack[-2] == "elem" and i == 0:
-                    # string += (tab * (lvl - 1))
-                    string += ""
-                elif "elem" in key_stack:
-                    string += list_offset + (tab * lvl)
-                else:
-                    string += tab * (lvl + 1)
-                string += str(key) + ": " + str(self._dict_to_yaml(val, "", key_stack, tab)) + "\n"
-                key_stack.pop()
-                i += 1
+            string += "\n"
+        for i, elem in enumerate(obj):
+            key_stack = deepcopy(key_stack)
+            key_stack.append("elem")
+            if use_hyphens:
+                string += (lvl + 1) * tab + "- " + str(self._dict_to_yaml(elem, "", key_stack, tab)) + "\n"
+            else:
+                string += str(self._dict_to_yaml(elem, "", key_stack, tab))
+                if num_entries > 1 and i != len(obj) - 1:
+                    string += ", "
+            key_stack.pop()
+        if not use_hyphens:
+            string += "]"
+        return string
+
+    def _process_dict(self, obj, string, key_stack, lvl, tab):  # pylint: disable=R0913
+        """
+        Processes dicts for _dict_to_yaml() in the dump() method
+        """
+        list_offset = 2 * " "
+        if len(key_stack) > 0 and key_stack[-1] != "elem":
+            string += "\n"
+        i = 0
+        for key, val in obj.items():
+            key_stack = deepcopy(key_stack)
+            key_stack.append(key)
+            if len(key_stack) > 1 and key_stack[-2] == "elem" and i == 0:
+                # string += (tab * (lvl - 1))
+                string += ""
+            elif "elem" in key_stack:
+                string += list_offset + (tab * lvl)
+            else:
+                string += tab * (lvl + 1)
+            string += str(key) + ": " + str(self._dict_to_yaml(val, "", key_stack, tab)) + "\n"
+            key_stack.pop()
+            i += 1
         return string
 
     def get_step_worker_map(self):

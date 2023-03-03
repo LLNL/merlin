@@ -32,6 +32,10 @@
 Module of all Merlin-specific exception types.
 """
 
+# Pylint complains that these exceptions are no different from Exception
+# but we don't care, we just need new names for exceptions here
+# pylint: disable=W0246
+
 __all__ = (
     "RetryException",
     "SoftFailException",
@@ -48,7 +52,7 @@ class RetryException(Exception):
     """
 
     def __init__(self):
-        super(RetryException, self).__init__()
+        super().__init__()
 
 
 class SoftFailException(Exception):
@@ -58,7 +62,7 @@ class SoftFailException(Exception):
     """
 
     def __init__(self):
-        super(SoftFailException, self).__init__()
+        super().__init__()
 
 
 class HardFailException(Exception):
@@ -68,7 +72,7 @@ class HardFailException(Exception):
     """
 
     def __init__(self):
-        super(HardFailException, self).__init__()
+        super().__init__()
 
 
 class InvalidChainException(Exception):
@@ -77,7 +81,7 @@ class InvalidChainException(Exception):
     """
 
     def __init__(self):
-        super(InvalidChainException, self).__init__()
+        super().__init__()
 
 
 class RestartException(Exception):
@@ -87,4 +91,4 @@ class RestartException(Exception):
     """
 
     def __init__(self):
-        super(RestartException, self).__init__()
+        super().__init__()
