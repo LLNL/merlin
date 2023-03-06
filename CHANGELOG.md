@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [unreleased]
 ### Fixed
 - Pip wheel wasn't including .sh files for merlin examples
+- The learn.py script in the openfoam_wf* examples will now create the missing Energy v Lidspeed plot
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
+- Added a singularity container openfoam_wf example
 
 ## [1.9.1]
 ### Fixed
