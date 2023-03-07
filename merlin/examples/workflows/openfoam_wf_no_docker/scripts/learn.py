@@ -103,11 +103,13 @@ ax[0][1].set_xlim([x_min, x_max])
 ax[0][1].set_ylim([y_min, y_max])
 
 
+ax[1][1].scatter(X[:, 0], 10 ** y[:, 1])
 ax[1][1].set_xlabel(r"Lidspeed ($\frac{m}{s}$)", fontsize=fontsize)
 ax[1][1].set_ylabel(r"$Energy$", fontsize=fontsize)
 ax[1][1].set_title("Average Energy Variation with Lidspeed")
 ax[1][1].grid()
-
+ax[1][1].set_xlim([np.min(X[:, 0]), np.max(X[:, 0])])
+ax[1][1].set_ylim([np.min(10 ** y[:, 1]), np.max(10 ** y[:, 1])])
 
 input_energy = ax[1][0].scatter(
     X[:, 0],
