@@ -356,7 +356,9 @@ What is flux?
 ~~~~~~~~~~~~~
 Flux is a hierarchical scheduler and launcher for parallel simulations. It allows the user
 to specify the same launch command that will work on different HPC clusters with different 
-default schedulers such as SLURM or LSF.
+default schedulers such as SLURM or LSF. Merlin versions earlier than 1.9.2 used the non-flux native
+scheduler to launch a flux instance. Subsequent merlin versions can launch the merlin workers
+using a native flux scheduler.
 More information can be found at the `Flux web page <http://flux-framework.org/docs/home/>`_.
 
 
@@ -369,6 +371,15 @@ in the ``launch_args`` variable in the batch section.
    batch:
      type: flux
      launch_args: --mpi=none
+
+.. _pbs:
+
+What is PBS?
+~~~~~~~~~~~~
+Another job scheduler. See `Portable Batch System
+https://en.wikipedia.org/wiki/Portable_Batch_System`_
+.
+This functionality is only available to launch a flux scheduler.
 
 How do I use flux on LC?
 ~~~~~~~~~~~~~~~~~~~~~~~~
