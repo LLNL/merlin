@@ -4,10 +4,9 @@ description:
 
 batch:
   type: flux
-  nodes: 1
   flux_exec: flux exec -r "0-1"
   flux_start_opts: -o,-S,log-filename=flux_par.out
-  nodes: 3
+  nodes: 1
 
 env:
   variables:
