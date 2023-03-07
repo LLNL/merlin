@@ -22,7 +22,7 @@ def define_tests():
     is the test's name, and the value is a tuple
     of (shell command, condition(s) to satisfy).
     """
-    celery_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
+    celery_slurm_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
     celery_flux_regex = r"(flux mini alloc\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
     celery_pbs_regex = r"(qsub\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
 
@@ -147,22 +147,22 @@ def define_tests():
     run_workers_echo_tests = {
         "run-workers echo simple_chain": (
             f"{workers} {simple} --echo",
-            [HasReturnCode(), HasRegex(celery_regex)],
+            [HasReturnCode(), HasRegex(celery_slurm_regex)],
             "local",
         ),
         "run-workers echo feature_demo": (
             f"{workers} {demo} --echo",
-            [HasReturnCode(), HasRegex(celery_regex)],
+            [HasReturnCode(), HasRegex(celery_slurm_regex)],
             "local",
         ),
         "run-workers echo slurm_test": (
             f"{workers} {slurm} --echo",
-            [HasReturnCode(), HasRegex(celery_regex)],
+            [HasReturnCode(), HasRegex(celery_slurm_regex)],
             "local",
         ),
         "run-workers echo flux_test": (
             f"{workers} {flux} --echo",
-            [HasReturnCode(), HasRegex(celery_regex)],
+            [HasReturnCode(), HasRegex(celery_slurm_regex)],
             "local",
         ),
         "run-workers echo flux_native_test": (
