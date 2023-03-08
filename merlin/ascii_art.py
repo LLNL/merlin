@@ -120,7 +120,6 @@ merlin_hat_small = """
 
 
 def _make_banner():
-
     name_lines = merlin_name_small.split("\n")
     hat_lines = merlin_hat_small.split("\n")
 
