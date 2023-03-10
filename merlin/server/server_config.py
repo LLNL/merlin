@@ -39,12 +39,6 @@ from typing import Tuple
 
 import yaml
 
-
-try:
-    import importlib.resources as resources
-except ImportError:
-    import importlib_resources as resources
-
 from merlin.server.server_util import (
     CONTAINER_TYPES,
     MERLIN_CONFIG_DIR,
@@ -55,6 +49,12 @@ from merlin.server.server_util import (
     RedisUsers,
     ServerConfig,
 )
+
+
+try:
+    import importlib.resources as resources
+except ImportError:
+    import importlib_resources as resources
 
 
 LOG = logging.getLogger("merlin")

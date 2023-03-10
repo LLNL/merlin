@@ -5,8 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+### Fixed
+- Pip wheel wasn't including .sh files for merlin examples
+- The learn.py script in the openfoam_wf* examples will now create the missing Energy v Lidspeed plot
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
+- Added a singularity container openfoam_wf example
+- Added flux native worker launch support
+- Added PBS flux launch support
+- Added check_for_flux, check_for_slurm, check_for_lsf, and check_for_pbs utility functions
+
+### Changed
+- Changed celery_regex to celery_slurm_regex in test_definitions.py
 
 ## [1.9.1]
 ### Fixed
