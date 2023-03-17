@@ -8,15 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Pip wheel wasn't including .sh files for merlin examples
 - The learn.py script in the openfoam_wf* examples will now create the missing Energy v Lidspeed plot
+
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
 - Added a singularity container openfoam_wf example
 - Added flux native worker launch support
 - Added PBS flux launch support
 - Added check_for_flux, check_for_slurm, check_for_lsf, and check_for_pbs utility functions
+- Tests for the `stop-workers` command
+- A function in `run_tests.py` to check that an integration test definition is formatted correctly
+- A new dev_workflow example `multiple_workers.yaml` that's used for testing the `stop-workers` command
+- Ability to start 2 subprocesses for a single test
+- Added the --distributed and --display-table flags to run_tests.py
+  - --distributed: only run distributed tests
+  - --display-tests: displays a table of all existing tests and the id associated with each test
 
 ### Changed
 - Changed celery_regex to celery_slurm_regex in test_definitions.py
+- Reformatted how integration tests are defined and part of how they run
+  - Test values are now dictionaries rather than tuples
+  - Stopped using `subprocess.Popen()` and `subprocess.communicate()` to run tests and now instead use `subprocess.run()` for simplicity and to keep things up-to-date with the latest subprocess release (`run()` will call `Popen()` and `communicate()` under the hood so we don't have to handle that anymore)
+- Rewrote the README in the integration tests folder to explain the new integration test format
 
 ## [1.9.1]
 ### Fixed

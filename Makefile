@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
@@ -38,6 +38,8 @@ include config.mk
 .PHONY : e2e-tests-diagnostic
 .PHONY : e2e-tests-local
 .PHONY : e2e-tests-local-diagnostic
+.PHONY : e2e-tests-distributed
+.PHONY : e2e-tests-distributed-diagnostic
 .PHONY : tests
 .PHONY : check-flake8
 .PHONY : check-black
@@ -107,6 +109,16 @@ e2e-tests-local:
 e2e-tests-local-diagnostic:
 	. $(VENV)/bin/activate; \
 	$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose
+
+
+e2e-tests-distributed:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --distributed; \
+
+
+e2e-tests-distributed-diagnostic:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) $(TEST)/integration/run_tests.py --distributed --verbose
 
 
 # run unit and CLI tests
@@ -184,6 +196,17 @@ version:
 	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	find tests/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
 	find Makefile -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+
+# Increment copyright year
+year:
+# do LICENSE (no comma after year)
+	sed -i 's/$(YEAR) Lawrence Livermore/$(NEW_YEAR) Lawrence Livermore/g' LICENSE
+
+# do all file headers (works on linux)
+	find merlin/ -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
+	find *.py -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
+	find tests/ -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
+	find Makefile -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
 
 # Make a list of all dependencies/requirements
 reqlist:
