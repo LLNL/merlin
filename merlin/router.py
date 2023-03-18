@@ -160,7 +160,7 @@ def dump_status(query_return, csv_file):
         f.write("\n")
 
 
-def query_workers(task_server):
+def query_workers(task_server, spec_worker_names, queues, workers_regex):
     """
     Gets info from workers.
 
@@ -169,7 +169,7 @@ def query_workers(task_server):
     LOG.info("Searching for workers...")
 
     if task_server == "celery":
-        query_celery_workers()
+        query_celery_workers(spec_worker_names, queues, workers_regex)
     else:
         LOG.error("Celery is not specified as the task server!")
 

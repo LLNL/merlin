@@ -185,6 +185,26 @@ def regex_list_filter(regex, list_to_filter, match=True):
     return list(filter(r.search, list_to_filter))
 
 
+def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False):
+    """
+    Take a list of regex's, apply each regex to a list we're searching through,
+    and append each result to a result list.
+
+    :param `regex_list`: A list of regular expressions to apply to the list_to_filter
+    :param `list_to_filter`: A list that we'll apply regexs to
+    :param `result_list`: A list that we'll append results of the regex filters to
+    :param `match`: A bool where when true we use re.match for applying the regex,
+                    when false we use re.search for applying the regex.
+    """
+    for regex in regex_list:
+        filter_results = set(regex_list_filter(regex, list_to_filter, match))
+
+        if not filter_results:
+            LOG.warning(f"No regex match for {regex}.")
+        else:
+            result_list += filter_results
+
+
 def load_yaml(filepath):
     """
     Safely read a yaml file.

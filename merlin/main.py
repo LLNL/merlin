@@ -269,7 +269,19 @@ def query_workers(args):
     :param `args`: parsed CLI arguments
     """
     print(banner_small)
-    router.query_workers(args.task_server)
+
+    # Get the workers from the spec file if --spec provided
+    worker_names = []
+    if args.spec:
+        spec_path = verify_filepath(args.spec)
+        spec = MerlinSpec.load_specification(spec_path)
+        worker_names = spec.get_worker_names()
+        for worker_name in worker_names:
+            if "$" in worker_name:
+                LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
+        LOG.debug(f"Searching for the following workers to stop based on the spec {args.spec}: {worker_names}")
+
+    router.query_workers(args.task_server, worker_names, args.queues, args.workers)
 
 
 def stop_workers(args):
@@ -781,6 +793,21 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         default="celery",
         help="Task server type from which to query workers.\
                             Default: %(default)s",
+    )
+    query.add_argument(
+        "--spec",
+        type=str,
+        default=None,
+        help="Path to a Merlin YAML spec file from which to read worker names to query.",
+    )
+    query.add_argument("--queues", type=str, default=None, nargs="+", help="Specific queues to query workers from.")
+    query.add_argument(
+        "--workers",
+        type=str,
+        action="store",
+        nargs="+",
+        default=None,
+        help="Regex match for specific workers to query.",
     )
 
     # merlin stop-workers
