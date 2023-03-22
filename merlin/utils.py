@@ -397,14 +397,14 @@ def get_flux_version(flux_path, no_errors=False):
 
 def get_flux_cmd(flux_path, no_errors=False):
     """
-    Return the flux command as string
+    Return the flux run command as string
 
     :param `flux_path`: the full path to the flux bin
     :param `no_errors`: a flag to determine if this a test run to ignore errors
     """
-    # The default is for flux version >= 0.13,
+    # The default is for flux version <= 0.39.x
     # this may change in the future.
-    flux_cmd = "flux mini run"
+    flux_cmd = "flux run"
 
     flux_ver = get_flux_version(flux_path, no_errors=no_errors)
 
@@ -412,10 +412,35 @@ def get_flux_cmd(flux_path, no_errors=False):
     if vers[0] == 0 and vers[1] < 13:
         flux_cmd = "flux wreckrun"
 
-    if vers[0] == 0 and vers[1] > 40:
-        flux_cmd = "flux run"
+    if vers[0] == 0 and vers[1] < 40:
+        flux_cmd = "flux mini run"
 
     return flux_cmd
+
+
+def get_flux_alloc(flux_path, no_errors=False):
+    """
+    Return the full flux alloc command as string
+
+    :param `flux_path`: the full path to the flux bin
+    :param `no_errors`: a flag to determine if this a test run to ignore errors
+    """
+    # The default is for flux version < 0.39.x
+    # this may change in the future.
+    flux_alloc = "alloc"
+
+    flux_ver = get_flux_version(flux_path, no_errors=no_errors)
+
+    vers = [int(n) for n in flux_ver.split(".")]
+
+    if vers[0] == 0 and vers[1] < 40:
+        flux_alloc = "mini alloc"
+
+    flux_exec: str = os.path.join(flux_path, "flux")
+
+    full_flux_alloc: str = f"{flux_exec} {flux_alloc}"
+
+    return  full_flux_alloc
 
 
 def check_machines(machines):

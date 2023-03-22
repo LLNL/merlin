@@ -40,7 +40,7 @@ import os
 import subprocess
 from typing import Dict, Optional, Union
 
-from merlin.utils import get_yaml_var
+from merlin.utils import get_yaml_var, get_flux_alloc
 
 
 LOG = logging.getLogger(__name__)
@@ -328,8 +328,8 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
         if "/" in flux_path:
             flux_path += "/"
 
-        flux_exe: str = os.path.join(flux_path, "flux")
-        launch_command = f"{flux_exe} mini alloc -o pty -N {nodes} --exclusive --job-name=merlin"
+        flux_alloc: str = get_flux_alloc(flux_path)
+        launch_command = f"{flux_alloc} -o pty -N {nodes} --exclusive --job-name=merlin"
         if bank:
             launch_command += f" --setattr=system.bank={bank}"
         if queue:

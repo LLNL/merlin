@@ -42,7 +42,7 @@ from maestrowf.interfaces.script.slurmscriptadapter import SlurmScriptAdapter
 from maestrowf.utils import start_process
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.utils import convert_timestring
+from merlin.utils import convert_timestring, get_flux_cmd
 
 
 LOG = logging.getLogger(__name__)
@@ -287,10 +287,9 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
 
         :param **kwargs: A dictionary with default settings for the adapter.
         """
-        flux_command = kwargs.pop("flux_command", "flux mini run")
+        flux_command = kwargs.pop("flux_command", get_flux_cmd())
         super(MerlinFluxScriptAdapter, self).__init__(**kwargs)
 
-        #  "cmd": "flux mini run",
         self._cmd_flags = {
             "cmd": flux_command,
             "ntasks": "-n",
