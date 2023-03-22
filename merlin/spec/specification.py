@@ -48,7 +48,7 @@ from merlin.spec import all_keys, defaults
 LOG = logging.getLogger(__name__)
 
 
-class MerlinSpec(YAMLSpecification):
+class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
     """
     This class represents the logic for parsing the Merlin yaml
     specification.
@@ -67,8 +67,8 @@ class MerlinSpec(YAMLSpecification):
             column_labels: [X0, X1]
     """
 
-    def __init__(self):
-        super(MerlinSpec, self).__init__()
+    def __init__(self):  # pylint: disable=W0246
+        super(MerlinSpec, self).__init__()  # pylint: disable=R1725
 
     @property
     def yaml_sections(self):
@@ -123,32 +123,50 @@ class MerlinSpec(YAMLSpecification):
         return result
 
     @classmethod
-    def load_specification(cls, filepath, suppress_warning=True):
+    def load_specification(cls, filepath, suppress_warning=True):  # pylint: disable=W0237
+        """
+        Load in a spec file and create a MerlinSpec object based on its' contents.
+
+        :param `cls`: The class reference (like self)
+        :param `filepath`: A path to the spec file we're loading in
+        :param `suppress_warning`: A bool representing whether to warn the user about unrecognized keys
+        :returns: A MerlinSpec object
+        """
         LOG.info("Loading specification from path: %s", filepath)
         try:
             # Load the YAML spec from the filepath
             with open(filepath, "r") as data:
                 spec = cls.load_spec_from_string(data, needs_IO=False, needs_verification=True)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=C0103
             LOG.exception(e.args)
             raise e
 
         # Path not set in _populate_spec because loading spec with string
         # does not have a path so we set it here
         spec.path = filepath
-        spec.specroot = os.path.dirname(spec.path)
+        spec.specroot = os.path.dirname(spec.path)  # pylint: disable=W0201
 
         if not suppress_warning:
             spec.warn_unrecognized_keys()
         return spec
 
     @classmethod
-    def load_spec_from_string(cls, string, needs_IO=True, needs_verification=False):
+    def load_spec_from_string(cls, string, needs_IO=True, needs_verification=False):  # pylint: disable=C0103
+        """
+        Read in a spec file from a string (or stream) and create a MerlinSpec object from it.
+
+        :param `cls`: The class reference (like self)
+        :param `string`: A string or stream of the file we're reading in
+        :param `needs_IO`: A bool representing whether we need to turn the string into a file
+                           object or not
+        :param `needs_verification`: A bool representing whether we need to verify the spec
+        :returns: A MerlinSpec object
+        """
         LOG.debug("Creating Merlin spec object...")
         # Create and populate the MerlinSpec object
         data = StringIO(string) if needs_IO else string
         spec = cls._populate_spec(data)
-        spec.specroot = None
+        spec.specroot = None  # pylint: disable=W0201
         spec.process_spec_defaults()
         LOG.debug("Merlin spec object created.")
 
@@ -179,7 +197,7 @@ class MerlinSpec(YAMLSpecification):
         try:
             spec = yaml.load(data, yaml.FullLoader)
         except AttributeError:
-            LOG.warn(
+            LOG.warning(
                 "PyYAML is using an unsafe version with a known "
                 "load vulnerability. Please upgrade your installation "
                 "to a more recent version!"
@@ -198,11 +216,11 @@ class MerlinSpec(YAMLSpecification):
 
         # Reset the file pointer and load the merlin block
         data.seek(0)
-        merlin_spec.merlin = MerlinSpec.load_merlin_block(data)
+        merlin_spec.merlin = MerlinSpec.load_merlin_block(data)  # pylint: disable=W0201
 
         # Reset the file pointer and load the user block
         data.seek(0)
-        merlin_spec.user = MerlinSpec.load_user_block(data)
+        merlin_spec.user = MerlinSpec.load_user_block(data)  # pylint: disable=W0201
 
         return merlin_spec
 
@@ -262,7 +280,7 @@ class MerlinSpec(YAMLSpecification):
                         )
                         raise ValueError(error_msg)
 
-        except Exception:
+        except Exception:  # pylint: disable=W0706
             raise
 
     def verify_merlin_block(self, schema):
@@ -288,7 +306,7 @@ class MerlinSpec(YAMLSpecification):
         YAMLSpecification.validate_schema("batch", self.batch, schema)
 
         # Additional Walltime checks in case the regex from the schema bypasses an error
-        if "walltime" in self.batch:
+        if "walltime" in self.batch:  # pylint: disable=R1702
             if self.batch["type"] == "lsf":
                 LOG.warning("The walltime argument is not available in lsf.")
             else:
@@ -299,17 +317,17 @@ class MerlinSpec(YAMLSpecification):
                         # Walltime must have : if it's not of the form SS
                         if ":" not in walltime:
                             raise ValueError(err_msg)
-                        else:
-                            # Walltime must have exactly 2 chars between :
-                            time = walltime.split(":")
-                            for section in time:
-                                if len(section) != 2:
-                                    raise ValueError(err_msg)
-                except Exception:
+                        # Walltime must have exactly 2 chars between :
+                        time = walltime.split(":")
+                        for section in time:
+                            if len(section) != 2:
+                                raise ValueError(err_msg)
+                except Exception:  # pylint: disable=W0706
                     raise
 
     @staticmethod
     def load_merlin_block(stream):
+        """Loads in the merlin block of the spec file"""
         try:
             merlin_block = yaml.safe_load(stream)["merlin"]
         except KeyError:
@@ -324,6 +342,7 @@ class MerlinSpec(YAMLSpecification):
 
     @staticmethod
     def load_user_block(stream):
+        """Loads in the user block of the spec file"""
         try:
             user_block = yaml.safe_load(stream)["user"]
         except KeyError:
@@ -331,6 +350,7 @@ class MerlinSpec(YAMLSpecification):
         return user_block
 
     def process_spec_defaults(self):
+        """Fills in the default values if they aren't there already"""
         for name, section in self.sections.items():
             if section is None:
                 setattr(self, name, {})
@@ -354,8 +374,23 @@ class MerlinSpec(YAMLSpecification):
         if self.merlin["resources"]["workers"] is None:
             self.merlin["resources"]["workers"] = {"default_worker": defaults.WORKER}
         else:
-            for worker, vals in self.merlin["resources"]["workers"].items():
+            # Gather a list of step names defined in the study
+            steps = self.get_study_step_names()
+            modified_steps = False
+            # Loop through each worker and fill in the defaults
+            for _, vals in self.merlin["resources"]["workers"].items():
                 MerlinSpec.fill_missing_defaults(vals, defaults.WORKER)
+                # Loop through the list of steps assigned to a worker
+                for step in vals["steps"]:
+                    # If the assigned step is still in the list of existing steps, remove it
+                    if step in steps:
+                        modified_steps = True
+                        steps.remove(step)
+            # If other steps have been assigned a worker but there are still steps remaining
+            # that haven't been assigned a worker yet, assign the remaining steps to the default worker
+            if modified_steps and steps:
+                self.merlin["resources"]["workers"]["default_worker"] = defaults.WORKER
+                self.merlin["resources"]["workers"]["default_worker"]["steps"] = steps
         if self.merlin["samples"] is not None:
             MerlinSpec.fill_missing_defaults(self.merlin["samples"], defaults.SAMPLES)
 
@@ -370,7 +405,7 @@ class MerlinSpec(YAMLSpecification):
         existing ones.
         """
 
-        def recurse(result, defaults):
+        def recurse(result, defaults):  # pylint: disable=W0621
             if not isinstance(defaults, dict):
                 return
             for key, val in defaults.items():
@@ -387,6 +422,7 @@ class MerlinSpec(YAMLSpecification):
 
     # ***Unsure if this method is still needed after adding json schema verification***
     def warn_unrecognized_keys(self):
+        """Checks if there are any unrecognized keys in the spec file"""
         # check description
         MerlinSpec.check_section("description", self.description, all_keys.DESCRIPTION)
 
@@ -397,7 +433,7 @@ class MerlinSpec(YAMLSpecification):
         MerlinSpec.check_section("env", self.environment, all_keys.ENV)
 
         # check parameters
-        for param, contents in self.globals.items():
+        for _, contents in self.globals.items():
             MerlinSpec.check_section("global.parameters", contents, all_keys.PARAMETER)
 
         # check steps
@@ -416,13 +452,14 @@ class MerlinSpec(YAMLSpecification):
         # user block is not checked
 
     @staticmethod
-    def check_section(section_name, section, all_keys):
+    def check_section(section_name, section, all_keys):  # pylint: disable=W0621
+        """Checks a section of the spec file to see if there are any unrecognized keys"""
         diff = set(section.keys()).difference(all_keys)
 
         # TODO: Maybe add a check here for required keys
 
         for extra in diff:
-            LOG.warn(f"Unrecognized key '{extra}' found in spec section '{section_name}'.")
+            LOG.warning(f"Unrecognized key '{extra}' found in spec section '{section_name}'.")
 
     def dump(self):
         """
@@ -434,11 +471,11 @@ class MerlinSpec(YAMLSpecification):
             result = result.replace("\n\n\n", "\n\n")
         try:
             yaml.safe_load(result)
-        except Exception as e:
-            raise ValueError(f"Error parsing provenance spec:\n{e}")
+        except Exception as e:  # pylint: disable=C0103
+            raise ValueError(f"Error parsing provenance spec:\n{e}")  # pylint: disable=W0707
         return result
 
-    def _dict_to_yaml(self, obj, string, key_stack, tab, newline=True):
+    def _dict_to_yaml(self, obj, string, key_stack, tab):
         """
         The if-else ladder for sorting the yaml string prettification of dump().
         """
@@ -449,12 +486,11 @@ class MerlinSpec(YAMLSpecification):
 
         if isinstance(obj, str):
             return self._process_string(obj, lvl, tab)
-        elif isinstance(obj, bool):
+        if isinstance(obj, bool):
             return str(obj).lower()
-        elif not (isinstance(obj, list) or isinstance(obj, dict)):
+        if not isinstance(obj, (list, dict)):
             return obj
-        else:
-            return self._process_dict_or_list(obj, string, key_stack, lvl, tab)
+        return self._process_dict_or_list(obj, string, key_stack, lvl, tab)
 
     def _process_string(self, obj, lvl, tab):
         """
@@ -465,15 +501,15 @@ class MerlinSpec(YAMLSpecification):
             obj = "|\n" + tab * (lvl + 1) + ("\n" + tab * (lvl + 1)).join(split)
         return obj
 
-    def _process_dict_or_list(self, obj, string, key_stack, lvl, tab):
+    def _process_dict_or_list(self, obj, string, key_stack, lvl, tab):  # pylint: disable=R0912,R0913
         """
         Processes lists and dicts for _dict_to_yaml() in the dump() method.
         """
-        from copy import deepcopy
+        from copy import deepcopy  # pylint: disable=C0415
 
         list_offset = 2 * " "
         if isinstance(obj, list):
-            n = len(obj)
+            num_entries = len(obj)
             use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"] or key_stack[0] in ["user"]
             if not use_hyphens:
                 string += "["
@@ -485,8 +521,8 @@ class MerlinSpec(YAMLSpecification):
                 if use_hyphens:
                     string += (lvl + 1) * tab + "- " + str(self._dict_to_yaml(elem, "", key_stack, tab)) + "\n"
                 else:
-                    string += str(self._dict_to_yaml(elem, "", key_stack, tab, newline=(i != 0)))
-                    if n > 1 and i != len(obj) - 1:
+                    string += str(self._dict_to_yaml(elem, "", key_stack, tab))
+                    if num_entries > 1 and i != len(obj) - 1:
                         string += ", "
                 key_stack.pop()
             if not use_hyphens:
@@ -496,9 +532,9 @@ class MerlinSpec(YAMLSpecification):
             if len(key_stack) > 0 and key_stack[-1] != "elem":
                 string += "\n"
             i = 0
-            for k, v in obj.items():
+            for key, val in obj.items():
                 key_stack = deepcopy(key_stack)
-                key_stack.append(k)
+                key_stack.append(key)
                 if len(key_stack) > 1 and key_stack[-2] == "elem" and i == 0:
                     # string += (tab * (lvl - 1))
                     string += ""
@@ -506,14 +542,32 @@ class MerlinSpec(YAMLSpecification):
                     string += list_offset + (tab * lvl)
                 else:
                     string += tab * (lvl + 1)
-                string += str(k) + ": " + str(self._dict_to_yaml(v, "", key_stack, tab)) + "\n"
+                string += str(key) + ": " + str(self._dict_to_yaml(val, "", key_stack, tab)) + "\n"
                 key_stack.pop()
                 i += 1
         return string
 
+    def get_step_worker_map(self):
+        """
+        Creates a dictionary with step names as keys and a list of workers
+        associated with each step as values. The inverse of get_worker_step_map().
+        """
+        steps = self.get_study_step_names()
+        step_worker_map = {step_name: [] for step_name in steps}
+        for worker_name, worker_val in self.merlin["resources"]["workers"].items():
+            # Case 1: worker doesn't have specific steps
+            if "all" in worker_val["steps"]:
+                for step_name in step_worker_map:
+                    step_worker_map[step_name].append(worker_name)
+            # Case 2: worker has specific steps
+            else:
+                for step in worker_val["steps"]:
+                    step_worker_map[step].append(worker_name)
+        return step_worker_map
+
     def get_task_queues(self):
         """Returns a dictionary of steps and their corresponding task queues."""
-        from merlin.config.configfile import CONFIG
+        from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
         steps = self.get_study_steps()
         queues = {}
@@ -540,8 +594,8 @@ class MerlinSpec(YAMLSpecification):
                 else:
                     task_queues = [queues[steps]]
             except KeyError:
-                nl = "\n"
-                LOG.error(f"Invalid steps '{steps}'! Try one of these (or 'all'):\n{nl.join(queues.keys())}")
+                newline = "\n"
+                LOG.error(f"Invalid steps '{steps}'! Try one of these (or 'all'):\n{newline.join(queues.keys())}")
                 raise
         return sorted(set(task_queues))
 
@@ -555,6 +609,7 @@ class MerlinSpec(YAMLSpecification):
         return shlex.quote(queues)
 
     def get_worker_names(self):
+        """Builds a list of workers"""
         result = []
         for worker in self.merlin["resources"]["workers"]:
             result.append(worker)

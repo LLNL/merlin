@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Pip wheel wasn't including .sh files for merlin examples
 - The learn.py script in the openfoam_wf* examples will now create the missing Energy v Lidspeed plot
+- Fixed the flags associated with the `stop-workers` command (--spec, --queues, --workers)
+- Fixed the --step flag for the `run-workers` command
 
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
@@ -22,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the --distributed and --display-table flags to run_tests.py
   - --distributed: only run distributed tests
   - --display-tests: displays a table of all existing tests and the id associated with each test
+- Added the --disable-logs flag to the `run-workers` command
+- Merlin will now assign `default_worker` to any step not associated with a worker
+- Added `get_step_worker_map()` as a method in `specification.py`
 - Added get_flux_alloc function for new flux version >= 0.48.x interface change
 
 ### Changed
@@ -30,6 +35,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Test values are now dictionaries rather than tuples
   - Stopped using `subprocess.Popen()` and `subprocess.communicate()` to run tests and now instead use `subprocess.run()` for simplicity and to keep things up-to-date with the latest subprocess release (`run()` will call `Popen()` and `communicate()` under the hood so we don't have to handle that anymore)
 - Rewrote the README in the integration tests folder to explain the new integration test format
+- Reformatted `start_celery_workers()` in `celeryadapter.py` file. This involved:
+  - Modifying `verify_args()` to return the arguments it verifies/updates
+  - Changing `launch_celery_worker()` to launch the subprocess (no longer builds the celery command)
+  - Creating `get_celery_cmd()` to do what `launch_celery_worker()` used to do and build the celery command to run
+  - Creating `_get_steps_to_start()`, `_create_kwargs()`, and `_get_workers_to_start()` as helper functions to simplify logic in `start_celery_workers()`
+- Modified the `merlinspec.json` file:
+  - the minimum `gpus per task` is now 0 instead of 1
+  - variables defined in the `env` block of a spec file can now be arrays
 - Changed get_flux_cmd for new flux version >=0.48.x interface
 
 ## [1.9.1]

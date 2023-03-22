@@ -56,8 +56,7 @@ from merlin.utils import get_flux_alloc, get_flux_cmd
 
 OUTPUT_DIR = "cli_test_studies"
 CLEAN_MERLIN_SERVER = "rm -rf appendonly.aof dump.rdb merlin_server/"
-# KILL_WORKERS = "pkill -9 -f '.*merlin_test_worker'"
-KILL_WORKERS = "pkill -9 -f 'celery'"
+KILL_WORKERS = "pkill -9 -f '.*merlin_test_worker'"
 
 
 def define_tests():  # pylint: disable=R0914
