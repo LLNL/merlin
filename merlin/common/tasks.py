@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
@@ -141,7 +141,6 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
         elif result == ReturnCode.SOFT_FAIL:
             LOG.warning(f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow.")
         elif result == ReturnCode.HARD_FAIL:
-
             # stop all workers attached to this queue
             step_queue = step.get_task_queue()
             LOG.error(f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow.")
@@ -260,7 +259,6 @@ def add_merlin_expanded_chain_to_chord(
         ]
         LOG.debug(f"recursing grandparent with relative paths {relative_paths}")
         for step in chain_:
-
             # Make a list of new task objects with modified cmd and workspace
             # based off of the parameter substitutions and relative_path for
             # a given sample.
@@ -325,7 +323,6 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
     LOG.debug(f"simple chain with {chain_}")
     all_chains = []
     for step in chain_:
-
         # Make a list of new task signatures with modified cmd and workspace
         # based off of the parameter substitutions and relative_path for
         # a given sample.

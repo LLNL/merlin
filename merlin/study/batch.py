@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
@@ -37,6 +37,7 @@ are implemented.
 """
 import logging
 import os
+import subprocess
 from typing import Dict, Optional, Union
 
 from merlin.utils import get_yaml_var
@@ -64,24 +65,118 @@ def batch_check_parallel(spec):
     return parallel
 
 
+def check_for_flux():
+    """
+    Check if FLUX is the main scheduler for the cluster
+    """
+    try:
+        p = subprocess.Popen(
+            ["flux", "resource", "info"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        result = p.stdout.readlines()
+        if result and len(result) > 0 and b"Nodes" in result[0]:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        return False
+
+
+def check_for_slurm():
+    """
+    Check if SLURM is the main scheduler for the cluster
+    """
+    try:
+        p = subprocess.Popen(
+            ["sbatch", "--help"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        result = p.stdout.readlines()
+        if result and len(result) > 0 and b"sbatch" in result[0]:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        return False
+
+
+def check_for_lsf():
+    """
+    Check if LSF is the main scheduler for the cluster
+    """
+    try:
+        p = subprocess.Popen(
+            ["jsrun", "--help"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        result = p.stdout.readlines()
+        if result and len(result) > 0 and b"jsrun" in result[0]:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        return False
+
+
+def check_for_pbs():
+    """
+    Check if PBS is the main scheduler for the cluster
+    """
+    try:
+        p = subprocess.Popen(
+            ["qsub", "--version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        result = p.stdout.readlines()
+        if result and len(result) > 0 and b"pbs_version" in result[0]:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
+        return False
+
+
 def get_batch_type(default=None):
     """
     Determine which batch scheduler to use.
 
     :param default: (str) The default batch scheduler to use if a scheduler
-        can't be determined. The default is slurm.
-    :returns: (str) The batch name (available options: slurm, flux, lsf).
+                          can't be determined. The default is None.
+    :returns: (str) The batch name (available options: slurm, flux, lsf, pbs).
     """
-    if default is None:
-        default = "slurm"
+    # Flux should be checked first due to slurm emulation scripts
+    LOG.debug(f"check for flux = {check_for_flux()}")
+    if check_for_flux():
+        return "flux"
 
-    if "SYS_TYPE" not in os.environ:
-        return default
+    # PBS should be checked before slurm for testing
+    LOG.debug(f"check for pbs = {check_for_pbs()}")
+    if check_for_pbs():
+        return "pbs"
 
-    if "toss3" in os.environ["SYS_TYPE"]:
+    # LSF should be checked before slurm for testing
+    LOG.debug(f"check for lsf = {check_for_lsf()}")
+    if check_for_lsf():
+        return "lsf"
+
+    LOG.debug(f"check for slurm = {check_for_slurm()}")
+    if check_for_slurm():
         return "slurm"
 
-    if "blueos" in os.environ["SYS_TYPE"]:
+    SYS_TYPE = os.environ.get("SYS_TYPE", "")
+    if "toss_3" in SYS_TYPE:
+        return "slurm"
+
+    if "blueos" in SYS_TYPE:
         return "lsf"
 
     return default
@@ -160,29 +255,37 @@ def batch_worker_launch(
     if not launch_command:
         launch_command = construct_worker_launch_command(batch, btype, nodes)
 
-    launch_command += f" {launch_args}"
+    if launch_args:
+        launch_command += f" {launch_args}"
 
     # Allow for any pre launch manipulation, e.g. module load
     # hwloc/1.11.10-cuda
     if launch_pre:
         launch_command = f"{launch_pre} {launch_command}"
 
+    LOG.debug(f"launch_command = {launch_command}")
+
     worker_cmd: str = ""
     if btype == "flux":
         flux_path: str = get_yaml_var(batch, "flux_path", "")
-        flux_opts: Union[str, Dict] = get_yaml_var(batch, "flux_start_opts", "")
-        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(batch, "flux_exec_workers", True)
-
-        flux_exec: str = ""
-        if flux_exec_workers:
-            flux_exec = get_yaml_var(batch, "flux_exec", "flux exec")
-
         if "/" in flux_path:
             flux_path += "/"
 
         flux_exe: str = os.path.join(flux_path, "flux")
 
-        launch: str = f"{launch_command} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
+        flux_opts: Union[str, Dict] = get_yaml_var(batch, "flux_start_opts", "")
+
+        flux_exec_workers: Union[str, Dict, bool] = get_yaml_var(batch, "flux_exec_workers", True)
+
+        default_flux_exec = "flux exec" if launch_command else f"{flux_exe} exec"
+        flux_exec: str = ""
+        if flux_exec_workers:
+            flux_exec = get_yaml_var(batch, "flux_exec", default_flux_exec)
+
+        if launch_command and "flux" not in launch_command:
+            launch: str = f"{launch_command} {flux_exe} start {flux_opts} {flux_exec} `which {shell}` -c"
+        else:
+            launch: str = f"{launch_command} {flux_exec} `which {shell}` -c"
         worker_cmd = f'{launch} "{com}"'
     else:
         worker_cmd = f"{launch_command} {com}"
@@ -203,6 +306,10 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
     bank: str = get_yaml_var(batch, "bank", "")
     queue: str = get_yaml_var(batch, "queue", "")
     walltime: str = get_yaml_var(batch, "walltime", "")
+
+    if btype == "pbs" and workload_manager == btype:
+        raise Exception("The PBS scheduler is only enabled for 'batch: flux' type")
+
     if btype == "slurm" or workload_manager == "slurm":
         launch_command = f"srun -N {nodes} -n {nodes}"
         if bank:
@@ -211,8 +318,34 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
             launch_command += f" -p {queue}"
         if walltime:
             launch_command += f" -t {walltime}"
+
     if workload_manager == "lsf":
         # The jsrun utility does not have a time argument
         launch_command = f"jsrun -a 1 -c ALL_CPUS -g ALL_GPUS --bind=none -n {nodes}"
+
+    if workload_manager == "flux":
+        flux_path: str = get_yaml_var(batch, "flux_path", "")
+        if "/" in flux_path:
+            flux_path += "/"
+
+        flux_exe: str = os.path.join(flux_path, "flux")
+        launch_command = f"{flux_exe} mini alloc -o pty -N {nodes} --exclusive --job-name=merlin"
+        if bank:
+            launch_command += f" --setattr=system.bank={bank}"
+        if queue:
+            launch_command += f" --setattr=system.queue={queue}"
+        if walltime:
+            launch_command += f" -t {walltime}"
+
+    if workload_manager == "pbs":
+        launch_command = f"qsub -l nodes={nodes}"
+        # launch_command = f"qsub -l nodes={nodes} -l procs={nodes}"
+        if bank:
+            launch_command += f" -A {bank}"
+        if queue:
+            launch_command += f" -q {queue}"
+        # if walltime:
+        #     launch_command += f" -l walltime={walltime}"
+        launch_command += " --"  # To read from stdin
 
     return launch_command

@@ -131,7 +131,7 @@ jobs:
       run: |
         python3 -m pytest tests/unit/
 
-    - name: Run integration test suite
+    - name: Run integration test suite for local tests
       run: |
         python3 tests/integration/run_tests.py --verbose --local
 
@@ -179,7 +179,7 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
 
-    - name: Install merlin to run unit tests
+    - name: Install merlin and setup redis as the broker
       run: |
         pip3 install -e .
         merlin config --broker redis
@@ -189,12 +189,12 @@ jobs:
         merlin example feature_demo
         pip3 install -r feature_demo/requirements.txt
 
-    - name: Run integration test suite for Redis
+    - name: Run integration test suite for distributed tests
       env:
         REDIS_HOST: redis
         REDIS_PORT: 6379
       run: |
-        python3 tests/integration/run_tests.py --verbose --ids 31 32
+        python3 tests/integration/run_tests.py --verbose --distributed
 
     # - name: Setup rabbitmq config
     #   run: |

@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
@@ -113,13 +113,16 @@ class MerlinStudy:
             ),
             "MERLIN_SAMPLE_NAMES": " ".join(self.get_sample_labels(from_spec=self.original_spec)),
             "MERLIN_SPEC_ORIGINAL_TEMPLATE": os.path.join(
-                self.info, self.original_spec.description["name"].replace(" ", "_") + ".orig.yaml"
+                self.info,
+                self.original_spec.description["name"].replace(" ", "_") + ".orig.yaml",
             ),
             "MERLIN_SPEC_EXECUTED_RUN": os.path.join(
-                self.info, self.original_spec.description["name"].replace(" ", "_") + ".partial.yaml"
+                self.info,
+                self.original_spec.description["name"].replace(" ", "_") + ".partial.yaml",
             ),
             "MERLIN_SPEC_ARCHIVED_COPY": os.path.join(
-                self.info, self.original_spec.description["name"].replace(" ", "_") + ".expanded.yaml"
+                self.info,
+                self.original_spec.description["name"].replace(" ", "_") + ".expanded.yaml",
             ),
         }
 

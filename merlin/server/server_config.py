@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
@@ -39,12 +39,6 @@ from typing import Tuple
 
 import yaml
 
-
-try:
-    import importlib.resources as resources
-except ImportError:
-    import importlib_resources as resources
-
 from merlin.server.server_util import (
     CONTAINER_TYPES,
     MERLIN_CONFIG_DIR,
@@ -55,6 +49,12 @@ from merlin.server.server_util import (
     RedisUsers,
     ServerConfig,
 )
+
+
+try:
+    import importlib.resources as resources
+except ImportError:
+    import importlib_resources as resources
 
 
 LOG = logging.getLogger("merlin")

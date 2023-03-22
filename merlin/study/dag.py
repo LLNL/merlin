@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
@@ -202,15 +202,11 @@ class DAG:
         for group in list_of_groups_of_chains:
             for chain in group:
                 for task_name in chain:
-
                     if self.num_children(task_name) == 1 and task_name != "_source":
-
                         child = self.children(task_name)[0]
 
                         if self.num_parents(child) == 1:
-
                             if self.compatible_merlin_expansion(child, task_name):
-
                                 self.find_chain(child, list_of_groups_of_chains).remove(child)
 
                                 chain.append(child)
