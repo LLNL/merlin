@@ -56,7 +56,7 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 ARRAY_FILE_FORMATS = ".npy, .csv, .tab"
-DEFAULT_FLUX_VERSION = "0.13"
+DEFAULT_FLUX_VERSION = "0.48.0"
 
 
 def get_user_process_info(user=None, attrs=None):
@@ -420,7 +420,7 @@ def get_flux_cmd(flux_path, no_errors=False):
 
 def get_flux_alloc(flux_path, no_errors=False):
     """
-    Return the full flux alloc command as string
+    Return the flux alloc command as string
 
     :param `flux_path`: the full path to the flux bin
     :param `no_errors`: a flag to determine if this a test run to ignore errors
