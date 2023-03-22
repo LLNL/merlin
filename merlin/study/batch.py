@@ -40,7 +40,7 @@ import os
 import subprocess
 from typing import Dict, Optional, Union
 
-from merlin.utils import get_yaml_var, get_flux_alloc
+from merlin.utils import get_flux_alloc, get_yaml_var
 
 
 LOG = logging.getLogger(__name__)
