@@ -427,20 +427,16 @@ def get_flux_alloc(flux_path, no_errors=False):
     """
     # The default is for flux version < 0.39.x
     # this may change in the future.
-    flux_alloc = "alloc"
+    flux_alloc = "flux alloc"
 
     flux_ver = get_flux_version(flux_path, no_errors=no_errors)
 
     vers = [int(n) for n in flux_ver.split(".")]
 
     if vers[0] == 0 and vers[1] < 40:
-        flux_alloc = "mini alloc"
+        flux_alloc = "flux mini alloc"
 
-    flux_exec: str = os.path.join(flux_path, "flux")
-
-    full_flux_alloc: str = f"{flux_exec} {flux_alloc}"
-
-    return  full_flux_alloc
+    return flux_alloc
 
 
 def check_machines(machines):

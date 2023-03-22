@@ -51,7 +51,7 @@ from conditions import (  # pylint: disable=E0401
     StepFileHasRegex,
 )
 
-from merlin.utils import get_flux_cmd
+from merlin.utils import get_flux_cmd, get_flux_alloc
 
 
 OUTPUT_DIR = "cli_test_studies"
@@ -66,8 +66,9 @@ def define_tests():  # pylint: disable=R0914
     is the test's name, and the value is a tuple
     of (shell command, condition(s) to satisfy).
     """
+    flux_alloc = get_flux_alloc("flux", no_errors=True),
     celery_slurm_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
-    celery_flux_regex = r"(flux mini alloc\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
+    celery_flux_regex = fr"({flux_alloc}\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
     celery_pbs_regex = r"(qsub\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
 
     # shortcut string variables
