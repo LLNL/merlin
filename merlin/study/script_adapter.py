@@ -42,7 +42,7 @@ from maestrowf.interfaces.script.slurmscriptadapter import SlurmScriptAdapter
 from maestrowf.utils import start_process
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.utils import convert_timestring, get_flux_cmd
+from merlin.utils import convert_timestring
 
 
 LOG = logging.getLogger(__name__)
@@ -287,7 +287,8 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
 
         :param **kwargs: A dictionary with default settings for the adapter.
         """
-        flux_command = kwargs.pop("flux_command", get_flux_cmd())
+        # The flux_command should always be overriden by the study object's flux_command property
+        flux_command = kwargs.pop("flux_command", "flux run")
         super(MerlinFluxScriptAdapter, self).__init__(**kwargs)
 
         self._cmd_flags = {
