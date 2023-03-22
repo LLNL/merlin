@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the --distributed and --display-table flags to run_tests.py
   - --distributed: only run distributed tests
   - --display-tests: displays a table of all existing tests and the id associated with each test
-- Added get_flux_alloc function for new flux interface change
+- Added get_flux_alloc function for new flux version >= 0.48.x interface change
 
 ### Changed
 - Changed celery_regex to celery_slurm_regex in test_definitions.py
@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Test values are now dictionaries rather than tuples
   - Stopped using `subprocess.Popen()` and `subprocess.communicate()` to run tests and now instead use `subprocess.run()` for simplicity and to keep things up-to-date with the latest subprocess release (`run()` will call `Popen()` and `communicate()` under the hood so we don't have to handle that anymore)
 - Rewrote the README in the integration tests folder to explain the new integration test format
-- Changed get_flux_cmd for new interface
+- Changed get_flux_cmd for new flux version >=0.48.x interface
 
 ## [1.9.1]
 ### Fixed
