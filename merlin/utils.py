@@ -402,18 +402,18 @@ def get_flux_cmd(flux_path, no_errors=False):
     :param `flux_path`: the full path to the flux bin
     :param `no_errors`: a flag to determine if this a test run to ignore errors
     """
-    # The default is for flux version <= 0.39.x
+    # The default is for flux version >= 0.48.x
     # this may change in the future.
     flux_cmd = "flux run"
 
     flux_ver = get_flux_version(flux_path, no_errors=no_errors)
 
     vers = [int(n) for n in flux_ver.split(".")]
+    if vers[0] == 0 and vers[1] < 48:
+        flux_cmd = "flux mini run"
+
     if vers[0] == 0 and vers[1] < 13:
         flux_cmd = "flux wreckrun"
-
-    if vers[0] == 0 and vers[1] < 40:
-        flux_cmd = "flux mini run"
 
     return flux_cmd
 
@@ -425,7 +425,7 @@ def get_flux_alloc(flux_path, no_errors=False):
     :param `flux_path`: the full path to the flux bin
     :param `no_errors`: a flag to determine if this a test run to ignore errors
     """
-    # The default is for flux version < 0.39.x
+    # The default is for flux version >= 0.48.x
     # this may change in the future.
     flux_alloc = "flux alloc"
 
@@ -433,7 +433,7 @@ def get_flux_alloc(flux_path, no_errors=False):
 
     vers = [int(n) for n in flux_ver.split(".")]
 
-    if vers[0] == 0 and vers[1] < 40:
+    if vers[0] == 0 and vers[1] < 48:
         flux_alloc = "flux mini alloc"
 
     return flux_alloc
