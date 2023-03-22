@@ -1,2 +1,8 @@
 #!/usr/bin/env python3
-print("Nodes")
+import sys
+
+
+if len(sys.argv) > 1 and sys.argv[1] == 'version':
+   print("commands:    		0.48.0")
+else:
+   print("Nodes")
