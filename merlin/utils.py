@@ -412,6 +412,9 @@ def get_flux_cmd(flux_path, no_errors=False):
     if vers[0] == 0 and vers[1] < 13:
         flux_cmd = "flux wreckrun"
 
+    if vers[0] == 0 and vers[1] > 40:
+        flux_cmd = "flux run"
+
     return flux_cmd
 
 
