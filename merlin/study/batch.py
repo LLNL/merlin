@@ -154,21 +154,21 @@ def get_batch_type(default=None):
     :returns: (str) The batch name (available options: slurm, flux, lsf, pbs).
     """
     # Flux should be checked first due to slurm emulation scripts
-    LOG.debug(f"check for flux = {check_for_flux()}")
+    LOG.debug(f"check for flux scheduler = {check_for_flux()}")
     if check_for_flux():
         return "flux"
 
     # PBS should be checked before slurm for testing
-    LOG.debug(f"check for pbs = {check_for_pbs()}")
+    LOG.debug(f"check for pbs scheduler = {check_for_pbs()}")
     if check_for_pbs():
         return "pbs"
 
     # LSF should be checked before slurm for testing
-    LOG.debug(f"check for lsf = {check_for_lsf()}")
+    LOG.debug(f"check for lsf scheduler = {check_for_lsf()}")
     if check_for_lsf():
         return "lsf"
 
-    LOG.debug(f"check for slurm = {check_for_slurm()}")
+    LOG.debug(f"check for slurm scheduler = {check_for_slurm()}")
     if check_for_slurm():
         return "slurm"
 
