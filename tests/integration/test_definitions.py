@@ -90,7 +90,7 @@ def define_tests():  # pylint: disable=R0914
     flux_restart = f"{examples}/flux/flux_par_restart.yaml"
     flux_native = f"{examples}/flux/flux_par_native_test.yaml"
     workers_flux = f"merlin {err_lvl} run-workers"
-    fake_cmds_path = f"tests/integration/fake_commands"
+    fake_cmds_path = "tests/integration/fake_commands"
     if not shutil.which("flux"):
         # Use bogus flux to test if no flux is present
         workers_flux = f"""PATH="{fake_cmds_path}:$PATH";merlin {err_lvl} run-workers"""
