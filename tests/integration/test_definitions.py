@@ -40,6 +40,8 @@ Each test looks like:
 }
 """
 
+import shutil
+
 from conditions import (  # pylint: disable=E0401
     FileHasNoRegex,
     FileHasRegex,
@@ -88,9 +90,15 @@ def define_tests():  # pylint: disable=R0914
     flux_restart = f"{examples}/flux/flux_par_restart.yaml"
     flux_native = f"{examples}/flux/flux_par_native_test.yaml"
     flux_native_path = f"{examples}/flux/scripts/flux_test"
-    workers_flux = f"""PATH="{flux_native_path}:$PATH";merlin {err_lvl} run-workers"""
+    workers_flux = f"merlin {err_lvl} run-workers"
+    if not shutil.which("flux"):
+        # Use bogus flux to test if no flux is present
+        workers_flux = f"""PATH="{flux_native_path}:$PATH";merlin {err_lvl} run-workers"""
     pbs_path = f"{examples}/flux/scripts/pbs_test"
-    workers_pbs = f"""PATH="{pbs_path}:$PATH";merlin {err_lvl} run-workers"""
+    workers_pbs = f"merlin {err_lvl} run-workers" ""
+    if not shutil.which("qsub"):
+        # Use bogus qsub to test if no pbs scheduler is present
+        workers_pbs = f"""PATH="{pbs_path}:$PATH";merlin {err_lvl} run-workers"""
     lsf = f"{examples}/lsf/lsf_par.yaml"
     mul_workers_demo = f"{dev_examples}/multiple_workers.yaml"
     black = "black --check --target-version py36"
