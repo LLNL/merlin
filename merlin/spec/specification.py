@@ -375,22 +375,24 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             self.merlin["resources"]["workers"] = {"default_worker": defaults.WORKER}
         else:
             # Gather a list of step names defined in the study
-            steps = self.get_study_step_names()
-            modified_steps = False
+            all_workflow_steps = self.get_study_step_names()
+            # Create a variable to track the steps assigned to workers
+            worker_steps = []
+
             # Loop through each worker and fill in the defaults
-            for _, vals in self.merlin["resources"]["workers"].items():
-                MerlinSpec.fill_missing_defaults(vals, defaults.WORKER)
-                # Loop through the list of steps assigned to a worker
-                for step in vals["steps"]:
-                    # If the assigned step is still in the list of existing steps, remove it
-                    if step in steps:
-                        modified_steps = True
-                        steps.remove(step)
-            # If other steps have been assigned a worker but there are still steps remaining
-            # that haven't been assigned a worker yet, assign the remaining steps to the default worker
-            if modified_steps and steps:
+            for _, worker_settings in self.merlin["resources"]["workers"].items():
+                MerlinSpec.fill_missing_defaults(worker_settings, defaults.WORKER)
+                worker_steps.extend(worker_settings["steps"])
+
+            # Figure out which steps still need workers
+            steps_that_need_workers = list(set(all_workflow_steps) - set(worker_steps))
+
+            # If there are still steps remaining that haven't been assigned a worker yet,
+            # assign the remaining steps to the default worker. If all the steps still need workers
+            # (i.e. no workers were assigned) then default workers' steps should be "all" so we skip this
+            if steps_that_need_workers and (steps_that_need_workers != all_workflow_steps):
                 self.merlin["resources"]["workers"]["default_worker"] = defaults.WORKER
-                self.merlin["resources"]["workers"]["default_worker"]["steps"] = steps
+                self.merlin["resources"]["workers"]["default_worker"]["steps"] = steps_that_need_workers
         if self.merlin["samples"] is not None:
             MerlinSpec.fill_missing_defaults(self.merlin["samples"], defaults.SAMPLES)
 
