@@ -3,6 +3,6 @@ import sys
 
 
 if len(sys.argv) > 1 and sys.argv[1] == 'version':
-   print("commands:    		0.48.0")
+   print("commands:    		0.48.0\n<This is a fake flux for testing>")
 else:
-   print("Nodes")
+   print("Nodes\n<This is a fake flux for testing>")

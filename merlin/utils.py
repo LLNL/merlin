@@ -427,14 +427,14 @@ def get_flux_alloc(flux_path, no_errors=False):
     """
     # The default is for flux version >= 0.48.x
     # this may change in the future.
-    flux_alloc = "flux alloc"
+    flux_alloc = f"{flux_path} alloc"
 
     flux_ver = get_flux_version(flux_path, no_errors=no_errors)
 
     vers = [int(n) for n in flux_ver.split(".")]
 
     if vers[0] == 0 and vers[1] < 48:
-        flux_alloc = "flux mini alloc"
+        flux_alloc = f"{flux_path} mini alloc"
 
     return flux_alloc
 

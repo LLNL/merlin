@@ -330,7 +330,7 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
 
         flux_exe: str = os.path.join(flux_path, "flux")
         flux_alloc: str = get_flux_alloc(flux_exe)
-        launch_command = f"{flux_exe} {flux_alloc} -o pty -N {nodes} --exclusive --job-name=merlin"
+        launch_command = f"{flux_alloc} -o pty -N {nodes} --exclusive --job-name=merlin"
 
         if bank:
             launch_command += f" --setattr=system.bank={bank}"
