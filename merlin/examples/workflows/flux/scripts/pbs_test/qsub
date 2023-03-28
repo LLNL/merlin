@@ -1,2 +1,0 @@
-#!/bin/sh
-echo "pbs_version = 19.0.0"

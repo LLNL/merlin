@@ -40,6 +40,8 @@ Each test looks like:
 }
 """
 
+import shutil
+
 # Pylint complains that we didn't install this module but it's defined locally so ignore
 from conditions import (  # pylint: disable=E0401
     FileHasNoRegex,
@@ -52,7 +54,7 @@ from conditions import (  # pylint: disable=E0401
     StepFileHasRegex,
 )
 
-from merlin.utils import get_flux_cmd
+from merlin.utils import get_flux_alloc, get_flux_cmd
 
 
 OUTPUT_DIR = "cli_test_studies"
@@ -66,8 +68,9 @@ def define_tests():  # pylint: disable=R0914
     is the test's name, and the value is a tuple
     of (shell command, condition(s) to satisfy).
     """
+    flux_alloc = (get_flux_alloc("flux", no_errors=True),)
     celery_slurm_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
-    celery_flux_regex = r"(flux mini alloc\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
+    celery_flux_regex = rf"({flux_alloc}\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
     celery_pbs_regex = r"(qsub\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
 
     # shortcut string variables
@@ -87,10 +90,15 @@ def define_tests():  # pylint: disable=R0914
     flux = f"{examples}/flux/flux_test.yaml"
     flux_restart = f"{examples}/flux/flux_par_restart.yaml"
     flux_native = f"{examples}/flux/flux_par_native_test.yaml"
-    flux_native_path = f"{examples}/flux/scripts/flux_test"
-    workers_flux = f"""PATH="{flux_native_path}:$PATH";merlin {err_lvl} run-workers"""
-    pbs_path = f"{examples}/flux/scripts/pbs_test"
-    workers_pbs = f"""PATH="{pbs_path}:$PATH";merlin {err_lvl} run-workers"""
+    workers_flux = f"merlin {err_lvl} run-workers"
+    fake_cmds_path = "tests/integration/fake_commands"
+    if not shutil.which("flux"):
+        # Use bogus flux to test if no flux is present
+        workers_flux = f"""PATH="{fake_cmds_path}:$PATH";merlin {err_lvl} run-workers"""
+    workers_pbs = f"merlin {err_lvl} run-workers" ""
+    if not shutil.which("qsub"):
+        # Use bogus qsub to test if no pbs scheduler is present
+        workers_pbs = f"""PATH="{fake_cmds_path}:$PATH";merlin {err_lvl} run-workers"""
     lsf = f"{examples}/lsf/lsf_par.yaml"
     mul_workers_demo = f"{dev_examples}/multiple_workers.yaml"
     black = "black --check --target-version py36"

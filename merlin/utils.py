@@ -56,7 +56,7 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 ARRAY_FILE_FORMATS = ".npy, .csv, .tab"
-DEFAULT_FLUX_VERSION = "0.13"
+DEFAULT_FLUX_VERSION = "0.48.0"
 
 
 def get_user_process_info(user=None, attrs=None):
@@ -397,22 +397,46 @@ def get_flux_version(flux_path, no_errors=False):
 
 def get_flux_cmd(flux_path, no_errors=False):
     """
-    Return the flux command as string
+    Return the flux run command as string
 
     :param `flux_path`: the full path to the flux bin
     :param `no_errors`: a flag to determine if this a test run to ignore errors
     """
-    # The default is for flux version >= 0.13,
+    # The default is for flux version >= 0.48.x
     # this may change in the future.
-    flux_cmd = "flux mini run"
+    flux_cmd = "flux run"
 
     flux_ver = get_flux_version(flux_path, no_errors=no_errors)
 
     vers = [int(n) for n in flux_ver.split(".")]
+    if vers[0] == 0 and vers[1] < 48:
+        flux_cmd = "flux mini run"
+
     if vers[0] == 0 and vers[1] < 13:
         flux_cmd = "flux wreckrun"
 
     return flux_cmd
+
+
+def get_flux_alloc(flux_path, no_errors=False):
+    """
+    Return the flux alloc command as string
+
+    :param `flux_path`: the full path to the flux bin
+    :param `no_errors`: a flag to determine if this a test run to ignore errors
+    """
+    # The default is for flux version >= 0.48.x
+    # this may change in the future.
+    flux_alloc = f"{flux_path} alloc"
+
+    flux_ver = get_flux_version(flux_path, no_errors=no_errors)
+
+    vers = [int(n) for n in flux_ver.split(".")]
+
+    if vers[0] == 0 and vers[1] < 48:
+        flux_alloc = f"{flux_path} mini alloc"
+
+    return flux_alloc
 
 
 def check_machines(machines):

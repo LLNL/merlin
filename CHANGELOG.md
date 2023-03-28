@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merlin will now assign `default_worker` to any step not associated with a worker
 - Added `get_step_worker_map()` as a method in `specification.py`
 - Added `tabulate_info()` function in `display.py` to help with table formatting
+- Added get_flux_alloc function for new flux version >= 0.48.x interface change
 
 ### Changed
 - Changed celery_regex to celery_slurm_regex in test_definitions.py
@@ -71,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Modified `batch_worker_launch` to use the new `parse_batch_block` function
   - Added a function `construct_scheduler_legend` to build a dict that keeps as much information as we need about each scheduler stored in one place
   - Cleaned up the `construct_worker_launch_command` function to utilize the newly added functions and decrease the amount of repeated code
+- Changed get_flux_cmd for new flux version >=0.48.x interface
 
 
 ## [1.9.1]

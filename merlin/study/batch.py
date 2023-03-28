@@ -40,7 +40,7 @@ import os
 import subprocess
 from typing import Dict, Optional, Union
 
-from merlin.utils import get_yaml_var
+from merlin.utils import get_flux_alloc, get_yaml_var
 
 
 LOG = logging.getLogger(__name__)
@@ -154,21 +154,21 @@ def get_batch_type(default=None):
     :returns: (str) The batch name (available options: slurm, flux, lsf, pbs).
     """
     # Flux should be checked first due to slurm emulation scripts
-    LOG.debug(f"check for flux = {check_for_flux()}")
+    LOG.debug(f"check for flux scheduler = {check_for_flux()}")
     if check_for_flux():
         return "flux"
 
     # PBS should be checked before slurm for testing
-    LOG.debug(f"check for pbs = {check_for_pbs()}")
+    LOG.debug(f"check for pbs scheduler = {check_for_pbs()}")
     if check_for_pbs():
         return "pbs"
 
     # LSF should be checked before slurm for testing
-    LOG.debug(f"check for lsf = {check_for_lsf()}")
+    LOG.debug(f"check for lsf scheduler = {check_for_lsf()}")
     if check_for_lsf():
         return "lsf"
 
-    LOG.debug(f"check for slurm = {check_for_slurm()}")
+    LOG.debug(f"check for slurm scheduler = {check_for_slurm()}")
     if check_for_slurm():
         return "slurm"
 
@@ -329,7 +329,9 @@ def construct_worker_launch_command(batch: Optional[Dict], btype: str, nodes: in
             flux_path += "/"
 
         flux_exe: str = os.path.join(flux_path, "flux")
-        launch_command = f"{flux_exe} mini alloc -o pty -N {nodes} --exclusive --job-name=merlin"
+        flux_alloc: str = get_flux_alloc(flux_exe)
+        launch_command = f"{flux_alloc} -o pty -N {nodes} --exclusive --job-name=merlin"
+
         if bank:
             launch_command += f" --setattr=system.bank={bank}"
         if queue:

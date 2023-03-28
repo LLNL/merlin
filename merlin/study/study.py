@@ -438,7 +438,7 @@ class MerlinStudy:  # pylint: disable=R0902
     @cached_property
     def flux_command(self):
         """
-        Returns the flux version.
+        Returns the flux command, this will include the full path, if flux_path given in the workflow.
         """
         flux_bin = "flux"
         if "flux_path" in self.expanded_spec.batch.keys():

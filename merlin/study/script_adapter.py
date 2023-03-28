@@ -274,10 +274,10 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
 
         :param **kwargs: A dictionary with default settings for the adapter.
         """
-        flux_command = kwargs.pop("flux_command", "flux mini run")
+        # The flux_command should always be overriden by the study object's flux_command property
+        flux_command = kwargs.pop("flux_command", "flux run")
         super().__init__(**kwargs)
 
-        #  "cmd": "flux mini run",
         self._cmd_flags = {
             "cmd": flux_command,
             "ntasks": "-n",
