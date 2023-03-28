@@ -378,7 +378,7 @@ To send out a stop signal to some or all connected workers, use:
     $ merlin stop-workers [--spec <input.yaml>] [--queues <queues>] [--workers <regex>] [--task_server celery]
 
 
-The default behavior will send a stop to all connected workers,
+The default behavior will send a stop to all connected workers across all workflows,
 having them shutdown softly.
 
 The ``--spec`` option targets only workers named in the ``merlin`` block of the spec file.
@@ -390,7 +390,7 @@ The ``--queues`` option allows you to pass in the names of specific queues to st
     # Stop all workers on these queues, no matter their name
     $ merlin stop-workers --queues queue1 queue2
 
-The ``--workers`` option allows you to pass in a regular expression of names of queues to stop:
+The ``--workers`` option allows you to pass in regular expressions of names of workers to stop:
 
 .. code:: bash
 

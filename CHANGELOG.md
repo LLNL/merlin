@@ -10,6 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The learn.py script in the openfoam_wf* examples will now create the missing Energy v Lidspeed plot
 - Fixed the flags associated with the `stop-workers` command (--spec, --queues, --workers)
 - Fixed the --step flag for the `run-workers` command
+- Fixed most of the pylint errors that we're showing up when you ran `make check-style`
+  - Some errors have been disabled rather than fixed. These include:
+    - Any pylint errors in merlin_template.py since it's deprecated now
+    - A "duplicate code" instance between a function in `expansion.py` and a method in `study.py`
+      - The function is explicitly not creating a MerlinStudy object so the code *must* be duplicate here
+    - Invalid-name (C0103): These errors typically relate to the names of short variables (i.e. naming files something like f or errors e)
+    - Unused-argument (W0613): These have been disabled for celery-related functions since celery *does* use these arguments behind the scenes
+    - Broad-exception (W0718): Pylint wants a more specific exception but sometimes it's ok to have a broad exception
+    - Import-outside-toplevel (C0415): Sometimes it's necessary for us to import inside a function. Where this is the case, these errors are disabled
+    - Too-many-statements (R0915): This is disabled for the `setup_argparse` function in `main.py` since it's necessary to be big. It's disabled in `tasks.py` and `celeryadapter.py` too until we can get around to refactoring some code there
+    - No-else-return (R1705): These are disabled in `router.py` until we refactor the file
+    - Consider-using-with (R1732): Pylint wants us to consider using with for calls to subprocess.run or subprocess.Popen but it's not necessary
+    - Too-many-arguments (R0913): These are disabled for functions that I believe *need* to have several arguments
+      - Note: these could be fixed by using *args and **kwargs but it makes the code harder to follow so I'm opting to not do that
+    - Too-many-local-variables (R0914): These are disabled for functions that have a lot of variables
+      - It may be a good idea at some point to go through these and try to find ways to shorten the number of variables used or split the functions up
+    - Too-many-branches (R0912): These are disabled for certain functions that require a good amount of branching
+      - Might be able to fix this in the future if we split functions up more
+    - Too-few-public-methods (R0903): These are disabled for classes we may add to in the future or "wrapper" classes
+    - Attribute-defined-outside-init (W0201): These errors are only disabled in `specification.py` as they occur in class methods so init() won't be called
 
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
@@ -27,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the --disable-logs flag to the `run-workers` command
 - Merlin will now assign `default_worker` to any step not associated with a worker
 - Added `get_step_worker_map()` as a method in `specification.py`
+- Added `tabulate_info()` function in `display.py` to help with table formatting
 
 ### Changed
 - Changed celery_regex to celery_slurm_regex in test_definitions.py
@@ -42,6 +63,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified the `merlinspec.json` file:
   - the minimum `gpus per task` is now 0 instead of 1
   - variables defined in the `env` block of a spec file can now be arrays
+- Refactored `batch.py`:
+  - Merged 4 functions (`check_for_slurm`, `check_for_lsf`, `check_for_flux`, and `check_for_pbs`) into 1 function named `check_for_scheduler`
+    - Modified `get_batch_type` to accommodate this change
+  - Added a function `parse_batch_block` to handle all the logic of reading in the batch block and storing it in one dict
+  - Added a function `get_flux_launch` to help decrease the amount of logic taking place in `batch_worker_launch`
+  - Modified `batch_worker_launch` to use the new `parse_batch_block` function
+  - Added a function `construct_scheduler_legend` to build a dict that keeps as much information as we need about each scheduler stored in one place
+  - Cleaned up the `construct_worker_launch_command` function to utilize the newly added functions and decrease the amount of repeated code
+
 
 ## [1.9.1]
 ### Fixed

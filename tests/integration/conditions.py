@@ -50,7 +50,7 @@ class Condition(ABC):
     @abstractmethod
     def passes(self):
         """The method that will check if the test passes or not"""
-        pass
+        raise NotImplementedError("The 'passes' property should be defined in all Condition subclasses.")
 
 
 # pylint: disable=no-member
@@ -141,6 +141,12 @@ class StudyOutputAware(Condition):
         if isinstance(candidates, list):
             return sorted(candidates)[-1]
         return candidates
+
+    @property
+    @abstractmethod
+    def passes(self):
+        """The method that will check if the test passes or not"""
+        raise NotImplementedError("The 'passes' property should be defined in all StudyOutputAware subclasses.")
 
 
 class StepFileExists(StudyOutputAware):

@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module defines all the keys possible in each block of a merlin spec file"""
 
 DESCRIPTION = {"description", "name"}
 

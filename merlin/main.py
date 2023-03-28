@@ -366,7 +366,9 @@ def process_server(args: Namespace):
         config_server(args)
 
 
-def setup_argparse() -> None:
+# Pylint complains that there's too many statements here and wants us
+# to split the function up but that wouldn't make much sense so we ignore it
+def setup_argparse() -> None:  # pylint: disable=R0915
     """
     Setup argparse and any CLI options we want available via the package.
     """

@@ -37,6 +37,11 @@ from merlin.common.sample_index import MAX_SAMPLE, SampleIndex
 from merlin.utils import cd
 
 
+# These pylint errors I've disabled are for "too many arguments"
+# and "too many local variables". I think the functions are still clear
+# pylint: disable=R0913,R0914
+
+
 def create_hierarchy(
     num_samples,
     bundle_size,

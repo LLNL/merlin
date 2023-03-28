@@ -28,9 +28,7 @@
 # SOFTWARE.
 ###############################################################################
 
-"""
-TODO
-"""
+"""This module handles encryption logic"""
 
 import logging
 import os
@@ -38,6 +36,10 @@ import os
 from cryptography.fernet import Fernet
 
 from merlin.config.configfile import CONFIG
+
+
+# This disables all the errors about short variable names (like using f to represent a file)
+# pylint: disable=invalid-name
 
 
 LOG = logging.getLogger(__name__)
@@ -52,8 +54,8 @@ def _get_key_path():
 
     try:
         key_filepath = os.path.abspath(os.path.expanduser(key_filepath))
-    except KeyError:
-        raise ValueError("Error! No password provided for RabbitMQ")
+    except KeyError as e:
+        raise ValueError("Error! No password provided for RabbitMQ") from e
     return key_filepath
 
 

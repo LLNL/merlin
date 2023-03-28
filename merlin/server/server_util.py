@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""Utils relating to merlin server"""
 
 import hashlib
 import logging
@@ -47,7 +48,7 @@ MERLIN_SERVER_SUBDIR = "server/"
 MERLIN_SERVER_CONFIG = "merlin_server.yaml"
 
 
-def valid_ipv4(ip: str) -> bool:
+def valid_ipv4(ip: str) -> bool:  # pylint: disable=C0103
     """
     Checks valid ip address
     """
@@ -69,12 +70,13 @@ def valid_port(port: int) -> bool:
     """
     Checks valid network port
     """
-    if port > 0 and port < 65536:
+    if 0 < port < 65536:
         return True
     return False
 
 
-class ContainerConfig:
+# Pylint complains about too many instance variables but it's necessary here so ignore
+class ContainerConfig:  # pylint: disable=R0902
     """
     ContainerConfig provides interface for parsing and interacting with the container value specified within
     the merlin_server.yaml configuration file. Dictionary of the config values should be passed when initialized
@@ -120,50 +122,65 @@ class ContainerConfig:
         self.user_file = data["user_file"] if "user_file" in data else self.USERS_FILE
 
     def get_format(self) -> str:
+        """Getter method to get the container format"""
         return self.format
 
     def get_image_type(self) -> str:
+        """Getter method to get the image type"""
         return self.image_type
 
     def get_image_name(self) -> str:
+        """Getter method to get the image name"""
         return self.image
 
     def get_image_url(self) -> str:
+        """Getter method to get the image url"""
         return self.url
 
     def get_image_path(self) -> str:
+        """Getter method to get the path to the image"""
         return os.path.join(self.config_dir, self.image)
 
     def get_config_name(self) -> str:
+        """Getter method to get the configuration file name"""
         return self.config
 
     def get_config_path(self) -> str:
+        """Getter method to get the configuration file path"""
         return os.path.join(self.config_dir, self.config)
 
     def get_config_dir(self) -> str:
+        """Getter method to get the configuration directory"""
         return self.config_dir
 
     def get_pfile_name(self) -> str:
+        """Getter method to get the process file name"""
         return self.pfile
 
     def get_pfile_path(self) -> str:
+        """Getter method to get the process file path"""
         return os.path.join(self.config_dir, self.pfile)
 
     def get_pass_file_name(self) -> str:
+        """Getter method to get the password file name"""
         return self.pass_file
 
     def get_pass_file_path(self) -> str:
+        """Getter method to get the password file path"""
         return os.path.join(self.config_dir, self.pass_file)
 
     def get_user_file_name(self) -> str:
+        """Getter method to get the user file name"""
         return self.user_file
 
     def get_user_file_path(self) -> str:
+        """Getter method to get the user file path"""
         return os.path.join(self.config_dir, self.user_file)
 
     def get_container_password(self) -> str:
+        """Getter method to get the container password"""
         password = None
-        with open(self.get_pass_file_path(), "r") as f:
+        with open(self.get_pass_file_path(), "r") as f:  # pylint: disable=C0103
             password = f.read()
         return password
 
@@ -192,15 +209,19 @@ class ContainerFormatConfig:
         self.pull_command = data["pull_command"] if "pull_command" in data else self.PULL_COMMAND
 
     def get_command(self) -> str:
+        """Getter method to get the container command"""
         return self.command
 
     def get_run_command(self) -> str:
+        """Getter method to get the run command"""
         return self.run_command
 
     def get_stop_command(self) -> str:
+        """Getter method to get the stop command"""
         return self.stop_command
 
     def get_pull_command(self) -> str:
+        """Getter method to get the pull command"""
         return self.pull_command
 
 
@@ -222,13 +243,17 @@ class ProcessConfig:
         self.kill = data["kill"] if "kill" in data else self.KILL_COMMAND
 
     def get_status_command(self) -> str:
+        """Getter method to get the status command"""
         return self.status
 
     def get_kill_command(self) -> str:
+        """Getter method to get the kill command"""
         return self.kill
 
 
-class ServerConfig:
+# Pylint complains there's not enough methods here but this is essentially a wrapper for other
+# classes so we can ignore it
+class ServerConfig:  # pylint: disable=R0903
     """
     ServerConfig is an interface for storing all the necessary configuration for merlin server.
     These configuration container things such as ContainerConfig, ProcessConfig, and ContainerFormatConfig.
@@ -267,9 +292,10 @@ class RedisConfig:
         self.parse()
 
     def parse(self) -> None:
+        """Parses the redis configuration file"""
         self.entries = {}
         self.comments = {}
-        with open(self.filename, "r+") as f:
+        with open(self.filename, "r+") as f:  # pylint: disable=C0103
             file_contents = f.read()
             file_lines = file_contents.split("\n")
             comments = ""
@@ -289,16 +315,19 @@ class RedisConfig:
             self.trailing_comments = comments[:-1]
 
     def write(self) -> None:
-        with open(self.filename, "w") as f:
+        """Writes to the redis configuration file"""
+        with open(self.filename, "w") as f:  # pylint: disable=C0103
             for entry in self.entry_order:
                 f.write(self.comments[entry])
                 f.write(f"{entry} {self.entries[entry]}\n")
             f.write(self.trailing_comments)
 
     def set_filename(self, filename: str) -> None:
+        """Setter method to set the filename"""
         self.filename = filename
 
     def set_config_value(self, key: str, value: str) -> bool:
+        """Changes a configuration value"""
         if key not in self.entries:
             return False
         self.entries[key] = value
@@ -306,17 +335,21 @@ class RedisConfig:
         return True
 
     def get_config_value(self, key: str) -> str:
+        """Given an entry in the config, get the value"""
         if key in self.entries:
             return self.entries[key]
         return None
 
     def changes_made(self) -> bool:
+        """Getter method to get the changes made"""
         return self.changed
 
     def get_ip_address(self) -> str:
+        """Getter method to get the ip from the redis config"""
         return self.get_config_value("bind")
 
     def set_ip_address(self, ipaddress: str) -> bool:
+        """Validates and sets a given ip address"""
         if ipaddress is None:
             return False
         # Check if ipaddress is valid
@@ -332,9 +365,11 @@ class RedisConfig:
         return True
 
     def get_port(self) -> str:
+        """Getter method to get the port from the redis config"""
         return self.get_config_value("port")
 
     def set_port(self, port: str) -> bool:
+        """Validates and sets a given port"""
         if port is None:
             return False
         # Check if port is valid
@@ -350,6 +385,7 @@ class RedisConfig:
         return True
 
     def set_password(self, password: str) -> bool:
+        """Changes the password"""
         if password is None:
             return False
         self.set_config_value("requirepass", password)
@@ -357,9 +393,14 @@ class RedisConfig:
         return True
 
     def get_password(self) -> str:
+        """Getter method to get the config password"""
         return self.get_config_value("requirepass")
 
     def set_directory(self, directory: str) -> bool:
+        """
+        Sets the save directory in the redis config file.
+        Creates the directory if necessary.
+        """
         if directory is None:
             return False
         if not os.path.exists(directory):
@@ -378,6 +419,7 @@ class RedisConfig:
         return True
 
     def set_snapshot_seconds(self, seconds: int) -> bool:
+        """Sets the snapshot wait time"""
         if seconds is None:
             return False
         # Set the snapshot second in the redis config
@@ -385,17 +427,19 @@ class RedisConfig:
         if value is None:
             LOG.error("Unable to get exisiting parameter values for snapshot")
             return False
-        else:
-            value = value.split()
-            value[0] = str(seconds)
-            value = " ".join(value)
-            if not self.set_config_value("save", value):
-                LOG.error("Unable to set snapshot value seconds")
-                return False
+
+        value = value.split()
+        value[0] = str(seconds)
+        value = " ".join(value)
+        if not self.set_config_value("save", value):
+            LOG.error("Unable to set snapshot value seconds")
+            return False
+
         LOG.info(f"Snapshot wait time is set to {seconds} seconds")
         return True
 
     def set_snapshot_changes(self, changes: int) -> bool:
+        """Sets the snapshot threshold"""
         if changes is None:
             return False
         # Set the snapshot changes into the redis config
@@ -403,17 +447,19 @@ class RedisConfig:
         if value is None:
             LOG.error("Unable to get exisiting parameter values for snapshot")
             return False
-        else:
-            value = value.split()
-            value[1] = str(changes)
-            value = " ".join(value)
-            if not self.set_config_value("save", value):
-                LOG.error("Unable to set snapshot value seconds")
-                return False
+
+        value = value.split()
+        value[1] = str(changes)
+        value = " ".join(value)
+        if not self.set_config_value("save", value):
+            LOG.error("Unable to set snapshot value seconds")
+            return False
+
         LOG.info(f"Snapshot threshold is set to {changes} changes")
         return True
 
     def set_snapshot_file(self, file: str) -> bool:
+        """Sets the snapshot file"""
         if file is None:
             return False
         # Set the snapshot file in the redis config
@@ -425,6 +471,7 @@ class RedisConfig:
         return True
 
     def set_append_mode(self, mode: str) -> bool:
+        """Sets the append mode"""
         if mode is None:
             return False
         valid_modes = ["always", "everysec", "no"]
@@ -443,6 +490,7 @@ class RedisConfig:
         return True
 
     def set_append_file(self, file: str) -> bool:
+        """Sets the append file"""
         if file is None:
             return False
         # Set the append file in the redis config
@@ -461,13 +509,17 @@ class RedisUsers:
     """
 
     class User:
+        """Embedded class to store user specific information"""
+
         status = "on"
         hash_password = hashlib.sha256(b"password").hexdigest()
         keys = "*"
         channels = "*"
         commands = "@all"
 
-        def __init__(self, status="on", keys="*", channels="*", commands="@all", password=None) -> None:
+        def __init__(  # pylint: disable=R0913
+            self, status="on", keys="*", channels="*", commands="@all", password=None
+        ) -> None:
             self.status = status
             self.keys = keys
             self.channels = channels
@@ -475,14 +527,20 @@ class RedisUsers:
             if password is not None:
                 self.set_password(password)
 
-        def parse_dict(self, dict: dict) -> None:
-            self.status = dict["status"]
-            self.keys = dict["keys"]
-            self.channels = dict["channels"]
-            self.commands = dict["commands"]
-            self.hash_password = dict["hash_password"]
+        def parse_dict(self, dictionary: dict) -> None:
+            """
+            Given a dict of user info, parse the dict and store
+            the values as class attributes.
+            :param `dictionary`: The dict to parse
+            """
+            self.status = dictionary["status"]
+            self.keys = dictionary["keys"]
+            self.channels = dictionary["channels"]
+            self.commands = dictionary["commands"]
+            self.hash_password = dictionary["hash_password"]
 
         def get_user_dict(self) -> dict:
+            """Getter method to get the user info"""
             self.status = "on"
             return {
                 "status": self.status,
@@ -493,12 +551,15 @@ class RedisUsers:
             }
 
         def __repr__(self) -> str:
+            """Repr magic method for User class"""
             return str(self.get_user_dict())
 
         def __str__(self) -> str:
+            """Str magic method for User class"""
             return self.__repr__()
 
         def set_password(self, password: str) -> None:
+            """Setter method to set the user's hash password"""
             self.hash_password = hashlib.sha256(bytes(password, "utf-8")).hexdigest()
 
     filename = ""
@@ -510,7 +571,8 @@ class RedisUsers:
             self.parse()
 
     def parse(self) -> None:
-        with open(self.filename, "r") as f:
+        """Parses the redis user configuration file"""
+        with open(self.filename, "r") as f:  # pylint: disable=C0103
             self.users = yaml.load(f, yaml.Loader)
             for user in self.users:
                 new_user = self.User()
@@ -518,36 +580,44 @@ class RedisUsers:
                 self.users[user] = new_user
 
     def write(self) -> None:
+        """Writes to the redis user configuration file"""
         data = self.users.copy()
         for key in data:
             data[key] = self.users[key].get_user_dict()
-        with open(self.filename, "w") as f:
+        with open(self.filename, "w") as f:  # pylint: disable=C0103
             yaml.dump(data, f, yaml.Dumper)
 
-    def add_user(self, user, status="on", keys="*", channels="*", commands="@all", password=None) -> bool:
+    def add_user(  # pylint: disable=R0913
+        self, user, status="on", keys="*", channels="*", commands="@all", password=None
+    ) -> bool:
+        """Add a user to the dict of Redis users"""
         if user in self.users:
             return False
         self.users[user] = self.User(status, keys, channels, commands, password)
         return True
 
     def set_password(self, user: str, password: str):
+        """Set the password for a specific user"""
         if user not in self.users:
             return False
         self.users[user].set_password(password)
+        return True
 
     def remove_user(self, user) -> bool:
+        """Remove a user from the dict of users"""
         if user in self.users:
             del self.users[user]
             return True
         return False
 
     def apply_to_redis(self, host: str, port: int, password: str) -> None:
-        db = redis.Redis(host=host, port=port, password=password)
-        current_users = db.acl_users()
+        """Apply the changes to users to redis"""
+        database = redis.Redis(host=host, port=port, password=password)
+        current_users = database.acl_users()
         for user in self.users:
             if user not in current_users:
                 data = self.users[user]
-                db.acl_setuser(
+                database.acl_setuser(
                     username=user,
                     hashed_passwords=[f"+{data.hash_password}"],
                     enabled=(data.status == "on"),
@@ -558,7 +628,7 @@ class RedisUsers:
 
         for user in current_users:
             if user not in self.users:
-                db.acl_deluser(user)
+                database.acl_deluser(user)
 
 
 class AppYaml:
@@ -579,29 +649,34 @@ class AppYaml:
         self.read(filename)
 
     def apply_server_config(self, server_config: ServerConfig):
-        rc = RedisConfig(server_config.container.get_config_path())
+        """Store the redis configuration"""
+        redis_config = RedisConfig(server_config.container.get_config_path())
 
         self.data[self.broker_name]["name"] = server_config.container.get_image_type()
         self.data[self.broker_name]["username"] = "default"
         self.data[self.broker_name]["password"] = server_config.container.get_pass_file_path()
-        self.data[self.broker_name]["server"] = rc.get_ip_address()
-        self.data[self.broker_name]["port"] = rc.get_port()
+        self.data[self.broker_name]["server"] = redis_config.get_ip_address()
+        self.data[self.broker_name]["port"] = redis_config.get_port()
 
         self.data[self.results_name]["name"] = server_config.container.get_image_type()
         self.data[self.results_name]["username"] = "default"
         self.data[self.results_name]["password"] = server_config.container.get_pass_file_path()
-        self.data[self.results_name]["server"] = rc.get_ip_address()
-        self.data[self.results_name]["port"] = rc.get_port()
+        self.data[self.results_name]["server"] = redis_config.get_ip_address()
+        self.data[self.results_name]["port"] = redis_config.get_port()
 
     def update_data(self, new_data: dict):
+        """Update the data dict with new entries"""
         self.data.update(new_data)
 
     def get_data(self):
+        """Getter method to obtain the data"""
         return self.data
 
     def read(self, filename: str = default_filename):
+        """Load in a yaml file and save it to the data attribute"""
         self.data = merlin.utils.load_yaml(filename)
 
     def write(self, filename: str = default_filename):
-        with open(filename, "w+") as f:
+        """Given a filename, dump the data to the file"""
+        with open(filename, "w+") as f:  # pylint: disable=C0103
             yaml.dump(self.data, f, yaml.Dumper)

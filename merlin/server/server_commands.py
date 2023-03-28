@@ -70,7 +70,9 @@ def init_server() -> None:
     LOG.info("Merlin server initialization successful.")
 
 
-def config_server(args: Namespace) -> None:
+# Pylint complains that there's too many branches in this function but
+# it looks clean to me so we'll ignore it
+def config_server(args: Namespace) -> None:  # pylint: disable=R0912
     """
     Process the merlin server config flags to make changes and edits to appropriate configurations
     based on the input passed in by the user.
@@ -144,6 +146,8 @@ def config_server(args: Namespace) -> None:
         else:
             LOG.error(f"User '{args.remove_user}' doesn't exist within current users.")
 
+    return None
+
 
 def status_server() -> None:
     """
@@ -162,20 +166,22 @@ def status_server() -> None:
         LOG.info("Merlin server is running.")
 
 
-def start_server() -> bool:
+def start_server() -> bool:  # pylint: disable=R0911
     """
     Start a merlin server container using singularity.
     :return:: True if server was successful started and False if failed.
     """
     current_status = get_server_status()
+    uninitialized_err = "Merlin server has not been intitialized. Please run 'merlin server init' first."
+    status_errors = {
+        ServerStatus.NOT_INITALIZED: uninitialized_err,
+        ServerStatus.MISSING_CONTAINER: uninitialized_err,
+        ServerStatus.RUNNING: """Merlin server already running.
+                              Stop current server with 'merlin server stop' before attempting to start a new server.""",
+    }
 
-    if current_status == ServerStatus.NOT_INITALIZED or current_status == ServerStatus.MISSING_CONTAINER:
-        LOG.info("Merlin server has not been initialized. Please run 'merlin server init' first.")
-        return False
-
-    if current_status == ServerStatus.RUNNING:
-        LOG.info("Merlin server already running.")
-        LOG.info("Stop current server with 'merlin server stop' before attempting to start a new server.")
+    if current_status in status_errors:
+        LOG.info(status_errors[current_status])
         return False
 
     server_config = pull_server_config()
@@ -184,16 +190,19 @@ def start_server() -> bool:
         return False
 
     image_path = server_config.container.get_image_path()
-    if not os.path.exists(image_path):
-        LOG.error("Unable to find image at " + image_path)
-        return False
-
     config_path = server_config.container.get_config_path()
-    if not os.path.exists(config_path):
-        LOG.error("Unable to find config file at " + config_path)
-        return False
+    path_errors = {
+        image_path: "image",
+        config_path: "config file",
+    }
 
-    process = subprocess.Popen(
+    for path in (image_path, config_path):
+        if not os.path.exists(path):
+            LOG.error(f"Unable to find {path_errors[path]} at {path}")
+            return False
+
+    # Pylint wants us to use with here but we don't need that
+    process = subprocess.Popen(  # pylint: disable=R1732
         server_config.container_format.get_run_command()
         .strip("\\")
         .format(
@@ -237,9 +246,9 @@ def start_server() -> bool:
     redis_users.apply_to_redis(redis_config.get_ip_address(), redis_config.get_port(), redis_config.get_password())
 
     new_app_yaml = os.path.join(server_config.container.get_config_dir(), "app.yaml")
-    ay = AppYaml()
-    ay.apply_server_config(server_config=server_config)
-    ay.write(new_app_yaml)
+    app_yaml = AppYaml()
+    app_yaml.apply_server_config(server_config=server_config)
+    app_yaml.write(new_app_yaml)
     LOG.info(f"New app.yaml written to {new_app_yaml}.")
     LOG.info("Replace app.yaml in ~/.merlin/app.yaml to use merlin server as main configuration.")
     LOG.info("To use for local runs, move app.yaml into the running directory.")

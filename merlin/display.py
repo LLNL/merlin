@@ -127,7 +127,7 @@ def _examine_connection(server, sconf, excpts):
             counter += 1
             if counter > connect_timeout:
                 conn_check.kill()
-                raise TimeoutError(f"Connection was killed due to timeout ({connect_timeout}server)")
+                raise TimeoutError(f"Connection was killed due to timeout ({connect_timeout}s)")
         conn.release()
         if conn_check.exception:
             error, _ = conn_check.exception
@@ -195,6 +195,7 @@ def display_multiple_configs(files, configs):
         pprint.pprint(config)
 
 
+# Might use args here in the future so we'll disable the pylint warning for now
 def print_info(args):  # pylint: disable=W0613
     """
     Provide version and location information about python and pip to
