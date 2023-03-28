@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module handles overriding variables in a spec file via the CLI"""
 
 import logging
 from copy import deepcopy
@@ -49,6 +50,7 @@ def error_override_vars(override_vars, spec_filepath):
 
 
 def replace_override_vars(env, override_vars):
+    """Replace override variables in the environment block"""
     if override_vars is None:
         return env
     result = deepcopy(env)

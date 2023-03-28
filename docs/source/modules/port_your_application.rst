@@ -44,7 +44,7 @@ The scripts defined in the workflow steps are also written to the output directo
 
 .. where are the worker logs, and what might show up there that .out and .err won't see? -> these more developer focused output?
 
-When a bug crops up in a running study with many parameters, there are a few other commands to make use of.  Rather than trying to spam ``Ctrl-c`` to kill all the workers, you will want to instead use ``merlin stop-workers <workflow_name>.yaml`` to stop the workers.  This should then be followed up with ``merlin purge <workflow_name>.yaml`` to clear out the task queue to prevent the same
+When a bug crops up in a running study with many parameters, there are a few other commands to make use of.  Rather than trying to spam ``Ctrl-c`` to kill all the workers, you will want to instead use ``merlin stop-workers --spec <workflow_name>.yaml`` to stop the workers for that workflow.  This should then be followed up with ``merlin purge <workflow_name>.yaml`` to clear out the task queue to prevent the same
 buggy tasks from continuing to run the next time ``run-workers`` is invoked.
 
 .. last item from board: use merlin status to see if have workers ... is that 'dangling tasks' in the image?

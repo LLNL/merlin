@@ -42,6 +42,7 @@ Each test looks like:
 
 import shutil
 
+# Pylint complains that we didn't install this module but it's defined locally so ignore
 from conditions import (  # pylint: disable=E0401
     FileHasNoRegex,
     FileHasRegex,

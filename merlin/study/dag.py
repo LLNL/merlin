@@ -205,11 +205,9 @@ class DAG:
                     if self.num_children(task_name) == 1 and task_name != "_source":
                         child = self.children(task_name)[0]
 
-                        if self.num_parents(child) == 1:
-                            if self.compatible_merlin_expansion(child, task_name):
-                                self.find_chain(child, list_of_groups_of_chains).remove(child)
-
-                                chain.append(child)
+                        if self.num_parents(child) == 1 and self.compatible_merlin_expansion(child, task_name):
+                            self.find_chain(child, list_of_groups_of_chains).remove(child)
+                            chain.append(child)
 
         new_list = [[chain for chain in group if len(chain) > 0] for group in list_of_groups_of_chains]
         new_list_2 = [group for group in new_list if len(group) > 0]

@@ -58,17 +58,16 @@ USER = getpass.getuser()
 
 def read_file(filepath):
     "Safe file read from filepath"
-    with open(filepath, "r") as f:
+    with open(filepath, "r") as f:  # pylint: disable=C0103
         line = f.readline().strip()
         return quote(line, safe="")
 
 
-def get_rabbit_connection(config_path, include_password, conn="amqps"):
+def get_rabbit_connection(include_password, conn="amqps"):
     """
     Given the path to the directory where the broker configurations are stored
     setup and return the RabbitMQ connection string.
 
-    :param config_path : The path for ssl certificates and passwords
     :param include_password : Format the connection for ouput by setting this True
     """
     LOG.debug(f"Broker: connection = {conn}")
@@ -86,13 +85,13 @@ def get_rabbit_connection(config_path, include_password, conn="amqps"):
         password_filepath = CONFIG.broker.password
         LOG.debug(f"Broker: password filepath = {password_filepath}")
         password_filepath = os.path.abspath(expanduser(password_filepath))
-    except KeyError:
-        raise ValueError("Broker: No password provided for RabbitMQ")
+    except KeyError as e:  # pylint: disable=C0103
+        raise ValueError("Broker: No password provided for RabbitMQ") from e
 
     try:
         password = read_file(password_filepath)
-    except IOError:
-        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist")
+    except IOError as e:  # pylint: disable=C0103
+        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist") from e
 
     try:
         port = CONFIG.broker.port
@@ -120,13 +119,10 @@ def get_rabbit_connection(config_path, include_password, conn="amqps"):
     return RABBITMQ_CONNECTION.format(**rabbitmq_config)
 
 
-def get_redissock_connection(config_path, include_password):
+def get_redissock_connection():
     """
     Given the path to the directory where the broker configurations are stored
     setup and return the redis+socket connection string.
-
-    :param config_path : The path for ssl certificates and passwords
-    :param include_password : Format the connection for ouput by setting this True
     """
     try:
         db_num = CONFIG.broker.db_num
@@ -141,18 +137,17 @@ def get_redissock_connection(config_path, include_password):
 
 # flake8 complains this function is too complex, we don't gain much nesting any of this as a separate function,
 # however, cyclomatic complexity examination is off to get around this
-def get_redis_connection(config_path, include_password, ssl=False):  # noqa C901
+def get_redis_connection(include_password, use_ssl=False):  # noqa C901
     """
     Return the redis or rediss specific connection
 
-    :param config_path : The path for ssl certificates and passwords
     :param include_password : Format the connection for ouput by setting this True
-    :param ssl : Flag to use rediss output
+    :param use_ssl : Flag to use rediss output
     """
     server = CONFIG.broker.server
     LOG.debug(f"Broker: server = {server}")
 
-    urlbase = "rediss" if ssl else "redis"
+    urlbase = "rediss" if use_ssl else "redis"
 
     try:
         port = CONFIG.broker.port
@@ -179,9 +174,9 @@ def get_redis_connection(config_path, include_password, ssl=False):  # noqa C901
         except IOError:
             password = CONFIG.broker.password
         if include_password:
-            spass = "%s:%s@" % (username, password)
+            spass = f"{username}:{password}@"
         else:
-            spass = "%s:%s@" % (username, "******")
+            spass = f"{username}:******@"
     except (AttributeError, KeyError):
         spass = ""
         LOG.debug(f"Broker: redis using default password = {spass}")
@@ -218,25 +213,24 @@ def get_connection_string(include_password=True):
 
     if broker not in BROKERS:
         raise ValueError(f"Error: {broker} is not a supported broker.")
-    else:
-        return _sort_valid_broker(broker, config_path, include_password)
+    return _sort_valid_broker(broker, include_password)
 
 
-def _sort_valid_broker(broker, config_path, include_password):
-    if broker == "rabbitmq" or broker == "amqps":
-        return get_rabbit_connection(config_path, include_password, conn="amqps")
+def _sort_valid_broker(broker, include_password):
+    if broker in ("rabbitmq", "amqps"):
+        return get_rabbit_connection(include_password, conn="amqps")
 
-    elif broker == "amqp":
-        return get_rabbit_connection(config_path, include_password, conn="amqp")
+    if broker == "amqp":
+        return get_rabbit_connection(include_password, conn="amqp")
 
-    elif broker == "redis+socket":
-        return get_redissock_connection(config_path, include_password)
+    if broker == "redis+socket":
+        return get_redissock_connection()
 
-    elif broker == "redis":
-        return get_redis_connection(config_path, include_password)
+    if broker == "redis":
+        return get_redis_connection(include_password)
 
     # broker must be rediss
-    return get_redis_connection(config_path, include_password, ssl=True)
+    return get_redis_connection(include_password, use_ssl=True)
 
 
 def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:
@@ -276,7 +270,7 @@ def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:
     if not broker_ssl:
         broker_ssl = True
 
-    if broker == "rabbitmq" or broker == "rediss" or broker == "amqps":
+    if broker in ("rabbitmq", "rediss", "amqps"):
         return broker_ssl
 
     return False

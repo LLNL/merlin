@@ -51,8 +51,10 @@ def run_celery(study, run_mode=None):
     configure Celery to run locally (without workers).
     """
     # Only import celery stuff if we want celery in charge
+    # Pylint complains about circular import between merlin.common.tasks -> merlin.router -> merlin.study.celeryadapter
+    # For now I think this is still the best way to do this so we'll ignore it
     from merlin.celery import app  # pylint: disable=C0415
-    from merlin.common.tasks import queue_merlin_study  # pylint: disable=C0415
+    from merlin.common.tasks import queue_merlin_study  # pylint: disable=C0415, R0401
 
     adapter_config = study.get_adapter_config(override_type="local")
 
@@ -468,7 +470,7 @@ def purge_celery_tasks(queues, force):
     return subprocess.run(purge_command, shell=True).returncode
 
 
-def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
+def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):  # pylint: disable=R0912
     """Send a stop command to celery workers.
 
     Default behavior is to stop all connected workers.

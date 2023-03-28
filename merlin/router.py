@@ -60,6 +60,10 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 
+# TODO go through this file and find a way to make a common return format to main.py
+# Also, if that doesn't fix them, look into the pylint errors that have been disabled
+# and try to resolve them
+
 
 def run_task_server(study, run_mode=None):
     """
@@ -200,15 +204,6 @@ def stop_workers(task_server, spec_worker_names, queues, workers_regex):
         stop_celery_workers(queues, spec_worker_names, workers_regex)
     else:
         LOG.error("Celery is not specified as the task server!")
-
-
-def route_for_task(name, args, kwargs, options, task=None, **kw):  # pylint: disable=W0613,R1710
-    """
-    Custom task router for queues
-    """
-    if ":" in name:
-        queue, _ = name.split(":")
-        return {"queue": queue}
 
 
 def create_config(task_server: str, config_dir: str, broker: str, test: str) -> None:

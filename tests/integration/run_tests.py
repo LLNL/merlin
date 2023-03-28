@@ -39,7 +39,10 @@ import time
 from contextlib import suppress
 from subprocess import TimeoutExpired, run
 
+# Pylint complains that we didn't install this module but it's defined locally so ignore
 from test_definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
+
+from merlin.display import tabulate_info
 
 
 def get_definition_issues(test):
@@ -84,8 +87,8 @@ def run_single_test(test):
     and information about the test for logging purposes.
     :param `test`: A dictionary that defines the test
     :returns: A tuple of type (bool, dict) where the bool
-              represents if the test passed and the dict
-              contains info about the test.
+                represents if the test passed and the dict
+                contains info about the test.
     """
     # Parse the test definition
     commands = test.pop("cmds", None)
@@ -212,6 +215,7 @@ def filter_tests_to_run(args, tests):
     return selective, n_to_run
 
 
+# TODO split this function up so it's not as large (this will fix the pylint issue here too)
 def run_tests(args, tests):  # pylint: disable=R0914
     """
     Run all inputted tests.
@@ -310,8 +314,6 @@ def display_tests(tests):
     the --id flag.
     :param `tests`: A dict of tests (Dict)
     """
-    from merlin.display import tabulate_info  # pylint: disable=C0415
-
     test_names = list(tests.keys())
     test_table = [(i + 1, test_names[i]) for i in range(len(test_names))]
     test_table.insert(0, ("ID", "Test Name"))
