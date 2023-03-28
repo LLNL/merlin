@@ -178,6 +178,8 @@ def process_test_result(passed, info, is_verbose, exit_on_failure):
             print(f"\treturn code: {info['return_code']}")
         if info["stderr"] != "":
             print(f"\tstderr:\n{info['stderr']}")
+        if info["stdout"] != "":
+            print(f"\tstdout:\n{info['stdout']}")
 
     return passed
 

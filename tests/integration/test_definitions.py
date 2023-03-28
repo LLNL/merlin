@@ -62,23 +62,49 @@ CLEAN_MERLIN_SERVER = "rm -rf appendonly.aof dump.rdb merlin_server/"
 KILL_WORKERS = "pkill -9 -f '.*merlin_test_worker'"
 
 
-def define_tests():  # pylint: disable=R0914
+def get_worker_by_cmd(cmd: str, default: str) -> str:
+    """
+    Given a command used by a scheduler (e.g. flux for flux, jsrun for lsf, etc.)
+    check if that command is found and if it isn't, use a fake scheduler command.
+    :param `cmd`: A string representing the command used by a scheduler
+    :param `default`: The default worker launch command to use if a scheduler is found
+    :returns: The appropriate worker launch command
+    """
+    fake_cmds_path = "tests/integration/fake_commands"
+    if not shutil.which(cmd):
+        # Use bogus flux to test if no flux is present
+        workers_cmd = f"""PATH="{fake_cmds_path}:$PATH";{default}"""
+    else:
+        workers_cmd = default
+
+    return workers_cmd
+
+
+def define_tests():  # pylint: disable=R0914,R0915
     """
     Returns a dictionary of tests, where the key
     is the test's name, and the value is a tuple
     of (shell command, condition(s) to satisfy).
     """
+    # Shortcuts for regexs to check against
     flux_alloc = (get_flux_alloc("flux", no_errors=True),)
-    celery_slurm_regex = r"(srun\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
-    celery_flux_regex = rf"({flux_alloc}\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
-    celery_pbs_regex = r"(qsub\s+.*)?celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
+    celery_regex = r"celery\s+(-A|--app)\s+merlin\s+worker\s+.*"
+    celery_slurm_regex = rf"(srun\s+.*)?{celery_regex}"
+    celery_lsf_regex = rf"(jsrun\s+.*)?{celery_regex}"
+    celery_flux_regex = rf"({flux_alloc}\s+.*)?{celery_regex}"
+    celery_pbs_regex = rf"(qsub\s+.*)?{celery_regex}"
 
-    # shortcut string variables
+    # Shortcuts for Merlin commands
     err_lvl = "-lvl error"
     workers = f"merlin {err_lvl} run-workers"
+    workers_flux = get_worker_by_cmd("flux", workers)
+    workers_pbs = get_worker_by_cmd("qsub", workers)
+    workers_lsf = get_worker_by_cmd("jsrun", workers)
     run = f"merlin {err_lvl} run"
     restart = f"merlin {err_lvl} restart"
     purge = "merlin purge"
+
+    # Shortcuts for example workflow paths
     examples = "merlin/examples/workflows"
     dev_examples = "merlin/examples/dev_workflows"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
@@ -90,17 +116,10 @@ def define_tests():  # pylint: disable=R0914
     flux = f"{examples}/flux/flux_test.yaml"
     flux_restart = f"{examples}/flux/flux_par_restart.yaml"
     flux_native = f"{examples}/flux/flux_par_native_test.yaml"
-    workers_flux = f"merlin {err_lvl} run-workers"
-    fake_cmds_path = "tests/integration/fake_commands"
-    if not shutil.which("flux"):
-        # Use bogus flux to test if no flux is present
-        workers_flux = f"""PATH="{fake_cmds_path}:$PATH";merlin {err_lvl} run-workers"""
-    workers_pbs = f"merlin {err_lvl} run-workers" ""
-    if not shutil.which("qsub"):
-        # Use bogus qsub to test if no pbs scheduler is present
-        workers_pbs = f"""PATH="{fake_cmds_path}:$PATH";merlin {err_lvl} run-workers"""
     lsf = f"{examples}/lsf/lsf_par.yaml"
     mul_workers_demo = f"{dev_examples}/multiple_workers.yaml"
+
+    # Other shortcuts
     black = "black --check --target-version py36"
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
     release_dependencies = "./requirements/release.txt"
@@ -212,6 +231,11 @@ def define_tests():  # pylint: disable=R0914
         "run-workers echo slurm_test": {
             "cmds": f"{workers} {slurm} --echo",
             "conditions": [HasReturnCode(), HasRegex(celery_slurm_regex)],
+            "run type": "local",
+        },
+        "run-workers echo lsf_test": {
+            "cmds": f"{workers_lsf} {lsf} --echo",
+            "conditions": [HasReturnCode(), HasRegex(celery_lsf_regex)],
             "run type": "local",
         },
         "run-workers echo flux_test": {
