@@ -257,6 +257,12 @@ How do I see what workers are connected?
 
    $ merlin query-workers
 
+This command gives you fine control over which workers you're looking for via
+a regex on their name, the queue names associated with workers, or even by providing
+the name of a spec file where workers are defined.
+
+For more info, see :ref:`query-workers`.
+
 How do I stop workers?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -103,6 +103,8 @@ def define_tests():  # pylint: disable=R0914,R0915
     run = f"merlin {err_lvl} run"
     restart = f"merlin {err_lvl} restart"
     purge = "merlin purge"
+    stop = "merlin stop-workers"
+    query = "merlin query-workers"
 
     # Shortcuts for example workflow paths
     examples = "merlin/examples/workflows"
@@ -515,7 +517,7 @@ def define_tests():  # pylint: disable=R0914,R0915
     }
     stop_workers_tests = {
         "stop workers no workers": {
-            "cmds": "merlin stop-workers",
+            "cmds": f"{stop}",
             "conditions": [
                 HasReturnCode(),
                 HasRegex("No workers found to stop"),
@@ -528,7 +530,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         "stop workers no flags": {
             "cmds": [
                 f"{workers} {mul_workers_demo}",
-                "merlin stop-workers",
+                f"{stop}",
             ],
             "conditions": [
                 HasReturnCode(),
@@ -544,7 +546,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         "stop workers with spec flag": {
             "cmds": [
                 f"{workers} {mul_workers_demo}",
-                f"merlin stop-workers --spec {mul_workers_demo}",
+                f"{stop} --spec {mul_workers_demo}",
             ],
             "conditions": [
                 HasReturnCode(),
@@ -560,7 +562,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         "stop workers with workers flag": {
             "cmds": [
                 f"{workers} {mul_workers_demo}",
-                "merlin stop-workers --workers step_1_merlin_test_worker step_2_merlin_test_worker",
+                f"{stop} --workers step_1_merlin_test_worker step_2_merlin_test_worker",
             ],
             "conditions": [
                 HasReturnCode(),
@@ -576,11 +578,88 @@ def define_tests():  # pylint: disable=R0914,R0915
         "stop workers with queues flag": {
             "cmds": [
                 f"{workers} {mul_workers_demo}",
-                "merlin stop-workers --queues hello_queue",
+                f"{stop} --queues hello_queue",
             ],
             "conditions": [
                 HasReturnCode(),
                 HasRegex("No workers found to stop", negate=True),
+                HasRegex("step_1_merlin_test_worker"),
+                HasRegex("step_2_merlin_test_worker", negate=True),
+                HasRegex("other_merlin_test_worker", negate=True),
+            ],
+            "run type": "distributed",
+            "cleanup": KILL_WORKERS,
+            "num procs": 2,
+        },
+    }
+    query_workers_tests = {
+        "query workers no workers": {
+            "cmds": f"{query}",
+            "conditions": [
+                HasReturnCode(),
+                HasRegex("No workers found!"),
+                HasRegex("step_1_merlin_test_worker", negate=True),
+                HasRegex("step_2_merlin_test_worker", negate=True),
+                HasRegex("other_merlin_test_worker", negate=True),
+            ],
+            "run type": "distributed",
+        },
+        "query workers no flags": {
+            "cmds": [
+                f"{workers} {mul_workers_demo}",
+                f"{query}",
+            ],
+            "conditions": [
+                HasReturnCode(),
+                HasRegex("No workers found!", negate=True),
+                HasRegex("step_1_merlin_test_worker"),
+                HasRegex("step_2_merlin_test_worker"),
+                HasRegex("other_merlin_test_worker"),
+            ],
+            "run type": "distributed",
+            "cleanup": KILL_WORKERS,
+            "num procs": 2,
+        },
+        "query workers with spec flag": {
+            "cmds": [
+                f"{workers} {mul_workers_demo}",
+                f"{query} --spec {mul_workers_demo}",
+            ],
+            "conditions": [
+                HasReturnCode(),
+                HasRegex("No workers found!", negate=True),
+                HasRegex("step_1_merlin_test_worker"),
+                HasRegex("step_2_merlin_test_worker"),
+                HasRegex("other_merlin_test_worker"),
+            ],
+            "run type": "distributed",
+            "cleanup": KILL_WORKERS,
+            "num procs": 2,
+        },
+        "query workers with workers flag": {
+            "cmds": [
+                f"{workers} {mul_workers_demo}",
+                f"{query} --workers step_1_merlin_test_worker step_2_merlin_test_worker",
+            ],
+            "conditions": [
+                HasReturnCode(),
+                HasRegex("No workers found!", negate=True),
+                HasRegex("step_1_merlin_test_worker"),
+                HasRegex("step_2_merlin_test_worker"),
+                HasRegex("other_merlin_test_worker", negate=True),
+            ],
+            "run type": "distributed",
+            "cleanup": KILL_WORKERS,
+            "num procs": 2,
+        },
+        "query workers with queues flag": {
+            "cmds": [
+                f"{workers} {mul_workers_demo}",
+                f"{query} --queues hello_queue",
+            ],
+            "conditions": [
+                HasReturnCode(),
+                HasRegex("No workers found!", negate=True),
                 HasRegex("step_1_merlin_test_worker"),
                 HasRegex("step_2_merlin_test_worker", negate=True),
                 HasRegex("other_merlin_test_worker", negate=True),
@@ -637,6 +716,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         # style_checks, # omitting style checks due to different results on different machines
         dependency_checks,
         stop_workers_tests,
+        query_workers_tests,
         distributed_tests,
     ]:
         all_tests.update(test_dict)

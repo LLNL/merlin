@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `get_step_worker_map()` as a method in `specification.py`
 - Added `tabulate_info()` function in `display.py` to help with table formatting
 - Added get_flux_alloc function for new flux version >= 0.48.x interface change
+- New flags to the `query-workers` command
+  - `--queues`: query workers based on the queues they're associated with
+  - `--workers`: query workers based on a regex of the names you're looking for
+  - `--spec`: query workers based on the workers defined in a spec file
 
 ### Changed
 - Changed celery_regex to celery_slurm_regex in test_definitions.py
@@ -73,7 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added a function `construct_scheduler_legend` to build a dict that keeps as much information as we need about each scheduler stored in one place
   - Cleaned up the `construct_worker_launch_command` function to utilize the newly added functions and decrease the amount of repeated code
 - Changed get_flux_cmd for new flux version >=0.48.x interface
-
+- The `query-workers` command now prints a table as its' output
+  - Each row of the `Workers` column has the name of an active worker
+  - Each row of the `Queues` column has a list of queues associated with the active worker
 
 ## [1.9.1]
 ### Fixed

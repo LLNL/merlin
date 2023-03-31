@@ -39,7 +39,7 @@ import time
 from contextlib import suppress
 
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
-from merlin.utils import check_machines, get_procs, get_yaml_var, is_running, regex_list_filter
+from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
 
 LOG = logging.getLogger(__name__)
@@ -128,18 +128,136 @@ def get_queues(app):
     return queues, [*active_workers]
 
 
-def query_celery_workers():
-    """Look for existing celery workers.
-
-    Send results to the log.
+def get_active_workers(app):
     """
+    This is the inverse of get_queues() defined above. This function
+    builds a dict where the keys are worker names and the values are lists
+    of queues attached to the worker.
+
+    :param `app`: The celery application
+    :returns: A dict mapping active workers to queues
+    """
+    # Get the information we need from celery
+    i = app.control.inspect()
+    active_workers = i.active_queues()
+    if active_workers is None:
+        active_workers = {}
+
+    # Build the mapping dictionary
+    worker_queue_map = {}
+    for worker, queues in active_workers.items():
+        for queue in queues:
+            if worker in worker_queue_map:
+                worker_queue_map[worker].append(queue["name"])
+            else:
+                worker_queue_map[worker] = [queue["name"]]
+
+    return worker_queue_map
+
+
+def celerize_queues(queues):
+    """
+    Celery requires a queue tag to be prepended to their
+    queues so this function will 'celerize' every queue in
+    a list you provide it by prepending the queue tag.
+
+    :param `queues`: A list of queues that need the queue
+                     tag prepended.
+    """
+    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+
+    for i, queue in enumerate(queues):
+        queues[i] = f"{CONFIG.celery.queue_tag}{queue}"
+
+
+def _build_output_table(worker_list, output_table):
+    """
+    Helper function for query-status that will build a table
+    that we'll use as output.
+
+    :param `worker_list`: A list of workers to add to the table
+    :param `output_table`: A list of tuples where each entry is
+                           of the form (worker name, associated queues)
+    """
+    from merlin.celery import app  # pylint: disable=C0415
+
+    # Get a mapping between workers and the queues they're watching
+    worker_queue_map = get_active_workers(app)
+
+    # Loop through the list of workers and add an entry in the table
+    # of the form (worker name, queues attached to this worker)
+    for worker in worker_list:
+        if "celery@" not in worker:
+            worker = f"celery@{worker}"
+        output_table.append((worker, ", ".join(worker_queue_map[worker])))
+
+
+def query_celery_workers(spec_worker_names, queues, workers_regex):
+    """
+    Look for existing celery workers. Filter by spec, queues, or
+    worker names if provided by user. At the end, print a table
+    of workers and their associated queues.
+
+    :param `spec_worker_names`: The worker names defined in a spec file
+    :param `queues`: A list of queues to filter by
+    :param `workers_regex`: A list of regexs to filter by
+    """
+    from merlin.celery import app  # pylint: disable=C0415
+    from merlin.display import tabulate_info  # pylint: disable=C0415
+
+    # Ping all workers and grab which ones are running
     workers = get_workers_from_app()
-    if workers:
-        LOG.info("Found these connected workers:")
-        for worker in workers:
-            LOG.info(worker)
-    else:
+    if not workers:
         LOG.warning("No workers found!")
+        return
+
+    # Remove prepended celery tag while we filter
+    workers = [worker.replace("celery@", "") for worker in workers]
+    workers_to_query = []
+
+    # --queues flag
+    if queues:
+        # Get a mapping between queues and the workers watching them
+        queue_worker_map, _ = get_queues(app)
+        # Remove duplicates and prepend the celery queue tag to all queues
+        queues = list(set(queues))
+        celerize_queues(queues)
+        # Add the workers associated to each queue to the list of workers we're
+        # going to query
+        for queue in queues:
+            try:
+                workers_to_query.extend(queue_worker_map[queue])
+            except KeyError:
+                LOG.warning(f"No workers connected to {queue}.")
+
+    # --spec flag
+    if spec_worker_names:
+        apply_list_of_regex(spec_worker_names, workers, workers_to_query)
+
+    # --workers flag
+    if workers_regex:
+        apply_list_of_regex(workers_regex, workers, workers_to_query)
+
+    # Remove any potential duplicates
+    workers = set(workers)
+    workers_to_query = set(workers_to_query)
+
+    # If there were filters and nothing was found then we can't display a table
+    if (queues or spec_worker_names or workers_regex) and not workers_to_query:
+        LOG.warning("No workers found that match your filters.")
+        return
+
+    # Build the output table based on our filters
+    table = []
+    if workers_to_query:
+        _build_output_table(workers_to_query, table)
+    else:
+        _build_output_table(workers, table)
+
+    # Display the output table
+    LOG.info("Found these connected workers:")
+    tabulate_info(table, headers=["Workers", "Queues"])
+    print()
 
 
 def query_celery_queues(queues):
@@ -490,7 +608,6 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
 
     """
     from merlin.celery import app  # pylint: disable=C0415
-    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
     LOG.debug(f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}")
     active_queues, _ = get_queues(app)
@@ -500,8 +617,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
         queues = [*active_queues]
     # Celery adds the queue tag in front of each queue so we add that here
     else:
-        for i, queue in enumerate(queues):
-            queues[i] = f"{CONFIG.celery.queue_tag}{queue}"
+        celerize_queues(queues)
 
     # Find the set of all workers attached to all of those queues
     all_workers = set()
@@ -524,20 +640,16 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
         workers_to_stop = []
         # --spec flag
         if (spec_worker_names is not None) and len(spec_worker_names) > 0:
-            for worker_name in spec_worker_names:
-                LOG.debug(
-                    f"""Result of regex_list_filter for {worker_name}:
-                    {regex_list_filter(worker_name, all_workers, match=False)}"""
-                )
-                workers_to_stop += regex_list_filter(worker_name, all_workers, match=False)
+            apply_list_of_regex(spec_worker_names, all_workers, workers_to_stop)
         # --workers flag
         if worker_regex is not None:
-            for worker in worker_regex:
-                LOG.debug(f"Result of regex_list_filter: {regex_list_filter(worker, all_workers, match=False)}")
-                workers_to_stop += regex_list_filter(worker, all_workers, match=False)
+            LOG.debug(f"Searching for workers to stop based on the following regex's: {worker_regex}")
+            apply_list_of_regex(worker_regex, all_workers, workers_to_stop)
 
     # Remove duplicates
     workers_to_stop = list(set(workers_to_stop))
+    LOG.debug(f"Post-filter worker stop list: {workers_to_stop}")
+
     if workers_to_stop:
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
         app.control.broadcast("shutdown", destination=workers_to_stop)
