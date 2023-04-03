@@ -40,7 +40,7 @@ import os
 import subprocess
 from typing import Dict, Optional, Union
 
-from merlin.utils import get_flux_alloc, get_yaml_var
+from merlin.utils import convert_timestring, get_flux_alloc, get_yaml_var
 
 
 LOG = logging.getLogger(__name__)
@@ -294,7 +294,7 @@ def construct_scheduler_legend(parsed_batch: Dict, nodes: int) -> Dict:
             "expected check output": b"Nodes",
             "launch": f"{parsed_batch['flux alloc']} -o pty -N {nodes} --exclusive --job-name=merlin",
             "queue": f" --setattr=system.queue={parsed_batch['queue']}",
-            "walltime": f" -t {parsed_batch['walltime']}",
+            "walltime": f" -t {convert_timestring(parsed_batch['walltime'], format_method='FSD')}",
         },
         "lsf": {
             "check cmd": ["jsrun", "--help"],
@@ -308,7 +308,7 @@ def construct_scheduler_legend(parsed_batch: Dict, nodes: int) -> Dict:
             "expected check output": b"pbs_version",
             "launch": f"qsub -l nodes={nodes}",
             "queue": f" -q {parsed_batch['queue']}",
-            "walltime": f" -l walltime={parsed_batch['walltime']}",
+            "walltime": f" -l walltime={convert_timestring(parsed_batch['walltime'])}",
         },
         "slurm": {
             "bank": f" -A {parsed_batch['bank']}",
@@ -316,7 +316,7 @@ def construct_scheduler_legend(parsed_batch: Dict, nodes: int) -> Dict:
             "expected check output": b"sbatch",
             "launch": f"srun -N {nodes} -n {nodes}",
             "queue": f" -p {parsed_batch['queue']}",
-            "walltime": f" -t {parsed_batch['walltime']}",
+            "walltime": f" -t {convert_timestring(parsed_batch['walltime'])}",
         },
     }
     return scheduler_legend

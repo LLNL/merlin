@@ -54,6 +54,7 @@ from conditions import (  # pylint: disable=E0401
     StepFileHasRegex,
 )
 
+from merlin.study.batch import check_for_scheduler
 from merlin.utils import get_flux_alloc, get_flux_cmd
 
 
@@ -70,12 +71,17 @@ def get_worker_by_cmd(cmd: str, default: str) -> str:
     :param `default`: The default worker launch command to use if a scheduler is found
     :returns: The appropriate worker launch command
     """
-    fake_cmds_path = "tests/integration/fake_commands"
+    workers_cmd = default
+    fake_cmds_path = f"tests/integration/fake_commands/{cmd}_fake_command"
+    bogus_cmd = f"""PATH="{fake_cmds_path}:$PATH";{default}"""
+    scheduler_legend = {"flux": {"check cmd": ["flux", "resource", "list"], "expected check output": b"Nodes"}}
+
+    # Use bogus flux/qsub to test if no flux/qsub is present
     if not shutil.which(cmd):
-        # Use bogus flux to test if no flux is present
-        workers_cmd = f"""PATH="{fake_cmds_path}:$PATH";{default}"""
-    else:
-        workers_cmd = default
+        workers_cmd = bogus_cmd
+    # Use bogus flux if flux is present but slurm is the main scheduler
+    elif cmd == "flux" and not check_for_scheduler(cmd, scheduler_legend):
+        workers_cmd = bogus_cmd
 
     return workers_cmd
 
@@ -107,15 +113,16 @@ def define_tests():  # pylint: disable=R0914,R0915
     # Shortcuts for example workflow paths
     examples = "merlin/examples/workflows"
     dev_examples = "merlin/examples/dev_workflows"
+    test_specs = "tests/integration/test_specs"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
     remote_demo = f"{examples}/remote_feature_demo/remote_feature_demo.yaml"
     demo_pgen = f"{examples}/feature_demo/scripts/pgen.py"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
-    slurm = f"{examples}/slurm/slurm_test.yaml"
+    slurm = f"{test_specs}/slurm_test.yaml"
     slurm_restart = f"{examples}/slurm/slurm_par_restart.yaml"
-    flux = f"{examples}/flux/flux_test.yaml"
+    flux = f"{test_specs}/flux_test.yaml"
     flux_restart = f"{examples}/flux/flux_par_restart.yaml"
-    flux_native = f"{examples}/flux/flux_par_native_test.yaml"
+    flux_native = f"{test_specs}/flux_par_native_test.yaml"
     lsf = f"{examples}/lsf/lsf_par.yaml"
     mul_workers_demo = f"{dev_examples}/multiple_workers.yaml"
 
@@ -230,7 +237,13 @@ def define_tests():  # pylint: disable=R0914,R0915
         },
         "run-workers echo slurm_test": {
             "cmds": f"{workers} {slurm} --echo",
-            "conditions": [HasReturnCode(), HasRegex(celery_slurm_regex)],
+            # Making sure walltime isn't set to an integer w/ last two conditions here
+            "conditions": [
+                HasReturnCode(),
+                HasRegex(celery_slurm_regex),
+                HasRegex(r"-t 36000", negate=True),
+                HasRegex(r"-t 10:00:00"),
+            ],
             "run type": "local",
         },
         "run-workers echo lsf_test": {
@@ -245,12 +258,22 @@ def define_tests():  # pylint: disable=R0914,R0915
         },
         "run-workers echo flux_native_test": {
             "cmds": f"{workers_flux} {flux_native} --echo",
-            "conditions": [HasReturnCode(), HasRegex(celery_flux_regex)],
+            "conditions": [
+                HasReturnCode(),
+                HasRegex(celery_flux_regex),
+                HasRegex(r"-t 36000"),
+                HasRegex(r"-t 10:00:00", negate=True),
+            ],
             "run type": "local",
         },
         "run-workers echo pbs_test": {
             "cmds": f"{workers_pbs} {flux_native} --echo",
-            "conditions": [HasReturnCode(), HasRegex(celery_pbs_regex)],
+            "conditions": [
+                HasReturnCode(),
+                HasRegex(celery_pbs_regex),
+                HasRegex(r"-l walltime=36000", negate=True),
+                HasRegex(r"-l walltime=10:00:00"),
+            ],
             "run type": "local",
         },
         "run-workers echo override feature_demo": {
