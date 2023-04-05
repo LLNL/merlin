@@ -53,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `--queues`: query workers based on the queues they're associated with
   - `--workers`: query workers based on a regex of the names you're looking for
   - `--spec`: query workers based on the workers defined in a spec file
+- Check code with github-action codeql , replacement for lgtm
 
 ### Changed
 - Changed celery_regex to celery_slurm_regex in test_definitions.py
