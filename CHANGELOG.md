@@ -4,7 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [1.10.0]
 ### Fixed
 - Pip wheel wasn't including .sh files for merlin examples
 - The learn.py script in the openfoam_wf* examples will now create the missing Energy v Lidspeed plot
@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A function in `run_tests.py` to check that an integration test definition is formatted correctly
 - A new dev_workflow example `multiple_workers.yaml` that's used for testing the `stop-workers` command
 - Ability to start 2 subprocesses for a single test
-- Added the --distributed and --display-table flags to run_tests.py
+- Added the --distributed and --display-tests flags to run_tests.py
   - --distributed: only run distributed tests
   - --display-tests: displays a table of all existing tests and the id associated with each test
 - Added the --disable-logs flag to the `run-workers` command
