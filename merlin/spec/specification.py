@@ -38,12 +38,14 @@ import logging
 import os
 import shlex
 from copy import deepcopy
+from datetime import timedelta
 from io import StringIO
 
 import yaml
 from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
+from merlin.utils import repr_timedelta
 
 
 LOG = logging.getLogger(__name__)
@@ -179,6 +181,18 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             spec.verify()
             LOG.debug("Merlin spec verified.")
 
+        # Convert the walltime value back to HMS if PyYAML messed with it
+        for _, section in spec.yaml_sections.items():
+            # Section is a list for the study block
+            if isinstance(section, list):
+                for step in section:
+                    if "walltime" in step and isinstance(step["walltime"], int):
+                        step["walltime"] = repr_timedelta(timedelta(seconds=step["walltime"]))
+            # Section is a dict for all other blocks
+            if isinstance(section, dict):
+                if "walltime" in section and isinstance(section["walltime"], int):
+                    section["walltime"] = repr_timedelta(timedelta(seconds=section["walltime"]))
+
         return spec
 
     @classmethod
@@ -205,7 +219,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 "load vulnerability. Please upgrade your installation "
                 "to a more recent version!"
             )
-            spec = yaml.load(data)
+            spec = yaml.load(data, yaml.Loader)
         LOG.debug("Successfully loaded specification: \n%s", spec["description"])
 
         # Load in the parts of the yaml that are the same as Maestro's
@@ -311,21 +325,6 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         # Additional Walltime checks in case the regex from the schema bypasses an error
         if self.batch["type"] == "lsf" and "walltime" in self.batch:
             LOG.warning("The walltime argument is not available in lsf.")
-        elif "walltime" in self.batch:
-            try:
-                err_msg = "Walltime must be of the form SS, MM:SS, or HH:MM:SS."
-                walltime = self.batch["walltime"]
-                if len(walltime) > 2:
-                    # Walltime must have : if it's not of the form SS
-                    if ":" not in walltime:
-                        raise ValueError(err_msg)
-                    # Walltime must have exactly 2 chars between :
-                    time = walltime.split(":")
-                    for section in time:
-                        if len(section) != 2:
-                            raise ValueError(err_msg)
-            except Exception:  # pylint: disable=W0706
-                raise
 
     @staticmethod
     def load_merlin_block(stream):

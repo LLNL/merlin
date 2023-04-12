@@ -4,6 +4,7 @@ import tempfile
 import unittest
 
 import yaml
+from jsonschema import ValidationError
 
 from merlin.spec.specification import MerlinSpec
 
@@ -257,14 +258,14 @@ class TestCustomVerification(unittest.TestCase):
         # Read in INVALID_MERLIN spec
         spec = self.read_spec()
 
-        invalid_walltimes = ["2", "0:1", "111", "1:1:1", "65", "65:12", "66:77", ":02:12", "123:45:33", ""]
+        invalid_walltimes = ["", -1]
 
         # Loop through the invalid walltimes and make sure they're all caught
         for time in invalid_walltimes:
             spec["batch"]["walltime"] = time
             self.update_spec(spec)
 
-            with self.assertRaises(ValueError):
+            with self.assertRaises((ValidationError, ValueError)):
                 MerlinSpec.load_specification(self.merlin_spec_filepath)
 
         # Reset the spec

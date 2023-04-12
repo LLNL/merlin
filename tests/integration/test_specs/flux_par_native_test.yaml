@@ -7,17 +7,19 @@ batch:
   flux_exec: flux exec -r "0-1"
   flux_start_opts: -o,-S,log-filename=flux_par.out
   nodes: 1
+  walltime: 10:00:00
 
 env:
   variables:
     OUTPUT_PATH: ./studies
     N_SAMPLES: 10
+    SCRIPTS: $(SPECROOT)/../../../merlin/examples/workflows/flux/scripts
 
 study:
 - description: Build the code
   name: build
   run:
-    cmd: mpicc -o mpi_hello $(SPECROOT)/scripts/hello.c >& build.out
+    cmd: mpicc -o mpi_hello $(SCRIPTS)/hello.c >& build.out
     task_queue: flux_par
 - description: Echo the params
   name: runs 
@@ -44,7 +46,7 @@ study:
   name: data
   run:
     cmd: |
-      $(SPECROOT)/scripts/flux_info.py > flux_timings.out
+      $(SCRIPTS)/flux_info.py > flux_timings.out
     depends: [runs_*]
     task_queue: flux_par
 
@@ -73,4 +75,4 @@ merlin:
     column_labels: [V1, V2]
     file: $(MERLIN_INFO)/samples.npy
     generate:
-      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
+      cmd: python3 $(SCRIPTS)/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

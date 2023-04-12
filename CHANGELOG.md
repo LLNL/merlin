@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - Might be able to fix this in the future if we split functions up more
     - Too-few-public-methods (R0903): These are disabled for classes we may add to in the future or "wrapper" classes
     - Attribute-defined-outside-init (W0201): These errors are only disabled in `specification.py` as they occur in class methods so init() won't be called
+- Fixed an issue where the walltime value in the batch block was being converted to an integer instead of remaining in HH:MM:SS format
 
 ### Added
 - Now loads np.arrays of dtype='object', allowing mix-type sample npy
