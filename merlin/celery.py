@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -44,11 +44,21 @@ import merlin.common.security.encrypt_backend_traffic
 from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
 from merlin.config.utils import Priority, get_priority
-from merlin.router import route_for_task
 from merlin.utils import nested_namespace_to_dicts
 
 
 LOG: logging.Logger = logging.getLogger(__name__)
+
+
+# This function has to have specific args/return values for celery so ignore pylint
+def route_for_task(name, args, kwargs, options, task=None, **kw):  # pylint: disable=W0613,R1710
+    """
+    Custom task router for queues
+    """
+    if ":" in name:
+        queue, _ = name.split(":")
+        return {"queue": queue}
+
 
 merlin.common.security.encrypt_backend_traffic.set_backend_funcs()
 
@@ -84,7 +94,7 @@ app: Celery = Celery(
 # set task priority defaults to prioritize workflow tasks over task-expansion tasks
 task_priority_defaults: Dict[str, Union[int, Priority]] = {
     "task_queue_max_priority": 10,
-    "task_default_priority": get_priority(Priority.mid),
+    "task_default_priority": get_priority(Priority.MID),
 }
 if CONFIG.broker.name.lower() == "redis":
     app.conf.broker_transport_options = {

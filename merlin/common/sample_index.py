@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -69,7 +69,7 @@ class SampleIndex:
     # Class variable to indicate depth (mostly used for pretty printing).
     depth = -1
 
-    def __init__(self, minid, maxid, children, name, leafid=-1, num_bundles=0, address=""):
+    def __init__(self, minid, maxid, children, name, leafid=-1, num_bundles=0, address=""):  # pylint: disable=R0913
         """The constructor."""
 
         # The direct children of this node, generally also of type SampleIndex.
@@ -251,14 +251,14 @@ class SampleIndex:
         """
         path = self.name
         for child_val in self.children.values():
-            if sample_id >= child_val.min and sample_id < child_val.max:
+            if child_val.min <= sample_id < child_val.max:
                 path = os.path.join(path, child_val.get_path_to_sample(sample_id))
         return path
 
     def write_single_sample_index_file(self, path):
         """Writes the index file associated with this node."""
         if not self.is_directory:
-            return
+            return None
 
         fname = os.path.join(path, self.name, "sample_index.txt")
         with open(fname, "w") as _file:

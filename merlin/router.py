@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -53,12 +53,16 @@ from merlin.study.celeryadapter import (
 
 
 try:
-    import importlib.resources as resources
+    from importlib import resources
 except ImportError:
     import importlib_resources as resources
 
 
 LOG = logging.getLogger(__name__)
+
+# TODO go through this file and find a way to make a common return format to main.py
+# Also, if that doesn't fix them, look into the pylint errors that have been disabled
+# and try to resolve them
 
 
 def run_task_server(study, run_mode=None):
@@ -74,7 +78,7 @@ def run_task_server(study, run_mode=None):
         LOG.error("Celery is not specified as the task server!")
 
 
-def launch_workers(spec, steps, worker_args="", just_return_command=False):
+def launch_workers(spec, steps, worker_args="", disable_logs=False, just_return_command=False):
     """
     Launches workers for the specified study.
 
@@ -83,12 +87,13 @@ def launch_workers(spec, steps, worker_args="", just_return_command=False):
     :param `worker_args`: Optional arguments for the workers
     :param `just_return_command`: Don't execute, just return the command
     """
-    if spec.merlin["resources"]["task_server"] == "celery":
+    if spec.merlin["resources"]["task_server"] == "celery":  # pylint: disable=R1705
         # Start workers
-        cproc = start_celery_workers(spec, steps, worker_args, just_return_command)
+        cproc = start_celery_workers(spec, steps, worker_args, disable_logs, just_return_command)
         return cproc
     else:
         LOG.error("Celery is not specified as the task server!")
+        return "No workers started"
 
 
 def purge_tasks(task_server, spec, force, steps):
@@ -103,12 +108,13 @@ def purge_tasks(task_server, spec, force, steps):
     """
     LOG.info(f"Purging queues for steps = {steps}")
 
-    if task_server == "celery":
+    if task_server == "celery":  # pylint: disable=R1705
         queues = spec.make_queue_string(steps)
         # Purge tasks
         return purge_celery_tasks(queues, force)
     else:
         LOG.error("Celery is not specified as the task server!")
+        return -1
 
 
 def query_status(task_server, spec, steps, verbose=True):
@@ -122,12 +128,13 @@ def query_status(task_server, spec, steps, verbose=True):
     if verbose:
         LOG.info(f"Querying queues for steps = {steps}")
 
-    if task_server == "celery":
+    if task_server == "celery":  # pylint: disable=R1705
         queues = spec.get_queue_list(steps)
         # Query the queues
         return query_celery_queues(queues)
     else:
         LOG.error("Celery is not specified as the task server!")
+        return []
 
 
 def dump_status(query_return, csv_file):
@@ -141,7 +148,7 @@ def dump_status(query_return, csv_file):
         fmode = "a"
     else:
         fmode = "w"
-    with open(csv_file, mode=fmode) as f:
+    with open(csv_file, mode=fmode) as f:  # pylint: disable=W1514,C0103
         if f.mode == "w":  # add the header
             f.write("# time")
             for name, job, consumer in query_return:
@@ -153,7 +160,7 @@ def dump_status(query_return, csv_file):
         f.write("\n")
 
 
-def query_workers(task_server):
+def query_workers(task_server, spec_worker_names, queues, workers_regex):
     """
     Gets info from workers.
 
@@ -162,7 +169,7 @@ def query_workers(task_server):
     LOG.info("Searching for workers...")
 
     if task_server == "celery":
-        return query_celery_workers()
+        query_celery_workers(spec_worker_names, queues, workers_regex)
     else:
         LOG.error("Celery is not specified as the task server!")
 
@@ -174,10 +181,11 @@ def get_workers(task_server):
     :return: A list of all connected workers
     :rtype: list
     """
-    if task_server == "celery":
+    if task_server == "celery":  # pylint: disable=R1705
         return get_workers_from_app()
     else:
         LOG.error("Celery is not specified as the task server!")
+        return []
 
 
 def stop_workers(task_server, spec_worker_names, queues, workers_regex):
@@ -191,20 +199,11 @@ def stop_workers(task_server, spec_worker_names, queues, workers_regex):
     """
     LOG.info("Stopping workers...")
 
-    if task_server == "celery":
+    if task_server == "celery":  # pylint: disable=R1705
         # Stop workers
-        return stop_celery_workers(queues, spec_worker_names, workers_regex)
+        stop_celery_workers(queues, spec_worker_names, workers_regex)
     else:
         LOG.error("Celery is not specified as the task server!")
-
-
-def route_for_task(name, args, kwargs, options, task=None, **kw):
-    """
-    Custom task router for queues
-    """
-    if ":" in name:
-        queue, _ = name.split(":")
-        return {"queue": queue}
 
 
 def create_config(task_server: str, config_dir: str, broker: str, test: str) -> None:
@@ -249,7 +248,7 @@ def check_merlin_status(args, spec):
 
     total_jobs = 0
     total_consumers = 0
-    for name, jobs, consumers in queue_status:
+    for _, jobs, consumers in queue_status:
         total_jobs += jobs
         total_consumers += consumers
 

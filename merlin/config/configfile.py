@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -36,7 +36,7 @@ import getpass
 import logging
 import os
 import ssl
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 
 from merlin.config import Config
 from merlin.utils import load_yaml
@@ -60,9 +60,9 @@ def load_config(filepath):
     """
     if not os.path.isfile(filepath):
         LOG.info(f"No app config file at {filepath}")
-    else:
-        LOG.info(f"Reading app config from file {filepath}")
-        return load_yaml(filepath)
+        return None
+    LOG.info(f"Reading app config from file {filepath}")
+    return load_yaml(filepath)
 
 
 def find_config_file(path=None):
@@ -78,10 +78,9 @@ def find_config_file(path=None):
 
         if os.path.isfile(local_app):
             return local_app
-        elif os.path.isfile(path_app):
+        if os.path.isfile(path_app):
             return path_app
-        else:
-            return None
+        return None
 
     app_path = os.path.join(path, APP_FILENAME)
     if os.path.exists(app_path):
@@ -133,6 +132,7 @@ def get_config(path: Optional[str]) -> Dict:
 
 
 def load_default_celery(config):
+    """Creates the celery default configuration"""
     try:
         config["celery"]
     except KeyError:
@@ -152,6 +152,7 @@ def load_default_celery(config):
 
 
 def load_defaults(config):
+    """Loads default configuration values"""
     load_default_user_names(config)
     load_default_celery(config)
 
@@ -247,7 +248,7 @@ def get_ssl_entries(
     except (AttributeError, KeyError):
         LOG.debug(f"{server_type}: ssl ssl_protocol not present")
 
-    if server_ssl and "cert_reqs" not in server_ssl.keys():
+    if server_ssl and "cert_reqs" not in server_ssl:
         server_ssl["cert_reqs"] = ssl.CERT_REQUIRED
 
     ssl_map: Dict[str, str] = process_ssl_map(server_name)
@@ -290,14 +291,12 @@ def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dic
     : param ssl_map : the dict holding special key:value pairs for rediss and mysql
     """
     new_server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
-    sk: List[str] = server_ssl.keys()
-    smk: List[str] = ssl_map.keys()
-    k: str
-    for k in sk:
-        if k in smk:
-            new_server_ssl[ssl_map[k]] = server_ssl[k]
+
+    for key in server_ssl:
+        if key in ssl_map:
+            new_server_ssl[ssl_map[key]] = server_ssl[key]
         else:
-            new_server_ssl[k] = server_ssl[k]
+            new_server_ssl[key] = server_ssl[key]
 
     return new_server_ssl
 

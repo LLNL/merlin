@@ -1,14 +1,14 @@
 """The top level main function for invoking Merlin."""
 
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -68,7 +68,7 @@ class HelpParser(ArgumentParser):
     print the help message when an error happens."""
 
     def error(self, message):
-        sys.stderr.write("error: %s\n" % message)
+        sys.stderr.write(f"error: {message}\n")
         self.print_help()
         sys.exit(2)
 
@@ -222,7 +222,7 @@ def launch_workers(args):
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
-    status = router.launch_workers(spec, args.worker_steps, args.worker_args, args.worker_echo_only)
+    status = router.launch_workers(spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only)
     if args.worker_echo_only:
         print(status)
     else:
@@ -269,7 +269,19 @@ def query_workers(args):
     :param `args`: parsed CLI arguments
     """
     print(banner_small)
-    router.query_workers(args.task_server)
+
+    # Get the workers from the spec file if --spec provided
+    worker_names = []
+    if args.spec:
+        spec_path = verify_filepath(args.spec)
+        spec = MerlinSpec.load_specification(spec_path)
+        worker_names = spec.get_worker_names()
+        for worker_name in worker_names:
+            if "$" in worker_name:
+                LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
+        LOG.debug(f"Searching for the following workers to stop based on the spec {args.spec}: {worker_names}")
+
+    router.query_workers(args.task_server, worker_names, args.queues, args.workers)
 
 
 def stop_workers(args):
@@ -280,6 +292,8 @@ def stop_workers(args):
     """
     print(banner_small)
     worker_names = []
+
+    # Load in the spec if one was provided via the CLI
     if args.spec:
         spec_path = verify_filepath(args.spec)
         spec = MerlinSpec.load_specification(spec_path)
@@ -287,6 +301,8 @@ def stop_workers(args):
         for worker_name in worker_names:
             if "$" in worker_name:
                 LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
+
+    # Send stop command to router
     router.stop_workers(args.task_server, worker_names, args.queues, args.workers)
 
 
@@ -344,6 +360,10 @@ def process_monitor(args):
 
 
 def process_server(args: Namespace):
+    """
+    Route to the correct function based on the command
+    given via the CLI
+    """
     if args.commands == "init":
         init_server()
     elif args.commands == "start":
@@ -358,7 +378,9 @@ def process_server(args: Namespace):
         config_server(args)
 
 
-def setup_argparse() -> None:
+# Pylint complains that there's too many statements here and wants us
+# to split the function up but that wouldn't make much sense so we ignore it
+def setup_argparse() -> None:  # pylint: disable=R0915
     """
     Setup argparse and any CLI options we want available via the package.
     """
@@ -755,6 +777,12 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
+    run_workers.add_argument(
+        "--disable-logs",
+        action="store_true",
+        help="Turn off the logs for the celery workers. Note: having the -l flag "
+        "in your workers' args section will overwrite this flag for that worker.",
+    )
 
     # merlin query-workers
     query: ArgumentParser = subparsers.add_parser("query-workers", help="List connected task server workers.")
@@ -765,6 +793,21 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         default="celery",
         help="Task server type from which to query workers.\
                             Default: %(default)s",
+    )
+    query.add_argument(
+        "--spec",
+        type=str,
+        default=None,
+        help="Path to a Merlin YAML spec file from which to read worker names to query.",
+    )
+    query.add_argument("--queues", type=str, default=None, nargs="+", help="Specific queues to query workers from.")
+    query.add_argument(
+        "--workers",
+        type=str,
+        action="store",
+        nargs="+",
+        default=None,
+        help="Regex match for specific workers to query.",
     )
 
     # merlin stop-workers
@@ -787,6 +830,8 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
     stop.add_argument(
         "--workers",
         type=str,
+        action="store",
+        nargs="+",
         default=None,
         help="regex match for specific workers to stop",
     )

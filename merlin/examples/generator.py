@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -50,13 +50,15 @@ EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflo
 
 
 def gather_example_dirs():
+    """Get all the example directories"""
     result = {}
-    for d in os.listdir(EXAMPLES_DIR):
-        result[d] = d
+    for directory in os.listdir(EXAMPLES_DIR):
+        result[directory] = directory
     return result
 
 
 def gather_all_examples():
+    """Get all the example yaml files"""
     path = os.path.join(os.path.join(EXAMPLES_DIR, ""), os.path.join("*", "*.yaml"))
     return glob.glob(path)
 
@@ -81,11 +83,11 @@ def list_examples():
         directory = os.path.join(os.path.join(EXAMPLES_DIR, example_dir), "")
         specs = glob.glob(directory + "*.yaml")
         for spec in specs:
-            with open(spec) as f:
+            with open(spec) as f:  # pylint: disable=C0103
                 try:
                     spec_metadata = yaml.safe_load(f)["description"]
                 except KeyError:
-                    LOG.warn(f"{spec} lacks required section 'description'")
+                    LOG.warning(f"{spec} lacks required section 'description'")
                     continue
                 except TypeError:
                     continue
@@ -103,6 +105,7 @@ def setup_example(name, outdir):
     """Setup the given example."""
     example = None
     spec_paths = gather_all_examples()
+    spec_path = None
     for spec_path in spec_paths:
         spec = os.path.basename(os.path.normpath(spec_path)).replace(".yaml", "")
         if name == spec:

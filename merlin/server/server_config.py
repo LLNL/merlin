@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module represents everything that goes into server configuration"""
 
 import enum
 import logging
@@ -39,12 +40,6 @@ from typing import Tuple
 
 import yaml
 
-
-try:
-    import importlib.resources as resources
-except ImportError:
-    import importlib_resources as resources
-
 from merlin.server.server_util import (
     CONTAINER_TYPES,
     MERLIN_CONFIG_DIR,
@@ -55,6 +50,12 @@ from merlin.server.server_util import (
     RedisUsers,
     ServerConfig,
 )
+
+
+try:
+    from importlib import resources
+except ImportError:
+    import importlib_resources as resources
 
 
 LOG = logging.getLogger("merlin")
@@ -99,7 +100,7 @@ def generate_password(length, pass_command: str = None) -> str:
     random.shuffle(characters)
 
     password = []
-    for i in range(length):
+    for _ in range(length):
         password.append(random.choice(characters))
 
     random.shuffle(password)
@@ -132,6 +133,8 @@ def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
             return False, line.decode("utf-8")
         line = redis_stdout.readline()
 
+    return False, "Reached end of redis output without seeing 'Ready to accept connections'"
+
 
 def create_server_config() -> bool:
     """
@@ -142,7 +145,7 @@ def create_server_config() -> bool:
     :return:: True if success and False if fail
     """
     if not os.path.exists(MERLIN_CONFIG_DIR):
-        LOG.error("Unable to find main merlin configuration directory at " + MERLIN_CONFIG_DIR)
+        LOG.error(f"Unable to find main merlin configuration directory at {MERLIN_CONFIG_DIR}")
         return False
 
     config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
@@ -172,7 +175,7 @@ def create_server_config() -> bool:
 
     # Load Merlin Server Configuration and apply it to app.yaml
     with resources.path("merlin.server", MERLIN_SERVER_CONFIG) as merlin_server_config:
-        with open(merlin_server_config) as f:
+        with open(merlin_server_config) as f:  # pylint: disable=C0103
             main_server_config = yaml.load(f, yaml.Loader)
             filename = LOCAL_APP_YAML if os.path.exists(LOCAL_APP_YAML) else AppYaml.default_filename
             merlin_app_yaml = AppYaml(filename)
@@ -211,7 +214,7 @@ def config_merlin_server():
         # else:
         password = generate_password(PASSWORD_LENGTH)
 
-        with open(pass_file, "w+") as f:
+        with open(pass_file, "w+") as f:  # pylint: disable=C0103
             f.write(password)
 
         LOG.info("Creating password file for merlin server container.")
@@ -228,7 +231,9 @@ def config_merlin_server():
         redis_users.write()
         redis_config.write()
 
-        LOG.info("User {} created in user file for merlin server container".format(os.environ.get("USER")))
+        LOG.info(f"User {os.environ.get('USER')} created in user file for merlin server container")
+
+    return None
 
 
 def pull_server_config() -> ServerConfig:
@@ -251,7 +256,7 @@ def pull_server_config() -> ServerConfig:
     if "container" in server_config:
         if "format" in server_config["container"]:
             format_file = os.path.join(config_dir, server_config["container"]["format"] + ".yaml")
-            with open(format_file, "r") as ff:
+            with open(format_file, "r") as ff:  # pylint: disable=C0103
                 format_data = yaml.load(ff, yaml.Loader)
                 for key in format_needed_keys:
                     if key not in format_data[server_config["container"]["format"]]:
@@ -378,7 +383,7 @@ def pull_process_file(file_path: str) -> dict:
     if not returns None
     :return:: Data containing in process file.
     """
-    with open(file_path, "r") as f:
+    with open(file_path, "r") as f:  # pylint: disable=C0103
         data = yaml.load(f, yaml.Loader)
         if check_process_file_format(data):
             return data
@@ -392,6 +397,6 @@ def dump_process_file(data: dict, file_path: str):
     """
     if not check_process_file_format(data):
         return False
-    with open(file_path, "w+") as f:
+    with open(file_path, "w+") as f:  # pylint: disable=C0103
         yaml.dump(data, f, yaml.Dumper)
     return True

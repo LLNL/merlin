@@ -4,11 +4,13 @@ description:
 
 batch:
   type: slurm
+  walltime: 10:00:00
 
 env:
   variables:
     OUTPUT_PATH: ./studies
     N_SAMPLES: 10
+    SCRIPTS: $(SPECROOT)/../../../merlin/examples/workflows/slurm/scripts
 
 study:
 - description: Echo the params
@@ -44,4 +46,4 @@ merlin:
     column_labels: [V1, V2]
     file: $(MERLIN_INFO)/samples.npy
     generate:
-      cmd: python3 $(SPECROOT)/scripts/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 
+      cmd: python3 $(SCRIPTS)/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

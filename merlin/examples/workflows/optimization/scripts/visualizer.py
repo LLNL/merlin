@@ -1,14 +1,13 @@
 import argparse
-
-import matplotlib
-
-
-matplotlib.use("pdf")
 import ast
 import pickle
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
+
+matplotlib.use("pdf")
 
 
 plt.style.use("seaborn-white")

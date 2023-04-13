@@ -174,6 +174,8 @@ the input yaml file.
 ``Example: --vars QUEUE_NAME=new_queue EPOCHS=3``
 
 
+.. _query-workers:
+
 Searching for any workers (``merlin query-workers``)
 ----------------------------------------------------
 
@@ -185,8 +187,43 @@ the task server you can use:
     $ merlin query-workers
 
 This will broadcast a command to all connected workers and print
-the names of any that respond. This is useful for interacting
-with workers, such as via ``merlin stop-workers --workers``.
+the names of any that respond and the queues they're attached to.
+This is useful for interacting with workers, such as via
+``merlin stop-workers --workers``.
+
+The ``--queues`` option will look for workers associated with the
+names of the queues you provide here. For example, if you want to
+see the names of all workers attached to the queues named ``demo``
+and ``merlin`` you would use:
+
+.. code-block::
+
+    merlin query-workers --queues demo merlin
+
+The ``--spec`` option will query for workers defined in the spec
+file you provide. For example, if ``simworker`` and ``nonsimworker``
+are defined in a spec file called ``example_spec.yaml`` then to query
+for these workers you would use:
+
+.. code-block::
+
+    merlin query-workers --spec example_spec.yaml
+
+The ``--workers`` option will query for workers based on the worker
+names you provide here. For example, if you wanted to query a worker
+named ``step_1_worker`` you would use:
+
+.. code-block::
+
+    merlin query-workers --workers step_1_worker
+
+This flag can also take regular expressions as input. For instance,
+if you had several workers running but only wanted to find the workers
+whose names started with ``step`` you would use:
+
+.. code-block::
+
+    merlin query-workers --workers ^step
 
 
 Restart the workflow (``merlin restart``)
@@ -378,7 +415,7 @@ To send out a stop signal to some or all connected workers, use:
     $ merlin stop-workers [--spec <input.yaml>] [--queues <queues>] [--workers <regex>] [--task_server celery]
 
 
-The default behavior will send a stop to all connected workers,
+The default behavior will send a stop to all connected workers across all workflows,
 having them shutdown softly.
 
 The ``--spec`` option targets only workers named in the ``merlin`` block of the spec file.
@@ -390,7 +427,7 @@ The ``--queues`` option allows you to pass in the names of specific queues to st
     # Stop all workers on these queues, no matter their name
     $ merlin stop-workers --queues queue1 queue2
 
-The ``--workers`` option allows you to pass in a regular expression of names of queues to stop:
+The ``--workers`` option allows you to pass in regular expressions of names of workers to stop:
 
 .. code:: bash
 
