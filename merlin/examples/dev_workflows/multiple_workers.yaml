@@ -1,0 +1,56 @@
+description:
+    name: multiple_workers
+    description: a very simple merlin workflow with multiple workers
+
+global.parameters:
+    GREET:
+        values : ["hello","hola"]
+        label  : GREET.%%
+    WORLD:
+        values : ["world","mundo"]
+        label  : WORLD.%%
+
+study:
+    - name: step_1
+      description: say hello
+      run:
+          cmd: |
+              echo "$(GREET), $(WORLD)!"
+          task_queue: hello_queue
+
+    - name: step_2
+      description: step 2
+      run:
+        cmd: |
+            echo "step_2"
+        depends: [step_1_*]
+        task_queue: echo_queue
+
+    - name: step_3
+      description: stop workers
+      run:
+        cmd: |
+            echo "stop workers"
+        depends: [step_2]
+        task_queue: other_queue
+
+    - name: step_4
+      description: another step
+      run:
+        cmd: |
+            echo "another step"
+        depends: [step_3]
+        task_queue: other_queue
+
+merlin:
+    resources:
+        workers:
+            step_1_merlin_test_worker:
+                args: -l INFO
+                steps: [step_1]
+            step_2_merlin_test_worker:
+                args: -l INFO
+                steps: [step_2]
+            other_merlin_test_worker:
+                args: -l INFO
+                steps: [step_3, step_4]

@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -35,8 +35,10 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
+# Need to disable an overwrite warning here since celery has an exception that we need that directly
+# overwrites a python built-in exception
 from celery import chain, chord, group, shared_task, signature
-from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError
+from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
@@ -60,6 +62,13 @@ retry_exceptions = (
 LOG = logging.getLogger(__name__)
 
 STOP_COUNTDOWN = 60
+
+# TODO: most of the pylint errors that are disabled in this file are the ones listed below.
+# We should refactor this file so that we use more functions to solve all of these errors
+# R0912: too many branches
+# R0913: too many arguments
+# R0914: too many local variables
+# R0915: too many statements
 
 
 @shared_task(
@@ -118,9 +127,9 @@ def update_status(*args: Any, **kwargs: Any) -> None:
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority(Priority.high),
+    priority=get_priority(Priority.HIGH),
 )
-def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noqa: C901
+def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noqa: C901 pylint: disable=R0912,R0915
     """
     Executes a Merlin Step
     :param args: The arguments, one of which should be an instance of Step
@@ -179,7 +188,8 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                 self.retry(countdown=step.retry_delay)
             except MaxRetriesExceededError:
                 LOG.warning(
-                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
+                    f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command,
+                    but has already reached its retry limit ({self.max_retries}). Continuing with workflow."""
                 )
                 result = ReturnCode.SOFT_FAIL
                 # Need to call mark_end again since we switched from
@@ -195,7 +205,8 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                 self.retry(countdown=step.retry_delay)
             except MaxRetriesExceededError:
                 LOG.warning(
-                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
+                    f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command,
+                    but has already reached its retry limit ({self.max_retries}). Continuing with workflow."""
                 )
                 result = ReturnCode.SOFT_FAIL
                 # Need to call mark_end again since we switched from
@@ -293,9 +304,9 @@ def prepare_chain_workspace(sample_index, chain_):
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority(Priority.low),
+    priority=get_priority(Priority.LOW),
 )
-def add_merlin_expanded_chain_to_chord(
+def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
     self,
     task_type,
     chain_,
@@ -326,7 +337,6 @@ def add_merlin_expanded_chain_to_chord(
         ]
         LOG.debug(f"recursing grandparent with relative paths {relative_paths}")
         for step in chain_:
-
             # Make a list of new task objects with modified cmd and workspace
             # based off of the parameter substitutions and relative_path for
             # a given sample.
@@ -391,7 +401,6 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
     LOG.debug(f"simple chain with {chain_}")
     all_chains = []
     for step in chain_:
-
         # Make a list of new task signatures with modified cmd and workspace
         # based off of the parameter substitutions and relative_path for
         # a given sample.
@@ -433,14 +442,14 @@ def add_chains_to_chord(self, all_chains):
             # generates a new task signature, so we need to make
             # sure we are modifying task signatures before adding them to the
             # kwargs.
-            for g in reversed(range(len(all_chains))):
-                if g < len(all_chains) - 1:
+            for j in reversed(range(len(all_chains))):
+                if j < len(all_chains) - 1:
                     # fmt: off
-                    new_kwargs = signature(all_chains[g][i]).kwargs.update(
-                        {"next_in_chain": all_chains[g + 1][i]}
+                    new_kwargs = signature(all_chains[j][i]).kwargs.update(
+                        {"next_in_chain": all_chains[j + 1][i]}
                     )
                     # fmt: on
-                    all_chains[g][i] = all_chains[g][i].replace(kwargs=new_kwargs)
+                    all_chains[j][i] = all_chains[j][i].replace(kwargs=new_kwargs)
             chain_steps.append(all_chains[0][i])
 
         for sig in chain_steps:
@@ -456,9 +465,9 @@ def add_chains_to_chord(self, all_chains):
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority(Priority.low),
+    priority=get_priority(Priority.LOW),
 )
-def expand_tasks_with_samples(
+def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
     self,
     dag,
     chain_,
@@ -467,7 +476,6 @@ def expand_tasks_with_samples(
     task_type,
     adapter_config,
     level_max_dirs,
-    **kwargs,
 ):
     """
     Generate a group of celery chains of tasks from a chain of task names, using merlin
@@ -561,6 +569,7 @@ def expand_tasks_with_samples(
         LOG.debug("simple chain task queued")
 
 
+# Pylint complains that "self" is unused but it's needed behind the scenes with celery
 @shared_task(
     bind=True,
     autoretry_for=retry_exceptions,
@@ -568,9 +577,9 @@ def expand_tasks_with_samples(
     acks_late=False,
     reject_on_worker_lost=False,
     name="merlin:shutdown_workers",
-    priority=get_priority(Priority.high),
+    priority=get_priority(Priority.HIGH),
 )
-def shutdown_workers(self, shutdown_queues):
+def shutdown_workers(self, shutdown_queues):  # pylint: disable=W0613
     """
     This task issues a call to shutdown workers.
 
@@ -587,13 +596,15 @@ def shutdown_workers(self, shutdown_queues):
     return stop_workers("celery", None, shutdown_queues, None)
 
 
+# Pylint complains that these args are unused but celery passes args
+# here behind the scenes and won't work if these aren't here
 @shared_task(
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     name="merlin:chordfinisher",
-    priority=get_priority(Priority.low),
+    priority=get_priority(Priority.LOW),
 )
-def chordfinisher(*args, **kwargs):
+def chordfinisher(*args, **kwargs):  # pylint: disable=W0613
     """.
     It turns out that chain(group,group) in celery does not execute one group
     after another, but executes the groups as if they were independent from
@@ -608,7 +619,7 @@ def chordfinisher(*args, **kwargs):
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     name="merlin:queue_merlin_study",
-    priority=get_priority(Priority.low),
+    priority=get_priority(Priority.LOW),
 )
 def queue_merlin_study(study, adapter):
     """

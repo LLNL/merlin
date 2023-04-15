@@ -5,14 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
-### Fixed
-- Fixed the flags associated with the "merlin stop-workers" command (--spec, --queues, --workers)
-- Fixed the --step flag for the "merlin run-workers" command
-
 ### Added
-- Now loads np.arrays of dtype='object', allowing mix-type sample npy
 - Added the --active-queues flag to the "merlin info" command similar to old status command but will only show queues with running workers
-- Added the --disable-logs flag to the "merlin run-workers" command
 - New task "update_status" to be called for status changes
 - New worker spun up in the background for tracking statuses
 - 3 new methods to the MerlinSpec object:
@@ -24,9 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New file status.py dedicated to work relating to the status command
 
 ### Changed
-- In the merlinspec.json file the minimum gpus per task was changed from 1 to 0
 - query_celery_status() in display.py now uses with statements to open connection and channel to ensure they close
-- Reformatted start_celery_workers() in celeryadapter.py file
 - Reformatted the entire "merlin status" command
   - Now accepts both spec files and workspace directories as arguments
     - e.g. "merlin status hello.yaml" and "merlin status hello_20230228-111920/" both work
@@ -38,6 +30,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Low Level display:
     - Shows more in-depth details for each task
     - Interactive ability to filter
+
+## [1.10.0]
+### Fixed
+- Pip wheel wasn't including .sh files for merlin examples
+- The learn.py script in the openfoam_wf* examples will now create the missing Energy v Lidspeed plot
+- Fixed the flags associated with the `stop-workers` command (--spec, --queues, --workers)
+- Fixed the --step flag for the `run-workers` command
+- Fixed most of the pylint errors that we're showing up when you ran `make check-style`
+  - Some errors have been disabled rather than fixed. These include:
+    - Any pylint errors in merlin_template.py since it's deprecated now
+    - A "duplicate code" instance between a function in `expansion.py` and a method in `study.py`
+      - The function is explicitly not creating a MerlinStudy object so the code *must* be duplicate here
+    - Invalid-name (C0103): These errors typically relate to the names of short variables (i.e. naming files something like f or errors e)
+    - Unused-argument (W0613): These have been disabled for celery-related functions since celery *does* use these arguments behind the scenes
+    - Broad-exception (W0718): Pylint wants a more specific exception but sometimes it's ok to have a broad exception
+    - Import-outside-toplevel (C0415): Sometimes it's necessary for us to import inside a function. Where this is the case, these errors are disabled
+    - Too-many-statements (R0915): This is disabled for the `setup_argparse` function in `main.py` since it's necessary to be big. It's disabled in `tasks.py` and `celeryadapter.py` too until we can get around to refactoring some code there
+    - No-else-return (R1705): These are disabled in `router.py` until we refactor the file
+    - Consider-using-with (R1732): Pylint wants us to consider using with for calls to subprocess.run or subprocess.Popen but it's not necessary
+    - Too-many-arguments (R0913): These are disabled for functions that I believe *need* to have several arguments
+      - Note: these could be fixed by using *args and **kwargs but it makes the code harder to follow so I'm opting to not do that
+    - Too-many-local-variables (R0914): These are disabled for functions that have a lot of variables
+      - It may be a good idea at some point to go through these and try to find ways to shorten the number of variables used or split the functions up
+    - Too-many-branches (R0912): These are disabled for certain functions that require a good amount of branching
+      - Might be able to fix this in the future if we split functions up more
+    - Too-few-public-methods (R0903): These are disabled for classes we may add to in the future or "wrapper" classes
+    - Attribute-defined-outside-init (W0201): These errors are only disabled in `specification.py` as they occur in class methods so init() won't be called
+- Fixed an issue where the walltime value in the batch block was being converted to an integer instead of remaining in HH:MM:SS format
+
+### Added
+- Now loads np.arrays of dtype='object', allowing mix-type sample npy
+- Added a singularity container openfoam_wf example
+- Added flux native worker launch support
+- Added PBS flux launch support
+- Added check_for_flux, check_for_slurm, check_for_lsf, and check_for_pbs utility functions
+- Tests for the `stop-workers` command
+- A function in `run_tests.py` to check that an integration test definition is formatted correctly
+- A new dev_workflow example `multiple_workers.yaml` that's used for testing the `stop-workers` command
+- Ability to start 2 subprocesses for a single test
+- Added the --distributed and --display-tests flags to run_tests.py
+  - --distributed: only run distributed tests
+  - --display-tests: displays a table of all existing tests and the id associated with each test
+- Added the --disable-logs flag to the `run-workers` command
+- Merlin will now assign `default_worker` to any step not associated with a worker
+- Added `get_step_worker_map()` as a method in `specification.py`
+- Added `tabulate_info()` function in `display.py` to help with table formatting
+- Added get_flux_alloc function for new flux version >= 0.48.x interface change
+- New flags to the `query-workers` command
+  - `--queues`: query workers based on the queues they're associated with
+  - `--workers`: query workers based on a regex of the names you're looking for
+  - `--spec`: query workers based on the workers defined in a spec file
+
+### Changed
+- Changed celery_regex to celery_slurm_regex in test_definitions.py
+- Reformatted how integration tests are defined and part of how they run
+  - Test values are now dictionaries rather than tuples
+  - Stopped using `subprocess.Popen()` and `subprocess.communicate()` to run tests and now instead use `subprocess.run()` for simplicity and to keep things up-to-date with the latest subprocess release (`run()` will call `Popen()` and `communicate()` under the hood so we don't have to handle that anymore)
+- Rewrote the README in the integration tests folder to explain the new integration test format
+- Reformatted `start_celery_workers()` in `celeryadapter.py` file. This involved:
+  - Modifying `verify_args()` to return the arguments it verifies/updates
+  - Changing `launch_celery_worker()` to launch the subprocess (no longer builds the celery command)
+  - Creating `get_celery_cmd()` to do what `launch_celery_worker()` used to do and build the celery command to run
+  - Creating `_get_steps_to_start()`, `_create_kwargs()`, and `_get_workers_to_start()` as helper functions to simplify logic in `start_celery_workers()`
+- Modified the `merlinspec.json` file:
+  - the minimum `gpus per task` is now 0 instead of 1
+  - variables defined in the `env` block of a spec file can now be arrays
+- Refactored `batch.py`:
+  - Merged 4 functions (`check_for_slurm`, `check_for_lsf`, `check_for_flux`, and `check_for_pbs`) into 1 function named `check_for_scheduler`
+    - Modified `get_batch_type` to accommodate this change
+  - Added a function `parse_batch_block` to handle all the logic of reading in the batch block and storing it in one dict
+  - Added a function `get_flux_launch` to help decrease the amount of logic taking place in `batch_worker_launch`
+  - Modified `batch_worker_launch` to use the new `parse_batch_block` function
+  - Added a function `construct_scheduler_legend` to build a dict that keeps as much information as we need about each scheduler stored in one place
+  - Cleaned up the `construct_worker_launch_command` function to utilize the newly added functions and decrease the amount of repeated code
+- Changed get_flux_cmd for new flux version >=0.48.x interface
+- The `query-workers` command now prints a table as its' output
+  - Each row of the `Workers` column has the name of an active worker
+  - Each row of the `Queues` column has a list of queues associated with the active worker
 
 ## [1.9.1]
 ### Fixed

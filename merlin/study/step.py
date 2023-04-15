@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module represents all of the logic that goes into a step"""
 
 import logging
 import re
@@ -43,7 +44,6 @@ from maestrowf.utils import create_parentdir
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.tasks import update_status
-from merlin.config.configfile import CONFIG
 from merlin.study.script_adapter import MerlinScriptAdapter
 
 
@@ -149,6 +149,8 @@ class MerlinStepRecord(_StepRecord):
 
         :side effect: a celery task is created and started
         """
+        from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+
         state_translator: Dict[State, str] = {
             State.INITIALIZED: "INITIALIZED",
             State.RUNNING: "RUNNING",
@@ -186,8 +188,8 @@ class Step:
         :param maestro_step_record: The StepRecord object.
         """
         self.mstep = maestro_step_record
-        self.restart = False
         self.study_name = study_name
+        self.__restart = False
 
     def get_cmd(self):
         """
@@ -242,6 +244,8 @@ class Step:
     @staticmethod
     def get_task_queue_from_dict(step_dict):
         """given a maestro step dict, get the task queue"""
+        from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+
         queue_tag = CONFIG.celery.queue_tag
         omit_tag = CONFIG.celery.omit_queue_tag
         if omit_tag:
@@ -260,6 +264,7 @@ class Step:
 
     @property
     def retry_delay(self):
+        """Returns the retry delay (default 1)"""
         default_retry_delay = 1
         return self.mstep.step.__dict__["run"].get("retry_delay", default_retry_delay)
 
@@ -270,19 +275,19 @@ class Step:
         """
         return self.mstep.step.__dict__["run"]["max_retries"]
 
-    def __get_restart(self):
+    @property
+    def restart(self):
         """
-        Set the restart property ensuring that restart is false
+        Get the restart property
         """
         return self.__restart
 
-    def __set_restart(self, val):
+    @restart.setter
+    def restart(self, val):
         """
         Set the restart property ensuring that restart is false
         """
         self.__restart = val
-
-    restart = property(__get_restart, __set_restart)
 
     def needs_merlin_expansion(self, labels):
         """
@@ -380,5 +385,5 @@ class Step:
         # calls to the step execute and restart functions.
         if self.restart and self.get_restart_cmd():
             return ReturnCode(self.mstep.restart(adapter))
-        else:
-            return ReturnCode(self.mstep.execute(adapter))
+
+        return ReturnCode(self.mstep.execute(adapter))

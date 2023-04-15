@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2022, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.9.1.
+# This file is part of Merlin, Version: 1.10.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -66,7 +66,27 @@ ANSI_COLORS = {
 }
 
 
+# TODO: make these color blind compliant
+# (see https://mikemol.github.io/technique/colorblind/2018/02/11/color-safe-palette.html)
+ANSI_COLORS = {
+    "RESET": "\033[0m",
+    "GREY": "\033[90m",
+    "RED": "\033[91m",
+    "GREEN": "\033[92m",
+    "YELLOW": "\033[93m",
+    "BLUE": "\033[94m",
+    "MAGENTA": "\033[95m",
+    "CYAN": "\033[96m",
+    "WHITE": "\033[97m",
+}
+
+
 class ConnProcess(Process):
+    """
+    An extension of Multiprocessing's Process class in order
+    to overwrite the run and exception defintions.
+    """
+
     def __init__(self, *args, **kwargs):
         Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = Pipe()
@@ -76,19 +96,24 @@ class ConnProcess(Process):
         try:
             Process.run(self)
             self._cconn.send(None)
-        except Exception as e:
-            tb = traceback.format_exc()
-            self._cconn.send((e, tb))
+        except Exception as e:  # pylint: disable=W0718,C0103
+            trace_back = traceback.format_exc()
+            self._cconn.send((e, trace_back))
             # raise e  # You can still rise this exception if you need to
 
     @property
     def exception(self):
+        """Create custom exception"""
         if self._pconn.poll():
             self._exception = self._pconn.recv()
         return self._exception
 
 
 def check_server_access(sconf):
+    """
+    Check if there are any issues connecting to the servers.
+    If there are, output the errors.
+    """
     servers = ["broker server", "results server"]
 
     if sconf.keys():
@@ -96,25 +121,25 @@ def check_server_access(sconf):
         print("-" * 28)
 
     excpts = {}
-    for s in servers:
-        if s in sconf:
-            _examine_connection(s, sconf, excpts)
+    for server in servers:
+        if server in sconf:
+            _examine_connection(server, sconf, excpts)
 
     if excpts:
         print("\nExceptions:")
-        for k, v in excpts.items():
-            print(f"{k}: {v}")
+        for key, val in excpts.items():
+            print(f"{key}: {val}")
 
 
-def _examine_connection(s, sconf, excpts):
+def _examine_connection(server, sconf, excpts):
     connect_timeout = 60
     try:
         ssl_conf = None
-        if "broker" in s:
+        if "broker" in server:
             ssl_conf = broker.get_ssl_config()
-        if "results" in s:
+        if "results" in server:
             ssl_conf = results_backend.get_ssl_config()
-        conn = Connection(sconf[s], ssl=ssl_conf)
+        conn = Connection(sconf[server], ssl=ssl_conf)
         conn_check = ConnProcess(target=conn.connect)
         conn_check.start()
         counter = 0
@@ -123,16 +148,16 @@ def _examine_connection(s, sconf, excpts):
             counter += 1
             if counter > connect_timeout:
                 conn_check.kill()
-                raise Exception(f"Connection was killed due to timeout ({connect_timeout}s)")
+                raise TimeoutError(f"Connection was killed due to timeout ({connect_timeout}s)")
         conn.release()
         if conn_check.exception:
-            error, traceback = conn_check.exception
+            error, _ = conn_check.exception
             raise error
-    except Exception as e:
-        print(f"{s} connection: Error")
-        excpts[s] = e
+    except Exception as e:  # pylint: disable=W0718,C0103
+        print(f"{server} connection: Error")
+        excpts[server] = e
     else:
-        print(f"{s} connection: OK")
+        print(f"{server} connection: OK")
 
 
 def display_config_info():
@@ -150,7 +175,7 @@ def display_config_info():
         conf["broker server"] = broker.get_connection_string(include_password=False)
         sconf["broker server"] = broker.get_connection_string()
         conf["broker ssl"] = broker.get_ssl_config()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718,C0103
         conf["broker server"] = "Broker server error."
         excpts["broker server"] = e
 
@@ -158,7 +183,7 @@ def display_config_info():
         conf["results server"] = results_backend.get_connection_string(include_password=False)
         sconf["results server"] = results_backend.get_connection_string()
         conf["results ssl"] = results_backend.get_ssl_config()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=W0718,C0103
         conf["results server"] = "No results server configured or error."
         excpts["results server"] = e
 
@@ -166,8 +191,8 @@ def display_config_info():
 
     if excpts:
         print("\nExceptions:")
-        for k, v in excpts.items():
-            print(f"{k}: {v}")
+        for key, val in excpts.items():
+            print(f"{key}: {val}")
 
     check_server_access(sconf)
 
@@ -191,7 +216,8 @@ def display_multiple_configs(files, configs):
         pprint.pprint(config)
 
 
-def print_info(args):
+# Might use args here in the future so we'll disable the pylint warning for now
+def print_info(args):  # pylint: disable=W0613
     """
     Provide version and location information about python and pip to
     facilitate user troubleshooting. 'merlin info' is a CLI tool only for
@@ -208,8 +234,8 @@ def print_info(args):
     print("")
     info_calls = ["which python3", "python3 --version", "which pip3", "pip3 --version"]
     info_str = ""
-    for x in info_calls:
-        info_str += 'echo " $ ' + x + '" && ' + x + "\n"
+    for cmd in info_calls:
+        info_str += 'echo " $ ' + cmd + '" && ' + cmd + "\n"
         info_str += "echo \n"
     info_str += r"echo \"echo \$PYTHONPATH\" && echo $PYTHONPATH"
     _ = subprocess.run(info_str, shell=True)
@@ -510,7 +536,6 @@ def tabulate_info(info, headers=None, color=None):
     Display info in a table. Colorize the table if you'd like.
     Intended for use for functions outside of this file so they don't
     need to import tabulate.
-
     :param `info`: The info you want to tabulate.
     :param `headers`: A string or list stating what you'd like the headers to be.
                       Options: "firstrow", "keys", or List[str]
