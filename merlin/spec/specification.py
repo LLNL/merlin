@@ -40,12 +40,14 @@ import shlex
 from copy import deepcopy
 from datetime import timedelta
 from io import StringIO
+from typing import Dict
 
 import yaml
 from maestrowf.specification import YAMLSpecification
 
+from merlin.study.step import needs_merlin_expansion
 from merlin.spec import all_keys, defaults
-from merlin.utils import repr_timedelta
+from merlin.utils import contains_token, load_array_file, repr_timedelta
 
 
 LOG = logging.getLogger(__name__)
@@ -662,3 +664,73 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         for worker in self.merlin["resources"]["workers"]:
             result.append(worker)
         return result
+
+    def get_tasks_per_step(self) -> Dict[str, int]:
+        """
+        Get the number of tasks needed to complete each step, formatted as a dictionary.
+
+        :returns: A dict where the keys are the step names and the values are the number of tasks required for that step
+        """
+        # Get the number of samples used
+        samples = []
+        if self.merlin["samples"]["file"]:
+            samples = load_array_file(self.merlin["samples"]["file"])
+        num_samples = len(samples)
+
+        # Get the column labels, the parameter labels, the number of parameters, and the steps in the study
+        column_labels = self.merlin["samples"]["column_labels"]
+        parameter_labels = list(self.get_parameters().labels.keys())
+        num_params = self.get_parameters().length
+        study_steps = self.get_study_steps()
+
+        tasks_per_step = {}
+        for step in study_steps:
+            cmd = step.__dict__["run"]["cmd"]
+            restart_cmd = step.__dict__["run"]["restart"]
+
+            # Default number of tasks for a step is 1
+            tasks_per_step[step.name] = 1
+
+            # TODO instead of needs_merlin_expansion can we somehow use python's built-in `in` or merlin.utils `contains_token`?
+            # - if we can then we can move needs_merlin_expansion back to a method in step.py
+
+            # If this step uses parameters, we'll at least have a num_params number of tasks to complete
+            if needs_merlin_expansion(cmd, restart_cmd, parameter_labels):
+                tasks_per_step[step.name] = num_params
+
+            # If merlin expansion is needed with column labels, this step uses samples
+            if needs_merlin_expansion(cmd, restart_cmd, column_labels):
+                tasks_per_step[step.name] *= num_samples
+        
+        return tasks_per_step
+
+    def _step_contains_param(self, step, params):
+        """
+        :param `step`: A StudyStep object representing the step we're looking for parameters in
+        :param `params`: A list of global parameters defined in the spec
+        :returns: True if `step` uses a global parameter, False otherwise
+        """
+        cmd = step.__dict__["run"]["cmd"]
+        restart_cmd = step.__dict__["run"]["restart"]
+        for param in params:
+            if param in cmd or param in restart_cmd:
+                return True
+        return False
+
+    @property
+    def steps_with_params(self):
+        """
+        :returns: A list of steps that use global parameters
+        """
+        study_steps = self.get_study_steps()
+        params = self.get_parameters().parameters
+        steps_with_params = []
+        for step in study_steps:
+            if self._step_contains_param(step, params):
+                steps_with_params.append(step.name)
+        return steps_with_params
+
+    @property
+    def parameter_length(self):
+        """Returns the length of the parameters"""
+        return self.get_parameters().length

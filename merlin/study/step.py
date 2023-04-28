@@ -33,46 +33,93 @@ import logging
 import re
 from contextlib import suppress
 from copy import deepcopy
+from typing import Dict, List, Tuple
 from datetime import datetime
-
-from celery import current_task
 
 from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
-from maestrowf.utils import create_parentdir
+from maestrowf.utils import create_parentdir, get_duration
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.common.tasks import update_status
+from merlin.study.celeryadapter import update_status_with_celery
 from merlin.study.script_adapter import MerlinScriptAdapter
 
 
 LOG = logging.getLogger(__name__)
 
 
+def needs_merlin_expansion(cmd: str, restart_cmd: str, labels: List[str]) -> bool:
+    """
+    Check if the cmd or restart cmd provided have variables that need expansion.
+
+    :param `cmd`: The command inside a study step to check for expansion
+    :param `restart_cmd`: The restart command inside a study step to check for expansion
+    :param `labels`: A list of labels to check for inside `cmd` and `restart_cmd`
+    :return : True if the cmd has any of the default keywords or spec
+        specified sample column labels. False otherwise.
+    """
+    needs_expansion = False
+
+    for label in labels + [
+        "MERLIN_SAMPLE_ID",
+        "MERLIN_SAMPLE_PATH",
+        "merlin_sample_id",
+        "merlin_sample_path",
+    ]:
+        if f"$({label})" in cmd:
+            needs_expansion = True
+
+    # The restart may need expansion while the cmd does not.
+    if not needs_expansion and restart_cmd:
+        for label in labels + [
+            "MERLIN_SAMPLE_ID",
+            "MERLIN_SAMPLE_PATH",
+            "merlin_sample_id",
+            "merlin_sample_path",
+        ]:
+            if f"$({label})" in restart_cmd:
+                needs_expansion = True
+
+    return needs_expansion
+
+
 class MerlinStepRecord(_StepRecord):
     """
-    This classs is a wrapper for the Maestro _StepRecord to remove
-    a re-submit message.
+    This class is a wrapper for the Maestro _StepRecord to remove
+    a re-submit message and handle status updates.
     """
 
-    def __init__(self, workspace, step, study_name, **kwargs):
-        _StepRecord.__init__(self, workspace, step, status=State.INITIALIZED, **kwargs)
-        self.status_file = f"{self.workspace.value}/MERLIN_STATUS"
-        self.study_name = study_name
-
-        # Save the task queue and worker name from celery as an attribute here
-        # Wanted to put this logic in merlin.common.tasks in update_status but celery
-        # doesn't have a way to get the parent routing key (queue) and worker name
-        # TODO: this isn't always correct, need to look into this
-        self.celery_task_queue = current_task.request.delivery_info["routing_key"]
-        self.celery_worker_name = current_task.request.hostname
-
-    def _execute(self, adapter, script):
+    def __init__(self, workspace: str, maestro_step: StudyStep, merlin_step: "Step", **kwargs):
         """
-        Overwrites StepRecord's _execute method from Maestro since self.to_be_scheduled is
+        :param `workspace`: The output workspace for this step
+        :param `maestro_step`: The StudyStep object associated with this step
+        :param `merlin_step`: The Step object associated with this step
+        """
+        _StepRecord.__init__(self, workspace, maestro_step, status=State.INITIALIZED, **kwargs)
+        self.merlin_step = merlin_step
+
+    @property
+    def condensed_workspace(self) -> str:
+        """
+        Put together a smaller version of the workspace path to display.
+        :returns: A condensed workspace name
+        """
+        step_name = self.merlin_step.name_no_params()
+        end_of_path = self.workspace.value.split(step_name, 1)[1]
+        condensed_workspace = f"{step_name}{end_of_path}"
+
+        return condensed_workspace
+
+    def _execute(self, adapter: "ScriptAdapter object", script: str) -> Tuple["SubmissionRecord", int]:
+        """
+        Overwrites _StepRecord's _execute method from Maestro since self.to_be_scheduled is
         always true here. Also, if we didn't overwrite this we wouldn't be able to call
         self.mark_running() for status updates.
+
+        :param `adapter`: The script adapter to submit jobs to
+        :param `script`: The script to send to the script adapter
+        :returns: A tuple of a return code and the jobid from the execution of `script`
         """
         self.mark_running()
         srecord = adapter.submit(self.step, script, self.workspace.value)
@@ -88,43 +135,65 @@ class MerlinStepRecord(_StepRecord):
 
         self._update_status_file()
 
-    def mark_end(self, state, max_retries=False):
+    def mark_end(self, state: ReturnCode, highest_lvl_sample_index: "SampleIndex", max_retries: bool = False):
         """
         Mark the end time of the record with associated termination state
         and update the status file.
         
-        :param `state`: 
+        :param `state`: A merlin ReturnCode object representing the end state of a task
+        :param `highest_lvl_sample_index`: A SampleIndex object with information about the sample index hierarchy at this step
+        :param `max_retries`: A bool representing whether we hit the max number of retries or not
         """
-        # Call to super().mark_end() will mark end time and update self.status for us
-        step_result: str
-        if state == ReturnCode.OK:
-            super().mark_end(State.FINISHED)
-            step_result = f"MERLIN_SUCCESS"
-        elif state == ReturnCode.DRY_OK:
-            super().mark_end(State.DRY_RUN)
-            step_result = f"DRY_SUCCESS"
-        elif state == ReturnCode.RETRY:
-            super().mark_end(State.FINISHED)
-            step_result = f"MERLIN_RETRY"
-        elif state == ReturnCode.RESTART:
-            super().mark_end(State.FINISHED)
-            step_result = f"MERLIN_RESTART"
-        elif state == ReturnCode.SOFT_FAIL:
-            super().mark_end(State.FAILED)
-            step_result = f"MERLIN_SOFT_FAIL"
-            if max_retries:
-                step_result += " (MAX RETRIES REACHED)"
-        elif state == ReturnCode.HARD_FAIL:
-            super().mark_end(State.FAILED)
-            step_result = f"MERLIN_HARD_FAIL"
-        elif state == ReturnCode.STOP_WORKERS:
-            super().mark_end(State.CANCELLED)
-            step_result = f"MERLIN_STOP_WORKERS"
-        else:
-            super().mark_end(State.UNKNOWN)
-            step_result = f"UNRECOGNIZED_RETURN_CODE"
+        # Dictionary to keep track of associated variables for each return code
+        state_mapper = {
+            ReturnCode.OK: {
+                "maestro state": State.FINISHED,
+                "result": "MERLIN_SUCCESS",
+            },
+            ReturnCode.DRY_OK: {
+                "maestro state": State.DRYRUN,
+                "result": "DRY_SUCCESS",
+            },
+            ReturnCode.RETRY: {
+                "maestro state": State.FINISHED,
+                "result": "MERLIN_RETRY",
+            },
+            ReturnCode.RESTART: {
+                "maestro state": State.FINISHED,
+                "result": "MERLIN_RESTART",
+            },
+            ReturnCode.SOFT_FAIL: {
+                "maestro state": State.FAILED,
+                "result": "MERLIN_SOFT_FAIL",
+            },
+            ReturnCode.HARD_FAIL: {
+                "maestro state": State.FAILED,
+                "result": "MERLIN_HARD_FAIL",
+            },
+            ReturnCode.STOP_WORKERS: {
+                "maestro state": State.CANCELLED,
+                "result": "MERLIN_STOP_WORKERS",
+            },
+            "UNKNOWN": {
+                "maestro state": State.UNKNOWN,
+                "result": "UNRECOGNIZED_RETURN_CODE",
+            },
+        }
 
-        self._update_status_file(result=step_result)
+        # Check if the state provided is valid
+        if state not in state_mapper:
+            state = "UNKNOWN"
+
+        # Call to super().mark_end() will mark end time and update self.status for us
+        super().mark_end(state_mapper[state]["maestro state"])
+        step_result = state_mapper[state]["result"]
+
+        # Append a "max retries reached" message to the step result if necessary
+        if state == ReturnCode.SOFT_FAIL and max_retries:
+            step_result += " (MAX RETRIES REACHED)"
+
+        # Update the status file
+        self._update_status_file(result=step_result, highest_lvl_sample_index=highest_lvl_sample_index, finished=True)
 
     def mark_restart(self):
         # TODO: figure restart out since you haven't thought about it at all yet
@@ -139,18 +208,26 @@ class MerlinStepRecord(_StepRecord):
         create_parentdir(self.workspace.value)
         self._update_status_file()
 
-    def _update_status_file(self, result=None):
+    def _update_status_file(
+        self,
+        result: str = None,
+        task_server: str = "celery",
+        highest_lvl_sample_index: "SampleIndex" = None,
+        finished: bool = False
+    ):
         """
         Puts together a dictionary full of status info and creates a signature
         for the update_status celery task. This signature is ran here as well.
 
-        :param str result:  Optional parameter only applied when we've finished running
-                            this step. String representation of a ReturnCode value.
-
-        :side effect: a celery task is created and started
+        :param `result`:  Optional parameter only applied when we've finished running
+                          this step. String representation of a ReturnCode value.
+        :param `task_server`: Optional parameter to define the task server we're using.
+        :param `highest_lvl_sample_index`: Optional SampleIndex object that will be sent to the update_status_with_celery function
+        :param `finished`: Optional boolean parameter to represent if this step is now finished
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
+        # This dict is used for converting an enum value to a string for readability
         state_translator: Dict[State, str] = {
             State.INITIALIZED: "INITIALIZED",
             State.RUNNING: "RUNNING",
@@ -161,6 +238,7 @@ class MerlinStepRecord(_StepRecord):
             State.UNKNOWN: "UNKNOWN"
         }
 
+        # Build the status info dict
         status_info = {
             "name": self.name,
             "status": state_translator[self.status],
@@ -168,13 +246,12 @@ class MerlinStepRecord(_StepRecord):
             "elapsed_time": self.elapsed_time,
             "run_time": self.run_time,
             "num_restarts": self.restarts,
-            "workspace": self.workspace.value,
-            "queue": self.celery_task_queue,
-            "worker": self.celery_worker_name,
+            "workspace": self.condensed_workspace,
         }
-        status_updater = update_status.s(status_info=status_info, status_file=self.status_file)
-        status_updater.set(queue=f"{CONFIG.celery.queue_tag}{self.study_name}_status_queue")
-        status_updater.apply_async()
+
+        # Update the status file
+        if task_server == "celery":
+            update_status_with_celery(status_info, self.workspace.value, self.merlin_step, highest_lvl_sample_index, finished)
 
 
 class Step:
@@ -183,12 +260,15 @@ class Step:
     executed by calling execute.
     """
 
-    def __init__(self, maestro_step_record, study_name):
+    def __init__(self, maestro_step_record, study_name, parameter_info):
         """
         :param maestro_step_record: The StepRecord object.
+        :param `study_name`: The name of the study
+        :param `parameter_info`: A dict containing information about parameters in the study
         """
         self.mstep = maestro_step_record
         self.study_name = study_name
+        self.parameter_info = parameter_info
         self.__restart = False
 
     def get_cmd(self):
@@ -235,7 +315,7 @@ class Step:
         study_step.name = step_dict["_name"]
         study_step.description = step_dict["description"]
         study_step.run = step_dict["run"]
-        return Step(MerlinStepRecord(new_workspace, study_step, self.study_name), self.study_name)
+        return Step(MerlinStepRecord(new_workspace, study_step, self), self.study_name, self.parameter_info)
 
     def get_task_queue(self):
         """Retrieve the task queue for the Step."""
@@ -289,36 +369,19 @@ class Step:
         """
         self.__restart = val
 
-    def needs_merlin_expansion(self, labels):
+    @property
+    def uses_params(self):
+        """Returns a boolean denoting whether this step uses global parameters or not"""
+        if self.name_no_params() in self.parameter_info["steps_using_params"]:
+            return True
+        return False
+
+    def check_if_expansion_needed(self, labels):
         """
         :return : True if the cmd has any of the default keywords or spec
             specified sample column labels.
         """
-        needs_expansion = False
-
-        cmd = self.get_cmd()
-        for label in labels + [
-            "MERLIN_SAMPLE_ID",
-            "MERLIN_SAMPLE_PATH",
-            "merlin_sample_id",
-            "merlin_sample_path",
-        ]:
-            if f"$({label})" in cmd:
-                needs_expansion = True
-
-        # The restart may need expansion while the cmd does not.
-        restart_cmd = self.get_restart_cmd()
-        if not needs_expansion and restart_cmd:
-            for label in labels + [
-                "MERLIN_SAMPLE_ID",
-                "MERLIN_SAMPLE_PATH",
-                "merlin_sample_id",
-                "merlin_sample_path",
-            ]:
-                if f"$({label})" in restart_cmd:
-                    needs_expansion = True
-
-        return needs_expansion
+        return needs_merlin_expansion(self.get_cmd(), self.get_restart_cmd(), labels)
 
     def get_workspace(self):
         """
@@ -331,6 +394,29 @@ class Step:
         :return : The step name.
         """
         return self.mstep.step.__dict__["_name"]
+
+    def name_no_params(self):
+        """
+        Get the original name of the step without any parameters/samples in the name.
+        :returns: A string representing the name of the step
+        """
+        # Get the name with everything still in it
+        name = self.name()
+
+        # Remove the parameter labels from the name
+        for label in self.parameter_info["labels"]:
+            name = name.replace(f"{label}", "")
+
+        # Remove possible leftover characters after condensing the name
+        while name.endswith(".") or name.endswith("_"):
+            if name.endswith("."):
+                split_char = "."
+            else:
+                split_char = "_"
+            split_name = name.rsplit(split_char, 1)
+            name = "".join(split_name)
+
+        return name
 
     def execute(self, adapter_config):
         """
@@ -387,3 +473,15 @@ class Step:
             return ReturnCode(self.mstep.restart(adapter))
 
         return ReturnCode(self.mstep.execute(adapter))
+
+    def get_top_lvl_dir(self):
+        """
+        Get the path to the top level directory of this step. Useful for steps that
+        process parameters/samples.
+
+        :returns: A string representing the path to the top level directory for this step
+        """
+        workspace = self.get_workspace()
+        original_step_name = self.name_no_params()
+        top_lvl_path = f"{workspace.split(original_step_name)[0]}{original_step_name}"
+        return top_lvl_path

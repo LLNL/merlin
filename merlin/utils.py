@@ -39,9 +39,11 @@ import socket
 import subprocess
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import timedelta
+from datetime import timedelta, datetime
+from filelock import FileLock
+from pathlib import Path
 from types import SimpleNamespace
-from typing import Union
+from typing import List, Union
 
 import numpy as np
 import psutil
@@ -560,3 +562,76 @@ def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") 
     tdelta = convert_to_timedelta(timestring)
     LOG.debug(f"Timedelta object is: {tdelta}")
     return repr_timedelta(tdelta, method=format_method)
+
+
+def ws_time_to_td(ws_time: str) -> datetime:
+    """
+    Converts a workspace timestring to a datetime object.
+
+    :param `ws_time`: A workspace timestring in the format YYYYMMDD-HHMMSS
+    :returns: A datetime object created from the workspace timestring
+    """
+    year = int(ws_time[:4])
+    month = int(ws_time[4:6])
+    day = int(ws_time[6:8])
+    hour = int(ws_time[9:11])
+    minute = int(ws_time[11:13])
+    second = int(ws_time[13:])
+    return datetime(year, month, day, hour=hour, minute=minute, second=second)
+
+
+def get_parent_dir(path: Union[str, Path]) -> Path:
+    """
+    Given a filepath or a dirpath, return the parent directory.
+
+    :param `path`: A filepath or a dirpath
+    :returns: A pathlib.Path object
+    """
+    if isinstance(path, str):
+        path = Path(path)
+    if not path.exists():
+        LOG.warning(f"The path {path} does not exist. Cannot get parent directory.")
+        return None
+    parent_path = path.parent.absolute()
+    return parent_path
+
+
+def get_sibling_dirs(path: Union[str, Path], include_path=False) -> List[Path]:
+    """
+    Given a filepath or a dirpath, return the sibling directories.
+
+    :param `path`: A filepath or a dirpath
+    :param `include_path`: An optional boolean parameter to determine whether to
+                           include `path` in the list of returned Path objects
+    :returns: A list of Path objects
+    """
+    # Get the parent path
+    parent_path = get_parent_dir(path)
+    if not parent_path:
+        return []
+
+    # Get the sibling dirs (not including the path passed in)
+    sibling_dirs = [x for x in parent_path.iterdir() if x.is_dir()]
+
+    # Remove the path passed in if necessary
+    if isinstance(path, str):
+        path = Path(path)
+    if path in sibling_dirs and not include_path:
+        sibling_dirs.remove(path)
+
+    return sibling_dirs
+
+def obtain_filelock(workspace: Union[Path, str], lock_name: str) -> FileLock:
+    """
+    Creates a lock file and returns a FileLock object.
+
+    :param `workspace`: The path to whatever file intended to be modified using this lock
+    :param `lock_name`: The name of the lock file to create/use
+    :returns: A FileLock object
+    """
+    if isinstance(workspace, str):
+        workspace = Path(workspace)
+    lock_file = workspace / lock_name
+    lock_file.touch(exist_ok=True)
+    lock = FileLock(lock_file)
+    return lock

@@ -533,11 +533,16 @@ class MerlinStudy:  # pylint: disable=R0902
 
         # Generate the DAG
         _, maestro_dag = study.stage()
-        labels = []
+        column_labels = []
         if self.expanded_spec.merlin["samples"]:
-            labels = self.expanded_spec.merlin["samples"]["column_labels"]
+            column_labels = self.expanded_spec.merlin["samples"]["column_labels"]
+        parameter_info = {
+            "labels": self.parameter_labels,
+            "length": self.expanded_spec.parameter_length,
+            "steps_using_params": self.expanded_spec.steps_with_params,
+        }
         # To avoid pickling issues with _pass_detect_cycle from maestro, we unpack the dag here
-        self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, labels, study.name)
+        self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, column_labels, study.name, parameter_info)
 
     def get_adapter_config(self, override_type=None):
         """Builds and returns the adapter configuration dictionary"""
@@ -561,3 +566,20 @@ class MerlinStudy:  # pylint: disable=R0902
 
         LOG.debug(f"Adapter config = {adapter_config}")
         return adapter_config
+
+    @property
+    def parameter_labels(self):
+        """
+        Get the parameter labels for this study.
+        :returns: A list of parameter labels used in this study
+        """
+        parameters = self.expanded_spec.get_parameters()
+        metadata = parameters.get_metadata()
+
+        param_labels = []
+        for parameter_info in metadata.values():
+            for parameter_label in parameter_info["labels"].values():
+                param_labels.append(parameter_label)
+
+        return param_labels
+

@@ -33,12 +33,13 @@ This module provides an adapter to the Celery Distributed Task Queue.
 """
 import logging
 import os
+import re
 import socket
 import subprocess
 import time
+from celery import current_task
 from contextlib import suppress
 
-from merlin.config.configfile import CONFIG
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
@@ -395,6 +396,7 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
                 nodes: 1
                 machine: [hostA, hostB]
     """
+    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
     if not just_return_command:
         LOG.info("Starting workers")
 
@@ -412,10 +414,6 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
     # Start a worker to track the status of tasks
     #############################################
     status_worker_args = ""
-    parallel = batch_check_parallel(spec)
-    if parallel:
-        status_worker_args = "--concurrency 1 --prefetch-multiplier 1 -O fair"
-
     if not disable_logs and LOG.isEnabledFor(logging.DEBUG):
         LOG.debug("Redirecting worker output to individual log files")
         status_worker_args += " --logfile %p.%i"
@@ -427,7 +425,7 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
     local_queues.append(status_queue)
 
     # Get the celery worker launch command & append it to the batch launch
-    celery_status_cmd = get_celery_cmd(spec, queue_names=status_queue, worker_args=status_worker_args, just_return_command=True)
+    celery_status_cmd = get_celery_cmd(status_queue, worker_args=status_worker_args, just_return_command=True)
     worker_status_cmd = os.path.expandvars(batch_worker_launch(spec, celery_status_cmd))
 
     LOG.debug(f"worker_status_cmd: {worker_status_cmd}")
@@ -718,3 +716,42 @@ def create_celery_config(config_dir, data_file_name, data_file_path):
     from merlin.common.security import encrypt  # pylint: disable=C0415
 
     encrypt.init_key()
+
+
+def update_status_with_celery(status_info, workspace, step, highest_lvl_sample_index, finished):
+    """
+    Update the status file and add celery specific info to it. Creates a signature
+    for the update_status celery task and runs it.
+
+    :param `status_info`: A dict of status information for a task
+    :param `workspace`: The path to the current workspace within the step
+    :param `step`: A MerlinStep object for the step we're updating status files for
+    :param `highest_lvl_sample_index`: A SampleIndex object to track the sample hierarchy for a step
+    :param `finished`: True if the step is now done, False otherwise.
+
+    :side effect: A celery task is created and started
+    """
+    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+    from merlin.common.tasks import update_status  # pylint: disable=C0415
+
+    # Add the task queue and worker name from celery to the status info dict
+    # Wanted to put this logic in merlin.common.tasks in update_status but celery
+    # doesn't have a way to get the parent routing key (queue) and worker name
+    # TODO: this isn't always correct, need to look into this
+    queue = current_task.request.delivery_info["routing_key"]
+    status_info["queue"] = queue.replace(CONFIG.celery.queue_tag, "")
+    worker = re.search(r"@.+\.", current_task.request.hostname).group()
+    status_info["worker"] = worker[1:len(worker) - 1]
+
+    # Create the update_status signature and run it
+    status_updater = update_status.s(
+        status_info=status_info,
+        workspace=workspace,
+        top_lvl_dir=step.get_top_lvl_dir(),
+        highest_lvl_sample_index=highest_lvl_sample_index,
+        finished=finished,
+        parameter_length=step.parameter_info["length"],
+        uses_params=step.uses_params
+    )
+    status_updater.set(queue=f"{CONFIG.celery.queue_tag}{step.study_name}_status_queue")
+    status_updater.apply_async()

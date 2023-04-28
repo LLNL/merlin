@@ -35,6 +35,7 @@ The merlin sample_index module, which contains the SampleIndex class.
 import logging
 import os
 from contextlib import suppress
+from typing import Dict
 
 
 LOG = logging.getLogger(__name__)
@@ -56,6 +57,19 @@ def uniform_directories(num_samples=MAX_SAMPLE, bundle_size=1, level_max_dirs=10
     # We've gone over the total number of samples, remove the first entry
     del directory_sizes[0]
     return directory_sizes
+
+
+def get_hierarchy_children(sample_index: "SampleIndex") -> Dict[str, int]:
+    """
+    Get the number of children for each layer in the sample index hierarchy.
+    :param `sample_index`: The SampleIndex object tracking our sample hierarchy
+    :returns: A dict where keys are paths that contain children and values are the number of children
+    """
+    num_children = {}
+    for path, node in sample_index.traverse_directories(bottom_up=True):
+        if len(node.children) != 1:
+            num_children[path] = len(node.children)
+    return num_children
 
 
 class SampleIndex:
