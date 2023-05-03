@@ -54,18 +54,21 @@ import logging
 LOG = logging.getLogger("merlin")
 DEFAULT_LOG_LEVEL = "INFO"
 
-# TODO: make these color blind compliant (see https://mikemol.github.io/technique/colorblind/2018/02/11/color-safe-palette.html)
+# Colors here are chosen based on the Bang Wong color palette (https://www.nature.com/articles/nmeth.1618)
+# Another useful link for comparing colors: https://davidmathlogic.com/colorblind/#%2356B4E9-%230072B2-%23009E73-%23D55E00-%23F0E442-%23E69F00-%23666666
 ANSI_COLORS = {
     "RESET": "\033[0m",
-    "GREY": "\033[90m",
-    "RED": "\033[91m",
-    "GREEN": "\033[92m",
-    "YELLOW": "\033[93m",
-    "BLUE": "\033[94m",
-    "MAGENTA": "\033[95m",
-    "CYAN": "\033[96m",
-    "WHITE": "\033[97m"
+    "GREY": "\033[38;2;102;102;102m",
+    "LIGHT_BLUE": "\033[38;2;86;180;233m",
+    "BLUE": "\033[38;2;0;114;178m",
+    "GREEN": "\033[38;2;0;158;115m",
+    "YELLOW": "\033[38;2;240;228;66m",
+    "ORANGE": "\033[38;2;230;159;0m",
+    "RED": "\033[38;2;213;94;0m",
 }
+
+# Inverse of ANSI_COLORS (useful for debugging)
+COLOR_TRANSLATOR = {v: k for k, v in ANSI_COLORS.items()}
 
 
 class ConnProcess(Process):
@@ -466,7 +469,7 @@ def _display_low_lvl(step_tracker: Dict[str, List[str]], workspace: str, args: "
         print()
 
 
-def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, List[str]], workspace: str):
+def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, List[str]], workspace: str, cb_help: bool):
     """
     Displays a high level overview of the status of a study. This includes
     progress bars for each step and a summary of the number of initialized,
@@ -475,6 +478,7 @@ def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, Li
     :param `tasks_per_step`: A dict that says how many tasks each step takes
     :param `step_tracker`:  a dict that says which steps have started and which haven't
     :param `workspace`:     the filepath of the study output
+    :param `cb_help`: True if colorblind assistance (using symbols) is needed. False otherwise.
     """
     from merlin.study.status import read_status  # pylint: disable=C0415
     print(f"{ANSI_COLORS['YELLOW']}Status for {workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
@@ -484,20 +488,19 @@ def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, Li
 
     for sstep in step_tracker["started_steps"]:
         state_info: Dict[State, str] = {
-            "INITIALIZED": {"count": 0, "color": ANSI_COLORS["CYAN"]},
-            "RUNNING": {"count": 0, "color": ANSI_COLORS["MAGENTA"]},
-            "FINISHED": {"count": 0, "color": ANSI_COLORS["GREEN"]},
-            "CANCELLED": {"count": 0, "color": ANSI_COLORS["YELLOW"]},
-            "DRY_RUN": {"count": 0, "color": ANSI_COLORS["BLUE"]},
-            "FAILED": {"count": 0, "color": ANSI_COLORS["RED"]},
-            "UNKNOWN": {"count": 0, "color": ANSI_COLORS["GREY"]},
-            "TOTAL_TASKS": {"total": tasks_per_step[sstep], "color": ANSI_COLORS["WHITE"]},
-            "TASK_QUEUE": {"name": "", "color": ANSI_COLORS["WHITE"]},
-            "WORKER_NAME": {"name": "", "color": ANSI_COLORS["WHITE"]},
+            "FINISHED": {"count": 0, "color": ANSI_COLORS["GREEN"], "fill": "█"},
+            "CANCELLED": {"count": 0, "color": ANSI_COLORS["YELLOW"], "fill": "/"},
+            "FAILED": {"count": 0, "color": ANSI_COLORS["RED"], "fill": "⣿"},
+            "UNKNOWN": {"count": 0, "color": ANSI_COLORS["GREY"], "fill": "?"},
+            "INITIALIZED": {"count": 0, "color": ANSI_COLORS["LIGHT_BLUE"]},
+            "RUNNING": {"count": 0, "color": ANSI_COLORS["BLUE"]},
+            "DRY_RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
+            "TOTAL_TASKS": {"total": tasks_per_step[sstep]},
+            "TASK_QUEUE": {"name": ""},
+            "WORKER_NAME": {"name": ""},
         }
 
         # Count number of tasks in each state
-        # TODO figure out why sometimes not all tasks are marked as finished (parallel issue I believe)
         for root, dirs, files in os.walk(f"{workspace}/{sstep}"):
             if "MERLIN_STATUS" in files:
                 # Read in the statuses for the tasks in this step
@@ -519,17 +522,30 @@ def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, Li
                         state_info["WORKER_NAME"]["name"] = task_info[8]
 
         # Get the number of finished tasks (not running or initialized)
-        finished_tasks = state_info["TOTAL_TASKS"]["total"] - (state_info['INITIALIZED']["count"] + state_info['RUNNING']["count"])
+        completed_tasks = [
+            state_info["FINISHED"]["count"],
+            state_info["FAILED"]["count"],
+            state_info["DRY_RUN"]["count"],
+            state_info["CANCELLED"]["count"],
+            state_info["UNKNOWN"]["count"]
+        ]
+        num_completed_tasks = sum(completed_tasks)
 
         # Display the progress bar
-        progress_bar(finished_tasks, state_info["TOTAL_TASKS"]["total"], state_info=state_info, prefix=f"{sstep}", suffix="Complete", length=progress_bar_width)
+        progress_bar(num_completed_tasks, state_info["TOTAL_TASKS"]["total"], state_info=state_info, prefix=f"{sstep}", suffix="Complete", length=progress_bar_width, cb_help=cb_help)
 
         # Build a summary list of task info
         print(f"\nSUMMARY:")
         summary = []
         for key, val in state_info.items():
+            label = key
+            # Add colorblind symbols if needed
+            if cb_help and "fill" in val:
+                label = f"{key} {val['fill']}"
             # Color the label
-            label = f"{val['color']}{key}{ANSI_COLORS['RESET']}"
+            if "color" in val:
+                label = f"{val['color']}{label}{ANSI_COLORS['RESET']}"
+            
             # Grab the value associated with the label
             value = None
             if "count" in val and val["count"] > 0:
@@ -568,11 +584,11 @@ def display_status(workspace: str, tasks_per_step: Dict[str, int], step_tracker:
     if low_lvl:
         _display_low_lvl(step_tracker, workspace, args)
     else:
-        _display_high_lvl(tasks_per_step, step_tracker, workspace)
+        _display_high_lvl(tasks_per_step, step_tracker, workspace, args.cb_help)
 
 
 # Credit to this stack overflow post: https://stackoverflow.com/a/34325723
-def progress_bar(current, total, state_info=None, prefix="", suffix="", decimals=1, length=80, fill="█", printEnd="\n", color=None):
+def progress_bar(current, total, state_info=None, prefix="", suffix="", decimals=1, length=80, fill="█", printEnd="\n", color=None, cb_help=False):
     """
     Prints a progress bar based on current and total.
     
@@ -586,9 +602,10 @@ def progress_bar(current, total, state_info=None, prefix="", suffix="", decimals
     :param `fill`:        bar fill character (Str)
     :param `printEnd`:    end character (e.g. "\r", "\r\n") (Str)
     :param `color`:       color of the progress bar (ANSI Str) (overridden by state_info)
+    :param `cb_help`:     true if color blind help is needed; false otherwise (Bool)
     """
     # Set the color of the bar
-    if color:
+    if color and color in ANSI_COLORS:
         fill = f"{color}{fill}{ANSI_COLORS['RESET']}"
     
     # Get the percentage done and the total fill length of the bar
@@ -600,16 +617,19 @@ def progress_bar(current, total, state_info=None, prefix="", suffix="", decimals
         print(f'\r{prefix} |', end="")
         for key, val in state_info.items():
             # Only fill bar with completed tasks
-            # TODO should we remove initialized and running here?
             if key in ("INITIALIZED", "RUNNING", "TASK_QUEUE", "WORKER_NAME", "TOTAL_TASKS"):
                 continue
 
             # Get the length to fill for this specific state
             partial_filled_length = int(length * val["count"] // total)
+
             if partial_filled_length > 0:
-                fill = f"{val['color']}{fill}{ANSI_COLORS['RESET']}"
+                if cb_help:
+                    fill = val['fill']
                 bar = fill * partial_filled_length
-                print(f'{bar}', end="")
+                # bar = fill * partial_filled_length
+                print(f"{val['color']}{bar}", end="")
+
         
         # The remaining bar represents the number of tasks still incomplete
         remaining_bar = '-' * (length - total_filled_length)
