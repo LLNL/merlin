@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.0.
+# This file is part of Merlin, Version: 1.10.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -281,6 +281,16 @@ def define_tests():  # pylint: disable=R0914,R0915
         "run-workers echo override feature_demo": {
             "cmds": f"{workers} {demo} --echo --vars VERIFY_QUEUE=custom_verify_queue",
             "conditions": [HasReturnCode(), HasRegex("custom_verify_queue")],
+            "run type": "local",
+        },
+        "default_worker assigned": {
+            "cmds": f"{workers} {test_specs}/default_worker_test.yaml --echo",
+            "conditions": [HasReturnCode(), HasRegex(r"default_worker.*-Q '\[merlin\]_step_4_queue'")],
+            "run type": "local",
+        },
+        "no default_worker assigned": {
+            "cmds": f"{workers} {test_specs}/no_default_worker_test.yaml --echo",
+            "conditions": [HasReturnCode(), HasRegex(r"default_worker", negate=True)],
             "run type": "local",
         },
     }
