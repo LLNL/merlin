@@ -283,6 +283,16 @@ def define_tests():  # pylint: disable=R0914,R0915
             "conditions": [HasReturnCode(), HasRegex("custom_verify_queue")],
             "run type": "local",
         },
+        "default_worker assigned": {
+            "cmds": f"{workers} {test_specs}/default_worker_test.yaml --echo",
+            "conditions": [HasReturnCode(), HasRegex(r"default_worker.*-Q '\[merlin\]_step_4_queue'")],
+            "run type": "local",
+        },
+        "no default_worker assigned": {
+            "cmds": f"{workers} {test_specs}/no_default_worker_test.yaml --echo",
+            "conditions": [HasReturnCode(), HasRegex(r"default_worker", negate=True)],
+            "run type": "local",
+        },
     }
     wf_format_tests = {
         "local minimum_format": {
