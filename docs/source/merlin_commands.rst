@@ -389,16 +389,83 @@ Status (``merlin status``)
 --------------------------
 .. code:: bash
 
-    $ merlin status <input.yaml> [--steps <steps>] [--vars <VARIABLES=<VARIABLES>>] [--csv <csv file>] [--task_server celery]
+    $ merlin status <input.yaml OR output_study/> [--cb-help] [--steps <step(s)>] [--task-queues <task queue(s)>] [--workers <worker(s)>] [--max-tasks <max num tasks to display>] [--task-status <task status(es)>] [--no-prompts] [--queue-info] [--csv <csv file>] [--task_server celery]
 
-Use the ``--steps`` option to identify specific steps in the specification that you want to query.
+Summary View
+^^^^^^^^^^^^
+
+The ``merlin status`` command can take either a yaml spec file or an output study directory as input. For example, ``hello_world.yaml`` and
+``hello_world_20230503-105137/`` are both valid inputs so long as the file or output directory exists. If you choose to provide a spec file as input and
+there are multiple output directories associated with that spec file, then you will be prompted to select which study you'd like to view the status of:
+
+.. image:: ../images/status-multiple-studies.png
+
+Upon selecting a study to view you will be shown a high-level summary of the status for each step in the study:
+
+.. image:: ../images/status-high-lvl.png
+
+To implement the use of symbols for colorblind assistance, use the ``--cb-help`` option:
+
+.. image:: ../images/status-high-lvl-cb-help.png
+
+Task-by-Task View
+^^^^^^^^^^^^^^^^^
+    
+To see more detailed information about the tasks ran for each step use any of the following 5 filters: ``--steps``, ``--task-status``, ``--max-tasks``,
+``--task-queues``, and/or ``--workers``.
+
+.. warning::
+    The ``--no-prompts`` option should be used with caution as you may accidentally output thousands of task statuses to the terminal.
+    It's recommended to use this flag when writing status to an output file rather than viewing through the terminal.
+
+If there are a large amount of task statuses to display (which is very likely) and the ``--max-tasks`` option is not provided, Merlin will prompt for
+filters and use pagination to display 50 statuses at a time to ensure we don't overload the terminal. If you'd like to disable these prompts, use the
+``--no-prompts`` option. If this option is provided with a spec file as input (e.g ``merlin status hello_samples.yaml --no-prompts``), then Merlin will
+select the most recent study associated with the spec file to check the status of.
+
+The ``--steps`` filter allows you to view information about each task that was ran for a step. This flag can take one or multiple steps
+as input and will output a table of task info.
+
+.. image:: ../images/status-steps.png
+
+The ``--task-status`` filter allows you to search for tasks with a certain status. This filter can take one or more statuses as input.
+Valid inputs include: INITIALIZED, RUNNING, FINISHED, FAILED, CANCELLED, DRY_RUN, and UNKNOWN.
+
+.. image:: ../images/status-task-status.png
+
+The ``--max-tasks`` filter allows you to limit how many tasks are displayed in the output. This filter takes in an integer as input
+which represents the maximum number of tasks you'd like to display.
+
+.. image:: ../images/status-max-tasks.png
+
+The ``--task-queues`` filter allows you to search for tasks that are in or were in certain task queues. This filter can take one or more
+queues as input. If a queue provided cannot be found, that queue will be removed from the filter.
+
+.. image:: ../images/status-task-queues.png
+
+The ``--workers`` filter allows you to search for tasks that are being run or were ran by certain celery workers. This filter can take
+one or more worker names as input. If a worker provided cannot be found, that worker will be removed from the filter.
+
+.. image:: ../images/status-workers.png
+
+Non-View Related Options
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are 4 additional options to be used with the ``merlin status`` command that won't directly trigger the summary or task-by-task views:
+``queue-info``, ``--vars``, ``--csv``, and ``--task_server``.
+
+The ``--queue-info`` option displays the status of the celery queues for your study. It will display the queue name, the number of tasks
+currently in the queue, and the number of workers assigned to the queue. This is the same functionality as the ``merlin status`` command
+prior to v1.10.1.
+
+.. BRIAN MAKE THE ABOVE VERSION ACCURATE WHEN YOU KNOW THE RIGHT VERSION TO PUT THERE
 
 The ``--vars`` option will specify desired Merlin variable values to override
 those found in the specification. The list is space-delimited and should be given after
 the input yaml file.
-``Example: --vars LEARN=path/to/new_learn.py EPOCHS=3``
+``Example: --vars OUTPUT_PATH=./studies``
 
-The ``--csv`` option takes in a filename, to dump status reports to.
+The ``--csv`` option takes in a filename, to dump task-by-task status reports to.
 
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
