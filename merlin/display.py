@@ -423,7 +423,7 @@ def _display_low_lvl(step_tracker: Dict[str, List[str]], workspace: str, args: "
     print(f"{ANSI_COLORS['YELLOW']}Status for {workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
 
     # Initialize a list of lists that we'll use to display the status info
-    status_info = [["Step Name", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts", "Step Workspace", "Task Queue", "Worker Name", "Num Samples"]]
+    status_info = [["Step Name", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts", "Step Workspace", "Task Queue", "Worker Name"]]
     # TODO:
     # - Find out how Maestro displays their status table and use that
     # - Figure out what to do with restarted tasks
@@ -496,8 +496,6 @@ def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, Li
             "RUNNING": {"count": 0, "color": ANSI_COLORS["BLUE"]},
             "DRY_RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
             "TOTAL_TASKS": {"total": tasks_per_step[sstep]},
-            "TASK_QUEUE": {"name": ""},
-            "WORKER_NAME": {"name": ""},
         }
 
         # Count number of tasks in each state
@@ -515,11 +513,13 @@ def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, Li
                     # Increment the count for whatever the task status is
                     state_info[task_info[1]]["count"] += 1
 
-                    # Save the task queue and worker name if they don't exist yet
-                    if not state_info["TASK_QUEUE"]["name"]:
-                        state_info["TASK_QUEUE"]["name"] = task_info[7]
-                    if not state_info["WORKER_NAME"]["name"]:
-                        state_info["WORKER_NAME"]["name"] = task_info[8]
+                    # If the length is 9 rather than 7 then we have a task queue and worker to show
+                    if len(task_info) == 9:
+                        # Save the task queue and worker name if they don't exist yet
+                        if "TASK_QUEUE" not in state_info:
+                            state_info["TASK_QUEUE"] = {"name": task_info[7]}
+                        if "WORKER_NAME" not in state_info:
+                            state_info["WORKER_NAME"] = {"name": task_info[8]}
 
         # Get the number of finished tasks (not running or initialized)
         completed_tasks = [

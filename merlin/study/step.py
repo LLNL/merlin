@@ -42,8 +42,9 @@ from maestrowf.datastructures.core.study import StudyStep
 from maestrowf.utils import create_parentdir, get_duration
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.study.celeryadapter import update_status_with_celery
+from merlin.study.celeryadapter import get_current_queue, get_current_worker
 from merlin.study.script_adapter import MerlinScriptAdapter
+from merlin.study.status import write_status
 
 
 LOG = logging.getLogger(__name__)
@@ -105,9 +106,17 @@ class MerlinStepRecord(_StepRecord):
         Put together a smaller version of the workspace path to display.
         :returns: A condensed workspace name
         """
-        step_name = self.merlin_step.name_no_params()
-        end_of_path = self.workspace.value.split(step_name, 1)[1]
-        condensed_workspace = f"{step_name}{end_of_path}"
+        timestamp_regex = r"\d{8}-\d{6}/"
+        match = re.search(rf"{self.merlin_step.study_name}_{timestamp_regex}", self.workspace.value)
+
+        # If we got a match from the regex (which we should always get) then use it to condense the workspace
+        if match:
+            condensed_workspace = self.workspace.value.split(match.group())[1]
+        # Otherwise manually condense (which could have issues if step names/parameters/study names are equivalent)
+        else:
+            step_name = self.merlin_step.name_no_params()
+            end_of_path = self.workspace.value.rsplit(step_name, 1)[1]
+            condensed_workspace = f"{step_name}{end_of_path}"
 
         return condensed_workspace
 
@@ -130,9 +139,7 @@ class MerlinStepRecord(_StepRecord):
 
     def mark_running(self):
         """Mark the start time of the record and update the status file."""
-        # TODO: do we need to modify this somehow for restarts? Do we need to reset start time?
         super().mark_running()
-
         self._update_status_file()
 
     def mark_end(self, state: ReturnCode, highest_lvl_sample_index: "SampleIndex", max_retries: bool = False):
@@ -196,16 +203,14 @@ class MerlinStepRecord(_StepRecord):
         self._update_status_file(result=step_result, highest_lvl_sample_index=highest_lvl_sample_index, finished=True)
 
     def mark_restart(self):
-        # TODO: figure restart out since you haven't thought about it at all yet
-        super().mark_restart()
-        self._update_status_file()
-        # If we want a status entry for each retry then update start time here
-        # Maybe we create an attribute to track if this step is on a restart? Then
-        # we can see if we should append a line to status file or overwrite
+        """Increment the number of restarts we've had for this step and update the status file"""
+        if self.restart_limit == 0 or self._num_restarts < self.restart_limit:
+            self._num_restarts += 1
+            self._update_status_file()
 
     def setup_workspace(self):
         """Initialize the record's workspace and status file."""
-        create_parentdir(self.workspace.value)
+        super().setup_workspace()
         self._update_status_file()
 
     def _update_status_file(
@@ -225,7 +230,6 @@ class MerlinStepRecord(_StepRecord):
         :param `highest_lvl_sample_index`: Optional SampleIndex object that will be sent to the update_status_with_celery function
         :param `finished`: Optional boolean parameter to represent if this step is now finished
         """
-        from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
         # This dict is used for converting an enum value to a string for readability
         state_translator: Dict[State, str] = {
@@ -238,20 +242,32 @@ class MerlinStepRecord(_StepRecord):
             State.UNKNOWN: "UNKNOWN"
         }
 
-        # Build the status info dict
-        status_info = {
-            "name": self.name,
-            "status": state_translator[self.status],
-            "result": result,
-            "elapsed_time": self.elapsed_time,
-            "run_time": self.run_time,
-            "num_restarts": self.restarts,
-            "workspace": self.condensed_workspace,
-        }
+        if not result:
+            result = "-------"
+
+        # Put together a list of status info
+        status_info = [
+            self.name,
+            state_translator[self.status],
+            result,
+            self.elapsed_time,
+            self.run_time,
+            self.restarts,
+            self.condensed_workspace
+        ]
 
         # Update the status file
         if task_server == "celery":
-            update_status_with_celery(status_info, self.workspace.value, self.merlin_step, highest_lvl_sample_index, finished)
+            from merlin.celery import app # # pylint: disable=C0415
+            # If the tasks are always eager, this is a local run and we won't have workers running
+            if not app.conf.task_always_eager:
+                status_info.append(get_current_queue())
+                status_info.append(get_current_worker())
+        
+        status_line = " ".join(str(info_item) for info_item in status_info)
+        status_line += "\n"
+
+        write_status(self.workspace.value, status_line)
 
 
 class Step:
