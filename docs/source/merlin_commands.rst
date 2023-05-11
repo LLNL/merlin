@@ -456,7 +456,7 @@ There are 4 additional options to be used with the ``merlin status`` command tha
 
 The ``--queue-info`` option displays the status of the celery queues for your study. It will display the queue name, the number of tasks
 currently in the queue, and the number of workers assigned to the queue. This is the same functionality as the ``merlin status`` command
-prior to v1.10.1.
+prior to v1.11.0.
 
 .. BRIAN MAKE THE ABOVE VERSION ACCURATE WHEN YOU KNOW THE RIGHT VERSION TO PUT THERE
 

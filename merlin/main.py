@@ -268,8 +268,24 @@ def query_status(args):
             LOG.error(f"The file or directory path {args.spec_or_workspace} does not exist.")
             return
 
-    # Query the status
-    status.query_status(args, spec_display, file_or_ws)
+    # Status command prior to v1.11.0
+    if args.queue_info:
+        # Load the spec
+        if spec_display:
+            args.specification = file_or_ws
+            spec, _ = get_merlin_spec_with_override(args)
+        else:
+            spec = status.load_from_workspace(file_or_ws)
+        # Print the queue information
+        ret = router.query_status(args.task_server, spec, args.steps)
+        for name, jobs, consumers in ret:
+            print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
+        # TODO get rid of this?
+        if args.csv is not None:
+            router.dump_status(ret, args.csv)
+    # Status command after v1.11.0
+    else:
+        status.query_status(args, spec_display, file_or_ws)
 
 
 def query_workers(args):
@@ -919,6 +935,23 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         help="The specific steps in the YAML file you want to query",
     )
     status_cmd.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type.\
+                            Default: %(default)s",
+    )
+    status_cmd.add_argument(
+        "--vars",
+        action="store",
+        dest="variables",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
+        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+    )
+    status_cmd.add_argument(
         "--task-queues",
         nargs="+",
         type=str,
@@ -958,9 +991,13 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         help="Used to filter which tasks to display by their status. Options: INITIALIZED, RUNNING, \
             FINISHED, FAILED, RESTARTED, CANCELLED, or UNKNOWN. Can only be used with the --steps flag."
     )
-    # TODO: figure out how to dump to csv for both high and low level displays
-    # TODO: fix issue with incorrect task queue/worker being displayed for steps
-    #   - Maybe need to change something in tasks.py
+    # TODO apply this to low level somehow?
+    status_cmd.add_argument(
+        "--cb-help",
+        action="store_true",
+        help="Use different symbols to represent different statuses."
+    )
+    # TODO: figure out how to dump to csv with and without filters
     status_cmd.add_argument("--csv", type=str, help="csv file to dump status report to", default=None)
 
     # merlin info

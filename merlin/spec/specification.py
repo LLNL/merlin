@@ -591,17 +591,19 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                     worker_step_map[worker_name].append(step)
         return worker_step_map
 
-    def get_task_queues(self):
+    def get_task_queues(self, omit_tag=False):
         """
         Returns a dictionary of steps and their corresponding task queues.
-        This returns the inverse of get_queue_step_relationship().
+
+        :param `omit_tag`: If True, omit the celery queue tag.
+        :returns: the inverse of get_queue_step_relationship().
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
         steps = self.get_study_steps()
         queues = {}
         for step in steps:
-            if "task_queue" in step.run and CONFIG.celery.omit_queue_tag:
+            if "task_queue" in step.run and (omit_tag or CONFIG.celery.omit_queue_tag):
                 queues[step.name] = step.run["task_queue"]
             elif "task_queue" in step.run:
                 queues[step.name] = CONFIG.celery.queue_tag + step.run["task_queue"]
@@ -628,13 +630,14 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         return relationship_tracker
 
-    def get_queue_list(self, steps):
+    def get_queue_list(self, steps, omit_tag=False):
         """
         Return a sorted list of queues corresponding to spec steps
 
-        param steps: a list of step names or 'all'
+        :param `steps`: a list of step names or ['all']
+        :param `omit_tag`: If True, omit the celery queue tag.
         """
-        queues = self.get_task_queues()
+        queues = self.get_task_queues(omit_tag=omit_tag)
         if steps[0] == "all":
             task_queues = queues.values()
         else:
@@ -659,11 +662,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         return shlex.quote(queues)
 
     def get_worker_names(self):
-        """Builds a list of workers"""
-        result = []
-        for worker in self.merlin["resources"]["workers"]:
-            result.append(worker)
-        return result
+        """Builds a list of worker names"""
+        return list(self.merlin["resources"]["workers"].keys())
 
     def get_tasks_per_step(self) -> Dict[str, int]:
         """
@@ -690,9 +690,6 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
             # Default number of tasks for a step is 1
             tasks_per_step[step.name] = 1
-
-            # TODO instead of needs_merlin_expansion can we somehow use python's built-in `in` or merlin.utils `contains_token`?
-            # - if we can then we can move needs_merlin_expansion back to a method in step.py
 
             # If this step uses parameters, we'll at least have a num_params number of tasks to complete
             if needs_merlin_expansion(cmd, restart_cmd, parameter_labels):

@@ -407,7 +407,7 @@ def _low_lvl_with_prompts(status_info: List[List[str]], num_tasks: int):
 
 
 
-def _display_low_lvl(step_tracker: Dict[str, List[str]], workspace: str, args: "Argparse Namespace"):
+def _display_low_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, List[str]], workspace: str, args: "Argparse Namespace"):
     """
     Displays a low level overview of the status of a study. This is a task-by-task
     status display where each task will show:
@@ -415,11 +415,12 @@ def _display_low_lvl(step_tracker: Dict[str, List[str]], workspace: str, args: "
     in that order. If too many tasks are found, prompts will appear for the user to decide
     what to do (that way we don't overload the terminal).
 
+    :param `tasks_per_step`: A dict that says how many tasks each step takes
     :param `step_tracker`: A dict that says which steps have started and which haven't
     :param `workspace`: the filepath of the study output
     :param `args`: The CLI arguments provided via the user
     """
-    from merlin.study.status import read_status  # pylint: disable=C0415
+    from merlin.study.status import get_step_statuses  # pylint: disable=C0415
     print(f"{ANSI_COLORS['YELLOW']}Status for {workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
 
     # Initialize a list of lists that we'll use to display the status info
@@ -430,13 +431,10 @@ def _display_low_lvl(step_tracker: Dict[str, List[str]], workspace: str, args: "
 
     # Read in the statuses for the tasks in this step
     for sstep in step_tracker["started_steps"]:
-        for root, dirs, files in os.walk(f"{workspace}/{sstep}"):
-            if "MERLIN_STATUS" in files:
-                timeout_message = f"Timed out while reading {root}/MERLIN_STATUS for low level display."
-                all_statuses = read_status(root, timeout_message=timeout_message).split("\n")
-                all_statuses.remove('')
-                for status in all_statuses:
-                    status_info.append(status.split(" "))
+        step_workspace = f"{workspace}/{sstep}"
+        step_statuses = get_step_statuses(step_workspace, tasks_per_step[sstep])
+        for status in step_statuses:
+            status_info.append(status.split(" "))
 
     # Filter by task status if necessary
     if args.task_status:
@@ -469,6 +467,42 @@ def _display_low_lvl(step_tracker: Dict[str, List[str]], workspace: str, args: "
         print()
 
 
+def _display_summary(state_info: Dict[str, str], cb_help: bool):
+    """
+    Given a dict of state info for a step, print a summary of the task states.
+
+    :param `state_info`: A dictionary of information related to task states for a step
+    :param `cb_help`: True if colorblind assistance (using symbols) is needed. False otherwise.
+    """
+    # Build a summary list of task info
+    print(f"\nSUMMARY:")
+    summary = []
+    for key, val in state_info.items():
+        label = key
+        # Add colorblind symbols if needed
+        if cb_help and "fill" in val:
+            label = f"{key} {val['fill']}"
+        # Color the label
+        if "color" in val:
+            label = f"{val['color']}{label}{ANSI_COLORS['RESET']}"
+        
+        # Grab the value associated with the label
+        value = None
+        if "count" in val and val["count"] > 0:
+            value = val["count"]
+        elif "total" in val:
+            value = val["total"]
+        elif "name" in val:
+            value = val["name"]
+        # Add the label and value as an entry to the summary
+        if value:
+            summary.append([label, value])
+
+    # Display the summary
+    print(tabulate(summary))
+    print()
+
+
 def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, List[str]], workspace: str, cb_help: bool):
     """
     Displays a high level overview of the status of a study. This includes
@@ -480,7 +514,7 @@ def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, Li
     :param `workspace`:     the filepath of the study output
     :param `cb_help`: True if colorblind assistance (using symbols) is needed. False otherwise.
     """
-    from merlin.study.status import read_status  # pylint: disable=C0415
+    from merlin.study.status import get_step_statuses  # pylint: disable=C0415
     print(f"{ANSI_COLORS['YELLOW']}Status for {workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
     print()
     terminal_size = shutil.get_terminal_size()
@@ -497,70 +531,34 @@ def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, Li
             "DRY_RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
             "TOTAL_TASKS": {"total": tasks_per_step[sstep]},
         }
+        
+        # Read in the statuses for this step
+        step_workspace = f"{workspace}/{sstep}"
+        step_statuses = get_step_statuses(step_workspace, tasks_per_step[sstep])
 
-        # Count number of tasks in each state
-        for root, dirs, files in os.walk(f"{workspace}/{sstep}"):
-            if "MERLIN_STATUS" in files:
-                # Read in the statuses for the tasks in this step
-                status_file = f"{root}/MERLIN_STATUS"
-                timeout_message = f"Timed out while reading {status_file} for high level display."
-                all_statuses = read_status(root, timeout_message=timeout_message).split("\n")
-                all_statuses.remove('')
+        num_completed_tasks = 0
+        for status in step_statuses:
+            # Parse the task_info into a list
+            task_info = status.split(" ")
+            # Increment the count for whatever the task status is
+            state_info[task_info[1]]["count"] += 1
 
-                for status in all_statuses:
-                    # Parse the task_info into a list
-                    task_info = status.split(" ")
-                    # Increment the count for whatever the task status is
-                    state_info[task_info[1]]["count"] += 1
+            # Increment the number of completed tasks (not running or initialized)
+            if task_info[1] not in ("INITIALIZED", "RUNNING"):
+                num_completed_tasks += 1
 
-                    # If the length is 9 rather than 7 then we have a task queue and worker to show
-                    if len(task_info) == 9:
-                        # Save the task queue and worker name if they don't exist yet
-                        if "TASK_QUEUE" not in state_info:
-                            state_info["TASK_QUEUE"] = {"name": task_info[7]}
-                        if "WORKER_NAME" not in state_info:
-                            state_info["WORKER_NAME"] = {"name": task_info[8]}
-
-        # Get the number of finished tasks (not running or initialized)
-        completed_tasks = [
-            state_info["FINISHED"]["count"],
-            state_info["FAILED"]["count"],
-            state_info["DRY_RUN"]["count"],
-            state_info["CANCELLED"]["count"],
-            state_info["UNKNOWN"]["count"]
-        ]
-        num_completed_tasks = sum(completed_tasks)
+            # If the length is 9 rather than 7 then we have a task queue and worker to show
+            if len(task_info) == 9:
+                # Save the task queue and worker name if they don't exist yet
+                if "TASK_QUEUE" not in state_info:
+                    state_info["TASK_QUEUE"] = {"name": task_info[7]}
+                if "WORKER_NAME" not in state_info:
+                    state_info["WORKER_NAME"] = {"name": task_info[8]}
 
         # Display the progress bar
-        progress_bar(num_completed_tasks, state_info["TOTAL_TASKS"]["total"], state_info=state_info, prefix=f"{sstep}", suffix="Complete", length=progress_bar_width, cb_help=cb_help)
+        progress_bar(num_completed_tasks, tasks_per_step[sstep], state_info=state_info, prefix=f"{sstep}", suffix="Complete", length=progress_bar_width, cb_help=cb_help)
 
-        # Build a summary list of task info
-        print(f"\nSUMMARY:")
-        summary = []
-        for key, val in state_info.items():
-            label = key
-            # Add colorblind symbols if needed
-            if cb_help and "fill" in val:
-                label = f"{key} {val['fill']}"
-            # Color the label
-            if "color" in val:
-                label = f"{val['color']}{label}{ANSI_COLORS['RESET']}"
-            
-            # Grab the value associated with the label
-            value = None
-            if "count" in val and val["count"] > 0:
-                value = val["count"]
-            elif "total" in val:
-                value = val["total"]
-            elif "name" in val:
-                value = val["name"]
-            # Add the label and value as an entry to the summary
-            if value:
-                summary.append([label, value])
-
-        # Display the summary
-        print(tabulate(summary))
-        print()
+        _display_summary(state_info, cb_help)
 
     # For each unstarted step, print an empty progress bar
     for ustep in step_tracker["unstarted_steps"]:
@@ -582,7 +580,7 @@ def display_status(workspace: str, tasks_per_step: Dict[str, int], step_tracker:
     :param `args`: The CLI arguments provided via the user
     """
     if low_lvl:
-        _display_low_lvl(step_tracker, workspace, args)
+        _display_low_lvl(tasks_per_step, step_tracker, workspace, args)
     else:
         _display_high_lvl(tasks_per_step, step_tracker, workspace, args.cb_help)
 

@@ -29,6 +29,7 @@
 ###############################################################################
 import logging
 import os
+import re
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
@@ -36,7 +37,7 @@ from filelock import Timeout
 
 from merlin import display, router
 from merlin.config.configfile import CONFIG
-from merlin.utils import get_parent_dir, get_sibling_dirs, obtain_filelock, ws_time_to_td
+from merlin.utils import ws_time_to_td
 
 LOG = logging.getLogger(__name__)
 
@@ -56,45 +57,61 @@ def query_status(args: "Argparse Namespace", spec_display: bool, file_or_ws: str
         workspace, spec = load_from_spec(args, file_or_ws)
     else:
         spec = load_from_workspace(file_or_ws)
-        workspace = file_or_ws
+        workspace = file_or_ws 
 
-    # The old merlin status command
-    if args.queue_info:
-        ret = router.query_status("celery", spec, args.steps)
-        for name, jobs, consumers in ret:
-            print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
-        if args.csv is not None:
-            router.dump_status(ret, args.csv)
-        return
+    # Verify the filter args (if any)
+    verify_filter_args(args, spec)
 
     # Get a dict of started and unstarted steps to display and a dict representing the number of tasks per step
     step_tracker = get_steps_to_display(workspace, spec, args.steps, args.task_queues, args.workers)
-    # tasks_per_step = get_tasks_per_step(spec)
     tasks_per_step = spec.get_tasks_per_step()
 
     # Determine whether to display a low level or high level display
-    low_lvl = True if args.task_queues or args.workers or ("all" not in args.steps) else False
-
-    # Verify the filter args (if any)
-    verify_filter_args(args)
+    filters = [args.task_queues, args.workers, args.task_status, args.max_tasks, ("all" not in args.steps)]
+    low_lvl = any(filters)
 
     # Display the status
     display.display_status(workspace, tasks_per_step, step_tracker, low_lvl, args)
 
 
-def verify_filter_args(args: "Argparse Namespace"):
+def get_step_statuses(step_workspace: str, total_tasks: int) -> List[str]:
+    """
+    Given a step workspace and the total number of tasks for the step, read in all the statuses
+    for the step and return them in a list.
+
+    :param `step_workspace`: The path to the step we're going to read statuses from
+    :param `total_tasks`: The total number of tasks for the step
+    :returns: A list of statuses for the given step
+    """
+    step_statuses = []
+    num_statuses_read = 0
+    # Count number of tasks in each state
+    for root, dirs, files in os.walk(step_workspace):
+        if "MERLIN_STATUS" in files:
+            # Read in the statuses for the tasks in this step
+            status_file = f"{root}/MERLIN_STATUS"
+            statuses_read = read_status(status_file).split("\n")
+            statuses_read.remove('')
+            step_statuses.extend(statuses_read)
+            num_statuses_read += len(statuses_read)
+        # To help save time, exit this loop if we've read all the task statuses for this step
+        if num_statuses_read == total_tasks:
+            break
+    return step_statuses
+
+
+def verify_filter_args(args: "Argparse Namespace", spec: "MerlinSpec"):
     """
     Verify that our filters are all valid and able to be used.
     :param `args`: The CLI arguments provided via the user
+    :param `spec`: A MerlinSpec object loaded from the expanded spec in the output study directory
     """
-    # Ignore invalid use of filters
-    if "all" in args.steps:
-        if args.max_tasks:
-            LOG.warning("Can only use the --max-tasks flag with the --steps flag. Ignoring --max-tasks...")
-            args.max_tasks = None
-        if args.task_status:
-            LOG.warning("Can only use the --task-status flag with the --steps flag. Ignoring --task-status...")
-            args.task_status = None
+    if "all" not in args.steps:
+        existing_steps = spec.get_study_step_names()
+        for step in args.steps[:]:
+            if step not in existing_steps:
+                LOG.warning(f"The step {step} was not found in the study {spec.name}. Removing this step from the list of steps to filter by...")
+                args.steps.remove(step)
 
     # Make sure max_tasks is a positive int
     if args.max_tasks and args.max_tasks < 1:
@@ -109,6 +126,22 @@ def verify_filter_args(args: "Argparse Namespace"):
             if status_filter not in valid_task_statuses:
                 LOG.warning(f"The status filter {status_filter} is invalid. Valid statuses are any of the following: {valid_task_statuses}. Ignoring {status_filter} as a filter...")
                 args.task_status.remove(status_filter)
+
+    # Ensure every task queue provided exists
+    if args.task_queues:
+        existing_queues = spec.get_queue_list(["all"], omit_tag=True)
+        for queue in args.task_queues[:]:
+            if queue not in existing_queues:
+                LOG.warning(f"The queue {queue} is not an existing queue. Removing this queue from the list of queues to filter by...")
+                args.task_queues.remove(queue)
+    
+    # Ensure every worker provided exists
+    if args.workers:
+        worker_names = spec.get_worker_names()
+        for worker in args.workers[:]:
+            if worker not in worker_names:
+                LOG.warning(f"The worker {worker} cannot be found. Removing this worker from the list of workers to filter by...")
+                args.workers.remove(worker)
 
 
 def get_latest_study(studies: List[str]) -> str:
@@ -134,44 +167,22 @@ def get_latest_study(studies: List[str]) -> str:
     return newest_study
 
 
-def load_from_spec(args: "Argparse Namespace", filepath: str) -> Tuple[str, "MerlinSpec"]:
+def obtain_study(study_output_dir: str, num_studies: int, potential_studies: List[Tuple[int, str]], no_prompts: bool) -> str:
     """
-    Get the desired workspace from the user and load up it's yaml spec
-    for further processing.
+    Grab the study that the user wants to view the status of based on a list of potential studies provided.
 
-    :param `args`: The namespace given by ArgumentParser with flag info
-    :param `filepath`: The filepath to a spec given by the user
-
-    :returns: The workspace of the study we'll check the status for and a MerlinSpec
-              object loaded in from the workspace's merlin_info subdirectory.
+    :param `study_output_dir`: A string representing the output path of a study; equivalent to $(OUTPUT_PATH)
+    :param `num_studies`: The number of potential studies we found
+    :param `potential_studies`: The list of potential studies we found; Each entry is of the form (index, potential_study_name)
+    :param `no_prompts`: A CLI flag for the status command representing whether the user wants CLI prompts or not
+    :returns: A directory path to the study that the user wants to view the status of ("study_output_dir/selected_potential_study")
     """
-    from merlin.main import verify_dirpath, get_spec_with_expansion
-
-    # Get the spec and the output path for the spec
-    spec_provided = get_spec_with_expansion(filepath)
-
-    if spec_provided.output_path:
-        study_output_dir = verify_dirpath(spec_provided.output_path)
-    else:
-        study_output_dir = verify_dirpath(".")
-
-    # Build a list of potential study output directories
-    study_output_subdirs = next(os.walk(study_output_dir))[1]
-    potential_studies = []
-    num_studies = 1
-    for subdir in study_output_subdirs:
-        if subdir.startswith(spec_provided.name):
-            potential_studies.append((num_studies, subdir))
-            num_studies += 1
-
-    # Obtain the correct study that the user wants to view the status of
-    # based on the list of potential studies we just built
     study_to_check = f"{study_output_dir}/"
-    if num_studies == 1:
+    if num_studies == 0:
         raise ValueError("Could not find any potential studies.")
-    if num_studies > 2:
+    if num_studies > 1:
         # Get the latest study
-        if args.no_prompts:
+        if no_prompts:
             LOG.info("Choosing the latest study...")
             potential_studies = [study for _, study in potential_studies]
             latest_study = get_latest_study(potential_studies)
@@ -183,17 +194,56 @@ def load_from_spec(args: "Argparse Namespace", filepath: str) -> Tuple[str, "Mer
             display.tabulate_info(potential_studies, headers=["Index", "Study Name"])
             prompt = "Which study would you like to view the status of? Use the index on the left: "
             index = -1
-            while index < 1 or index > num_studies-1:
+            while index < 1 or index > num_studies:
                 try:
                     index = int(input(prompt))
-                    if index < 1 or index > num_studies-1:
+                    if index < 1 or index > num_studies:
                         raise ValueError
                 except ValueError:
-                    print(f"{display.ANSI_COLORS['RED']}Input must be an integer between 1 and {num_studies-1}.{display.ANSI_COLORS['RESET']}")
-                    prompt = "Enter a different index: "
+                        print(f"{display.ANSI_COLORS['RED']}Input must be an integer between 1 and {num_studies}.{display.ANSI_COLORS['RESET']}")
+                        prompt = "Enter a different index: "
             study_to_check += potential_studies[index-1][1]
     else:
+        # Only one study was found so we'll just assume that's the one the user wants
         study_to_check += potential_studies[0][1]
+    
+    return study_to_check
+
+
+def load_from_spec(args: "Argparse Namespace", filepath: str) -> Tuple[str, "MerlinSpec"]:
+    """
+    Get the desired workspace from the user and load up it's yaml spec
+    for further processing.
+
+    :param `args`: The namespace given by ArgumentParser with flag info
+    :param `filepath`: The filepath to a spec given by the user
+
+    :returns: The workspace of the study we'll check the status for and a MerlinSpec
+              object loaded in from the workspace's merlin_info subdirectory.
+    """
+    from merlin.main import get_spec_with_expansion, get_merlin_spec_with_override, verify_dirpath
+
+    # Get the spec and the output path for the spec
+    args.specification = filepath
+    spec_provided, _ = get_merlin_spec_with_override(args)
+    if spec_provided.output_path:
+        study_output_dir = verify_dirpath(spec_provided.output_path)
+    else:
+        study_output_dir = verify_dirpath(".")
+
+    # Build a list of potential study output directories
+    study_output_subdirs = next(os.walk(study_output_dir))[1]
+    timestamp_regex = r"\d{8}-\d{6}"
+    potential_studies = []
+    num_studies = 0
+    for subdir in study_output_subdirs:
+        match = re.search(rf"{spec_provided.name}_{timestamp_regex}", subdir)
+        if match:
+            potential_studies.append((num_studies+1, subdir))
+            num_studies += 1
+
+    # Obtain the correct study that the user wants to view the status of based on the list of potential studies we just built
+    study_to_check = obtain_study(study_output_dir, num_studies, potential_studies, args.no_prompts)
 
     # Verify the directory that the user selected is a merlin study output directory
     if "merlin_info" not in next(os.walk(study_to_check))[1]:
@@ -252,7 +302,7 @@ def process_workers(spec: "MerlinSpec", workers_provided: List[str], steps_to_ch
     for wp in workers_provided:
         # Check for invalid workers
         if wp not in worker_step_map:
-            print(f"{display.ANSI_COLORS['YELLOW']}Worker with name {wp} does not exist for this study.{display.ANSI_COLORS['RESET']}")
+            LOG.warning(f"Worker with name {wp} does not exist for this study.")
         else:
             for step in worker_step_map[wp]:
                 if step not in steps_to_check:
@@ -278,7 +328,7 @@ def process_task_queue(spec: "MerlinSpec", queues_provided: List[str], steps_to_
     for qp in queues_provided:
         # Check for invalid task queues
         if f"{CONFIG.celery.queue_tag}{qp}" not in queue_step_relationship:
-            print(f"{display.ANSI_COLORS['YELLOW']}Task queue with name {qp} does not exist for this study.{display.ANSI_COLORS['RESET']}")
+            LOG.warning(f"Task queue with name {qp} does not exist for this study.")
         else:
             for step in queue_step_relationship[f"{CONFIG.celery.queue_tag}{qp}"]:
                 if step not in steps_to_check:
@@ -322,241 +372,48 @@ def get_steps_to_display(workspace: str, spec: "MerlinSpec", steps: List[str], t
     existing_steps = spec.get_study_step_names()
 
     if ("all" in steps) and (not task_queues) and (not workers):
-        steps_to_check = existing_steps
+        steps = existing_steps
     else:
         # This won't matter anymore since task_queues or workers is not None here
         if "all" in steps:
             steps = []
 
-         # Build a list of steps to get the status for based on steps, task_queues, and workers flags
-        steps_to_check = []
-
-        # Loop through all steps provided by user and if they exist, add them to our list
-        # of steps to get the status for
-        for step in steps:
-            if step not in existing_steps:
-                LOG.warning(f"Could not find {step} in this study with name {spec.name}.")
-            else:
-                steps_to_check.append(step)
-
         # Add steps to start based on task queues and/or workers provided
         if task_queues:
-            process_task_queue(spec, task_queues, steps_to_check)
+            process_task_queue(spec, task_queues, steps)
         if workers:
-            process_workers(spec, workers, steps_to_check)
+            process_workers(spec, workers, steps)
 
         # Sort the steps to start by the order they show up in the study
         idx = 0
         for estep in existing_steps:
-            if estep in steps_to_check:
-                steps_to_check.remove(estep)
-                steps_to_check.insert(idx, estep)
+            if estep in steps:
+                steps.remove(estep)
+                steps.insert(idx, estep)
                 idx += 1
 
     # Filter the steps to display status for by started/unstarted
-    step_tracker = create_step_tracker(workspace, steps_to_check)
+    step_tracker = create_step_tracker(workspace, steps)
 
     return step_tracker
 
 
-def status_file_exists(workspace: Union[Path, str]) -> bool:
-    """
-    Check if the status file in the workspace exists.
-
-    :param `workspace`: The path to the workspace that we're looking for a status file in
-    :returns: A boolean denoting whether the status file exists or not
-    """
-    # Convert workspace to a Path object and obtain a filelock object if necessary
-    if isinstance(workspace, str):
-        workspace = Path(workspace)
-    lock = obtain_filelock(workspace, "status.lock")
-    lock_file = workspace / "status.lock"
-
-    # Lock the file and check if the status file exists
-    try:
-        with lock.acquire(timeout=5):
-            status_file = workspace / "MERLIN_STATUS"
-            result = status_file.exists()
-    except Timeout:
-        LOG.warning("Timed out while checking if the status file exists.")
-    lock_file.unlink()
-
-    return result
-
-def write_status(workspace: Union[Path, str], status: str, timeout_message=None):
-    """
-    Locks the status file for writing and writes the task status to it.
-
-    :param `workspace`: The path to the workspace that has the status file we'll write to
-    :param `status`: The status we'll write to the status file
-    :param `timeout_message`: An optional parameter for defining a custom timeout message
-    """
-    # Convert workspace to a Path object if necessary and obtain a filelock object for this status file
-    if isinstance(workspace, str):
-        workspace = Path(workspace)
-    lock = obtain_filelock(workspace, "status.lock")
-    lock_file = workspace / "status.lock"
-
-    # Lock the file and write the task status to the status cache file
-    try:
-        with lock.acquire(timeout=5):
-            status_file = workspace / "MERLIN_STATUS"
-            status_file.write_text(status)
-    except Timeout:
-        if not timeout_message:
-            timeout_message = "Timed out when writing status to file."
-        LOG.warning(timeout_message)
-    lock_file.unlink()
-
-
-def read_status(workspace: Union[Path, str], timeout_message=None, delete_after_read=False) -> str:
+def read_status(status_file: Union[Path, str], display_fnf_message=True) -> str:
     """
     Locks the status file for reading and returns its contents.
 
-    :param `workspace`: The path to the workspace that has the status file we'll read from
-    :param `timeout_message`: An optional parameter for defining a custom timeout message
-    :param `delete_after_read`: An optional parameter to delete the status file after reading from it
-    :returns: The contents of the status file located at `workspace`
+    :param `status_file`: The path to the status file that we'll read from
+    :param `display_fnf_message`: If True, display the file not found warning. Otherwise don't.
+    :returns: The contents of the status file
     """
     # Convert workspace to a Path object if necessary and obtain a filelock object for this status file
-    if isinstance(workspace, str):
-        workspace = Path(workspace)
-    lock = obtain_filelock(workspace, "status.lock")
-    lock_file = workspace / "status.lock"
-
-    # Initialize a variable to store the status(es) we'll read in
+    if isinstance(status_file, str):
+        status_file = Path(status_file)
     status = ""
-
-    # Lock the file and read in the status files contents
     try:
-        with lock.acquire(timeout=5):
-            status_file = workspace / "MERLIN_STATUS"
-            status = status_file.read_text()
-            # Delete the status file after reading it if necessary
-            if delete_after_read:
-                status_file.unlink()
-    except Timeout:
-        if not timeout_message:
-            timeout_message = "Timed out when reading from status file."
-        LOG.warning(timeout_message)
+        status = status_file.read_text()
     except FileNotFoundError:
-        LOG.warning(f"File not found: {status_file}. Deleting associated lock file.")
-        # If the file wasn't found, we don't need the lock file anymore
-        delete_after_read = True
-    # Delete the lock file
-    lock_file.unlink()
-
+        if display_fnf_message:
+            LOG.warning(f"File not found: {status_file}.")
+        status = "FNF"
     return status
-
-
-def get_statuses_to_condense(dirs_to_check: List[Path], total_num_siblings: int) -> List[List[str]]:
-    """
-    This function reads in statuses for condensing and checks if we're ready to condense at the same time.
-    If we're ready to condense, this will return a list of statuses to condense. Otherwise, this will return
-    an empty list.
-
-    Conditions needed for condensing:
-    1. Number of sibling directories that currently exist must be equal to the total number of sibling directories
-       that will eventually be created
-    2. Status files exist in all sibling directories
-    3. (Only if this is a leaf directory) Every status file has a status that's not 'INITIALIZED' or 'RUNNING'
-
-    :param `dirs_to_check`: A list of sibling directories to read/check status files of
-    :param `total_num_siblings`: The total number of sibling directories that will eventually be created
-    :returns: A list of statuses to condense if all conditions are met for condensing. Otherwise an empty list.
-    """
-    # Checking against condition 1
-    if len(dirs_to_check) == total_num_siblings:
-        all_statuses = []
-        for directory in dirs_to_check:
-            # Checking against condition 2
-            if not status_file_exists(directory):
-                return []
-            
-            # Read in the status and append it to the list of all statuses needed for condensing
-            timeout_message = "Timed out when checking if condensing status files is needed."
-            status = read_status(directory, timeout_message=timeout_message)
-            all_statuses.append(status)
-
-            # If we only have one status, this is a leaf (i.e. no condensing has been done yet) so check the state
-            status = status.split("\n")
-            status.remove("")
-            if len(status) == 1:
-                # Checking against condition 3
-                status = status[0].split(" ")
-                try:
-                    # status[1] is the state of the task
-                    if status[1] in ("INITIALIZED", "RUNNING"):
-                        return []
-                except IndexError:
-                    return []
-
-        # If we get here then all conditions are satisfied and we need to condense
-        return all_statuses
-    return []
-
-
-def condense_status_files(workspace: str, top_lvl_dir: str, param_length: int, uses_params: bool, hierarchy_children: Dict[str, int] = None,):
-    """
-    Condense status files up the hierarchy (if necessary).
-
-    :param `workspace`: The path to the task that's currently being worked on. Will serve as our starting point for condensing.
-    :param `top_lvl_dir`: The path to the top level directory of the step we're condensing files for. Will serve as our end point
-                          for condensing.
-    :param `param_length`: The number of values in each global parameter
-    :param `uses_params`: True if the step we're condensing for uses parameters. False, otherwise.
-    :param `hierarchy_children`: A dict where the keys are the sample index paths and the values are the number of child directories
-                                 in that path. Used for making sure the number of sibling directories that exist is correct before
-                                 we start condensing. ONLY NEEDED FOR A STEP USING SAMPLES.
-    """
-    # Get the directory to stop our condensing at and initialize the current directory variable
-    current_dir = Path(workspace)
-    write_timeout_message = "Timed out when writing condensed status up to the parent status file."
-    stop_condensing = False
-
-    while str(current_dir) != top_lvl_dir and not stop_condensing:
-        # Get the sibling directories (including the current dir) and the parent directory
-        sibling_dirs = get_sibling_dirs(current_dir, include_path=True)
-        parent_dir = get_parent_dir(current_dir)
-
-        # Get the total number of children that the parent directory will eventually have
-        if str(parent_dir) == top_lvl_dir and uses_params:
-            total_num_siblings = param_length
-        else:
-            # This else statement will only get hit if the step we're condensing for uses samples
-            for sample_path, total_num_siblings in hierarchy_children.items():
-                if str(parent_dir).endswith(sample_path):
-                    break
-        
-        # Lock the parent directory for condensing
-        parent_lock = obtain_filelock(parent_dir, "condense.lock")
-        try:
-            with parent_lock.acquire(timeout=5):
-                statuses_to_condense = get_statuses_to_condense(sibling_dirs, total_num_siblings)
-                # If we have statuses to condense then condense them
-                if statuses_to_condense:
-                    # Delete the status files (and their associated lock files) we're about to condense
-                    for directory in sibling_dirs:
-                        status_file = directory / "MERLIN_STATUS"
-                        status_lock = directory / "status.lock"
-                        lock = obtain_filelock(directory, "status.lock")
-                        try:
-                            with lock.acquire(timeout=5):
-                                status_file.unlink()
-                        except Timeout:
-                            LOG.warning(f"Timed out while unlinking {status_file}")
-                        status_lock.unlink()
-                    # Condense the statuses and then write it to a new status file in the parent directory
-                    condensed_status = "".join(statuses_to_condense)
-                    write_status(parent_dir, condensed_status, timeout_message=write_timeout_message)
-                # If we don't have statuses to condense then we can stop looping
-                else:
-                    stop_condensing = True
-        except Timeout:
-            LOG.warning("Timed out when checking if condensing is needed")
-        # Remove the condense lock to free up file space
-        parent_lock_file = parent_dir / "condense.lock"
-        parent_lock_file.unlink()
-        
-        # Move the current dir up a level for the next iteration
-        current_dir = parent_dir
