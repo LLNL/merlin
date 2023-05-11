@@ -33,8 +33,8 @@ import logging
 import re
 from contextlib import suppress
 from copy import deepcopy
+from pathlib import Path
 from typing import Dict, List, Tuple
-from datetime import datetime
 
 from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
@@ -42,9 +42,7 @@ from maestrowf.datastructures.core.study import StudyStep
 from maestrowf.utils import create_parentdir, get_duration
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.study.celeryadapter import get_current_queue, get_current_worker
 from merlin.study.script_adapter import MerlinScriptAdapter
-from merlin.study.status import write_status
 
 
 LOG = logging.getLogger(__name__)
@@ -142,13 +140,12 @@ class MerlinStepRecord(_StepRecord):
         super().mark_running()
         self._update_status_file()
 
-    def mark_end(self, state: ReturnCode, highest_lvl_sample_index: "SampleIndex", max_retries: bool = False):
+    def mark_end(self, state: ReturnCode, max_retries: bool = False):
         """
         Mark the end time of the record with associated termination state
         and update the status file.
         
         :param `state`: A merlin ReturnCode object representing the end state of a task
-        :param `highest_lvl_sample_index`: A SampleIndex object with information about the sample index hierarchy at this step
         :param `max_retries`: A bool representing whether we hit the max number of retries or not
         """
         # Dictionary to keep track of associated variables for each return code
@@ -200,7 +197,7 @@ class MerlinStepRecord(_StepRecord):
             step_result += " (MAX RETRIES REACHED)"
 
         # Update the status file
-        self._update_status_file(result=step_result, highest_lvl_sample_index=highest_lvl_sample_index, finished=True)
+        self._update_status_file(result=step_result, finished=True)
 
     def mark_restart(self):
         """Increment the number of restarts we've had for this step and update the status file"""
@@ -217,8 +214,7 @@ class MerlinStepRecord(_StepRecord):
         self,
         result: str = None,
         task_server: str = "celery",
-        highest_lvl_sample_index: "SampleIndex" = None,
-        finished: bool = False
+        finished: bool = False,
     ):
         """
         Puts together a dictionary full of status info and creates a signature
@@ -227,7 +223,6 @@ class MerlinStepRecord(_StepRecord):
         :param `result`:  Optional parameter only applied when we've finished running
                           this step. String representation of a ReturnCode value.
         :param `task_server`: Optional parameter to define the task server we're using.
-        :param `highest_lvl_sample_index`: Optional SampleIndex object that will be sent to the update_status_with_celery function
         :param `finished`: Optional boolean parameter to represent if this step is now finished
         """
 
@@ -258,7 +253,8 @@ class MerlinStepRecord(_StepRecord):
 
         # Update the status file
         if task_server == "celery":
-            from merlin.celery import app # # pylint: disable=C0415
+            from merlin.celery import app  # pylint: disable=C0415
+            from merlin.common.tasks import get_current_queue, get_current_worker  # pylint: disable=C0415
             # If the tasks are always eager, this is a local run and we won't have workers running
             if not app.conf.task_always_eager:
                 status_info.append(get_current_queue())
@@ -267,7 +263,8 @@ class MerlinStepRecord(_StepRecord):
         status_line = " ".join(str(info_item) for info_item in status_info)
         status_line += "\n"
 
-        write_status(self.workspace.value, status_line)
+        status_file = Path(f"{self.workspace.value}/MERLIN_STATUS")
+        status_file.write_text(status_line)
 
 
 class Step:
