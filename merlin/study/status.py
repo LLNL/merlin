@@ -27,15 +27,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+import csv
 import logging
 import os
 import re
+from collections import deque
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
-from filelock import Timeout
-
-from merlin import display, router
+from merlin import display
 from merlin.config.configfile import CONFIG
 from merlin.utils import ws_time_to_td
 
@@ -70,11 +70,118 @@ def query_status(args: "Argparse Namespace", spec_display: bool, file_or_ws: str
     filters = [args.task_queues, args.workers, args.task_status, args.max_tasks, ("all" not in args.steps)]
     low_lvl = any(filters)
 
-    # Display the status
-    display.display_status(workspace, tasks_per_step, step_tracker, low_lvl, args)
+    # If we're dumping to csv or showing low level task-by-task info
+    if args.csv or low_lvl:
+        # Get the statuses requested by the user and insert column titles
+        all_statuses = get_all_statuses(step_tracker["started_steps"], tasks_per_step, workspace, args)
+        statuses_with_labels = insert_column_titles(all_statuses)
+
+        if args.csv:
+            dump_status_to_csv(statuses_with_labels, args.csv)
+        else:
+            display.display_low_lvl_status(statuses_with_labels, step_tracker["unstarted_steps"], workspace, args)
+    else:
+        # Display the high level status summary
+        display.display_high_lvl_status(tasks_per_step, step_tracker, workspace, args.cb_help)
 
 
-def get_step_statuses(step_workspace: str, total_tasks: int) -> List[str]:
+def insert_column_titles(statuses: List[List[str]]) -> List[List[str]]:
+    """
+    Given a list of statuses, prepend a list of column titles.
+    Using deque rather than list.insert we make this an O(1) operation.
+
+    :param `statuses`: A list of statuses where each status is contained within its own list
+    :returns: The modified list with column titles
+    """
+    # Store column titles in a list and add additional column titles if necessary
+    column_titles = ["Step Name", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts", "Step Workspace"]
+    try:
+        # If celery workers were used, the length of each status entry will be 9
+        len_status_entry = len(statuses[0])
+        if len_status_entry == 9:
+            column_titles.append("Task Queue")
+            column_titles.append("Worker Name")
+    except IndexError:
+        pass
+
+    # Insert column titles at head of list in O(1) time
+    statuses = deque(statuses)
+    statuses.appendleft(column_titles)
+    statuses = list(statuses)
+
+    return statuses
+
+
+def dump_status_to_csv(statuses_to_write: List[List[str]], csv_file: str):
+    """
+    Write the statuses to a csv file.
+
+    :param `statuses_to_write`: A list of statuses to write to the csv file
+    :param `csv_file`: The name of the csv file we're going to write to
+    :side effect: A csv file is created or appended to
+    """
+    # Get the correct filemode
+    if os.path.exists(csv_file):
+        fmode = "a"
+    else:
+        fmode = "w"
+    
+    # If we have statuses to write, create a csv writer object and write to the csv file
+    if len(statuses_to_write) > 1:
+        LOG.info(f"{'Writing' if fmode == 'w' else 'Appending'} {len(statuses_to_write) - 1} statuses to {csv_file}...")
+        with open(csv_file, fmode) as f:
+            csv_writer = csv.writer(f)
+            # If we're writing a new csv file, add the column titles
+            if fmode == "w":
+                csv_writer.writerow(statuses_to_write[0])
+            csv_writer.writerows(statuses_to_write[1:])
+        LOG.info("Writing complete.")
+    else:
+        LOG.error(f"No statuses found to write.")
+
+
+def get_all_statuses(started_steps: List[str], tasks_per_step: Dict[str, int], workspace: str, args: "Namespace") -> List[List[str]]:
+    """
+    Get all the statuses that the user is looking for. Filters for task queue and workers will have already been applied
+    when creating the started_steps list. The filters for task status and max tasks will be applied here.
+
+    :param `started_steps`: A list of started steps that the user wants information from
+    :param `tasks_per_step`: A dictionary to keep track of how many tasks are needed for each step in the workflow
+    :param `workspace`: The output directory path for the study
+    :param `args`: The arguments from the user provided by the CLI
+    :returns: A list of all statuses matching the users filter(s). Each status is contained within its own list.
+    """
+    # Read in all statuses from the started steps the user wants to see, and split each status by spaces
+    LOG.info(f"Reading task statuses from {workspace}")
+    all_statuses = []
+    for sstep in started_steps:
+        step_workspace = f"{workspace}/{sstep}"
+        step_statuses = get_step_statuses(step_workspace, tasks_per_step[sstep])
+        for step in step_statuses:
+            all_statuses.append(step.split(" "))
+
+    # Filter the statuses we read in by task status if necessary
+    if args.task_status:
+        LOG.info(f"Filtering tasks by the following statuses: {args.task_status}")
+        for entry in all_statuses[:]:
+            if entry[1] not in args.task_status:
+                all_statuses.remove(entry)
+        if len(all_statuses) == 0:
+            LOG.error(f"No tasks found matching the filters {args.task_status}.")
+
+    LOG.info(f"Found {len(all_statuses)} tasks matching your filters.")
+
+    # Limit the number of statuses to display if necessary
+    if args.max_tasks:
+        if args.max_tasks > len(all_statuses):
+            args.max_tasks = len(all_statuses)
+        LOG.info(f"Max tasks filter was provided. Limiting the number of statuses to display to {args.max_tasks}.")
+        all_statuses = all_statuses[:args.max_tasks]
+
+    return all_statuses
+
+
+def get_step_statuses(step_workspace: str, total_tasks: int, args: "Namespace" = None) -> List[str]:
     """
     Given a step workspace and the total number of tasks for the step, read in all the statuses
     for the step and return them in a list.

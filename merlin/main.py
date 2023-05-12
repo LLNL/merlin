@@ -280,7 +280,6 @@ def query_status(args):
         ret = router.query_status(args.task_server, spec, args.steps)
         for name, jobs, consumers in ret:
             print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
-        # TODO get rid of this?
         if args.csv is not None:
             router.dump_status(ret, args.csv)
     # Status command after v1.11.0
@@ -997,7 +996,6 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         action="store_true",
         help="Use different symbols to represent different statuses."
     )
-    # TODO: figure out how to dump to csv with and without filters
     status_cmd.add_argument("--csv", type=str, help="csv file to dump status report to", default=None)
 
     # merlin info

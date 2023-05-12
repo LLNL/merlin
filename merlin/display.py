@@ -37,6 +37,7 @@ import shutil
 import subprocess
 import time
 import traceback
+from collections import deque
 from datetime import datetime
 from multiprocessing import Pipe, Process
 from typing import Dict, List, Union
@@ -289,26 +290,6 @@ def paginate_statuses(status_info: List[List[str]], num_tasks: int):
             if user_continue == 'n':
                 break
 
-def _filter_by_status(status_filters: List[str], status_info: List[List[str]]):
-    """
-    Filter the list of status info by certain status filters provided by the user.
-
-    :param `status_filters`: A list of filters provided by the user from the --task-status flag
-    :param `status_info`: A list of task statuses read from MERLIN_STATUS files
-    """
-    # Add the column label here so we don't accidentally remove that line
-    status_filters.append("Status")
-
-    for entry in status_info[:]:
-        # entry[1] is the status of that specific task; if it doesn't match the filter, remove it
-        if entry[1] not in status_filters:
-            status_info.remove(entry)
-
-    # If just the header line is left then there were no tasks found for the filters provided
-    if len(status_info) == 1:
-        status_filters.remove("Status")
-        print(f"{ANSI_COLORS['RED']}No tasks found for the filters {status_filters}.{ANSI_COLORS['RESET']}")
-
 
 def get_user_filter() -> Union[int, List[str]]:
     """
@@ -367,7 +348,7 @@ def _low_lvl_with_prompts(status_info: List[List[str]], num_tasks: int):
     :param `status_info`: A list of task statuses read from MERLIN_STATUS files
     :param `num_tasks`: The total number of task statuses in status_info (len(status_info))
     """
-    print(f"{ANSI_COLORS['YELLOW']}{num_tasks - 1} tasks found.{ANSI_COLORS['RESET']}")
+    print(f"{ANSI_COLORS['YELLOW']}{num_tasks} tasks found.{ANSI_COLORS['RESET']}")
     # See what the user would like to do in this case
     user_input = input("Would you like to display all tasks, filter the tasks, or cancel this operation? (a/f/c): ").lower()
     while user_input != 'a' and user_input != 'f' and user_input != 'c':
@@ -406,63 +387,39 @@ def _low_lvl_with_prompts(status_info: List[List[str]], num_tasks: int):
         raise ValueError("Something went wrong while getting user input.")
 
 
-
-def _display_low_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, List[str]], workspace: str, args: "Argparse Namespace"):
+def display_low_lvl_status(statuses_to_display: List[List[str]], unstarted_steps: List[str], workspace: str, args: "Namespace"):
     """
     Displays a low level overview of the status of a study. This is a task-by-task
     status display where each task will show:
     step name, step status, return code, elapsed time, run time, num restarts, dir path, task queue, worker name
     in that order. If too many tasks are found, prompts will appear for the user to decide
-    what to do (that way we don't overload the terminal).
+    what to do that way we don't overload the terminal (unless the no-prompts or max-tasks flags are provided).
 
-    :param `tasks_per_step`: A dict that says how many tasks each step takes
-    :param `step_tracker`: A dict that says which steps have started and which haven't
+    :param `statuses_to_display`: A list of statuses to display. Each status is contained in it's own list.
+    :param `unstarted_steps`: A list of step names that have yet to start executing
     :param `workspace`: the filepath of the study output
     :param `args`: The CLI arguments provided via the user
     """
-    from merlin.study.status import get_step_statuses  # pylint: disable=C0415
-    print(f"{ANSI_COLORS['YELLOW']}Status for {workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
-
-    # Initialize a list of lists that we'll use to display the status info
-    status_info = [["Step Name", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts", "Step Workspace", "Task Queue", "Worker Name"]]
     # TODO:
     # - Find out how Maestro displays their status table and use that
     # - Figure out what to do with restarted tasks
+    print(f"{ANSI_COLORS['YELLOW']}Status for {workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
 
-    # Read in the statuses for the tasks in this step
-    for sstep in step_tracker["started_steps"]:
-        step_workspace = f"{workspace}/{sstep}"
-        step_statuses = get_step_statuses(step_workspace, tasks_per_step[sstep])
-        for status in step_statuses:
-            status_info.append(status.split(" "))
+    # Subtract one for the entry relating to column titles
+    num_tasks = len(statuses_to_display) - 1
 
-    # Filter by task status if necessary
-    if args.task_status:
-        _filter_by_status(args.task_status, status_info)
-
-    # Get the number of tasks associated with this step
-    num_tasks = len(status_info)
-
-    # Only display a certain amount of tasks
-    if (args.no_prompts and args.max_tasks) or args.max_tasks:
-        print(f"{ANSI_COLORS['YELLOW']}Found {num_tasks - 1} tasks.{ANSI_COLORS['RESET']}")
-        if args.max_tasks > num_tasks:
-            args.max_tasks = num_tasks
-        print(f"Displaying {args.max_tasks} of these tasks...")
-        print(tabulate(status_info[:args.max_tasks+1], headers="firstrow"))
-    # Don't show any prompts, just display everything
-    elif args.no_prompts or (0 < num_tasks < 251):
-        print(f"{ANSI_COLORS['YELLOW']}Found {num_tasks - 1} tasks.{ANSI_COLORS['RESET']}")
-        print(tabulate(status_info, headers="firstrow"))
+    # Only display a certain amount of tasks, no prompts
+    if args.no_prompts or args.max_tasks or (0 < num_tasks < 251):
+        print(f"{ANSI_COLORS['YELLOW']}Displaying {num_tasks} tasks.{ANSI_COLORS['RESET']}")
+        print(tabulate(statuses_to_display, headers="firstrow"))
     # Filter has already been applied, now just paginate the display
     elif args.task_status:
-        print(f"{ANSI_COLORS['YELLOW']}Found {num_tasks - 1} tasks matching your filter.{ANSI_COLORS['RESET']}")
-        paginate_statuses(status_info, num_tasks)
+        paginate_statuses(statuses_to_display, num_tasks)
     # No filters have been applied, ask the user for prompts to help limit the display
     else:
-        _low_lvl_with_prompts(status_info, num_tasks)
+        _low_lvl_with_prompts(statuses_to_display, num_tasks)
 
-    for ustep in step_tracker["unstarted_steps"]:
+    for ustep in unstarted_steps:
         print(f"\n{ustep} has not started yet.")
         print()
 
@@ -503,7 +460,7 @@ def _display_summary(state_info: Dict[str, str], cb_help: bool):
     print()
 
 
-def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, List[str]], workspace: str, cb_help: bool):
+def display_high_lvl_status(tasks_per_step: Dict[str, int], step_tracker: Dict[str, List[str]], workspace: str, cb_help: bool):
     """
     Displays a high level overview of the status of a study. This includes
     progress bars for each step and a summary of the number of initialized,
@@ -531,7 +488,7 @@ def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, Li
             "DRY_RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
             "TOTAL_TASKS": {"total": tasks_per_step[sstep]},
         }
-        
+
         # Read in the statuses for this step
         step_workspace = f"{workspace}/{sstep}"
         step_statuses = get_step_statuses(step_workspace, tasks_per_step[sstep])
@@ -565,24 +522,6 @@ def _display_high_lvl(tasks_per_step: Dict[str, int], step_tracker: Dict[str, Li
         progress_bar(0, 100, prefix=f"{ustep}", suffix="Complete", length=progress_bar_width)
         print(f"\n{ustep} has not started yet.")
         print()
-    
-    print(f"{ANSI_COLORS['YELLOW']}If you'd like to see task-by-task info for a step, use the --steps flag with the 'merlin status' command.{ANSI_COLORS['RESET']}")
-
-
-def display_status(workspace: str, tasks_per_step: Dict[str, int], step_tracker: Dict[str, List[str]], low_lvl: bool, args: "Argparse Namespace"):
-    """
-    Displays the status of a study.
-
-    :param `workspace`: The output directory for a study
-    :param `tasks_per_step`: A dict that says how many tasks each step takes
-    :param `step_tracker`: A dict that says which steps have started and which haven't
-    :param `low_lvl`: A boolean to determine whether to display the low or high level display
-    :param `args`: The CLI arguments provided via the user
-    """
-    if low_lvl:
-        _display_low_lvl(tasks_per_step, step_tracker, workspace, args)
-    else:
-        _display_high_lvl(tasks_per_step, step_tracker, workspace, args.cb_help)
 
 
 # Credit to this stack overflow post: https://stackoverflow.com/a/34325723
