@@ -100,6 +100,8 @@ class MerlinStudy:  # pylint: disable=R0902
 
         self.restart_dir = restart_dir
 
+        base_name = os.path.basename(filepath)
+        base_name = base_name.replace(".yaml", "")
         self.special_vars = {
             "SPECROOT": self.original_spec.specroot,
             "MERLIN_TIMESTAMP": self.timestamp,
@@ -116,15 +118,15 @@ class MerlinStudy:  # pylint: disable=R0902
             "MERLIN_SAMPLE_NAMES": " ".join(self.get_sample_labels(from_spec=self.original_spec)),
             "MERLIN_SPEC_ORIGINAL_TEMPLATE": os.path.join(
                 self.info,
-                self.original_spec.description["name"].replace(" ", "_") + ".orig.yaml",
+                base_name + ".orig.yaml",
             ),
             "MERLIN_SPEC_EXECUTED_RUN": os.path.join(
                 self.info,
-                self.original_spec.description["name"].replace(" ", "_") + ".partial.yaml",
+                base_name + ".partial.yaml",
             ),
             "MERLIN_SPEC_ARCHIVED_COPY": os.path.join(
                 self.info,
-                self.original_spec.description["name"].replace(" ", "_") + ".expanded.yaml",
+                base_name + ".expanded.yaml",
             ),
         }
 
