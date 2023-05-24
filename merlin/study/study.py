@@ -36,6 +36,7 @@ import subprocess
 import time
 from contextlib import suppress
 from copy import deepcopy
+from pathlib import Path
 
 from cached_property import cached_property
 from maestrowf.datastructures.core import Study
@@ -126,7 +127,7 @@ class MerlinStudy:  # pylint: disable=R0902
 
     def _set_special_file_vars(self):
         """Setter for the orig, partial, and expanded file paths of a study."""
-        base_name = os.path.basename(self.filepath)
+        base_name = Path(self.filepath).stem
         base_name = base_name.replace(".yaml", "")
         self.special_vars["MERLIN_SPEC_ORIGINAL_TEMPLATE"] = os.path.join(
             self.info,
@@ -414,17 +415,16 @@ class MerlinStudy:  # pylint: disable=R0902
                 os.path.join(self.info, os.path.basename(self.samples_file)),
             )
 
-        # write expanded spec for provenance
+        # write expanded spec for provenance and set the path (necessary for testing)
         with open(self.special_vars["MERLIN_SPEC_ARCHIVED_COPY"], "w") as f:  # pylint: disable=C0103
             f.write(result.dump())
+        result.path = self.special_vars["MERLIN_SPEC_ARCHIVED_COPY"]
 
         # write original spec for provenance
         self.write_original_spec()
 
         # write partially-expanded spec for provenance
         partial_spec = deepcopy(self.original_spec)
-        result = MerlinSpec.load_spec_from_string(result.dump())
-        result.path = self.special_vars["MERLIN_SPEC_ARCHIVED_COPY"]
         if "variables" in result.environment:
             partial_spec.environment["variables"] = result.environment["variables"]
         if "labels" in result.environment:
