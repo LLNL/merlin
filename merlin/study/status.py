@@ -27,15 +27,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-import csv
 import logging
 import os
 import re
 from collections import deque
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 from merlin import display
+from merlin.common.dumper import Dumper
 from merlin.config.configfile import CONFIG
 from merlin.utils import ws_time_to_td
 
@@ -70,19 +71,41 @@ def query_status(args: "Argparse Namespace", spec_display: bool, file_or_ws: str
     filters = [args.task_queues, args.workers, args.task_status, args.max_tasks, ("all" not in args.steps)]
     low_lvl = any(filters)
 
-    # If we're dumping to csv or showing low level task-by-task info
-    if args.csv or low_lvl:
+    # If we're dumping to an output file or showing low level task-by-task info
+    if args.dump or low_lvl:
         # Get the statuses requested by the user and insert column titles
-        all_statuses = get_all_statuses(step_tracker["started_steps"], tasks_per_step, workspace, args)
-        statuses_with_labels = insert_column_titles(all_statuses)
+        requested_statuses = get_requested_statuses(step_tracker["started_steps"], tasks_per_step, workspace, args)
 
-        if args.csv:
-            dump_status_to_csv(statuses_with_labels, args.csv)
-        else:
-            display.display_low_lvl_status(statuses_with_labels, step_tracker["unstarted_steps"], workspace, args)
+        # Check that there's statuses found
+        if len(requested_statuses) > 0:
+            if args.dump:
+                dump_handler(requested_statuses, args.dump)
+            else:
+                statuses_with_labels = insert_column_titles(requested_statuses)
+                display.display_low_lvl_status(statuses_with_labels, step_tracker["unstarted_steps"], workspace, args)
     else:
         # Display the high level status summary
         display.display_high_lvl_status(tasks_per_step, step_tracker, workspace, args.cb_help)
+
+
+def get_column_labels(statuses: List[List[str]]) -> List[str]:
+    """
+    Build a list of column labels for the status entries.
+    :param `statuses`: A list of lists of statuses. Each status is contained within its own list.
+    :returns: A list of column labels
+    """
+    # Store column titles in a list and add additional column titles if necessary
+    column_labels = ["Step Name", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts", "Step Workspace"]
+    try:
+        # If celery workers were used, the length of each status entry will be 9
+        len_status_entry = len(statuses[0])
+        if len_status_entry == 9:
+            column_labels.append("Task Queue")
+            column_labels.append("Worker Name")
+    except IndexError:
+        pass
+
+    return column_labels
 
 
 def insert_column_titles(statuses: List[List[str]]) -> List[List[str]]:
@@ -93,54 +116,165 @@ def insert_column_titles(statuses: List[List[str]]) -> List[List[str]]:
     :param `statuses`: A list of statuses where each status is contained within its own list
     :returns: The modified list with column titles
     """
-    # Store column titles in a list and add additional column titles if necessary
-    column_titles = ["Step Name", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts", "Step Workspace"]
-    try:
-        # If celery workers were used, the length of each status entry will be 9
-        len_status_entry = len(statuses[0])
-        if len_status_entry == 9:
-            column_titles.append("Task Queue")
-            column_titles.append("Worker Name")
-    except IndexError:
-        pass
+    column_labels = get_column_labels(statuses)
 
     # Insert column titles at head of list in O(1) time
     statuses = deque(statuses)
-    statuses.appendleft(column_titles)
+    statuses.appendleft(column_labels)
     statuses = list(statuses)
 
     return statuses
 
 
-def dump_status_to_csv(statuses_to_write: List[List[str]], csv_file: str):
+def build_csv_status(statuses_to_write: List[List[str]], fmode: str, date: str) -> Tuple[List[List[str]], List[str]]:
     """
-    Write the statuses to a csv file.
+    Build the lists of column labels and statuses to write to the csv file.
 
     :param `statuses_to_write`: A list of statuses to write to the csv file
-    :param `csv_file`: The name of the csv file we're going to write to
-    :side effect: A csv file is created or appended to
+    :param `fmode`: The file write mode (either "a" or "w")
+    :param `date`: A timestamp for us to mark when this status occurred
+    :returns: Two lists as a tuple. The first list is the statuses to write. The second list is the column labels.
     """
-    # Get the correct filemode
-    if os.path.exists(csv_file):
+    # Build the list of column labels
+    labels = []
+    if fmode == "w":
+        labels = ["Time of Status"]
+        labels.extend(get_column_labels(statuses_to_write))
+
+    # Insert the date at the head of each status entry in O(1) time
+    for i, status_entry in enumerate(statuses_to_write):
+        status_entry = deque(status_entry)
+        status_entry.appendleft(date)
+        status_entry = list(status_entry)
+        statuses_to_write[i] = status_entry
+
+    return statuses_to_write, labels
+
+    
+def build_json_status(statuses_to_write: List[List[str]], date: str) -> Dict:
+    """
+    Build the dict of statuses to dump to the json file.
+
+    :param `statuses_to_write`: A list of statuses to write to the json file
+    :param `date`: A timestamp for us to mark when this status occurred
+    :returns: A dictionary that's ready to dump to a json outfile
+    """
+    # Build a dict for the new json entry we'll write
+    json_to_dump = {date: {}}
+    for status in statuses_to_write:
+        # Create an entry for this step if it doesn't exist yet; status[0] is the step name
+        if status[0] not in json_to_dump[date]:
+            json_to_dump[date][status[0]] = {}
+
+            # If the status has 9 entries, then we have a queue and worker to display
+            if len(status) == 9:
+                json_to_dump[date][status[0]]["queue"] = status[7]
+                json_to_dump[date][status[0]]["worker"] = status[8]
+
+        # Create an entry for each workspace (status[6]) in this step
+        json_to_dump[date][status[0]][status[6]] = {
+            "status": status[1],
+            "return_code": status[2],
+            "elapsed_time": status[3],
+            "run_time": status[4],
+            "restarts": status[5]
+        }
+
+    return json_to_dump
+
+
+def build_csv_queue_info(query_return: List[Tuple[str, int, int]], fmode: str, date: str) -> Tuple[List[List[str]], List[str]]:
+    """
+    Build the lists of column labels and queue info to write to the csv file.
+
+    :param `query_return`: The output of query_status
+    :param `fmode`: The file write mode (either "a" or "w")
+    :param `date`: A timestamp for us to mark when this status occurred
+    :returns: Two lists as a tuple. The first list is the queue info to write. The second list is the column labels.
+    """
+    # Build the list of labels if necessary
+    labels = []
+    if fmode == "w":
+        labels.append("# time")
+        for name, jobs, consumers in query_return:
+            labels.append(f"{name}:tasks")
+            labels.append(f"{name}:consumers")
+    
+    # Build the list of data to dump
+    csv_to_dump = [date]
+    for _, jobs, consumers in query_return:
+        csv_to_dump.append(str(jobs))
+        csv_to_dump.append(str(consumers))
+    # The Dumper class needs a list of lists to write rows of data to csv files
+    csv_to_dump = [csv_to_dump]
+
+    return csv_to_dump, labels
+
+    
+def build_json_queue_info(query_return, date: str) -> Dict:
+    """
+    Build the dict of queue info to dump to the json file.
+
+    :param `query_return`: The output of query_status
+    :param `date`: A timestamp for us to mark when this status occurred
+    :returns: A dictionary that's ready to dump to a json outfile
+    """
+    # Get the datetime so we can track different entries and initalize a new json entry
+    json_to_dump = {date: {}}
+
+    # Add info for each queue (name)
+    for name, jobs, consumers in query_return:
+        json_to_dump[date][name] = {"tasks": jobs, "consumers": consumers}
+
+    return json_to_dump
+
+
+def dump_handler(info_to_write: Union[List[List[str]], List[Tuple[str, int, int]]], dump_file: str, queue_dump: bool = False):
+    """
+    Dump the information about a study to a file.
+
+    :param `info_to_write`: If dumping statuses, this will be a list of lists of statuses to dump.
+                            If dumping queue info, this will be a list of tuples representing queue information.
+    :param `dump_file`: The name of the file we're going to write to
+    :param `queue_dump`: If True, we're dumping queue information. Otherwise, we're dumping status information.
+    """
+    # Create a dumper object to help us write to dump_file
+    dumper = Dumper(dump_file)
+
+    # Get the correct file write mode
+    if os.path.exists(dump_file):
         fmode = "a"
     else:
         fmode = "w"
     
-    # If we have statuses to write, create a csv writer object and write to the csv file
-    if len(statuses_to_write) > 1:
-        LOG.info(f"{'Writing' if fmode == 'w' else 'Appending'} {len(statuses_to_write) - 1} statuses to {csv_file}...")
-        with open(csv_file, fmode) as f:
-            csv_writer = csv.writer(f)
-            # If we're writing a new csv file, add the column titles
-            if fmode == "w":
-                csv_writer.writerow(statuses_to_write[0])
-            csv_writer.writerows(statuses_to_write[1:])
-        LOG.info("Writing complete.")
-    else:
-        LOG.error(f"No statuses found to write.")
+    # Get a timestamp for this dump
+    date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    write_type = 'Writing' if fmode == 'w' else 'Appending'
+    LOG.info(f"{write_type} {'queue information' if queue_dump else 'statuses'} to {dump_file}...")
+
+    # Handle different file types
+    if dump_file.endswith(".csv"):
+        # Build the lists of information/labels we'll need
+        if queue_dump:
+            csv_to_dump, labels = build_csv_queue_info(info_to_write, fmode, date)
+        else:
+            csv_to_dump, labels = build_csv_status(info_to_write, fmode, date)
+        # Write to the csv file
+        dumper.write(csv_to_dump, fmode, labels=labels)
+    elif dump_file.endswith(".json"):
+        # Build the dict of info to dump to the json file
+        if queue_dump:
+            json_to_dump = build_json_queue_info(info_to_write, date)
+        else:
+            json_to_dump = build_json_status(info_to_write, date)
+        # Write to the json file
+        dumper.write(json_to_dump, fmode)
+
+    LOG.info(f"{write_type} complete.")
 
 
-def get_all_statuses(started_steps: List[str], tasks_per_step: Dict[str, int], workspace: str, args: "Namespace") -> List[List[str]]:
+def get_requested_statuses(started_steps: List[str], tasks_per_step: Dict[str, int], workspace: str, args: "Namespace") -> List[List[str]]:
     """
     Get all the statuses that the user is looking for. Filters for task queue and workers will have already been applied
     when creating the started_steps list. The filters for task status and max tasks will be applied here.
@@ -153,32 +287,32 @@ def get_all_statuses(started_steps: List[str], tasks_per_step: Dict[str, int], w
     """
     # Read in all statuses from the started steps the user wants to see, and split each status by spaces
     LOG.info(f"Reading task statuses from {workspace}")
-    all_statuses = []
+    requested_statuses = []
     for sstep in started_steps:
         step_workspace = f"{workspace}/{sstep}"
         step_statuses = get_step_statuses(step_workspace, tasks_per_step[sstep])
         for step in step_statuses:
-            all_statuses.append(step.split(" "))
+            requested_statuses.append(step.split(" "))
 
     # Filter the statuses we read in by task status if necessary
     if args.task_status:
         LOG.info(f"Filtering tasks by the following statuses: {args.task_status}")
-        for entry in all_statuses[:]:
+        for entry in requested_statuses[:]:
             if entry[1] not in args.task_status:
-                all_statuses.remove(entry)
-        if len(all_statuses) == 0:
+                requested_statuses.remove(entry)
+        if len(requested_statuses) == 0:
             LOG.error(f"No tasks found matching the filters {args.task_status}.")
 
-    LOG.info(f"Found {len(all_statuses)} tasks matching your filters.")
+    LOG.info(f"Found {len(requested_statuses)} tasks matching your filters.")
 
     # Limit the number of statuses to display if necessary
     if args.max_tasks:
-        if args.max_tasks > len(all_statuses):
-            args.max_tasks = len(all_statuses)
+        if args.max_tasks > len(requested_statuses):
+            args.max_tasks = len(requested_statuses)
         LOG.info(f"Max tasks filter was provided. Limiting the number of statuses to display to {args.max_tasks}.")
-        all_statuses = all_statuses[:args.max_tasks]
+        requested_statuses = requested_statuses[:args.max_tasks]
 
-    return all_statuses
+    return requested_statuses
 
 
 def get_step_statuses(step_workspace: str, total_tasks: int, args: "Namespace" = None) -> List[str]:

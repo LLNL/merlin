@@ -256,6 +256,10 @@ def query_status(args):
     """
     print(banner_small)
 
+    # Make sure dump is valid if provided
+    if args.dump and (not args.dump.endswith(".csv") and not args.dump.endswith(".json")):
+        raise ValueError("The --dump option takes a filename that must end with .csv or .json")
+
     # Establish whether the argument provided by the user was a spec file or a study directory
     spec_display = False
     try:
@@ -280,8 +284,8 @@ def query_status(args):
         ret = router.query_status(args.task_server, spec, args.steps)
         for name, jobs, consumers in ret:
             print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
-        if args.csv is not None:
-            router.dump_status(ret, args.csv)
+        if args.dump is not None:
+            status.dump_handler(ret, args.dump, queue_dump=True)
     # Status command after v1.11.0
     else:
         status.query_status(args, spec_display, file_or_ws)
@@ -980,7 +984,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         "--max-tasks",
         action="store",
         type=int,
-        help="A filter to put a cap on how many tasks can be displayed. Can only be used with the --steps flag."
+        help="A filter to put a cap on how many tasks can be displayed."
     )
     status_cmd.add_argument(
         "--task-status",
@@ -988,7 +992,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         nargs="+",
         type=str,
         help="Used to filter which tasks to display by their status. Options: INITIALIZED, RUNNING, \
-            FINISHED, FAILED, RESTARTED, CANCELLED, or UNKNOWN. Can only be used with the --steps flag."
+            FINISHED, FAILED, RESTARTED, CANCELLED, or UNKNOWN."
     )
     # TODO apply this to low level somehow?
     status_cmd.add_argument(
@@ -996,7 +1000,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         action="store_true",
         help="Use different symbols to represent different statuses."
     )
-    status_cmd.add_argument("--csv", type=str, help="csv file to dump status report to", default=None)
+    status_cmd.add_argument("--dump", type=str, help="Dump the status to a file. Provide the filename (must be .csv or .json).", default=None)
 
     # merlin info
     info: ArgumentParser = subparsers.add_parser(

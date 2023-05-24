@@ -144,29 +144,6 @@ def query_status(task_server, spec, steps, verbose=True):
         return []
 
 
-def dump_status(query_return, csv_file):
-    """
-    Dump the results of a query_status to a csv file.
-
-    :param `query_return`: The output of query_status
-    :param `csv_file`: The csv file to append
-    """
-    if os.path.exists(csv_file):
-        fmode = "a"
-    else:
-        fmode = "w"
-    with open(csv_file, mode=fmode) as f:  # pylint: disable=W1514,C0103
-        if f.mode == "w":  # add the header
-            f.write("# time")
-            for name, job, consumer in query_return:
-                f.write(f",{name}:tasks,{name}:consumers")
-            f.write("\n")
-        f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        for name, job, consumer in query_return:
-            f.write(f",{job},{consumer}")
-        f.write("\n")
-
-
 def query_workers(task_server, spec_worker_names, queues, workers_regex):
     """
     Gets info from workers.
