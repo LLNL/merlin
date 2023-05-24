@@ -452,20 +452,51 @@ Non-View Related Options
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are 4 additional options to be used with the ``merlin status`` command that won't directly trigger the summary or task-by-task views:
-``queue-info``, ``--vars``, ``--csv``, and ``--task_server``.
+``queue-info``, ``--vars``, ``--dump``, and ``--task_server``.
 
 The ``--queue-info`` option displays the status of the celery queues for your study. It will display the queue name, the number of tasks
 currently in the queue, and the number of workers assigned to the queue. This is the same functionality as the ``merlin status`` command
 prior to v1.11.0.
-
-.. BRIAN MAKE THE ABOVE VERSION ACCURATE WHEN YOU KNOW THE RIGHT VERSION TO PUT THERE
 
 The ``--vars`` option will specify desired Merlin variable values to override
 those found in the specification. The list is space-delimited and should be given after
 the input yaml file.
 ``Example: --vars OUTPUT_PATH=./studies``
 
-The ``--csv`` option takes in a filename, to dump task-by-task status reports to.
+The ``--dump`` option takes in a filename to dump task-by-task status reports to. Currently, the only supported file types to dump status
+to are csv and json. Merlin will recognize the file type if you put it as the file extension (i.e. providing ``--dump status.csv`` will result
+in a csv file being created). If you provide a file that already exists, Merlin will append the status to that file.
+
+For csv files, the first entry for each row will be a timestamp of when the dump took place. This allows you to append statuses to the same file
+and check them periodically without having to create new files each time.
+
+For json files, the format for a status dump is as follows:
+
+.. image:: ../images/status-json-format.png
+
+The timestamp here, like csv, represents when the dump took place which allows you to dump multiple status calls to the same file. The ``step_name``
+and ``workspace`` keys will vary depending on your study.
+
+Example usage:
+
+.. code:: bash
+
+    merlin status hello_samples_20230503-124629/ --dump status.json
+
+The ``--dump`` option can be used with the ``--queue-info`` option, as well. This will write information about the queues for a study to an output
+file rather than task-by-task status reports.
+
+For json files, the format for a queue info dump is as follows:
+
+.. image:: ../images/queue-info-json-format.png
+
+The ``queue_name`` key will vary depending on the queues used for your study.
+
+Example usage:
+
+.. code:: bash
+
+    merlin status hello_samples_20230503-124629/ --dump status.json --queue-info
 
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
 
