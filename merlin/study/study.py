@@ -36,6 +36,7 @@ import subprocess
 import time
 from contextlib import suppress
 from copy import deepcopy
+from pathlib import Path
 
 from cached_property import cached_property
 from maestrowf.datastructures.core import Study
@@ -83,6 +84,7 @@ class MerlinStudy:  # pylint: disable=R0902
         pgen_file=None,
         pargs=None,
     ):
+        self.filepath = filepath
         self.original_spec = MerlinSpec.load_specification(filepath)
         self.override_vars = override_vars
         error_override_vars(self.override_vars, self.original_spec.path)
@@ -114,19 +116,8 @@ class MerlinStudy:  # pylint: disable=R0902
             # below will be substituted for sample values on execution
             "MERLIN_SAMPLE_VECTOR": " ".join([f"$({k})" for k in self.get_sample_labels(from_spec=self.original_spec)]),
             "MERLIN_SAMPLE_NAMES": " ".join(self.get_sample_labels(from_spec=self.original_spec)),
-            "MERLIN_SPEC_ORIGINAL_TEMPLATE": os.path.join(
-                self.info,
-                self.original_spec.description["name"].replace(" ", "_") + ".orig.yaml",
-            ),
-            "MERLIN_SPEC_EXECUTED_RUN": os.path.join(
-                self.info,
-                self.original_spec.description["name"].replace(" ", "_") + ".partial.yaml",
-            ),
-            "MERLIN_SPEC_ARCHIVED_COPY": os.path.join(
-                self.info,
-                self.original_spec.description["name"].replace(" ", "_") + ".expanded.yaml",
-            ),
         }
+        self._set_special_file_vars()
 
         self.pgen_file = pgen_file
         self.pargs = pargs
@@ -134,12 +125,27 @@ class MerlinStudy:  # pylint: disable=R0902
         self.dag = None
         self.load_dag()
 
-    def write_original_spec(self, filename):
+    def _set_special_file_vars(self):
+        """Setter for the orig, partial, and expanded file paths of a study."""
+        base_name = Path(self.filepath).stem
+        self.special_vars["MERLIN_SPEC_ORIGINAL_TEMPLATE"] = os.path.join(
+            self.info,
+            base_name + ".orig.yaml",
+        )
+        self.special_vars["MERLIN_SPEC_EXECUTED_RUN"] = os.path.join(
+            self.info,
+            base_name + ".partial.yaml",
+        )
+        self.special_vars["MERLIN_SPEC_ARCHIVED_COPY"] = os.path.join(
+            self.info,
+            base_name + ".expanded.yaml",
+        )
+
+    def write_original_spec(self):
         """
-        Copy the original spec into merlin_info/ as '<name>.orig.yaml'.
+        Copy the original spec into merlin_info/ as '<base_file_name>.orig.yaml'.
         """
-        spec_name = os.path.join(self.info, filename + ".orig.yaml")
-        shutil.copyfile(self.original_spec.path, spec_name)
+        shutil.copyfile(self.original_spec.path, self.special_vars["MERLIN_SPEC_ORIGINAL_TEMPLATE"])
 
     def label_clash_error(self):
         """
@@ -368,10 +374,6 @@ class MerlinStudy:  # pylint: disable=R0902
             return self.get_expanded_spec()
 
         result = self.get_expanded_spec()
-        expanded_name = result.description["name"].replace(" ", "_") + ".expanded.yaml"
-
-        # Set expanded filepath
-        expanded_filepath = os.path.join(self.info, expanded_name)
 
         # expand provenance spec filename
         if contains_token(self.original_spec.name) or contains_shell_ref(self.original_spec.name):
@@ -394,8 +396,8 @@ class MerlinStudy:  # pylint: disable=R0902
             self.workspace = expanded_workspace
             self.info = os.path.join(self.workspace, "merlin_info")
             self.special_vars["MERLIN_INFO"] = self.info
+            self._set_special_file_vars()
 
-            expanded_filepath = os.path.join(self.info, expanded_name)
             new_spec_text = expand_by_line(result.dump(), MerlinStudy.get_user_vars(result))
             result = MerlinSpec.load_spec_from_string(new_spec_text)
             result = expand_env_vars(result)
@@ -412,15 +414,13 @@ class MerlinStudy:  # pylint: disable=R0902
                 os.path.join(self.info, os.path.basename(self.samples_file)),
             )
 
-        # write expanded spec for provenance
-        with open(expanded_filepath, "w") as f:  # pylint: disable=C0103
+        # write expanded spec for provenance and set the path (necessary for testing)
+        with open(self.special_vars["MERLIN_SPEC_ARCHIVED_COPY"], "w") as f:  # pylint: disable=C0103
             f.write(result.dump())
+        result.path = self.special_vars["MERLIN_SPEC_ARCHIVED_COPY"]
 
         # write original spec for provenance
-        result = MerlinSpec.load_spec_from_string(result.dump())
-        result.path = expanded_filepath
-        name = result.description["name"].replace(" ", "_")
-        self.write_original_spec(name)
+        self.write_original_spec()
 
         # write partially-expanded spec for provenance
         partial_spec = deepcopy(self.original_spec)
@@ -428,8 +428,7 @@ class MerlinStudy:  # pylint: disable=R0902
             partial_spec.environment["variables"] = result.environment["variables"]
         if "labels" in result.environment:
             partial_spec.environment["labels"] = result.environment["labels"]
-        partial_spec_path = os.path.join(self.info, name + ".partial.yaml")
-        with open(partial_spec_path, "w") as f:  # pylint: disable=C0103
+        with open(self.special_vars["MERLIN_SPEC_EXECUTED_RUN"], "w") as f:  # pylint: disable=C0103
             f.write(partial_spec.dump())
 
         LOG.info(f"Study workspace is '{self.workspace}'.")

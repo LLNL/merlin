@@ -41,6 +41,15 @@ study:
         nodes: 1
         task_queue: hello_queue
 
+    - name: test_special_vars
+      description: test the special vars
+      run:
+        cmd: |
+            echo $(MERLIN_SPEC_ORIGINAL_TEMPLATE)
+            echo $(MERLIN_SPEC_EXECUTED_RUN)
+            echo $(MERLIN_SPEC_ARCHIVED_COPY)
+        task_queue: special_var_queue
+
 global.parameters:
     X2:
         values : [0.5]
@@ -234,11 +243,16 @@ class TestMerlinStudy(unittest.TestCase):
 
     @staticmethod
     def file_contains_string(f, string):
-        return string in open(f, "r").read()
+        result = False
+        with open(f, "r") as infile:
+            if string in infile.read():
+                result = True
+        return result
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
-        self.merlin_spec_filepath = os.path.join(self.tmpdir, "basic_ensemble.yaml")
+        self.base_name = "basic_ensemble"
+        self.merlin_spec_filepath = os.path.join(self.tmpdir, f"{self.base_name}.yaml")
 
         with open(self.merlin_spec_filepath, "w+") as _file:
             _file.write(MERLIN_SPEC)
@@ -262,6 +276,34 @@ class TestMerlinStudy(unittest.TestCase):
         assert not TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "$(OUTPUT_PATH)")
         assert TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "$PATH")
         assert not TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "PATH_VAR: $PATH")
+
+        # Special vars are in the second step of MERLIN_SPEC so grab that step here
+        original_special_var_step = self.study.original_spec.study[1]["run"]["cmd"]
+        expanded_special_var_step = self.study.expanded_spec.study[1]["run"]["cmd"]
+
+        # Make sure the special filepath variables aren't expanded in the original spec
+        assert "$(MERLIN_SPEC_ORIGINAL_TEMPLATE)" in original_special_var_step
+        assert "$(MERLIN_SPEC_EXECUTED_RUN)" in original_special_var_step
+        assert "$(MERLIN_SPEC_ARCHIVED_COPY)" in original_special_var_step
+
+        # Make sure the special filepath variables aren't left in their variable form in the expanded spec
+        assert "$(MERLIN_SPEC_ORIGINAL_TEMPLATE)" not in expanded_special_var_step
+        assert "$(MERLIN_SPEC_EXECUTED_RUN)" not in expanded_special_var_step
+        assert "$(MERLIN_SPEC_ARCHIVED_COPY)" not in expanded_special_var_step
+
+        # Make sure the special filepath variables we're expanded appropriately in the expanded spec
+        assert (
+            f"{self.base_name}.orig.yaml" in expanded_special_var_step
+            and "unit_test1.orig.yaml" not in expanded_special_var_step
+        )
+        assert (
+            f"{self.base_name}.partial.yaml" in expanded_special_var_step
+            and "unit_test1.partial.yaml" not in expanded_special_var_step
+        )
+        assert (
+            f"{self.base_name}.expanded.yaml" in expanded_special_var_step
+            and "unit_test1.expanded.yaml" not in expanded_special_var_step
+        )
 
     def test_column_label_conflict(self):
         """
@@ -291,3 +333,7 @@ class TestMerlinStudy(unittest.TestCase):
             assert isinstance(study_no_env, MerlinStudy), bad_type_err
         except Exception as e:
             assert False, f"Encountered unexpected exception, {e}, for viable MerlinSpec without optional 'env' section."
+
+
+if __name__ == "__main__":
+    unittest.main()
