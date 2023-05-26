@@ -30,7 +30,7 @@ jobs:
           
       - name: echo output
         run: |
-          echo ${{join(steps.modify-changelog.outputs.*, ', ')}}
+          echo join(steps.modify-changelog.outputs.*, ', ')
           git status
 
 #       # This step is required for committing the changes to your branch. 
