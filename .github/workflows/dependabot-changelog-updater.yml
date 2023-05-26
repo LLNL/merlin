@@ -25,20 +25,19 @@ jobs:
         id: modify-changelog
         uses: dangoslen/dependabot-changelog-helper@v3
         with:
-          version: ${{ needs.setup.outputs.version }}
+          version: 'unreleased'
           activationLabel: 'dependabot'
           changelogPath: './CHANGELOG.md'
           
       - name: echo output
         run: |
           echo ${{ steps.modify-changelog.outputs }}
-          echo ${{ github.actor }}
 
       # This step is required for committing the changes to your branch. 
       # See https://github.com/stefanzweifel/git-auto-commit-action#commits-of-this-action-do-not-trigger-new-workflow-runs 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "Updated Changelog"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #           repository: ${{ github.head_ref }}
