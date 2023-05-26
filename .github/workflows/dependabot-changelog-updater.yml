@@ -30,10 +30,7 @@ jobs:
           
       - name: echo output
         run: |
-          for ELEMENT in ${{ steps.modify-changelog.outputs }}
-          do
-          echo $ELEMENT
-          done
+          echo ${{ steps.modify-changelog.outputs.errorMessage }}
           git status
 
       # This step is required for committing the changes to your branch. 
