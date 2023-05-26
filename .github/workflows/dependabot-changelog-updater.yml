@@ -27,11 +27,12 @@ jobs:
         with:
           version: 'unreleased'
           activationLabel: 'dependabot'
-          changelogPath: './CHANGELOG.md'
+          changelogPath: './not-a-path/CHANGELOG.md'
           
       - name: echo output
         run: |
           echo ${{ steps.modify-changelog.outputs }}
+          git status
 
       # This step is required for committing the changes to your branch. 
       # See https://github.com/stefanzweifel/git-auto-commit-action#commits-of-this-action-do-not-trigger-new-workflow-runs 
@@ -40,4 +41,4 @@ jobs:
           commit_message: "Updated Changelog"
 #         env:
 #           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#           repository: ${{ github.head_ref }}
+          repository: ${{ github.head_ref }}
