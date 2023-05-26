@@ -21,8 +21,7 @@ jobs:
           # See https://github.com/stefanzweifel/git-auto-commit-action#commits-of-this-action-do-not-trigger-new-workflow-runs
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: modify changelog
-        id: modify-changelog
+      - id: modify-changelog
         uses: dangoslen/dependabot-changelog-helper@v3
         with:
           version: 'unreleased'
@@ -31,7 +30,7 @@ jobs:
           
       - name: echo output
         run: |
-          for ELEMENT in ${{ steps.modify-changelog.outputs.* }}
+          for ELEMENT in ${{ steps.modify-changelog.outputs }}
           do
           echo $ELEMENT
           done
