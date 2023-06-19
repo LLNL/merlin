@@ -692,7 +692,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             tasks_per_step[step.name] = 1
 
             # If this step uses parameters, we'll at least have a num_params number of tasks to complete
-            if needs_merlin_expansion(cmd, restart_cmd, parameter_labels):
+            if needs_merlin_expansion(cmd, restart_cmd, parameter_labels, include_sample_keywords=False):
                 tasks_per_step[step.name] = num_params
 
             # If merlin expansion is needed with column labels, this step uses samples
@@ -726,6 +726,73 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             if self._step_contains_param(step, params):
                 steps_with_params.append(step.name)
         return steps_with_params
+
+    def get_step_param_map(self):
+        """
+        Create a mapping of parameters used for each step. Each step will have a cmd
+        to search for parameters in and could also have a restart cmd to check, too.
+        This creates a mapping of the form:
+        step_name_with_parameters: {
+            "cmd": {
+                TOKEN_1: param_1_value_1,
+                TOKEN_2: param_2_value_1,
+            },
+            "restart_cmd": {
+                TOKEN_1: param_1_value_1,
+                TOKEN_3: param_3_value_1,
+            }
+        }
+        :returns: A dict mapping between steps and params of the form shown above
+        """
+        # Get the steps and the parameters in the study
+        study_steps = self.get_study_steps()
+        param_gen = self.get_parameters()
+
+        # Given a parameters block like so:
+        # global.parameters:
+        #     TOKEN:
+        #         values: [param_val_1, param_val_2]
+        #         label: label.%%
+        # Expanded labels will map tokens to their expanded labels (e.g. {'TOKEN': ['label.param_val_1', 'label.param_val_2']})
+        # Label param map will map labels to parameter values (e.g. {'label.param_val_1': {'TOKEN': 'param_val_1'}, 'label.param_val_2': {'TOKEN': 'param_val_2'}})
+        expanded_labels = {}
+        label_param_map = {}
+        for token, orig_label in param_gen.labels.items():
+            for param in param_gen.parameters[token]:
+                expanded_label = orig_label.replace(param_gen.label_token, param)
+                if token in expanded_labels:
+                    expanded_labels[token].append(expanded_label)
+                else:
+                    expanded_labels[token] = [expanded_label]
+                label_param_map[expanded_label] = {token: param}
+
+        step_param_map = {}
+        for step in study_steps:
+            # Get the cmd and restart cmd for the step
+            cmd = step.__dict__["run"]["cmd"]
+            restart_cmd = step.__dict__["run"]["restart"]
+            
+            # Get the parameters used in this step and the labels used with those parameters
+            all_params_in_step = param_gen.get_used_parameters(step)
+            labels_used = [expanded_labels[param] for param in sorted(all_params_in_step)]
+
+            # Zip all labels used for the step together (since this is how steps are named in Maestro)
+            for labels in zip(*labels_used):
+                # Initialize the entry in the step param map
+                param_str = ".".join(labels)
+                step_name_with_params = f"{step.name}_{param_str}"
+                step_param_map[step_name_with_params] = {"cmd": {}, "restart_cmd": {}}
+
+                # Populate the entry in the step param map based on which token is found in which command (cmd or restart)
+                for label in labels:
+                    for token, param_value in label_param_map[label].items():
+                        full_token = f"{param_gen.token}({token})"
+                        if full_token in cmd:
+                            step_param_map[step_name_with_params]["cmd"][token] = param_value
+                        if full_token in restart_cmd:
+                            step_param_map[step_name_with_params]["restart_cmd"][token] = param_value
+
+        return step_param_map
 
     @property
     def parameter_length(self):

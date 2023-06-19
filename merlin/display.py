@@ -49,6 +49,7 @@ from merlin.ascii_art import banner_small
 from merlin.config import broker, results_backend
 from merlin.config.configfile import default_config_info, CONFIG
 from merlin.study.celeryadapter import get_queues, query_celery_queues
+from merlin.study.status_renderers import status_renderer_factory
 from merlin.celery import app
 
 import logging
@@ -266,32 +267,7 @@ def print_queue_info(queues):
     print(tabulate(found_queues, headers="firstrow"), "\n")
 
 
-def paginate_statuses(status_info: List[List[str]], num_tasks: int):
-    """
-    Use pagination to display statuses. Here we display 50 tasks at a time and
-    ask the user if they want to see the next 50 or not.
-
-    :param `status_info`: A list of task statuses to display here
-    :param `num_tasks`: The total number of task statuses in status_info (len(status_info))
-    """
-    # Display 50 tasks at a time so we don't overload the terminal
-    for i in range(1, num_tasks, 50):
-        if i == 1:
-            print(tabulate(status_info[0:i+50], headers="firstrow"))
-        else:
-            print(tabulate(status_info[i:i+50]))
-        
-        # Only need to ask the user this if there will be more tasks to display on the next iteration
-        if i+50 < num_tasks:
-            # See if the user wants to continue displaying tasks
-            user_continue = input("Display the next 50 tasks? (y/n) ").lower()
-            while user_continue != "y" and user_continue != "n":
-                user_continue = input("Invalid input. Must be either 'y' for yes or 'n' for no.").lower()
-            if user_continue == 'n':
-                break
-
-
-def get_user_filter() -> Union[int, List[str]]:
+def get_user_filter(disable_theme) -> Union[int, List[str]]:
     """
     Get a filter on the statuses to display from the user. Possible options
     for filtering:
@@ -299,18 +275,32 @@ def get_user_filter() -> Union[int, List[str]]:
         - A list of statuses (see valid_status_filters below) -> equivalent to the --task-status flag
         - An exit keyword to leave the merlin status command without displaying anything
 
+    :param `disable_theme`:If True, the theme for the status display is disabled. Otherwise the theme is enabled.
     :returns: An int or a list of strings to filter by
     """
     # Print the filtering options for the user
-    print("\nFilter Options:")
     valid_status_filters = ('INITIALIZED', 'RUNNING', 'FINISHED', 'FAILED', 'RESTART', 'CANCELLED', 'UNKNOWN')
     valid_exit_filters = ('E', 'EXIT')
-    filter_options = {
-        "Display a specific number of tasks": "Enter an integer greater than 0",
-        "Filter by status": f"Enter a comma separated list of the following statuses you'd like to see: {valid_status_filters}",
-        "Exit without filtering": f"Enter one of the following: {valid_exit_filters}"
+    filter_info = {
+        "Filter Type": [
+            "Display a specific number of tasks",
+            "Filter by status",
+            "Exit without filtering"
+        ], 
+        "Description": [
+            "Enter an integer greater than 0",
+            f"Enter a comma separated list of the following statuses you'd like to see: {valid_status_filters}",
+            f"Enter one of the following: {valid_exit_filters}"
+        ],
+        "Example": [
+            "30",
+            "FAILED, CANCELLED",
+            "EXIT"
+        ]
     }
-    print(tabulate([(k, v) for k, v in filter_options.items()]))
+    filter_option_renderer = status_renderer_factory.get_renderer("table", disable_theme=disable_theme, disable_pager=True)
+    filter_option_renderer.layout(status_data=filter_info)
+    filter_option_renderer.render()
 
     # Obtain and validate the filter provided by the user
     invalid_filter = True
@@ -328,8 +318,9 @@ def get_user_filter() -> Union[int, List[str]]:
             # Split user filters by commas
             user_filter = user_filter.split(",")
             # Ensure all filters are valid
-            for entry in user_filter:
+            for i, entry in enumerate(user_filter):
                 entry = entry.upper()
+                user_filter[i] = entry
                 if entry not in valid_status_filters and entry not in valid_exit_filters:
                     invalid_filter = True
                     print(f"Invalid input: {entry}. Input must be one of {valid_status_filters} or one of {valid_exit_filters}")
@@ -340,54 +331,33 @@ def get_user_filter() -> Union[int, List[str]]:
     return user_filter
 
 
-def _low_lvl_with_prompts(status_info: List[List[str]], num_tasks: int):
+def filter_via_prompts(status_info: Dict[str, List], disable_theme: bool):
     """
     Interact with the user to manage how many/which tasks are displayed. This helps to
     prevent us from overloading the terminal by displaying a bazillion tasks at once.
 
-    :param `status_info`: A list of task statuses read from MERLIN_STATUS files
-    :param `num_tasks`: The total number of task statuses in status_info (len(status_info))
+    :param `status_info`: A dict of task statuses read from MERLIN_STATUS files
+    :param `disable_theme`: If True, the theme for the status display is disabled. Otherwise the theme is enabled.
     """
-    print(f"{ANSI_COLORS['YELLOW']}{num_tasks} tasks found.{ANSI_COLORS['RESET']}")
-    # See what the user would like to do in this case
-    user_input = input("Would you like to display all tasks, filter the tasks, or cancel this operation? (a/f/c): ").lower()
-    while user_input != 'a' and user_input != 'f' and user_input != 'c':
-        print("Invalid input. ", end="")
-        user_input = input("Please enter 'a' for all, 'f' for filter, or 'c' for cancel: ")
-    
-    # Display all tasks
-    if user_input == 'a':
-        paginate_statuses(status_info, num_tasks)
-    # Filter tasks
-    elif user_input == 'f':
-        # Get the filter from the user
-        user_filter = get_user_filter()
-        # Display a certain amount of tasks provided by the user
-        if isinstance(user_filter, int):
-            if user_filter > num_tasks:
-                user_filter = num_tasks
-            print(tabulate(status_info[:user_filter+1], headers="firstrow"))
-        # Apply the non-numerical filter given by the user
-        else:
-            # Exit without displaying anything
-            if "E" in user_filter or "EXIT" in user_filter:
-                pass
-            # Filter by status and display the results using pagination
-            else:
-                _filter_by_status(user_filter, status_info)
-                num_tasks = len(status_info)
-                print(f"{ANSI_COLORS['YELLOW']}Found {num_tasks - 1} tasks matching your filter.{ANSI_COLORS['RESET']}")
-                paginate_statuses(status_info, num_tasks)
-
-    # Cancel the display
-    elif user_input == 'c':
-        pass
-    # We should never be here
+    from merlin.study.status import _filter_by_status, _filter_by_max_tasks  # pylint: disable=C0415
+    # Get the filter from the user
+    user_filter = get_user_filter(disable_theme)
+    # Display a certain amount of tasks provided by the user
+    if isinstance(user_filter, int):
+        _filter_by_max_tasks(status_info, user_filter)
+    # Apply the non-numerical filter given by the user
     else:
-        raise ValueError("Something went wrong while getting user input.")
+        # Exit without displaying anything
+        if "E" in user_filter or "EXIT" in user_filter:
+            pass
+        # Filter by status
+        else:
+            _filter_by_status(status_info, user_filter)
+            num_tasks = len(status_info["Step Name"])
+            LOG.info(f"Found {num_tasks} tasks matching your filter.")
 
 
-def display_low_lvl_status(statuses_to_display: List[List[str]], unstarted_steps: List[str], workspace: str, args: "Namespace"):
+def display_low_lvl_status(statuses_to_display: Dict[str, List], unstarted_steps: List[str], workspace: str, args: "Namespace"):
     """
     Displays a low level overview of the status of a study. This is a task-by-task
     status display where each task will show:
@@ -395,29 +365,42 @@ def display_low_lvl_status(statuses_to_display: List[List[str]], unstarted_steps
     in that order. If too many tasks are found, prompts will appear for the user to decide
     what to do that way we don't overload the terminal (unless the no-prompts or max-tasks flags are provided).
 
-    :param `statuses_to_display`: A list of statuses to display. Each status is contained in it's own list.
+    :param `statuses_to_display`: A dict of statuses to display. Keys are column headers, values are columns.
     :param `unstarted_steps`: A list of step names that have yet to start executing
     :param `workspace`: the filepath of the study output
     :param `args`: The CLI arguments provided via the user
     """
-    # TODO:
-    # - Find out how Maestro displays their status table and use that
-    # - Figure out what to do with restarted tasks
-    print(f"{ANSI_COLORS['YELLOW']}Status for {workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
+    try:
+        status_renderer = status_renderer_factory.get_renderer(args.layout, args.disable_theme, args.disable_pager)
+    except ValueError:
+        LOG.error(f"Layout '{args.layout}' not implemented.")
+        raise
 
-    # Subtract one for the entry relating to column titles
-    num_tasks = len(statuses_to_display) - 1
+    # Get the number of tasks we're about to display
+    num_tasks = len(statuses_to_display["Step Name"])
 
-    # Only display a certain amount of tasks, no prompts
-    if args.no_prompts or args.max_tasks or (0 < num_tasks < 251):
-        print(f"{ANSI_COLORS['YELLOW']}Displaying {num_tasks} tasks.{ANSI_COLORS['RESET']}")
-        print(tabulate(statuses_to_display, headers="firstrow"))
-    # Filter has already been applied, now just paginate the display
-    elif args.task_status:
-        paginate_statuses(statuses_to_display, num_tasks)
-    # No filters have been applied, ask the user for prompts to help limit the display
-    else:
-        _low_lvl_with_prompts(statuses_to_display, num_tasks)
+    # If the pager is disabled then we need to be careful not to overload the terminal with a bazillion tasks
+    if args.disable_pager and not args.no_prompts:
+        # Setting the limit at 250 tasks before asking for additional filters
+        while num_tasks > 250:
+            # See if the user wants to apply additional filters
+            apply_additional_filters = input(f"About to display {num_tasks} tasks without a pager. Would you like to apply additional filters? (y/n) ").lower()
+            while apply_additional_filters not in ("y", "n"):
+                apply_additional_filters = input("Invalid input. You must enter either 'y' for yes or 'n' for no: ").lower()
+
+            # Apply filters if necessary or break the loop
+            if apply_additional_filters == "y":
+                filter_via_prompts(statuses_to_display, args.disable_theme)
+            else:
+                print(f"Not filtering further. Displaying {num_tasks} tasks...")
+                break
+
+            num_tasks = len(statuses_to_display["Step Name"])
+
+    # Display the statuses
+    if num_tasks > 0:
+        status_renderer.layout(status_data=statuses_to_display, study_title=workspace)
+        status_renderer.render()
 
     for ustep in unstarted_steps:
         print(f"\n{ustep} has not started yet.")
@@ -442,7 +425,7 @@ def _display_summary(state_info: Dict[str, str], cb_help: bool):
         # Color the label
         if "color" in val:
             label = f"{val['color']}{label}{ANSI_COLORS['RESET']}"
-        
+
         # Grab the value associated with the label
         value = None
         if "count" in val and val["count"] > 0:
@@ -471,13 +454,14 @@ def display_high_lvl_status(tasks_per_step: Dict[str, int], step_tracker: Dict[s
     :param `workspace`:     the filepath of the study output
     :param `cb_help`: True if colorblind assistance (using symbols) is needed. False otherwise.
     """
-    from merlin.study.status import get_step_statuses  # pylint: disable=C0415
+    from merlin.study.status import get_step_statuses, status_list_to_dict  # pylint: disable=C0415
     print(f"{ANSI_COLORS['YELLOW']}Status for {workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
     print()
     terminal_size = shutil.get_terminal_size()
     progress_bar_width = terminal_size.columns//4
 
     for sstep in step_tracker["started_steps"]:
+        # This dict will keep track of the number of tasks at each status
         state_info: Dict[State, str] = {
             "FINISHED": {"count": 0, "color": ANSI_COLORS["GREEN"], "fill": "█"},
             "CANCELLED": {"count": 0, "color": ANSI_COLORS["YELLOW"], "fill": "/"},
@@ -491,31 +475,29 @@ def display_high_lvl_status(tasks_per_step: Dict[str, int], step_tracker: Dict[s
 
         # Read in the statuses for this step
         step_workspace = f"{workspace}/{sstep}"
-        step_statuses = get_step_statuses(step_workspace, tasks_per_step[sstep])
+        status_dict = get_step_statuses(step_workspace, tasks_per_step[sstep])
 
         num_completed_tasks = 0
-        for status in step_statuses:
-            # Parse the task_info into a list
-            task_info = status.split(" ")
+        num_rows = len(status_dict["Step Name"])
+        for i in range(num_rows):
             # Increment the count for whatever the task status is
-            state_info[task_info[1]]["count"] += 1
+            state_info[status_dict["Status"][i]]["count"] += 1
 
             # Increment the number of completed tasks (not running or initialized)
-            if task_info[1] not in ("INITIALIZED", "RUNNING"):
+            if status_dict["Status"][i] not in ("INITIALIZED", "RUNNING"):
                 num_completed_tasks += 1
+            
+            # Add entries for task queue and worker name if applicable
+            if "Task Queue" in status_dict and "TASK_QUEUE" not in state_info:
+                state_info["TASK_QUEUE"] = {"name": status_dict["Task Queue"][i]}
+            if "Worker Name" in status_dict and "WORKER_NAME" not in state_info:
+                state_info["WORKER_NAME"] = {"name": status_dict["Worker Name"][i]}
 
-            # If the length is 9 rather than 7 then we have a task queue and worker to show
-            if len(task_info) == 9:
-                # Save the task queue and worker name if they don't exist yet
-                if "TASK_QUEUE" not in state_info:
-                    state_info["TASK_QUEUE"] = {"name": task_info[7]}
-                if "WORKER_NAME" not in state_info:
-                    state_info["WORKER_NAME"] = {"name": task_info[8]}
-
-        # Display the progress bar
-        progress_bar(num_completed_tasks, tasks_per_step[sstep], state_info=state_info, prefix=f"{sstep}", suffix="Complete", length=progress_bar_width, cb_help=cb_help)
-
+        # Display the progress bar and summary for the step
+        print(sstep + "\n")
+        progress_bar(num_completed_tasks, tasks_per_step[sstep], state_info=state_info, suffix="Complete", length=progress_bar_width, cb_help=cb_help)
         _display_summary(state_info, cb_help)
+        print("-"*(terminal_size.columns//2))
 
     # For each unstarted step, print an empty progress bar
     for ustep in step_tracker["unstarted_steps"]:
@@ -564,9 +546,7 @@ def progress_bar(current, total, state_info=None, prefix="", suffix="", decimals
                 if cb_help:
                     fill = val['fill']
                 bar = fill * partial_filled_length
-                # bar = fill * partial_filled_length
                 print(f"{val['color']}{bar}", end="")
-
         
         # The remaining bar represents the number of tasks still incomplete
         remaining_bar = '-' * (length - total_filled_length)

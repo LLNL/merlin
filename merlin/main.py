@@ -56,6 +56,7 @@ from merlin.server.server_commands import config_server, init_server, restart_se
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
 from merlin.study import status
+from merlin.study.status_renderers import status_renderer_factory
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS
 
@@ -972,7 +973,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         help="List server stats (name, number of tasks to do, \
             number of connected workers) for a workflow spec. \
             This is the same behavior as the status command before \
-            Merlin version 1.9.2 was released.",
+            Merlin version 1.11.0 was released.",
     )
     status_cmd.add_argument(
         "--no-prompts",
@@ -991,8 +992,26 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         action="store",
         nargs="+",
         type=str,
-        help="Used to filter which tasks to display by their status. Options: INITIALIZED, RUNNING, \
-            FINISHED, FAILED, RESTARTED, CANCELLED, or UNKNOWN."
+        choices=["INITIALIZED", "RUNNING", "FINISHED", "FAILED", "RESTARTED", "CANCELLED", "UNKNOWN"],
+        help="Used to filter which tasks to display by their status."
+    )
+    status_cmd.add_argument(
+        "--layout",
+        type=str,
+        choices=status_renderer_factory.get_layouts(),
+        default="default",
+        help="Alternate status layouts. [Default: %(default)s]"
+    )
+    status_cmd.add_argument(
+        "--disable-theme",
+        action="store_true",
+        help="Turn off styling for the status layout. (If you want styling but it's not working, try modifying "
+        "the MANPAGER or PAGER environment variables to be 'less -r'; i.e. export MANPAGER='less -r')"
+    )
+    status_cmd.add_argument(
+        "--disable-pager",
+        action="store_true",
+        help="Turn off the pager functionality when viewing the status."
     )
     # TODO apply this to low level somehow?
     status_cmd.add_argument(

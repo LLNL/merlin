@@ -538,8 +538,7 @@ class MerlinStudy:  # pylint: disable=R0902
             column_labels = self.expanded_spec.merlin["samples"]["column_labels"]
         parameter_info = {
             "labels": self.parameter_labels,
-            "length": self.expanded_spec.parameter_length,
-            "steps_using_params": self.expanded_spec.steps_with_params,
+            "step_param_map": self.expanded_spec.get_step_param_map(),
         }
         # To avoid pickling issues with _pass_detect_cycle from maestro, we unpack the dag here
         self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, column_labels, study.name, parameter_info)

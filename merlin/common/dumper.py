@@ -32,7 +32,7 @@
 import csv
 import json
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Dict, List
 
 
 LOG = logging.getLogger(__name__)
@@ -45,9 +45,14 @@ class Dumper:
 
     Example csv usage:
     dumper = Dumper("populations.csv")
-    population_data = [["Eugene", "OR", 175096], ["Livermore", "CA", 86803]]
-    labels = ["City", "State", "Population"]
-    dumper.write(population_data, "w", labels=labels)
+    # Eugene, OR has a population of 175096
+    # Livermore, CA has a population of 86803
+    population_data = {
+        "City": ["Eugene", "Livermore"],
+        "State": ["OR", "CA"],
+        "Population": [175096, 86803]
+    }
+    dumper.write(population_data, "w")
         |---> Output will be written to populations.csv
 
     Example json usage:
@@ -78,38 +83,34 @@ class Dumper:
 
         self.file_name = file_name
 
-    def write(self, info_to_write: Union[Dict, List[List]], fmode: str, labels: Optional[List] = None):
+    def write(self, info_to_write: Dict, fmode: str):
         """
         Write information to an outfile.
         :param `info_to_write`: The information you want to write to the output file
         :param `fmode`: The file write mode ("w", "a", etc.)
-        :param `labels`: The row of column labels to attach to a csv file (optional)
         """
         if self.file_type == "csv":
-            self._csv_write(info_to_write, fmode, labels=labels)
+            self._csv_write(info_to_write, fmode)
         elif self.file_type == "json":
-            if labels:
-                LOG.warning("Labels aren't used for json files.")
             self._json_write(info_to_write, fmode)
 
-    def _csv_write(self, csv_to_dump: List[List], fmode: str, labels: Optional[List[str]] = None):
+    def _csv_write(self, csv_to_dump: Dict[str, List], fmode: str):
         """
         Write information to a csv file.
-        :param `csv_to_dump`: The information to write to the csv file. Each entry represents a row to write.
+        :param `csv_to_dump`: The information to write to the csv file. Dict keys will be the column headers and values will be the column values.
         :param `fmode`: The file write mode ("w", "a", etc.)
-        :param `labels`: The row of column labels to write (optional)
         """
         # If we have statuses to write, create a csv writer object and write to the csv file
         with open(self.file_name, fmode) as outfile:
             csv_writer = csv.writer(outfile)
-            if labels:
-                csv_writer.writerow(labels)
-            csv_writer.writerows(csv_to_dump)
+            if fmode == "w":
+                csv_writer.writerow(csv_to_dump.keys())
+            csv_writer.writerows(zip(*csv_to_dump.values()))
 
-    def _json_write(self, json_to_dump: Dict, fmode: str):
+    def _json_write(self, json_to_dump: Dict[str, Dict], fmode: str):
         """
         Write information to a json file.
-        :param `json_to_dump`: The information to write to the json file. Must be a dict.
+        :param `json_to_dump`: The information to write to the json file.
         :param `fmode`: The file write mode ("w", "a", etc.)
         """
         # Appending to json requires file mode to be r+ for json.load

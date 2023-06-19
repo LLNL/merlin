@@ -39,7 +39,6 @@ from typing import Dict, List, Tuple
 from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
-from maestrowf.utils import create_parentdir, get_duration
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.study.script_adapter import MerlinScriptAdapter
@@ -48,7 +47,7 @@ from merlin.study.script_adapter import MerlinScriptAdapter
 LOG = logging.getLogger(__name__)
 
 
-def needs_merlin_expansion(cmd: str, restart_cmd: str, labels: List[str]) -> bool:
+def needs_merlin_expansion(cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords=True) -> bool:
     """
     Check if the cmd or restart cmd provided have variables that need expansion.
 
@@ -58,29 +57,19 @@ def needs_merlin_expansion(cmd: str, restart_cmd: str, labels: List[str]) -> boo
     :return : True if the cmd has any of the default keywords or spec
         specified sample column labels. False otherwise.
     """
-    needs_expansion = False
+    sample_keywords = ["MERLIN_SAMPLE_ID", "MERLIN_SAMPLE_PATH", "merlin_sample_id", "merlin_sample_path"]
+    if include_sample_keywords:
+        labels += sample_keywords
 
-    for label in labels + [
-        "MERLIN_SAMPLE_ID",
-        "MERLIN_SAMPLE_PATH",
-        "merlin_sample_id",
-        "merlin_sample_path",
-    ]:
+    for label in labels:
         if f"$({label})" in cmd:
-            needs_expansion = True
+            return True
+        # The restart may need expansion while the cmd does not.
+        if restart_cmd and f"$({label})" in restart_cmd:
+                return True
 
-    # The restart may need expansion while the cmd does not.
-    if not needs_expansion and restart_cmd:
-        for label in labels + [
-            "MERLIN_SAMPLE_ID",
-            "MERLIN_SAMPLE_PATH",
-            "merlin_sample_id",
-            "merlin_sample_path",
-        ]:
-            if f"$({label})" in restart_cmd:
-                needs_expansion = True
-
-    return needs_expansion
+    # If we got through all the labels and no expansion was needed then these commands don't need expansion
+    return False
 
 
 class MerlinStepRecord(_StepRecord):
@@ -240,27 +229,37 @@ class MerlinStepRecord(_StepRecord):
         if not result:
             result = "-------"
 
-        # Put together a list of status info
-        status_info = [
-            self.name,
-            state_translator[self.status],
-            result,
-            self.elapsed_time,
-            self.run_time,
-            self.restarts,
-            self.condensed_workspace
-        ]
+        # Create the parameter strings for both the cmd and restart cmd
+        cmd_params = restart_params = "-------"
+        if self.merlin_step.params["cmd"]:
+            cmd_params = ";".join([f"{param}:{value}" for param, value in self.merlin_step.params["cmd"].items()])
+        if self.merlin_step.params["restart_cmd"]:
+            restart_params = ";".join([f"{param}:{value}" for param, value in self.merlin_step.params["restart_cmd"].items()])
 
-        # Update the status file
+        # Put together a list of status info
+        status_info = {
+            "Step Name": self.name,
+            "Step Workspace": self.condensed_workspace,
+            "Status": state_translator[self.status],
+            "Return Code": result,
+            "Elapsed Time": self.elapsed_time,
+            "Run Time": self.run_time,
+            "Restarts": self.restarts,
+            "Cmd Parameters": cmd_params,
+            "Restart Parameters": restart_params,
+        }
+
+        # Add celery specific info
         if task_server == "celery":
             from merlin.celery import app  # pylint: disable=C0415
             from merlin.common.tasks import get_current_queue, get_current_worker  # pylint: disable=C0415
             # If the tasks are always eager, this is a local run and we won't have workers running
             if not app.conf.task_always_eager:
-                status_info.append(get_current_queue())
-                status_info.append(get_current_worker())
+                status_info["Task Queue"] = get_current_queue()
+                status_info["Worker Name"] = get_current_worker()
         
-        status_line = " ".join(str(info_item) for info_item in status_info)
+        # Create the status line and write it to the status file
+        status_line = " ".join(str(info_item) for info_item in status_info.values())
         status_line += "\n"
 
         status_file = Path(f"{self.workspace.value}/MERLIN_STATUS")
@@ -283,6 +282,8 @@ class Step:
         self.study_name = study_name
         self.parameter_info = parameter_info
         self.__restart = False
+        self.params = {"cmd": {}, "restart_cmd": {}}
+        self.establish_params()
 
     def get_cmd(self):
         """
@@ -382,12 +383,14 @@ class Step:
         """
         self.__restart = val
 
-    @property
-    def uses_params(self):
-        """Returns a boolean denoting whether this step uses global parameters or not"""
-        if self.name_no_params() in self.parameter_info["steps_using_params"]:
-            return True
-        return False
+    def establish_params(self):
+        """If this step uses parameters, pull them from the step param map."""
+        try:
+            step_params = self.parameter_info["step_param_map"][self.name()]
+            for cmd_type in step_params:
+                self.params[cmd_type].update(step_params[cmd_type])
+        except KeyError:
+            pass
 
     def check_if_expansion_needed(self, labels):
         """
@@ -486,15 +489,3 @@ class Step:
             return ReturnCode(self.mstep.restart(adapter))
 
         return ReturnCode(self.mstep.execute(adapter))
-
-    def get_top_lvl_dir(self):
-        """
-        Get the path to the top level directory of this step. Useful for steps that
-        process parameters/samples.
-
-        :returns: A string representing the path to the top level directory for this step
-        """
-        workspace = self.get_workspace()
-        original_step_name = self.name_no_params()
-        top_lvl_path = f"{workspace.split(original_step_name)[0]}{original_step_name}"
-        return top_lvl_path
