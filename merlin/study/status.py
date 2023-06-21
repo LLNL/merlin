@@ -41,6 +41,10 @@ from merlin.config.configfile import CONFIG
 from merlin.utils import ws_time_to_td
 
 LOG = logging.getLogger(__name__)
+VALID_STATUS_FILTERS = ('INITIALIZED', 'RUNNING', 'FINISHED', 'FAILED', 'RESTART', 'CANCELLED', 'UNKNOWN')
+VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY")
+VALID_EXIT_FILTERS = ('E', 'EXIT')
+ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS
 
 
 def query_status(args: "Argparse Namespace", spec_display: bool, file_or_ws: str):
@@ -61,7 +65,7 @@ def query_status(args: "Argparse Namespace", spec_display: bool, file_or_ws: str
         workspace = file_or_ws 
 
     # Verify the filter args (if any) and determine whether any filters remain after verification
-    filters = [args.task_queues, args.workers, args.task_status, ("all" not in args.steps)]
+    filters = [args.task_queues, args.workers, args.task_status, args.return_code, ("all" not in args.steps)]
     filters_provided = any(filters + [args.max_tasks])
     verify_filter_args(args, spec)
     filters_remaining = any(filters + [args.max_tasks])
@@ -290,22 +294,44 @@ def status_list_to_dict(list_of_statuses: List[List[str]]) -> Dict[str, List]:
     return status_dict
 
 
-def _filter_by_status(status_dict: Dict[str, List], status_filters: List[str]):
+def apply_filters(filter_types: List[str], status_dict: Dict[str, List], filters: List[str]):
     """
-    Given a list of status filters, filter the dict of statuses by them.
+    Given a list of filters, filter the dict of statuses by them.
+    :param `filter_type`: A list of str denoting the types of filters we're applying
     :param `status_dict`: A dict statuses that we're going to display.
-    :param `status_filters`: A list of filters to apply to the dict of statuses
+    :param `filters`: A list of filters to apply to the dict of statuses
     """
-    LOG.info(f"Filtering tasks by the following statuses: {status_filters}")
+    LOG.info(f"Filtering tasks using these filters: {filters}")
+
+    # Create a valid filter dict that has the index of that filter in the status line
+    valid_filters = {
+        "status": 2,
+        "return code": 3,
+    }
+
+    # Ensure the filter types provided are valid and grab the indices we'll need to check
+    indices_to_check = []
+    for filter_type in filter_types:
+        try:
+            indices_to_check.append(valid_filters[filter_type])
+        except KeyError:
+            LOG.warning(f"Invalid filter type: {filter_type}. Ignoring this filter type.")
+
     # Create a list of tuples for each status entry
     status_list = list(zip(*status_dict.values()))
 
     # If the status of a task doesn't match the filters provided by the user, remove that entry
     for status_entry in status_list[:]:
-        if status_entry[2] not in status_filters:
+        found_a_match = False
+        for idx in indices_to_check:
+            if status_entry[idx] in filters:
+                found_a_match = True
+                break
+        if not found_a_match:
             status_list.remove(status_entry)
+
     if len(status_list) == 0:
-        LOG.error(f"No tasks found matching the task status filters {status_filters}.")
+        LOG.error(f"No tasks found matching the filters {filters}.")
 
     # Revert the status back to dict form and update the status dict with the changes
     status_dict.update(status_list_to_dict(status_list))
@@ -355,9 +381,18 @@ def get_requested_statuses(started_steps: List[str], tasks_per_step: Dict[str, i
             for key, val in step_statuses.items():
                 requested_statuses[key].extend(val)
 
-    # Filter the statuses we read in by task status if necessary
+    # Filter the statuses we read in if necessary
+    filter_types = set()
+    filters = []
     if args.task_status:
-        _filter_by_status(requested_statuses, args.task_status)
+        filter_types.add("status")
+        filters += args.task_status
+    if args.return_code:
+        filter_types.add("return code")
+        filters += args.return_code
+    
+    if filters:
+        apply_filters(list(filter_types), requested_statuses, filters)
 
     # Get the number of tasks found with our filters
     num_tasks_found = 0
@@ -411,18 +446,31 @@ def get_step_statuses(step_workspace: str, total_tasks: int, args: "Namespace" =
     return status_dict
 
 
+def _verify_filters(filters_to_check: List[str], valid_options: Union[List, Tuple], warning_msg=""):
+    """
+    Check each filter in a list of filters provided by the user against a list of valid options.
+    If the filter is invalid, remove it from the list of filters.
+
+    :param `filters_to_check`: A list of filters provided by the user
+    :param `valid_options`: A list of valid options for this particular filter
+    :param `warning_msg`: An optional warning message to attach to output
+    """
+    for filter_arg in filters_to_check[:]:
+        if filter_arg not in valid_options:
+            LOG.warning(f"The filter {filter_arg} is invalid. {warning_msg}")
+            args_to_check.remove(filter_arg)
+
+
 def verify_filter_args(args: "Argparse Namespace", spec: "MerlinSpec"):
     """
     Verify that our filters are all valid and able to be used.
     :param `args`: The CLI arguments provided via the user
     :param `spec`: A MerlinSpec object loaded from the expanded spec in the output study directory
     """
+    # Ensure the steps are valid
     if "all" not in args.steps:
         existing_steps = spec.get_study_step_names()
-        for step in args.steps[:]:
-            if step not in existing_steps:
-                LOG.warning(f"The step {step} was not found in the study {spec.name}. Removing this step from the list of steps to filter by...")
-                args.steps.remove(step)
+        _verify_filters(args.steps, existing_steps, warning_msg="Removing this step from the list of steps to filter by...")
 
     # Make sure max_tasks is a positive int
     if args.max_tasks and args.max_tasks < 1:
@@ -433,26 +481,23 @@ def verify_filter_args(args: "Argparse Namespace", spec: "MerlinSpec"):
     if args.task_status:
         args.task_status = [x.upper() for x in args.task_status]
         valid_task_statuses = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "RESTART", "CANCELLED", "UNKNOWN")
-        for status_filter in args.task_status[:]:
-            if status_filter not in valid_task_statuses:
-                LOG.warning(f"The status filter {status_filter} is invalid. Valid statuses are any of the following: {valid_task_statuses}. Ignoring {status_filter} as a filter...")
-                args.task_status.remove(status_filter)
+        _verify_filters(args.task_status, valid_task_statuses, warning_msg="Removing this status from the list of statuses to filter by...")
+
+    # Ensure return_code is valid
+    if args.return_code:
+        args.return_code = [f"MERLIN_{x.upper()}" for x in args.return_code]
+        valid_return_codes = ("MERLIN_SUCCESS", "MERLIN_SOFT_FAIL", "MERLIN_HARD_FAIL", "MERLIN_STOP_WORKERS", "MERLIN_RESTART", "MERLIN_RETRY")
+        _verify_filters(args.return_code, valid_return_codes, warning_msg="Removing this code from the list of return codes to filter by...")
 
     # Ensure every task queue provided exists
     if args.task_queues:
         existing_queues = spec.get_queue_list(["all"], omit_tag=True)
-        for queue in args.task_queues[:]:
-            if queue not in existing_queues:
-                LOG.warning(f"The queue {queue} is not an existing queue. Removing this queue from the list of queues to filter by...")
-                args.task_queues.remove(queue)
+        _verify_filters(args.task_queues, existing_queues, warning_msg="Removing this queue from the list of queues to filter by...")
     
     # Ensure every worker provided exists
     if args.workers:
         worker_names = spec.get_worker_names()
-        for worker in args.workers[:]:
-            if worker not in worker_names:
-                LOG.warning(f"The worker {worker} cannot be found. Removing this worker from the list of workers to filter by...")
-                args.workers.remove(worker)
+        _verify_filters(args.workers, worker_names, warning_msg="Removing this worker from the list of workers to filter by...")
 
 
 def get_latest_study(studies: List[str]) -> str:

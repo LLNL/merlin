@@ -992,8 +992,16 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         action="store",
         nargs="+",
         type=str,
-        choices=["INITIALIZED", "RUNNING", "FINISHED", "FAILED", "RESTARTED", "CANCELLED", "UNKNOWN"],
-        help="Used to filter which tasks to display by their status."
+        choices=status.VALID_STATUS_FILTERS,
+        help="Used to filter which tasks to display based on their status."
+    )
+    status_cmd.add_argument(
+        "--return-code",
+        action="store",
+        nargs="+",
+        type=str,
+        choices=status.VALID_RETURN_CODES,
+        help="Used to filter which tasks to display based on their return code"
     )
     status_cmd.add_argument(
         "--layout",
