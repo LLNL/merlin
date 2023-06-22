@@ -41,7 +41,9 @@ import time
 from datetime import datetime
 
 from merlin.study.celeryadapter import (
+    celerize_queues,
     create_celery_config,
+    get_queues,
     get_workers_from_app,
     purge_celery_tasks,
     query_celery_queues,
@@ -124,19 +126,61 @@ def purge_tasks(task_server, spec, force, steps):
         return -1
 
 
-def query_status(task_server, spec, steps, verbose=True):
+def query_queues(task_server, spec, steps, specific_queues):
     """
-    Queries status of queues in spec file from server.
+    Queries status of queues.
 
     :param `task_server`: The task server from which to purge tasks.
-    :param `spec`: A MerlinSpec object
+    :param `spec`: A MerlinSpec object or None
     :param `steps`: Spaced-separated list of stepnames to query. Default is all
+    :param `specific_queues`: A list of queue names to query or None
     """
-    if verbose:
-        LOG.info(f"Querying queues for steps = {steps}")
+    from merlin.celery import app  # pylint: disable=C0415
 
     if task_server == "celery":  # pylint: disable=R1705
-        queues = spec.get_queue_list(steps)
+        queues = set()
+        # If the user provided a spec file, get the queues from that spec
+        if spec:
+            LOG.info(f"Querying queues for steps = {steps}")
+            queues = set(spec.get_queue_list(steps))
+
+        # If the user provided specific queues, search for those
+        if specific_queues:
+            LOG.info(f"Filtering queues to query by these specific queues: {specific_queues}")
+            # Add the queue tag from celery if necessary
+            celerize_queues(specific_queues)
+            # Remove any potential duplicates and create a new set to store the queues we'll want to check
+            specific_queues = set(specific_queues)
+            specific_queues_to_check = set()
+            
+            for specific_queue in specific_queues:
+                # If the user provided the --specification flag too then we'll need to check that this
+                # specific queue exists in the spec that they provided
+                add_specific_queue = True
+                if spec and specific_queue not in queues:
+                    LOG.warning(
+                        f"Either couldn't find {specific_queue} in the existing queues for the spec file provided or this queue doesn't go with the steps provided with the --steps option. Ignoring this queue."
+                    )
+                    add_specific_queue = False
+
+                # Add the full queue name to the set of queues we'll check
+                if add_specific_queue:
+                    specific_queues_to_check.add(specific_queue)
+            queues = specific_queues_to_check
+
+        # Default behavior with no options provided; display active queues
+        if not spec and not specific_queues:
+            LOG.info("Querying active queues")
+            existing_queues, _ = get_queues(app)
+
+            # Check if there's any active queues currently
+            if len(existing_queues) == 0:
+                LOG.warning(f"No active queues found. Are your workers running yet?")
+                return []
+
+            # Set the queues we're going to check to be all existing queues by default
+            queues = existing_queues.keys()
+
         # Query the queues
         return query_celery_queues(queues)
     else:
