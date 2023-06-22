@@ -41,6 +41,7 @@ from typing import Any, Dict, List, Optional
 # overwrites a python built-in exception
 from celery import chain, chord, current_task, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
+from filelock import FileLock, Timeout
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
@@ -457,7 +458,7 @@ def get_1D_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority(Priority.HIGH),
+    priority=get_priority(Priority.LOW),
 )
 def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:
     """
@@ -498,8 +499,15 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:
 
     # Condense the statuses and append them to the top level status file
     condensed_status = "".join(statuses_to_condense)
-    with open(f"{str(workspace)}/MERLIN_STATUS", "a") as f:
-        f.write(condensed_status)
+    condensed_lock_file = f"{str(workspace)}/status.lock"
+    lock = FileLock(condensed_lock_file)
+    try:
+        with lock.acquire(timeout=10):
+            with open(f"{str(workspace)}/MERLIN_STATUS", "a") as f:
+                f.write(condensed_status)
+    except Timeout:
+        # Raising this celery timeout instead will trigger a restart for this task
+        raise TimeoutError
 
     return ReturnCode.OK
 

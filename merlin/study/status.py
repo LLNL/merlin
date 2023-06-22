@@ -360,8 +360,8 @@ def _filter_by_max_tasks(status_dict: Dict[str, List], max_tasks: int):
 
 def get_requested_statuses(started_steps: List[str], tasks_per_step: Dict[str, int], workspace: str, args: "Namespace") -> List[List[str]]:
     """
-    Get all the statuses that the user is looking for. Filters for task queue and workers will have already been applied
-    when creating the started_steps list. The filters for task status and max tasks will be applied here.
+    Get all the statuses that the user is looking for. Filters for steps, task queues, workers will have already been applied
+    when creating the started_steps list. Remaining filters will be applied here.
 
     :param `started_steps`: A list of started steps that the user wants information from
     :param `tasks_per_step`: A dictionary to keep track of how many tasks are needed for each step in the workflow
