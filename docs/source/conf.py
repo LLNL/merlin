@@ -122,7 +122,7 @@ htmlhelp_basename = "Merlindoc"
 
 # -- Options for LaTeX output ------------------------------------------------
 
-latex_engine = "latexpdf"
+latex_engine = "pdflatex"
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
