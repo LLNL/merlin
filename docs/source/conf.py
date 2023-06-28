@@ -140,6 +140,8 @@ latex_elements = {
 
 latex_logo = "../images/merlin.png"
 
+latex_additional_files = ["_static/searchtools.js"]
+
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
