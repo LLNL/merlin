@@ -83,6 +83,8 @@ def list_examples():
         directory = os.path.join(os.path.join(EXAMPLES_DIR, example_dir), "")
         specs = glob.glob(directory + "*.yaml")
         for spec in specs:
+            if "template" in spec:
+                continue
             with open(spec) as f:  # pylint: disable=C0103
                 try:
                     spec_metadata = yaml.safe_load(f)["description"]
