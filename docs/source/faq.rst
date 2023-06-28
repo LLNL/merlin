@@ -383,7 +383,7 @@ in the ``launch_args`` variable in the batch section.
 What is PBS?
 ~~~~~~~~~~~~
 Another job scheduler. See `Portable Batch System
-https://en.wikipedia.org/wiki/Portable_Batch_System`_
+<https://en.wikipedia.org/wiki/Portable_Batch_System>`_
 .
 This functionality is only available to launch a flux scheduler.
 
