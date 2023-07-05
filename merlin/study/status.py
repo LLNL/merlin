@@ -27,749 +27,810 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+import json
 import logging
 import os
 import re
-from collections import deque
+
+from copy import deepcopy
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from filelock import FileLock, Timeout
+from typing import Dict, List, Optional, Tuple, Union
 
 from merlin import display
-from merlin.common.dumper import Dumper
+from merlin.common.dumper import dump_handler
 from merlin.config.configfile import CONFIG
-from merlin.utils import ws_time_to_td
+from merlin.study.status_renderers import status_renderer_factory
+from merlin.utils import ws_time_to_td, dict_deep_merge
 
 LOG = logging.getLogger(__name__)
-VALID_STATUS_FILTERS = ('INITIALIZED', 'RUNNING', 'FINISHED', 'FAILED', 'RESTART', 'CANCELLED', 'UNKNOWN')
-VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY")
+VALID_STATUS_FILTERS = ('INITIALIZED', 'RUNNING', 'FINISHED', 'FAILED', 'CANCELLED', 'DRY_RUN', 'UNKNOWN')
+VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY", "DRY_SUCCESS", "UNRECOGNIZED")
 VALID_EXIT_FILTERS = ('E', 'EXIT')
-ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS
+ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS + ("MAX_TASKS",)
+NON_WORKSPACE_KEYS = set(["Cmd Parameters", "Restart Parameters", "Task Queue", "Worker Name"])
 
 
-def query_status(args: "Argparse Namespace", spec_display: bool, file_or_ws: str):
+class Status:
     """
-    The overarching function to query the status of a study.
-
-    :param `args`: The CLI arguments provided via the user
-    :param `spec_display`: A boolean. If this is True, the user provided a spec file. If this is False,
-                           the user provided a workspace directory.
-    :param `file_or_ws`: If spec_display is True then this is a filepath to a spec file. Otherwise,
-                         this is a dirpath to a study's output directory (workspace).
+    This class handles everything to do with status besides displaying it.
+    Display functionality is handled in display.py.
     """
-    # Load in the spec file from either the spec provided by the user or the workspace
-    if spec_display:
-        workspace, spec = load_from_spec(args, file_or_ws)
-    else:
-        spec = load_from_workspace(file_or_ws)
-        workspace = file_or_ws 
+    def __init__(self, args: "Argparse Namespace", spec_display: bool, file_or_ws: str):
+        # Save the args to this class instance
+        self.args = args
 
-    # Verify the filter args (if any) and determine whether any filters remain after verification
-    filters = [args.task_queues, args.workers, args.task_status, args.return_code, ("all" not in args.steps)]
-    filters_provided = any(filters + [args.max_tasks])
-    verify_filter_args(args, spec)
-    filters_remaining = any(filters + [args.max_tasks])
-
-    # If the user provided filters but the verification process removed them all, don't display anything
-    if filters_provided != filters_remaining:
-        LOG.warning("No filters remaining, cannot find tasks to display.")
-    else:
-        # Get a dict of started and unstarted steps to display and a dict representing the number of tasks per step
-        step_tracker = get_steps_to_display(workspace, spec, args.steps, args.task_queues, args.workers)
-        tasks_per_step = spec.get_tasks_per_step()
-
-        # If we're dumping to an output file or showing low level task-by-task info
-        if args.dump or filters_remaining:
-            # Get the statuses requested by the user
-            requested_statuses = get_requested_statuses(step_tracker["started_steps"], tasks_per_step, workspace, args)
-
-            # Check that there's statuses found
-            if requested_statuses and len(requested_statuses["Step Name"]) > 0:
-                if args.dump:
-                    dump_handler(requested_statuses, args.dump)
-                else:
-                    display.display_low_lvl_status(requested_statuses, step_tracker["unstarted_steps"], workspace, args)
+        # Load in the workspace path and spec object
+        if spec_display:
+            self.workspace, self.spec = self._load_from_spec(file_or_ws)
         else:
-            # Display the high level status summary
-            display.display_high_lvl_status(tasks_per_step, step_tracker, workspace, args.cb_help)
+            self.workspace = file_or_ws
+            self.spec = self._load_from_workspace()
 
+        # Verify the args provided by the user
+        self._verify_filter_args()
 
-def get_column_labels(statuses: List[List[str]]) -> List[str]:
-    """
-    Build a list of column labels for the status entries.
-    :param `statuses`: A list of lists of statuses. Each status is contained within its own list.
-    :returns: A list of column labels
-    """
-    # Store column titles in a list and add additional column titles if necessary
-    column_labels = ["Step Name", "Step Workspace", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts", "Cmd Parameters", "Restart Parameters"]
-    try:
-        # If celery workers were used, the length of each status entry will be 10
-        len_status_entry = len(statuses[0])
-        if len_status_entry == 11:
-            column_labels.append("Task Queue")
-            column_labels.append("Worker Name")
-    except IndexError:
-        pass
+        # Create a step tracker that will tell us which steps we'll display that have started/not started
+        self.step_tracker = self.get_steps_to_display()
 
-    return column_labels
+        # Create a tasks per step mapping in order to give accurate totals for each step
+        self.tasks_per_step = self.spec.get_tasks_per_step()
 
+        # This attribute will store a map between the overall step name and the real step names
+        # that are created with parameters (e.g. step name is hello and uses a "GREET: hello" parameter
+        # so the real step name is hello_GREET.hello)
+        self.real_step_name_map = {}
 
-def insert_column_titles(statuses: List[List[str]]) -> List[List[str]]:
-    """
-    Given a list of statuses, prepend a list of column titles.
-    Using deque rather than list.insert we make this an O(1) operation.
+        # Variable to store the statuses that the user wants
+        self.requested_statuses = {}
+        self.get_requested_statuses()
 
-    :param `statuses`: A list of statuses where each status is contained within its own list
-    :returns: The modified list with column titles
-    """
-    column_labels = get_column_labels(statuses)
+    def _get_latest_study(self, studies: List[str]) -> str:
+        """
+        Given a list of studies, get the latest one.
 
-    # Insert column titles at head of list in O(1) time
-    statuses = deque(statuses)
-    statuses.appendleft(column_labels)
-    statuses = list(statuses)
+        :param `studies`: A list of studies to sort through
+        :returns: The latest study in the list provided
+        """
+        # We can assume the newest study is the last one to be added to the list of potential studies
+        newest_study = studies[-1]
+        newest_timestring = newest_study[-15:]
+        newest_study_date = ws_time_to_td(newest_timestring)
 
-    return statuses
-
-
-def build_csv_status(statuses_to_write: Dict[str, List], date: str) -> Dict[str, List]:
-    """
-    Add the timestamp to the statuses to write.
-
-    :param `statuses_to_write`: A dict of statuses to write to the csv file
-    :param `date`: A timestamp for us to mark when this status occurred
-    :returns: A dict equivalent to `statuses_to_write` with a timestamp entry at the start of the dict.
-    """
-    # Build the list of column labels
-    statuses_with_timestamp = {"Time of Status": [date] * len(statuses_to_write["Step Name"])}
-    statuses_with_timestamp.update(statuses_to_write)
-    return statuses_with_timestamp
-
-    
-def build_json_status(statuses_to_write: Dict[str, List], date: str) -> Dict:
-    """
-    Build the dict of statuses to dump to the json file.
-
-    :param `statuses_to_write`: A dict of statuses to write to the json file
-    :param `date`: A timestamp for us to mark when this status occurred
-    :returns: A dictionary that's ready to dump to a json outfile
-    """
-    # Build a dict for the new json entry we'll write
-    json_to_dump = {date: {}}
-    for i, step in enumerate(statuses_to_write["Step Name"]):
-        # Create an entry for this step if it doesn't exist yet
-        if step not in json_to_dump[date]:
-            json_to_dump[date][step] = {}
-
-            # If we have a queue and worker to display add that here
-            if "Task Queue" in statuses_to_write:
-                json_to_dump[date][step]["queue"] = statuses_to_write["Task Queue"][i]
-            if "Worker Name" in statuses_to_write:
-                json_to_dump[date][step]["worker"] = statuses_to_write["Worker Name"][i]
-            
-            # Add parameter entries as necessary
-            if statuses_to_write["Cmd Parameters"][i] != '-------':
-                json_to_dump[date][step]["cmd parameters"] = {}
-            if statuses_to_write["Restart Parameters"][i] != '-------':
-                json_to_dump[date][step]["restart parameters"] = {}
-
-            # Populate the parameter entries
-            param_keys = ("Cmd Parameters", "Restart Parameters")
-            for param_key in param_keys:
-                lower_param_key = param_key.lower()
-                if lower_param_key in json_to_dump[date][step]:
-                    for param in statuses_to_write[param_key][i].split(";"):
-                        split_param = param.split(":")
-                        token = split_param[0]
-                        value = split_param[1]
-                        json_to_dump[date][step][lower_param_key][token] = value
+        # Check that the newest study somehow isn't the last entry
+        for study in studies:
+            temp_timestring = study[-15:]
+            date_to_check = ws_time_to_td(temp_timestring)
+            if date_to_check > newest_study_date:
+                newest_study = study
+                newest_study_date = date_to_check
         
-        # Format the information for each workspace here
-        workspace_dict = {
-            statuses_to_write["Step Workspace"][i]: {
-                "status": statuses_to_write["Status"][i],
-                "return_code": statuses_to_write["Return Code"][i],
-                "elapsed_time": statuses_to_write["Elapsed Time"][i],
-                "run_time": statuses_to_write["Run Time"][i],
-                "restarts": statuses_to_write["Restarts"][i],
-            }
-        }
+        return newest_study
 
-        # Update the overarching json dump with the workspace status info
-        json_to_dump[date][step].update(workspace_dict)
+    def _obtain_study(self, study_output_dir: str, num_studies: int, potential_studies: List[Tuple[int, str]]) -> str:
+        """
+        Grab the study that the user wants to view the status of based on a list of potential studies provided.
 
-    return json_to_dump
-
-
-def build_csv_queue_info(query_return: List[Tuple[str, int, int]], date: str) -> Dict[str, List]:
-    """
-    Build the lists of column labels and queue info to write to the csv file.
-
-    :param `query_return`: The output of query_status
-    :param `date`: A timestamp for us to mark when this status occurred
-    :returns: A dict of queue information to dump to csv
-    """
-    # Build the list of labels if necessary
-    csv_to_dump = {"Time": [date]}
-    for name, jobs, consumers in query_return:
-        csv_to_dump[f"{name}:tasks"] = [str(jobs)]
-        csv_to_dump[f"{name}:consumers"] = [str(consumers)]
-    
-    return csv_to_dump
-
-    
-def build_json_queue_info(query_return: List[Tuple[str, int, int]], date: str) -> Dict:
-    """
-    Build the dict of queue info to dump to the json file.
-
-    :param `query_return`: The output of query_status
-    :param `date`: A timestamp for us to mark when this status occurred
-    :returns: A dictionary that's ready to dump to a json outfile
-    """
-    # Get the datetime so we can track different entries and initalize a new json entry
-    json_to_dump = {date: {}}
-
-    # Add info for each queue (name)
-    for name, jobs, consumers in query_return:
-        json_to_dump[date][name] = {"tasks": jobs, "consumers": consumers}
-
-    return json_to_dump
-
-
-def dump_handler(info_to_write: Union[Dict[str, List], List[Tuple[str, int, int]]], dump_file: str, queue_dump: bool = False):
-    """
-    Dump the information about a study to a file.
-
-    :param `info_to_write`: If dumping statuses, this will be a dict of statuses to dump.
-                            If dumping queue info, this will be a list of tuples representing queue information.
-    :param `dump_file`: The name of the file we're going to write to
-    :param `queue_dump`: If True, we're dumping queue information. Otherwise, we're dumping status information.
-    """
-    # Create a dumper object to help us write to dump_file
-    dumper = Dumper(dump_file)
-
-    # Get the correct file write mode
-    if os.path.exists(dump_file):
-        fmode = "a"
-    else:
-        fmode = "w"
-    
-    # Get a timestamp for this dump
-    date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    write_type = 'Writing' if fmode == 'w' else 'Appending'
-    LOG.info(f"{write_type} {'queue information' if queue_dump else 'statuses'} to {dump_file}...")
-
-    # Handle different file types
-    if dump_file.endswith(".csv"):
-        # Build the lists of information/labels we'll need
-        if queue_dump:
-            dump_info = build_csv_queue_info(info_to_write, date)
+        :param `study_output_dir`: A string representing the output path of a study; equivalent to $(OUTPUT_PATH)
+        :param `num_studies`: The number of potential studies we found
+        :param `potential_studies`: The list of potential studies we found; Each entry is of the form (index, potential_study_name)
+        :returns: A directory path to the study that the user wants to view the status of ("study_output_dir/selected_potential_study")
+        """
+        study_to_check = f"{study_output_dir}/"
+        if num_studies == 0:
+            raise ValueError("Could not find any potential studies.")
+        if num_studies > 1:
+            # Get the latest study
+            if self.args.no_prompts:
+                LOG.info("Choosing the latest study...")
+                potential_studies = [study for _, study in potential_studies]
+                latest_study = self._get_latest_study(potential_studies)
+                LOG.info(f"Chose {latest_study}")
+                study_to_check += latest_study
+            # Ask the user which study to view
+            else:
+                print(f"Found {num_studies-1} potential studies:")
+                display.tabulate_info(potential_studies, headers=["Index", "Study Name"])
+                prompt = "Which study would you like to view the status of? Use the index on the left: "
+                index = -1
+                while index < 1 or index > num_studies:
+                    try:
+                        index = int(input(prompt))
+                        if index < 1 or index > num_studies:
+                            raise ValueError
+                    except ValueError:
+                            print(f"{display.ANSI_COLORS['RED']}Input must be an integer between 1 and {num_studies}.{display.ANSI_COLORS['RESET']}")
+                            prompt = "Enter a different index: "
+                study_to_check += potential_studies[index-1][1]
         else:
-            dump_info = build_csv_status(info_to_write, date)
-    elif dump_file.endswith(".json"):
-        # Build the dict of info to dump to the json file
-        if queue_dump:
-            dump_info = build_json_queue_info(info_to_write, date)
+            # Only one study was found so we'll just assume that's the one the user wants
+            study_to_check += potential_studies[0][1]
+        
+        return study_to_check
+
+    def _load_from_spec(self, filepath: str) -> Tuple[str, "MerlinSpec"]:
+        """
+        Get the desired workspace from the user and load up it's yaml spec
+        for further processing.
+
+        :param `filepath`: The filepath to a spec given by the user
+        :returns: The workspace of the study we'll check the status for and a MerlinSpec
+                object loaded in from the workspace's merlin_info subdirectory.
+        """
+        from merlin.main import get_spec_with_expansion, get_merlin_spec_with_override, verify_dirpath  # pylint: disable=C0415
+
+        # Get the spec and the output path for the spec
+        self.args.specification = filepath
+        spec_provided, _ = get_merlin_spec_with_override(self.args)
+        if spec_provided.output_path:
+            study_output_dir = verify_dirpath(spec_provided.output_path)
         else:
-            dump_info = build_json_status(info_to_write, date)
-    
-    # Write the output
-    dumper.write(dump_info, fmode)
-    LOG.info(f"{write_type} complete.")
+            study_output_dir = verify_dirpath(".")
 
+        # Build a list of potential study output directories
+        study_output_subdirs = next(os.walk(study_output_dir))[1]
+        timestamp_regex = r"\d{8}-\d{6}"
+        potential_studies = []
+        num_studies = 0
+        for subdir in study_output_subdirs:
+            match = re.search(rf"{spec_provided.name}_{timestamp_regex}", subdir)
+            if match:
+                potential_studies.append((num_studies+1, subdir))
+                num_studies += 1
 
-def status_list_to_dict(list_of_statuses: List[List[str]]) -> Dict[str, List]:
-    """
-    Convert a list of statuses (where each status is contained in it's own list) to a dictionary
-    of statuses.
-    :param `list_of_statuses`: A list of list of statuses
-    :returns: A dict of statuses where each key is a column label and each val are the values in that column
-    """
-    labels = get_column_labels(list_of_statuses)
-    status_dict = {k: [] for k in labels}
-    for status_entry in list_of_statuses:
-        for key, val in zip(labels, status_entry):
-            status_dict[key].append(val)
-    return status_dict
+        # Obtain the correct study that the user wants to view the status of based on the list of potential studies we just built
+        study_to_check = self._obtain_study(study_output_dir, num_studies, potential_studies)
 
+        # Verify the directory that the user selected is a merlin study output directory
+        if "merlin_info" not in next(os.walk(study_to_check))[1]:
+            LOG.error(f"The merlin_info subdirectory was not found. {study_to_check} may not be a Merlin study output directory.")
 
-def apply_filters(filter_types: List[str], status_dict: Dict[str, List], filters: List[str]):
-    """
-    Given a list of filters, filter the dict of statuses by them.
-    :param `filter_type`: A list of str denoting the types of filters we're applying
-    :param `status_dict`: A dict statuses that we're going to display.
-    :param `filters`: A list of filters to apply to the dict of statuses
-    """
-    LOG.info(f"Filtering tasks using these filters: {filters}")
+        # Grab the spec saved to the merlin info directory in case something in the current spec has changed since starting the study
+        actual_spec = get_spec_with_expansion(f"{study_to_check}/merlin_info/{spec_provided.name}.expanded.yaml")
 
-    # Create a valid filter dict that has the index of that filter in the status line
-    valid_filters = {
-        "status": 2,
-        "return code": 3,
-    }
+        return study_to_check, actual_spec
 
-    # Ensure the filter types provided are valid and grab the indices we'll need to check
-    indices_to_check = []
-    for filter_type in filter_types:
-        try:
-            indices_to_check.append(valid_filters[filter_type])
-        except KeyError:
-            LOG.warning(f"Invalid filter type: {filter_type}. Ignoring this filter type.")
+    def _load_from_workspace(self) -> "MerlinSpec":
+        """
+        Create a MerlinSpec object based on the spec file in the workspace.
 
-    # Create a list of tuples for each status entry
-    status_list = list(zip(*status_dict.values()))
+        :returns: A MerlinSpec object loaded from the workspace provided by the user
+        """
+        from merlin.main import verify_dirpath, get_spec_with_expansion  # pylint: disable=C0415
 
-    # If the status of a task doesn't match the filters provided by the user, remove that entry
-    for status_entry in status_list[:]:
-        found_a_match = False
-        for idx in indices_to_check:
-            if status_entry[idx] in filters:
-                found_a_match = True
-                break
-        if not found_a_match:
-            status_list.remove(status_entry)
-
-    if len(status_list) == 0:
-        LOG.error(f"No tasks found matching the filters {filters}.")
-
-    # Revert the status back to dict form and update the status dict with the changes
-    status_dict.update(status_list_to_dict(status_list))
-
-    # If updating the status dict resulted in no steps being found then we may need to manually reset the task queue and worker name entries
-    if not status_dict["Step Name"]:
-        if "Task Queue" in status_dict:
-            status_dict["Task Queue"] = []
-        if "Worker Name" in status_dict:
-            status_dict["Worker Name"] = []
-
-
-def _filter_by_max_tasks(status_dict: Dict[str, List], max_tasks: int):
-    """
-    Given a number representing the maximum amount of tasks to display, filter the dict of statuses
-    to that number.
-    :param `status_dict`: A dict statuses that we're going to display.
-    :param `max_tasks`: An int representing the max number of tasks to display
-    """
-    LOG.info(f"Max tasks filter was provided. Displaying at most {max_tasks} tasks.")
-    if max_tasks > len(status_dict["Step Name"]):
-        max_tasks = len(status_dict["Step Name"])
-    for key, val in status_dict.items():
-        status_dict[key] = val[:max_tasks]
-
-
-def get_requested_statuses(started_steps: List[str], tasks_per_step: Dict[str, int], workspace: str, args: "Namespace") -> List[List[str]]:
-    """
-    Get all the statuses that the user is looking for. Filters for steps, task queues, workers will have already been applied
-    when creating the started_steps list. Remaining filters will be applied here.
-
-    :param `started_steps`: A list of started steps that the user wants information from
-    :param `tasks_per_step`: A dictionary to keep track of how many tasks are needed for each step in the workflow
-    :param `workspace`: The output directory path for the study
-    :param `args`: The arguments from the user provided by the CLI
-    :returns: A list of all statuses matching the users filter(s). Each status is contained within its own list.
-    """
-    # Read in all statuses from the started steps the user wants to see, and split each status by spaces
-    LOG.info(f"Reading task statuses from {workspace}")
-    requested_statuses = {}
-    for sstep in started_steps:
-        step_workspace = f"{workspace}/{sstep}"
-        step_statuses = get_step_statuses(step_workspace, tasks_per_step[sstep])
-        if not requested_statuses:
-            requested_statuses.update(step_statuses)
-        else:
-            for key, val in step_statuses.items():
-                requested_statuses[key].extend(val)
-
-    # Filter the statuses we read in if necessary
-    filter_types = set()
-    filters = []
-    if args.task_status:
-        filter_types.add("status")
-        filters += args.task_status
-    if args.return_code:
-        filter_types.add("return code")
-        filters += args.return_code
-    
-    if filters:
-        apply_filters(list(filter_types), requested_statuses, filters)
-
-    # Get the number of tasks found with our filters
-    num_tasks_found = 0
-    if requested_statuses:
-        num_tasks_found = len(requested_statuses['Step Name'])
-
-    LOG.info(f"Found {num_tasks_found} tasks matching your filters.")
-
-    # Limit the number of statuses to display if necessary
-    if args.max_tasks:
-        _filter_by_max_tasks(requested_statuses, args.max_tasks)
-
-    return requested_statuses
-
-
-def get_step_statuses(step_workspace: str, total_tasks: int, args: "Namespace" = None) -> Dict[str, List[str]]:
-    """
-    Given a step workspace and the total number of tasks for the step, read in all the statuses
-    for the step and return them in a dict.
-
-    :param `step_workspace`: The path to the step we're going to read statuses from
-    :param `total_tasks`: The total number of tasks for the step
-    :returns: A dict of statuses for the given step
-    """
-    from filelock import FileLock, Timeout  # pylint: disable=C0415
-    step_statuses = []
-    num_statuses_read = 0
-    # Count number of tasks in each state
-    for root, dirs, files in os.walk(step_workspace):
-        if "MERLIN_STATUS" in files:
-            # Read in the statuses for the tasks in this step
-            status_file = f"{root}/MERLIN_STATUS"
-            lock = FileLock(f"{root}/status.lock")
-            try:
-                with lock.acquire(timeout=10):
-                    statuses_read = read_status(status_file).split("\n")
-            except Timeout:
-                LOG.warning(f"Timed out when trying to read status from {status_file}")
-                statuses_read = []
-            statuses_read.remove('')
-            step_statuses.extend(statuses_read)
-            num_statuses_read += len(statuses_read)
-        # To help save time, exit this loop if we've read all the task statuses for this step
-        if num_statuses_read == total_tasks:
+        # Grab the spec file from the directory provided
+        info_dir = verify_dirpath(f"{self.workspace}/merlin_info")
+        spec_file = ""
+        for root, dirs, files in os.walk(info_dir):
+            for f in files:
+                if f.endswith(".expanded.yaml"):
+                    spec_file = f"{info_dir}/{f}"
+                    break
             break
 
-    # Move the statuses into a dict
-    step_statuses = [status.split() for status in step_statuses]
-    status_dict = status_list_to_dict(step_statuses)
+        # Make sure we got a spec file and load it in
+        if not spec_file:
+            LOG.error(f"Spec file not found in {info_dir}. Cannot display status.")
+            return
+        spec = get_spec_with_expansion(spec_file)
 
-    return status_dict
+        return spec
 
+    def _verify_filters(self, filters_to_check: List[str], valid_options: Union[List, Tuple], warning_msg: Optional[str] = ""):
+        """
+        Check each filter in a list of filters provided by the user against a list of valid options.
+        If the filter is invalid, remove it from the list of filters.
 
-def _verify_filters(filters_to_check: List[str], valid_options: Union[List, Tuple], warning_msg=""):
-    """
-    Check each filter in a list of filters provided by the user against a list of valid options.
-    If the filter is invalid, remove it from the list of filters.
+        :param `filters_to_check`: A list of filters provided by the user
+        :param `valid_options`: A list of valid options for this particular filter
+        :param `warning_msg`: An optional warning message to attach to output
+        """
+        for filter_arg in filters_to_check[:]:
+            if filter_arg not in valid_options:
+                LOG.warning(f"The filter {filter_arg} is invalid. {warning_msg}")
+                filters_to_check.remove(filter_arg)
 
-    :param `filters_to_check`: A list of filters provided by the user
-    :param `valid_options`: A list of valid options for this particular filter
-    :param `warning_msg`: An optional warning message to attach to output
-    """
-    for filter_arg in filters_to_check[:]:
-        if filter_arg not in valid_options:
-            LOG.warning(f"The filter {filter_arg} is invalid. {warning_msg}")
-            args_to_check.remove(filter_arg)
+    def _verify_filter_args(self):
+        """
+        Verify that our filters are all valid and able to be used.
 
+        :param `args`: The CLI arguments provided via the user
+        :param `spec`: A MerlinSpec object loaded from the expanded spec in the output study directory
+        """
+        # Ensure the steps are valid
+        if "all" not in self.args.steps:
+            existing_steps = self.spec.get_study_step_names()
+            self._verify_filters(self.args.steps, existing_steps, warning_msg="Removing this step from the list of steps to filter by...")
 
-def verify_filter_args(args: "Argparse Namespace", spec: "MerlinSpec"):
-    """
-    Verify that our filters are all valid and able to be used.
-    :param `args`: The CLI arguments provided via the user
-    :param `spec`: A MerlinSpec object loaded from the expanded spec in the output study directory
-    """
-    # Ensure the steps are valid
-    if "all" not in args.steps:
-        existing_steps = spec.get_study_step_names()
-        _verify_filters(args.steps, existing_steps, warning_msg="Removing this step from the list of steps to filter by...")
+        # Make sure max_tasks is a positive int
+        if self.args.max_tasks and self.args.max_tasks < 1:
+            LOG.warning(f"The value of --max-tasks must be greater than 0. Ignoring --max-tasks...")
+            self.args.max_tasks = None
 
-    # Make sure max_tasks is a positive int
-    if args.max_tasks and args.max_tasks < 1:
-        LOG.warning(f"The value of --max-tasks must be greater than 0. Ignoring --max-tasks...")
-        args.max_tasks = None
-    
-    # Make sure task_status is valid
-    if args.task_status:
-        args.task_status = [x.upper() for x in args.task_status]
-        valid_task_statuses = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "RESTART", "CANCELLED", "UNKNOWN")
-        _verify_filters(args.task_status, valid_task_statuses, warning_msg="Removing this status from the list of statuses to filter by...")
+        # Make sure task_status is valid
+        if self.args.task_status:
+            self.args.task_status = [x.upper() for x in self.args.task_status]
+            self._verify_filters(self.args.task_status, VALID_STATUS_FILTERS, warning_msg="Removing this status from the list of statuses to filter by...")
 
-    # Ensure return_code is valid
-    if args.return_code:
-        args.return_code = [f"MERLIN_{x.upper()}" for x in args.return_code]
-        valid_return_codes = ("MERLIN_SUCCESS", "MERLIN_SOFT_FAIL", "MERLIN_HARD_FAIL", "MERLIN_STOP_WORKERS", "MERLIN_RESTART", "MERLIN_RETRY")
-        _verify_filters(args.return_code, valid_return_codes, warning_msg="Removing this code from the list of return codes to filter by...")
+        # Ensure return_code is valid
+        if self.args.return_code:
+            # TODO remove this code block and uncomment the one below once you've
+            # implemented entries for restarts/retries
+            idx = 0
+            for ret_code_provided in self.args.return_code[:]:
+                ret_code_provided = ret_code_provided.upper()
+                if ret_code_provided in ("RETRY", "RESTART"):
+                    LOG.warning(f"The {ret_code_provided} filter is coming soon. Ignoring this filter for now...")
+                    self.args.return_code.remove(ret_code_provided)
+                else:
+                    self.args.return_code[idx] = f"MERLIN_{ret_code_provided}"
+                    idx += 1
+                
+            # self.args.return_code = [f"MERLIN_{x.upper()}" for x in self.args.return_code]
+            valid_return_codes = [f"MERLIN_{x}" for x in VALID_RETURN_CODES]
+            self._verify_filters(self.args.return_code, valid_return_codes, warning_msg="Removing this code from the list of return codes to filter by...")
 
-    # Ensure every task queue provided exists
-    if args.task_queues:
-        existing_queues = spec.get_queue_list(["all"], omit_tag=True)
-        _verify_filters(args.task_queues, existing_queues, warning_msg="Removing this queue from the list of queues to filter by...")
-    
-    # Ensure every worker provided exists
-    if args.workers:
-        worker_names = spec.get_worker_names()
-        _verify_filters(args.workers, worker_names, warning_msg="Removing this worker from the list of workers to filter by...")
+        # Ensure every task queue provided exists
+        if self.args.task_queues:
+            existing_queues = self.spec.get_queue_list(["all"], omit_tag=True)
+            self._verify_filters(self.args.task_queues, existing_queues, warning_msg="Removing this queue from the list of queues to filter by...")
+        
+        # Ensure every worker provided exists
+        if self.args.workers:
+            worker_names = self.spec.get_worker_names()
+            self._verify_filters(self.args.workers, worker_names, warning_msg="Removing this worker from the list of workers to filter by...")
 
+    def _process_workers(self):
+        """
+        Modifies the list of steps to display status for based on
+        the list of workers provided by the user.
+        """
+        # Remove duplicates
+        workers_provided = list(set(self.args.workers))
 
-def get_latest_study(studies: List[str]) -> str:
-    """
-    Given a list of studies, get the latest one.
+        # Get a map between workers and steps
+        worker_step_map = self.spec.get_worker_step_map()
 
-    :param `studies`: A list of studies to sort through
-    :returns: The latest study in the list provided
-    """
-    # We can assume the newest study is the last one to be added to the list of potential studies
-    newest_study = studies[-1]
-    newest_timestring = newest_study[-15:]
-    newest_study_date = ws_time_to_td(newest_timestring)
+        # Append steps associated with each worker provided
+        for wp in workers_provided:
+            # Check for invalid workers
+            if wp not in worker_step_map:
+                LOG.warning(f"Worker with name {wp} does not exist for this study.")
+            else:
+                for step in worker_step_map[wp]:
+                    if step not in self.args.steps:
+                        self.args.steps.append(step)
 
-    # Check that the newest study somehow isn't the last entry
-    for study in studies:
-        temp_timestring = study[-15:]
-        date_to_check = ws_time_to_td(temp_timestring)
-        if date_to_check > newest_study_date:
-            newest_study = study
-            newest_study_date = date_to_check
-    
-    return newest_study
+    def _process_task_queue(self):
+        """
+        Modifies the list of steps to display status for based on
+        the list of task queues provided by the user.
+        """
+        # Remove duplicate queues
+        queues_provided = list(set(self.args.task_queues))
 
+        # Get a map between queues and steps
+        queue_step_relationship = self.spec.get_queue_step_relationship()
 
-def obtain_study(study_output_dir: str, num_studies: int, potential_studies: List[Tuple[int, str]], no_prompts: bool) -> str:
-    """
-    Grab the study that the user wants to view the status of based on a list of potential studies provided.
+        # Append steps associated with each task queue provided
+        for qp in queues_provided:
+            # Check for invalid task queues
+            queue_with_celery_tag = f"{CONFIG.celery.queue_tag}{qp}"
+            if queue_with_celery_tag not in queue_step_relationship:
+                LOG.warning(f"Task queue with name {qp} does not exist for this study.")
+            else:
+                for step in queue_step_relationship[queue_with_celery_tag]:
+                    if step not in self.args.steps:
+                        self.args.steps.append(step)
 
-    :param `study_output_dir`: A string representing the output path of a study; equivalent to $(OUTPUT_PATH)
-    :param `num_studies`: The number of potential studies we found
-    :param `potential_studies`: The list of potential studies we found; Each entry is of the form (index, potential_study_name)
-    :param `no_prompts`: A CLI flag for the status command representing whether the user wants CLI prompts or not
-    :returns: A directory path to the study that the user wants to view the status of ("study_output_dir/selected_potential_study")
-    """
-    study_to_check = f"{study_output_dir}/"
-    if num_studies == 0:
-        raise ValueError("Could not find any potential studies.")
-    if num_studies > 1:
-        # Get the latest study
-        if no_prompts:
-            LOG.info("Choosing the latest study...")
-            potential_studies = [study for _, study in potential_studies]
-            latest_study = get_latest_study(potential_studies)
-            LOG.info(f"Chose {latest_study}")
-            study_to_check += latest_study
-        # Ask the user which study to view
+    def _create_step_tracker(self) -> Dict[str, List[str]]:
+        """
+        Creates a dictionary of started and unstarted steps that we
+        will display the status for.
+
+        :param `workspace`: The output directory for a study
+        :param `steps_to_check`: A list of steps to view the status of
+        :returns: A dictionary mapping of started and unstarted steps. Values are lists of step names.
+        """
+        step_tracker = {"started_steps": [], "unstarted_steps": []}
+        started_steps = next(os.walk(self.workspace))[1]
+        started_steps.remove("merlin_info")
+        steps_to_check = self.args.steps.copy()
+
+        for sstep in started_steps:
+            if sstep in steps_to_check:
+                step_tracker["started_steps"].append(sstep)
+                steps_to_check.remove(sstep)
+        step_tracker["unstarted_steps"] = steps_to_check
+
+        return step_tracker
+
+    def _remove_steps_without_statuses(self):
+        """
+        After applying filters, there's a chance that certain steps will still exist
+        in self.requested_statuses but won't have any tasks to view the status of so
+        we'll remove those here.
+        """
+        result = deepcopy(self.requested_statuses)
+        for step_name, overall_step_info in self.requested_statuses.items():
+            sub_step_workspaces = sorted(list(overall_step_info.keys() - NON_WORKSPACE_KEYS))
+            if len(sub_step_workspaces) == 0:
+                del result[step_name]
+
+        self.requested_statuses = result
+
+    def get_steps_to_display(self) -> Dict[str, List[str]]:
+        """
+        Generates a list of steps to display the status for based on information
+        provided to the merlin status command by the user.
+
+        :returns: A dictionary of started and unstarted steps for us to display the status of
+        """
+        existing_steps = self.spec.get_study_step_names()
+
+        if ("all" in self.args.steps) and (not self.args.task_queues) and (not self.args.workers):
+            self.args.steps = existing_steps
         else:
-            print(f"Found {num_studies-1} potential studies:")
-            display.tabulate_info(potential_studies, headers=["Index", "Study Name"])
-            prompt = "Which study would you like to view the status of? Use the index on the left: "
-            index = -1
-            while index < 1 or index > num_studies:
-                try:
-                    index = int(input(prompt))
-                    if index < 1 or index > num_studies:
-                        raise ValueError
-                except ValueError:
-                        print(f"{display.ANSI_COLORS['RED']}Input must be an integer between 1 and {num_studies}.{display.ANSI_COLORS['RESET']}")
-                        prompt = "Enter a different index: "
-            study_to_check += potential_studies[index-1][1]
-    else:
-        # Only one study was found so we'll just assume that's the one the user wants
-        study_to_check += potential_studies[0][1]
-    
-    return study_to_check
+            # This won't matter anymore since task_queues or workers is not None here
+            if "all" in self.args.steps:
+                self.args.steps = []
 
+            # Add steps to start based on task queues and/or workers provided
+            if self.args.task_queues:
+                self._process_task_queue()
+            if self.args.workers:
+                self._process_workers()
 
-def load_from_spec(args: "Argparse Namespace", filepath: str) -> Tuple[str, "MerlinSpec"]:
-    """
-    Get the desired workspace from the user and load up it's yaml spec
-    for further processing.
+            # Sort the steps to start by the order they show up in the study
+            for i, estep in enumerate(existing_steps):
+                if estep in self.args.steps:
+                    self.args.steps.remove(estep)
+                    self.args.steps.insert(i, estep)
 
-    :param `args`: The namespace given by ArgumentParser with flag info
-    :param `filepath`: The filepath to a spec given by the user
+        # Filter the steps to display status for by started/unstarted
+        step_tracker = self._create_step_tracker()
 
-    :returns: The workspace of the study we'll check the status for and a MerlinSpec
-              object loaded in from the workspace's merlin_info subdirectory.
-    """
-    from merlin.main import get_spec_with_expansion, get_merlin_spec_with_override, verify_dirpath  # pylint: disable=C0415
+        return step_tracker
 
-    # Get the spec and the output path for the spec
-    args.specification = filepath
-    spec_provided, _ = get_merlin_spec_with_override(args)
-    if spec_provided.output_path:
-        study_output_dir = verify_dirpath(spec_provided.output_path)
-    else:
-        study_output_dir = verify_dirpath(".")
+    @property
+    def num_requested_statuses(self):
+        """
+        Count the number of task statuses in a the requested_statuses dict.
+        We need to ignore non workspace keys when we count.
+        """
+        num_statuses = 0
+        for status_info in self.requested_statuses.values():
+            num_statuses += len(status_info.keys() - NON_WORKSPACE_KEYS)
+        return num_statuses
 
-    # Build a list of potential study output directories
-    study_output_subdirs = next(os.walk(study_output_dir))[1]
-    timestamp_regex = r"\d{8}-\d{6}"
-    potential_studies = []
-    num_studies = 0
-    for subdir in study_output_subdirs:
-        match = re.search(rf"{spec_provided.name}_{timestamp_regex}", subdir)
-        if match:
-            potential_studies.append((num_studies+1, subdir))
-            num_studies += 1
+    def apply_filters(self, filter_types: List[str], filters: List[str]):
+        """
+        Given a list of filters, filter the dict of requested statuses by them.
 
-    # Obtain the correct study that the user wants to view the status of based on the list of potential studies we just built
-    study_to_check = obtain_study(study_output_dir, num_studies, potential_studies, args.no_prompts)
+        :param `filter_types`: A list of str denoting the types of filters we're applying
+        :param `filters`: A list of filters to apply to the dict of statuses we read in
+        """
+        LOG.info(f"Filtering tasks using these filters: {filters}")
 
-    # Verify the directory that the user selected is a merlin study output directory
-    if "merlin_info" not in next(os.walk(study_to_check))[1]:
-        LOG.error(f"The merlin_info subdirectory was not found. {study_to_check} may not be a Merlin study output directory.")
+        # Create a deep copy of the dict so we can make changes to it while we iterate
+        result = deepcopy(self.requested_statuses)
+        for step_name, overall_step_info in self.requested_statuses.items():
+            for sub_step_workspace, task_status_info in overall_step_info.items():
+                # Ignore non workspace keys
+                if sub_step_workspace in NON_WORKSPACE_KEYS:
+                    continue
 
-    # Grab the spec saved to the merlin info directory in case something in the current spec has changed since starting the study
-    actual_spec = get_spec_with_expansion(f"{study_to_check}/merlin_info/{spec_provided.name}.expanded.yaml")
+                # Search for our filters
+                found_a_match = False
+                for filter_type in filter_types:
+                    if task_status_info[filter_type] in filters:
+                        found_a_match = True
+                        break
 
-    return study_to_check, actual_spec
+                # If our filters aren't a match for this task then delete it
+                if not found_a_match:
+                    del result[step_name][sub_step_workspace]
 
+        # Get the number of tasks found with our filters
+        self.requested_statuses = result
+        self._remove_steps_without_statuses()
+        LOG.info(f"Found {self.num_requested_statuses} tasks matching your filters.")
 
-def load_from_workspace(workspace: str) -> "MerlinSpec":
-    """
-    Create a MerlinSpec object based on the spec file in the workspace.
+        # If no tasks were found set the status dict to empty
+        if self.num_requested_statuses == 0:
+            self.requested_statuses = {}
 
-    :param `workspace`: A directory path to an existing study's workspace
-    :returns: A MerlinSpec object loaded from the workspace provided by the user
-    """
-    from merlin.main import verify_dirpath, get_spec_with_expansion  # pylint: disable=C0415
+    def apply_max_tasks_limit(self):
+        """
+        Given a number representing the maximum amount of tasks to display, filter the dict of statuses
+        to that number.
+        """
+        # Make sure the max_tasks variable is set to a reasonable number and store that value
+        if self.args.max_tasks and self.args.max_tasks > self.num_requested_statuses:
+            self.args.max_tasks = self.num_requested_statuses
+        max_tasks = self.args.max_tasks
 
-    # Grab the spec file from the directory provided
-    info_dir = verify_dirpath(f"{workspace}/merlin_info")
-    spec_file = ""
-    for root, dirs, files in os.walk(info_dir):
-        for f in files:
-            if f.endswith(".expanded.yaml"):
-                spec_file = f"{info_dir}/{f}"
+        new_status_dict = {}
+        for step_name, overall_step_info in self.requested_statuses.items():
+            new_status_dict[step_name] = {}
+            sub_step_workspaces = sorted(list(overall_step_info.keys() - NON_WORKSPACE_KEYS))
+
+            # If there are more status entries than max_tasks will allow then we need to remove some
+            if len(sub_step_workspaces) > self.args.max_tasks:
+                workspaces_to_delete = set(sub_step_workspaces) - set(sub_step_workspaces[:self.args.max_tasks])
+                for ws_to_delete in workspaces_to_delete:
+                    del overall_step_info[ws_to_delete]
+                self.args.max_tasks = 0
+            # Otherwise, subtract how many tasks there are in this step from max_tasks
+            else:
+                self.args.max_tasks -= len(sub_step_workspaces)
+
+            # Merge in the task statuses that we're allowing
+            dict_deep_merge(new_status_dict[step_name], overall_step_info)
+        
+        LOG.info(f"Limited the number of tasks to display to {max_tasks} tasks.")
+
+        # Set the new requested statuses with the max_tasks limit and remove steps without statuses
+        self.requested_statuses = new_status_dict
+        self._remove_steps_without_statuses()
+
+        # Reset max_tasks
+        self.args.max_tasks = max_tasks
+
+    def get_step_statuses(self, step_workspace: str, started_step_name: str) -> Dict[str, List[str]]:
+        """
+        Given a step workspace and the name of the step, read in all the statuses
+        for the step and return them in a dict.
+
+        :param `step_workspace`: The path to the step we're going to read statuses from
+        :param `started_step_name`: The name of the started step that we're getting statuses from
+        :returns: A dict of statuses for the given step
+        """
+        step_statuses = {}
+        num_statuses_read = 0
+
+        # Traverse the step workspace and look for MERLIN_STATUS files
+        for root, dirs, files in os.walk(step_workspace):
+            if "MERLIN_STATUS.json" in files:
+                status_file = f"{root}/MERLIN_STATUS.json"
+                lock = FileLock(f"{root}/status.lock")
+                statuses_read = read_status(status_file, lock)
+
+                # Count the number of statuses we just read
+                for step_name, status_info in statuses_read.items():
+                    if started_step_name not in self.real_step_name_map:
+                        self.real_step_name_map[started_step_name] = [step_name]
+                    else:
+                        self.real_step_name_map[started_step_name].append(step_name)
+                    num_statuses_read += len(status_info.keys() - NON_WORKSPACE_KEYS)
+                
+                # Merge the statuses we read with the dict tracking all statuses for this step
+                dict_deep_merge(step_statuses, statuses_read)
+
+            # If we've read all the statuses then we're done
+            if num_statuses_read == self.tasks_per_step[started_step_name]:
                 break
-        break
+            # This shouldn't get hit
+            elif num_statuses_read > self.tasks_per_step[started_step_name]:
+                LOG.error(f"Read {num_statuses_read} statuses when there should only be {self.tasks_per_step[started_step_name]} tasks in total.")
+                break
 
-    # Make sure we got a spec file and load it in
-    if not spec_file:
-        LOG.error(f"Spec file not found in {info_dir}. Cannot display status.")
-        return
-    spec = get_spec_with_expansion(spec_file)
+        return step_statuses
 
-    return spec
+    def get_requested_statuses(self):
+        """
+        Populate the requested_statuses dict with statuses that the user is looking to find.
+        Filters for steps, task queues, workers will have already been applied
+        when creating the step_tracker attribute. Remaining filters will be applied here.
+        """
+        LOG.info(f"Reading task statuses from {self.workspace}")
 
+        # Read in all statuses from the started steps the user wants to see
+        for sstep in self.step_tracker["started_steps"]:
+            step_workspace = f"{self.workspace}/{sstep}"
+            step_statuses = self.get_step_statuses(step_workspace, sstep)
+            dict_deep_merge(self.requested_statuses, step_statuses)
 
-def process_workers(spec: "MerlinSpec", workers_provided: List[str], steps_to_check: List[str]):
-    """
-    Modifies the list of steps to display status for based on
-    the list of workers provided by the user.
+        # Count how many statuses in total that we just read in
+        LOG.info(f"Read in {self.num_requested_statuses} statuses.")
 
-    :param `spec`: MerlinSpec object for a study
-    :param `workers_provided`: A list of workers provided by the user
-    :param `steps_to_check`: A list of steps to view the status for
-    """
-    # Remove duplicates
-    workers_provided = list(set(workers_provided))
+        # Build a list of filters provided
+        filter_types = set()
+        filters = []
+        if self.args.task_status:
+            filter_types.add("Status")
+            filters += self.args.task_status
+        if self.args.return_code:
+            filter_types.add("Return Code")
+            filters += self.args.return_code
 
-    # Get a map between workers and steps
-    worker_step_map = spec.get_worker_step_map()
+        # Apply the filters if necessary
+        if filters:
+            self.apply_filters(list(filter_types), filters)
 
-    # Append steps associated with each worker provided
-    for wp in workers_provided:
-        # Check for invalid workers
-        if wp not in worker_step_map:
-            LOG.warning(f"Worker with name {wp} does not exist for this study.")
+        # Limit the number of tasks to display if necessary
+        if self.args.max_tasks and self.args.max_tasks > 0:
+            self.apply_max_tasks_limit()
+
+    def query_task_by_task_status(self):
+        """
+        Displays a task-by-task view of the status based on user filter(s).
+        """
+        # Check if there's any filters remaining after the verification process
+        filters_remaining = any(
+            [
+                self.args.task_queues,
+                self.args.workers,
+                self.args.task_status,
+                self.args.return_code,
+                (self.args.steps and self.args.steps != self.spec.get_study_step_names()),
+                self.args.max_tasks
+            ]
+        )
+
+        # If there's no filters left, there's nothing to display
+        if not filters_remaining:
+            LOG.warning("No filters remaining, cannot find tasks to display.")
         else:
-            for step in worker_step_map[wp]:
-                if step not in steps_to_check:
-                    steps_to_check.append(step)
+            # Check that there's statuses found and display them
+            if self.requested_statuses:
+                display.display_status_task_by_task(self.requested_statuses, self)
+
+    def query_summary_status(self):
+        """Displays the high level summary of the status"""
+        display.display_status_summary(self)
+
+    def get_user_filters(self) -> List[str]:
+        """
+        Get a filter on the statuses to display from the user. Possible options
+        for filtering:
+            - A str MAX_TASKS -> will ask the user for another input that's equivalent to the --max-tasks flag
+            - A list of statuses -> equivalent to the --task-status flag
+            - A list of return codes -> equivalent to the --return-code flag
+            - An exit keyword to leave the filter prompt without filtering
+
+        :returns: A list of strings to filter by
+        """
+        # Build the filter options
+        filter_info = {
+            "Filter Type": [
+                "Put a limit on the number of tasks to display",
+                "Filter by status",
+                "Filter by return code",
+                "Exit without filtering"
+            ], 
+            "Description": [
+                "Enter 'MAX_TASKS'",
+                f"Enter a comma separated list of the following statuses you'd like to see: {VALID_STATUS_FILTERS}",
+                f"Enter a comma separated list of the following return codes you'd like to see: {VALID_RETURN_CODES}",
+                f"Enter one of the following: {VALID_EXIT_FILTERS}"
+            ],
+            "Example": [
+                "MAX_TASKS",
+                "FAILED, CANCELLED",
+                "SOFT_FAIL, RETRY",
+                "EXIT"
+            ]
+        }
+
+        # Display the filter options
+        filter_option_renderer = status_renderer_factory.get_renderer("table", disable_theme=True, disable_pager=True)
+        filter_option_renderer.layout(status_data=filter_info)
+        filter_option_renderer.render()
+
+        # Obtain and validate the filter provided by the user
+        invalid_filter = True
+        while invalid_filter:
+            user_filters = input("How would you like to filter the tasks? ")
+            # Remove spaces and split user filters by commas
+            user_filters = user_filters.replace(" ", "")
+            user_filters = user_filters.split(",")
+
+            # Ensure every filter is valid
+            for i, entry in enumerate(user_filters):
+                entry = entry.upper()
+                if entry not in ALL_VALID_FILTERS:
+                    invalid_filter = True
+                    print(f"Invalid input: {entry}. Input must be one of the following {ALL_VALID_FILTERS}")
+                    break
+                else:
+                    invalid_filter = False
+                    user_filters[i] = entry
+
+        return user_filters
+
+    def get_user_max_tasks(self) -> int:
+        """
+        Get a limit for the amount of tasks to display from the user.
+
+        :returns: An int representing the max amount of tasks to display
+        """
+        invalid_input = True
+
+        while invalid_input:
+            try:
+                user_max_tasks = int(input("What limit would you like to set? (must be an integer greater than 0) "))
+                if user_max_tasks > 0:
+                    invalid_input = False
+            except ValueError:
+                continue
+
+        return user_max_tasks
+
+    def filter_via_prompts(self):
+        """
+        Interact with the user to manage how many/which tasks are displayed. This helps to
+        prevent us from overloading the terminal by displaying a bazillion tasks at once.
+        """
+        # Initialize a list to store the filter types we're going to apply
+        filter_types = []
+
+        # Get the filters from the user
+        user_filters = self.get_user_filters()
+
+        # TODO remove this once restart/retry functionality is implemented
+        if "RESTART" in user_filters:
+            LOG.warning("The RESTART filter is coming soon. Ignoring this filter for now...")
+            user_filters.remove("RESTART")
+        if "RETRY" in user_filters:
+            LOG.warning("The RETRY filter is coming soon. Ignoring this filter for now...")
+            user_filters.remove("RETRY")
+
+        # Variable to track whether the user wants to stop filtering
+        exit_without_filtering = False
+
+        # Process the filters
+        max_tasks_found = False
+        for i, user_filter in enumerate(user_filters):
+            # Case 1: Exit command found, stop filtering
+            if user_filter in ("E", "EXIT"):
+                exit_without_filtering = True
+            # Case 2: MAX_TASKS command found, get the limit from the user
+            elif user_filter == "MAX_TASKS":
+                max_tasks_found = True
+            # Case 3: Status filter provided, add it to the list of filter types
+            elif user_filter in VALID_STATUS_FILTERS and "Status" not in filter_types:
+                filter_types.append("Status")
+            # Case 4: Return Code filter provided, add it to the list of filter types and add the MERLIN prefix
+            elif user_filter in VALID_RETURN_CODES:
+                user_filters[i] = f"MERLIN_{user_filter}"
+                if "Return Code" not in filter_types:
+                    filter_types.append("Return Code")
+        
+        # Apply the filters and tell the user how many tasks match the filters (if necessary)
+        if not exit_without_filtering:
+            self.apply_filters(filter_types, user_filters)
+
+        # Apply max tasks limit (if necessary)
+        if max_tasks_found:
+            user_max_tasks = self.get_user_max_tasks()
+            self.args.max_tasks = user_max_tasks
+            self.apply_max_tasks_limit()
+
+    def format_json_dump(self, date: datetime) -> Dict:
+        """
+        Build the dict of statuses to dump to the json file.
+
+        :param `date`: A timestamp for us to mark when this status occurred
+        :returns: A dictionary that's ready to dump to a json outfile
+        """
+        # Statuses are already in json format so we'll just add a timestamp for the dump here
+        return {date: self.requested_statuses}
+
+    def format_csv_dump(self, date: datetime) -> Dict:
+        """
+        Add the timestamp to the statuses to write.
+
+        :param `date`: A timestamp for us to mark when this status occurred
+        :returns: A dict equivalent of formatted statuses with a timestamp entry at the start of the dict.
+        """
+        # Reformat the statuses to a new dict where the keys are the column labels and rows are the values
+        statuses_to_write = self.format_status_for_display()
+
+        # Add date entries as the first column then update this dict with the statuses we just reformatted
+        statuses_with_timestamp = {"Time of Status": [date] * len(statuses_to_write["Step Name"])}
+        statuses_with_timestamp.update(statuses_to_write)
+
+        return statuses_with_timestamp
+
+    def dump(self):
+        """
+        Dump the status information to a file.
+        """
+        # Get a timestamp for this dump
+        date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Handle different file types
+        if self.args.dump.endswith(".csv"):
+            # Build the lists of information/labels we'll need
+            dump_info = self.format_csv_dump(date)
+        elif self.args.dump.endswith(".json"):
+            # Build the dict of info to dump to the json file
+            dump_info = self.format_json_dump(date)
+
+        # Dump the information
+        dump_handler(self.args.dump, dump_info)
+
+    def format_status_for_display(self) -> Dict:
+        """
+        Reformat our statuses to display so they can use Maestro's status renderer layouts.
+
+        :param `statuses_to_format`: A dict of statuses that we need to reformat
+        :returns: A formatted dictionary where each key is a column and the values are the rows
+                  of information to display for that column.
+        """
+        reformatted_statuses = {
+            "Step Name": [],
+            "Step Workspace": [],
+            "Status": [],
+            "Return Code": [],
+            "Elapsed Time": [],
+            "Run Time": [],
+            "Restarts": [],
+            "Cmd Parameters": [],
+            "Restart Parameters": [],
+            "Task Queue": [],
+            "Worker Name": [],
+        }
+
+        # Loop through all statuses
+        for step_name, overall_step_info in self.requested_statuses.items():
+            for sub_step_workspace, task_status_info in overall_step_info.items():
+                # Ignore non workspace keys for now
+                if sub_step_workspace in NON_WORKSPACE_KEYS:
+                    continue
+
+                # Put the step name and workspace in each entry
+                reformatted_statuses["Step Name"].append(step_name)
+                reformatted_statuses["Step Workspace"].append(sub_step_workspace)
+
+                # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
+                for key, val in task_status_info.items():
+                    reformatted_statuses[key].append(val)
+            
+            # Handle the non workspace keys
+            num_statuses = len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
+            for key in NON_WORKSPACE_KEYS:
+                try:
+                    # Set the val_to_add value based on if a value exists for the key
+                    val_to_add = "-------"
+                    if overall_step_info[key]:
+                        val_to_add = overall_step_info[key]
+                except KeyError:
+                    # This key error will happen for Task Queue and Worker Name columns on local runs
+                    # So just remove that entry in the reformatted statuses dict if necessary
+                    if key in reformatted_statuses:
+                        del reformatted_statuses[key]
+                    continue
+                # Add the val_to_add entry for each row
+                key_entries = [val_to_add] * num_statuses
+                reformatted_statuses[key].extend(key_entries)
+
+        return reformatted_statuses
 
 
-def process_task_queue(spec: "MerlinSpec", queues_provided: List[str], steps_to_check: List[str]):
-    """
-    Modifies the list of steps to display status for based on
-    the list of task queues provided by the user.
-
-    :param `spec`: MerlinSpec object for a study
-    :param `queues_provided`: A list of task queues provided by the user
-    :param `steps_to_check`: A list of steps to view the status for
-    """
-    # Remove duplicate queues
-    queues_provided = list(set(queues_provided))
-
-    # Get a map between queues and steps
-    queue_step_relationship = spec.get_queue_step_relationship()
-
-    # Append steps associated with each task queue provided
-    for qp in queues_provided:
-        # Check for invalid task queues
-        if f"{CONFIG.celery.queue_tag}{qp}" not in queue_step_relationship:
-            LOG.warning(f"Task queue with name {qp} does not exist for this study.")
-        else:
-            for step in queue_step_relationship[f"{CONFIG.celery.queue_tag}{qp}"]:
-                if step not in steps_to_check:
-                    steps_to_check.append(step)
-
-
-def create_step_tracker(workspace: str, steps_to_check: List[str]) -> Dict[str, List[str]]:
-    """
-    Creates a dictionary of started and unstarted steps that we
-    will display the status for.
-
-    :param `workspace`: The output directory for a study
-    :param `steps_to_check`: A list of steps to view the status of
-    :returns: A dictionary mapping of started and unstarted steps. Values are lists of step names.
-    """
-    step_tracker = {"started_steps": [], "unstarted_steps": []}
-    started_steps = next(os.walk(workspace))[1]
-    started_steps.remove("merlin_info")
-
-    for sstep in started_steps:
-        if sstep in steps_to_check:
-            step_tracker["started_steps"].append(sstep)
-            steps_to_check.remove(sstep)
-    step_tracker["unstarted_steps"] = steps_to_check
-
-    return step_tracker
-
-
-def get_steps_to_display(workspace: str, spec: "MerlinSpec", steps: List[str], task_queues: List[str], workers: List[str]) -> Dict[str, List[str]]:
-    """
-    Generates a list of steps to display the status for based on information
-    provided to the merlin status command by the user.
-
-    :param `workspace`: The output directory for a study
-    :param `spec`: MerlinSpec object for a study
-    :param `steps`: A list of steps to view the status of
-    :param `task_queues`: A list of task_queues to view the status of
-    :param `workers`: A list of workers to view the status of tasks they're running
-    :returns: A dictionary of started and unstarted steps for us to display the status of
-    """
-    existing_steps = spec.get_study_step_names()
-
-    if ("all" in steps) and (not task_queues) and (not workers):
-        steps = existing_steps
-    else:
-        # This won't matter anymore since task_queues or workers is not None here
-        if "all" in steps:
-            steps = []
-
-        # Add steps to start based on task queues and/or workers provided
-        if task_queues:
-            process_task_queue(spec, task_queues, steps)
-        if workers:
-            process_workers(spec, workers, steps)
-
-        # Sort the steps to start by the order they show up in the study
-        idx = 0
-        for estep in existing_steps:
-            if estep in steps:
-                steps.remove(estep)
-                steps.insert(idx, estep)
-                idx += 1
-
-    # Filter the steps to display status for by started/unstarted
-    step_tracker = create_step_tracker(workspace, steps)
-
-    return step_tracker
-
-
-def read_status(status_file: Union[Path, str], display_fnf_message=True) -> str:
+def read_status(status_file: str, lock: FileLock, display_fnf_message: Optional[bool] = True) -> Dict:
     """
     Locks the status file for reading and returns its contents.
 
     :param `status_file`: The path to the status file that we'll read from
+    :param `lock`: A FileLock object that we'll use to lock the file
     :param `display_fnf_message`: If True, display the file not found warning. Otherwise don't.
-    :returns: The contents of the status file
+    :returns: A dict of the contents in the status file
     """
-    # Convert workspace to a Path object if necessary and obtain a filelock object for this status file
-    if isinstance(status_file, str):
-        status_file = Path(status_file)
-    status = ""
     try:
-        status = status_file.read_text()
+        # The status files will need locks when reading to avoid race conditions
+        with lock.acquire(timeout=10):
+            with open(status_file, "r") as f:
+                statuses_read = json.load(f)
+    # Handle timeouts
+    except Timeout:
+        LOG.warning(f"Timed out when trying to read status from {status_file}")
+        statuses_read = {}
+    # Handle FNF errors
     except FileNotFoundError:
         if display_fnf_message:
-            LOG.warning(f"File not found: {status_file}.")
-        status = "FNF"
-    return status
+            LOG.warning(f"Could not find {status_file}")
+        statuses_read = {}
+
+    return statuses_read

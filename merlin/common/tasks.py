@@ -31,6 +31,7 @@
 """Test tasks."""
 from __future__ import absolute_import, unicode_literals
 
+import json
 import logging
 import os
 import re
@@ -51,6 +52,7 @@ from merlin.exceptions import HardFailException, InvalidChainException, RestartE
 from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
 from merlin.study.status import read_status
+from merlin.utils import dict_deep_merge
 
 
 retry_exceptions = (
@@ -136,9 +138,9 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             LOG.info(f"Skipping step '{step_name}' in '{step_dir}'.")
             result = ReturnCode.OK
         else:
+            LOG.info(f"Executing step '{step_name}' in '{step_dir}'...")
             result = step.execute(config)
-
-        step.mstep.mark_end(result)
+            step.mstep.mark_end(result)
         
         if result == ReturnCode.OK:
             LOG.info(f"Step '{step_name}' in '{step_dir}' finished successfully.")
@@ -299,6 +301,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
         relative_paths = [
             os.path.dirname(sample_index.get_path_to_sample(sample_id + min_sample_id)) for sample_id in range(num_samples)
         ]
+        top_lvl_workspace = chain_[0].get_workspace()
         LOG.debug(f"recursing grandparent with relative paths {relative_paths}")
         for step in chain_:
             # Make a list of new task objects with modified cmd and workspace
@@ -319,6 +322,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
                         ),
                     ),
                     adapter_config=adapter_config,
+                    top_lvl_workspace=top_lvl_workspace,
                 )
                 new_step.set(queue=step.get_task_queue())
                 new_chain.append(new_step)
@@ -327,7 +331,8 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
 
         condense_sig = condense_status_files.s(
             sample_index=sample_index,
-            workspace=chain_[0].get_workspace()
+            workspace=top_lvl_workspace,
+            condensed_workspace=chain_[0].mstep.condensed_workspace,
         ).set(
             queue=chain_[0].get_task_queue(),
         )
@@ -476,38 +481,63 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:
         LOG.warning(f"Sample index not found. Cannot condense status files.")
         return None
 
-    # Get the step (or step/parameter) workspace
+    # Get the full step (or step/parameter) workspace
     workspace = kwargs.pop("workspace", None)
     if not workspace:
         LOG.warning(f"Workspace not found. Cannot condense status files.")
+        return None
     workspace = Path(workspace)
 
+    # Get a condensed version of the workspace
+    condensed_workspace = kwargs.pop("condensed_workspace", None)
+    if not condensed_workspace:
+        LOG.warning(f"Condensed workspace not provided. Cannot condense status files.")
+        return None
+
     # Read in all the statuses from this sample index
-    statuses_to_condense = []
+    condensed_statuses = {}
     condition = lambda c: c.is_parent_of_leaf
     for path, node in sample_index.traverse(conditional=condition):
-        status_file = workspace / path / "MERLIN_STATUS"
-        status = read_status(status_file)
+        # Read in the status data
+        sample_workspace = f"{str(workspace)}/{path}"
+        status_file = f"{sample_workspace}/MERLIN_STATUS.json"
+        lock = FileLock(f"{sample_workspace}/status.lock")
+        status = read_status(status_file, lock)
+        
+        # This for loop is just to get the step name that we don't have; it's really not even looping
+        for step_name, step_status_info in status.items():
+            try:
+                # Make sure the status for this sample workspace is in a finished state (not initialized or running)
+                if status[step_name][f"{condensed_workspace}/{path}"]["Status"] not in ("INITIALIZED", "RUNNING"):
+                    # Add the status data to the statuses we'll write to the condensed file and remove this status file
+                    dict_deep_merge(condensed_statuses, status)
+                    os.remove(status_file)
+            except KeyError:
+                LOG.warning(f"Key error when reading from {sample_workspace}")
 
-        # If the task's status isn't in a finish state, ignore it (this shouldn't happen)
-        if status.split(" ")[1] in ("INITIALIZED", "RUNNING"):
-            continue
-        # Otherwise, add the status to the list of statuses to condense and delete the status file
-        else:
-            statuses_to_condense.append(status)
-            status_file.unlink()
+    # If there are statuses to write to the condensed status file then write them
+    if condensed_statuses:
+        # Lock the file to avoid race conditions
+        condensed_status_file = f"{str(workspace)}/MERLIN_STATUS.json"
+        condensed_lock_file = f"{str(workspace)}/status.lock"
+        lock = FileLock(condensed_lock_file)
+        try:
+            # If the condensed file already exists, grab the statuses from it
+            if os.path.exists(condensed_status_file):
+                existing_condensed_statuses = read_status(condensed_status_file, lock)
 
-    # Condense the statuses and append them to the top level status file
-    condensed_status = "".join(statuses_to_condense)
-    condensed_lock_file = f"{str(workspace)}/status.lock"
-    lock = FileLock(condensed_lock_file)
-    try:
-        with lock.acquire(timeout=10):
-            with open(f"{str(workspace)}/MERLIN_STATUS", "a") as f:
-                f.write(condensed_status)
-    except Timeout:
-        # Raising this celery timeout instead will trigger a restart for this task
-        raise TimeoutError
+                # Merging the statuses we're condensing into the already existing statuses
+                # because it's faster at scale than vice versa
+                dict_deep_merge(existing_condensed_statuses, condensed_statuses)
+                condensed_statuses = existing_condensed_statuses
+
+            # Write the new condensed statuses
+            with lock.acquire(timeout=10):
+                with open(condensed_status_file, "w") as f:
+                    json.dump(condensed_statuses, f)
+        except Timeout:
+            # Raising this celery timeout instead will trigger a restart for this task
+            raise TimeoutError
 
     return ReturnCode.OK
 

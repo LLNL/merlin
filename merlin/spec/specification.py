@@ -673,12 +673,13 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         # Get the number of samples used
         samples = []
-        if self.merlin["samples"]["file"]:
+        if self.merlin["samples"] and self.merlin["samples"]["file"]:
             samples = load_array_file(self.merlin["samples"]["file"])
         num_samples = len(samples)
 
         # Get the column labels, the parameter labels, the number of parameters, and the steps in the study
-        column_labels = self.merlin["samples"]["column_labels"]
+        if num_samples > 0:
+            column_labels = self.merlin["samples"]["column_labels"]
         parameter_labels = list(self.get_parameters().labels.keys())
         num_params = self.get_parameters().length
         study_steps = self.get_study_steps()
@@ -696,7 +697,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 tasks_per_step[step.name] = num_params
 
             # If merlin expansion is needed with column labels, this step uses samples
-            if needs_merlin_expansion(cmd, restart_cmd, column_labels):
+            if num_samples > 0 and needs_merlin_expansion(cmd, restart_cmd, column_labels):
                 tasks_per_step[step.name] *= num_samples
         
         return tasks_per_step

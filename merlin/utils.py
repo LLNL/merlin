@@ -498,6 +498,30 @@ def contains_shell_ref(string):
     return False
 
 
+def dict_deep_merge(a, b, path=None):
+    """
+    This function recursively merges dict b into dict a. The built-in
+    merge of dictionaries in python (dict(a) | dict(b)) does not do a
+    deep merge so this function is necessary. Credit to this stack
+    overflow post: https://stackoverflow.com/a/7205107.
+
+    :param `a`: A dict that we'll merge b into
+    :param `b`: A dict that we want to merge into a
+    :param `path`: The path down the dictionary tree that we're currently at
+    """
+    if path is None: path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                dict_deep_merge(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass # same leaf value
+            else:
+                raise Exception(f"Conflict at {'.'.join(path + [str(key)])}")
+        else:
+            a[key] = b[key]
+
+
 # Time utilities
 def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
     """Convert a timestring to a timedelta object.

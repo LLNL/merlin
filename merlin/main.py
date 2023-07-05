@@ -257,6 +257,10 @@ def query_status(args):
     """
     print(banner_small)
 
+    # Ensure task server is valid
+    if args.task_server != "celery":
+        raise ValueError("Currently the only supported task server is celery.")
+
     # Make sure dump is valid if provided
     if args.dump and (not args.dump.endswith(".csv") and not args.dump.endswith(".json")):
         raise ValueError("The --dump option takes a filename that must end with .csv or .json")
@@ -273,7 +277,18 @@ def query_status(args):
             LOG.error(f"The file or directory path {args.spec_or_workspace} does not exist.")
             return
 
-    status.query_status(args, spec_display, file_or_ws)
+    # Build a list of filters and create the status instance
+    filters = [args.task_queues, args.workers, args.task_status, args.return_code, (args.steps and "all" not in args.steps), args.max_tasks]
+    filters_provided = any(filters)
+    status_obj = status.Status(args, spec_display, file_or_ws)
+
+    # Handle output appropriately
+    if args.dump:
+        status_obj.dump()
+    elif filters_provided:
+        status_obj.query_task_by_task_status()
+    else:
+        status_obj.query_summary_status()
 
 def query_queues(args):
     """
@@ -307,7 +322,7 @@ def query_queues(args):
         # Dump queue information to an output file if necessary
         if args.dump:
             ret.pop(0)
-            status.dump_handler(ret, args.dump, queue_dump=True)
+            router.dump_queue_info(ret, args.dump)
 
 
 def query_workers(args):
@@ -963,14 +978,14 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
-    filter_group = status_cmd.add_argument_group("filter options")
-    filter_group.add_argument(
+    status_filter_group = status_cmd.add_argument_group("filter options")
+    status_filter_group.add_argument(
         "--max-tasks",
         action="store",
         type=int,
         help="Sets a limit on how many tasks can be displayed"
     )
-    filter_group.add_argument(
+    status_filter_group.add_argument(
         "--return-code",
         action="store",
         nargs="+",
@@ -978,7 +993,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         choices=status.VALID_RETURN_CODES,
         help="Filter which tasks to display based on their return code"
     )
-    filter_group.add_argument(
+    status_filter_group.add_argument(
         "--steps",
         nargs="+",
         type=str,
@@ -986,13 +1001,13 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         default=["all"],
         help="Filter which tasks to display based on the steps they're associated with",
     )
-    filter_group.add_argument(
+    status_filter_group.add_argument(
         "--task-queues",
         nargs="+",
         type=str,
         help="Filter which tasks to display based on the task queue they're in",
     )
-    filter_group.add_argument(
+    status_filter_group.add_argument(
         "--task-status",
         action="store",
         nargs="+",
@@ -1000,37 +1015,37 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         choices=status.VALID_STATUS_FILTERS,
         help="Filter which tasks to display based on their status"
     )
-    filter_group.add_argument(
+    status_filter_group.add_argument(
         "--workers",
         nargs="+",
         type=str,
         help="Filter which tasks to display based on which workers are processing them",
     )
-    display_group = status_cmd.add_argument_group("display options")
-    display_group.add_argument(
+    status_display_group = status_cmd.add_argument_group("display options")
+    status_display_group.add_argument(
         "--cb-help",
         action="store_true",
         help="Colorblind help; uses different symbols to represent different statuses"
     )
-    display_group.add_argument(
+    status_display_group.add_argument(
         "--disable-pager",
         action="store_true",
         help="Turn off the pager functionality when viewing the status"
     )
-    display_group.add_argument(
+    status_display_group.add_argument(
         "--disable-theme",
         action="store_true",
         help="Turn off styling for the status layout (If you want styling but it's not working, try modifying "
         "the MANPAGER or PAGER environment variables to be 'less -r'; i.e. export MANPAGER='less -r')"
     )
-    display_group.add_argument(
+    status_display_group.add_argument(
         "--layout",
         type=str,
         choices=status_renderer_factory.get_layouts(),
         default="default",
         help="Alternate status layouts [Default: %(default)s]"
     )
-    display_group.add_argument(
+    status_display_group.add_argument(
         "--no-prompts",
         action="store_true",
         help="Ignore any prompts provided. This will default to the latest study \

@@ -32,6 +32,8 @@
 import csv
 import json
 import logging
+import os
+
 from typing import Dict, List
 
 
@@ -125,3 +127,24 @@ class Dumper:
                 outfile.seek(0)
             # Write to the outfile
             json.dump(json_to_dump, outfile)
+
+
+def dump_handler(dump_file: str, dump_info: Dict):
+    """
+    Help handle the process of creating a Dumper object and writing
+    to an output file.
+
+    :param `dump_file`: A filepath to the file we're dumping to
+    :param `dump_info`: A dict of information that we'll be dumping to `dump_file`
+    """
+    # Create a dumper object to help us write to dump_file
+    dumper = Dumper(dump_file)
+
+    # Get the correct file write mode and log message
+    fmode = 'a' if os.path.exists(dump_file) else 'w'
+    write_type = 'Writing' if fmode == 'w' else 'Appending'
+    LOG.info(f"{write_type} to {dump_file}...")
+
+    # Write the output
+    dumper.write(dump_info, fmode)
+    LOG.info(f"{write_type} complete.")

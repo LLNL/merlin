@@ -29,12 +29,15 @@
 ###############################################################################
 """This module represents all of the logic that goes into a step"""
 
+import json
 import logging
+import os
 import re
 from contextlib import suppress
 from copy import deepcopy
-from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
+
+from filelock import FileLock
 
 from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
@@ -42,12 +45,13 @@ from maestrowf.datastructures.core.study import StudyStep
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.study.script_adapter import MerlinScriptAdapter
+from merlin.study.status import read_status
 
 
 LOG = logging.getLogger(__name__)
 
 
-def needs_merlin_expansion(cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords=True) -> bool:
+def needs_merlin_expansion(cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords: Optional[bool] = True) -> bool:
     """
     Check if the cmd or restart cmd provided have variables that need expansion.
 
@@ -145,7 +149,7 @@ class MerlinStepRecord(_StepRecord):
             },
             ReturnCode.DRY_OK: {
                 "maestro state": State.DRYRUN,
-                "result": "DRY_SUCCESS",
+                "result": "MERLIN_DRY_SUCCESS",
             },
             ReturnCode.RETRY: {
                 "maestro state": State.FINISHED,
@@ -169,7 +173,7 @@ class MerlinStepRecord(_StepRecord):
             },
             "UNKNOWN": {
                 "maestro state": State.UNKNOWN,
-                "result": "UNRECOGNIZED_RETURN_CODE",
+                "result": "MERLIN_UNRECOGNIZED",
             },
         }
 
@@ -201,9 +205,9 @@ class MerlinStepRecord(_StepRecord):
 
     def _update_status_file(
         self,
-        result: str = None,
-        task_server: str = "celery",
-        finished: bool = False,
+        result: Optional[str] = None,
+        task_server: Optional[str] = "celery",
+        finished: Optional[bool] = False,
     ):
         """
         Puts together a dictionary full of status info and creates a signature
@@ -226,44 +230,48 @@ class MerlinStepRecord(_StepRecord):
             State.UNKNOWN: "UNKNOWN"
         }
 
-        if not result:
-            result = "-------"
+        status_file = f"{self.workspace.value}/MERLIN_STATUS.json"
 
-        # Create the parameter strings for both the cmd and restart cmd
-        cmd_params = restart_params = "-------"
-        if self.merlin_step.params["cmd"]:
-            cmd_params = ";".join([f"{param}:{value}" for param, value in self.merlin_step.params["cmd"].items()])
-        if self.merlin_step.params["restart_cmd"]:
-            restart_params = ";".join([f"{param}:{value}" for param, value in self.merlin_step.params["restart_cmd"].items()])
+        # If the status file already exists then we can just add to it
+        if os.path.exists(status_file):
+            lock = FileLock(f"{self.workspace.value}/status.lock")
+            status_info = read_status(status_file, lock)
+        else:
+            # Create the parameter entries
+            cmd_params = restart_params = None
+            if self.merlin_step.params["cmd"]:
+                cmd_params = ";".join([f"{param}:{value}" for param, value in self.merlin_step.params["cmd"].items()])
+            if self.merlin_step.params["restart_cmd"]:
+                restart_params = ";".join([f"{param}:{value}" for param, value in self.merlin_step.params["restart_cmd"].items()])
 
-        # Put together a list of status info
-        status_info = {
-            "Step Name": self.name,
-            "Step Workspace": self.condensed_workspace,
+            # Inititalize the status_info dict we'll be dumping to the status file
+            status_info = {
+                self.name: {
+                    "Cmd Parameters": cmd_params,
+                    "Restart Parameters": restart_params,
+                }
+            }
+
+            # Add celery specific info
+            if task_server == "celery":
+                from merlin.celery import app  # pylint: disable=C0415
+                from merlin.common.tasks import get_current_queue, get_current_worker  # pylint: disable=C0415
+                # If the tasks are always eager, this is a local run and we won't have workers running
+                if not app.conf.task_always_eager:
+                    status_info[self.name]["Task Queue"] = get_current_queue()
+                    status_info[self.name]["Worker Name"] = get_current_worker()
+        
+        # Put together a dict of status info
+        status_info[self.name][self.condensed_workspace] = {
             "Status": state_translator[self.status],
             "Return Code": result,
             "Elapsed Time": self.elapsed_time,
             "Run Time": self.run_time,
             "Restarts": self.restarts,
-            "Cmd Parameters": cmd_params,
-            "Restart Parameters": restart_params,
         }
 
-        # Add celery specific info
-        if task_server == "celery":
-            from merlin.celery import app  # pylint: disable=C0415
-            from merlin.common.tasks import get_current_queue, get_current_worker  # pylint: disable=C0415
-            # If the tasks are always eager, this is a local run and we won't have workers running
-            if not app.conf.task_always_eager:
-                status_info["Task Queue"] = get_current_queue()
-                status_info["Worker Name"] = get_current_worker()
-        
-        # Create the status line and write it to the status file
-        status_line = " ".join(str(info_item) for info_item in status_info.values())
-        status_line += "\n"
-
-        status_file = Path(f"{self.workspace.value}/MERLIN_STATUS")
-        status_file.write_text(status_line)
+        with open(status_file, "w") as f:
+            json.dump(status_info, f)
 
 
 class Step:
@@ -467,8 +475,6 @@ class Step:
 
         self.mstep.setup_workspace()
         self.mstep.generate_script(adapter)
-        step_name = self.name()
-        step_dir = self.get_workspace()
 
         # dry run: sets up a workspace without executing any tasks. Each step's
         # workspace directory is created, and each step's command script is
@@ -477,7 +483,6 @@ class Step:
         if adapter_config["dry_run"] is True:
             return ReturnCode.DRY_OK
 
-        LOG.info(f"Executing step '{step_name}' in '{step_dir}'...")
         # TODO: once maestrowf is updated so that execute returns a
         # submissionrecord, then we need to return the record.return_code here
         # at that point, we can drop the use of MerlinScriptAdapter above, and
