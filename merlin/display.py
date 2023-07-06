@@ -39,14 +39,12 @@ import time
 import traceback
 from datetime import datetime
 from multiprocessing import Pipe, Process
-from typing import Dict, List
+from typing import Dict
 
 from kombu import Connection
 from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
-
-# from merlin.celery import app
 from merlin.config import broker, results_backend
 from merlin.config.configfile import default_config_info
 from merlin.study.status_renderers import status_renderer_factory
@@ -56,7 +54,8 @@ LOG = logging.getLogger("merlin")
 DEFAULT_LOG_LEVEL = "INFO"
 
 # Colors here are chosen based on the Bang Wong color palette (https://www.nature.com/articles/nmeth.1618)
-# Another useful link for comparing colors: https://davidmathlogic.com/colorblind/#%2356B4E9-%230072B2-%23009E73-%23D55E00-%23F0E442-%23E69F00-%23666666
+# Another useful link for comparing colors:
+# https://davidmathlogic.com/colorblind/#%2356B4E9-%230072B2-%23009E73-%23D55E00-%23F0E442-%23E69F00-%23666666
 ANSI_COLORS = {
     "RESET": "\033[0m",
     "GREY": "\033[38;2;102;102;102m",
@@ -87,7 +86,7 @@ class ConnProcess(Process):
         try:
             Process.run(self)
             self._cconn.send(None)
-        except Exception as e:  # pylint: disable=W0718,C0103
+        except Exception as e:  # pylint: disable=C0103,W0703
             trace_back = traceback.format_exc()
             self._cconn.send((e, trace_back))
             # raise e  # You can still rise this exception if you need to
@@ -144,7 +143,7 @@ def _examine_connection(server, sconf, excpts):
         if conn_check.exception:
             error, _ = conn_check.exception
             raise error
-    except Exception as e:  # pylint: disable=W0718,C0103
+    except Exception as e:  # pylint: disable=C0103,W0703
         print(f"{server} connection: Error")
         excpts[server] = e
     else:
@@ -166,7 +165,7 @@ def display_config_info():
         conf["broker server"] = broker.get_connection_string(include_password=False)
         sconf["broker server"] = broker.get_connection_string()
         conf["broker ssl"] = broker.get_ssl_config()
-    except Exception as e:  # pylint: disable=W0718,C0103
+    except Exception as e:  # pylint: disable=C0103,W0703
         conf["broker server"] = "Broker server error."
         excpts["broker server"] = e
 
@@ -174,7 +173,7 @@ def display_config_info():
         conf["results server"] = results_backend.get_connection_string(include_password=False)
         sconf["results server"] = results_backend.get_connection_string()
         conf["results ssl"] = results_backend.get_ssl_config()
-    except Exception as e:  # pylint: disable=W0718,C0103
+    except Exception as e:  # pylint: disable=C0103,W0703
         conf["results server"] = "No results server configured or error."
         excpts["results server"] = e
 
@@ -233,7 +232,7 @@ def print_info(args):  # pylint: disable=W0613
     print("")
 
 
-def display_status_task_by_task(statuses_to_display: Dict[str, List], status_obj: "Status"):  # noqa: F821
+def display_status_task_by_task(status_obj: "Status"):  # noqa: F821
     """
     Displays a low level overview of the status of a study. This is a task-by-task
     status display where each task will show:
@@ -242,7 +241,6 @@ def display_status_task_by_task(statuses_to_display: Dict[str, List], status_obj
     If too many tasks are found and the pager is disabled, prompts will appear for the user to decide
     what to do that way we don't overload the terminal (unless the no-prompts flag is provided).
 
-    :param `statuses_to_display`: A dict of statuses to display
     :param `status_obj`: A Status object
     """
     args = status_obj.args
@@ -258,10 +256,11 @@ def display_status_task_by_task(statuses_to_display: Dict[str, List], status_obj
     # If the pager is disabled then we need to be careful not to overload the terminal with a bazillion tasks
     if args.disable_pager and not args.no_prompts:
         # Setting the limit at 250 tasks before asking for additional filters
-        while status_obj.num_requested_statuses > 250:
+        while status_obj.num_requested_statuses > 20:
             # See if the user wants to apply additional filters
             apply_additional_filters = input(
-                f"About to display {status_obj.num_requested_statuses} tasks without a pager. Would you like to apply additional filters? (y/n/c) "
+                f"About to display {status_obj.num_requested_statuses} tasks without a pager. "
+                "Would you like to apply additional filters? (y/n/c) "
             ).lower()
             while apply_additional_filters not in ("y", "n", "c"):
                 apply_additional_filters = input(
@@ -379,7 +378,7 @@ def display_status_summary(status_obj: "Status"):  # noqa: F821
 
         # Display the progress bar and summary for the step
         print(f"\n{sstep}\n")
-        progress_bar(
+        display_progress_bar(
             num_completed_tasks,
             status_obj.tasks_per_step[sstep],
             state_info=state_info,
@@ -393,13 +392,13 @@ def display_status_summary(status_obj: "Status"):  # noqa: F821
     # For each unstarted step, print an empty progress bar
     for ustep in status_obj.step_tracker["unstarted_steps"]:
         print(f"\n{ustep}\n")
-        progress_bar(0, 100, suffix="Complete", length=progress_bar_width)
+        display_progress_bar(0, 100, suffix="Complete", length=progress_bar_width)
         print(f"\n{ustep} has not started yet.\n")
         print("-" * (terminal_size.columns // 2))
 
 
 # Credit to this stack overflow post: https://stackoverflow.com/a/34325723
-def progress_bar(
+def display_progress_bar(  # pylint: disable=R0913,R0914
     current,
     total,
     state_info=None,
@@ -408,7 +407,7 @@ def progress_bar(
     decimals=1,
     length=80,
     fill="█",
-    printEnd="\n",
+    print_end="\n",
     color=None,
     cb_help=False,
 ):
@@ -423,7 +422,7 @@ def progress_bar(
     :param `decimals`:    positive number of decimals in percent complete (Int)
     :param `length`:      character length of bar (Int)
     :param `fill`:        bar fill character (Str)
-    :param `printEnd`:    end character (e.g. "\r", "\r\n") (Str)
+    :param `print_end`:    end character (e.g. "\r", "\r\n") (Str)
     :param `color`:       color of the progress bar (ANSI Str) (overridden by state_info)
     :param `cb_help`:     true if color blind help is needed; false otherwise (Bool)
     """
@@ -449,16 +448,16 @@ def progress_bar(
             if partial_filled_length > 0:
                 if cb_help:
                     fill = val["fill"]
-                bar = fill * partial_filled_length
-                print(f"{val['color']}{bar}", end="")
+                progress_bar = fill * partial_filled_length
+                print(f"{val['color']}{progress_bar}", end="")
 
         # The remaining bar represents the number of tasks still incomplete
         remaining_bar = "-" * (length - total_filled_length)
-        print(f'{ANSI_COLORS["RESET"]}{remaining_bar}| {percent}% {suffix}', end=printEnd)
+        print(f'{ANSI_COLORS["RESET"]}{remaining_bar}| {percent}% {suffix}', end=print_end)
     # Print a normal progress bar
     else:
-        bar = fill * total_filled_length + "-" * (length - total_filled_length)
-        print(f"\r{prefix} |{bar}| {percent}% {suffix}", end=printEnd)
+        progress_bar = fill * total_filled_length + "-" * (length - total_filled_length)
+        print(f"\r{prefix} |{progress_bar}| {percent}% {suffix}", end=print_end)
 
 
 def tabulate_info(info, headers=None, color=None):

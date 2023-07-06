@@ -233,7 +233,7 @@ def _sort_valid_broker(broker, include_password):
     return get_redis_connection(include_password, use_ssl=True)
 
 
-def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:
+def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:  # pylint: disable=E1101
     """
     Return the ssl config based on the configuration specified in the
     `app.yaml` config file.
@@ -263,7 +263,7 @@ def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:
     except AttributeError:
         certs_path = None
 
-    broker_ssl: Union[bool, Dict[str, Union[str, ssl.VerifyMode]]] = get_ssl_entries(
+    broker_ssl: Union[bool, Dict[str, Union[str, ssl.VerifyMode]]] = get_ssl_entries(  # pylint: disable=E1101
         "Broker", broker, CONFIG.broker, certs_path
     )
 

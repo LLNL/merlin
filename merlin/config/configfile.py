@@ -206,7 +206,7 @@ def get_cert_file(server_type, config, cert_name, cert_path):
 
 def get_ssl_entries(
     server_type: str, server_name: str, server_config: Config, cert_path: str
-) -> Dict[str, Union[str, ssl.VerifyMode]]:
+) -> Dict[str, Union[str, ssl.VerifyMode]]:  # pylint: disable=E1101
     """
     Check if a ssl certificate file is present in the config
 
@@ -217,7 +217,7 @@ def get_ssl_entries(
     :return : The data needed to manage an ssl certification.
     :rtype : A Dict.
     """
-    server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
+    server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}  # pylint: disable=E1101
 
     keyfile: Optional[str] = get_cert_file(server_type, server_config, "keyfile", cert_path)
     if keyfile:
@@ -282,7 +282,7 @@ def process_ssl_map(server_name: str) -> Optional[Dict[str, str]]:
     return ssl_map
 
 
-def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dict[str, str]) -> Dict:
+def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dict[str, str]) -> Dict:  # pylint: disable=E1101
     """
     The different servers have different key var expectations, this updates the keys of the ssl_server dict with keys from
     the ssl_map if using rediss or mysql.
@@ -290,7 +290,7 @@ def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dic
     : param server_ssl : the dict constructed in get_ssl_entries, here updated with keys from ssl_map
     : param ssl_map : the dict holding special key:value pairs for rediss and mysql
     """
-    new_server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
+    new_server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}  # pylint: disable=E1101
 
     for key in server_ssl:
         if key in ssl_map:

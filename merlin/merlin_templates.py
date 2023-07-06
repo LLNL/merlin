@@ -66,7 +66,7 @@ def main():  # pylint: disable=C0116
         setup_logging(logger=LOG, log_level=DEFAULT_LOG_LEVEL, colors=True)
         args.func(args)
         sys.exit()
-    except Exception as ex:  # pylint: disable=W0718
+    except Exception as ex:  # pylint: disable=W0703
         print(ex)
         sys.exit(1)
 

@@ -34,7 +34,7 @@ Module of all Merlin-specific exception types.
 
 # Pylint complains that these exceptions are no different from Exception
 # but we don't care, we just need new names for exceptions here
-# pylint: disable=W0246
+# pylint: disable=W0235
 
 __all__ = (
     "RetryException",

@@ -44,7 +44,9 @@ class DAG:
     independent chains of tasks.
     """
 
-    def __init__(self, maestro_adjacency_table, maestro_values, column_labels, study_name, parameter_info):
+    def __init__(
+        self, maestro_adjacency_table, maestro_values, column_labels, study_name, parameter_info
+    ):  # pylint: disable=R0913
         """
         :param `maestro_adjacency_table`: An ordered dict showing adjacency of nodes. Comes from a maestrowf ExecutionGraph.
         :param `maestro_values`: An ordered dict of the values at each node. Comes from a maestrowf ExecutionGraph.

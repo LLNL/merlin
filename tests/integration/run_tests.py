@@ -256,7 +256,7 @@ def run_tests(args, tests):  # pylint: disable=R0914
         else:
             try:
                 passed, info = run_single_test(test)
-            except Exception as e:  # pylint: disable=C0103,W0718
+            except Exception as e:  # pylint: disable=C0103,W0703
                 print(e)
                 passed = False
                 info = None

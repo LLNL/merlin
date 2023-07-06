@@ -1,3 +1,4 @@
+# pylint: disable=C0302
 """The top level main function for invoking Merlin."""
 
 ###############################################################################
@@ -1079,7 +1080,8 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         type=str,
         dest="steps",
         default=["all"],
-        help="The specific steps in the YAML file you want to query the queues of. This option MUST be used with the --specification option",
+        help="The specific steps in the YAML file you want to query the queues of. "
+        "This option MUST be used with the --specification option",
     )
     queue_info.add_argument(
         "--task_server",

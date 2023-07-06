@@ -111,7 +111,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
      "next_in_chain": <Step object>} # merlin_step will be added to the current chord
                                      # with next_in_chain as an argument
     """
-    from merlin.study.step import Step
+    from merlin.study.step import Step  # pylint: disable=C0415
 
     step: Optional[Step] = None
     LOG.debug(f"args is {len(args)} long")
@@ -339,8 +339,8 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
         )
 
         LOG.debug("adding chain to chord")
-        chain_1D = get_1D_chain(all_chains)
-        launch_chain(self, chain_1D, condense_sig=condense_sig)
+        chain_1d = get_1d_chain(all_chains)
+        launch_chain(self, chain_1d, condense_sig=condense_sig)
         LOG.debug("chain added to chord")
     else:
         # recurse down the sample_index hierarchy
@@ -386,42 +386,43 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
 
         new_steps = [task_type.s(step, adapter_config=adapter_config).set(queue=step.get_task_queue())]
         all_chains.append(new_steps)
-    chain_1D = get_1D_chain(all_chains)
-    launch_chain(self, chain_1D)
+    chain_1d = get_1d_chain(all_chains)
+    launch_chain(self, chain_1d)
 
 
-def launch_chain(self: "Task", chain_1D: List["Signature"], condense_sig: "Signature" = None):  # noqa: F821
+def launch_chain(self: "Task", chain_1d: List["Signature"], condense_sig: "Signature" = None):  # noqa: F821
     """
     Given a 1D chain, appropriately launch the signatures it contains.
     If this is a local run, launch the signatures instantly.
     Otherwise, there's two cases:
-    a. The chain is dealing with samples (i.e. we'll need to condense status files) so create a new chord and add it to the current chord
+    a. The chain is dealing with samples (i.e. we'll need to condense status files)
+       so create a new chord and add it to the current chord
     b. The chain is NOT dealing with samples so we can just add the signatures to the current chord
 
     :param `self`: The current task
-    :param `chain_1D`: A 1-dimensional list of signatures to launch
+    :param `chain_1d`: A 1-dimensional list of signatures to launch
     :param `condense_sig`: A signature for condensing the status files. None if condensing isn't needed.
     """
     # If there's nothing in the chain then we won't have to launch anything so check that first
-    if chain_1D:
+    if chain_1d:
         # Case 1: local run; launch signatures instantly
         if self.request.is_eager:
-            for sig in chain_1D:
+            for sig in chain_1d:
                 sig.delay()
         # Case 2: non-local run; signatures need to be added to the current chord
         else:
             # Case a: we're dealing with a sample hierarchy and need to condense status files when we're done executing tasks
             if condense_sig:
-                # This chord makes it so we'll process all tasks in chain_1D and then condense the status files when they're done
-                sample_chord = chord(chain_1D, condense_sig)
+                # This chord makes it so we'll process all tasks in chain_1d, then condense the status files when they're done
+                sample_chord = chord(chain_1d, condense_sig)
                 self.add_to_chord(sample_chord, lazy=False)
             # Case b: no condensing is needed so just add all the signatures to the chord
             else:
-                for sig in chain_1D:
+                for sig in chain_1d:
                     self.add_to_chord(sig, lazy=False)
 
 
-def get_1D_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:  # noqa: F821
+def get_1d_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:  # noqa: F821
     """
     Convert a 2D list of chains into a 1D list.
     :param all_chains: Two-dimensional list of chains [chain_length][number_of_chains]
@@ -466,7 +467,7 @@ def get_1D_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:  # n
     retry_backoff=True,
     priority=get_priority(Priority.LOW),
 )
-def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:
+def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pylint: disable=R0914,W0613
     """
     After a section of the sample tree has finished, condense the status files.
 
@@ -497,15 +498,15 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:
 
     # Read in all the statuses from this sample index
     condensed_statuses = {}
-    for path, node in sample_index.traverse(conditional=lambda c: c.is_parent_of_leaf):
+    for path, _ in sample_index.traverse(conditional=lambda c: c.is_parent_of_leaf):
         # Read in the status data
         sample_workspace = f"{str(workspace)}/{path}"
         status_file = f"{sample_workspace}/MERLIN_STATUS.json"
-        lock = FileLock(f"{sample_workspace}/status.lock")
+        lock = FileLock(f"{sample_workspace}/status.lock")  # pylint: disable=E0110
         status = read_status(status_file, lock)
 
         # This for loop is just to get the step name that we don't have; it's really not even looping
-        for step_name, step_status_info in status.items():
+        for step_name, _ in status.items():
             try:
                 # Make sure the status for this sample workspace is in a finished state (not initialized or running)
                 if status[step_name][f"{condensed_workspace}/{path}"]["Status"] not in ("INITIALIZED", "RUNNING"):
@@ -518,13 +519,13 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:
     # If there are statuses to write to the condensed status file then write them
     if condensed_statuses:
         # Lock the file to avoid race conditions
-        condensed_status_file = f"{str(workspace)}/MERLIN_STATUS.json"
+        condensed_status_filepath = f"{str(workspace)}/MERLIN_STATUS.json"
         condensed_lock_file = f"{str(workspace)}/status.lock"
-        lock = FileLock(condensed_lock_file)
+        lock = FileLock(condensed_lock_file)  # pylint: disable=E0110
         try:
             # If the condensed file already exists, grab the statuses from it
-            if os.path.exists(condensed_status_file):
-                existing_condensed_statuses = read_status(condensed_status_file, lock)
+            if os.path.exists(condensed_status_filepath):
+                existing_condensed_statuses = read_status(condensed_status_filepath, lock)
 
                 # Merging the statuses we're condensing into the already existing statuses
                 # because it's faster at scale than vice versa
@@ -533,11 +534,11 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:
 
             # Write the new condensed statuses
             with lock.acquire(timeout=10):
-                with open(condensed_status_file, "w") as f:
-                    json.dump(condensed_statuses, f)
+                with open(condensed_status_filepath, "w") as condensed_status_file:
+                    json.dump(condensed_statuses, condensed_status_file)
         except Timeout:
             # Raising this celery timeout instead will trigger a restart for this task
-            raise TimeoutError
+            raise TimeoutError  # pylint: disable=W0707
 
     return ReturnCode.OK
 

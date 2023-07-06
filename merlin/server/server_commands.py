@@ -229,7 +229,7 @@ def start_server() -> bool:  # pylint: disable=R0911
 
     redis_out["image_pid"] = redis_out.pop("pid")
     redis_out["parent_pid"] = process.pid
-    redis_out["hostname"] = socket.gethostname()
+    redis_out["hostname"] = socket.gethostname()  # pylint: disable=E1101
     if not dump_process_file(redis_out, server_config.container.get_pfile_path()):
         LOG.error("Unable to create process file for container.")
         return False

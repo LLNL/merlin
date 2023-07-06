@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module handles all the functionality of getting the statuses of studies"""
 import json
 import logging
 import os
@@ -115,8 +116,10 @@ class Status:
 
         :param `study_output_dir`: A string representing the output path of a study; equivalent to $(OUTPUT_PATH)
         :param `num_studies`: The number of potential studies we found
-        :param `potential_studies`: The list of potential studies we found; Each entry is of the form (index, potential_study_name)
-        :returns: A directory path to the study that the user wants to view the status of ("study_output_dir/selected_potential_study")
+        :param `potential_studies`: The list of potential studies we found;
+                                    Each entry is of the form (index, potential_study_name)
+        :returns: A directory path to the study that the user wants
+                  to view the status of ("study_output_dir/selected_potential_study")
         """
         study_to_check = f"{study_output_dir}/"
         if num_studies == 0:
@@ -142,7 +145,8 @@ class Status:
                             raise ValueError
                     except ValueError:
                         print(
-                            f"{display.ANSI_COLORS['RED']}Input must be an integer between 1 and {num_studies}.{display.ANSI_COLORS['RESET']}"
+                            f"{display.ANSI_COLORS['RED']}Input must be an integer between 1 "
+                            f"and {num_studies}.{display.ANSI_COLORS['RESET']}"
                         )
                         prompt = "Enter a different index: "
                 study_to_check += potential_studies[index - 1][1]
@@ -182,7 +186,7 @@ class Status:
                 potential_studies.append((num_studies + 1, subdir))
                 num_studies += 1
 
-        # Obtain the correct study that the user wants to view the status of based on the list of potential studies we just built
+        # Obtain the correct study to view the status of based on the list of potential studies we just built
         study_to_check = self._obtain_study(study_output_dir, num_studies, potential_studies)
 
         # Verify the directory that the user selected is a merlin study output directory
@@ -191,7 +195,8 @@ class Status:
                 f"The merlin_info subdirectory was not found. {study_to_check} may not be a Merlin study output directory."
             )
 
-        # Grab the spec saved to the merlin info directory in case something in the current spec has changed since starting the study
+        # Grab the spec saved to the merlin info directory in case something
+        # in the current spec has changed since starting the study
         actual_spec = get_spec_with_expansion(f"{study_to_check}/merlin_info/{spec_provided.name}.expanded.yaml")
 
         return study_to_check, actual_spec
@@ -207,8 +212,8 @@ class Status:
         # Grab the spec file from the directory provided
         info_dir = verify_dirpath(f"{self.workspace}/merlin_info")
         spec_file = ""
-        for root, dirs, files in os.walk(info_dir):
-            for f in files:
+        for _, _, files in os.walk(info_dir):
+            for f in files:  # pylint: disable=C0103
                 if f.endswith(".expanded.yaml"):
                     spec_file = f"{info_dir}/{f}"
                     break
@@ -217,7 +222,7 @@ class Status:
         # Make sure we got a spec file and load it in
         if not spec_file:
             LOG.error(f"Spec file not found in {info_dir}. Cannot display status.")
-            return
+            return None
         spec = get_spec_with_expansion(spec_file)
 
         return spec
@@ -314,12 +319,12 @@ class Status:
         worker_step_map = self.spec.get_worker_step_map()
 
         # Append steps associated with each worker provided
-        for wp in workers_provided:
+        for worker_provided in workers_provided:
             # Check for invalid workers
-            if wp not in worker_step_map:
-                LOG.warning(f"Worker with name {wp} does not exist for this study.")
+            if worker_provided not in worker_step_map:
+                LOG.warning(f"Worker with name {worker_provided} does not exist for this study.")
             else:
-                for step in worker_step_map[wp]:
+                for step in worker_step_map[worker_provided]:
                     if step not in self.args.steps:
                         self.args.steps.append(step)
 
@@ -335,11 +340,11 @@ class Status:
         queue_step_relationship = self.spec.get_queue_step_relationship()
 
         # Append steps associated with each task queue provided
-        for qp in queues_provided:
+        for queue_provided in queues_provided:
             # Check for invalid task queues
-            queue_with_celery_tag = f"{CONFIG.celery.queue_tag}{qp}"
+            queue_with_celery_tag = f"{CONFIG.celery.queue_tag}{queue_provided}"
             if queue_with_celery_tag not in queue_step_relationship:
-                LOG.warning(f"Task queue with name {qp} does not exist for this study.")
+                LOG.warning(f"Task queue with name {queue_provided} does not exist for this study.")
             else:
                 for step in queue_step_relationship[queue_with_celery_tag]:
                     if step not in self.args.steps:
@@ -512,11 +517,11 @@ class Status:
         num_statuses_read = 0
 
         # Traverse the step workspace and look for MERLIN_STATUS files
-        for root, dirs, files in os.walk(step_workspace):
+        for root, _, files in os.walk(step_workspace):
             if "MERLIN_STATUS.json" in files:
-                status_file = f"{root}/MERLIN_STATUS.json"
-                lock = FileLock(f"{root}/status.lock")
-                statuses_read = read_status(status_file, lock)
+                status_filepath = f"{root}/MERLIN_STATUS.json"
+                lock = FileLock(f"{root}/status.lock")  # pylint: disable=E0110
+                statuses_read = read_status(status_filepath, lock)
 
                 # Count the number of statuses we just read
                 for step_name, status_info in statuses_read.items():
@@ -533,9 +538,10 @@ class Status:
             if num_statuses_read == self.tasks_per_step[started_step_name]:
                 break
             # This shouldn't get hit
-            elif num_statuses_read > self.tasks_per_step[started_step_name]:
+            if num_statuses_read > self.tasks_per_step[started_step_name]:
                 LOG.error(
-                    f"Read {num_statuses_read} statuses when there should only be {self.tasks_per_step[started_step_name]} tasks in total."
+                    f"Read {num_statuses_read} statuses when there should "
+                    f"only be {self.tasks_per_step[started_step_name]} tasks in total."
                 )
                 break
 
@@ -598,7 +604,7 @@ class Status:
         else:
             # Check that there's statuses found and display them
             if self.requested_statuses:
-                display.display_status_task_by_task(self.requested_statuses, self)
+                display.display_status_task_by_task(self)
 
     def query_summary_status(self):
         """Displays the high level summary of the status"""
@@ -652,9 +658,8 @@ class Status:
                     invalid_filter = True
                     print(f"Invalid input: {entry}. Input must be one of the following {ALL_VALID_FILTERS}")
                     break
-                else:
-                    invalid_filter = False
-                    user_filters[i] = entry
+                invalid_filter = False
+                user_filters[i] = entry
 
         return user_filters
 
@@ -716,8 +721,14 @@ class Status:
                 if "Return Code" not in filter_types:
                     filter_types.append("Return Code")
 
+        # Remove the MAX_TASKS entry so we don't try to filter using it
+        try:
+            user_filters.remove("MAX_TASKS")
+        except ValueError:
+            pass
+
         # Apply the filters and tell the user how many tasks match the filters (if necessary)
-        if not exit_without_filtering:
+        if not exit_without_filtering and user_filters:
             self.apply_filters(filter_types, user_filters)
 
         # Apply max tasks limit (if necessary)
@@ -828,11 +839,11 @@ class Status:
         return reformatted_statuses
 
 
-def read_status(status_file: str, lock: FileLock, display_fnf_message: Optional[bool] = True) -> Dict:
+def read_status(status_filepath: str, lock: FileLock, display_fnf_message: Optional[bool] = True) -> Dict:
     """
     Locks the status file for reading and returns its contents.
 
-    :param `status_file`: The path to the status file that we'll read from
+    :param `status_filepath`: The path to the status file that we'll read from
     :param `lock`: A FileLock object that we'll use to lock the file
     :param `display_fnf_message`: If True, display the file not found warning. Otherwise don't.
     :returns: A dict of the contents in the status file
@@ -840,16 +851,16 @@ def read_status(status_file: str, lock: FileLock, display_fnf_message: Optional[
     try:
         # The status files will need locks when reading to avoid race conditions
         with lock.acquire(timeout=10):
-            with open(status_file, "r") as f:
-                statuses_read = json.load(f)
+            with open(status_filepath, "r") as status_file:
+                statuses_read = json.load(status_file)
     # Handle timeouts
     except Timeout:
-        LOG.warning(f"Timed out when trying to read status from {status_file}")
+        LOG.warning(f"Timed out when trying to read status from {status_filepath}")
         statuses_read = {}
     # Handle FNF errors
     except FileNotFoundError:
         if display_fnf_message:
-            LOG.warning(f"Could not find {status_file}")
+            LOG.warning(f"Could not find {status_filepath}")
         statuses_read = {}
 
     return statuses_read

@@ -274,7 +274,7 @@ def query_celery_queues(queues):
                 try:
                     name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
                     found_queues.append((name, jobs, consumers))
-                except Exception as e:
+                except Exception as e:  # pylint: disable=W0703,C0103
                     LOG.warning(f"Cannot find queue {queue} on server.{e}")
     return found_queues
 
@@ -499,7 +499,7 @@ def examine_and_log_machines(worker_val, yenv) -> bool:
         if yenv:
             output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
             if output_path and not os.path.exists(output_path):
-                hostname = socket.gethostname()
+                hostname = socket.gethostname()  # pylint: disable=E1101
                 LOG.error(f"The output path, {output_path}, is not accessible on this host, {hostname}")
         else:
             LOG.warning(

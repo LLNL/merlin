@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module handles creating a formatted task-by-task status display"""
 from maestrowf import BaseStatusRenderer, FlatStatusRenderer, StatusRendererFactory
 from rich import box
 from rich.columns import Columns
@@ -36,6 +37,13 @@ from rich.theme import Theme
 
 
 class MerlinDefaultRenderer(BaseStatusRenderer):
+    """
+    This class handles the default status formatting for task-by-task display.
+    It will separate the display on a step-by-step basis.
+
+    Similar to Maestro's 'narrow' status display.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -53,6 +61,9 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
             "col_style_2": "blue",
             "background": "grey7",
         }
+
+        # Setup the status table that will contain our formatted status
+        self._status_table = Table.grid(padding=0)
 
     def create_param_subtable(self, params, param_type):
         """Create the parameter section of the display"""
@@ -77,7 +88,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
             step_params.add_column("val2", style=style, justify="right")
 
             param_idx = 0
-            for param_row in range(num_param_rows):
+            for _ in range(num_param_rows):
                 this_row = []
                 for param_str in param_list[param_idx : param_idx + 2]:
                     if param_str:
@@ -126,7 +137,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
         # Setup the column styles
         for nominal_col_num, col in enumerate(cols):
-            if col in list(self._theme_dict.keys()):
+            if col in list(self._theme_dict):
                 col_style = col
             else:
                 if nominal_col_num % 2 == 0:
@@ -138,14 +149,13 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
         return task_details
 
-    def layout(self, status_data, study_title=None, status_time=None):
+    def layout(self, status_data, study_title=None, data_filters=None, status_time=None):  # pylint: disable=R0912,R0914
         """Setup the layout of the display"""
         if isinstance(status_data, dict) and status_data:
             self._status_data = status_data
         else:
             raise ValueError("Status data must be a dict")
 
-        self._status_table = Table.grid(padding=0)
         table_title = ""
 
         if status_time:
@@ -219,7 +229,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
         # If we're disabling the theme, we need to set all themes in the theme dict to none
         if self.disable_theme:
-            for key in self._theme_dict.keys():
+            for key in self._theme_dict:
                 self._theme_dict[key] = "none"
 
         # Get the rich Console
@@ -235,6 +245,14 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
 
 class MerlinFlatRenderer(FlatStatusRenderer):
+    """
+    This class handles the flat status formatting for task-by-task display.
+    It will not separate the display on a step-by-step basis and instead group
+    all statuses together in a single table.
+
+    Similar to Maestro's 'flat' status display.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
         self.disable_theme = kwargs.pop("disable_theme", False)
@@ -257,7 +275,7 @@ class MerlinFlatRenderer(FlatStatusRenderer):
 
         # If we're disabling the theme, we need to set all themes in the theme dict to none
         if self.disable_theme:
-            for key in self._theme_dict.keys():
+            for key in self._theme_dict:
                 self._theme_dict[key] = "none"
 
         # Get the rich Console
@@ -273,6 +291,10 @@ class MerlinFlatRenderer(FlatStatusRenderer):
 
 
 class MerlinStatusRendererFactory(StatusRendererFactory):
+    """
+    This class keeps track of all available status layouts for Merlin.
+    """
+
     # TODO: when maestro releases the pager changes:
     # - remove init and render in MerlinFlatRenderer
     # - remove the get_renderer method below
@@ -280,13 +302,13 @@ class MerlinStatusRendererFactory(StatusRendererFactory):
     #   - these variables will be in BaseStatusRenderer in Maestro
     # - remove render method in MerlinDefaultRenderer
     #   - this will also be in BaseStatusRenderer in Maestro
-    def __init__(self):
+    def __init__(self):  # pylint: disable=W0231
         self._layouts = {
             "table": MerlinFlatRenderer,
             "default": MerlinDefaultRenderer,
         }
 
-    def get_renderer(self, layout, disable_theme, disable_pager):
+    def get_renderer(self, layout, disable_theme, disable_pager):  # pylint: disable=W0221
         """Get handle for specific layout renderer to instantiate
 
         Args:

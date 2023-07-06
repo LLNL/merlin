@@ -191,7 +191,7 @@ class MerlinStepRecord(_StepRecord):
             step_result += " (MAX RETRIES REACHED)"
 
         # Update the status file
-        self._update_status_file(result=step_result, finished=True)
+        self._update_status_file(result=step_result)
 
     def mark_restart(self):
         """Increment the number of restarts we've had for this step and update the status file"""
@@ -208,7 +208,6 @@ class MerlinStepRecord(_StepRecord):
         self,
         result: Optional[str] = None,
         task_server: Optional[str] = "celery",
-        finished: Optional[bool] = False,
     ):
         """
         Puts together a dictionary full of status info and creates a signature
@@ -217,7 +216,6 @@ class MerlinStepRecord(_StepRecord):
         :param `result`:  Optional parameter only applied when we've finished running
                           this step. String representation of a ReturnCode value.
         :param `task_server`: Optional parameter to define the task server we're using.
-        :param `finished`: Optional boolean parameter to represent if this step is now finished
         """
 
         # This dict is used for converting an enum value to a string for readability
@@ -231,12 +229,12 @@ class MerlinStepRecord(_StepRecord):
             State.UNKNOWN: "UNKNOWN",
         }
 
-        status_file = f"{self.workspace.value}/MERLIN_STATUS.json"
+        status_filepath = f"{self.workspace.value}/MERLIN_STATUS.json"
 
         # If the status file already exists then we can just add to it
-        if os.path.exists(status_file):
-            lock = FileLock(f"{self.workspace.value}/status.lock")
-            status_info = read_status(status_file, lock)
+        if os.path.exists(status_filepath):
+            lock = FileLock(f"{self.workspace.value}/status.lock")  # pylint: disable=E0110
+            status_info = read_status(status_filepath, lock)
         else:
             # Create the parameter entries
             cmd_params = restart_params = None
@@ -274,8 +272,8 @@ class MerlinStepRecord(_StepRecord):
             "Restarts": self.restarts,
         }
 
-        with open(status_file, "w") as f:
-            json.dump(status_info, f)
+        with open(status_filepath, "w") as status_file:
+            json.dump(status_info, status_file)
 
 
 class Step:

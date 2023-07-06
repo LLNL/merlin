@@ -39,7 +39,8 @@ from typing import Dict, List
 LOG = logging.getLogger(__name__)
 
 
-class Dumper:
+# TODO When we add more public methods we can get rid of this pylint disable
+class Dumper:  # pylint: disable=R0903
     """
     The dumper class is intended to help write information to files.
     Currently, the supported file types to dump to are csv and json.
@@ -98,7 +99,8 @@ class Dumper:
     def _csv_write(self, csv_to_dump: Dict[str, List], fmode: str):
         """
         Write information to a csv file.
-        :param `csv_to_dump`: The information to write to the csv file. Dict keys will be the column headers and values will be the column values.
+        :param `csv_to_dump`: The information to write to the csv file.
+                              Dict keys will be the column headers and values will be the column values.
         :param `fmode`: The file write mode ("w", "a", etc.)
         """
         # If we have statuses to write, create a csv writer object and write to the csv file

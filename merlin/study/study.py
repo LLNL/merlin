@@ -55,10 +55,11 @@ from merlin.utils import contains_shell_ref, contains_token, get_flux_cmd, load_
 LOG = logging.getLogger(__name__)
 
 
-# TODO: see if there's any way to split this class up (pylint doesn't like how many attributes there are)
+# TODO: see if there's any way to split this class up
+#       (pylint doesn't like how many attributes and public methods there are)
 # - Might be able to create an object to store files and handle file modifications
 # - If we don't want to create entirely new classes we could try grouping args into dicts
-class MerlinStudy:  # pylint: disable=R0902
+class MerlinStudy:  # pylint: disable=R0902,R0904
     """
     Represents a Merlin study run on a specification. Used for 'merlin run'.
 

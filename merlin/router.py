@@ -222,7 +222,8 @@ def query_queues(
                 add_specific_queue = True
                 if spec and specific_queue not in queues:
                     LOG.warning(
-                        f"Either couldn't find {specific_queue} in the existing queues for the spec file provided or this queue doesn't go with the steps provided with the --steps option. Ignoring this queue."
+                        f"Either couldn't find {specific_queue} in the existing queues for the spec file provided or "
+                        "this queue doesn't go with the steps provided with the --steps option. Ignoring this queue."
                     )
                     add_specific_queue = False
 

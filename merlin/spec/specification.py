@@ -53,8 +53,8 @@ from merlin.utils import load_array_file, repr_timedelta
 LOG = logging.getLogger(__name__)
 
 
-# Pylint complains we have too many instance attributes but it's fine
-class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
+# Pylint complains we have too many instance attributes and public methods but it's fine
+class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902,R0904
     """
     This class represents the logic for parsing the Merlin yaml
     specification.
@@ -74,7 +74,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
     """
 
     # Pylint says this call to super is useless but we'll leave it in case we want to add to __init__ in the future
-    def __init__(self):  # pylint: disable=W0246
+    def __init__(self):  # pylint: disable=W0235
         super().__init__()
 
     @property
@@ -735,7 +735,31 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 steps_with_params.append(step.name)
         return steps_with_params
 
-    def get_step_param_map(self):
+    def _create_param_maps(self, param_gen, expanded_labels, label_param_map):
+        """
+        Given a parameters block like so:
+        global.parameters:
+            TOKEN:
+                values: [param_val_1, param_val_2]
+                label: label.%%
+        Expanded labels will map tokens to their expanded labels (e.g. {'TOKEN': ['label.param_val_1', 'label.param_val_2']})
+        Label param map will map labels to parameter values
+        (e.g. {'label.param_val_1': {'TOKEN': 'param_val_1'}, 'label.param_val_2': {'TOKEN': 'param_val_2'}})
+
+        :param `param_gen`: A ParameterGenerator object from Maestro
+        :param `expanded_labels`: A dict to store the map from tokens to expanded labels
+        :param `label_param_map`: A dict to store the map from labels to parameter values
+        """
+        for token, orig_label in param_gen.labels.items():
+            for param in param_gen.parameters[token]:
+                expanded_label = orig_label.replace(param_gen.label_token, param)
+                if token in expanded_labels:
+                    expanded_labels[token].append(expanded_label)
+                else:
+                    expanded_labels[token] = [expanded_label]
+                label_param_map[expanded_label] = {token: param}
+
+    def get_step_param_map(self):  # pylint: disable=R0914
         """
         Create a mapping of parameters used for each step. Each step will have a cmd
         to search for parameters in and could also have a restart cmd to check, too.
@@ -756,23 +780,10 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         study_steps = self.get_study_steps()
         param_gen = self.get_parameters()
 
-        # Given a parameters block like so:
-        # global.parameters:
-        #     TOKEN:
-        #         values: [param_val_1, param_val_2]
-        #         label: label.%%
-        # Expanded labels will map tokens to their expanded labels (e.g. {'TOKEN': ['label.param_val_1', 'label.param_val_2']})
-        # Label param map will map labels to parameter values (e.g. {'label.param_val_1': {'TOKEN': 'param_val_1'}, 'label.param_val_2': {'TOKEN': 'param_val_2'}})
+        # Create maps between tokens and expanded labels, and between labels and parameter values
         expanded_labels = {}
         label_param_map = {}
-        for token, orig_label in param_gen.labels.items():
-            for param in param_gen.parameters[token]:
-                expanded_label = orig_label.replace(param_gen.label_token, param)
-                if token in expanded_labels:
-                    expanded_labels[token].append(expanded_label)
-                else:
-                    expanded_labels[token] = [expanded_label]
-                label_param_map[expanded_label] = {token: param}
+        self._create_param_maps(param_gen, expanded_labels, label_param_map)
 
         step_param_map = {}
         for step in study_steps:

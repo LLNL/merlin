@@ -229,7 +229,7 @@ class StepFileHasRegex(StudyOutputAware):
             with open(filename, "r") as textfile:
                 filetext = textfile.read()
             return self.is_within(filetext)
-        except Exception:  # pylint: disable=W0718
+        except Exception:  # pylint: disable=W0703
             return False
 
     def is_within(self, text):
@@ -338,7 +338,7 @@ class FileHasRegex(Condition):
             with open(self.filename, "r") as f:  # pylint: disable=C0103
                 filetext = f.read()
             return self.is_within(filetext)
-        except Exception:  # pylint: disable=W0718
+        except Exception:  # pylint: disable=W0703
             return False
 
     def is_within(self, text):

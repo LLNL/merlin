@@ -466,7 +466,8 @@ def check_machines(machines):
     :param `machines`: A single machine or list of machines to compare
                        with the current machine.
     """
-    local_hostname = socket.gethostname()
+    # pylint complains that gethostname is not a member but it is
+    local_hostname = socket.gethostname()  # pylint: disable=E1101
 
     if not isinstance(machines, (list, tuple)):
         machines = [machines]
@@ -497,29 +498,29 @@ def contains_shell_ref(string):
     return False
 
 
-def dict_deep_merge(a, b, path=None):
+def dict_deep_merge(dict_a, dict_b, path=None):
     """
-    This function recursively merges dict b into dict a. The built-in
-    merge of dictionaries in python (dict(a) | dict(b)) does not do a
+    This function recursively merges dict_b into dict_a. The built-in
+    merge of dictionaries in python (dict(dict_a) | dict(dict_b)) does not do a
     deep merge so this function is necessary. Credit to this stack
     overflow post: https://stackoverflow.com/a/7205107.
 
-    :param `a`: A dict that we'll merge b into
-    :param `b`: A dict that we want to merge into a
+    :param `dict_a`: A dict that we'll merge dict_b into
+    :param `dict_b`: A dict that we want to merge into dict_a
     :param `path`: The path down the dictionary tree that we're currently at
     """
     if path is None:
         path = []
-    for key in b:
-        if key in a:
-            if isinstance(a[key], dict) and isinstance(b[key], dict):
-                dict_deep_merge(a[key], b[key], path + [str(key)])
-            elif a[key] == b[key]:
+    for key in dict_b:
+        if key in dict_a:
+            if isinstance(dict_a[key], dict) and isinstance(dict_b[key], dict):
+                dict_deep_merge(dict_a[key], dict_b[key], path + [str(key)])
+            elif dict_a[key] == dict_b[key]:
                 pass  # same leaf value
             else:
                 raise Exception(f"Conflict at {'.'.join(path + [str(key)])}")
         else:
-            a[key] = b[key]
+            dict_a[key] = dict_b[key]
 
 
 # Time utilities
