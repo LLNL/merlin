@@ -389,7 +389,7 @@ Status (``merlin status``)
 --------------------------
 .. code:: bash
 
-    $ merlin status <input.yaml OR output_study/> [--cb-help] [--steps <step(s)>] [--task-queues <task queue(s)>] [--workers <worker(s)>] [--max-tasks <max num tasks to display>] [--task-status <task status(es)>] [--no-prompts] [--queue-info] [--csv <csv file>] [--task_server celery]
+    $ merlin status <input.yaml OR output_study/> [--dump <csv or json file>] [--task_server celery] [--vars <VARIABLES=<VARIABLES>>] [--max-tasks <max num tasks to display>] [--return-code <return code(s)>] [--steps <step(s)>] [--task-queues <task queue(s)>] [--task-status <task status(es)>] [--workers <worker(s)>] [--cb-help] [--disable-pager] [--disable-theme] [--layout <layout>] [--no-prompts]
 
 Summary View
 ^^^^^^^^^^^^
