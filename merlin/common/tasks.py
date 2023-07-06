@@ -80,7 +80,7 @@ STOP_COUNTDOWN = 60
 def get_current_worker():
     """Get the worker on the current running task from celery"""
     worker = re.search(r"@.+\.", current_task.request.hostname).group()
-    worker = worker[1:len(worker) - 1]
+    worker = worker[1 : len(worker) - 1]
     return worker
 
 
@@ -112,6 +112,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                                      # with next_in_chain as an argument
     """
     from merlin.study.step import Step
+
     step: Optional[Step] = None
     LOG.debug(f"args is {len(args)} long")
 
@@ -141,7 +142,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             LOG.info(f"Executing step '{step_name}' in '{step_dir}'...")
             result = step.execute(config)
             step.mstep.mark_end(result)
-        
+
         if result == ReturnCode.OK:
             LOG.info(f"Step '{step_name}' in '{step_dir}' finished successfully.")
             # touch a file indicating we're done with this step
@@ -199,7 +200,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
         else:
             LOG.warning(f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow.")
-        
+
         # queue off the next task in a chain while adding it to the current chord so that the chordfinisher actually
         # waits for the next task in the chain
         if next_in_chain is not None:
@@ -389,7 +390,7 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
     launch_chain(self, chain_1D)
 
 
-def launch_chain(self: "Task", chain_1D: List["Signature"], condense_sig: "Signature" = None):
+def launch_chain(self: "Task", chain_1D: List["Signature"], condense_sig: "Signature" = None):  # noqa: F821
     """
     Given a 1D chain, appropriately launch the signatures it contains.
     If this is a local run, launch the signatures instantly.
@@ -420,7 +421,7 @@ def launch_chain(self: "Task", chain_1D: List["Signature"], condense_sig: "Signa
                     self.add_to_chord(sig, lazy=False)
 
 
-def get_1D_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:
+def get_1D_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:  # noqa: F821
     """
     Convert a 2D list of chains into a 1D list.
     :param all_chains: Two-dimensional list of chains [chain_length][number_of_chains]
@@ -428,7 +429,7 @@ def get_1D_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:
     """
     chain_steps = []
     if len(all_chains) == 1:
-        # Steps will be enqueued in a single parallel group        
+        # Steps will be enqueued in a single parallel group
         chain_steps = all_chains[0]
 
     if len(all_chains) > 1:
@@ -478,32 +479,31 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:
     # Get the sample index object that we'll use for condensing
     sample_index = kwargs.pop("sample_index", None)
     if not sample_index:
-        LOG.warning(f"Sample index not found. Cannot condense status files.")
+        LOG.warning("Sample index not found. Cannot condense status files.")
         return None
 
     # Get the full step (or step/parameter) workspace
     workspace = kwargs.pop("workspace", None)
     if not workspace:
-        LOG.warning(f"Workspace not found. Cannot condense status files.")
+        LOG.warning("Workspace not found. Cannot condense status files.")
         return None
     workspace = Path(workspace)
 
     # Get a condensed version of the workspace
     condensed_workspace = kwargs.pop("condensed_workspace", None)
     if not condensed_workspace:
-        LOG.warning(f"Condensed workspace not provided. Cannot condense status files.")
+        LOG.warning("Condensed workspace not provided. Cannot condense status files.")
         return None
 
     # Read in all the statuses from this sample index
     condensed_statuses = {}
-    condition = lambda c: c.is_parent_of_leaf
-    for path, node in sample_index.traverse(conditional=condition):
+    for path, node in sample_index.traverse(conditional=lambda c: c.is_parent_of_leaf):
         # Read in the status data
         sample_workspace = f"{str(workspace)}/{path}"
         status_file = f"{sample_workspace}/MERLIN_STATUS.json"
         lock = FileLock(f"{sample_workspace}/status.lock")
         status = read_status(status_file, lock)
-        
+
         # This for loop is just to get the step name that we don't have; it's really not even looping
         for step_name, step_status_info in status.items():
             try:

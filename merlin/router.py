@@ -39,7 +39,7 @@ import logging
 import os
 import time
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from merlin.common.dumper import dump_handler
 from merlin.study.celeryadapter import (
@@ -94,13 +94,7 @@ def launch_workers(spec, steps, worker_args="", disable_logs=False, just_return_
     """
     if spec.merlin["resources"]["task_server"] == "celery":  # pylint: disable=R1705
         # Start workers
-        cproc = start_celery_workers(
-            spec,
-            steps,
-            worker_args,
-            disable_logs,
-            just_return_command
-        )
+        cproc = start_celery_workers(spec, steps, worker_args, disable_logs, just_return_command)
         return cproc
     else:
         LOG.error("Celery is not specified as the task server!")
@@ -141,7 +135,7 @@ def build_csv_queue_info(query_return: List[Tuple[str, int, int]], date: str) ->
     for name, jobs, consumers in query_return:
         csv_to_dump[f"{name}:tasks"] = [str(jobs)]
         csv_to_dump[f"{name}:consumers"] = [str(consumers)]
-    
+
     return csv_to_dump
 
 
@@ -172,7 +166,7 @@ def dump_queue_info(query_return: List[Tuple[str, int, int]], dump_file: str):
     :param `dump_file`: The filepath of the file we'll dump queue info to
     """
     # Get a timestamp for this dump
-    date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Handle different file types
     if dump_file.endswith(".csv"):
@@ -186,7 +180,13 @@ def dump_queue_info(query_return: List[Tuple[str, int, int]], dump_file: str):
     dump_handler(dump_file, dump_info)
 
 
-def query_queues(task_server: str, spec: "MerlinSpec", steps: List[str], specific_queues: List[str]):
+def query_queues(
+    task_server: str,
+    spec: "MerlinSpec",  # noqa: F821
+    steps: List[str],
+    specific_queues: List[str],
+    verbose: Optional[bool] = True,
+):
     """
     Queries status of queues.
 
@@ -194,6 +194,7 @@ def query_queues(task_server: str, spec: "MerlinSpec", steps: List[str], specifi
     :param `spec`: A MerlinSpec object or None
     :param `steps`: Spaced-separated list of stepnames to query. Default is all
     :param `specific_queues`: A list of queue names to query or None
+    :param `verbose`: A bool to determine whether to output log statements or not
     """
     from merlin.celery import app  # pylint: disable=C0415
 
@@ -201,18 +202,20 @@ def query_queues(task_server: str, spec: "MerlinSpec", steps: List[str], specifi
         queues = set()
         # If the user provided a spec file, get the queues from that spec
         if spec:
-            LOG.info(f"Querying queues for steps = {steps}")
+            if verbose:
+                LOG.info(f"Querying queues for steps = {steps}")
             queues = set(spec.get_queue_list(steps))
 
         # If the user provided specific queues, search for those
         if specific_queues:
-            LOG.info(f"Filtering queues to query by these specific queues: {specific_queues}")
+            if verbose:
+                LOG.info(f"Filtering queues to query by these specific queues: {specific_queues}")
             # Add the queue tag from celery if necessary
             celerize_queues(specific_queues)
             # Remove any potential duplicates and create a new set to store the queues we'll want to check
             specific_queues = set(specific_queues)
             specific_queues_to_check = set()
-            
+
             for specific_queue in specific_queues:
                 # If the user provided the --specification flag too then we'll need to check that this
                 # specific queue exists in the spec that they provided
@@ -230,12 +233,13 @@ def query_queues(task_server: str, spec: "MerlinSpec", steps: List[str], specifi
 
         # Default behavior with no options provided; display active queues
         if not spec and not specific_queues:
-            LOG.info("Querying active queues")
+            if verbose:
+                LOG.info("Querying active queues")
             existing_queues, _ = get_queues(app)
 
             # Check if there's any active queues currently
             if len(existing_queues) == 0:
-                LOG.warning(f"No active queues found. Are your workers running yet?")
+                LOG.warning("No active queues found. Are your workers running yet?")
                 return []
 
             # Set the queues we're going to check to be all existing queues by default
@@ -332,7 +336,7 @@ def check_merlin_status(args, spec):
     :param `args`: parsed CLI arguments
     :param `spec`: the parsed spec.yaml
     """
-    queue_status = query_status(args.task_server, spec, args.steps, verbose=False)
+    queue_status = query_queues(args.task_server, spec, args.steps, None, verbose=False)
 
     total_jobs = 0
     total_consumers = 0

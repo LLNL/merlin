@@ -581,4 +581,3 @@ class MerlinStudy:  # pylint: disable=R0902
                 param_labels.append(parameter_label)
 
         return param_labels
-

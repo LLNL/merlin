@@ -27,7 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-from maestrowf import BaseStatusRenderer, FlatStatusRenderer, NarrowStatusRenderer, StatusRendererFactory
+from maestrowf import BaseStatusRenderer, FlatStatusRenderer, StatusRendererFactory
 from rich import box
 from rich.columns import Columns
 from rich.console import Console
@@ -189,7 +189,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
             # If we're on a new step and it's not the first one we're looking at,
             # add the previously built task_details sub-table to the step sub table
             if curr_step != prev_step and row != 0:
-                step_table_tracker[prev_step].add_row("", task_details)
+                step_table_tracker[prev_step].add_row("", task_details)  # noqa: F821
 
             # If we're on a new step, create a new step sub-table and task details sub-table
             if curr_step != prev_step:
@@ -239,7 +239,7 @@ class MerlinFlatRenderer(FlatStatusRenderer):
         super().__init__(args, kwargs)
         self.disable_theme = kwargs.pop("disable_theme", False)
         self.disable_pager = kwargs.pop("disable_pager", False)
-    
+
     def layout(self, status_data, study_title=None, filter_dict=None):
         """Setup the layout of the display"""
         if "Cmd Parameters" in status_data:

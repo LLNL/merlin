@@ -33,7 +33,6 @@ import csv
 import json
 import logging
 import os
-
 from typing import Dict, List
 
 
@@ -141,8 +140,8 @@ def dump_handler(dump_file: str, dump_info: Dict):
     dumper = Dumper(dump_file)
 
     # Get the correct file write mode and log message
-    fmode = 'a' if os.path.exists(dump_file) else 'w'
-    write_type = 'Writing' if fmode == 'w' else 'Appending'
+    fmode = "a" if os.path.exists(dump_file) else "w"
+    write_type = "Writing" if fmode == "w" else "Appending"
     LOG.info(f"{write_type} to {dump_file}...")
 
     # Write the output

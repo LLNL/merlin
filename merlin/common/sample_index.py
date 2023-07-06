@@ -35,7 +35,6 @@ The merlin sample_index module, which contains the SampleIndex class.
 import logging
 import os
 from contextlib import suppress
-from typing import Dict
 
 
 LOG = logging.getLogger(__name__)

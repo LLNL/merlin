@@ -38,7 +38,6 @@ from copy import deepcopy
 from typing import Dict, List, Optional, Tuple
 
 from filelock import FileLock
-
 from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
@@ -51,7 +50,9 @@ from merlin.study.status import read_status
 LOG = logging.getLogger(__name__)
 
 
-def needs_merlin_expansion(cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords: Optional[bool] = True) -> bool:
+def needs_merlin_expansion(
+    cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords: Optional[bool] = True
+) -> bool:
     """
     Check if the cmd or restart cmd provided have variables that need expansion.
 
@@ -70,7 +71,7 @@ def needs_merlin_expansion(cmd: str, restart_cmd: str, labels: List[str], includ
             return True
         # The restart may need expansion while the cmd does not.
         if restart_cmd and f"$({label})" in restart_cmd:
-                return True
+            return True
 
     # If we got through all the labels and no expansion was needed then these commands don't need expansion
     return False
@@ -111,7 +112,7 @@ class MerlinStepRecord(_StepRecord):
 
         return condensed_workspace
 
-    def _execute(self, adapter: "ScriptAdapter object", script: str) -> Tuple["SubmissionRecord", int]:
+    def _execute(self, adapter: "ScriptAdapter", script: str) -> Tuple["SubmissionRecord", int]:  # noqa: F821
         """
         Overwrites _StepRecord's _execute method from Maestro since self.to_be_scheduled is
         always true here. Also, if we didn't overwrite this we wouldn't be able to call
@@ -137,7 +138,7 @@ class MerlinStepRecord(_StepRecord):
         """
         Mark the end time of the record with associated termination state
         and update the status file.
-        
+
         :param `state`: A merlin ReturnCode object representing the end state of a task
         :param `max_retries`: A bool representing whether we hit the max number of retries or not
         """
@@ -227,7 +228,7 @@ class MerlinStepRecord(_StepRecord):
             State.CANCELLED: "CANCELLED",
             State.DRYRUN: "DRY_RUN",
             State.FAILED: "FAILED",
-            State.UNKNOWN: "UNKNOWN"
+            State.UNKNOWN: "UNKNOWN",
         }
 
         status_file = f"{self.workspace.value}/MERLIN_STATUS.json"
@@ -242,7 +243,9 @@ class MerlinStepRecord(_StepRecord):
             if self.merlin_step.params["cmd"]:
                 cmd_params = ";".join([f"{param}:{value}" for param, value in self.merlin_step.params["cmd"].items()])
             if self.merlin_step.params["restart_cmd"]:
-                restart_params = ";".join([f"{param}:{value}" for param, value in self.merlin_step.params["restart_cmd"].items()])
+                restart_params = ";".join(
+                    [f"{param}:{value}" for param, value in self.merlin_step.params["restart_cmd"].items()]
+                )
 
             # Inititalize the status_info dict we'll be dumping to the status file
             status_info = {
@@ -256,11 +259,12 @@ class MerlinStepRecord(_StepRecord):
             if task_server == "celery":
                 from merlin.celery import app  # pylint: disable=C0415
                 from merlin.common.tasks import get_current_queue, get_current_worker  # pylint: disable=C0415
+
                 # If the tasks are always eager, this is a local run and we won't have workers running
                 if not app.conf.task_always_eager:
                     status_info[self.name]["Task Queue"] = get_current_queue()
                     status_info[self.name]["Worker Name"] = get_current_worker()
-        
+
         # Put together a dict of status info
         status_info[self.name][self.condensed_workspace] = {
             "Status": state_translator[self.status],

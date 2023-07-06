@@ -45,9 +45,9 @@ from typing import Dict
 import yaml
 from maestrowf.specification import YAMLSpecification
 
-from merlin.study.step import needs_merlin_expansion
 from merlin.spec import all_keys, defaults
-from merlin.utils import contains_token, load_array_file, repr_timedelta
+from merlin.study.step import needs_merlin_expansion
+from merlin.utils import load_array_file, repr_timedelta
 
 
 LOG = logging.getLogger(__name__)
@@ -621,8 +621,12 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         for step in steps:
             if "task_queue" in step.run:
-                queue_name = step.run["task_queue"] if CONFIG.celery.omit_queue_tag else f"{CONFIG.celery.queue_tag}{step.run['task_queue']}"
-                
+                queue_name = (
+                    step.run["task_queue"]
+                    if CONFIG.celery.omit_queue_tag
+                    else f"{CONFIG.celery.queue_tag}{step.run['task_queue']}"
+                )
+
                 if queue_name in relationship_tracker:
                     relationship_tracker[queue_name].append(step.name)
                 else:
@@ -699,7 +703,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             # If merlin expansion is needed with column labels, this step uses samples
             if num_samples > 0 and needs_merlin_expansion(cmd, restart_cmd, column_labels):
                 tasks_per_step[step.name] *= num_samples
-        
+
         return tasks_per_step
 
     def _step_contains_param(self, step, params):
@@ -772,7 +776,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             # Get the cmd and restart cmd for the step
             cmd = step.__dict__["run"]["cmd"]
             restart_cmd = step.__dict__["run"]["restart"]
-            
+
             # Get the parameters used in this step and the labels used with those parameters
             all_params_in_step = param_gen.get_used_parameters(step)
             labels_used = [expanded_labels[param] for param in sorted(all_params_in_step)]

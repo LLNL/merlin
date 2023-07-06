@@ -48,7 +48,7 @@ from argparse import (
 from contextlib import suppress
 from typing import Dict, List, Optional, Union
 
-from merlin import display, VERSION, router
+from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
@@ -224,7 +224,9 @@ def launch_workers(args):
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
-    launch_worker_status = router.launch_workers(spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only)
+    launch_worker_status = router.launch_workers(
+        spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only
+    )
     if args.worker_echo_only:
         print(launch_worker_status)
     else:
@@ -278,7 +280,14 @@ def query_status(args):
             return
 
     # Build a list of filters and create the status instance
-    filters = [args.task_queues, args.workers, args.task_status, args.return_code, (args.steps and "all" not in args.steps), args.max_tasks]
+    filters = [
+        args.task_queues,
+        args.workers,
+        args.task_status,
+        args.return_code,
+        (args.steps and "all" not in args.steps),
+        args.max_tasks,
+    ]
     filters_provided = any(filters)
     status_obj = status.Status(args, spec_display, file_or_ws)
 
@@ -290,6 +299,7 @@ def query_status(args):
     else:
         status_obj.query_summary_status()
 
+
 def query_queues(args):
     """
     CLI command for querying status of celery queues.
@@ -298,6 +308,7 @@ def query_queues(args):
     :param 'args': parsed CLI arguments
     """
     from merlin import display  # pylint: disable=import-outside-toplevel
+
     print(banner_small)
 
     # Ensure a spec is provided if steps are provided
@@ -353,7 +364,6 @@ def stop_workers(args):
 
     :param `args`: parsed CLI arguments
     """
-    from merlin.config.configfile import CONFIG
     print(banner_small)
     worker_names = []
 
@@ -368,7 +378,7 @@ def stop_workers(args):
 
     # Send stop command to router
     router.stop_workers(args.task_server, worker_names, args.queues, args.workers)
-        
+
 
 def print_info(args):
     """
@@ -890,13 +900,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         help="Task server type from which to stop workers.\
                             Default: %(default)s",
     )
-    stop.add_argument(
-        "--queues",
-        type=str,
-        default=None,
-        nargs="+",
-        help="specific queues to stop"
-    )
+    stop.add_argument("--queues", type=str, default=None, nargs="+", help="specific queues to stop")
     stop.add_argument(
         "--workers",
         type=str,
@@ -960,7 +964,9 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
     )
     status_cmd.set_defaults(func=query_status)
     status_cmd.add_argument("spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study")
-    status_cmd.add_argument("--dump", type=str, help="Dump the status to a file. Provide the filename (must be .csv or .json).", default=None)
+    status_cmd.add_argument(
+        "--dump", type=str, help="Dump the status to a file. Provide the filename (must be .csv or .json).", default=None
+    )
     status_cmd.add_argument(
         "--task_server",
         type=str,
@@ -980,10 +986,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
     )
     status_filter_group = status_cmd.add_argument_group("filter options")
     status_filter_group.add_argument(
-        "--max-tasks",
-        action="store",
-        type=int,
-        help="Sets a limit on how many tasks can be displayed"
+        "--max-tasks", action="store", type=int, help="Sets a limit on how many tasks can be displayed"
     )
     status_filter_group.add_argument(
         "--return-code",
@@ -991,7 +994,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         nargs="+",
         type=str,
         choices=status.VALID_RETURN_CODES,
-        help="Filter which tasks to display based on their return code"
+        help="Filter which tasks to display based on their return code",
     )
     status_filter_group.add_argument(
         "--steps",
@@ -1013,7 +1016,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         nargs="+",
         type=str,
         choices=status.VALID_STATUS_FILTERS,
-        help="Filter which tasks to display based on their status"
+        help="Filter which tasks to display based on their status",
     )
     status_filter_group.add_argument(
         "--workers",
@@ -1023,33 +1026,29 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
     )
     status_display_group = status_cmd.add_argument_group("display options")
     status_display_group.add_argument(
-        "--cb-help",
-        action="store_true",
-        help="Colorblind help; uses different symbols to represent different statuses"
+        "--cb-help", action="store_true", help="Colorblind help; uses different symbols to represent different statuses"
     )
     status_display_group.add_argument(
-        "--disable-pager",
-        action="store_true",
-        help="Turn off the pager functionality when viewing the status"
+        "--disable-pager", action="store_true", help="Turn off the pager functionality when viewing the status"
     )
     status_display_group.add_argument(
         "--disable-theme",
         action="store_true",
         help="Turn off styling for the status layout (If you want styling but it's not working, try modifying "
-        "the MANPAGER or PAGER environment variables to be 'less -r'; i.e. export MANPAGER='less -r')"
+        "the MANPAGER or PAGER environment variables to be 'less -r'; i.e. export MANPAGER='less -r')",
     )
     status_display_group.add_argument(
         "--layout",
         type=str,
         choices=status_renderer_factory.get_layouts(),
         default="default",
-        help="Alternate status layouts [Default: %(default)s]"
+        help="Alternate status layouts [Default: %(default)s]",
     )
     status_display_group.add_argument(
         "--no-prompts",
         action="store_true",
         help="Ignore any prompts provided. This will default to the latest study \
-            if you provide a spec file rather than a study workspace."
+            if you provide a spec file rather than a study workspace.",
     )
 
     queue_info: ArgumentParser = subparsers.add_parser(
@@ -1058,17 +1057,21 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
             number of tasks to do) for active queues.",
     )
     queue_info.set_defaults(func=query_queues)
-    queue_info.add_argument("--dump", type=str, help="Dump the queue information to a file. Provide the filename (must be .csv or .json)", default=None)
-    queue_info.add_argument("--specification",
-                            type=str,
-                            help="Path to a Merlin YAML spec file. \
-                            This will only display information for queues defined in this spec file. \
-                            This is the same behavior as the status command before Merlin version 1.11.0 was released.")
     queue_info.add_argument(
-        "--specific-queues",
-        nargs="+",
+        "--dump",
         type=str,
-        help="Display queue stats for specific queues you list here"
+        help="Dump the queue information to a file. Provide the filename (must be .csv or .json)",
+        default=None,
+    )
+    queue_info.add_argument(
+        "--specification",
+        type=str,
+        help="Path to a Merlin YAML spec file. \
+                            This will only display information for queues defined in this spec file. \
+                            This is the same behavior as the status command before Merlin version 1.11.0 was released.",
+    )
+    queue_info.add_argument(
+        "--specific-queues", nargs="+", type=str, help="Display queue stats for specific queues you list here"
     )
     queue_info.add_argument(
         "--steps",

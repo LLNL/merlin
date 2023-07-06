@@ -39,10 +39,9 @@ import socket
 import subprocess
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import timedelta, datetime
-from pathlib import Path
+from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import psutil
@@ -509,13 +508,14 @@ def dict_deep_merge(a, b, path=None):
     :param `b`: A dict that we want to merge into a
     :param `path`: The path down the dictionary tree that we're currently at
     """
-    if path is None: path = []
+    if path is None:
+        path = []
     for key in b:
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
                 dict_deep_merge(a[key], b[key], path + [str(key)])
             elif a[key] == b[key]:
-                pass # same leaf value
+                pass  # same leaf value
             else:
                 raise Exception(f"Conflict at {'.'.join(path + [str(key)])}")
         else:

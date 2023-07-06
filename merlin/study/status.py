@@ -31,22 +31,23 @@ import json
 import logging
 import os
 import re
-
 from copy import deepcopy
 from datetime import datetime
-from filelock import FileLock, Timeout
 from typing import Dict, List, Optional, Tuple, Union
+
+from filelock import FileLock, Timeout
 
 from merlin import display
 from merlin.common.dumper import dump_handler
 from merlin.config.configfile import CONFIG
 from merlin.study.status_renderers import status_renderer_factory
-from merlin.utils import ws_time_to_td, dict_deep_merge
+from merlin.utils import dict_deep_merge, ws_time_to_td
+
 
 LOG = logging.getLogger(__name__)
-VALID_STATUS_FILTERS = ('INITIALIZED', 'RUNNING', 'FINISHED', 'FAILED', 'CANCELLED', 'DRY_RUN', 'UNKNOWN')
+VALID_STATUS_FILTERS = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "CANCELLED", "DRY_RUN", "UNKNOWN")
 VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY", "DRY_SUCCESS", "UNRECOGNIZED")
-VALID_EXIT_FILTERS = ('E', 'EXIT')
+VALID_EXIT_FILTERS = ("E", "EXIT")
 ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS + ("MAX_TASKS",)
 NON_WORKSPACE_KEYS = set(["Cmd Parameters", "Restart Parameters", "Task Queue", "Worker Name"])
 
@@ -56,7 +57,8 @@ class Status:
     This class handles everything to do with status besides displaying it.
     Display functionality is handled in display.py.
     """
-    def __init__(self, args: "Argparse Namespace", spec_display: bool, file_or_ws: str):
+
+    def __init__(self, args: "Namespace", spec_display: bool, file_or_ws: str):  # noqa: F821
         # Save the args to this class instance
         self.args = args
 
@@ -104,7 +106,7 @@ class Status:
             if date_to_check > newest_study_date:
                 newest_study = study
                 newest_study_date = date_to_check
-        
+
         return newest_study
 
     def _obtain_study(self, study_output_dir: str, num_studies: int, potential_studies: List[Tuple[int, str]]) -> str:
@@ -139,16 +141,18 @@ class Status:
                         if index < 1 or index > num_studies:
                             raise ValueError
                     except ValueError:
-                            print(f"{display.ANSI_COLORS['RED']}Input must be an integer between 1 and {num_studies}.{display.ANSI_COLORS['RESET']}")
-                            prompt = "Enter a different index: "
-                study_to_check += potential_studies[index-1][1]
+                        print(
+                            f"{display.ANSI_COLORS['RED']}Input must be an integer between 1 and {num_studies}.{display.ANSI_COLORS['RESET']}"
+                        )
+                        prompt = "Enter a different index: "
+                study_to_check += potential_studies[index - 1][1]
         else:
             # Only one study was found so we'll just assume that's the one the user wants
             study_to_check += potential_studies[0][1]
-        
+
         return study_to_check
 
-    def _load_from_spec(self, filepath: str) -> Tuple[str, "MerlinSpec"]:
+    def _load_from_spec(self, filepath: str) -> Tuple[str, "MerlinSpec"]:  # noqa: F821
         """
         Get the desired workspace from the user and load up it's yaml spec
         for further processing.
@@ -157,7 +161,7 @@ class Status:
         :returns: The workspace of the study we'll check the status for and a MerlinSpec
                 object loaded in from the workspace's merlin_info subdirectory.
         """
-        from merlin.main import get_spec_with_expansion, get_merlin_spec_with_override, verify_dirpath  # pylint: disable=C0415
+        from merlin.main import get_merlin_spec_with_override, get_spec_with_expansion, verify_dirpath  # pylint: disable=C0415
 
         # Get the spec and the output path for the spec
         self.args.specification = filepath
@@ -175,7 +179,7 @@ class Status:
         for subdir in study_output_subdirs:
             match = re.search(rf"{spec_provided.name}_{timestamp_regex}", subdir)
             if match:
-                potential_studies.append((num_studies+1, subdir))
+                potential_studies.append((num_studies + 1, subdir))
                 num_studies += 1
 
         # Obtain the correct study that the user wants to view the status of based on the list of potential studies we just built
@@ -183,20 +187,22 @@ class Status:
 
         # Verify the directory that the user selected is a merlin study output directory
         if "merlin_info" not in next(os.walk(study_to_check))[1]:
-            LOG.error(f"The merlin_info subdirectory was not found. {study_to_check} may not be a Merlin study output directory.")
+            LOG.error(
+                f"The merlin_info subdirectory was not found. {study_to_check} may not be a Merlin study output directory."
+            )
 
         # Grab the spec saved to the merlin info directory in case something in the current spec has changed since starting the study
         actual_spec = get_spec_with_expansion(f"{study_to_check}/merlin_info/{spec_provided.name}.expanded.yaml")
 
         return study_to_check, actual_spec
 
-    def _load_from_workspace(self) -> "MerlinSpec":
+    def _load_from_workspace(self) -> "MerlinSpec":  # noqa: F821
         """
         Create a MerlinSpec object based on the spec file in the workspace.
 
         :returns: A MerlinSpec object loaded from the workspace provided by the user
         """
-        from merlin.main import verify_dirpath, get_spec_with_expansion  # pylint: disable=C0415
+        from merlin.main import get_spec_with_expansion, verify_dirpath  # pylint: disable=C0415
 
         # Grab the spec file from the directory provided
         info_dir = verify_dirpath(f"{self.workspace}/merlin_info")
@@ -240,17 +246,23 @@ class Status:
         # Ensure the steps are valid
         if "all" not in self.args.steps:
             existing_steps = self.spec.get_study_step_names()
-            self._verify_filters(self.args.steps, existing_steps, warning_msg="Removing this step from the list of steps to filter by...")
+            self._verify_filters(
+                self.args.steps, existing_steps, warning_msg="Removing this step from the list of steps to filter by..."
+            )
 
         # Make sure max_tasks is a positive int
         if self.args.max_tasks and self.args.max_tasks < 1:
-            LOG.warning(f"The value of --max-tasks must be greater than 0. Ignoring --max-tasks...")
+            LOG.warning("The value of --max-tasks must be greater than 0. Ignoring --max-tasks...")
             self.args.max_tasks = None
 
         # Make sure task_status is valid
         if self.args.task_status:
             self.args.task_status = [x.upper() for x in self.args.task_status]
-            self._verify_filters(self.args.task_status, VALID_STATUS_FILTERS, warning_msg="Removing this status from the list of statuses to filter by...")
+            self._verify_filters(
+                self.args.task_status,
+                VALID_STATUS_FILTERS,
+                warning_msg="Removing this status from the list of statuses to filter by...",
+            )
 
         # Ensure return_code is valid
         if self.args.return_code:
@@ -265,20 +277,30 @@ class Status:
                 else:
                     self.args.return_code[idx] = f"MERLIN_{ret_code_provided}"
                     idx += 1
-                
+
             # self.args.return_code = [f"MERLIN_{x.upper()}" for x in self.args.return_code]
             valid_return_codes = [f"MERLIN_{x}" for x in VALID_RETURN_CODES]
-            self._verify_filters(self.args.return_code, valid_return_codes, warning_msg="Removing this code from the list of return codes to filter by...")
+            self._verify_filters(
+                self.args.return_code,
+                valid_return_codes,
+                warning_msg="Removing this code from the list of return codes to filter by...",
+            )
 
         # Ensure every task queue provided exists
         if self.args.task_queues:
             existing_queues = self.spec.get_queue_list(["all"], omit_tag=True)
-            self._verify_filters(self.args.task_queues, existing_queues, warning_msg="Removing this queue from the list of queues to filter by...")
-        
+            self._verify_filters(
+                self.args.task_queues,
+                existing_queues,
+                warning_msg="Removing this queue from the list of queues to filter by...",
+            )
+
         # Ensure every worker provided exists
         if self.args.workers:
             worker_names = self.spec.get_worker_names()
-            self._verify_filters(self.args.workers, worker_names, warning_msg="Removing this worker from the list of workers to filter by...")
+            self._verify_filters(
+                self.args.workers, worker_names, warning_msg="Removing this worker from the list of workers to filter by..."
+            )
 
     def _process_workers(self):
         """
@@ -457,7 +479,7 @@ class Status:
 
             # If there are more status entries than max_tasks will allow then we need to remove some
             if len(sub_step_workspaces) > self.args.max_tasks:
-                workspaces_to_delete = set(sub_step_workspaces) - set(sub_step_workspaces[:self.args.max_tasks])
+                workspaces_to_delete = set(sub_step_workspaces) - set(sub_step_workspaces[: self.args.max_tasks])
                 for ws_to_delete in workspaces_to_delete:
                     del overall_step_info[ws_to_delete]
                 self.args.max_tasks = 0
@@ -467,7 +489,7 @@ class Status:
 
             # Merge in the task statuses that we're allowing
             dict_deep_merge(new_status_dict[step_name], overall_step_info)
-        
+
         LOG.info(f"Limited the number of tasks to display to {max_tasks} tasks.")
 
         # Set the new requested statuses with the max_tasks limit and remove steps without statuses
@@ -503,7 +525,7 @@ class Status:
                     else:
                         self.real_step_name_map[started_step_name].append(step_name)
                     num_statuses_read += len(status_info.keys() - NON_WORKSPACE_KEYS)
-                
+
                 # Merge the statuses we read with the dict tracking all statuses for this step
                 dict_deep_merge(step_statuses, statuses_read)
 
@@ -512,7 +534,9 @@ class Status:
                 break
             # This shouldn't get hit
             elif num_statuses_read > self.tasks_per_step[started_step_name]:
-                LOG.error(f"Read {num_statuses_read} statuses when there should only be {self.tasks_per_step[started_step_name]} tasks in total.")
+                LOG.error(
+                    f"Read {num_statuses_read} statuses when there should only be {self.tasks_per_step[started_step_name]} tasks in total."
+                )
                 break
 
         return step_statuses
@@ -564,7 +588,7 @@ class Status:
                 self.args.task_status,
                 self.args.return_code,
                 (self.args.steps and self.args.steps != self.spec.get_study_step_names()),
-                self.args.max_tasks
+                self.args.max_tasks,
             ]
         )
 
@@ -597,20 +621,15 @@ class Status:
                 "Put a limit on the number of tasks to display",
                 "Filter by status",
                 "Filter by return code",
-                "Exit without filtering"
-            ], 
+                "Exit without filtering",
+            ],
             "Description": [
                 "Enter 'MAX_TASKS'",
                 f"Enter a comma separated list of the following statuses you'd like to see: {VALID_STATUS_FILTERS}",
                 f"Enter a comma separated list of the following return codes you'd like to see: {VALID_RETURN_CODES}",
-                f"Enter one of the following: {VALID_EXIT_FILTERS}"
+                f"Enter one of the following: {VALID_EXIT_FILTERS}",
             ],
-            "Example": [
-                "MAX_TASKS",
-                "FAILED, CANCELLED",
-                "SOFT_FAIL, RETRY",
-                "EXIT"
-            ]
+            "Example": ["MAX_TASKS", "FAILED, CANCELLED", "SOFT_FAIL, RETRY", "EXIT"],
         }
 
         # Display the filter options
@@ -696,7 +715,7 @@ class Status:
                 user_filters[i] = f"MERLIN_{user_filter}"
                 if "Return Code" not in filter_types:
                     filter_types.append("Return Code")
-        
+
         # Apply the filters and tell the user how many tasks match the filters (if necessary)
         if not exit_without_filtering:
             self.apply_filters(filter_types, user_filters)
@@ -738,7 +757,7 @@ class Status:
         Dump the status information to a file.
         """
         # Get a timestamp for this dump
-        date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Handle different file types
         if self.args.dump.endswith(".csv"):
@@ -787,7 +806,7 @@ class Status:
                 # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
                 for key, val in task_status_info.items():
                     reformatted_statuses[key].append(val)
-            
+
             # Handle the non workspace keys
             num_statuses = len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
             for key in NON_WORKSPACE_KEYS:

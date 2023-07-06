@@ -394,13 +394,11 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
                 nodes: 1
                 machine: [hostA, hostB]
     """
-    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
     if not just_return_command:
         LOG.info("Starting workers")
 
     overlap = spec.merlin["resources"]["overlap"]
     workers = spec.merlin["resources"]["workers"]
-    study_name = spec.description["name"]
 
     # Build kwargs dict for subprocess.Popen to use when we launch the worker
     kwargs, yenv = _create_kwargs(spec)
