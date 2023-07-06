@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Added
+- Tests for ensuring `$(MERLIN_SPEC_ORIGINAL_TEMPLATE)`, `$(MERLIN_SPEC_ARCHIVED_COPY)`, and `$(MERLIN_SPEC_EXECUTED_RUN)` are stored correctly
+- A pdf download format for the docs
 - Added the --active-queues flag to the "merlin info" command similar to old status command but will only show queues with running workers
 - New task "update_status" to be called for status changes
 - New worker spun up in the background for tracking statuses
@@ -18,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New file status.py dedicated to work relating to the status command
 
 ### Changed
+- The ProvenanceYAMLFileHasRegex condition for integration tests now saves the study name and spec file name as attributes instead of just the study name
+  - This lead to minor changes in 3 tests ("local override feature demo", "local pgen feature demo", and "remote feature demo") with what we pass to this specific condition
+- Updated scikit-learn requirement for the openfoam_wf_singularity example
+- Uncommented Latex support in the docs configuration to get pdf builds working
 - query_celery_status() in display.py now uses with statements to open connection and channel to ensure they close
 - Reformatted the entire "merlin status" command
   - Now accepts both spec files and workspace directories as arguments
@@ -30,6 +36,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Low Level display:
     - Shows more in-depth details for each task
     - Interactive ability to filter
+### Fixed
+- A bug where the .orig, .partial, and .expanded file names were using the study name rather than the original file name
+- A bug where the openfoam_wf_singularity example was not being found
+- Some build warnings in the docs (unknown targets, duplicate targets, title underlines too short, etc.)
+
+## [1.10.1]
+### Fixed
+- A bug where assigning a worker all steps also assigned steps to the default worker
+
+### Added
+- Tests to make sure the default worker is being assigned properly
+
+### Changed
+- Requirement name in examples/workflows/remote_feature_demo/requirements.txt and examples/workflows/feature_demo/requirements.txt from sklearn to scikit-learn since sklearn is now deprecated
 
 ## [1.10.0]
 ### Fixed

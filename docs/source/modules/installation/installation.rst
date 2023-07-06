@@ -229,7 +229,7 @@ If everything is set up correctly, you should see:
 
 
 (OPTIONAL) Docker Advanced Installation
-----------------------------
+---------------------------------------
 
 RabbitMQ Server
 +++++++++++++++

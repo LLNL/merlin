@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.0.
+# This file is part of Merlin, Version: 1.10.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -387,8 +387,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 MerlinSpec.fill_missing_defaults(worker_settings, defaults.WORKER)
                 worker_steps.extend(worker_settings["steps"])
 
-            # Figure out which steps still need workers
-            steps_that_need_workers = list(set(all_workflow_steps) - set(worker_steps))
+            if "all" in worker_steps:
+                steps_that_need_workers = []
+            else:
+                # Figure out which steps still need workers
+                steps_that_need_workers = list(set(all_workflow_steps) - set(worker_steps))
 
             # If there are still steps remaining that haven't been assigned a worker yet,
             # assign the remaining steps to the default worker. If all the steps still need workers

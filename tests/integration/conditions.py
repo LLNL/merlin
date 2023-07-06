@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.0.
+# This file is part of Merlin, Version: 1.10.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -249,14 +249,16 @@ class ProvenanceYAMLFileHasRegex(HasRegex):
     MUST contain a given regular expression.
     """
 
-    def __init__(self, regex, name, output_path, provenance_type, negate=False):  # pylint: disable=R0913
+    def __init__(self, regex, spec_file_name, study_name, output_path, provenance_type, negate=False):  # pylint: disable=R0913
         """
         :param `regex`: a string regex pattern
-        :param `name`: the name of a study
+        :param `spec_file_name`: the name of the spec file
+        :param `study_name`: the name of a study
         :param `output_path`: the $(OUTPUT_PATH) of a study
         """
         super().__init__(regex, negate=negate)
-        self.name = name
+        self.spec_file_name = spec_file_name
+        self.study_name = study_name
         self.output_path = output_path
         provenance_types = ["orig", "partial", "expanded"]
         if provenance_type not in provenance_types:
@@ -277,7 +279,9 @@ class ProvenanceYAMLFileHasRegex(HasRegex):
         """
         Returns a regex string for the glob library to recursively find files with.
         """
-        return f"{self.output_path}/{self.name}" f"_[0-9]*-[0-9]*/merlin_info/{self.name}.{self.prov_type}.yaml"
+        return (
+            f"{self.output_path}/{self.study_name}" f"_[0-9]*-[0-9]*/merlin_info/{self.spec_file_name}.{self.prov_type}.yaml"
+        )
 
     def is_within(self):  # pylint: disable=W0221
         """

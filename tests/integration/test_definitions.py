@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.0.
+# This file is part of Merlin, Version: 1.10.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -283,6 +283,16 @@ def define_tests():  # pylint: disable=R0914,R0915
             "conditions": [HasReturnCode(), HasRegex("custom_verify_queue")],
             "run type": "local",
         },
+        "default_worker assigned": {
+            "cmds": f"{workers} {test_specs}/default_worker_test.yaml --echo",
+            "conditions": [HasReturnCode(), HasRegex(r"default_worker.*-Q '\[merlin\]_step_4_queue'")],
+            "run type": "local",
+        },
+        "no default_worker assigned": {
+            "cmds": f"{workers} {test_specs}/no_default_worker_test.yaml --echo",
+            "conditions": [HasReturnCode(), HasRegex(r"default_worker", negate=True)],
+            "run type": "local",
+        },
     }
     wf_format_tests = {
         "local minimum_format": {
@@ -425,31 +435,36 @@ def define_tests():  # pylint: disable=R0914,R0915
                 HasReturnCode(),
                 ProvenanceYAMLFileHasRegex(
                     regex=r"HELLO: \$\(SCRIPTS\)/hello_world.py",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="orig",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex=r"name: \$\(NAME\)",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex="studies/feature_demo_",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex="name: feature_demo",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex=r"\$\(NAME\)",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                     negate=True,
@@ -500,13 +515,15 @@ def define_tests():  # pylint: disable=R0914,R0915
             "conditions": [
                 ProvenanceYAMLFileHasRegex(
                     regex=r"\[0.3333333",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex=r"\[0.5",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                     negate=True,
@@ -705,7 +722,8 @@ def define_tests():  # pylint: disable=R0914,R0915
                 HasReturnCode(),
                 ProvenanceYAMLFileHasRegex(
                     regex="cli_test_demo_workers:",
-                    name="feature_demo",
+                    spec_file_name="remote_feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
