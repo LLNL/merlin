@@ -63,6 +63,7 @@ retry_exceptions = (
     OperationalError,
     RetryException,
     RestartException,
+    FileNotFoundError,
 )
 
 LOG = logging.getLogger(__name__)
@@ -501,39 +502,49 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pyl
     for path, _ in sample_index.traverse(conditional=lambda c: c.is_parent_of_leaf):
         # Read in the status data
         sample_workspace = f"{str(workspace)}/{path}"
-        status_file = f"{sample_workspace}/MERLIN_STATUS.json"
+        status_filepath = f"{sample_workspace}/MERLIN_STATUS.json"
         lock = FileLock(f"{sample_workspace}/status.lock")  # pylint: disable=E0110
-        status = read_status(status_file, lock)
+        try:
+            # The status files will need locks when reading to avoid race conditions
+            with lock.acquire(timeout=10):
+                with open(status_filepath, "r") as status_file:
+                    status = json.load(status_file)
 
-        # This for loop is just to get the step name that we don't have; it's really not even looping
-        for step_name, _ in status.items():
-            try:
-                # Make sure the status for this sample workspace is in a finished state (not initialized or running)
-                if status[step_name][f"{condensed_workspace}/{path}"]["Status"] not in ("INITIALIZED", "RUNNING"):
-                    # Add the status data to the statuses we'll write to the condensed file and remove this status file
-                    dict_deep_merge(condensed_statuses, status)
-                    os.remove(status_file)
-            except KeyError:
-                LOG.warning(f"Key error when reading from {sample_workspace}")
+            # This for loop is just to get the step name that we don't have; it's really not even looping
+            for step_name, _ in status.items():
+                try:
+                    # Make sure the status for this sample workspace is in a finished state (not initialized or running)
+                    if status[step_name][f"{condensed_workspace}/{path}"]["Status"] not in ("INITIALIZED", "RUNNING"):
+                        # Add the status data to the statuses we'll write to the condensed file and remove this status file
+                        dict_deep_merge(condensed_statuses, status)
+                        os.remove(status_filepath)
+                except KeyError:
+                    LOG.warning(f"Key error when reading from {sample_workspace}")
+        except Timeout:
+            # Raising this celery timeout instead will trigger a restart for this task
+            raise TimeoutError  # pylint: disable=W0707
+        except FileNotFoundError:
+            LOG.warning(f"Could not find {status_filepath} while trying to condense. Restarting this task...")
+            raise FileNotFoundError  # pylint: disable=W0707
 
     # If there are statuses to write to the condensed status file then write them
     if condensed_statuses:
-        # Lock the file to avoid race conditions
         condensed_status_filepath = f"{str(workspace)}/MERLIN_STATUS.json"
         condensed_lock_file = f"{str(workspace)}/status.lock"
         lock = FileLock(condensed_lock_file)  # pylint: disable=E0110
         try:
-            # If the condensed file already exists, grab the statuses from it
-            if os.path.exists(condensed_status_filepath):
-                existing_condensed_statuses = read_status(condensed_status_filepath, lock)
+            # Lock the file to avoid race conditions
+            with lock.acquire(timeout=20):
+                # If the condensed file already exists, grab the statuses from it
+                if os.path.exists(condensed_status_filepath):
+                    with open(condensed_status_filepath, "r") as condensed_status_file:
+                        existing_condensed_statuses = json.load(condensed_status_file)
+                    # Merging the statuses we're condensing into the already existing statuses
+                    # because it's faster at scale than vice versa
+                    dict_deep_merge(existing_condensed_statuses, condensed_statuses)
+                    condensed_statuses = existing_condensed_statuses
 
-                # Merging the statuses we're condensing into the already existing statuses
-                # because it's faster at scale than vice versa
-                dict_deep_merge(existing_condensed_statuses, condensed_statuses)
-                condensed_statuses = existing_condensed_statuses
-
-            # Write the new condensed statuses
-            with lock.acquire(timeout=10):
+                # Write the condensed statuses to the condensed status file
                 with open(condensed_status_filepath, "w") as condensed_status_file:
                     json.dump(condensed_statuses, condensed_status_file)
         except Timeout:

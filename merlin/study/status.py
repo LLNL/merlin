@@ -60,8 +60,9 @@ class Status:
     """
 
     def __init__(self, args: "Namespace", spec_display: bool, file_or_ws: str):  # noqa: F821
-        # Save the args to this class instance
+        # Save the args to this class instance and check if the steps filter was given
         self.args = args
+        self.steps_filter_provided = True if "all" not in args.steps else False
 
         # Load in the workspace path and spec object
         if spec_display:
@@ -528,7 +529,8 @@ class Status:
                     if started_step_name not in self.real_step_name_map:
                         self.real_step_name_map[started_step_name] = [step_name]
                     else:
-                        self.real_step_name_map[started_step_name].append(step_name)
+                        if step_name not in self.real_step_name_map[started_step_name]:
+                            self.real_step_name_map[started_step_name].append(step_name)
                     num_statuses_read += len(status_info.keys() - NON_WORKSPACE_KEYS)
 
                 # Merge the statuses we read with the dict tracking all statuses for this step
@@ -593,7 +595,7 @@ class Status:
                 self.args.workers,
                 self.args.task_status,
                 self.args.return_code,
-                (self.args.steps and self.args.steps != self.spec.get_study_step_names()),
+                self.steps_filter_provided,
                 self.args.max_tasks,
             ]
         )
