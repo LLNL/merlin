@@ -171,10 +171,18 @@ class Status:
         # Get the spec and the output path for the spec
         self.args.specification = filepath
         spec_provided, _ = get_merlin_spec_with_override(self.args)
-        if spec_provided.output_path:
-            study_output_dir = verify_dirpath(spec_provided.output_path)
+
+        # Case where the output path is left out of the spec file
+        if spec_provided.output_path == "":
+            output_path = os.path.dirname(filepath)
+        # Case where output path is absolute
+        elif spec_provided.output_path.startswith("/"):
+            output_path = spec_provided.output_path
+        # Case where output path is relative to the specroot
         else:
-            study_output_dir = verify_dirpath(".")
+            output_path = f"{os.path.dirname(filepath)}/{spec_provided.output_path}"
+
+        study_output_dir = verify_dirpath(output_path)
 
         # Build a list of potential study output directories
         study_output_subdirs = next(os.walk(study_output_dir))[1]
