@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A bug where the .orig, .partial, and .expanded file names were using the study name rather than the original file name
 - A bug where the openfoam_wf_singularity example was not being found
 - Some build warnings in the docs (unknown targets, duplicate targets, title underlines too short, etc.)
+- A bug where when the output path contained a variable that was overridden, the overridden variable was not changed in the output_path
 
 ### Added
 - Tests for ensuring `$(MERLIN_SPEC_ORIGINAL_TEMPLATE)`, `$(MERLIN_SPEC_ARCHIVED_COPY)`, and `$(MERLIN_SPEC_EXECUTED_RUN)` are stored correctly
