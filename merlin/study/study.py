@@ -324,6 +324,8 @@ class MerlinStudy:  # pylint: disable=R0902
             os.makedirs(output_path)
             LOG.info(f"Made dir(s) to output path '{output_path}'.")
 
+        LOG.info(f"OUTPUT_PATH: {os.path.basename(output_path)}")
+
         return output_path
 
     @cached_property

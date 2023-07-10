@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Tests for ensuring `$(MERLIN_SPEC_ORIGINAL_TEMPLATE)`, `$(MERLIN_SPEC_ARCHIVED_COPY)`, and `$(MERLIN_SPEC_EXECUTED_RUN)` are stored correctly
 - A pdf download format for the docs
+- Tests for cli substitutions
 
 ### Changed
 - The ProvenanceYAMLFileHasRegex condition for integration tests now saves the study name and spec file name as attributes instead of just the study name
