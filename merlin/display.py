@@ -232,7 +232,7 @@ def print_info(args):  # pylint: disable=W0613
     print("")
 
 
-def display_status_task_by_task(status_obj: "Status"):  # noqa: F821
+def display_status_task_by_task(status_obj: "DetailedStatus"):  # noqa: F821
     """
     Displays a low level overview of the status of a study. This is a task-by-task
     status display where each task will show:
@@ -241,7 +241,7 @@ def display_status_task_by_task(status_obj: "Status"):  # noqa: F821
     If too many tasks are found and the pager is disabled, prompts will appear for the user to decide
     what to do that way we don't overload the terminal (unless the no-prompts flag is provided).
 
-    :param `status_obj`: A Status object
+    :param `status_obj`: A DetailedStatus object
     """
     args = status_obj.args
     try:

@@ -51,7 +51,6 @@ from merlin.config.utils import Priority, get_priority
 from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
 from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
-from merlin.study.status import read_status
 from merlin.utils import dict_deep_merge
 
 

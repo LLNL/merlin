@@ -58,11 +58,9 @@ class Status:
     This class handles everything to do with status besides displaying it.
     Display functionality is handled in display.py.
     """
-
     def __init__(self, args: "Namespace", spec_display: bool, file_or_ws: str):  # noqa: F821
         # Save the args to this class instance and check if the steps filter was given
         self.args = args
-        self.steps_filter_provided = True if "all" not in args.steps else False
 
         # Load in the workspace path and spec object
         if spec_display:
@@ -70,9 +68,6 @@ class Status:
         else:
             self.workspace = file_or_ws
             self.spec = self._load_from_workspace()
-
-        # Verify the args provided by the user
-        self._verify_filter_args()
 
         # Create a step tracker that will tell us which steps we'll display that have started/not started
         self.step_tracker = self.get_steps_to_display()
@@ -236,6 +231,232 @@ class Status:
 
         return spec
 
+    def _create_step_tracker(self, steps_to_check: List[str]) -> Dict[str, List[str]]:
+        """
+        Creates a dictionary of started and unstarted steps that we
+        will display the status for.
+
+        :param `steps_to_check`: A list of steps to view the status of
+        :returns: A dictionary mapping of started and unstarted steps. Values are lists of step names.
+        """
+        step_tracker = {"started_steps": [], "unstarted_steps": []}
+        started_steps = next(os.walk(self.workspace))[1]
+        started_steps.remove("merlin_info")
+
+        for sstep in started_steps:
+            if sstep in steps_to_check:
+                step_tracker["started_steps"].append(sstep)
+                steps_to_check.remove(sstep)
+        step_tracker["unstarted_steps"] = steps_to_check
+
+        return step_tracker
+
+    def get_steps_to_display(self) -> Dict[str, List[str]]:
+        """
+        Generates a list of steps to display the status for based on information
+        provided to the merlin status command by the user.
+
+        :returns: A dictionary of started and unstarted steps for us to display the status of
+        """
+        existing_steps = self.spec.get_study_step_names()
+
+        LOG.debug(f"existing steps: {existing_steps}")
+        LOG.debug(f"Building step tracker based on existing steps...")
+
+        # Filter the steps to display status for by started/unstarted
+        step_tracker = self._create_step_tracker(existing_steps)
+
+        return step_tracker
+
+    @property
+    def num_requested_statuses(self):
+        """
+        Count the number of task statuses in a the requested_statuses dict.
+        We need to ignore non workspace keys when we count.
+        """
+        num_statuses = 0
+        for status_info in self.requested_statuses.values():
+            num_statuses += len(status_info.keys() - NON_WORKSPACE_KEYS)
+        return num_statuses
+
+    def get_step_statuses(self, step_workspace: str, started_step_name: str) -> Dict[str, List[str]]:
+        """
+        Given a step workspace and the name of the step, read in all the statuses
+        for the step and return them in a dict.
+
+        :param `step_workspace`: The path to the step we're going to read statuses from
+        :param `started_step_name`: The name of the started step that we're getting statuses from
+        :returns: A dict of statuses for the given step
+        """
+        step_statuses = {}
+        num_statuses_read = 0
+
+        # Traverse the step workspace and look for MERLIN_STATUS files
+        for root, _, files in os.walk(step_workspace):
+            if "MERLIN_STATUS.json" in files:
+                status_filepath = f"{root}/MERLIN_STATUS.json"
+                lock = FileLock(f"{root}/status.lock")  # pylint: disable=E0110
+                statuses_read = read_status(status_filepath, lock)
+
+                # Count the number of statuses we just read
+                for step_name, status_info in statuses_read.items():
+                    if started_step_name not in self.real_step_name_map:
+                        self.real_step_name_map[started_step_name] = [step_name]
+                    else:
+                        if step_name not in self.real_step_name_map[started_step_name]:
+                            self.real_step_name_map[started_step_name].append(step_name)
+                    num_statuses_read += len(status_info.keys() - NON_WORKSPACE_KEYS)
+
+                # Merge the statuses we read with the dict tracking all statuses for this step
+                dict_deep_merge(step_statuses, statuses_read)
+
+            # If we've read all the statuses then we're done
+            if num_statuses_read == self.tasks_per_step[started_step_name]:
+                break
+            # This shouldn't get hit
+            if num_statuses_read > self.tasks_per_step[started_step_name]:
+                LOG.error(
+                    f"Read {num_statuses_read} statuses when there should "
+                    f"only be {self.tasks_per_step[started_step_name]} tasks in total."
+                )
+                break
+
+        return step_statuses
+
+    def get_requested_statuses(self):
+        """
+        Populate the requested_statuses dict with statuses the statuses from the study.
+        """
+        LOG.info(f"Reading task statuses from {self.workspace}")
+
+        # Read in all statuses from the started steps the user wants to see
+        for sstep in self.step_tracker["started_steps"]:
+            step_workspace = f"{self.workspace}/{sstep}"
+            step_statuses = self.get_step_statuses(step_workspace, sstep)
+            dict_deep_merge(self.requested_statuses, step_statuses)
+
+        # Count how many statuses in total that we just read in
+        LOG.info(f"Read in {self.num_requested_statuses} statuses.")
+
+    def display(self):
+        """Displays the high level summary of the status"""
+        display.display_status_summary(self)
+
+    def format_json_dump(self, date: datetime) -> Dict:
+        """
+        Build the dict of statuses to dump to the json file.
+
+        :param `date`: A timestamp for us to mark when this status occurred
+        :returns: A dictionary that's ready to dump to a json outfile
+        """
+        # Statuses are already in json format so we'll just add a timestamp for the dump here
+        return {date: self.requested_statuses}
+
+    def format_csv_dump(self, date: datetime) -> Dict:
+        """
+        Add the timestamp to the statuses to write.
+
+        :param `date`: A timestamp for us to mark when this status occurred
+        :returns: A dict equivalent of formatted statuses with a timestamp entry at the start of the dict.
+        """
+        # Reformat the statuses to a new dict where the keys are the column labels and rows are the values
+        statuses_to_write = self.format_status_for_display()
+
+        # Add date entries as the first column then update this dict with the statuses we just reformatted
+        statuses_with_timestamp = {"Time of Status": [date] * len(statuses_to_write["Step Name"])}
+        statuses_with_timestamp.update(statuses_to_write)
+
+        return statuses_with_timestamp
+
+    def dump(self):
+        """
+        Dump the status information to a file.
+        """
+        # Get a timestamp for this dump
+        date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Handle different file types
+        if self.args.dump.endswith(".csv"):
+            # Build the lists of information/labels we'll need
+            dump_info = self.format_csv_dump(date)
+        elif self.args.dump.endswith(".json"):
+            # Build the dict of info to dump to the json file
+            dump_info = self.format_json_dump(date)
+
+        # Dump the information
+        dump_handler(self.args.dump, dump_info)
+
+    def format_status_for_display(self) -> Dict:
+        """
+        Reformat our statuses to display so they can use Maestro's status renderer layouts.
+
+        :returns: A formatted dictionary where each key is a column and the values are the rows
+                  of information to display for that column.
+        """
+        reformatted_statuses = {
+            "Step Name": [],
+            "Step Workspace": [],
+            "Status": [],
+            "Return Code": [],
+            "Elapsed Time": [],
+            "Run Time": [],
+            "Restarts": [],
+            "Cmd Parameters": [],
+            "Restart Parameters": [],
+            "Task Queue": [],
+            "Worker Name": [],
+        }
+
+        # Loop through all statuses
+        for step_name, overall_step_info in self.requested_statuses.items():
+            for sub_step_workspace, task_status_info in overall_step_info.items():
+                # Ignore non workspace keys for now
+                if sub_step_workspace in NON_WORKSPACE_KEYS:
+                    continue
+
+                # Put the step name and workspace in each entry
+                reformatted_statuses["Step Name"].append(step_name)
+                reformatted_statuses["Step Workspace"].append(sub_step_workspace)
+
+                # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
+                for key, val in task_status_info.items():
+                    reformatted_statuses[key].append(val)
+
+            # Handle the non workspace keys
+            num_statuses = len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
+            for key in NON_WORKSPACE_KEYS:
+                try:
+                    # Set the val_to_add value based on if a value exists for the key
+                    val_to_add = "-------"
+                    if overall_step_info[key]:
+                        val_to_add = overall_step_info[key]
+                except KeyError:
+                    # This key error will happen for Task Queue and Worker Name columns on local runs
+                    # So just remove that entry in the reformatted statuses dict if necessary
+                    if key in reformatted_statuses:
+                        del reformatted_statuses[key]
+                    continue
+                # Add the val_to_add entry for each row
+                key_entries = [val_to_add] * num_statuses
+                reformatted_statuses[key].extend(key_entries)
+
+        return reformatted_statuses
+
+
+class DetailedStatus(Status):
+    """
+    This class handles obtaining and filtering requested statuses from the user.
+    This class shares similar methodology to the Status class it inherits from.
+    """
+    def __init__(self, args: "Namespace", spec_display: bool, file_or_ws: str):
+        super().__init__(args, spec_display, file_or_ws)
+
+        # Check if the steps filter was given
+        self.steps_filter_provided = True if "all" not in args.steps else False
+
+        # Verify the filter args provided by the user
+        self._verify_filter_args()
+
     def _verify_filters(self, filters_to_check: List[str], valid_options: Union[List, Tuple], warning_msg: Optional[str] = ""):
         """
         Check each filter in a list of filters provided by the user against a list of valid options.
@@ -359,50 +580,10 @@ class Status:
                     if step not in self.args.steps:
                         self.args.steps.append(step)
 
-    def _create_step_tracker(self) -> Dict[str, List[str]]:
-        """
-        Creates a dictionary of started and unstarted steps that we
-        will display the status for.
-
-        :param `workspace`: The output directory for a study
-        :param `steps_to_check`: A list of steps to view the status of
-        :returns: A dictionary mapping of started and unstarted steps. Values are lists of step names.
-        """
-        step_tracker = {"started_steps": [], "unstarted_steps": []}
-        started_steps = next(os.walk(self.workspace))[1]
-        started_steps.remove("merlin_info")
-        steps_to_check = self.args.steps.copy()
-
-        for sstep in started_steps:
-            if sstep in steps_to_check:
-                step_tracker["started_steps"].append(sstep)
-                steps_to_check.remove(sstep)
-        step_tracker["unstarted_steps"] = steps_to_check
-
-        return step_tracker
-
-    def _remove_steps_without_statuses(self):
-        """
-        After applying filters, there's a chance that certain steps will still exist
-        in self.requested_statuses but won't have any tasks to view the status of so
-        we'll remove those here.
-        """
-        result = deepcopy(self.requested_statuses)
-        for step_name, overall_step_info in self.requested_statuses.items():
-            sub_step_workspaces = sorted(list(overall_step_info.keys() - NON_WORKSPACE_KEYS))
-            if len(sub_step_workspaces) == 0:
-                del result[step_name]
-
-        self.requested_statuses = result
-
-    def get_steps_to_display(self) -> Dict[str, List[str]]:
-        """
-        Generates a list of steps to display the status for based on information
-        provided to the merlin status command by the user.
-
-        :returns: A dictionary of started and unstarted steps for us to display the status of
-        """
+    def get_steps_to_display(self):
         existing_steps = self.spec.get_study_step_names()
+
+        LOG.debug(f"existing steps: {existing_steps}")
 
         if ("all" in self.args.steps) and (not self.args.task_queues) and (not self.args.workers):
             self.args.steps = existing_steps
@@ -423,21 +604,26 @@ class Status:
                     self.args.steps.remove(estep)
                     self.args.steps.insert(i, estep)
 
+        LOG.debug(f"Building detailed step tracker based on these steps: {self.args.steps}")
+
         # Filter the steps to display status for by started/unstarted
-        step_tracker = self._create_step_tracker()
+        step_tracker = self._create_step_tracker(self.args.steps.copy())
 
         return step_tracker
 
-    @property
-    def num_requested_statuses(self):
+    def _remove_steps_without_statuses(self):
         """
-        Count the number of task statuses in a the requested_statuses dict.
-        We need to ignore non workspace keys when we count.
+        After applying filters, there's a chance that certain steps will still exist
+        in self.requested_statuses but won't have any tasks to view the status of so
+        we'll remove those here.
         """
-        num_statuses = 0
-        for status_info in self.requested_statuses.values():
-            num_statuses += len(status_info.keys() - NON_WORKSPACE_KEYS)
-        return num_statuses
+        result = deepcopy(self.requested_statuses)
+        for step_name, overall_step_info in self.requested_statuses.items():
+            sub_step_workspaces = sorted(list(overall_step_info.keys() - NON_WORKSPACE_KEYS))
+            if len(sub_step_workspaces) == 0:
+                del result[step_name]
+
+        self.requested_statuses = result
 
     def apply_filters(self, filter_types: List[str], filters: List[str]):
         """
@@ -479,7 +665,7 @@ class Status:
     def apply_max_tasks_limit(self):
         """
         Given a number representing the maximum amount of tasks to display, filter the dict of statuses
-        to that number.
+        so that there are at most a max_tasks amount of tasks.
         """
         # Make sure the max_tasks variable is set to a reasonable number and store that value
         if self.args.max_tasks and self.args.max_tasks > self.num_requested_statuses:
@@ -513,68 +699,16 @@ class Status:
         # Reset max_tasks
         self.args.max_tasks = max_tasks
 
-    def get_step_statuses(self, step_workspace: str, started_step_name: str) -> Dict[str, List[str]]:
-        """
-        Given a step workspace and the name of the step, read in all the statuses
-        for the step and return them in a dict.
-
-        :param `step_workspace`: The path to the step we're going to read statuses from
-        :param `started_step_name`: The name of the started step that we're getting statuses from
-        :returns: A dict of statuses for the given step
-        """
-        step_statuses = {}
-        num_statuses_read = 0
-
-        # Traverse the step workspace and look for MERLIN_STATUS files
-        for root, _, files in os.walk(step_workspace):
-            if "MERLIN_STATUS.json" in files:
-                status_filepath = f"{root}/MERLIN_STATUS.json"
-                lock = FileLock(f"{root}/status.lock")  # pylint: disable=E0110
-                statuses_read = read_status(status_filepath, lock)
-
-                # Count the number of statuses we just read
-                for step_name, status_info in statuses_read.items():
-                    if started_step_name not in self.real_step_name_map:
-                        self.real_step_name_map[started_step_name] = [step_name]
-                    else:
-                        if step_name not in self.real_step_name_map[started_step_name]:
-                            self.real_step_name_map[started_step_name].append(step_name)
-                    num_statuses_read += len(status_info.keys() - NON_WORKSPACE_KEYS)
-
-                # Merge the statuses we read with the dict tracking all statuses for this step
-                dict_deep_merge(step_statuses, statuses_read)
-
-            # If we've read all the statuses then we're done
-            if num_statuses_read == self.tasks_per_step[started_step_name]:
-                break
-            # This shouldn't get hit
-            if num_statuses_read > self.tasks_per_step[started_step_name]:
-                LOG.error(
-                    f"Read {num_statuses_read} statuses when there should "
-                    f"only be {self.tasks_per_step[started_step_name]} tasks in total."
-                )
-                break
-
-        return step_statuses
-
     def get_requested_statuses(self):
         """
         Populate the requested_statuses dict with statuses that the user is looking to find.
         Filters for steps, task queues, workers will have already been applied
         when creating the step_tracker attribute. Remaining filters will be applied here.
         """
-        LOG.info(f"Reading task statuses from {self.workspace}")
+        # Grab all the statuses based on our step tracker
+        super().get_requested_statuses()
 
-        # Read in all statuses from the started steps the user wants to see
-        for sstep in self.step_tracker["started_steps"]:
-            step_workspace = f"{self.workspace}/{sstep}"
-            step_statuses = self.get_step_statuses(step_workspace, sstep)
-            dict_deep_merge(self.requested_statuses, step_statuses)
-
-        # Count how many statuses in total that we just read in
-        LOG.info(f"Read in {self.num_requested_statuses} statuses.")
-
-        # Build a list of filters provided
+        # Apply filters to the statuses
         filter_types = set()
         filters = []
         if self.args.task_status:
@@ -582,7 +716,7 @@ class Status:
             filters += self.args.task_status
         if self.args.return_code:
             filter_types.add("Return Code")
-            filters += self.args.return_code
+            filters += [f"MERLIN_{return_code}" for return_code in self.args.return_code]
 
         # Apply the filters if necessary
         if filters:
@@ -591,34 +725,6 @@ class Status:
         # Limit the number of tasks to display if necessary
         if self.args.max_tasks and self.args.max_tasks > 0:
             self.apply_max_tasks_limit()
-
-    def query_task_by_task_status(self):
-        """
-        Displays a task-by-task view of the status based on user filter(s).
-        """
-        # Check if there's any filters remaining after the verification process
-        filters_remaining = any(
-            [
-                self.args.task_queues,
-                self.args.workers,
-                self.args.task_status,
-                self.args.return_code,
-                self.steps_filter_provided,
-                self.args.max_tasks,
-            ]
-        )
-
-        # If there's no filters left, there's nothing to display
-        if not filters_remaining:
-            LOG.warning("No filters remaining, cannot find tasks to display.")
-        else:
-            # Check that there's statuses found and display them
-            if self.requested_statuses:
-                display.display_status_task_by_task(self)
-
-    def query_summary_status(self):
-        """Displays the high level summary of the status"""
-        display.display_status_summary(self)
 
     def get_user_filters(self) -> List[str]:
         """
@@ -747,106 +853,30 @@ class Status:
             self.args.max_tasks = user_max_tasks
             self.apply_max_tasks_limit()
 
-    def format_json_dump(self, date: datetime) -> Dict:
+    def display(self):
         """
-        Build the dict of statuses to dump to the json file.
-
-        :param `date`: A timestamp for us to mark when this status occurred
-        :returns: A dictionary that's ready to dump to a json outfile
+        Displays a task-by-task view of the status based on user filter(s).
         """
-        # Statuses are already in json format so we'll just add a timestamp for the dump here
-        return {date: self.requested_statuses}
+        # Check if there's any filters remaining after the verification process
+        filters_remaining = any(
+            [
+                self.args.task_queues,
+                self.args.workers,
+                self.args.task_status,
+                self.args.return_code,
+                self.steps_filter_provided,
+                self.args.max_tasks,
+            ]
+        )
 
-    def format_csv_dump(self, date: datetime) -> Dict:
-        """
-        Add the timestamp to the statuses to write.
+        # If there's no filters left, there's nothing to display
+        if not filters_remaining:
+            LOG.warning("No filters remaining, cannot find tasks to display.")
+        else:
+            # Check that there's statuses found and display them
+            if self.requested_statuses:
+                display.display_status_task_by_task(self)
 
-        :param `date`: A timestamp for us to mark when this status occurred
-        :returns: A dict equivalent of formatted statuses with a timestamp entry at the start of the dict.
-        """
-        # Reformat the statuses to a new dict where the keys are the column labels and rows are the values
-        statuses_to_write = self.format_status_for_display()
-
-        # Add date entries as the first column then update this dict with the statuses we just reformatted
-        statuses_with_timestamp = {"Time of Status": [date] * len(statuses_to_write["Step Name"])}
-        statuses_with_timestamp.update(statuses_to_write)
-
-        return statuses_with_timestamp
-
-    def dump(self):
-        """
-        Dump the status information to a file.
-        """
-        # Get a timestamp for this dump
-        date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        # Handle different file types
-        if self.args.dump.endswith(".csv"):
-            # Build the lists of information/labels we'll need
-            dump_info = self.format_csv_dump(date)
-        elif self.args.dump.endswith(".json"):
-            # Build the dict of info to dump to the json file
-            dump_info = self.format_json_dump(date)
-
-        # Dump the information
-        dump_handler(self.args.dump, dump_info)
-
-    def format_status_for_display(self) -> Dict:
-        """
-        Reformat our statuses to display so they can use Maestro's status renderer layouts.
-
-        :param `statuses_to_format`: A dict of statuses that we need to reformat
-        :returns: A formatted dictionary where each key is a column and the values are the rows
-                  of information to display for that column.
-        """
-        reformatted_statuses = {
-            "Step Name": [],
-            "Step Workspace": [],
-            "Status": [],
-            "Return Code": [],
-            "Elapsed Time": [],
-            "Run Time": [],
-            "Restarts": [],
-            "Cmd Parameters": [],
-            "Restart Parameters": [],
-            "Task Queue": [],
-            "Worker Name": [],
-        }
-
-        # Loop through all statuses
-        for step_name, overall_step_info in self.requested_statuses.items():
-            for sub_step_workspace, task_status_info in overall_step_info.items():
-                # Ignore non workspace keys for now
-                if sub_step_workspace in NON_WORKSPACE_KEYS:
-                    continue
-
-                # Put the step name and workspace in each entry
-                reformatted_statuses["Step Name"].append(step_name)
-                reformatted_statuses["Step Workspace"].append(sub_step_workspace)
-
-                # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
-                for key, val in task_status_info.items():
-                    reformatted_statuses[key].append(val)
-
-            # Handle the non workspace keys
-            num_statuses = len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
-            for key in NON_WORKSPACE_KEYS:
-                try:
-                    # Set the val_to_add value based on if a value exists for the key
-                    val_to_add = "-------"
-                    if overall_step_info[key]:
-                        val_to_add = overall_step_info[key]
-                except KeyError:
-                    # This key error will happen for Task Queue and Worker Name columns on local runs
-                    # So just remove that entry in the reformatted statuses dict if necessary
-                    if key in reformatted_statuses:
-                        del reformatted_statuses[key]
-                    continue
-                # Add the val_to_add entry for each row
-                key_entries = [val_to_add] * num_statuses
-                reformatted_statuses[key].extend(key_entries)
-
-        return reformatted_statuses
 
 
 def read_status(status_filepath: str, lock: FileLock, display_fnf_message: Optional[bool] = True) -> Dict:
