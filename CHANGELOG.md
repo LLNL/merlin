@@ -5,9 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+### Fixed
+- A bug where the .orig, .partial, and .expanded file names were using the study name rather than the original file name
+- A bug where the openfoam_wf_singularity example was not being found
+- Some build warnings in the docs (unknown targets, duplicate targets, title underlines too short, etc.)
+- A bug where when the output path contained a variable that was overridden, the overridden variable was not changed in the output_path
+
 ### Added
 - Tests for ensuring `$(MERLIN_SPEC_ORIGINAL_TEMPLATE)`, `$(MERLIN_SPEC_ARCHIVED_COPY)`, and `$(MERLIN_SPEC_EXECUTED_RUN)` are stored correctly
 - A pdf download format for the docs
+- Tests for cli substitutions
 - Added the --active-queues flag to the "merlin info" command similar to old status command but will only show queues with running workers
 - New task "update_status" to be called for status changes
 - New worker spun up in the background for tracking statuses
@@ -36,10 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Low Level display:
     - Shows more in-depth details for each task
     - Interactive ability to filter
-### Fixed
-- A bug where the .orig, .partial, and .expanded file names were using the study name rather than the original file name
-- A bug where the openfoam_wf_singularity example was not being found
-- Some build warnings in the docs (unknown targets, duplicate targets, title underlines too short, etc.)
 
 ## [1.10.1]
 ### Fixed

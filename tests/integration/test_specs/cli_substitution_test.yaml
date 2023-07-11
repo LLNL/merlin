@@ -1,0 +1,14 @@
+description:
+    name: cli_substitution_test
+    description: a spec that helps test cli substitutions
+
+env:
+    variables:
+        SUB: no_substitution
+        OUTPUT_PATH: output_path_$(SUB)
+
+study:
+    - name: step1
+      description: step 1
+      run:
+         cmd: echo "test"

@@ -307,14 +307,25 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
 
         output_path = str(self.original_spec.output_path)
 
-        if (self.override_vars is not None) and ("OUTPUT_PATH" in self.override_vars):
-            output_path = str(self.override_vars["OUTPUT_PATH"])
+        # If there are override vars we need to check that the output path doesn't need changed
+        if self.override_vars is not None:
+            # Case where output path is directly modified
+            if "OUTPUT_PATH" in self.override_vars:
+                output_path = str(self.override_vars["OUTPUT_PATH"])
+            else:
+                for var_name, var_val in self.override_vars.items():
+                    token = f"$({var_name})"
+                    # Case where output path contains a variable that was overridden
+                    if token in output_path:
+                        output_path = output_path.replace(token, str(var_val))
 
         output_path = expand_line(output_path, self.user_vars, env_vars=True)
         output_path = os.path.abspath(output_path)
         if not os.path.isdir(output_path):
             os.makedirs(output_path)
             LOG.info(f"Made dir(s) to output path '{output_path}'.")
+
+        LOG.info(f"OUTPUT_PATH: {os.path.basename(output_path)}")
 
         return output_path
 
