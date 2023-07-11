@@ -752,7 +752,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902,R0904
         """
         for token, orig_label in param_gen.labels.items():
             for param in param_gen.parameters[token]:
-                expanded_label = orig_label.replace(param_gen.label_token, param)
+                expanded_label = orig_label.replace(param_gen.label_token, str(param))
                 if token in expanded_labels:
                     expanded_labels[token].append(expanded_label)
                 else:
