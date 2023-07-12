@@ -252,7 +252,18 @@ def purge_tasks(args):
     LOG.info(f"Purge return = {ret} .")
 
 
-def get_status_obj(args: "Namespace", detailed: Optional[bool] = False) -> status.Status:
+def query_status(args):
+    """
+    CLI command for querying status of studies.
+    Based on the parsed CLI args construct either a Status object or a DetailedStatus object
+    and display the appropriate output.
+    Object mapping is as follows:
+    merlin status -> Status object ; merlin detailed-status -> DetailedStatus object
+
+    :param `args`: parsed CLI arguments
+    """
+    print(banner_small)
+
     # Ensure task server is valid
     if args.task_server != "celery":
         raise ValueError("Currently the only supported task server is celery.")
@@ -273,86 +284,19 @@ def get_status_obj(args: "Namespace", detailed: Optional[bool] = False) -> statu
             LOG.error(f"The file or directory path {args.spec_or_workspace} does not exist.")
             return None
 
+    # Get either a Status object or DetailedStatus object
     if args.detailed:
-        print(f"detailed")
         status_obj = status.DetailedStatus(args, spec_display, file_or_ws)
     else:
-        print(f"not detailed")
         status_obj = status.Status(args, spec_display, file_or_ws)
-
-    return status_obj
-
-
-def query_status(args):
-    print(banner_small)
-
-    status_obj = get_status_obj(args)
 
     # Handle output appropriately
     if args.dump:
         status_obj.dump()
     else:
         status_obj.display()
-
-
-# def query_detailed_status(args):
-#     print(banner_small)
-
-#     status_obj = get_status_obj(args, detailed=True)
-
-#     if args.dump:
-#         status_obj.dump()
-#     else:
-#         status_obj.display()
-
-
-# def query_status(args):
-#     """
-#     CLI command for querying status of tasks.
-
-#     :param 'args': parsed CLI arguments
-#     """
-#     print(banner_small)
-
-#     # Ensure task server is valid
-#     if args.task_server != "celery":
-#         raise ValueError("Currently the only supported task server is celery.")
-
-#     # Make sure dump is valid if provided
-#     if args.dump and (not args.dump.endswith(".csv") and not args.dump.endswith(".json")):
-#         raise ValueError("The --dump option takes a filename that must end with .csv or .json")
-
-#     # Establish whether the argument provided by the user was a spec file or a study directory
-#     spec_display = False
-#     try:
-#         file_or_ws = verify_filepath(args.spec_or_workspace)
-#         spec_display = True
-#     except ValueError:
-#         try:
-#             file_or_ws = verify_dirpath(args.spec_or_workspace)
-#         except ValueError:
-#             LOG.error(f"The file or directory path {args.spec_or_workspace} does not exist.")
-#             return
-
-#     # Build a list of filters and create the status instance
-#     filters = [
-#         args.task_queues,
-#         args.workers,
-#         args.task_status,
-#         args.return_code,
-#         (args.steps and "all" not in args.steps),
-#         args.max_tasks,
-#     ]
-#     filters_provided = any(filters)
-#     status_obj = status.Status(args, spec_display, file_or_ws)
-
-#     # Handle output appropriately
-#     if args.dump:
-#         status_obj.dump()
-#     elif filters_provided:
-#         status_obj.query_task_by_task_status()
-#     else:
-#         status_obj.query_summary_status()
+    
+    return None
 
 
 def query_queues(args):

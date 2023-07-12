@@ -709,32 +709,6 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902,R0904
 
         return tasks_per_step
 
-    def _step_contains_param(self, step, params):
-        """
-        :param `step`: A StudyStep object representing the step we're looking for parameters in
-        :param `params`: A list of global parameters defined in the spec
-        :returns: True if `step` uses a global parameter, False otherwise
-        """
-        cmd = step.__dict__["run"]["cmd"]
-        restart_cmd = step.__dict__["run"]["restart"]
-        for param in params:
-            if param in cmd or param in restart_cmd:
-                return True
-        return False
-
-    @property
-    def steps_with_params(self):
-        """
-        :returns: A list of steps that use global parameters
-        """
-        study_steps = self.get_study_steps()
-        params = self.get_parameters().parameters
-        steps_with_params = []
-        for step in study_steps:
-            if self._step_contains_param(step, params):
-                steps_with_params.append(step.name)
-        return steps_with_params
-
     def _create_param_maps(self, param_gen, expanded_labels, label_param_map):
         """
         Given a parameters block like so:
@@ -812,8 +786,3 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902,R0904
                             step_param_map[step_name_with_params]["restart_cmd"][token] = param_value
 
         return step_param_map
-
-    @property
-    def parameter_length(self):
-        """Returns the length of the parameters"""
-        return self.get_parameters().length

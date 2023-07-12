@@ -46,7 +46,6 @@ DICT = {
         "interval_step": 10,
         "interval_max": 60,
     },
-    "task_track_started": True,
     "redis_max_connections": 100000,
     "broker_transport_options": {
         "visibility_timeout": 60 * 60 * 24,
