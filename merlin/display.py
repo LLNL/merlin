@@ -256,7 +256,7 @@ def display_status_task_by_task(status_obj: "DetailedStatus"):  # noqa: F821
     # If the pager is disabled then we need to be careful not to overload the terminal with a bazillion tasks
     if args.disable_pager and not args.no_prompts:
         # Setting the limit at 250 tasks before asking for additional filters
-        while status_obj.num_requested_statuses > 20:
+        while status_obj.num_requested_statuses > 250:
             # See if the user wants to apply additional filters
             apply_additional_filters = input(
                 f"About to display {status_obj.num_requested_statuses} tasks without a pager. "

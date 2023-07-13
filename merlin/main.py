@@ -311,8 +311,11 @@ def query_queues(args):
     print(banner_small)
 
     # Ensure a spec is provided if steps are provided
-    if "all" not in args.steps and not args.specification:
-        raise ValueError("The --steps argument MUST be used with the --specification argument.")
+    if not args.specification:
+        if "all" not in args.steps:
+            raise ValueError("The --steps argument MUST be used with the --specification argument.")
+        if args.variables:
+            raise ValueError("The --vars argument MUST be used with the --specification argument.")
 
     spec = None
     # Load the spec if necessary
@@ -1086,8 +1089,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
 
     queue_info: ArgumentParser = subparsers.add_parser(
         "queue-info",
-        help="List queue stats (name, number of connected workers, \
-            number of tasks to do) for active queues.",
+        help="List queue statistics (queue name, number of tasks in the queue, number of connected workers).",
     )
     queue_info.set_defaults(func=query_queues)
     queue_info.add_argument(
@@ -1097,16 +1099,23 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         default=None,
     )
     queue_info.add_argument(
+        "--specific-queues", nargs="+", type=str, help="Display queue stats for specific queues you list here"
+    )
+    queue_info.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type. Default: %(default)s",
+    )
+    spec_group = queue_info.add_argument_group("specification options")
+    spec_group.add_argument(
         "--specification",
         type=str,
         help="Path to a Merlin YAML spec file. \
                             This will only display information for queues defined in this spec file. \
                             This is the same behavior as the status command before Merlin version 1.11.0 was released.",
     )
-    queue_info.add_argument(
-        "--specific-queues", nargs="+", type=str, help="Display queue stats for specific queues you list here"
-    )
-    queue_info.add_argument(
+    spec_group.add_argument(
         "--steps",
         nargs="+",
         type=str,
@@ -1115,13 +1124,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         help="The specific steps in the YAML file you want to query the queues of. "
         "This option MUST be used with the --specification option",
     )
-    queue_info.add_argument(
-        "--task_server",
-        type=str,
-        default="celery",
-        help="Task server type. Default: %(default)s",
-    )
-    queue_info.add_argument(
+    spec_group.add_argument(
         "--vars",
         action="store",
         dest="variables",
@@ -1129,7 +1132,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         nargs="+",
         default=None,
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+        "This option MUST be used with the --specification option. Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
 
     # merlin info

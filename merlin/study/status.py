@@ -69,6 +69,9 @@ class Status:
             self.workspace = file_or_ws
             self.spec = self._load_from_workspace()
 
+        # Verify the filter args (this will only do something for DetailedStatus)
+        self._verify_filter_args()
+
         # Create a step tracker that will tell us which steps we'll display that have started/not started
         self.step_tracker = self.get_steps_to_display()
 
@@ -83,6 +86,13 @@ class Status:
         # Variable to store the statuses that the user wants
         self.requested_statuses = {}
         self.get_requested_statuses()
+
+    def _verify_filter_args(self):
+        """
+        This is an abstract method since we'll need to verify filter args for DetailedStatus
+        but not for Status.
+        """
+        pass
 
     def _get_latest_study(self, studies: List[str]) -> str:
         """
@@ -454,9 +464,6 @@ class DetailedStatus(Status):
         # Check if the steps filter was given
         self.steps_filter_provided = True if "all" not in args.steps else False
 
-        # Verify the filter args provided by the user
-        self._verify_filter_args()
-
     def _verify_filters(self, filters_to_check: List[str], valid_options: Union[List, Tuple], warning_msg: Optional[str] = ""):
         """
         Check each filter in a list of filters provided by the user against a list of valid options.
@@ -480,10 +487,12 @@ class DetailedStatus(Status):
         """
         # Ensure the steps are valid
         if "all" not in self.args.steps:
+            LOG.debug(f"args.steps before verification: {self.args.steps}")
             existing_steps = self.spec.get_study_step_names()
             self._verify_filters(
                 self.args.steps, existing_steps, warning_msg="Removing this step from the list of steps to filter by..."
             )
+            LOG.debug(f"args.steps after verification: {self.args.steps}")
 
         # Make sure max_tasks is a positive int
         if self.args.max_tasks and self.args.max_tasks < 1:
@@ -542,6 +551,7 @@ class DetailedStatus(Status):
         Modifies the list of steps to display status for based on
         the list of workers provided by the user.
         """
+        LOG.debug("Processing workers filter...")
         # Remove duplicates
         workers_provided = list(set(self.args.workers))
 
@@ -557,12 +567,15 @@ class DetailedStatus(Status):
                 for step in worker_step_map[worker_provided]:
                     if step not in self.args.steps:
                         self.args.steps.append(step)
+        
+        LOG.debug(f"Steps after workers filter: {self.args.steps}")
 
     def _process_task_queue(self):
         """
         Modifies the list of steps to display status for based on
         the list of task queues provided by the user.
         """
+        LOG.debug("Processing task_queues filter...")
         # Remove duplicate queues
         queues_provided = list(set(self.args.task_queues))
 
@@ -580,12 +593,15 @@ class DetailedStatus(Status):
                     if step not in self.args.steps:
                         self.args.steps.append(step)
 
+        LOG.debug(f"Steps after task_queues filter: {self.args.steps}")
+
     def get_steps_to_display(self):
         existing_steps = self.spec.get_study_step_names()
 
         LOG.debug(f"existing steps: {existing_steps}")
 
         if ("all" in self.args.steps) and (not self.args.task_queues) and (not self.args.workers):
+            LOG.debug("The steps, task_queues, and workers filters weren't provided. Setting steps to be all existing steps.")
             self.args.steps = existing_steps
         else:
             # This won't matter anymore since task_queues or workers is not None here
