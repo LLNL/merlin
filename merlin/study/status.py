@@ -58,6 +58,7 @@ class Status:
     This class handles everything to do with status besides displaying it.
     Display functionality is handled in display.py.
     """
+
     def __init__(self, args: "Namespace", spec_display: bool, file_or_ws: str):  # noqa: F821
         # Save the args to this class instance and check if the steps filter was given
         self.args = args
@@ -92,7 +93,6 @@ class Status:
         This is an abstract method since we'll need to verify filter args for DetailedStatus
         but not for Status.
         """
-        pass
 
     def _get_latest_study(self, studies: List[str]) -> str:
         """
@@ -162,7 +162,7 @@ class Status:
 
         return study_to_check
 
-    def _load_from_spec(self, filepath: str) -> Tuple[str, "MerlinSpec"]:  # noqa: F821
+    def _load_from_spec(self, filepath: str) -> Tuple[str, "MerlinSpec"]:  # noqa: F821 pylint: disable=R0914
         """
         Get the desired workspace from the user and load up it's yaml spec
         for further processing.
@@ -271,7 +271,7 @@ class Status:
         existing_steps = self.spec.get_study_step_names()
 
         LOG.debug(f"existing steps: {existing_steps}")
-        LOG.debug(f"Building step tracker based on existing steps...")
+        LOG.debug("Building step tracker based on existing steps...")
 
         # Filter the steps to display status for by started/unstarted
         step_tracker = self._create_step_tracker(existing_steps)
@@ -458,11 +458,12 @@ class DetailedStatus(Status):
     This class handles obtaining and filtering requested statuses from the user.
     This class shares similar methodology to the Status class it inherits from.
     """
-    def __init__(self, args: "Namespace", spec_display: bool, file_or_ws: str):
+
+    def __init__(self, args: "Namespace", spec_display: bool, file_or_ws: str):  # noqa: F821
         super().__init__(args, spec_display, file_or_ws)
 
         # Check if the steps filter was given
-        self.steps_filter_provided = True if "all" not in args.steps else False
+        self.steps_filter_provided = "all" not in args.steps
 
     def _verify_filters(self, filters_to_check: List[str], valid_options: Union[List, Tuple], warning_msg: Optional[str] = ""):
         """
@@ -567,7 +568,7 @@ class DetailedStatus(Status):
                 for step in worker_step_map[worker_provided]:
                     if step not in self.args.steps:
                         self.args.steps.append(step)
-        
+
         LOG.debug(f"Steps after workers filter: {self.args.steps}")
 
     def _process_task_queue(self):
@@ -892,7 +893,6 @@ class DetailedStatus(Status):
             # Check that there's statuses found and display them
             if self.requested_statuses:
                 display.display_status_task_by_task(self)
-
 
 
 def read_status(status_filepath: str, lock: FileLock, display_fnf_message: Optional[bool] = True) -> Dict:

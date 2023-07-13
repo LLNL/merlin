@@ -35,7 +35,6 @@ import json
 import logging
 import os
 import re
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Need to disable an overwrite warning here since celery has an exception that we need that directly
@@ -461,6 +460,47 @@ def get_1d_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:  # n
     return chain_steps
 
 
+def gather_statuses(sample_index: "SampleIndex", workspace: str, condensed_workspace: str) -> Dict:  # noqa: F821
+    """
+    Traverse the sample index and gather all of the statuses into one.
+
+    :param `sample_index`: A SampleIndex object to track this specific sample hierarchy
+    :param `workspace`: The full workspace path to the step we're condensing for
+    :param `condensed_workspace`: A shortened version of `workspace` that's saved in the status files
+    :returns: A dict of condensed statuses
+    """
+    condensed_statuses = {}
+    for path, _ in sample_index.traverse(conditional=lambda c: c.is_parent_of_leaf):
+        # Read in the status data
+        sample_workspace = f"{workspace}/{path}"
+        status_filepath = f"{sample_workspace}/MERLIN_STATUS.json"
+        lock = FileLock(f"{sample_workspace}/status.lock")  # pylint: disable=E0110
+        try:
+            # The status files will need locks when reading to avoid race conditions
+            with lock.acquire(timeout=10):
+                with open(status_filepath, "r") as status_file:
+                    status = json.load(status_file)
+
+            # This for loop is just to get the step name that we don't have; it's really not even looping
+            for step_name, _ in status.items():
+                try:
+                    # Make sure the status for this sample workspace is in a finished state (not initialized or running)
+                    if status[step_name][f"{condensed_workspace}/{path}"]["Status"] not in ("INITIALIZED", "RUNNING"):
+                        # Add the status data to the statuses we'll write to the condensed file and remove this status file
+                        dict_deep_merge(condensed_statuses, status)
+                        os.remove(status_filepath)
+                except KeyError:
+                    LOG.warning(f"Key error when reading from {sample_workspace}")
+        except Timeout:
+            # Raising this celery timeout instead will trigger a restart for this task
+            raise TimeoutError  # pylint: disable=W0707
+        except FileNotFoundError:
+            LOG.warning(f"Could not find {status_filepath} while trying to condense. Restarting this task...")
+            raise FileNotFoundError  # pylint: disable=W0707
+
+    return condensed_statuses
+
+
 @shared_task(
     bind=True,
     autoretry_for=retry_exceptions,
@@ -488,7 +528,6 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pyl
     if not workspace:
         LOG.warning("Workspace not found. Cannot condense status files.")
         return None
-    workspace = Path(workspace)
 
     # Get a condensed version of the workspace
     condensed_workspace = kwargs.pop("condensed_workspace", None)
@@ -497,39 +536,12 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pyl
         return None
 
     # Read in all the statuses from this sample index
-    condensed_statuses = {}
-    for path, _ in sample_index.traverse(conditional=lambda c: c.is_parent_of_leaf):
-        # Read in the status data
-        sample_workspace = f"{str(workspace)}/{path}"
-        status_filepath = f"{sample_workspace}/MERLIN_STATUS.json"
-        lock = FileLock(f"{sample_workspace}/status.lock")  # pylint: disable=E0110
-        try:
-            # The status files will need locks when reading to avoid race conditions
-            with lock.acquire(timeout=10):
-                with open(status_filepath, "r") as status_file:
-                    status = json.load(status_file)
-
-            # This for loop is just to get the step name that we don't have; it's really not even looping
-            for step_name, _ in status.items():
-                try:
-                    # Make sure the status for this sample workspace is in a finished state (not initialized or running)
-                    if status[step_name][f"{condensed_workspace}/{path}"]["Status"] not in ("INITIALIZED", "RUNNING"):
-                        # Add the status data to the statuses we'll write to the condensed file and remove this status file
-                        dict_deep_merge(condensed_statuses, status)
-                        os.remove(status_filepath)
-                except KeyError:
-                    LOG.warning(f"Key error when reading from {sample_workspace}")
-        except Timeout:
-            # Raising this celery timeout instead will trigger a restart for this task
-            raise TimeoutError  # pylint: disable=W0707
-        except FileNotFoundError:
-            LOG.warning(f"Could not find {status_filepath} while trying to condense. Restarting this task...")
-            raise FileNotFoundError  # pylint: disable=W0707
+    condensed_statuses = gather_statuses(sample_index, workspace, condensed_workspace)
 
     # If there are statuses to write to the condensed status file then write them
     if condensed_statuses:
-        condensed_status_filepath = f"{str(workspace)}/MERLIN_STATUS.json"
-        condensed_lock_file = f"{str(workspace)}/status.lock"
+        condensed_status_filepath = f"{workspace}/MERLIN_STATUS.json"
+        condensed_lock_file = f"{workspace}/status.lock"
         lock = FileLock(condensed_lock_file)  # pylint: disable=E0110
         try:
             # Lock the file to avoid race conditions

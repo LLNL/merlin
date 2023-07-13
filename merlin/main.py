@@ -295,7 +295,7 @@ def query_status(args):
         status_obj.dump()
     else:
         status_obj.display()
-    
+
     return None
 
 
@@ -1000,9 +1000,10 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         "detailed-status",
         help="Display a task-by-task status of a study.",
     )
-    # detailed_status.set_defaults(func=query_status)
     detailed_status.set_defaults(func=query_status, detailed=True)
-    detailed_status.add_argument("spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study")
+    detailed_status.add_argument(
+        "spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study"
+    )
     detailed_status.add_argument(
         "--dump", type=str, help="Dump the status to a file. Provide the filename (must be .csv or .json).", default=None
     )
