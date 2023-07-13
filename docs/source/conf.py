@@ -47,7 +47,7 @@ release = MERLIN_VERSION
 #    'sphinx.ext.autodoc',
 #    'sphinx.ext.intersphinx',
 # ]
-extensions = ["sphinx.ext.autodoc"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.autosectionlabel"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

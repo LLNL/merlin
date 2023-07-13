@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - You can set a limit on the number of tasks to display
   - There are 3 options to modify the output display
 - A pdf download format for the docs
+- A new page titled `Monitoring Studies` in the docs to explain the new commands and the new status command
+- Two new command entries in the `Command Line` page of the docs for the `queue-info` and `detailed-status` commands
 - New file `merlin/study/status.py` dedicated to work relating to the status command
   - Contains the Status and DetailedStatus classes
 - New file `merlin/study/status_renderers.py` dedicated to formatting the output for the task-by-task display
@@ -59,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New functionality:
     - Shows step_by_step progress bar for tasks
     - Displays a summary of task statuses below the progress bar
+- Reformatted the status command section in the `Command Line` page of the docs
 - The ProvenanceYAMLFileHasRegex condition for integration tests now saves the study name and spec file name as attributes instead of just the study name
   - This lead to minor changes in 3 tests ("local override feature demo", "local pgen feature demo", and "remote feature demo") with what we pass to this specific condition
 - Updated scikit-learn requirement for the openfoam_wf_singularity example

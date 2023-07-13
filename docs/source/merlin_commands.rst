@@ -244,6 +244,7 @@ skip during execution of a workflow.
 
 The ``--local`` option will run tasks sequentially in your current shell.
 
+.. _merlin-run:
 
 Run the workflow (``merlin run``)
 ---------------------------------
@@ -385,120 +386,196 @@ shown below.
   merlin monitor
 
 
-Status (``merlin status``)
---------------------------
-.. code:: bash
+View Queue Information (``merlin queue-info``)
+----------------------------------------------
+List queue statistics (name of the queue, number of tasks in this queue, and number of connected workers to this queue). For more
+information see :ref:`Monitoring Studies`.
 
-    $ merlin status <input.yaml OR output_study/> [--dump <csv or json file>] [--task_server celery] [--vars <VARIABLES=<VARIABLES>>] [--max-tasks <max num tasks to display>] [--return-code <return code(s)>] [--steps <step(s)>] [--task-queues <task queue(s)>] [--task-status <task status(es)>] [--workers <worker(s)>] [--cb-help] [--disable-pager] [--disable-theme] [--layout <layout>] [--no-prompts]
-
-Summary View
-^^^^^^^^^^^^
-
-The ``merlin status`` command can take either a yaml spec file or an output study directory as input. For example, ``hello_world.yaml`` and
-``hello_world_20230503-105137/`` are both valid inputs so long as the file or output directory exists. If you choose to provide a spec file as input and
-there are multiple output directories associated with that spec file, then you will be prompted to select which study you'd like to view the status of:
-
-.. image:: ../images/status-multiple-studies.png
-
-Upon selecting a study to view you will be shown a high-level summary of the status for each step in the study:
-
-.. image:: ../images/status-high-lvl.png
-
-To implement the use of symbols for colorblind assistance, use the ``--cb-help`` option:
-
-.. image:: ../images/status-high-lvl-cb-help.png
-
-Task-by-Task View
-^^^^^^^^^^^^^^^^^
-    
-To see more detailed information about the tasks ran for each step use any of the following 5 filters: ``--steps``, ``--task-status``, ``--max-tasks``,
-``--task-queues``, and/or ``--workers``.
-
-.. warning::
-    The ``--no-prompts`` option should be used with caution as you may accidentally output thousands of task statuses to the terminal.
-    It's recommended to use this flag when writing status to an output file rather than viewing through the terminal.
-
-If there are a large amount of task statuses to display (which is very likely) and the ``--max-tasks`` option is not provided, Merlin will prompt for
-filters and use pagination to display 50 statuses at a time to ensure we don't overload the terminal. If you'd like to disable these prompts, use the
-``--no-prompts`` option. If this option is provided with a spec file as input (e.g ``merlin status hello_samples.yaml --no-prompts``), then Merlin will
-select the most recent study associated with the spec file to check the status of.
-
-The ``--steps`` filter allows you to view information about each task that was ran for a step. This flag can take one or multiple steps
-as input and will output a table of task info.
-
-.. image:: ../images/status-steps.png
-
-The ``--task-status`` filter allows you to search for tasks with a certain status. This filter can take one or more statuses as input.
-Valid inputs include: INITIALIZED, RUNNING, FINISHED, FAILED, CANCELLED, DRY_RUN, and UNKNOWN.
-
-.. image:: ../images/status-task-status.png
-
-The ``--max-tasks`` filter allows you to limit how many tasks are displayed in the output. This filter takes in an integer as input
-which represents the maximum number of tasks you'd like to display.
-
-.. image:: ../images/status-max-tasks.png
-
-The ``--task-queues`` filter allows you to search for tasks that are in or were in certain task queues. This filter can take one or more
-queues as input. If a queue provided cannot be found, that queue will be removed from the filter.
-
-.. image:: ../images/status-task-queues.png
-
-The ``--workers`` filter allows you to search for tasks that are being run or were ran by certain celery workers. This filter can take
-one or more worker names as input. If a worker provided cannot be found, that worker will be removed from the filter.
-
-.. image:: ../images/status-workers.png
-
-Non-View Related Options
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-There are 4 additional options to be used with the ``merlin status`` command that won't directly trigger the summary or task-by-task views:
-``queue-info``, ``--vars``, ``--dump``, and ``--task_server``.
-
-The ``--queue-info`` option displays the status of the celery queues for your study. It will display the queue name, the number of tasks
-currently in the queue, and the number of workers assigned to the queue. This is the same functionality as the ``merlin status`` command
-prior to v1.11.0.
-
-The ``--vars`` option will specify desired Merlin variable values to override
-those found in the specification. The list is space-delimited and should be given after
-the input yaml file.
-``Example: --vars OUTPUT_PATH=./studies``
-
-The ``--dump`` option takes in a filename to dump task-by-task status reports to. Currently, the only supported file types to dump status
-to are csv and json. Merlin will recognize the file type if you put it as the file extension (i.e. providing ``--dump status.csv`` will result
-in a csv file being created). If you provide a file that already exists, Merlin will append the status to that file.
-
-For csv files, the first entry for each row will be a timestamp of when the dump took place. This allows you to append statuses to the same file
-and check them periodically without having to create new files each time.
-
-For json files, the format for a status dump is as follows:
-
-.. image:: ../images/status-json-format.png
-
-The timestamp here, like csv, represents when the dump took place which allows you to dump multiple status calls to the same file. The ``step_name``
-and ``workspace`` keys will vary depending on your study.
-
-Example usage:
+Usage:
 
 .. code:: bash
 
-    merlin status hello_samples_20230503-124629/ --dump status.json
+  $ merlin queue-info [--dump <csv or json file>] [--specification <spec_file.yaml>] [--specific-queues <queue name(s)>] [--steps <step name(s)>] [--task_server celery] [--vars <VARIABLES=<VARIABLES>>]
 
-The ``--dump`` option can be used with the ``--queue-info`` option, as well. This will write information about the queues for a study to an output
-file rather than task-by-task status reports.
+.. list-table:: Options
+    :widths: 20 20 40 20
+    :header-rows: 1
 
-For json files, the format for a queue info dump is as follows:
+    * - Name
+      - Type
+      - Description
+      - Default
+    * - -h, --help
+      - boolean
+      - Show a help message and exit
+      - False
+    * - --dump
+      - filename
+      - Dump the queue information to a file. Provide the filename (must be .csv or .json).
+      - None
+    * - --specification
+      - filename
+      - Path to a Merlin YAML spec file. This will only display information for queues defined in this spec file.
+        This is the same behavior as the status command before Merlin version 1.11.0 was released.
+      - None
+    * - --specific-queues
+      - string
+      - Display queue stats for specific queues you list here
+      - None
+    * - --steps
+      - string
+      - The specific steps in the YAML file you want to query the queues of. This option MUST be used with the --specification option.
+      - "all"
+    * - --task_server
+      - string
+      - Task server type. WARNING: the only supported task server at the moment is celery.
+      - celery
+    * - --vars
+      - string
+      - Specify desired Merlin variable values to override those found in the specification. Space-delimited. Example: '--vars
+        LEARN=path/to/new_learn.py EPOCHS=3'
+      - None
 
-.. image:: ../images/queue-info-json-format.png
 
-The ``queue_name`` key will vary depending on the queues used for your study.
+Status Summary (``merlin status``)
+----------------------------------
+Display a summary of the status of a study. For more information see :ref:`Monitoring Studies`.
 
-Example usage:
+Usage:
 
 .. code:: bash
 
-    merlin status hello_samples_20230503-124629/ --dump status.json --queue-info
+    $ merlin status <input.yaml OR output_study/> [--cb-help] [--dump <csv or json file>] [--no-prompts] [--task_server celery] [--vars <VARIABLES=<VARIABLES>>]
 
-The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
+.. list-table:: Options
+    :widths: 20 20 40 20
+    :header-rows: 1
+
+    * - Name
+      - Type
+      - Description
+      - Default
+    * - -h, --help
+      - boolean
+      - Show a help message and exit
+      - False
+    * - --cb-help
+      - boolean
+      - Colorblind help; uses different symbols to represent different statuses
+      - False
+    * - --dump
+      - filename
+      - Dump the status to a file. Provide the filename (must be .csv or .json).
+      - None
+    * - --no-prompts
+      - boolean
+      - Ignore any prompts provided. This will default to the latest study if you provide a spec file rather than a study workspace.
+      - False
+    * - --task_server
+      - string
+      - Task server type. WARNING: the only supported task server at the moment is celery.
+      - celery
+    * - --vars
+      - string
+      - Specify desired Merlin variable values to override those found in the specification. Space-delimited. Example: '--vars
+        LEARN=path/to/new_learn.py EPOCHS=3'
+      - None
+
+Detailed Status (``merlin detailed-status``)
+--------------------------------------------
+Display the task-by-task status of a study. For more information see :ref:`Monitoring Studies`.
+
+Usage:
+
+.. code:: bash
+
+    $ merlin detailed-status <input.yaml OR output_study/> [--dump <csv or json file>] [--task_server celery] [--vars <VARIABLES=<VARIABLES>>] [--max-tasks <max num tasks to display>] [--return-code <return code(s)>] [--steps <step(s)>] [--task-queues <task queue(s)>] [--task-status <task status(es)>] [--workers <worker(s)>]S [--disable-pager] [--disable-theme] [--layout <layout>] [--no-prompts]
+
+.. list-table:: General Options
+    :widths: 20 20 40 20
+    :header-rows: 1
+
+    * - Name
+      - Type
+      - Description
+      - Default
+    * - -h, --help
+      - boolean
+      - Show a help message and exit
+      - False
+    * - --dump
+      - filename
+      - Dump the status to a file. Provide the filename (must be .csv or .json).
+      - None
+    * - --task_server
+      - string
+      - Task server type. WARNING: the only supported task server at the moment is celery.
+      - celery
+    * - --vars
+      - string
+      - Specify desired Merlin variable values to override those found in the specification. Space-delimited. Example: '--vars
+        LEARN=path/to/new_learn.py EPOCHS=3'
+      - None
+
+.. list-table:: Filter Options
+    :widths: 20 20 40 20
+    :header-rows: 1
+
+    * - Filter Name
+      - Type
+      - Description
+      - Default
+    * - --max-tasks
+      - integer
+      - Sets a limit on how many tasks can be displayed
+      - None
+    * - --return-code
+      - choice (SUCCESS \| SOFT_FAIL \| HARD_FAIL \| STOP_WORKERS \| RETRY \| DRY_SUCCESS \| UNRECOGNIZED)
+      - Filter which tasks to display based on their return code
+      - None
+    * - --steps
+      - string
+      - Filter which tasks to display based on the steps they're associated with
+      - "all"
+    * - --task-queues
+      - string
+      - Filter which tasks to display based on the task queue they're in
+      - None
+    * - --task-status
+      - choice (INITIALIZED \| RUNNING \| FINISHED \| FAILED \| CANCELLED \| DRY_RUN \| UNKNOWN)
+      - Filter which tasks to display based on their status
+      - None
+    * - --workers
+      - string
+      - Filter which tasks to display based on which workers are processing them
+      - None
+
+.. list-table:: Display Options
+    :widths: 20 20 40 20
+    :header-rows: 1
+
+    * - Name
+      - Type
+      - Description
+      - Default
+    * - --disable-pager
+      - boolean
+      - Turn off the pager functionality when viewing the status
+      - False
+    * - --disable-theme
+      - boolean
+      - Turn off styling for the status layout (If you want styling but it's not working, try modifying the MANPAGER or PAGER environment
+        variables to be 'less -r'; i.e. export MANPAGER='less -r')
+      - False
+    * - --layout
+      - choice (table \| default)
+      - Alternate status layouts
+      - default
+    * - --no-prompts
+      - boolean
+      - Ignore any prompts provided. This will default to the latest study if you provide a spec file rather than a study workspace.
+      - False
+
 
 
 .. _stop-workers:

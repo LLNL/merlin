@@ -65,11 +65,12 @@ For more details, check out the rest of the documentation.
 Need help? `merlin@llnl.gov <merlin@llnl.gov>`_
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    tutorial
    getting_started
    faq
+   merlin_monitoring
    merlin_commands
    merlin_workflows
    merlin_specification

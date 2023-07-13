@@ -37,3 +37,24 @@ td {
 .underline {
     text-decoration: underline;
 }
+.red {
+    color:#d55e00;
+}
+.orange {
+    color:#e69f00;
+}
+.yellow {
+    color:#f0e442;
+}
+.green {
+    color:#009e74;
+}
+.blue {
+    color:#0072b2;
+}
+.light-blue {
+    color: #56b3e9;
+}
+.grey {
+    color: #666666;
+}
