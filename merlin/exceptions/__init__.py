@@ -92,3 +92,12 @@ class RestartException(Exception):
 
     def __init__(self):
         super().__init__()
+
+class DeepMergeException(Exception):
+    """
+    Exception to signal that there's a conflict when trying
+    to merge two dicts together
+    """
+
+    def __init__(self):
+        super().__init__()

@@ -47,6 +47,7 @@ import numpy as np
 import psutil
 import yaml
 
+from merlin.exceptions import DeepMergeException
 
 try:
     import cPickle as pickle
@@ -502,8 +503,9 @@ def dict_deep_merge(dict_a, dict_b, path=None):
     """
     This function recursively merges dict_b into dict_a. The built-in
     merge of dictionaries in python (dict(dict_a) | dict(dict_b)) does not do a
-    deep merge so this function is necessary. Credit to this stack
-    overflow post: https://stackoverflow.com/a/7205107.
+    deep merge so this function is necessary. This will only merge in new keys,
+    it will NOT update existing ones.
+    Credit to this stack overflow post: https://stackoverflow.com/a/7205107.
 
     :param `dict_a`: A dict that we'll merge dict_b into
     :param `dict_b`: A dict that we want to merge into dict_a
@@ -518,7 +520,7 @@ def dict_deep_merge(dict_a, dict_b, path=None):
             elif dict_a[key] == dict_b[key]:
                 pass  # same leaf value
             else:
-                raise Exception(f"Conflict at {'.'.join(path + [str(key)])}")
+                raise DeepMergeException(f"Conflict at {'.'.join(path + [str(key)])}")
         else:
             dict_a[key] = dict_b[key]
 
@@ -588,7 +590,7 @@ def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") 
     return repr_timedelta(tdelta, method=format_method)
 
 
-def ws_time_to_td(ws_time: str) -> datetime:
+def ws_time_to_dt(ws_time: str) -> datetime:
     """
     Converts a workspace timestring to a datetime object.
 

@@ -32,6 +32,7 @@ import json
 import logging
 import os
 import re
+from glob import glob
 from copy import deepcopy
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Union
@@ -42,7 +43,7 @@ from merlin import display
 from merlin.common.dumper import dump_handler
 from merlin.config.configfile import CONFIG
 from merlin.study.status_renderers import status_renderer_factory
-from merlin.utils import dict_deep_merge, ws_time_to_td
+from merlin.utils import dict_deep_merge, ws_time_to_dt
 
 
 LOG = logging.getLogger(__name__)
@@ -104,12 +105,12 @@ class Status:
         # We can assume the newest study is the last one to be added to the list of potential studies
         newest_study = studies[-1]
         newest_timestring = newest_study[-15:]
-        newest_study_date = ws_time_to_td(newest_timestring)
+        newest_study_date = ws_time_to_dt(newest_timestring)
 
         # Check that the newest study somehow isn't the last entry
         for study in studies:
             temp_timestring = study[-15:]
-            date_to_check = ws_time_to_td(temp_timestring)
+            date_to_check = ws_time_to_dt(temp_timestring)
             if date_to_check > newest_study_date:
                 newest_study = study
                 newest_study_date = date_to_check
@@ -140,7 +141,7 @@ class Status:
                 study_to_check += latest_study
             # Ask the user which study to view
             else:
-                print(f"Found {num_studies-1} potential studies:")
+                print(f"Found {num_studies} potential studies:")
                 display.tabulate_info(potential_studies, headers=["Index", "Study Name"])
                 prompt = "Which study would you like to view the status of? Use the index on the left: "
                 index = -1
@@ -205,13 +206,18 @@ class Status:
 
         # Verify the directory that the user selected is a merlin study output directory
         if "merlin_info" not in next(os.walk(study_to_check))[1]:
-            LOG.error(
+            raise ValueError(
                 f"The merlin_info subdirectory was not found. {study_to_check} may not be a Merlin study output directory."
             )
 
         # Grab the spec saved to the merlin info directory in case something
         # in the current spec has changed since starting the study
-        actual_spec = get_spec_with_expansion(f"{study_to_check}/merlin_info/{spec_provided.name}.expanded.yaml")
+        expanded_spec_options = glob(f"{study_to_check}/merlin_info/*.expanded.yaml")
+        if len(expanded_spec_options) > 1:
+            raise ValueError(f"Multiple expanded spec options found in the {study_to_check}/merlin_info/ directory")
+        elif len(expanded_spec_options) < 1:
+            raise ValueError(f"No expanded spec options found in the {study_to_check}/merlin_info/ directory")
+        actual_spec = get_spec_with_expansion(expanded_spec_options[0])
 
         return study_to_check, actual_spec
 
@@ -348,9 +354,15 @@ class Status:
         # Count how many statuses in total that we just read in
         LOG.info(f"Read in {self.num_requested_statuses} statuses.")
 
-    def display(self):
-        """Displays the high level summary of the status"""
-        display.display_status_summary(self)
+    def display(self, test_mode=False) -> Dict:
+        """
+        Displays the high level summary of the status.
+
+        :param `test_mode`: If true, run this in testing mode and don't print any output
+        :returns: A dict that will be empty if test_mode is False. Otherwise, the dict will
+                  contain the status info that would be displayed.
+        """
+        return display.display_status_summary(self, test_mode=test_mode)
 
     def format_json_dump(self, date: datetime) -> Dict:
         """
@@ -596,7 +608,14 @@ class DetailedStatus(Status):
 
         LOG.debug(f"Steps after task_queues filter: {self.args.steps}")
 
-    def get_steps_to_display(self):
+    def get_steps_to_display(self) -> Dict[str, List[str]]:
+        """
+        Generates a list of steps to display the status for based on information
+        provided to the merlin detailed-status command by the user. This function
+        will handle the --steps, --task-queues, and --workers filter options.
+
+        :returns: A dictionary of started and unstarted steps for us to display the status of
+        """
         existing_steps = self.spec.get_study_step_names()
 
         LOG.debug(f"existing steps: {existing_steps}")

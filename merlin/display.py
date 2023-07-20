@@ -326,19 +326,23 @@ def _display_summary(state_info: Dict[str, str], cb_help: bool):
     print()
 
 
-def display_status_summary(status_obj: "Status"):  # noqa: F821
+def display_status_summary(status_obj: "Status", test_mode=False) -> Dict:  # noqa: F821
     """
     Displays a high level overview of the status of a study. This includes
     progress bars for each step and a summary of the number of initialized,
     running, finished, cancelled, dry ran, failed, and unknown tasks.
 
     :param `status_obj`: A Status object
+    :param `test_mode`: If True, don't print anything and just return a dict of all the state info for each step
+    :returns: A dict that's empty usually. If ran in test_mode it will be a dict of state_info for every step.
     """
     from merlin.study.status import NON_WORKSPACE_KEYS  # pylint: disable=C0415
 
-    print(f"{ANSI_COLORS['YELLOW']}Status for {status_obj.workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
-    terminal_size = shutil.get_terminal_size()
-    progress_bar_width = terminal_size.columns // 4
+    all_state_info = {}
+    if not test_mode:
+        print(f"{ANSI_COLORS['YELLOW']}Status for {status_obj.workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
+        terminal_size = shutil.get_terminal_size()
+        progress_bar_width = terminal_size.columns // 4
 
     for sstep in status_obj.step_tracker["started_steps"]:
         # This dict will keep track of the number of tasks at each status
@@ -376,25 +380,33 @@ def display_status_summary(status_obj: "Status"):  # noqa: F821
                 if task_status_info["Status"] not in ("INITIALIZED", "RUNNING"):
                     num_completed_tasks += 1
 
-        # Display the progress bar and summary for the step
-        print(f"\n{sstep}\n")
-        display_progress_bar(
-            num_completed_tasks,
-            status_obj.tasks_per_step[sstep],
-            state_info=state_info,
-            suffix="Complete",
-            length=progress_bar_width,
-            cb_help=status_obj.args.cb_help,
-        )
-        _display_summary(state_info, status_obj.args.cb_help)
-        print("-" * (terminal_size.columns // 2))
+        if test_mode:
+            all_state_info[sstep] = state_info
+        else:
+            # Display the progress bar and summary for the step
+            print(f"\n{sstep}\n")
+            display_progress_bar(
+                num_completed_tasks,
+                status_obj.tasks_per_step[sstep],
+                state_info=state_info,
+                suffix="Complete",
+                length=progress_bar_width,
+                cb_help=status_obj.args.cb_help,
+            )
+            _display_summary(state_info, status_obj.args.cb_help)
+            print("-" * (terminal_size.columns // 2))
 
     # For each unstarted step, print an empty progress bar
     for ustep in status_obj.step_tracker["unstarted_steps"]:
-        print(f"\n{ustep}\n")
-        display_progress_bar(0, 100, suffix="Complete", length=progress_bar_width)
-        print(f"\n{ustep} has not started yet.\n")
-        print("-" * (terminal_size.columns // 2))
+        if test_mode:
+            all_state_info[ustep] = "UNSTARTED"
+        else:
+            print(f"\n{ustep}\n")
+            display_progress_bar(0, 100, suffix="Complete", length=progress_bar_width)
+            print(f"\n{ustep} has not started yet.\n")
+            print("-" * (terminal_size.columns // 2))
+    
+    return all_state_info
 
 
 # Credit to this stack overflow post: https://stackoverflow.com/a/34325723
