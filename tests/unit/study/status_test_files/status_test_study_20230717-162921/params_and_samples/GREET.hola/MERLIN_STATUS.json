@@ -1,1 +1,43 @@
-{"params_and_samples_GREET.hola": {"Cmd Parameters": "GREET:hola", "Restart Parameters": null, "Task Queue": "both_queue", "Worker Name": "sample_worker", "params_and_samples/GREET.hola/00": {"Status": "FINISHED", "Return Code": "MERLIN_SUCCESS", "Elapsed Time": "0d:00h:00m:00s", "Run Time": "0d:00h:00m:00s", "Restarts": 0}, "params_and_samples/GREET.hola/01": {"Status": "FINISHED", "Return Code": "MERLIN_SUCCESS", "Elapsed Time": "0d:00h:00m:00s", "Run Time": "0d:00h:00m:00s", "Restarts": 0}, "params_and_samples/GREET.hola/02": {"Status": "FINISHED", "Return Code": "MERLIN_SUCCESS", "Elapsed Time": "0d:00h:00m:00s", "Run Time": "0d:00h:00m:00s", "Restarts": 0}, "params_and_samples/GREET.hola/03": {"Status": "FINISHED", "Return Code": "MERLIN_SUCCESS", "Elapsed Time": "0d:00h:00m:00s", "Run Time": "0d:00h:00m:00s", "Restarts": 0}, "params_and_samples/GREET.hola/04": {"Status": "FINISHED", "Return Code": "MERLIN_SUCCESS", "Elapsed Time": "0d:00h:00m:00s", "Run Time": "0d:00h:00m:00s", "Restarts": 0}}}
+{
+    "params_and_samples_GREET.hola": {
+        "Cmd Parameters": "GREET:hola",
+        "Restart Parameters": null,
+        "Task Queue": "both_queue",
+        "Worker Name": "sample_worker",
+        "params_and_samples/GREET.hola/00": {
+            "Status": "FINISHED",
+            "Return Code": "MERLIN_SUCCESS",
+            "Elapsed Time": "0d:00h:00m:00s",
+            "Run Time": "0d:00h:00m:00s",
+            "Restarts": 0
+        },
+        "params_and_samples/GREET.hola/01": {
+            "Status": "FINISHED",
+            "Return Code": "MERLIN_SUCCESS",
+            "Elapsed Time": "0d:00h:00m:00s",
+            "Run Time": "0d:00h:00m:00s",
+            "Restarts": 0
+        },
+        "params_and_samples/GREET.hola/02": {
+            "Status": "FINISHED",
+            "Return Code": "MERLIN_SUCCESS",
+            "Elapsed Time": "0d:00h:00m:00s",
+            "Run Time": "0d:00h:00m:00s",
+            "Restarts": 0
+        },
+        "params_and_samples/GREET.hola/03": {
+            "Status": "FINISHED",
+            "Return Code": "MERLIN_SUCCESS",
+            "Elapsed Time": "0d:00h:00m:00s",
+            "Run Time": "0d:00h:00m:00s",
+            "Restarts": 0
+        },
+        "params_and_samples/GREET.hola/04": {
+            "Status": "FINISHED",
+            "Return Code": "MERLIN_SUCCESS",
+            "Elapsed Time": "0d:00h:00m:00s",
+            "Run Time": "0d:00h:00m:00s",
+            "Restarts": 0
+        }
+    }
+}
