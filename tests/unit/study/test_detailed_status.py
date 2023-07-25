@@ -14,7 +14,7 @@ from merlin.study.status import DetailedStatus
 from tests.unit.study.status_test_files import shared_tests, status_test_variables
 
 
-class BaseDetailedStatusTest(unittest.TestCase):
+class TestBaseDetailedStatus(unittest.TestCase):
     """
     Base class for all detailed status tests to provide the setup configuration.
     """
@@ -55,7 +55,7 @@ class BaseDetailedStatusTest(unittest.TestCase):
         )
 
 
-class TestSetup(BaseDetailedStatusTest):
+class TestSetup(TestBaseDetailedStatus):
     """
     This tests the setup of the DetailedStatus class.
     """
@@ -104,7 +104,7 @@ class TestSetup(BaseDetailedStatusTest):
         self.assertEqual(detailed_status_obj.steps_filter_provided, False)
 
 
-class TestPromptFunctionality(BaseDetailedStatusTest):
+class TestPromptFunctionality(TestBaseDetailedStatus):
     """
     This class is strictly for testing that all prompt functionality that's
     possible through the DetailedStatus class is running correctly.
@@ -548,7 +548,7 @@ class TestPromptFunctionality(BaseDetailedStatusTest):
         self.assertEqual(self.detailed_status_obj.requested_statuses, status_test_variables.REQUESTED_STATUSES_WITH_MAX_TASKS)
 
 
-class TestFilterApplication(BaseDetailedStatusTest):
+class TestFilterApplication(TestBaseDetailedStatus):
     """
     This class is strictly for testing that filters are applied correctly.
 
@@ -738,7 +738,7 @@ class TestFilterApplication(BaseDetailedStatusTest):
         self.run_apply_filters_test(status_test_variables.REQUESTED_STATUSES_FAIL_AND_CANCEL)
 
 
-class TestFilterVerification(BaseDetailedStatusTest):
+class TestFilterVerification(TestBaseDetailedStatus):
     """
     This class is strictly for testing the verification process when filters
     are given to the DetailedStatus object. This does NOT test that filters
