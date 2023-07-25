@@ -12,7 +12,9 @@ import sys
 from merlin.main import verify_dirpath, verify_filepath
 from merlin.utils import dict_deep_merge
 
+
 LOG = logging.getLogger(__name__)
+
 
 def combine_status_files(workspace, outfile, delete):
     """
@@ -38,7 +40,7 @@ def combine_status_files(workspace, outfile, delete):
             dict_deep_merge(condensed_statuses, status)
             if delete:
                 os.remove(status_filepath)
-    
+
     # Dump all of the statuses to the outfile
     with open(outfile, "w") as condensed_status_file:
         json.dump(condensed_statuses, condensed_status_file)
@@ -50,10 +52,12 @@ def main():
     call combine_status_files
     """
     # Create argument parser and parse the args
-    parser = argparse.ArgumentParser(prog='combine-statuses', description='Combine the status files from a workspace')
+    parser = argparse.ArgumentParser(prog="combine-statuses", description="Combine the status files from a workspace")
     parser.add_argument("workspace", action="store", help="the workspace containing status files")
     parser.add_argument("outfile", action="store", help="a json filepath to dump the statuses to")
-    parser.add_argument("-d", "--delete", dest="delete", action="store_true", help="delete the status files after reading their information")
+    parser.add_argument(
+        "-d", "--delete", dest="delete", action="store_true", help="delete the status files after reading their information"
+    )
     args = parser.parse_args()
 
     # Verify workspace value provided and get absolute path
@@ -75,6 +79,7 @@ def main():
 
     # Combine the status files
     combine_status_files(workspace, outfile, args.delete)
+
 
 if __name__ == "__main__":
     main()

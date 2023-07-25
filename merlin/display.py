@@ -232,7 +232,7 @@ def print_info(args):  # pylint: disable=W0613
     print("")
 
 
-def display_status_task_by_task(status_obj: "DetailedStatus"):  # noqa: F821
+def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = False):  # noqa: F821
     """
     Displays a low level overview of the status of a study. This is a task-by-task
     status display where each task will show:
@@ -242,6 +242,8 @@ def display_status_task_by_task(status_obj: "DetailedStatus"):  # noqa: F821
     what to do that way we don't overload the terminal (unless the no-prompts flag is provided).
 
     :param `status_obj`: A DetailedStatus object
+    :param `test_mode`: If true, run this in testing mode and don't print any output. This will also
+                        decrease the limit on the number of tasks allowed before a prompt is displayed.
     """
     args = status_obj.args
     try:
@@ -255,8 +257,9 @@ def display_status_task_by_task(status_obj: "DetailedStatus"):  # noqa: F821
 
     # If the pager is disabled then we need to be careful not to overload the terminal with a bazillion tasks
     if args.disable_pager and not args.no_prompts:
-        # Setting the limit at 250 tasks before asking for additional filters
-        while status_obj.num_requested_statuses > 250:
+        # Setting the limit by default to be 250 tasks before asking for additional filters
+        no_prompt_limit = 250 if not test_mode else 15
+        while status_obj.num_requested_statuses > no_prompt_limit:
             # See if the user wants to apply additional filters
             apply_additional_filters = input(
                 f"About to display {status_obj.num_requested_statuses} tasks without a pager. "
@@ -279,7 +282,7 @@ def display_status_task_by_task(status_obj: "DetailedStatus"):  # noqa: F821
                 break
 
     # Display the statuses
-    if not cancel_display:
+    if not cancel_display and not test_mode:
         if status_obj.num_requested_statuses > 0:
             formatted_statuses = status_obj.format_status_for_display()
             status_renderer.layout(status_data=formatted_statuses, study_title=status_obj.workspace)
@@ -326,7 +329,7 @@ def _display_summary(state_info: Dict[str, str], cb_help: bool):
     print()
 
 
-def display_status_summary(status_obj: "Status", test_mode=False) -> Dict:  # noqa: F821
+def display_status_summary(status_obj: "Status", test_mode=False) -> Dict:  # noqa: F821 pylint: disable=R0912
     """
     Displays a high level overview of the status of a study. This includes
     progress bars for each step and a summary of the number of initialized,
@@ -405,7 +408,7 @@ def display_status_summary(status_obj: "Status", test_mode=False) -> Dict:  # no
             display_progress_bar(0, 100, suffix="Complete", length=progress_bar_width)
             print(f"\n{ustep} has not started yet.\n")
             print("-" * (terminal_size.columns // 2))
-    
+
     return all_state_info
 
 

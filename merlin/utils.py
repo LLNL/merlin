@@ -49,6 +49,7 @@ import yaml
 
 from merlin.exceptions import DeepMergeException
 
+
 try:
     import cPickle as pickle
 except ImportError:

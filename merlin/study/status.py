@@ -32,9 +32,10 @@ import json
 import logging
 import os
 import re
-from glob import glob
+from argparse import Namespace
 from copy import deepcopy
 from datetime import datetime
+from glob import glob
 from typing import Dict, List, Optional, Tuple, Union
 
 from filelock import FileLock, Timeout
@@ -60,7 +61,7 @@ class Status:
     Display functionality is handled in display.py.
     """
 
-    def __init__(self, args: "Namespace", spec_display: bool, file_or_ws: str):  # noqa: F821
+    def __init__(self, args: Namespace, spec_display: bool, file_or_ws: str):
         # Save the args to this class instance and check if the steps filter was given
         self.args = args
 
@@ -87,7 +88,7 @@ class Status:
 
         # Variable to store the statuses that the user wants
         self.requested_statuses = {}
-        self.get_requested_statuses()
+        self.load_requested_statuses()
 
     def _verify_filter_args(self):
         """
@@ -215,7 +216,7 @@ class Status:
         expanded_spec_options = glob(f"{study_to_check}/merlin_info/*.expanded.yaml")
         if len(expanded_spec_options) > 1:
             raise ValueError(f"Multiple expanded spec options found in the {study_to_check}/merlin_info/ directory")
-        elif len(expanded_spec_options) < 1:
+        if len(expanded_spec_options) < 1:
             raise ValueError(f"No expanded spec options found in the {study_to_check}/merlin_info/ directory")
         actual_spec = get_spec_with_expansion(expanded_spec_options[0])
 
@@ -339,9 +340,9 @@ class Status:
 
         return step_statuses
 
-    def get_requested_statuses(self):
+    def load_requested_statuses(self):
         """
-        Populate the requested_statuses dict with statuses the statuses from the study.
+        Populate the requested_statuses dict with the statuses from the study.
         """
         LOG.info(f"Reading task statuses from {self.workspace}")
 
@@ -471,46 +472,59 @@ class DetailedStatus(Status):
     This class shares similar methodology to the Status class it inherits from.
     """
 
-    def __init__(self, args: "Namespace", spec_display: bool, file_or_ws: str):  # noqa: F821
+    def __init__(self, args: Namespace, spec_display: bool, file_or_ws: str):
+        args_copy = Namespace(**vars(args))
         super().__init__(args, spec_display, file_or_ws)
 
         # Check if the steps filter was given
-        self.steps_filter_provided = "all" not in args.steps
+        self.steps_filter_provided = "all" not in args_copy.steps
 
-    def _verify_filters(self, filters_to_check: List[str], valid_options: Union[List, Tuple], warning_msg: Optional[str] = ""):
+    def _verify_filters(
+        self,
+        filters_to_check: List[str],
+        valid_options: Union[List, Tuple],
+        suppress_warnings: bool,
+        warning_msg: Optional[str] = "",
+    ):
         """
         Check each filter in a list of filters provided by the user against a list of valid options.
         If the filter is invalid, remove it from the list of filters.
 
         :param `filters_to_check`: A list of filters provided by the user
         :param `valid_options`: A list of valid options for this particular filter
+        :param `suppress_warnings`: If True, don't log warnings. Otherwise, log them
         :param `warning_msg`: An optional warning message to attach to output
         """
         for filter_arg in filters_to_check[:]:
             if filter_arg not in valid_options:
-                LOG.warning(f"The filter {filter_arg} is invalid. {warning_msg}")
+                if not suppress_warnings:
+                    LOG.warning(f"The filter {filter_arg} is invalid. {warning_msg}")
                 filters_to_check.remove(filter_arg)
 
-    def _verify_filter_args(self):
+    def _verify_filter_args(self, suppress_warnings=False):
         """
         Verify that our filters are all valid and able to be used.
 
-        :param `args`: The CLI arguments provided via the user
-        :param `spec`: A MerlinSpec object loaded from the expanded spec in the output study directory
+        :param `suppress_warnings`: If True, don't log warnings. Otherwise, log them.
         """
         # Ensure the steps are valid
         if "all" not in self.args.steps:
             LOG.debug(f"args.steps before verification: {self.args.steps}")
             existing_steps = self.spec.get_study_step_names()
             self._verify_filters(
-                self.args.steps, existing_steps, warning_msg="Removing this step from the list of steps to filter by..."
+                self.args.steps,
+                existing_steps,
+                suppress_warnings,
+                warning_msg="Removing this step from the list of steps to filter by...",
             )
             LOG.debug(f"args.steps after verification: {self.args.steps}")
 
         # Make sure max_tasks is a positive int
-        if self.args.max_tasks and self.args.max_tasks < 1:
-            LOG.warning("The value of --max-tasks must be greater than 0. Ignoring --max-tasks...")
-            self.args.max_tasks = None
+        if self.args.max_tasks is not None:
+            if self.args.max_tasks < 1 or not isinstance(self.args.max_tasks, int):
+                if not suppress_warnings:
+                    LOG.warning("The value of --max-tasks must be an integer greater than 0. Ignoring --max-tasks...")
+                self.args.max_tasks = None
 
         # Make sure task_status is valid
         if self.args.task_status:
@@ -518,28 +532,30 @@ class DetailedStatus(Status):
             self._verify_filters(
                 self.args.task_status,
                 VALID_STATUS_FILTERS,
+                suppress_warnings,
                 warning_msg="Removing this status from the list of statuses to filter by...",
             )
 
         # Ensure return_code is valid
         if self.args.return_code:
-            # TODO remove this code block and uncomment the one below once you've
+            # TODO remove this code block and uncomment the line below once you've
             # implemented entries for restarts/retries
             idx = 0
             for ret_code_provided in self.args.return_code[:]:
                 ret_code_provided = ret_code_provided.upper()
                 if ret_code_provided in ("RETRY", "RESTART"):
-                    LOG.warning(f"The {ret_code_provided} filter is coming soon. Ignoring this filter for now...")
+                    if not suppress_warnings:
+                        LOG.warning(f"The {ret_code_provided} filter is coming soon. Ignoring this filter for now...")
                     self.args.return_code.remove(ret_code_provided)
                 else:
-                    self.args.return_code[idx] = f"MERLIN_{ret_code_provided}"
+                    self.args.return_code[idx] = ret_code_provided
                     idx += 1
 
-            # self.args.return_code = [f"MERLIN_{x.upper()}" for x in self.args.return_code]
-            valid_return_codes = [f"MERLIN_{x}" for x in VALID_RETURN_CODES]
+            # self.args.return_code = [ret_code.upper() for ret_code in self.args.return_code]
             self._verify_filters(
                 self.args.return_code,
-                valid_return_codes,
+                VALID_RETURN_CODES,
+                suppress_warnings,
                 warning_msg="Removing this code from the list of return codes to filter by...",
             )
 
@@ -549,6 +565,7 @@ class DetailedStatus(Status):
             self._verify_filters(
                 self.args.task_queues,
                 existing_queues,
+                suppress_warnings,
                 warning_msg="Removing this queue from the list of queues to filter by...",
             )
 
@@ -556,7 +573,10 @@ class DetailedStatus(Status):
         if self.args.workers:
             worker_names = self.spec.get_worker_names()
             self._verify_filters(
-                self.args.workers, worker_names, warning_msg="Removing this worker from the list of workers to filter by..."
+                self.args.workers,
+                worker_names,
+                suppress_warnings,
+                warning_msg="Removing this worker from the list of workers to filter by...",
             )
 
     def _process_workers(self):
@@ -735,14 +755,14 @@ class DetailedStatus(Status):
         # Reset max_tasks
         self.args.max_tasks = max_tasks
 
-    def get_requested_statuses(self):
+    def load_requested_statuses(self):
         """
         Populate the requested_statuses dict with statuses that the user is looking to find.
         Filters for steps, task queues, workers will have already been applied
         when creating the step_tracker attribute. Remaining filters will be applied here.
         """
         # Grab all the statuses based on our step tracker
-        super().get_requested_statuses()
+        super().load_requested_statuses()
 
         # Apply filters to the statuses
         filter_types = set()
@@ -828,7 +848,10 @@ class DetailedStatus(Status):
                 user_max_tasks = int(input("What limit would you like to set? (must be an integer greater than 0) "))
                 if user_max_tasks > 0:
                     invalid_input = False
+                else:
+                    raise ValueError
             except ValueError:
+                print("Invalid input. The limit must be an integer greater than 0.")
                 continue
 
         return user_max_tasks
@@ -838,9 +861,6 @@ class DetailedStatus(Status):
         Interact with the user to manage how many/which tasks are displayed. This helps to
         prevent us from overloading the terminal by displaying a bazillion tasks at once.
         """
-        # Initialize a list to store the filter types we're going to apply
-        filter_types = []
-
         # Get the filters from the user
         user_filters = self.get_user_filters()
 
@@ -857,12 +877,14 @@ class DetailedStatus(Status):
 
         # Process the filters
         max_tasks_found = False
+        filter_types = []
         for i, user_filter in enumerate(user_filters):
             # Case 1: Exit command found, stop filtering
             if user_filter in ("E", "EXIT"):
                 exit_without_filtering = True
+                break
             # Case 2: MAX_TASKS command found, get the limit from the user
-            elif user_filter == "MAX_TASKS":
+            if user_filter == "MAX_TASKS":
                 max_tasks_found = True
             # Case 3: Status filter provided, add it to the list of filter types
             elif user_filter in VALID_STATUS_FILTERS and "Status" not in filter_types:
@@ -889,29 +911,17 @@ class DetailedStatus(Status):
             self.args.max_tasks = user_max_tasks
             self.apply_max_tasks_limit()
 
-    def display(self):
+    def display(self, test_mode: bool = False):
         """
         Displays a task-by-task view of the status based on user filter(s).
-        """
-        # Check if there's any filters remaining after the verification process
-        filters_remaining = any(
-            [
-                self.args.task_queues,
-                self.args.workers,
-                self.args.task_status,
-                self.args.return_code,
-                self.steps_filter_provided,
-                self.args.max_tasks,
-            ]
-        )
 
-        # If there's no filters left, there's nothing to display
-        if not filters_remaining:
-            LOG.warning("No filters remaining, cannot find tasks to display.")
+        :param `test_mode`: If true, run this in testing mode and don't print any output
+        """
+        # Check that there's statuses found and display them
+        if self.requested_statuses:
+            display.display_status_task_by_task(self, test_mode=test_mode)
         else:
-            # Check that there's statuses found and display them
-            if self.requested_statuses:
-                display.display_status_task_by_task(self)
+            LOG.warning("No statuses to display.")
 
 
 def read_status(status_filepath: str, lock: FileLock, display_fnf_message: Optional[bool] = True) -> Dict:
