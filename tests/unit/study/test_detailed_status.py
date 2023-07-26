@@ -151,7 +151,7 @@ class TestDumpFunctionality(TestBaseDetailedStatus):
         self.detailed_status_obj.args.dump = json_dump_file
 
         # Run the json dump test
-        shared_tests.run_json_dump_test(self.detailed_status_obj)
+        shared_tests.run_json_dump_test(self.detailed_status_obj, status_test_variables.ALL_REQUESTED_STATUSES)
 
     def test_csv_dump(self):
         """
@@ -167,7 +167,41 @@ class TestDumpFunctionality(TestBaseDetailedStatus):
         self.detailed_status_obj.args.dump = csv_dump_file
 
         # Run the csv dump test
-        shared_tests.run_csv_dump_test(self.detailed_status_obj)
+        shared_tests.run_csv_dump_test(self.detailed_status_obj, status_test_variables.ALL_FORMATTED_STATUSES)
+
+    def test_json_dump_with_filters(self):
+        """
+        Test the json dump functionality while using filters. This tests both the write and append
+        dump functionalities. The file needs to exist already for an append so it's
+        better to keep these tests together.
+        """
+        # Set filters for failed and cancelled tasks, and then reload the requested_statuses
+        self.detailed_status_obj.args.task_status = ["FAILED", "CANCELLED"]
+        self.detailed_status_obj.load_requested_statuses()
+
+        # Set the dump file
+        json_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/detailed_dump_test.json"
+        self.detailed_status_obj.args.dump = json_dump_file
+
+        # Run the json dump test (we should only get failed and cancelled statuses)
+        shared_tests.run_json_dump_test(self.detailed_status_obj, status_test_variables.REQUESTED_STATUSES_FAIL_AND_CANCEL)
+        
+    def test_csv_dump_with_filters(self):
+        """
+        Test the csv dump functionality while using filters. This tests both the write and append
+        dump functionalities. The file needs to exist already for an append so it's
+        better to keep these tests together.
+        """
+        # Set filters for failed and cancelled tasks, and then reload the requested_statuses
+        self.detailed_status_obj.args.task_status = ["FAILED", "CANCELLED"]
+        self.detailed_status_obj.load_requested_statuses()
+
+        # Set the dump file
+        csv_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/detailed_dump_test.csv"
+        self.detailed_status_obj.args.dump = csv_dump_file
+
+        # Run the csv dump test (we should only get failed and cancelled statuses)
+        shared_tests.run_csv_dump_test(self.detailed_status_obj, status_test_variables.FORMATTED_STATUSES_FAIL_AND_CANCEL)
 
 
 class TestPromptFunctionality(TestBaseDetailedStatus):

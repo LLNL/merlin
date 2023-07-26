@@ -161,6 +161,20 @@ REQUESTED_STATUSES_WITH_MAX_TASKS = {
     },
 }
 
+FORMATTED_STATUSES_FAIL_AND_CANCEL = {
+    "step_name": ["fail_step", "cancel_step"],
+    "step_workspace": ["fail_step", "cancel_step"],
+    "status": ["FAILED", "CANCELLED"],
+    "return_code": ["MERLIN_SOFT_FAIL", "MERLIN_STOP_WORKERS"],
+    "elapsed_time": ["0d:00h:00m:00s", "0d:00h:00m:00s"],
+    "run_time": ["0d:00h:00m:00s", "0d:00h:00m:00s"],
+    "restarts": [0, 0],
+    "cmd_parameters": ["-------", "-------"],
+    "restart_parameters": ["-------", "-------"],
+    "task_queue": ["fail_queue", "cancel_queue"],
+    "worker_name": ["other_worker", "other_worker"],
+}
+
 # This variable holds the state_info dict of every step from VALID_WORKSPACE
 # i.e. the format returned by the display() method when run in test_mode
 DISPLAY_INFO = {

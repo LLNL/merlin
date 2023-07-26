@@ -174,7 +174,7 @@ class TestMerlinStatus(unittest.TestCase):
         status_obj.args.dump = json_dump_file
 
         # Run the json dump test
-        shared_tests.run_json_dump_test(status_obj)
+        shared_tests.run_json_dump_test(status_obj, status_test_variables.ALL_REQUESTED_STATUSES)
 
     def test_csv_dump(self):
         """
@@ -191,7 +191,7 @@ class TestMerlinStatus(unittest.TestCase):
         status_obj.args.dump = csv_dump_file
 
         # Run the csv dump test
-        shared_tests.run_csv_dump_test(status_obj)
+        shared_tests.run_csv_dump_test(status_obj, status_test_variables.ALL_FORMATTED_STATUSES)
 
     def test_display(self):
         """

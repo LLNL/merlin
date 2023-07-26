@@ -166,7 +166,7 @@ def run_study_selector_prompt_invalid_input(status_obj: Union[Status, DetailedSt
     assert result == status_test_variables.VALID_WORKSPACE_PATH
 
 
-def run_json_dump_test(status_obj: Union[Status, DetailedStatus]):
+def run_json_dump_test(status_obj: Union[Status, DetailedStatus], expected_output: Dict):
     try:
         # Test write dump functionality for json
         status_obj.dump()
@@ -174,7 +174,7 @@ def run_json_dump_test(status_obj: Union[Status, DetailedStatus]):
             json_df_contents = json.load(json_df)
         # There should only be one entry in the json dump file so this will only 'loop' once
         for dump_entry in json_df_contents.values():
-            json_dump_diff = DeepDiff(dump_entry, status_test_variables.ALL_REQUESTED_STATUSES)
+            json_dump_diff = DeepDiff(dump_entry, expected_output)
             assert json_dump_diff == {}
 
         # Test append dump functionality for json
@@ -188,7 +188,7 @@ def run_json_dump_test(status_obj: Union[Status, DetailedStatus]):
         # There should be two entries here now, both with the same statuses just different timestamps
         assert len(json_df_append_contents) == 2
         for dump_entry in json_df_append_contents.values():
-            json_append_dump_diff = DeepDiff(dump_entry, status_test_variables.ALL_REQUESTED_STATUSES)
+            json_append_dump_diff = DeepDiff(dump_entry, expected_output)
             assert json_append_dump_diff == {}
     # Make sure we always remove the test file that's created from this dump
     finally:
@@ -218,12 +218,15 @@ def _format_csv_data(csv_dump_data: csv.DictReader) -> Dict[str, List[str]]:
     return csv_dump_output
 
 
-def run_csv_dump_test(status_obj: Union[Status, DetailedStatus]):
+def run_csv_dump_test(status_obj: Union[Status, DetailedStatus], expected_output: Dict[str, List[Union[str, int]]]):
     """
     Test the csv dump functionality. This tests both the write and append
     dump functionalities. The file needs to exist already for an append so it's
     better to keep these tests together. This covers the format_status_for_display
     and dump methods.
+
+    :param `status_obj`: A Status or DetailedStatus object that we're testing the dump functionality for
+    :param `expected_output`: The expected output from the dump that we'll compare against
     """
     try:
         # Test write dump functionality for csv
@@ -242,7 +245,7 @@ def run_csv_dump_test(status_obj: Union[Status, DetailedStatus]):
             assert len(timestamps) == 1
 
             # Check for differences (should be none)
-            csv_dump_diff = DeepDiff(csv_dump_output, status_test_variables.ALL_FORMATTED_STATUSES)
+            csv_dump_diff = DeepDiff(csv_dump_output, expected_output)
             assert csv_dump_diff == {}
 
         # Test append dump functionality for csv
@@ -265,8 +268,8 @@ def run_csv_dump_test(status_obj: Union[Status, DetailedStatus]):
             assert len(timestamps) == 2
 
             # Since there are two dumps, we need to double up the formatted statuses too
-            appended_formatted_statuses = deepcopy(status_test_variables.ALL_FORMATTED_STATUSES)
-            for key, val in status_test_variables.ALL_FORMATTED_STATUSES.items():
+            appended_formatted_statuses = deepcopy(expected_output)
+            for key, val in expected_output.items():
                 appended_formatted_statuses[key].extend(val)
 
             csv_append_dump_diff = DeepDiff(csv_append_dump_output, appended_formatted_statuses)
