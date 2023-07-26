@@ -41,8 +41,7 @@ from subprocess import TimeoutExpired, run
 
 from tabulate import tabulate
 
-# Pylint complains that we didn't install this module but it's defined locally so ignore
-from test_definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
+from tests.integration.test_definitions import OUTPUT_DIR, define_tests
 
 
 def get_definition_issues(test):

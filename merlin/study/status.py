@@ -42,7 +42,6 @@ from filelock import FileLock, Timeout
 from tabulate import tabulate
 
 from merlin.common.dumper import dump_handler
-from merlin.config.configfile import CONFIG
 from merlin.display import ANSI_COLORS, display_status_summary, display_status_task_by_task
 from merlin.study.status_renderers import status_renderer_factory
 from merlin.utils import dict_deep_merge, ws_time_to_dt
@@ -620,6 +619,8 @@ class DetailedStatus(Status):
         Modifies the list of steps to display status for based on
         the list of task queues provided by the user.
         """
+        from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+
         LOG.debug("Processing task_queues filter...")
         # Remove duplicate queues
         queues_provided = list(set(self.args.task_queues))
