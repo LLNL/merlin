@@ -39,6 +39,7 @@ from unittest.mock import MagicMock, call, patch
 
 from deepdiff import DeepDiff
 
+from merlin.main import get_merlin_spec_with_override
 from merlin.study.status import DetailedStatus
 from tests.unit.study.status_test_files import shared_tests, status_test_variables
 
@@ -113,6 +114,10 @@ class TestSetup(TestBaseDetailedStatus):
         # We have to reset this to be all since it will have already been expanded due to the setUp method from
         # the base class
         self.args.steps = ["all"]
+
+        # We need to load in the MerlinSpec object and save it to the args we'll give to DetailedStatus
+        self.args.specification = status_test_variables.SPEC_PATH
+        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
 
         # Create the new object using a specification rather than a workspace
         detailed_status_obj = DetailedStatus(args=self.args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
@@ -229,6 +234,10 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         This is testing the prompt that's displayed when multiple study output
         directories are found. This tests the _obtain_study method with valid input.
         """
+        # We need to load in the MerlinSpec object and save it to the args we'll give to DetailedStatus
+        self.args.specification = status_test_variables.SPEC_PATH
+        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
         status_obj = DetailedStatus(args=self.args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
@@ -239,6 +248,10 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         This is testing the prompt that's displayed when multiple study output
         directories are found. This tests the _obtain_study method with invalid inputs.
         """
+        # We need to load in the MerlinSpec object and save it to the args we'll give to DetailedStatus
+        self.args.specification = status_test_variables.SPEC_PATH
+        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
         status_obj = DetailedStatus(args=self.args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)

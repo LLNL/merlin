@@ -43,8 +43,9 @@ from tabulate import tabulate
 
 from merlin.common.dumper import dump_handler
 from merlin.display import ANSI_COLORS, display_status_summary, display_status_task_by_task
+from merlin.spec.expansion import get_spec_with_expansion
 from merlin.study.status_renderers import status_renderer_factory
-from merlin.utils import dict_deep_merge, ws_time_to_dt
+from merlin.utils import dict_deep_merge, verify_dirpath, ws_time_to_dt
 
 
 LOG = logging.getLogger(__name__)
@@ -173,21 +174,16 @@ class Status:
         :returns: The workspace of the study we'll check the status for and a MerlinSpec
                 object loaded in from the workspace's merlin_info subdirectory.
         """
-        from merlin.main import get_merlin_spec_with_override, get_spec_with_expansion, verify_dirpath  # pylint: disable=C0415
-
-        # Get the spec and the output path for the spec
-        self.args.specification = filepath
-        spec_provided, _ = get_merlin_spec_with_override(self.args)
-
+        # Get the output path of the study that was given to us
         # Case where the output path is left out of the spec file
-        if spec_provided.output_path == "":
+        if self.args.spec_provided.output_path == "":
             output_path = os.path.dirname(filepath)
         # Case where output path is absolute
-        elif spec_provided.output_path.startswith("/"):
-            output_path = spec_provided.output_path
+        elif self.args.spec_provided.output_path.startswith("/"):
+            output_path = self.args.spec_provided.output_path
         # Case where output path is relative to the specroot
         else:
-            output_path = f"{os.path.dirname(filepath)}/{spec_provided.output_path}"
+            output_path = f"{os.path.dirname(filepath)}/{self.args.spec_provided.output_path}"
 
         study_output_dir = verify_dirpath(output_path)
 
@@ -197,7 +193,7 @@ class Status:
         potential_studies = []
         num_studies = 0
         for subdir in study_output_subdirs:
-            match = re.search(rf"{spec_provided.name}_{timestamp_regex}", subdir)
+            match = re.search(rf"{self.args.spec_provided.name}_{timestamp_regex}", subdir)
             if match:
                 potential_studies.append((num_studies + 1, subdir))
                 num_studies += 1
@@ -228,8 +224,6 @@ class Status:
 
         :returns: A MerlinSpec object loaded from the workspace provided by the user
         """
-        from merlin.main import get_spec_with_expansion, verify_dirpath  # pylint: disable=C0415
-
         # Grab the spec file from the directory provided
         info_dir = verify_dirpath(f"{self.workspace}/merlin_info")
         spec_file = ""
@@ -363,7 +357,7 @@ class Status:
         :returns: A dict that will be empty if test_mode is False. Otherwise, the dict will
                   contain the status info that would be displayed.
         """
-        return display_status_summary(self, test_mode=test_mode)
+        return display_status_summary(self, NON_WORKSPACE_KEYS, test_mode=test_mode)
 
     def format_json_dump(self, date: datetime) -> Dict:
         """

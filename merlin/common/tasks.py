@@ -34,12 +34,11 @@ from __future__ import absolute_import, unicode_literals
 import json
 import logging
 import os
-import re
 from typing import Any, Dict, List, Optional
 
 # Need to disable an overwrite warning here since celery has an exception that we need that directly
 # overwrites a python built-in exception
-from celery import chain, chord, current_task, group, shared_task, signature
+from celery import chain, chord, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
 from filelock import FileLock, Timeout
 
@@ -74,22 +73,6 @@ STOP_COUNTDOWN = 60
 # R0913: too many arguments
 # R0914: too many local variables
 # R0915: too many statements
-
-
-def get_current_worker():
-    """Get the worker on the current running task from celery"""
-    worker = re.search(r"@.+\.", current_task.request.hostname).group()
-    worker = worker[1 : len(worker) - 1]
-    return worker
-
-
-def get_current_queue():
-    """Get the queue on the current running task from celery"""
-    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
-
-    queue = current_task.request.delivery_info["routing_key"]
-    queue = queue.replace(CONFIG.celery.queue_tag, "")
-    return queue
 
 
 @shared_task(  # noqa: C901

@@ -329,18 +329,20 @@ def _display_summary(state_info: Dict[str, str], cb_help: bool):
     print()
 
 
-def display_status_summary(status_obj: "Status", test_mode=False) -> Dict:  # noqa: F821 pylint: disable=R0912
+def display_status_summary(  # pylint: disable=R0912
+    status_obj: "Status", non_workspace_keys: set, test_mode=False  # noqa: F821
+) -> Dict:
     """
     Displays a high level overview of the status of a study. This includes
     progress bars for each step and a summary of the number of initialized,
     running, finished, cancelled, dry ran, failed, and unknown tasks.
 
     :param `status_obj`: A Status object
+    :param `non_workspace_keys`: A set of keys in requested_statuses that are not workspace keys.
+                                 This will be set("parameters", "task_queue", "worker_name)
     :param `test_mode`: If True, don't print anything and just return a dict of all the state info for each step
     :returns: A dict that's empty usually. If ran in test_mode it will be a dict of state_info for every step.
     """
-    from merlin.study.status import NON_WORKSPACE_KEYS  # pylint: disable=C0415
-
     all_state_info = {}
     if not test_mode:
         print(f"{ANSI_COLORS['YELLOW']}Status for {status_obj.workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
@@ -375,7 +377,7 @@ def display_status_summary(status_obj: "Status", test_mode=False) -> Dict:  # no
             # Loop through all workspaces for this step (if there's no samples for this step it'll just be one path)
             for sub_step_workspace, task_status_info in overall_step_info.items():
                 # We've already handled the non-workspace keys that we need so ignore them here
-                if sub_step_workspace in NON_WORKSPACE_KEYS:
+                if sub_step_workspace in non_workspace_keys:
                     continue
 
                 state_info[task_status_info["status"]]["count"] += 1

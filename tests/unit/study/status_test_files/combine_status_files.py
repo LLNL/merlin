@@ -38,8 +38,7 @@ import logging
 import os
 import sys
 
-from merlin.main import verify_dirpath, verify_filepath
-from merlin.utils import dict_deep_merge
+from merlin.utils import dict_deep_merge, verify_dirpath, verify_filepath
 
 
 LOG = logging.getLogger(__name__)

@@ -41,7 +41,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Union
+from typing import List, Optional, Union
 
 import numpy as np
 import psutil
@@ -290,6 +290,38 @@ def determine_protocol(fname):
     return protocol
 
 
+def verify_filepath(filepath: str) -> str:
+    """
+    Verify that the filepath argument is a valid
+    file.
+
+    :param [str] `filepath`: the path of a file
+
+    :return: the verified absolute filepath with expanded environment variables.
+    :rtype: str
+    """
+    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
+    if not os.path.isfile(filepath):
+        raise ValueError(f"'{filepath}' is not a valid filepath")
+    return filepath
+
+
+def verify_dirpath(dirpath: str) -> str:
+    """
+    Verify that the dirpath argument is a valid
+    directory.
+
+    :param [str] `dirpath`: the path of a directory
+
+    :return: returns the absolute path with expanded environment vars for a given dirpath.
+    :rtype: str
+    """
+    dirpath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
+    if not os.path.isdir(dirpath):
+        raise ValueError(f"'{dirpath}' is not a valid directory path")
+    return dirpath
+
+
 @contextmanager
 def cd(path):  # pylint: disable=C0103
     """
@@ -497,6 +529,33 @@ def contains_shell_ref(string):
     """
     if re.search(r"\$\w+", string) or re.search(r"\$\{\w+\}", string):
         return True
+    return False
+
+
+def needs_merlin_expansion(
+    cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords: Optional[bool] = True
+) -> bool:
+    """
+    Check if the cmd or restart cmd provided have variables that need expansion.
+
+    :param `cmd`: The command inside a study step to check for expansion
+    :param `restart_cmd`: The restart command inside a study step to check for expansion
+    :param `labels`: A list of labels to check for inside `cmd` and `restart_cmd`
+    :return : True if the cmd has any of the default keywords or spec
+        specified sample column labels. False otherwise.
+    """
+    sample_keywords = ["MERLIN_SAMPLE_ID", "MERLIN_SAMPLE_PATH", "merlin_sample_id", "merlin_sample_path"]
+    if include_sample_keywords:
+        labels += sample_keywords
+
+    for label in labels:
+        if f"$({label})" in cmd:
+            return True
+        # The restart may need expansion while the cmd does not.
+        if restart_cmd and f"$({label})" in restart_cmd:
+            return True
+
+    # If we got through all the labels and no expansion was needed then these commands don't need expansion
     return False
 
 

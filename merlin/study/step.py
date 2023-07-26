@@ -35,8 +35,9 @@ import os
 import re
 from contextlib import suppress
 from copy import deepcopy
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
+from celery import current_task
 from filelock import FileLock
 from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
@@ -45,36 +46,26 @@ from maestrowf.datastructures.core.study import StudyStep
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.study.script_adapter import MerlinScriptAdapter
 from merlin.study.status import read_status
+from merlin.utils import needs_merlin_expansion
 
 
 LOG = logging.getLogger(__name__)
 
 
-def needs_merlin_expansion(
-    cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords: Optional[bool] = True
-) -> bool:
-    """
-    Check if the cmd or restart cmd provided have variables that need expansion.
+def get_current_worker():
+    """Get the worker on the current running task from celery"""
+    worker = re.search(r"@.+\.", current_task.request.hostname).group()
+    worker = worker[1 : len(worker) - 1]
+    return worker
 
-    :param `cmd`: The command inside a study step to check for expansion
-    :param `restart_cmd`: The restart command inside a study step to check for expansion
-    :param `labels`: A list of labels to check for inside `cmd` and `restart_cmd`
-    :return : True if the cmd has any of the default keywords or spec
-        specified sample column labels. False otherwise.
-    """
-    sample_keywords = ["MERLIN_SAMPLE_ID", "MERLIN_SAMPLE_PATH", "merlin_sample_id", "merlin_sample_path"]
-    if include_sample_keywords:
-        labels += sample_keywords
 
-    for label in labels:
-        if f"$({label})" in cmd:
-            return True
-        # The restart may need expansion while the cmd does not.
-        if restart_cmd and f"$({label})" in restart_cmd:
-            return True
+def get_current_queue():
+    """Get the queue on the current running task from celery"""
+    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
-    # If we got through all the labels and no expansion was needed then these commands don't need expansion
-    return False
+    queue = current_task.request.delivery_info["routing_key"]
+    queue = queue.replace(CONFIG.celery.queue_tag, "")
+    return queue
 
 
 class MerlinStepRecord(_StepRecord):
@@ -256,7 +247,6 @@ class MerlinStepRecord(_StepRecord):
             # Add celery specific info
             if task_server == "celery":
                 from merlin.celery import app  # pylint: disable=C0415
-                from merlin.common.tasks import get_current_queue, get_current_worker  # pylint: disable=C0415
 
                 # If the tasks are always eager, this is a local run and we won't have workers running
                 if not app.conf.task_always_eager:

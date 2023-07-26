@@ -58,10 +58,10 @@ from merlin.log_formatter import setup_logging
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
-from merlin.study import status
+from merlin.study.status import VALID_RETURN_CODES, VALID_STATUS_FILTERS, DetailedStatus, Status
 from merlin.study.status_renderers import status_renderer_factory
 from merlin.study.study import MerlinStudy
-from merlin.utils import ARRAY_FILE_FORMATS
+from merlin.utils import ARRAY_FILE_FORMATS, verify_dirpath, verify_filepath
 
 
 LOG = logging.getLogger("merlin")
@@ -76,38 +76,6 @@ class HelpParser(ArgumentParser):
         sys.stderr.write(f"error: {message}\n")
         self.print_help()
         sys.exit(2)
-
-
-def verify_filepath(filepath: str) -> str:
-    """
-    Verify that the filepath argument is a valid
-    file.
-
-    :param [str] `filepath`: the path of a file
-
-    :return: the verified absolute filepath with expanded environment variables.
-    :rtype: str
-    """
-    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
-    if not os.path.isfile(filepath):
-        raise ValueError(f"'{filepath}' is not a valid filepath")
-    return filepath
-
-
-def verify_dirpath(dirpath: str) -> str:
-    """
-    Verify that the dirpath argument is a valid
-    directory.
-
-    :param [str] `dirpath`: the path of a directory
-
-    :return: returns the absolute path with expanded environment vars for a given dirpath.
-    :rtype: str
-    """
-    dirpath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
-    if not os.path.isdir(dirpath):
-        raise ValueError(f"'{dirpath}' is not a valid directory path")
-    return dirpath
 
 
 def parse_override_vars(
@@ -286,11 +254,17 @@ def query_status(args):
             LOG.error(f"The file or directory path {args.spec_or_workspace} does not exist.")
             return None
 
+    # If we're loading status based on a spec, load in the spec provided
+    if spec_display:
+        args.specification = file_or_ws
+        spec_provided, _ = get_merlin_spec_with_override(args)
+        args.spec_provided = spec_provided
+
     # Get either a Status object or DetailedStatus object
     if args.detailed:
-        status_obj = status.DetailedStatus(args, spec_display, file_or_ws)
+        status_obj = DetailedStatus(args, spec_display, file_or_ws)
     else:
-        status_obj = status.Status(args, spec_display, file_or_ws)
+        status_obj = Status(args, spec_display, file_or_ws)
 
     # Handle output appropriately
     if args.dump:
@@ -1033,7 +1007,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         action="store",
         nargs="+",
         type=str,
-        choices=status.VALID_RETURN_CODES,
+        choices=VALID_RETURN_CODES,
         help="Filter which tasks to display based on their return code",
     )
     status_filter_group.add_argument(
@@ -1055,7 +1029,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         action="store",
         nargs="+",
         type=str,
-        choices=status.VALID_STATUS_FILTERS,
+        choices=VALID_STATUS_FILTERS,
         help="Filter which tasks to display based on their status",
     )
     status_filter_group.add_argument(

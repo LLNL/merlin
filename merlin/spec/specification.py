@@ -46,8 +46,7 @@ import yaml
 from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
-from merlin.study.step import needs_merlin_expansion
-from merlin.utils import load_array_file, repr_timedelta
+from merlin.utils import load_array_file, needs_merlin_expansion, repr_timedelta
 
 
 LOG = logging.getLogger(__name__)
