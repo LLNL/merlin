@@ -45,7 +45,6 @@ from kombu import Connection
 from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
-from merlin.config import broker, results_backend
 from merlin.config.configfile import default_config_info
 from merlin.study.status_renderers import status_renderer_factory
 
@@ -122,6 +121,8 @@ def check_server_access(sconf):
 
 
 def _examine_connection(server, sconf, excpts):
+    from merlin.config import broker, results_backend  # pylint: disable=C0415
+
     connect_timeout = 60
     try:
         ssl_conf = None
@@ -154,6 +155,8 @@ def display_config_info():
     """
     Prints useful configuration information to the console.
     """
+    from merlin.config import broker, results_backend  # pylint: disable=C0415
+
     print("Merlin Configuration")
     print("-" * 25)
     print("")
