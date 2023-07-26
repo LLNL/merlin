@@ -31,8 +31,13 @@
 This module contains all shared tests needed for testing both
 the Status object and the DetailedStatus object.
 """
+import csv
+import json
+import os
+from copy import deepcopy
 from io import StringIO
-from typing import Union
+from time import sleep
+from typing import Dict, List, Union
 from unittest.mock import patch
 
 from deepdiff import DeepDiff
@@ -159,3 +164,116 @@ def run_study_selector_prompt_invalid_input(status_obj: Union[Status, DetailedSt
 
     # Finally, we check that the _obtain_study method returned the correct workspace
     assert result == status_test_variables.VALID_WORKSPACE_PATH
+
+
+def run_json_dump_test(status_obj: Union[Status, DetailedStatus]):
+    try:
+        # Test write dump functionality for json
+        status_obj.dump()
+        with open(status_obj.args.dump, "r") as json_df:
+            json_df_contents = json.load(json_df)
+        # There should only be one entry in the json dump file so this will only 'loop' once
+        for dump_entry in json_df_contents.values():
+            json_dump_diff = DeepDiff(dump_entry, status_test_variables.ALL_REQUESTED_STATUSES)
+            assert json_dump_diff == {}
+
+        # Test append dump functionality for json
+        # If we don't sleep for 1 second here the program will run too fast and the timestamp for the append dump will be the same
+        # as the timestamp for the write dump, which causes the write dump entry to be overridden
+        sleep(1)
+        # Here, the file already exists from the previous test so it will automatically append to the file
+        status_obj.dump()
+        with open(status_obj.args.dump, "r") as json_df:
+            json_df_append_contents = json.load(json_df)
+        # There should be two entries here now, both with the same statuses just different timestamps
+        assert len(json_df_append_contents) == 2
+        for dump_entry in json_df_append_contents.values():
+            json_append_dump_diff = DeepDiff(dump_entry, status_test_variables.ALL_REQUESTED_STATUSES)
+            assert json_append_dump_diff == {}
+    # Make sure we always remove the test file that's created from this dump
+    finally:
+        try:
+            os.remove(status_obj.args.dump)
+        except FileNotFoundError:
+            pass
+
+
+def _format_csv_data(csv_dump_data: csv.DictReader) -> Dict[str, List[str]]:
+    """
+    Helper function for testing the csv dump functionality to format csv data read in
+    from the dump file.
+
+    :param `csv_dump_data`: The DictReader object that has the csv data from the dump file
+    :returns: A formatted dict where keys are fieldnames of the csv file and values are the columns for each field
+    """
+    # Create a formatted dict to store the csv data in csv_dump_data
+    csv_dump_output = {field_name: [] for field_name in csv_dump_data.fieldnames}
+    for row in csv_dump_data:
+        for key, val in row.items():
+            # TODO when we add entries for restarts we'll need to change this
+            if key == "restarts":
+                csv_dump_output[key].append(int(val))
+            else:
+                csv_dump_output[key].append(val)
+    return csv_dump_output
+
+
+def run_csv_dump_test(status_obj: Union[Status, DetailedStatus]):
+    """
+    Test the csv dump functionality. This tests both the write and append
+    dump functionalities. The file needs to exist already for an append so it's
+    better to keep these tests together. This covers the format_status_for_display
+    and dump methods.
+    """
+    try:
+        # Test write dump functionality for csv
+        status_obj.dump()
+        with open(status_obj.args.dump, "r") as csv_df:
+            csv_dump_data = csv.DictReader(csv_df)
+            # Make sure a timestamp field was created
+            assert "Time of Status" in csv_dump_data.fieldnames
+
+            # Format the csv data that we just read in and create a set of timestamps
+            csv_dump_output = _format_csv_data(csv_dump_data)
+            timestamps = set(csv_dump_output["Time of Status"])
+
+            # We don't care if the timestamp matches, we only care that there should be exactly one timestamp here
+            del csv_dump_output["Time of Status"]
+            assert len(timestamps) == 1
+
+            # Check for differences (should be none)
+            csv_dump_diff = DeepDiff(csv_dump_output, status_test_variables.ALL_FORMATTED_STATUSES)
+            assert csv_dump_diff == {}
+
+        # Test append dump functionality for csv
+        # If we don't sleep for 1 second here the program will run too fast and the timestamp for the append dump will be the same
+        # as the timestamp for the write dump, which makes it impossible to differentiate between different dump calls
+        sleep(1)
+        # Here, the file already exists from the previous test so it will automatically append to the file
+        status_obj.dump()
+        with open(status_obj.args.dump, "r") as csv_df:
+            csv_append_dump_data = csv.DictReader(csv_df)
+            # Make sure a timestamp field still exists
+            assert "Time of Status" in csv_append_dump_data.fieldnames
+
+            # Format the csv data that we just read in and create a set of timestamps
+            csv_append_dump_output = _format_csv_data(csv_append_dump_data)
+            timestamps = set(csv_append_dump_output["Time of Status"])
+
+            # We don't care if the timestamp matches, we only care that there should be exactly two timestamps here now
+            del csv_append_dump_output["Time of Status"]
+            assert len(timestamps) == 2
+
+            # Since there are two dumps, we need to double up the formatted statuses too
+            appended_formatted_statuses = deepcopy(status_test_variables.ALL_FORMATTED_STATUSES)
+            for key, val in status_test_variables.ALL_FORMATTED_STATUSES.items():
+                appended_formatted_statuses[key].extend(val)
+
+            csv_append_dump_diff = DeepDiff(csv_append_dump_output, appended_formatted_statuses)
+            assert csv_append_dump_diff == {}
+    # Make sure we always remove the test file that's created from this dump
+    finally:
+        try:
+            os.remove(status_obj.args.dump)
+        except FileNotFoundError:
+            pass

@@ -130,6 +130,46 @@ class TestSetup(TestBaseDetailedStatus):
         self.assertEqual(detailed_status_obj.steps_filter_provided, False)
 
 
+class TestDumpFunctionality(TestBaseDetailedStatus):
+    """
+    This class will test the dump functionality for dumping detailed-status
+    to csv and json files. It will run the same test as we run for the Status
+    command and it will also run dump tests with some filters applied.
+    """
+
+    def test_json_dump(self):
+        """
+        Test the json dump functionality. This tests both the write and append
+        dump functionalities. The file needs to exist already for an append so it's
+        better to keep these tests together.
+
+        This will test a json dump using the detailed-status command without applying
+        any filters.
+        """
+        # Set the dump file
+        json_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/detailed_dump_test.json"
+        self.detailed_status_obj.args.dump = json_dump_file
+
+        # Run the json dump test
+        shared_tests.run_json_dump_test(self.detailed_status_obj)
+
+    def test_csv_dump(self):
+        """
+        Test the csv dump functionality. This tests both the write and append
+        dump functionalities. The file needs to exist already for an append so it's
+        better to keep these tests together.
+
+        This will test a csv dump using the detailed-status command without applying
+        any filters.
+        """
+        # Set the dump file
+        csv_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/detailed_dump_test.csv"
+        self.detailed_status_obj.args.dump = csv_dump_file
+
+        # Run the csv dump test
+        shared_tests.run_csv_dump_test(self.detailed_status_obj)
+
+
 class TestPromptFunctionality(TestBaseDetailedStatus):
     """
     This class is strictly for testing that all prompt functionality that's
