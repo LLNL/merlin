@@ -31,11 +31,11 @@
 Tests for the Status class in the status.py module
 """
 import unittest
-import yaml
 from argparse import Namespace
 from copy import deepcopy
 from datetime import datetime
 
+import yaml
 from deepdiff import DeepDiff
 
 from merlin.main import get_merlin_spec_with_override
@@ -45,7 +45,7 @@ from tests.unit.study.status_test_files import shared_tests, status_test_variabl
 
 class TestMerlinStatus(unittest.TestCase):
     """Test the logic for methods in the Status class."""
-    
+
     @classmethod
     def setUpClass(cls):
         """
@@ -55,7 +55,7 @@ class TestMerlinStatus(unittest.TestCase):
         # Read in the contents of the expanded spec
         with open(status_test_variables.EXPANDED_SPEC_PATH, "r") as expanded_file:
             cls.initial_expanded_contents = yaml.load(expanded_file, yaml.Loader)
-        
+
         # Create a copy of the contents so we can reset the file when these tests are done
         modified_contents = deepcopy(cls.initial_expanded_contents)
 
@@ -199,10 +199,16 @@ class TestMerlinStatus(unittest.TestCase):
         date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
 
-        # Test csv formatter
+        # Build the correct format and store each row in a list (so we can ignore the order)
         correct_csv_format = {"time_of_status": [date] * len(status_test_variables.ALL_FORMATTED_STATUSES["step_name"])}
         correct_csv_format.update(status_test_variables.ALL_FORMATTED_STATUSES)
-        csv_format_diff = DeepDiff(status_obj.format_csv_dump(date), correct_csv_format)
+        correct_csv_format = shared_tests.build_row_list(correct_csv_format)
+
+        # Run the csv_formatter and store each row it creates in a list
+        actual_csv_format = shared_tests.build_row_list(status_obj.format_csv_dump(date))
+
+        # Compare differences (should be none)
+        csv_format_diff = DeepDiff(actual_csv_format, correct_csv_format, ignore_order=True)
         self.assertEqual(csv_format_diff, {})
 
     def test_json_dump(self):
@@ -235,7 +241,8 @@ class TestMerlinStatus(unittest.TestCase):
         status_obj.args.dump = csv_dump_file
 
         # Run the csv dump test
-        shared_tests.run_csv_dump_test(status_obj, status_test_variables.ALL_FORMATTED_STATUSES)
+        expected_output = shared_tests.build_row_list(status_test_variables.ALL_FORMATTED_STATUSES)
+        shared_tests.run_csv_dump_test(status_obj, expected_output)
 
     def test_display(self):
         """

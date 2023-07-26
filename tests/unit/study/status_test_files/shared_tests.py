@@ -34,10 +34,9 @@ the Status object and the DetailedStatus object.
 import csv
 import json
 import os
-from copy import deepcopy
 from io import StringIO
 from time import sleep
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 from unittest.mock import patch
 
 from deepdiff import DeepDiff
@@ -218,7 +217,23 @@ def _format_csv_data(csv_dump_data: csv.DictReader) -> Dict[str, List[str]]:
     return csv_dump_output
 
 
-def run_csv_dump_test(status_obj: Union[Status, DetailedStatus], expected_output: Dict[str, List[Union[str, int]]]):
+def build_row_list(csv_formatted_dict: Dict[str, List[Union[str, int]]]) -> List[Tuple]:
+    """
+    Given a dict where each key/val pair represents column label/column values, create a
+    list of rows. For example:
+    input: {"a": [1, 2, 3], "b": [4, 5, 6]}
+    output: [("a", "b"), (1, 4), (2, 5), (3, 6)]
+
+    :param `csv_formatted_dict`: The dict of csv columns that we're converting to a list of rows
+    :returns: A list of rows created from the `csv_formatted_dict`
+    """
+    column_labels = tuple(csv_formatted_dict.keys())
+    row_list = list(zip(*csv_formatted_dict.values()))
+    row_list.insert(0, column_labels)
+    return row_list
+
+
+def run_csv_dump_test(status_obj: Union[Status, DetailedStatus], expected_output: List[Tuple]):
     """
     Test the csv dump functionality. This tests both the write and append
     dump functionalities. The file needs to exist already for an append so it's
@@ -245,7 +260,8 @@ def run_csv_dump_test(status_obj: Union[Status, DetailedStatus], expected_output
             assert len(timestamps) == 1
 
             # Check for differences (should be none)
-            csv_dump_diff = DeepDiff(csv_dump_output, expected_output)
+            csv_dump_output = build_row_list(csv_dump_output)
+            csv_dump_diff = DeepDiff(csv_dump_output, expected_output, ignore_order=True)
             assert csv_dump_diff == {}
 
         # Test append dump functionality for csv
@@ -267,12 +283,15 @@ def run_csv_dump_test(status_obj: Union[Status, DetailedStatus], expected_output
             del csv_append_dump_output["time_of_status"]
             assert len(timestamps) == 2
 
-            # Since there are two dumps, we need to double up the formatted statuses too
-            appended_formatted_statuses = deepcopy(expected_output)
-            for key, val in expected_output.items():
-                appended_formatted_statuses[key].extend(val)
+            # Since there are now two dumps, we need to double up the expected output too (except for the keys)
+            expected_keys = expected_output[0]
+            expected_output.remove(expected_keys)
+            expected_output.extend(expected_output)
+            expected_output.insert(0, expected_keys)
 
-            csv_append_dump_diff = DeepDiff(csv_append_dump_output, appended_formatted_statuses)
+            # Check for differences (should be none)
+            csv_append_dump_output = build_row_list(csv_append_dump_output)
+            csv_append_dump_diff = DeepDiff(csv_append_dump_output, expected_output, ignore_order=True, report_repetition=True)
             assert csv_append_dump_diff == {}
     # Make sure we always remove the test file that's created from this dump
     finally:

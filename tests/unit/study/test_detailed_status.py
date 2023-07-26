@@ -32,13 +32,13 @@ Tests for the DetailedStatus class in the status.py module
 """
 import re
 import unittest
-import yaml
 from argparse import Namespace
 from copy import deepcopy
 from io import StringIO
 from typing import Dict, List
 from unittest.mock import MagicMock, call, patch
 
+import yaml
 from deepdiff import DeepDiff
 
 from merlin.main import get_merlin_spec_with_override
@@ -60,7 +60,7 @@ class TestBaseDetailedStatus(unittest.TestCase):
         # Read in the contents of the expanded spec
         with open(status_test_variables.EXPANDED_SPEC_PATH, "r") as expanded_file:
             cls.initial_expanded_contents = yaml.load(expanded_file, yaml.Loader)
-        
+
         # Create a copy of the contents so we can reset the file when these tests are done
         modified_contents = deepcopy(cls.initial_expanded_contents)
 
@@ -203,7 +203,8 @@ class TestDumpFunctionality(TestBaseDetailedStatus):
         self.detailed_status_obj.args.dump = csv_dump_file
 
         # Run the csv dump test
-        shared_tests.run_csv_dump_test(self.detailed_status_obj, status_test_variables.ALL_FORMATTED_STATUSES)
+        expected_output = shared_tests.build_row_list(status_test_variables.ALL_FORMATTED_STATUSES)
+        shared_tests.run_csv_dump_test(self.detailed_status_obj, expected_output)
 
     def test_json_dump_with_filters(self):
         """
@@ -237,7 +238,8 @@ class TestDumpFunctionality(TestBaseDetailedStatus):
         self.detailed_status_obj.args.dump = csv_dump_file
 
         # Run the csv dump test (we should only get failed and cancelled statuses)
-        shared_tests.run_csv_dump_test(self.detailed_status_obj, status_test_variables.FORMATTED_STATUSES_FAIL_AND_CANCEL)
+        expected_output = shared_tests.build_row_list(status_test_variables.FORMATTED_STATUSES_FAIL_AND_CANCEL)
+        shared_tests.run_csv_dump_test(self.detailed_status_obj, expected_output)
 
 
 class TestPromptFunctionality(TestBaseDetailedStatus):
