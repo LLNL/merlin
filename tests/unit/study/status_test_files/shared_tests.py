@@ -234,14 +234,14 @@ def run_csv_dump_test(status_obj: Union[Status, DetailedStatus], expected_output
         with open(status_obj.args.dump, "r") as csv_df:
             csv_dump_data = csv.DictReader(csv_df)
             # Make sure a timestamp field was created
-            assert "Time of Status" in csv_dump_data.fieldnames
+            assert "time_of_status" in csv_dump_data.fieldnames
 
             # Format the csv data that we just read in and create a set of timestamps
             csv_dump_output = _format_csv_data(csv_dump_data)
-            timestamps = set(csv_dump_output["Time of Status"])
+            timestamps = set(csv_dump_output["time_of_status"])
 
             # We don't care if the timestamp matches, we only care that there should be exactly one timestamp here
-            del csv_dump_output["Time of Status"]
+            del csv_dump_output["time_of_status"]
             assert len(timestamps) == 1
 
             # Check for differences (should be none)
@@ -257,14 +257,14 @@ def run_csv_dump_test(status_obj: Union[Status, DetailedStatus], expected_output
         with open(status_obj.args.dump, "r") as csv_df:
             csv_append_dump_data = csv.DictReader(csv_df)
             # Make sure a timestamp field still exists
-            assert "Time of Status" in csv_append_dump_data.fieldnames
+            assert "time_of_status" in csv_append_dump_data.fieldnames
 
             # Format the csv data that we just read in and create a set of timestamps
             csv_append_dump_output = _format_csv_data(csv_append_dump_data)
-            timestamps = set(csv_append_dump_output["Time of Status"])
+            timestamps = set(csv_append_dump_output["time_of_status"])
 
             # We don't care if the timestamp matches, we only care that there should be exactly two timestamps here now
-            del csv_append_dump_output["Time of Status"]
+            del csv_append_dump_output["time_of_status"]
             assert len(timestamps) == 2
 
             # Since there are two dumps, we need to double up the formatted statuses too

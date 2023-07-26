@@ -36,6 +36,18 @@ from rich.table import Table
 from rich.theme import Theme
 
 
+def format_label(label_to_format: str, delimiter: str = "_") -> str:
+    """
+    Take a string of the format 'word1_word2_...' and format it so it's prettier.
+    This would turn the string above to 'Word1 Word2 ...'.
+
+    :param `label_to_format`: The string we want to format
+    :param `delimiter`: The character separating words in `label_to_format`
+    :returns: A formatted string based on `label_to_format`
+    """
+    return label_to_format.replace(delimiter, " ").title()
+
+
 class MerlinDefaultRenderer(BaseStatusRenderer):
     """
     This class handles the default status formatting for task-by-task display.
@@ -78,12 +90,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
             num_param_rows = int(len(param_list) / 2)
 
-            title = ""
-            if param_type == "cmd_parameters":
-                title = "Cmd Parameters"
-            elif param_type == "restart_parameters":
-                title = "Restart Parameters"
-            step_params = Table(title=title, show_header=False, show_lines=True, box=box.HORIZONTALS)
+            step_params = Table(title=format_label(param_type), show_header=False, show_lines=True, box=box.HORIZONTALS)
 
             # Note col names don't actually matter, just setting styles
             style = "blue" if not self.disable_theme else ""
@@ -150,7 +157,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
                 else:
                     col_style = "col_style_2"
 
-            task_details.add_column(col, style=col_style, overflow="fold")
+            task_details.add_column(format_label(col), style=col_style, overflow="fold")
 
         return task_details
 
@@ -269,6 +276,11 @@ class MerlinFlatRenderer(FlatStatusRenderer):
             del status_data["cmd_parameters"]
         if "restart_parameters" in status_data:
             del status_data["restart_parameters"]
+
+        # Capitalize column labels
+        capitalized_keys = [format_label(key) for key in status_data]
+        status_data = dict(zip(capitalized_keys, list(status_data.values())))
+
         super().layout(status_data, study_title=study_title, filter_dict=filter_dict)
 
     def render(self, theme=None):

@@ -386,7 +386,7 @@ class Status:
         statuses_to_write = self.format_status_for_display()
 
         # Add date entries as the first column then update this dict with the statuses we just reformatted
-        statuses_with_timestamp = {"Time of Status": [date] * len(statuses_to_write["step_name"])}
+        statuses_with_timestamp = {"time_of_status": [date] * len(statuses_to_write["step_name"])}
         statuses_with_timestamp.update(statuses_to_write)
 
         return statuses_with_timestamp

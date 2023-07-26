@@ -35,30 +35,40 @@ The format of a MERLIN_STATUS.json file is as follows:
 .. code-block:: json
 
     {
-        "Step Name": {
-            "Cmd Parameters": "TOKEN1:value1;TOKEN2:value2;...",
-            "Restart Parameters": "TOKEN1:value1;TOKEN2:value2;...",
-            "Task Queue": "name_of_queue",
-            "Worker Name": "name_of_worker",
-            "sub_workspace": {
-                "Status": "<One of the 7 possible statuses>",
-                "Return Code": "<One of the 8 possible return codes>",
-                "Elapsed Time": "xd:xxh:xxm:xxs",
-                "Run Time": "xd:xxh:xxm:xxs",
-                "Restarts": 0
+        "step_name": {
+            "parameters": {
+                "cmd": {
+                    "TOKEN1": "value1",
+                    "TOKEN2": "value2",
+                    "etc": "etc"
+                },
+                "restart": {
+                    "TOKEN1": "value1",
+                    "TOKEN2": "value2",
+                    "etc": "etc"
+                }
+            },
+            "task_queue": "name_of_queue",
+            "worker_name": "name_of_worker",
+            "step_workspace": {
+                "status": "<One of the 7 possible statuses>",
+                "return_code": "<One of the 8 possible return codes>",
+                "elapsed_time": "xd:xxh:xxm:xxs",
+                "run_time": "xd:xxh:xxm:xxs",
+                "restarts": 0
             }
         }
     }
 
-Here, the "Cmd Parameters" are parameters used in the cmd section of a step and "Restart Parameters" are parameters used in the restart
-section of a step. Both of these values may be null. Additionally, if you run your study :ref:`locally<merlin-run>` there will not be any
-entries for "Task Queue" and "Worker Name".
+In the parameters section here, the cmd parameters are parameters used in the "cmd" section of a step and the restart parameters are parameters
+used in the "restart" section of a step. Both of these values may be null. Additionally, if you run your study :ref:`locally<merlin-run>` there will
+not be any entries for "task_queue" and "worker_name".
 
-If your step uses samples, a "sub_workspace" entry for each sample will be created. In other words, you will have multiple "sub_workspace"
-entries of the form "sub_workspace/00", "sub_workspace/01", "sub_workspace/02", etc.
+If your step uses samples, a "step_workspace" entry for each sample will be created. In other words, you will have multiple "step_workspace"
+entries of the form "step_workspace/00", "step_workspace/01", "step_workspace/02", etc.
 
-The ``merlin status`` and ``merlin detailed-status`` will read from these MERLIN_STATUS.json files and format the output in an easy-to-analyze
-manner.
+The ``merlin status`` and ``merlin detailed-status`` commands will read from these MERLIN_STATUS.json files and format the output in an
+easy-to-analyze manner.
 
 Possible Statuses
 +++++++++++++++++
@@ -149,7 +159,7 @@ See :ref:`Step return variables` for more information about return codes.
 Inputs
 ++++++
 
-Both the ``merlin status`` and the ``merlin detailed-status`` command can take either a yaml spec file or an output study directory as input.
+Both the ``merlin status`` and the ``merlin detailed-status`` commands can take either a yaml spec file or an output study directory as input.
 For example, ``hello_world.yaml`` and ``hello_world_20230503-105137/`` are both valid inputs so long as the file or output directory exists.
 
 Status Usage:
@@ -510,7 +520,7 @@ Example JSON dump:
 When dumping to a file that DOES NOT yet exist, Merlin will create that file for you and populate it with the requested status info.
 
 When dumping to a file that DOES exist, Merlin will append the requested status information to that file. You can differentiate between separate
-dump calls by looking at the timestamps of the dumps. For CSV files this timestamp exists in the "Time of Status" column (see
+dump calls by looking at the timestamps of the dumps. For CSV files this timestamp exists in the "time_of_status" column (see
 :ref:`Status CSV Dump Format` below) and for JSON files this timestamp will be the top level key to the status entry (see
 :ref:`Status JSON Dump Format` below).
 
@@ -527,7 +537,7 @@ The format of a CSV dump file for statuses is as follows:
 
 .. code-block::
 
-  Time of Status,Step Name,Step Workspace,Status,Return Code,Elapsed Time,Run Time,Restarts,Cmd Parameters,Restart Parameters,Task Queue,Worker Name
+  time_of_status,step_name,step_workspace,status,return_code,elapsed_time,run_time,restarts,cmd_parameters,restart_parameters,task_queue,worker_name
 
 The image below shows an example of dumping the status info of tasks with FAILED task statuses to a csv file, and then displaying that csv file using
 the `rich-cli library <https://github.com/Textualize/rich-cli>`_:
@@ -547,17 +557,27 @@ The only difference is that each entry begins with a date:
 
   { 
     "YYYY-MM-DD HH:MM:SS": {
-      "Step Name": {
-        "Cmd Parameters": "TOKEN1:value1;TOKEN2:value2;...",
-        "Restart Parameters": "TOKEN1:value1;TOKEN2:value2;...",
-        "Task Queue": "name_of_queue",
-        "Worker Name": "name_of_worker",
-        "sub_workspace": {
-            "Status": "<One of the 7 possible statuses>",
-            "Return Code": "<One of the 8 possible return codes>",
-            "Elapsed Time": "xd:xxh:xxm:xxs",
-            "Run Time": "xd:xxh:xxm:xxs",
-            "Restarts": 0
+      "step_name": {
+        "parameters": {
+            "cmd": {
+                "TOKEN1": "value1",
+                "TOKEN2": "value2",
+                "etc": "etc"
+            },
+            "restart": {
+                "TOKEN1": "value1",
+                "TOKEN2": "value2",
+                "etc": "etc"
+            }
+        },
+        "task_queue": "name_of_queue",
+        "worker_name": "name_of_worker",
+        "step_workspace": {
+            "status": "<One of the 7 possible statuses>",
+            "return_code": "<One of the 8 possible return codes>",
+            "elapsed_time": "xd:xxh:xxm:xxs",
+            "run_time": "xd:xxh:xxm:xxs",
+            "restarts": 0
         }
       }
     }
