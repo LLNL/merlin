@@ -1,15 +1,21 @@
 {
     "just_parameters_GREET.hola.LEAVE.adios": {
-        "Cmd Parameters": "GREET:hola",
-        "Restart Parameters": "LEAVE:adios",
-        "Task Queue": "just_parameters_queue",
-        "Worker Name": "other_worker",
+        "parameters": {
+            "cmd": {
+                "GREET": "hola"
+            },
+            "restart": {
+                "LEAVE": "adios"
+            }
+        },
+        "task_queue": "just_parameters_queue",
+        "worker_name": "other_worker",
         "just_parameters/GREET.hola.LEAVE.adios": {
-            "Status": "FINISHED",
-            "Return Code": "MERLIN_SUCCESS",
-            "Elapsed Time": "0d:00h:00m:00s",
-            "Run Time": "0d:00h:00m:00s",
-            "Restarts": 0
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0
         }
     }
 }

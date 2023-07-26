@@ -162,7 +162,7 @@ class TestMerlinStatus(unittest.TestCase):
         status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
 
         # Test csv formatter
-        correct_csv_format = {"Time of Status": [date] * len(status_test_variables.ALL_FORMATTED_STATUSES["Step Name"])}
+        correct_csv_format = {"Time of Status": [date] * len(status_test_variables.ALL_FORMATTED_STATUSES["step_name"])}
         correct_csv_format.update(status_test_variables.ALL_FORMATTED_STATUSES)
         csv_format_diff = DeepDiff(status_obj.format_csv_dump(date), correct_csv_format)
         self.assertEqual(csv_format_diff, {})
@@ -218,7 +218,7 @@ class TestMerlinStatus(unittest.TestCase):
         for row in csv_dump_data:
             for key, val in row.items():
                 # TODO when we add entries for restart we'll need to change this
-                if key == "Restarts":
+                if key == "restarts":
                     csv_dump_output[key].append(int(val))
                 else:
                     csv_dump_output[key].append(val)

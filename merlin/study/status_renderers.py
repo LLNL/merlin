@@ -78,7 +78,12 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
             num_param_rows = int(len(param_list) / 2)
 
-            step_params = Table(title=param_type, show_header=False, show_lines=True, box=box.HORIZONTALS)
+            title = ""
+            if param_type == "cmd_parameters":
+                title = "Cmd Parameters"
+            elif param_type == "restart_parameters":
+                title = "Restart Parameters"
+            step_params = Table(title=title, show_header=False, show_lines=True, box=box.HORIZONTALS)
 
             # Note col names don't actually matter, just setting styles
             style = "blue" if not self.disable_theme else ""
@@ -111,17 +116,17 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         step_table.add_column("key")
         step_table.add_column("val", overflow="fold")
         # Top level contains step name and workspace name, full table width
-        step_table.add_row("STEP:", self._status_data["Step Name"][row_num], style="Step Name")
-        if "Worker Name" in self._status_data:
-            step_table.add_row("WORKER NAME:", self._status_data["Worker Name"][row_num], style="Workspace")
-        if "Task Queue" in self._status_data:
-            step_table.add_row("TASK QUEUE:", self._status_data["Task Queue"][row_num], style="Workspace")
+        step_table.add_row("STEP:", self._status_data["step_name"][row_num], style="Step Name")
+        if "worker_name" in self._status_data:
+            step_table.add_row("WORKER NAME:", self._status_data["worker_name"][row_num], style="Workspace")
+        if "task_queue" in self._status_data:
+            step_table.add_row("TASK QUEUE:", self._status_data["task_queue"][row_num], style="Workspace")
 
         step_table.add_row("", "")  # just a little whitespace
 
         # Add optional parameter tables, if step has parameters
         param_subtables = []
-        for param_type in ("Cmd Parameters", "Restart Parameters"):
+        for param_type in ("cmd_parameters", "restart_parameters"):
             params = self._status_data[param_type][row_num]
             step_params = self.create_param_subtable(params, param_type)
             if step_params is not None:
@@ -180,21 +185,21 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         cols = [
             key
             for key in self._status_data.keys()
-            if (key not in ("Step Name", "Cmd Parameters", "Restart Parameters", "Task Queue", "Worker Name"))
+            if (key not in ("step_name", "cmd_parameters", "restart_parameters", "task_queue", "worker_name"))
         ]
 
         num_rows = len(self._status_data[cols[0]])
 
         # We're going to create a sub table for each step so initialize that here
         step_table_tracker = {}
-        for row_num, step_name in enumerate(self._status_data["Step Name"]):
+        for row_num, step_name in enumerate(self._status_data["step_name"]):
             if step_name not in step_table_tracker:
                 step_table_tracker[step_name] = self.create_step_subtable(row_num)
 
         prev_step = ""
         # Setup one table to contain each steps' info
         for row in range(num_rows):
-            curr_step = self._status_data["Step Name"][row]
+            curr_step = self._status_data["step_name"][row]
 
             # If we're on a new step and it's not the first one we're looking at,
             # add the previously built task_details sub-table to the step sub table
@@ -260,10 +265,10 @@ class MerlinFlatRenderer(FlatStatusRenderer):
 
     def layout(self, status_data, study_title=None, filter_dict=None):
         """Setup the layout of the display"""
-        if "Cmd Parameters" in status_data:
-            del status_data["Cmd Parameters"]
-        if "Restart Parameters" in status_data:
-            del status_data["Restart Parameters"]
+        if "cmd_parameters" in status_data:
+            del status_data["cmd_parameters"]
+        if "restart_parameters" in status_data:
+            del status_data["restart_parameters"]
         super().layout(status_data, study_title=study_title, filter_dict=filter_dict)
 
     def render(self, theme=None):

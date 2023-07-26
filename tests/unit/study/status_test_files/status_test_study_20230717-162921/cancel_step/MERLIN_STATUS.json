@@ -1,15 +1,17 @@
 {
     "cancel_step": {
-        "Cmd Parameters": null,
-        "Restart Parameters": null,
-        "Task Queue": "cancel_queue",
-        "Worker Name": "other_worker",
+        "parameters": {
+            "cmd": null,
+            "restart": null
+        },
+        "task_queue": "cancel_queue",
+        "worker_name": "other_worker",
         "cancel_step": {
-            "Status": "CANCELLED",
-            "Return Code": "MERLIN_STOP_WORKERS",
-            "Elapsed Time": "0d:00h:00m:00s",
-            "Run Time": "0d:00h:00m:00s",
-            "Restarts": 0
+            "status": "CANCELLED",
+            "return_code": "MERLIN_STOP_WORKERS",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0
         }
     }
 }

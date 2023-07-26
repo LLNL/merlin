@@ -52,7 +52,7 @@ VALID_STATUS_FILTERS = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "CANCELL
 VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY", "DRY_SUCCESS", "UNRECOGNIZED")
 VALID_EXIT_FILTERS = ("E", "EXIT")
 ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS + ("MAX_TASKS",)
-NON_WORKSPACE_KEYS = set(["Cmd Parameters", "Restart Parameters", "Task Queue", "Worker Name"])
+NON_WORKSPACE_KEYS = set(["parameters", "task_queue", "worker_name"])
 
 
 class Status:
@@ -386,7 +386,7 @@ class Status:
         statuses_to_write = self.format_status_for_display()
 
         # Add date entries as the first column then update this dict with the statuses we just reformatted
-        statuses_with_timestamp = {"Time of Status": [date] * len(statuses_to_write["Step Name"])}
+        statuses_with_timestamp = {"Time of Status": [date] * len(statuses_to_write["step_name"])}
         statuses_with_timestamp.update(statuses_to_write)
 
         return statuses_with_timestamp
@@ -417,51 +417,62 @@ class Status:
                   of information to display for that column.
         """
         reformatted_statuses = {
-            "Step Name": [],
-            "Step Workspace": [],
-            "Status": [],
-            "Return Code": [],
-            "Elapsed Time": [],
-            "Run Time": [],
-            "Restarts": [],
-            "Cmd Parameters": [],
-            "Restart Parameters": [],
-            "Task Queue": [],
-            "Worker Name": [],
+            "step_name": [],
+            "step_workspace": [],
+            "status": [],
+            "return_code": [],
+            "elapsed_time": [],
+            "run_time": [],
+            "restarts": [],
+            "cmd_parameters": [],
+            "restart_parameters": [],
+            "task_queue": [],
+            "worker_name": [],
         }
 
         # Loop through all statuses
         for step_name, overall_step_info in self.requested_statuses.items():
-            for sub_step_workspace, task_status_info in overall_step_info.items():
-                # Ignore non workspace keys for now
-                if sub_step_workspace in NON_WORKSPACE_KEYS:
-                    continue
-
-                # Put the step name and workspace in each entry
-                reformatted_statuses["Step Name"].append(step_name)
-                reformatted_statuses["Step Workspace"].append(sub_step_workspace)
-
-                # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
-                for key, val in task_status_info.items():
-                    reformatted_statuses[key].append(val)
-
-            # Handle the non workspace keys
+            # Get the number of statuses for this step so we know how many entries there should be
             num_statuses = len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
-            for key in NON_WORKSPACE_KEYS:
-                try:
+
+            # Loop through information for each step
+            for step_info_key, step_info_value in overall_step_info.items():
+                # Format parameters
+                if step_info_key in NON_WORKSPACE_KEYS and step_info_key == "parameters":
+                    for cmd_type in ("cmd", "restart"):
+                        reformatted_statuses_key = f"{cmd_type}_parameters"
+                        # Set the val_to_add value based on if a value exists for the key
+                        if step_info_value[cmd_type] is not None:
+                            param_str = ";".join(
+                                [f"{token}:{param_val}" for token, param_val in step_info_value[cmd_type].items()]
+                            )
+                        else:
+                            param_str = "-------"
+                        # Add the parameter string for each row in this step
+                        reformatted_statuses[reformatted_statuses_key].extend([param_str] * num_statuses)
+
+                # Format other non-workspace keys (task_queue and worker_name)
+                elif step_info_key in NON_WORKSPACE_KEYS:
                     # Set the val_to_add value based on if a value exists for the key
-                    val_to_add = "-------"
-                    if overall_step_info[key]:
-                        val_to_add = overall_step_info[key]
-                except KeyError:
-                    # This key error will happen for Task Queue and Worker Name columns on local runs
-                    # So just remove that entry in the reformatted statuses dict if necessary
-                    if key in reformatted_statuses:
-                        del reformatted_statuses[key]
-                    continue
-                # Add the val_to_add entry for each row
-                key_entries = [val_to_add] * num_statuses
-                reformatted_statuses[key].extend(key_entries)
+                    val_to_add = step_info_value if step_info_value else "-------"
+                    # Add the val_to_add entry for each row
+                    key_entries = [val_to_add] * num_statuses
+                    reformatted_statuses[step_info_key].extend(key_entries)
+
+                # Format workspace keys
+                else:
+                    # Put the step name and workspace in each entry
+                    reformatted_statuses["step_name"].append(step_name)
+                    reformatted_statuses["step_workspace"].append(step_info_key)
+
+                    # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
+                    for key, val in step_info_value.items():
+                        reformatted_statuses[key].append(val)
+
+        # For local runs, there will be no task queue or worker name so delete these entries
+        for celery_specific_key in ("task_queue", "worker_name"):
+            if not reformatted_statuses[celery_specific_key]:
+                del reformatted_statuses[celery_specific_key]
 
         return reformatted_statuses
 
@@ -768,10 +779,10 @@ class DetailedStatus(Status):
         filter_types = set()
         filters = []
         if self.args.task_status:
-            filter_types.add("Status")
+            filter_types.add("status")
             filters += self.args.task_status
         if self.args.return_code:
-            filter_types.add("Return Code")
+            filter_types.add("return_code")
             filters += [f"MERLIN_{return_code}" for return_code in self.args.return_code]
 
         # Apply the filters if necessary
@@ -887,13 +898,13 @@ class DetailedStatus(Status):
             if user_filter == "MAX_TASKS":
                 max_tasks_found = True
             # Case 3: Status filter provided, add it to the list of filter types
-            elif user_filter in VALID_STATUS_FILTERS and "Status" not in filter_types:
-                filter_types.append("Status")
+            elif user_filter in VALID_STATUS_FILTERS and "status" not in filter_types:
+                filter_types.append("status")
             # Case 4: Return Code filter provided, add it to the list of filter types and add the MERLIN prefix
             elif user_filter in VALID_RETURN_CODES:
                 user_filters[i] = f"MERLIN_{user_filter}"
-                if "Return Code" not in filter_types:
-                    filter_types.append("Return Code")
+                if "return_code" not in filter_types:
+                    filter_types.append("return_code")
 
         # Remove the MAX_TASKS entry so we don't try to filter using it
         try:

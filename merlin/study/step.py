@@ -239,17 +239,17 @@ class MerlinStepRecord(_StepRecord):
             # Create the parameter entries
             cmd_params = restart_params = None
             if self.merlin_step.params["cmd"]:
-                cmd_params = ";".join([f"{param}:{value}" for param, value in self.merlin_step.params["cmd"].items()])
+                cmd_params = {param: value for param, value in self.merlin_step.params["cmd"].items()}
             if self.merlin_step.params["restart_cmd"]:
-                restart_params = ";".join(
-                    [f"{param}:{value}" for param, value in self.merlin_step.params["restart_cmd"].items()]
-                )
+                restart_params = {param: value for param, value in self.merlin_step.params["restart_cmd"].items()}
 
             # Inititalize the status_info dict we'll be dumping to the status file
             status_info = {
                 self.name: {
-                    "Cmd Parameters": cmd_params,
-                    "Restart Parameters": restart_params,
+                    "parameters": {
+                        "cmd": cmd_params,
+                        "restart": restart_params,
+                    }
                 }
             }
 
@@ -260,16 +260,16 @@ class MerlinStepRecord(_StepRecord):
 
                 # If the tasks are always eager, this is a local run and we won't have workers running
                 if not app.conf.task_always_eager:
-                    status_info[self.name]["Task Queue"] = get_current_queue()
-                    status_info[self.name]["Worker Name"] = get_current_worker()
+                    status_info[self.name]["task_queue"] = get_current_queue()
+                    status_info[self.name]["worker_name"] = get_current_worker()
 
         # Put together a dict of status info
         status_info[self.name][self.condensed_workspace] = {
-            "Status": state_translator[self.status],
-            "Return Code": result,
-            "Elapsed Time": self.elapsed_time,
-            "Run Time": self.run_time,
-            "Restarts": self.restarts,
+            "status": state_translator[self.status],
+            "return_code": result,
+            "elapsed_time": self.elapsed_time,
+            "run_time": self.run_time,
+            "restarts": self.restarts,
         }
 
         with open(status_filepath, "w") as status_file:

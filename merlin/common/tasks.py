@@ -485,7 +485,7 @@ def gather_statuses(sample_index: "SampleIndex", workspace: str, condensed_works
             for step_name, _ in status.items():
                 try:
                     # Make sure the status for this sample workspace is in a finished state (not initialized or running)
-                    if status[step_name][f"{condensed_workspace}/{path}"]["Status"] not in ("INITIALIZED", "RUNNING"):
+                    if status[step_name][f"{condensed_workspace}/{path}"]["status"] not in ("INITIALIZED", "RUNNING"):
                         # Add the status data to the statuses we'll write to the condensed file and remove this status file
                         dict_deep_merge(condensed_statuses, status)
                         os.remove(status_filepath)

@@ -367,10 +367,10 @@ def display_status_summary(status_obj: "Status", test_mode=False) -> Dict:  # no
             overall_step_info = status_obj.requested_statuses[real_step_name]
 
             # If this was a non-local run we should have a task queue and worker name to add to state_info
-            if "Task Queue" in overall_step_info:
-                state_info["TASK_QUEUE"] = {"name": overall_step_info["Task Queue"]}
-            if "Worker Name" in overall_step_info:
-                state_info["WORKER_NAME"] = {"name": overall_step_info["Worker Name"]}
+            if "task_queue" in overall_step_info:
+                state_info["TASK_QUEUE"] = {"name": overall_step_info["task_queue"]}
+            if "worker_name" in overall_step_info:
+                state_info["WORKER_NAME"] = {"name": overall_step_info["worker_name"]}
 
             # Loop through all workspaces for this step (if there's no samples for this step it'll just be one path)
             for sub_step_workspace, task_status_info in overall_step_info.items():
@@ -378,9 +378,9 @@ def display_status_summary(status_obj: "Status", test_mode=False) -> Dict:  # no
                 if sub_step_workspace in NON_WORKSPACE_KEYS:
                     continue
 
-                state_info[task_status_info["Status"]]["count"] += 1
+                state_info[task_status_info["status"]]["count"] += 1
                 # Increment the number of completed tasks (not running or initialized)
-                if task_status_info["Status"] not in ("INITIALIZED", "RUNNING"):
+                if task_status_info["status"] not in ("INITIALIZED", "RUNNING"):
                     num_completed_tasks += 1
 
         if test_mode:

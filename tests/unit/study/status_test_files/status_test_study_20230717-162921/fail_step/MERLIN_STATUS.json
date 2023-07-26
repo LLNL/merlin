@@ -1,15 +1,17 @@
 {
     "fail_step": {
-        "Cmd Parameters": null,
-        "Restart Parameters": null,
-        "Task Queue": "fail_queue",
-        "Worker Name": "other_worker",
+        "parameters": {
+            "cmd": null,
+            "restart": null
+        },
+        "task_queue": "fail_queue",
+        "worker_name": "other_worker",
         "fail_step": {
-            "Status": "FAILED",
-            "Return Code": "MERLIN_SOFT_FAIL",
-            "Elapsed Time": "0d:00h:00m:00s",
-            "Run Time": "0d:00h:00m:00s",
-            "Restarts": 0
+            "status": "FAILED",
+            "return_code": "MERLIN_SOFT_FAIL",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0
         }
     }
 }
