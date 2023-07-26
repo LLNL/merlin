@@ -45,7 +45,6 @@ from kombu import Connection
 from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
-from merlin.config.configfile import default_config_info
 from merlin.study.status_renderers import status_renderer_factory
 
 
@@ -156,6 +155,7 @@ def display_config_info():
     Prints useful configuration information to the console.
     """
     from merlin.config import broker, results_backend  # pylint: disable=C0415
+    from merlin.config.configfile import default_config_info  # pylint: disable=C0415
 
     print("Merlin Configuration")
     print("-" * 25)
