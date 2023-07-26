@@ -185,7 +185,7 @@ class TestDumpFunctionality(TestBaseDetailedStatus):
 
         # Run the json dump test (we should only get failed and cancelled statuses)
         shared_tests.run_json_dump_test(self.detailed_status_obj, status_test_variables.REQUESTED_STATUSES_FAIL_AND_CANCEL)
-        
+
     def test_csv_dump_with_filters(self):
         """
         Test the csv dump functionality while using filters. This tests both the write and append

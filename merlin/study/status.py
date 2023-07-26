@@ -38,12 +38,12 @@ from datetime import datetime
 from glob import glob
 from typing import Dict, List, Optional, Tuple, Union
 
-from tabulate import tabulate
 from filelock import FileLock, Timeout
+from tabulate import tabulate
 
-from merlin import display
 from merlin.common.dumper import dump_handler
 from merlin.config.configfile import CONFIG
+from merlin.display import ANSI_COLORS, display_status_summary, display_status_task_by_task
 from merlin.study.status_renderers import status_renderer_factory
 from merlin.utils import dict_deep_merge, ws_time_to_dt
 
@@ -154,8 +154,8 @@ class Status:
                             raise ValueError
                     except ValueError:
                         print(
-                            f"{display.ANSI_COLORS['RED']}Input must be an integer between 1 "
-                            f"and {num_studies}.{display.ANSI_COLORS['RESET']}"
+                            f"{ANSI_COLORS['RED']}Input must be an integer between 1 "
+                            f"and {num_studies}.{ANSI_COLORS['RESET']}"
                         )
                         prompt = "Enter a different index: "
                 study_to_check += potential_studies[index - 1][1]
@@ -364,7 +364,7 @@ class Status:
         :returns: A dict that will be empty if test_mode is False. Otherwise, the dict will
                   contain the status info that would be displayed.
         """
-        return display.display_status_summary(self, test_mode=test_mode)
+        return display_status_summary(self, test_mode=test_mode)
 
     def format_json_dump(self, date: datetime) -> Dict:
         """
@@ -931,7 +931,7 @@ class DetailedStatus(Status):
         """
         # Check that there's statuses found and display them
         if self.requested_statuses:
-            display.display_status_task_by_task(self, test_mode=test_mode)
+            display_status_task_by_task(self, test_mode=test_mode)
         else:
             LOG.warning("No statuses to display.")
 

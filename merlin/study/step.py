@@ -239,9 +239,9 @@ class MerlinStepRecord(_StepRecord):
             # Create the parameter entries
             cmd_params = restart_params = None
             if self.merlin_step.params["cmd"]:
-                cmd_params = {param: value for param, value in self.merlin_step.params["cmd"].items()}
+                cmd_params = dict(self.merlin_step.params["cmd"].items())
             if self.merlin_step.params["restart_cmd"]:
-                restart_params = {param: value for param, value in self.merlin_step.params["restart_cmd"].items()}
+                restart_params = dict(self.merlin_step.params["restart_cmd"].items())
 
             # Inititalize the status_info dict we'll be dumping to the status file
             status_info = {

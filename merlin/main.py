@@ -308,8 +308,6 @@ def query_queues(args):
 
     :param 'args': parsed CLI arguments
     """
-    from merlin import display  # pylint: disable=import-outside-toplevel
-
     print(banner_small)
 
     # Ensure a spec is provided if steps are provided
