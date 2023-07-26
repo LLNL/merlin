@@ -32,12 +32,15 @@ import os
 
 
 # Global path variables for files we'll need during these status tests
-PATH_TO_TEST_FILES = f"{os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__))))}"
+PATH_TO_TEST_FILES = f"{os.path.dirname(__file__)}"
 SPEC_PATH = f"{PATH_TO_TEST_FILES}/status_test_spec.yaml"
 VALID_WORKSPACE = "status_test_study_20230717-162921"
 DUMMY_WORKSPACE = "status_test_study_20230713-000000"
 VALID_WORKSPACE_PATH = f"{PATH_TO_TEST_FILES}/{VALID_WORKSPACE}"
 DUMMY_WORKSPACE_PATH = f"{PATH_TO_TEST_FILES}/{DUMMY_WORKSPACE}"
+MERLIN_INFO_PATH = f"{VALID_WORKSPACE_PATH}/merlin_info"
+EXPANDED_SPEC_PATH = f"{MERLIN_INFO_PATH}/status_test_spec.expanded.yaml"
+SAMPLES_PATH = f"{MERLIN_INFO_PATH}/samples.csv"
 
 # These globals are variables that will be tested against to ensure correct output
 FULL_STEP_TRACKER = {

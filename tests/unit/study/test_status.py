@@ -31,7 +31,9 @@
 Tests for the Status class in the status.py module
 """
 import unittest
+import yaml
 from argparse import Namespace
+from copy import deepcopy
 from datetime import datetime
 
 from deepdiff import DeepDiff
@@ -43,6 +45,35 @@ from tests.unit.study.status_test_files import shared_tests, status_test_variabl
 
 class TestMerlinStatus(unittest.TestCase):
     """Test the logic for methods in the Status class."""
+    
+    @classmethod
+    def setUpClass(cls):
+        """
+        We need to modify the path to the samples file in the expanded spec for these tests.
+        This will only happen once when these tests are initialized.
+        """
+        # Read in the contents of the expanded spec
+        with open(status_test_variables.EXPANDED_SPEC_PATH, "r") as expanded_file:
+            cls.initial_expanded_contents = yaml.load(expanded_file, yaml.Loader)
+        
+        # Create a copy of the contents so we can reset the file when these tests are done
+        modified_contents = deepcopy(cls.initial_expanded_contents)
+
+        # Modify the samples file path
+        modified_contents["merlin"]["samples"]["file"] = status_test_variables.SAMPLES_PATH
+
+        # Write the new contents to the expanded spec
+        with open(status_test_variables.EXPANDED_SPEC_PATH, "w") as expanded_file:
+            yaml.dump(modified_contents, expanded_file)
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        When these tests are done we'll reset the contents of the expanded spec path
+        to their initial states.
+        """
+        with open(status_test_variables.EXPANDED_SPEC_PATH, "w") as expanded_file:
+            yaml.dump(cls.initial_expanded_contents, expanded_file)
 
     def setUp(self):
         """
