@@ -49,6 +49,8 @@ from argparse import (
 from contextlib import suppress
 from typing import Dict, List, Optional, Union
 
+from tabulate import tabulate
+
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
@@ -329,7 +331,7 @@ def query_queues(args):
         # Print the queue information
         ret.insert(0, ("Queue Name", "Task Count", "Worker Count"))
         print()
-        display.tabulate_info(ret, headers="firstrow")
+        print(tabulate(ret, headers="firstrow"))
         print()
 
         # Dump queue information to an output file if necessary

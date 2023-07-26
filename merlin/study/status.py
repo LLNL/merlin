@@ -38,6 +38,7 @@ from datetime import datetime
 from glob import glob
 from typing import Dict, List, Optional, Tuple, Union
 
+from tabulate import tabulate
 from filelock import FileLock, Timeout
 
 from merlin import display
@@ -143,7 +144,7 @@ class Status:
             # Ask the user which study to view
             else:
                 print(f"Found {num_studies} potential studies:")
-                display.tabulate_info(potential_studies, headers=["Index", "Study Name"])
+                print(tabulate(potential_studies, headers=["Index", "Study Name"]))
                 prompt = "Which study would you like to view the status of? Use the index on the left: "
                 index = -1
                 while index < 1 or index > num_studies:

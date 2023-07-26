@@ -473,24 +473,3 @@ def display_progress_bar(  # pylint: disable=R0913,R0914
     else:
         progress_bar = fill * total_filled_length + "-" * (length - total_filled_length)
         print(f"\r{prefix} |{progress_bar}| {percent}% {suffix}", end=print_end)
-
-
-def tabulate_info(info, headers=None, color=None):
-    """
-    Display info in a table. Colorize the table if you'd like.
-    Intended for use for functions outside of this file so they don't
-    need to import tabulate.
-    :param `info`: The info you want to tabulate.
-    :param `headers`: A string or list stating what you'd like the headers to be.
-                      Options: "firstrow", "keys", or List[str]
-    :param `color`: An ANSI color.
-    """
-    # Adds the color at the start of the print
-    if color:
-        print(color, end="")
-
-    # \033[0m resets color to white
-    if headers:
-        print(tabulate(info, headers=headers), ANSI_COLORS["RESET"])
-    else:
-        print(tabulate(info), ANSI_COLORS["RESET"])
