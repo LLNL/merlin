@@ -32,7 +32,7 @@ import os
 
 
 # Global path variables for files we'll need during these status tests
-PATH_TO_TEST_FILES = f"{os.path.dirname(__file__)}"
+PATH_TO_TEST_FILES = f"{os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__))))}"
 SPEC_PATH = f"{PATH_TO_TEST_FILES}/status_test_spec.yaml"
 VALID_WORKSPACE = "status_test_study_20230717-162921"
 DUMMY_WORKSPACE = "status_test_study_20230713-000000"
