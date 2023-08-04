@@ -69,3 +69,4 @@ jupyter/testDistributedSamples.py
 dist/
 build/
 .DS_Store
+.vscode/
