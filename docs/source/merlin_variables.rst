@@ -161,7 +161,7 @@ Reserved variables
             $(MERLIN_INFO)/*.expanded.yaml
 
 The ``LAUNCHER`` Variable
-+++++++++++++++++++++
++++++++++++++++++++++++++
 
 ``$(LAUNCHER)`` is a special case of a reserved variable since it's value *can* be changed.
 It serves as an abstraction to launch a job with parallel schedulers like :ref:`slurm<slurm>`,

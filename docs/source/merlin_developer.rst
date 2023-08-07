@@ -164,8 +164,7 @@ properties labeled ``name`` and ``population`` that are both required, it would 
     }
 
 Here, ``name`` can only be a string but ``population`` can be both a string and an integer. 
-For help with json schema formatting, check out the `step-by-step getting started guide 
-<https://json-schema.org/learn/getting-started/step-by-step.html>`_.
+For help with json schema formatting, check out the `step-by-step getting started guide`_.
 
 The next step is to enable this block in the schema validation process. To do this we need to:
 

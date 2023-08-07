@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.1.
+# This file is part of Merlin, Version: 1.10.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -83,6 +83,8 @@ def list_examples():
         directory = os.path.join(os.path.join(EXAMPLES_DIR, example_dir), "")
         specs = glob.glob(directory + "*.yaml")
         for spec in specs:
+            if "template" in spec:
+                continue
             with open(spec) as f:  # pylint: disable=C0103
                 try:
                     spec_metadata = yaml.safe_load(f)["description"]

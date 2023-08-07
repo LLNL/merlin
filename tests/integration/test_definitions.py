@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.1.
+# This file is part of Merlin, Version: 1.10.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -127,6 +127,7 @@ def define_tests():  # pylint: disable=R0914,R0915
     flux_native = f"{test_specs}/flux_par_native_test.yaml"
     lsf = f"{examples}/lsf/lsf_par.yaml"
     mul_workers_demo = f"{dev_examples}/multiple_workers.yaml"
+    cli_substitution_wf = f"{test_specs}/cli_substitution_test.yaml"
 
     # Other shortcuts
     black = "black --check --target-version py36"
@@ -323,6 +324,26 @@ def define_tests():  # pylint: disable=R0914,R0915
             "run type": "local",
         },
     }
+    cli_substitution_tests = {
+        "no substitutions": {
+            "cmds": f"merlin run {cli_substitution_wf} --local",
+            "conditions": [HasReturnCode(), HasRegex(r"OUTPUT_PATH: output_path_no_substitution")],
+            "run type": "local",
+            "cleanup": "rm -r output_path_no_substitution",
+        },
+        "output_path substitution": {
+            "cmds": f"merlin run {cli_substitution_wf} --local --vars OUTPUT_PATH=output_path_substitution",
+            "conditions": [HasReturnCode(), HasRegex(r"OUTPUT_PATH: output_path_substitution")],
+            "run type": "local",
+            "cleanup": "rm -r output_path_substitution",
+        },
+        "output_path w/ variable substitution": {
+            "cmds": f"merlin run {cli_substitution_wf} --local --vars SUB=variable_sub",
+            "conditions": [HasReturnCode(), HasRegex(r"OUTPUT_PATH: output_path_variable_sub")],
+            "run type": "local",
+            "cleanup": "rm -r output_path_variable_sub",
+        },
+    }
     example_tests = {
         "example failure": {"cmds": "merlin example failure", "conditions": HasRegex("not found"), "run type": "local"},
         "example simple_chain": {
@@ -435,31 +456,36 @@ def define_tests():  # pylint: disable=R0914,R0915
                 HasReturnCode(),
                 ProvenanceYAMLFileHasRegex(
                     regex=r"HELLO: \$\(SCRIPTS\)/hello_world.py",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="orig",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex=r"name: \$\(NAME\)",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex="studies/feature_demo_",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="partial",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex="name: feature_demo",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex=r"\$\(NAME\)",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                     negate=True,
@@ -510,13 +536,15 @@ def define_tests():  # pylint: disable=R0914,R0915
             "conditions": [
                 ProvenanceYAMLFileHasRegex(
                     regex=r"\[0.3333333",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
                 ProvenanceYAMLFileHasRegex(
                     regex=r"\[0.5",
-                    name="feature_demo",
+                    spec_file_name="feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                     negate=True,
@@ -715,7 +743,8 @@ def define_tests():  # pylint: disable=R0914,R0915
                 HasReturnCode(),
                 ProvenanceYAMLFileHasRegex(
                     regex="cli_test_demo_workers:",
-                    name="feature_demo",
+                    spec_file_name="remote_feature_demo",
+                    study_name="feature_demo",
                     output_path=OUTPUT_DIR,
                     provenance_type="expanded",
                 ),
@@ -740,6 +769,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         examples_check,
         run_workers_echo_tests,
         wf_format_tests,
+        cli_substitution_tests,
         example_tests,
         restart_step_tests,
         restart_wf_tests,
