@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A bug where the openfoam_wf_singularity example was not being found
 - Some build warnings in the docs (unknown targets, duplicate targets, title underlines too short, etc.)
 - A bug where when the output path contained a variable that was overridden, the overridden variable was not changed in the output_path
+- Cyclical imports and config imports that could easily cause ci issues
 
 ### Added
 - A new command `merlin queue-info` that will print the status of your celery queues
@@ -49,6 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
 - Tests for ensuring `$(MERLIN_SPEC_ORIGINAL_TEMPLATE)`, `$(MERLIN_SPEC_ARCHIVED_COPY)`, and `$(MERLIN_SPEC_EXECUTED_RUN)` are stored correctly
 - Tests for cli substitutions
+- Tests for the Status and DetailedStatus classes
+  - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
+- Tests for the queue-info command/some other queue related functions in the celeryadapter module
 
 ### Changed
 - Reformatted the entire "merlin status" command
@@ -72,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - query_celery_queues() in `merlin/study/celeryadapter.py` now uses with statements to open connection and channel to ensure they close
 - Removed the `dump_status` function from `merlin/router.py` since dumping is now handled in the new Status object
 - Pulled the needs_merlin_expansion() method out of the Step class and made it a function instead
+- Removed `tabulate_info` function; replaced with tabulate from the tabulate library
 
 ## [1.10.1]
 ### Fixed
