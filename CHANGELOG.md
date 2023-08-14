@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a property paramater_labels to the MerlinStudy class
 - Added two new utility functions:
   - dict_deep_merge() that deep merges two dicts into one
-  - ws_time_to_td() that converts a workspace timestring (YYYYMMDD-HHMMSS) to a datetime object
+  - ws_time_to_dt() that converts a workspace timestring (YYYYMMDD-HHMMSS) to a datetime object
 - A new task `condense_status_files` to be called when sets of samples finish
 - Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
 - Tests for the Status and DetailedStatus classes
@@ -54,11 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed the --steps flag
   - Replaced the --csv flag with the --dump flag
     - This will make it easier in the future to adopt more file types to dump to
-  - Moved previous functionality to the new `merlin queue-info` command
+  - Moved previous functionality to the new `merlin queue-info --spec` command
   - New functionality:
     - Shows step_by_step progress bar for tasks
     - Displays a summary of task statuses below the progress bar
-- Reformatted the status command section in the `Command Line` page of the 
+- Reformatted the status command section in the `Command Line` page of the docs
 - Split the `add_chains_to_chord` function in `merlin/common/tasks.py` into two functions:
   - `get_1d_chain` which converts a 2D list of chains into a 1D list
   - `launch_chain` which launches the 1D chain
