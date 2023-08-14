@@ -667,21 +667,21 @@ option for task server is celery so you most likely will not want to use this op
 Specification Options
 +++++++++++++++++++++
 
-There are three options that revolve around using a spec file to query queue information: ``--specification``, ``--steps``,
+There are three options that revolve around using a spec file to query queue information: ``--spec``, ``--steps``,
 and ``--vars``.
 
 .. note::
 
-  The ``--steps`` and ``--vars`` options MUST be used alongside the ``--specification`` option. They CANNOT be used by themselves.
+  The ``--steps`` and ``--vars`` options MUST be used alongside the ``--spec`` option. They CANNOT be used by themselves.
 
-Using the ``--specification`` option allows you to query queue statistics for queues that only exist in the spec file you provide.
+Using the ``--spec`` option allows you to query queue statistics for queues that only exist in the spec file you provide.
 This is the same functionality as the ``merlin status`` command prior to the release of Merlin v1.11.0.
 
 Usage:
 
 .. code-block:: bash
 
-  merlin queue-info --specification <spec file>
+  merlin queue-info --spec <spec file>
 
 Example:
 
@@ -691,17 +691,16 @@ Example:
   Output of the queue-info command using the specification option
 
 If you'd like to see queue information for queues that are attached to specific steps in your workflow, use the ``--steps`` option.
-This option MUST be used alongside the ``--specification`` option.
+This option MUST be used alongside the ``--spec`` option.
 
 Usage:
 
 .. code-block:: bash
 
-  merlin queue-info --specification <spec file> --steps <step name(s)>
+  merlin queue-info --spec <spec file> --steps <step name(s)>
 
-Say I have a spec file with steps named ``step_1`` through ``step_4`` and each step is attached to a different queue. In this scenario ``step_1``
-and ``step_4`` are attached to ``hello_queue`` and the default Merlin queue respectively. Using the ``--steps`` option for these two steps
-gives us:
+Say I have a spec file with steps named ``step_1`` through ``step_4`` and each step is attached to a different queue ``step_1_queue`` through
+``step_4_queue`` respectively. Using the ``--steps`` option for these two steps gives us:
 
 .. figure:: ../images/queue-info/steps-option.png
   :alt: output of queue-info using the steps option
@@ -709,13 +708,13 @@ gives us:
   Output of the queue-info command using the steps option to query steps named step_1 and step_4 of a workflow
 
 The ``--vars`` option can be used to modify any variables defined in your spec file from the CLI. This option MUST be used alongside the
-``--specification`` option. The list is space-delimited and should be given after the input yaml file.
+``--spec`` option. The list is space-delimited and should be given after the input yaml file.
 
 Usage:
 
 .. code-block:: bash
 
-  merlin queue-info --specification <spec file> --vars QUEUE_VAR=new_queue_var_value
+  merlin queue-info --spec <spec file> --vars QUEUE_VAR=new_queue_var_value
 
 Dumping Queue Info to Output Files
 ++++++++++++++++++++++++++++++++++
@@ -735,7 +734,7 @@ dump calls by looking at the timestamps of the dumps. For CSV files this timesta
 :ref:`Queue Info CSV Dump Format` below) and for JSON files this timestamp will be the top level key to the queue info entry (see
 :ref:`Queue Info JSON Dump Format` below).
 
-Using any of the ``--specific-steps``, ``--specification``, or ``--steps`` options will modify the output that's written to the output file.
+Using any of the ``--specific-steps``, ``--spec``, or ``--steps`` options will modify the output that's written to the output file.
 
 Queue Info CSV Dump Format
 --------------------------

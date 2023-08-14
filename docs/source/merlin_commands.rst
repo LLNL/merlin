@@ -395,7 +395,7 @@ Usage:
 
 .. code:: bash
 
-  $ merlin queue-info [--dump <csv or json file>] [--specification <spec_file.yaml>] [--specific-queues <queue name(s)>] [--steps <step name(s)>] [--task_server celery] [--vars <VARIABLES=<VARIABLES>>]
+  $ merlin queue-info [--dump <csv or json file>] [--spec <spec_file.yaml>] [--specific-queues <queue name(s)>] [--steps <step name(s)>] [--task_server celery] [--vars <VARIABLES=<VARIABLES>>]
 
 .. list-table:: Options
     :widths: 20 20 40 20
@@ -413,10 +413,10 @@ Usage:
       - filename
       - Dump the queue information to a file. Provide the filename (must be .csv or .json).
       - None
-    * - --specification
+    * - --spec
       - filename
       - Path to a Merlin YAML spec file. This will only display information for queues defined in this spec file.
-        This is the same behavior as the status command before Merlin version 1.11.0 was released.
+        This is the same behavior as the status command prior to Merlin version 1.11.0.
       - None
     * - --specific-queues
       - string
@@ -424,7 +424,7 @@ Usage:
       - None
     * - --steps
       - string
-      - The specific steps in the YAML file you want to query the queues of. This option MUST be used with the --specification option.
+      - The specific steps in the YAML file you want to query the queues of. This option MUST be used with the --spec option.
       - "all"
     * - --task_server
       - string
@@ -432,7 +432,7 @@ Usage:
       - celery
     * - --vars
       - string
-      - Specify desired Merlin variable values to override those found in the specification. Space-delimited. Example: '--vars
+      - Specify desired Merlin variable values to override those found in the specification. Space-delimited. This option MUST be used with the --spec option. Example: '--vars
         LEARN=path/to/new_learn.py EPOCHS=3'
       - None
 
