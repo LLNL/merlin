@@ -38,14 +38,12 @@ decoupled from the logic the tasks are running.
 import logging
 import os
 import time
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-from merlin.common.dumper import dump_handler
 from merlin.study.celeryadapter import (
-    celerize_queues,
+    build_set_of_queues,
     create_celery_config,
-    get_queues,
+    dump_celery_queue_info,
     get_workers_from_app,
     purge_celery_tasks,
     query_celery_queues,
@@ -122,62 +120,19 @@ def purge_tasks(task_server, spec, force, steps):
         return -1
 
 
-def build_csv_queue_info(query_return: List[Tuple[str, int, int]], date: str) -> Dict[str, List]:
-    """
-    Build the lists of column labels and queue info to write to the csv file.
-
-    :param `query_return`: The output of query_queues
-    :param `date`: A timestamp for us to mark when this status occurred
-    :returns: A dict of queue information to dump to csv
-    """
-    # Build the list of labels if necessary
-    csv_to_dump = {"Time": [date]}
-    for name, jobs, consumers in query_return:
-        csv_to_dump[f"{name}:tasks"] = [str(jobs)]
-        csv_to_dump[f"{name}:consumers"] = [str(consumers)]
-
-    return csv_to_dump
-
-
-def build_json_queue_info(query_return: List[Tuple[str, int, int]], date: str) -> Dict:
-    """
-    Build the dict of queue info to dump to the json file.
-
-    :param `query_return`: The output of query_queues
-    :param `date`: A timestamp for us to mark when this status occurred
-    :returns: A dictionary that's ready to dump to a json outfile
-    """
-    # Get the datetime so we can track different entries and initalize a new json entry
-    json_to_dump = {date: {}}
-
-    # Add info for each queue (name)
-    for name, jobs, consumers in query_return:
-        json_to_dump[date][name] = {"tasks": jobs, "consumers": consumers}
-
-    return json_to_dump
-
-
-def dump_queue_info(query_return: List[Tuple[str, int, int]], dump_file: str):
+def dump_queue_info(task_server: str, query_return: List[Tuple[str, int, int]], dump_file: str):
     """
     Format the information we're going to dump in a way that the Dumper class can
     understand and add a timestamp to the info.
 
+    :param `task_server`: The task server from which to query queues
     :param `query_return`: The output of query_queues
     :param `dump_file`: The filepath of the file we'll dump queue info to
     """
-    # Get a timestamp for this dump
-    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # Handle different file types
-    if dump_file.endswith(".csv"):
-        # Build the lists of information/labels we'll need
-        dump_info = build_csv_queue_info(query_return, date)
-    elif dump_file.endswith(".json"):
-        # Build the dict of info to dump to the json file
-        dump_info = build_json_queue_info(query_return, date)
-
-    # Dump the information
-    dump_handler(dump_file, dump_info)
+    if task_server == "celery":
+        dump_celery_queue_info(query_return, dump_file)
+    else:
+        LOG.error("Celery is not specified as the task server!")
 
 
 def query_queues(
@@ -190,63 +145,15 @@ def query_queues(
     """
     Queries status of queues.
 
-    :param `task_server`: The task server from which to purge tasks.
+    :param `task_server`: The task server from which to query queues
     :param `spec`: A MerlinSpec object or None
     :param `steps`: Spaced-separated list of stepnames to query. Default is all
     :param `specific_queues`: A list of queue names to query or None
     :param `verbose`: A bool to determine whether to output log statements or not
     """
-    from merlin.celery import app  # pylint: disable=C0415
-
     if task_server == "celery":  # pylint: disable=R1705
-        queues = set()
-        # If the user provided a spec file, get the queues from that spec
-        if spec:
-            if verbose:
-                LOG.info(f"Querying queues for steps = {steps}")
-            queues = set(spec.get_queue_list(steps))
-
-        # If the user provided specific queues, search for those
-        if specific_queues:
-            if verbose:
-                LOG.info(f"Filtering queues to query by these specific queues: {specific_queues}")
-            # Add the queue tag from celery if necessary
-            celerize_queues(specific_queues)
-            # Remove any potential duplicates and create a new set to store the queues we'll want to check
-            specific_queues = set(specific_queues)
-            specific_queues_to_check = set()
-
-            for specific_queue in specific_queues:
-                # If the user provided the --specification flag too then we'll need to check that this
-                # specific queue exists in the spec that they provided
-                add_specific_queue = True
-                if spec and specific_queue not in queues:
-                    LOG.warning(
-                        f"Either couldn't find {specific_queue} in the existing queues for the spec file provided or "
-                        "this queue doesn't go with the steps provided with the --steps option. Ignoring this queue."
-                    )
-                    add_specific_queue = False
-
-                # Add the full queue name to the set of queues we'll check
-                if add_specific_queue:
-                    specific_queues_to_check.add(specific_queue)
-            queues = specific_queues_to_check
-
-        # Default behavior with no options provided; display active queues
-        if not spec and not specific_queues:
-            if verbose:
-                LOG.info("Querying active queues")
-            existing_queues, _ = get_queues(app)
-
-            # Check if there's any active queues currently
-            if len(existing_queues) == 0:
-                LOG.warning("No active queues found. Are your workers running yet?")
-                return []
-
-            # Set the queues we're going to check to be all existing queues by default
-            queues = existing_queues.keys()
-
-        # Query the queues
+        # Build a set of queues to query and query them
+        queues = build_set_of_queues(spec, steps, specific_queues, verbose=verbose)
         return query_celery_queues(queues)
     else:
         LOG.error("Celery is not specified as the task server!")

@@ -309,7 +309,7 @@ def query_queues(args):
         # Dump queue information to an output file if necessary
         if args.dump:
             ret.pop(0)
-            router.dump_queue_info(ret, args.dump)
+            router.dump_queue_info(args.task_server, ret, args.dump)
 
 
 def query_workers(args):
@@ -1084,11 +1084,12 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
     )
     spec_group = queue_info.add_argument_group("specification options")
     spec_group.add_argument(
-        "--specification",
+        "--spec",
+        dest="specification",
         type=str,
         help="Path to a Merlin YAML spec file. \
                             This will only display information for queues defined in this spec file. \
-                            This is the same behavior as the status command before Merlin version 1.11.0 was released.",
+                            This is the same behavior as the status command prior to Merlin version 1.11.0.",
     )
     spec_group.add_argument(
         "--steps",
@@ -1097,7 +1098,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         dest="steps",
         default=["all"],
         help="The specific steps in the YAML file you want to query the queues of. "
-        "This option MUST be used with the --specification option",
+        "This option MUST be used with the --spec option",
     )
     spec_group.add_argument(
         "--vars",
@@ -1107,7 +1108,7 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         nargs="+",
         default=None,
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "This option MUST be used with the --specification option. Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+        "This option MUST be used with the --spec option. Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
 
     # merlin info
