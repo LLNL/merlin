@@ -124,46 +124,6 @@ REQUESTED_STATUSES_FAIL_AND_CANCEL = {
     },
 }
 
-# This variable holds the result of applying a max_tasks limit of 3 to the VALID_WORKSPACE
-REQUESTED_STATUSES_WITH_MAX_TASKS = {
-    "just_parameters_GREET.hello.LEAVE.goodbye": {
-        "parameters": {"cmd": {"GREET": "hello"}, "restart": {"LEAVE": "goodbye"}},
-        "task_queue": "just_parameters_queue",
-        "worker_name": "other_worker",
-        "just_parameters/GREET.hello.LEAVE.goodbye": {
-            "status": "FINISHED",
-            "return_code": "MERLIN_SUCCESS",
-            "elapsed_time": "0d:00h:00m:00s",
-            "run_time": "0d:00h:00m:00s",
-            "restarts": 0,
-        },
-    },
-    "just_parameters_GREET.hola.LEAVE.adios": {
-        "parameters": {"cmd": {"GREET": "hola"}, "restart": {"LEAVE": "adios"}},
-        "task_queue": "just_parameters_queue",
-        "worker_name": "other_worker",
-        "just_parameters/GREET.hola.LEAVE.adios": {
-            "status": "FINISHED",
-            "return_code": "MERLIN_SUCCESS",
-            "elapsed_time": "0d:00h:00m:00s",
-            "run_time": "0d:00h:00m:00s",
-            "restarts": 0,
-        },
-    },
-    "just_samples": {
-        "parameters": {"cmd": None, "restart": None},
-        "task_queue": "just_samples_queue",
-        "worker_name": "sample_worker",
-        "just_samples/00": {
-            "status": "FINISHED",
-            "return_code": "MERLIN_SUCCESS",
-            "elapsed_time": "0d:00h:00m:00s",
-            "run_time": "0d:00h:00m:00s",
-            "restarts": 0,
-        },
-    },
-}
-
 FORMATTED_STATUSES_FAIL_AND_CANCEL = {
     "step_name": ["fail_step", "cancel_step"],
     "step_workspace": ["fail_step", "cancel_step"],

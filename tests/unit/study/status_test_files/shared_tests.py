@@ -166,6 +166,14 @@ def run_study_selector_prompt_invalid_input(status_obj: Union[Status, DetailedSt
 
 
 def run_json_dump_test(status_obj: Union[Status, DetailedStatus], expected_output: Dict):
+    """
+    Test the json dump functionality. This tests both the write and append
+    dump functionalities. The file needs to exist already for an append so it's
+    better to keep these tests together. This covers the dump method.
+
+    :param `status_obj`: A Status or DetailedStatus object that we're testing the dump functionality for
+    :param `expected_output`: The expected output from the dump that we'll compare against
+    """
     try:
         # Test write dump functionality for json
         status_obj.dump()
