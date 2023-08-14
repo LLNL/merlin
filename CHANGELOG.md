@@ -6,32 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 ### Fixed
-- A bug where the .orig, .partial, and .expanded file names were using the study name rather than the original file name
-- A bug where the openfoam_wf_singularity example was not being found
-- Some build warnings in the docs (unknown targets, duplicate targets, title underlines too short, etc.)
-- A bug where when the output path contained a variable that was overridden, the overridden variable was not changed in the output_path
 - Cyclical imports and config imports that could easily cause ci issues
 
 ### Added
 - A new command `merlin queue-info` that will print the status of your celery queues
   - By default this will only pull information from active queues
-  - There are options to look for specific queues (`--specific-queues`), queues defined in certain spec files (`--specification`; this is the same functionality as the past `merlin status` command), and queues attached to certain steps (`--steps`)
+  - There are options to look for specific queues (`--specific-queues`), queues defined in certain spec files (`--spec`; this is the same functionality as the `merlin status` command prior to this release), and queues attached to certain steps (`--steps`)
   - There is also an option to dump this info to an output file (`--dump`)
 - A new command `merlin detailed-status` that displays task-by-task status information about your study
   - This has options to filter by return code, task queues, task statuses, and workers
   - You can set a limit on the number of tasks to display
   - There are 3 options to modify the output display
-- A pdf download format for the docs
-- A new page titled `Monitoring Studies` in the docs to explain the new commands and the new status command
+- A new page titled `Monitoring Studies` in the docs to explain the new commands listed above
 - Two new command entries in the `Command Line` page of the docs for the `queue-info` and `detailed-status` commands
 - New file `merlin/study/status.py` dedicated to work relating to the status command
   - Contains the Status and DetailedStatus classes
-- New file `merlin/study/status_renderers.py` dedicated to formatting the output for the task-by-task display
+- New file `merlin/study/status_renderers.py` dedicated to formatting the output for the detailed-status command
 - New file `merlin/common/dumper.py` containing a Dumper object to help dump output to outfiles
 - Study name and parameter info now stored in the DAG and MerlinStep objects
 - Added functions to `merlin/display.py` that help display status information:
   - `display_task_by_task_status` handles the display for the `merlin detailed-status` command
-  - `display_summary` handles the display for the `merlin status` command
+  - `display_status_summary` handles the display for the `merlin status` command
   - `display_progress_bar` generates and displays a progress bar
 - Added new methods to the MerlinSpec class:
   - get_worker_step_map()
@@ -48,8 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ws_time_to_td() that converts a workspace timestring (YYYYMMDD-HHMMSS) to a datetime object
 - A new task `condense_status_files` to be called when sets of samples finish
 - Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
-- Tests for ensuring `$(MERLIN_SPEC_ORIGINAL_TEMPLATE)`, `$(MERLIN_SPEC_ARCHIVED_COPY)`, and `$(MERLIN_SPEC_EXECUTED_RUN)` are stored correctly
-- Tests for cli substitutions
 - Tests for the Status and DetailedStatus classes
   - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
 - Tests for the queue-info command/some other queue related functions in the celeryadapter module
@@ -65,11 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New functionality:
     - Shows step_by_step progress bar for tasks
     - Displays a summary of task statuses below the progress bar
-- Reformatted the status command section in the `Command Line` page of the docs
-- The ProvenanceYAMLFileHasRegex condition for integration tests now saves the study name and spec file name as attributes instead of just the study name
-  - This lead to minor changes in 3 tests ("local override feature demo", "local pgen feature demo", and "remote feature demo") with what we pass to this specific condition
-- Updated scikit-learn requirement for the openfoam_wf_singularity example
-- Uncommented Latex support in the docs configuration to get pdf builds working
+- Reformatted the status command section in the `Command Line` page of the 
 - Split the `add_chains_to_chord` function in `merlin/common/tasks.py` into two functions:
   - `get_1d_chain` which converts a 2D list of chains into a 1D list
   - `launch_chain` which launches the 1D chain
@@ -77,6 +66,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the `dump_status` function from `merlin/router.py` since dumping is now handled in the new Status object
 - Pulled the needs_merlin_expansion() method out of the Step class and made it a function instead
 - Removed `tabulate_info` function; replaced with tabulate from the tabulate library
+
+## [1.10.2]
+### Fixed
+- A bug where the .orig, .partial, and .expanded file names were using the study name rather than the original file name
+- A bug where the openfoam_wf_singularity example was not being found
+- Some build warnings in the docs (unknown targets, duplicate targets, title underlines too short, etc.)
+- A bug where when the output path contained a variable that was overridden, the overridden variable was not changed in the output_path
+- A bug where permission denied errors happened when checking for system scheduler
+
+### Added
+- Tests for ensuring `$(MERLIN_SPEC_ORIGINAL_TEMPLATE)`, `$(MERLIN_SPEC_ARCHIVED_COPY)`, and `$(MERLIN_SPEC_EXECUTED_RUN)` are stored correctly
+- A pdf download format for the docs
+- Tests for cli substitutions
+
+### Changed
+- The ProvenanceYAMLFileHasRegex condition for integration tests now saves the study name and spec file name as attributes instead of just the study name
+  - This lead to minor changes in 3 tests ("local override feature demo", "local pgen feature demo", and "remote feature demo") with what we pass to this specific condition
+- Updated scikit-learn requirement for the openfoam_wf_singularity example
+- Uncommented Latex support in the docs configuration to get pdf builds working
 
 ## [1.10.1]
 ### Fixed
