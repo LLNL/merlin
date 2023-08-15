@@ -31,7 +31,7 @@
 Tests for the celeryadapter module.
 
 If tests are failing/erroring make sure that you don't have a local redis server
-already up and running on 127.0.0.1.
+already up and running on 127.0.0.1 port PORT.
 """
 import csv
 import json
@@ -47,7 +47,7 @@ from redis import Redis
 from merlin.config import Config
 from merlin.spec.specification import MerlinSpec
 from merlin.study import celeryadapter
-from tests.unit.study.dummy_app import dummy_app
+from tests.unit.study.dummy_app import PORT, dummy_app
 from tests.unit.study.status_test_files.shared_tests import _format_csv_data
 from tests.unit.study.status_test_files.status_test_variables import PATH_TO_TEST_FILES, SPEC_PATH
 
@@ -68,12 +68,14 @@ class DummyCelerySetup(unittest.TestCase):
         Set up a redis server to connect to our dummy app one time that can be used for any test we need.
         """
         # Launch a local redis server that we'll connect our dummy celery app to
-        # NOTE if the redis server is having trouble launching, make sure there isn't already one running on 127.0.0.1:6379
-        cls.redis_server = subprocess.Popen(["redis-server"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # NOTE if the redis server is having trouble launching, make sure there isn't already one running on 127.0.0.1:PORT
+        cls.redis_server = subprocess.Popen(
+            ["redis-server", "--port", str(PORT)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
 
-        # Wait for the redis server to spin up and then connect to it (no arguments will set host to localhost and port to 6379 by default)
+        # Wait for the redis server to spin up and then connect to it
         sleep(1)
-        cls.redis_connection = Redis()
+        cls.redis_connection = Redis(host="localhost", port=PORT)
 
     @classmethod
     def tearDownClass(cls):
