@@ -4,6 +4,16 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+### Fixed
+
+### Added
+
+### Changed
+- Bump certifi from 2022.12.7 to 2023.7.22 in /docs
+- Bump pygments from 2.13.0 to 2.15.0 in /docs
+- Bump requests from 2.28.1 to 2.31.0 in /docs
+
 ## [1.10.2]
 ### Fixed
 - A bug where the .orig, .partial, and .expanded file names were using the study name rather than the original file name
