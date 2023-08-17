@@ -62,7 +62,7 @@ class TestActiveQueues:
         result = celeryadapter.build_set_of_queues(
             steps=["all"], spec=None, specific_queues=None, verbose=False, app=celery_app
         )
-        self.assertEqual(result, set(worker_queue_map.values()))
+        assert result == set(worker_queue_map.values())
 
     def test_query_celery_queues(self, launch_workers):
         """
@@ -79,7 +79,7 @@ class TestActiveQueues:
         This should return a list of active queues.
         """
         result = celeryadapter.get_running_queues("celery_app")
-        self.assertEqual(sorted(result), sorted(list(worker_queue_map.values())))
+        assert sorted(result) sorted(list(worker_queue_map.values()))
 
     def test_get_queues_active(self, launch_workers, worker_queue_map):
         """
@@ -91,14 +91,13 @@ class TestActiveQueues:
         queue_result, worker_result = celeryadapter.get_queues(celery_app)
 
         # Ensure we got output before looping
-        self.assertEqual(len(queue_result), 3)
-        self.assertEqual(len(worker_result), 3)
+        assert len(queue_result) == len(worker_result) == 3
 
         for worker, queue in worker_queue_map.items():
             # Check that the entry in the queue_result dict for this queue is correct
-            self.assertIn(queue, queue_result)
-            self.assertEqual(len(queue_result[queue]), 1)
-            self.assertIn(worker, queue_result[queue][0])
+            assert queue in queue_result
+            assert len(queue_result[queue]) == 1
+            assert worker in queue_result[queue][0]
 
             # Remove this entry from the queue_result dict
             del queue_result[queue]
@@ -113,8 +112,8 @@ class TestActiveQueues:
             assert worker_found
 
         # Ensure there was no extra output that we weren't expecting
-        self.assertEqual(queue_result, {})
-        self.assertEqual(worker_result, [])
+        assert queue_result == {}
+        assert worker_result == []
 
 
 class TestInactiveQueues:
@@ -123,7 +122,7 @@ class TestInactiveQueues:
     It will run tests where we don't need any active queues to interact with.
     """
 
-    def test_build_set_of_queues(self):
+    def test_build_set_of_queues(self, celery_app):
         """
         Test the build_set_of_queues function with no queues active.
         This should return an empty set.
@@ -131,9 +130,9 @@ class TestInactiveQueues:
         result = celeryadapter.build_set_of_queues(
             steps=["all"], spec=None, specific_queues=None, verbose=False, app=celery_app
         )
-        self.assertEqual(result, set())
+        assert result == set()
 
-    def test_build_set_of_queues_with_spec(self):
+    def test_build_set_of_queues_with_spec(self, celery_app):
         """
         Test the build_set_of_queues function with a spec provided as input.
         This should return a set of the queues defined in the spec file.
@@ -159,9 +158,9 @@ class TestInactiveQueues:
         for i, output in enumerate(expected_output):
             expected_output[i] = f"{merlin_tag}{output}"
 
-        self.assertEqual(result, set(expected_output))
+        assert result == set(expected_output)
 
-    def test_build_set_of_queues_with_specific_queues(self):
+    def test_build_set_of_queues_with_specific_queues(self, celery_app):
         """
         Test the build_set_of_queues function with specific queues provided as input.
         This should return a set of all the queues listed in the specific_queues argument.
@@ -174,9 +173,9 @@ class TestInactiveQueues:
             steps=["all"], spec=None, specific_queues=specific_queues, verbose=False, app=celery_app
         )
 
-        self.assertEqual(result, set(specific_queues))
+        assert result == set(specific_queues)
 
-    def test_build_set_of_queues_with_specific_queues_and_spec(self):
+    def test_build_set_of_queues_with_specific_queues_and_spec(self, celery_app):
         """
         Test the build_set_of_queues function with specific queues and a yaml spec provided as input.
         The specific queues provided here will have a mix of queues that exist in the spec and
@@ -198,9 +197,9 @@ class TestInactiveQueues:
         # Build the expected output list
         expected_output = [f"[merlin]_{queue}" for queue in valid_queues]
 
-        self.assertEqual(result, set(expected_output))
+        assert result == set(expected_output)
 
-    def test_build_set_of_queues_with_steps_and_spec(self):
+    def test_build_set_of_queues_with_steps_and_spec(self, celery_app):
         """
         Test the build_set_of_queues function with steps and a yaml spec provided as input.
         This should return the queues associated with the steps that we provide.
@@ -220,7 +219,7 @@ class TestInactiveQueues:
         for i, output in enumerate(expected_output):
             expected_output[i] = f"{merlin_tag}{output}"
 
-        self.assertEqual(result, set(expected_output))
+        assert result == set(expected_output)
 
     def test_query_celery_queues(self):
         """
@@ -252,7 +251,7 @@ class TestInactiveQueues:
 
         # Run the test
         result = celeryadapter.build_csv_queue_info(query_return, date)
-        self.assertEqual(result, expected_output)
+        assert result == expected_output
 
     def test_build_json_queue_info(self, worker_queue_map):
         """
@@ -274,7 +273,7 @@ class TestInactiveQueues:
 
         # Run the test
         result = celeryadapter.build_json_queue_info(query_return, date)
-        self.assertEqual(result, expected_output)
+        assert result == expected_output
 
     def test_dump_celery_queue_info_csv(self, worker_queue_map):
         """
@@ -303,18 +302,18 @@ class TestInactiveQueues:
             with open(outfile, "r") as csv_df:
                 csv_dump_data = csv.DictReader(csv_df)
                 # Make sure a timestamp field was created
-                self.assertIn("time", csv_dump_data.fieldnames)
+                assert "time" in csv_dump_data.fieldnames
 
                 # Format the csv data that we just read in
                 csv_dump_output = _format_csv_data(csv_dump_data)
 
                 # We did one dump so we should only have 1 timestamp; we don't care about the value
-                self.assertEqual(len(csv_dump_output["time"]), 1)
+                assert len(csv_dump_output["time"]) == 1
                 del csv_dump_output["time"]
 
                 # Make sure the rest of the csv file was created as expected
                 dump_diff = DeepDiff(csv_dump_output, expected_output)
-                self.assertEqual(dump_diff, {})
+                assert dump_diff == {}
         finally:
             try:
                 os.remove(outfile)
@@ -350,7 +349,7 @@ class TestInactiveQueues:
             # There should only be one entry in the json dump file so this will only 'loop' once
             for dump_entry in json_df_contents.values():
                 json_dump_diff = DeepDiff(dump_entry, expected_output)
-                self.assertEqual(json_dump_diff, {})
+                assert json_dump_diff == {}
         finally:
             try:
                 os.remove(outfile)
@@ -372,7 +371,7 @@ class TestInactiveQueues:
 
         # Ensure the queue tag was added to every queue
         for queue in queues_to_check:
-            self.assertIn(queue_tag, queue)
+            assert queue_tag in queue
 
     def test_get_running_queues(self):
         """
@@ -380,14 +379,14 @@ class TestInactiveQueues:
         This should return an empty list.
         """
         result = celeryadapter.get_running_queues("celery_app")
-        self.assertEqual(result, [])
+        assert result == []
 
-    def test_get_queues(self):
+    def test_get_queues(self, celery_app):
         """
         Test the get_queues function with no queues active.
         This should return a tuple where the first entry is an empty dict
         and the second entry is an empty list.
         """
         queue_result, worker_result = celeryadapter.get_queues(celery_app)
-        self.assertEqual(queue_result, {})
-        self.assertEqual(worker_result, [])
+        assert queue_result == {}
+        assert worker_result == []
