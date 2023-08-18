@@ -205,7 +205,6 @@ def query_celery_workers(spec_worker_names, queues, workers_regex):
     :param `workers_regex`: A list of regexs to filter by
     """
     from merlin.celery import app  # pylint: disable=C0415
-    from merlin.display import tabulate_info  # pylint: disable=C0415
 
     # Ping all workers and grab which ones are running
     workers = get_workers_from_app()
