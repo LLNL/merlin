@@ -4,9 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
-### Fixed
-
+## [1.10.3]
 ### Added
 - The *.conf regex for the recursive-include of the merlin server directory so that pip will add it to the wheel
 - A note to the docs for how to fix an issue where the `merlin server start` command hangs
