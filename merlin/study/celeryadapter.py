@@ -38,6 +38,8 @@ import subprocess
 import time
 from contextlib import suppress
 
+from tabulate import tabulate
+
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
@@ -256,7 +258,7 @@ def query_celery_workers(spec_worker_names, queues, workers_regex):
 
     # Display the output table
     LOG.info("Found these connected workers:")
-    tabulate_info(table, headers=["Workers", "Queues"])
+    print(tabulate(table, headers=["Workers", "Queues"]))
     print()
 
 

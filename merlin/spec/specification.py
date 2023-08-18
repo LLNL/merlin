@@ -40,12 +40,13 @@ import shlex
 from copy import deepcopy
 from datetime import timedelta
 from io import StringIO
+from typing import Dict
 
 import yaml
 from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
-from merlin.utils import repr_timedelta
+from merlin.utils import load_array_file, needs_merlin_expansion, repr_timedelta
 
 
 LOG = logging.getLogger(__name__)
@@ -623,3 +624,39 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         for worker in self.merlin["resources"]["workers"]:
             result.append(worker)
         return result
+
+    def get_tasks_per_step(self) -> Dict[str, int]:
+        """
+        Get the number of tasks needed to complete each step, formatted as a dictionary.
+        :returns: A dict where the keys are the step names and the values are the number of tasks required for that step
+        """
+        # Get the number of samples used
+        samples = []
+        if self.merlin["samples"] and self.merlin["samples"]["file"]:
+            samples = load_array_file(self.merlin["samples"]["file"])
+        num_samples = len(samples)
+
+        # Get the column labels, the parameter labels, the number of parameters, and the steps in the study
+        if num_samples > 0:
+            column_labels = self.merlin["samples"]["column_labels"]
+        parameter_labels = list(self.get_parameters().labels.keys())
+        num_params = self.get_parameters().length
+        study_steps = self.get_study_steps()
+
+        tasks_per_step = {}
+        for step in study_steps:
+            cmd = step.__dict__["run"]["cmd"]
+            restart_cmd = step.__dict__["run"]["restart"]
+
+            # Default number of tasks for a step is 1
+            tasks_per_step[step.name] = 1
+
+            # If this step uses parameters, we'll at least have a num_params number of tasks to complete
+            if needs_merlin_expansion(cmd, restart_cmd, parameter_labels, include_sample_keywords=False):
+                tasks_per_step[step.name] = num_params
+
+            # If merlin expansion is needed with column labels, this step uses samples
+            if num_samples > 0 and needs_merlin_expansion(cmd, restart_cmd, column_labels):
+                tasks_per_step[step.name] *= num_samples
+
+        return tasks_per_step
