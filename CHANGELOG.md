@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
 - Tests for the Status class
   - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
+- The *.conf regex for the recursive-include of the merlin server directory so that pip will add it to the wheel
+- A note to the docs for how to fix an issue where the `merlin server start` command hangs
 
 ### Changed
 - Reformatted the entire "merlin status" command
