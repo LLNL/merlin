@@ -1,5 +1,5 @@
 recursive-include merlin/data *.yaml *.py
-recursive-include merlin/server *.yaml *.py
+recursive-include merlin/server *.yaml *.py *.conf
 recursive-include merlin/examples *
 include requirements.txt
 include requirements/*
