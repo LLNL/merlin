@@ -38,7 +38,7 @@ Starts the container located in the local merlin server configuration.
     If this command seems to hang and never release control back to you, follow these steps:
 
     1. Kill the command with ``Ctrl+C``
-    2. Run ``export LC_ALL="C.UTF-8"``
+    2. Run either ``export LC_ALL="C.UTF-8"`` or ``export LC_ALL="C"``
     3. Re-run the ``merlin server start`` command
 
 Stopping an exisiting Merlin Server (``merlin server stop``)
