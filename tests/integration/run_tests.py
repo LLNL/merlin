@@ -39,10 +39,9 @@ import time
 from contextlib import suppress
 from subprocess import TimeoutExpired, run
 
-# Pylint complains that we didn't install this module but it's defined locally so ignore
-from test_definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
+from tabulate import tabulate
 
-from merlin.display import tabulate_info
+from tests.integration.test_definitions import OUTPUT_DIR, define_tests
 
 
 def get_definition_issues(test):
@@ -320,7 +319,7 @@ def display_tests(tests):
     test_table = [(i + 1, test_names[i]) for i in range(len(test_names))]
     test_table.insert(0, ("ID", "Test Name"))
     print()
-    tabulate_info(test_table, headers="firstrow")
+    print(tabulate(test_table, headers="firstrow"))
     print()
 
 
