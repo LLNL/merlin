@@ -38,15 +38,8 @@ import os
 import sys
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-__version__ = "1.10.1"
-=======
+
 __version__ = "1.10.3"
->>>>>>> faf71edb866548cf686c2cef0fee559e01db28ce
-=======
-__version__ = "1.10.2"
->>>>>>> 77d09c3fe40df699e2f37701c07f28ff40c84b65
 VERSION = __version__
 PATH_TO_PROJ = os.path.join(os.path.dirname(__file__), "")
 
