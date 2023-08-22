@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.1.
+# This file is part of Merlin, Version: 1.10.3.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -92,7 +92,7 @@ def check_for_scheduler(scheduler, scheduler_legend):
         if result and len(result) > 0 and scheduler_legend[scheduler]["expected check output"] in result[0]:
             return True
         return False
-    except FileNotFoundError:
+    except (FileNotFoundError, PermissionError):
         return False
 
 
