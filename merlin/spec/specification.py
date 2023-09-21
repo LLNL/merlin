@@ -369,6 +369,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         defaults.STUDY_STEP_RUN["shell"] = self.batch["shell"]
         for step in self.study:
             MerlinSpec.fill_missing_defaults(step["run"], defaults.STUDY_STEP_RUN)
+            # Insert VLAUNCHER specific variables if necessary
+            if "$(VLAUNCHER)" in step["run"]["cmd"]:
+                for vlaunch_var, vlaunch_val in defaults.VLAUNCHER_VARS.items():
+                    if vlaunch_var not in step["run"]["cmd"]:
+                        step["run"]["cmd"] = f"{vlaunch_var}={vlaunch_val}\n" + step["run"]["cmd"]
 
         # fill in missing merlin section defaults
         MerlinSpec.fill_missing_defaults(self.merlin, defaults.MERLIN["merlin"])

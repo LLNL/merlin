@@ -34,6 +34,7 @@ Merlin script adapter module
 
 import logging
 import os
+import re
 from typing import Dict, List, Set
 
 from maestrowf.interfaces.script import SubmissionRecord
@@ -46,6 +47,22 @@ from merlin.utils import convert_timestring
 
 
 LOG = logging.getLogger(__name__)
+
+def find_vlaunch_value(vlaunch_var: str, step_cmd: str) -> int:
+    """
+    Given a variable used for VLAUNCHER and the step cmd value, find
+    the variable and return it's value.
+
+    :param `vlaunch_var`: the name of the VLAUNCHER variable (without MERLIN_)
+    :param `step_cmd`: the string for the cmd of a step
+    :returns: the value associated with the `vlaunch_var`
+    """
+    matches = list(re.finditer(rf"MERLIN_{vlaunch_var}=(\d+)", step_cmd))
+
+    if matches:
+        return int(matches[-1].group(1))
+    
+    raise ValueError(f"VLAUNCHER used but could not find MERLIN_{vlaunch_var} in the step.")
 
 
 class MerlinLSFScriptAdapter(SlurmScriptAdapter):
@@ -156,6 +173,31 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
 
         return " ".join(args)
 
+    def write_script(self, ws_path, step):
+        """
+        This will overwrite the write_script in method from Maestro's base ScriptAdapter
+        class but will eventually call it. This is necessary for the VLAUNCHER to work.
+
+        :param `ws_path`: the path to the workspace where we'll write the scripts
+        :param `step`: the Maestro StudyStep object containing info for our step
+        :returns: a tuple containing:
+                  - a boolean representing whether this step is to be scheduled or not
+                    - Merlin can ignore this
+                  - a path to the script for the cmd
+                  - a path to the script for the restart cmd
+        """
+        if "$(VLAUNCHER)" in step.run["cmd"]:
+            step.run["cmd"] = step.run["cmd"].replace("$(VLAUNCHER)", "$(LAUNCHER)")
+
+            step.run["nodes"] = find_vlaunch_value("NODES", step.run["cmd"])
+            step.run["procs"] = find_vlaunch_value("PROCS", step.run["cmd"])
+            step.run["cores per task"] = find_vlaunch_value("CORES", step.run["cmd"])
+
+            if find_vlaunch_value("GPUS", step.run["cmd"]) > 0:
+                raise ValueError("Merlin does not yet have the ability to set GPUs per task with lsf. Coming soon.")
+
+        return super().write_script(ws_path, step)
+
 
 class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
     """
@@ -255,6 +297,31 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
                 args += [self._cmd_flags[key], f"{str(value)}"]
 
         return " ".join(args)
+    
+    def write_script(self, ws_path, step):
+        """
+        This will overwrite the write_script in method from Maestro's base ScriptAdapter
+        class but will eventually call it. This is necessary for the VLAUNCHER to work.
+
+        :param `ws_path`: the path to the workspace where we'll write the scripts
+        :param `step`: the Maestro StudyStep object containing info for our step
+        :returns: a tuple containing:
+                  - a boolean representing whether this step is to be scheduled or not
+                    - Merlin can ignore this
+                  - a path to the script for the cmd
+                  - a path to the script for the restart cmd
+        """
+        if "$(VLAUNCHER)" in step.run["cmd"]:
+            step.run["cmd"] = step.run["cmd"].replace("$(VLAUNCHER)", "$(LAUNCHER)")
+
+            step.run["nodes"] = find_vlaunch_value("NODES", step.run["cmd"])
+            step.run["procs"] = find_vlaunch_value("PROCS", step.run["cmd"])
+            step.run["cores per task"] = find_vlaunch_value("CORES", step.run["cmd"])
+
+            if find_vlaunch_value("GPUS", step.run["cmd"]) > 0:
+                raise ValueError("Merlin does not yet have the ability to set GPUs per task with slurm. Coming soon.")
+
+        return super().write_script(ws_path, step)
 
 
 class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
@@ -318,6 +385,29 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
         Convert a time format to flux standard designation.
         """
         return convert_timestring(val, format_method="FSD")
+
+    def write_script(self, ws_path, step):
+        """
+        This will overwrite the write_script in method from Maestro's base ScriptAdapter
+        class but will eventually call it. This is necessary for the VLAUNCHER to work.
+
+        :param `ws_path`: the path to the workspace where we'll write the scripts
+        :param `step`: the Maestro StudyStep object containing info for our step
+        :returns: a tuple containing:
+                  - a boolean representing whether this step is to be scheduled or not
+                    - Merlin can ignore this
+                  - a path to the script for the cmd
+                  - a path to the script for the restart cmd
+        """
+        if "$(VLAUNCHER)" in step.run["cmd"]:
+            step.run["cmd"] = step.run["cmd"].replace("$(VLAUNCHER)", "$(LAUNCHER)")
+
+            step.run["nodes"] = find_vlaunch_value("NODES", step.run["cmd"])
+            step.run["procs"] = find_vlaunch_value("PROCS", step.run["cmd"])
+            step.run["cores per task"] = find_vlaunch_value("CORES", step.run["cmd"])
+            step.run["gpus"] = find_vlaunch_value("GPUS", step.run["cmd"])
+
+        return super().write_script(ws_path, step)
 
 
 class MerlinScriptAdapter(LocalScriptAdapter):

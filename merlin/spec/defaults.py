@@ -52,3 +52,10 @@ SAMPLES = {
     "generate": {"cmd": "echo 'Insert sample-generating command here'"},
     "level_max_dirs": 25,
 }
+
+VLAUNCHER_VARS = {
+    "MERLIN_NODES": 1,
+    "MERLIN_PROCS": 1,
+    "MERLIN_CORES": 1,
+    "MERLIN_GPUS": 0,
+}
