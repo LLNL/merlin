@@ -127,7 +127,7 @@ class MerlinStudy:  # pylint: disable=R0902
 
     def _set_special_file_vars(self):
         """Setter for the orig, partial, and expanded file paths of a study."""
-        base_name = Path(self.filepath).stem
+        base_name = self.filepath.replace(".out", "").replace(".partial", "").replace(".expanded", "")
         self.special_vars["MERLIN_SPEC_ORIGINAL_TEMPLATE"] = os.path.join(
             self.info,
             base_name + ".orig.yaml",
