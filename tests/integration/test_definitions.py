@@ -443,6 +443,17 @@ def define_tests():  # pylint: disable=R0914,R0915
             ),
             "run type": "local",
         },
+        "dry launch flux vlauncher": {
+            "cmds": f"{run} {flux} --dry --local --no-errors --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+            "conditions": StepFileHasRegex(
+                "vlauncher_test",
+                "*/vlauncher_test.slurm.sh",
+                "flux_test",
+                OUTPUT_DIR,
+                "flux run -n 3 -N 6 -c 2",
+            ),
+            "run type": "local",
+        }
     }
     other_local_tests = {
         "local simple_chain": {
