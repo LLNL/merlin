@@ -66,6 +66,47 @@ def find_vlaunch_value(vlaunch_var: str, step_cmd: str) -> int:
     raise ValueError(f"VLAUNCHER used but could not find MERLIN_{vlaunch_var} in the step.")
 
 
+def find_vlaunch_var(vlaunch_var: str, step_cmd: str) -> str:
+    """
+    Given a variable used for VLAUNCHER and the step cmd value, find
+    the variable.
+
+    :param `vlaunch_var`: the name of the VLAUNCHER variable (without MERLIN_)
+    :param `step_cmd`: the string for the cmd of a step
+    :returns: the value associated with the `vlaunch_var`
+    """
+    matches = list(re.finditer(rf"MERLIN_{vlaunch_var}", step_cmd))
+
+    if matches:
+        return f"${{MERLIN_{vlaunch_var}}}"
+
+    raise ValueError(f"VLAUNCHER used but could not find MERLIN_{vlaunch_var} in the step.")
+
+
+def setup_vlaunch(step_run: str, batch_type: str, gpu_config: bool) -> None:
+    """
+    Check for the VLAUNCHER keyword int the step run string, find
+    the MERLIN variables and configure VLAUNCHER.
+
+    :param `step_run`: the step.run command string
+    :param `batch_type`: the batch type string
+    :param `gpu_config`: bool to determin if gpus should be configured
+    :returns: None
+    """
+    if "$(VLAUNCHER)" in step_run["cmd"]:
+        step_run["cmd"] = step_run["cmd"].replace("$(VLAUNCHER)", "$(LAUNCHER)")
+
+        step_run["nodes"] = find_vlaunch_var("NODES", step_run["cmd"])
+        step_run["procs"] = find_vlaunch_var("PROCS", step_run["cmd"])
+        step_run["cores per task"] = find_vlaunch_var("CORES", step_run["cmd"])
+
+        if find_vlaunch_var("GPUS", step_run["cmd"]):
+            if gpu_config:
+                step_run["gpus"] = find_vlaunch_var("GPUS", step_run["cmd"])
+            else:
+                LOG.warning(f"Merlin does not yet have the ability to set GPUs per task with {batch_type}. Coming soon.")
+
+
 class MerlinLSFScriptAdapter(SlurmScriptAdapter):
     """
     A SchedulerScriptAdapter class for slurm blocking parallel launches,
@@ -187,15 +228,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
                   - a path to the script for the cmd
                   - a path to the script for the restart cmd
         """
-        if "$(VLAUNCHER)" in step.run["cmd"]:
-            step.run["cmd"] = step.run["cmd"].replace("$(VLAUNCHER)", "$(LAUNCHER)")
-
-            step.run["nodes"] = find_vlaunch_value("NODES", step.run["cmd"])
-            step.run["procs"] = find_vlaunch_value("PROCS", step.run["cmd"])
-            step.run["cores per task"] = find_vlaunch_value("CORES", step.run["cmd"])
-
-            if find_vlaunch_value("GPUS", step.run["cmd"]) > 0:
-                raise ValueError("Merlin does not yet have the ability to set GPUs per task with lsf. Coming soon.")
+        setup_vlaunch(step.run, "lsf" , False)
 
         return super().write_script(ws_path, step)
 
@@ -312,15 +345,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
                   - a path to the script for the cmd
                   - a path to the script for the restart cmd
         """
-        if "$(VLAUNCHER)" in step.run["cmd"]:
-            step.run["cmd"] = step.run["cmd"].replace("$(VLAUNCHER)", "$(LAUNCHER)")
-
-            step.run["nodes"] = find_vlaunch_value("NODES", step.run["cmd"])
-            step.run["procs"] = find_vlaunch_value("PROCS", step.run["cmd"])
-            step.run["cores per task"] = find_vlaunch_value("CORES", step.run["cmd"])
-
-            if find_vlaunch_value("GPUS", step.run["cmd"]) > 0:
-                raise ValueError("Merlin does not yet have the ability to set GPUs per task with slurm. Coming soon.")
+        setup_vlaunch(step.run, "slurm" , False)
 
         return super().write_script(ws_path, step)
 
@@ -400,13 +425,7 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
                   - a path to the script for the cmd
                   - a path to the script for the restart cmd
         """
-        if "$(VLAUNCHER)" in step.run["cmd"]:
-            step.run["cmd"] = step.run["cmd"].replace("$(VLAUNCHER)", "$(LAUNCHER)")
-
-            step.run["nodes"] = find_vlaunch_value("NODES", step.run["cmd"])
-            step.run["procs"] = find_vlaunch_value("PROCS", step.run["cmd"])
-            step.run["cores per task"] = find_vlaunch_value("CORES", step.run["cmd"])
-            step.run["gpus"] = find_vlaunch_value("GPUS", step.run["cmd"])
+        setup_vlaunch(step.run, "flux" , True)
 
         return super().write_script(ws_path, step)
 
