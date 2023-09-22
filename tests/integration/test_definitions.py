@@ -453,7 +453,7 @@ def define_tests():  # pylint: disable=R0914,R0915
                 "flux run -n 3 -N 6 -c 2",
             ),
             "run type": "local",
-        }
+        },
     }
     other_local_tests = {
         "local simple_chain": {

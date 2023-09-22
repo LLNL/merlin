@@ -48,6 +48,7 @@ from merlin.utils import convert_timestring
 
 LOG = logging.getLogger(__name__)
 
+
 def find_vlaunch_value(vlaunch_var: str, step_cmd: str) -> int:
     """
     Given a variable used for VLAUNCHER and the step cmd value, find
@@ -61,7 +62,7 @@ def find_vlaunch_value(vlaunch_var: str, step_cmd: str) -> int:
 
     if matches:
         return int(matches[-1].group(1))
-    
+
     raise ValueError(f"VLAUNCHER used but could not find MERLIN_{vlaunch_var} in the step.")
 
 
@@ -297,7 +298,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
                 args += [self._cmd_flags[key], f"{str(value)}"]
 
         return " ".join(args)
-    
+
     def write_script(self, ws_path, step):
         """
         This will overwrite the write_script in method from Maestro's base ScriptAdapter
