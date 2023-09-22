@@ -5,8 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
+### Added
+- New reserved variables:
+  - `VLAUNCHER`: The same functionality as the `LAUNCHER` variable, but will substitute shell variables `MERLIN_NODES`, `MERLIN_PROCS`, `MERLIN_CORES`, and `MERLIN_GPUS` for nodes, procs, cores per task, and gpus
+
 ### Changed
 - Hardcoded Sphinx v5.3.0 requirement is now removed so we can use latest Sphinx
+
+### Fixed
+- A bug where the filenames in iterative workflows kept appending `.out`, `.partial`, or `.expanded` to the filenames stored in the `merlin_info/` subdirectory
 
 ## [1.10.3]
 ### Added
