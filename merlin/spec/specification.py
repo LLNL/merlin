@@ -371,9 +371,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             MerlinSpec.fill_missing_defaults(step["run"], defaults.STUDY_STEP_RUN)
             # Insert VLAUNCHER specific variables if necessary
             if "$(VLAUNCHER)" in step["run"]["cmd"]:
-                SHSET=""
+                SHSET = ""
                 if "csh" in step["run"]["shell"]:
-                    SHSET="set "
+                    SHSET = "set "
                 for vlaunch_var, vlaunch_val in defaults.VLAUNCHER_VARS.items():
                     if vlaunch_var not in step["run"]["cmd"]:
                         step["run"]["cmd"] = f"{SHSET}{vlaunch_var}={vlaunch_val}\n" + step["run"]["cmd"]

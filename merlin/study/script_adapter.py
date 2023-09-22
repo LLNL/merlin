@@ -228,7 +228,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
                   - a path to the script for the cmd
                   - a path to the script for the restart cmd
         """
-        setup_vlaunch(step.run, "lsf" , False)
+        setup_vlaunch(step.run, "lsf", False)
 
         return super().write_script(ws_path, step)
 
@@ -345,7 +345,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
                   - a path to the script for the cmd
                   - a path to the script for the restart cmd
         """
-        setup_vlaunch(step.run, "slurm" , False)
+        setup_vlaunch(step.run, "slurm", False)
 
         return super().write_script(ws_path, step)
 
@@ -425,7 +425,7 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
                   - a path to the script for the cmd
                   - a path to the script for the restart cmd
         """
-        setup_vlaunch(step.run, "flux" , True)
+        setup_vlaunch(step.run, "flux", True)
 
         return super().write_script(ws_path, step)
 
