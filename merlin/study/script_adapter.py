@@ -34,7 +34,6 @@ Merlin script adapter module
 
 import logging
 import os
-import re
 from typing import Dict, List, Set
 
 from maestrowf.interfaces.script import SubmissionRecord
