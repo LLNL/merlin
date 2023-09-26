@@ -443,7 +443,9 @@ def get_1d_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:  # n
     return chain_steps
 
 
-def gather_statuses(sample_index: "SampleIndex", workspace: str, condensed_workspace: str, files_to_remove: List[str]) -> Dict:  # noqa: F821
+def gather_statuses(
+    sample_index: "SampleIndex", workspace: str, condensed_workspace: str, files_to_remove: List[str]
+) -> Dict:  # noqa: F821
     """
     Traverse the sample index and gather all of the statuses into one.
 
@@ -545,7 +547,7 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pyl
                 # Write the condensed statuses to the condensed status file
                 with open(condensed_status_filepath, "w") as condensed_status_file:
                     json.dump(condensed_statuses, condensed_status_file)
-                
+
                 # Remove the status files we just condensed
                 for file_to_remove in files_to_remove:
                     LOG.debug(f"Removing '{file_to_remove}'.")

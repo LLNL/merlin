@@ -218,7 +218,7 @@ class Status:
             raise ValueError(f"Multiple expanded spec options found in the {study_to_check}/merlin_info/ directory")
         if len(expanded_spec_options) < 1:
             raise ValueError(f"No expanded spec options found in the {study_to_check}/merlin_info/ directory")
-        
+
         LOG.debug(f"Creating a spec object from '{expanded_spec_options[0]}'...")
         actual_spec = get_spec_with_expansion(expanded_spec_options[0])
         LOG.debug("Spec object created.")
@@ -237,7 +237,7 @@ class Status:
             raise ValueError(f"Multiple expanded spec options found in the {self.workspace}/merlin_info/ directory")
         if len(expanded_spec_options) < 1:
             raise ValueError(f"No expanded spec options found in the {self.workspace}/merlin_info/ directory")
-        
+
         # Create a MerlinSpec object from the expanded spec we grabbed
         LOG.debug(f"Creating a spec object from '{expanded_spec_options[0]}'...")
         spec = get_spec_with_expansion(expanded_spec_options[0])
@@ -329,7 +329,9 @@ class Status:
 
                 # Merge the statuses we read with the dict tracking all statuses for this step
                 dict_deep_merge(step_statuses, statuses_read)
-        LOG.info(f"Done traversing '{step_workspace}'. Read in {num_statuses_read} {'statuses' if num_statuses_read != 1 else 'status'}.")
+        LOG.info(
+            f"Done traversing '{step_workspace}'. Read in {num_statuses_read} {'statuses' if num_statuses_read != 1 else 'status'}."
+        )
 
         return step_statuses
 
