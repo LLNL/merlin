@@ -443,15 +443,17 @@ def get_1d_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:  # n
     return chain_steps
 
 
-def gather_statuses(sample_index: "SampleIndex", workspace: str, condensed_workspace: str) -> Dict:  # noqa: F821
+def gather_statuses(sample_index: "SampleIndex", workspace: str, condensed_workspace: str, files_to_remove: List[str]) -> Dict:  # noqa: F821
     """
     Traverse the sample index and gather all of the statuses into one.
 
     :param `sample_index`: A SampleIndex object to track this specific sample hierarchy
     :param `workspace`: The full workspace path to the step we're condensing for
     :param `condensed_workspace`: A shortened version of `workspace` that's saved in the status files
+    :param `files_to_remove`: An empty list that we'll add filepaths to that need removed
     :returns: A dict of condensed statuses
     """
+    LOG.info(f"Gathering statuses to condense for '{condensed_workspace}'")
     condensed_statuses = {}
     for path, _ in sample_index.traverse(conditional=lambda c: c.is_parent_of_leaf):
         # Read in the status data
@@ -465,13 +467,13 @@ def gather_statuses(sample_index: "SampleIndex", workspace: str, condensed_works
                     status = json.load(status_file)
 
             # This for loop is just to get the step name that we don't have; it's really not even looping
-            for step_name, _ in status.items():
+            for step_name in status:
                 try:
                     # Make sure the status for this sample workspace is in a finished state (not initialized or running)
                     if status[step_name][f"{condensed_workspace}/{path}"]["status"] not in ("INITIALIZED", "RUNNING"):
                         # Add the status data to the statuses we'll write to the condensed file and remove this status file
                         dict_deep_merge(condensed_statuses, status)
-                        os.remove(status_filepath)
+                        files_to_remove.append(status_filepath)
                 except KeyError:
                     LOG.warning(f"Key error when reading from {sample_workspace}")
         except Timeout:
@@ -519,7 +521,8 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pyl
         return None
 
     # Read in all the statuses from this sample index
-    condensed_statuses = gather_statuses(sample_index, workspace, condensed_workspace)
+    files_to_remove = []
+    condensed_statuses = gather_statuses(sample_index, workspace, condensed_workspace, files_to_remove)
 
     # If there are statuses to write to the condensed status file then write them
     if condensed_statuses:
@@ -530,6 +533,7 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pyl
             # Lock the file to avoid race conditions
             with lock.acquire(timeout=20):
                 # If the condensed file already exists, grab the statuses from it
+                LOG.info(f"Condensing statuses for '{condensed_workspace}' to '{condensed_status_filepath}'")
                 if os.path.exists(condensed_status_filepath):
                     with open(condensed_status_filepath, "r") as condensed_status_file:
                         existing_condensed_statuses = json.load(condensed_status_file)
@@ -541,6 +545,11 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pyl
                 # Write the condensed statuses to the condensed status file
                 with open(condensed_status_filepath, "w") as condensed_status_file:
                     json.dump(condensed_statuses, condensed_status_file)
+                
+                # Remove the status files we just condensed
+                for file_to_remove in files_to_remove:
+                    LOG.debug(f"Removing '{file_to_remove}'.")
+                    os.remove(file_to_remove)
         except Timeout:
             # Raising this celery timeout instead will trigger a restart for this task
             raise TimeoutError  # pylint: disable=W0707

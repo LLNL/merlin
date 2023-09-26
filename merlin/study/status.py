@@ -183,21 +183,27 @@ class Status:
         else:
             output_path = f"{os.path.dirname(filepath)}/{self.args.spec_provided.output_path}"
 
+        LOG.debug(f"Verifying output path: {output_path}...")
         study_output_dir = verify_dirpath(output_path)
+        LOG.debug(f"Output path verified. Expanded version: {study_output_dir}")
 
         # Build a list of potential study output directories
         study_output_subdirs = next(os.walk(study_output_dir))[1]
         timestamp_regex = r"\d{8}-\d{6}"
         potential_studies = []
         num_studies = 0
+        LOG.debug(f"All subdirs in output path: {study_output_subdirs}")
         for subdir in study_output_subdirs:
             match = re.search(rf"{self.args.spec_provided.name}_{timestamp_regex}", subdir)
             if match:
                 potential_studies.append((num_studies + 1, subdir))
                 num_studies += 1
+        LOG.debug(f"Potential studies: {potential_studies}")
 
         # Obtain the correct study to view the status of based on the list of potential studies we just built
+        LOG.debug("Obtaining a study to view the status of...")
         study_to_check = self._obtain_study(study_output_dir, num_studies, potential_studies)
+        LOG.debug(f"Selected '{study_to_check}' for viewing.")
 
         # Verify the directory that the user selected is a merlin study output directory
         if "merlin_info" not in next(os.walk(study_to_check))[1]:
@@ -212,7 +218,10 @@ class Status:
             raise ValueError(f"Multiple expanded spec options found in the {study_to_check}/merlin_info/ directory")
         if len(expanded_spec_options) < 1:
             raise ValueError(f"No expanded spec options found in the {study_to_check}/merlin_info/ directory")
+        
+        LOG.debug(f"Creating a spec object from '{expanded_spec_options[0]}'...")
         actual_spec = get_spec_with_expansion(expanded_spec_options[0])
+        LOG.debug("Spec object created.")
 
         return study_to_check, actual_spec
 
@@ -223,20 +232,16 @@ class Status:
         :returns: A MerlinSpec object loaded from the workspace provided by the user
         """
         # Grab the spec file from the directory provided
-        info_dir = verify_dirpath(f"{self.workspace}/merlin_info")
-        spec_file = ""
-        for _, _, files in os.walk(info_dir):
-            for f in files:  # pylint: disable=C0103
-                if f.endswith(".expanded.yaml"):
-                    spec_file = f"{info_dir}/{f}"
-                    break
-            break
-
-        # Make sure we got a spec file and load it in
-        if not spec_file:
-            LOG.error(f"Spec file not found in {info_dir}. Cannot display status.")
-            return None
-        spec = get_spec_with_expansion(spec_file)
+        expanded_spec_options = glob(f"{self.workspace}/merlin_info/*.expanded.yaml")
+        if len(expanded_spec_options) > 1:
+            raise ValueError(f"Multiple expanded spec options found in the {self.workspace}/merlin_info/ directory")
+        if len(expanded_spec_options) < 1:
+            raise ValueError(f"No expanded spec options found in the {self.workspace}/merlin_info/ directory")
+        
+        # Create a MerlinSpec object from the expanded spec we grabbed
+        LOG.debug(f"Creating a spec object from '{expanded_spec_options[0]}'...")
+        spec = get_spec_with_expansion(expanded_spec_options[0])
+        LOG.debug("Spec object created.")
 
         return spec
 
@@ -252,11 +257,16 @@ class Status:
         started_steps = next(os.walk(self.workspace))[1]
         started_steps.remove("merlin_info")
 
+        LOG.debug(f"All started steps: {started_steps}")
+
         for sstep in started_steps:
             if sstep in steps_to_check:
                 step_tracker["started_steps"].append(sstep)
                 steps_to_check.remove(sstep)
         step_tracker["unstarted_steps"] = steps_to_check
+
+        LOG.debug(f"Started steps after (potentially) filtering: {step_tracker['started_steps']}")
+        LOG.debug(f"Unstarted steps: {step_tracker['unstarted_steps']}")
 
         return step_tracker
 
@@ -274,6 +284,8 @@ class Status:
 
         # Filter the steps to display status for by started/unstarted
         step_tracker = self._create_step_tracker(existing_steps)
+
+        LOG.debug("Step tracker created.")
 
         return step_tracker
 
@@ -299,36 +311,25 @@ class Status:
         """
         step_statuses = {}
         num_statuses_read = 0
+        self.real_step_name_map[started_step_name] = set()
 
         # Traverse the step workspace and look for MERLIN_STATUS files
+        LOG.info(f"Traversing '{step_workspace}' to find MERLIN_STATUS.json files...")
         for root, _, files in os.walk(step_workspace):
-            if "MERLIN_STATUS.json" in files:
-                status_filepath = f"{root}/MERLIN_STATUS.json"
+            # Search for a status file
+            status_filepath = os.path.join(root, "MERLIN_STATUS.json")
+            matching_files = glob(status_filepath)
+            if matching_files:
+                LOG.debug(f"Found status file at '{status_filepath}'")
                 lock = FileLock(f"{root}/status.lock")  # pylint: disable=E0110
                 statuses_read = read_status(status_filepath, lock)
 
-                # Count the number of statuses we just read
-                for step_name, status_info in statuses_read.items():
-                    if started_step_name not in self.real_step_name_map:
-                        self.real_step_name_map[started_step_name] = [step_name]
-                    else:
-                        if step_name not in self.real_step_name_map[started_step_name]:
-                            self.real_step_name_map[started_step_name].append(step_name)
-                    num_statuses_read += len(status_info.keys() - NON_WORKSPACE_KEYS)
+                # Update map of real step names
+                self.real_step_name_map[started_step_name].update(list(statuses_read.keys()))
 
                 # Merge the statuses we read with the dict tracking all statuses for this step
                 dict_deep_merge(step_statuses, statuses_read)
-
-            # If we've read all the statuses then we're done
-            if num_statuses_read == self.tasks_per_step[started_step_name]:
-                break
-            # This shouldn't get hit
-            if num_statuses_read > self.tasks_per_step[started_step_name]:
-                LOG.error(
-                    f"Read {num_statuses_read} statuses when there should "
-                    f"only be {self.tasks_per_step[started_step_name]} tasks in total."
-                )
-                break
+        LOG.info(f"Done traversing '{step_workspace}'. Read in {num_statuses_read} {'statuses' if num_statuses_read != 1 else 'status'}.")
 
         return step_statuses
 
@@ -345,7 +346,7 @@ class Status:
             dict_deep_merge(self.requested_statuses, step_statuses)
 
         # Count how many statuses in total that we just read in
-        LOG.info(f"Read in {self.num_requested_statuses} statuses.")
+        LOG.info(f"Read in {self.num_requested_statuses} statuses total.")
 
     def display(self, test_mode=False) -> Dict:
         """
@@ -375,7 +376,9 @@ class Status:
         :returns: A dict equivalent of formatted statuses with a timestamp entry at the start of the dict.
         """
         # Reformat the statuses to a new dict where the keys are the column labels and rows are the values
+        LOG.debug("Formatting statuses for csv dump...")
         statuses_to_write = self.format_status_for_display()
+        LOG.debug("Statuses formatted.")
 
         # Add date entries as the first column then update this dict with the statuses we just reformatted
         statuses_with_timestamp = {"time_of_status": [date] * len(statuses_to_write["step_name"])}

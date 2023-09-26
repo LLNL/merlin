@@ -290,6 +290,7 @@ def display_status_summary(  # pylint: disable=R0912
         terminal_size = shutil.get_terminal_size()
         progress_bar_width = terminal_size.columns // 4
 
+    LOG.debug(f"step_tracker in display: {status_obj.step_tracker}")
     for sstep in status_obj.step_tracker["started_steps"]:
         # This dict will keep track of the number of tasks at each status
         state_info = {
@@ -305,6 +306,7 @@ def display_status_summary(  # pylint: disable=R0912
 
         num_completed_tasks = 0
         # Loop through each entry for the step (if there's no parameters there will just be one entry)
+        LOG.debug(f"real_step_name_map[{sstep}]: {status_obj.real_step_name_map[sstep]}")
         for real_step_name in status_obj.real_step_name_map[sstep]:
             # Grab the statuses for this step
             overall_step_info = status_obj.requested_statuses[real_step_name]

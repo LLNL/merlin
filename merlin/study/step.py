@@ -101,6 +101,7 @@ class MerlinStepRecord(_StepRecord):
             end_of_path = self.workspace.value.rsplit(step_name, 1)[1]
             condensed_workspace = f"{step_name}{end_of_path}"
 
+        LOG.debug(f"Condense workspace '{condensed_workspace}'")
         return condensed_workspace
 
     def _execute(self, adapter: "ScriptAdapter", script: str) -> Tuple["SubmissionRecord", int]:  # noqa: F821
@@ -114,6 +115,8 @@ class MerlinStepRecord(_StepRecord):
         :returns: A tuple of a return code and the jobid from the execution of `script`
         """
         self.mark_running()
+
+        LOG.info(f"Submitting script for {self.name}")
         srecord = adapter.submit(self.step, script, self.workspace.value)
 
         retcode = srecord.submission_code
@@ -122,6 +125,7 @@ class MerlinStepRecord(_StepRecord):
 
     def mark_running(self):
         """Mark the start time of the record and update the status file."""
+        LOG.debug(f"Marking running for {self.name}")
         super().mark_running()
         self._update_status_file()
 
@@ -133,6 +137,8 @@ class MerlinStepRecord(_StepRecord):
         :param `state`: A merlin ReturnCode object representing the end state of a task
         :param `max_retries`: A bool representing whether we hit the max number of retries or not
         """
+        LOG.debug(f"Marking end for {self.name}")
+
         # Dictionary to keep track of associated variables for each return code
         state_mapper = {
             ReturnCode.OK: {
@@ -186,12 +192,14 @@ class MerlinStepRecord(_StepRecord):
 
     def mark_restart(self):
         """Increment the number of restarts we've had for this step and update the status file"""
+        LOG.debug(f"Marking restart for {self.name}")
         if self.restart_limit == 0 or self._num_restarts < self.restart_limit:
             self._num_restarts += 1
             self._update_status_file()
 
     def setup_workspace(self):
         """Initialize the record's workspace and status file."""
+        LOG.debug(f"Setting up workspace for {self.name}")
         super().setup_workspace()
         self._update_status_file()
 
@@ -220,7 +228,13 @@ class MerlinStepRecord(_StepRecord):
             State.UNKNOWN: "UNKNOWN",
         }
 
+        LOG.debug(f"Marking status for {self.name} as {state_translator[self.status]}.")
+        if result:
+            LOG.debug(f"Result for {self.name} is {result}")
+
         status_filepath = f"{self.workspace.value}/MERLIN_STATUS.json"
+
+        LOG.debug(f"Status filepath for {self.name}: '{status_filepath}")
 
         # If the status file already exists then we can just add to it
         if os.path.exists(status_filepath):
@@ -248,8 +262,10 @@ class MerlinStepRecord(_StepRecord):
             "restarts": self.restarts,
         }
 
+        LOG.info(f"Writing status for {self.name} to '{status_filepath}...")
         with open(status_filepath, "w") as status_file:
             json.dump(status_info, status_file)
+        LOG.info(f"Status for {self.name} successfully written.")
 
 
 class Step:
