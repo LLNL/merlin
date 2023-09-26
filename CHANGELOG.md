@@ -5,9 +5,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
-### Fixed
-- Cyclical imports and config imports that could easily cause ci issues
-
 ### Added
 - New file `merlin/study/status.py` dedicated to work relating to the status command
   - Contains the Status and DetailedStatus classes
@@ -29,11 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
 - Tests for the Status class
   - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
-- The *.conf regex for the recursive-include of the merlin server directory so that pip will add it to the wheel
-- A note to the docs for how to fix an issue where the `merlin server start` command hangs
+
+### Fixed
+- Cyclical imports and config imports that could easily cause ci issues
 
 ### Changed
-- Reformatted the entire "merlin status" command
+- Hardcoded Sphinx v5.3.0 requirement is now removed so we can use latest Sphinx
+- Reformatted the entire `merlin status` command
   - Now accepts both spec files and workspace directories as arguments
     - e.g. "merlin status hello.yaml" and "merlin status hello_20230228-111920/" both work
   - Removed the --steps flag
@@ -48,6 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pulled the needs_merlin_expansion() method out of the Step class and made it a function instead
 - Removed `tabulate_info` function; replaced with tabulate from the tabulate library
 - Moved `verify_filepath` and `verify_dirpath` from `merlin/main.py` to `merlin/utils.py`
+
+## [1.10.3]
+### Added
+- The *.conf regex for the recursive-include of the merlin server directory so that pip will add it to the wheel
+- A note to the docs for how to fix an issue where the `merlin server start` command hangs
+
+### Changed
 - Bump certifi from 2022.12.7 to 2023.7.22 in /docs
 - Bump pygments from 2.13.0 to 2.15.0 in /docs
 - Bump requests from 2.28.1 to 2.31.0 in /docs
