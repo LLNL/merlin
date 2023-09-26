@@ -74,6 +74,6 @@ merlin:
                 steps: [just_parameters, fail_step, cancel_step, unstarted_step]
     samples:
         generate:
-            cmd: python3 make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+            cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
         file: $(MERLIN_INFO)/samples.csv
         column_labels: [WORLD, NUM]
