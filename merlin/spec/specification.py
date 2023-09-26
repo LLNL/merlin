@@ -45,7 +45,7 @@ import yaml
 from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
-from merlin.utils import repr_timedelta
+from merlin.utils import find_vlaunch_var, repr_timedelta
 
 
 LOG = logging.getLogger(__name__)
@@ -374,8 +374,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 SHSET = ""
                 if "csh" in step["run"]["shell"]:
                     SHSET = "set "
+                # We need to set default values for VLAUNCHER variables if they're not defined by the user
                 for vlaunch_var, vlaunch_val in defaults.VLAUNCHER_VARS.items():
-                    if vlaunch_var not in step["run"]["cmd"]:
+                    if not find_vlaunch_var(vlaunch_var.replace("MERLIN_", ""), step["run"]["cmd"], accept_no_matches=True):
+                        # Look for predefined nodes/procs/cores/gpus values in the step and default to those
+                        vlaunch_val = step["run"][vlaunch_val[0]] if vlaunch_val[0] in step["run"] else vlaunch_val[1]
                         step["run"]["cmd"] = f"{SHSET}{vlaunch_var}={vlaunch_val}\n" + step["run"]["cmd"]
 
         # fill in missing merlin section defaults

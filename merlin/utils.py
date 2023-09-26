@@ -497,6 +497,26 @@ def contains_shell_ref(string):
     return False
 
 
+def find_vlaunch_var(vlaunch_var: str, step_cmd: str, accept_no_matches=False) -> str:
+    """
+    Given a variable used for VLAUNCHER and the step cmd value, find
+    the variable.
+
+    :param `vlaunch_var`: The name of the VLAUNCHER variable (without MERLIN_)
+    :param `step_cmd`: The string for the cmd of a step
+    :param `accept_no_matches`: If True, return None if we couldn't find the variable. Otherwise, raise an error.
+    :returns: the `vlaunch_var` variable or None
+    """
+    matches = list(re.findall(rf"^(?!#).*MERLIN_{vlaunch_var}=\d+", step_cmd, re.MULTILINE))
+
+    if matches:
+        return f"${{MERLIN_{vlaunch_var}}}"
+
+    if accept_no_matches:
+        return None
+    raise ValueError(f"VLAUNCHER used but could not find MERLIN_{vlaunch_var} in the step.")
+
+
 # Time utilities
 def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
     """Convert a timestring to a timedelta object.

@@ -43,44 +43,10 @@ from maestrowf.interfaces.script.slurmscriptadapter import SlurmScriptAdapter
 from maestrowf.utils import start_process
 
 from merlin.common.abstracts.enums import ReturnCode
-from merlin.utils import convert_timestring
+from merlin.utils import convert_timestring, find_vlaunch_var
 
 
 LOG = logging.getLogger(__name__)
-
-
-def find_vlaunch_value(vlaunch_var: str, step_cmd: str) -> int:
-    """
-    Given a variable used for VLAUNCHER and the step cmd value, find
-    the variable and return it's value.
-
-    :param `vlaunch_var`: the name of the VLAUNCHER variable (without MERLIN_)
-    :param `step_cmd`: the string for the cmd of a step
-    :returns: the value associated with the `vlaunch_var`
-    """
-    matches = list(re.finditer(rf"MERLIN_{vlaunch_var}=(\d+)", step_cmd))
-
-    if matches:
-        return int(matches[-1].group(1))
-
-    raise ValueError(f"VLAUNCHER used but could not find MERLIN_{vlaunch_var} in the step.")
-
-
-def find_vlaunch_var(vlaunch_var: str, step_cmd: str) -> str:
-    """
-    Given a variable used for VLAUNCHER and the step cmd value, find
-    the variable.
-
-    :param `vlaunch_var`: the name of the VLAUNCHER variable (without MERLIN_)
-    :param `step_cmd`: the string for the cmd of a step
-    :returns: the value associated with the `vlaunch_var`
-    """
-    matches = list(re.finditer(rf"MERLIN_{vlaunch_var}", step_cmd))
-
-    if matches:
-        return f"${{MERLIN_{vlaunch_var}}}"
-
-    raise ValueError(f"VLAUNCHER used but could not find MERLIN_{vlaunch_var} in the step.")
 
 
 def setup_vlaunch(step_run: str, batch_type: str, gpu_config: bool) -> None:
