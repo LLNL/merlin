@@ -56,11 +56,11 @@ TASKS_PER_STEP = {
     "unstarted_step": 1,
 }
 REAL_STEP_NAME_MAP = {
-    "just_samples": ["just_samples"],
-    "just_parameters": ["just_parameters_GREET.hello.LEAVE.goodbye", "just_parameters_GREET.hola.LEAVE.adios"],
-    "params_and_samples": ["params_and_samples_GREET.hello", "params_and_samples_GREET.hola"],
-    "fail_step": ["fail_step"],
-    "cancel_step": ["cancel_step"],
+    "just_samples": set(["just_samples"]),
+    "just_parameters": set(["just_parameters_GREET.hello.LEAVE.goodbye", "just_parameters_GREET.hola.LEAVE.adios"]),
+    "params_and_samples": set(["params_and_samples_GREET.hello", "params_and_samples_GREET.hola"]),
+    "fail_step": set(["fail_step"]),
+    "cancel_step": set(["cancel_step"]),
 }
 NUM_ALL_REQUESTED_STATUSES = sum(TASKS_PER_STEP.values()) - TASKS_PER_STEP["unstarted_step"]
 
