@@ -338,7 +338,7 @@ class Status:
                 dict_deep_merge(step_statuses[started_step_name], statuses_read)
 
         LOG.info(
-            f"Done traversing '{step_workspace}'. Read in {num_statuses_read} " \
+            f"Done traversing '{step_workspace}'. Read in {num_statuses_read} "
             f"{'statuses' if num_statuses_read != 1 else 'status'}."
         )
 

@@ -269,6 +269,63 @@ class TestMerlinStatus(unittest.TestCase):
             state_info_diff = DeepDiff(state_info, status_test_variables.DISPLAY_INFO[step_name], ignore_order=True)
             self.assertEqual(state_info_diff, {})
 
+    def test_get_runtime_avg_std_dev(self):
+        """
+        Test the functionality that calculates the run time average and standard
+        deviation for each step. This test covers the get_runtime_avg_std_dev method.
+        """
+        dummy_step_status = {
+            "dummy_step": {
+                "dummy_step_PARAM.1": {
+                    "task_queue": "dummy_queue",
+                    "worker_name": "dummy_worker",
+                    "dummy_step/PARAM.1/00": {
+                        "status": "FINISHED",
+                        "return_code": "MERLIN_SUCCESS",
+                        "elapsed_time": "0d:02h:00m:00s",
+                        "run_time": "0d:01h:38m:27s",  # 3600 + 2280 + 27 = 5907 seconds
+                        "restarts": 0,
+                    },
+                    "dummy_step/PARAM.1/01": {
+                        "status": "FINISHED",
+                        "return_code": "MERLIN_SUCCESS",
+                        "elapsed_time": "0d:02h:00m:00s",
+                        "run_time": "0d:01h:45m:08s",  # 3600 + 2700 + 8 = 6308 seconds
+                        "restarts": 0,
+                    },
+                },
+                "dummy_step_PARAM.2": {
+                    "task_queue": "dummy_queue",
+                    "worker_name": "dummy_worker",
+                    "dummy_step/PARAM.2/00": {
+                        "status": "FINISHED",
+                        "return_code": "MERLIN_SUCCESS",
+                        "elapsed_time": "0d:02h:00m:00s",
+                        "run_time": "0d:01h:52m:33s",  # 3600 + 3120 + 33 = 6753 seconds
+                        "restarts": 0,
+                    },
+                    "dummy_step/PARAM.2/01": {
+                        "status": "FINISHED",
+                        "return_code": "MERLIN_SUCCESS",
+                        "elapsed_time": "0d:02h:00m:00s",
+                        "run_time": "0d:01h:08m:40s",  # 3600 + 480 + 40 = 4120 seconds
+                        "restarts": 0,
+                    },
+                },
+            }
+        }
+
+        status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj.get_runtime_avg_std_dev(dummy_step_status, "dummy_step")
+
+        # Set expected values
+        expected_avg = "01h:36m:12s"  # Mean is 5772 seconds = 01h:36m:12s
+        expected_std_dev = "±16m:40s"  # Std dev is 1000 seconds = 16m:40s
+
+        # Make sure the values were calculated as expected
+        self.assertEqual(dummy_step_status["dummy_step"]["avg_run_time"], expected_avg)
+        self.assertEqual(dummy_step_status["dummy_step"]["run_time_std_dev"], expected_std_dev)
+
 
 if __name__ == "__main__":
     unittest.main()
