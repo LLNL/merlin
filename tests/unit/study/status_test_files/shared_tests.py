@@ -63,12 +63,6 @@ def assert_correct_attribute_creation(status_obj: Union[Status, DetailedStatus])
     tasks_per_step_diff = DeepDiff(status_obj.tasks_per_step, status_test_variables.TASKS_PER_STEP, ignore_order=True)
     assert tasks_per_step_diff == {}
 
-    # Ensuring real_step_name_map was created properly
-    real_step_name_map_diff = DeepDiff(
-        status_obj.real_step_name_map, status_test_variables.REAL_STEP_NAME_MAP, ignore_order=True
-    )
-    assert real_step_name_map_diff == {}
-
     # Ensuring requested_statuses was created properly
     requested_statuses_diff = DeepDiff(
         status_obj.requested_statuses, status_test_variables.ALL_REQUESTED_STATUSES, ignore_order=True

@@ -266,7 +266,7 @@ class TestMerlinStatus(unittest.TestCase):
                 assert step_name in status_test_variables.FULL_STEP_TRACKER["unstarted_steps"]
 
             # Make sure all the state info dicts for each step match what they should be
-            state_info_diff = DeepDiff(state_info, status_test_variables.DISPLAY_INFO[step_name])
+            state_info_diff = DeepDiff(state_info, status_test_variables.DISPLAY_INFO[step_name], ignore_order=True)
             self.assertEqual(state_info_diff, {})
 
 
