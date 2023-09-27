@@ -255,12 +255,16 @@ def _display_summary(state_info: Dict[str, str], cb_help: bool):
 
         # Grab the value associated with the label
         value = None
-        if "count" in val and val["count"] > 0:
-            value = val["count"]
+        if "count" in val:
+            if val["count"] > 0:
+                value = val["count"]
         elif "total" in val:
             value = val["total"]
         elif "name" in val:
             value = val["name"]
+        else:
+            value = val
+
         # Add the label and value as an entry to the summary
         if value:
             summary.append([label, value])
@@ -300,22 +304,27 @@ def display_status_summary(  # pylint: disable=R0912
             "UNKNOWN": {"count": 0, "color": ANSI_COLORS["GREY"], "fill": "?"},
             "INITIALIZED": {"count": 0, "color": ANSI_COLORS["LIGHT_BLUE"]},
             "RUNNING": {"count": 0, "color": ANSI_COLORS["BLUE"]},
-            "DRY_RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
-            "TOTAL_TASKS": {"total": status_obj.tasks_per_step[sstep]},
+            "DRY RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
+            "TOTAL TASKS": {"total": status_obj.tasks_per_step[sstep]},
+            "AVG RUN TIME": status_obj.requested_statuses[sstep]["avg_run_time"],
+            "RUN TIME STD DEV": status_obj.requested_statuses[sstep]["run_time_std_dev"]
         }
 
+        # Initialize a var to track # of completed tasks and grab the statuses for this step
         num_completed_tasks = 0
+        step_statuses = status_obj.requested_statuses[sstep]
+
         # Loop through each entry for the step (if there's no parameters there will just be one entry)
-        LOG.debug(f"real_step_name_map[{sstep}]: {status_obj.real_step_name_map[sstep]}")
-        for real_step_name in status_obj.real_step_name_map[sstep]:
-            # Grab the statuses for this step
-            overall_step_info = status_obj.requested_statuses[real_step_name]
+        for real_step_name, overall_step_info in step_statuses.items():
+            # Non-dict entries are just for run time info at the moment
+            if not isinstance(overall_step_info, dict):
+                continue
 
             # If this was a non-local run we should have a task queue and worker name to add to state_info
             if "task_queue" in overall_step_info:
-                state_info["TASK_QUEUE"] = {"name": overall_step_info["task_queue"]}
+                state_info["TASK QUEUE"] = {"name": overall_step_info["task_queue"]}
             if "worker_name" in overall_step_info:
-                state_info["WORKER_NAME"] = {"name": overall_step_info["worker_name"]}
+                state_info["WORKER NAME"] = {"name": overall_step_info["worker_name"]}
 
             # Loop through all workspaces for this step (if there's no samples for this step it'll just be one path)
             for sub_step_workspace, task_status_info in overall_step_info.items():
@@ -399,7 +408,7 @@ def display_progress_bar(  # pylint: disable=R0913,R0914
         print(f"\r{prefix} |", end="")
         for key, val in state_info.items():
             # Only fill bar with completed tasks
-            if key in ("INITIALIZED", "RUNNING", "TASK_QUEUE", "WORKER_NAME", "TOTAL_TASKS"):
+            if key in ("INITIALIZED", "RUNNING", "TASK QUEUE", "WORKER NAME", "TOTAL TASKS", "AVG RUN TIME", "RUN TIME STD DEV"):
                 continue
 
             # Get the length to fill for this specific state

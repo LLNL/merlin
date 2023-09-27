@@ -649,6 +649,40 @@ def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") 
     return repr_timedelta(tdelta, method=format_method)
 
 
+def pretty_format_HMS(timestring: str) -> str:
+    """
+    Given an HMS timestring, format it so it removes blank entries and adds
+    labels.
+
+    :param `timestring`: the HMS timestring we'll format
+    :returns: a formatted timestring
+
+    Examples:
+        - "00:00:34:00" -> "34m"
+        - "01:00:00:25" -> "01d:25s"
+        - "00:19:44:28" -> "19h:44m:28s"
+    """
+    # Create labels and split the timestring
+    labels = ["d", "h", "m", "s"]
+    parsed_ts = timestring.split(":")
+    if len(parsed_ts) > 4:
+        raise ValueError("The timestring to label must be in the format DD:HH:MM:SS")
+
+    # Label each integer with its corresponding unit
+    labeled_time_list = []
+    for i in range(1, len(parsed_ts) + 1):
+        if parsed_ts[-i] != "00":
+            labeled_time_list.append(parsed_ts[-i] + labels[-i])
+
+    # Join the labeled time list into a string.
+    if len(labeled_time_list) == 0:
+        labeled_time_list.append("00s")
+    labeled_time_list.reverse()
+    labeled_time_string = ":".join(labeled_time_list)
+
+    return labeled_time_string
+
+
 def ws_time_to_dt(ws_time: str) -> datetime:
     """
     Converts a workspace timestring to a datetime object.

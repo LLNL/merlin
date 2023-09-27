@@ -30,6 +30,7 @@
 """This module handles all the functionality of getting the statuses of studies"""
 import json
 import logging
+import numpy as np
 import os
 import re
 from argparse import Namespace
@@ -43,7 +44,7 @@ from tabulate import tabulate
 from merlin.common.dumper import dump_handler
 from merlin.display import ANSI_COLORS, display_status_summary
 from merlin.spec.expansion import get_spec_with_expansion
-from merlin.utils import dict_deep_merge, verify_dirpath, ws_time_to_dt
+from merlin.utils import convert_timestring, convert_to_timedelta, dict_deep_merge, pretty_format_HMS, verify_dirpath, ws_time_to_dt
 
 
 LOG = logging.getLogger(__name__)
@@ -51,7 +52,9 @@ VALID_STATUS_FILTERS = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "CANCELL
 VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY", "DRY_SUCCESS", "UNRECOGNIZED")
 VALID_EXIT_FILTERS = ("E", "EXIT")
 ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS + ("MAX_TASKS",)
-NON_WORKSPACE_KEYS = set(["task_queue", "worker_name"])
+CELERY_KEYS = set(["task_queue", "worker_name"])
+RUN_TIME_STAT_KEYS = set(["avg_run_time", "run_time_std_dev"])
+NON_WORKSPACE_KEYS = CELERY_KEYS.union(RUN_TIME_STAT_KEYS)
 
 
 class Status:
@@ -74,16 +77,11 @@ class Status:
         # Verify the filter args (this will only do something for DetailedStatus)
         self._verify_filter_args()
 
-        # Create a step tracker that will tell us which steps we'll display that have started/not started
+        # Create a step tracker that will tell us which steps have started/not started
         self.step_tracker = self.get_steps_to_display()
 
         # Create a tasks per step mapping in order to give accurate totals for each step
         self.tasks_per_step = self.spec.get_tasks_per_step()
-
-        # This attribute will store a map between the overall step name and the real step names
-        # that are created with parameters (e.g. step name is hello and uses a "GREET: hello" parameter
-        # so the real step name is hello_GREET.hello)
-        self.real_step_name_map = {}
 
         # Variable to store the statuses that the user wants
         self.requested_statuses = {}
@@ -296,8 +294,11 @@ class Status:
         We need to ignore non workspace keys when we count.
         """
         num_statuses = 0
-        for status_info in self.requested_statuses.values():
-            num_statuses += len(status_info.keys() - NON_WORKSPACE_KEYS)
+        for step_name in self.step_tracker["started_steps"]:
+            for status_key, status_info in self.requested_statuses[step_name].items():
+                if status_key in RUN_TIME_STAT_KEYS:
+                    continue
+                num_statuses += len(status_info.keys() - NON_WORKSPACE_KEYS)
         return num_statuses
 
     def get_step_statuses(self, step_workspace: str, started_step_name: str) -> Dict[str, List[str]]:
@@ -309,9 +310,8 @@ class Status:
         :param `started_step_name`: The name of the started step that we're getting statuses from
         :returns: A dict of statuses for the given step
         """
-        step_statuses = {}
+        step_statuses = {started_step_name: {}}
         num_statuses_read = 0
-        self.real_step_name_map[started_step_name] = set()
 
         # Traverse the step workspace and look for MERLIN_STATUS files
         LOG.info(f"Traversing '{step_workspace}' to find MERLIN_STATUS.json files...")
@@ -321,17 +321,21 @@ class Status:
             matching_files = glob(status_filepath)
             if matching_files:
                 LOG.debug(f"Found status file at '{status_filepath}'")
+                # Read in the statuses and count how many statuses we read
                 lock = FileLock(f"{root}/status.lock")  # pylint: disable=E0110
                 statuses_read = read_status(status_filepath, lock)
-
-                # Update map of real step names
-                self.real_step_name_map[started_step_name].update(list(statuses_read.keys()))
+                for status_info in statuses_read.values():
+                    num_statuses_read += len(status_info.keys() - NON_WORKSPACE_KEYS)
 
                 # Merge the statuses we read with the dict tracking all statuses for this step
-                dict_deep_merge(step_statuses, statuses_read)
+                dict_deep_merge(step_statuses[started_step_name], statuses_read)
+
         LOG.info(
             f"Done traversing '{step_workspace}'. Read in {num_statuses_read} {'statuses' if num_statuses_read != 1 else 'status'}."
         )
+
+        # Calculate run time average and standard deviation for this step
+        step_statuses = self.get_runtime_avg_std_dev(step_statuses, started_step_name)
 
         return step_statuses
 
@@ -349,6 +353,47 @@ class Status:
 
         # Count how many statuses in total that we just read in
         LOG.info(f"Read in {self.num_requested_statuses} statuses total.")
+
+    def get_runtime_avg_std_dev(self, step_statuses: Dict, step_name: str) -> Dict:
+        """
+        Calculate the mean and standard deviation for the runtime of each step.
+        Add this to the state information once calculated.
+
+        :param `step_statuses`: A dict of step status information that we'll parse for run times
+        :param `step_name`: The name of the step
+        :returns: An updated dict of step status info with run time avg and std dev
+        """
+        # Initialize a list to track all existing runtimes
+        run_times_in_seconds = []
+    
+        # This outer loop will only loop once
+        LOG.info(f"Calculating run time avg and std dev for {step_name}...")
+        for _, overall_step_info in step_statuses[step_name].items():
+            for step_info_key, step_status_info in overall_step_info.items():
+                # Ignore non-workspace keys and any run times that have been yet to be calculated
+                if step_info_key in NON_WORKSPACE_KEYS or step_status_info["run_time"] == "--:--:--":
+                    LOG.debug(f"Skipping {step_info_key}.")
+                    continue
+
+                # Parse the runtime value, convert it to seconds, and add it to the lsit of existing run times
+                run_time = step_status_info["run_time"].replace("d", "").replace("h", "").replace("m", "").replace("s", "")
+                run_time_tdelta = convert_to_timedelta(run_time)
+                run_times_in_seconds.append(run_time_tdelta.total_seconds())
+
+        # Using the list of existing run times, calculate avg and std dev
+        LOG.debug(f"Using the following run times for our calculations: {run_times_in_seconds}")
+        np_run_times_in_seconds = np.array(run_times_in_seconds)
+        run_time_mean = round(np.mean(np_run_times_in_seconds))
+        run_time_std_dev = round(np.std(np_run_times_in_seconds))
+        LOG.debug(f"Run time avg in seconds: {run_time_mean}")
+        LOG.debug(f"Run time std dev in seconds: {run_time_std_dev}")
+
+        # Pretty format the avg and std dev and store them as new entries to the status information for the step
+        step_statuses[step_name]["avg_run_time"] = pretty_format_HMS(convert_timestring(run_time_mean))
+        step_statuses[step_name]["run_time_std_dev"] = f"±{pretty_format_HMS(convert_timestring(run_time_std_dev))}"
+        LOG.info(f"Run time avg and std dev for {step_name} calculated.")
+        
+        return step_statuses
 
     def display(self, test_mode=False) -> Dict:
         """
@@ -425,30 +470,36 @@ class Status:
             "worker_name": [],
         }
 
-        # Loop through all statuses
-        for step_name, overall_step_info in self.requested_statuses.items():
-            # Get the number of statuses for this step so we know how many entries there should be
-            num_statuses = len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
+        # We only care about started steps since unstarted steps won't have any status to report
+        for step_name in self.step_tracker["started_steps"]:
+            # Obtain and loop through all statuses
+            step_statuses = self.requested_statuses[step_name]
+            for full_step_name, overall_step_info in step_statuses.items():
+                if full_step_name in RUN_TIME_STAT_KEYS:
+                    continue
 
-            # Loop through information for each step
-            for step_info_key, step_info_value in overall_step_info.items():
-                # Format non-workspace keys (task_queue and worker_name)
-                if step_info_key in NON_WORKSPACE_KEYS:
-                    # Set the val_to_add value based on if a value exists for the key
-                    val_to_add = step_info_value if step_info_value else "-------"
-                    # Add the val_to_add entry for each row
-                    key_entries = [val_to_add] * num_statuses
-                    reformatted_statuses[step_info_key].extend(key_entries)
+                # Get the number of statuses for this step so we know how many entries there should be
+                num_statuses = len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
 
-                # Format workspace keys
-                else:
-                    # Put the step name and workspace in each entry
-                    reformatted_statuses["step_name"].append(step_name)
-                    reformatted_statuses["step_workspace"].append(step_info_key)
+                # Loop through information for each step
+                for step_info_key, step_info_value in overall_step_info.items():
+                    # Format celery specific keys
+                    if step_info_key in CELERY_KEYS:
+                        # Set the val_to_add value based on if a value exists for the key
+                        val_to_add = step_info_value if step_info_value else "-------"
+                        # Add the val_to_add entry for each row
+                        key_entries = [val_to_add] * num_statuses
+                        reformatted_statuses[step_info_key].extend(key_entries)
 
-                    # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
-                    for key, val in step_info_value.items():
-                        reformatted_statuses[key].append(val)
+                    # Format workspace keys
+                    else:
+                        # Put the step name and workspace in each entry
+                        reformatted_statuses["step_name"].append(step_name)
+                        reformatted_statuses["step_workspace"].append(step_info_key)
+
+                        # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
+                        for key, val in step_info_value.items():
+                            reformatted_statuses[key].append(val)
 
         # For local runs, there will be no task queue or worker name so delete these entries
         for celery_specific_key in ("task_queue", "worker_name"):
