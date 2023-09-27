@@ -307,7 +307,7 @@ def display_status_summary(  # pylint: disable=R0912
             "DRY RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
             "TOTAL TASKS": {"total": status_obj.tasks_per_step[sstep]},
             "AVG RUN TIME": status_obj.requested_statuses[sstep]["avg_run_time"],
-            "RUN TIME STD DEV": status_obj.requested_statuses[sstep]["run_time_std_dev"]
+            "RUN TIME STD DEV": status_obj.requested_statuses[sstep]["run_time_std_dev"],
         }
 
         # Initialize a var to track # of completed tasks and grab the statuses for this step
@@ -408,7 +408,15 @@ def display_progress_bar(  # pylint: disable=R0913,R0914
         print(f"\r{prefix} |", end="")
         for key, val in state_info.items():
             # Only fill bar with completed tasks
-            if key in ("INITIALIZED", "RUNNING", "TASK QUEUE", "WORKER NAME", "TOTAL TASKS", "AVG RUN TIME", "RUN TIME STD DEV"):
+            if key in (
+                "INITIALIZED",
+                "RUNNING",
+                "TASK QUEUE",
+                "WORKER NAME",
+                "TOTAL TASKS",
+                "AVG RUN TIME",
+                "RUN TIME STD DEV",
+            ):
                 continue
 
             # Get the length to fill for this specific state

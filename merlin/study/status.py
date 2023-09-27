@@ -30,7 +30,6 @@
 """This module handles all the functionality of getting the statuses of studies"""
 import json
 import logging
-import numpy as np
 import os
 import re
 from argparse import Namespace
@@ -38,13 +37,21 @@ from datetime import datetime
 from glob import glob
 from typing import Dict, List, Optional, Tuple
 
+import numpy as np
 from filelock import FileLock, Timeout
 from tabulate import tabulate
 
 from merlin.common.dumper import dump_handler
 from merlin.display import ANSI_COLORS, display_status_summary
 from merlin.spec.expansion import get_spec_with_expansion
-from merlin.utils import convert_timestring, convert_to_timedelta, dict_deep_merge, pretty_format_HMS, verify_dirpath, ws_time_to_dt
+from merlin.utils import (
+    convert_timestring,
+    convert_to_timedelta,
+    dict_deep_merge,
+    pretty_format_HMS,
+    verify_dirpath,
+    ws_time_to_dt,
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -315,7 +322,7 @@ class Status:
 
         # Traverse the step workspace and look for MERLIN_STATUS files
         LOG.info(f"Traversing '{step_workspace}' to find MERLIN_STATUS.json files...")
-        for root, _, files in os.walk(step_workspace):
+        for root, _, _ in os.walk(step_workspace):
             # Search for a status file
             status_filepath = os.path.join(root, "MERLIN_STATUS.json")
             matching_files = glob(status_filepath)
@@ -331,7 +338,8 @@ class Status:
                 dict_deep_merge(step_statuses[started_step_name], statuses_read)
 
         LOG.info(
-            f"Done traversing '{step_workspace}'. Read in {num_statuses_read} {'statuses' if num_statuses_read != 1 else 'status'}."
+            f"Done traversing '{step_workspace}'. Read in {num_statuses_read} " \
+            f"{'statuses' if num_statuses_read != 1 else 'status'}."
         )
 
         # Calculate run time average and standard deviation for this step
@@ -365,7 +373,7 @@ class Status:
         """
         # Initialize a list to track all existing runtimes
         run_times_in_seconds = []
-    
+
         # This outer loop will only loop once
         LOG.info(f"Calculating run time avg and std dev for {step_name}...")
         for _, overall_step_info in step_statuses[step_name].items():
@@ -392,7 +400,7 @@ class Status:
         step_statuses[step_name]["avg_run_time"] = pretty_format_HMS(convert_timestring(run_time_mean))
         step_statuses[step_name]["run_time_std_dev"] = f"±{pretty_format_HMS(convert_timestring(run_time_std_dev))}"
         LOG.info(f"Run time avg and std dev for {step_name} calculated.")
-        
+
         return step_statuses
 
     def display(self, test_mode=False) -> Dict:

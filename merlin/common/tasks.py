@@ -444,8 +444,8 @@ def get_1d_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:  # n
 
 
 def gather_statuses(
-    sample_index: "SampleIndex", workspace: str, condensed_workspace: str, files_to_remove: List[str]
-) -> Dict:  # noqa: F821
+    sample_index: "SampleIndex", workspace: str, condensed_workspace: str, files_to_remove: List[str]  # noqa: F821
+) -> Dict:
     """
     Traverse the sample index and gather all of the statuses into one.
 
