@@ -33,6 +33,34 @@ study:
     depends: [runs*]
     task_queue: flux_test
 
+- description: step that uses vlauncher
+  name: vlauncher_test
+  run:
+    cmd: |
+      MERLIN_NODES=6
+      MERLIN_PROCS=3
+      MERLIN_CORES=2
+      $(VLAUNCHER) echo "step that uses vlauncher"
+    task_queue: flux_test
+
+- description: test vlauncher step defaults
+  name: vlauncher_test_step_defaults
+  run:
+    cmd: |
+      $(VLAUNCHER) echo "test vlauncher step defaults"
+    task_queue: flux_test
+    nodes: 6
+    procs: 3
+    cores per task: 2
+    gpus: 1
+
+- description: test vlauncher no step defaults
+  name: vlauncher_test_no_step_defaults
+  run:
+    cmd: |
+      $(VLAUNCHER) echo "test vlauncher no step defaults"
+    task_queue: flux_test
+
 global.parameters:
   STUDY:
     label: STUDY.%%
