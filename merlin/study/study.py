@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.3.
+# This file is part of Merlin, Version: 1.11.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -127,7 +127,8 @@ class MerlinStudy:  # pylint: disable=R0902
 
     def _set_special_file_vars(self):
         """Setter for the orig, partial, and expanded file paths of a study."""
-        base_name = Path(self.filepath).stem
+        shortened_filepath = self.filepath.replace(".out", "").replace(".partial", "").replace(".expanded", "")
+        base_name = Path(shortened_filepath).stem
         self.special_vars["MERLIN_SPEC_ORIGINAL_TEMPLATE"] = os.path.join(
             self.info,
             base_name + ".orig.yaml",
