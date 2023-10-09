@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.3.
+# This file is part of Merlin, Version: 1.11.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -582,6 +582,26 @@ def dict_deep_merge(dict_a, dict_b, path=None):
                 raise DeepMergeException(f"Conflict at {'.'.join(path + [str(key)])}")
         else:
             dict_a[key] = dict_b[key]
+
+
+def find_vlaunch_var(vlaunch_var: str, step_cmd: str, accept_no_matches=False) -> str:
+    """
+    Given a variable used for VLAUNCHER and the step cmd value, find
+    the variable.
+
+    :param `vlaunch_var`: The name of the VLAUNCHER variable (without MERLIN_)
+    :param `step_cmd`: The string for the cmd of a step
+    :param `accept_no_matches`: If True, return None if we couldn't find the variable. Otherwise, raise an error.
+    :returns: the `vlaunch_var` variable or None
+    """
+    matches = list(re.findall(rf"^(?!#).*MERLIN_{vlaunch_var}=\d+", step_cmd, re.MULTILINE))
+
+    if matches:
+        return f"${{MERLIN_{vlaunch_var}}}"
+
+    if accept_no_matches:
+        return None
+    raise ValueError(f"VLAUNCHER used but could not find MERLIN_{vlaunch_var} in the step.")
 
 
 # Time utilities

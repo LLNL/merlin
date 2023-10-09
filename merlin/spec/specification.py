@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.3.
+# This file is part of Merlin, Version: 1.11.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -46,7 +46,7 @@ import yaml
 from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
-from merlin.utils import load_array_file, needs_merlin_expansion, repr_timedelta
+from merlin.utils import find_vlaunch_var, load_array_file, needs_merlin_expansion, repr_timedelta
 
 
 LOG = logging.getLogger(__name__)
@@ -370,6 +370,17 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         defaults.STUDY_STEP_RUN["shell"] = self.batch["shell"]
         for step in self.study:
             MerlinSpec.fill_missing_defaults(step["run"], defaults.STUDY_STEP_RUN)
+            # Insert VLAUNCHER specific variables if necessary
+            if "$(VLAUNCHER)" in step["run"]["cmd"]:
+                SHSET = ""
+                if "csh" in step["run"]["shell"]:
+                    SHSET = "set "
+                # We need to set default values for VLAUNCHER variables if they're not defined by the user
+                for vlaunch_var, vlaunch_val in defaults.VLAUNCHER_VARS.items():
+                    if not find_vlaunch_var(vlaunch_var.replace("MERLIN_", ""), step["run"]["cmd"], accept_no_matches=True):
+                        # Look for predefined nodes/procs/cores/gpus values in the step and default to those
+                        vlaunch_val = step["run"][vlaunch_val[0]] if vlaunch_val[0] in step["run"] else vlaunch_val[1]
+                        step["run"]["cmd"] = f"{SHSET}{vlaunch_var}={vlaunch_val}\n" + step["run"]["cmd"]
 
         # fill in missing merlin section defaults
         MerlinSpec.fill_missing_defaults(self.merlin, defaults.MERLIN["merlin"])

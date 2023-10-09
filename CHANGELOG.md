@@ -4,7 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [Unreleased]
 ### Added
 - New file `merlin/study/status.py` dedicated to work relating to the status command
   - Contains the Status and DetailedStatus classes
@@ -27,11 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests for the Status class
   - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
 
-### Fixed
-- Cyclical imports and config imports that could easily cause ci issues
-
 ### Changed
-- Hardcoded Sphinx v5.3.0 requirement is now removed so we can use latest Sphinx
 - Reformatted the entire `merlin status` command
   - Now accepts both spec files and workspace directories as arguments
     - e.g. "merlin status hello.yaml" and "merlin status hello_20230228-111920/" both work
@@ -47,6 +43,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pulled the needs_merlin_expansion() method out of the Step class and made it a function instead
 - Removed `tabulate_info` function; replaced with tabulate from the tabulate library
 - Moved `verify_filepath` and `verify_dirpath` from `merlin/main.py` to `merlin/utils.py`
+
+### Fixed
+- Cyclical imports and config imports that could easily cause ci issues
+
+## [1.11.0]
+### Added
+- New reserved variable:
+  - `VLAUNCHER`: The same functionality as the `LAUNCHER` variable, but will substitute shell variables `MERLIN_NODES`, `MERLIN_PROCS`, `MERLIN_CORES`, and `MERLIN_GPUS` for nodes, procs, cores per task, and gpus
+
+### Changed
+- Hardcoded Sphinx v5.3.0 requirement is now removed so we can use latest Sphinx
+
+### Fixed
+- A bug where the filenames in iterative workflows kept appending `.out`, `.partial`, or `.expanded` to the filenames stored in the `merlin_info/` subdirectory
+- A bug where a skewed sample hierarchy was created when a restart was necessary in the `add_merlin_expanded_chain_to_chord` task
 
 ## [1.10.3]
 ### Added
