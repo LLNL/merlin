@@ -1,0 +1,112 @@
+batch:
+  dry_run: false
+  shell: /bin/bash
+  type: local
+description:
+  description: a spec file to test the status command
+  name: status_test_study
+env:
+  dependencies: null
+  labels: null
+  sources: null
+  variables:
+    N_SAMPLES: 5
+    OUTPUT_PATH: .
+global.parameters:
+  GREET:
+    label: GREET.%%
+    values:
+    - hello
+    - hola
+  LEAVE:
+    label: LEAVE.%%
+    values:
+    - goodbye
+    - adios
+merlin:
+  resources:
+    overlap: false
+    task_server: celery
+    workers:
+      other_worker:
+        args: -l INFO -Ofair --concurrency 1 --prefetch-multiplier 1
+        batch: null
+        nodes: null
+        steps:
+        - just_parameters
+        - fail_step
+        - cancel_step
+        - unstarted_step
+      sample_worker:
+        args: -l INFO -Ofair --concurrency 36 --prefetch-multiplier 1
+        batch: null
+        nodes: null
+        steps:
+        - just_samples
+        - params_and_samples
+  samples:
+    column_labels:
+    - WORLD
+    - NUM
+    file: the test setup will modify this value
+    generate:
+      cmd: python3 make_samples.py --filepath=<purposefully modified here> --number=5
+    level_max_dirs: 25
+study:
+- description: no parameters, just samples
+  name: just_samples
+  run:
+    cmd: echo "$(NUM). $(WORLD)!"
+    max_retries: 30
+    shell: /bin/bash
+    task_queue: just_samples_queue
+- description: no samples, just parameters
+  name: just_parameters
+  run:
+    cmd: echo "$(GREET)!"
+    max_retries: 30
+    restart: echo "$(LEAVE)."
+    shell: /bin/bash
+    task_queue: just_parameters_queue
+- description: both parameters and samples
+  name: params_and_samples
+  run:
+    cmd: echo "$(GREET), $(WORLD)!"
+    depends:
+    - just_samples_*
+    - just_parameters_*
+    max_retries: 30
+    shell: /bin/bash
+    task_queue: both_queue
+- description: purposefully fail a step
+  name: fail_step
+  run:
+    cmd: exit 101
+    depends:
+    - params_and_samples_*
+    max_retries: 30
+    shell: /bin/bash
+    task_queue: fail_queue
+- description: purposefully cancel the study
+  name: cancel_step
+  run:
+    cmd: 'exit $(MERLIN_STOP_WORKERS)
+
+      sleep 70
+
+      '
+    depends:
+    - fail_step
+    max_retries: 30
+    shell: /bin/bash
+    task_queue: cancel_queue
+- description: purposefully don't run this step
+  name: unstarted_step
+  run:
+    cmd: echo "nobody wants to start me :("
+    depends:
+    - cancel_step
+    max_retries: 30
+    shell: /bin/bash
+    task_queue: unstarted_queue
+user: null

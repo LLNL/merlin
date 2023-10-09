@@ -55,10 +55,11 @@ from merlin.utils import contains_shell_ref, contains_token, get_flux_cmd, load_
 LOG = logging.getLogger(__name__)
 
 
-# TODO: see if there's any way to split this class up (pylint doesn't like how many attributes there are)
+# TODO: see if there's any way to split this class up
+#       (pylint doesn't like how many attributes and public methods there are)
 # - Might be able to create an object to store files and handle file modifications
 # - If we don't want to create entirely new classes we could try grouping args into dicts
-class MerlinStudy:  # pylint: disable=R0902
+class MerlinStudy:  # pylint: disable=R0902,R0904
     """
     Represents a Merlin study run on a specification. Used for 'merlin run'.
 
@@ -544,11 +545,14 @@ class MerlinStudy:  # pylint: disable=R0902
 
         # Generate the DAG
         _, maestro_dag = study.stage()
-        labels = []
+        column_labels = []
         if self.expanded_spec.merlin["samples"]:
-            labels = self.expanded_spec.merlin["samples"]["column_labels"]
+            column_labels = self.expanded_spec.merlin["samples"]["column_labels"]
+        parameter_info = {
+            "labels": self.parameter_labels,
+        }
         # To avoid pickling issues with _pass_detect_cycle from maestro, we unpack the dag here
-        self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, labels)
+        self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, column_labels, study.name, parameter_info)
 
     def get_adapter_config(self, override_type=None):
         """Builds and returns the adapter configuration dictionary"""
@@ -572,3 +576,19 @@ class MerlinStudy:  # pylint: disable=R0902
 
         LOG.debug(f"Adapter config = {adapter_config}")
         return adapter_config
+
+    @property
+    def parameter_labels(self):
+        """
+        Get the parameter labels for this study.
+        :returns: A list of parameter labels used in this study
+        """
+        parameters = self.expanded_spec.get_parameters()
+        metadata = parameters.get_metadata()
+
+        param_labels = []
+        for parameter_info in metadata.values():
+            for parameter_label in parameter_info["labels"].values():
+                param_labels.append(parameter_label)
+
+        return param_labels

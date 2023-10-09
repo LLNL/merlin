@@ -55,8 +55,9 @@ from merlin.log_formatter import setup_logging
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
+from merlin.study.status import Status
 from merlin.study.study import MerlinStudy
-from merlin.utils import ARRAY_FILE_FORMATS
+from merlin.utils import ARRAY_FILE_FORMATS, verify_dirpath, verify_filepath
 
 
 LOG = logging.getLogger("merlin")
@@ -71,38 +72,6 @@ class HelpParser(ArgumentParser):
         sys.stderr.write(f"error: {message}\n")
         self.print_help()
         sys.exit(2)
-
-
-def verify_filepath(filepath: str) -> str:
-    """
-    Verify that the filepath argument is a valid
-    file.
-
-    :param [str] `filepath`: the path of a file
-
-    :return: the verified absolute filepath with expanded environment variables.
-    :rtype: str
-    """
-    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
-    if not os.path.isfile(filepath):
-        raise ValueError(f"'{filepath}' is not a valid filepath")
-    return filepath
-
-
-def verify_dirpath(dirpath: str) -> str:
-    """
-    Verify that the dirpath argument is a valid
-    directory.
-
-    :param [str] `dirpath`: the path of a directory
-
-    :return: returns the absolute path with expanded environment vars for a given dirpath.
-    :rtype: str
-    """
-    dirpath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
-    if not os.path.isdir(dirpath):
-        raise ValueError(f"'{dirpath}' is not a valid directory path")
-    return dirpath
 
 
 def parse_override_vars(
@@ -249,17 +218,56 @@ def purge_tasks(args):
 
 def query_status(args):
     """
-    CLI command for querying queue status.
+    CLI command for querying status of studies.
+    Based on the parsed CLI args, construct either a Status object or a DetailedStatus object
+    and display the appropriate output.
+    Object mapping is as follows:
+    merlin status -> Status object ; merlin detailed-status -> DetailedStatus object
 
-    :param 'args': parsed CLI arguments
+    :param `args`: parsed CLI arguments
     """
     print(banner_small)
-    spec, _ = get_merlin_spec_with_override(args)
-    ret = router.query_status(args.task_server, spec, args.steps)
-    for name, jobs, consumers in ret:
-        print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
-    if args.csv is not None:
-        router.dump_status(ret, args.csv)
+
+    # Ensure task server is valid
+    if args.task_server != "celery":
+        raise ValueError("Currently the only supported task server is celery.")
+
+    # Make sure dump is valid if provided
+    if args.dump and (not args.dump.endswith(".csv") and not args.dump.endswith(".json")):
+        raise ValueError("The --dump option takes a filename that must end with .csv or .json")
+
+    # Establish whether the argument provided by the user was a spec file or a study directory
+    spec_display = False
+    try:
+        file_or_ws = verify_filepath(args.spec_or_workspace)
+        spec_display = True
+    except ValueError:
+        try:
+            file_or_ws = verify_dirpath(args.spec_or_workspace)
+        except ValueError:
+            LOG.error(f"The file or directory path {args.spec_or_workspace} does not exist.")
+            return None
+
+    # If we're loading status based on a spec, load in the spec provided
+    if spec_display:
+        args.specification = file_or_ws
+        spec_provided, _ = get_merlin_spec_with_override(args)
+        args.spec_provided = spec_provided
+
+    # Get either a Status object or DetailedStatus object
+    # if args.detailed:
+    #     status_obj = DetailedStatus(args, spec_display, file_or_ws)
+    # else:
+    #     status_obj = Status(args, spec_display, file_or_ws)
+    status_obj = Status(args, spec_display, file_or_ws)  # The above can be uncommented when we add DetailedStatus
+
+    # Handle output appropriately
+    if args.dump:
+        status_obj.dump()
+    else:
+        status_obj.display()
+
+    return None
 
 
 def query_workers(args):
@@ -885,29 +893,32 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         Merlin job.
     """
     # merlin status
-    status: ArgumentParser = subparsers.add_parser(
+    status_cmd: ArgumentParser = subparsers.add_parser(
         "status",
-        help="List server stats (name, number of tasks to do, \
-                              number of connected workers) for a workflow spec.",
+        help="Display a summary of the status of a study.",
     )
-    status.set_defaults(func=query_status)
-    status.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
-    status.add_argument(
-        "--steps",
-        nargs="+",
-        type=str,
-        dest="steps",
-        default=["all"],
-        help="The specific steps in the YAML file you want to query",
+    status_cmd.set_defaults(func=query_status, detailed=False)
+    status_cmd.add_argument("spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study")
+    status_cmd.add_argument(
+        "--cb-help", action="store_true", help="Colorblind help; uses different symbols to represent different statuses"
     )
-    status.add_argument(
+    status_cmd.add_argument(
+        "--dump", type=str, help="Dump the status to a file. Provide the filename (must be .csv or .json).", default=None
+    )
+    status_cmd.add_argument(
+        "--no-prompts",
+        action="store_true",
+        help="Ignore any prompts provided. This will default to the latest study \
+            if you provide a spec file rather than a study workspace.",
+    )
+    status_cmd.add_argument(
         "--task_server",
         type=str,
         default="celery",
         help="Task server type.\
                             Default: %(default)s",
     )
-    status.add_argument(
+    status_cmd.add_argument(
         "--vars",
         action="store",
         dest="variables",
@@ -917,7 +928,6 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
         "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
-    status.add_argument("--csv", type=str, help="csv file to dump status report to", default=None)
 
     # merlin info
     info: ArgumentParser = subparsers.add_parser(

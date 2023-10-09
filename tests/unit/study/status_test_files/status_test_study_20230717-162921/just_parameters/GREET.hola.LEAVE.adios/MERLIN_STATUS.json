@@ -1,0 +1,13 @@
+{
+    "just_parameters_GREET.hola.LEAVE.adios": {
+        "task_queue": "just_parameters_queue",
+        "worker_name": "other_worker",
+        "just_parameters/GREET.hola.LEAVE.adios": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:01m:00s",
+            "run_time": "0d:00h:01m:00s",
+            "restarts": 0
+        }
+    }
+}
