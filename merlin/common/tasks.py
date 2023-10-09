@@ -321,7 +321,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
                 else:
                     self.add_to_chord(next_step, lazy=False)
                 LOG.debug(f"queued for samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}")
-        except Exception as e:
+        except retry_exceptions as e:
             # Reset the index to what it was before so we don't accidentally create a bunch of extra samples upon restart
             next_index.name = next_index_name_before
             raise e
