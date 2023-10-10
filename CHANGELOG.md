@@ -6,17 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- A new command `merlin detailed-status` that displays task-by-task status information about your study
+  - This has options to filter by return code, task queues, task statuses, and workers
+  - You can set a limit on the number of tasks to display
+  - There are 3 options to modify the output display
 - New file `merlin/study/status.py` dedicated to work relating to the status command
   - Contains the Status and DetailedStatus classes
+- New file `merlin/study/status_renderers.py` dedicated to formatting the output for the detailed-status command
 - New file `merlin/common/dumper.py` containing a Dumper object to help dump output to outfiles
 - Study name and parameter info now stored in the DAG and MerlinStep objects
 - Added functions to `merlin/display.py` that help display status information:
+  - `display_task_by_task_status` handles the display for the `merlin detailed-status` command
   - `display_status_summary` handles the display for the `merlin status` command
   - `display_progress_bar` generates and displays a progress bar
 - Added new methods to the MerlinSpec class:
+  - get_worker_step_map()
+  - get_queue_step_relationship()
   - get_tasks_per_step()
+  - get_step_param_map()
 - Added methods to the MerlinStepRecord class to mark status changes for tasks as they run (follows Maestro's StepRecord format mostly)
 - Added methods to the Step class:
+  - establish_params()
   - name_no_params()
 - Added a property paramater_labels to the MerlinStudy class
 - Added two new utility functions:
@@ -24,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ws_time_to_dt() that converts a workspace timestring (YYYYMMDD-HHMMSS) to a datetime object
 - A new celery task `condense_status_files` to be called when sets of samples finish
 - Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
-- Tests for the Status class
+- Tests for the Status and DetailedStatus classes
   - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
 
 ### Changed
