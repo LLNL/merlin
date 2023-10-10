@@ -585,7 +585,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 for step in worker_val["steps"]:
                     step_worker_map[step].append(worker_name)
         return step_worker_map
-    
+
     def get_worker_step_map(self):
         """
         Creates a dictionary with worker names as keys and a list of steps

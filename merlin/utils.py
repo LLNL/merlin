@@ -669,7 +669,7 @@ def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") 
     return repr_timedelta(tdelta, method=format_method)
 
 
-def pretty_format_HMS(timestring: str) -> str:
+def pretty_format_hms(timestring: str) -> str:
     """
     Given an HMS timestring, format it so it removes blank entries and adds
     labels.

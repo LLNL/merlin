@@ -381,7 +381,7 @@ def display_status_summary(  # pylint: disable=R0912
         for full_step_name in status_obj.full_step_name_map[sstep]:
             overall_step_info = status_obj.requested_statuses[full_step_name]
 
-        # for real_step_name, overall_step_info in step_statuses.items():
+            # for real_step_name, overall_step_info in step_statuses.items():
             # # Non-dict entries are just for run time info at the moment
             # if not isinstance(overall_step_info, dict):
             #     continue

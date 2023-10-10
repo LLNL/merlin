@@ -42,7 +42,7 @@ __all__ = (
     "HardFailException",
     "InvalidChainException",
     "RestartException",
-    "DeepMergeException,",
+    "DeepMergeException",
 )
 
 

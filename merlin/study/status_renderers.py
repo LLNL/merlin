@@ -82,7 +82,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
     def create_param_subtable(self, params: str, param_type: str) -> Table:
         """
         Create the parameter section of the display
-        
+
         :param `params`: A string of the form 'TOKEN:value;TOKEN2:value2;...'
         :param `param_type`: The type of parameter (either cmd or restart)
         :returns: A rich Table object with the parameter info formatted appropriately
@@ -127,7 +127,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
     def create_step_subtable(self, row_num: int) -> Table:
         """
         Create each step entry in the display
-        
+
         :param `row_num`: The index of the row we're currently at in the status_data object
         :returns: A rich Table object with info for one sub step (here a 'sub step' is referencing a step
                   with multiple parameters; each parameter set will have it's own entry in the output)
@@ -159,7 +159,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
     def create_task_details_subtable(self, cols: List[str]) -> Table:
         """
         Create the task details section of the display
-        
+
         :param `cols`: A list of column names for each task info entry we'll display
         :returns: A rich Table with the formatted task info for a sub step
         """
@@ -183,7 +183,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
     def layout(self, status_data, study_title=None, status_time=None):  # pylint: disable=R0912,R0914
         """
         Setup the overall layout of the display
-        
+
         :param `status_data`: A dict of status data to display
         :param `study_title`: A title for the study to display at the top of the output
         :param `status_time`: A timestamp to add to the title
@@ -260,7 +260,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
     def render(self, theme: Dict[str, str] = None):
         """
         Do the actual printing
-        
+
         :param `theme`: A dict of theme settings (see self._theme_dict for the appropriate layout)
         """
         # Apply any theme customization
@@ -302,7 +302,7 @@ class MerlinFlatRenderer(FlatStatusRenderer):
     def layout(self, status_data: Dict[str, List[Union[str, int]]], study_title: str = None):
         """
         Setup the layout of the display
-        
+
         :param `status_data`: A dict of status information that we'll display
         :param `study_title`: The title of the study to display at the top of the output
         """
@@ -320,7 +320,7 @@ class MerlinFlatRenderer(FlatStatusRenderer):
     def render(self, theme: Dict[str, str] = None):
         """
         Do the actual printing
-        
+
         :param `theme`: A dict of theme settings (see self._theme_dict for the appropriate layout)
         """
         # Apply any theme customization

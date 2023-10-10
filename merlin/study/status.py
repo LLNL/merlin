@@ -50,7 +50,7 @@ from merlin.utils import (
     convert_timestring,
     convert_to_timedelta,
     dict_deep_merge,
-    pretty_format_HMS,
+    pretty_format_hms,
     verify_dirpath,
     ws_time_to_dt,
 )
@@ -420,8 +420,8 @@ class Status:
             LOG.debug(f"Run time std dev in seconds: {run_time_std_dev}")
 
             # Pretty format the avg and std dev and store them as new entries in the run time info
-            self.run_time_info[step_name]["avg_run_time"] = pretty_format_HMS(convert_timestring(run_time_mean))
-            self.run_time_info[step_name]["run_time_std_dev"] = f"±{pretty_format_HMS(convert_timestring(run_time_std_dev))}"
+            self.run_time_info[step_name]["avg_run_time"] = pretty_format_hms(convert_timestring(run_time_mean))
+            self.run_time_info[step_name]["run_time_std_dev"] = f"±{pretty_format_hms(convert_timestring(run_time_std_dev))}"
             LOG.info(f"Run time avg and std dev for {step_name} calculated.")
 
     def display(self, test_mode=False) -> Dict:
