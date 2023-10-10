@@ -33,17 +33,19 @@ import logging
 import os
 import re
 from argparse import Namespace
+from copy import deepcopy
 from datetime import datetime
 from glob import glob
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from filelock import FileLock, Timeout
 from tabulate import tabulate
 
 from merlin.common.dumper import dump_handler
-from merlin.display import ANSI_COLORS, display_status_summary
+from merlin.display import ANSI_COLORS, display_status_summary, display_status_task_by_task
 from merlin.spec.expansion import get_spec_with_expansion
+from merlin.study.status_renderers import status_renderer_factory
 from merlin.utils import (
     convert_timestring,
     convert_to_timedelta,
@@ -62,6 +64,7 @@ ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTE
 CELERY_KEYS = set(["task_queue", "worker_name"])
 RUN_TIME_STAT_KEYS = set(["avg_run_time", "run_time_std_dev"])
 NON_WORKSPACE_KEYS = CELERY_KEYS.union(RUN_TIME_STAT_KEYS)
+NON_WORKSPACE_KEYS.add("parameters")
 
 
 class Status:
@@ -89,6 +92,14 @@ class Status:
 
         # Create a tasks per step mapping in order to give accurate totals for each step
         self.tasks_per_step = self.spec.get_tasks_per_step()
+
+        # This attribute will store a map between the overall step name and the full step names
+        # that are created with parameters (e.g. step name is hello and uses a "GREET: hello" parameter
+        # so the real step name is hello_GREET.hello)
+        self.full_step_name_map = {}
+
+        # Variable to store run time information for each step
+        self.run_time_info = {}
 
         # Variable to store the statuses that the user wants
         self.requested_statuses = {}
@@ -301,11 +312,9 @@ class Status:
         We need to ignore non workspace keys when we count.
         """
         num_statuses = 0
-        for step_name in self.step_tracker["started_steps"]:
-            for status_key, status_info in self.requested_statuses[step_name].items():
-                if status_key in RUN_TIME_STAT_KEYS:
-                    continue
-                num_statuses += len(status_info.keys() - NON_WORKSPACE_KEYS)
+        for overall_step_info in self.requested_statuses.values():
+            num_statuses += len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
+
         return num_statuses
 
     def get_step_statuses(self, step_workspace: str, started_step_name: str) -> Dict[str, List[str]]:
@@ -314,11 +323,12 @@ class Status:
         for the step and return them in a dict.
 
         :param `step_workspace`: The path to the step we're going to read statuses from
-        :param `started_step_name`: The name of the started step that we're getting statuses from
         :returns: A dict of statuses for the given step
         """
-        step_statuses = {started_step_name: {}}
+        step_statuses = {}
         num_statuses_read = 0
+
+        self.full_step_name_map[started_step_name] = set()
 
         # Traverse the step workspace and look for MERLIN_STATUS files
         LOG.info(f"Traversing '{step_workspace}' to find MERLIN_STATUS.json files...")
@@ -328,22 +338,22 @@ class Status:
             matching_files = glob(status_filepath)
             if matching_files:
                 LOG.debug(f"Found status file at '{status_filepath}'")
-                # Read in the statuses and count how many statuses we read
+                # Read in the statuses
                 lock = FileLock(f"{root}/status.lock")  # pylint: disable=E0110
                 statuses_read = read_status(status_filepath, lock)
-                for status_info in statuses_read.values():
+
+                # Add full step name to the tracker and count number of statuses we just read in
+                for full_step_name, status_info in statuses_read.items():
+                    self.full_step_name_map[started_step_name].add(full_step_name)
                     num_statuses_read += len(status_info.keys() - NON_WORKSPACE_KEYS)
 
                 # Merge the statuses we read with the dict tracking all statuses for this step
-                dict_deep_merge(step_statuses[started_step_name], statuses_read)
+                dict_deep_merge(step_statuses, statuses_read)
 
         LOG.info(
             f"Done traversing '{step_workspace}'. Read in {num_statuses_read} "
             f"{'statuses' if num_statuses_read != 1 else 'status'}."
         )
-
-        # Calculate run time average and standard deviation for this step
-        step_statuses = self.get_runtime_avg_std_dev(step_statuses, started_step_name)
 
         return step_statuses
 
@@ -358,6 +368,9 @@ class Status:
             step_workspace = f"{self.workspace}/{sstep}"
             step_statuses = self.get_step_statuses(step_workspace, sstep)
             dict_deep_merge(self.requested_statuses, step_statuses)
+
+            # Calculate run time average and standard deviation for this step
+            self.get_runtime_avg_std_dev(step_statuses, sstep)
 
         # Count how many statuses in total that we just read in
         LOG.info(f"Read in {self.num_requested_statuses} statuses total.")
@@ -376,11 +389,16 @@ class Status:
 
         # This outer loop will only loop once
         LOG.info(f"Calculating run time avg and std dev for {step_name}...")
-        for _, overall_step_info in step_statuses[step_name].items():
+        for overall_step_info in step_statuses.values():
             for step_info_key, step_status_info in overall_step_info.items():
-                # Ignore non-workspace keys and any run times that have been yet to be calculated
-                if step_info_key in NON_WORKSPACE_KEYS or step_status_info["run_time"] == "--:--:--":
+                # Ignore non-workspace keys
+                if step_info_key in NON_WORKSPACE_KEYS:
                     LOG.debug(f"Skipping {step_info_key}.")
+                    continue
+
+                # Ignore any run times that have yet to be calculated
+                if step_status_info["run_time"] == "--:--:--":
+                    LOG.debug(f"Skipping {step_info_key} since the run time is empty.")
                     continue
 
                 # Parse the runtime value, convert it to seconds, and add it to the lsit of existing run times
@@ -390,18 +408,21 @@ class Status:
 
         # Using the list of existing run times, calculate avg and std dev
         LOG.debug(f"Using the following run times for our calculations: {run_times_in_seconds}")
-        np_run_times_in_seconds = np.array(run_times_in_seconds)
-        run_time_mean = round(np.mean(np_run_times_in_seconds))
-        run_time_std_dev = round(np.std(np_run_times_in_seconds))
-        LOG.debug(f"Run time avg in seconds: {run_time_mean}")
-        LOG.debug(f"Run time std dev in seconds: {run_time_std_dev}")
+        self.run_time_info[step_name] = {}
+        if len(run_times_in_seconds) == 0:
+            self.run_time_info[step_name]["avg_run_time"] = "--"
+            self.run_time_info[step_name]["run_time_std_dev"] = "±--"
+        else:
+            np_run_times_in_seconds = np.array(run_times_in_seconds)
+            run_time_mean = round(np.mean(np_run_times_in_seconds))
+            run_time_std_dev = round(np.std(np_run_times_in_seconds))
+            LOG.debug(f"Run time avg in seconds: {run_time_mean}")
+            LOG.debug(f"Run time std dev in seconds: {run_time_std_dev}")
 
-        # Pretty format the avg and std dev and store them as new entries to the status information for the step
-        step_statuses[step_name]["avg_run_time"] = pretty_format_HMS(convert_timestring(run_time_mean))
-        step_statuses[step_name]["run_time_std_dev"] = f"±{pretty_format_HMS(convert_timestring(run_time_std_dev))}"
-        LOG.info(f"Run time avg and std dev for {step_name} calculated.")
-
-        return step_statuses
+            # Pretty format the avg and std dev and store them as new entries in the run time info
+            self.run_time_info[step_name]["avg_run_time"] = pretty_format_HMS(convert_timestring(run_time_mean))
+            self.run_time_info[step_name]["run_time_std_dev"] = f"±{pretty_format_HMS(convert_timestring(run_time_std_dev))}"
+            LOG.info(f"Run time avg and std dev for {step_name} calculated.")
 
     def display(self, test_mode=False) -> Dict:
         """
@@ -474,40 +495,50 @@ class Status:
             "elapsed_time": [],
             "run_time": [],
             "restarts": [],
+            "cmd_parameters": [],
+            "restart_parameters": [],
             "task_queue": [],
             "worker_name": [],
         }
 
         # We only care about started steps since unstarted steps won't have any status to report
-        for step_name in self.step_tracker["started_steps"]:
-            # Obtain and loop through all statuses
-            step_statuses = self.requested_statuses[step_name]
-            for full_step_name, overall_step_info in step_statuses.items():
-                if full_step_name in RUN_TIME_STAT_KEYS:
-                    continue
+        for step_name, overall_step_info in self.requested_statuses.items():
+            # Get the number of statuses for this step so we know how many entries there should be
+            num_statuses = len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
 
-                # Get the number of statuses for this step so we know how many entries there should be
-                num_statuses = len(overall_step_info.keys() - NON_WORKSPACE_KEYS)
+            # Loop through information for each step
+            for step_info_key, step_info_value in overall_step_info.items():
+                # Format celery specific keys
+                if step_info_key in CELERY_KEYS:
+                    # Set the val_to_add value based on if a value exists for the key
+                    val_to_add = step_info_value if step_info_value else "-------"
+                    # Add the val_to_add entry for each row
+                    key_entries = [val_to_add] * num_statuses
+                    reformatted_statuses[step_info_key].extend(key_entries)
 
-                # Loop through information for each step
-                for step_info_key, step_info_value in overall_step_info.items():
-                    # Format celery specific keys
-                    if step_info_key in CELERY_KEYS:
+                # Format parameters
+                elif step_info_key == "parameters":
+                    for cmd_type in ("cmd", "restart"):
+                        reformatted_statuses_key = f"{cmd_type}_parameters"
                         # Set the val_to_add value based on if a value exists for the key
-                        val_to_add = step_info_value if step_info_value else "-------"
-                        # Add the val_to_add entry for each row
-                        key_entries = [val_to_add] * num_statuses
-                        reformatted_statuses[step_info_key].extend(key_entries)
+                        if step_info_value[cmd_type] is not None:
+                            param_str = ";".join(
+                                [f"{token}:{param_val}" for token, param_val in step_info_value[cmd_type].items()]
+                            )
+                        else:
+                            param_str = "-------"
+                        # Add the parameter string for each row in this step
+                        reformatted_statuses[reformatted_statuses_key].extend([param_str] * num_statuses)
 
-                    # Format workspace keys
-                    else:
-                        # Put the step name and workspace in each entry
-                        reformatted_statuses["step_name"].append(step_name)
-                        reformatted_statuses["step_workspace"].append(step_info_key)
+                # Format workspace keys
+                else:
+                    # Put the step name and workspace in each entry
+                    reformatted_statuses["step_name"].append(step_name)
+                    reformatted_statuses["step_workspace"].append(step_info_key)
 
-                        # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
-                        for key, val in step_info_value.items():
-                            reformatted_statuses[key].append(val)
+                    # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
+                    for key, val in step_info_value.items():
+                        reformatted_statuses[key].append(val)
 
         # For local runs, there will be no task queue or worker name so delete these entries
         for celery_specific_key in ("task_queue", "worker_name"):
@@ -518,7 +549,465 @@ class Status:
 
 
 class DetailedStatus(Status):
-    pass
+    """
+    This class handles obtaining and filtering requested statuses from the user.
+    This class shares similar methodology to the Status class it inherits from.
+    """
+
+    def __init__(self, args: Namespace, spec_display: bool, file_or_ws: str):
+        args_copy = Namespace(**vars(args))
+        super().__init__(args, spec_display, file_or_ws)
+
+        # Check if the steps filter was given
+        self.steps_filter_provided = "all" not in args_copy.steps
+
+    def _verify_filters(
+        self,
+        filters_to_check: List[str],
+        valid_options: Union[List, Tuple],
+        suppress_warnings: bool,
+        warning_msg: Optional[str] = "",
+    ):
+        """
+        Check each filter in a list of filters provided by the user against a list of valid options.
+        If the filter is invalid, remove it from the list of filters.
+
+        :param `filters_to_check`: A list of filters provided by the user
+        :param `valid_options`: A list of valid options for this particular filter
+        :param `suppress_warnings`: If True, don't log warnings. Otherwise, log them
+        :param `warning_msg`: An optional warning message to attach to output
+        """
+        for filter_arg in filters_to_check[:]:
+            if filter_arg not in valid_options:
+                if not suppress_warnings:
+                    LOG.warning(f"The filter {filter_arg} is invalid. {warning_msg}")
+                filters_to_check.remove(filter_arg)
+
+    def _verify_filter_args(self, suppress_warnings=False):
+        """
+        Verify that our filters are all valid and able to be used.
+
+        :param `suppress_warnings`: If True, don't log warnings. Otherwise, log them.
+        """
+        # Ensure the steps are valid
+        if "all" not in self.args.steps:
+            LOG.debug(f"args.steps before verification: {self.args.steps}")
+            existing_steps = self.spec.get_study_step_names()
+            self._verify_filters(
+                self.args.steps,
+                existing_steps,
+                suppress_warnings,
+                warning_msg="Removing this step from the list of steps to filter by...",
+            )
+            LOG.debug(f"args.steps after verification: {self.args.steps}")
+
+        # Make sure max_tasks is a positive int
+        if self.args.max_tasks is not None:
+            if self.args.max_tasks < 1 or not isinstance(self.args.max_tasks, int):
+                if not suppress_warnings:
+                    LOG.warning("The value of --max-tasks must be an integer greater than 0. Ignoring --max-tasks...")
+                self.args.max_tasks = None
+
+        # Make sure task_status is valid
+        if self.args.task_status:
+            self.args.task_status = [x.upper() for x in self.args.task_status]
+            self._verify_filters(
+                self.args.task_status,
+                VALID_STATUS_FILTERS,
+                suppress_warnings,
+                warning_msg="Removing this status from the list of statuses to filter by...",
+            )
+
+        # Ensure return_code is valid
+        if self.args.return_code:
+            # TODO remove this code block and uncomment the line below once you've
+            # implemented entries for restarts/retries
+            idx = 0
+            for ret_code_provided in self.args.return_code[:]:
+                ret_code_provided = ret_code_provided.upper()
+                if ret_code_provided in ("RETRY", "RESTART"):
+                    if not suppress_warnings:
+                        LOG.warning(f"The {ret_code_provided} filter is coming soon. Ignoring this filter for now...")
+                    self.args.return_code.remove(ret_code_provided)
+                else:
+                    self.args.return_code[idx] = ret_code_provided
+                    idx += 1
+
+            # self.args.return_code = [ret_code.upper() for ret_code in self.args.return_code]
+            self._verify_filters(
+                self.args.return_code,
+                VALID_RETURN_CODES,
+                suppress_warnings,
+                warning_msg="Removing this code from the list of return codes to filter by...",
+            )
+
+        # Ensure every task queue provided exists
+        if self.args.task_queues:
+            existing_queues = self.spec.get_queue_list(["all"], omit_tag=True)
+            self._verify_filters(
+                self.args.task_queues,
+                existing_queues,
+                suppress_warnings,
+                warning_msg="Removing this queue from the list of queues to filter by...",
+            )
+
+        # Ensure every worker provided exists
+        if self.args.workers:
+            worker_names = self.spec.get_worker_names()
+            self._verify_filters(
+                self.args.workers,
+                worker_names,
+                suppress_warnings,
+                warning_msg="Removing this worker from the list of workers to filter by...",
+            )
+
+    def _process_workers(self):
+        """
+        Modifies the list of steps to display status for based on
+        the list of workers provided by the user.
+        """
+        LOG.debug("Processing workers filter...")
+        # Remove duplicates
+        workers_provided = list(set(self.args.workers))
+
+        # Get a map between workers and steps
+        worker_step_map = self.spec.get_worker_step_map()
+
+        # Append steps associated with each worker provided
+        for worker_provided in workers_provided:
+            # Check for invalid workers
+            if worker_provided not in worker_step_map:
+                LOG.warning(f"Worker with name {worker_provided} does not exist for this study.")
+            else:
+                for step in worker_step_map[worker_provided]:
+                    if step not in self.args.steps:
+                        self.args.steps.append(step)
+
+        LOG.debug(f"Steps after workers filter: {self.args.steps}")
+
+    def _process_task_queue(self):
+        """
+        Modifies the list of steps to display status for based on
+        the list of task queues provided by the user.
+        """
+        from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+
+        LOG.debug("Processing task_queues filter...")
+        # Remove duplicate queues
+        queues_provided = list(set(self.args.task_queues))
+
+        # Get a map between queues and steps
+        queue_step_relationship = self.spec.get_queue_step_relationship()
+
+        # Append steps associated with each task queue provided
+        for queue_provided in queues_provided:
+            # Check for invalid task queues
+            queue_with_celery_tag = f"{CONFIG.celery.queue_tag}{queue_provided}"
+            if queue_with_celery_tag not in queue_step_relationship:
+                LOG.warning(f"Task queue with name {queue_provided} does not exist for this study.")
+            else:
+                for step in queue_step_relationship[queue_with_celery_tag]:
+                    if step not in self.args.steps:
+                        self.args.steps.append(step)
+
+        LOG.debug(f"Steps after task_queues filter: {self.args.steps}")
+
+    def get_steps_to_display(self) -> Dict[str, List[str]]:
+        """
+        Generates a list of steps to display the status for based on information
+        provided to the merlin detailed-status command by the user. This function
+        will handle the --steps, --task-queues, and --workers filter options.
+
+        :returns: A dictionary of started and unstarted steps for us to display the status of
+        """
+        existing_steps = self.spec.get_study_step_names()
+
+        LOG.debug(f"existing steps: {existing_steps}")
+
+        if ("all" in self.args.steps) and (not self.args.task_queues) and (not self.args.workers):
+            LOG.debug("The steps, task_queues, and workers filters weren't provided. Setting steps to be all existing steps.")
+            self.args.steps = existing_steps
+        else:
+            # This won't matter anymore since task_queues or workers is not None here
+            if "all" in self.args.steps:
+                self.args.steps = []
+
+            # Add steps to start based on task queues and/or workers provided
+            if self.args.task_queues:
+                self._process_task_queue()
+            if self.args.workers:
+                self._process_workers()
+
+            # Sort the steps to start by the order they show up in the study
+            for i, estep in enumerate(existing_steps):
+                if estep in self.args.steps:
+                    self.args.steps.remove(estep)
+                    self.args.steps.insert(i, estep)
+
+        LOG.debug(f"Building detailed step tracker based on these steps: {self.args.steps}")
+
+        # Filter the steps to display status for by started/unstarted
+        step_tracker = self._create_step_tracker(self.args.steps.copy())
+
+        return step_tracker
+
+    def _remove_steps_without_statuses(self):
+        """
+        After applying filters, there's a chance that certain steps will still exist
+        in self.requested_statuses but won't have any tasks to view the status of so
+        we'll remove those here.
+        """
+        result = deepcopy(self.requested_statuses)
+
+        for step_name, overall_step_info in self.requested_statuses.items():
+            sub_step_workspaces = sorted(list(overall_step_info.keys() - NON_WORKSPACE_KEYS))
+            if len(sub_step_workspaces) == 0:
+                del result[step_name]
+
+        self.requested_statuses = result
+
+    def apply_filters(self, filter_types: List[str], filters: List[str]):
+        """
+        Given a list of filters, filter the dict of requested statuses by them.
+
+        :param `filter_types`: A list of str denoting the types of filters we're applying
+        :param `filters`: A list of filters to apply to the dict of statuses we read in
+        """
+        LOG.info(f"Filtering tasks using these filters: {filters}")
+
+        # Create a deep copy of the dict so we can make changes to it while we iterate
+        result = deepcopy(self.requested_statuses)
+
+        for step_name, overall_step_info in self.requested_statuses.items():
+            for sub_step_workspace, task_status_info in overall_step_info.items():
+                # Ignore non workspace keys
+                if sub_step_workspace in NON_WORKSPACE_KEYS:
+                    continue
+
+                # Search for our filters
+                found_a_match = False
+                for filter_type in filter_types:
+                    if task_status_info[filter_type] in filters:
+                        found_a_match = True
+                        break
+
+                # If our filters aren't a match for this task then delete it
+                if not found_a_match:
+                    del result[step_name][sub_step_workspace]
+
+        # Get the number of tasks found with our filters
+        self.requested_statuses = result
+        self._remove_steps_without_statuses()
+        LOG.info(f"Found {self.num_requested_statuses} tasks matching your filters.")
+
+        # If no tasks were found set the status dict to empty
+        if self.num_requested_statuses == 0:
+            self.requested_statuses = {}
+
+    def apply_max_tasks_limit(self):
+        """
+        Given a number representing the maximum amount of tasks to display, filter the dict of statuses
+        so that there are at most a max_tasks amount of tasks.
+        """
+        # Make sure the max_tasks variable is set to a reasonable number and store that value
+        if self.args.max_tasks and self.args.max_tasks > self.num_requested_statuses:
+            self.args.max_tasks = self.num_requested_statuses
+        max_tasks = self.args.max_tasks
+
+        new_status_dict = {}
+        for step_name, overall_step_info in self.requested_statuses.items():
+            new_status_dict[step_name] = {}
+            sub_step_workspaces = sorted(list(overall_step_info.keys() - NON_WORKSPACE_KEYS))
+
+            # If there are more status entries than max_tasks will allow then we need to remove some
+            if len(sub_step_workspaces) > self.args.max_tasks:
+                workspaces_to_delete = set(sub_step_workspaces) - set(sub_step_workspaces[: self.args.max_tasks])
+                for ws_to_delete in workspaces_to_delete:
+                    del overall_step_info[ws_to_delete]
+                self.args.max_tasks = 0
+            # Otherwise, subtract how many tasks there are in this step from max_tasks
+            else:
+                self.args.max_tasks -= len(sub_step_workspaces)
+
+            # Merge in the task statuses that we're allowing
+            dict_deep_merge(new_status_dict[step_name], overall_step_info)
+
+        LOG.info(f"Limited the number of tasks to display to {max_tasks} tasks.")
+
+        # Set the new requested statuses with the max_tasks limit and remove steps without statuses
+        self.requested_statuses = new_status_dict
+        self._remove_steps_without_statuses()
+
+        # Reset max_tasks
+        self.args.max_tasks = max_tasks
+
+    def load_requested_statuses(self):
+        """
+        Populate the requested_statuses dict with statuses that the user is looking to find.
+        Filters for steps, task queues, workers will have already been applied
+        when creating the step_tracker attribute. Remaining filters will be applied here.
+        """
+        # Grab all the statuses based on our step tracker
+        super().load_requested_statuses()
+
+        # Apply filters to the statuses
+        filter_types = set()
+        filters = []
+        if self.args.task_status:
+            filter_types.add("status")
+            filters += self.args.task_status
+        if self.args.return_code:
+            filter_types.add("return_code")
+            filters += [f"MERLIN_{return_code}" for return_code in self.args.return_code]
+
+        # Apply the filters if necessary
+        if filters:
+            self.apply_filters(list(filter_types), filters)
+
+        # Limit the number of tasks to display if necessary
+        if self.args.max_tasks and self.args.max_tasks > 0:
+            self.apply_max_tasks_limit()
+
+    def get_user_filters(self) -> List[str]:
+        """
+        Get a filter on the statuses to display from the user. Possible options
+        for filtering:
+            - A str MAX_TASKS -> will ask the user for another input that's equivalent to the --max-tasks flag
+            - A list of statuses -> equivalent to the --task-status flag
+            - A list of return codes -> equivalent to the --return-code flag
+            - An exit keyword to leave the filter prompt without filtering
+
+        :returns: A list of strings to filter by
+        """
+        # Build the filter options
+        filter_info = {
+            "Filter Type": [
+                "Put a limit on the number of tasks to display",
+                "Filter by status",
+                "Filter by return code",
+                "Exit without filtering",
+            ],
+            "Description": [
+                "Enter 'MAX_TASKS'",
+                f"Enter a comma separated list of the following statuses you'd like to see: {VALID_STATUS_FILTERS}",
+                f"Enter a comma separated list of the following return codes you'd like to see: {VALID_RETURN_CODES}",
+                f"Enter one of the following: {VALID_EXIT_FILTERS}",
+            ],
+            "Example": ["MAX_TASKS", "FAILED, CANCELLED", "SOFT_FAIL, RETRY", "EXIT"],
+        }
+
+        # Display the filter options
+        filter_option_renderer = status_renderer_factory.get_renderer("table", disable_theme=True, disable_pager=True)
+        filter_option_renderer.layout(status_data=filter_info)
+        filter_option_renderer.render()
+
+        # Obtain and validate the filter provided by the user
+        invalid_filter = True
+        while invalid_filter:
+            user_filters = input("How would you like to filter the tasks? ")
+            # Remove spaces and split user filters by commas
+            user_filters = user_filters.replace(" ", "")
+            user_filters = user_filters.split(",")
+
+            # Ensure every filter is valid
+            for i, entry in enumerate(user_filters):
+                entry = entry.upper()
+                if entry not in ALL_VALID_FILTERS:
+                    invalid_filter = True
+                    print(f"Invalid input: {entry}. Input must be one of the following {ALL_VALID_FILTERS}")
+                    break
+                invalid_filter = False
+                user_filters[i] = entry
+
+        return user_filters
+
+    def get_user_max_tasks(self) -> int:
+        """
+        Get a limit for the amount of tasks to display from the user.
+
+        :returns: An int representing the max amount of tasks to display
+        """
+        invalid_input = True
+
+        while invalid_input:
+            try:
+                user_max_tasks = int(input("What limit would you like to set? (must be an integer greater than 0) "))
+                if user_max_tasks > 0:
+                    invalid_input = False
+                else:
+                    raise ValueError
+            except ValueError:
+                print("Invalid input. The limit must be an integer greater than 0.")
+                continue
+
+        return user_max_tasks
+
+    def filter_via_prompts(self):
+        """
+        Interact with the user to manage how many/which tasks are displayed. This helps to
+        prevent us from overloading the terminal by displaying a bazillion tasks at once.
+        """
+        # Get the filters from the user
+        user_filters = self.get_user_filters()
+
+        # TODO remove this once restart/retry functionality is implemented
+        if "RESTART" in user_filters:
+            LOG.warning("The RESTART filter is coming soon. Ignoring this filter for now...")
+            user_filters.remove("RESTART")
+        if "RETRY" in user_filters:
+            LOG.warning("The RETRY filter is coming soon. Ignoring this filter for now...")
+            user_filters.remove("RETRY")
+
+        # Variable to track whether the user wants to stop filtering
+        exit_without_filtering = False
+
+        # Process the filters
+        max_tasks_found = False
+        filter_types = []
+        for i, user_filter in enumerate(user_filters):
+            # Case 1: Exit command found, stop filtering
+            if user_filter in ("E", "EXIT"):
+                exit_without_filtering = True
+                break
+            # Case 2: MAX_TASKS command found, get the limit from the user
+            if user_filter == "MAX_TASKS":
+                max_tasks_found = True
+            # Case 3: Status filter provided, add it to the list of filter types
+            elif user_filter in VALID_STATUS_FILTERS and "status" not in filter_types:
+                filter_types.append("status")
+            # Case 4: Return Code filter provided, add it to the list of filter types and add the MERLIN prefix
+            elif user_filter in VALID_RETURN_CODES:
+                user_filters[i] = f"MERLIN_{user_filter}"
+                if "return_code" not in filter_types:
+                    filter_types.append("return_code")
+
+        # Remove the MAX_TASKS entry so we don't try to filter using it
+        try:
+            user_filters.remove("MAX_TASKS")
+        except ValueError:
+            pass
+
+        # Apply the filters and tell the user how many tasks match the filters (if necessary)
+        if not exit_without_filtering and user_filters:
+            self.apply_filters(filter_types, user_filters)
+
+        # Apply max tasks limit (if necessary)
+        if max_tasks_found:
+            user_max_tasks = self.get_user_max_tasks()
+            self.args.max_tasks = user_max_tasks
+            self.apply_max_tasks_limit()
+
+    def display(self, test_mode: bool = False):
+        """
+        Displays a task-by-task view of the status based on user filter(s).
+
+        :param `test_mode`: If true, run this in testing mode and don't print any output
+        """
+        # Check that there's statuses found and display them
+        if self.requested_statuses:
+            display_status_task_by_task(self, test_mode=test_mode)
+        else:
+            LOG.warning("No statuses to display.")
 
 
 def read_status(status_filepath: str, lock: FileLock, display_fnf_message: Optional[bool] = True) -> Dict:

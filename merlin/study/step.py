@@ -241,8 +241,23 @@ class MerlinStepRecord(_StepRecord):
             lock = FileLock(f"{self.workspace.value}/status.lock")  # pylint: disable=E0110
             status_info = read_status(status_filepath, lock)
         else:
+            # Create the parameter entries
+            cmd_params = restart_params = None
+            if self.merlin_step.params["cmd"]:
+                cmd_params = dict(self.merlin_step.params["cmd"].items())
+            if self.merlin_step.params["restart_cmd"]:
+                restart_params = dict(self.merlin_step.params["restart_cmd"].items())
+            LOG.debug(f"Cmd parameters for {self.name}: {cmd_params}; Restart params: {restart_params}")
+
             # Inititalize the status_info dict we'll be dumping to the status file
-            status_info = {self.name: {}}
+            status_info = {
+                self.name: {
+                    "parameters": {
+                        "cmd": cmd_params,
+                        "restart": restart_params,
+                    }
+                }
+            }
 
             # Add celery specific info
             if task_server == "celery":
@@ -284,6 +299,8 @@ class Step:
         self.study_name = study_name
         self.parameter_info = parameter_info
         self.__restart = False
+        self.params = {"cmd": {}, "restart_cmd": {}}
+        self.establish_params()
 
     def get_cmd(self):
         """
@@ -382,6 +399,15 @@ class Step:
         Set the restart property ensuring that restart is false
         """
         self.__restart = val
+
+    def establish_params(self):
+        """If this step uses parameters, pull them from the step param map."""
+        try:
+            step_params = self.parameter_info["step_param_map"][self.name()]
+            for cmd_type in step_params:
+                self.params[cmd_type].update(step_params[cmd_type])
+        except KeyError:
+            pass
 
     def check_if_expansion_needed(self, labels):
         """
