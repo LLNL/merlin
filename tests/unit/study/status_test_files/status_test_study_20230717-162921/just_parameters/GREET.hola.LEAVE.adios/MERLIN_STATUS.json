@@ -1,5 +1,13 @@
 {
     "just_parameters_GREET.hola.LEAVE.adios": {
+        "parameters": {
+            "cmd": {
+                "GREET": "hola"
+            },
+            "restart": {
+                "LEAVE": "adios"
+            }
+        },
         "task_queue": "just_parameters_queue",
         "worker_name": "other_worker",
         "just_parameters/GREET.hola.LEAVE.adios": {

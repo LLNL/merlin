@@ -57,6 +57,80 @@ TASKS_PER_STEP = {
 }
 NUM_ALL_REQUESTED_STATUSES = sum(TASKS_PER_STEP.values()) - TASKS_PER_STEP["unstarted_step"]
 
+# This is the requested statuses with just the failed step
+REQUESTED_STATUSES_JUST_FAILED_STEP = {
+    "fail_step": {
+        "parameters": {"cmd": None, "restart": None},
+        "task_queue": "fail_queue",
+        "worker_name": "other_worker",
+        "fail_step": {
+            "status": "FAILED",
+            "return_code": "MERLIN_SOFT_FAIL",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0,
+        },
+    }
+}
+
+# This is the requested statuses with just the cancelled step
+REQUESTED_STATUSES_JUST_CANCELLED_STEP = {
+    "cancel_step": {
+        "parameters": {"cmd": None, "restart": None},
+        "task_queue": "cancel_queue",
+        "worker_name": "other_worker",
+        "cancel_step": {
+            "status": "CANCELLED",
+            "return_code": "MERLIN_STOP_WORKERS",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0,
+        },
+    }
+}
+
+# This is the requested statuses with both the failed step and the cancelled step
+REQUESTED_STATUSES_FAIL_AND_CANCEL = {
+    "fail_step": {
+        "parameters": {"cmd": None, "restart": None},
+        "task_queue": "fail_queue",
+        "worker_name": "other_worker",
+        "fail_step": {
+            "status": "FAILED",
+            "return_code": "MERLIN_SOFT_FAIL",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0,
+        },
+    },
+    "cancel_step": {
+        "parameters": {"cmd": None, "restart": None},
+        "task_queue": "cancel_queue",
+        "worker_name": "other_worker",
+        "cancel_step": {
+            "status": "CANCELLED",
+            "return_code": "MERLIN_STOP_WORKERS",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0,
+        },
+    },
+}
+
+FORMATTED_STATUSES_FAIL_AND_CANCEL = {
+    "step_name": ["fail_step", "cancel_step"],
+    "step_workspace": ["fail_step", "cancel_step"],
+    "status": ["FAILED", "CANCELLED"],
+    "return_code": ["MERLIN_SOFT_FAIL", "MERLIN_STOP_WORKERS"],
+    "elapsed_time": ["0d:00h:00m:00s", "0d:00h:00m:00s"],
+    "run_time": ["0d:00h:00m:00s", "0d:00h:00m:00s"],
+    "restarts": [0, 0],
+    "cmd_parameters": ["-------", "-------"],
+    "restart_parameters": ["-------", "-------"],
+    "task_queue": ["fail_queue", "cancel_queue"],
+    "worker_name": ["other_worker", "other_worker"],
+}
+
 # This variable holds the state_info dict of every step from VALID_WORKSPACE
 # i.e. the format returned by the display() method when run in test_mode
 DISPLAY_INFO = {
@@ -133,188 +207,198 @@ DISPLAY_INFO = {
     "unstarted_step": "UNSTARTED",
 }
 
-# This variable holds every status from the VALID_WORKSPACE in the format used when we first load them in
-# i.e. the format loaded in by load_requested_statuses()
-ALL_REQUESTED_STATUSES = {
+RUN_TIME_INFO = {
     "just_parameters": {
         "avg_run_time": "01m:15s",
         "run_time_std_dev": "±15s",
-        "just_parameters_GREET.hello.LEAVE.goodbye": {
-            "task_queue": "just_parameters_queue",
-            "worker_name": "other_worker",
-            "just_parameters/GREET.hello.LEAVE.goodbye": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:02m:00s",
-                "run_time": "0d:00h:01m:30s",
-                "restarts": 0,
-            },
-        },
-        "just_parameters_GREET.hola.LEAVE.adios": {
-            "task_queue": "just_parameters_queue",
-            "worker_name": "other_worker",
-            "just_parameters/GREET.hola.LEAVE.adios": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:01m:00s",
-                "run_time": "0d:00h:01m:00s",
-                "restarts": 0,
-            },
-        },
     },
     "just_samples": {
         "avg_run_time": "01m:30s",
         "run_time_std_dev": "±21s",
-        "just_samples": {
-            "task_queue": "just_samples_queue",
-            "worker_name": "sample_worker",
-            "just_samples/00": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:02m:00s",
-                "run_time": "0d:00h:01m:00s",
-                "restarts": 0,
-            },
-            "just_samples/01": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:02m:00s",
-                "run_time": "0d:00h:01m:15s",
-                "restarts": 0,
-            },
-            "just_samples/02": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:02m:00s",
-                "run_time": "0d:00h:01m:30s",
-                "restarts": 0,
-            },
-            "just_samples/03": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:02m:00s",
-                "run_time": "0d:00h:01m:45s",
-                "restarts": 0,
-            },
-            "just_samples/04": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:02m:00s",
-                "run_time": "0d:00h:02m:00s",
-                "restarts": 0,
-            },
-        },
     },
     "params_and_samples": {
         "avg_run_time": "16s",
         "run_time_std_dev": "±06s",
-        "params_and_samples_GREET.hello": {
-            "task_queue": "both_queue",
-            "worker_name": "sample_worker",
-            "params_and_samples/GREET.hello/00": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:15s",
-                "run_time": "0d:00h:00m:10s",
-                "restarts": 0,
-            },
-            "params_and_samples/GREET.hello/01": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:15s",
-                "run_time": "0d:00h:00m:11s",
-                "restarts": 0,
-            },
-            "params_and_samples/GREET.hello/02": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:15s",
-                "run_time": "0d:00h:00m:12s",
-                "restarts": 0,
-            },
-            "params_and_samples/GREET.hello/03": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:15s",
-                "run_time": "0d:00h:00m:13s",
-                "restarts": 0,
-            },
-            "params_and_samples/GREET.hello/04": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:15s",
-                "run_time": "0d:00h:00m:14s",
-                "restarts": 0,
-            },
-        },
-        "params_and_samples_GREET.hola": {
-            "task_queue": "both_queue",
-            "worker_name": "sample_worker",
-            "params_and_samples/GREET.hola/00": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:30s",
-                "run_time": "0d:00h:00m:10s",
-                "restarts": 0,
-            },
-            "params_and_samples/GREET.hola/01": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:30s",
-                "run_time": "0d:00h:00m:18s",
-                "restarts": 0,
-            },
-            "params_and_samples/GREET.hola/02": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:30s",
-                "run_time": "0d:00h:00m:23s",
-                "restarts": 0,
-            },
-            "params_and_samples/GREET.hola/03": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:30s",
-                "run_time": "0d:00h:00m:29s",
-                "restarts": 0,
-            },
-            "params_and_samples/GREET.hola/04": {
-                "status": "FINISHED",
-                "return_code": "MERLIN_SUCCESS",
-                "elapsed_time": "0d:00h:00m:30s",
-                "run_time": "0d:00h:00m:16s",
-                "restarts": 0,
-            },
-        },
     },
     "fail_step": {
         "avg_run_time": "00s",
         "run_time_std_dev": "±00s",
-        "fail_step": {
-            "task_queue": "fail_queue",
-            "worker_name": "other_worker",
-            "fail_step": {
-                "status": "FAILED",
-                "return_code": "MERLIN_SOFT_FAIL",
-                "elapsed_time": "0d:00h:00m:00s",
-                "run_time": "0d:00h:00m:00s",
-                "restarts": 0,
-            },
-        },
     },
     "cancel_step": {
         "avg_run_time": "00s",
         "run_time_std_dev": "±00s",
+    },
+}
+
+# This variable holds every status from the VALID_WORKSPACE in the format used when we first load them in
+# i.e. the format loaded in by load_requested_statuses()
+ALL_REQUESTED_STATUSES = {
+    "just_parameters_GREET.hello.LEAVE.goodbye": {
+        "parameters": {"cmd": {"GREET": "hello"}, "restart": {"LEAVE": "goodbye"}},
+        "task_queue": "just_parameters_queue",
+        "worker_name": "other_worker",
+        "just_parameters/GREET.hello.LEAVE.goodbye": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:30s",
+            "restarts": 0,
+        },
+    },
+    "just_parameters_GREET.hola.LEAVE.adios": {
+        "parameters": {"cmd": {"GREET": "hola"}, "restart": {"LEAVE": "adios"}},
+        "task_queue": "just_parameters_queue",
+        "worker_name": "other_worker",
+        "just_parameters/GREET.hola.LEAVE.adios": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:01m:00s",
+            "run_time": "0d:00h:01m:00s",
+            "restarts": 0,
+        },
+    },
+    "just_samples": {
+        "parameters": {"cmd": None, "restart": None},
+        "task_queue": "just_samples_queue",
+        "worker_name": "sample_worker",
+        "just_samples/00": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:00s",
+            "restarts": 0,
+        },
+        "just_samples/01": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:15s",
+            "restarts": 0,
+        },
+        "just_samples/02": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:30s",
+            "restarts": 0,
+        },
+        "just_samples/03": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:45s",
+            "restarts": 0,
+        },
+        "just_samples/04": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:02m:00s",
+            "restarts": 0,
+        },
+    },
+    "params_and_samples_GREET.hello": {
+        "parameters": {"cmd": {"GREET": "hello"}, "restart": None},
+        "task_queue": "both_queue",
+        "worker_name": "sample_worker",
+        "params_and_samples/GREET.hello/00": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:15s",
+            "run_time": "0d:00h:00m:10s",
+            "restarts": 0,
+        },
+        "params_and_samples/GREET.hello/01": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:15s",
+            "run_time": "0d:00h:00m:11s",
+            "restarts": 0,
+        },
+        "params_and_samples/GREET.hello/02": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:15s",
+            "run_time": "0d:00h:00m:12s",
+            "restarts": 0,
+        },
+        "params_and_samples/GREET.hello/03": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:15s",
+            "run_time": "0d:00h:00m:13s",
+            "restarts": 0,
+        },
+        "params_and_samples/GREET.hello/04": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:15s",
+            "run_time": "0d:00h:00m:14s",
+            "restarts": 0,
+        },
+    },
+    "params_and_samples_GREET.hola": {
+        "parameters": {"cmd": {"GREET": "hola"}, "restart": None},
+        "task_queue": "both_queue",
+        "worker_name": "sample_worker",
+        "params_and_samples/GREET.hola/00": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:10s",
+            "restarts": 0,
+        },
+        "params_and_samples/GREET.hola/01": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:18s",
+            "restarts": 0,
+        },
+        "params_and_samples/GREET.hola/02": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:23s",
+            "restarts": 0,
+        },
+        "params_and_samples/GREET.hola/03": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:29s",
+            "restarts": 0,
+        },
+        "params_and_samples/GREET.hola/04": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:16s",
+            "restarts": 0,
+        },
+    },
+    "fail_step": {
+        "parameters": {"cmd": None, "restart": None},
+        "task_queue": "fail_queue",
+        "worker_name": "other_worker",
+        "fail_step": {
+            "status": "FAILED",
+            "return_code": "MERLIN_SOFT_FAIL",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0,
+        },
+    },
+    "cancel_step": {
+        "parameters": {"cmd": None, "restart": None},
+        "task_queue": "cancel_queue",
+        "worker_name": "other_worker",
         "cancel_step": {
-            "task_queue": "cancel_queue",
-            "worker_name": "other_worker",
-            "cancel_step": {
-                "status": "CANCELLED",
-                "return_code": "MERLIN_STOP_WORKERS",
-                "elapsed_time": "0d:00h:00m:00s",
-                "run_time": "0d:00h:00m:00s",
-                "restarts": 0,
-            },
+            "status": "CANCELLED",
+            "return_code": "MERLIN_STOP_WORKERS",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0,
         },
     },
 }
@@ -323,23 +407,23 @@ ALL_REQUESTED_STATUSES = {
 # i.e. the format returned by format_status_for_display()
 ALL_FORMATTED_STATUSES = {
     "step_name": [
-        "just_parameters",
-        "just_parameters",
+        "just_parameters_GREET.hello.LEAVE.goodbye",
+        "just_parameters_GREET.hola.LEAVE.adios",
         "just_samples",
         "just_samples",
         "just_samples",
         "just_samples",
         "just_samples",
-        "params_and_samples",
-        "params_and_samples",
-        "params_and_samples",
-        "params_and_samples",
-        "params_and_samples",
-        "params_and_samples",
-        "params_and_samples",
-        "params_and_samples",
-        "params_and_samples",
-        "params_and_samples",
+        "params_and_samples_GREET.hello",
+        "params_and_samples_GREET.hello",
+        "params_and_samples_GREET.hello",
+        "params_and_samples_GREET.hello",
+        "params_and_samples_GREET.hello",
+        "params_and_samples_GREET.hola",
+        "params_and_samples_GREET.hola",
+        "params_and_samples_GREET.hola",
+        "params_and_samples_GREET.hola",
+        "params_and_samples_GREET.hola",
         "fail_step",
         "cancel_step",
     ],
@@ -449,6 +533,48 @@ ALL_FORMATTED_STATUSES = {
         "0d:00h:00m:00s",
     ],
     "restarts": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "cmd_parameters": [
+        "GREET:hello",
+        "GREET:hola",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "GREET:hello",
+        "GREET:hello",
+        "GREET:hello",
+        "GREET:hello",
+        "GREET:hello",
+        "GREET:hola",
+        "GREET:hola",
+        "GREET:hola",
+        "GREET:hola",
+        "GREET:hola",
+        "-------",
+        "-------",
+    ],
+    "restart_parameters": [
+        "LEAVE:goodbye",
+        "LEAVE:adios",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+        "-------",
+    ],
     "task_queue": [
         "just_parameters_queue",
         "just_parameters_queue",

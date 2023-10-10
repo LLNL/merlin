@@ -1,5 +1,9 @@
 {
     "just_samples": {
+        "parameters": {
+            "cmd": null,
+            "restart": null
+        },
         "task_queue": "just_samples_queue",
         "worker_name": "sample_worker",
         "just_samples/00": {

@@ -1,5 +1,11 @@
 {
     "params_and_samples_GREET.hola": {
+        "parameters": {
+            "cmd": {
+                "GREET": "hola"
+            },
+            "restart": null
+        },
         "task_queue": "both_queue",
         "worker_name": "sample_worker",
         "params_and_samples/GREET.hola/00": {
