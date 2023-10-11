@@ -48,7 +48,7 @@ merlin:
     column_labels:
     - WORLD
     - NUM
-    file: /g/g20/gunny/Projects/merlin/tests/unit/study/status_test_files/status_test_study_20230717-162921/merlin_info/samples.csv
+    file: the test setup will modify this value
     generate:
       cmd: python3 make_samples.py --filepath=<purposefully modified here> --number=5
     level_max_dirs: 25

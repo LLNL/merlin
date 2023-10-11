@@ -28,7 +28,8 @@
 # SOFTWARE.
 ###############################################################################
 """This module handles creating a formatted task-by-task status display"""
-from typing import Dict, List, Union
+import logging
+from typing import Dict, List, Optional, Union
 
 from maestrowf import BaseStatusRenderer, FlatStatusRenderer, StatusRendererFactory
 from rich import box
@@ -38,7 +39,10 @@ from rich.table import Table
 from rich.theme import Theme
 
 
-def format_label(label_to_format: str, delimiter: str = "_") -> str:
+LOG = logging.getLogger(__name__)
+
+
+def format_label(label_to_format: str, delimiter: Optional[str] = "_") -> str:
     """
     Take a string of the format 'word1_word2_...' and format it so it's prettier.
     This would turn the string above to 'Word1 Word2 ...'.
@@ -50,6 +54,9 @@ def format_label(label_to_format: str, delimiter: str = "_") -> str:
     return label_to_format.replace(delimiter, " ").title()
 
 
+# TODO see if we can modify these classes to use the json format of statuses rather than csv
+# - Maestro uses csv format and we adopted a lot of their code here
+# - the code might be easier to follow if we use json rather than csv format
 class MerlinDefaultRenderer(BaseStatusRenderer):
     """
     This class handles the default status formatting for task-by-task display.
@@ -91,6 +98,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
             param_list = []
         else:
             param_list = params.split(";")
+        LOG.debug(f"Creating param subtable using the following params: {param_list}")
 
         if len(param_list) > 0 and param_list[0]:
             if len(param_list) % 2 != 0:
@@ -163,6 +171,8 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         :param `cols`: A list of column names for each task info entry we'll display
         :returns: A rich Table with the formatted task info for a sub step
         """
+        LOG.debug(f"Creating task details subtable using the following columns: {cols}")
+
         # We'll need a new task_details list now
         task_details = Table(title="Task Details")
 
@@ -180,7 +190,9 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
         return task_details
 
-    def layout(self, status_data, study_title=None, status_time=None):  # pylint: disable=R0912,R0914
+    def layout(
+        self, status_data, study_title: Optional[str] = None, status_time: Optional[str] = None
+    ):  # pylint: disable=R0912,R0914
         """
         Setup the overall layout of the display
 
@@ -202,6 +214,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
                 table_title += "\n"
             table_title += f"Study: {study_title}"
         if table_title:
+            LOG.debug(f"Table title: {table_title}")
             self._status_table.title = table_title
 
         self._status_table.box = box.HEAVY
@@ -221,6 +234,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         ]
 
         num_rows = len(self._status_data[cols[0]])
+        LOG.debug(f"Setting the layout for {num_rows} rows of statuses")
 
         # We're going to create a sub table for each step so initialize that here
         step_table_tracker = {}
@@ -257,7 +271,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         for step_table in step_table_tracker.values():
             self._status_table.add_row(step_table, end_section=True)
 
-    def render(self, theme: Dict[str, str] = None):
+    def render(self, theme: Optional[Dict[str, str]] = None):
         """
         Do the actual printing
 
@@ -265,11 +279,13 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         """
         # Apply any theme customization
         if theme:
+            LOG.debug(f"Applying theme: {theme}")
             for key, value in theme.items():
                 self._theme_dict[key] = value
 
         # If we're disabling the theme, we need to set all themes in the theme dict to none
         if self.disable_theme:
+            LOG.debug("Disabling theme.")
             for key in self._theme_dict:
                 self._theme_dict[key] = "none"
 
@@ -299,7 +315,7 @@ class MerlinFlatRenderer(FlatStatusRenderer):
         self.disable_theme = kwargs.pop("disable_theme", False)
         self.disable_pager = kwargs.pop("disable_pager", False)
 
-    def layout(self, status_data: Dict[str, List[Union[str, int]]], study_title: str = None):
+    def layout(self, status_data: Dict[str, List[Union[str, int]]], study_title: Optional[str] = None):
         """
         Setup the layout of the display
 
@@ -317,7 +333,7 @@ class MerlinFlatRenderer(FlatStatusRenderer):
 
         super().layout(status_data, study_title=study_title)
 
-    def render(self, theme: Dict[str, str] = None):
+    def render(self, theme: Optional[Dict[str, str]] = None):
         """
         Do the actual printing
 
@@ -325,11 +341,13 @@ class MerlinFlatRenderer(FlatStatusRenderer):
         """
         # Apply any theme customization
         if theme:
+            LOG.debug(f"Applying theme: {theme}")
             for key, value in theme.items():
                 self._theme_dict[key] = value
 
         # If we're disabling the theme, we need to set all themes in the theme dict to none
         if self.disable_theme:
+            LOG.debug("Disabling theme.")
             for key in self._theme_dict:
                 self._theme_dict[key] = "none"
 

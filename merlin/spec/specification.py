@@ -40,7 +40,7 @@ import shlex
 from copy import deepcopy
 from datetime import timedelta
 from io import StringIO
-from typing import Dict
+from typing import Dict, List
 
 import yaml
 from maestrowf.specification import YAMLSpecification
@@ -568,10 +568,12 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             i += 1
         return string
 
-    def get_step_worker_map(self):
+    def get_step_worker_map(self) -> Dict[str, List[str]]:
         """
         Creates a dictionary with step names as keys and a list of workers
         associated with each step as values. The inverse of get_worker_step_map().
+
+        :returns: A dict mapping step names to workers
         """
         steps = self.get_study_step_names()
         step_worker_map = {step_name: [] for step_name in steps}
@@ -586,10 +588,12 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                     step_worker_map[step].append(worker_name)
         return step_worker_map
 
-    def get_worker_step_map(self):
+    def get_worker_step_map(self) -> Dict[str, List[str]]:
         """
         Creates a dictionary with worker names as keys and a list of steps
         associated with each worker as values. The inverse of get_step_worker_map().
+
+        :returns: A dict mapping workers to the steps they watch
         """
         worker_step_map = {}
         steps = self.get_study_step_names()
@@ -606,10 +610,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     def get_task_queues(self, omit_tag=False):
         """
-        Returns a dictionary of steps and their corresponding task queues.
+        Creates a dictionary of steps and their corresponding task queues.
+        This is the inverse of get_queue_step_relationship()
 
         :param `omit_tag`: If True, omit the celery queue tag.
-        :returns: the inverse of get_queue_step_relationship().
+        :returns: A dict of steps and their corresponding task queues
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
@@ -622,7 +627,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 queues[step.name] = CONFIG.celery.queue_tag + step.run["task_queue"]
         return queues
 
-    def get_queue_step_relationship(self) -> Dict:
+    def get_queue_step_relationship(self) -> Dict[str, List[str]]:
         """
         Builds a dictionary of task queues and their associated steps.
         This returns the inverse of get_task_queues().
@@ -649,12 +654,13 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         return relationship_tracker
 
-    def get_queue_list(self, steps, omit_tag=False):
+    def get_queue_list(self, steps, omit_tag=False) -> set:
         """
-        Return a sorted list of queues corresponding to spec steps
+        Return a sorted set of queues corresponding to spec steps
 
         :param `steps`: a list of step names or ['all']
         :param `omit_tag`: If True, omit the celery queue tag.
+        :returns: A sorted set of queues corresponding to spec steps
         """
         queues = self.get_task_queues(omit_tag=omit_tag)
         if steps[0] == "all":
@@ -723,7 +729,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         return tasks_per_step
 
-    def _create_param_maps(self, param_gen, expanded_labels, label_param_map):
+    def _create_param_maps(self, param_gen: "ParameterGenerator", expanded_labels: Dict, label_param_map: Dict):  # noqa: F821
         """
         Given a parameters block like so:
         global.parameters:
@@ -747,7 +753,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                     expanded_labels[token] = [expanded_label]
                 label_param_map[expanded_label] = {token: param}
 
-    def get_step_param_map(self):  # pylint: disable=R0914
+    def get_step_param_map(self) -> Dict:  # pylint: disable=R0914
         """
         Create a mapping of parameters used for each step. Each step will have a cmd
         to search for parameters in and could also have a restart cmd to check, too.

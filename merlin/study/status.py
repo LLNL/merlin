@@ -57,6 +57,8 @@ from merlin.utils import (
 
 
 LOG = logging.getLogger(__name__)
+
+# Status constants
 VALID_STATUS_FILTERS = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "CANCELLED", "DRY_RUN", "UNKNOWN")
 VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY", "DRY_SUCCESS", "UNRECOGNIZED")
 VALID_EXIT_FILTERS = ("E", "EXIT")
@@ -331,7 +333,7 @@ class Status:
         self.full_step_name_map[started_step_name] = set()
 
         # Traverse the step workspace and look for MERLIN_STATUS files
-        LOG.info(f"Traversing '{step_workspace}' to find MERLIN_STATUS.json files...")
+        LOG.debug(f"Traversing '{step_workspace}' to find MERLIN_STATUS.json files...")
         for root, _, _ in os.walk(step_workspace):
             # Search for a status file
             status_filepath = os.path.join(root, "MERLIN_STATUS.json")
@@ -350,7 +352,7 @@ class Status:
                 # Merge the statuses we read with the dict tracking all statuses for this step
                 dict_deep_merge(step_statuses, statuses_read)
 
-        LOG.info(
+        LOG.debug(
             f"Done traversing '{step_workspace}'. Read in {num_statuses_read} "
             f"{'statuses' if num_statuses_read != 1 else 'status'}."
         )
@@ -388,12 +390,11 @@ class Status:
         run_times_in_seconds = []
 
         # This outer loop will only loop once
-        LOG.info(f"Calculating run time avg and std dev for {step_name}...")
+        LOG.debug(f"Calculating run time avg and std dev for step '{step_name}'...")
         for overall_step_info in step_statuses.values():
             for step_info_key, step_status_info in overall_step_info.items():
                 # Ignore non-workspace keys
                 if step_info_key in NON_WORKSPACE_KEYS:
-                    LOG.debug(f"Skipping {step_info_key}.")
                     continue
 
                 # Ignore any run times that have yet to be calculated
@@ -422,9 +423,9 @@ class Status:
             # Pretty format the avg and std dev and store them as new entries in the run time info
             self.run_time_info[step_name]["avg_run_time"] = pretty_format_hms(convert_timestring(run_time_mean))
             self.run_time_info[step_name]["run_time_std_dev"] = f"±{pretty_format_hms(convert_timestring(run_time_std_dev))}"
-            LOG.info(f"Run time avg and std dev for {step_name} calculated.")
+            LOG.debug(f"Run time avg and std dev for step '{step_name}' calculated.")
 
-    def display(self, test_mode=False) -> Dict:
+    def display(self, test_mode: Optional[bool] = False) -> Dict:
         """
         Displays the high level summary of the status.
 
@@ -541,7 +542,7 @@ class Status:
                         reformatted_statuses[key].append(val)
 
         # For local runs, there will be no task queue or worker name so delete these entries
-        for celery_specific_key in ("task_queue", "worker_name"):
+        for celery_specific_key in CELERY_KEYS:
             if not reformatted_statuses[celery_specific_key]:
                 del reformatted_statuses[celery_specific_key]
 
@@ -580,10 +581,10 @@ class DetailedStatus(Status):
         for filter_arg in filters_to_check[:]:
             if filter_arg not in valid_options:
                 if not suppress_warnings:
-                    LOG.warning(f"The filter {filter_arg} is invalid. {warning_msg}")
+                    LOG.warning(f"The filter '{filter_arg}' is invalid. {warning_msg}")
                 filters_to_check.remove(filter_arg)
 
-    def _verify_filter_args(self, suppress_warnings=False):
+    def _verify_filter_args(self, suppress_warnings: Optional[bool] = False):
         """
         Verify that our filters are all valid and able to be used.
 
@@ -603,13 +604,16 @@ class DetailedStatus(Status):
 
         # Make sure max_tasks is a positive int
         if self.args.max_tasks is not None:
+            LOG.debug(f"args.max_tasks before verification: {self.args.max_tasks}")
             if self.args.max_tasks < 1 or not isinstance(self.args.max_tasks, int):
                 if not suppress_warnings:
                     LOG.warning("The value of --max-tasks must be an integer greater than 0. Ignoring --max-tasks...")
                 self.args.max_tasks = None
+            LOG.debug(f"args.max_tasks after verification: {self.args.max_tasks}")
 
         # Make sure task_status is valid
         if self.args.task_status:
+            LOG.debug(f"args.task_status before verificaiton: {self.args.task_status}")
             self.args.task_status = [x.upper() for x in self.args.task_status]
             self._verify_filters(
                 self.args.task_status,
@@ -617,9 +621,11 @@ class DetailedStatus(Status):
                 suppress_warnings,
                 warning_msg="Removing this status from the list of statuses to filter by...",
             )
+            LOG.debug(f"args.task_status after verification: {self.args.task_status}")
 
         # Ensure return_code is valid
         if self.args.return_code:
+            LOG.debug(f"args.return_code before verification: {self.args.return_code}")
             # TODO remove this code block and uncomment the line below once you've
             # implemented entries for restarts/retries
             idx = 0
@@ -640,9 +646,11 @@ class DetailedStatus(Status):
                 suppress_warnings,
                 warning_msg="Removing this code from the list of return codes to filter by...",
             )
+            LOG.debug(f"args.return_code after verification: {self.args.return_code}")
 
         # Ensure every task queue provided exists
         if self.args.task_queues:
+            LOG.debug(f"args.task_queues before verification: {self.args.task_queues}")
             existing_queues = self.spec.get_queue_list(["all"], omit_tag=True)
             self._verify_filters(
                 self.args.task_queues,
@@ -650,9 +658,11 @@ class DetailedStatus(Status):
                 suppress_warnings,
                 warning_msg="Removing this queue from the list of queues to filter by...",
             )
+            LOG.debug(f"args.task_queues after verification: {self.args.task_queues}")
 
         # Ensure every worker provided exists
         if self.args.workers:
+            LOG.debug(f"args.workers before verification: {self.args.workers}")
             worker_names = self.spec.get_worker_names()
             self._verify_filters(
                 self.args.workers,
@@ -660,6 +670,7 @@ class DetailedStatus(Status):
                 suppress_warnings,
                 warning_msg="Removing this worker from the list of workers to filter by...",
             )
+            LOG.debug(f"args.workers after verification: {self.args.workers}")
 
     def _process_workers(self):
         """
@@ -762,6 +773,7 @@ class DetailedStatus(Status):
         for step_name, overall_step_info in self.requested_statuses.items():
             sub_step_workspaces = sorted(list(overall_step_info.keys() - NON_WORKSPACE_KEYS))
             if len(sub_step_workspaces) == 0:
+                LOG.debug(f"Removing step '{step_name}' from the requested_statuses dict since it didn't match our filters.")
                 del result[step_name]
 
         self.requested_statuses = result
@@ -793,6 +805,7 @@ class DetailedStatus(Status):
 
                 # If our filters aren't a match for this task then delete it
                 if not found_a_match:
+                    LOG.debug(f"No matching filter for '{sub_step_workspace}'; removing it from requested_statuses.")
                     del result[step_name][sub_step_workspace]
 
         # Get the number of tasks found with our filters
@@ -810,7 +823,11 @@ class DetailedStatus(Status):
         so that there are at most a max_tasks amount of tasks.
         """
         # Make sure the max_tasks variable is set to a reasonable number and store that value
-        if self.args.max_tasks and self.args.max_tasks > self.num_requested_statuses:
+        if self.args.max_tasks > self.num_requested_statuses:
+            LOG.debug(
+                f"'max_tasks' was set to {self.args.max_tasks} but only {self.num_requested_statuses} statuses exist. "
+                f"Setting 'max_tasks' to {self.num_requested_statuses}."
+            )
             self.args.max_tasks = self.num_requested_statuses
         max_tasks = self.args.max_tasks
 
@@ -865,7 +882,7 @@ class DetailedStatus(Status):
             self.apply_filters(list(filter_types), filters)
 
         # Limit the number of tasks to display if necessary
-        if self.args.max_tasks and self.args.max_tasks > 0:
+        if self.args.max_tasks is not None and self.args.max_tasks > 0:
             self.apply_max_tasks_limit()
 
     def get_user_filters(self) -> List[str]:
@@ -997,7 +1014,7 @@ class DetailedStatus(Status):
             self.args.max_tasks = user_max_tasks
             self.apply_max_tasks_limit()
 
-    def display(self, test_mode: bool = False):
+    def display(self, test_mode: Optional[bool] = False):
         """
         Displays a task-by-task view of the status based on user filter(s).
 

@@ -261,7 +261,7 @@ def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = 
     # If the pager is disabled then we need to be careful not to overload the terminal with a bazillion tasks
     if args.disable_pager and not args.no_prompts:
         # Setting the limit by default to be 250 tasks before asking for additional filters
-        no_prompt_limit = 25 if not test_mode else 15
+        no_prompt_limit = 250 if not test_mode else 15
         while status_obj.num_requested_statuses > no_prompt_limit:
             # See if the user wants to apply additional filters
             apply_additional_filters = input(
@@ -380,11 +380,6 @@ def display_status_summary(  # pylint: disable=R0912
         # Loop through each entry for the step (if there's no parameters there will just be one entry)
         for full_step_name in status_obj.full_step_name_map[sstep]:
             overall_step_info = status_obj.requested_statuses[full_step_name]
-
-            # for real_step_name, overall_step_info in step_statuses.items():
-            # # Non-dict entries are just for run time info at the moment
-            # if not isinstance(overall_step_info, dict):
-            #     continue
 
             # If this was a non-local run we should have a task queue and worker name to add to state_info
             if "task_queue" in overall_step_info:
