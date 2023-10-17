@@ -255,7 +255,6 @@ def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = 
         LOG.error(f"Layout '{args.layout}' not implemented.")
         raise
 
-    # Get the number of tasks we're about to display
     cancel_display = False
 
     # If the pager is disabled then we need to be careful not to overload the terminal with a bazillion tasks
@@ -378,8 +377,6 @@ def display_status_summary(  # pylint: disable=R0912
 
         # Initialize a var to track # of completed tasks and grab the statuses for this step
         num_completed_tasks = 0
-
-        # step_statuses = status_obj.requested_statuses[sstep]
 
         # Loop through each entry for the step (if there's no parameters there will just be one entry)
         for full_step_name in status_obj.full_step_name_map[sstep]:
