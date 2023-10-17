@@ -287,8 +287,12 @@ def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = 
     # Display the statuses
     if not cancel_display and not test_mode:
         if status_obj.num_requested_statuses > 0:
-            formatted_statuses = status_obj.format_status_for_display()
-            status_renderer.layout(status_data=formatted_statuses, study_title=status_obj.workspace)
+            # Table layout requires csv format (since it uses Maestro's renderer)
+            if args.layout == "table":
+                status_data = status_obj.format_status_for_csv()
+            else:
+                status_data = status_obj.requested_statuses
+            status_renderer.layout(status_data=status_data, study_title=status_obj.workspace)
             status_renderer.render()
 
         for ustep in status_obj.step_tracker["unstarted_steps"]:

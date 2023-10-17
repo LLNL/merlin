@@ -55,7 +55,8 @@ from merlin.log_formatter import setup_logging
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
-from merlin.study.status import VALID_RETURN_CODES, VALID_STATUS_FILTERS, DetailedStatus, Status
+from merlin.study.status import DetailedStatus, Status
+from merlin.study.status_constants import VALID_RETURN_CODES, VALID_STATUS_FILTERS
 from merlin.study.status_renderers import status_renderer_factory
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS, verify_dirpath, verify_filepath

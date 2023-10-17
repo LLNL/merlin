@@ -230,7 +230,7 @@ class TestMerlinStatus(unittest.TestCase):
         """
         Test the csv dump functionality. This tests both the write and append
         dump functionalities. The file needs to exist already for an append so it's
-        better to keep these tests together. This covers the format_status_for_display
+        better to keep these tests together. This covers the format_status_for_csv
         and dump methods.
         """
         # Create the status object that we'll run tests on

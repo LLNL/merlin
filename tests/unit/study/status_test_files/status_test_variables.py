@@ -404,7 +404,7 @@ ALL_REQUESTED_STATUSES = {
 }
 
 # This variable holds every status from the VALID_WORKSPACE in the format used for displaying/dumping statuses
-# i.e. the format returned by format_status_for_display()
+# i.e. the format returned by format_status_for_csv()
 ALL_FORMATTED_STATUSES = {
     "step_name": [
         "just_parameters_GREET.hello.LEAVE.goodbye",

@@ -45,6 +45,14 @@ from tabulate import tabulate
 from merlin.common.dumper import dump_handler
 from merlin.display import ANSI_COLORS, display_status_summary, display_status_task_by_task
 from merlin.spec.expansion import get_spec_with_expansion
+from merlin.study.status_constants import (
+    ALL_VALID_FILTERS,
+    CELERY_KEYS,
+    NON_WORKSPACE_KEYS,
+    VALID_EXIT_FILTERS,
+    VALID_RETURN_CODES,
+    VALID_STATUS_FILTERS,
+)
 from merlin.study.status_renderers import status_renderer_factory
 from merlin.utils import (
     convert_timestring,
@@ -57,16 +65,6 @@ from merlin.utils import (
 
 
 LOG = logging.getLogger(__name__)
-
-# Status constants
-VALID_STATUS_FILTERS = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "CANCELLED", "DRY_RUN", "UNKNOWN")
-VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY", "DRY_SUCCESS", "UNRECOGNIZED")
-VALID_EXIT_FILTERS = ("E", "EXIT")
-ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS + ("MAX_TASKS",)
-CELERY_KEYS = set(["task_queue", "worker_name"])
-RUN_TIME_STAT_KEYS = set(["avg_run_time", "run_time_std_dev"])
-NON_WORKSPACE_KEYS = CELERY_KEYS.union(RUN_TIME_STAT_KEYS)
-NON_WORKSPACE_KEYS.add("parameters")
 
 
 class Status:
@@ -454,7 +452,7 @@ class Status:
         """
         # Reformat the statuses to a new dict where the keys are the column labels and rows are the values
         LOG.debug("Formatting statuses for csv dump...")
-        statuses_to_write = self.format_status_for_display()
+        statuses_to_write = self.format_status_for_csv()
         LOG.debug("Statuses formatted.")
 
         # Add date entries as the first column then update this dict with the statuses we just reformatted
@@ -481,9 +479,9 @@ class Status:
         # Dump the information
         dump_handler(self.args.dump, dump_info)
 
-    def format_status_for_display(self) -> Dict:
+    def format_status_for_csv(self) -> Dict:
         """
-        Reformat our statuses to display so they can use Maestro's status renderer layouts.
+        Reformat our statuses to csv format so they can use Maestro's status renderer layouts.
 
         :returns: A formatted dictionary where each key is a column and the values are the rows
                   of information to display for that column.

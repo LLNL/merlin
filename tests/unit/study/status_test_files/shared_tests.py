@@ -243,7 +243,7 @@ def run_csv_dump_test(status_obj: Union[Status, DetailedStatus], expected_output
     """
     Test the csv dump functionality. This tests both the write and append
     dump functionalities. The file needs to exist already for an append so it's
-    better to keep these tests together. This covers the format_status_for_display
+    better to keep these tests together. This covers the format_status_for_csv
     and dump methods.
 
     :param `status_obj`: A Status or DetailedStatus object that we're testing the dump functionality for

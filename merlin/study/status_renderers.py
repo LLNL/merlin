@@ -36,7 +36,10 @@ from rich import box
 from rich.columns import Columns
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 from rich.theme import Theme
+
+from merlin.study.status_constants import NON_WORKSPACE_KEYS
 
 
 LOG = logging.getLogger(__name__)
@@ -54,9 +57,6 @@ def format_label(label_to_format: str, delimiter: Optional[str] = "_") -> str:
     return label_to_format.replace(delimiter, " ").title()
 
 
-# TODO see if we can modify these classes to use the json format of statuses rather than csv
-# - Maestro uses csv format and we adopted a lot of their code here
-# - the code might be easier to follow if we use json rather than csv format
 class MerlinDefaultRenderer(BaseStatusRenderer):
     """
     This class handles the default status formatting for task-by-task display.
@@ -72,12 +72,20 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         self.disable_pager = kwargs.pop("disable_pager", False)
 
         # Setup default theme
+        # TODO modify this theme to add more colors
         self._theme_dict = {
-            "State": "bold red",
+            "INITIALIZED": "blue",
+            "RUNNING": "blue",
+            "DRY_RUN": "green",
+            "FINISHED": "green",
+            "CANCELLED": "yellow",
+            "FAILED": "bold red",
+            "UNKNOWN": "bold red",
             "Step Name": "bold",
             "Workspace": "blue",
             "row_style": "",
             "row_style_dim": "dim",
+            "row_style_failed": "bold red",
             "col_style_1": "",
             "col_style_2": "blue",
             "background": "grey7",
@@ -86,97 +94,93 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         # Setup the status table that will contain our formatted status
         self._status_table = Table.grid(padding=0)
 
-    def create_param_subtable(self, params: str, param_type: str) -> Table:
+    def create_param_table(self, parameters: Dict[str, Dict[str, str]]) -> Columns:
         """
         Create the parameter section of the display
 
-        :param `params`: A string of the form 'TOKEN:value;TOKEN2:value2;...'
-        :param `param_type`: The type of parameter (either cmd or restart)
-        :returns: A rich Table object with the parameter info formatted appropriately
+        :param `parameters`: A dict of the form {"cmd": {"TOKEN1": "value1"}, "restart": {"TOKEN2": "value1"}}
+        :returns: A rich Columns object with the parameter info formatted appropriately
         """
-        if params == "-------":
-            param_list = []
-        else:
-            param_list = params.split(";")
-        LOG.debug(f"Creating param subtable using the following params: {param_list}")
+        param_table = []
+        # Loop through cmd and restart entries
+        for param_type, param_set in parameters.items():
+            # If there are no parameters, don't create a table
+            if param_set is None:
+                continue
 
-        if len(param_list) > 0 and param_list[0]:
-            if len(param_list) % 2 != 0:
-                param_list.append("")
+            # Set up the table for this parameter type
+            param_subtable = Table(
+                title=format_label(f"{param_type} Parameters"), show_header=False, show_lines=True, box=box.HORIZONTALS
+            )
 
-            num_param_rows = int(len(param_list) / 2)
-
-            step_params = Table(title=format_label(param_type), show_header=False, show_lines=True, box=box.HORIZONTALS)
-
-            # Note col names don't actually matter, just setting styles
+            # Col names don't actually matter, we're just creating the style here
             style = "blue" if not self.disable_theme else ""
-            step_params.add_column("name", style="")
-            step_params.add_column("val", style=style, justify="right")
-            step_params.add_column("name2", style="")
-            step_params.add_column("val2", style=style, justify="right")
+            param_subtable.add_column("token", style="")  # This col will have all the token values
+            param_subtable.add_column("val", style=style, justify="right")  # This col will have all the parameter values
+            param_subtable.add_column("padding1", style="")  # This col is just for padding in the display
+            param_subtable.add_column("padding2", style=style, justify="right")  # This col is just for padding in the display
 
-            param_idx = 0
-            for _ in range(num_param_rows):
-                this_row = []
-                for param_str in param_list[param_idx : param_idx + 2]:
-                    if param_str:
-                        this_row.extend(param_str.split(":"))
-                    else:
-                        this_row.extend(["", ""])
+            # Loop through each parameter token/val for this param type and create a row entry for each token/val
+            for token, param_val in param_set.items():
+                param_subtable.add_row(token, param_val, style="row_style")
 
-                param_idx += 2
+            # Add the sub table for this parameter type to the list that will store both sub tables
+            param_table.append(param_subtable)
 
-                step_params.add_row(*this_row, style="row_style")
-        else:
-            step_params = None
+        # Put the tables side-by-side in columns and return it
+        return Columns(param_table)
 
-        return step_params
-
-    def create_step_subtable(self, row_num: int) -> Table:
+    def create_step_table(
+        self,
+        step_name: str,
+        parameters: Dict[str, Dict[str, str]],
+        task_queue: Optional[str] = None,
+        worker_name: Optional[str] = None,
+    ) -> Table:
         """
         Create each step entry in the display
 
-        :param `row_num`: The index of the row we're currently at in the status_data object
+        :param `step_name`: The name of the step that we're setting the layout for
+        :param `parameters`: The parameters dict for this step
+        :param `task_queue`: The name of the task queue associated with this step if one was provided
+        :param `worker_name`: The name of the worker that ran this step if one was provided
         :returns: A rich Table object with info for one sub step (here a 'sub step' is referencing a step
                   with multiple parameters; each parameter set will have it's own entry in the output)
         """
+        # Initialize the table that will have our step entry information
         step_table = Table(box=box.SIMPLE_HEAVY, show_header=False)
-        # Dummy columns
+
+        # Dummy columns used just for aligning our content properly
         step_table.add_column("key")
         step_table.add_column("val", overflow="fold")
-        # Top level contains step name and workspace name, full table width
-        step_table.add_row("STEP:", self._status_data["step_name"][row_num], style="Step Name")
-        if "worker_name" in self._status_data:
-            step_table.add_row("WORKER NAME:", self._status_data["worker_name"][row_num], style="Workspace")
-        if "task_queue" in self._status_data:
-            step_table.add_row("TASK QUEUE:", self._status_data["task_queue"][row_num], style="Workspace")
+
+        # Top level contains step name and may contain task queue and worker name
+        step_table.add_row("STEP:", step_name, style="Step Name")
+        if worker_name is not None:
+            step_table.add_row("WORKER NAME:", worker_name, style="Workspace")
+        if task_queue is not None:
+            step_table.add_row("TASK QUEUE:", task_queue, style="Workspace")
 
         step_table.add_row("", "")  # just a little whitespace
 
         # Add optional parameter tables, if step has parameters
-        param_subtables = []
-        for param_type in ("cmd_parameters", "restart_parameters"):
-            params = self._status_data[param_type][row_num]
-            step_params = self.create_param_subtable(params, param_type)
-            if step_params is not None:
-                param_subtables.append(step_params)
-        step_table.add_row("", Columns(param_subtables))
+        param_table = self.create_param_table(parameters)
+        step_table.add_row("", param_table)
 
         return step_table
 
-    def create_task_details_subtable(self, cols: List[str]) -> Table:
+    def create_task_details_table(self, task_statuses: Dict) -> Table:
         """
         Create the task details section of the display
 
-        :param `cols`: A list of column names for each task info entry we'll display
+        :param `task_statuses`: A dict of task statuses to format into our layout
         :returns: A rich Table with the formatted task info for a sub step
         """
-        LOG.debug(f"Creating task details subtable using the following columns: {cols}")
-
-        # We'll need a new task_details list now
+        # Initialize the task details table
         task_details = Table(title="Task Details")
 
-        # Setup the column styles
+        # Setup the columns
+        cols = ["Step Workspace", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts"]
         for nominal_col_num, col in enumerate(cols):
             if col in list(self._theme_dict):
                 col_style = col
@@ -188,11 +192,36 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
             task_details.add_column(format_label(col), style=col_style, overflow="fold")
 
+        # Set up the rows
+        row_style = "row_style"
+        for step_workspace, status_info in task_statuses.items():
+            # Ignore the non-workspace keys
+            if step_workspace in NON_WORKSPACE_KEYS:
+                continue
+
+            # Create each row entry
+            status_entry = [step_workspace]
+            for status_info_key, status_info_val in status_info.items():
+                # For status entries we'll color the column differently
+                if status_info_key == "status":
+                    status_entry.append(Text(status_info_val, style=self._theme_dict[status_info_val]))
+                    # If we have a failed task then let's make that stand out by bolding and styling the whole row red
+                    if status_info_val in ("FAILED", "UNKNOWN"):
+                        row_style = "row_style_failed"
+                else:
+                    status_entry.append(str(status_info_val))
+
+            # Add the row entry to the task details table
+            task_details.add_row(*status_entry, style=row_style)
+
+            # Change styling for each row so statuses stand out more
+            row_style = "row_style" if row_style == "row_style_dim" else "row_style_dim"
+
         return task_details
 
     def layout(
         self, status_data, study_title: Optional[str] = None, status_time: Optional[str] = None
-    ):  # pylint: disable=R0912,R0914
+    ):  # pylint: disable=W0237
         """
         Setup the overall layout of the display
 
@@ -205,8 +234,8 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         else:
             raise ValueError("Status data must be a dict")
 
+        # Create the table title
         table_title = ""
-
         if status_time:
             table_title += f"Status as of {status_time}"
         if study_title:
@@ -217,6 +246,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
             LOG.debug(f"Table title: {table_title}")
             self._status_table.title = table_title
 
+        # Create settings for the entire display
         self._status_table.box = box.HEAVY
         self._status_table.show_lines = True
         self._status_table.show_edge = False
@@ -226,49 +256,25 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         # Uses folding overflow for very long step/workspace names
         self._status_table.add_column("Step", overflow="fold")
 
-        # Note, filter on columns here
-        cols = [
-            key
-            for key in self._status_data.keys()
-            if (key not in ("step_name", "cmd_parameters", "restart_parameters", "task_queue", "worker_name"))
-        ]
+        # Build out the status table by sectioning it off at each step
+        for step_name, overall_step_info in self._status_data.items():
+            task_queue = overall_step_info["task_queue"] if "task_queue" in overall_step_info else None
+            worker_name = overall_step_info["worker_name"] if "worker_name" in overall_step_info else None
 
-        num_rows = len(self._status_data[cols[0]])
-        LOG.debug(f"Setting the layout for {num_rows} rows of statuses")
+            # Set up the top section of each step entry
+            # (this section will have step name, task queue, worker name, and parameters)
+            step_table = self.create_step_table(
+                step_name, overall_step_info["parameters"], task_queue=task_queue, worker_name=worker_name
+            )
 
-        # We're going to create a sub table for each step so initialize that here
-        step_table_tracker = {}
-        for row_num, step_name in enumerate(self._status_data["step_name"]):
-            if step_name not in step_table_tracker:
-                step_table_tracker[step_name] = self.create_step_subtable(row_num)
+            # Set up the bottom section of each step entry
+            # (this section will have task-by-task info; status, return code, run time, etc.)
+            sample_details_table = self.create_task_details_table(overall_step_info)
 
-        prev_step = ""
-        # Setup one table to contain each steps' info
-        for row in range(num_rows):
-            curr_step = self._status_data["step_name"][row]
+            # Add the bottom section to the top section
+            step_table.add_row("", sample_details_table)
 
-            # If we're on a new step and it's not the first one we're looking at,
-            # add the previously built task_details sub-table to the step sub table
-            if curr_step != prev_step and row != 0:
-                step_table_tracker[prev_step].add_row("", task_details)  # noqa: F821
-
-            # If we're on a new step, create a new step sub-table and task details sub-table
-            if curr_step != prev_step:
-                task_details = self.create_task_details_subtable(cols)
-
-            if row % 2 == 0:
-                row_style = "dim"
-            else:
-                row_style = "none"
-
-            task_details.add_row(*[f"{self._status_data[key][row]}" for key in cols], style=row_style)
-
-            if row == num_rows - 1:
-                step_table_tracker[curr_step].add_row("", task_details)
-
-            prev_step = curr_step
-
-        for step_table in step_table_tracker.values():
+            # Add this step to the full status table
             self._status_table.add_row(step_table, end_section=True)
 
     def render(self, theme: Optional[Dict[str, str]] = None):
@@ -315,7 +321,9 @@ class MerlinFlatRenderer(FlatStatusRenderer):
         self.disable_theme = kwargs.pop("disable_theme", False)
         self.disable_pager = kwargs.pop("disable_pager", False)
 
-    def layout(self, status_data: Dict[str, List[Union[str, int]]], study_title: Optional[str] = None):
+    def layout(
+        self, status_data: Dict[str, List[Union[str, int]]], study_title: Optional[str] = None
+    ):  # pylint: disable=W0221
         """
         Setup the layout of the display
 
