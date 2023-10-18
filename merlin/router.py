@@ -37,10 +37,14 @@ decoupled from the logic the tasks are running.
 """
 import logging
 import os
+import subprocess
 import time
 from datetime import datetime
+from typing import List, Optional
 
+from merlin.exceptions import NoWorkersException
 from merlin.study.celeryadapter import (
+    check_celery_workers_processing,
     create_celery_config,
     get_workers_from_app,
     purge_celery_tasks,
@@ -236,43 +240,96 @@ def create_config(task_server: str, config_dir: str, broker: str, test: str) -> 
         LOG.error("Only celery can be configured currently.")
 
 
-def check_merlin_status(args, spec):
+def wait_for_workers(sleep: int, task_server: str, spec: "MerlinSpec"):
     """
-    Function to check merlin workers and queues to keep
-    the allocation alive
+    Wait on workers to start up. Check on worker start 10 times with `sleep` seconds between
+    each check. If no workers are started in time, raise an error to kill the monitor (there
+    was likely an issue with the task server that caused worker launch to fail).
+
+    :param `sleep`: An integer representing the amount of seconds to sleep between each check
+    :param `task_server`: The task server from which to look for workers
+    :param `spec`: A MerlinSpec object representing the spec we're monitoring
+    """
+    # Get the names of the workers that we're looking for
+    worker_names = spec.get_worker_names()
+    LOG.info(f"Checking for the following workers: {worker_names}")
+
+    # Loop until workers are detected
+    count = 0
+    max_count = 10
+    while count < max_count:
+        # This list will include strings comprised of the worker name with the hostname e.g. worker_name@host.
+        worker_status = get_workers(task_server)
+        LOG.info(f"Monitor: checking for workers, running workers = {worker_status} ...")
+
+        # Check to see if any of the workers we're looking for in 'worker_names' have started
+        check = any(any(iwn in iws for iws in worker_status) for iwn in worker_names)
+        if check:
+            break
+
+        # Increment count and sleep until the next check
+        count += 1
+        time.sleep(sleep)
+
+    # If no workers were started in time, raise an exception to stop the monitor
+    if count == max_count:
+        raise NoWorkersException("Monitor: no workers available to process the non-empty queue")
+
+
+def check_workers_processing(queues_in_spec: List[str], task_server: str, app_name: str) -> bool:
+    """
+    Check if any workers are still processing tasks by querying the task server.
+
+    :param `queues_in_spec`: A list of queues to check if tasks are still active in
+    :param `task_server`: The task server from which to query
+    :param `app_name`: The name of the app we're querying
+    :returns: True if workers are still processing tasks, False otherwise
+    """
+    if task_server == "celery":
+        return check_celery_workers_processing(queues_in_spec, app_name)
+    else:
+        LOG.error("Celery is not specified as the task server!")
+        return False
+
+
+def check_merlin_status(args: "Namespace", spec: "MerlinSpec", app_name: Optional[str] = "merlin"):
+    """
+    Function to check merlin workers and queues to keep the allocation alive
 
     :param `args`: parsed CLI arguments
-    :param `spec`: the parsed spec.yaml
+    :param `spec`: the parsed spec.yaml as a MerlinSpec object
+    :param `app_name`: the name of the celery app to monitor
     """
+    # Initialize the variable to track if there are still active tasks
+    active_tasks = False
+
+    # Get info about jobs and workers in our spec from celery
     queue_status = query_status(args.task_server, spec, args.steps, verbose=False)
 
+    # Count the number of jobs and workers that are active
     total_jobs = 0
     total_consumers = 0
     for _, jobs, consumers in queue_status:
         total_jobs += jobs
         total_consumers += consumers
+    LOG.info(f"Monitor: found {total_jobs} jobs in queues and {total_consumers} workers alive")
 
-    if total_jobs > 0 and total_consumers == 0:
-        # Determine if any of the workers are on this allocation
-        worker_names = spec.get_worker_names()
+    # If we're here, jobs should be queued
+    # If there are no workers, wait for the workers to start
+    if total_consumers == 0:
+        wait_for_workers(args.sleep, args.task_server, spec)
 
-        # Loop until workers are detected.
-        count = 0
-        max_count = 10
-        while count < max_count:
-            # This list will include strings comprised of the worker name with the hostname e.g. worker_name@host.
-            worker_status = get_workers(args.task_server)
-            LOG.info(f"Monitor: checking for workers, running workers = {worker_status} ...")
+    # If we're here, workers have started and jobs should be queued
+    if total_jobs > 0:
+        active_tasks = True
+    # If there are no jobs left, see if any workers are still processing them
+    elif total_jobs == 0:
+        # Get the queues defined in the spec
+        queues_in_spec = spec.get_queue_list(["all"])
+        LOG.debug(f"queues_in_spec: {queues_in_spec}")
 
-            check = any(any(iwn in iws for iws in worker_status) for iwn in worker_names)
-            if check:
-                break
+        # Check for any tasks that are still being processed
+        active_tasks = check_workers_processing(queues_in_spec, args.task_server, app_name)
 
-            count += 1
-            time.sleep(args.sleep)
-
-        if count == max_count:
-            LOG.error("Monitor: no workers available to process the non-empty queue")
-            total_jobs = 0
-
-    return total_jobs
+    LOG.debug(f"active_tasks: {active_tasks}")
+    return active_tasks

@@ -37,6 +37,7 @@ import socket
 import subprocess
 import time
 from contextlib import suppress
+from typing import List
 
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
@@ -296,6 +297,34 @@ def get_workers_from_app():
     if workers is None:
         return []
     return [*workers]
+
+
+def check_celery_workers_processing(queues_in_spec: List[str], app_name: str) -> bool:
+    """
+    Query celery to see if any workers are still processing tasks.
+
+    :param `queues_in_spec`: A list of queues to check if tasks are still active in
+    :param `app_name`: The name of the app we're querying
+    :returns: True if workers are still processing tasks, False otherwise
+    """
+    # Inspect active call and store stdout
+    inspect_active_cmd = ["celery", "-A", app_name, "inspect", "active"]
+    LOG.debug(f"inspect_active_cmd: {inspect_active_cmd}")
+    process = subprocess.run(inspect_active_cmd, capture_output=True, text=True)
+
+    # Parse stdout for each queue to see if there are still tasks being processed
+    if process.returncode == 0:
+        LOG.debug(f"celery inspect active stdout: {process.stdout}")
+        LOG.info("Workers are active")
+        active_tasks = any(queue in process.stdout for queue in queues_in_spec)
+    else:
+        LOG.error(
+            "Error running celery inspect active, setting 'active_tasks' to be False. " \
+            f"There are likely no workers active. {process.stderr}"
+        )
+        active_tasks = False
+
+    return active_tasks
 
 
 def _get_workers_to_start(spec, steps):
