@@ -39,10 +39,10 @@ import time
 from contextlib import suppress
 from typing import Dict, List
 
+from amqp.exceptions import ChannelError
+
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
-
-from amqp.exceptions import ChannelError
 
 
 LOG = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ def get_running_queues():
     return running_queues
 
 
-def get_queues(app):
+def get_active_celery_queues(app):
     """Get all active queues and workers for a celery application.
 
     Unlike get_running_queues, this goes through the application's server.
@@ -111,7 +111,7 @@ def get_queues(app):
     :example:
 
     >>> from merlin.celery import app
-    >>> queues, workers = get_queues(app)
+    >>> queues, workers = get_active_celery_queues(app)
     >>> queue_names = [*queues]
     >>> workers_on_q0 = queues[queue_names[0]]
     >>> workers_not_on_q0 = [worker for worker in workers
@@ -133,7 +133,7 @@ def get_queues(app):
 
 def get_active_workers(app):
     """
-    This is the inverse of get_queues() defined above. This function
+    This is the inverse of get_active_celery_queues() defined above. This function
     builds a dict where the keys are worker names and the values are lists
     of queues attached to the worker.
 
@@ -221,7 +221,7 @@ def query_celery_workers(spec_worker_names, queues, workers_regex):
     # --queues flag
     if queues:
         # Get a mapping between queues and the workers watching them
-        queue_worker_map, _ = get_queues(app)
+        queue_worker_map, _ = get_active_celery_queues(app)
         # Remove duplicates and prepend the celery queue tag to all queues
         queues = list(set(queues))
         celerize_queues(queues)
@@ -285,7 +285,9 @@ def query_celery_queues(queues: List[str]) -> Dict[str, List[str]]:
             for queue in queues:
                 try:
                     # Count the number of jobs and consumers for each queue
-                    _, queue_info[queue]["jobs"], queue_info[queue]["consumers"] = channel.queue_declare(queue=queue, passive=True)
+                    _, queue_info[queue]["jobs"], queue_info[queue]["consumers"] = channel.queue_declare(
+                        queue=queue, passive=True
+                    )
                 # Redis likes to throw this error when a queue we're looking for has no jobs
                 except ChannelError:
                     pass
@@ -343,7 +345,7 @@ def check_celery_workers_processing(queues_in_spec: List[str], app_name: str) ->
         active_tasks = any(queue in process.stdout for queue in queues_in_spec)
     else:
         LOG.error(
-            "Error running celery inspect active, setting 'active_tasks' to be False. " \
+            "Error running celery inspect active, setting 'active_tasks' to be False. "
             f"There are likely no workers active. {process.stderr}"
         )
         active_tasks = False
@@ -663,7 +665,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     from merlin.celery import app  # pylint: disable=C0415
 
     LOG.debug(f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}")
-    active_queues, _ = get_queues(app)
+    active_queues, _ = get_active_celery_queues(app)
 
     # If not specified, get all the queues
     if queues is None:
