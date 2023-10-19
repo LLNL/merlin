@@ -37,7 +37,6 @@ decoupled from the logic the tasks are running.
 """
 import logging
 import os
-import subprocess
 import time
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -260,7 +259,7 @@ def get_active_queues(task_server: str) -> Dict[str, List[str]]:
     return active_queues
 
 
-def wait_for_workers(sleep: int, task_server: str, spec: "MerlinSpec"):
+def wait_for_workers(sleep: int, task_server: str, spec: "MerlinSpec"):  # noqa
     """
     Wait on workers to start up. Check on worker start 10 times with `sleep` seconds between
     each check. If no workers are started in time, raise an error to kill the monitor (there
@@ -305,14 +304,17 @@ def check_workers_processing(queues_in_spec: List[str], task_server: str, app_na
     :param `app_name`: The name of the app we're querying
     :returns: True if workers are still processing tasks, False otherwise
     """
+    result = False
+
     if task_server == "celery":
-        return check_celery_workers_processing(queues_in_spec, app_name)
+        result = check_celery_workers_processing(queues_in_spec, app_name)
     else:
         LOG.error("Celery is not specified as the task server!")
-        return False
+
+    return result
 
 
-def check_merlin_status(args: "Namespace", spec: "MerlinSpec", app_name: Optional[str] = "merlin") -> bool:
+def check_merlin_status(args: "Namespace", spec: "MerlinSpec", app_name: Optional[str] = "merlin") -> bool:  # noqa
     """
     Function to check merlin workers and queues to keep the allocation alive
 

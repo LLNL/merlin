@@ -298,8 +298,8 @@ def query_celery_queues(queues: List[str]) -> Dict[str, List[str]]:
         # Get a dict of active queues by querying the celery app
         active_queues = app.control.inspect().active_queues()
         if active_queues is not None:
-            # Loop through each worker in the output
-            for worker, active_queue_list in active_queues.items():
+            # Loop through each active queue that was found
+            for active_queue_list in active_queues.values():
                 # Loop through each queue that each worker is watching
                 for active_queue in active_queue_list:
                     # If this is a queue we're looking for, increment the consumer count
