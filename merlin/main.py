@@ -256,8 +256,9 @@ def query_status(args):
     print(banner_small)
     spec, _ = get_merlin_spec_with_override(args)
     ret = router.query_status(args.task_server, spec, args.steps)
-    for name, jobs, consumers in ret:
-        print(f"{name:30} - Workers: {consumers:10} - Queued Tasks: {jobs:10}")
+
+    for name, queue_info in ret.items():
+        print(f"{name:30} - Workers: {queue_info['consumers']:10} - Queued Tasks: {queue_info['jobs']:10}")
     if args.csv is not None:
         router.dump_status(ret, args.csv)
 

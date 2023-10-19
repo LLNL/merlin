@@ -37,10 +37,12 @@ import socket
 import subprocess
 import time
 from contextlib import suppress
-from typing import List
+from typing import Dict, List
 
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
+
+from amqp.exceptions import ChannelError
 
 
 LOG = logging.getLogger(__name__)
@@ -261,26 +263,48 @@ def query_celery_workers(spec_worker_names, queues, workers_regex):
     print()
 
 
-def query_celery_queues(queues):
-    """Return stats for queues specified.
+def query_celery_queues(queues: List[str]) -> Dict[str, List[str]]:
+    """
+    Build a dict of information about the number of jobs and consumers attached
+    to specific queues that we want information on.
 
-    Send results to the log.
+    :param `queues`: A list of the queues we want to know about
+    :returns: A dict of info on the number of jobs and consumers for each queue in `queues`
     """
     from merlin.celery import app  # pylint: disable=C0415
+    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
-    connection = app.connection()
-    found_queues = []
-    try:
-        channel = connection.channel()
-        for queue in queues:
-            try:
-                name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
-                found_queues.append((name, jobs, consumers))
-            except Exception as e:  # pylint: disable=C0103,W0718
-                LOG.warning(f"Cannot find queue {queue} on server.{e}")
-    finally:
-        connection.close()
-    return found_queues
+    # Initialize the dictionary with the info we want about our queues
+    queue_info = {queue: {"consumers": 0, "jobs": 0} for queue in queues}
+
+    # Open a connection via our Celery app
+    with app.connection() as conn:
+        # Open a channel inside our connection
+        with conn.channel() as channel:
+            # Loop through all the queues we're searching for
+            for queue in queues:
+                try:
+                    # Count the number of jobs and consumers for each queue
+                    _, queue_info[queue]["jobs"], queue_info[queue]["consumers"] = channel.queue_declare(queue=queue, passive=True)
+                # Redis likes to throw this error when a queue we're looking for has no jobs
+                except ChannelError:
+                    pass
+
+    # Redis doesn't keep track of consumers attached to queues like rabbit does
+    # so we have to count this ourselves here
+    if CONFIG.broker.name in ("rediss", "redis"):
+        # Get a dict of active queues by querying the celery app
+        active_queues = app.control.inspect().active_queues()
+        if active_queues is not None:
+            # Loop through each worker in the output
+            for worker, active_queue_list in active_queues.items():
+                # Loop through each queue that each worker is watching
+                for active_queue in active_queue_list:
+                    # If this is a queue we're looking for, increment the consumer count
+                    if active_queue["name"] in queues:
+                        queue_info[active_queue["name"]]["consumers"] += 1
+
+    return queue_info
 
 
 def get_workers_from_app():

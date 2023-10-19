@@ -155,12 +155,12 @@ def dump_status(query_return, csv_file):
     with open(csv_file, mode=fmode) as f:  # pylint: disable=W1514,C0103
         if f.mode == "w":  # add the header
             f.write("# time")
-            for name, job, consumer in query_return:
+            for name in query_return:
                 f.write(f",{name}:tasks,{name}:consumers")
             f.write("\n")
         f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        for name, job, consumer in query_return:
-            f.write(f",{job},{consumer}")
+        for queue_info in query_return.values():
+            f.write(f",{queue_info['jobs']},{queue_info['consumers']}")
         f.write("\n")
 
 
@@ -292,26 +292,28 @@ def check_workers_processing(queues_in_spec: List[str], task_server: str, app_na
         return False
 
 
-def check_merlin_status(args: "Namespace", spec: "MerlinSpec", app_name: Optional[str] = "merlin"):
+def check_merlin_status(args: "Namespace", spec: "MerlinSpec", app_name: Optional[str] = "merlin") -> bool:
     """
     Function to check merlin workers and queues to keep the allocation alive
 
     :param `args`: parsed CLI arguments
     :param `spec`: the parsed spec.yaml as a MerlinSpec object
     :param `app_name`: the name of the celery app to monitor
+    :returns: True if there are still tasks being processed, False otherwise
     """
     # Initialize the variable to track if there are still active tasks
     active_tasks = False
 
     # Get info about jobs and workers in our spec from celery
     queue_status = query_status(args.task_server, spec, args.steps, verbose=False)
+    LOG.info(f"Monitor: queue_status: {queue_status}")
 
     # Count the number of jobs and workers that are active
-    total_jobs = 0
     total_consumers = 0
-    for _, jobs, consumers in queue_status:
-        total_jobs += jobs
-        total_consumers += consumers
+    total_jobs = 0
+    for queue_info in queue_status.values():
+        total_jobs += queue_info["jobs"]
+        total_consumers += queue_info["consumers"]
     LOG.info(f"Monitor: found {total_jobs} jobs in queues and {total_consumers} workers alive")
 
     # If we're here, jobs should be queued
