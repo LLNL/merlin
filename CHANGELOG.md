@@ -4,6 +4,11 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Fixed
+- The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
+- The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
+
 ## [1.11.0]
 ### Added
 - New reserved variable:
