@@ -335,7 +335,7 @@ def construct_worker_launch_command(parsed_batch: Dict, nodes: int) -> str:
     scheduler_legend: Dict = construct_scheduler_legend(parsed_batch, nodes)
     workload_manager: str = get_batch_type(scheduler_legend)
 
-    print(f"parsed_batch: {parsed_batch}")
+    LOG.debug(f"parsed_batch: {parsed_batch}")
 
     if parsed_batch["btype"] == "pbs" and workload_manager == parsed_batch["btype"]:
         raise TypeError("The PBS scheduler is only enabled for 'batch: flux' type")
@@ -343,7 +343,7 @@ def construct_worker_launch_command(parsed_batch: Dict, nodes: int) -> str:
     if parsed_batch["btype"] == "slurm" and workload_manager not in ("lsf", "flux", "pbs"):
         workload_manager = "slurm"
 
-    print(f"workload_manager: {workload_manager}")
+    LOG.debug(f"workload_manager: {workload_manager}")
 
     try:
         launch_command = scheduler_legend[workload_manager]["launch"]
