@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.3.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -407,13 +407,81 @@ def define_tests():  # pylint: disable=R0914,R0915
         },
         "dry launch flux": {
             "cmds": f"{run} {flux} --dry --local --no-errors --vars N_SAMPLES=2 OUTPUT_PATH=./{OUTPUT_DIR}",
-            "conditions": StepFileHasRegex(
-                "runs",
-                "*/runs.slurm.sh",
-                "flux_test",
-                OUTPUT_DIR,
-                get_flux_cmd("flux", no_errors=True),
-            ),
+            "conditions": [
+                StepFileHasRegex(
+                    "runs",
+                    "*/runs.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    get_flux_cmd("flux", no_errors=True),
+                ),
+                ##################
+                # VLAUNCHER TESTS
+                ##################
+                StepFileHasRegex(
+                    "vlauncher_test",
+                    "vlauncher_test.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    r"flux run -n \$\{MERLIN_PROCS\} -N \$\{MERLIN_NODES\} -c \$\{MERLIN_CORES\}",
+                ),
+                StepFileHasRegex(
+                    "vlauncher_test_step_defaults",
+                    "vlauncher_test_step_defaults.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    r"MERLIN_GPUS=1",
+                ),
+                StepFileHasRegex(
+                    "vlauncher_test_step_defaults",
+                    "vlauncher_test_step_defaults.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    r"MERLIN_NODES=6",
+                ),
+                StepFileHasRegex(
+                    "vlauncher_test_step_defaults",
+                    "vlauncher_test_step_defaults.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    r"MERLIN_PROCS=3",
+                ),
+                StepFileHasRegex(
+                    "vlauncher_test_step_defaults",
+                    "vlauncher_test_step_defaults.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    r"MERLIN_CORES=2",
+                ),
+                StepFileHasRegex(
+                    "vlauncher_test_no_step_defaults",
+                    "vlauncher_test_no_step_defaults.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    r"MERLIN_GPUS=0",
+                ),
+                StepFileHasRegex(
+                    "vlauncher_test_no_step_defaults",
+                    "vlauncher_test_no_step_defaults.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    r"MERLIN_NODES=1",
+                ),
+                StepFileHasRegex(
+                    "vlauncher_test_no_step_defaults",
+                    "vlauncher_test_no_step_defaults.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    r"MERLIN_PROCS=1",
+                ),
+                StepFileHasRegex(
+                    "vlauncher_test_no_step_defaults",
+                    "vlauncher_test_no_step_defaults.slurm.sh",
+                    "flux_test",
+                    OUTPUT_DIR,
+                    r"MERLIN_CORES=1",
+                ),
+            ],
             "run type": "local",
         },
         "dry launch lsf": {

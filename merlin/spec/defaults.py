@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.3.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -51,4 +51,12 @@ WORKER = {"steps": ["all"], "nodes": None, "batch": None}
 SAMPLES = {
     "generate": {"cmd": "echo 'Insert sample-generating command here'"},
     "level_max_dirs": 25,
+}
+
+# Values of the form (step key to search for, default value if no step key found)
+VLAUNCHER_VARS = {
+    "MERLIN_NODES": ("nodes", 1),
+    "MERLIN_PROCS": ("procs", 1),
+    "MERLIN_CORES": ("cores per task", 1),
+    "MERLIN_GPUS": ("gpus", 0),
 }

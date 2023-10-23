@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.10.3.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -299,7 +299,7 @@ def construct_scheduler_legend(parsed_batch: Dict, nodes: int) -> Dict:
         "lsf": {
             "check cmd": ["jsrun", "--help"],
             "expected check output": b"jsrun",
-            "launch": f"jsrun -a 1 -c ALL_CPUS -g ALL_SGPUS --bind=none -n {nodes}",
+            "launch": f"jsrun -a 1 -c ALL_CPUS -g ALL_GPUS --bind=none -n {nodes}",
         },
         # pbs is mainly a placeholder in case a user wants to try it (we don't have it at the lab so it's mostly untested)
         "pbs": {
@@ -335,11 +335,15 @@ def construct_worker_launch_command(parsed_batch: Dict, nodes: int) -> str:
     scheduler_legend: Dict = construct_scheduler_legend(parsed_batch, nodes)
     workload_manager: str = get_batch_type(scheduler_legend)
 
+    LOG.debug(f"parsed_batch: {parsed_batch}")
+
     if parsed_batch["btype"] == "pbs" and workload_manager == parsed_batch["btype"]:
         raise TypeError("The PBS scheduler is only enabled for 'batch: flux' type")
 
     if parsed_batch["btype"] == "slurm" and workload_manager not in ("lsf", "flux", "pbs"):
         workload_manager = "slurm"
+
+    LOG.debug(f"workload_manager: {workload_manager}")
 
     try:
         launch_command = scheduler_legend[workload_manager]["launch"]
