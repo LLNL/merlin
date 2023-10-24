@@ -31,15 +31,16 @@
 This module contains pytest fixtures to be used throughout the entire
 integration test suite.
 """
-import os
-import pytest
-import redis
 import multiprocessing
+import os
 import subprocess
 from time import sleep
 from typing import Dict, List
 
+import pytest
+import redis
 from celery import Celery
+
 
 try:
     from urllib import quote
@@ -51,6 +52,7 @@ class RedisServerError(Exception):
     """
     Exception to signal that the server wasn't pinged properly.
     """
+
     def __init__(self, message=None):
         super().__init__(message)
 
@@ -59,6 +61,7 @@ class ServerInitError(Exception):
     """
     Exception to signal that there was an error initializing the server.
     """
+
     def __init__(self, message=None):
         super().__init__(message)
 
@@ -118,7 +121,9 @@ def redis_pass(merlin_server_dir: str) -> str:
         with open(f"{merlin_server_dir}/redis.pass", "r") as f:
             redis_password = f.readline().strip()
     except FileNotFoundError as e:
-        raise ServerInitError(f"The redis.pass file was not created, likely a problem with the 'merlin server init' command. {e}")
+        raise ServerInitError(
+            f"The redis.pass file was not created, likely a problem with the 'merlin server init' command. {e}"
+        )
     return redis_password
 
 
@@ -146,16 +151,10 @@ def redis_server(redis_pass: str, redis_pass_celery_format: str) -> str:
     """
     # Start the local redis server
     try:
-        subprocess.run(
-            "merlin server start",
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+        subprocess.run("merlin server start", shell=True, capture_output=True, text=True, timeout=5)
     except subprocess.TimeoutExpired:
         pass
-    
+
     # Ensure the server started properly
     host = "localhost"
     port = 6379
@@ -189,7 +188,7 @@ def celery_app(redis_server: str) -> Celery:
 def worker_queue_map() -> Dict[str, str]:
     """
     Worker and queue names to be used throughout tests
-    
+
     :returns: A dict of dummy worker/queue associations
     """
     return {f"test_worker_{i}": f"test_queue_{i}" for i in range(3)}
@@ -235,7 +234,7 @@ def wait_for_worker_launch(app: Celery, num_workers: int, verbose: bool = False)
     # If all workers are not ready after the maximum wait time, raise an error
     if not are_workers_ready(app, num_workers, verbose=verbose):
         raise TimeoutError("Celery workers did not start within the expected time.")
-    
+
     if verbose:
         print("workers launched")
 
@@ -263,7 +262,7 @@ def shutdown_processes(worker_processes: List[multiprocessing.Process], echo_pro
     for echo_process in echo_processes:
         echo_process.terminate()
         echo_process.wait()
-    
+
     # The echo processes will spawn 3 sleep inf processes that we also need to kill
     subprocess.run("ps ux | grep 'sleep inf' | grep -v grep | awk '{print $2}' | xargs kill", shell=True)
 
