@@ -40,7 +40,7 @@ from contextlib import suppress
 from subprocess import TimeoutExpired, run
 
 # Pylint complains that we didn't install this module but it's defined locally so ignore
-from test_definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
+from tests.integration.definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
 
 from merlin.display import tabulate_info
 
