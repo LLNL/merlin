@@ -235,7 +235,7 @@ def run_tests(args, tests):  # pylint: disable=R0914
             total += 1
             continue
         dot_length = 50 - len(test_name) - len(str(test_label))
-        print(f"TEST {test_label}: {test_name}{'.'*dot_length}", end="")
+        print(f"TEST {test_label}: {test_name}{'.' * dot_length}", end="")
         # Check the format of the test definition
         definition_issues = get_definition_issues(test)
         if definition_issues:
