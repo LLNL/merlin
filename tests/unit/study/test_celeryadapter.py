@@ -30,19 +30,12 @@
 """
 Tests for the celeryadapter module.
 """
-import csv
-import json
-import os
-from datetime import datetime
 from typing import Dict
 
 import celery
-from deepdiff import DeepDiff
 
 from merlin.config import Config
-from merlin.spec.specification import MerlinSpec
 from merlin.study import celeryadapter
-from tests.conftest import celery_app, launch_workers, worker_queue_map
 
 
 class TestActiveQueues:
@@ -51,7 +44,7 @@ class TestActiveQueues:
     It will run tests where we need active queues to interact with.
     """
 
-    def test_query_celery_queues(self, launch_workers: "Fixture"):
+    def test_query_celery_queues(self, launch_workers: "Fixture"):  # noqa: F821
         """
         Test the query_celery_queues function by providing it with a list of active queues.
         This should return a list of tuples. Each tuple will contain information
@@ -60,7 +53,7 @@ class TestActiveQueues:
         # TODO Modify query_celery_queues so the output for a redis broker is the same
         # as the output for rabbit broker
 
-    def test_get_running_queues(self, launch_workers: "Fixture", worker_queue_map: Dict[str, str]):
+    def test_get_running_queues(self, launch_workers: "Fixture", worker_queue_map: Dict[str, str]):  # noqa: F821
         """
         Test the get_running_queues function with queues active.
         This should return a list of active queues.
@@ -71,7 +64,9 @@ class TestActiveQueues:
         result = celeryadapter.get_running_queues("test_app", test_mode=True)
         assert sorted(result) == sorted(list(worker_queue_map.values()))
 
-    def test_get_queues_active(self, celery_app: celery.Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]):
+    def test_get_queues_active(
+        self, celery_app: celery.Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
+    ):
         """
         Test the get_queues function with queues active.
         This should return a tuple where the first entry is a dict of queue info
