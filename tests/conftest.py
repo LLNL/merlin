@@ -39,13 +39,8 @@ from typing import Dict, List
 
 import pytest
 import redis
+from _pytest.tmpdir import TempPathFactory
 from celery import Celery
-
-
-try:
-    from urllib import quote
-except ImportError:
-    from urllib.parse import quote
 
 
 class RedisServerError(Exception):
@@ -53,27 +48,21 @@ class RedisServerError(Exception):
     Exception to signal that the server wasn't pinged properly.
     """
 
-    def __init__(self, message=None):
-        super().__init__(message)
-
 
 class ServerInitError(Exception):
     """
     Exception to signal that there was an error initializing the server.
     """
 
-    def __init__(self, message=None):
-        super().__init__(message)
-
 
 @pytest.fixture(scope="session")
-def temp_output_dir(tmp_path_factory: "TempPathFactory") -> str:
+def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
     """
     This fixture will create a temporary directory to store output files of integration tests.
     The temporary directory will be stored at /tmp/`whoami`/pytest-of-`whoami`/. There can be at most
     3 temp directories in this location so upon the 4th test run, the 1st temp directory will be removed.
 
-    :param `tmp_path_factory`: A built in factory with pytest to help create temp paths for testing
+    :param tmp_path_factory: A built in factory with pytest to help create temp paths for testing
     :yields: The path to the temp output directory we'll use for this test run
     """
     # Log the cwd, then create and move into the temporary one
@@ -88,65 +77,48 @@ def temp_output_dir(tmp_path_factory: "TempPathFactory") -> str:
 
 
 @pytest.fixture(scope="session")
-def merlin_server_dir(temp_output_dir: str) -> str:
+def redis_pass() -> str:
+    """
+    This fixture represents the password to the merlin test server.
+
+    :returns: The redis password for our test server
+    """
+    return "merlin-test-server"
+
+
+@pytest.fixture(scope="session")
+def merlin_server_dir(temp_output_dir: str, redis_pass: str) -> str:  # pylint: disable=redefined-outer-name
     """
     This fixture will initialize the merlin server (i.e. create all the files we'll
     need to start up a local redis server). It will return the path to the directory
     containing the files needed for the server to start up.
 
-    :param `temp_output_dir`: The path to the temporary output directory we'll be using for this test run
+    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    :param redis_pass: The password to the test redis server that we'll create here
     :returns: The path to the merlin_server directory with the server configurations
     """
     # Initialize the setup for the local redis server
-    subprocess.run("merlin server init", shell=True, capture_output=True, text=True)
+    # We'll also set the password to 'merlin-test-server' so it'll be easy to shutdown if there's an issue
+    subprocess.run(f"merlin server init; merlin server config -pwd {redis_pass}", shell=True, capture_output=True, text=True)
 
     # Check that the merlin server was initialized properly
-    merlin_server_dir = f"{temp_output_dir}/merlin_server"
-    if not os.path.exists(merlin_server_dir):
+    server_dir = f"{temp_output_dir}/merlin_server"
+    if not os.path.exists(server_dir):
         raise ServerInitError("The merlin server was not initialized properly.")
 
-    return merlin_server_dir
+    return server_dir
 
 
 @pytest.fixture(scope="session")
-def redis_pass(merlin_server_dir: str) -> str:
-    """
-    Once the merlin server has been initialized, a password file will have been
-    written to the merlin server directory. This fixture will grab that password.
-
-    :param `merlin_server_dir`: The path to the merlin_server directory with the server configurations
-    :returns: The raw redis password from the redis.pass file in the merlin_server directory
-    """
-    try:
-        with open(f"{merlin_server_dir}/redis.pass", "r") as f:
-            redis_password = f.readline().strip()
-    except FileNotFoundError as e:
-        raise ServerInitError(
-            f"The redis.pass file was not created, likely a problem with the 'merlin server init' command. {e}"
-        )
-    return redis_password
-
-
-@pytest.fixture(scope="session")
-def redis_pass_celery_format(redis_pass: str) -> str:
-    """
-    Take the raw redis password and format for use with celery.
-    See https://docs.python.org/3/library/urllib.parse.html#urllib.parse.quote for more info.
-
-    :param `redis_pass`: The raw redis password read from the redis.pass file
-    :returns: A formatted redis password that can be used with celery
-    """
-    return quote(redis_pass, safe="")
-
-
-@pytest.fixture(scope="session")
-def redis_server(redis_pass: str, redis_pass_celery_format: str) -> str:
+def redis_server(merlin_server_dir: str, redis_pass: str) -> str:  # pylint: disable=redefined-outer-name,unused-argument
     """
     Start a redis server instance that runs on localhost:6379. This will yield the
     redis server uri that can be used to create a connection with celery.
 
-    :param `redis_pass`: The raw redis password stored in the redis.pass file
-    :param `redis_pass_celery_format`: The redis password formatted to work with celery
+    :param merlin_server_dir: The directory to the merlin test server configuration.
+        This will not be used here but we need the server configurations before we can
+        start the server.
+    :param redis_pass: The raw redis password stored in the redis.pass file
     :yields: The local redis server uri
     """
     # Start the local redis server
@@ -158,15 +130,15 @@ def redis_server(redis_pass: str, redis_pass_celery_format: str) -> str:
     # Ensure the server started properly
     host = "localhost"
     port = 6379
-    db = 0
+    database = 0
     username = "default"
-    redis_client = redis.Redis(host=host, port=port, db=db, password=redis_pass, username=username)
+    redis_client = redis.Redis(host=host, port=port, db=database, password=redis_pass, username=username)
     if not redis_client.ping():
         raise RedisServerError("The redis server could not be pinged. Check that the server is running with 'ps ux'.")
 
     # Hand over the redis server url to any other fixtures/tests that need it
-    redis_server = f"redis://{username}:{redis_pass_celery_format}@{host}:{port}/{db}"
-    yield redis_server
+    redis_server_uri = f"redis://{username}:{redis_pass}@{host}:{port}/{database}"
+    yield redis_server_uri
 
     # Kill the server; don't run this until all tests are done (accomplished with 'yield' above)
     kill_process = subprocess.run("merlin server stop", shell=True, capture_output=True, text=True)
@@ -174,11 +146,11 @@ def redis_server(redis_pass: str, redis_pass_celery_format: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def celery_app(redis_server: str) -> Celery:
+def celery_app(redis_server: str) -> Celery:  # pylint: disable=redefined-outer-name
     """
     Create the celery app to be used throughout our integration tests.
 
-    :param `redis_server`: The redis server uri we'll use to connect to redis
+    :param redis_server: The redis server uri we'll use to connect to redis
     :returns: The celery app object we'll use for testing
     """
     return Celery("test_app", broker=redis_server, backend=redis_server)
@@ -198,9 +170,9 @@ def are_workers_ready(app: Celery, num_workers: int, verbose: bool = False) -> b
     """
     Check to see if the workers are up and running yet.
 
-    :param `app`: The celery app fixture that's connected to our redis server
-    :param `num_workers`: An int representing the number of workers we're looking to have started
-    :param `verbose`: If true, enable print statements to show where we're at in execution
+    :param app: The celery app fixture that's connected to our redis server
+    :param num_workers: An int representing the number of workers we're looking to have started
+    :param verbose: If true, enable print statements to show where we're at in execution
     :returns: True if all workers are running. False otherwise.
     """
     app_stats = app.control.inspect().stats()
@@ -215,9 +187,9 @@ def wait_for_worker_launch(app: Celery, num_workers: int, verbose: bool = False)
     within the time limit then we'll raise a timeout error. Otherwise, the workers
     are up and running and we can continue with our tests.
 
-    :param `app`: The celery app fixture that's connected to our redis server
-    :param `num_workers`: An int representing the number of workers we're looking to have started
-    :param `verbose`: If true, enable print statements to show where we're at in execution
+    :param app: The celery app fixture that's connected to our redis server
+    :param num_workers: An int representing the number of workers we're looking to have started
+    :param verbose: If true, enable print statements to show where we're at in execution
     """
     max_wait_time = 2  # Maximum wait time in seconds
     wait_interval = 0.5  # Interval between checks in seconds
@@ -245,8 +217,8 @@ def shutdown_processes(worker_processes: List[multiprocessing.Process], echo_pro
     multiprocessing library and echo processes were created with the subprocess library,
     so we have to shut them down slightly differently.
 
-    :param `worker_processes`: A list of worker processes to terminate
-    :param `echo_processes`: A list of echo processes to terminate
+    :param worker_processes: A list of worker processes to terminate
+    :param echo_processes: A list of echo processes to terminate
     """
     # Worker processes were created with the multiprocessing library
     for worker_process in worker_processes:
@@ -273,25 +245,26 @@ def start_worker(app: Celery, worker_launch_cmd: List[str]):
     we tell it to stop, that's why we have to use the multiprocessing library for this. We have to use
     app.worker_main instead of the normal "celery -A <app name> worker" command to launch the workers
     since our celery app is created in a pytest fixture and is unrecognizable by the celery command.
-    For each worker, the output of it's logs are sent to /tmp/`whoami`/pytest-of-`whoami`/pytest-current/integration_outfiles_current/
-    under a file with a name similar to: test_worker_*.log.
+    For each worker, the output of it's logs are sent to
+    /tmp/`whoami`/pytest-of-`whoami`/pytest-current/integration_outfiles_current/ under a file with a name
+    similar to: test_worker_*.log.
     NOTE: pytest-current/ will have the results of the most recent test run. If you want to see a previous run
     check under pytest-<integer value>/. HOWEVER, only the 3 most recent test runs will be saved.
 
-    :param `app`: The celery app fixture that's connected to our redis server
-    :param `worker_launch_cmd`: The command to launch a worker
+    :param app: The celery app fixture that's connected to our redis server
+    :param worker_launch_cmd: The command to launch a worker
     """
     app.worker_main(worker_launch_cmd)
 
 
 @pytest.fixture(scope="class")
-def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):
+def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):  # pylint: disable=redefined-outer-name
     """
     Launch the workers on the celery app fixture using the worker and queue names
     defined in the worker_queue_map fixture.
 
-    :param `celery_app`: The celery app fixture that's connected to our redis server
-    :param `worker_queue_map`: A dict where the keys are worker names and the values are queue names
+    :param celery_app: The celery app fixture that's connected to our redis server
+    :param worker_queue_map: A dict where the keys are worker names and the values are queue names
     """
     # Create the processes that will start the workers and store them in a list
     worker_processes = []
@@ -301,7 +274,9 @@ def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):
 
         # We have to use this dummy echo command to simulate a celery worker command that will show up with 'ps ux'
         # We'll sleep for infinity here and then kill this process during shutdown
-        echo_process = subprocess.Popen(f"echo 'celery test_app {' '.join(worker_launch_cmd)}'; sleep inf", shell=True)
+        echo_process = subprocess.Popen(  # pylint: disable=consider-using-with
+            f"echo 'celery test_app {' '.join(worker_launch_cmd)}'; sleep inf", shell=True
+        )
         echo_processes.append(echo_process)
 
         # We launch workers in their own process since they maintain control of a process until we stop them
@@ -313,10 +288,10 @@ def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):
     try:
         num_workers = len(worker_queue_map)
         wait_for_worker_launch(celery_app, num_workers, verbose=False)
-    except TimeoutError as e:
+    except TimeoutError as exc:
         # If workers don't launch in time, we need to make sure these processes stop
         shutdown_processes(worker_processes, echo_processes)
-        raise e
+        raise exc
 
     # Give control to the tests that need to use workers
     yield

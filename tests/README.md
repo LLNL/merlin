@@ -11,30 +11,50 @@ This directory is organized like so:
     <!-- - `test_*.py` - The actual test scripts to run -->
     - `definitions.py` - The test definitions
     - `run_tests.py` - The script to run the tests defined in `definitions.py`
-    - `conditions.py` - The conditions ot test against
+    - `conditions.py` - The conditions to test against
 
 ## How to Run
 
 Before running any tests:
 
 1. Activate your virtual environment with Merlin's dev requirements installed
-2. Navigate to the integration tests folder where this README is located
+2. Navigate to the tests folder where this README is located
 
 To run the entire test suite:
 
-`python -m pytest`
+```
+python -m pytest
+```
 
 To run a specific test file:
 
-`python -m pytest /path/to/test_specific_file.py`
+```
+python -m pytest /path/to/test_specific_file.py
+```
 
 To run a certain test class within a specific test file:
 
-`python -m pytest /path/to/test_specific_file.py::TestCertainClass`
+```
+python -m pytest /path/to/test_specific_file.py::TestCertainClass
+```
 
 To run one unique test:
 
-`python -m pytest /path/to/test_specific_file.py::TestCertainClass::test_unique_test`
+```
+python -m pytest /path/to/test_specific_file.py::TestCertainClass::test_unique_test
+```
+
+## Killing the Test Server
+
+In case of an issue with the test suite, or if you stop the tests with `ctrl+C`, you may need to stop
+the server manually. This can be done with:
+
+```
+redis-cli
+127.0.0.1:6379> AUTH merlin-test-server
+127.0.0.1:6379> shutdown
+not connected> quit
+```
 
 ## The Fixture Process Explained
 
@@ -56,11 +76,9 @@ def dummy_fixture():
     return "hello world"
 ```
 
-2. Import the fixture and use it as an argument in a test function:
+2. Use it as an argument in a test function (you don't even need to import it!):
 
 ```
-from tests.conftest import dummy_fixture
-
 def test_dummy(dummy_fixture):
     assert dummy_fixture == "hello world"
 ```
