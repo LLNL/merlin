@@ -10,3 +10,4 @@ twine
 sphinx>=2.0.0
 alabaster
 johnnydep
+deepdiff
