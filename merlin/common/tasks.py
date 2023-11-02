@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -480,7 +480,7 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
             if not found_tasks:
                 for next_index_path, next_index in sample_index.traverse(conditional=condition):
                     LOG.info(
-                        f"generating next step for range {next_index.min}:{next_index.max} {next_index.max-next_index.min}"
+                        f"generating next step for range {next_index.min}:{next_index.max} {next_index.max - next_index.min}"
                     )
                     next_index.name = next_index_path
 

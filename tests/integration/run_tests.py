@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -39,10 +39,8 @@ import time
 from contextlib import suppress
 from subprocess import TimeoutExpired, run
 
-# Pylint complains that we didn't install this module but it's defined locally so ignore
-from test_definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
-
 from merlin.display import tabulate_info
+from tests.integration.definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
 
 
 def get_definition_issues(test):
@@ -237,7 +235,7 @@ def run_tests(args, tests):  # pylint: disable=R0914
             total += 1
             continue
         dot_length = 50 - len(test_name) - len(str(test_label))
-        print(f"TEST {test_label}: {test_name}{'.'*dot_length}", end="")
+        print(f"TEST {test_label}: {test_name}{'.' * dot_length}", end="")
         # Check the format of the test definition
         definition_issues = get_definition_issues(test)
         if definition_issues:

@@ -5,9 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Pytest fixtures in the `conftest.py` file of the integration test suite
+- Tests for the `celeryadapter.py` module
+
 ### Fixed
 - The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
 - The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
+
+## [1.11.1]
+### Fixed
+- Typo in `batch.py` that caused lsf launches to fail (`ALL_SGPUS` changed to `ALL_GPUS`)
 
 ## [1.11.0]
 ### Added

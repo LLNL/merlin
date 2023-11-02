@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,7 +37,7 @@ import socket
 import subprocess
 import time
 from contextlib import suppress
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from amqp.exceptions import ChannelError
 
@@ -72,23 +72,31 @@ def run_celery(study, run_mode=None):
     queue_merlin_study(study, adapter_config)
 
 
-def get_running_queues():
+def get_running_queues(celery_app_name: str, test_mode: bool = False) -> List[str]:
     """
-    Check for running celery workers with -Q queues
-    and return a unique list of the queues
+    Check for running celery workers by looking at the currently running processes.
+    If there are running celery workers, we'll pull the queues from the -Q tag in the
+    process command. The list returned here will contain only unique celery queue names.
+    This must be run on the allocation where the workers are running.
 
-    Must be run on the allocation where the workers are running
+    :param `celery_app_name`: The name of the celery app (typically merlin here unless testing)
+    :param `test_mode`: If True, run this function in test mode
+    :returns: A unique list of celery queues with workers attached to them
     """
     running_queues = []
 
-    if not is_running("celery worker"):
+    if not is_running(f"{celery_app_name} worker"):
         return running_queues
 
-    procs = get_procs("celery")
+    proc_name = "celery" if not test_mode else "sh"
+    procs = get_procs(proc_name)
     for _, lcmd in procs:
         lcmd = list(filter(None, lcmd))
         cmdline = " ".join(lcmd)
         if "-Q" in cmdline:
+            if test_mode:
+                echo_cmd = lcmd.pop(2)
+                lcmd.extend(echo_cmd.split())
             running_queues.extend(lcmd[lcmd.index("-Q") + 1].split(","))
 
     running_queues = list(set(running_queues))
@@ -158,19 +166,20 @@ def get_active_workers(app):
     return worker_queue_map
 
 
-def celerize_queues(queues):
+def celerize_queues(queues: List[str], config: Optional[Dict] = None):
     """
     Celery requires a queue tag to be prepended to their
     queues so this function will 'celerize' every queue in
     a list you provide it by prepending the queue tag.
 
-    :param `queues`: A list of queues that need the queue
-                     tag prepended.
+    :param `queues`: A list of queues that need the queue tag prepended.
+    :param `config`: A dict of configuration settings
     """
-    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+    if config is None:
+        from merlin.config.configfile import CONFIG as config  # pylint: disable=C0415
 
     for i, queue in enumerate(queues):
-        queues[i] = f"{CONFIG.celery.queue_tag}{queue}"
+        queues[i] = f"{config.celery.queue_tag}{queue}"
 
 
 def _build_output_table(worker_list, output_table):
@@ -517,7 +526,7 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
         running_queues.extend(local_queues)
         queues = queues.split(",")
         if not overlap:
-            running_queues.extend(get_running_queues())
+            running_queues.extend(get_running_queues("merlin"))
             # Cache the queues from this worker to use to test
             # for existing queues in any subsequent workers.
             # If overlap is True, then do not check the local queues.
