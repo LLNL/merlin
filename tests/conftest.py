@@ -123,7 +123,8 @@ def redis_server(merlin_server_dir: str, redis_pass: str) -> str:  # pylint: dis
     """
     # Start the local redis server
     try:
-        subprocess.run("merlin server start", shell=True, capture_output=True, text=True, timeout=5)
+        # Need to set LC_ALL='C' before starting the server or else redis causes a failure
+        subprocess.run("export LC_ALL='C'; merlin server start", shell=True, capture_output=True, text=True, timeout=5)
     except subprocess.TimeoutExpired:
         pass
 
