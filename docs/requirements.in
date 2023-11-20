@@ -1,0 +1,4 @@
+# This file will list all requirements for the docs so we can freeze a version of them for release.
+# To freeze the versions run:
+#       pip-compile requirements.in
+sphinx

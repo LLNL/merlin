@@ -4,6 +4,38 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Pytest fixtures in the `conftest.py` file of the integration test suite
+  - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
+- Tests for the `celeryadapter.py` module
+
+## [1.11.1]
+### Fixed
+- Typo in `batch.py` that caused lsf launches to fail (`ALL_SGPUS` changed to `ALL_GPUS`)
+
+## [1.11.0]
+### Added
+- New reserved variable:
+  - `VLAUNCHER`: The same functionality as the `LAUNCHER` variable, but will substitute shell variables `MERLIN_NODES`, `MERLIN_PROCS`, `MERLIN_CORES`, and `MERLIN_GPUS` for nodes, procs, cores per task, and gpus
+
+### Changed
+- Hardcoded Sphinx v5.3.0 requirement is now removed so we can use latest Sphinx
+
+### Fixed
+- A bug where the filenames in iterative workflows kept appending `.out`, `.partial`, or `.expanded` to the filenames stored in the `merlin_info/` subdirectory
+- A bug where a skewed sample hierarchy was created when a restart was necessary in the `add_merlin_expanded_chain_to_chord` task
+
+## [1.10.3]
+### Added
+- The *.conf regex for the recursive-include of the merlin server directory so that pip will add it to the wheel
+- A note to the docs for how to fix an issue where the `merlin server start` command hangs
+
+### Changed
+- Bump certifi from 2022.12.7 to 2023.7.22 in /docs
+- Bump pygments from 2.13.0 to 2.15.0 in /docs
+- Bump requests from 2.28.1 to 2.31.0 in /docs
+
 ## [1.10.2]
 ### Fixed
 - A bug where the .orig, .partial, and .expanded file names were using the study name rather than the original file name

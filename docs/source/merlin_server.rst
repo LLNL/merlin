@@ -1,7 +1,7 @@
 Merlin Server
 =============
 The merlin server command allows users easy access to containerized broker 
-and results servers for merlin workflows. This allowsusers to run merlin without
+and results servers for merlin workflows. This allows users to run merlin without
 a dedicated external server.
 
 The main configuration will be stored in the subdirectory called "server/" by 
