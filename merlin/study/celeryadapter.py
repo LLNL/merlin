@@ -40,13 +40,16 @@ from contextlib import suppress
 from typing import Dict, List, Optional
 
 from amqp.exceptions import ChannelError
+from celery import Celery
 
+from merlin.config import Config
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
 
 LOG = logging.getLogger(__name__)
 
+# TODO figure out a better way to handle the import of celery app and CONFIG
 
 def run_celery(study, run_mode=None):
     """
@@ -272,16 +275,20 @@ def query_celery_workers(spec_worker_names, queues, workers_regex):
     print()
 
 
-def query_celery_queues(queues: List[str]) -> Dict[str, List[str]]:
+def query_celery_queues(queues: List[str], app: Celery = None, config: Config = None) -> Dict[str, List[str]]:
     """
     Build a dict of information about the number of jobs and consumers attached
     to specific queues that we want information on.
 
-    :param `queues`: A list of the queues we want to know about
+    :param queues: A list of the queues we want to know about
+    :param app: The celery application (this will be none unless testing)
+    :param config: The configuration object that has the broker name (this will be none unless testing)
     :returns: A dict of info on the number of jobs and consumers for each queue in `queues`
     """
-    from merlin.celery import app  # pylint: disable=C0415
-    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+    if app is None:
+        from merlin.celery import app  # pylint: disable=C0415
+    if config is None:
+        from merlin.config.configfile import CONFIG as config  # pylint: disable=C0415
 
     # Initialize the dictionary with the info we want about our queues
     queue_info = {queue: {"consumers": 0, "jobs": 0} for queue in queues}
@@ -303,7 +310,7 @@ def query_celery_queues(queues: List[str]) -> Dict[str, List[str]]:
 
     # Redis doesn't keep track of consumers attached to queues like rabbit does
     # so we have to count this ourselves here
-    if CONFIG.broker.name in ("rediss", "redis"):
+    if config.broker.name in ("rediss", "redis"):
         # Get a dict of active queues by querying the celery app
         active_queues = app.control.inspect().active_queues()
         if active_queues is not None:
@@ -334,32 +341,28 @@ def get_workers_from_app():
     return [*workers]
 
 
-def check_celery_workers_processing(queues_in_spec: List[str], app_name: str) -> bool:
+def check_celery_workers_processing(queues_in_spec: List[str], app: Celery) -> bool:
     """
     Query celery to see if any workers are still processing tasks.
 
-    :param `queues_in_spec`: A list of queues to check if tasks are still active in
-    :param `app_name`: The name of the app we're querying
+    :param queues_in_spec: A list of queues to check if tasks are still active in
+    :param app: The celery app that we're querying
     :returns: True if workers are still processing tasks, False otherwise
     """
-    # Inspect active call and store stdout
-    inspect_active_cmd = ["celery", "-A", app_name, "inspect", "active"]
-    LOG.debug(f"inspect_active_cmd: {inspect_active_cmd}")
-    process = subprocess.run(inspect_active_cmd, capture_output=True, text=True)
+    # Query celery for active tasks
+    active_tasks = app.control.inspect().active()
+    print(f"active_tasks: {active_tasks}")
 
-    # Parse stdout for each queue to see if there are still tasks being processed
-    if process.returncode == 0:
-        LOG.debug(f"celery inspect active stdout: {process.stdout}")
-        LOG.info("Workers are active")
-        active_tasks = any(queue in process.stdout for queue in queues_in_spec)
-    else:
-        LOG.error(
-            "Error running celery inspect active, setting 'active_tasks' to be False. "
-            f"There are likely no workers active. {process.stderr}"
-        )
-        active_tasks = False
+    # Search for the queues we provided if necessary
+    if active_tasks is not None:
+        for tasks in active_tasks.values():
+            for task in tasks:
+                if task["delivery_info"]["routing_key"] in queues_in_spec:
+                    print("Workers are still active")
+                    return True
 
-    return active_tasks
+    print("Workers are no longer active")
+    return False
 
 
 def _get_workers_to_start(spec, steps):

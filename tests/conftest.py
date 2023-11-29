@@ -41,6 +41,7 @@ import pytest
 import redis
 from _pytest.tmpdir import TempPathFactory
 from celery import Celery
+from celery.canvas import Signature
 
 
 class RedisServerError(Exception):
@@ -154,7 +155,28 @@ def celery_app(redis_server: str) -> Celery:  # pylint: disable=redefined-outer-
     :param redis_server: The redis server uri we'll use to connect to redis
     :returns: The celery app object we'll use for testing
     """
-    return Celery("test_app", broker=redis_server, backend=redis_server)
+    return Celery("merlin_test_app", broker=redis_server, backend=redis_server)
+
+
+@pytest.fixture(scope="session")
+def sleep_sig(celery_app: Celery) -> Signature:
+    """
+    Create a task registered to our celery app and return a signature for it.
+    Once requested by a test, you can set the queue you'd like to send this to
+    with `sleep_sig.set(queue=<queue name>)`. Here, <queue name> will likely be
+    one of the queues defined in the `worker_queue_map` fixture.
+
+    :param celery_app: The celery app object we'll use for testing
+    :returns: A celery signature for a task that will sleep for 3 seconds
+    """
+    # Create a celery task that sleeps for 3 sec
+    @celery_app.task
+    def sleep_task():
+        print("running sleep task")
+        sleep(3)
+
+    # Create a signature for this task
+    return sleep_task.s()
 
 
 @pytest.fixture(scope="session")
@@ -267,16 +289,17 @@ def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):  # pyl
     :param celery_app: The celery app fixture that's connected to our redis server
     :param worker_queue_map: A dict where the keys are worker names and the values are queue names
     """
+    print(f"launch_workers called")
     # Create the processes that will start the workers and store them in a list
     worker_processes = []
     echo_processes = []
     for worker, queue in worker_queue_map.items():
-        worker_launch_cmd = ["worker", "-n", worker, "-Q", queue, "--concurrency", "1", f"--logfile={worker}.log"]
+        worker_launch_cmd = ["worker", "-n", worker, "-Q", queue, "--concurrency", "1", f"--logfile={worker}.log", "--loglevel=DEBUG"]
 
         # We have to use this dummy echo command to simulate a celery worker command that will show up with 'ps ux'
         # We'll sleep for infinity here and then kill this process during shutdown
         echo_process = subprocess.Popen(  # pylint: disable=consider-using-with
-            f"echo 'celery test_app {' '.join(worker_launch_cmd)}'; sleep inf", shell=True
+            f"echo 'celery merlin_test_app {' '.join(worker_launch_cmd)}'; sleep inf", shell=True
         )
         echo_processes.append(echo_process)
 

@@ -295,32 +295,31 @@ def wait_for_workers(sleep: int, task_server: str, spec: "MerlinSpec"):  # noqa
         raise NoWorkersException("Monitor: no workers available to process the non-empty queue")
 
 
-def check_workers_processing(queues_in_spec: List[str], task_server: str, app_name: str) -> bool:
+def check_workers_processing(queues_in_spec: List[str], task_server: str) -> bool:
     """
     Check if any workers are still processing tasks by querying the task server.
 
     :param `queues_in_spec`: A list of queues to check if tasks are still active in
     :param `task_server`: The task server from which to query
-    :param `app_name`: The name of the app we're querying
     :returns: True if workers are still processing tasks, False otherwise
     """
     result = False
 
     if task_server == "celery":
-        result = check_celery_workers_processing(queues_in_spec, app_name)
+        from merlin.celery import app
+        result = check_celery_workers_processing(queues_in_spec, app)
     else:
         LOG.error("Celery is not specified as the task server!")
 
     return result
 
 
-def check_merlin_status(args: "Namespace", spec: "MerlinSpec", app_name: Optional[str] = "merlin") -> bool:  # noqa
+def check_merlin_status(args: "Namespace", spec: "MerlinSpec") -> bool:  # noqa
     """
     Function to check merlin workers and queues to keep the allocation alive
 
     :param `args`: parsed CLI arguments
     :param `spec`: the parsed spec.yaml as a MerlinSpec object
-    :param `app_name`: the name of the celery app to monitor
     :returns: True if there are still tasks being processed, False otherwise
     """
     # Initialize the variable to track if there are still active tasks
@@ -363,7 +362,7 @@ def check_merlin_status(args: "Namespace", spec: "MerlinSpec", app_name: Optiona
         active_tasks = True
     # If there are no jobs left, see if any workers are still processing them
     elif total_jobs == 0:
-        active_tasks = check_workers_processing(queues_in_spec, args.task_server, app_name)
+        active_tasks = check_workers_processing(queues_in_spec, args.task_server)
 
     LOG.debug(f"Monitor: active_tasks: {active_tasks}")
     return active_tasks

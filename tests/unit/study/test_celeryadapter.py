@@ -30,28 +30,49 @@
 """
 Tests for the celeryadapter module.
 """
+from time import sleep
 from typing import Dict
 
-import celery
+from celery import Celery
+from celery.canvas import Signature
+from deepdiff import DeepDiff
 
 from merlin.config import Config
 from merlin.study import celeryadapter
 
 
-class TestActiveQueues:
+class TestActive:
     """
-    This class will test queue related functions in the celeryadapter.py module.
-    It will run tests where we need active queues to interact with.
+    This class will test functions in the celeryadapter.py module.
+    It will run tests where we need active queues/workers to interact with.
     """
 
-    def test_query_celery_queues(self, launch_workers: "Fixture"):  # noqa: F821
+    def test_query_celery_queues(
+        self, celery_app: Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
+    ):
         """
         Test the query_celery_queues function by providing it with a list of active queues.
-        This should return a list of tuples. Each tuple will contain information
-        (name, num jobs, num consumers) for each queue that we provided.
+        This should return a dict where keys are queue names and values are more dicts containing
+        the number of jobs and consumers in that queue.
+
+        :param `celery_app`: A pytest fixture for the test Celery app
+        :param launch_workers: A pytest fixture that launches celery workers for us to interact with
+        :param worker_queue_map: A pytest fixture that returns a dict of workers and queues
         """
-        # TODO Modify query_celery_queues so the output for a redis broker is the same
-        # as the output for rabbit broker
+        # Set up a dummy configuration to use in the test
+        dummy_config = Config({"broker": {"name": "redis"}})
+
+        # Get the actual output
+        queues_to_query = list(worker_queue_map.values())
+        actual_queue_info = celeryadapter.query_celery_queues(queues_to_query, app=celery_app, config=dummy_config)
+
+        # Ensure all 3 queues in worker_queue_map were queried before looping
+        assert len(actual_queue_info) == 3
+
+        # Ensure each queue has a worker attached
+        for queue_name, queue_info in actual_queue_info.items():
+            assert queue_name in worker_queue_map.values()
+            assert queue_info == {"consumers": 1, "jobs": 0}
 
     def test_get_running_queues(self, launch_workers: "Fixture", worker_queue_map: Dict[str, str]):  # noqa: F821
         """
@@ -61,14 +82,14 @@ class TestActiveQueues:
         :param `launch_workers`: A pytest fixture that launches celery workers for us to interact with
         :param `worker_queue_map`: A pytest fixture that returns a dict of workers and queues
         """
-        result = celeryadapter.get_running_queues("test_app", test_mode=True)
+        result = celeryadapter.get_running_queues("merlin_test_app", test_mode=True)
         assert sorted(result) == sorted(list(worker_queue_map.values()))
 
-    def test_get_queues_active(
-        self, celery_app: celery.Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
+    def test_get_active_celery_queues(
+        self, celery_app: Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
     ):
         """
-        Test the get_queues function with queues active.
+        Test the get_active_celery_queues function with queues active.
         This should return a tuple where the first entry is a dict of queue info
         and the second entry is a list of worker names.
 
@@ -77,7 +98,7 @@ class TestActiveQueues:
         :param `worker_queue_map`: A pytest fixture that returns a dict of workers and queues
         """
         # Start the queues and run the test
-        queue_result, worker_result = celeryadapter.get_queues(celery_app)
+        queue_result, worker_result = celeryadapter.get_active_celery_queues(celery_app)
 
         # Ensure we got output before looping
         assert len(queue_result) == len(worker_result) == 3
@@ -103,22 +124,75 @@ class TestActiveQueues:
         # Ensure there was no extra output that we weren't expecting
         assert queue_result == {}
         assert worker_result == []
+    
+    def test_check_celery_workers_processing_tasks(
+        self,
+        celery_app: Celery,
+        sleep_sig: Signature,
+        launch_workers: "Fixture",  # noqa: F821
+    ):
+        """
+        Test the check_celery_workers_processing function with workers active and a task in a queue.
+        This function will query workers for any tasks they're still processing. We'll send a
+        a task that sleeps for 3 seconds to our workers before we run this test so that there should be
+        a task for this function to find.
+
+        :param celery_app: A pytest fixture for the test Celery app
+        :param sleep_sig: A pytest fixture for a celery signature of a task that sleeps for 3 sec
+        :param launch_workers: A pytest fixture that launches celery workers for us to interact with
+        """
+        # TODO figure out why this test fails when ran with the other tests
+
+        # Our active workers/queues are test_worker_[0-2]/test_queue_[0-2] so we're
+        # sending this to test_queue_0 for test_worker_0 to process
+        queue_for_signature = "test_queue_0"
+        sleep_sig.set(queue=queue_for_signature)
+        result = sleep_sig.delay()
+
+        # We need to give the task we just sent to the server a second to get picked up by the worker
+        sleep(1)
+
+        # Run the test now that the task should be getting processed
+        active_queue_test = celeryadapter.check_celery_workers_processing([queue_for_signature], celery_app)
+        assert active_queue_test == True
+
+        # Now test that a queue without any tasks returns false
+        # We sent the signature to task_queue_0 so task_queue_1 shouldn't have any tasks to find
+        non_active_queue_test = celeryadapter.check_celery_workers_processing(["test_queue_1"], celery_app)
+        assert non_active_queue_test == False
 
 
-class TestInactiveQueues:
+class TestInactive:
     """
-    This class will test queue related functions in the celeryadapter.py module.
-    It will run tests where we don't need any active queues to interact with.
+    This class will test functions in the celeryadapter.py module.
+    It will run tests where we don't need any active queues/workers to interact with.
     """
 
-    def test_query_celery_queues(self):
+    def test_query_celery_queues(
+        self, celery_app: Celery, worker_queue_map: Dict[str, str]  # noqa: F821
+    ):
         """
         Test the query_celery_queues function by providing it with a list of inactive queues.
-        This should return a list of strings. Each string will give a message saying that a
-        particular queue was inactive
+        This should return a dict where keys are queue names and values are more dicts containing
+        the number of jobs and consumers in that queue (which should be 0 for both here).
+
+        :param `celery_app`: A pytest fixture for the test Celery app
+        :param worker_queue_map: A pytest fixture that returns a dict of workers and queues
         """
-        # TODO Modify query_celery_queues so the output for a redis broker is the same
-        # as the output for rabbit broker
+        # Set up a dummy configuration to use in the test
+        dummy_config = Config({"broker": {"name": "redis"}})
+
+        # Get the actual output
+        queues_to_query = list(worker_queue_map.values())
+        actual_queue_info = celeryadapter.query_celery_queues(queues_to_query, app=celery_app, config=dummy_config)
+
+        # Ensure all 3 queues in worker_queue_map were queried before looping
+        assert len(actual_queue_info) == 3
+
+        # Ensure each queue has no worker attached (since the queues should be inactive here)
+        for queue_name, queue_info in actual_queue_info.items():
+            assert queue_name in worker_queue_map.values()
+            assert queue_info == {"consumers": 0, "jobs": 0}
 
     def test_celerize_queues(self, worker_queue_map: Dict[str, str]):
         """
@@ -144,17 +218,29 @@ class TestInactiveQueues:
         Test the get_running_queues function with no queues active.
         This should return an empty list.
         """
-        result = celeryadapter.get_running_queues("test_app", test_mode=True)
+        result = celeryadapter.get_running_queues("merlin_test_app", test_mode=True)
         assert result == []
 
-    def test_get_queues(self, celery_app: celery.Celery):
+    def test_get_active_celery_queues(self, celery_app: Celery):
         """
-        Test the get_queues function with no queues active.
+        Test the get_active_celery_queues function with no queues active.
         This should return a tuple where the first entry is an empty dict
         and the second entry is an empty list.
 
         :param `celery_app`: A pytest fixture for the test Celery app
         """
-        queue_result, worker_result = celeryadapter.get_queues(celery_app)
+        queue_result, worker_result = celeryadapter.get_active_celery_queues(celery_app)
         assert queue_result == {}
         assert worker_result == []
+
+    def test_check_celery_workers_processing_tasks(self, celery_app: Celery, worker_queue_map: Dict[str, str]):
+        """
+        Test the check_celery_workers_processing function with no workers active.
+        This function will query workers for any tasks they're still processing. Since no workers are active
+        this should return False.
+
+        :param celery_app: A pytest fixture for the test Celery app
+        """
+        # Run the test now that the task should be getting processed
+        result = celeryadapter.check_celery_workers_processing(list(worker_queue_map.values()), celery_app)
+        assert result == False
