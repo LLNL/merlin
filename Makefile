@@ -87,7 +87,7 @@ install-dev: virtualenv install-merlin install-workflow-deps
 # tests require a valid dev install of merlin
 unit-tests:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) -m pytest $(UNIT); \
+	$(PYTHON) -m pytest -v --order-scope=module $(UNIT); \
 
 
 # run CLI tests - these require an active install of merlin in a venv

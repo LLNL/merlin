@@ -33,6 +33,7 @@ Tests for the celeryadapter module.
 from time import sleep
 from typing import Dict
 
+import pytest
 from celery import Celery
 from celery.canvas import Signature
 from deepdiff import DeepDiff
@@ -41,10 +42,16 @@ from merlin.config import Config
 from merlin.study import celeryadapter
 
 
+@pytest.fixture(before="TestInactive")
 class TestActive:
     """
     This class will test functions in the celeryadapter.py module.
     It will run tests where we need active queues/workers to interact with.
+
+    NOTE: The tests in this class must be ran before the TestInactive class or else the
+    Celery workers needed for this class don't start
+
+    TODO: fix the bug noted above and then check if we still need pytest-order
     """
 
     def test_query_celery_queues(
@@ -124,7 +131,8 @@ class TestActive:
         # Ensure there was no extra output that we weren't expecting
         assert queue_result == {}
         assert worker_result == []
-    
+
+    @pytest.mark.order(index=1)
     def test_check_celery_workers_processing_tasks(
         self,
         celery_app: Celery,
@@ -137,12 +145,14 @@ class TestActive:
         a task that sleeps for 3 seconds to our workers before we run this test so that there should be
         a task for this function to find.
 
+        NOTE: the celery app fixture shows strange behavior when using app.control.inspect() calls (which
+        check_celery_workers_processing uses) so we have to run this test first in this class in order to
+        have it run properly.
+
         :param celery_app: A pytest fixture for the test Celery app
         :param sleep_sig: A pytest fixture for a celery signature of a task that sleeps for 3 sec
         :param launch_workers: A pytest fixture that launches celery workers for us to interact with
         """
-        # TODO figure out why this test fails when ran with the other tests
-
         # Our active workers/queues are test_worker_[0-2]/test_queue_[0-2] so we're
         # sending this to test_queue_0 for test_worker_0 to process
         queue_for_signature = "test_queue_0"
