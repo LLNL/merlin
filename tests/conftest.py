@@ -170,6 +170,7 @@ def sleep_sig(celery_app: Celery) -> Signature:  # pylint: disable=redefined-out
     :param celery_app: The celery app object we'll use for testing
     :returns: A celery signature for a task that will sleep for 3 seconds
     """
+
     # Create a celery task that sleeps for 3 sec
     @celery_app.task
     def sleep_task():
