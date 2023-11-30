@@ -352,17 +352,14 @@ def check_celery_workers_processing(queues_in_spec: List[str], app: Celery) -> b
     """
     # Query celery for active tasks
     active_tasks = app.control.inspect().active()
-    print(f"active_tasks: {active_tasks}")
 
     # Search for the queues we provided if necessary
     if active_tasks is not None:
         for tasks in active_tasks.values():
             for task in tasks:
                 if task["delivery_info"]["routing_key"] in queues_in_spec:
-                    print("Workers are still active")
                     return True
 
-    print("Workers are no longer active")
     return False
 
 
