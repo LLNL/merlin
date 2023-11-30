@@ -41,6 +41,7 @@ import redis
 from _pytest.tmpdir import TempPathFactory
 from celery import Celery
 from celery.canvas import Signature
+
 from tests.celery_test_workers import CeleryTestWorkersManager
 
 
@@ -159,7 +160,7 @@ def celery_app(redis_server: str) -> Celery:  # pylint: disable=redefined-outer-
 
 
 @pytest.fixture(scope="session")
-def sleep_sig(celery_app: Celery) -> Signature:
+def sleep_sig(celery_app: Celery) -> Signature:  # pylint: disable=redefined-outer-name
     """
     Create a task registered to our celery app and return a signature for it.
     Once requested by a test, you can set the queue you'd like to send this to
@@ -190,7 +191,7 @@ def worker_queue_map() -> Dict[str, str]:
 
 
 @pytest.fixture(scope="class")
-def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):
+def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):  # pylint: disable=redefined-outer-name
     """
     Launch the workers on the celery app fixture using the worker and queue names
     defined in the worker_queue_map fixture.

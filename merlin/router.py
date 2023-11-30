@@ -39,7 +39,7 @@ import logging
 import os
 import time
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from merlin.exceptions import NoWorkersException
 from merlin.study.celeryadapter import (
@@ -307,6 +307,7 @@ def check_workers_processing(queues_in_spec: List[str], task_server: str) -> boo
 
     if task_server == "celery":
         from merlin.celery import app
+
         result = check_celery_workers_processing(queues_in_spec, app)
     else:
         LOG.error("Celery is not specified as the task server!")

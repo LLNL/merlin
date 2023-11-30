@@ -96,7 +96,7 @@ class CeleryTestWorkersManager:
 
         if verbose:
             print(f"{worker_name} launched")
-    
+
     def start_worker(self, worker_launch_cmd: List[str]):
         """
         This is where a worker is actually started. Each worker maintains control of a process until
@@ -128,7 +128,17 @@ class CeleryTestWorkersManager:
             raise ValueError(f"The worker {worker_name} is already running. Choose a different name.")
 
         # Create the launch command for this worker
-        worker_launch_cmd = ["worker", "-n", worker_name, "-Q", ",".join(queues), "--concurrency", str(concurrency), f"--logfile={worker_name}.log", "--loglevel=DEBUG"]
+        worker_launch_cmd = [
+            "worker",
+            "-n",
+            worker_name,
+            "-Q",
+            ",".join(queues),
+            "--concurrency",
+            str(concurrency),
+            f"--logfile={worker_name}.log",
+            "--loglevel=DEBUG",
+        ]
 
         # Create an echo command to simulate a running celery worker since our celery worker will be spun up in
         # a different process and we won't be able to see it with 'ps ux' like we normally would

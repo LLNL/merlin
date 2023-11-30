@@ -51,6 +51,7 @@ LOG = logging.getLogger(__name__)
 
 # TODO figure out a better way to handle the import of celery app and CONFIG
 
+
 def run_celery(study, run_mode=None):
     """
     Run the given MerlinStudy object. If the run mode is set to "local"

@@ -36,13 +36,12 @@ from typing import Dict
 import pytest
 from celery import Celery
 from celery.canvas import Signature
-from deepdiff import DeepDiff
 
 from merlin.config import Config
 from merlin.study import celeryadapter
 
 
-@pytest.fixture(before="TestInactive")
+@pytest.mark.order(before="TestInactive")
 class TestActive:
     """
     This class will test functions in the celeryadapter.py module.
@@ -164,12 +163,15 @@ class TestActive:
 
         # Run the test now that the task should be getting processed
         active_queue_test = celeryadapter.check_celery_workers_processing([queue_for_signature], celery_app)
-        assert active_queue_test == True
+        assert active_queue_test is True
 
         # Now test that a queue without any tasks returns false
         # We sent the signature to task_queue_0 so task_queue_1 shouldn't have any tasks to find
         non_active_queue_test = celeryadapter.check_celery_workers_processing(["test_queue_1"], celery_app)
-        assert non_active_queue_test == False
+        assert non_active_queue_test is False
+
+        # Wait for the worker to finish running the task
+        result.get()
 
 
 class TestInactive:
@@ -178,9 +180,7 @@ class TestInactive:
     It will run tests where we don't need any active queues/workers to interact with.
     """
 
-    def test_query_celery_queues(
-        self, celery_app: Celery, worker_queue_map: Dict[str, str]  # noqa: F821
-    ):
+    def test_query_celery_queues(self, celery_app: Celery, worker_queue_map: Dict[str, str]):  # noqa: F821
         """
         Test the query_celery_queues function by providing it with a list of inactive queues.
         This should return a dict where keys are queue names and values are more dicts containing
@@ -253,4 +253,4 @@ class TestInactive:
         """
         # Run the test now that the task should be getting processed
         result = celeryadapter.check_celery_workers_processing(list(worker_queue_map.values()), celery_app)
-        assert result == False
+        assert result is False
