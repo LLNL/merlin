@@ -1,0 +1,51 @@
+description:
+    name: hello_samples
+    description: An example to stop ensembles automatically using hello world
+
+env:
+    variables:
+        N_SAMPLES: 10
+
+global.parameters:
+    GREET:
+        values : ["hello","hola"]
+        label  : GREET.%%
+
+study:
+    - name: step_1
+      description: say hello
+      run:
+          cmd: echo "$(GREET), $(WORLD)!"
+
+    - name: step_2
+      description: print a success message
+      run:
+          cmd: print("Hurrah, we did it!")
+          depends: [step_1_*]
+          shell: /usr/bin/env python3
+
+    - name: stopEnsemble
+      description: Stop any and all workers attached to this specification file
+      run:
+          cmd: |
+              cp $(SPECROOT)/quitScript.sh ./
+
+              specFile=$(basename $(MERLIN_SPEC_ORIGINAL_TEMPLATE))
+              specFile=${specFile/.orig.yaml/.yaml}
+
+              echo $(SPECROOT)
+              echo $specFile
+
+              sbatch ./quitScript.sh $(SPECROOT) $specFile 	      
+
+              #Give successful exit since batch job was canceled
+              #and can't do it
+              exit $(MERLIN_SUCCESS)
+          depends: [step_2]
+
+merlin:
+    samples:
+        generate:
+            cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+        file: $(MERLIN_INFO)/samples.csv
+        column_labels: [WORLD]

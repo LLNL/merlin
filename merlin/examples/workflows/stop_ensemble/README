@@ -1,0 +1,72 @@
++----------------------------------------------------+
+|                                                    |
+|               Stop Workers Example                 |
+|                                                    |
+| Description: Hello World example including a quit  |
+|              script to stop running and dependent  |
+|              jobs running the Merlin workflow.     |
+|                                                    |
+| Important Scripts: -workers.sbatch                 |
+|                    -hello_samples.yaml             |
+|                    -quitScript.sh                  |
+|                                                    |
+| Created By: Dylan Cliche (cliche1@llnl.gov)        |
+| Updated On: 08/14/2023                             |
++----------------------------------------------------+
+
+
+==========================================================
+                   Running the Example                 
+==========================================================
+
+1) merlin run <specification file>
+2) sbatch workers.sbatch <specification file> <true/false>
+
+Notes: -<specification file> is your yaml file including
+        the extension ".yaml".
+       -The second input parameter to workers.sbatch tells
+        slurm to either run a diasy chain of dependency
+	jobs ("true") or no dependency jobs ("false" or
+	no second input parameter at all).
+
+
+==========================================================
+                     What is Going On                  
+==========================================================
+
+When the job is allocated, the typical hello_samples will
+execute via step_1 and step_2 within the yaml file. After,
+a stopWorkers step is executed that will copy the
+quitScript.sh bash file from $(SPECROOT) and obtain the
+specfile and the specRoot.
+
+These two variables are passed into quitSript.sh
+which will find all job IDs of both running and awaiting
+job allocations, loop through them, and cancel every
+single one that deals with the <specification file>
+ran from $(SPECROOT) defined in steps 1 and 2 in the
+"Running the Example" section above.
+
+
+==========================================================
+                      Important Notes                   
+==========================================================
+
+1) quitScript.sh is submitted via sbatch instead of a
+   straight source or bash -c call because otherwise the
+   script will stop the workers immediately and the YAML
+   file then stops, but the task would never obtain a
+   successfull exit. Therefore, it would have to be purged
+   each time before starting a new Merlin run. By
+   submitting it via sbatch, once it is submitted the task
+   can exit successfully before the workers are stopped.
+
+2) Make sure the stopWorkers task is the very last task
+   in your workflow as it will stop any and all jobs
+   that have been allocated for the workflow.
+
+3) The virtual environment name and path are defined
+   in workers.sbatch. Change these to your specific needs
+   prior to running.
+
+
