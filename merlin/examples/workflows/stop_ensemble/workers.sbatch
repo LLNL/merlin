@@ -32,8 +32,8 @@ fi
 
 echo "Spec Filename: $YAML"
 
-MERLIN_PATH=/usr/workspace/cliche1/MERLIN
-VENV_NAME=merlin_venv_toss_3_x86_64_ib_py_3_8
+MERLIN_PATH=<Path to Merlin venv>
+VENV_NAME=<venv>
 
 # Activate the virtual environment
 source ${MERLIN_PATH}/${VENV_NAME}/bin/activate
