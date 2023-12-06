@@ -78,7 +78,6 @@ class CeleryTestWorkersManager:
         ps_proc = subprocess.run("ps ux", shell=True, capture_output=True, text=True)
         for pid in self.echo_processes.values():
             if str(pid) in ps_proc.stdout:
-                print(f"pid: {pid}")
                 os.kill(pid, signal.SIGKILL)
 
     def _is_worker_ready(self, worker_name: str, verbose: bool = False) -> bool:

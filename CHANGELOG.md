@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pytest fixtures in the `conftest.py` file of the integration test suite
   - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
 - Tests for the `celeryadapter.py` module
+- New CeleryTestWorkersManager context to help with starting/stopping workers for tests
 
 ### Fixed
 - The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
