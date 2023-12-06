@@ -204,12 +204,6 @@ def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):  # pyl
     # (basically just add in concurrency value to worker_queue_map)
     worker_info = {worker_name: {"concurrency": 1, "queues": [queue]} for worker_name, queue in worker_queue_map.items()}
 
-    # Create our workers manager and launch our workers
-    workers_manager = CeleryTestWorkersManager(celery_app)
-    workers_manager.launch_workers(worker_info)
-
-    # Yield control to the tests that need workers launched
-    yield
-
-    # Tests are done so shut down all of our workers
-    workers_manager.stop_all_workers()
+    with CeleryTestWorkersManager(celery_app) as workers_manager:
+        workers_manager.launch_workers(worker_info)
+        yield

@@ -36,7 +36,8 @@ import os
 import signal
 import subprocess
 from time import sleep
-from typing import Dict, List
+from types import TracebackType
+from typing import Dict, List, Type
 
 from celery import Celery
 
@@ -44,6 +45,9 @@ from celery import Celery
 class CeleryTestWorkersManager:
     """
     A class to handle the setup and teardown of celery workers.
+    This should be treated as a context and used with python's
+    built-in 'with' statement. If you use it without this statement,
+    beware that the processes spun up here may never be stopped.
     """
 
     def __init__(self, app: Celery):
@@ -51,6 +55,31 @@ class CeleryTestWorkersManager:
         self.running_workers = []
         self.worker_processes = {}
         self.echo_processes = {}
+
+    def __enter__(self):
+        """This magic method is necessary for allowing this class to be used as a context manager."""
+        return self
+
+    def __exit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType):
+        """
+        This will always run at the end of a context with statement, even if an error is raised.
+        It's a safe way to ensure all of our subprocesses are stopped no matter what.
+        """
+
+        # Try to stop everything gracefully first
+        self.stop_all_workers()
+
+        # Check that all the worker processes were stopped, otherwise forcefully terminate them
+        for worker_process in self.worker_processes.values():
+            if worker_process.is_alive():
+                worker_process.kill()
+
+        # Check that all the echo processes were stopped, otherwise forcefully terminate them
+        ps_proc = subprocess.run("ps ux", shell=True, capture_output=True, text=True)
+        for pid in self.echo_processes.values():
+            if str(pid) in ps_proc.stdout:
+                print(f"pid: {pid}")
+                os.kill(pid, signal.SIGKILL)
 
     def _is_worker_ready(self, worker_name: str, verbose: bool = False) -> bool:
         """
@@ -147,7 +176,7 @@ class CeleryTestWorkersManager:
             shell=True,
             preexec_fn=os.setpgrp,  # Make this the parent of the group so we can kill the 'sleep inf' that's spun up
         )
-        self.echo_processes[worker_name] = echo_process
+        self.echo_processes[worker_name] = echo_process.pid
 
         # Start the worker in a separate process since it'll take control of the entire process until we kill it
         worker_process = multiprocessing.Process(target=self.start_worker, args=(worker_launch_cmd,))
@@ -192,7 +221,8 @@ class CeleryTestWorkersManager:
                 self.worker_processes[worker_name].kill()
 
         # Terminate the echo process and its sleep inf subprocess
-        os.killpg(os.getpgid(self.echo_processes[worker_name].pid), signal.SIGTERM)
+        os.killpg(os.getpgid(self.echo_processes[worker_name]), signal.SIGTERM)
+        sleep(2)
 
     def stop_all_workers(self):
         """
