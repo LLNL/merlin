@@ -1,1 +1,8 @@
-sphinx>=5.3.0
+markdown-grid-table
+mkdocs
+mkdocs-gen-files
+mkdocs-glightbox
+mkdocs-literate-nav
+mkdocs-material
+mkdocstrings
+mkdocstrings-python
