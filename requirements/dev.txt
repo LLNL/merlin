@@ -5,6 +5,7 @@ dep-license
 flake8
 isort
 pytest
+pytest-cov
 pylint
 twine
 sphinx>=2.0.0
