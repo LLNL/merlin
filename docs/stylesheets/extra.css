@@ -1,0 +1,8 @@
+[data-md-color-scheme=slate] {
+    --md-default-bg-color: hsla(var(--md-hue),15%,22%,1);
+}
+
+[data-md-color-primary=black] .md-button--primary {
+    background-color: hsla(202, 97%, 34%, 1);  /* This is the same as #036BA9 (the hex color of Merlin's hat logo) */
+    border-color: hsla(202, 97%, 34%, 1);
+}
