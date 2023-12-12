@@ -118,6 +118,9 @@ class TestEncryption:
         """
         Test the `set_backend_funcs` function.
         """
+        orig_encode = celery.backends.base.Backend.encode
+        orig_decode = celery.backends.base.Backend.decode
+
         # Make sure these values haven't been set yet
         assert celery.backends.base.Backend.encode != _encrypt_encode
         assert celery.backends.base.Backend.decode != _decrypt_decode
@@ -127,3 +130,6 @@ class TestEncryption:
         # Ensure the new functions have been set
         assert celery.backends.base.Backend.encode == _encrypt_encode
         assert celery.backends.base.Backend.decode == _decrypt_decode
+
+        celery.backends.base.Backend.encode = orig_encode
+        celery.backends.base.Backend.decode = orig_decode

@@ -53,7 +53,8 @@ pytest_plugins = [
     fixture_file.replace("/", ".").replace(".py", "") for fixture_file in glob("tests/fixtures/[!__]*.py", recursive=True)
 ]
 
-from tests.encryption_manager import EncryptionManager
+from tests.context_managers.celery_workers_manager import CeleryWorkersManager
+from tests.context_managers.encryption_manager import EncryptionManager
 
 
 class RedisServerError(Exception):
@@ -215,7 +216,7 @@ def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):  # pyl
     # (basically just add in concurrency value to worker_queue_map)
     worker_info = {worker_name: {"concurrency": 1, "queues": [queue]} for worker_name, queue in worker_queue_map.items()}
 
-    with CeleryTestWorkersManager(celery_app) as workers_manager:
+    with CeleryWorkersManager(celery_app) as workers_manager:
         workers_manager.launch_workers(worker_info)
         yield
 
