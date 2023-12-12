@@ -1,9 +1,11 @@
+"""
+Tests for the `sample_index.py` and `sample_index_factory.py` files.
+"""
 import os
-import pytest
-import shutil
-from contextlib import suppress
 
-from merlin.common.sample_index import SampleIndex, uniform_directories, new_dir
+import pytest
+
+from merlin.common.sample_index import SampleIndex, new_dir, uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy, read_hierarchy
 
 
@@ -68,7 +70,6 @@ def test_new_dir(temp_output_dir: str):
 
     # Test OSError functionality
     new_dir(test_path)
-
 
 
 class TestSampleIndex:
@@ -228,7 +229,7 @@ class TestSampleIndex:
         working_dir = self.get_working_dir("test_is_grandparent_of_leaf")
         indx = create_hierarchy(10, 1, [2], root=working_dir)
         self.write_hierarchy_for_debug(indx)
-        
+
         invalid_indx = SampleIndex(1, 3, {}, "invalid_indx")
 
         # Ensure that trying to change the root raises an error
@@ -246,7 +247,6 @@ class TestSampleIndex:
         # Test a valid set operation
         dummy_indx = SampleIndex(0, 1, {}, "dummy_indx", leafid=0, address="0.0")
         indx["0"]["0.0"] = dummy_indx
-
 
     def test_index_file_writing(self, temp_output_dir: str):
         """
@@ -272,12 +272,13 @@ class TestSampleIndex:
         # Create the directory and ensure it has the correct format
         working_dir = self.get_working_dir("test_directory_writing_small/")
         indx = create_hierarchy(2, 1, [1], root=working_dir)
-        expected = ": DIRECTORY MIN 0 MAX 2 NUM_BUNDLES 2\n" \
-                   "   0: DIRECTORY MIN 0 MAX 1 NUM_BUNDLES 1\n" \
-                   "      0.0: BUNDLE 0 MIN 0 MAX 1\n" \
-                   "   1: DIRECTORY MIN 1 MAX 2 NUM_BUNDLES 1\n" \
-                   "      1.0: BUNDLE 1 MIN 1 MAX 2\n" \
-
+        expected = (
+            ": DIRECTORY MIN 0 MAX 2 NUM_BUNDLES 2\n"
+            "   0: DIRECTORY MIN 0 MAX 1 NUM_BUNDLES 1\n"
+            "      0.0: BUNDLE 0 MIN 0 MAX 1\n"
+            "   1: DIRECTORY MIN 1 MAX 2 NUM_BUNDLES 1\n"
+            "      1.0: BUNDLE 1 MIN 1 MAX 2\n"
+        )
         assert expected == str(indx)
 
         # Write the directories and ensure the paths are actually written
@@ -338,18 +339,19 @@ class TestSampleIndex:
             temporary output path for our tests
         """
         working_dir = self.get_working_dir("test_start_sample_id")
-        expected = ": DIRECTORY MIN 203 MAX 303 NUM_BUNDLES 10\n" \
-                   "   0: BUNDLE 0 MIN 203 MAX 213\n" \
-                   "   1: BUNDLE 1 MIN 213 MAX 223\n" \
-                   "   2: BUNDLE 2 MIN 223 MAX 233\n" \
-                   "   3: BUNDLE 3 MIN 233 MAX 243\n" \
-                   "   4: BUNDLE 4 MIN 243 MAX 253\n" \
-                   "   5: BUNDLE 5 MIN 253 MAX 263\n" \
-                   "   6: BUNDLE 6 MIN 263 MAX 273\n" \
-                   "   7: BUNDLE 7 MIN 273 MAX 283\n" \
-                   "   8: BUNDLE 8 MIN 283 MAX 293\n" \
-                   "   9: BUNDLE 9 MIN 293 MAX 303\n" \
-
+        expected = (
+            ": DIRECTORY MIN 203 MAX 303 NUM_BUNDLES 10\n"
+            "   0: BUNDLE 0 MIN 203 MAX 213\n"
+            "   1: BUNDLE 1 MIN 213 MAX 223\n"
+            "   2: BUNDLE 2 MIN 223 MAX 233\n"
+            "   3: BUNDLE 3 MIN 233 MAX 243\n"
+            "   4: BUNDLE 4 MIN 243 MAX 253\n"
+            "   5: BUNDLE 5 MIN 253 MAX 263\n"
+            "   6: BUNDLE 6 MIN 263 MAX 273\n"
+            "   7: BUNDLE 7 MIN 273 MAX 283\n"
+            "   8: BUNDLE 8 MIN 283 MAX 293\n"
+            "   9: BUNDLE 9 MIN 293 MAX 303\n"
+        )
         idx203 = create_hierarchy(100, 10, start_sample_id=203, root=working_dir)
         self.write_hierarchy_for_debug(idx203)
 
@@ -424,7 +426,7 @@ class TestSampleIndex:
             f"{working_dir}/0/3/1",
             f"{working_dir}/0/3/2",
             f"{working_dir}/0/3/3",
-            f"{working_dir}/0/3/4"
+            f"{working_dir}/0/3/4",
         ]
         expected_all_dirs = " ".join(expected_all_dirs_list)
         assert all_dirs == expected_all_dirs
@@ -444,12 +446,13 @@ class TestSampleIndex:
         top = read_hierarchy(os.path.abspath(working_dir))
 
         # Compare results
-        expected = ": DIRECTORY MIN 0 MAX 2 NUM_BUNDLES 2\n" \
-                   "   0: DIRECTORY MIN 0 MAX 1 NUM_BUNDLES 1\n" \
-                   "      0.0: BUNDLE -1 MIN 0 MAX 1\n" \
-                   "   1: DIRECTORY MIN 1 MAX 2 NUM_BUNDLES 1\n" \
-                   "      1.0: BUNDLE -1 MIN 1 MAX 2\n" \
-
+        expected = (
+            ": DIRECTORY MIN 0 MAX 2 NUM_BUNDLES 2\n"
+            "   0: DIRECTORY MIN 0 MAX 1 NUM_BUNDLES 1\n"
+            "      0.0: BUNDLE -1 MIN 0 MAX 1\n"
+            "   1: DIRECTORY MIN 1 MAX 2 NUM_BUNDLES 1\n"
+            "      1.0: BUNDLE -1 MIN 1 MAX 2\n"
+        )
         assert str(top) == expected
 
         # Create and insert the sub hierarchy
@@ -457,22 +460,23 @@ class TestSampleIndex:
         top["1.0"] = sub_h
 
         # Compare results
-        expected = ": DIRECTORY MIN 0 MAX 2 NUM_BUNDLES 2\n" \
-                   "   0: DIRECTORY MIN 0 MAX 1 NUM_BUNDLES 1\n" \
-                   "      0.0: BUNDLE -1 MIN 0 MAX 1\n" \
-                   "   1: DIRECTORY MIN 1 MAX 2 NUM_BUNDLES 1\n" \
-                   "      1.0: DIRECTORY MIN 0 MAX 100 NUM_BUNDLES 10\n" \
-                   "         1.0.0: BUNDLE 0 MIN 0 MAX 10\n" \
-                   "         1.0.1: BUNDLE 1 MIN 10 MAX 20\n" \
-                   "         1.0.2: BUNDLE 2 MIN 20 MAX 30\n" \
-                   "         1.0.3: BUNDLE 3 MIN 30 MAX 40\n" \
-                   "         1.0.4: BUNDLE 4 MIN 40 MAX 50\n" \
-                   "         1.0.5: BUNDLE 5 MIN 50 MAX 60\n" \
-                   "         1.0.6: BUNDLE 6 MIN 60 MAX 70\n" \
-                   "         1.0.7: BUNDLE 7 MIN 70 MAX 80\n" \
-                   "         1.0.8: BUNDLE 8 MIN 80 MAX 90\n" \
-                   "         1.0.9: BUNDLE 9 MIN 90 MAX 100\n" \
-
+        expected = (
+            ": DIRECTORY MIN 0 MAX 2 NUM_BUNDLES 2\n"
+            "   0: DIRECTORY MIN 0 MAX 1 NUM_BUNDLES 1\n"
+            "      0.0: BUNDLE -1 MIN 0 MAX 1\n"
+            "   1: DIRECTORY MIN 1 MAX 2 NUM_BUNDLES 1\n"
+            "      1.0: DIRECTORY MIN 0 MAX 100 NUM_BUNDLES 10\n"
+            "         1.0.0: BUNDLE 0 MIN 0 MAX 10\n"
+            "         1.0.1: BUNDLE 1 MIN 10 MAX 20\n"
+            "         1.0.2: BUNDLE 2 MIN 20 MAX 30\n"
+            "         1.0.3: BUNDLE 3 MIN 30 MAX 40\n"
+            "         1.0.4: BUNDLE 4 MIN 40 MAX 50\n"
+            "         1.0.5: BUNDLE 5 MIN 50 MAX 60\n"
+            "         1.0.6: BUNDLE 6 MIN 60 MAX 70\n"
+            "         1.0.7: BUNDLE 7 MIN 70 MAX 80\n"
+            "         1.0.8: BUNDLE 8 MIN 80 MAX 90\n"
+            "         1.0.9: BUNDLE 9 MIN 90 MAX 100\n"
+        )
         assert str(top) == expected
 
     def test_sample_index_creation_and_insertion(self, temp_output_dir: str):
@@ -510,5 +514,5 @@ class TestSampleIndex:
             # Inserting hierarchy at 0.1
             try:
                 idx["0.1"] = create_hierarchy(args[0], args[1], args[2], address="0.1")
-            except KeyError as error:
+            except KeyError:
                 assert False
