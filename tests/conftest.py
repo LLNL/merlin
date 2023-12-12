@@ -53,6 +53,8 @@ pytest_plugins = [
     fixture_file.replace("/", ".").replace(".py", "") for fixture_file in glob("tests/fixtures/[!__]*.py", recursive=True)
 ]
 
+from tests.encryption_manager import EncryptionManager
+
 
 class RedisServerError(Exception):
     """
@@ -215,4 +217,39 @@ def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):  # pyl
 
     with CeleryTestWorkersManager(celery_app) as workers_manager:
         workers_manager.launch_workers(worker_info)
+        yield
+
+
+@pytest.fixture(scope="session")
+def encryption_output_dir(temp_output_dir: str) -> str:  # pylint: disable=redefined-outer-name
+    """
+    Get a temporary output directory for our encryption tests.
+
+    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    """
+    encryption_dir = f"{temp_output_dir}/encryption_tests"
+    os.mkdir(encryption_dir)
+    return encryption_dir
+
+
+@pytest.fixture(scope="session")
+def test_encryption_key() -> bytes:
+    """An encryption key to be used for tests that need it"""
+    return b"Q3vLp07Ljm60ahfU9HwOOnfgGY91lSrUmqcTiP0v9i0="
+
+
+@pytest.fixture(scope="class")
+def use_fake_encrypt_data_key(encryption_output_dir: str, test_encryption_key: bytes):  # pylint: disable=redefined-outer-name
+    """
+    Create a fake encrypt data key to use for these tests. This will save the
+    current data key so we can set it back to what it was prior to running
+    the tests.
+
+    :param encryption_output_dir: The path to the temporary output directory we'll be using for this test run
+    """
+    # Use a context manager to ensure cleanup runs even if an error occurs
+    with EncryptionManager(encryption_output_dir, test_encryption_key) as encrypt_manager:
+        # Set the fake encryption key
+        encrypt_manager.set_fake_key()
+        # Yield control to the tests
         yield
