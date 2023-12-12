@@ -13,7 +13,7 @@ class TestUtilSampling:
     """
 
     def test_scale_samples_basic(self):
-        """Test basic functionality without logging"""
+        """Test basic functionality"""
         samples_norm = np.array([[0.2, 0.4], [0.6, 0.8]])
         limits = [(-1, 1), (2, 6)]
         result = scale_samples(samples_norm, limits)
