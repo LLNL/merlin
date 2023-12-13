@@ -16,41 +16,40 @@ class TestEncryption:
     This class will house all tests necessary for our encryption modules.
     """
 
-    def test_encrypt(self, use_fake_encrypt_data_key: "fixture"):  # noqa: F821
+    def test_encrypt(self, config: "fixture"):  # noqa: F821
         """
         Test that our encryption function is encrypting the bytes that we're
         passing to it.
 
-        :param use_fake_encrypt_data_key: A fixture to set up a fake encryption key for testing
+        :param config: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         str_to_encrypt = b"super secret string shhh"
         encrypted_str = encrypt(str_to_encrypt)
         for word in str_to_encrypt.decode("utf-8").split(" "):
             assert word not in encrypted_str.decode("utf-8")
 
-    def test_decrypt(self, use_fake_encrypt_data_key: "fixture"):  # noqa: F821
+    def test_decrypt(self, config: "fixture"):  # noqa: F821
         """
-        Test that our decryption function is decrypting the bytes that we're
-        passing to it.
+        Test that our decryption function is decrypting the bytes that we're passing to it.
 
-        :param use_fake_encrypt_data_key: A fixture to set up a fake encryption key for testing
+        :param config: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         # This is the output of the bytes from the encrypt test
         str_to_decrypt = b"gAAAAABld6k-jEncgCW5AePgrwn-C30dhr7dzGVhqzcqskPqFyA2Hdg3VWmo0qQnLklccaUYzAGlB4PMxyp4T-1gAYlAOf_7sC_bJOEcYOIkhZFoH6cX4Uw="
         decrypted_str = decrypt(str_to_decrypt)
         assert decrypted_str == b"super secret string shhh"
 
-    def test_get_key_path(self, use_fake_encrypt_data_key: "fixture"):  # noqa F821
+    def test_get_key_path(self, config: "fixture"):  # noqa: F821
         """
         Test the `_get_key_path` function.
 
-        :param use_fake_encrypt_data_key: A fixture to set up a fake encryption key for testing
+        :param config: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         # Test the default behavior (`_get_key_path` will pull from CONFIG.results_backend which
         # will be set to the temporary output path for our tests in the `use_fake_encrypt_data_key` fixture)
         user = os.getlogin()
         actual_default = _get_key_path()
-        assert actual_default.startswith(f"/tmp/{user}/") and actual_default.endswith("/encryption_tests/encrypt_data_key")
+        assert actual_default.startswith(f"/tmp/{user}/") and actual_default.endswith("/encrypt_data_key")
 
         # Test with having the encryption key set to None
         temp = CONFIG.results_backend.encryption_key
@@ -67,14 +66,14 @@ class TestEncryption:
         assert actual_no_results_backend == os.path.abspath(os.path.expanduser("~/.merlin/encrypt_data_key"))
         CONFIG.results_backend = orig_results_backend
 
-    def test_gen_key(self, encryption_output_dir: str):
+    def test_gen_key(self, temp_output_dir: str):
         """
         Test the `_gen_key` function.
 
-        :param encryption_output_dir: A fixture to create a temporary output directory for our encryption tests
+        :param temp_output_dir: The path to the temporary output directory for this test run
         """
         # Create the file but don't put anything in it
-        key_gen_test_file = f"{encryption_output_dir}/key_gen_test"
+        key_gen_test_file = f"{temp_output_dir}/key_gen_test"
         with open(key_gen_test_file, "w"):
             pass
 
@@ -89,13 +88,13 @@ class TestEncryption:
             key_gen_contents = key_gen_file.read()
         assert key_gen_contents != ""
 
-    def test_get_key(self, use_fake_encrypt_data_key: str, encryption_output_dir: str, test_encryption_key: bytes):
+    def test_get_key(self, merlin_server_dir: str, test_encryption_key: bytes, config: "fixture"):  # noqa: F821
         """
         Test the `_get_key` function.
 
-        :param use_fake_encrypt_data_key: A fixture to set up a fake encryption key for testing
-        :param encryption_output_dir: A fixture to create a temporary output directory for our encryption tests
+        :param merlin_server_dir: The directory to the merlin test server configuration
         :param test_encryption_key: A fixture to establish a fixed encryption key for testing
+        :param config: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         # Test the default functionality
         actual_default = _get_key()
@@ -103,7 +102,7 @@ class TestEncryption:
 
         # Modify the permission of the key file so that it can't be read by anyone
         # (we're purposefully trying to raise an IOError)
-        key_path = f"{encryption_output_dir}/encrypt_data_key"
+        key_path = f"{merlin_server_dir}/encrypt_data_key"
         orig_file_permissions = os.stat(key_path).st_mode
         os.chmod(key_path, 0o222)
         with pytest.raises(IOError):
