@@ -32,30 +32,17 @@ This module contains pytest fixtures to be used throughout the entire
 integration test suite.
 """
 import os
-import subprocess
 from time import sleep
 from typing import Dict
 
 import pytest
-import redis
 from _pytest.tmpdir import TempPathFactory
 from celery import Celery
 from celery.canvas import Signature
 
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.context_managers.encryption_manager import EncryptionManager
-
-
-class RedisServerError(Exception):
-    """
-    Exception to signal that the server wasn't pinged properly.
-    """
-
-
-class ServerInitError(Exception):
-    """
-    Exception to signal that there was an error initializing the server.
-    """
+from tests.context_managers.server_manager import RedisServerManager
 
 
 @pytest.fixture(scope="session")
@@ -80,73 +67,20 @@ def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
 
 
 @pytest.fixture(scope="session")
-def redis_pass() -> str:
-    """
-    This fixture represents the password to the merlin test server.
-
-    :returns: The redis password for our test server
-    """
-    return "merlin-test-server"
-
-
-@pytest.fixture(scope="session")
-def merlin_server_dir(temp_output_dir: str, redis_pass: str) -> str:  # pylint: disable=redefined-outer-name
-    """
-    This fixture will initialize the merlin server (i.e. create all the files we'll
-    need to start up a local redis server). It will return the path to the directory
-    containing the files needed for the server to start up.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    :param redis_pass: The password to the test redis server that we'll create here
-    :returns: The path to the merlin_server directory with the server configurations
-    """
-    # Initialize the setup for the local redis server
-    # We'll also set the password to 'merlin-test-server' so it'll be easy to shutdown if there's an issue
-    subprocess.run(f"merlin server init; merlin server config -pwd {redis_pass}", shell=True, capture_output=True, text=True)
-
-    # Check that the merlin server was initialized properly
-    server_dir = f"{temp_output_dir}/merlin_server"
-    if not os.path.exists(server_dir):
-        raise ServerInitError("The merlin server was not initialized properly.")
-
-    return server_dir
-
-
-@pytest.fixture(scope="session")
-def redis_server(merlin_server_dir: str, redis_pass: str) -> str:  # pylint: disable=redefined-outer-name,unused-argument
+def redis_server(temp_output_dir: str) -> str:  # pylint: disable=redefined-outer-name
     """
     Start a redis server instance that runs on localhost:6379. This will yield the
     redis server uri that can be used to create a connection with celery.
 
-    :param merlin_server_dir: The directory to the merlin test server configuration.
-        This will not be used here but we need the server configurations before we can
-        start the server.
-    :param redis_pass: The raw redis password stored in the redis.pass file
+    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     :yields: The local redis server uri
     """
-    # Start the local redis server
-    try:
-        # Need to set LC_ALL='C' before starting the server or else redis causes a failure
-        subprocess.run("export LC_ALL='C'; merlin server start", shell=True, timeout=5)
-    except subprocess.TimeoutExpired:
-        pass
-
-    # Ensure the server started properly
-    host = "localhost"
-    port = 6379
-    database = 0
-    username = "default"
-    redis_client = redis.Redis(host=host, port=port, db=database, password=redis_pass, username=username)
-    if not redis_client.ping():
-        raise RedisServerError("The redis server could not be pinged. Check that the server is running with 'ps ux'.")
-
-    # Hand over the redis server url to any other fixtures/tests that need it
-    redis_server_uri = f"redis://{username}:{redis_pass}@{host}:{port}/{database}"
-    yield redis_server_uri
-
-    # Kill the server; don't run this until all tests are done (accomplished with 'yield' above)
-    kill_process = subprocess.run("merlin server stop", shell=True, capture_output=True, text=True)
-    assert "Merlin server terminated." in kill_process.stderr
+    with RedisServerManager(temp_output_dir) as redis_server_manager:
+        redis_server_manager.initialize_server()
+        redis_server_manager.start_server()
+        # Yield the redis_server uri to any fixtures/tests that may need it
+        yield redis_server_manager.redis_server_uri
+        # The server will be stopped once this context reaches the end of it's execution here
 
 
 @pytest.fixture(scope="session")
@@ -242,3 +176,4 @@ def use_fake_encrypt_data_key(encryption_output_dir: str, test_encryption_key: b
         # Set the fake encryption key
         encrypt_manager.set_fake_key()
         # Yield control to the tests
+        yield

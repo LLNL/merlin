@@ -21,7 +21,7 @@ class EncryptionManager:
         self.orig_results_backend = CONFIG.results_backend
 
     def __enter__(self):
-        """This magic method is necessary for allowing this class to be sued as a context manager"""
+        """This magic method is necessary for allowing this class to be used as a context manager"""
         return self
 
     def __exit__(self, exc_type: Type[Exception], exc_value: Exception, traceback: TracebackType):

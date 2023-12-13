@@ -40,7 +40,7 @@ from types import TracebackType
 from typing import Dict, List, Type
 
 from celery import Celery
-from merlin.config.configfile import CONFIG
+
 
 class CeleryWorkersManager:
     """
@@ -198,7 +198,6 @@ class CeleryWorkersManager:
         :param worker_info: A dict of worker info with the form
             {"worker_name": {"concurrency": <int>, "queues": <list of queue names>}}
         """
-        # CONFIG.results_backend.encryption_key = "~/.merlin/encrypt_data_key"
         for worker_name, worker_settings in worker_info.items():
             self.launch_worker(worker_name, worker_settings["queues"], worker_settings["concurrency"])
 
