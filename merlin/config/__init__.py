@@ -31,6 +31,7 @@
 """
 Used to store the application configuration.
 """
+from copy import copy
 
 from types import SimpleNamespace
 from typing import Dict, List, Optional
@@ -55,6 +56,35 @@ class Config:  # pylint: disable=R0903
         self.broker: Optional[SimpleNamespace]
         self.results_backend: Optional[SimpleNamespace]
         self.load_app_into_namespaces(app_dict)
+
+    def __copy__(self):
+        """
+        A magic method to allow this class to be copied with copy(instance_of_Config).
+        """
+        cls = self.__class__
+        result = cls.__new__(cls)
+        copied_attrs = {
+            "celery": copy(self.__dict__["celery"]),
+            "broker": copy(self.__dict__["broker"]),
+            "results_backend": copy(self.__dict__["results_backend"]),
+        }
+        result.__dict__.update(copied_attrs)
+        return result
+
+    def __str__(self):
+        """
+        A magic method so we can print the CONFIG class.
+        """
+        formatted_str = "config:"
+        attrs = {"celery": self.celery, "broker": self.broker, "results_backend": self.results_backend}
+        for name, attr in attrs.items():
+            if attr is not None:
+                items = (f"    {k}: {v!r}" for k, v in attr.__dict__.items())
+                joined_items = "\n".join(items)
+                formatted_str += f"\n  {name}: \n{joined_items}"
+            else:
+                formatted_str += f"\n  {name}: \n    None"
+        return formatted_str
 
     def load_app_into_namespaces(self, app_dict: Dict) -> None:
         """
