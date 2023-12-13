@@ -64,7 +64,7 @@ def test_new_dir(temp_output_dir: str):
             temporary output path for our tests
     """
     # Test basic functionality
-    test_path = f"{os.getcwd()}/test_new_dir"
+    test_path = f"{os.getcwd()}/test_sample_index/test_new_dir"
     new_dir(test_path)
     assert os.path.exists(test_path)
 
