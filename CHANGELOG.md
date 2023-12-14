@@ -6,10 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Pytest fixtures in the `conftest.py` file of the integration test suite
+- Pytest fixtures in the `conftest.py` file of the test suite
   - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
-- Tests for the `celeryadapter.py` module
-- New CeleryTestWorkersManager context to help with starting/stopping workers for tests
+- Coverage to the test suite. This includes adding tests for:
+  - `merlin/common/`
+  - `merlin/config/`
+  - `celeryadapter.py`
+- Context managers for the `conftest.py` file to ensure safe spin up and shutdown of fixtures
+  - RedisServerManager: context to help with starting/stopping a redis server for tests
+  - CeleryWorkersManager: context to help with starting/stopping workers for tests
+- Ability to copy and print the `Config` object from `merlin/config/__init__.py`
 
 ### Fixed
 - The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
