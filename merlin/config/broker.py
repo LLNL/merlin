@@ -85,13 +85,13 @@ def get_rabbit_connection(include_password, conn="amqps"):
         password_filepath = CONFIG.broker.password
         LOG.debug(f"Broker: password filepath = {password_filepath}")
         password_filepath = os.path.abspath(expanduser(password_filepath))
-    except KeyError as e:  # pylint: disable=C0103
-        raise ValueError("Broker: No password provided for RabbitMQ") from e
+    except (AttributeError, KeyError) as exc:
+        raise ValueError("Broker: No password provided for RabbitMQ") from exc
 
     try:
         password = read_file(password_filepath)
-    except IOError as e:  # pylint: disable=C0103
-        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist") from e
+    except IOError as exc:
+        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist") from exc
 
     try:
         port = CONFIG.broker.port
@@ -204,12 +204,6 @@ def get_connection_string(include_password=True):
         broker = CONFIG.broker.name.lower()
     except AttributeError:
         broker = ""
-
-    try:
-        config_path = CONFIG.celery.certs
-        config_path = os.path.abspath(os.path.expanduser(config_path))
-    except AttributeError:
-        config_path = None
 
     if broker not in BROKERS:
         raise ValueError(f"Error: {broker} is not a supported broker.")
