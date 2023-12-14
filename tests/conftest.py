@@ -46,7 +46,81 @@ from merlin.config.configfile import CONFIG
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.context_managers.server_manager import RedisServerManager
 
-REDIS_PASS = "merlin-test-server"
+SERVER_PASS = "merlin-test-server"
+
+
+#######################################
+#### Helper Functions for Fixtures ####
+#######################################
+
+
+def create_pass_file(pass_filepath: str):
+    """
+    Check if a password file already exists (it will if the redis server has been started)
+    and if it hasn't then create one and write the password to the file.
+
+    :param pass_filepath: The path to the password file that we need to check for/create
+    """
+    if not os.path.exists(pass_filepath):
+        with open(pass_filepath, "w") as pass_file:
+            pass_file.write(SERVER_PASS)
+
+
+def create_encryption_file(key_filepath: str, encryption_key: bytes, app_yaml_filepath: str = None):
+    """
+    Check if an encryption file already exists (it will if the redis server has been started)
+    and if it hasn't then create one and write the encryption key to the file. If an app.yaml
+    filepath has been passed to this function then we'll need to update it so that the encryption
+    key points to the `key_filepath`.
+
+    :param key_filepath: The path to the file that will store our encryption key
+    :param encryption_key: An encryption key to be used for testing
+    :param app_yaml_filepath: A path to the app.yaml file that needs to be updated
+    """
+    if not os.path.exists(key_filepath):
+        with open(key_filepath, "w") as key_file:
+            key_file.write(encryption_key.decode("utf-8"))
+
+    if app_yaml_filepath is not None:
+        # Load up the app.yaml that was created by starting the server
+        with open(app_yaml_filepath, "r") as app_yaml_file:
+            app_yaml = yaml.load(app_yaml_file, yaml.Loader)
+        
+        # Modify the path to the encryption key and then save it
+        app_yaml["results_backend"]["encryption_key"] = key_filepath
+        with open(app_yaml_filepath, "w") as app_yaml_file:
+            yaml.dump(app_yaml, app_yaml_file)
+
+
+def set_config(broker: Dict[str, str], results_backend: Dict[str, str]):
+    """
+    Given configuration options for the broker and results_backend, update
+    the CONFIG object.
+
+    :param broker: A dict of the configuration settings for the broker
+    :param results_backend: A dict of configuration settings for the results_backend
+    """
+    global CONFIG
+
+    # Set the broker configuration for testing
+    CONFIG.broker.password = broker["password"]
+    CONFIG.broker.port = broker["port"]
+    CONFIG.broker.server = broker["server"]
+    CONFIG.broker.username = broker["username"]
+    CONFIG.broker.vhost = broker["vhost"]
+    CONFIG.broker.name = broker["name"]
+
+    # Set the results_backend configuration for testing
+    CONFIG.results_backend.password = results_backend["password"]
+    CONFIG.results_backend.port = results_backend["port"]
+    CONFIG.results_backend.server = results_backend["server"]
+    CONFIG.results_backend.username = results_backend["username"]
+    CONFIG.results_backend.encryption_key = results_backend["encryption_key"]
+
+
+#######################################
+######### Fixture Definitions #########
+#######################################
 
 
 #######################################
@@ -85,7 +159,10 @@ def merlin_server_dir(temp_output_dir: str) -> str:
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     :returns: The path to the merlin_server directory that will be created by the `redis_server` fixture
     """
-    return f"{temp_output_dir}/merlin_server"
+    server_dir = f"{temp_output_dir}/merlin_server"
+    if not os.path.exists(server_dir):
+        os.mkdir(server_dir)
+    return server_dir
 
 
 @pytest.fixture(scope="session")
@@ -98,9 +175,10 @@ def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:  # 
     :param test_encryption_key: An encryption key to be used for testing
     :yields: The local redis server uri
     """
-    with RedisServerManager(merlin_server_dir, REDIS_PASS, test_encryption_key) as redis_server_manager:
+    with RedisServerManager(merlin_server_dir, SERVER_PASS) as redis_server_manager:
         redis_server_manager.initialize_server()
         redis_server_manager.start_server()
+        create_encryption_file(f"{merlin_server_dir}/encrypt_data_key", test_encryption_key, app_yaml_filepath=f"{merlin_server_dir}/app.yaml")
         # Yield the redis_server uri to any fixtures/tests that may need it
         yield redis_server_manager.redis_server_uri
         # The server will be stopped once this context reaches the end of it's execution here
@@ -171,50 +249,61 @@ def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):  # pyl
 def test_encryption_key() -> bytes:
     """
     An encryption key to be used for tests that need it.
-    
+
     :returns: The test encryption key
     """
     return b"Q3vLp07Ljm60ahfU9HwOOnfgGY91lSrUmqcTiP0v9i0="
 
 
-@pytest.fixture(scope="session")
-def app_yaml(merlin_server_dir: str, redis_server: str) -> Dict[str, Any]:  # pylint: disable=redefined-outer-name
-    """
-    Load in the app.yaml file generated by starting the redis server.
-
-    :param merlin_server_dir: The directory to the merlin test server configuration
-    :param redis_server: The fixture that starts up the redis server
-    :returns: The contents of the app.yaml file created by starting the redis server
-    """
-    with open(f"{merlin_server_dir}/app.yaml", "r") as app_yaml_file:
-        app_yaml = yaml.load(app_yaml_file, yaml.Loader)
-        return app_yaml
-
-
 @pytest.fixture(scope="function")
-def config(app_yaml: str):  # pylint: disable=redefined-outer-name
+def redis_config(merlin_server_dir: str, test_encryption_key: bytes):  # pylint: disable=redefined-outer-name
     """
     This fixture is intended to be used for testing any functionality in the codebase
-    that uses the CONFIG object. This will modify the CONFIG object to use static test values
-    that shouldn't change.
+    that uses the CONFIG object with a Redis broker and results_backend.
 
-    :param app_yaml: The contents of the app.yaml created by starting the containerized redis server
+    :param merlin_server_dir: The directory to the merlin test server configuration
+    :param test_encryption_key: An encryption key to be used for testing
     """
     global CONFIG
+
+    # Create a copy of the CONFIG option so we can reset it after the test
     orig_config = copy(CONFIG)
 
-    CONFIG.broker.password = app_yaml["broker"]["password"]
-    CONFIG.broker.port = app_yaml["broker"]["port"]
-    CONFIG.broker.server = app_yaml["broker"]["server"]
-    CONFIG.broker.username = app_yaml["broker"]["username"]
-    CONFIG.broker.vhost = app_yaml["broker"]["vhost"]
+    # Create a password file and encryption key file (if they don't already exist)
+    pass_file = f"{merlin_server_dir}/redis.pass"
+    key_file = f"{merlin_server_dir}/encrypt_data_key"
+    create_pass_file(pass_file)
+    create_encryption_file(key_file, test_encryption_key)
 
-    CONFIG.results_backend.password = app_yaml["results_backend"]["password"]
-    CONFIG.results_backend.port = app_yaml["results_backend"]["port"]
-    CONFIG.results_backend.server = app_yaml["results_backend"]["server"]
-    CONFIG.results_backend.username = app_yaml["results_backend"]["username"]
-    CONFIG.results_backend.encryption_key = app_yaml["results_backend"]["encryption_key"]
+    # Create the broker and results_backend configuration to use
+    broker = {
+        "cert_reqs": "none",
+        "password": pass_file,
+        "port": 6379,
+        "server": "127.0.0.1",
+        "username": "default",
+        "vhost": "host4testing",
+        "name": "redis",
+    }
 
+    results_backend = {
+        "cert_reqs": "none",
+        "db_num": 0,
+        "encryption_key": key_file,
+        "password": pass_file,
+        "port": 6379,
+        "server": "127.0.0.1",
+        "username": "default",
+        "name": "redis",
+    }
+
+    # Set the configuration
+    set_config(broker, results_backend)
+
+    # Go run the tests
     yield
 
-    CONFIG = orig_config
+    # Reset the configuration
+    CONFIG.celery = orig_config.celery
+    CONFIG.broker = orig_config.broker
+    CONFIG.results_backend = orig_config.results_backend
