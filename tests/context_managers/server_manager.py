@@ -32,9 +32,8 @@ class RedisServerManager:
     spun up here may never be stopped.
     """
 
-    def __init__(self, server_dir: str, redis_pass: str, test_encryption_key: bytes):
+    def __init__(self, server_dir: str, redis_pass: str):
         self._redis_pass = redis_pass
-        self._test_encryption_key = test_encryption_key
         self.server_dir = server_dir
         self.host = "localhost"
         self.port = 6379
@@ -67,26 +66,6 @@ class RedisServerManager:
         if not os.path.exists(self.server_dir):
             raise ServerInitError("The merlin server was not initialized properly.")
 
-    def _create_fake_encryption_key(self):
-        """
-        For testing we'll use a specific encryption key. We'll create a file for that and
-        save it to the app.yaml created for testing.
-        """
-        # Create a fake encryption key file for testing purposes
-        encryption_file = f"{self.server_dir}/encrypt_data_key"
-        with open(encryption_file, "w") as key_file:
-            key_file.write(self._test_encryption_key.decode("utf-8"))
-
-        # Load up the app.yaml that was created by starting the server
-        server_app_yaml = f"{self.server_dir}/app.yaml"
-        with open(server_app_yaml, "r") as app_yaml_file:
-            app_yaml = yaml.load(app_yaml_file, yaml.Loader)
-        
-        # Modify the path to the encryption key and then save it
-        app_yaml["results_backend"]["encryption_key"] = encryption_file
-        with open(server_app_yaml, "w") as app_yaml_file:
-            yaml.dump(app_yaml, app_yaml_file)
-
     def start_server(self):
         """Attempt to start the local redis server."""
         try:
@@ -101,8 +80,6 @@ class RedisServerManager:
         )
         if not redis_client.ping():
             raise RedisServerError("The redis server could not be pinged. Check that the server is running with 'ps ux'.")
-
-        self._create_fake_encryption_key()
 
     def stop_server(self):
         """Stop the server."""
