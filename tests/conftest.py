@@ -326,8 +326,8 @@ def redis_config(merlin_server_dir: str, config: "fixture"):  # noqa: F821 pylin
 
 @pytest.fixture(scope="function")
 def rabbit_config(
-    merlin_server_dir: str, config: "fixture"
-):  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
+    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
+):
     """
     This fixture is intended to be used for testing any functionality in the codebase
     that uses the CONFIG object with a RabbitMQ broker and Redis results_backend.

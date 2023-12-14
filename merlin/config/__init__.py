@@ -80,9 +80,9 @@ class Config:  # pylint: disable=R0903
             if attr is not None:
                 items = (f"    {k}: {v!r}" for k, v in attr.__dict__.items())
                 joined_items = "\n".join(items)
-                formatted_str += f"\n  {name}: \n{joined_items}"
+                formatted_str += f"\n  {name}:\n{joined_items}"
             else:
-                formatted_str += f"\n  {name}: \n    None"
+                formatted_str += f"\n  {name}:\n    None"
         return formatted_str
 
     def load_app_into_namespaces(self, app_dict: Dict) -> None:
