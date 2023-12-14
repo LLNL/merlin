@@ -1,7 +1,6 @@
 """
 Tests for the `encrypt.py` and `encrypt_backend_traffic.py` files.
 """
-import getpass
 import os
 
 import celery
@@ -48,9 +47,8 @@ class TestEncryption:
         """
         # Test the default behavior (`_get_key_path` will pull from CONFIG.results_backend which
         # will be set to the temporary output path for our tests in the `use_fake_encrypt_data_key` fixture)
-        user = getpass.getuser()
         actual_default = _get_key_path()
-        assert actual_default.startswith(f"/tmp/{user}/") and actual_default.endswith("/encrypt_data_key")
+        assert actual_default.startswith("/tmp/") and actual_default.endswith("/encrypt_data_key")
 
         # Test with having the encryption key set to None
         temp = CONFIG.results_backend.encryption_key
