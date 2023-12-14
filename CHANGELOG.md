@@ -95,8 +95,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
 - Pytest fixtures in the `conftest.py` file of the integration test suite
   - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
-- Tests for the `celeryadapter.py` module
-- New CeleryTestWorkersManager context to help with starting/stopping workers for tests
+- Coverage to the test suite. This includes adding tests for:
+  - `merlin/common/`
+  - `merlin/config/`
+  - `celeryadapter.py`
+- Context managers for the `conftest.py` file to ensure safe spin up and shutdown of fixtures
+  - RedisServerManager: context to help with starting/stopping a redis server for tests
+  - CeleryWorkersManager: context to help with starting/stopping workers for tests
+- Ability to copy and print the `Config` object from `merlin/config/__init__.py`
 
 ### Changed
 - Reformatted the entire `merlin status` command
