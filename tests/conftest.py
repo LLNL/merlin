@@ -32,12 +32,12 @@ This module contains pytest fixtures to be used throughout the entire test suite
 """
 import os
 from glob import glob
-import yaml
 from copy import copy
 from time import sleep
-from typing import Any, Dict
+from typing import Dict
 
 import pytest
+import yaml
 from _pytest.tmpdir import TempPathFactory
 from celery import Celery
 from celery.canvas import Signature
@@ -46,7 +46,16 @@ from merlin.config.configfile import CONFIG
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.context_managers.server_manager import RedisServerManager
 
+
 SERVER_PASS = "merlin-test-server"
+
+
+#######################################
+# Loading in Module Specific Fixtures #
+#######################################
+pytest_plugins = [
+    fixture_file.replace("/", ".").replace(".py", "") for fixture_file in glob("tests/fixtures/[!__]*.py", recursive=True)
+]
 
 
 #######################################
@@ -85,7 +94,7 @@ def create_encryption_file(key_filepath: str, encryption_key: bytes, app_yaml_fi
         # Load up the app.yaml that was created by starting the server
         with open(app_yaml_filepath, "r") as app_yaml_file:
             app_yaml = yaml.load(app_yaml_file, yaml.Loader)
-        
+
         # Modify the path to the encryption key and then save it
         app_yaml["results_backend"]["encryption_key"] = key_filepath
         with open(app_yaml_filepath, "w") as app_yaml_file:
@@ -100,8 +109,6 @@ def set_config(broker: Dict[str, str], results_backend: Dict[str, str]):
     :param broker: A dict of the configuration settings for the broker
     :param results_backend: A dict of configuration settings for the results_backend
     """
-    global CONFIG
-
     # Set the broker configuration for testing
     CONFIG.broker.password = broker["password"]
     CONFIG.broker.port = broker["port"]
@@ -121,14 +128,6 @@ def set_config(broker: Dict[str, str], results_backend: Dict[str, str]):
 #######################################
 ######### Fixture Definitions #########
 #######################################
-
-
-#######################################
-# Loading in Module Specific Fixtures #
-#######################################
-pytest_plugins = [
-    fixture_file.replace("/", ".").replace(".py", "") for fixture_file in glob("tests/fixtures/[!__]*.py", recursive=True)
-]
 
 @pytest.fixture(scope="session")
 def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
@@ -152,7 +151,7 @@ def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
 
 
 @pytest.fixture(scope="session")
-def merlin_server_dir(temp_output_dir: str) -> str:
+def merlin_server_dir(temp_output_dir: str) -> str:  # pylint: disable=redefined-outer-name
     """
     The path to the merlin_server directory that will be created by the `redis_server` fixture.
 
@@ -178,7 +177,9 @@ def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:  # 
     with RedisServerManager(merlin_server_dir, SERVER_PASS) as redis_server_manager:
         redis_server_manager.initialize_server()
         redis_server_manager.start_server()
-        create_encryption_file(f"{merlin_server_dir}/encrypt_data_key", test_encryption_key, app_yaml_filepath=f"{merlin_server_dir}/app.yaml")
+        create_encryption_file(
+            f"{merlin_server_dir}/encrypt_data_key", test_encryption_key, app_yaml_filepath=f"{merlin_server_dir}/app.yaml"
+        )
         # Yield the redis_server uri to any fixtures/tests that may need it
         yield redis_server_manager.redis_server_uri
         # The server will be stopped once this context reaches the end of it's execution here
@@ -256,49 +257,42 @@ def test_encryption_key() -> bytes:
 
 
 @pytest.fixture(scope="function")
-def redis_config(merlin_server_dir: str, test_encryption_key: bytes):  # pylint: disable=redefined-outer-name
+def config(merlin_server_dir: str, test_encryption_key: bytes):  # pylint: disable=redefined-outer-name
     """
-    This fixture is intended to be used for testing any functionality in the codebase
-    that uses the CONFIG object with a Redis broker and results_backend.
+    DO NOT USE THIS FIXTURE IN A TEST, USE `redis_config` OR `rabbit_config` INSTEAD.
+    This fixture is intended to be used strictly by the `redis_config` and `rabbit_config`
+    fixtures. It sets up the CONFIG object but leaves certain broker settings unset.
 
     :param merlin_server_dir: The directory to the merlin test server configuration
     :param test_encryption_key: An encryption key to be used for testing
     """
-    global CONFIG
+    # global CONFIG
 
     # Create a copy of the CONFIG option so we can reset it after the test
     orig_config = copy(CONFIG)
 
-    # Create a password file and encryption key file (if they don't already exist)
-    pass_file = f"{merlin_server_dir}/redis.pass"
+    # Create an encryption key file (if it doesn't already exist)
     key_file = f"{merlin_server_dir}/encrypt_data_key"
-    create_pass_file(pass_file)
     create_encryption_file(key_file, test_encryption_key)
 
-    # Create the broker and results_backend configuration to use
-    broker = {
-        "cert_reqs": "none",
-        "password": pass_file,
-        "port": 6379,
-        "server": "127.0.0.1",
-        "username": "default",
-        "vhost": "host4testing",
-        "name": "redis",
-    }
+    # Set the broker configuration for testing
+    CONFIG.broker.password = "password path not yet set"  # This will be updated in `redis_config` or `rabbit_config`
+    CONFIG.broker.port = "port not yet set"  # This will be updated in `redis_config` or `rabbit_config`
+    CONFIG.broker.name = "name not yet set"  # This will be updated in `redis_config` or `rabbit_config`
+    CONFIG.broker.server = "127.0.0.1"
+    CONFIG.broker.username = "default"
+    CONFIG.broker.vhost = "host4testing"
+    CONFIG.broker.cert_reqs = "none"
 
-    results_backend = {
-        "cert_reqs": "none",
-        "db_num": 0,
-        "encryption_key": key_file,
-        "password": pass_file,
-        "port": 6379,
-        "server": "127.0.0.1",
-        "username": "default",
-        "name": "redis",
-    }
-
-    # Set the configuration
-    set_config(broker, results_backend)
+    # Set the results_backend configuration for testing
+    CONFIG.results_backend.password = f"{merlin_server_dir}/redis.pass"
+    CONFIG.results_backend.port = 6379
+    CONFIG.results_backend.server = "127.0.0.1"
+    CONFIG.results_backend.username = "default"
+    CONFIG.results_backend.cert_reqs = "none"
+    CONFIG.results_backend.encryption_key = key_file
+    CONFIG.results_backend.db_num = 0
+    CONFIG.results_backend.name = "redis"
 
     # Go run the tests
     yield
@@ -307,3 +301,47 @@ def redis_config(merlin_server_dir: str, test_encryption_key: bytes):  # pylint:
     CONFIG.celery = orig_config.celery
     CONFIG.broker = orig_config.broker
     CONFIG.results_backend = orig_config.results_backend
+
+
+@pytest.fixture(scope="function")
+def redis_config(merlin_server_dir: str, config: "fixture"):  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
+    """
+    This fixture is intended to be used for testing any functionality in the codebase
+    that uses the CONFIG object with a Redis broker and results_backend.
+
+    :param merlin_server_dir: The directory to the merlin test server configuration
+    :param config: The fixture that sets up most of the CONFIG object for testing
+    """
+    # global CONFIG
+
+    pass_file = f"{merlin_server_dir}/redis.pass"
+    create_pass_file(pass_file)
+
+    CONFIG.broker.password = pass_file
+    CONFIG.broker.port = 6379
+    CONFIG.broker.name = "redis"
+
+    yield
+
+
+@pytest.fixture(scope="function")
+def rabbit_config(
+    merlin_server_dir: str, config: "fixture"
+):  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
+    """
+    This fixture is intended to be used for testing any functionality in the codebase
+    that uses the CONFIG object with a RabbitMQ broker and Redis results_backend.
+
+    :param merlin_server_dir: The directory to the merlin test server configuration
+    :param config: The fixture that sets up most of the CONFIG object for testing
+    """
+    # global CONFIG
+
+    pass_file = f"{merlin_server_dir}/rabbit.pass"
+    create_pass_file(pass_file)
+
+    CONFIG.broker.password = pass_file
+    CONFIG.broker.port = 5671
+    CONFIG.broker.name = "rabbitmq"
+
+    yield

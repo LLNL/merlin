@@ -32,7 +32,6 @@
 Used to store the application configuration.
 """
 from copy import copy
-
 from types import SimpleNamespace
 from typing import Dict, List, Optional
 
