@@ -48,6 +48,11 @@ from tests.context_managers.server_manager import RedisServerManager
 
 
 SERVER_PASS = "merlin-test-server"
+CERT_FILES = {
+    "ssl_cert": "test-rabbit-client-cert.pem",
+    "ssl_ca": "test-mysql-ca-cert.pem",
+    "ssl_key": "test-rabbit-client-key.pem",
+}
 
 
 #######################################
@@ -99,6 +104,20 @@ def create_encryption_file(key_filepath: str, encryption_key: bytes, app_yaml_fi
         app_yaml["results_backend"]["encryption_key"] = key_filepath
         with open(app_yaml_filepath, "w") as app_yaml_file:
             yaml.dump(app_yaml, app_yaml_file)
+
+
+def create_cert_files(cert_filepath: str, cert_files: Dict[str, str]):
+    """
+    Check if cert files already exist and if they don't then create them.
+
+    :param cert_filepath: The path to the cert files 
+    :param cert_files: A dict of certification files to create
+    """
+    for cert_file in cert_files.values():
+        full_cert_filepath = f"{cert_filepath}/{cert_file}"
+        if not os.path.exists(full_cert_filepath):
+            with open(full_cert_filepath, "w"):
+                pass
 
 
 def set_config(broker: Dict[str, str], results_backend: Dict[str, str]):
@@ -390,6 +409,8 @@ def mysql_results_backend_config(
     """
     pass_file = f"{merlin_server_dir}/mysql.pass"
     create_pass_file(pass_file)
+
+    create_cert_files(merlin_server_dir, CERT_FILES)
 
     CONFIG.results_backend.password = pass_file
     CONFIG.results_backend.name = "mysql"
