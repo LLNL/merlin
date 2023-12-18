@@ -2,9 +2,10 @@
 Tests for the `results_backend.py` file.
 """
 import os
-import pytest
 from ssl import CERT_NONE
 from typing import Any, Dict
+
+import pytest
 
 from merlin.config.configfile import CONFIG
 from merlin.config.results_backend import (
@@ -16,9 +17,10 @@ from merlin.config.results_backend import (
     get_mysql,
     get_mysql_config,
     get_redis,
-    get_ssl_config
+    get_ssl_config,
 )
 from tests.conftest import CERT_FILES, SERVER_PASS, create_cert_files, create_pass_file
+
 
 RESULTS_BACKEND_DIR = "{temp_output_dir}/test_results_backend"
 
@@ -36,7 +38,7 @@ def test_get_backend_password_pass_file_in_merlin():
     if not os.path.exists(path_to_merlin_dir):
         remove_merlin_dir_after_test = True
         os.mkdir(path_to_merlin_dir)
-    
+
     # Create the test password file
     pass_filename = "test.pass"
     full_pass_filepath = f"{path_to_merlin_dir}/{pass_filename}"
@@ -179,7 +181,7 @@ class TestRedisResultsBackend:
         """
         expected_vals = {
             "urlbase": "redis",
-            "spass": f"default:******@",
+            "spass": "default:******@",
             "server": "127.0.0.1",
             "port": 6379,
             "db_num": 0,
@@ -372,7 +374,7 @@ class TestMySQLResultsBackend:
 
     def test_get_mysql_config_certs_set(self, mysql_results_backend_config: "fixture", merlin_server_dir: str):  # noqa: F821
         """
-        Test the `get_mysql_config` function with the certs dict getting set and returned. 
+        Test the `get_mysql_config` function with the certs dict getting set and returned.
 
         :param mysql_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
         :param merlin_server_dir: The directory that has the test certification files
@@ -392,9 +394,11 @@ class TestMySQLResultsBackend:
         """
         assert get_mysql_config(None, None) == {"cert_reqs": CERT_NONE}
 
-    def test_get_mysql_config_no_mysql_certs(self, mysql_results_backend_config: "fixture", merlin_server_dir: str):  # noqa: F821
+    def test_get_mysql_config_no_mysql_certs(
+        self, mysql_results_backend_config: "fixture", merlin_server_dir: str  # noqa: F821
+    ):
         """
-        Test the `get_mysql_config` function with no mysql certs dict. 
+        Test the `get_mysql_config` function with no mysql certs dict.
 
         :param mysql_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
         :param merlin_server_dir: The directory that has the test certification files
@@ -411,7 +415,9 @@ class TestMySQLResultsBackend:
         CONFIG.results_backend.name = "invalid"
         assert get_mysql_config("invalid/path", CERT_FILES) is False
 
-    def run_get_mysql(self, expected_vals: Dict[str, Any], certs_path: str, mysql_certs: Dict[str, str], include_password: bool):
+    def run_get_mysql(
+        self, expected_vals: Dict[str, Any], certs_path: str, mysql_certs: Dict[str, str], include_password: bool
+    ):
         """
         Helper method for running tests for the `get_mysql` function.
 
@@ -447,9 +453,13 @@ class TestMySQLResultsBackend:
         }
         for key, cert_file in CERT_FILES.items():
             expected_vals[key] = f"{merlin_server_dir}/{cert_file}"
-        self.run_get_mysql(expected_vals=expected_vals, certs_path=merlin_server_dir, mysql_certs=CERT_FILES, include_password=True)
+        self.run_get_mysql(
+            expected_vals=expected_vals, certs_path=merlin_server_dir, mysql_certs=CERT_FILES, include_password=True
+        )
 
-    def test_get_mysql_dont_include_password(self, mysql_results_backend_config: "fixture", merlin_server_dir: str):  # noqa: F821
+    def test_get_mysql_dont_include_password(
+        self, mysql_results_backend_config: "fixture", merlin_server_dir: str  # noqa: F821
+    ):
         """
         Test the `get_mysql` function but set include_password to False. This should * out the password.
 
@@ -465,7 +475,9 @@ class TestMySQLResultsBackend:
         }
         for key, cert_file in CERT_FILES.items():
             expected_vals[key] = f"{merlin_server_dir}/{cert_file}"
-        self.run_get_mysql(expected_vals=expected_vals, certs_path=merlin_server_dir, mysql_certs=CERT_FILES, include_password=False)
+        self.run_get_mysql(
+            expected_vals=expected_vals, certs_path=merlin_server_dir, mysql_certs=CERT_FILES, include_password=False
+        )
 
     def test_get_mysql_no_mysql_certs(self, mysql_results_backend_config: "fixture", merlin_server_dir: str):  # noqa: F821
         """
@@ -502,7 +514,7 @@ class TestMySQLResultsBackend:
         CONFIG.results_backend.server = False
         with pytest.raises(TypeError) as excinfo:
             get_mysql()
-        assert f"Results backend: server False does not have a configuration" in str(excinfo.value)
+        assert "Results backend: server False does not have a configuration" in str(excinfo.value)
 
     def test_get_mysql_invalid_certs_path(self, mysql_results_backend_config: "fixture"):  # noqa: F821
         """

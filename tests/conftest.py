@@ -101,7 +101,7 @@ def create_cert_files(cert_filepath: str, cert_files: Dict[str, str]):
     """
     Check if cert files already exist and if they don't then create them.
 
-    :param cert_filepath: The path to the cert files 
+    :param cert_filepath: The path to the cert files
     :param cert_files: A dict of certification files to create
     """
     for cert_file in cert_files.values():
@@ -310,9 +310,13 @@ def config(merlin_server_dir: str, test_encryption_key: bytes):  # pylint: disab
     CONFIG.broker.cert_reqs = "none"
 
     # Set the results_backend configuration for testing
-    CONFIG.results_backend.password = None  # This will be updated in `redis_results_backend_config` or `mysql_results_backend_config`
+    CONFIG.results_backend.password = (
+        None  # This will be updated in `redis_results_backend_config` or `mysql_results_backend_config`
+    )
     CONFIG.results_backend.port = None  # This will be updated in `redis_results_backend_config`
-    CONFIG.results_backend.name = None  # This will be updated in `redis_results_backend_config` or `mysql_results_backend_config`
+    CONFIG.results_backend.name = (
+        None  # This will be updated in `redis_results_backend_config` or `mysql_results_backend_config`
+    )
     CONFIG.results_backend.dbname = None  # This will be updated in `mysql_results_backend_config`
     CONFIG.results_backend.server = "127.0.0.1"
     CONFIG.results_backend.username = "default"
@@ -330,7 +334,9 @@ def config(merlin_server_dir: str, test_encryption_key: bytes):  # pylint: disab
 
 
 @pytest.fixture(scope="function")
-def redis_broker_config(merlin_server_dir: str, config: "fixture"):  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
+def redis_broker_config(
+    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
+):
     """
     This fixture is intended to be used for testing any functionality in the codebase
     that uses the CONFIG object with a Redis broker and results_backend.
@@ -349,7 +355,9 @@ def redis_broker_config(merlin_server_dir: str, config: "fixture"):  # noqa: F82
 
 
 @pytest.fixture(scope="function")
-def redis_results_backend_config(merlin_server_dir: str, config: "fixture"):  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
+def redis_results_backend_config(
+    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
+):
     """
     This fixture is intended to be used for testing any functionality in the codebase
     that uses the CONFIG object with a Redis results_backend.
