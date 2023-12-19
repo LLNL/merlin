@@ -42,33 +42,15 @@ from celery import Celery
 from celery.canvas import Signature
 
 from merlin.config.configfile import CONFIG
+from tests.constants import SERVER_PASS, CERT_FILES
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.context_managers.server_manager import RedisServerManager
-
-
-SERVER_PASS = "merlin-test-server"
-CERT_FILES = {
-    "ssl_cert": "test-rabbit-client-cert.pem",
-    "ssl_ca": "test-mysql-ca-cert.pem",
-    "ssl_key": "test-rabbit-client-key.pem",
-}
+from tests.utils import create_cert_files, create_pass_file
 
 
 #######################################
 #### Helper Functions for Fixtures ####
 #######################################
-
-
-def create_pass_file(pass_filepath: str):
-    """
-    Check if a password file already exists (it will if the redis server has been started)
-    and if it hasn't then create one and write the password to the file.
-
-    :param pass_filepath: The path to the password file that we need to check for/create
-    """
-    if not os.path.exists(pass_filepath):
-        with open(pass_filepath, "w") as pass_file:
-            pass_file.write(SERVER_PASS)
 
 
 def create_encryption_file(key_filepath: str, encryption_key: bytes, app_yaml_filepath: str = None):
@@ -95,44 +77,6 @@ def create_encryption_file(key_filepath: str, encryption_key: bytes, app_yaml_fi
         app_yaml["results_backend"]["encryption_key"] = key_filepath
         with open(app_yaml_filepath, "w") as app_yaml_file:
             yaml.dump(app_yaml, app_yaml_file)
-
-
-def create_cert_files(cert_filepath: str, cert_files: Dict[str, str]):
-    """
-    Check if cert files already exist and if they don't then create them.
-
-    :param cert_filepath: The path to the cert files
-    :param cert_files: A dict of certification files to create
-    """
-    for cert_file in cert_files.values():
-        full_cert_filepath = f"{cert_filepath}/{cert_file}"
-        if not os.path.exists(full_cert_filepath):
-            with open(full_cert_filepath, "w"):
-                pass
-
-
-def set_config(broker: Dict[str, str], results_backend: Dict[str, str]):
-    """
-    Given configuration options for the broker and results_backend, update
-    the CONFIG object.
-
-    :param broker: A dict of the configuration settings for the broker
-    :param results_backend: A dict of configuration settings for the results_backend
-    """
-    # Set the broker configuration for testing
-    CONFIG.broker.password = broker["password"]
-    CONFIG.broker.port = broker["port"]
-    CONFIG.broker.server = broker["server"]
-    CONFIG.broker.username = broker["username"]
-    CONFIG.broker.vhost = broker["vhost"]
-    CONFIG.broker.name = broker["name"]
-
-    # Set the results_backend configuration for testing
-    CONFIG.results_backend.password = results_backend["password"]
-    CONFIG.results_backend.port = results_backend["port"]
-    CONFIG.results_backend.server = results_backend["server"]
-    CONFIG.results_backend.username = results_backend["username"]
-    CONFIG.results_backend.encryption_key = results_backend["encryption_key"]
 
 
 #######################################
