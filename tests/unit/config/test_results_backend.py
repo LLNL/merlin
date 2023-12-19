@@ -386,13 +386,16 @@ class TestMySQLResultsBackend:
         actual = get_mysql_config(merlin_server_dir, CERT_FILES)
         assert actual == expected
 
-    def test_get_mysql_config_ssl_exists(self, mysql_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_mysql_config_ssl_exists(self, mysql_results_backend_config: "fixture", temp_output_dir: str):  # noqa: F821
         """
         Test the `get_mysql_config` function with mysql_ssl being found. This should just return the ssl value that's found.
 
         :param mysql_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
         """
-        assert get_mysql_config(None, None) == {"cert_reqs": CERT_NONE}
+        expected = {key: f"{temp_output_dir}/{cert_file}" for key, cert_file in CERT_FILES.items()}
+        expected["cert_reqs"] = CERT_NONE
+        assert get_mysql_config(None, None) == expected
 
     def test_get_mysql_config_no_mysql_certs(
         self, mysql_results_backend_config: "fixture", merlin_server_dir: str  # noqa: F821
@@ -529,14 +532,17 @@ class TestMySQLResultsBackend:
         {CERT_FILES}\ncheck the celery/certs path or set the ssl information in the app.yaml file."""
         assert err_msg in str(excinfo.value)
 
-    def test_get_ssl_config_mysql(self, mysql_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_ssl_config_mysql(self, mysql_results_backend_config: "fixture", temp_output_dir: str):  # noqa: F821
         """
         Test the `get_ssl_config` function with mysql as the results_backend.
         This should return a dict of cert reqs with ssl.CERT_NONE as the value.
 
         :param mysql_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
         """
-        assert get_ssl_config() == {"cert_reqs": CERT_NONE}
+        expected = {key: f"{temp_output_dir}/{cert_file}" for key, cert_file in CERT_FILES.items()}
+        expected["cert_reqs"] = CERT_NONE
+        assert get_ssl_config() == expected
 
     def test_get_ssl_config_mysql_celery_check(self, mysql_results_backend_config: "fixture"):  # noqa: F821
         """
@@ -557,6 +563,9 @@ class TestMySQLResultsBackend:
         CONFIG.celery.certs = merlin_server_dir
 
         create_cert_files(merlin_server_dir, MYSQL_CONFIG_FILENAMES)
+        CONFIG.results_backend.keyfile = MYSQL_CONFIG_FILENAMES["ssl_key"]
+        CONFIG.results_backend.certfile = MYSQL_CONFIG_FILENAMES["ssl_cert"]
+        CONFIG.results_backend.ca_certs = MYSQL_CONFIG_FILENAMES["ssl_ca"]
 
         expected_vals = {
             "cert_reqs": CERT_NONE,

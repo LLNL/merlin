@@ -31,6 +31,7 @@
 This module contains pytest fixtures to be used throughout the entire test suite.
 """
 import os
+import shutil
 from copy import copy
 from time import sleep
 from typing import Dict
@@ -109,6 +110,17 @@ def create_cert_files(cert_filepath: str, cert_files: Dict[str, str]):
         if not os.path.exists(full_cert_filepath):
             with open(full_cert_filepath, "w"):
                 pass
+
+
+def create_app_yaml(app_yaml_filepath: str):
+    """
+    Create a dummy app.yaml file at `app_yaml_filepath`.
+
+    :param app_yaml_filepath: The location to create an app.yaml file at
+    """
+    full_app_yaml_filepath = f"{app_yaml_filepath}/app.yaml"
+    if not os.path.exists(full_app_yaml_filepath):
+        shutil.copy(f"{os.path.dirname(__file__)}/dummy_app.yaml", full_app_yaml_filepath)
 
 
 def set_config(broker: Dict[str, str], results_backend: Dict[str, str]):
@@ -415,5 +427,8 @@ def mysql_results_backend_config(
     CONFIG.results_backend.password = pass_file
     CONFIG.results_backend.name = "mysql"
     CONFIG.results_backend.dbname = "test_mysql_db"
+    CONFIG.results_backend.keyfile = CERT_FILES["ssl_key"]
+    CONFIG.results_backend.certfile = CERT_FILES["ssl_cert"]
+    CONFIG.results_backend.ca_certs = CERT_FILES["ssl_ca"]
 
     yield
