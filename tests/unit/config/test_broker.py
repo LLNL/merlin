@@ -18,7 +18,8 @@ from merlin.config.broker import (
     read_file,
 )
 from merlin.config.configfile import CONFIG
-from tests.conftest import SERVER_PASS, create_pass_file
+from tests.constants import SERVER_PASS
+from tests.utils import create_pass_file
 
 
 def test_read_file(merlin_server_dir: str):

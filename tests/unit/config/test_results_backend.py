@@ -19,7 +19,8 @@ from merlin.config.results_backend import (
     get_redis,
     get_ssl_config,
 )
-from tests.conftest import CERT_FILES, SERVER_PASS, create_cert_files, create_pass_file
+from tests.constants import CERT_FILES, SERVER_PASS
+from tests.utils import create_cert_files, create_pass_file
 
 
 RESULTS_BACKEND_DIR = "{temp_output_dir}/test_results_backend"
