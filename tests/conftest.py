@@ -31,7 +31,6 @@
 This module contains pytest fixtures to be used throughout the entire test suite.
 """
 import os
-import shutil
 from copy import copy
 from glob import glob
 from time import sleep
@@ -119,17 +118,6 @@ def create_cert_files(cert_filepath: str, cert_files: Dict[str, str]):
         if not os.path.exists(full_cert_filepath):
             with open(full_cert_filepath, "w"):
                 pass
-
-
-def create_app_yaml(app_yaml_filepath: str):
-    """
-    Create a dummy app.yaml file at `app_yaml_filepath`.
-
-    :param app_yaml_filepath: The location to create an app.yaml file at
-    """
-    full_app_yaml_filepath = f"{app_yaml_filepath}/app.yaml"
-    if not os.path.exists(full_app_yaml_filepath):
-        shutil.copy(f"{os.path.dirname(__file__)}/dummy_app.yaml", full_app_yaml_filepath)
 
 
 def set_config(broker: Dict[str, str], results_backend: Dict[str, str]):
