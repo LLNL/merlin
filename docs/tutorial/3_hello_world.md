@@ -1,6 +1,6 @@
 # Hello, World!
 
-This hands-on module walks through the steps of building and running a simple merlin workflow.
+This hands-on module walks through the steps of building and running a simple Merlin workflow.
 
 !!! info "Prerequisites"
 
@@ -18,7 +18,7 @@ This hands-on module walks through the steps of building and running a simple me
 
 ## Get Example Files
 
-Merlin comes with a built-in command `merlin example` to easily get a basic workflow up and running. To see a list of all the examples provided with merlin you can run:
+Merlin comes with a built-in command `merlin example` to easily get a basic workflow up and running. To see a list of all the examples provided with Merlin you can run:
 
 ```bash
 merlin example list
@@ -177,25 +177,64 @@ The order of the spec sections doesn't matter.
 
 ## Try It!
 
-First, we'll run merlin locally. On the command line, run:
+First, we'll run Merlin locally. On the command line, run:
 
-.. code-block:: bash
-
-    $ merlin run --local my_hello.yaml
+```bash
+merlin run --local my_hello.yaml
+```
 
 If your spec is bugless, you should see a few messages proclaiming successful step completion, like this (for now we'll ignore the warning):
 
-.. literalinclude :: local_out.txt
-    :language: text
+???+ success
+
+    ```
+           *      
+       *~~~~~                                       
+      *~~*~~~*      __  __           _ _       
+     /   ~~~~~     |  \/  |         | (_)      
+         ~~~~~     | \  / | ___ _ __| |_ _ __  
+        ~~~~~*     | |\/| |/ _ \ '__| | | '_ \ 
+       *~~~~~~~    | |  | |  __/ |  | | | | | |
+      ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
+     *~~~~~~~~~~~                                    
+       ~~~*~~~*    Machine Learning for HPC Workflows                                 
+              
+
+
+    [2023-12-19 17:41:02: INFO] Loading specification from path: /path/to/hello.yaml
+    [2023-12-19 17:41:02: WARNING] Workflow specification missing 
+    encouraged 'merlin' section! Run 'merlin example' for examples.
+    Using default configuration with no sampling.
+    [2023-12-19 17:41:02: INFO] OUTPUT_PATH: hello
+    [2023-12-19 17:41:02: INFO] Study workspace is '/path/to/hello_20231219-174102'.
+    [2023-12-19 17:41:02: INFO] Reading app config from file /path/to/.merlin/app.yaml
+    [2023-12-19 17:41:02: INFO] Overriding default celery config with 'celery.override' in 'app.yaml':
+            visibility_timeout:     86400
+    [2023-12-19 17:41:02: INFO] Calculating task groupings from DAG.
+    [2023-12-19 17:41:02: INFO] Converting graph to tasks.
+    [2023-12-19 17:41:02: INFO] Launching tasks.
+    WARNING:celery.backends.redis:
+    Setting ssl_cert_reqs=CERT_NONE when connecting to redis means that celery will not validate the identity of the redis broker when connecting. This leaves you vulnerable to man in the middle attacks.
+
+    [2023-12-19 17:41:02: INFO] Executing step 'step_1_GREET.hello.WORLD.world' in '/path/to/hello_20231219-174102/step_1/GREET.hello.WORLD.world'...
+    [2023-12-19 17:41:02: INFO] Execution returned status OK.
+    [2023-12-19 17:41:02: INFO] Step 'step_1_GREET.hello.WORLD.world' in '/path/to/hello_20231219-174102/step_1/GREET.hello.WORLD.world' finished successfully.
+    [2023-12-19 17:41:02: INFO] Executing step 'step_1_GREET.hola.WORLD.mundo' in '/path/to/hello_20231219-174102/step_1/GREET.hola.WORLD.mundo'...
+    [2023-12-19 17:41:02: INFO] Execution returned status OK.
+    [2023-12-19 17:41:02: INFO] Step 'step_1_GREET.hola.WORLD.mundo' in '/path/to/hello_20231219-174102/step_1/GREET.hola.WORLD.mundo' finished successfully.
+    [2023-12-19 17:41:02: INFO] Executing step 'step_2' in '/path/to/hello_20231219-174102/step_2'...
+    [2023-12-19 17:41:02: INFO] Execution returned status OK.
+    [2023-12-19 17:41:02: INFO] Step 'step_2' in '/path/to/hello_20231219-174102/step_2' finished successfully.
+    ```
 
 Great! But what happened? We can inspect the output directory to find out.
 
-Look for a directory named `hello_<TIMESTAMP>`. That's your output directory.
-Within, there should be a directory for each step of the workflow, plus one called `merlin_info`.
-The whole file tree looks like this:
+Look for a directory named `hello_<TIMESTAMP>`. That's your output directory. Within, there should be a directory for each step of the workflow, plus one called `merlin_info`. The whole file tree looks like this:
 
-.. image:: merlin_output.png
-    :align: center
+<figure markdown>
+  ![File Tree for Hello Example](../assets/tutorial/hello_world/merlin_output.png)
+  <figcaption>File Tree for Hello Example</figcaption>
+</figure>
 
 A lot of stuff, right? Here's what it means:
 
@@ -209,61 +248,158 @@ A lot of stuff, right? Here's what it means:
 
 * `.err` files contain the step's stderr. Hopefully empty, and useful for debugging.
 
-.. Assuming config is ready
-
 ## Run Distributed!
 
-.. important::
+!!! warning "Important Note"
 
-    Before trying this, make sure you've properly set up your merlin config file `app.yaml`. Run `$ merlin info` for information on your merlin configuration.
+    Before trying this, make sure you've properly set up your Merlin config file `app.yaml`. If you can run `merlin info` and see no errors you should be good to go. Otherwise, see either the [Configuring Merlin](./2_installation.md#configuring-merlin) section of the installation step in the Tutorial or the [Configuration](../user_guide/configuration.md) page for more information.
 
 Now we will run the same workflow, but in parallel on our task server:
 
-.. code-block:: bash
+```bash
+merlin run my_hello.yaml
+```
 
-    $ merlin run my_hello.yaml
+If your Merlin configuration is set up correctly, you should see something like this:
 
-If your merlin configuration is set up correctly, you should see something like this:
+!!! success "Output From Sending Tasks to the Server"
 
-.. literalinclude :: run_out.txt
-   :language: text
+    ```
+           *
+       *~~~~~
+      *~~*~~~*      __  __           _ _
+     /   ~~~~~     |  \/  |         | (_)
+         ~~~~~     | \  / | ___ _ __| |_ _ __
+        ~~~~~*     | |\/| |/ _ \ '__| | | '_ \
+       *~~~~~~~    | |  | |  __/ |  | | | | | |
+      ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
+     *~~~~~~~~~~~
+       ~~~*~~~*    Machine Learning for HPC Workflows
+
+
+
+    [2023-12-19 17:45:36: INFO] Loading specification from path: /path/to/hello.yaml
+    [2023-12-19 17:45:36: WARNING] Workflow specification missing 
+    encouraged 'merlin' section! Run 'merlin example' for examples.
+    Using default configuration with no sampling.
+    [2023-12-19 17:45:36: INFO] OUTPUT_PATH: hello
+    [2023-12-19 17:45:36: INFO] Study workspace is '/path/to/hello_20231219-174536'.
+    [2023-12-19 17:45:36: INFO] Reading app config from file /path/to/.merlin/app.yaml
+    [2023-12-19 17:45:36: INFO] Overriding default celery config with 'celery.override' in 'app.yaml':
+            visibility_timeout:     86400
+    [2023-12-19 17:45:36: INFO] Calculating task groupings from DAG.
+    [2023-12-19 17:45:36: INFO] Converting graph to tasks.
+    [2023-12-19 17:45:36: INFO] Launching tasks.
+    WARNING:celery.backends.redis:
+    Setting ssl_cert_reqs=CERT_NONE when connecting to redis means that celery will not validate the identity of the redis broker when connecting. This leaves you vulnerable to man in the middle attacks.
+    ```
 
 That means we have launched our tasks! Now we need to launch the workers that will complete those tasks. Run this:
 
-.. code-block:: bash
+```bash
+merlin run-workers my_hello.yaml
+```
 
-    $ merlin run-workers my_hello.yaml
+Here's the expected Merlin output message for running workers:
 
-Here's the expected merlin output message for running workers:
+!!! success "Output From Running Workers"
 
-.. literalinclude :: run_workers_out.txt
-   :language: text
+    ```
+           *
+       *~~~~~
+      *~~*~~~*      __  __           _ _
+     /   ~~~~~     |  \/  |         | (_)
+         ~~~~~     | \  / | ___ _ __| |_ _ __
+        ~~~~~*     | |\/| |/ _ \ '__| | | '_ \
+       *~~~~~~~    | |  | |  __/ |  | | | | | |
+      ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
+     *~~~~~~~~~~~
+       ~~~*~~~*    Machine Learning for HPC Workflows
+
+
+
+    [2023-12-19 17:46:46: INFO] Loading specification from path: /path/to/hello.yaml
+    [2023-12-19 17:46:46: WARNING] Workflow specification missing 
+    encouraged 'merlin' section! Run 'merlin example' for examples.
+    Using default configuration with no sampling.
+    [2023-12-19 17:46:46: INFO] Launching workers from '/path/to/hello.yaml'
+    [2023-12-19 17:46:46: INFO] Starting workers
+    [2023-12-19 17:46:46: INFO] Reading app config from file /path/to/.merlin/app.yaml
+    ```
 
 Immediately after that, this will pop up:
 
-.. literalinclude :: celery.txt
-   :language: text
+!!! success "Celery Workers Logs"
 
-You may not see all of the info logs listed after the Celery C is displayed. If you'd like to see them you can change the merlin workers' log levels with the `--worker-args` tag:
+    ```
+    -------------- celery@worker_name.%machine770 v5.3.4 (emerald-rush)
+    --- ***** -----
+    -- ******* ---- Linux-4.18.0-513.9.1.1toss.t4.x86_64-x86_64-with-glibc2.28 2023-12-19 17:46:49
+    - *** --- * ---
+    - ** ---------- [config]
+    - ** ---------- .> app:         merlin:0x2aaab20619e8
+    - ** ---------- .> transport:   amqps://user:**@server:5671//user
+    - ** ---------- .> results:     redis://user:**@server:6379/0
+    - *** --- * --- .> concurrency: 36 (prefork)
+    -- ******* ---- .> task events: OFF (enable -E to monitor tasks in this worker)
+    --- ***** -----
+    -------------- [queues]
+                    .> [merlin]_merlin  exchange=[merlin]_merlin(direct) key=[merlin]_merlin
 
-.. code-block:: bash
 
-    $ merlin run-workers --worker-args "-l INFO" my_hello.yaml
+    [tasks]
+    . merlin.common.tasks.add_merlin_expanded_chain_to_chord
+    . merlin.common.tasks.expand_tasks_with_samples
+    . merlin.common.tasks.merlin_step
+    . merlin:chordfinisher
+    . merlin:queue_merlin_study
+    . merlin:shutdown_workers
 
-The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
+    [2023-12-19 17:46:47,549: INFO] Connected to amqps://user:**@server:5671//user
+    [2023-12-19 17:46:47,599: INFO] mingle: searching for neighbors
+    [2023-12-19 17:46:48,807: INFO] mingle: sync with 2 nodes
+    [2023-12-19 17:46:48,807: INFO] mingle: sync complete
+    [2023-12-19 17:46:48,835: INFO] celery@worker_name.%machine770 ready.
+    ```
+
+You may not see all of the info logs listed after the Celery C is displayed. If you'd like to see them you can change the Merlin workers' log levels with the `--worker-args` tag:
+
+```bash
+merlin run-workers --worker-args "-l INFO" my_hello.yaml
+```
+
+The terminal you ran workers in is now being taken over by Celery, the powerful task queue library that Merlin uses internally. The workers will continue to report their task status here until their tasks are complete.
 
 Workers are persistent, even after work is done. Send a stop signal to all your workers with this command:
 
-.. code-block:: bash
-
-    $ merlin stop-workers
+```bash
+merlin stop-workers
+```
 
 ...and a successful worker stop will look like this, with the name of specific worker(s) reported:
 
-.. literalinclude :: stop_workers.txt
-    :language: text
+!!! success "Successful Worker Stop Output"
+    ```
+           *
+       *~~~~~
+      *~~*~~~*      __  __           _ _
+     /   ~~~~~     |  \/  |         | (_)
+         ~~~~~     | \  / | ___ _ __| |_ _ __
+        ~~~~~*     | |\/| |/ _ \ '__| | | '_ \
+       *~~~~~~~    | |  | |  __/ |  | | | | | |
+      ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
+     *~~~~~~~~~~~
+       ~~~*~~~*    Machine Learning for HPC Workflows
 
-.. _Using Samples:
+
+
+    [2020-03-06 09:20:08: INFO] Stopping workers...
+    [2020-03-06 09:20:08: INFO] Reading app config from file /path/to/.merlin/app.yaml
+    [2020-03-06 09:20:09: INFO] Overriding default celery config with 'celery.override' in 'app.yaml':
+        visibility_timeout:     86400
+    [2020-03-06 09:20:10: INFO] Sending stop to these workers: ['celery@machine_name.%machine']
+    [2020-03-06 09:20:10: WARNING] Got shutdown from remote
+    ```
 
 ## Using Samples
 
@@ -273,24 +409,126 @@ To do this, we'll need samples. Specifically, we'll change `WORLD` from a global
 
 First, we remove the global parameter `WORLD` so it does not conflict with our new sample. Parameters now look like this:
 
-.. code-block:: yaml
+```yaml
+global.parameters:
+    GREET:
+        values : ["hello", "hola"]
+        label  : GREET.%%
+```
 
-    global.parameters:
-        GREET:
-            values : ["hello", "hola"]
-            label  : GREET.%%
+Next we'll add two new blocks to our spec: the `env` block and the `merlin` block.
 
-Now add these yaml sections to your spec:
+### Section: `env`
 
-.. code-block:: yaml
+To set up custom environment variables and other values that can be used throughout our spec we need to introduce a new `env` block to our spec file. Any variable defined here will remain constant throughout the spec.
+
+For this example, we'll add the following `env` block:
+
+```yaml
+env:
+    variables:
+        N_SAMPLES: 3
+```
+
+This makes `N_SAMPLES` into a user-defined variable that you can use elsewhere in your spec.
+
+### Section: `merlin`
+
+In addition to the `env` block, we'll also need to add the `merlin` block to our spec:
+
+```yaml
+ merlin:
+    samples:
+        generate:
+            cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+        file: $(MERLIN_INFO)/samples.csv
+        column_labels: [WORLD]
+```   
+
+As you may have guessed, the `merlin` block is an exclusively Merlin feature. This block provides a way to generate samples for your workflow. In this case, a sample is the name of a person.
+
+For simplicity we give `column_labels` the name `WORLD`, just like before.
+
+It's also important to note that `$(SPECROOT)` and `$(MERLIN_INFO)` are [Reserved Variables](../user_guide/variables.md#user-variables). The `$(SPECROOT)` variable is a shorthand for the directory path of the spec file and the `$(MERLIN_INFO)` variable is a shorthand for the directory holding the provenance specs and sample generation results. More information on Merlin variables can be found on the [Variables](../user_guide/variables.md) page.
+
+### The `make_samples.py` Script
+
+In the [Get Example Files](#get-example-files) section above we mentioned the `make_samples.py` file. It's good practice to shift larger chunks of code to external scripts and that's exactly what this file is doing for us. This file will handle our sample generation by randomly selecting names using 2 external python libraries: the [Names library](https://pypi.org/project/names/) and the [NumPy library](https://numpy.org/). Let's make sure those libraries are installed now:
+
+```bash
+pip3 install -r requirements.txt
+```
+
+The `make_samples.py` file should be kept at the same location as your spec file and its contents should look like so:
+
+```python title="make_samples.py" linenums="1"
+import argparse
+
+import names
+import numpy as np
+
+
+# argument parsing
+parser = argparse.ArgumentParser(description="Make some samples (names of people).")
+parser.add_argument("--number", type=int, action="store", help="the number of samples you want to make")
+parser.add_argument("--filepath", type=str, help="output file")
+args = parser.parse_args()
+
+# sample making
+all_names = np.loadtxt(names.FILES["first:female"], dtype=str, usecols=0)
+selected_names = np.random.choice(all_names, size=args.number)
+
+result = ""
+name_list = list(selected_names)
+result = "\n".join(name_list)
+
+with open(args.filepath, "w") as f:
+    f.write(result)
+```
+
+Since our environment variable `N_SAMPLES` is set to 3, the sample-generating command that calls this script in our `merlin` block should churn out 3 different names.
+
+### Running With Samples
+
+Before we run our study, let's take a look at our DAG now that we've added samples:
+
+<figure markdown>
+  ![DAG With Samples](../assets/tutorial/hello_world/dag4.png)
+  <figcaption>DAG With Samples</figcaption>
+</figure>
+
+Every sample that's generated in Merlin will run for each parameter set. So, since we have one parameter `GREET` with two values `hello` and `hola` (two parameter sets), and three sample names, we'll get six different runs of `step_1`.
+
+With the modifications to the `global.parameters` block and the additions of the `env` and `merlin` blocks, your new and improved `my_hello.yaml` should now match `hello_samples.yaml`:
+
+???+ abstract "Full Hello Samples Spec"
+
+    ```yaml title="hello_samples.yaml"
+    description:
+        name: hello_samples
+        description: a very simple merlin workflow, with samples
 
     env:
         variables:
             N_SAMPLES: 3
 
-This makes `N_SAMPLES` into a user-defined variable that you can use elsewhere in your spec.
+    global.parameters:
+        GREET:
+            values : ["hello","hola"]
+            label  : GREET.%%
 
-.. code-block:: yaml
+    study:
+        - name: step_1
+        description: say hello
+        run:
+            cmd: echo "$(GREET), $(WORLD)!"
+
+        - name: step_2
+        description: print a success message
+        run:
+            cmd: print("Hurrah, we did it!")
+            depends: [step_1_*]
+            shell: /usr/bin/env python3
 
     merlin:
         samples:
@@ -298,60 +536,35 @@ This makes `N_SAMPLES` into a user-defined variable that you can use elsewhere i
                 cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
             file: $(MERLIN_INFO)/samples.csv
             column_labels: [WORLD]
-
-This is the merlin block, an exclusively merlin feature. It provides a way to generate samples for your workflow. In this case, a sample is the name of a person. 
-
-For simplicity we give `column_labels` the name `WORLD`, just like before.
-
-It's also important to note that `$(SPECROOT)` and `$(MERLIN_INFO)` are reserved variables. The `$(SPECROOT)` variable is a shorthand for the directory path of the spec file and the `$(MERLIN_INFO)` variable is a shorthand for the directory holding the provenance specs and sample generation results. More information on Merlin variables can be found on the :doc:`variables page<../../merlin_variables>`.
-
-It's good practice to shift larger chunks of code to external scripts. At the same location of your spec, make a new file called `make_samples.py`:
-
-.. literalinclude :: ../../../../merlin/examples/workflows/hello/make_samples.py
-   :language: text
-
-Since our environment variable `N_SAMPLES` is set to 3, this sample-generating command should churn out 3 different names.
-
-Before we can run this, we must install the script's external python library dependencies (`names`: a simple package that generates random names, and `numpy`: a scientific computing package):
-
-.. code-block:: bash
-
-    $ pip3 install -r requirements.txt
-
-Here's our DAG with samples:
-
-.. image:: dag4.png
-    :width: 400
-    :align: center
-
-Here's your new and improved `my_hello.yaml`, which now should match `hello_samples.yaml`:
-
-.. literalinclude:: ../../../../merlin/examples/workflows/hello/hello_samples.yaml
-   :language: yaml
+    ```
 
 Run the workflow again!
 
 Once finished, this is what the insides of `step_1` look like:
 
-.. image:: merlin_output2.png
-    :align: center
+<figure markdown>
+  ![Successful Step 1 With Samples](../assets/tutorial/hello_world/merlin_output2.png)
+  <figcaption>Successful Step 1 With Samples</figcaption>
+</figure>
 
-* Numerically-named directories like `00`, `01`, and `02` are sample directories. Instead of storing sample output in a single flattened location, merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
+Numerically-named directories like `00`, `01`, and `02` are sample directories. Instead of storing sample output in a single flattened location, Merlin stores them in a tree-like sample index, which helps get around file system constraints when working with massive amounts of data.
 
-Lastly, let's flex merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could internally change the value in the spec from 3 to 1000. OR you could just run this:
+Lastly, let's flex Merlin's muscle a bit and scale up our workflow to 1000 samples. To do this, you could internally change the value of `N_SAMPLES` in the spec from 3 to 1000. OR you could modify the value at the command line like so:
 
-.. code-block:: bash
+```bash
+merlin run my_hello.yaml --vars N_SAMPLES=1000
+```
 
-    $ merlin run my_hello.yaml --vars N_SAMPLES=1000
+Don't forget to start your workers if they're not still running:
 
-.. code-block:: bash
-
-    $ merlin run-workers my_hello.yaml
+```bash
+merlin run-workers my_hello.yaml
+```
 
 Once again, to send a warm stop signal to your workers, run:
 
-.. code-block:: bash
-
-    $ merlin stop-workers
+```bash
+merlin stop-workers
+```
 
 Congratulations! You concurrently greeted 1000 friends in English and Spanish!
