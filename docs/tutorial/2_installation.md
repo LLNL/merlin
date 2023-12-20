@@ -80,9 +80,11 @@ which merlin
 
 You should see that it was installed in your virtualenv, like so:
 
-```bash
-<path_to_virtualenv>/merlin_venv/bin/merlin
-```
+!!! success
+
+    ```bash
+    <path_to_virtualenv>/merlin_venv/bin/merlin
+    ```
 
 If this is not the output you see, you may need to restart your virtualenv and try again. 
 
@@ -156,7 +158,7 @@ merlin config --broker redis
 
 The `merlin config` command above will create a file called `app.yaml` in the `~/.merlin` directory. If you are running a Redis server locally then you are all set, look in the `~/.merlin/app.yaml` file to see the configuration, it should look like the configuration below.
 
-???+ example
+???+ abstract "app.yaml"
 
     ```yaml
     broker:
@@ -250,7 +252,7 @@ merlin info
 
 If everything is set up correctly, you should see:
 
-???+ abstract "Expected Output for Successful Config"
+???+ success "Expected Output for Successful Config"
 
     ```
            *      
