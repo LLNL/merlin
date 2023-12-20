@@ -33,3 +33,12 @@ def create_cert_files(cert_filepath: str, cert_files: Dict[str, str]):
                 pass
 
 
+def create_dir(dirpath: str):
+    """
+    Check if `dirpath` exists and if it doesn't then create it.
+
+    :param dirpath: The directory to create
+    """
+    if not os.path.exists(dirpath):
+        os.mkdir(dirpath)
+
