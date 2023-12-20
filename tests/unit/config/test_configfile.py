@@ -25,23 +25,13 @@ from merlin.config.configfile import (
     merge_sslmap,
     process_ssl_map,
 )
-from tests.conftest import CERT_FILES
+from tests.constants import CERT_FILES
+from tests.utils import create_dir
 
 
 CONFIGFILE_DIR = "{temp_output_dir}/test_configfile"
 COPIED_APP_FILENAME = "app_copy.yaml"
 DUMMY_APP_FILEPATH = f"{os.path.dirname(__file__)}/dummy_app.yaml"
-
-
-def create_configfile_dir(temp_output_dir: str):
-    """
-    Create the configfile dir if it doesn't exist yet.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    full_configfile_dirpath = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
-    if not os.path.exists(full_configfile_dirpath):
-        os.mkdir(full_configfile_dirpath)
 
 
 def create_app_yaml(app_yaml_filepath: str):
@@ -61,8 +51,8 @@ def test_load_config(temp_output_dir: str):
 
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     """
-    create_configfile_dir(temp_output_dir)
     configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
+    create_dir(configfile_dir)
     create_app_yaml(configfile_dir)
 
     with open(DUMMY_APP_FILEPATH, "r") as dummy_app_file:
@@ -85,8 +75,8 @@ def test_find_config_file_valid_path(temp_output_dir: str):
 
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     """
-    create_configfile_dir(temp_output_dir)
     configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
+    create_dir(configfile_dir)
     create_app_yaml(configfile_dir)
 
     assert find_config_file(configfile_dir) == f"{configfile_dir}/app.yaml"
@@ -109,8 +99,8 @@ def test_find_config_file_local_path(temp_output_dir: str):
     """
 
     # Create the configfile directory and put an app.yaml file there
-    create_configfile_dir(temp_output_dir)
     configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
+    create_dir(configfile_dir)
     create_app_yaml(configfile_dir)
 
     # Move into the configfile directory and run the test
@@ -330,8 +320,8 @@ def test_get_config(temp_output_dir: str):
     """
 
     # Create the configfile directory and put an app.yaml file there
-    create_configfile_dir(temp_output_dir)
     configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
+    create_dir(configfile_dir)
     create_app_yaml(configfile_dir)
 
     # Load up the contents of the dummy app.yaml file that we copied
@@ -422,8 +412,8 @@ def test_default_config_info(temp_output_dir: str):
     """
 
     # Create the configfile directory and put an app.yaml file there
-    create_configfile_dir(temp_output_dir)
     configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
+    create_dir(configfile_dir)
     create_app_yaml(configfile_dir)
     cwd = os.getcwd()
     os.chdir(configfile_dir)
