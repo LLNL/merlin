@@ -110,8 +110,15 @@ Monitor (``merlin monitor``)
 Batch submission scripts may not keep the batch allocation alive
 if there is not a blocking process in the submission script. The
 ``merlin monitor`` command addresses this by providing a blocking process that
-checks for tasks in the queues every (sleep) seconds. When the queues are empty, the 
-blocking process will exit and allow the allocation to end.
+checks for tasks in the queues every (sleep) seconds. When the queues are empty, the
+monitor will query celery to see if any workers are still processing tasks from the
+queues. If no workers are processing any tasks from the queues and the queues are empty,
+the blocking process will exit and allow the allocation to end.
+
+The ``monitor`` function will check for celery workers for up to
+10*(sleep) seconds before monitoring begins. The loop happens when the 
+queue(s) in the spec contain tasks, but no running workers are detected.
+This is to protect against a failed worker launch.
 
 .. code:: bash
 
@@ -128,11 +135,6 @@ The ``--sleep`` argument is the duration in seconds between checks
 for workers. The default is 60 seconds.
 
 The only currently available option for ``--task_server`` is celery, which is the default when this flag is excluded.
-
-The ``monitor`` function will check for celery workers for up to
-10*(sleep) seconds before monitoring begins. The loop happens when the 
-queue(s) in the spec contain tasks, but no running workers are detected.
-This is to protect against a failed worker launch.
 
 
 Purging Tasks (``merlin purge``)
