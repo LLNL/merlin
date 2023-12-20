@@ -2,7 +2,6 @@
 Tests for the `merlin/examples/generator.py` module.
 """
 import os
-import pathlib
 from typing import List
 
 from tabulate import tabulate
@@ -13,7 +12,7 @@ from merlin.examples.generator import (
     gather_example_dirs,
     list_examples,
     setup_example,
-    write_example
+    write_example,
 )
 from tests.utils import create_dir
 
@@ -39,7 +38,7 @@ def test_gather_example_dirs():
         "restart",
         "restart_delay",
         "simple_chain",
-        "slurm"
+        "slurm",
     ]
     expected = {}
     for wf_dir in example_workflows:
@@ -76,7 +75,7 @@ def test_gather_all_examples():
         f"{EXAMPLES_DIR}/restart_delay/restart_delay.yaml",
         f"{EXAMPLES_DIR}/simple_chain/simple_chain.yaml",
         f"{EXAMPLES_DIR}/slurm/slurm_par_restart.yaml",
-        f"{EXAMPLES_DIR}/slurm/slurm_par.yaml"
+        f"{EXAMPLES_DIR}/slurm/slurm_par.yaml",
     ]
     actual = gather_all_examples()
     assert sorted(actual) == sorted(expected)
@@ -85,7 +84,7 @@ def test_gather_all_examples():
 def test_write_example_dir(temp_output_dir: str):
     """
     Test the `write_example` function with the src_path as a directory.
-    
+
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     """
     generator_dir = EXAMPLES_GENERATOR_DIR.format(temp_output_dir=temp_output_dir)
@@ -98,7 +97,7 @@ def test_write_example_dir(temp_output_dir: str):
 def test_write_example_file(temp_output_dir: str):
     """
     Test the `write_example` function with the src_path as a file.
-    
+
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     """
     generator_dir = EXAMPLES_GENERATOR_DIR.format(temp_output_dir=temp_output_dir)
@@ -115,16 +114,22 @@ def test_list_examples():
     """Test the `list_examples` function to see if it gives us all of the examples that we want."""
     expected_headers = ["name", "description"]
     expected_rows = [
-        ["openfoam_wf_no_docker", "A parameter study that includes initializing, running,\n" \
-                                  "post-processing, collecting, learning and vizualizing OpenFOAM runs\n" \
-                                  "without using docker."],
-        ["optimization_basic", "Design Optimization Template\n" \
-                               "To use,\n" \
-                               "1. Specify the first three variables here (N_DIMS, TEST_FUNCTION, DEBUG)\n" \
-                               "2. Run the template_config file in current directory using `python template_config.py`\n" \
-                               "3. Merlin run as usual (merlin run optimization.yaml)\n" \
-                               "* MAX_ITER and the N_SAMPLES options use default values unless using DEBUG mode\n" \
-                               "* BOUNDS_X and UNCERTS_X are configured using the template_config.py scripts"],
+        [
+            "openfoam_wf_no_docker",
+            "A parameter study that includes initializing, running,\n"
+            "post-processing, collecting, learning and vizualizing OpenFOAM runs\n"
+            "without using docker.",
+        ],
+        [
+            "optimization_basic",
+            "Design Optimization Template\n"
+            "To use,\n"
+            "1. Specify the first three variables here (N_DIMS, TEST_FUNCTION, DEBUG)\n"
+            "2. Run the template_config file in current directory using `python template_config.py`\n"
+            "3. Merlin run as usual (merlin run optimization.yaml)\n"
+            "* MAX_ITER and the N_SAMPLES options use default values unless using DEBUG mode\n"
+            "* BOUNDS_X and UNCERTS_X are configured using the template_config.py scripts",
+        ],
         ["feature_demo", "Run 10 hello worlds."],
         ["flux_local", "Run a scan through Merlin/Maestro"],
         ["flux_par", "A simple ensemble of parallel MPI jobs run by flux."],
@@ -141,16 +146,28 @@ def test_list_examples():
         ["hello", "a very simple merlin workflow"],
         ["hello_samples", "a very simple merlin workflow, with samples"],
         ["hpc_demo", "Demo running a workflow on HPC machines"],
-        ["openfoam_wf", "A parameter study that includes initializing, running,\n" \
-                        "post-processing, collecting, learning and visualizing OpenFOAM runs\n" \
-                        "using docker."],
-        ["openfoam_wf_singularity", "A parameter study that includes initializing, running,\n" \
-                                    "post-processing, collecting, learning and visualizing OpenFOAM runs\n" \
-                                    "using singularity."],
-        ["null_chain", "Run N_SAMPLES steps of TIME seconds each at CONC concurrency.\n" \
-                       "May be used to measure overhead in merlin.\n" \
-                       "Iterates thru a chain of workflows."],
-        ["null_spec", "run N_SAMPLES null steps at CONC concurrency for TIME seconds each. May be used to measure overhead in merlin."],
+        [
+            "openfoam_wf",
+            "A parameter study that includes initializing, running,\n"
+            "post-processing, collecting, learning and visualizing OpenFOAM runs\n"
+            "using docker.",
+        ],
+        [
+            "openfoam_wf_singularity",
+            "A parameter study that includes initializing, running,\n"
+            "post-processing, collecting, learning and visualizing OpenFOAM runs\n"
+            "using singularity.",
+        ],
+        [
+            "null_chain",
+            "Run N_SAMPLES steps of TIME seconds each at CONC concurrency.\n"
+            "May be used to measure overhead in merlin.\n"
+            "Iterates thru a chain of workflows.",
+        ],
+        [
+            "null_spec",
+            "run N_SAMPLES null steps at CONC concurrency for TIME seconds each. May be used to measure overhead in merlin.",
+        ],
         ["iterative_demo", "Demo of a workflow with self driven iteration/looping"],
     ]
     expected = "\n" + tabulate(expected_rows, expected_headers) + "\n"
@@ -534,10 +551,7 @@ def test_setup_example_restart(temp_output_dir: str):
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     """
     example_name = "restart"
-    example_files = [
-        "restart.yaml",
-        "scripts/make_samples.py"
-    ]
+    example_files = ["restart.yaml", "scripts/make_samples.py"]
 
     run_setup_example(temp_output_dir, example_name, example_files, example_name)
 
@@ -549,10 +563,7 @@ def test_setup_example_restart_delay(temp_output_dir: str):
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     """
     example_name = "restart_delay"
-    example_files = [
-        "restart_delay.yaml",
-        "scripts/make_samples.py"
-    ]
+    example_files = ["restart_delay.yaml", "scripts/make_samples.py"]
 
     run_setup_example(temp_output_dir, example_name, example_files, example_name)
 

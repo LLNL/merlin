@@ -98,10 +98,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Coverage to the test suite. This includes adding tests for:
   - `merlin/common/`
   - `merlin/config/`
+  - `merlin/examples/`
   - `celeryadapter.py`
 - Context managers for the `conftest.py` file to ensure safe spin up and shutdown of fixtures
-  - RedisServerManager: context to help with starting/stopping a redis server for tests
-  - CeleryWorkersManager: context to help with starting/stopping workers for tests
+  - `RedisServerManager`: context to help with starting/stopping a redis server for tests
+  - `CeleryWorkersManager`: context to help with starting/stopping workers for tests
 - Ability to copy and print the `Config` object from `merlin/config/__init__.py`
 
 ### Changed

@@ -43,7 +43,7 @@ from celery import Celery
 from celery.canvas import Signature
 
 from merlin.config.configfile import CONFIG
-from tests.constants import SERVER_PASS, CERT_FILES
+from tests.constants import CERT_FILES, SERVER_PASS
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.context_managers.server_manager import RedisServerManager
 from tests.utils import create_cert_files, create_pass_file
