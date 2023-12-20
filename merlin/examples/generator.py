@@ -48,6 +48,14 @@ LOG = logging.getLogger(__name__)
 
 EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflows")
 
+# TODO modify the example command to eliminate redundancy
+# - e.g. running `merlin example flux_local` will produce the same output
+#   as running `merlin example flux_par` or `merlin example flux_par_restart`.
+#   This should just be `merlin example flux`.
+# - restart and restart delay should be one example
+# - feature demo and remote feature demo should be one example
+# - all openfoam examples should just be under one openfoam label
+
 
 def gather_example_dirs():
     """Get all the example directories"""
