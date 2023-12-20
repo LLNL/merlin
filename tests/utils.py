@@ -41,4 +41,3 @@ def create_dir(dirpath: str):
     """
     if not os.path.exists(dirpath):
         os.mkdir(dirpath)
-
