@@ -717,7 +717,7 @@ Finally, let's check the outputs of our study:
 cat hello_samples_<timestamp>/step_1/*/*/*.out hello_<timestamp>/step_2/*.out
 ```
 
-The outputs should look like similar to this (the names presented here will vary):
+The outputs should look similar to this (the names presented here will vary):
 
 !!! success
 
