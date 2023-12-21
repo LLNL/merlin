@@ -10,7 +10,6 @@
         - merlin
         - pandas
         - faker
-        - maestrowf
 
 !!! info "Estimated Time"
 
