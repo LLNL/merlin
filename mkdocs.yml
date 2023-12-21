@@ -29,9 +29,11 @@ nav:
     - Configuration: "user_guide/configuration.md"
     - Command Line Interface: "user_guide/command_line.md"
     - Variables: "user_guide/variables.md"
+    - Contributing: "user_guide/contributing.md"
   - Reference Guide:
     - Merlin Reference: "api_reference/index.md"
     - API Reference: "api_reference/"
+  - FAQ: "faq.md"
   - Contact Us: "contact.md"
 
 theme:
