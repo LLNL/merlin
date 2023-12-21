@@ -6,7 +6,7 @@ control flow.
 
 .. note:: Only user variables and ``OUTPUT_PATH`` may be reassigned or overridden from the command line.
 
-## Directory structure context
+## Directory Structure Context
 
 The directory structure of merlin output looks like this:
 
@@ -27,7 +27,7 @@ The directory structure of merlin output looks like this:
             WORKSPACE
 
 
-## Reserved variables
+## Reserved Variables
 
 .. list-table:: Study variables that Merlin uses. May be referenced within a specification file, but not reassigned or overridden.
    :widths: 25 50 25
@@ -160,8 +160,7 @@ The directory structure of merlin output looks like this:
             $(MERLIN_INFO)/*.expanded.yaml
 
 
-The ``LAUNCHER`` and ``VLAUNCHER`` Variables
-+++++++++++++++++++++++++++++++++++++++++++++++
+### The ``LAUNCHER`` and ``VLAUNCHER`` Variables
 
 ``$(LAUNCHER)`` is a special case of a reserved variable since it's value *can* be changed.
 It serves as an abstraction to launch a job with parallel schedulers like :ref:`slurm<slurm>`,
@@ -235,8 +234,8 @@ Let's say we have the following defined in our yaml file:
 
 The ``$(VLAUNCHER)`` variable would be substituted to ``flux run -N 4 -n 2 -c 8 -g 2``.
 
-User variables
--------------------
+## User Variables
+
 Variables defined by a specification file in the ``env`` section, as in this example:
 
 .. code-block:: yaml
@@ -275,8 +274,8 @@ in the ``description.name`` field as long as it makes a valid filename:
 
 The above would produce a study called ``my_hello_study_42``.
 
-Environment variables
----------------------
+## Environment Variables
+
 Merlin expands Unix environment variables for you. The values of the user variables below would be expanded:
 
 .. code-block:: yaml
@@ -306,8 +305,8 @@ So this step:
       run:
         cmd: echo $PATH ; echo /an/example/:/path/string/
 
-Step return variables
------------------------------------
+## Step Return Variables
+
 .. list-table:: Special return code variables for task steps.
    :widths: 25 50 25
    :header-rows: 1
