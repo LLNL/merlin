@@ -10,7 +10,7 @@
        POST_PROC: $(SPECROOT)/sample_processor.py # Process single iterations' results
        CUM_POST_PROC: $(SPECROOT)/cumulative_sample_processor.py # Process all iterations
        POST_NPROCS: 36          # Number of threads for post proc scripts
-       PYTHON: /usr/WS2/white242/merlin_dev_2/venv_merlin_py3_7/bin/python
+       PYTHON: <INSERT PATH TO VIRTUALENV HERE>
        ITER: 1
        MAX_ITER: 10
 
