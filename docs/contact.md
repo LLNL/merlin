@@ -7,7 +7,7 @@ hide:
 
 !!! question "Have a Question?"
 
-    :material-email: [merlin-dev@llnl.gov](mailto:merlin-dev@llnl.gov)
+    :material-email: [merlin@llnl.gov](mailto:merlin@llnl.gov)
 
     :simple-microsoftteams: LC Teams Channels:
 

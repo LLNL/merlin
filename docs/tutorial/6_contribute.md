@@ -1,48 +1,80 @@
-Contribute to Merlin
-====================
-.. admonition:: Estimated time
+# Contribute to Merlin
 
-      * 10 minutes
+!!! info "Estimated Time"
 
-.. admonition:: You will learn
+    10 minutes
 
-      * How to post issues to the merlin repo.
-      * Guidelines for contributing to merlin.
+!!! abstract "You Will Learn"
 
-.. contents:: Table of Contents:
-  :local:
+    - How to post issues to the Merlin repo.
+    - Guidelines for contributing to Merlin.
 
-Issues
-++++++
-Found a bug? Have an idea? Or just want to ask a question?
-`Create a new issue <https://github.com/LLNL/merlin/issues/new/choose>`_ on GitHub.
+## Issues
 
-Bug Reports
------------
-To report a bug, simply navigate to `Issues <https://github.com/LLNL/merlin/issues>`_, click "New Issue", then click "Bug report". Then simply fill out a few fields such as "Describe the bug" and "Expected behavior". Try to fill out every field as it will help us figure out your bug sooner.
+Found a bug? Have an idea? Or just want to ask a question? [Create a new issue](https://github.com/LLNL/merlin/issues/new/choose) on GitHub.
 
-Feature Requests
-----------------
-We are still adding new features to merlin. To suggest one, simply navigate to `Issues <https://github.com/LLNL/merlin/issues>`_, click "New Issue", then click "Feature request". Then fill out a few fields such as "What problem is this feature looking to solve?"
+### Bug Reports
 
-Questions
----------
-.. note::
+To report a bug, simply navigate to [Issues](https://github.com/LLNL/merlin/issues), click "New Issue", then click "Bug report". Then simply fill out a few fields such as "Describe the bug" and "Expected behavior". Try to fill out every field as it will help us figure out your bug sooner.
 
-    Who knows? Your question may already be answered in the :doc:`FAQ<../faq>`.
+### Feature Requests
 
-We encourage questions to be asked in a collaborative setting: on GitHub, direct any questions to `General Questions <https://github.com/LLNL/merlin/issues/new?labels=question&template=question.md&title=%5BQ%2FA%5D+>`_ in Issues.
+We are still adding new features to Merlin. To suggest one, simply navigate to [Issues](https://github.com/LLNL/merlin/issues), click "New Issue", then click "Feature request". Then fill out a few fields such as "What problem is this feature looking to solve?"
 
-Any questions can also be sent to merlin@llnl.gov.
+### Questions
 
-Contributing
-++++++++++++
+!!! note
+
+    Who knows? Your question may already be answered in the [FAQ](../faq.md).
+
+We encourage questions to be asked in a collaborative setting: on GitHub, direct any questions to [General Questions](https://github.com/LLNL/merlin/issues/new?labels=question&template=question.md&title=%5BQ%2FA%5D+) in Issues.
+
+For more ways to reach out with questions, see the [Contact](../contact.md) page.
+
+## Contributing
+
 Merlin is an open source project, so contributions are welcome. Contributions can be anything from bugfixes, documentation, or even new core features.
 
-Contributing to Merlin is easy! Just `send us a pull request <https://github.com/LLNL/merlin/pulls>`_ from your fork. Before you send it, summarize your change in the ``[Unreleased]`` section of ``CHANGELOG.md`` and make sure develop is the destination branch. We also appreciate `squash commits <https://github.com/LLNL/merlin/wiki/Squash-commits>`_ before pull requests are merged.
+Merlin uses a rough approximation of the Git Flow branching model. The `develop` branch contains the latest contributions, and `main` is always tagged and points to the latest stable release.
 
-Merlin uses a rough approximation of the Git Flow branching model. The develop branch contains the latest contributions, and main is always tagged and points to the latest stable release.
+If you're a contributor, try to test and run by branching off of `develop`. That's where all the magic is happening (and where we hope bugs stop).
 
-If you're a contributor, try to test and run on develop. That's where all the magic is happening (and where we hope bugs stop).
+More detailed information on contributing can be found on the [Contributing](../user_guide/contributing.md).
 
-More detailed information on contributing can be found on the :doc:`Contributing page<../merlin_developer>`.
+### How to Contribute
+
+Contributing to Merlin is as easy as following these steps:
+
+1. [Fork the Merlin repository](https://github.com/LLNL/merlin/fork)
+
+2. [Clone your forked repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository)
+
+3. Ensure you're on the `develop` branch by running:
+
+    ```bash
+    git branch
+    ```
+
+4. Create a new branch for your changes. Typically branch names will start with one of the following prefixes: `feature`, `bugfix`, `refactor`, or `docs`. The following command will create a new branch for you and switch to it:
+
+    ```bash
+    git switch -c <branch prefix>/<your branch name>
+    ```
+
+5. Create your changes
+
+6. Once you've made all of your changes, run the following command from the root of the repository to ensure the style of your code matches Merlin's standard:
+
+    ```bash
+    make fix-style
+    ```
+
+7. Ensure all of the tests pass:
+
+    ```bash
+    make tests
+    ```
+
+8. Summarize your changes in the `[Unreleased]` section in the `CHANGELOG.md` file
+
+9. [Send us a pull request](https://github.com/LLNL/merlin/pulls) from your fork. Make sure you're requesting a pull request from your branch to the `develop` branch on Merlin's home repository.
