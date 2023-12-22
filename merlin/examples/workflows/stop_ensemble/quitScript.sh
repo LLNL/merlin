@@ -3,7 +3,7 @@
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=1
 #SBATCH -J stopWorkers
-#SBATCH -t 00:00:05
+#SBATCH -t 00:01:00
 #SBATCH -o merlin_StopWorker_%j.out
 
 # Turn off core files to work around flux exec issue.
@@ -18,14 +18,22 @@ do
     if [[ $JOB2CHECK != $SLURM_JOB_ID ]]
     then
         if [[ ! -z $(scontrol show job $JOB2CHECK | \
-	                 grep "Command=$specRoot" | \
-	       	         grep -w $targetSpecFile) ]]
+	                 grep -w "WorkDir=$specRoot") ]]
         then
-            cancelJOB_NAME=$(squeue --me --job=$JOB2CHECK --format=%j | sed -n '2p')
-            echo $cancelJOB_NAME
-            echo "Job to Cancel::::Job Name: $cancelJOB_NAME  Job ID: $JOB2CHECK"
-            echo "canceling job"
-            scancel $JOB2CHECK
+            outFile=$(scontrol show job $JOB2CHECK | \
+	                  grep "StdOut=")
+            outFile=${outFile##*=}
+
+            foundSpec=$(grep 'Specification File: ' $outFile | sed 's/^.*: //')
+
+            if [[ $targetSpecFile == $foundSpec ]]
+            then
+	        cancelJOB_NAME=$(squeue --me --job=$JOB2CHECK --format=%j | sed -n '2p')
+                echo $cancelJOB_NAME
+                echo "Job to Cancel::::Job Name: $cancelJOB_NAME  Job ID: $JOB2CHECK"
+                echo "canceling job"
+                scancel $JOB2CHECK
+            fi
         fi
     fi
 done
