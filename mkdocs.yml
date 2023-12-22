@@ -25,7 +25,6 @@ nav:
   - User Guide:
     - Overview: "user_guide/index.md"
     - Installation: "user_guide/installation.md"
-    - Virtual Environments: "user_guide/virtual_envs.md"
     - Configuration: "user_guide/configuration.md"
     - Command Line Interface: "user_guide/command_line.md"
     - Variables: "user_guide/variables.md"
