@@ -439,7 +439,7 @@ The aliases defined previously can be used with this set of docker containers.
 
 ### Redis TLS Server
 
-This optional section details the setup of a Redis server with TLS for Merlin. The reddis TLS configuration can be found in the [Security With Redis](../user_guide/configuration.md#security-with-redis) section. A newer Redis (version 6 or greater) must be used to enable TLS.
+This optional section details the setup of a Redis server with TLS for Merlin. The Redis TLS configuration can be found in the [Security With Redis](../user_guide/configuration.md#security-with-rediss_1) section. A newer Redis (version 6 or greater) must be used to enable TLS.
 
 A set of self-signed keys is created through the `tls-gen` package. These keys are then copied to a common directory for use in the Redis server and python.
 
@@ -452,7 +452,7 @@ mkdir -p ${HOME}/merlinu/cert_redis
 cp result/* ${HOME}/merlinu/cert_redis
 ```
 
-The configuration below does not use client verification `--tls-auth-clients no` so the ssl files do not need to be defined as shown in the [Security With Redis](../user_guide/configuration.md#security-with-redis) section.
+The configuration below does not use client verification `--tls-auth-clients no` so the ssl files do not need to be defined as shown in the [Security With Redis](../user_guide/configuration.md#security-with-rediss_1) section.
 
 ??? abstract "RabbitMQ & Redis TLS Docker Compose"
 

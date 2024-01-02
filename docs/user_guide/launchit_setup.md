@@ -1,2 +1,0 @@
-# LaunchIT Server Setup
-
