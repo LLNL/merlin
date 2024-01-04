@@ -3,7 +3,7 @@ hide:
   - navigation
 ---
 
-![Merlin Banner](./assets/merlin_banner.png)
+![Merlin Banner](./assets/merlin_banner.png){ width="75%" }
 
 ----
 
