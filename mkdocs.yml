@@ -25,9 +25,13 @@ nav:
   - User Guide:
     - Overview: "user_guide/index.md"
     - Installation: "user_guide/installation.md"
-    - Configuration: "user_guide/configuration.md"
+    - Configuration: 
+      - Overview: "user_guide/configuration/index.md"
+      - External Server: "user_guide/configuration/external_server.md"
+      - Merlin Server: "user_guide/configuration/merlin_server.md"
     - Command Line Interface: "user_guide/command_line.md"
     - Variables: "user_guide/variables.md"
+    - Celery: "user_guide/celery.md"
     - Contributing: "user_guide/contributing.md"
   - Reference Guide:
     - Merlin Reference: "api_reference/index.md"
