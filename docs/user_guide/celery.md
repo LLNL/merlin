@@ -6,7 +6,7 @@ Merlin queues tasks to the broker which receives and routes tasks. Merlin by def
 
 Celery has many functions, it defines the interface to the task broker, the backend results database and the workers that will run the tasks.
 
-As discussed in the [Configuration](./configuration.md) page, the broker and backend are configured through [the app.yaml file](./configuration.md#the-appyaml-file). A configuration for the rabbit AMQP server is shown below.
+As discussed in the [Configuration](./configuration/index.md) page, the broker and backend are configured through [the app.yaml file](./configuration/index.md#the-appyaml-file). A configuration for the rabbit AMQP server is shown below.
 
 ???+ abstract "Config File for RabbitMQ Broker and Redis Backend"
 

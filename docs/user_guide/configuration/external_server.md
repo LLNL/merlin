@@ -4,7 +4,7 @@
 
     It's recommended that you read through the [Configuration Overview](./index.md) page before proceeding with this module.
 
-## The Broker Section
+## Configuring the Broker
 
 In the `broker` section of your app.yaml you will provide all of the necessary settings for Merlin to establish a connection with your broker.
 
@@ -255,7 +255,7 @@ Using the `url` setting, Merlin will construct a connection string of the form:
     redis://localhost:6379/0
     ```
 
-## The Results Backend Section
+## Configuring the Results Backend
 
 In the `results_backend` section of your app.yaml you will provide all of the necessary settings for Merlin to establish a connection with your results backend.
 

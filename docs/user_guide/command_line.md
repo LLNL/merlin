@@ -26,7 +26,7 @@ See the [Configuration Commands](#configuration-commands), [Workflow Management 
 
 ## Configuration Commands
 
-Since running Merlin in a distributed manner requires the [configuration](./configuration.md) of a centralized server, Merlin comes equipped with three commands to help users get this set up:
+Since running Merlin in a distributed manner requires the [configuration](./configuration/index.md) of a centralized server, Merlin comes equipped with three commands to help users get this set up:
 
 - *[config](#config-merlin-config)*: Create the skeleton `app.yaml` file needed for configuration
 - *[info](#info-merlin-info)*: Ensure stable connections to the server(s)
@@ -34,9 +34,9 @@ Since running Merlin in a distributed manner requires the [configuration](./conf
 
 ### Config (`merlin config`)
 
-Create a default [config (app.yaml) file](./configuration.md#the-appyaml-file) in the `${HOME}/.merlin` directory using the `config` command. This file can then be edited for your system configuration.
+Create a default [config (app.yaml) file](./configuration/index.md#the-appyaml-file) in the `${HOME}/.merlin` directory using the `config` command. This file can then be edited for your system configuration.
 
-See more information on how to set this file up at the [Configuration](./configuration.md) page.
+See more information on how to set this file up at the [Configuration](./configuration/index.md) page.
 
 **Usage:**
 

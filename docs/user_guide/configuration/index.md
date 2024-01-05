@@ -16,7 +16,9 @@ A broker is a message queue that acts as an intermediary between the sender of a
 
 The broker is responsible for queuing the tasks and delivering them to the appropriate worker processes. It allows for the decoupling of the task producer and the task consumer, enabling a more scalable and flexible architecture.
 
-[Celery supports various message brokers](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/index.html), including [RabbitMQ](https://www.rabbitmq.com/), [Redis](https://redis.io/), and others. You can configure Celery to use a specific broker based on your requirements (although we suggest using RabbitMQ). See the [Broker](#the-broker-section) section below for more information on configuring your broker.
+[Celery supports various message brokers](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/index.html), including [RabbitMQ](https://www.rabbitmq.com/), [Redis](https://redis.io/), and others. You can configure Celery to use a specific broker based on your requirements (although we suggest using RabbitMQ).
+
+See the [Configuring the Broker and Results Backend](#configuring-the-broker-and-results-backend) section below for more information on configuring your broker.
 
 ### What is a Results Backend?
 
@@ -24,7 +26,9 @@ The results backend is a storage system where the results of executed tasks are 
 
 The results backend enables the asynchronous nature of Celery. Instead of blocking and waiting for a task to complete, the sender can continue with other work and later retrieve the result from the results backend.
 
-[Celery supports various results backends](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/index.html), including databases (such as SQLAlchemy, Django ORM), message brokers (Redis, RabbitMQ), and others. You can configure Celery to use a specific broker based on your requirements (although we suggest using Redis). However, since Merlin utilizes [Celery chords](https://docs.celeryq.dev/en/stable/userguide/canvas.html#chords) and the amqp (rpc RabbitMQ) server does not support chords, we cannot use RabbitMQ as a results backend. See the [Results Backend](#the-results-backend-section) section below for more information on configuring your results backend.
+[Celery supports various results backends](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/index.html), including databases (such as SQLAlchemy, Django ORM), message brokers (Redis, RabbitMQ), and others. You can configure Celery to use a specific broker based on your requirements (although we suggest using Redis). However, since Merlin utilizes [Celery chords](https://docs.celeryq.dev/en/stable/userguide/canvas.html#chords) and the amqp (rpc RabbitMQ) server does not support chords, we cannot use RabbitMQ as a results backend.
+
+See the [Configuring the Broker and Results Backend](#configuring-the-broker-and-results-backend) section below for more information on configuring your results backend.
 
 ## The app.yaml File
 
@@ -285,7 +289,7 @@ Overriding these settings is as simple as listing a new key-value pair in the `c
             visibility_timeout: 75000
     ```
 
-## Configuring the Broker and Results Backend Sections
+## Configuring the Broker and Results Backend
 
 When it comes to configuring the `broker` and `results_backend` sections of your `app.yaml` file, configuration will depend on the type of user you are and what type of servers you wish to use.
 

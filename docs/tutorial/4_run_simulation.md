@@ -47,7 +47,7 @@ Check that the virtual environment with Merlin installed is activated and that y
 merlin info
 ```
 
-This is covered more in depth in the [Verifying Installation](./2_installation.md#checkingverifying-installation) section of the Installation module and at the [Configuration](../user_guide/configuration.md) page.
+This is covered more in depth in the [Verifying Installation](./2_installation.md#checkingverifying-installation) section of the Installation module and at the [Configuration](../user_guide/configuration/index.md) page.
 
 There are two ways to do this example: with docker and without docker. To go through the version with docker, get the necessary files for this module by running:
 

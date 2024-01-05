@@ -4,7 +4,7 @@ The Merlin library can be installed by using [virtual environments and pip](#ins
 
 Contributors to Merlin should follow the [Developer Setup](#developer-setup) below.
 
-Once Merlin has been installed, the installation needs to be configured. See the [Configuration](./configuration.md) page for instructions on how to configure Merlin.
+Once Merlin has been installed, the installation needs to be configured. See the [Configuration](./configuration/index.md) page for instructions on how to configure Merlin.
 
 ## Installing With Virtual Environments & Pip
 
@@ -63,7 +63,7 @@ Verify that Merlin installed properly by ensuring the following command can run:
 merlin --version
 ```
 
-All set up? See the [Configuration](./configuration.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
+All set up? See the [Configuration](./configuration/index.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
 
 More information on Merlin commands can be found at the [Command Line Interface](command_line.md) page.
 
@@ -204,7 +204,7 @@ Using the example output above, we could choose to load Python like so:
 
 At this point the module specific Python, Merlin, Maestro and Celery will all be in your path.
 
-Congratulations, you're ready to use Merlin! See the [Configuration](./configuration.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
+Congratulations, you're ready to use Merlin! See the [Configuration](./configuration/index.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
 
 More information on Merlin commands can be found at the [Command Line Interface](command_line.md) page.
 
@@ -228,7 +228,7 @@ Additionally, there is an alternative method to setup Merlin on supercomputers. 
     pip3 install "merlin[dev]"
     ```
 
-All set up? See the [Configuration](./configuration.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
+All set up? See the [Configuration](./configuration/index.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
 
 More information on Merlin commands can be found at the [Command Line Interface](command_line.md) page.
 
@@ -258,6 +258,6 @@ merlin --version
 
 If you don't see a version number, you may need to restart your virtualenv and try again.
 
-All set up? See the [Configuration](./configuration.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
+All set up? See the [Configuration](./configuration/index.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
 
 More information on Merlin commands can be found at the [Command Line Interface](command_line.md) page.

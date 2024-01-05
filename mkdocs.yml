@@ -12,6 +12,18 @@ nav:
     - 5. Advanced Topics: "tutorial/5_advanced_topics.md"
     - 6. Contribute to Merlin: "tutorial/6_contribute.md"
     - 7. Port Your Own Application: "tutorial/7_port_application.md"
+  - User Guide:
+    - Overview: "user_guide/index.md"
+    - Installation: "user_guide/installation.md"
+    - Configuration: 
+      - Overview: "user_guide/configuration/index.md"
+      - External Server: "user_guide/configuration/external_server.md"
+      - Merlin Server: "user_guide/configuration/merlin_server.md"
+    - Specification: "user_guide/specification.md"
+    - Command Line Interface: "user_guide/command_line.md"
+    - Variables: "user_guide/variables.md"
+    - Celery: "user_guide/celery.md"
+    - Contributing: "user_guide/contributing.md"
   - Examples:
     - Overview: "examples/index.md"
     - Hello World Examples: "examples/hello.md"
@@ -22,21 +34,10 @@ nav:
     - Flux Examples: "examples/flux.md"
     - Slurm Examples: "examples/slurm.md"
     - LSF Examples: "examples/lsf.md"
-  - User Guide:
-    - Overview: "user_guide/index.md"
-    - Installation: "user_guide/installation.md"
-    - Configuration: 
-      - Overview: "user_guide/configuration/index.md"
-      - External Server: "user_guide/configuration/external_server.md"
-      - Merlin Server: "user_guide/configuration/merlin_server.md"
-    - Command Line Interface: "user_guide/command_line.md"
-    - Variables: "user_guide/variables.md"
-    - Celery: "user_guide/celery.md"
-    - Contributing: "user_guide/contributing.md"
+  - FAQ: "faq.md"
   - Reference Guide:
     - Merlin Reference: "api_reference/index.md"
     - API Reference: "api_reference/"
-  - FAQ: "faq.md"
   - Contact Us: "contact.md"
 
 theme:

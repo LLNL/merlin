@@ -197,7 +197,7 @@ See the [Expected Output](#expected-output) section below for details on the fil
 
 #### Running in a Distributed Manner
 
-To run your workflow in a distributed manner, first make sure running `merlin info` doesn't show any errors. If it does, you'll need to setup your [configuration](../user_guide/configuration.md).
+To run your workflow in a distributed manner, first make sure running `merlin info` doesn't show any errors. If it does, you'll need to setup your [Configuration](../user_guide/configuration/index.md).
 
 Once your configuration is setup properly, we'll need to accomplish two things to run our study: sending tasks to the external server and starting workers to manage and run those tasks. Let's send the tasks to the server first:
 
