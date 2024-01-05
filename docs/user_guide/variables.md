@@ -50,7 +50,17 @@ Reserved variables are study variables that Merlin uses. They may be referenced 
 
 ### The `LAUNCHER` and `VLAUNCHER` Variables
 
-`$(LAUNCHER)` is a special case of a reserved variable since it's value *can* be changed. It serves as an abstraction to launch a job with parallel schedulers like [Slurm](../faq.md#what-is-slurm), [LSF](../faq.md#what-is-lsf), and [Flux](../faq.md#what-is-flux), and it can be used within a step command. 
+`$(LAUNCHER)` is a special case of a reserved variable since it's value *can* be changed. It serves as an abstraction to launch a job with parallel schedulers like [Slurm](../faq.md#what-is-slurm), [LSF](../faq.md#what-is-lsf), and [Flux](../faq.md#what-is-flux), and it can be used within a step command.
+
+The arguments that the `LAUNCHER` variable can use are:
+
+| Argument Name | Description |
+| ------------- | ----------- |
+| `procs` | The total number of MPI tasks |
+| `nodes` | The total number of MPI nodes |
+| `walltime` | The total walltime of the run (hh\:mm\:ss or mm:ss or ss) **(not available in LSF)** |
+| `cores per task` | The number of hardware threads per MPI task |
+| `gpus per task` | The number of GPUs per MPI task |
 
 !!! example "LAUNCHER Example"
 
