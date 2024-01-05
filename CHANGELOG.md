@@ -15,6 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
 - The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
 
+### Changed
+- The entire documentation has been ported to MkDocs and re-organized
+  - *Dark Mode*
+  - New "Getting Started" example for a simple setup tutorial
+  - More detail on configuration instructions
+    - Added explanation of why configuration is necessary
+    - Added list of all Celery settings used by Merlin
+    - Links to Confluence for setting up LaunchIT servers
+    - Non-LC users have their own "External Server Configuration" page
+    - Full page on configuring containerized servers with `merlin server`
+  - There's now a full page on installation instructions
+    - Instructions for installing w/ pip & venvs
+    - Instructions for installing w/ spack
+    - Instructions for setting up a dev installation of Merlin
+  - More detail on explaining the spec file
+    - Split each block into it's own section
+  - More detail with the CLI page
+    - Added tables for all command options
+    - Added examples for commands that have multiple options
+    - Added more links to places in the documentation so that it's easier for users to find info they're looking for
+  - New "Examples" page has been added
+    - The goal is to have a detailed explanation of each example
+    - For now, the only example that's completed here is the "Hello, World!" example
+  - Updated "FAQ" page to include more links to helpful locations throughout the documentation
+  - Set up a place to store API docs
+    - I'm thinking we can document Merlin *and* the test suite here
+  - New "Contact" page with info on reaching Merlin devs
+
 ## [1.11.1]
 ### Fixed
 - Typo in `batch.py` that caused lsf launches to fail (`ALL_SGPUS` changed to `ALL_GPUS`)
