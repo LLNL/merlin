@@ -1,4 +1,4 @@
-markdown-grid-table
+markdown-grid-tables
 mkdocs
 mkdocs-gen-files
 mkdocs-glightbox
