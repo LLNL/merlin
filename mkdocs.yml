@@ -23,6 +23,7 @@ nav:
     - Command Line Interface: "user_guide/command_line.md"
     - Variables: "user_guide/variables.md"
     - Celery: "user_guide/celery.md"
+    - Docker: "user_guide/docker.md"
     - Contributing: "user_guide/contributing.md"
   - Examples:
     - Overview: "examples/index.md"
