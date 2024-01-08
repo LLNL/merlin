@@ -1,165 +1,193 @@
 # Contributing
 
-Welcome to the Merlin developer documentation! This section provides
-instructions for contributing to Merlin.
+Welcome to the Merlin developer documentation! This module provides instructions for contributing to Merlin.
 
 ## Getting Started
 
-Follow the :doc:`Getting Started <./getting_started>` documentation to setup
-your Merlin development environment.
+Follow the [Developer Setup](./installation.md#developer-setup) documentation to setup your Merlin development environment (we recommend using the [Make Setup](./installation.md#make-setup)).
 
-Once your development is setup create a branch:
+Once your development environment is setup ensure you're on the development branch:
 
-.. code-block:: bash
+```bash
+git checkout develop
+```
 
-    $ git checkout -b feature/<username>/description
+Then create a new branch for whatever you're working on. Typically branch names will start with one of the following prefixes: `feature`, `bugfix`, `refactor`, or `docs`. The following command will create a new branch for you and switch to it:
 
-.. note::
+```bash
+git switch -c <branch prefix>/<your branch name>
+```
 
-    Other common types of branches besides feature are: ``bugfix``,
-    ``hotfix``, or ``refactor``.
-
-    Select the branch type that best represents the development.
-
-Merlin follows a `gitflow workflow <https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_.
-Updates to the develop branch are made via pull requests.
-
+Merlin follows a [gitflow workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow). Updates to the develop branch are made via pull requests.
 
 ## Developer Guide
 
-This section provides Merlin's guide for contributing features/bugfixes to
-Merlin.
+This section provides Merlin's guide for contributing features/bugfixes to Merlin.
 
-## Pull Request Checklist
+### Pull Request Checklist
 
-.. warning:: All pull requests must pass ``make tests`` prior to consideration!
+!!! warning
 
-To expedite review, please ensure that pull requests
+    All pull requests must pass `make tests` prior to consideration!
 
-- Are from a meaningful branch name (e.g. ``feature/my_name/cool_thing``)
+To expedite review, please ensure that pull requests...
 
-- Are being merged into the `appropriate branch <https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow>`_
+- Are from a meaningful branch name (e.g. `feature/cool_thing`)
+
+- Are being merged into the [appropriate branch](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) (likely [Merlin's develop branch](https://github.com/LLNL/merlin/tree/develop))
 
 - Include testing for any new features
 
-  - unit tests in ``tests/unit``
-  - integration tests in ``tests/integration``
+    - unit tests in `tests/unit`
+    - integration tests in `tests/integration`
 
 - Include descriptions of the changes
 
-  - a summary in the pull request
-  - details in ``CHANGELOG.md``
+    - a summary in the pull request
+    - details in the `[Unreleased]` section of the `CHANGELOG.md`
 
-- Ran ``make fix-style`` to adhere to style guidelines
+- Ran `make fix-style` to adhere to style guidelines
 
-- Pass ``make tests``; output included in pull request
+    - it's best practice to run `make check-style` too to ensure no further linter changes need to be manually fixed
 
-- Increment version number `appropriately <https://semver.org>`_
+- Pass `make tests`; output included in pull request
 
-  - in ``CHANGELOG.md``
-  - in ``merlin.__init__.py``
+### Testing
 
-- Have `squashed <https://github.com/LLNL/merlin/wiki/Squash-commits>`_ commits
+All pull requests must pass unit and integration tests. To ensure that they do run:
 
-## Testing
+```bash
+make tests
+```
 
-All pull requests must pass unit and integration tests. To ensure that they do run
+All pull requests that include bugfixes or new features must have new tests in `tests/unit` and/or `tests/integration`. See the [README](https://github.com/LLNL/merlin/blob/develop/tests/README.md) in the test suite for instructions on how to write your tests. You can also view the [Reference Guide](../api_reference/index.md) to see API docs for the test suite.
 
-.. code-block:: bash
+<!-- TODO: get the API docs for the test suite set up -->
 
-    $ make tests
+### Python Code Style Guide
 
-## Python Code Style Guide
+This section documents Merlin's style guide. Unless otherwise specified, [PEP-8](https://www.python.org/dev/peps/pep-0008/) is the preferred coding style and [PEP-0257](https://www.python.org/dev/peps/pep-0257/) for docstrings.
 
-This section documents Merlin's style guide. Unless otherwise specified,
-`PEP-8 <https://www.python.org/dev/peps/pep-0008/>`_
-is the preferred coding style and `PEP-0257 <https://www.python.org/dev/peps/pep-0257/>`_
-for docstrings.
+!!! note
 
-.. note:: ``make fix-style`` will automatically fix any style issues.
+    Running the following command from the root of the Merlin repository should automatically fix most styling issues:
+
+    ```bash
+    make fix-style
+    ```
 
 Merlin has style checkers configured. They can be run from the Makefile:
 
-.. code-block:: bash
+```bash
+make check-style
+```
 
-    $ make check-style
+### Adding New Features to YAML Spec File
 
-## Adding New Features to YAML Spec File
+!!! note "Block vs Property"
 
-In order to conform to Maestro's verification format introduced in Maestro v1.1.7,
-we now use `json schema <https://www.json-schema.org>`_ validation to verify our spec
-file. 
+    To provide clarity for the following section, we need to discuss what's meant by a "block" vs a "property" of the [YAML spec](./specification.md).
 
-If you are adding a new feature to Merlin that requires a new block within the yaml spec
-file or a new property within a block, then you are going to need to update the 
-merlinspec.json file located in the merlin/spec/ directory. You also may want to add 
-additional verifications within the specification.py file located in the same directory. 
+    **Block:** A block is anything at the first level of a YAML spec. Merlin comes equipped with 7 blocks: `description`, `environment`, `global.parameters`, `batch`, `study`, `merlin`, and `user`.
 
-.. note::
-   If you add custom verifications beyond the pattern checking that the json schema
-   checks for, then you should also add tests for this verification in the test_specification.py
-   file located in the merlin/tests/unit/spec/ directory. Follow the steps for adding new
-   tests in the docstring of the TestCustomVerification class.
+    **Property:** A property is any keyword defined within a block.
 
-### Adding a New Property
+    Here's an example:
 
-To add a new property to a block in the yaml file, you need to create a 
-template for that property and place it in the correct block in merlinspec.json. For 
-example, say I wanted to add a new property called ``example`` that's an integer within 
-the ``description`` block. I would modify the ``description`` block in the merlinspec.json file to look 
-like this:
+    ```yaml
+    description:  # Block - description
+        name: hello  # Property - name
+        description: a very simple merlin workflow  # Property - description
 
-.. code-block:: json
+    global.parameters:  # Block - global.parameters
+        GREET:  # Property - GREET
+            values : ["hello","hola"]  # Property - values
+            label  : GREET.%%  # Property - label
+        WORLD:  # Property - WORLD
+            values : ["world","mundo"]  # Property - values
+            label  : WORLD.%%  # Property - label
+    ```
 
-    "DESCRIPTION": {
-      "type": "object",
-      "properties": {
-        "name": {"type": "string", "minLength": 1},
-        "description": {"type": "string", "minLength": 1},
-        "example": {"type": "integer", "minimum": 1}
-      },
-      "required": ["name", "description"]
-    }
+In order to conform to Maestro's verification format introduced in Maestro v1.1.7, we now use [json schema](https://json-schema.org/) validation to verify our spec file. 
 
-If you need help with json schema formatting, check out the `step-by-step getting 
-started guide <https://json-schema.org/learn/getting-started-step-by-step.html>`_.
+If you are adding a new feature to Merlin that requires a new block within the yaml spec file or a new property within a block, then you are going to need to update the `merlinspec.json` file located in the `merlin/spec/` directory. You also may want to add additional verifications within the `specification.py` file located in the same directory.
 
-That's all that's required of adding a new property. If you want to add your own custom
-verifications make sure to create unit tests for them (see the note above for more info).
+!!! note
 
-### Adding a New Block
+    If you add custom verifications beyond the pattern checking that the json schema checks for, then you should also add tests for this verification in the `test_specification.py` file located in the `merlin/tests/unit/spec/` directory.
 
-Adding a new block is slightly more complicated than adding a new property. You will not
-only have to update the merlinspec.json schema file but also add calls to verify that 
-block within specification.py.
+#### Adding a New Property
 
-To add a block to the json schema, you will need to define the template for that entire
-block. For example, if I wanted to create a block called ``country`` with two 
-properties labeled ``name`` and ``population`` that are both required, it would look like so:
+To add a new property to a block in the yaml file, you need to create a template for that property and place it in the correct block in `merlinspec.json`. 
 
-.. code-block:: json
+!!! tip
 
-    "COUNTRY": {
-      "type": "object",
-      "properties": {
-        "name": {"type": "string", "minLength": 1},
-        "population": {
-          "anyOf": [
-            {"type": "string", "minLength": 1},
-            {"type": "integer", "minimum": 1}
-          ]
+    For help with json schema formatting, check out the [step-by-step getting started guide](https://json-schema.org/learn/getting-started-step-by-step.html).
+
+!!! example
+
+    Say I wanted to add a new property called `example` that's an integer within the `description` block. I would modify the `description` block in the `merlinspec.json` file to look like so:
+
+    ```json title="merlinspec.json" hl_lines="7"
+    {
+        "DESCRIPTION": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "minLength": 1},
+                "description": {"type": "string", "minLength": 1},
+                "example": {"type": "integer", "minimum": 1}
+            },
+            "required": ["name", "description"]
         }
-      },
-      "required": ["name", "capital"]
+        .
+        .
+        .
     }
+    ```
 
-Here, ``name`` can only be a string but ``population`` can be both a string and an integer. 
-For help with json schema formatting, check out the `step-by-step getting started guide`_.
+That's all that's required of adding a new property. If you want to add your own custom verifications make sure to create [unit tests](#testing) for them.
 
-The next step is to enable this block in the schema validation process. To do this we need to:
+#### Adding a New Block
 
-#. Create a new method called verify_<your_block_name>() within the MerlinSpec class
-#. Call the YAMLSpecification.validate_schema() method provided to us via Maestro in your new method
-#. Add a call to verify_<your_block_name>() inside the verify() method
+Adding a new block is slightly more complicated than adding a new property. You will not only have to update the `merlinspec.json` schema file but also add calls to verify that block within `specification.py`.
 
-If you add your own custom verifications on top of this, please add unit tests for them.
+To add a block to the json schema, you will need to define the template for that entire block.
+
+!!! tip
+
+    For help with json schema formatting, check out the [step-by-step getting started guide](https://json-schema.org/learn/getting-started-step-by-step.html).
+
+!!! example
+
+    Say I wanted to create a block called `country` with two properties labeled `name` and `population` that are both required. It would look like so:
+
+    ```json title="merlinspec.json"
+    {
+        .
+        .
+        .
+        "COUNTRY": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "minLength": 1},
+                "population": {
+                    "anyOf": [
+                        {"type": "string", "minLength": 1},
+                        {"type": "integer", "minimum": 1}
+                    ]
+                }
+            },
+            "required": ["name", "capital"]
+        }
+    }
+    ```
+    
+    Here, `name` can only be a string but `population` can be both a string and an integer. 
+
+The next step is to enable this block in the schema validation process of `specification.py`. To do this we need to:
+
+1. Create a new method called `verify_<your_block_name>()` within the `MerlinSpec` class
+2. Call the `YAMLSpecification.validate_schema()` method provided to us via [Maestro](https://github.com/LLNL/maestrowf/blob/develop/maestrowf/specification/yamlspecification.py#L400) in your new method
+3. Add a call to `verify_<your_block_name>()` inside the `verify()` method
+
+If you add your own custom verifications on top of this, please add [unit tests](#testing) for them.

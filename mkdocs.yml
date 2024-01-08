@@ -93,17 +93,17 @@ markdown_extensions:
 plugins:
   - glightbox
   - search
-#   - gen-files:
-#       scripts:
-#       - docs/gen_ref_pages.py
-#   - mkdocstrings:
-#       handlers:
-#         python:
-#           paths: [merlin]
-#           options:
-#             docstring_style: sphinx
-#   - literate-nav:
-#       nav_file: SUMMARY.md
+  # - gen-files:
+  #     scripts:
+  #     - docs/gen_ref_pages.py
+  # - mkdocstrings:
+  #     handlers:
+  #       python:
+  #         paths: [merlin]
+  #         options:
+  #           docstring_style: sphinx
+  # - literate-nav:
+  #     nav_file: SUMMARY.md
 
 extra:
   social:

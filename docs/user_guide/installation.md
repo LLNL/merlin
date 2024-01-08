@@ -214,24 +214,6 @@ The developer setup can be done via pip or via make. This section will cover how
 
 Additionally, there is an alternative method to setup Merlin on supercomputers. See the [Spack](#installing-with-spack) section above for more details.
 
-### Pip Setup
-
-[Create a virtual environment](#creating-a-virtual-environment) and [activate it](#activating-a-virtual-environment), then install with the additional developer dependencies:
-
-=== "GitHub"
-    ```bash
-    pip3 install -e "git+https://github.com/LLNL/merlin.git@develop#egg=merlin[dev]"
-    ```
-
-=== "PyPi"
-    ```bash
-    pip3 install "merlin[dev]"
-    ```
-
-All set up? See the [Configuration](./configuration/index.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
-
-More information on Merlin commands can be found at the [Command Line Interface](command_line.md) page.
-
 ### Make Setup
 
 Visit the [Merlin repository](https://github.com/LLNL/merlin/) on github. [Create a fork of the repo](https://github.com/LLNL/merlin/fork) and [clone it](https://docs.github.com/en/get-started/quickstart/fork-a-repo#cloning-your-forked-repository) onto your system.
@@ -257,6 +239,24 @@ merlin --version
 ```
 
 If you don't see a version number, you may need to restart your virtualenv and try again.
+
+All set up? See the [Configuration](./configuration/index.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
+
+More information on Merlin commands can be found at the [Command Line Interface](command_line.md) page.
+
+### Pip Setup
+
+[Create a virtual environment](#creating-a-virtual-environment) and [activate it](#activating-a-virtual-environment), then install with the additional developer dependencies:
+
+=== "GitHub"
+    ```bash
+    pip3 install -e "git+https://github.com/LLNL/merlin.git@develop#egg=merlin[dev]"
+    ```
+
+=== "PyPi"
+    ```bash
+    pip3 install "merlin[dev]"
+    ```
 
 All set up? See the [Configuration](./configuration/index.md) page for instructions on how to configure Merlin or check out the [Tutorial](../tutorial/index.md)!
 
