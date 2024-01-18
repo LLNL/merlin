@@ -411,7 +411,7 @@ merlin run [OPTIONS] SPECIFICATION
 | `--local` | string | Run tasks sequentially in your current shell | "distributed" |
 | `--vars` | List[string] | A space-delimited list of variables to override in the spec file. This list should be given after the spec file is provided. Ex: `--vars LEARN=/path/to/new_learn.py EPOCHS=3` | None |
 | `--samplesfile` | choice(`<filename>.npy` \| `<filename>.csv` \| `<filename>.tab`) | Specify a file containing samples. This file should be given after the spec file is provided. | None |
-| `--dry` | boolean | Do a [Dry Run](#dry-run) of your workflow | `False` |
+| `--dry` | boolean | Do a [Dry Run](./running_studies.md#dry-runs) of your workflow | `False` |
 | `--no-errors` | boolean | Silence the errors thrown when flux is not present | `False` |
 | `--pgen` | filename | Specify a parameter generator filename to override the `global.parameters` block of your spec file | None |
 | `--pargs` | string | A string that represents a single argument to pass a custom parameter generation function. Reuse `--parg` to pass multiple arguments. [Use with `--pgen`] | None |
@@ -442,39 +442,11 @@ merlin run [OPTIONS] SPECIFICATION
     merlin run my_specification.yaml --dry --local
     ```
 
-#### Dry Run
-
-'Dry run' means telling workers to create a study's workspace and all of its necessary subdirectories and scripts (with variables expanded) without actually executing the scripts.
-
-To dry-run a workflow, use `--dry`:
-
-=== "Locally"
-
-    ```bash
-    merlin run --local --dry <input.yaml>
-    ```
-
-=== "Distributed"
-
-    ```bash
-    merlin run --dry <input.yaml> ; merlin run-workers <input.yaml>
-    ```
-
-You can also specify dry runs from the workflow specification file:
-
-```yaml
-batch:
-    dry_run: True
-```
-
-If you wish to execute a workflow after dry-running it, simply use [`merlin restart`](#restart-merlin-restart).
-
-
 ### Run Workers (`merlin run-workers`)
 
 The tasks queued on the broker by the [`merlin run`](#run-merlin-run) command are run by a collection of workers. These workers can be run local in the current shell or in parallel on a batch allocation. The workers are launched using the `run-workers` command which reads the configuration for the worker launch from the `<input.yaml>` file.
 
-Within the `<input.yaml>` file, the `batch` and `merlin.resources.workers` sections are both used to configure the worker launch. The top level `batch` section can be overridden in the `merlin.resources.workers` section. Parallel workers should be scheduled using the system's batch scheduler (see [below](#launching-workers-in-parallel) for more info).
+Within the `<input.yaml>` file, the `batch` and `merlin.resources.workers` sections are both used to configure the worker launch. The top level `batch` section can be overridden in the `merlin.resources.workers` section. Parallel workers should be scheduled using the system's batch scheduler (see the section describing [Distributed Runs](./running_studies.md#distributed-runs) for more info).
 
 Once the workers are running, tasks from the broker will be processed.
 
@@ -514,49 +486,6 @@ merlin run-workers [OPTIONS] SPECIFICATION
     ```bash
     merlin run-workers my_specification.yaml --worker-args "-l INFO --concurrency 4"
     ```
-
-#### Launching Workers in Parallel
-
-An example of launching a simple Celery worker using srun:
-
-```bash
-srun -n 1 celery -A merlin worker -l INFO
-```
-
-A parallel batch allocation launch is configured to run a single worker process per node. This worker process will then launch a number of worker threads to process the tasks. The number of worker threads that are launched depends on the `--concurrency` value provided to the workers. By default this will be the number of CPUs on the node. The number of threads can be configured by the users (see the [Configuring Celery Wrokers](./celery.md#configuring-celery-workers) section for more details).
-
-A full SLURM batch submission script to run the workflow on 4 nodes is shown below.
-
-```bash
-#!/bin/bash
-#SBATCH -N 4
-#SBATCH -J Merlin
-#SBATCH -t 30:00
-#SBATCH -p pdebug
-#SBATCH --mail-type=ALL
-#SBATCH -o merlin_workers_%j.out
-
-# Assumes you are run this in the same dir as the yaml file.
-YAML_FILE=input.yaml
-
-# Source the merlin virtualenv
-source <path to merlin venv>/bin/activate
-
-# Remove all tasks from the queues for this run.
-#merlin purge -f ${YAML_FILE}
-
-# Submit the tasks to the task server
-merlin run ${YAML_FILE}
-
-# Print out the workers command
-merlin run-workers ${YAML_FILE} --echo
-
-# Run the workers on the allocation
-merlin run-workers ${YAML_FILE}
-
-# Delay until the workers cease running
-merlin monitor
-```  
 
 ### Stop Workers (`merlin stop-workers`)
 
