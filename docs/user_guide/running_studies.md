@@ -48,7 +48,7 @@ merlin run my_specification.yaml
 The diagram below displays the basic flow of this process:
 
 <figure markdown>
-  ![merlin run diagram](../assets/merlin-run-diagram.png)
+  ![merlin run diagram](../assets/running_studies/merlin-run-diagram.png)
   <figcaption>High-Level Overview of "merlin run"</figcaption>
 </figure>
 
@@ -101,7 +101,7 @@ You can specify workers in [the `merlin` block](./specification.md#the-merlin-bl
         The robots in this diagram represent the workers that are started on each node of the allocation. This is the default behavior when workers are spun up. If you'd like to modify how many nodes a worker possesses, that can be customized in [the `resources` section](./specification.md#resources) of the `merlin` block in your spec file.
 
     <figure markdown>
-      ![parallel worker launch diagram](../assets/parallel-launch.png)
+      ![parallel worker launch diagram](../assets/running_studies/parallel-launch.png)
       <figcaption>Flowchart for Starting Workers In Parallel</figcaption>
     </figure>
 
@@ -120,21 +120,21 @@ You can specify workers in [the `merlin` block](./specification.md#the-merlin-bl
     Below is a visual demonstration of this worker startup process. The robot represents the workers started on the current node.
 
     <figure markdown>
-      ![current node worker launch diagram](../assets/current-node-launch.png)
+      ![current node worker launch diagram](../assets/running_studies/current-node-launch.png)
       <figcaption>Flowchart for Starting Workers On The Current Node</figcaption>
     </figure>
 
 The workers that you spin up will live on the node(s) of your allocation and communicate with both the broker (to pull tasks from the queues for execution) and the [results server](./configuration/index.md#what-is-a-results-backend) (to store task state information). The communication between the worker and the broker is two-way so that the worker can push new tasks to the server as the workflow executes and pull existing tasks from the server that need to be executed. Below is a visual representation of this communication:
 
 <figure markdown>
-  ![worker/server communication diagram](../assets/worker-server-communication.png)
+  ![worker/server communication diagram](../assets/running_studies/worker-server-communication.png)
   <figcaption>Communication Between Workers and the Central Server</figcaption>
 </figure>
 
 If we put everything from this section together, we can see the full picture of the producer-consumer model that Merlin utilizes in workflow runs:
 
 <figure markdown>
-  ![producer-consumer model](../assets/producer-consumer-model.png)
+  ![producer-consumer model](../assets/running_studies/producer-consumer-model.png)
   <figcaption>The Producer-Consumer Model for Merlin</figcaption>
 </figure>
 
@@ -515,6 +515,6 @@ Putting everything together, this means the workers will act as both the produce
 Below is a visual representation of the iterative process.
 
 <figure markdown>
-  ![iterative diagram](../assets/iterative-diagram.png)
+  ![iterative diagram](../assets/running_studies/iterative-diagram.png)
   <figcaption>Processing Diagram for Iterative Workflows</figcaption>
 </figure>
