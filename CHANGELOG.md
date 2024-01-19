@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
 - The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
+- Add the restart keyword to the specification docs
 
 ## [1.11.1]
 ### Fixed
