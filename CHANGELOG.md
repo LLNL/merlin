@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added tables for all command options
     - Added examples for commands that have multiple options
     - Added more links to places in the documentation so that it's easier for users to find info they're looking for
+  - New "Running Studies" page to explain different ways to run studies, restart them, and accomplish command line substitution
+  - New "Interpreting Output" page to help users understand how the output workspace is generated in more detail
   - New "Examples" page has been added
     - The goal is to have a detailed explanation of each example
     - For now, the only example that's completed here is the "Hello, World!" example
