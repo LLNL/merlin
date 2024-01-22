@@ -173,7 +173,8 @@ Running the workflow will first convert your steps into a task execution graph a
 
     !!! success "Contents of `hello_samples_<timestamp>`"
 
-        ![Contents of hello_samples Workspace](./assets/hello_samples_tree.png)
+        <!-- ![Contents of hello_samples Workspace](./assets/hello_samples_tree.png) -->
+        ![Contents of hello_samples Workspace](./assets/hello-samples-tree.png)
 
 ## Goals and Motivations
 
