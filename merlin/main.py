@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -364,8 +364,13 @@ def process_monitor(args):
     """
     LOG.info("Monitor: checking queues ...")
     spec, _ = get_merlin_spec_with_override(args)
+
+    # Give the user time to queue up jobs in case they haven't already
+    time.sleep(args.sleep)
+
+    # Check if we still need our allocation
     while router.check_merlin_status(args, spec):
-        LOG.info("Monitor: found tasks in queues")
+        LOG.info("Monitor: found tasks in queues and/or tasks being processed")
         time.sleep(args.sleep)
     LOG.info("Monitor: ... stop condition met")
 

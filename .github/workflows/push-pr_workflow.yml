@@ -129,7 +129,7 @@ jobs:
 
     - name: Run pytest over unit test suite
       run: |
-        python3 -m pytest tests/unit/
+        python3 -m pytest -v --order-scope=module tests/unit/
 
     - name: Run integration test suite for local tests
       run: |

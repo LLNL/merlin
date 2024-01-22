@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Pytest fixtures in the `conftest.py` file of the integration test suite
+  - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
+- Tests for the `celeryadapter.py` module
+- New CeleryTestWorkersManager context to help with starting/stopping workers for tests
 - A new command `merlin detailed-status` that displays task-by-task status information about your study
   - This has options to filter by return code, task queues, task statuses, and workers
   - You can set a limit on the number of tasks to display
@@ -55,7 +59,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved `verify_filepath` and `verify_dirpath` from `merlin/main.py` to `merlin/utils.py`
 
 ### Fixed
+- The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
+- The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
+- Add the restart keyword to the specification docs
 - Cyclical imports and config imports that could easily cause ci issues
+
+## [1.11.1]
+### Fixed
+- Typo in `batch.py` that caused lsf launches to fail (`ALL_SGPUS` changed to `ALL_GPUS`)
 
 ## [1.11.0]
 ### Added
