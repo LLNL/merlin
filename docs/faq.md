@@ -438,7 +438,7 @@ run:
     procs: 3
 ```
 
-See [The `LAUNCHER` and `VLAUNCHER` Variables](./user_guide/variables.md#the-launcher-and-vlauncher-variables) and the [Scheduler Specific Run Options](./user_guide/specification.md#scheduler-specific-run-options) sections for more information.
+See [The `LAUNCHER` and `VLAUNCHER` Variables](./user_guide/variables.md#the-launcher-and-vlauncher-variables) and the [Scheduler Specific Properties](./user_guide/specification.md#scheduler-specific-properties) sections for more information.
 
 ### What is `level_max_dirs`?
 
