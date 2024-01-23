@@ -73,9 +73,17 @@ Contributing to Merlin is as easy as following these steps:
 
 6. Activate the environment that was just created with the below command. You'll have to modify `x` and `y` here to match the python version that your virtual environment was created with.
 
-    ```bash
-    source venv_merlin_py_x_y/bin/activate
-    ```
+    === "bash"
+
+        ```bash
+        source venv_merlin_py_x_y/bin/activate
+        ```
+
+    === "tcsh"
+
+        ```bash
+        source venv_merlin_py_x_y/bin/activate.csh
+        ```
 
 7. Create a new branch for your changes. Typically branch names will start with one of the following prefixes: `feature`, `bugfix`, `refactor`, or `docs`. The following command will create a new branch for you and switch to it:
 

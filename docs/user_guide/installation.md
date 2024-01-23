@@ -33,9 +33,17 @@ python3 -m venv venv
 
 Once the virtual environment is created it can be activated like so:
 
-```bash
-source venv/bin/activate
-```
+=== "bash"
+
+    ```bash
+    source venv/bin/activate
+    ```
+
+=== "tcsh"
+
+    ```tcsh
+    source venv/bin/activate.csh
+    ```
 
 This will set the Python and Pip path to the virtual environment at `venv/bin/python` and `venv/bin/pip` respectively.
 

@@ -75,7 +75,7 @@ You can specify workers in [the `merlin` block](./specification.md#the-merlin-bl
     # Assumes you are running this in the same dir as the yaml file.
     YAML_FILE=input.yaml
 
-    # Source the merlin virtualenv
+    # Source the merlin virtualenv (if using tcsh, change this to 'activate.csh' in the statement below)
     source <path to merlin venv>/bin/activate
 
     # Print out the workers command
