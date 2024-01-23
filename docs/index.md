@@ -25,7 +25,7 @@ With the expansion of data-driven computing, the HPC scientist needs to be able 
 
 ## Getting Started
 
-Merlin can be installed via pip in your own virtual environment.
+Merlin can be [installed](./user_guide/installation.md) via pip in your own virtual environment.
 
 1. First, create a virtual environment:
 
@@ -35,9 +35,17 @@ Merlin can be installed via pip in your own virtual environment.
 
 2. Now activate the virtual environment:
 
-    ```bash
-    source merlin_venv/bin/activate
-    ```
+    === "bash"
+
+        ```bash
+        source merlin_venv/bin/activate
+        ```
+    
+    === "tcsh"
+
+        ```tcsh
+        source merlin_venv/bin/activate.csh
+        ```
 
 3. Finally, install Merlin with pip:
 
@@ -51,13 +59,13 @@ Next, let's create a folder to store examples and move into it:
 mkdir merlin_examples ; cd merlin_examples/
 ```
 
-We can now download Merlin's built-in "Hello, World!" example:
+We can now download Merlin's built-in ["Hello, World!" example](./examples/hello.md):
 
 ```bash
 merlin example hello
 ```
 
-Before we run this example, let's set up a containerized server that Merlin can connect to.
+Before we run this example, let's set up a [containerized server](./user_guide/configuration/merlin_server.md) that Merlin can connect to.
 
 1. First, initialize the server files:
 
@@ -77,13 +85,36 @@ Before we run this example, let's set up a containerized server that Merlin can 
     cp merlin_server/app.yaml .
     ```
 
+Check that your server connection is working properly:
+
+```bash
+merlin info
+```
+
+Your broker and results server should both look like so:
+
+!!! success
+
+    ```bash
+    .
+    .
+    .
+    Checking server connections:
+    ----------------------------
+    broker server connection: OK
+    results server connection: OK
+    .
+    .
+    .
+    ```
+
 Now that we've set up a containerized server, enter the `hello/` example directory:
 
 ```bash
 cd hello/
 ```
 
-In this directory there are files named `hello.yaml` and `hello_samples.yaml`. These are what are known as Merlin specification (spec) files. The `hello.yaml` spec is a very basic example that will also work with [Maestro](https://maestrowf.readthedocs.io/en/latest/). We'll focus on `hello_samples.yaml` here as it has more Merlin specific features:
+In this directory there are files named `hello.yaml` and `hello_samples.yaml`. These are what are known as Merlin [specification (spec) files](./user_guide/specification.md). The `hello.yaml` spec is a very basic example that will also work with [Maestro](https://maestrowf.readthedocs.io/en/latest/). We'll focus on `hello_samples.yaml` here as it has more Merlin specific features:
 
 ```yaml
 description:  # (1)
@@ -133,7 +164,7 @@ merlin:
 5. Here, `cmd` is a single line string written in python. Merlin allows users to modify the `shell` that `cmd` uses to execute a step
 6. Specify step dependencies using steps' `name` values to control execution order
 7. Define custom workers to process your workflow in the most efficient manner
-8. Generate samples to be used throughout your workflow. These can be used similar to parameters; use the `$(SAMPLE_NAME)` syntax (as can be seen in `step_1`)
+8. Generate samples to be used throughout your workflow. These can be used similar to parameters; use the [`$(SAMPLE_NAME)` syntax](./user_guide/variables.md#token-syntax) (as can be seen in `step_1`)
 
 We have two ways to run the `hello_samples.yaml` example:
 

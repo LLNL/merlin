@@ -17,7 +17,7 @@ As discussed in the [Configuration](./configuration/index.md) page, the broker a
         certs: /path/to/celery/config
 
     broker:
-        # can be rabbitmq, redis, rediss, or redis+sock
+        # can be rabbitmq, redis, rediss, redis+sock, amqps, or amqp
         name: rabbitmq
         #username: # defaults to your username unless changed here
         password: ~/.merlin/rabbit-password

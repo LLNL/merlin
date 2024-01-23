@@ -93,82 +93,17 @@ It should look something like this:
 
 ???+ abstract "Initial Contents of the Spec"
 
-    ```yaml title="openfoam_wf.yaml"
-    description:
-        name: openfoam_wf
-        description: |
-          A parameter study that includes initializing, running,
-          post-processing, collecting, learning and visualizing OpenFOAM runs
-          using docker.
-
-    env:
-        variables:
-            OUTPUT_PATH:
-
-            SCRIPTS:
-            N_SAMPLES:
-
-    merlin:
-        samples:
-            generate:
-                cmd: |
-
-            file:
-            column_labels:
-        resources:
-            workers:
-                nonsimworkers:
-                    args: -l INFO --concurrency <INPUT CONCURRENCY HERE>
-                    steps:
-                simworkers:
-                    args: -l INFO --concurrency <INPUT CONCURRENCY HERE> --prefetch-multiplier 1 -Ofair
-                    steps:
-
-    study:
-        - name: setup
-          description: |
-                    Installs necessary python packages and imports the cavity directory
-                    from the docker container
-          run:
-              cmd: |
-
-        - name: sim_runs
-          description: |
-                      Edits the Lidspeed and viscosity then runs OpenFOAM simulation
-                      using the icoFoam solver
-          run:
-              cmd: |
-              depends:
-              task_queue: simqueue
-
-        - name: combine_outputs
-          description: |
-                    Combines the outputs of the previous step
-          run:
-              cmd: |
-              depends:
-
-        - name: learn
-          description: |
-                    Learns the output of the openfoam simulations using input parameters
-                    and outputs error visualization from the experiment
-          run:
-              cmd: |
-              depends:
-    ```
+    <!--codeinclude-->
+    [openfoam_wf.yaml](../../merlin/examples/workflows/openfoam_wf/openfoam_wf.yaml)
+    <!--/codeinclude-->
 
 ### Variables
 
 First we specify some variables to make our life easier. Locate the `env` block in our yaml spec:
 
-```yaml
-env:
-    variables:
-        OUTPUT_PATH:
-
-        SCRIPTS:
-        N_SAMPLES:
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf.yaml) lines:9-14
+<!--/codeinclude-->
 
 The `OUTPUT_PATH` variable is set to tell Merlin where you want your output directory to be written. The default is the current working directory.
 
@@ -178,8 +113,9 @@ We'll fill out the next two variables as we go.
 
 One Merlin best practice is to copy any scripts your workflow may use from your `SPECROOT` directory into the `MERLIN_INFO` directory. This is done to preserve the original scripts in case they are modified during the time Merlin is running. We will do that first. We'll put this in the Merlin sample generation section, since it runs before anything else.
 
-Edit the `merlin` block to look like the following:
+Edit the `samples` section of the `merlin` block to look like the following:
 
+<!-- Not using a codeinclude statment here since we need haven't defined our N_SAMPLES var yet -->
 ```yaml
 merlin:
     samples:
@@ -195,28 +131,15 @@ merlin:
 
 We will be using the scripts directory a lot so we'll set the variable `SCRIPTS` to `$(MERLIN_INFO)/scripts` for convenience. We would also like to have a more central control over the number of samples generated so we'll create an `N_SAMPLES` variable:
 
-```yaml
-env:
-    variables:
-        OUTPUT_PATH: ./openfoam_wf_output
-        SCRIPTS: $(MERLIN_INFO)/scripts
-        N_SAMPLES: 10
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:9-14
+<!--/codeinclude-->
 
-and update the `merlin` block to be:
+and update the `samples` section of the `merlin` block to be:
 
-```yaml
-merlin:
-    samples:
-        generate:
-            cmd: |
-                cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
-
-                # Generates the samples
-                python $(SCRIPTS)/make_samples.py -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples
-        file: $(MERLIN_INFO)/samples.npy
-        column_labels: [LID_SPEED, VISCOSITY]
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:17-26
+<!--/codeinclude-->
 
 Just like in the [Using Samples](./3_hello_world.md#using-samples) step of the hello world module, we generate samples using the `merlin` block. We are only concerned with how the variation of two initial conditions, lidspeed and viscosity, affects outputs of the system. These are the `column_labels`. The `make_samples.py` script is designed to make log uniform random samples. Now, we can move on to the steps of our study block.
 
@@ -228,19 +151,9 @@ We will also need to copy the lid driven cavity deck from the OpenFOAM docker co
 
 Locate the `setup` step in the study block and edit it to look like the following:
 
-```yaml
-study:
-    - name: setup
-        description: |
-                Installs necessary python packages and imports the cavity directory
-                from the docker container
-        run:
-        cmd: |
-            pip install -r $(SPECROOT)/requirements.txt
-
-            # Set up the cavity directory in the MERLIN_INFO directory
-            source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:37-47
+<!--/codeinclude-->
 
 This step does not need to be parallelized so we will assign it to lower concurrency (a setting that controls how many workers can be running at the same time on a single node).
 
@@ -273,31 +186,9 @@ Moving on to the `sim_runs` step, we want to:
 
 This part should look like:
 
-```yaml
-    - name: sim_runs
-      description: |
-                Edits the Lidspeed and viscosity then runs OpenFOAM simulation
-                using the icoFoam solver
-      run:
-        cmd: |
-            cp -r $(MERLIN_INFO)/cavity cavity/
-            cd cavity
-
-            ## Edits default values for viscosity and lidspeed with
-            #  values specified by samples section of the merlin block
-            sed -i '' "18s/.*/nu              [0 2 -1 0 0 0 0] $(VISCOSITY);/" constant/transportProperties
-            sed -i '' "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
-
-            cd ..
-            cp $(SCRIPTS)/run_openfoam .
-
-            # Creating a unique OpenFOAM docker container for each sample and using it to run the simulation
-            CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
-            docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
-            docker wait ${CONTAINER_NAME}
-        depends: [setup]
-        task_queue: simqueue
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:49-71
+<!--/codeinclude-->
 
 This step runs many simulations in parallel so it would run faster if we assign it a worker with a higher concurrency. Navigate back to the `resources` section in the `merlin` block
 
@@ -324,14 +215,9 @@ Navigate to the next step in our `study` block `combine_outputs`. The purpose of
 
 The `combine_outputs.py` script in the `$(SCRIPTS)` directory is provided for convenience and takes two inputs. The first informs it of the base directory of the `sim_runs` directory and the second specifies the subdirectories for each run. The script then goes into each of the directories and combines the velocity and enstrophy for each timestep of each run in a .npz file.
 
-```yaml
-    - name: combine_outputs
-      description: Combines the outputs of the previous step
-      run:
-        cmd: |
-            python $(SCRIPTS)/combine_outputs.py -data $(sim_runs.workspace) -merlin_paths $(MERLIN_PATHS_ALL)
-        depends: [sim_runs_*]
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:73-78
+<!--/codeinclude-->
 
 The `$(MERLIN_PATHS_ALL)` variable is a [Reserved Variable](../user_guide/variables.md#reserved-variables) that denotes a space delimited string of all of the sample paths.
 
@@ -354,14 +240,9 @@ In the `learn` step, we want to:
 
 The provided `learn.py` script does all of the above. It outputs the trained sklearn model and a png of the graphs plotted in the current directory.
 
-```yaml
-    - name: learn
-      description: Learns the output of the openfoam simulations using input parameters
-      run:
-        cmd: |
-           python $(SCRIPTS)/learn.py -workspace $(MERLIN_WORKSPACE)
-        depends: [combine_outputs]
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:80-85
+<!--/codeinclude-->
 
 This step is also dependent on the previous step for the .npz file and will only need one worker therefore we will assign it to `nonsimworkers`:
 
@@ -377,90 +258,9 @@ By the end, your `openfoam_wf.yaml` should look like the template version in the
 
 ???+ abstract "Complete Spec File"
 
-    ```yaml title="openfoam_wf.yaml"
-    description:
-        name: openfoam_wf_template
-        description: |
-        A parameter study that includes initializing, running,
-        post-processing, collecting, learning and visualizing OpenFOAM runs
-        using docker.
-
-    env:
-        variables:
-            OUTPUT_PATH: ./openfoam_wf_output
-
-            SCRIPTS: $(MERLIN_INFO)/scripts
-            N_SAMPLES: 10
-
-    merlin:
-        samples:
-            generate:
-                cmd: |
-                    cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
-
-                    # Generates the samples
-                    python $(SCRIPTS)/make_samples.py -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples
-            file: $(MERLIN_INFO)/samples.npy
-            column_labels: [LID_SPEED, VISCOSITY]
-        resources:
-            workers:
-                nonsimworkers:
-                    args: -l INFO --concurrency 1
-                    steps: [setup, combine_outputs, learn]
-                simworkers:
-                    args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
-                    steps: [sim_runs]
-
-    study:
-        - name: setup
-        description: |
-                    Installs necessary python packages and imports the cavity directory
-                    from the docker container
-        run:
-            cmd: |
-                pip install -r $(SPECROOT)/requirements.txt
-
-                # Set up the cavity directory in the MERLIN_INFO directory
-                source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
-
-        - name: sim_runs
-        description: |
-                    Edits the Lidspeed and viscosity then runs OpenFOAM simulation
-                    using the icoFoam solver
-        run:
-            cmd: |
-                cp -r $(MERLIN_INFO)/cavity cavity/
-                cd cavity
-
-                ## Edits default values for viscosity and lidspeed with
-                #  values specified by samples section of the merlin block
-                sed -i '' "18s/.*/nu              [0 2 -1 0 0 0 0] $(VISCOSITY);/" constant/transportProperties
-                sed -i '' "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
-
-                cd ..
-                cp $(SCRIPTS)/run_openfoam .
-
-                # Creating a unique OpenFOAM docker container for each sample and using it to run the simulation
-                CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
-                docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
-                docker wait ${CONTAINER_NAME}
-            depends: [setup]
-            task_queue: simqueue
-
-        - name: combine_outputs
-        description: Combines the outputs of the previous step
-        run:
-            cmd: |
-                python $(SCRIPTS)/combine_outputs.py -data $(sim_runs.workspace) -merlin_paths $(MERLIN_PATHS_ALL)
-            depends: [sim_runs_*]
-
-        - name: learn
-        description: Learns the output of the openfoam simulations using input parameters
-        run:
-            cmd: |
-                python $(SCRIPTS)/learn.py -workspace $(MERLIN_WORKSPACE)
-            depends: [combine_outputs]
-    ```
+    <!--codeinclude-->
+    [openfoam_wf_template.yaml](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml)
+    <!--/codeinclude-->
 
 ## Run the workflow
 

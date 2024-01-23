@@ -95,6 +95,8 @@ markdown_extensions:
 plugins:
   - glightbox
   - search
+  - codeinclude:
+      title_mode: pymdownx.tabbed
   # - gen-files:
   #     scripts:
   #     - docs/gen_ref_pages.py

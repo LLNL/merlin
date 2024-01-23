@@ -42,47 +42,9 @@ merlin config
 
 This command will create an app.yaml file in the `~/.merlin/` directory that looks like so:
 
-```yaml
-celery:
-    # see Celery configuration options
-    # https://docs.celeryproject.org/en/stable/userguide/configuration.html
-    override:
-        visibility_timeout: 86400
-
-broker:
-    # can be redis, redis+sock, or rabbitmq
-    name: rabbitmq
-    #username: # defaults to your username unless changed here
-    password: ~/.merlin/jackalope-password
-    # server URL
-    server: jackalope.llnl.gov
-
-    ### for rabbitmq, redis+sock connections ###
-    #vhost: # defaults to your username unless changed here
-
-    ### for redis+sock connections ###
-    #socketname: the socket name your redis connection can be found on.
-    #path: The path to the socket.
-
-    ### for redis connections ###
-    #port: The port number redis is listening on (default 6379)
-    #db_num: The data base number to connect to.
-
-results_backend:
-    # must be redis
-    name: redis
-    dbname: mlsi
-    username: mlsi
-    # name of file where redis password is stored.
-    password: redis.pass
-    server: jackalope.llnl.gov
-    # merlin will generate this key if it does not exist yet,
-    # and will use it to encrypt all data over the wire to
-    # your redis server.
-    encryption_key: ~/.merlin/encrypt_data_key
-    port: 6379
-    db_num: 0
-```
+<!--codeinclude-->
+[app.yaml](../../../merlin/data/celery/app.yaml)
+<!--/codeinclude-->
 
 As you can see there are three key sections to Merlin's app.yaml file: `celery`, `broker`, and `results_backend`. The rest of this page will go into more depth on each.
 

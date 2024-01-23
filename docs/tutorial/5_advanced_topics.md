@@ -157,6 +157,7 @@ merlin:
 
 Putting it all together and adding some variables/samples we have an HPC batch enabled study specification. In this demo workflow, `sample_names` generates many single core jobs, with concurrency set to 36 for this particular machine that has 36 cores per node. The `collect` step on the other hand consists of a single job that uses all cores on the node, and is assigned to a queue that has a concurrency of 1.
 
+<!-- Not using a codeinclude statement here since we're only using 1 machine and not a multi-machine setup yet -->
 ???+ abstract "HPC Batch Enabled Study Spec"
 
     ```yaml

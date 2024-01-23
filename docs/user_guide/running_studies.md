@@ -59,7 +59,7 @@ You can specify workers in [the `merlin` block](./specification.md#the-merlin-bl
 
 === "Launch In Parallel"
 
-    A parallel batch allocation launch is configured to run a single worker per node. This worker will then launch a number of worker processes to manage the tasks. The number of worker processes that are launched depends on the `--concurrency` value provided to the workers. By default this will be the number of CPUs on the node. The number of processes can be configured by the users (see the [Configuring Celery Workers](./celery.md#configuring-celery-workers) section for more details).
+    A parallel batch allocation launch is configured to run a single worker per node. This worker will then launch a number of worker processes to manage the tasks. The number of worker processes that are launched depends on the `--concurrency` value provided to the workers and the number of nodes in your allocation that are running workers. In math terms: `num_workers = concurrency * num_nodes`. By default the concurrency value will be the number of CPUs on the node but this can be configured by users (see the [Configuring Celery Workers](./celery.md#configuring-celery-workers) section for more details).
 
     A full [Slurm](../faq.md#what-is-slurm) batch submission script to run the workflow on 3 nodes is shown below.
 

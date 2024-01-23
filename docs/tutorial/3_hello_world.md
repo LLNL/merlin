@@ -52,25 +52,17 @@ Let's build our spec piece by piece. For each spec section listed below, fill in
 
 Just what it sounds like. Name and briefly summarize your workflow.
 
-```yaml
-description:
-    name: hello world workflow
-    description: say hello in 2 languages
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/hello/hello.yaml) lines:1-3
+<!--/codeinclude-->
 
 ### Section: `global.parameters`
 
 Global parameters are constants that you want to vary across simulations. Steps that contain a global parameter or depend on other steps that contain a global parameter are run for each index over parameter values. The label is the pattern for a filename that will be created for each value. For a more in-depth explanation of what parameters are, consult [Maestro's Docs](https://maestrowf.readthedocs.io/en/latest/Maestro/parameter_specification.html).
 
-```yaml
-global.parameters:
-    GREET:
-        values : ["hello","hola"]
-        label  : GREET.%%
-    WORLD:
-        values : ["world","mundo"]
-        label  : WORLD.%%
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/hello/hello.yaml) lines:5-11
+<!--/codeinclude-->
 
 !!! note
 
@@ -82,6 +74,7 @@ So this will give us an English result and a Spanish result. You could add as ma
 
 This is where you define workflow steps. While the convention is to list steps as sequentially as possible, the only factor in determining step order is the dependency directed acyclic graph (DAG) created by the `depends` field.
 
+<!-- Not using a codeinclude statment here since we need to demonstrate the depends field -->
 ```yaml
 study:
 - name: step_1
@@ -138,32 +131,9 @@ Your full hello world spec `my_hello.yaml` should now look like this (an exact m
 
 ???+ abstract "Full Hello Spec"
 
-    ```yaml title="hello.yaml"
-    description:
-        name: hello
-        description: a very simple merlin workflow
-
-    global.parameters:
-        GREET:
-            values : ["hello","hola"]
-            label  : GREET.%%
-        WORLD:
-            values : ["world","mundo"]
-            label  : WORLD.%%
-
-    study:
-        - name: step_1
-        description: say hello
-        run:
-            cmd: echo "$(GREET), $(WORLD)!"
-
-        - name: step_2
-        description: print a success message
-        run:
-            cmd: print("Hurrah, we did it!")
-            depends: [step_1_*]
-            shell: /usr/bin/env python3
-    ```
+    <!--codeinclude-->
+    [hello.yaml](../../merlin/examples/workflows/hello/hello.yaml)
+    <!--/codeinclude-->
 
 The order of the spec sections doesn't matter.
 
@@ -409,12 +379,9 @@ To do this, we'll need samples. Specifically, we'll change `WORLD` from a global
 
 First, we remove the global parameter `WORLD` so it does not conflict with our new sample. Parameters now look like this:
 
-```yaml
-global.parameters:
-    GREET:
-        values : ["hello", "hola"]
-        label  : GREET.%%
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/hello/hello_samples.yaml) lines:9-12
+<!--/codeinclude-->
 
 Next we'll add two new blocks to our spec: the `env` block and the `merlin` block.
 
@@ -424,11 +391,9 @@ To set up custom environment variables and other values that can be used through
 
 For this example, we'll add the following `env` block:
 
-```yaml
-env:
-    variables:
-        N_SAMPLES: 3
-```
+<!--codeinclude-->
+[](../../merlin/examples/workflows/hello/hello_samples.yaml) lines:5-7
+<!--/codeinclude-->
 
 This makes `N_SAMPLES` into a user-defined variable that you can use elsewhere in your spec.
 
@@ -436,14 +401,9 @@ This makes `N_SAMPLES` into a user-defined variable that you can use elsewhere i
 
 In addition to the `env` block, we'll also need to add the `merlin` block to our spec:
 
-```yaml
- merlin:
-    samples:
-        generate:
-            cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
-        file: $(MERLIN_INFO)/samples.csv
-        column_labels: [WORLD]
-```   
+<!--codeinclude-->
+[](../../merlin/examples/workflows/hello/hello_samples.yaml) lines:27-32
+<!--/codeinclude-->  
 
 As you may have guessed, the `merlin` block is an exclusively Merlin feature. This block provides a way to generate samples for your workflow. In this case, a sample is the name of a person.
 
@@ -461,30 +421,9 @@ pip3 install -r requirements.txt
 
 The `make_samples.py` file should be kept at the same location as your spec file and its contents should look like so:
 
-```python title="make_samples.py" linenums="1"
-import argparse
-
-import names
-import numpy as np
-
-
-# argument parsing
-parser = argparse.ArgumentParser(description="Make some samples (names of people).")
-parser.add_argument("--number", type=int, action="store", help="the number of samples you want to make")
-parser.add_argument("--filepath", type=str, help="output file")
-args = parser.parse_args()
-
-# sample making
-all_names = np.loadtxt(names.FILES["first:female"], dtype=str, usecols=0)
-selected_names = np.random.choice(all_names, size=args.number)
-
-result = ""
-name_list = list(selected_names)
-result = "\n".join(name_list)
-
-with open(args.filepath, "w") as f:
-    f.write(result)
-```
+<!--codeinclude-->
+[make_samples.py](../../merlin/examples/workflows/hello/make_samples.py)
+<!--/codeinclude-->
 
 Since our environment variable `N_SAMPLES` is set to 3, the sample-generating command that calls this script in our `merlin` block should churn out 3 different names.
 
@@ -503,40 +442,9 @@ With the modifications to the `global.parameters` block and the additions of the
 
 ???+ abstract "Full Hello Samples Spec"
 
-    ```yaml title="hello_samples.yaml"
-    description:
-        name: hello_samples
-        description: a very simple merlin workflow, with samples
-
-    env:
-        variables:
-            N_SAMPLES: 3
-
-    global.parameters:
-        GREET:
-            values : ["hello","hola"]
-            label  : GREET.%%
-
-    study:
-        - name: step_1
-        description: say hello
-        run:
-            cmd: echo "$(GREET), $(WORLD)!"
-
-        - name: step_2
-        description: print a success message
-        run:
-            cmd: print("Hurrah, we did it!")
-            depends: [step_1_*]
-            shell: /usr/bin/env python3
-
-    merlin:
-        samples:
-            generate:
-                cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
-            file: $(MERLIN_INFO)/samples.csv
-            column_labels: [WORLD]
-    ```
+    <!--codeinclude-->
+    [hello_samples.yaml](../../merlin/examples/workflows/hello/hello_samples.yaml)
+    <!--/codeinclude-->
 
 Run the workflow again!
 
