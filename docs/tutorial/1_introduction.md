@@ -54,17 +54,17 @@ The good news is that distributed cloud compute technology has really pushed the
 
 Traditionally, HPC workflow systems tie workflow steps to HPC resources and coordinate the execution of tasks and management of resources one of two ways:
 
-+-------------------------------------------------------------------------------------+-------------------------------------------------------+
-| External Coordination                                                               + - Separate batch jobs for each task                   |
-| ![External coordination](../assets/tutorial/introduction/external_coordination.png) + - External daemon tracks dependencies and jobs        |
-|                                                                                     + - Progress monitored with periodic polling            |
-|                                                                                     +   (of files or batch system)                          |
-+-------------------------------------------------------------------------------------+-------------------------------------------------------+
-| Internal Coordination                                                               + - Multiple tasks bundled into larger batch jobs       |
-| ![Internal coordination](../assets/tutorial/introduction/internal_coordination.png) + - Internal daemon tracks dependencies and resources   |
-|                                                                                     + - Progress monitored via polling                      |
-|                                                                                     +   (of filesystem or message passing)                  |
-+-------------------------------------------------------------------------------------+-------------------------------------------------------+
++--------------------------------------------------------------------------------------------+-------------------------------------------------------+
+| External Coordination                                                                      + - Separate batch jobs for each task                   |
+| ![External coordination](../assets/images/tutorial/introduction/external_coordination.png) + - External daemon tracks dependencies and jobs        |
+|                                                                                            + - Progress monitored with periodic polling            |
+|                                                                                            +   (of files or batch system)                          |
++--------------------------------------------------------------------------------------------+-------------------------------------------------------+
+| Internal Coordination                                                                      + - Multiple tasks bundled into larger batch jobs       |
+| ![Internal coordination](../assets/images/tutorial/introduction/internal_coordination.png) + - Internal daemon tracks dependencies and resources   |
+|                                                                                            + - Progress monitored via polling                      |
+|                                                                                            +   (of filesystem or message passing)                  |
++--------------------------------------------------------------------------------------------+-------------------------------------------------------+
 
 **External coordination** ties together independent batch jobs each executing workflow sub-tasks with an external monitor. This monitor could be a daemon or human that monitors either the batch or file system via periodic polling and orchestrates task launch dependencies.
 
@@ -76,13 +76,13 @@ Internal coordination can run many more concurrent tasks by bundling smaller job
 
 Instead of tying resources to tasks, Merlin does this:
 
-+-----------------------------------------------------------------------------------+-----------------------------------------------+
-| Centralized Coordination of Producers & Consumers                                 + - Batch jobs and workers decoupled from tasks |
-| ![Central Coordination](../assets/tutorial/introduction/central_coordination.png) + - Centralized queues visible to multiple jobs |
-|                                                                                   + - Progress and dependencies handled via       |
-|                                                                                   +   direct worker connections to central        |
-|                                                                                   +   message server and results database         |
-+-----------------------------------------------------------------------------------+-----------------------------------------------+
++------------------------------------------------------------------------------------------+-----------------------------------------------+
+| Centralized Coordination of Producers & Consumers                                        + - Batch jobs and workers decoupled from tasks |
+| ![Central Coordination](../assets/images/tutorial/introduction/central_coordination.png) + - Centralized queues visible to multiple jobs |
+|                                                                                          + - Progress and dependencies handled via       |
+|                                                                                          +   direct worker connections to central        |
+|                                                                                          +   message server and results database         |
++------------------------------------------------------------------------------------------+-----------------------------------------------+
 
 Merlin decouples workflow tasks from workflow resources.
 
@@ -153,7 +153,7 @@ What does this mean in practice?
 
 How quickly? The figure below shows task queuing rates when pushing [a simple workflow](3_hello_world.md) on the [Quartz Supercomputer](https://hpc.llnl.gov/hardware/platforms/Quartz) to 40 million samples. This measures how quickly simulation ensembles of various sample sizes can get enqueued.
 
-![Task Creation Rate](../assets/tutorial/introduction/task_creation_rate.png)
+![Task Creation Rate](../assets/images/tutorial/introduction/task_creation_rate.png)
 
 As you can see, by exploiting Celery's dynamic task queuing (tasks that create tasks), Merlin can enqueue hundreds of thousands of simulations per second. These jobs can then be consumed in parallel, at a rate that depends on the number of workers you have.
 
@@ -167,7 +167,7 @@ The only downside to being able to enqueue work this quickly is the inability of
 
 Here's an example of how Merlin, Maestro, and Flux can all work together to launch a workflow on multiple machines.
 
-![Merlin Architecture](../assets/merlin_arch.png)
+![Merlin Architecture](../assets/images/merlin_arch.png)
 
 The scientist describes her workflow with a Maestro-like specification. Her workflow consists of two steps:
 
@@ -214,7 +214,7 @@ Merlin extends [Maestro](https://maestrowf.readthedocs.io/en/latest/) with [Cele
 
 The different components interact to populate and drain the message queue broker of workflow tasks.
 
-![Merlin Run Flowchart](../assets/tutorial/introduction/merlin_run.png)
+![Merlin Run Flowchart](../assets/images/tutorial/introduction/merlin_run.png)
 
 When a call is made to `merlin run`, Maestro turns the workflow description (composed of "steps" with "parameters" and "samples") into a task dependency graph. Merlin translates this graph into discrete Celery tasks[^2].
 

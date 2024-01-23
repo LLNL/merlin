@@ -8,7 +8,7 @@ The [Celery](https://docs.celeryq.dev/en/stable/index.html) library provides sev
 
 ## Why is Configuration Necessary?
 
-As explained in the [User Guide Landing Page](./index.md), Merlin uses a central server to store tasks in a queue which workers will manage. To establish this functionality, Merlin uses the [Celery](https://docs.celeryq.dev/en/stable/index.html) library. Because of this, Merlin requires users to configure a broker and results backend.
+As explained in the [User Guide Landing Page](../index.md), Merlin uses a central server to store tasks in a queue which workers will manage. To establish this functionality, Merlin uses the [Celery](https://docs.celeryq.dev/en/stable/index.html) library. Because of this, Merlin requires users to configure a broker and results backend.
 
 ### What is a Broker?
 

@@ -104,14 +104,14 @@ study:
 `$(GREET)` and `$(WORLD)` expand the global parameters separately into their two values. `$(step_1.workspace)` gets the path to the output workspace of `step_1`. The default value for `shell` is `/bin/bash`. In `step_2` we override this to use python instead. Steps must be defined as nodes in a DAG, so no cyclical dependencies are allowed. Our step DAG currently looks like this:
 
 <figure markdown>
-  ![Basic 2-Step DAG](../assets/tutorial/hello_world/dag1.png)
+  ![Basic 2-Step DAG](../assets/images/tutorial/hello_world/dag1.png)
   <figcaption>Basic 2-Step DAG</figcaption>
 </figure>
 
 Since our global parameters have 2 values, this is actually what the DAG looks like:
 
 <figure markdown>
-  ![2-Step DAG with Parameters](../assets/tutorial/hello_world/dag2.png)
+  ![2-Step DAG with Parameters](../assets/images/tutorial/hello_world/dag2.png)
   <figcaption>2-Step DAG with Parameters</figcaption>
 </figure>
 
@@ -130,7 +130,7 @@ depends: [step_1_*]
 Now the DAG looks like this:
 
 <figure markdown>
-  ![2-Step Funnel DAG](../assets/tutorial/hello_world/dag3.png)
+  ![2-Step Funnel DAG](../assets/images/tutorial/hello_world/dag3.png)
   <figcaption>2-Step Funnel DAG</figcaption>
 </figure>
 
@@ -232,7 +232,7 @@ Great! But what happened? We can inspect the output directory to find out.
 Look for a directory named `hello_<TIMESTAMP>`. That's your output directory. Within, there should be a directory for each step of the workflow, plus one called `merlin_info`. The whole file tree looks like this:
 
 <figure markdown>
-  ![File Tree for Hello Example](../assets/tutorial/hello_world/merlin_output.png)
+  ![File Tree for Hello Example](../assets/images/tutorial/hello_world/merlin_output.png)
   <figcaption>File Tree for Hello Example</figcaption>
 </figure>
 
@@ -493,7 +493,7 @@ Since our environment variable `N_SAMPLES` is set to 3, the sample-generating co
 Before we run our study, let's take a look at our DAG now that we've added samples:
 
 <figure markdown>
-  ![DAG With Samples](../assets/tutorial/hello_world/dag4.png)
+  ![DAG With Samples](../assets/images/tutorial/hello_world/dag4.png)
   <figcaption>DAG With Samples</figcaption>
 </figure>
 
@@ -543,7 +543,7 @@ Run the workflow again!
 Once finished, this is what the insides of `step_1` look like:
 
 <figure markdown>
-  ![Successful Step 1 With Samples](../assets/tutorial/hello_world/merlin_output2.png)
+  ![Successful Step 1 With Samples](../assets/images/tutorial/hello_world/merlin_output2.png)
   <figcaption>Successful Step 1 With Samples</figcaption>
 </figure>
 

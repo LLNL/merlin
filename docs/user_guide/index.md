@@ -18,6 +18,6 @@ Merlin does all of this by leveraging some key HPC and cloud computing technolog
 
 The integrated system looks a little something like this:
 
-![Merlin Architecture](../assets/merlin_arch.png)
+![Merlin Architecture](../assets/images/merlin_arch.png)
 
 For more details, check out the rest of the user guide.

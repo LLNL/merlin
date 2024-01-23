@@ -23,12 +23,12 @@
 
 We aim to do a parameter study on the lid-driven cavity problem.
 
-+-------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
-| <figure markdown>                                                                         + <figure markdown>                                                                                      |
-|   ![Fig 1. Lid-driven cavity problem setup](../assets/tutorial/run_simulation/setup.png)  +   ![Fig 2. Example of a flow in steady state](../assets/tutorial/run_simulation/lid-driven-stable.png) |
-|   <figcaption>Fig 1. Lid-driven cavity problem setup</figcaption>                         +   <figcaption>Fig 2. Example of a flow in steady state</figcaption>                                    |
-| </figure>                                                                                 + </figure>                                                                                              |
-+-------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
++--------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------+
+| <figure markdown>                                                                                + <figure markdown>                                                                                             |
+|   ![Fig 1. Lid-driven cavity problem setup](../assets/images/tutorial/run_simulation/setup.png)  +   ![Fig 2. Example of a flow in steady state](../assets/images/tutorial/run_simulation/lid-driven-stable.png) |
+|   <figcaption>Fig 1. Lid-driven cavity problem setup</figcaption>                                +   <figcaption>Fig 2. Example of a flow in steady state</figcaption>                                           |
+| </figure>                                                                                        + </figure>                                                                                                     |
++--------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------+
 
 In this problem, we have a viscous fluid within a square cavity that has three non-slip walls and one moving wall (moving lid). We are interested in learning how varying the viscosity and lid speed affects the average enstrophy and kinetic energy of the fluid after it reaches steady state. We will be using the velocity squared as a proxy for kinetic energy.
 
@@ -68,7 +68,7 @@ merlin example openfoam_wf_no_docker ; cd openfoam_wf_no_docker/
 In the `openfoam_wf` directory you should see the following:
 
 <figure markdown>
-  ![Fig 3. openfoam_wf Directory Structure](../assets/tutorial/run_simulation/openfoam_wf_output.png)
+  ![Fig 3. openfoam_wf Directory Structure](../assets/images/tutorial/run_simulation/openfoam_wf_output.png)
   <figcaption>Fig 3. openfoam_wf Directory Structure</figcaption>
 </figure>
 
@@ -83,7 +83,7 @@ In the `openfoam_wf` directory you should see the following:
 We are going to build a spec file that produces this DAG:
 
 <figure markdown>
-  ![Fig 4. OpenFOAM DAG](../assets/tutorial/run_simulation/openfoam_dag.png)
+  ![Fig 4. OpenFOAM DAG](../assets/images/tutorial/run_simulation/openfoam_dag.png)
   <figcaption>Fig 4. OpenFOAM DAG</figcaption>
 </figure>
 
@@ -521,7 +521,7 @@ merlin run-workers openfoam_wf.yaml
 To see your results, look inside the `learn` output directory. You should see a png that looks like this:
 
 <figure markdown>
-  ![Fig 5. Output](../assets/tutorial/run_simulation/prediction.png)
+  ![Fig 5. Output](../assets/images/tutorial/run_simulation/prediction.png)
   <figcaption>Fig 5. Output</figcaption>
 </figure>
 

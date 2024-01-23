@@ -35,7 +35,7 @@ You'll find three different versions of your specification file in the `merlin_i
 A visual representation of a basic `merlin_info/` subdirectory is shown below.
 
 <figure markdown>
-  ![basic merlin_info subdirectory](../assets/interpreting_output/basic-merlin-info-workspace.png)
+  ![basic merlin_info subdirectory](../assets/images/interpreting_output/basic-merlin-info-workspace.png)
   <figcaption>A Basic "merlin_info/" Subdirectory</figcaption>
 </figure>
 
@@ -348,7 +348,7 @@ In addition to the `.sh` file, three more files will appear for runs that aren't
 A visual representation of a basic step workspace is shown below.
 
 <figure markdown>
-  ![basic step workspace](../assets/interpreting_output/basic-step-workspace.png)
+  ![basic step workspace](../assets/images/interpreting_output/basic-step-workspace.png)
   <figcaption>A Basic Step Workspace Hierarchy</figcaption>
 </figure>
 
@@ -621,7 +621,7 @@ In each parameter set subdirectory there will still be the typical `.sh`, `.out`
     After running this study, your `say_hello` step workspace will look like so:
 
     <figure markdown>
-      ![example workspace with parameter sets](../assets/interpreting_output/workspace-with-params.png)
+      ![example workspace with parameter sets](../assets/images/interpreting_output/workspace-with-params.png)
       <figcaption>An Example Workspace With Parameter Sets</figcaption>
     </figure>
 
@@ -645,7 +645,7 @@ The `merlin_info/` subdirectory is helpful for tracking the generation of sample
 A visual representation of the `merlin_info/` subdirectory with sample generation is shown below.
 
 <figure markdown>
-  ![merlin info subdirectory with samples](../assets/interpreting_output/merlin-info-with-samples.png)
+  ![merlin info subdirectory with samples](../assets/images/interpreting_output/merlin-info-with-samples.png)
   <figcaption>The "merlin_info/" Subdirectory With Sample Generation Files</figcaption>
 </figure>
 
@@ -844,7 +844,7 @@ The sample hierarchy structure will be based on the number of samples used in yo
     A visual represntation of this hierarchy is shown below.
 
     <figure markdown>
-      ![example workspace with samples](../assets/interpreting_output/workspace-with-samples.png)
+      ![example workspace with samples](../assets/images/interpreting_output/workspace-with-samples.png)
       <figcaption>An Example Sample Hierarchy</figcaption>
     </figure>
 
@@ -908,7 +908,7 @@ By default, Merlin allows for a maximum of 25 directories in each level of the s
     If we run this, we'll see two levels to our sample hierarchy. The top level will have two directories `00/` and `01/` and the second level of each will have `00/`-`24/` for a total of 50 leaf directories (one for each sample) in the sample hierarchy tree. A visual representation of this structure is shown below.
 
     <figure markdown>
-      ![two-level sample hierarchy](../assets/interpreting_output/two-level-sample-hierarchy.png)
+      ![two-level sample hierarchy](../assets/images/interpreting_output/two-level-sample-hierarchy.png)
       <figcaption>A Two Level Sample Hierarchy</figcaption>
     </figure>
 
@@ -932,7 +932,7 @@ By default, Merlin allows for a maximum of 25 directories in each level of the s
     Now there will be 5 directories `00/`-`04/` at the top level of the hierarchy and ten subdirectories `00/`-`09/` in each for a total of 50 leaf directories (since we still have 50 samples in our workflow). A visual representation of this is shown below.
 
     <figure markdown>
-      ![modified hierarchy structure](../assets/interpreting_output/modified-hierarchy-structure.png)
+      ![modified hierarchy structure](../assets/images/interpreting_output/modified-hierarchy-structure.png)
       <figcaption>Example of a Modified Hierarchy Structure</figcaption>
     </figure>
 
@@ -943,7 +943,7 @@ One of the most powerful functionalities of Merlin is the ability to combine bot
 The structure of a step workspace with both parameters and samples will have parameter labeled workspaces at the top level with a sample hierarchy nested below. A visual representation of this structure can be seen below.
 
 <figure markdown>
-  ![workspace with parameters and samples](../assets/interpreting_output/workspace-with-params-and-samples.png)
+  ![workspace with parameters and samples](../assets/images/interpreting_output/workspace-with-params-and-samples.png)
   <figcaption>Layout of a Workspace With Parameters and Samples</figcaption>
 </figure>
 

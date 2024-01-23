@@ -3,7 +3,7 @@ hide:
   - navigation
 ---
 
-![Merlin Banner](./assets/merlin_banner.png){ width="75%" }
+![Merlin Banner](./assets/images/merlin_banner.png){ width="75%" }
 
 ----
 
@@ -165,7 +165,7 @@ Running the workflow will first convert your steps into a task execution graph a
 
     The directed acyclic graph (DAG) that's created for the `hello_samples.yaml` example will look like so:
 
-    ![DAG for hello_samples](./assets/tutorial/hello_world/dag4.png)
+    ![DAG for hello_samples](./assets/images/tutorial/hello_world/dag4.png)
 
 === "Workspace Directory"
 
@@ -173,8 +173,8 @@ Running the workflow will first convert your steps into a task execution graph a
 
     !!! success "Contents of `hello_samples_<timestamp>`"
 
-        <!-- ![Contents of hello_samples Workspace](./assets/hello_samples_tree.png) -->
-        ![Contents of hello_samples Workspace](./assets/hello-samples-tree.png)
+        <!-- ![Contents of hello_samples Workspace](./assets/images/hello_samples_tree.png) -->
+        ![Contents of hello_samples Workspace](./assets/images/hello-samples-tree.png)
 
 ## Goals and Motivations
 

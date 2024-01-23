@@ -46,7 +46,7 @@ nav:
 theme:
   name: material
   language: en
-  logo: assets/merlin_icon.png
+  logo: assets/images/merlin_icon.png
   features:
     - header.autohide
     - navigation.tabs
@@ -114,6 +114,6 @@ extra:
       name: Merlin on GitHub
 
 extra_css:
-  - stylesheets/extra.css
+  - assets/stylesheets/extra.css
 
 copyright: Copyright &copy; 2024 | Lawrence Livermore National Security
