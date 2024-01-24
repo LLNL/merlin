@@ -255,8 +255,7 @@ def query_status(args):
     # If we're loading status based on a spec, load in the spec provided
     if spec_display:
         args.specification = file_or_ws
-        spec_provided, _ = get_merlin_spec_with_override(args)
-        args.spec_provided = spec_provided
+        args.spec_provided = get_spec_with_expansion(args.specification)
 
     # Get either a Status object or DetailedStatus object
     if args.detailed:
@@ -927,14 +926,13 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
                             Default: %(default)s",
     )
     status_cmd.add_argument(
-        "--vars",
+        "-o",
+        "--output-path",
         action="store",
-        dest="variables",
         type=str,
-        nargs="+",
         default=None,
-        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+        help="Specify a location to look for output workspaces. Only used when a spec file is passed as the argument "
+        "to 'status'; this will NOT be used if an output workspace is passed as the argument.",
     )
 
     # merlin detailed-status
@@ -957,14 +955,13 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
                             Default: %(default)s",
     )
     detailed_status.add_argument(
-        "--vars",
+        "-o",
+        "--output-path",
         action="store",
-        dest="variables",
         type=str,
-        nargs="+",
         default=None,
-        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+        help="Specify a location to look for output workspaces. Only used when a spec file is passed as the argument "
+        "to 'status'; this will NOT be used if an output workspace is passed as the argument.",
     )
     status_filter_group = detailed_status.add_argument_group("filter options")
     status_filter_group.add_argument(

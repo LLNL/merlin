@@ -188,16 +188,20 @@ class Status:
         :returns: The workspace of the study we'll check the status for and a MerlinSpec
                 object loaded in from the workspace's merlin_info subdirectory.
         """
-        # Get the output path of the study that was given to us
-        # Case where the output path is left out of the spec file
-        if self.args.spec_provided.output_path == "":
-            output_path = os.path.dirname(filepath)
-        # Case where output path is absolute
-        elif self.args.spec_provided.output_path.startswith("/"):
-            output_path = self.args.spec_provided.output_path
-        # Case where output path is relative to the specroot
+        # If the user provided a new output path to look in, use that
+        if self.args.output_path is not None:
+            output_path = self.args.output_path
+        # Otherwise, use the output path of the study that was given to us
         else:
-            output_path = f"{os.path.dirname(filepath)}/{self.args.spec_provided.output_path}"
+            # Case where the output path is left out of the spec file
+            if self.args.spec_provided.output_path == "":
+                output_path = os.path.dirname(filepath)
+            # Case where output path is absolute
+            elif self.args.spec_provided.output_path.startswith("/"):
+                output_path = self.args.spec_provided.output_path
+            # Case where output path is relative to the specroot
+            else:
+                output_path = f"{os.path.dirname(filepath)}/{self.args.spec_provided.output_path}"
 
         LOG.debug(f"Verifying output path: {output_path}...")
         study_output_dir = verify_dirpath(output_path)

@@ -39,10 +39,9 @@ import time
 from contextlib import suppress
 from typing import Dict, List, Optional
 
-from tabulate import tabulate
-
 from amqp.exceptions import ChannelError
 from celery import Celery
+from tabulate import tabulate
 
 from merlin.config import Config
 from merlin.study.batch import batch_check_parallel, batch_worker_launch

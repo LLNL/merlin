@@ -41,7 +41,7 @@ from unittest.mock import MagicMock, call, patch
 import yaml
 from deepdiff import DeepDiff
 
-from merlin.main import get_merlin_spec_with_override
+from merlin.spec.expansion import get_spec_with_expansion
 from merlin.study.status import DetailedStatus
 from tests.unit.study.status_test_files import shared_tests, status_test_variables
 
@@ -91,7 +91,7 @@ class TestBaseDetailedStatus(unittest.TestCase):
             subparsers="detailed-status",
             level="INFO",
             detailed=True,
-            variables=None,
+            output_path=None,
             task_server="celery",
             dump=None,
             no_prompts=True,  # We'll set this to True here since it's easier to test this way (in most cases)
@@ -148,7 +148,7 @@ class TestSetup(TestBaseDetailedStatus):
 
         # We need to load in the MerlinSpec object and save it to the args we'll give to DetailedStatus
         self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
 
         # Create the new object using a specification rather than a workspace
         detailed_status_obj = DetailedStatus(args=self.args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
@@ -269,7 +269,7 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to DetailedStatus
         self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
@@ -283,7 +283,7 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to DetailedStatus
         self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input

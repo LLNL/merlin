@@ -38,7 +38,7 @@ from datetime import datetime
 import yaml
 from deepdiff import DeepDiff
 
-from merlin.main import get_merlin_spec_with_override
+from merlin.spec.expansion import get_spec_with_expansion
 from merlin.study.status import Status
 from tests.unit.study.status_test_files import shared_tests, status_test_variables
 
@@ -86,7 +86,7 @@ class TestMerlinStatus(unittest.TestCase):
             subparsers="status",
             level="INFO",
             detailed=False,
-            variables=None,
+            output_path=None,
             task_server="celery",
             cb_help=False,
             dump=None,
@@ -101,7 +101,7 @@ class TestMerlinStatus(unittest.TestCase):
         with self.assertRaises(ValueError):
             invalid_spec_path = f"{status_test_variables.PATH_TO_TEST_FILES}/nonexistent.yaml"
             self.args.specification = invalid_spec_path
-            self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+            self.args.spec_provided = get_spec_with_expansion(self.args.specification)
             _ = Status(args=self.args, spec_display=True, file_or_ws=invalid_spec_path)
 
     def test_spec_setup_no_prompts(self):
@@ -113,7 +113,7 @@ class TestMerlinStatus(unittest.TestCase):
         as well as any methods covered in assert_correct_attribute_creation
         """
         self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
         status_obj = Status(args=self.args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
         assert isinstance(status_obj, Status)
 
@@ -126,7 +126,7 @@ class TestMerlinStatus(unittest.TestCase):
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to Status
         self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
@@ -140,7 +140,7 @@ class TestMerlinStatus(unittest.TestCase):
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to Status
         self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
