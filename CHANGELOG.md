@@ -44,10 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Reformatted the entire `merlin status` command
   - Now accepts both spec files and workspace directories as arguments
-    - e.g. "merlin status hello.yaml" and "merlin status hello_20230228-111920/" both work
   - Removed the --steps flag
   - Replaced the --csv flag with the --dump flag
-    - This will make it easier in the future to adopt more file types to dump to
   - New functionality:
     - Shows step_by_step progress bar for tasks
     - Displays a summary of task statuses below the progress bar
