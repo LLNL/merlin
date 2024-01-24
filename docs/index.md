@@ -3,7 +3,7 @@ hide:
   - navigation
 ---
 
-![Merlin Banner](./assets/images/merlin_banner.png){ width="75%" }
+![Merlin Banner](./assets/images/merlin_banner_white.png){ width="75%" id="landing-page-image" }
 
 ----
 
@@ -21,9 +21,19 @@ Workflows, applications and machines are becoming more complex, but subject matt
 
 With the expansion of data-driven computing, the HPC scientist needs to be able to run more simulations through complex multi-component workflows.
 
-**Merlin targets HPC workflows that require many simulations**.
+**Merlin targets HPC workflows that require many simulations**.[^1]
+
+## Goals and Motivations
+
+Merlin was created with the intention of providing flexible and reproducible workflows to users at a scale that could be much larger than [Maestro](https://maestrowf.readthedocs.io/en/latest/). Since Merlin is built as an extension of Maestro, we wanted to maintain [Maestro's Goals and Motivations](https://maestrowf.readthedocs.io/en/latest/#maestros-goals-and-motivations) while at the same time providing users the ability to become their own big-data generator.
+
+In the pursuit of flexible and reproducible worflows, Merlin places a paramount emphasis on workflow provenance. We recognize the importance of understanding how workflows evolve, ensuring that every decision, parameter adjustment, and execution is meticulously documented. Workflow provenance is not just a feature for us; it's a fundamental element that contributes to the reliability and trustworthiness of your studies.
+
+Merlin understands the dynamic nature of your work, especially when dealing with large-scale simulations. Our goal is to provide a platform that seamlessly scales to accommodate the computational demands of extensive simulations, ensuring that your workflows remain efficient and effective, even in the face of substantial computational requirements.
 
 ## Getting Started
+
+### Install Merlin
 
 Merlin can be [installed](./user_guide/installation.md) via pip in your own virtual environment.
 
@@ -53,62 +63,66 @@ Merlin can be [installed](./user_guide/installation.md) via pip in your own virt
     pip install merlin
     ```
 
-Next, let's create a folder to store examples and move into it:
+### Create a Containerized Server
+
+First, let's create a folder to store our server files and our examples. We'll also move into this directory:
 
 ```bash
 mkdir merlin_examples ; cd merlin_examples/
 ```
 
-We can now download Merlin's built-in ["Hello, World!" example](./examples/hello.md):
+Now let's set up a [containerized server](./user_guide/configuration/merlin_server.md) that Merlin can connect to.
 
-```bash
-merlin example hello
-```
-
-Before we run this example, let's set up a [containerized server](./user_guide/configuration/merlin_server.md) that Merlin can connect to.
-
-1. First, initialize the server files:
+1. Initialize the server files:
 
     ```bash
     merlin server init
     ```
 
-2. Next, start the server:
+2. Start the server:
 
     ```bash
     merlin server start
     ```
 
-3. Finally, copy the `app.yaml` configuration file from `merlin_server/` to your current directory:
+3. Copy the `app.yaml` configuration file from `merlin_server/` to your current directory:
 
     ```bash
     cp merlin_server/app.yaml .
     ```
 
-Check that your server connection is working properly:
-
-```bash
-merlin info
-```
-
-Your broker and results server should both look like so:
-
-!!! success
+4. Check that your server connection is working properly:
 
     ```bash
-    .
-    .
-    .
-    Checking server connections:
-    ----------------------------
-    broker server connection: OK
-    results server connection: OK
-    .
-    .
-    .
+    merlin info
     ```
 
-Now that we've set up a containerized server, enter the `hello/` example directory:
+    Your broker and results server should both look like so:
+
+    !!! success
+
+        ```bash
+        .
+        .
+        .
+        Checking server connections:
+        ----------------------------
+        broker server connection: OK
+        results server connection: OK
+        .
+        .
+        .
+        ```
+
+### Run an Example Workflow
+
+Let's download Merlin's built-in ["Hello, World!" example](./examples/hello.md):
+
+```bash
+merlin example hello
+```
+
+Now that we've downloaded the example, enter the `hello/` directory:
 
 ```bash
 cd hello/
@@ -192,31 +206,21 @@ We have two ways to run the `hello_samples.yaml` example:
 
 Running the workflow will first convert your steps into a task execution graph and then create a workspace directory with the results of running your study.
 
-=== "Task Execution Graph"
+The directed acyclic graph (DAG) that's created for the `hello_samples.yaml` example will look like so:
 
-    The directed acyclic graph (DAG) that's created for the `hello_samples.yaml` example will look like so:
+![DAG for hello_samples](./assets/images/tutorial/hello_world/dag4.png)
 
-    ![DAG for hello_samples](./assets/images/tutorial/hello_world/dag4.png)
+If ran successfully, a workspace for your run should've been created with the name `hello_samples_<timestamp>/`. Below shows the expected contents of this workspace:
 
-=== "Workspace Directory"
+!!! success "Contents of `hello_samples_<timestamp>`"
 
-    If ran successfully, a workspace for your run should've been created with the name `hello_samples_<timestamp>/`. Below shows the expected contents of this workspace:
-
-    !!! success "Contents of `hello_samples_<timestamp>`"
-
-        <!-- ![Contents of hello_samples Workspace](./assets/images/hello_samples_tree.png) -->
-        ![Contents of hello_samples Workspace](./assets/images/hello-samples-tree.png)
-
-## Goals and Motivations
-
-Merlin was created with the intention of providing flexible and reproducible workflows to users at a scale that could be much larger than [Maestro](https://maestrowf.readthedocs.io/en/latest/). Since Merlin is built as an extension of Maestro, we wanted to maintain [Maestro's Goals and Motivations](https://maestrowf.readthedocs.io/en/latest/#maestros-goals-and-motivations) while at the same time providing users the ability to become their own big-data generator.
-
-In the pursuit of flexible and reproducible worflows, Merlin places a paramount emphasis on workflow provenance. We recognize the importance of understanding how workflows evolve, ensuring that every decision, parameter adjustment, and execution is meticulously documented. Workflow provenance is not just a feature for us; it's a fundamental element that contributes to the reliability and trustworthiness of your studies.
-
-Merlin understands the dynamic nature of your work, especially when dealing with large-scale simulations. Our goal is to provide a platform that seamlessly scales to accommodate the computational demands of extensive simulations, ensuring that your workflows remain efficient and effective, even in the face of substantial computational requirements.
+    <!-- ![Contents of hello_samples Workspace](./assets/images/hello_samples_tree.png) -->
+    ![Contents of hello_samples Workspace](./assets/images/hello-samples-tree.png)
 
 ## Release
 
 Merlin is released under an MIT license. For more information, please see the [LICENSE](https://github.com/LLNL/merlin/blob/develop/LICENSE).
 
 ``LLNL-CODE-797170``
+
+[^1]: See [*Enabling Machine Learning-Ready HPC Ensembles with Merlin*](https://arxiv.org/abs/1912.02892) for a paper that mentions a study with up to 40 million simulations.
