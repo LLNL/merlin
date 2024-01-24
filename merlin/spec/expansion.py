@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,7 +37,7 @@ from os.path import expanduser, expandvars
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
-from merlin.utils import contains_shell_ref, contains_token
+from merlin.utils import contains_shell_ref, contains_token, verify_filepath
 
 
 MAESTRO_RESERVED = {"SPECROOT", "WORKSPACE", "LAUNCHER"}
@@ -251,5 +251,6 @@ def get_spec_with_expansion(filepath, override_vars=None):
     Return a MerlinSpec with overrides and expansion, without
     creating a MerlinStudy.
     """
+    filepath = verify_filepath(filepath)
     expanded_spec_text = expand_spec_no_study(filepath, override_vars)
     return MerlinSpec.load_spec_from_string(expanded_spec_text)

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.11.0
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -27,36 +27,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-"""This module defines the default values of every block in the merlin spec"""
+"""
+This file contains all of the constants used for the status command.
+Separating this from status.py and status_renderers.py helps with circular
+import issues.
+"""
 
-DESCRIPTION = {"description": {}}
+VALID_STATUS_FILTERS = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "CANCELLED", "DRY_RUN", "UNKNOWN")
+VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY", "DRY_SUCCESS", "UNRECOGNIZED")
+VALID_EXIT_FILTERS = ("E", "EXIT")
+ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS + ("MAX_TASKS",)
 
-BATCH = {"batch": {"type": "local", "dry_run": False, "shell": "/bin/bash"}}
-
-ENV = {"env": {"variables": {}, "sources": [], "labels": {}, "dependencies": {}}}
-
-STUDY_STEP_RUN = {"task_queue": "merlin", "shell": "/bin/bash", "max_retries": 30}
-
-PARAMETER = {"global.parameters": {}}
-
-MERLIN = {
-    "merlin": {
-        "resources": {"task_server": "celery", "overlap": False, "workers": None},
-        "samples": None,
-    }
-}
-
-WORKER = {"steps": ["all"], "nodes": None, "batch": None}
-
-SAMPLES = {
-    "generate": {"cmd": "echo 'Insert sample-generating command here'"},
-    "level_max_dirs": 25,
-}
-
-# Values of the form (step key to search for, default value if no step key found)
-VLAUNCHER_VARS = {
-    "MERLIN_NODES": ("nodes", 1),
-    "MERLIN_PROCS": ("procs", 1),
-    "MERLIN_CORES": ("cores per task", 1),
-    "MERLIN_GPUS": ("gpus", 0),
-}
+CELERY_KEYS = set(["task_queue", "worker_name"])
+RUN_TIME_STAT_KEYS = set(["avg_run_time", "run_time_std_dev"])
+NON_WORKSPACE_KEYS = CELERY_KEYS.union(RUN_TIME_STAT_KEYS)
+NON_WORKSPACE_KEYS.add("parameters")

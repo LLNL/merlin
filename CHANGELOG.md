@@ -6,17 +6,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Pytest fixtures in the `conftest.py` file of the integration test suite
+  - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
+- Tests for the `celeryadapter.py` module
+- New CeleryTestWorkersManager context to help with starting/stopping workers for tests
+- A new command `merlin detailed-status` that displays task-by-task status information about your study
+  - This has options to filter by return code, task queues, task statuses, and workers
+  - You can set a limit on the number of tasks to display
+  - There are 3 options to modify the output display
 - New file `merlin/study/status.py` dedicated to work relating to the status command
   - Contains the Status and DetailedStatus classes
+- New file `merlin/study/status_renderers.py` dedicated to formatting the output for the detailed-status command
 - New file `merlin/common/dumper.py` containing a Dumper object to help dump output to outfiles
 - Study name and parameter info now stored in the DAG and MerlinStep objects
 - Added functions to `merlin/display.py` that help display status information:
+  - `display_task_by_task_status` handles the display for the `merlin detailed-status` command
   - `display_status_summary` handles the display for the `merlin status` command
   - `display_progress_bar` generates and displays a progress bar
 - Added new methods to the MerlinSpec class:
+  - get_worker_step_map()
+  - get_queue_step_relationship()
   - get_tasks_per_step()
+  - get_step_param_map()
 - Added methods to the MerlinStepRecord class to mark status changes for tasks as they run (follows Maestro's StepRecord format mostly)
 - Added methods to the Step class:
+  - establish_params()
   - name_no_params()
 - Added a property paramater_labels to the MerlinStudy class
 - Added two new utility functions:
@@ -24,16 +38,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - ws_time_to_dt() that converts a workspace timestring (YYYYMMDD-HHMMSS) to a datetime object
 - A new celery task `condense_status_files` to be called when sets of samples finish
 - Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
-- Tests for the Status class
+- Tests for the Status and DetailedStatus classes
   - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
 
 ### Changed
 - Reformatted the entire `merlin status` command
   - Now accepts both spec files and workspace directories as arguments
-    - e.g. "merlin status hello.yaml" and "merlin status hello_20230228-111920/" both work
   - Removed the --steps flag
   - Replaced the --csv flag with the --dump flag
-    - This will make it easier in the future to adopt more file types to dump to
   - New functionality:
     - Shows step_by_step progress bar for tasks
     - Displays a summary of task statuses below the progress bar
@@ -45,7 +57,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved `verify_filepath` and `verify_dirpath` from `merlin/main.py` to `merlin/utils.py`
 
 ### Fixed
+- The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
+- The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
+- Add the restart keyword to the specification docs
 - Cyclical imports and config imports that could easily cause ci issues
+
+## [1.11.1]
+### Fixed
+- Typo in `batch.py` that caused lsf launches to fail (`ALL_SGPUS` changed to `ALL_GPUS`)
 
 ## [1.11.0]
 ### Added

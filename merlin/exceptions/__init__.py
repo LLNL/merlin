@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -42,7 +42,8 @@ __all__ = (
     "HardFailException",
     "InvalidChainException",
     "RestartException",
-    "DeepMergeException,",
+    "DeepMergeException",
+    "NoWorkersException",
 )
 
 
@@ -99,6 +100,16 @@ class DeepMergeException(Exception):
     """
     Exception to signal that there's a conflict when trying
     to merge two dicts together
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class NoWorkersException(Exception):
+    """
+    Exception to signal that no workers were started
+    to process a non-empty queue(s).
     """
 
     def __init__(self, message):

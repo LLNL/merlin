@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -40,7 +40,7 @@ import shlex
 from copy import deepcopy
 from datetime import timedelta
 from io import StringIO
-from typing import Dict
+from typing import Dict, List
 
 import yaml
 from maestrowf.specification import YAMLSpecification
@@ -568,10 +568,12 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             i += 1
         return string
 
-    def get_step_worker_map(self):
+    def get_step_worker_map(self) -> Dict[str, List[str]]:
         """
         Creates a dictionary with step names as keys and a list of workers
         associated with each step as values. The inverse of get_worker_step_map().
+
+        :returns: A dict mapping step names to workers
         """
         steps = self.get_study_step_names()
         step_worker_map = {step_name: [] for step_name in steps}
@@ -586,26 +588,81 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                     step_worker_map[step].append(worker_name)
         return step_worker_map
 
-    def get_task_queues(self):
-        """Returns a dictionary of steps and their corresponding task queues."""
+    def get_worker_step_map(self) -> Dict[str, List[str]]:
+        """
+        Creates a dictionary with worker names as keys and a list of steps
+        associated with each worker as values. The inverse of get_step_worker_map().
+
+        :returns: A dict mapping workers to the steps they watch
+        """
+        worker_step_map = {}
+        steps = self.get_study_step_names()
+        for worker_name, worker_val in self.merlin["resources"]["workers"].items():
+            # Case 1: worker doesn't have specific steps
+            if "all" in worker_val["steps"]:
+                worker_step_map[worker_name] = steps
+            # Case 2: worker has specific steps
+            else:
+                worker_step_map[worker_name] = []
+                for step in worker_val["steps"]:
+                    worker_step_map[worker_name].append(step)
+        return worker_step_map
+
+    def get_task_queues(self, omit_tag=False):
+        """
+        Creates a dictionary of steps and their corresponding task queues.
+        This is the inverse of get_queue_step_relationship()
+
+        :param `omit_tag`: If True, omit the celery queue tag.
+        :returns: A dict of steps and their corresponding task queues
+        """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
         steps = self.get_study_steps()
         queues = {}
         for step in steps:
-            if "task_queue" in step.run and CONFIG.celery.omit_queue_tag:
+            if "task_queue" in step.run and (omit_tag or CONFIG.celery.omit_queue_tag):
                 queues[step.name] = step.run["task_queue"]
             elif "task_queue" in step.run:
                 queues[step.name] = CONFIG.celery.queue_tag + step.run["task_queue"]
         return queues
 
-    def get_queue_list(self, steps):
+    def get_queue_step_relationship(self) -> Dict[str, List[str]]:
         """
-        Return a sorted list of queues corresponding to spec steps
+        Builds a dictionary of task queues and their associated steps.
+        This returns the inverse of get_task_queues().
 
-        param steps: a list of step names or 'all'
+        :returns: A dict of task queues and their associated steps
         """
-        queues = self.get_task_queues()
+        from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+
+        steps = self.get_study_steps()
+        relationship_tracker = {}
+
+        for step in steps:
+            if "task_queue" in step.run:
+                queue_name = (
+                    step.run["task_queue"]
+                    if CONFIG.celery.omit_queue_tag
+                    else f"{CONFIG.celery.queue_tag}{step.run['task_queue']}"
+                )
+
+                if queue_name in relationship_tracker:
+                    relationship_tracker[queue_name].append(step.name)
+                else:
+                    relationship_tracker[queue_name] = [step.name]
+
+        return relationship_tracker
+
+    def get_queue_list(self, steps, omit_tag=False) -> set:
+        """
+        Return a sorted set of queues corresponding to spec steps
+
+        :param `steps`: a list of step names or ['all']
+        :param `omit_tag`: If True, omit the celery queue tag.
+        :returns: A sorted set of queues corresponding to spec steps
+        """
+        queues = self.get_task_queues(omit_tag=omit_tag)
         if steps[0] == "all":
             task_queues = queues.values()
         else:
@@ -671,3 +728,82 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 tasks_per_step[step.name] *= num_samples
 
         return tasks_per_step
+
+    def _create_param_maps(self, param_gen: "ParameterGenerator", expanded_labels: Dict, label_param_map: Dict):  # noqa: F821
+        """
+        Given a parameters block like so:
+        global.parameters:
+            TOKEN:
+                values: [param_val_1, param_val_2]
+                label: label.%%
+        Expanded labels will map tokens to their expanded labels (e.g. {'TOKEN': ['label.param_val_1', 'label.param_val_2']})
+        Label param map will map labels to parameter values
+        (e.g. {'label.param_val_1': {'TOKEN': 'param_val_1'}, 'label.param_val_2': {'TOKEN': 'param_val_2'}})
+
+        :param `param_gen`: A ParameterGenerator object from Maestro
+        :param `expanded_labels`: A dict to store the map from tokens to expanded labels
+        :param `label_param_map`: A dict to store the map from labels to parameter values
+        """
+        for token, orig_label in param_gen.labels.items():
+            for param in param_gen.parameters[token]:
+                expanded_label = orig_label.replace(param_gen.label_token, str(param))
+                if token in expanded_labels:
+                    expanded_labels[token].append(expanded_label)
+                else:
+                    expanded_labels[token] = [expanded_label]
+                label_param_map[expanded_label] = {token: param}
+
+    def get_step_param_map(self) -> Dict:  # pylint: disable=R0914
+        """
+        Create a mapping of parameters used for each step. Each step will have a cmd
+        to search for parameters in and could also have a restart cmd to check, too.
+        This creates a mapping of the form:
+        step_name_with_parameters: {
+            "cmd": {
+                TOKEN_1: param_1_value_1,
+                TOKEN_2: param_2_value_1,
+            },
+            "restart_cmd": {
+                TOKEN_1: param_1_value_1,
+                TOKEN_3: param_3_value_1,
+            }
+        }
+
+        :returns: A dict mapping between steps and params of the form shown above
+        """
+        # Get the steps and the parameters in the study
+        study_steps = self.get_study_steps()
+        param_gen = self.get_parameters()
+
+        # Create maps between tokens and expanded labels, and between labels and parameter values
+        expanded_labels = {}
+        label_param_map = {}
+        self._create_param_maps(param_gen, expanded_labels, label_param_map)
+
+        step_param_map = {}
+        for step in study_steps:
+            # Get the cmd and restart cmd for the step
+            cmd = step.__dict__["run"]["cmd"]
+            restart_cmd = step.__dict__["run"]["restart"]
+
+            # Get the parameters used in this step and the labels used with those parameters
+            all_params_in_step = param_gen.get_used_parameters(step)
+            labels_used = [expanded_labels[param] for param in sorted(all_params_in_step)]
+
+            # Zip all labels used for the step together (since this is how steps are named in Maestro)
+            for labels in zip(*labels_used):
+                # Initialize the entry in the step param map
+                param_str = ".".join(labels)
+                step_name_with_params = f"{step.name}_{param_str}"
+                step_param_map[step_name_with_params] = {"cmd": {}, "restart_cmd": {}}
+
+                # Populate the entry in the step param map based on which token is found in which command (cmd or restart)
+                for label in labels:
+                    for token, param_value in label_param_map[label].items():
+                        full_token = f"{param_gen.token}({token})"
+                        if full_token in cmd:
+                            step_param_map[step_name_with_params]["cmd"][token] = param_value
+                        if full_token in restart_cmd:
+                            step_param_map[step_name_with_params]["restart_cmd"][token] = param_value
+
+        return step_param_map

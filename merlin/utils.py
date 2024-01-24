@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -669,7 +669,7 @@ def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") 
     return repr_timedelta(tdelta, method=format_method)
 
 
-def pretty_format_HMS(timestring: str) -> str:
+def pretty_format_hms(timestring: str) -> str:
     """
     Given an HMS timestring, format it so it removes blank entries and adds
     labels.

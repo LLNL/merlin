@@ -1,5 +1,9 @@
 {
     "fail_step": {
+        "parameters": {
+            "cmd": null,
+            "restart": null
+        },
         "task_queue": "fail_queue",
         "worker_name": "other_worker",
         "fail_step": {

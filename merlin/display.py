@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -45,6 +45,7 @@ from kombu import Connection
 from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
+from merlin.study.status_renderers import status_renderer_factory
 
 
 LOG = logging.getLogger("merlin")
@@ -234,6 +235,70 @@ def print_info(args):  # pylint: disable=W0613
     print("")
 
 
+def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = False):  # noqa: F821
+    """
+    Displays a low level overview of the status of a study. This is a task-by-task
+    status display where each task will show:
+    step name, worker name, task queue, cmd & restart parameters,
+    step workspace, step status, return code, elapsed time, run time, and num restarts.
+    If too many tasks are found and the pager is disabled, prompts will appear for the user to decide
+    what to do that way we don't overload the terminal (unless the no-prompts flag is provided).
+
+    :param `status_obj`: A DetailedStatus object
+    :param `test_mode`: If true, run this in testing mode and don't print any output. This will also
+                        decrease the limit on the number of tasks allowed before a prompt is displayed.
+    """
+    args = status_obj.args
+    try:
+        status_renderer = status_renderer_factory.get_renderer(args.layout, args.disable_theme, args.disable_pager)
+    except ValueError:
+        LOG.error(f"Layout '{args.layout}' not implemented.")
+        raise
+
+    cancel_display = False
+
+    # If the pager is disabled then we need to be careful not to overload the terminal with a bazillion tasks
+    if args.disable_pager and not args.no_prompts:
+        # Setting the limit by default to be 250 tasks before asking for additional filters
+        no_prompt_limit = 250 if not test_mode else 15
+        while status_obj.num_requested_statuses > no_prompt_limit:
+            # See if the user wants to apply additional filters
+            apply_additional_filters = input(
+                f"About to display {status_obj.num_requested_statuses} tasks without a pager. "
+                "Would you like to apply additional filters? (y/n/c) "
+            ).lower()
+            while apply_additional_filters not in ("y", "n", "c"):
+                apply_additional_filters = input(
+                    "Invalid input. You must enter either 'y' for yes, 'n' for no, or 'c' for cancel: "
+                ).lower()
+
+            # Apply filters if necessary or break the loop
+            if apply_additional_filters == "y":
+                status_obj.filter_via_prompts()
+            elif apply_additional_filters == "n":
+                print(f"Not filtering further. Displaying {status_obj.num_requested_statuses} tasks...")
+                break
+            else:
+                print("Cancelling status display.")
+                cancel_display = True
+                break
+
+    # Display the statuses
+    if not cancel_display and not test_mode:
+        if status_obj.num_requested_statuses > 0:
+            # Table layout requires csv format (since it uses Maestro's renderer)
+            if args.layout == "table":
+                status_data = status_obj.format_status_for_csv()
+            else:
+                status_data = status_obj.requested_statuses
+            status_renderer.layout(status_data=status_data, study_title=status_obj.workspace)
+            status_renderer.render()
+
+        for ustep in status_obj.step_tracker["unstarted_steps"]:
+            print(f"\n{ustep} has not started yet.")
+            print()
+
+
 def _display_summary(state_info: Dict[str, str], cb_help: bool):
     """
     Given a dict of state info for a step, print a summary of the task states.
@@ -306,19 +371,16 @@ def display_status_summary(  # pylint: disable=R0912
             "RUNNING": {"count": 0, "color": ANSI_COLORS["BLUE"]},
             "DRY RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
             "TOTAL TASKS": {"total": status_obj.tasks_per_step[sstep]},
-            "AVG RUN TIME": status_obj.requested_statuses[sstep]["avg_run_time"],
-            "RUN TIME STD DEV": status_obj.requested_statuses[sstep]["run_time_std_dev"],
+            "AVG RUN TIME": status_obj.run_time_info[sstep]["avg_run_time"],
+            "RUN TIME STD DEV": status_obj.run_time_info[sstep]["run_time_std_dev"],
         }
 
         # Initialize a var to track # of completed tasks and grab the statuses for this step
         num_completed_tasks = 0
-        step_statuses = status_obj.requested_statuses[sstep]
 
         # Loop through each entry for the step (if there's no parameters there will just be one entry)
-        for real_step_name, overall_step_info in step_statuses.items():
-            # Non-dict entries are just for run time info at the moment
-            if not isinstance(overall_step_info, dict):
-                continue
+        for full_step_name in status_obj.full_step_name_map[sstep]:
+            overall_step_info = status_obj.requested_statuses[full_step_name]
 
             # If this was a non-local run we should have a task queue and worker name to add to state_info
             if "task_queue" in overall_step_info:

@@ -69,6 +69,10 @@ def assert_correct_attribute_creation(status_obj: Union[Status, DetailedStatus])
     )
     assert requested_statuses_diff == {}
 
+    # Ensuring run time info was calculated correctly
+    run_time_info_diff = DeepDiff(status_obj.run_time_info, status_test_variables.RUN_TIME_INFO, ignore_order=True)
+    assert run_time_info_diff == {}
+
     # Ensuring num_requested_statuses is getting the correct amount of statuses
     assert status_obj.num_requested_statuses == status_test_variables.NUM_ALL_REQUESTED_STATUSES
 
@@ -239,7 +243,7 @@ def run_csv_dump_test(status_obj: Union[Status, DetailedStatus], expected_output
     """
     Test the csv dump functionality. This tests both the write and append
     dump functionalities. The file needs to exist already for an append so it's
-    better to keep these tests together. This covers the format_status_for_display
+    better to keep these tests together. This covers the format_status_for_csv
     and dump methods.
 
     :param `status_obj`: A Status or DetailedStatus object that we're testing the dump functionality for

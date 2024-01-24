@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -55,7 +55,9 @@ from merlin.log_formatter import setup_logging
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
-from merlin.study.status import Status
+from merlin.study.status import DetailedStatus, Status
+from merlin.study.status_constants import VALID_RETURN_CODES, VALID_STATUS_FILTERS
+from merlin.study.status_renderers import status_renderer_factory
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS, verify_dirpath, verify_filepath
 
@@ -191,11 +193,13 @@ def launch_workers(args):
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
-    status = router.launch_workers(spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only)
+    launch_worker_status = router.launch_workers(
+        spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only
+    )
     if args.worker_echo_only:
-        print(status)
+        print(launch_worker_status)
     else:
-        LOG.debug(f"celery command: {status}")
+        LOG.debug(f"celery command: {launch_worker_status}")
 
 
 def purge_tasks(args):
@@ -251,15 +255,13 @@ def query_status(args):
     # If we're loading status based on a spec, load in the spec provided
     if spec_display:
         args.specification = file_or_ws
-        spec_provided, _ = get_merlin_spec_with_override(args)
-        args.spec_provided = spec_provided
+        args.spec_provided = get_spec_with_expansion(args.specification)
 
     # Get either a Status object or DetailedStatus object
-    # if args.detailed:
-    #     status_obj = DetailedStatus(args, spec_display, file_or_ws)
-    # else:
-    #     status_obj = Status(args, spec_display, file_or_ws)
-    status_obj = Status(args, spec_display, file_or_ws)  # The above can be uncommented when we add DetailedStatus
+    if args.detailed:
+        status_obj = DetailedStatus(args, spec_display, file_or_ws)
+    else:
+        status_obj = Status(args, spec_display, file_or_ws)
 
     # Handle output appropriately
     if args.dump:
@@ -361,8 +363,13 @@ def process_monitor(args):
     """
     LOG.info("Monitor: checking queues ...")
     spec, _ = get_merlin_spec_with_override(args)
+
+    # Give the user time to queue up jobs in case they haven't already
+    time.sleep(args.sleep)
+
+    # Check if we still need our allocation
     while router.check_merlin_status(args, spec):
-        LOG.info("Monitor: found tasks in queues")
+        LOG.info("Monitor: found tasks in queues and/or tasks being processed")
         time.sleep(args.sleep)
     LOG.info("Monitor: ... stop condition met")
 
@@ -919,14 +926,105 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
                             Default: %(default)s",
     )
     status_cmd.add_argument(
-        "--vars",
+        "-o",
+        "--output-path",
         action="store",
-        dest="variables",
         type=str,
-        nargs="+",
         default=None,
-        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+        help="Specify a location to look for output workspaces. Only used when a spec file is passed as the argument "
+        "to 'status'; this will NOT be used if an output workspace is passed as the argument.",
+    )
+
+    # merlin detailed-status
+    detailed_status: ArgumentParser = subparsers.add_parser(
+        "detailed-status",
+        help="Display a task-by-task status of a study.",
+    )
+    detailed_status.set_defaults(func=query_status, detailed=True)
+    detailed_status.add_argument(
+        "spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study"
+    )
+    detailed_status.add_argument(
+        "--dump", type=str, help="Dump the status to a file. Provide the filename (must be .csv or .json).", default=None
+    )
+    detailed_status.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type.\
+                            Default: %(default)s",
+    )
+    detailed_status.add_argument(
+        "-o",
+        "--output-path",
+        action="store",
+        type=str,
+        default=None,
+        help="Specify a location to look for output workspaces. Only used when a spec file is passed as the argument "
+        "to 'status'; this will NOT be used if an output workspace is passed as the argument.",
+    )
+    status_filter_group = detailed_status.add_argument_group("filter options")
+    status_filter_group.add_argument(
+        "--max-tasks", action="store", type=int, help="Sets a limit on how many tasks can be displayed"
+    )
+    status_filter_group.add_argument(
+        "--return-code",
+        action="store",
+        nargs="+",
+        type=str,
+        choices=VALID_RETURN_CODES,
+        help="Filter which tasks to display based on their return code",
+    )
+    status_filter_group.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="steps",
+        default=["all"],
+        help="Filter which tasks to display based on the steps they're associated with",
+    )
+    status_filter_group.add_argument(
+        "--task-queues",
+        nargs="+",
+        type=str,
+        help="Filter which tasks to display based on the task queue they're in",
+    )
+    status_filter_group.add_argument(
+        "--task-status",
+        action="store",
+        nargs="+",
+        type=str,
+        choices=VALID_STATUS_FILTERS,
+        help="Filter which tasks to display based on their status",
+    )
+    status_filter_group.add_argument(
+        "--workers",
+        nargs="+",
+        type=str,
+        help="Filter which tasks to display based on which workers are processing them",
+    )
+    status_display_group = detailed_status.add_argument_group("display options")
+    status_display_group.add_argument(
+        "--disable-pager", action="store_true", help="Turn off the pager functionality when viewing the status"
+    )
+    status_display_group.add_argument(
+        "--disable-theme",
+        action="store_true",
+        help="Turn off styling for the status layout (If you want styling but it's not working, try modifying "
+        "the MANPAGER or PAGER environment variables to be 'less -r'; i.e. export MANPAGER='less -r')",
+    )
+    status_display_group.add_argument(
+        "--layout",
+        type=str,
+        choices=status_renderer_factory.get_layouts(),
+        default="default",
+        help="Alternate status layouts [Default: %(default)s]",
+    )
+    status_display_group.add_argument(
+        "--no-prompts",
+        action="store_true",
+        help="Ignore any prompts provided. This will default to the latest study \
+            if you provide a spec file rather than a study workspace.",
     )
 
     # merlin info

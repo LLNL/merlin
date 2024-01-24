@@ -38,7 +38,7 @@ from datetime import datetime
 import yaml
 from deepdiff import DeepDiff
 
-from merlin.main import get_merlin_spec_with_override
+from merlin.spec.expansion import get_spec_with_expansion
 from merlin.study.status import Status
 from tests.unit.study.status_test_files import shared_tests, status_test_variables
 
@@ -86,7 +86,7 @@ class TestMerlinStatus(unittest.TestCase):
             subparsers="status",
             level="INFO",
             detailed=False,
-            variables=None,
+            output_path=None,
             task_server="celery",
             cb_help=False,
             dump=None,
@@ -101,7 +101,7 @@ class TestMerlinStatus(unittest.TestCase):
         with self.assertRaises(ValueError):
             invalid_spec_path = f"{status_test_variables.PATH_TO_TEST_FILES}/nonexistent.yaml"
             self.args.specification = invalid_spec_path
-            self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+            self.args.spec_provided = get_spec_with_expansion(self.args.specification)
             _ = Status(args=self.args, spec_display=True, file_or_ws=invalid_spec_path)
 
     def test_spec_setup_no_prompts(self):
@@ -113,7 +113,7 @@ class TestMerlinStatus(unittest.TestCase):
         as well as any methods covered in assert_correct_attribute_creation
         """
         self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
         status_obj = Status(args=self.args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
         assert isinstance(status_obj, Status)
 
@@ -126,7 +126,7 @@ class TestMerlinStatus(unittest.TestCase):
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to Status
         self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
@@ -140,7 +140,7 @@ class TestMerlinStatus(unittest.TestCase):
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to Status
         self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided, _ = get_merlin_spec_with_override(self.args)
+        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
@@ -230,7 +230,7 @@ class TestMerlinStatus(unittest.TestCase):
         """
         Test the csv dump functionality. This tests both the write and append
         dump functionalities. The file needs to exist already for an append so it's
-        better to keep these tests together. This covers the format_status_for_display
+        better to keep these tests together. This covers the format_status_for_csv
         and dump methods.
         """
         # Create the status object that we'll run tests on
@@ -275,44 +275,42 @@ class TestMerlinStatus(unittest.TestCase):
         deviation for each step. This test covers the get_runtime_avg_std_dev method.
         """
         dummy_step_status = {
-            "dummy_step": {
-                "dummy_step_PARAM.1": {
-                    "task_queue": "dummy_queue",
-                    "worker_name": "dummy_worker",
-                    "dummy_step/PARAM.1/00": {
-                        "status": "FINISHED",
-                        "return_code": "MERLIN_SUCCESS",
-                        "elapsed_time": "0d:02h:00m:00s",
-                        "run_time": "0d:01h:38m:27s",  # 3600 + 2280 + 27 = 5907 seconds
-                        "restarts": 0,
-                    },
-                    "dummy_step/PARAM.1/01": {
-                        "status": "FINISHED",
-                        "return_code": "MERLIN_SUCCESS",
-                        "elapsed_time": "0d:02h:00m:00s",
-                        "run_time": "0d:01h:45m:08s",  # 3600 + 2700 + 8 = 6308 seconds
-                        "restarts": 0,
-                    },
+            "dummy_step_PARAM.1": {
+                "task_queue": "dummy_queue",
+                "worker_name": "dummy_worker",
+                "dummy_step/PARAM.1/00": {
+                    "status": "FINISHED",
+                    "return_code": "MERLIN_SUCCESS",
+                    "elapsed_time": "0d:02h:00m:00s",
+                    "run_time": "0d:01h:38m:27s",  # 3600 + 2280 + 27 = 5907 seconds
+                    "restarts": 0,
                 },
-                "dummy_step_PARAM.2": {
-                    "task_queue": "dummy_queue",
-                    "worker_name": "dummy_worker",
-                    "dummy_step/PARAM.2/00": {
-                        "status": "FINISHED",
-                        "return_code": "MERLIN_SUCCESS",
-                        "elapsed_time": "0d:02h:00m:00s",
-                        "run_time": "0d:01h:52m:33s",  # 3600 + 3120 + 33 = 6753 seconds
-                        "restarts": 0,
-                    },
-                    "dummy_step/PARAM.2/01": {
-                        "status": "FINISHED",
-                        "return_code": "MERLIN_SUCCESS",
-                        "elapsed_time": "0d:02h:00m:00s",
-                        "run_time": "0d:01h:08m:40s",  # 3600 + 480 + 40 = 4120 seconds
-                        "restarts": 0,
-                    },
+                "dummy_step/PARAM.1/01": {
+                    "status": "FINISHED",
+                    "return_code": "MERLIN_SUCCESS",
+                    "elapsed_time": "0d:02h:00m:00s",
+                    "run_time": "0d:01h:45m:08s",  # 3600 + 2700 + 8 = 6308 seconds
+                    "restarts": 0,
                 },
-            }
+            },
+            "dummy_step_PARAM.2": {
+                "task_queue": "dummy_queue",
+                "worker_name": "dummy_worker",
+                "dummy_step/PARAM.2/00": {
+                    "status": "FINISHED",
+                    "return_code": "MERLIN_SUCCESS",
+                    "elapsed_time": "0d:02h:00m:00s",
+                    "run_time": "0d:01h:52m:33s",  # 3600 + 3120 + 33 = 6753 seconds
+                    "restarts": 0,
+                },
+                "dummy_step/PARAM.2/01": {
+                    "status": "FINISHED",
+                    "return_code": "MERLIN_SUCCESS",
+                    "elapsed_time": "0d:02h:00m:00s",
+                    "run_time": "0d:01h:08m:40s",  # 3600 + 480 + 40 = 4120 seconds
+                    "restarts": 0,
+                },
+            },
         }
 
         status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
@@ -323,8 +321,8 @@ class TestMerlinStatus(unittest.TestCase):
         expected_std_dev = "±16m:40s"  # Std dev is 1000 seconds = 16m:40s
 
         # Make sure the values were calculated as expected
-        self.assertEqual(dummy_step_status["dummy_step"]["avg_run_time"], expected_avg)
-        self.assertEqual(dummy_step_status["dummy_step"]["run_time_std_dev"], expected_std_dev)
+        self.assertEqual(status_obj.run_time_info["dummy_step"]["avg_run_time"], expected_avg)
+        self.assertEqual(status_obj.run_time_info["dummy_step"]["run_time_std_dev"], expected_std_dev)
 
 
 if __name__ == "__main__":

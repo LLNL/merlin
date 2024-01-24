@@ -1,5 +1,9 @@
 {
     "cancel_step": {
+        "parameters": {
+            "cmd": null,
+            "restart": null
+        },
         "task_queue": "cancel_queue",
         "worker_name": "other_worker",
         "cancel_step": {

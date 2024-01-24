@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.0.
+# This file is part of Merlin, Version: 1.11.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -550,6 +550,7 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
             column_labels = self.expanded_spec.merlin["samples"]["column_labels"]
         parameter_info = {
             "labels": self.parameter_labels,
+            "step_param_map": self.expanded_spec.get_step_param_map(),
         }
         # To avoid pickling issues with _pass_detect_cycle from maestro, we unpack the dag here
         self.dag = DAG(maestro_dag.adjacency_table, maestro_dag.values, column_labels, study.name, parameter_info)
