@@ -79,9 +79,9 @@ Contributing to Merlin is as easy as following these steps:
         source venv_merlin_py_x_y/bin/activate
         ```
 
-    === "tcsh"
+    === "csh"
 
-        ```bash
+        ```csh
         source venv_merlin_py_x_y/bin/activate.csh
         ```
 

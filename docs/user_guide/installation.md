@@ -39,9 +39,9 @@ Once the virtual environment is created it can be activated like so:
     source venv/bin/activate
     ```
 
-=== "tcsh"
+=== "csh"
 
-    ```tcsh
+    ```csh
     source venv/bin/activate.csh
     ```
 

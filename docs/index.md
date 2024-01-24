@@ -51,9 +51,9 @@ Merlin can be [installed](./user_guide/installation.md) via pip in your own virt
         source merlin_venv/bin/activate
         ```
     
-    === "tcsh"
+    === "csh"
 
-        ```tcsh
+        ```csh
         source merlin_venv/bin/activate.csh
         ```
 
