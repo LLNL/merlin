@@ -120,6 +120,9 @@ see :doc:`./merlin_variables`.
   #        The $(LAUNCHER) macro can be used to substitute a parallel launcher 
   #        based on the batch:type:.
   #        It will use the nodes and procs values for the task.
+  #   restart: The (optional) restart command to run when $(MERLIN_RESTART)
+  #            is the exit code. The command in cmd will be run if the exit code
+  #            is $(MERLIN_RETRY).
   #   task_queue: the queue to assign the step to (optional. default: merlin)
   #   shell: the shell to use for the command (eg /bin/bash /usr/bin/env python)
   #          (optional. default: /bin/bash)
@@ -156,6 +159,8 @@ see :doc:`./merlin_variables`.
         cmd: |
           cd $(runs1.workspace)/$(MERLIN_SAMPLE_PATH)
           <post-process>
+          # exit $(MERLIN_RESTART) # syntax to send a restart error code
+          # This will rerun the cmd command. Users can also use $(MERLIN_RETRY).
         nodes: 1
         procs: 1
         depends: [runs1]
@@ -167,7 +172,14 @@ see :doc:`./merlin_variables`.
         cmd: |
           touch learnrun.out
           $(LAUNCHER) echo "$(VAR1) $(VAR2)" >> learnrun.out
-          exit $(MERLIN_RETRY) # some syntax to send a retry error code
+          exit $(MERLIN_RESTART) # syntax to send a restart error code
+          # exit $(MERLIN_RETRY) # syntax to send a retry error code to 
+          # run the cmd command again instead of the restart command.
+        restart: |
+          # Command to run if the $(MERLIN_RESTART) exit code is used
+          touch learnrunrs.out
+          $(LAUNCHER) echo "$(VAR1) $(VAR2)" >> learnrunrs.out
+          exit $(MERLIN_SUCCESS) # syntax to send a success code
         nodes: 1
         procs: 1
         task_queue: lqueue

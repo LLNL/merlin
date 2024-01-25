@@ -42,6 +42,7 @@ __all__ = (
     "HardFailException",
     "InvalidChainException",
     "RestartException",
+    "NoWorkersException",
 )
 
 
@@ -92,3 +93,13 @@ class RestartException(Exception):
 
     def __init__(self):
         super().__init__()
+
+
+class NoWorkersException(Exception):
+    """
+    Exception to signal that no workers were started
+    to process a non-empty queue(s).
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
