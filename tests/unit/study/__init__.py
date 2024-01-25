@@ -1,7 +1,3 @@
-"""
-Default celery configuration for merlin
-"""
-
 ###############################################################################
 # Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
@@ -10,7 +6,7 @@ Default celery configuration for merlin
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.10.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -31,30 +27,3 @@ Default celery configuration for merlin
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-
-from merlin.log_formatter import FORMATS
-
-
-DICT = {
-    "task_serializer": "pickle",
-    "accept_content": ["pickle"],
-    "result_serializer": "pickle",
-    "task_acks_late": True,
-    "task_reject_on_worker_lost": True,
-    "task_publish_retry_policy": {
-        "interval_start": 10,
-        "interval_step": 10,
-        "interval_max": 60,
-    },
-    "redis_max_connections": 100000,
-    "broker_transport_options": {
-        "visibility_timeout": 60 * 60 * 24,
-        "max_connections": 100,
-    },
-    "broker_pool_limit": 0,
-    "task_default_queue": "merlin",
-    "worker_log_color": True,
-    "worker_log_format": FORMATS["DEFAULT"],
-    "worker_task_log_format": FORMATS["WORKER"],
-    "worker_cancel_long_running_tasks_on_connection_loss": True,
-}

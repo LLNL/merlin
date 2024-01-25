@@ -41,6 +41,7 @@ from typing import Dict, List, Optional
 
 from amqp.exceptions import ChannelError
 from celery import Celery
+from tabulate import tabulate
 
 from merlin.config import Config
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
@@ -219,7 +220,6 @@ def query_celery_workers(spec_worker_names, queues, workers_regex):
     :param `workers_regex`: A list of regexs to filter by
     """
     from merlin.celery import app  # pylint: disable=C0415
-    from merlin.display import tabulate_info  # pylint: disable=C0415
 
     # Ping all workers and grab which ones are running
     workers = get_workers_from_app()
@@ -272,7 +272,7 @@ def query_celery_workers(spec_worker_names, queues, workers_regex):
 
     # Display the output table
     LOG.info("Found these connected workers:")
-    tabulate_info(table, headers=["Workers", "Queues"])
+    print(tabulate(table, headers=["Workers", "Queues"]))
     print()
 
 

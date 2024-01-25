@@ -1,7 +1,3 @@
-"""
-Default celery configuration for merlin
-"""
-
 ###############################################################################
 # Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
@@ -10,7 +6,7 @@ Default celery configuration for merlin
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.11.0
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -31,30 +27,18 @@ Default celery configuration for merlin
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""
+This file contains all of the constants used for the status command.
+Separating this from status.py and status_renderers.py helps with circular
+import issues.
+"""
 
-from merlin.log_formatter import FORMATS
+VALID_STATUS_FILTERS = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "CANCELLED", "DRY_RUN", "UNKNOWN")
+VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "RESTART", "RETRY", "DRY_SUCCESS", "UNRECOGNIZED")
+VALID_EXIT_FILTERS = ("E", "EXIT")
+ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS + ("MAX_TASKS",)
 
-
-DICT = {
-    "task_serializer": "pickle",
-    "accept_content": ["pickle"],
-    "result_serializer": "pickle",
-    "task_acks_late": True,
-    "task_reject_on_worker_lost": True,
-    "task_publish_retry_policy": {
-        "interval_start": 10,
-        "interval_step": 10,
-        "interval_max": 60,
-    },
-    "redis_max_connections": 100000,
-    "broker_transport_options": {
-        "visibility_timeout": 60 * 60 * 24,
-        "max_connections": 100,
-    },
-    "broker_pool_limit": 0,
-    "task_default_queue": "merlin",
-    "worker_log_color": True,
-    "worker_log_format": FORMATS["DEFAULT"],
-    "worker_task_log_format": FORMATS["WORKER"],
-    "worker_cancel_long_running_tasks_on_connection_loss": True,
-}
+CELERY_KEYS = set(["task_queue", "worker_name"])
+RUN_TIME_STAT_KEYS = set(["avg_run_time", "run_time_std_dev"])
+NON_WORKSPACE_KEYS = CELERY_KEYS.union(RUN_TIME_STAT_KEYS)
+NON_WORKSPACE_KEYS.add("parameters")
