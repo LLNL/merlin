@@ -1,0 +1,126 @@
+site_name: Merlin
+
+nav:
+  - Merlin: "index.md"
+  - Tutorial:
+    - Overview: "tutorial/index.md"
+    - 0. Prerequisites: "tutorial/0_prerequisites.md"
+    - 1. Introduction: "tutorial/1_introduction.md"
+    - 2. Installation: "tutorial/2_installation.md"
+    - 3. Hello, World!: "tutorial/3_hello_world.md"
+    - 4. Run a Real Simulation: "tutorial/4_run_simulation.md"
+    - 5. Advanced Topics: "tutorial/5_advanced_topics.md"
+    - 6. Contribute to Merlin: "tutorial/6_contribute.md"
+    - 7. Port Your Own Application: "tutorial/7_port_application.md"
+  - User Guide:
+    - Overview: "user_guide/index.md"
+    - Installation: "user_guide/installation.md"
+    - Configuration: 
+      - Overview: "user_guide/configuration/index.md"
+      - External Server: "user_guide/configuration/external_server.md"
+      - Merlin Server: "user_guide/configuration/merlin_server.md"
+    - Command Line Interface: "user_guide/command_line.md"
+    - Specification: "user_guide/specification.md"
+    - Variables: "user_guide/variables.md"
+    - Running Studies: "user_guide/running_studies.md"
+    - Interpreting Output: "user_guide/interpreting_output.md"
+    - Celery: "user_guide/celery.md"
+    - Docker: "user_guide/docker.md"
+    - Contributing: "user_guide/contributing.md"
+  - Examples:
+    - Overview: "examples/index.md"
+    - Hello World Examples: "examples/hello.md"
+    - Feature Demo: "examples/feature_demo.md"
+    - Iterative Demo: "examples/iterative.md"
+    - Restart Examples: "examples/restart.md"
+    - HPC Examples: "examples/hpc.md"
+    - Flux Examples: "examples/flux.md"
+    - Slurm Examples: "examples/slurm.md"
+    - LSF Examples: "examples/lsf.md"
+  - FAQ: "faq.md"
+  - Reference Guide:
+    - Merlin Reference: "api_reference/index.md"
+    - API Reference: "api_reference/"
+  - Contact Us: "contact.md"
+
+theme:
+  name: material
+  language: en
+  logo: assets/images/merlin_icon.png
+  features:
+    - header.autohide
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.instant
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to light mode
+      primary: black
+      accent: deep orange
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+      primary: black
+      accent: deep orange
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - footnotes
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - markdown_grid_tables
+
+plugins:
+  - glightbox
+  - search
+  - codeinclude:
+      title_mode: pymdownx.tabbed
+  # - gen-files:
+  #     scripts:
+  #     - docs/gen_ref_pages.py
+  # - mkdocstrings:
+  #     handlers:
+  #       python:
+  #         paths: [merlin]
+  #         options:
+  #           docstring_style: sphinx
+  # - literate-nav:
+  #     nav_file: SUMMARY.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/LLNL/merlin
+      name: Merlin on GitHub
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+extra_javascript:
+  - assets/javascripts/swap_lp_image.js
+
+copyright: Copyright &copy; 2024 | Lawrence Livermore National Security
