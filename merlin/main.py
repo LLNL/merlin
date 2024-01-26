@@ -495,7 +495,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     )
     restart.set_defaults(func=process_restart)
     restart.add_argument("restart_dir", type=str, help="Path to an existing Merlin workspace directory")
-    restart.add_argument(
+    restart.add_argument(  # TODO should this just be boolean instead of store_const?
         "--local",
         action="store_const",
         dest="run_mode",

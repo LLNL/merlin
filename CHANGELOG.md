@@ -62,6 +62,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add the restart keyword to the specification docs
 - Cyclical imports and config imports that could easily cause ci issues
 
+### Changed
+- The entire documentation has been ported to MkDocs and re-organized
+  - *Dark Mode*
+  - New "Getting Started" example for a simple setup tutorial
+  - More detail on configuration instructions
+  - There's now a full page on installation instructions
+  - More detail on explaining the spec file
+  - More detail with the CLI page
+  - New "Running Studies" page to explain different ways to run studies, restart them, and accomplish command line substitution
+  - New "Interpreting Output" page to help users understand how the output workspace is generated in more detail
+  - New "Examples" page has been added
+  - Updated "FAQ" page to include more links to helpful locations throughout the documentation
+  - Set up a place to store API docs
+  - New "Contact" page with info on reaching Merlin devs
+
 ## [1.11.1]
 ### Fixed
 - Typo in `batch.py` that caused lsf launches to fail (`ALL_SGPUS` changed to `ALL_GPUS`)
