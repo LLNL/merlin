@@ -288,6 +288,11 @@ def query_queues(args):
         if args.variables:
             raise ValueError("The --vars argument MUST be used with the --specification argument.")
 
+    # Ensure a supported file type is provided with the dump option
+    if args.dump is not None:
+        if not args.dump.endswith(".json") or not args.dump.endswith(".csv"):
+            raise ValueError("Unsupported file type. Dump files must be either '.json' or '.csv'.")
+
     spec = None
     # Load the spec if necessary
     if args.specification:
