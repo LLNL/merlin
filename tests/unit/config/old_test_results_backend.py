@@ -1,4 +1,5 @@
 """Tests for the results_backend module."""
+
 import os
 import shutil
 import tempfile

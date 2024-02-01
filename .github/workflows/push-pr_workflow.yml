@@ -56,9 +56,9 @@ jobs:
 
     - name: Lint with Black
       run: |
-        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 merlin
-        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 tests
-        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py36 *.py
+        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py38 merlin
+        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py38 tests
+        python3 -m black --check --line-length $MAX_LINE_LENGTH --target-version py38 *.py
 
     - name: Lint with PyLint
       run: |
