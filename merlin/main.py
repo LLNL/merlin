@@ -48,6 +48,8 @@ from argparse import (
 from contextlib import suppress
 from typing import Dict, List, Optional, Union
 
+from tabulate import tabulate
+
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
@@ -270,6 +272,50 @@ def query_status(args):
         status_obj.display()
 
     return None
+
+
+def query_queues(args):
+    """
+    CLI command for finding all workers.
+
+    :param args: parsed CLI arguments
+    """
+    print(banner_small)
+
+    # Ensure a spec is provided if steps are provided
+    if not args.specification:
+        if "all" not in args.steps:
+            raise ValueError("The --steps argument MUST be used with the --specification argument.")
+        if args.variables:
+            raise ValueError("The --vars argument MUST be used with the --specification argument.")
+
+    # Ensure a supported file type is provided with the dump option
+    if args.dump is not None:
+        if not args.dump.endswith(".json") or not args.dump.endswith(".csv"):
+            raise ValueError("Unsupported file type. Dump files must be either '.json' or '.csv'.")
+
+    spec = None
+    # Load the spec if necessary
+    if args.specification:
+        spec, _ = get_merlin_spec_with_override(args)
+
+    # Obtain the queue information
+    queue_information = router.query_queues(args.task_server, spec, args.steps, args.specific_queues)
+
+    if queue_information:
+        # Format the queue information so we can pass it to the tabulate library
+        formatted_queue_info = [("Queue Name", "Task Count", "Worker Count")]
+        for queue_name, queue_stats in queue_information.items():
+            formatted_queue_info.append((queue_name, queue_stats["jobs"], queue_stats["consumers"]))
+
+        # Print the queue information
+        print()
+        print(tabulate(formatted_queue_info, headers="firstrow"))
+        print()
+
+        # Dump queue information to an output file if necessary
+        if args.dump:
+            router.dump_queue_info(args.task_server, queue_information, args.dump)
 
 
 def query_workers(args):
@@ -1025,6 +1071,56 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         action="store_true",
         help="Ignore any prompts provided. This will default to the latest study \
             if you provide a spec file rather than a study workspace.",
+    )
+
+    # merlin queue-info
+    queue_info: ArgumentParser = subparsers.add_parser(
+        "queue-info",
+        help="List queue statistics (queue name, number of tasks in the queue, number of connected workers).",
+    )
+    queue_info.set_defaults(func=query_queues)
+    queue_info.add_argument(
+        "--dump",
+        type=str,
+        help="Dump the queue information to a file. Provide the filename (must be .csv or .json)",
+        default=None,
+    )
+    queue_info.add_argument(
+        "--specific-queues", nargs="+", type=str, help="Display queue stats for specific queues you list here"
+    )
+    queue_info.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type. Default: %(default)s",
+    )
+    spec_group = queue_info.add_argument_group("specification options")
+    spec_group.add_argument(
+        "--spec",
+        dest="specification",
+        type=str,
+        help="Path to a Merlin YAML spec file. \
+                            This will only display information for queues defined in this spec file. \
+                            This is the same behavior as the status command prior to Merlin version 1.11.0.",
+    )
+    spec_group.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="steps",
+        default=["all"],
+        help="The specific steps in the YAML file you want to query the queues of. "
+        "This option MUST be used with the --spec option",
+    )
+    spec_group.add_argument(
+        "--vars",
+        action="store",
+        dest="variables",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
+        "This option MUST be used with the --spec option. Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
 
     # merlin info

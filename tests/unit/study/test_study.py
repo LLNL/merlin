@@ -1,6 +1,7 @@
 """
 Tests for the maestroadapter.py module.
 """
+
 import os
 import shutil
 import tempfile

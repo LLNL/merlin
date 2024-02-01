@@ -6,10 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Pytest fixtures in the `conftest.py` file of the integration test suite
-  - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
-- Tests for the `celeryadapter.py` module
-- New CeleryTestWorkersManager context to help with starting/stopping workers for tests
+- A new command `merlin queue-info` that will print the status of your celery queues
+  - By default this will only pull information from active queues
+  - There are options to look for specific queues (`--specific-queues`), queues defined in certain spec files (`--spec`; this is the same functionality as the `merlin status` command prior to this update), and queues attached to certain steps (`--steps`)
+  - Queue info can be dumped to outfiles with `--dump`
 - A new command `merlin detailed-status` that displays task-by-task status information about your study
   - This has options to filter by return code, task queues, task statuses, and workers
   - You can set a limit on the number of tasks to display
@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
 - Tests for the Status and DetailedStatus classes
   - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
+- Pytest fixtures in the `conftest.py` file of the integration test suite
+  - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
+- Tests for the `celeryadapter.py` module
+- New CeleryTestWorkersManager context to help with starting/stopping workers for tests
 
 ### Changed
 - Reformatted the entire `merlin status` command
@@ -55,14 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pulled the needs_merlin_expansion() method out of the Step class and made it a function instead
 - Removed `tabulate_info` function; replaced with tabulate from the tabulate library
 - Moved `verify_filepath` and `verify_dirpath` from `merlin/main.py` to `merlin/utils.py`
-
-### Fixed
-- The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
-- The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
-- Add the restart keyword to the specification docs
-- Cyclical imports and config imports that could easily cause ci issues
-
-### Changed
 - The entire documentation has been ported to MkDocs and re-organized
   - *Dark Mode*
   - New "Getting Started" example for a simple setup tutorial
@@ -76,6 +72,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated "FAQ" page to include more links to helpful locations throughout the documentation
   - Set up a place to store API docs
   - New "Contact" page with info on reaching Merlin devs
+
+### Fixed
+- The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
+- The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
+- Add the restart keyword to the specification docs
+- Cyclical imports and config imports that could easily cause ci issues
 
 ## [1.11.1]
 ### Fixed

@@ -582,7 +582,7 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         calls = [call(initial_prompt), call(secondary_prompt), call(initial_prompt)]
 
         # Ensure the correct calls have been made
-        mock_input.has_calls(calls)
+        mock_input.assert_has_calls(calls)
 
     @patch("builtins.input", side_effect=["a", "0", "", "c"])
     def test_display_ync_prompt_invalid_inputs(self, mock_input: MagicMock):
