@@ -288,9 +288,9 @@ def build_csv_queue_info(query_return: List[Tuple[str, int, int]], date: str) ->
     """
     # Build the list of labels if necessary
     csv_to_dump = {"time": [date]}
-    for name, jobs, consumers in query_return:
-        csv_to_dump[f"{name}:tasks"] = [str(jobs)]
-        csv_to_dump[f"{name}:consumers"] = [str(consumers)]
+    for queue_name, queue_stats in query_return.items():
+        csv_to_dump[f"{queue_name}:tasks"] = [str(queue_stats["jobs"])]
+        csv_to_dump[f"{queue_name}:consumers"] = [str(queue_stats["consumers"])]
 
     return csv_to_dump
 
@@ -307,8 +307,8 @@ def build_json_queue_info(query_return: List[Tuple[str, int, int]], date: str) -
     json_to_dump = {date: {}}
 
     # Add info for each queue (name)
-    for name, jobs, consumers in query_return:
-        json_to_dump[date][name] = {"tasks": jobs, "consumers": consumers}
+    for queue_name, queue_stats in query_return.items():
+        json_to_dump[date][queue_name] = {"tasks": queue_stats["jobs"], "consumers": queue_stats["consumers"]}
 
     return json_to_dump
 

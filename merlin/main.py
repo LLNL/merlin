@@ -291,7 +291,7 @@ def query_queues(args):
 
     # Ensure a supported file type is provided with the dump option
     if args.dump is not None:
-        if not args.dump.endswith(".json") or not args.dump.endswith(".csv"):
+        if not args.dump.endswith(".json") and not args.dump.endswith(".csv"):
             raise ValueError("Unsupported file type. Dump files must be either '.json' or '.csv'.")
 
     spec = None
