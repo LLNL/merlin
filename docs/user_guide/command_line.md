@@ -539,11 +539,122 @@ merlin stop-workers [OPTIONS]
 
 ## Monitoring Commands
 
-The Merlin library comes equipped with commands to help monitor your workflow:
+The Merlin library comes equipped with several commands to help monitor your workflow:
 
+- *[detailed-status](#detailed-status-merlin-detailed-status)*: Display task-by-task status information for a study
 - *[monitor](#monitor-merlin-monitor)*: Keep your allocation alive while tasks are being processed
 - *[query-workers](#query-workers-merlin-query-workers)*: Communicate with Celery to view information on active workers
-- *[status](#status-merlin-status)*: Communicate with Celery to view the status of queues in your workflow(s)
+- *[queue-info](#queue-info-merlin-queue-info)*: Communicate with Celery to view the status of queues in your workflow(s)
+- *[status](#status-merlin-status)*: Display a summary of the status of a study
+
+### Detailed Status (`merlin detailed-status`)
+
+!!! warning
+
+    For the pager opened by this command to work properly the `MANPAGER` or `PAGER` environment variable must be set to `less -r`. This can be set with:
+
+    === "MANPAGER"
+
+        ```bash
+        export MANPAGER="less -r"
+        ```
+    
+    === "PAGER"
+
+        ```bash
+        export PAGER="less -r"
+        ```
+
+Display the task-by-task status of a workflow.
+
+This command will open a pager window with task statuses. Inside this pager window, you can search and scroll through task statuses for every step of your workflow.
+
+For more information, see the [Detailed Status documentation](./monitoring/status_cmds.md#the-detailed-status-command).
+
+**Usage:**
+
+```bash
+merlin detailed-status [OPTIONS] WORKSPACE_OR_SPECIFICATION
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--dump` | filename | The name of a csv or json file to dump the status to | None |
+| `--task_server`  | string | Task server type. Currently only "celery" is implemented. | "celery" |
+| `-o`, `--output-path` | dirname | Specify a location to look for output workspaces. Only used when a spec file is passed as the argument to `status`. | None |
+
+**Filter Options:**
+
+The `detailed-status` command comes equipped with several options to help filter the output of your status query.
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `--max-tasks` | integer | Sets a limit on how many tasks can be displayed. | None |
+| `--return-code` | List[string] | Filter which tasks to display based on their return code. Multiple return codes can be provided using a space-delimited list. Options: `SUCCESS`, `SOFT_FAIL`, `HARD_FAIL`, `STOP_WORKERS`, `RETRY`, `DRY_SUCCESS`, `UNRECOGNIZED`. | None |
+| `--steps` | List[string] | Filter which tasks to display based on the steps that they're associated with. Multiple steps can be provided using a space-delimited list. | `['all']` |
+| `--task-queues` | List[string] | Filter which tasks to display based on a the task queues that they were/are in. Multiple task queues can be provided using a space-delimited list. | None |
+| `--task-status` | List[string] | Filter which tasks to display based on their status. Multiple statuses can be provided using a space-delimited list. Options: `INITIALIZED`, `RUNNING`, `FINISHED`, `FAILED`, `CANCELLED`, `DRY_RUN`, `UNKNOWN`. | None |
+| `--workers` | List[string] | Filter which tasks to display based on which workers are processing them. Multiple workers can be provided using a space-delimited list. | None |
+
+**Display Options:**
+
+There are multiple options to modify the way task statuses are displayed.
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `--disable-pager` | boolean | Turn off the pager functionality when viewing the task-by-task status. **Caution:** This option is *not* recommended for large workflows as you could freeze your terminal with thousands of task statuses. | `False` |
+| `--disable-theme` | boolean | Turn off styling for the status layout. | `False` |
+| `--layout` | string | Alternate task-by-task status display layouts. Options: `table`, `default`. | `default` |
+| `--no-prompts` | boolean | Ignore any prompts provided. This cause the `detailed-status` command to default to the latest study if you provide a spec file as input. | `False` |
+
+**Examples:**
+
+!!! example "Check the Detailed Status Using Workspace as Input"
+
+    ```bash
+    merlin detailed-status study_name_20240129-123452/
+    ```
+
+!!! example "Check the Detailed Status Using a Specification as Input"
+
+    This will look in the `OUTPUT_PATH` [Reserved Variable](./variables.md#reserved-variables) defined within the spec file to try to find existing workspace directories associated with this spec file. If more than one are found, a prompt will be displayed for you to select a workspace directory. 
+
+    ```bash
+    merlin detailed-status my_specification.yaml
+    ```
+
+!!! example "Dump the Status Report to a JSON File"
+
+    ```bash
+    merlin detailed-status study_name_20240129-123452/ --dump status_report.json
+    ```
+
+!!! example "Only Display Failed Tasks"
+
+    ```bash
+    merlin detailed-status study_name_20240129-123452/ --task-status FAILED
+    ```
+
+!!! example "Display the First 8 Successful Tasks"
+
+    ```bash
+    merlin detailed-status study_name_20240129-123452/ --return-code SUCCESS --max-tasks 8
+    ```
+
+!!! example "Disable the Theme"
+
+    ```bash
+    merlin detailed-status study_name_20240129-123452/ --disable-theme
+    ```
+
+!!! example "Use the Table Layout"
+
+    ```bash
+    merlin detailed-status study_name_20240129-123452/ --layout table
+    ```
 
 ### Monitor (`merlin monitor`)
 
@@ -643,14 +754,20 @@ merlin query-workers [OPTIONS]
     merlin query-workers --workers ^step
     ```
 
-### Status (`merlin status`)
+### Queue Info (`merlin queue-info`)
 
-Check the status of the queues in your spec file to see if there are any tasks in them and any active workers watching them.
+!!! note
+
+    Prior to Merlin v1.12.0 the `merlin status` command would produce the same output as `merlin queue-info --spec <spec_file>`
+
+Check the status of queues to see if there are any tasks in them and/or any workers watching them.
+
+If used without the `--spec` option, this will query any active queues. Active queues are queues that either have a worker watching them, tasks in the queue, or both.
 
 **Usage:**
 
 ```bash
-merlin status [OPTIONS] SPECIFICATION
+merlin queue-info [OPTIONS]
 ```
 
 **Options:**
@@ -658,27 +775,125 @@ merlin status [OPTIONS] SPECIFICATION
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--dump` | filename | The name of a csv or json file to dump the queue information to | None |
+| `--specific-queues` | List[string] | A space-delimited list of queues to get information on | None |
+| `--task_server`  | string | Task server type. Currently only "celery" is implemented. | "celery" |
+
+**Specification Options:**
+
+These options all *must* be used with the `--spec` option if used.
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `--spec` | filename | Query for the queues named in each step of the spec file given here | None |
 | `--steps` | List[string] | A space-delimited list of steps in the input spec that you want to query. Should be given after the input spec. | `['all']` |
 | `--vars` | List[string] | A space-delimited list of variables to override in the spec file. This list should be given after the spec file is provided. Ex: `--vars QUEUE_NAME=new_queue_name` | None |
-| `--task_server`  | string | Task server type. Currently only "celery" is implemented. | "celery" |
-| `--csv` | filename | The name of a csv file to dump the queue status report to | None |
 
 **Examples:**
 
-!!! example "Basic Status Check"
+!!! example "Query All Active Queues"
+
+    ```bash
+    merlin queue-info
+    ```
+
+!!! example "Check the Status of Specific Queues"
+
+    ```bash
+    merlin queue-info --specific-queues queue_1 queue_3
+    ```
+
+!!! example "Check the Status of Queues in a Spec File"
+
+    **This is the same as running `merlin status <spec_file>` prior to Merlin v1.12.0**
+
+    ```bash
+    merlin queue-info --spec my_specification.yaml
+    ```
+
+!!! example "Check the Status of Queues for Specific Steps"
+
+    ```bash
+    merlin queue-info --spec my_specification.yaml --steps step_1 step_3
+    ```
+
+!!! example "Dump the Queue Information to a JSON File"
+
+    ```bash
+    merlin queue-info --dump queue_report.json
+    ```
+
+### Status (`merlin status`)
+
+!!! note
+
+    To obtain the same functionality as the `merlin status` command prior to Merlin v1.12.0 use [`merlin queue-info`](#queue-info-merlin-queue-info) with the `--spec` option:
+
+    ```bash
+    merlin queue-info --spec <spec_file>
+    ```
+
+Display a high-level status summary of a workflow.
+
+This will display the progress of each step in your workflow using progress bars and brief summaries. In each summary you can find how many tasks there are in total for a step, how many tasks are in each state, the average run time and standard deviation of run times of the tasks in the step, the task queue, and the worker that is watching the step.
+
+For more information, see the [Status documentation](./monitoring/status_cmds.md#the-status-command).
+
+**Usage:**
+
+```bash
+merlin status [OPTIONS] WORKSPACE_OR_SPECIFICATION
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--cb-help` | boolean | Colorblind help option. This will utilize different symbols for each state of a task. | `False` |
+| `--dump` | filename | The name of a csv or json file to dump the status to | None |
+| `--no-prompts` | boolean | Ignore any prompts provided to the command line. This will default to the latest study if you provide a spec file rather than a study workspace. | `False` |
+| `--task_server`  | string | Task server type. Currently only "celery" is implemented. | "celery" |
+| `-o`, `--output-path` | dirname | Specify a location to look for output workspaces. Only used when a spec file is passed as the argument to `status`. | None |
+
+**Examples:**
+
+!!! example "Check the Status Using Workspace as Input"
+
+    ```bash
+    merlin status study_name_20240129-123452/
+    ```
+
+!!! example "Check the Status Using a Specification as Input"
+
+    This will look in the `OUTPUT_PATH` [Reserved Variable](./variables.md#reserved-variables) defined within the spec file to try to find existing workspace directories associated with this spec file. If more than one are found, a prompt will be displayed for you to select a workspace directory. 
 
     ```bash
     merlin status my_specification.yaml
     ```
 
-!!! example "Check the Status of Queues for Certain Steps"
+!!! example "Check the Status Using a Specification as Input & Ignore Any Prompts"
+
+    If multiple workspace directories associated with the spec file provided are found, the `--no-prompts` option will ignore the prompt and select the most recent study that was ran based on the timestamps. 
 
     ```bash
-    merlin status my_specification.yaml --steps step_1 step_3
+    merlin status my_specification.yaml --no-prompts
     ```
 
-!!! example "Dump the Status to a CSV File"
+!!! example "Dump the Status Report to a CSV File"
 
     ```bash
-    merlin status my_specification.yaml --csv status_report.csv
+    merlin status study_name_20240129-123452/ --dump status_report.csv
+    ```
+
+!!! example "Look For Workspaces at a Certain Location"
+
+    ```bash
+    merlin status my_specification.yaml -o new_output_path/
+    ```
+
+!!! example "Utilize the Colorblind Functionality"
+
+    ```bash
+    merlin status study_name_20240129-123452/ --cb-help
     ```
