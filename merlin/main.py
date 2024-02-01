@@ -280,6 +280,7 @@ def query_queues(args):
 
     :param args: parsed CLI arguments
     """
+    print(banner_small)
 
     # Ensure a spec is provided if steps are provided
     if not args.specification:
