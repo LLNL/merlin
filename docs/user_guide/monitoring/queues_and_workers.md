@@ -280,7 +280,9 @@ merlin queue-info --spec <spec file> --vars <VAR_TO_MODIFY>=<VAL_TO_SET>
 
 ## Query Workers
 
-Merlin provides users with the [`merlin query-workers`](../command_line.md#query-workers-merlin-query-workers) command to help users see which workers are running and what task queues they're watching. This command will output content to a table format with two columns: workers and queues. The workers column will contain one connected worker per row. The queues column will contain a comma-delimited list of queues that the connected worker is watching.
+Merlin provides users with the [`merlin query-workers`](../command_line.md#query-workers-merlin-query-workers) command to help users see which workers are running and what task queues they're watching.
+
+This command will output content to a table format with two columns: workers and queues. The workers column will contain one connected worker per row. The queues column will contain a comma-delimited list of queues that the connected worker is watching.
 
 **Usage:**
 

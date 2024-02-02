@@ -702,6 +702,8 @@ Check which workers are currently connected to the task server.
 
 This will broadcast a command to all connected workers and print the names of any that respond and the queues they're attached to. This is useful for interacting with workers, such as via `merlin stop-workers --workers`.
 
+For more information, see the [Query Workers documentation](./monitoring/queues_and_workers.md#query-workers).
+
 **Usage:**
 
 ```bash
