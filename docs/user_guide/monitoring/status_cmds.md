@@ -173,7 +173,7 @@ If you choose to provide an output study directory as input, Merlin will pull in
 If you choose to provide a spec file as input, Merlin will search the `OUTPUT_PATH` (see [Reserved Variables](../variables.md#reserved-variables) for more info on this variable) for possible studies associated with this spec. If there are multiple output directories associated with your spec file, then you will be prompted to select which study you'd like to view the status of, as is shown in the figure below.
 
 <figure markdown>
-  ![Prompt when multiple studies are found](../../assets/images/status_cmds/multiple-studies.png)
+  ![Prompt when multiple studies are found](../../assets/images/monitoring/status_cmds/multiple-studies.png)
   <figcaption>Prompt When Multiple Studies Are Found</figcaption>
 </figure>
 
@@ -200,7 +200,7 @@ merlin status <spec or output workspace>
 ??? example "Example Status Output"
 
     <figure markdown>
-      ![Output of Status Command](../../assets/images/status_cmds/status.png)
+      ![Output of Status Command](../../assets/images/monitoring/status_cmds/status.png)
       <figcaption>Output of Status Command</figcaption>
     </figure>
 
@@ -215,7 +215,7 @@ merlin status <spec or output workspace> --cb-help
 ??? example "Example Colorblind-Assisted Status Output"
 
     <figure markdown>
-      ![Output of Status Command With Colorblind Assistance Enabled](../../assets/images/status_cmds/cb-help.png)
+      ![Output of Status Command With Colorblind Assistance Enabled](../../assets/images/monitoring/status_cmds/cb-help.png)
       <figcaption>Output of Status Command With Colorblind Assistance Enabled</figcaption>
     </figure>
 
@@ -230,7 +230,7 @@ This command requires you to select a study to view the status of. For more info
     If the output of the detailed-status command looks something like this:
 
     <figure markdown>
-      ![ASCII Error With Pager Functionality](../../assets/images/status_cmds/ascii-error.png)
+      ![ASCII Error With Pager Functionality](../../assets/images/monitoring/status_cmds/ascii-error.png)
       <figcaption>ASCII Error With Pager Functionality</figcaption>
     </figure>
 
@@ -259,7 +259,7 @@ merlin detailed-status <spec or output workspace>
 ??? example "Example Detailed-Status Output Inside The Pager"
 
     <figure markdown>
-      ![The output of detailed-status inside the pager](../../assets/images/status_cmds/inside-pager.png)
+      ![The output of detailed-status inside the pager](../../assets/images/monitoring/status_cmds/inside-pager.png)
       <figcaption>Output of Detailed-Status Inside the Pager</figcaption>
     </figure>
 
@@ -270,7 +270,7 @@ Once you close the pager, the statuses you requested will not appear and you'll 
 ??? example "Example Detailed-Status Output Once Pager Is Closed"
 
     <figure markdown>
-      ![The output of detailed-status outside the pager](../../assets/images/status_cmds/outside-pager.png)
+      ![The output of detailed-status outside the pager](../../assets/images/monitoring/status_cmds/outside-pager.png)
       <figcaption>Output of Detailed-Status When the Pager Is Closed</figcaption>
     </figure>
 
@@ -295,21 +295,21 @@ merlin detailed-status <spec or output directory> --disable-pager
 ??? example "Example Detailed-Status Output With Pager Disabled"
 
     <figure markdown>
-      ![The output of detailed-status with the pager disabled](../../assets/images/status_cmds/disable-pager.png)
+      ![The output of detailed-status with the pager disabled](../../assets/images/monitoring/status_cmds/disable-pager.png)
       <figcaption>Output of Detailed-Status With Pager Disabled</figcaption>
     </figure>
 
 When using this option you may unintentionally output a lot of information to the shell which could cause problems. To help prevent issues from too much information being printed, Merlin will prompt you to further filter your output if there are more than 250 task statuses to display:
 
 <figure markdown>
-  ![Prompt Displayed When Too Many Tasks Are Found With Disable-Pager](../../assets/images/status_cmds/prompt.png)
+  ![Prompt Displayed When Too Many Tasks Are Found With Disable-Pager](../../assets/images/monitoring/status_cmds/prompt.png)
   <figcaption>Prompt Displayed When Too Many Tasks Are Found With Disable-Pager</figcaption>
 </figure>
 
 If you'd like to cancel the filter and the display entirely, press `c`. If you don't wish to filter and just want to display your tasks, press `n` (again, _**be cautious**_ when using this option). If you decide that filtering your tasks would be a better option, press `y` and you'll see the following filter options:
 
 <figure markdown>
-  ![The prompt asking for you to provide filters](../../assets/images/status_cmds/filter-prompt.png)
+  ![The prompt asking for you to provide filters](../../assets/images/monitoring/status_cmds/filter-prompt.png)
   <figcaption>Prompt Asking For You To Provide Filters</figcaption>
 </figure>
 
@@ -329,7 +329,7 @@ It's possible to combine different filter types here. For example, a valid filte
 If you put `MAX_TASKS` anywhere in your filter, you'll receive another prompt asking you for an integer greater than 0 to set as the limit on the number of tasks to display:
 
 <figure markdown>
-  ![The prompt asking you to provide a max-tasks limit](../../assets/images/status_cmds/max-tasks-prompt.png)
+  ![The prompt asking you to provide a max-tasks limit](../../assets/images/monitoring/status_cmds/max-tasks-prompt.png)
   <figcaption>Prompt Asking For You To Provide A Max-Tasks Limit</figcaption>
 </figure>
 
@@ -346,7 +346,7 @@ merlin detailed-status <spec or output workspace> --disable-theme
 !!! example "Example Detailed-Status Output With Theme Disabled"
 
     <figure markdown>
-      ![The output of detailed-status with the theme disabled](../../assets/images/status_cmds/disable-theme.png)
+      ![The output of detailed-status with the theme disabled](../../assets/images/monitoring/status_cmds/disable-theme.png)
       <figcaption>Output of Detailed-Status With Theme Disabled</figcaption>
     </figure>
 
@@ -363,7 +363,7 @@ merlin detailed-status <spec or output workspace> --layout <table or default>
 !!! example "Example Detailed-Status Output With Table Layout"
 
     <figure markdown>
-      ![The output of detailed-status with the table layout](../../assets/images/status_cmds/layout-table.png)
+      ![The output of detailed-status with the table layout](../../assets/images/monitoring/status_cmds/layout-table.png)
       <figcaption>Output of Detailed-Status With Table Layout</figcaption>
     </figure>
 
@@ -411,7 +411,7 @@ merlin detailed-status <spec or output workspace> --max-tasks <integer greater t
     Here, we're setting the maximum number of tasks that can be displayed to 5:
 
     <figure markdown>
-      ![The output of detailed-status with the max tasks filter](../../assets/images/status_cmds/filter-max-tasks.png)
+      ![The output of detailed-status with the max tasks filter](../../assets/images/monitoring/status_cmds/filter-max-tasks.png)
       <figcaption>Output of Detailed-Status With Max-Tasks Set to 5</figcaption>
     </figure>
 
@@ -430,7 +430,7 @@ merlin detailed-status <spec or output directory> --return-code <one or more val
     Here, we're asking to see all tasks that completed with a `SOFT_FAIL` return code:
 
     <figure markdown>
-      ![The output of detailed-status with the return code filter](../../assets/images/status_cmds/filter-return-code.png)
+      ![The output of detailed-status with the return code filter](../../assets/images/monitoring/status_cmds/filter-return-code.png)
       <figcaption>Output of Detailed-Status With Return-Code Set to 'SOFT_FAIL'</figcaption>
     </figure>
 
@@ -449,7 +449,7 @@ merlin detailed-status <spec or output directory> --steps <space-delimited list 
     Here, we're asking to see all task statuses from the `just_samples` and `fail_step` steps:
 
     <figure markdown>
-      ![The output of detailed-status with the steps filter](../../assets/images/status_cmds/filter-steps.png)
+      ![The output of detailed-status with the steps filter](../../assets/images/monitoring/status_cmds/filter-steps.png)
       <figcaption>Output of Detailed-Status With The Steps Filter Set to 'just_samples' and 'fail_step'</figcaption>
     </figure>
 
@@ -468,7 +468,7 @@ merlin detailed-status <spec or output directory> --task-queues <space-delimited
     Here, we're asking to see all task statuses of tasks in the `just_parameters_queue` and `cancel_queue` queues:
 
     <figure markdown>
-      ![The output of detailed-status with the task-queues filter](../../assets/images/status_cmds/filter-task-queues.png)
+      ![The output of detailed-status with the task-queues filter](../../assets/images/monitoring/status_cmds/filter-task-queues.png)
       <figcaption>Output of Detailed-Status With The Task-Queues Filter Set to 'just_parameters_queue' and 'cancel_queue'</figcaption>
     </figure>
 
@@ -487,7 +487,7 @@ merlin detailed-status <spec or output directory> --task-status <space-delimited
     Here, we're asking to see all task statuses that have a `FAILED` or `UNKNOWN` status:
 
     <figure markdown>
-      ![The output of detailed-status with the task-status filter](../../assets/images/status_cmds/filter-task-status.png)
+      ![The output of detailed-status with the task-status filter](../../assets/images/monitoring/status_cmds/filter-task-status.png)
       <figcaption>Output of Detailed-Status With The Task-Status Filter Set to 'FAILED' and 'UNKNOWN'</figcaption>
     </figure>
 
@@ -506,7 +506,7 @@ merlin detailed-status <spec or output directory> --workers <space-delimited lis
     Here, we're asking to see all task statuses for tasks ran by the `sample_worker` worker:
 
     <figure markdown>
-      ![The output of detailed-status with the workers filter](../../assets/images/status_cmds/filter-workers.png)
+      ![The output of detailed-status with the workers filter](../../assets/images/monitoring/status_cmds/filter-workers.png)
       <figcaption>Output of Detailed-Status With The Workers Filter Set to 'sample_worker'</figcaption>
     </figure>
 
@@ -528,13 +528,13 @@ Both status commands in Merlin allow you to dump to an output file. This output 
 
 When dumping to a file that *does not* yet exist, Merlin will create that file for you and populate it with the requested status info.
 
-When dumping to a file that *does* exist, Merlin will append the requested status information to that file. You can differentiate between separate dump calls by looking at the timestamps of the dumps. For CSV files this timestamp exists in the `time_of_status` column (see [Status CSV Dump Format](#status-csv-dump-format) below) and for JSON files this timestamp will be the top level key to the status entry (see [Status JSON Dump Format](#status-json-dump-format) below).
+When dumping to a file that *does* exist, Merlin will append the requested status information to that file. You can differentiate between separate dump calls by looking at the timestamps of the dumps. For CSV files this timestamp exists in the `time_of_status` column (see [Status CSV Dump Format](#csv-dump-format) below) and for JSON files this timestamp will be the top level key to the status entry (see [Status JSON Dump Format](#json-dump-format) below).
 
 If you use the `--dump` option with `merlin detailed-status` and *don't* provide any filters, this will provide the same output in the file you're dumping to as it would if you used `--dump` with `merlin status`.
 
 If you use the `--dump` option with `merlin detailed-status` and you *do* provide filters, only the statuses that match your filters will be written to the dump file.
 
-### Status CSV Dump Format
+### CSV Dump Format
 
 The format of a CSV dump file for statuses is as follows:
 
@@ -545,11 +545,11 @@ time_of_status,step_name,step_workspace,status,return_code,elapsed_time,run_time
 The image below shows an example of dumping the status info of tasks with `FAILED` task statuses to a CSV file, and then displaying that CSV file using the [rich-cli library](https://github.com/Textualize/rich-cli):
 
 <figure markdown>
-  ![Example of dumping to a csv file and outputting its contents](../../assets/images/status_cmds/dump-csv.png)
+  ![Example of dumping to a csv file and outputting its contents](../../assets/images/monitoring/status_cmds/dump-csv.png)
   <figcaption>An Example Showcasing How to do a Filtered CSV Dump and View its Contents</figcaption>
 </figure>
 
-### Status JSON Dump Format
+### JSON Dump Format
 
 The format of a JSON dump file for statuses is almost exactly the same as the [format of the `MERLIN_STATUS.json` files](#how-they-work). The only difference is that each entry begins with a date:
 
@@ -586,7 +586,7 @@ The format of a JSON dump file for statuses is almost exactly the same as the [f
 The image below shows an example of dumping the status info of tasks with `FAILED` task statuses to a JSON file, and then displaying that JSON file using the [rich-cli library](https://github.com/Textualize/rich-cli):
 
 <figure markdown>
-  ![Example of dumping to a json file and outputting its contents](../../assets/images/status_cmds/dump-json.png)
+  ![Example of dumping to a json file and outputting its contents](../../assets/images/monitoring/status_cmds/dump-json.png)
   <figcaption>An Example Showcasing How to do a Filtered JSON Dump and View its Contents</figcaption>
 </figure>
 

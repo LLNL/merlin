@@ -762,7 +762,9 @@ merlin query-workers [OPTIONS]
 
 Check the status of queues to see if there are any tasks in them and/or any workers watching them.
 
-If used without the `--spec` option, this will query any active queues. Active queues are queues that either have a worker watching them, tasks in the queue, or both.
+If used without the `--spec` option, this will query any active queues. Active queues are queues that have a worker watching them.
+
+For more information, see the [Queue Information documentation](./monitoring/queues_and_workers.md#queue-information).
 
 **Usage:**
 
