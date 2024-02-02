@@ -1,4 +1,5 @@
 """Tests for the configfile module."""
+
 import os
 import shutil
 import tempfile
