@@ -547,6 +547,8 @@ The Merlin library comes equipped with several commands to help monitor your wor
 - *[queue-info](#queue-info-merlin-queue-info)*: Communicate with Celery to view the status of queues in your workflow(s)
 - *[status](#status-merlin-status)*: Display a summary of the status of a study
 
+More information on all of these commands can be found below and in the [Monitoring documentation](./monitoring/index.md).
+
 ### Detailed Status (`merlin detailed-status`)
 
 !!! warning
@@ -661,6 +663,8 @@ There are multiple options to modify the way task statuses are displayed.
 Batch submission scripts may not keep the batch allocation alive if there is not a blocking process in the submission script. The `merlin monitor` command addresses this by providing a blocking process that checks for tasks in the queues every (sleep) seconds ("sleep" here can be defined with the `--sleep` option). When the queues are empty, the monitor will query Celery to see if any workers are still processing tasks from the queues. If no workers are processing any tasks from the queues and the queues are empty, the blocking process will exit and allow the allocation to end.
 
 The `monitor` functionality will check for Celery workers for up to 10*(sleep) seconds before monitoring begins. The loop happens when the queue(s) in the spec contain tasks, but no running workers are detected. This is to protect against a failed worker launch.
+
+For more information, see the [Monitoring Studies for Persistent Allocations documentation](./monitoring/monitor_for_allocation.md).
 
 **Usage:**
 
