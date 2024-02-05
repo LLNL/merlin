@@ -335,7 +335,7 @@ def check_merlin_status(args: "Namespace", spec: "MerlinSpec") -> bool:  # noqa
         total_jobs += queue_info["jobs"]
 
     # Get the queues defined in the spec
-    queues_in_spec = spec.get_queue_list(["all"])
+    queues_in_spec = spec.get_queue_list(["all"] if args.steps is None else args.steps)
     LOG.debug(f"Monitor: queues_in_spec: {queues_in_spec}")
 
     # Get the active queues and the workers that are watching them
