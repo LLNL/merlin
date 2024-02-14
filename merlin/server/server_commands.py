@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.12.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -92,6 +92,9 @@ def config_server(args: Namespace) -> None:  # pylint: disable=R0912
         redis_users = RedisUsers(server_config.container.get_user_file_path())
         redis_users.set_password("default", args.password)
         redis_users.write()
+        pass_file = server_config.container.get_pass_file_path()
+        with open(pass_file, "w") as pfile:
+            pfile.write(args.password)
 
     redis_config.set_directory(args.directory)
 
