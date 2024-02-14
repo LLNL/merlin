@@ -31,33 +31,42 @@
 """
 Manages formatting for displaying information to the console.
 """
+import logging
 import pprint
+import shutil
 import subprocess
 import time
 import traceback
+from datetime import datetime
 from multiprocessing import Pipe, Process
+from typing import Dict
 
 from kombu import Connection
 from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
-from merlin.config import broker, results_backend
-from merlin.config.configfile import default_config_info
+from merlin.study.status_renderers import status_renderer_factory
 
 
-# TODO: make these color blind compliant
-# (see https://mikemol.github.io/technique/colorblind/2018/02/11/color-safe-palette.html)
+LOG = logging.getLogger("merlin")
+DEFAULT_LOG_LEVEL = "INFO"
+
+# Colors here are chosen based on the Bang Wong color palette (https://www.nature.com/articles/nmeth.1618)
+# Another useful link for comparing colors:
+# https://davidmathlogic.com/colorblind/#%2356B4E9-%230072B2-%23009E73-%23D55E00-%23F0E442-%23E69F00-%23666666
 ANSI_COLORS = {
     "RESET": "\033[0m",
-    "GREY": "\033[90m",
-    "RED": "\033[91m",
-    "GREEN": "\033[92m",
-    "YELLOW": "\033[93m",
-    "BLUE": "\033[94m",
-    "MAGENTA": "\033[95m",
-    "CYAN": "\033[96m",
-    "WHITE": "\033[97m",
+    "GREY": "\033[38;2;102;102;102m",
+    "LIGHT_BLUE": "\033[38;2;86;180;233m",
+    "BLUE": "\033[38;2;0;114;178m",
+    "GREEN": "\033[38;2;0;158;115m",
+    "YELLOW": "\033[38;2;240;228;66m",
+    "ORANGE": "\033[38;2;230;159;0m",
+    "RED": "\033[38;2;213;94;0m",
 }
+
+# Inverse of ANSI_COLORS (useful for debugging)
+COLOR_TRANSLATOR = {v: k for k, v in ANSI_COLORS.items()}
 
 
 class ConnProcess(Process):
@@ -75,7 +84,7 @@ class ConnProcess(Process):
         try:
             Process.run(self)
             self._cconn.send(None)
-        except Exception as e:  # pylint: disable=W0718,C0103
+        except Exception as e:  # pylint: disable=C0103,W0703
             trace_back = traceback.format_exc()
             self._cconn.send((e, trace_back))
             # raise e  # You can still rise this exception if you need to
@@ -111,6 +120,8 @@ def check_server_access(sconf):
 
 
 def _examine_connection(server, sconf, excpts):
+    from merlin.config import broker, results_backend  # pylint: disable=C0415
+
     connect_timeout = 60
     try:
         ssl_conf = None
@@ -132,7 +143,7 @@ def _examine_connection(server, sconf, excpts):
         if conn_check.exception:
             error, _ = conn_check.exception
             raise error
-    except Exception as e:  # pylint: disable=W0718,C0103
+    except Exception as e:  # pylint: disable=C0103,W0703
         print(f"{server} connection: Error")
         excpts[server] = e
     else:
@@ -143,6 +154,9 @@ def display_config_info():
     """
     Prints useful configuration information to the console.
     """
+    from merlin.config import broker, results_backend  # pylint: disable=C0415
+    from merlin.config.configfile import default_config_info  # pylint: disable=C0415
+
     print("Merlin Configuration")
     print("-" * 25)
     print("")
@@ -154,7 +168,7 @@ def display_config_info():
         conf["broker server"] = broker.get_connection_string(include_password=False)
         sconf["broker server"] = broker.get_connection_string()
         conf["broker ssl"] = broker.get_ssl_config()
-    except Exception as e:  # pylint: disable=W0718,C0103
+    except Exception as e:  # pylint: disable=C0103,W0703
         conf["broker server"] = "Broker server error."
         excpts["broker server"] = e
 
@@ -162,7 +176,7 @@ def display_config_info():
         conf["results server"] = results_backend.get_connection_string(include_password=False)
         sconf["results server"] = results_backend.get_connection_string()
         conf["results ssl"] = results_backend.get_ssl_config()
-    except Exception as e:  # pylint: disable=W0718,C0103
+    except Exception as e:  # pylint: disable=C0103,W0703
         conf["results server"] = "No results server configured or error."
         excpts["results server"] = e
 
@@ -221,22 +235,265 @@ def print_info(args):  # pylint: disable=W0613
     print("")
 
 
-def tabulate_info(info, headers=None, color=None):
+def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = False):  # noqa: F821
     """
-    Display info in a table. Colorize the table if you'd like.
-    Intended for use for functions outside of this file so they don't
-    need to import tabulate.
-    :param `info`: The info you want to tabulate.
-    :param `headers`: A string or list stating what you'd like the headers to be.
-                      Options: "firstrow", "keys", or List[str]
-    :param `color`: An ANSI color.
-    """
-    # Adds the color at the start of the print
-    if color:
-        print(color, end="")
+    Displays a low level overview of the status of a study. This is a task-by-task
+    status display where each task will show:
+    step name, worker name, task queue, cmd & restart parameters,
+    step workspace, step status, return code, elapsed time, run time, and num restarts.
+    If too many tasks are found and the pager is disabled, prompts will appear for the user to decide
+    what to do that way we don't overload the terminal (unless the no-prompts flag is provided).
 
-    # \033[0m resets color to white
-    if headers:
-        print(tabulate(info, headers=headers), ANSI_COLORS["RESET"])
+    :param `status_obj`: A DetailedStatus object
+    :param `test_mode`: If true, run this in testing mode and don't print any output. This will also
+                        decrease the limit on the number of tasks allowed before a prompt is displayed.
+    """
+    args = status_obj.args
+    try:
+        status_renderer = status_renderer_factory.get_renderer(args.layout, args.disable_theme, args.disable_pager)
+    except ValueError:
+        LOG.error(f"Layout '{args.layout}' not implemented.")
+        raise
+
+    cancel_display = False
+
+    # If the pager is disabled then we need to be careful not to overload the terminal with a bazillion tasks
+    if args.disable_pager and not args.no_prompts:
+        # Setting the limit by default to be 250 tasks before asking for additional filters
+        no_prompt_limit = 250 if not test_mode else 15
+        while status_obj.num_requested_statuses > no_prompt_limit:
+            # See if the user wants to apply additional filters
+            apply_additional_filters = input(
+                f"About to display {status_obj.num_requested_statuses} tasks without a pager. "
+                "Would you like to apply additional filters? (y/n/c) "
+            ).lower()
+            while apply_additional_filters not in ("y", "n", "c"):
+                apply_additional_filters = input(
+                    "Invalid input. You must enter either 'y' for yes, 'n' for no, or 'c' for cancel: "
+                ).lower()
+
+            # Apply filters if necessary or break the loop
+            if apply_additional_filters == "y":
+                status_obj.filter_via_prompts()
+            elif apply_additional_filters == "n":
+                print(f"Not filtering further. Displaying {status_obj.num_requested_statuses} tasks...")
+                break
+            else:
+                print("Cancelling status display.")
+                cancel_display = True
+                break
+
+    # Display the statuses
+    if not cancel_display and not test_mode:
+        if status_obj.num_requested_statuses > 0:
+            # Table layout requires csv format (since it uses Maestro's renderer)
+            if args.layout == "table":
+                status_data = status_obj.format_status_for_csv()
+            else:
+                status_data = status_obj.requested_statuses
+            status_renderer.layout(status_data=status_data, study_title=status_obj.workspace)
+            status_renderer.render()
+
+        for ustep in status_obj.step_tracker["unstarted_steps"]:
+            print(f"\n{ustep} has not started yet.")
+            print()
+
+
+def _display_summary(state_info: Dict[str, str], cb_help: bool):
+    """
+    Given a dict of state info for a step, print a summary of the task states.
+
+    :param `state_info`: A dictionary of information related to task states for a step
+    :param `cb_help`: True if colorblind assistance (using symbols) is needed. False otherwise.
+    """
+    # Build a summary list of task info
+    print("\nSUMMARY:")
+    summary = []
+    for key, val in state_info.items():
+        label = key
+        # Add colorblind symbols if needed
+        if cb_help and "fill" in val:
+            label = f"{key} {val['fill']}"
+        # Color the label
+        if "color" in val:
+            label = f"{val['color']}{label}{ANSI_COLORS['RESET']}"
+
+        # Grab the value associated with the label
+        value = None
+        if "count" in val:
+            if val["count"] > 0:
+                value = val["count"]
+        elif "total" in val:
+            value = val["total"]
+        elif "name" in val:
+            value = val["name"]
+        else:
+            value = val
+
+        # Add the label and value as an entry to the summary
+        if value:
+            summary.append([label, value])
+
+    # Display the summary
+    print(tabulate(summary))
+    print()
+
+
+def display_status_summary(  # pylint: disable=R0912
+    status_obj: "Status", non_workspace_keys: set, test_mode=False  # noqa: F821
+) -> Dict:
+    """
+    Displays a high level overview of the status of a study. This includes
+    progress bars for each step and a summary of the number of initialized,
+    running, finished, cancelled, dry ran, failed, and unknown tasks.
+
+    :param `status_obj`: A Status object
+    :param `non_workspace_keys`: A set of keys in requested_statuses that are not workspace keys.
+                                 This will be set("parameters", "task_queue", "worker_name)
+    :param `test_mode`: If True, don't print anything and just return a dict of all the state info for each step
+    :returns: A dict that's empty usually. If ran in test_mode it will be a dict of state_info for every step.
+    """
+    all_state_info = {}
+    if not test_mode:
+        print(f"{ANSI_COLORS['YELLOW']}Status for {status_obj.workspace} as of {datetime.now()}:{ANSI_COLORS['RESET']}")
+        terminal_size = shutil.get_terminal_size()
+        progress_bar_width = terminal_size.columns // 4
+
+    LOG.debug(f"step_tracker in display: {status_obj.step_tracker}")
+    for sstep in status_obj.step_tracker["started_steps"]:
+        # This dict will keep track of the number of tasks at each status
+        state_info = {
+            "FINISHED": {"count": 0, "color": ANSI_COLORS["GREEN"], "fill": "█"},
+            "CANCELLED": {"count": 0, "color": ANSI_COLORS["YELLOW"], "fill": "/"},
+            "FAILED": {"count": 0, "color": ANSI_COLORS["RED"], "fill": "⣿"},
+            "UNKNOWN": {"count": 0, "color": ANSI_COLORS["GREY"], "fill": "?"},
+            "INITIALIZED": {"count": 0, "color": ANSI_COLORS["LIGHT_BLUE"]},
+            "RUNNING": {"count": 0, "color": ANSI_COLORS["BLUE"]},
+            "DRY RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
+            "TOTAL TASKS": {"total": status_obj.tasks_per_step[sstep]},
+            "AVG RUN TIME": status_obj.run_time_info[sstep]["avg_run_time"],
+            "RUN TIME STD DEV": status_obj.run_time_info[sstep]["run_time_std_dev"],
+        }
+
+        # Initialize a var to track # of completed tasks and grab the statuses for this step
+        num_completed_tasks = 0
+
+        # Loop through each entry for the step (if there's no parameters there will just be one entry)
+        for full_step_name in status_obj.full_step_name_map[sstep]:
+            overall_step_info = status_obj.requested_statuses[full_step_name]
+
+            # If this was a non-local run we should have a task queue and worker name to add to state_info
+            if "task_queue" in overall_step_info:
+                state_info["TASK QUEUE"] = {"name": overall_step_info["task_queue"]}
+            if "worker_name" in overall_step_info:
+                state_info["WORKER NAME"] = {"name": overall_step_info["worker_name"]}
+
+            # Loop through all workspaces for this step (if there's no samples for this step it'll just be one path)
+            for sub_step_workspace, task_status_info in overall_step_info.items():
+                # We've already handled the non-workspace keys that we need so ignore them here
+                if sub_step_workspace in non_workspace_keys:
+                    continue
+
+                state_info[task_status_info["status"]]["count"] += 1
+                # Increment the number of completed tasks (not running or initialized)
+                if task_status_info["status"] not in ("INITIALIZED", "RUNNING"):
+                    num_completed_tasks += 1
+
+        if test_mode:
+            all_state_info[sstep] = state_info
+        else:
+            # Display the progress bar and summary for the step
+            print(f"\n{sstep}\n")
+            display_progress_bar(
+                num_completed_tasks,
+                status_obj.tasks_per_step[sstep],
+                state_info=state_info,
+                suffix="Complete",
+                length=progress_bar_width,
+                cb_help=status_obj.args.cb_help,
+            )
+            _display_summary(state_info, status_obj.args.cb_help)
+            print("-" * (terminal_size.columns // 2))
+
+    # For each unstarted step, print an empty progress bar
+    for ustep in status_obj.step_tracker["unstarted_steps"]:
+        if test_mode:
+            all_state_info[ustep] = "UNSTARTED"
+        else:
+            print(f"\n{ustep}\n")
+            display_progress_bar(0, 100, suffix="Complete", length=progress_bar_width)
+            print(f"\n{ustep} has not started yet.\n")
+            print("-" * (terminal_size.columns // 2))
+
+    return all_state_info
+
+
+# Credit to this stack overflow post: https://stackoverflow.com/a/34325723
+def display_progress_bar(  # pylint: disable=R0913,R0914
+    current,
+    total,
+    state_info=None,
+    prefix="",
+    suffix="",
+    decimals=1,
+    length=80,
+    fill="█",
+    print_end="\n",
+    color=None,
+    cb_help=False,
+):
+    """
+    Prints a progress bar based on current and total.
+
+    :param `current`:     current number (Int)
+    :param `total`:       total number (Int)
+    :param `state_info`:  information about the state of tasks (Dict) (overrides color)
+    :param `prefix`:      prefix string (Str)
+    :param `suffix`:      suffix string (Str)
+    :param `decimals`:    positive number of decimals in percent complete (Int)
+    :param `length`:      character length of bar (Int)
+    :param `fill`:        bar fill character (Str)
+    :param `print_end`:    end character (e.g. "\r", "\r\n") (Str)
+    :param `color`:       color of the progress bar (ANSI Str) (overridden by state_info)
+    :param `cb_help`:     true if color blind help is needed; false otherwise (Bool)
+    """
+    # Set the color of the bar
+    if color and color in ANSI_COLORS:
+        fill = f"{color}{fill}{ANSI_COLORS['RESET']}"
+
+    # Get the percentage done and the total fill length of the bar
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (current / float(total)))
+    total_filled_length = int(length * current // total)
+
+    # Print a progress bar based on state of the study
+    if state_info:
+        print(f"\r{prefix} |", end="")
+        for key, val in state_info.items():
+            # Only fill bar with completed tasks
+            if key in (
+                "INITIALIZED",
+                "RUNNING",
+                "TASK QUEUE",
+                "WORKER NAME",
+                "TOTAL TASKS",
+                "AVG RUN TIME",
+                "RUN TIME STD DEV",
+            ):
+                continue
+
+            # Get the length to fill for this specific state
+            partial_filled_length = int(length * val["count"] // total)
+
+            if partial_filled_length > 0:
+                if cb_help:
+                    fill = val["fill"]
+                progress_bar = fill * partial_filled_length
+                print(f"{val['color']}{progress_bar}", end="")
+
+        # The remaining bar represents the number of tasks still incomplete
+        remaining_bar = "-" * (length - total_filled_length)
+        print(f'{ANSI_COLORS["RESET"]}{remaining_bar}| {percent}% {suffix}', end=print_end)
+    # Print a normal progress bar
     else:
-        print(tabulate(info), ANSI_COLORS["RESET"])
+        progress_bar = fill * total_filled_length + "-" * (length - total_filled_length)
+        print(f"\r{prefix} |{progress_bar}| {percent}% {suffix}", end=print_end)

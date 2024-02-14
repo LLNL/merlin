@@ -77,8 +77,11 @@ class CeleryTestWorkersManager:
         # Check that all the echo processes were stopped, otherwise forcefully terminate them
         ps_proc = subprocess.run("ps ux", shell=True, capture_output=True, text=True)
         for pid in self.echo_processes.values():
-            if str(pid) in ps_proc.stdout:
-                os.kill(pid, signal.SIGKILL)
+            try:
+                if str(pid) in ps_proc.stdout:
+                    os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError as exc:
+                raise ProcessLookupError(f"PID {pid} not found. Output of 'ps ux':\n{ps_proc.stdout}") from exc
 
     def _is_worker_ready(self, worker_name: str, verbose: bool = False) -> bool:
         """

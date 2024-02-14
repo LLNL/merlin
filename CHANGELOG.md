@@ -6,17 +6,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- A new command `merlin queue-info` that will print the status of your celery queues
+  - By default this will only pull information from active queues
+  - There are options to look for specific queues (`--specific-queues`), queues defined in certain spec files (`--spec`; this is the same functionality as the `merlin status` command prior to this update), and queues attached to certain steps (`--steps`)
+  - Queue info can be dumped to outfiles with `--dump`
+- A new command `merlin detailed-status` that displays task-by-task status information about your study
+  - This has options to filter by return code, task queues, task statuses, and workers
+  - You can set a limit on the number of tasks to display
+  - There are 3 options to modify the output display
+- Docs for all of the monitoring commands
+- New file `merlin/study/status.py` dedicated to work relating to the status command
+  - Contains the Status and DetailedStatus classes
+- New file `merlin/study/status_renderers.py` dedicated to formatting the output for the detailed-status command
+- New file `merlin/common/dumper.py` containing a Dumper object to help dump output to outfiles
+- Study name and parameter info now stored in the DAG and MerlinStep objects
+- Added functions to `merlin/display.py` that help display status information:
+  - `display_task_by_task_status` handles the display for the `merlin detailed-status` command
+  - `display_status_summary` handles the display for the `merlin status` command
+  - `display_progress_bar` generates and displays a progress bar
+- Added new methods to the MerlinSpec class:
+  - get_worker_step_map()
+  - get_queue_step_relationship()
+  - get_tasks_per_step()
+  - get_step_param_map()
+- Added methods to the MerlinStepRecord class to mark status changes for tasks as they run (follows Maestro's StepRecord format mostly)
+- Added methods to the Step class:
+  - establish_params()
+  - name_no_params()
+- Added a property paramater_labels to the MerlinStudy class
+- Added two new utility functions:
+  - dict_deep_merge() that deep merges two dicts into one
+  - ws_time_to_dt() that converts a workspace timestring (YYYYMMDD-HHMMSS) to a datetime object
+- A new celery task `condense_status_files` to be called when sets of samples finish
+- Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
+- Tests for the Status and DetailedStatus classes
+  - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
 - Pytest fixtures in the `conftest.py` file of the integration test suite
   - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
 - Tests for the `celeryadapter.py` module
 - New CeleryTestWorkersManager context to help with starting/stopping workers for tests
 
-### Fixed
-- The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
-- The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
-- Add the restart keyword to the specification docs
-
 ### Changed
+- Reformatted the entire `merlin status` command
+  - Now accepts both spec files and workspace directories as arguments
+  - Removed the --steps flag
+  - Replaced the --csv flag with the --dump flag
+  - New functionality:
+    - Shows step_by_step progress bar for tasks
+    - Displays a summary of task statuses below the progress bar
+- Split the `add_chains_to_chord` function in `merlin/common/tasks.py` into two functions:
+  - `get_1d_chain` which converts a 2D list of chains into a 1D list
+  - `launch_chain` which launches the 1D chain
+- Pulled the needs_merlin_expansion() method out of the Step class and made it a function instead
+- Removed `tabulate_info` function; replaced with tabulate from the tabulate library
+- Moved `verify_filepath` and `verify_dirpath` from `merlin/main.py` to `merlin/utils.py`
 - The entire documentation has been ported to MkDocs and re-organized
   - *Dark Mode*
   - New "Getting Started" example for a simple setup tutorial
@@ -30,6 +73,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated "FAQ" page to include more links to helpful locations throughout the documentation
   - Set up a place to store API docs
   - New "Contact" page with info on reaching Merlin devs
+- The Merlin tutorial defaults to using Singularity rather than Docker for the OpenFoam example. Minor tutorial fixes have also been applied.
+
+### Fixed
+- The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
+- The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
+- Add the restart keyword to the specification docs
+- Cyclical imports and config imports that could easily cause ci issues
 
 ## [1.11.1]
 ### Fixed

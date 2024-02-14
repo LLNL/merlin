@@ -39,7 +39,8 @@ import time
 from contextlib import suppress
 from subprocess import TimeoutExpired, run
 
-from merlin.display import tabulate_info
+from tabulate import tabulate
+
 from tests.integration.definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
 
 
@@ -318,7 +319,7 @@ def display_tests(tests):
     test_table = [(i + 1, test_names[i]) for i in range(len(test_names))]
     test_table.insert(0, ("ID", "Test Name"))
     print()
-    tabulate_info(test_table, headers="firstrow")
+    print(tabulate(test_table, headers="firstrow"))
     print()
 
 
