@@ -49,23 +49,23 @@ merlin info
 
 This is covered more in depth in the [Verifying Installation](./2_installation.md#checkingverifying-installation) section of the Installation module and at the [Configuration](../user_guide/configuration/index.md) page.
 
-There are two ways to do this example: with docker and without docker. To go through the version with docker, get the necessary files for this module by running:
+There are a few ways to do this example, including with singularity and with docker. To go through the version with singularity, get the necessary files for this module by running:
+
+```bash
+merlin example openfoam_wf_singularity ; cd openfoam_wf_singularity/
+```
+    
+For the version with docker you should run:
 
 ```bash
 merlin example openfoam_wf ; cd openfoam_wf/
 ```
-    
-For the version without docker you should run:
-
-```bash
-merlin example openfoam_wf_no_docker ; cd openfoam_wf_no_docker/
-```
 
 !!! note
 
-    From here on, this tutorial will focus solely on the docker version of running OpenFOAM. However, the docker version of this tutorial is almost identical to the no docker version. If you're using the no docker version of this tutorial you can still follow along but check the openfoam_no_docker_template.yaml file in each step to see what differs.
+    From here on, this tutorial will focus solely on the singularity version of running OpenFOAM. The docker version of this tutorial is almost identical but will require having docker installed. If you're using the docker version of this tutorial you can still follow along but check the openfoam_docker_template.yaml file in each step to see what differs.
 
-In the `openfoam_wf` directory you should see the following:
+In the `openfoam_wf_singularity` directory you should see the following:
 
 <figure markdown>
   ![Fig 3. openfoam_wf Directory Structure](../assets/images/tutorial/run_simulation/openfoam_wf_output.png)
@@ -94,7 +94,7 @@ It should look something like this:
 ???+ abstract "Initial Contents of the Spec"
 
     <!--codeinclude-->
-    [openfoam_wf.yaml](../../merlin/examples/workflows/openfoam_wf/openfoam_wf.yaml)
+    [openfoam_wf.yaml](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf.yaml)
     <!--/codeinclude-->
 
 ### Variables
@@ -102,7 +102,7 @@ It should look something like this:
 First we specify some variables to make our life easier. Locate the `env` block in our yaml spec:
 
 <!--codeinclude-->
-[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf.yaml) lines:9-14
+[](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf.yaml) lines:9-15
 <!--/codeinclude-->
 
 The `OUTPUT_PATH` variable is set to tell Merlin where you want your output directory to be written. The default is the current working directory.
@@ -129,16 +129,16 @@ merlin:
         column_labels: [LID_SPEED, VISCOSITY]
 ```
 
-We will be using the scripts directory a lot so we'll set the variable `SCRIPTS` to `$(MERLIN_INFO)/scripts` for convenience. We would also like to have a more central control over the number of samples generated so we'll create an `N_SAMPLES` variable:
+We will be using the scripts directory a lot so we'll set the variable `SCRIPTS` to `$(MERLIN_INFO)/scripts` for convenience. We define `SIF`, our Singularity image of OpenFoam, to be `$(MERLIN_INFO)/openfoam6.sif`. We would also like to have a more central control over the number of samples generated so we'll create an `N_SAMPLES` variable:
 
 <!--codeinclude-->
-[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:9-14
+[](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf_singularity_template.yaml) lines:9-15
 <!--/codeinclude-->
 
 and update the `samples` section of the `merlin` block to be:
 
 <!--codeinclude-->
-[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:17-26
+[](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf_singularity_template.yaml) lines:18-27
 <!--/codeinclude-->
 
 Just like in the [Using Samples](./3_hello_world.md#using-samples) step of the hello world module, we generate samples using the `merlin` block. We are only concerned with how the variation of two initial conditions, lidspeed and viscosity, affects outputs of the system. These are the `column_labels`. The `make_samples.py` script is designed to make log uniform random samples. Now, we can move on to the steps of our study block.
@@ -147,12 +147,12 @@ Just like in the [Using Samples](./3_hello_world.md#using-samples) step of the h
 
 Our first step in our study block is concerned with making sure we have all the required python packages for this workflow. The specific packages are found in the `requirements.txt` file.
 
-We will also need to copy the lid driven cavity deck from the OpenFOAM docker container and adjust the write controls. This last part is scripted already for convenience.
+We will also need to copy the lid driven cavity deck from the OpenFOAM singularity container and adjust the write controls. This last part is scripted already for convenience.
 
 Locate the `setup` step in the study block and edit it to look like the following:
 
 <!--codeinclude-->
-[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:37-47
+[](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf_singularity_template.yaml) lines:38-48
 <!--/codeinclude-->
 
 This step does not need to be parallelized so we will assign it to lower concurrency (a setting that controls how many workers can be running at the same time on a single node).
@@ -181,13 +181,13 @@ Moving on to the `sim_runs` step, we want to:
 
 1. Copy the cavity deck from the `MERLIN_INFO` directory into each of the current step's subdirectories
 2. Edit the default input values (lidspeed and viscosity) in these cavity decks using the `sed` command
-3. Run the simulation using the `run_openfoam` executable through the OpenFOAM docker container
+3. Run the simulation using the `run_openfoam` executable through the OpenFOAM singularity container
 4. Post-process the results (also using the `run_openfoam` executable)
 
 This part should look like:
 
 <!--codeinclude-->
-[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:49-71
+[](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf_singularity_template.yaml) lines:50-76
 <!--/codeinclude-->
 
 This step runs many simulations in parallel so it would run faster if we assign it a worker with a higher concurrency. Navigate back to the `resources` section in the `merlin` block
@@ -216,7 +216,7 @@ Navigate to the next step in our `study` block `combine_outputs`. The purpose of
 The `combine_outputs.py` script in the `$(SCRIPTS)` directory is provided for convenience and takes two inputs. The first informs it of the base directory of the `sim_runs` directory and the second specifies the subdirectories for each run. The script then goes into each of the directories and combines the velocity and enstrophy for each timestep of each run in a .npz file.
 
 <!--codeinclude-->
-[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:73-78
+[](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf_singularity_template.yaml) lines:78-83
 <!--/codeinclude-->
 
 The `$(MERLIN_PATHS_ALL)` variable is a [Reserved Variable](../user_guide/variables.md#reserved-variables) that denotes a space delimited string of all of the sample paths.
@@ -241,7 +241,7 @@ In the `learn` step, we want to:
 The provided `learn.py` script does all of the above. It outputs the trained sklearn model and a png of the graphs plotted in the current directory.
 
 <!--codeinclude-->
-[](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml) lines:80-85
+[](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf_singularity_template.yaml) lines:85-90
 <!--/codeinclude-->
 
 This step is also dependent on the previous step for the .npz file and will only need one worker therefore we will assign it to `nonsimworkers`:
@@ -259,12 +259,12 @@ By the end, your `openfoam_wf.yaml` should look like the template version in the
 ???+ abstract "Complete Spec File"
 
     <!--codeinclude-->
-    [openfoam_wf_template.yaml](../../merlin/examples/workflows/openfoam_wf/openfoam_wf_template.yaml)
+    [openfoam_wf_template.yaml](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf_singularity_template.yaml)
     <!--/codeinclude-->
 
 ## Run the workflow
 
-Now that you are done with the Specification file, use the following commands from inside the `openfoam_wf` directory to run the workflow on our task server.
+Now that you are done with the Specification file, use the following commands from inside the `openfoam_wf_singularity` directory to run the workflow on our task server.
 
 !!! note
 

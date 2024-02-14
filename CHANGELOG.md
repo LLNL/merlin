@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated "FAQ" page to include more links to helpful locations throughout the documentation
   - Set up a place to store API docs
   - New "Contact" page with info on reaching Merlin devs
+- The Merlin tutorial defaults to using Singularity rather than Docker for the OpenFoam example. Minor tutorial fixes have also been applied.
 
 ### Fixed
 - The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
