@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - This has options to filter by return code, task queues, task statuses, and workers
   - You can set a limit on the number of tasks to display
   - There are 3 options to modify the output display
+- Docs for all of the monitoring commands
 - New file `merlin/study/status.py` dedicated to work relating to the status command
   - Contains the Status and DetailedStatus classes
 - New file `merlin/study/status_renderers.py` dedicated to formatting the output for the detailed-status command

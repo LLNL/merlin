@@ -401,9 +401,9 @@ class TestInactive:
         expected_output = {"time": [date]}
 
         # Build the fake query return and the expected output
-        query_return = []
+        query_return = {}
         for queue in worker_queue_map.values():
-            query_return.append((queue, 0, 1))
+            query_return[queue] = {"consumers": 1, "jobs": 0}
             expected_output[f"{queue}:tasks"] = ["0"]
             expected_output[f"{queue}:consumers"] = ["1"]
 
@@ -426,9 +426,9 @@ class TestInactive:
         expected_output = {date: {}}
 
         # Build the fake query return and the expected output
-        query_return = []
+        query_return = {}
         for queue in worker_queue_map.values():
-            query_return.append((queue, 0, 1))
+            query_return[queue] = {"consumers": 1, "jobs": 0}
             expected_output[date][queue] = {"tasks": 0, "consumers": 1}
 
         # Run the test
@@ -448,9 +448,9 @@ class TestInactive:
         expected_output = {}
 
         # Build the fake query return
-        query_return = []
+        query_return = {}
         for queue in worker_queue_map.values():
-            query_return.append((queue, 0, 1))
+            query_return[queue] = {"consumers": 1, "jobs": 0}
             expected_output[f"{queue}:tasks"] = ["0"]
             expected_output[f"{queue}:consumers"] = ["1"]
 
@@ -496,9 +496,9 @@ class TestInactive:
         expected_output = {}
 
         # Build the fake query return
-        query_return = []
+        query_return = {}
         for queue in worker_queue_map.values():
-            query_return.append((queue, 0, 1))
+            query_return[queue] = {"consumers": 1, "jobs": 0}
             expected_output[queue] = {"tasks": 0, "consumers": 1}
 
         # Run the test
