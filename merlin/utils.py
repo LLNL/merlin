@@ -39,13 +39,15 @@ import socket
 import subprocess
 from contextlib import contextmanager
 from copy import deepcopy
-from datetime import timedelta
+from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Union
+from typing import List, Optional, Union
 
 import numpy as np
 import psutil
 import yaml
+
+from merlin.exceptions import DeepMergeException
 
 
 try:
@@ -288,6 +290,38 @@ def determine_protocol(fname):
     return protocol
 
 
+def verify_filepath(filepath: str) -> str:
+    """
+    Verify that the filepath argument is a valid
+    file.
+
+    :param [str] `filepath`: the path of a file
+
+    :return: the verified absolute filepath with expanded environment variables.
+    :rtype: str
+    """
+    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
+    if not os.path.isfile(filepath):
+        raise ValueError(f"'{filepath}' is not a valid filepath")
+    return filepath
+
+
+def verify_dirpath(dirpath: str) -> str:
+    """
+    Verify that the dirpath argument is a valid
+    directory.
+
+    :param [str] `dirpath`: the path of a directory
+
+    :return: returns the absolute path with expanded environment vars for a given dirpath.
+    :rtype: str
+    """
+    dirpath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
+    if not os.path.isdir(dirpath):
+        raise ValueError(f"'{dirpath}' is not a valid directory path")
+    return dirpath
+
+
 @contextmanager
 def cd(path):  # pylint: disable=C0103
     """
@@ -497,6 +531,59 @@ def contains_shell_ref(string):
     return False
 
 
+def needs_merlin_expansion(
+    cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords: Optional[bool] = True
+) -> bool:
+    """
+    Check if the cmd or restart cmd provided have variables that need expansion.
+
+    :param `cmd`: The command inside a study step to check for expansion
+    :param `restart_cmd`: The restart command inside a study step to check for expansion
+    :param `labels`: A list of labels to check for inside `cmd` and `restart_cmd`
+    :return : True if the cmd has any of the default keywords or spec
+        specified sample column labels. False otherwise.
+    """
+    sample_keywords = ["MERLIN_SAMPLE_ID", "MERLIN_SAMPLE_PATH", "merlin_sample_id", "merlin_sample_path"]
+    if include_sample_keywords:
+        labels += sample_keywords
+
+    for label in labels:
+        if f"$({label})" in cmd:
+            return True
+        # The restart may need expansion while the cmd does not.
+        if restart_cmd and f"$({label})" in restart_cmd:
+            return True
+
+    # If we got through all the labels and no expansion was needed then these commands don't need expansion
+    return False
+
+
+def dict_deep_merge(dict_a, dict_b, path=None):
+    """
+    This function recursively merges dict_b into dict_a. The built-in
+    merge of dictionaries in python (dict(dict_a) | dict(dict_b)) does not do a
+    deep merge so this function is necessary. This will only merge in new keys,
+    it will NOT update existing ones.
+    Credit to this stack overflow post: https://stackoverflow.com/a/7205107.
+
+    :param `dict_a`: A dict that we'll merge dict_b into
+    :param `dict_b`: A dict that we want to merge into dict_a
+    :param `path`: The path down the dictionary tree that we're currently at
+    """
+    if path is None:
+        path = []
+    for key in dict_b:
+        if key in dict_a:
+            if isinstance(dict_a[key], dict) and isinstance(dict_b[key], dict):
+                dict_deep_merge(dict_a[key], dict_b[key], path + [str(key)])
+            elif dict_a[key] == dict_b[key]:
+                pass  # same leaf value
+            else:
+                raise DeepMergeException(f"Conflict at {'.'.join(path + [str(key)])}")
+        else:
+            dict_a[key] = dict_b[key]
+
+
 def find_vlaunch_var(vlaunch_var: str, step_cmd: str, accept_no_matches=False) -> str:
     """
     Given a variable used for VLAUNCHER and the step cmd value, find
@@ -580,3 +667,53 @@ def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") 
     tdelta = convert_to_timedelta(timestring)
     LOG.debug(f"Timedelta object is: {tdelta}")
     return repr_timedelta(tdelta, method=format_method)
+
+
+def pretty_format_hms(timestring: str) -> str:
+    """
+    Given an HMS timestring, format it so it removes blank entries and adds
+    labels.
+
+    :param `timestring`: the HMS timestring we'll format
+    :returns: a formatted timestring
+
+    Examples:
+        - "00:00:34:00" -> "34m"
+        - "01:00:00:25" -> "01d:25s"
+        - "00:19:44:28" -> "19h:44m:28s"
+    """
+    # Create labels and split the timestring
+    labels = ["d", "h", "m", "s"]
+    parsed_ts = timestring.split(":")
+    if len(parsed_ts) > 4:
+        raise ValueError("The timestring to label must be in the format DD:HH:MM:SS")
+
+    # Label each integer with its corresponding unit
+    labeled_time_list = []
+    for i in range(1, len(parsed_ts) + 1):
+        if parsed_ts[-i] != "00":
+            labeled_time_list.append(parsed_ts[-i] + labels[-i])
+
+    # Join the labeled time list into a string.
+    if len(labeled_time_list) == 0:
+        labeled_time_list.append("00s")
+    labeled_time_list.reverse()
+    labeled_time_string = ":".join(labeled_time_list)
+
+    return labeled_time_string
+
+
+def ws_time_to_dt(ws_time: str) -> datetime:
+    """
+    Converts a workspace timestring to a datetime object.
+
+    :param `ws_time`: A workspace timestring in the format YYYYMMDD-HHMMSS
+    :returns: A datetime object created from the workspace timestring
+    """
+    year = int(ws_time[:4])
+    month = int(ws_time[4:6])
+    day = int(ws_time[6:8])
+    hour = int(ws_time[9:11])
+    minute = int(ws_time[11:13])
+    second = int(ws_time[13:])
+    return datetime(year, month, day, hour=hour, minute=minute, second=second)

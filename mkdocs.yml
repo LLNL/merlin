@@ -3,7 +3,7 @@ site_name: Merlin
 nav:
   - Merlin: "index.md"
   - Tutorial:
-    - Overview: "tutorial/index.md"
+    - Tutorial Overview: "tutorial/index.md"
     - 0. Prerequisites: "tutorial/0_prerequisites.md"
     - 1. Introduction: "tutorial/1_introduction.md"
     - 2. Installation: "tutorial/2_installation.md"
@@ -13,22 +13,27 @@ nav:
     - 6. Contribute to Merlin: "tutorial/6_contribute.md"
     - 7. Port Your Own Application: "tutorial/7_port_application.md"
   - User Guide:
-    - Overview: "user_guide/index.md"
+    - User Guide Overview: "user_guide/index.md"
     - Installation: "user_guide/installation.md"
     - Configuration: 
-      - Overview: "user_guide/configuration/index.md"
+      - Configuration Overview: "user_guide/configuration/index.md"
       - External Server: "user_guide/configuration/external_server.md"
       - Merlin Server: "user_guide/configuration/merlin_server.md"
     - Command Line Interface: "user_guide/command_line.md"
     - Specification: "user_guide/specification.md"
     - Variables: "user_guide/variables.md"
     - Running Studies: "user_guide/running_studies.md"
-    - Interpreting Output: "user_guide/interpreting_output.md"
+    - Interpreting Study Output: "user_guide/interpreting_output.md"
+    - Monitoring Studies:
+      - Monitoring Overview: "user_guide/monitoring/index.md"
+      - The Status Commands: "user_guide/monitoring/status_cmds.md"
+      - Querying Queues and Workers: "user_guide/monitoring/queues_and_workers.md"
+      - Monitoring Studies For Persistent Allocations: "user_guide/monitoring/monitor_for_allocation.md"
     - Celery: "user_guide/celery.md"
     - Docker: "user_guide/docker.md"
     - Contributing: "user_guide/contributing.md"
   - Examples:
-    - Overview: "examples/index.md"
+    - Examples Overview: "examples/index.md"
     - Hello World Examples: "examples/hello.md"
     - Feature Demo: "examples/feature_demo.md"
     - Iterative Demo: "examples/iterative.md"
