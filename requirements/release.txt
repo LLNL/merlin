@@ -1,13 +1,19 @@
-cached_property
-celery[redis,sqlalchemy]>=5.0.3
-coloredlogs
-cryptography
-importlib_metadata<5.0.0; python_version == '3.7'
-importlib_resources; python_version < '3.7'
-maestrowf>=1.1.9dev1
-numpy
-parse
-psutil>=5.1.0
-pyyaml>=5.1.2
-tabulate
-redis>=4.3.4
+cached-property==1.5.2
+celery[redis,sqlalchemy]==5.2.7; python_version == "3.7"
+celery[redis,sqlalchemy]==5.3.6; python_version >= "3.8"
+coloredlogs==15.0.1
+cryptography==42.0.2
+importlib-metadata==4.13.0; python_version == "3.7"
+importlib-metadata==7.0.1; python_version >= "3.8"
+importlib-resources==5.12.0; python_version == "3.7"
+importlib-resources==6.1.1; python_version == "3.8"
+maestrowf==1.1.9
+numpy==1.21.6; python_version == "3.7"
+numpy==1.24.4; python_version == "3.8"
+numpy==1.26.4; python_version >= "3.9"
+parse==1.20.1
+psutil==5.9.8
+PyYAML==6.0.1
+redis==5.0.1
+SQLAlchemy==2.0.27
+tabulate==0.9.0
