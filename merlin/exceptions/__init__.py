@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.12.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -34,7 +34,7 @@ Module of all Merlin-specific exception types.
 
 # Pylint complains that these exceptions are no different from Exception
 # but we don't care, we just need new names for exceptions here
-# pylint: disable=W0246
+# pylint: disable=W0235
 
 __all__ = (
     "RetryException",
@@ -42,6 +42,8 @@ __all__ = (
     "HardFailException",
     "InvalidChainException",
     "RestartException",
+    "DeepMergeException",
+    "NoWorkersException",
 )
 
 
@@ -92,3 +94,23 @@ class RestartException(Exception):
 
     def __init__(self):
         super().__init__()
+
+
+class DeepMergeException(Exception):
+    """
+    Exception to signal that there's a conflict when trying
+    to merge two dicts together
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class NoWorkersException(Exception):
+    """
+    Exception to signal that no workers were started
+    to process a non-empty queue(s).
+    """
+
+    def __init__(self, message):
+        super().__init__(message)

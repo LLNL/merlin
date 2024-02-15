@@ -1,0 +1,118 @@
+description: 
+   name: status_test_study
+   description: a spec file to test the status command
+
+batch: 
+   type: local
+   dry_run: false
+   shell: /bin/bash
+
+env: 
+   variables: 
+      N_SAMPLES: 5
+      OUTPUT_PATH: .
+
+   sources: 
+
+   labels: 
+
+   dependencies: 
+
+study: 
+   - name: just_samples
+     description: no parameters, just samples
+     run: 
+        cmd: echo "$(NUM). $(WORLD)!"
+
+        task_queue: just_samples_queue
+        shell: /bin/bash
+        max_retries: 30
+
+   - name: just_parameters
+     description: no samples, just parameters
+     run: 
+        cmd: echo "$(GREET)!"
+
+        restart: echo "$(LEAVE)."
+        task_queue: just_parameters_queue
+        shell: /bin/bash
+        max_retries: 30
+
+   - name: params_and_samples
+     description: both parameters and samples
+     run: 
+        cmd: echo "$(GREET), $(WORLD)!"
+
+        task_queue: both_queue
+        depends: [just_samples_*, just_parameters_*]
+        shell: /bin/bash
+        max_retries: 30
+
+   - name: fail_step
+     description: purposefully fail a step
+     run: 
+        cmd: exit $(MERLIN_SOFT_FAIL)
+
+        depends: [params_and_samples_*]
+        task_queue: fail_queue
+        shell: /bin/bash
+        max_retries: 30
+
+   - name: cancel_step
+     description: purposefully cancel the study
+     run: 
+        cmd: |
+            exit $(MERLIN_STOP_WORKERS)
+            sleep 70
+        depends: [fail_step]
+        task_queue: cancel_queue
+        shell: /bin/bash
+        max_retries: 30
+
+   - name: unstarted_step
+     description: purposefully don't run this step
+     run: 
+        cmd: echo "nobody wants to start me :("
+
+        depends: [cancel_step]
+        task_queue: unstarted_queue
+        shell: /bin/bash
+        max_retries: 30
+
+global.parameters: 
+   GREET: 
+      values: [hello, hola]
+      label: GREET.%%
+
+   LEAVE: 
+      values: [goodbye, adios]
+      label: LEAVE.%%
+
+merlin: 
+   resources: 
+      workers: 
+         sample_worker: 
+            args: -l INFO -Ofair --concurrency 36 --prefetch-multiplier 1
+            steps: [just_samples, params_and_samples]
+            nodes: 
+            batch: 
+
+         other_worker: 
+            args: -l INFO -Ofair --concurrency 1 --prefetch-multiplier 1
+            steps: [just_parameters, fail_step, cancel_step, unstarted_step]
+            nodes: 
+            batch: 
+
+      task_server: celery
+      overlap: false
+
+   samples: 
+      generate: 
+         cmd: python3 make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+
+      file: $(MERLIN_INFO)/samples.csv
+      column_labels: [WORLD, NUM]
+      level_max_dirs: 25
+
+user: 
+
