@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.12.0.
 
 #
 # For details, see https://github.com/LLNL/merlin.
