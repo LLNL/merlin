@@ -30,7 +30,7 @@
 """This module contains priority handling"""
 
 import enum
-from typing import List
+from typing import Dict
 
 from merlin.config.configfile import CONFIG
 
@@ -41,6 +41,7 @@ class Priority(enum.Enum):
     HIGH = 1
     MID = 2
     LOW = 3
+    RETRY = 4
 
 
 def is_rabbit_broker(broker: str) -> bool:
@@ -53,26 +54,31 @@ def is_redis_broker(broker: str) -> bool:
     return broker in ["redis", "rediss", "redis+socket"]
 
 
+def determine_priority_map(broker_name: str) -> Dict[Priority, int]:
+    """
+    Returns the priority mapping for the given broker name.
+
+    :param broker_name: The name of the broker that we need the priority map for
+    :returns: The priority map associated with `broker_name`
+    """
+    if is_rabbit_broker(broker_name):
+        return {Priority.LOW: 1, Priority.HIGH: 9, Priority.RETRY: 10}
+    if is_redis_broker(broker_name):
+        return {Priority.LOW: 10, Priority.HIGH: 2, Priority.RETRY: 1}
+
+    raise ValueError(f"Unsupported broker name: {broker_name}")
+
+
 def get_priority(priority: Priority) -> int:
     """
-    Get the priority based on the broker. For a rabbit broker
-    a low priority is 1 and high is 10. For redis it's the opposite.
-    :returns: An int representing the priority level
+    Gets the priority level as an integer based on the broker.
+    For a rabbit broker a low priority is 1 and high is 10. For redis it's the opposite.
+
+    :param priority: The priority value that we want
+    :returns: The priority value as an integer
     """
-    broker: str = CONFIG.broker.name.lower()
-    priorities: List[Priority] = [Priority.HIGH, Priority.MID, Priority.LOW]
-    if not isinstance(priority, Priority):
-        raise TypeError(f"Unrecognized priority '{priority}'! Priority enum options: {[x.name for x in priorities]}")
-    if priority == Priority.MID:
-        return 5
-    if is_rabbit_broker(broker):
-        if priority == Priority.LOW:
-            return 1
-        if priority == Priority.HIGH:
-            return 10
-    if is_redis_broker(broker):
-        if priority == Priority.LOW:
-            return 10
-        if priority == Priority.HIGH:
-            return 1
-    raise ValueError(f"Function get_priority has reached unknown state! Maybe unsupported broker {broker}?")
+    if priority not in Priority:
+        raise ValueError(f"Invalid priority: {priority}")
+
+    priority_map = determine_priority_map(CONFIG.broker.name.lower())
+    return priority_map.get(priority, 5)  # Default to 5 for MID or unknown priorities
