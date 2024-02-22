@@ -81,4 +81,4 @@ def get_priority(priority: Priority) -> int:
         raise ValueError(f"Invalid priority: {priority}")
 
     priority_map = determine_priority_map(CONFIG.broker.name.lower())
-    return priority_map.get(priority, 5)  # Default to 5 for unknown priorities
+    return priority_map.get(priority, priority_map[Priority.MID])  # Default to MID priority for unknown priorities
