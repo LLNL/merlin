@@ -62,9 +62,9 @@ def determine_priority_map(broker_name: str) -> Dict[Priority, int]:
     :returns: The priority map associated with `broker_name`
     """
     if is_rabbit_broker(broker_name):
-        return {Priority.LOW: 1, Priority.HIGH: 9, Priority.RETRY: 10}
+        return {Priority.LOW: 1, Priority.MID: 5, Priority.HIGH: 9, Priority.RETRY: 10}
     if is_redis_broker(broker_name):
-        return {Priority.LOW: 10, Priority.HIGH: 2, Priority.RETRY: 1}
+        return {Priority.LOW: 10, Priority.MID: 5, Priority.HIGH: 2, Priority.RETRY: 1}
 
     raise ValueError(f"Unsupported broker name: {broker_name}")
 
@@ -81,4 +81,4 @@ def get_priority(priority: Priority) -> int:
         raise ValueError(f"Invalid priority: {priority}")
 
     priority_map = determine_priority_map(CONFIG.broker.name.lower())
-    return priority_map.get(priority, 5)  # Default to 5 for MID or unknown priorities
+    return priority_map.get(priority, 5)  # Default to 5 for unknown priorities
