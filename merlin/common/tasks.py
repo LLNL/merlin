@@ -139,7 +139,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                     f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})..."
                 )
                 step.mstep.mark_restart()
-                self.retry(countdown=step.retry_delay)
+                self.retry(countdown=step.retry_delay, priority=get_priority(Priority.RETRY))
             except MaxRetriesExceededError:
                 LOG.warning(
                     f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command,
@@ -155,7 +155,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                     f"Step '{step_name}' in '{step_dir}' is being retried ({self.request.retries + 1}/{self.max_retries})..."
                 )
                 step.mstep.mark_restart()
-                self.retry(countdown=step.retry_delay)
+                self.retry(countdown=step.retry_delay, priority=get_priority(Priority.RETRY))
             except MaxRetriesExceededError:
                 LOG.warning(
                     f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command,
