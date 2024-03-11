@@ -1,0 +1,79 @@
+description:
+    name: status_test_study
+    description: a spec file to test the status command
+
+env:
+    variables:
+        N_SAMPLES: 5
+        OUTPUT_PATH: .
+
+global.parameters:
+    GREET:
+        values : ["hello", "hola"]
+        label  : GREET.%%
+    LEAVE:
+        values: ["goodbye", "adios"]
+        label: LEAVE.%%
+
+study:
+    - name: just_samples
+      description: no parameters, just samples
+      run:
+          cmd: |
+              echo "$(NUM). $(WORLD)!"
+          task_queue: just_samples_queue
+
+    - name: just_parameters
+      description: no samples, just parameters
+      run:
+          cmd: |
+              echo "$(GREET)!"
+          restart: echo "$(LEAVE)."
+          task_queue: just_parameters_queue
+
+    - name: params_and_samples
+      description: both parameters and samples
+      run:
+          cmd: |
+              echo "$(GREET), $(WORLD)!"
+          task_queue: both_queue
+          depends: [just_samples_*, just_parameters_*]
+ 
+    - name: fail_step
+      description: purposefully fail a step
+      run:
+          cmd: |
+            exit $(MERLIN_SOFT_FAIL)
+          depends: [params_and_samples_*]
+          task_queue: fail_queue
+    
+    - name: cancel_step
+      description: purposefully cancel the study
+      run:
+          cmd: |
+            exit $(MERLIN_STOP_WORKERS)
+          depends: [fail_step]
+          task_queue: cancel_queue
+
+    - name: unstarted_step
+      description: purposefully don't run this step
+      run:
+          cmd: |
+              echo "nobody wants to start me :("
+          depends: [cancel_step]
+          task_queue: unstarted_queue
+
+merlin:
+    resources:
+        workers:
+            sample_worker:
+                args: -l INFO -Ofair --concurrency 36 --prefetch-multiplier 1
+                steps: [just_samples, params_and_samples]
+            other_worker:
+                args: -l INFO -Ofair --concurrency 1 --prefetch-multiplier 1
+                steps: [just_parameters, fail_step, cancel_step, unstarted_step]
+    samples:
+        generate:
+            cmd: python3 $(SPECROOT)/make_samples.py --filepath=$(MERLIN_INFO)/samples.csv --number=$(N_SAMPLES)
+        file: $(MERLIN_INFO)/samples.csv
+        column_labels: [WORLD, NUM]

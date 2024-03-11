@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.12.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -38,13 +38,14 @@ decoupled from the logic the tasks are running.
 import logging
 import os
 import time
-from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from merlin.exceptions import NoWorkersException
 from merlin.study.celeryadapter import (
+    build_set_of_queues,
     check_celery_workers_processing,
     create_celery_config,
+    dump_celery_queue_info,
     get_active_celery_queues,
     get_workers_from_app,
     purge_celery_tasks,
@@ -121,47 +122,44 @@ def purge_tasks(task_server, spec, force, steps):
         return -1
 
 
-def query_status(task_server, spec, steps, verbose=True):
+def dump_queue_info(task_server: str, query_return: List[Tuple[str, int, int]], dump_file: str):
     """
-    Queries status of queues in spec file from server.
+    Format the information we're going to dump in a way that the Dumper class can
+    understand and add a timestamp to the info.
 
-    :param `task_server`: The task server from which to purge tasks.
-    :param `spec`: A MerlinSpec object
-    :param `steps`: Spaced-separated list of stepnames to query. Default is all
+    :param task_server: The task server from which to query queues
+    :param query_return: The output of `query_queues`
+    :param dump_file: The filepath of the file we'll dump queue info to
     """
-    if verbose:
-        LOG.info(f"Querying queues for steps = {steps}")
+    if task_server == "celery":
+        dump_celery_queue_info(query_return, dump_file)
+    else:
+        LOG.error("Celery is not specified as the task server!")
 
+
+def query_queues(
+    task_server: str,
+    spec: "MerlinSpec",  # noqa: F821
+    steps: List[str],
+    specific_queues: List[str],
+    verbose: bool = True,
+):
+    """
+    Queries status of queues.
+
+    :param task_server: The task server from which to query queues
+    :param spec: A MerlinSpec object or None
+    :param steps: Spaced-separated list of stepnames to query. Default is all
+    :param specific_queues: A list of queue names to query or None
+    :param verbose: A bool to determine whether to output log statements or not
+    """
     if task_server == "celery":  # pylint: disable=R1705
-        queues = spec.get_queue_list(steps)
-        # Query the queues
+        # Build a set of queues to query and query them
+        queues = build_set_of_queues(spec, steps, specific_queues, verbose=verbose)
         return query_celery_queues(queues)
     else:
         LOG.error("Celery is not specified as the task server!")
         return []
-
-
-def dump_status(query_return, csv_file):
-    """
-    Dump the results of a query_status to a csv file.
-
-    :param `query_return`: The output of query_status
-    :param `csv_file`: The csv file to append
-    """
-    if os.path.exists(csv_file):
-        fmode = "a"
-    else:
-        fmode = "w"
-    with open(csv_file, mode=fmode) as f:  # pylint: disable=W1514,C0103
-        if f.mode == "w":  # add the header
-            f.write("# time")
-            for name in query_return:
-                f.write(f",{name}:tasks,{name}:consumers")
-            f.write("\n")
-        f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        for queue_info in query_return.values():
-            f.write(f",{queue_info['jobs']},{queue_info['consumers']}")
-        f.write("\n")
 
 
 def query_workers(task_server, spec_worker_names, queues, workers_regex):
@@ -327,7 +325,7 @@ def check_merlin_status(args: "Namespace", spec: "MerlinSpec") -> bool:  # noqa
     active_tasks = False
 
     # Get info about jobs and workers in our spec from celery
-    queue_status = query_status(args.task_server, spec, args.steps, verbose=False)
+    queue_status = query_queues(args.task_server, spec, args.steps, None, verbose=False)
     LOG.debug(f"Monitor: queue_status: {queue_status}")
 
     # Count the number of jobs that are active
@@ -337,7 +335,7 @@ def check_merlin_status(args: "Namespace", spec: "MerlinSpec") -> bool:  # noqa
         total_jobs += queue_info["jobs"]
 
     # Get the queues defined in the spec
-    queues_in_spec = spec.get_queue_list(["all"])
+    queues_in_spec = spec.get_queue_list(["all"] if args.steps is None else args.steps)
     LOG.debug(f"Monitor: queues_in_spec: {queues_in_spec}")
 
     # Get the active queues and the workers that are watching them

@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.12.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -48,6 +48,8 @@ from argparse import (
 from contextlib import suppress
 from typing import Dict, List, Optional, Union
 
+from tabulate import tabulate
+
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.examples.generator import list_examples, setup_example
@@ -55,8 +57,11 @@ from merlin.log_formatter import setup_logging
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
+from merlin.study.status import DetailedStatus, Status
+from merlin.study.status_constants import VALID_RETURN_CODES, VALID_STATUS_FILTERS
+from merlin.study.status_renderers import status_renderer_factory
 from merlin.study.study import MerlinStudy
-from merlin.utils import ARRAY_FILE_FORMATS
+from merlin.utils import ARRAY_FILE_FORMATS, verify_dirpath, verify_filepath
 
 
 LOG = logging.getLogger("merlin")
@@ -71,38 +76,6 @@ class HelpParser(ArgumentParser):
         sys.stderr.write(f"error: {message}\n")
         self.print_help()
         sys.exit(2)
-
-
-def verify_filepath(filepath: str) -> str:
-    """
-    Verify that the filepath argument is a valid
-    file.
-
-    :param [str] `filepath`: the path of a file
-
-    :return: the verified absolute filepath with expanded environment variables.
-    :rtype: str
-    """
-    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
-    if not os.path.isfile(filepath):
-        raise ValueError(f"'{filepath}' is not a valid filepath")
-    return filepath
-
-
-def verify_dirpath(dirpath: str) -> str:
-    """
-    Verify that the dirpath argument is a valid
-    directory.
-
-    :param [str] `dirpath`: the path of a directory
-
-    :return: returns the absolute path with expanded environment vars for a given dirpath.
-    :rtype: str
-    """
-    dirpath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
-    if not os.path.isdir(dirpath):
-        raise ValueError(f"'{dirpath}' is not a valid directory path")
-    return dirpath
 
 
 def parse_override_vars(
@@ -222,11 +195,13 @@ def launch_workers(args):
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
-    status = router.launch_workers(spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only)
+    launch_worker_status = router.launch_workers(
+        spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only
+    )
     if args.worker_echo_only:
-        print(status)
+        print(launch_worker_status)
     else:
-        LOG.debug(f"celery command: {status}")
+        LOG.debug(f"celery command: {launch_worker_status}")
 
 
 def purge_tasks(args):
@@ -249,18 +224,98 @@ def purge_tasks(args):
 
 def query_status(args):
     """
-    CLI command for querying queue status.
+    CLI command for querying status of studies.
+    Based on the parsed CLI args, construct either a Status object or a DetailedStatus object
+    and display the appropriate output.
+    Object mapping is as follows:
+    merlin status -> Status object ; merlin detailed-status -> DetailedStatus object
 
-    :param 'args': parsed CLI arguments
+    :param `args`: parsed CLI arguments
     """
     print(banner_small)
-    spec, _ = get_merlin_spec_with_override(args)
-    ret = router.query_status(args.task_server, spec, args.steps)
 
-    for name, queue_info in ret.items():
-        print(f"{name:30} - Workers: {queue_info['consumers']:10} - Queued Tasks: {queue_info['jobs']:10}")
-    if args.csv is not None:
-        router.dump_status(ret, args.csv)
+    # Ensure task server is valid
+    if args.task_server != "celery":
+        raise ValueError("Currently the only supported task server is celery.")
+
+    # Make sure dump is valid if provided
+    if args.dump and (not args.dump.endswith(".csv") and not args.dump.endswith(".json")):
+        raise ValueError("The --dump option takes a filename that must end with .csv or .json")
+
+    # Establish whether the argument provided by the user was a spec file or a study directory
+    spec_display = False
+    try:
+        file_or_ws = verify_filepath(args.spec_or_workspace)
+        spec_display = True
+    except ValueError:
+        try:
+            file_or_ws = verify_dirpath(args.spec_or_workspace)
+        except ValueError:
+            LOG.error(f"The file or directory path {args.spec_or_workspace} does not exist.")
+            return None
+
+    # If we're loading status based on a spec, load in the spec provided
+    if spec_display:
+        args.specification = file_or_ws
+        args.spec_provided = get_spec_with_expansion(args.specification)
+
+    # Get either a Status object or DetailedStatus object
+    if args.detailed:
+        status_obj = DetailedStatus(args, spec_display, file_or_ws)
+    else:
+        status_obj = Status(args, spec_display, file_or_ws)
+
+    # Handle output appropriately
+    if args.dump:
+        status_obj.dump()
+    else:
+        status_obj.display()
+
+    return None
+
+
+def query_queues(args):
+    """
+    CLI command for finding all workers.
+
+    :param args: parsed CLI arguments
+    """
+    print(banner_small)
+
+    # Ensure a spec is provided if steps are provided
+    if not args.specification:
+        if "all" not in args.steps:
+            raise ValueError("The --steps argument MUST be used with the --specification argument.")
+        if args.variables:
+            raise ValueError("The --vars argument MUST be used with the --specification argument.")
+
+    # Ensure a supported file type is provided with the dump option
+    if args.dump is not None:
+        if not args.dump.endswith(".json") and not args.dump.endswith(".csv"):
+            raise ValueError("Unsupported file type. Dump files must be either '.json' or '.csv'.")
+
+    spec = None
+    # Load the spec if necessary
+    if args.specification:
+        spec, _ = get_merlin_spec_with_override(args)
+
+    # Obtain the queue information
+    queue_information = router.query_queues(args.task_server, spec, args.steps, args.specific_queues)
+
+    if queue_information:
+        # Format the queue information so we can pass it to the tabulate library
+        formatted_queue_info = [("Queue Name", "Task Count", "Worker Count")]
+        for queue_name, queue_stats in queue_information.items():
+            formatted_queue_info.append((queue_name, queue_stats["jobs"], queue_stats["consumers"]))
+
+        # Print the queue information
+        print()
+        print(tabulate(formatted_queue_info, headers="firstrow"))
+        print()
+
+        # Dump queue information to an output file if necessary
+        if args.dump:
+            router.dump_queue_info(args.task_server, queue_information, args.dump)
 
 
 def query_workers(args):
@@ -891,29 +946,173 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         Merlin job.
     """
     # merlin status
-    status: ArgumentParser = subparsers.add_parser(
+    status_cmd: ArgumentParser = subparsers.add_parser(
         "status",
-        help="List server stats (name, number of tasks to do, \
-                              number of connected workers) for a workflow spec.",
+        help="Display a summary of the status of a study.",
     )
-    status.set_defaults(func=query_status)
-    status.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
-    status.add_argument(
-        "--steps",
-        nargs="+",
-        type=str,
-        dest="steps",
-        default=["all"],
-        help="The specific steps in the YAML file you want to query",
+    status_cmd.set_defaults(func=query_status, detailed=False)
+    status_cmd.add_argument("spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study")
+    status_cmd.add_argument(
+        "--cb-help", action="store_true", help="Colorblind help; uses different symbols to represent different statuses"
     )
-    status.add_argument(
+    status_cmd.add_argument(
+        "--dump", type=str, help="Dump the status to a file. Provide the filename (must be .csv or .json).", default=None
+    )
+    status_cmd.add_argument(
+        "--no-prompts",
+        action="store_true",
+        help="Ignore any prompts provided. This will default to the latest study \
+            if you provide a spec file rather than a study workspace.",
+    )
+    status_cmd.add_argument(
         "--task_server",
         type=str,
         default="celery",
         help="Task server type.\
                             Default: %(default)s",
     )
-    status.add_argument(
+    status_cmd.add_argument(
+        "-o",
+        "--output-path",
+        action="store",
+        type=str,
+        default=None,
+        help="Specify a location to look for output workspaces. Only used when a spec file is passed as the argument "
+        "to 'status'; this will NOT be used if an output workspace is passed as the argument.",
+    )
+
+    # merlin detailed-status
+    detailed_status: ArgumentParser = subparsers.add_parser(
+        "detailed-status",
+        help="Display a task-by-task status of a study.",
+    )
+    detailed_status.set_defaults(func=query_status, detailed=True)
+    detailed_status.add_argument(
+        "spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study"
+    )
+    detailed_status.add_argument(
+        "--dump", type=str, help="Dump the status to a file. Provide the filename (must be .csv or .json).", default=None
+    )
+    detailed_status.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type.\
+                            Default: %(default)s",
+    )
+    detailed_status.add_argument(
+        "-o",
+        "--output-path",
+        action="store",
+        type=str,
+        default=None,
+        help="Specify a location to look for output workspaces. Only used when a spec file is passed as the argument "
+        "to 'status'; this will NOT be used if an output workspace is passed as the argument.",
+    )
+    status_filter_group = detailed_status.add_argument_group("filter options")
+    status_filter_group.add_argument(
+        "--max-tasks", action="store", type=int, help="Sets a limit on how many tasks can be displayed"
+    )
+    status_filter_group.add_argument(
+        "--return-code",
+        action="store",
+        nargs="+",
+        type=str,
+        choices=VALID_RETURN_CODES,
+        help="Filter which tasks to display based on their return code",
+    )
+    status_filter_group.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="steps",
+        default=["all"],
+        help="Filter which tasks to display based on the steps they're associated with",
+    )
+    status_filter_group.add_argument(
+        "--task-queues",
+        nargs="+",
+        type=str,
+        help="Filter which tasks to display based on the task queue they're in",
+    )
+    status_filter_group.add_argument(
+        "--task-status",
+        action="store",
+        nargs="+",
+        type=str,
+        choices=VALID_STATUS_FILTERS,
+        help="Filter which tasks to display based on their status",
+    )
+    status_filter_group.add_argument(
+        "--workers",
+        nargs="+",
+        type=str,
+        help="Filter which tasks to display based on which workers are processing them",
+    )
+    status_display_group = detailed_status.add_argument_group("display options")
+    status_display_group.add_argument(
+        "--disable-pager", action="store_true", help="Turn off the pager functionality when viewing the status"
+    )
+    status_display_group.add_argument(
+        "--disable-theme",
+        action="store_true",
+        help="Turn off styling for the status layout (If you want styling but it's not working, try modifying "
+        "the MANPAGER or PAGER environment variables to be 'less -r'; i.e. export MANPAGER='less -r')",
+    )
+    status_display_group.add_argument(
+        "--layout",
+        type=str,
+        choices=status_renderer_factory.get_layouts(),
+        default="default",
+        help="Alternate status layouts [Default: %(default)s]",
+    )
+    status_display_group.add_argument(
+        "--no-prompts",
+        action="store_true",
+        help="Ignore any prompts provided. This will default to the latest study \
+            if you provide a spec file rather than a study workspace.",
+    )
+
+    # merlin queue-info
+    queue_info: ArgumentParser = subparsers.add_parser(
+        "queue-info",
+        help="List queue statistics (queue name, number of tasks in the queue, number of connected workers).",
+    )
+    queue_info.set_defaults(func=query_queues)
+    queue_info.add_argument(
+        "--dump",
+        type=str,
+        help="Dump the queue information to a file. Provide the filename (must be .csv or .json)",
+        default=None,
+    )
+    queue_info.add_argument(
+        "--specific-queues", nargs="+", type=str, help="Display queue stats for specific queues you list here"
+    )
+    queue_info.add_argument(
+        "--task_server",
+        type=str,
+        default="celery",
+        help="Task server type. Default: %(default)s",
+    )
+    spec_group = queue_info.add_argument_group("specification options")
+    spec_group.add_argument(
+        "--spec",
+        dest="specification",
+        type=str,
+        help="Path to a Merlin YAML spec file. \
+                            This will only display information for queues defined in this spec file. \
+                            This is the same behavior as the status command prior to Merlin version 1.11.0.",
+    )
+    spec_group.add_argument(
+        "--steps",
+        nargs="+",
+        type=str,
+        dest="steps",
+        default=["all"],
+        help="The specific steps in the YAML file you want to query the queues of. "
+        "This option MUST be used with the --spec option",
+    )
+    spec_group.add_argument(
         "--vars",
         action="store",
         dest="variables",
@@ -921,9 +1120,8 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
         nargs="+",
         default=None,
         help="Specify desired Merlin variable values to override those found in the specification. Space-delimited. "
-        "Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
+        "This option MUST be used with the --spec option. Example: '--vars LEARN=path/to/new_learn.py EPOCHS=3'",
     )
-    status.add_argument("--csv", type=str, help="csv file to dump status report to", default=None)
 
     # merlin info
     info: ArgumentParser = subparsers.add_parser(

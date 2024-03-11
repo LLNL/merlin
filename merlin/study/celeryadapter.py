@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.12.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,11 +37,14 @@ import socket
 import subprocess
 import time
 from contextlib import suppress
-from typing import Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 from amqp.exceptions import ChannelError
 from celery import Celery
+from tabulate import tabulate
 
+from merlin.common.dumper import dump_handler
 from merlin.config import Config
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
@@ -219,7 +222,6 @@ def query_celery_workers(spec_worker_names, queues, workers_regex):
     :param `workers_regex`: A list of regexs to filter by
     """
     from merlin.celery import app  # pylint: disable=C0415
-    from merlin.display import tabulate_info  # pylint: disable=C0415
 
     # Ping all workers and grab which ones are running
     workers = get_workers_from_app()
@@ -272,8 +274,154 @@ def query_celery_workers(spec_worker_names, queues, workers_regex):
 
     # Display the output table
     LOG.info("Found these connected workers:")
-    tabulate_info(table, headers=["Workers", "Queues"])
+    print(tabulate(table, headers=["Workers", "Queues"]))
     print()
+
+
+def build_csv_queue_info(query_return: List[Tuple[str, int, int]], date: str) -> Dict[str, List]:
+    """
+    Build the lists of column labels and queue info to write to the csv file.
+
+    :param query_return: The output of `query_queues`
+    :param date: A timestamp for us to mark when this status occurred
+    :returns: A dict of queue information to dump to a csv file
+    """
+    # Build the list of labels if necessary
+    csv_to_dump = {"time": [date]}
+    for queue_name, queue_stats in query_return.items():
+        csv_to_dump[f"{queue_name}:tasks"] = [str(queue_stats["jobs"])]
+        csv_to_dump[f"{queue_name}:consumers"] = [str(queue_stats["consumers"])]
+
+    return csv_to_dump
+
+
+def build_json_queue_info(query_return: List[Tuple[str, int, int]], date: str) -> Dict:
+    """
+    Build the dict of queue info to dump to the json file.
+
+    :param query_return: The output of `query_queues`
+    :param date: A timestamp for us to mark when this status occurred
+    :returns: A dictionary that's ready to dump to a json outfile
+    """
+    # Get the datetime so we can track different entries and initalize a new json entry
+    json_to_dump = {date: {}}
+
+    # Add info for each queue (name)
+    for queue_name, queue_stats in query_return.items():
+        json_to_dump[date][queue_name] = {"tasks": queue_stats["jobs"], "consumers": queue_stats["consumers"]}
+
+    return json_to_dump
+
+
+def dump_celery_queue_info(query_return: List[Tuple[str, int, int]], dump_file: str):
+    """
+    Format the information we're going to dump in a way that the Dumper class can
+    understand and add a timestamp to the info.
+
+    :param query_return: The output of `query_queues`
+    :param dump_file: The filepath of the file we'll dump queue info to
+    """
+    # Get a timestamp for this dump
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Handle different file types
+    if dump_file.endswith(".csv"):
+        # Build the lists of information/labels we'll need
+        dump_info = build_csv_queue_info(query_return, date)
+    elif dump_file.endswith(".json"):
+        # Build the dict of info to dump to the json file
+        dump_info = build_json_queue_info(query_return, date)
+
+    # Dump the information
+    dump_handler(dump_file, dump_info)
+
+
+def _get_specific_queues(queues: set, specific_queues: List[str], spec: "MerlinSpec", verbose=True) -> set:  # noqa: F821
+    """
+    Search for specific queues that the user asked for. The queues that cannot be found will not
+    be returned. The queues that can be found will be added to a set and returned.
+
+    :param queues: Either an empty set or a set of queues from `spec`
+    :param specific_queues: The list of queues that we're going to search for
+    :param spec: A `MerlinSpec` object or None
+    :param verbose: If True, display log messages. Otherwise, don't.
+    :returns: A set of the specific queues that were found to exist.
+    """
+    if verbose:
+        LOG.info(f"Filtering queues to query by these specific queues: {specific_queues}")
+
+    # Add the queue tag from celery if necessary
+    celerize_queues(specific_queues)
+    # Remove any potential duplicates and create a new set to store the queues we'll want to check
+    specific_queues = set(specific_queues)
+    specific_queues_to_check = set()
+
+    for specific_queue in specific_queues:
+        # If the user provided the --spec flag too then we'll need to check that this
+        # specific queue exists in the spec that they provided
+        add_specific_queue = True
+        if spec and specific_queue not in queues:
+            if verbose:
+                LOG.warning(
+                    f"Either couldn't find {specific_queue} in the existing queues for the spec file provided or "
+                    "this queue doesn't go with the steps provided with the --steps option. Ignoring this queue."
+                )
+            add_specific_queue = False
+
+        # Add the full queue name to the set of queues we'll check
+        if add_specific_queue:
+            specific_queues_to_check.add(specific_queue)
+
+    return specific_queues_to_check
+
+
+def build_set_of_queues(
+    spec: "MerlinSpec",  # noqa: F821
+    steps: List[str],
+    specific_queues: List[str],
+    verbose: Optional[bool] = True,
+    app: Optional["Celery"] = None,  # noqa: F821
+) -> set:
+    """
+    Build a set of queues to query based on the parameters given here.
+
+    :param spec: A `MerlinSpec` object or None
+    :param steps: Spaced-separated list of stepnames to query. Default is all
+    :param specific_queues: A list of queue names to query or None
+    :param verbose: A bool to determine whether to output log statements or not
+    :param app: A celery app object, if left out we'll just import it
+    :returns: A set of queues to investigate
+    """
+    if app is None:
+        from merlin.celery import app  # pylint: disable=C0415
+
+    queues = set()
+    # If the user provided a spec file, get the queues from that spec
+    if spec:
+        if verbose:
+            LOG.info(f"Querying queues for steps = {steps}")
+        queues = set(spec.get_queue_list(steps))
+
+    # If the user provided specific queues, search for those
+    if specific_queues:
+        queues = _get_specific_queues(queues, specific_queues, spec, verbose=verbose)
+
+    # Default behavior with no options provided; display active queues
+    if not spec and not specific_queues:
+        if verbose:
+            LOG.info("Querying active queues")
+        existing_queues, _ = get_active_celery_queues(app)
+
+        # Check if there's any active queues currently
+        if len(existing_queues) == 0:
+            if verbose:
+                LOG.warning("No active queues found. Are your workers running yet?")
+            return set()
+
+        # Set the queues we're going to check to be all existing queues by default
+        queues = set(existing_queues.keys())
+
+    return queues
 
 
 def query_celery_queues(queues: List[str], app: Celery = None, config: Config = None) -> Dict[str, List[str]]:
