@@ -312,13 +312,17 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
 
             all_chains.append(new_chain)
 
-        condense_sig = condense_status_files.s(
-            sample_index=sample_index,
-            workspace=top_lvl_workspace,
-            condensed_workspace=chain_[0].mstep.condensed_workspace,
-        ).set(
-            queue=chain_[0].get_task_queue(),
-        )
+        # Only need to condense status files if there's more than 1 sample
+        if num_samples > 1:
+            condense_sig = condense_status_files.s(
+                sample_index=sample_index,
+                workspace=top_lvl_workspace,
+                condensed_workspace=chain_[0].mstep.condensed_workspace,
+            ).set(
+                queue=chain_[0].get_task_queue(),
+            )
+        else:
+            condense_sig = None
 
         LOG.debug("adding chain to chord")
         chain_1d = get_1d_chain(all_chains)
