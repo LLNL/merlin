@@ -369,7 +369,7 @@ def display_status_summary(  # pylint: disable=R0912
             "UNKNOWN": {"count": 0, "color": ANSI_COLORS["GREY"], "fill": "?"},
             "INITIALIZED": {"count": 0, "color": ANSI_COLORS["LIGHT_BLUE"]},
             "RUNNING": {"count": 0, "color": ANSI_COLORS["BLUE"]},
-            "DRY RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
+            "DRY_RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
             "TOTAL TASKS": {"total": status_obj.tasks_per_step[sstep]},
             "AVG RUN TIME": status_obj.run_time_info[sstep]["avg_run_time"],
             "RUN TIME STD DEV": status_obj.run_time_info[sstep]["run_time_std_dev"],
