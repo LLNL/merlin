@@ -561,6 +561,10 @@ class DetailedStatus(Status):
         args_copy = Namespace(**vars(args))
         super().__init__(args, spec_display, file_or_ws)
 
+        # Need to set this environment value for the pager functionality to work
+        if not args.disable_pager:
+            os.environ["MANPAGER"] = "less -r"
+
         # Check if the steps filter was given
         self.steps_filter_provided = "all" not in args_copy.steps
 
