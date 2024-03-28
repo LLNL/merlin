@@ -55,6 +55,7 @@ from merlin.study.status_constants import (
 )
 from merlin.study.status_renderers import status_renderer_factory
 from merlin.utils import (
+    apply_list_of_regex,
     convert_timestring,
     convert_to_timedelta,
     dict_deep_merge,
@@ -104,6 +105,21 @@ class Status:
         # Variable to store the statuses that the user wants
         self.requested_statuses = {}
         self.load_requested_statuses()
+
+    def _print_requested_statuses(self):
+        """
+        Helper method to print out the requested statuses dict.
+        """
+        print("self.requested_statuses:")
+        for step_name, overall_step_info in self.requested_statuses.items():
+            print(f"\t{step_name}:")
+            for key, val in overall_step_info.items():
+                if key in NON_WORKSPACE_KEYS:
+                    print(f"\t\t{key}: {val}")
+                else:
+                    print(f"\t\t{key}:")
+                    for status_key, status_val in val.items():
+                        print(f"\t\t\t{status_key}: {status_val}")
 
     def _verify_filter_args(self):
         """
@@ -346,13 +362,17 @@ class Status:
                 lock = FileLock(f"{root}/status.lock")  # pylint: disable=E0110
                 statuses_read = read_status(status_filepath, lock)
 
+                # Merge the statuses we read with the dict tracking all statuses for this step
+                dict_deep_merge(step_statuses, statuses_read)
+
                 # Add full step name to the tracker and count number of statuses we just read in
                 for full_step_name, status_info in statuses_read.items():
                     self.full_step_name_map[started_step_name].add(full_step_name)
                     num_statuses_read += len(status_info.keys() - NON_WORKSPACE_KEYS)
 
-                # Merge the statuses we read with the dict tracking all statuses for this step
-                dict_deep_merge(step_statuses, statuses_read)
+                    # Make sure there aren't any duplicate workers
+                    if "workers" in step_statuses[full_step_name]:
+                        step_statuses[full_step_name]["workers"] = list(set(step_statuses[full_step_name]["workers"]))
 
         LOG.debug(
             f"Done traversing '{step_workspace}'. Read in {num_statuses_read} "
@@ -501,7 +521,7 @@ class Status:
             "cmd_parameters": [],
             "restart_parameters": [],
             "task_queue": [],
-            "worker_name": [],
+            "workers": [],
         }
 
         # We only care about started steps since unstarted steps won't have any status to report
@@ -511,8 +531,11 @@ class Status:
 
             # Loop through information for each step
             for step_info_key, step_info_value in overall_step_info.items():
-                # Format celery specific keys
-                if step_info_key in CELERY_KEYS:
+                # Skip the workers entry at the top level; this will be added in the else statement below on a task-by-task basis
+                if step_info_key == "workers":
+                    continue
+                # Format task queue entry
+                if step_info_key == "task_queue":
                     # Set the val_to_add value based on if a value exists for the key
                     val_to_add = step_info_value if step_info_value else "-------"
                     # Add the val_to_add entry for each row
@@ -541,7 +564,10 @@ class Status:
 
                     # Add the rest of the information for each task (status, return code, elapsed & run time, num restarts)
                     for key, val in step_info_value.items():
-                        reformatted_statuses[key].append(val)
+                        if key == "workers":
+                            reformatted_statuses[key].append(", ".join(val))
+                        else:
+                            reformatted_statuses[key].append(val)
 
         # For local runs, there will be no task queue or worker name so delete these entries
         for celery_specific_key in CELERY_KEYS:
@@ -678,30 +704,6 @@ class DetailedStatus(Status):
             )
             LOG.debug(f"args.workers after verification: {self.args.workers}")
 
-    def _process_workers(self):
-        """
-        Modifies the list of steps to display status for based on
-        the list of workers provided by the user.
-        """
-        LOG.debug("Processing workers filter...")
-        # Remove duplicates
-        workers_provided = list(set(self.args.workers))
-
-        # Get a map between workers and steps
-        worker_step_map = self.spec.get_worker_step_map()
-
-        # Append steps associated with each worker provided
-        for worker_provided in workers_provided:
-            # Check for invalid workers
-            if worker_provided not in worker_step_map:
-                LOG.warning(f"Worker with name {worker_provided} does not exist for this study.")
-            else:
-                for step in worker_step_map[worker_provided]:
-                    if step not in self.args.steps:
-                        self.args.steps.append(step)
-
-        LOG.debug(f"Steps after workers filter: {self.args.steps}")
-
     def _process_task_queue(self):
         """
         Modifies the list of steps to display status for based on
@@ -733,7 +735,7 @@ class DetailedStatus(Status):
         """
         Generates a list of steps to display the status for based on information
         provided to the merlin detailed-status command by the user. This function
-        will handle the --steps, --task-queues, and --workers filter options.
+        will handle the --steps and --task-queues filter options.
 
         :returns: A dictionary of started and unstarted steps for us to display the status of
         """
@@ -741,19 +743,17 @@ class DetailedStatus(Status):
 
         LOG.debug(f"existing steps: {existing_steps}")
 
-        if ("all" in self.args.steps) and (not self.args.task_queues) and (not self.args.workers):
-            LOG.debug("The steps, task_queues, and workers filters weren't provided. Setting steps to be all existing steps.")
+        if ("all" in self.args.steps) and (not self.args.task_queues):
+            LOG.debug("The steps and task_queues filters weren't provided. Setting steps to be all existing steps.")
             self.args.steps = existing_steps
         else:
-            # This won't matter anymore since task_queues or workers is not None here
+            # This won't matter anymore since task_queues is not None here
             if "all" in self.args.steps:
                 self.args.steps = []
 
-            # Add steps to start based on task queues and/or workers provided
+            # Add steps to start based on task queues provided
             if self.args.task_queues:
                 self._process_task_queue()
-            if self.args.workers:
-                self._process_workers()
 
             # Sort the steps to start by the order they show up in the study
             for i, estep in enumerate(existing_steps):
@@ -784,44 +784,97 @@ class DetailedStatus(Status):
 
         self.requested_statuses = result
 
-    def apply_filters(self, filter_types: List[str], filters: List[str]):
+    def _search_for_filter(self, filter_to_apply: List[str], entry_to_search: Union[List[str], str]) -> bool:
         """
-        Given a list of filters, filter the dict of requested statuses by them.
+        Search an entry to see if our filter(s) apply to this entry. If they do, return True. Otherwise, False.
 
-        :param `filter_types`: A list of str denoting the types of filters we're applying
-        :param `filters`: A list of filters to apply to the dict of statuses we read in
+        :param filter_to_apply: A list of filters to search for
+        :param entry_to_search: A list or string of entries to search for our filters in
+        :returns: True if a filter was found in the entry. False otherwise.
         """
-        LOG.info(f"Filtering tasks using these filters: {filters}")
+        if not isinstance(entry_to_search, list):
+            entry_to_search = [entry_to_search]
 
-        # Create a deep copy of the dict so we can make changes to it while we iterate
-        result = deepcopy(self.requested_statuses)
+        filter_matches = []
+        apply_list_of_regex(filter_to_apply, entry_to_search, filter_matches, display_warning=False)
+        if len(filter_matches) != 0:
+            return True
+        return False
 
+    def apply_filters(self):
+        """
+        Apply any filters given by the --workers, --return-code, and/or --task-status arguments.
+        This function will also apply the --max-tasks limit if it was set by a user. We apply this
+        limit here so it can be done in-place; if we called apply_max_tasks_limit instead, this
+        would become a two-pass algorithm and can be really slow with lots of statuses.
+        """
+        if self.args.max_tasks is not None:
+            # Make sure the max_tasks variable is set to a reasonable number and store that value
+            if self.args.max_tasks > self.num_requested_statuses:
+                LOG.debug(
+                    f"'max_tasks' was set to {self.args.max_tasks} but only {self.num_requested_statuses} statuses exist. "
+                    f"Setting 'max_tasks' to {self.num_requested_statuses}."
+                )
+                self.args.max_tasks = self.num_requested_statuses
+
+        # Establish a map between keys and filters; Only create a key/val pair here if the filter is not None
+        filter_key_map = {key: value for key, value in zip(["status", "return_code", "workers"], 
+                          [self.args.task_status, self.args.return_code, self.args.workers]) if value is not None}
+
+        matches_found = 0
+        filtered_statuses = {}
         for step_name, overall_step_info in self.requested_statuses.items():
+            filtered_statuses[step_name] = {}
+            # Add the non-workspace keys to the filtered_status dict so we don't accidentally miss any of this information while filtering
+            for non_ws_key in NON_WORKSPACE_KEYS:
+                try:
+                    filtered_statuses[step_name][non_ws_key] = overall_step_info[non_ws_key]
+                except KeyError:
+                    LOG.debug(f"Tried to add {non_ws_key} to filtered_statuses dict but it was not found in requested_statuses[{step_name}]")
+
+            # Go through the actual statuses and filter them as necessary
             for sub_step_workspace, task_status_info in overall_step_info.items():
                 # Ignore non workspace keys
                 if sub_step_workspace in NON_WORKSPACE_KEYS:
                     continue
 
-                # Search for our filters
                 found_a_match = False
-                for filter_type in filter_types:
-                    if task_status_info[filter_type] in filters:
-                        found_a_match = True
+
+                # Check all of our filters to see if this specific entry matches them all
+                filter_match = [False for _ in range(len(filter_key_map))]
+                for i, (filter_key, filter_to_apply) in enumerate(filter_key_map.items()):
+                    filter_match[i] = self._search_for_filter(filter_to_apply, task_status_info[filter_key])
+
+                found_a_match = any(filter_match)
+
+                # If a match is found, increment the number of matches found and compare against args.max_tasks limit
+                if found_a_match:
+                    matches_found += 1
+                    filtered_statuses[step_name][sub_step_workspace] = task_status_info
+                    # If we've hit the limit set by args.max_tasks, break out of the inner loop
+                    if matches_found == self.args.max_tasks:
                         break
+                else:
+                    # If our filters aren't a match for this task then delete it
+                    LOG.debug(f"No matching filter for '{sub_step_workspace}'.")
 
-                # If our filters aren't a match for this task then delete it
-                if not found_a_match:
-                    LOG.debug(f"No matching filter for '{sub_step_workspace}'; removing it from requested_statuses.")
-                    del result[step_name][sub_step_workspace]
+            # If we've hit the limit set by args.max_tasks, break out of the outer loop
+            if matches_found == self.args.max_tasks:
+                break
 
-        # Get the number of tasks found with our filters
-        self.requested_statuses = result
+        LOG.debug(f"result after applying filters: {filtered_statuses}")
+        LOG.info(f"Found {matches_found} tasks matching your filters.")
+
+        # Set our requested statuses to the new filtered statuses
+        self.requested_statuses = filtered_statuses
         self._remove_steps_without_statuses()
-        LOG.info(f"Found {self.num_requested_statuses} tasks matching your filters.")
 
         # If no tasks were found set the status dict to empty
         if self.num_requested_statuses == 0:
             self.requested_statuses = {}
+
+        if self.args.max_tasks is not None:
+            LOG.info(f"Limited the number of tasks to display to {self.args.max_tasks} tasks.")
 
     def apply_max_tasks_limit(self):
         """
@@ -873,50 +926,47 @@ class DetailedStatus(Status):
         # Grab all the statuses based on our step tracker
         super().load_requested_statuses()
 
-        # Apply filters to the statuses
-        filter_types = set()
-        filters = []
-        if self.args.task_status:
-            filter_types.add("status")
-            filters += self.args.task_status
-        if self.args.return_code:
-            filter_types.add("return_code")
-            filters += [f"MERLIN_{return_code}" for return_code in self.args.return_code]
+        # Determine if there are filters to apply
+        filters_to_apply = (self.args.return_code is not None) or (self.args.task_status is not None) or (self.args.workers is not None)
 
-        # Apply the filters if necessary
-        if filters:
-            self.apply_filters(list(filter_types), filters)
-
-        # Limit the number of tasks to display if necessary
-        if self.args.max_tasks is not None and self.args.max_tasks > 0:
+        # Case where there are filters to apply
+        if filters_to_apply:
+            self.apply_filters()  # This will also apply max_tasks if it's provided too
+        # Case where there are no filters but there is a max tasks limit set
+        elif self.args.max_tasks is not None:
             self.apply_max_tasks_limit()
 
-    def get_user_filters(self) -> List[str]:
+    def get_user_filters(self) -> bool:
         """
         Get a filter on the statuses to display from the user. Possible options
         for filtering:
             - A str MAX_TASKS -> will ask the user for another input that's equivalent to the --max-tasks flag
             - A list of statuses -> equivalent to the --task-status flag
             - A list of return codes -> equivalent to the --return-code flag
+            - A list of workers -> equivalent to the --workers flag
             - An exit keyword to leave the filter prompt without filtering
 
-        :returns: A list of strings to filter by
+        :returns: True if we need to exit without filtering. False otherwise.
         """
+        valid_workers = tuple(self.spec.get_worker_names())
+
         # Build the filter options
         filter_info = {
             "Filter Type": [
                 "Put a limit on the number of tasks to display",
                 "Filter by status",
                 "Filter by return code",
+                "Filter by workers",
                 "Exit without filtering",
             ],
             "Description": [
                 "Enter 'MAX_TASKS'",
                 f"Enter a comma separated list of the following statuses you'd like to see: {VALID_STATUS_FILTERS}",
                 f"Enter a comma separated list of the following return codes you'd like to see: {VALID_RETURN_CODES}",
+                f"Enter a comma separated list of the following workers from your spec: {valid_workers}",
                 f"Enter one of the following: {VALID_EXIT_FILTERS}",
             ],
-            "Example": ["MAX_TASKS", "FAILED, CANCELLED", "SOFT_FAIL, RETRY", "EXIT"],
+            "Example": ["MAX_TASKS", "FAILED, CANCELLED", "SOFT_FAIL, RETRY", "default_worker, other_worker", "EXIT"],
         }
 
         # Display the filter options
@@ -926,29 +976,60 @@ class DetailedStatus(Status):
 
         # Obtain and validate the filter provided by the user
         invalid_filter = True
+        exit_requested = False
         while invalid_filter:
             user_filters = input("How would you like to filter the tasks? ")
+
             # Remove spaces and split user filters by commas
             user_filters = user_filters.replace(" ", "")
             user_filters = user_filters.split(",")
 
+            # Variables to help track our filters
+            status_filters = []
+            return_code_filters = []
+            worker_filters = []
+            max_task_requested = False
+
             # Ensure every filter is valid
             for i, entry in enumerate(user_filters):
-                entry = entry.upper()
-                if entry not in ALL_VALID_FILTERS:
-                    invalid_filter = True
-                    print(f"Invalid input: {entry}. Input must be one of the following {ALL_VALID_FILTERS}")
-                    break
                 invalid_filter = False
-                user_filters[i] = entry
+                orig_entry = entry
+                entry = entry.upper()
 
-        return user_filters
+                if entry in VALID_STATUS_FILTERS:
+                    status_filters.append(entry)
+                elif entry in VALID_RETURN_CODES:
+                    return_code_filters.append(entry)
+                elif orig_entry in valid_workers:
+                    worker_filters.append(orig_entry)
+                elif entry == "MAX_TASKS":
+                    max_task_requested = True
+                elif entry in VALID_EXIT_FILTERS:
+                    LOG.info(f"The exit filter '{entry}' was provided. Exiting without filtering.")
+                    exit_requested = True
+                    break
+                else:
+                    invalid_filter = True
+                    print(f"Invalid input: {entry}. Input must be one of the following {ALL_VALID_FILTERS+valid_workers}")
+                    break
 
-    def get_user_max_tasks(self) -> int:
+        if exit_requested:
+            return True
+
+        # Set the filters provided by the user
+        self.args.task_status = status_filters if len(status_filters) > 0 else None
+        self.args.return_code = return_code_filters if len(return_code_filters) > 0 else None
+        self.args.workers = worker_filters if len(worker_filters) > 0 else None
+
+        # Set the max_tasks value if it was requested
+        if max_task_requested:
+            self.get_user_max_tasks()
+
+        return False
+
+    def get_user_max_tasks(self):
         """
         Get a limit for the amount of tasks to display from the user.
-
-        :returns: An int representing the max amount of tasks to display
         """
         invalid_input = True
 
@@ -963,7 +1044,7 @@ class DetailedStatus(Status):
                 print("Invalid input. The limit must be an integer greater than 0.")
                 continue
 
-        return user_max_tasks
+        self.args.max_tasks = user_max_tasks
 
     def filter_via_prompts(self):
         """
@@ -971,54 +1052,24 @@ class DetailedStatus(Status):
         prevent us from overloading the terminal by displaying a bazillion tasks at once.
         """
         # Get the filters from the user
-        user_filters = self.get_user_filters()
+        exit_without_filtering = self.get_user_filters()
 
-        # TODO remove this once restart/retry functionality is implemented
-        if "RESTART" in user_filters:
-            LOG.warning("The RESTART filter is coming soon. Ignoring this filter for now...")
-            user_filters.remove("RESTART")
-        if "RETRY" in user_filters:
-            LOG.warning("The RETRY filter is coming soon. Ignoring this filter for now...")
-            user_filters.remove("RETRY")
+        if not exit_without_filtering:
+            # TODO remove this once restart/retry functionality is implemented
+            if self.args.return_code is not None:
+                if "RESTART" in self.args.return_code:
+                    LOG.warning("The RESTART filter is coming soon. Ignoring this filter for now...")
+                    self.args.return_code.remove("RESTART")
+                if "RETRY" in self.args.return_code:
+                    LOG.warning("The RETRY filter is coming soon. Ignoring this filter for now...")
+                    self.args.return_code.remove("RETRY")
 
-        # Variable to track whether the user wants to stop filtering
-        exit_without_filtering = False
-
-        # Process the filters
-        max_tasks_found = False
-        filter_types = []
-        for i, user_filter in enumerate(user_filters):
-            # Case 1: Exit command found, stop filtering
-            if user_filter in ("E", "EXIT"):
-                exit_without_filtering = True
-                break
-            # Case 2: MAX_TASKS command found, get the limit from the user
-            if user_filter == "MAX_TASKS":
-                max_tasks_found = True
-            # Case 3: Status filter provided, add it to the list of filter types
-            elif user_filter in VALID_STATUS_FILTERS and "status" not in filter_types:
-                filter_types.append("status")
-            # Case 4: Return Code filter provided, add it to the list of filter types and add the MERLIN prefix
-            elif user_filter in VALID_RETURN_CODES:
-                user_filters[i] = f"MERLIN_{user_filter}"
-                if "return_code" not in filter_types:
-                    filter_types.append("return_code")
-
-        # Remove the MAX_TASKS entry so we don't try to filter using it
-        try:
-            user_filters.remove("MAX_TASKS")
-        except ValueError:
-            pass
-
-        # Apply the filters and tell the user how many tasks match the filters (if necessary)
-        if not exit_without_filtering and user_filters:
-            self.apply_filters(filter_types, user_filters)
-
-        # Apply max tasks limit (if necessary)
-        if max_tasks_found:
-            user_max_tasks = self.get_user_max_tasks()
-            self.args.max_tasks = user_max_tasks
-            self.apply_max_tasks_limit()
+            # If any status, return code, or workers filters were given, apply them
+            if any(list_var is not None and len(list_var) != 0 for list_var in [self.args.return_code, self.args.task_status, self.args.workers]):
+                self.apply_filters()  # This will also apply max_tasks if it's provided too
+            # If just max_tasks was given, apply the limit and nothing else
+            elif self.args.max_tasks is not None:
+                self.apply_max_task_limit()
 
     def display(self, test_mode: Optional[bool] = False):
         """
