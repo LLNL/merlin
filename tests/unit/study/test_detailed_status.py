@@ -294,35 +294,43 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
     # Testing get_user_filters()
     ###############################################
 
-    def run_get_user_filters_test(self, inputs_to_test: List[str], expected_outputs: List[List[str]]):
+    def run_mock_input_with_filters(self, input_to_test: str, expected_return: bool, max_tasks: str = None):
         """
-        This will pass every input in `inputs_to_test` to the get_user_filters
-        method. All inputs in `inputs_to_test` should be valid inputs to the
-        prompt displayed in the get_user_filters method. After passing inputs in,
-        we will capture the result of running that method and compare it against
-        the expected outputs from `expected_outputs`.
+        This will pass in `input_to_test` (and `max_tasks` if set) as input to the prompt
+        that's displayed by the `get_user_filters` method. This function will then compare
+        the expected return vs the actual return value.
 
-        :param `inputs_to_test`: A list of valid inputs to give to the prompt displayed in get_user_filters
-        :param `expected_outputs`: A list of expected outputs corresponding to the inputs provided in
-                                   `inputs_to_test`. Each expected output should be a list
+        Not explicitly shown in this function is the side effect that `get_user_filters`
+        will modify one or more of `self.args.task_status`, `self.args.return_code`,
+        `self.args.workers`, and/or `self.args.max_tasks`. The values set for these will
+        be compared in the test method that calls this method.
+
+        :param input_to_test: A string to pass into the input prompt raised by `get_user_filters`
+        :param expected_return: The expected return value of the `get_user_filters` call
+        :param max_tasks: A string (really an int) to pass into the second input prompt raised
+                          by `get_user_filters` when `MAX_TASKS` is requested
         """
-        # Ensure the number of inputs matches the number of outputs
-        if len(inputs_to_test) != len(expected_outputs):
-            raise ValueError("The run_get_user_filters_test method requires that both arguments are the same length.")
+        # Add max_tasks entry to our side effect if necessary (this is what's passed as input)
+        side_effect = [input_to_test]
+        if max_tasks is not None:
+            side_effect.append(max_tasks)
 
         # Redirect the input prompt to be stored in mock_input and not displayed in stdout
-        with patch("builtins.input", side_effect=inputs_to_test) as mock_input:
-            for expected_output in expected_outputs:
-                # We use patch here to keep stdout from get_user_filters from being displayed
-                with patch("sys.stdout"):
-                    # Run the method we're testing and capture the result
-                    result = self.detailed_status_obj.get_user_filters()
+        with patch("builtins.input", side_effect=side_effect) as mock_input:
+            # We use patch here to keep stdout from get_user_filters from being displayed
+            with patch("sys.stdout"):
+                # Run the method we're testing and capture the result
+                result = self.detailed_status_obj.get_user_filters()
+            
+            calls = [call("How would you like to filter the tasks? ")]
+            if max_tasks is not None:
+                calls.append(call("What limit would you like to set? (must be an integer greater than 0) "))
+            
+            # Make sure the prompt is called with the initial prompt message
+            # mock_input.assert_called_with("How would you like to filter the tasks? ")
+            mock_input.assert_has_calls(calls)
 
-                # Make sure the prompt is called with the initial prompt message
-                mock_input.assert_called_with("How would you like to filter the tasks? ")
-
-                # Ensure the result matches the expected output
-                self.assertEqual(result, expected_output)
+            self.assertEqual(result, expected_return)
 
     def run_invalid_get_user_filters_test(self, inputs_to_test: List[str]):
         """
@@ -355,13 +363,28 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         # to account for that when we check how many invalid msgs we got in our output
         self.assertEqual(len(all_invalid_msgs), len(inputs_to_test) - 1)
 
+    def reset_filters(self):
+        """
+        Reset the filters so they can be set again from a starting stage.
+        """
+        self.detailed_status_obj.args.task_status = None
+        self.detailed_status_obj.args.return_code = None
+        self.detailed_status_obj.args.workers = None
+        self.detailed_status_obj.args.max_tasks = None
+
     def test_get_user_filters_exit(self):
         """
         This will test the exit input to the get_user_filters method.
         """
         inputs_to_test = ["E", "EXIT", "E, EXIT"]
-        expected_outputs = [["E"], ["EXIT"], ["E", "EXIT"]]
-        self.run_get_user_filters_test(inputs_to_test, expected_outputs)
+        for input_to_test in inputs_to_test:
+            self.run_mock_input_with_filters(input_to_test, True)  # The return should be true so we know to exit
+            self.assertEqual(self.detailed_status_obj.args.task_status, None)
+            self.assertEqual(self.detailed_status_obj.args.return_code, None)
+            self.assertEqual(self.detailed_status_obj.args.workers, None)
+            self.assertEqual(self.detailed_status_obj.args.max_tasks, None)
+
+            self.reset_filters()
 
     def test_get_user_filters_task_status(self):
         """
@@ -369,7 +392,14 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         """
         inputs_to_test = ["FAILED", "CANCELLED", "FAILED, CANCELLED"]
         expected_outputs = [["FAILED"], ["CANCELLED"], ["FAILED", "CANCELLED"]]
-        self.run_get_user_filters_test(inputs_to_test, expected_outputs)
+        for input_to_test, expected_output in zip(inputs_to_test, expected_outputs):
+            self.run_mock_input_with_filters(input_to_test, False)
+            self.assertEqual(self.detailed_status_obj.args.task_status, expected_output)
+            self.assertEqual(self.detailed_status_obj.args.return_code, None)
+            self.assertEqual(self.detailed_status_obj.args.workers, None)
+            self.assertEqual(self.detailed_status_obj.args.max_tasks, None)
+
+            self.reset_filters()
 
     def test_get_user_filters_return_codes(self):
         """
@@ -377,37 +407,116 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         """
         inputs_to_test = ["SOFT_FAIL", "STOP_WORKERS", "SOFT_FAIL, STOP_WORKERS"]
         expected_outputs = [["SOFT_FAIL"], ["STOP_WORKERS"], ["SOFT_FAIL", "STOP_WORKERS"]]
-        self.run_get_user_filters_test(inputs_to_test, expected_outputs)
+        for input_to_test, expected_output in zip(inputs_to_test, expected_outputs):
+            self.run_mock_input_with_filters(input_to_test, False)
+            self.assertEqual(self.detailed_status_obj.args.task_status, None)
+            self.assertEqual(self.detailed_status_obj.args.return_code, expected_output)
+            self.assertEqual(self.detailed_status_obj.args.workers, None)
+            self.assertEqual(self.detailed_status_obj.args.max_tasks, None)
+
+            self.reset_filters()
 
     def test_get_user_filters_max_tasks(self):
         """
         This will test the max tasks input to the get_user_filters method.
         """
         inputs_to_test = ["MAX_TASKS"]
-        expected_outputs = [["MAX_TASKS"]]
-        self.run_get_user_filters_test(inputs_to_test, expected_outputs)
+        max_tasks = 23
+        for input_to_test in inputs_to_test:
+            self.run_mock_input_with_filters(input_to_test, False, max_tasks=str(max_tasks))
+            self.assertEqual(self.detailed_status_obj.args.task_status, None)
+            self.assertEqual(self.detailed_status_obj.args.return_code, None)
+            self.assertEqual(self.detailed_status_obj.args.workers, None)
+            self.assertEqual(self.detailed_status_obj.args.max_tasks, max_tasks)
 
-    def test_get_user_filters_combination(self):
+            self.reset_filters()
+
+    def test_get_user_filters_status_and_return_code(self):
         """
-        This will test a combination of filters as inputs to the get_user_filters method.
+        This will test a combination of the task status and return code filters as inputs
+        to the get_user_filters method. The only args that should be set here are the task_status
+        and return_code args.
         """
-        inputs_to_test = [
-            "CANCELLED, SOFT_FAIL",  # testing return code and task status being used together
-            "STOP_WORKERS, MAX_TASKS",  # testing return code and max tasks being used together
-            "STOP_WORKERS, EXIT",  # testing return code and exit being used together
-            "FAILED, MAX_TASKS",  # testing task status and max tasks being used together
-            "CANCELLED, EXIT",  # testing task status and exit being used together
-            "MAX_TASKS, EXIT",  # testing max tasks and exit being used together
-        ]
-        expected_outputs = [
-            ["CANCELLED", "SOFT_FAIL"],
-            ["STOP_WORKERS", "MAX_TASKS"],
-            ["STOP_WORKERS", "EXIT"],
-            ["FAILED", "MAX_TASKS"],
-            ["CANCELLED", "EXIT"],
-            ["MAX_TASKS", "EXIT"],
-        ]
-        self.run_get_user_filters_test(inputs_to_test, expected_outputs)
+        filter1 = "CANCELLED"
+        filter2 = "SOFT_FAIL"
+        self.run_mock_input_with_filters(", ".join([filter1, filter2]), False)
+        self.assertEqual(self.detailed_status_obj.args.task_status, [filter1])
+        self.assertEqual(self.detailed_status_obj.args.return_code, [filter2])
+        self.assertEqual(self.detailed_status_obj.args.workers, None)
+        self.assertEqual(self.detailed_status_obj.args.max_tasks, None)
+
+    def test_get_user_filters_status_and_workers(self):
+        """
+        This will test a combination of the task status and workers filters as inputs
+        to the get_user_filters method. The only args that should be set here are the task_status
+        and workers args.
+        """
+        filter1 = "CANCELLED"
+        filter2 = "sample_worker"
+        self.run_mock_input_with_filters(", ".join([filter1, filter2]), False)
+        self.assertEqual(self.detailed_status_obj.args.task_status, [filter1])
+        self.assertEqual(self.detailed_status_obj.args.return_code, None)
+        self.assertEqual(self.detailed_status_obj.args.workers, [filter2])
+        self.assertEqual(self.detailed_status_obj.args.max_tasks, None)
+    
+    def test_get_user_filters_status_and_max_tasks(self):
+        """
+        This will test a combination of the task status and max tasks filters as inputs
+        to the get_user_filters method. The only args that should be set here are the task_status
+        and max_tasks args.
+        """
+        filter1 = "FINISHED"
+        filter2 = "MAX_TASKS"
+        max_tasks = 4
+        self.run_mock_input_with_filters(", ".join([filter1, filter2]), False, max_tasks=str(max_tasks))
+        self.assertEqual(self.detailed_status_obj.args.task_status, [filter1])
+        self.assertEqual(self.detailed_status_obj.args.return_code, None)
+        self.assertEqual(self.detailed_status_obj.args.workers, None)
+        self.assertEqual(self.detailed_status_obj.args.max_tasks, max_tasks)
+    
+    def test_get_user_filters_return_code_and_workers(self):
+        """
+        This will test a combination of the return code and workers filters as inputs
+        to the get_user_filters method. The only args that should be set here are the return_code
+        and workers args.
+        """
+        filter1 = "STOP_WORKERS"
+        filter2 = "sample_worker"
+        self.run_mock_input_with_filters(", ".join([filter1, filter2]), False)
+        self.assertEqual(self.detailed_status_obj.args.task_status, None)
+        self.assertEqual(self.detailed_status_obj.args.return_code, [filter1])
+        self.assertEqual(self.detailed_status_obj.args.workers, [filter2])
+        self.assertEqual(self.detailed_status_obj.args.max_tasks, None)
+
+    def test_get_user_filters_return_code_and_max_tasks(self):
+        """
+        This will test a combination of the return code and max tasks filters as inputs
+        to the get_user_filters method. The only args that should be set here are the return_code
+        and max_tasks args.
+        """
+        filter1 = "RETRY"
+        filter2 = "MAX_TASKS"
+        max_tasks = 4
+        self.run_mock_input_with_filters(", ".join([filter1, filter2]), False, max_tasks=str(max_tasks))
+        self.assertEqual(self.detailed_status_obj.args.task_status, None)
+        self.assertEqual(self.detailed_status_obj.args.return_code, [filter1])
+        self.assertEqual(self.detailed_status_obj.args.workers, None)
+        self.assertEqual(self.detailed_status_obj.args.max_tasks, max_tasks)
+    
+    def test_get_user_filters_workers_and_max_tasks(self):
+        """
+        This will test a combination of the workers and max tasks filters as inputs
+        to the get_user_filters method. The only args that should be set here are the workers
+        and max_tasks args.
+        """
+        filter1 = "sample_worker"
+        filter2 = "MAX_TASKS"
+        max_tasks = 4
+        self.run_mock_input_with_filters(", ".join([filter1, filter2]), False, max_tasks=str(max_tasks))
+        self.assertEqual(self.detailed_status_obj.args.task_status, None)
+        self.assertEqual(self.detailed_status_obj.args.return_code, None)
+        self.assertEqual(self.detailed_status_obj.args.workers, [filter1])
+        self.assertEqual(self.detailed_status_obj.args.max_tasks, max_tasks)
 
     def test_get_user_filters_only_invalid_inputs(self):
         """
@@ -457,12 +566,12 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
             # We use patch here to keep stdout from get_user_tasks from being displayed
             with patch("sys.stdout"):
                 # Run the method we're testing and save the result
-                result = self.detailed_status_obj.get_user_max_tasks()
+                self.detailed_status_obj.get_user_max_tasks()
 
             # Make sure the prompt is called with the correct prompt message
             mock_input.assert_called_with("What limit would you like to set? (must be an integer greater than 0) ")
             # Ensure we get correct output
-            self.assertEqual(result, expected_output)
+            self.assertEqual(self.detailed_status_obj.args.max_tasks, expected_output)
 
     # '1' is a valid input and we'll use that to exit safely from this test
     @patch("builtins.input", side_effect=["0", "-1", "1.5", "a", "1"])
@@ -790,33 +899,6 @@ class TestFilterApplication(TestBaseDetailedStatus):
         # Run the test
         self.run_get_steps_to_display_test(expected_step_tracker)
 
-    def test_apply_single_worker(self):
-        """
-        This tests the application of the workers filter with only one worker.
-        """
-        # Modify the workers argument and create the expected output
-        self.detailed_status_obj.args.workers = ["sample_worker"]
-        expected_step_tracker = {"started_steps": ["just_samples", "params_and_samples"], "unstarted_steps": []}
-
-        # We need to reset steps to "all" otherwise this test won't work
-        self.detailed_status_obj.args.steps = ["all"]
-
-        # Run the test
-        self.run_get_steps_to_display_test(expected_step_tracker)
-
-    def test_apply_multiple_workers(self):
-        """
-        This tests the application of the workers filter with multiple worker.
-        """
-        # Modify the workers argument and create the expected output
-        self.detailed_status_obj.args.workers = ["sample_worker", "other_worker"]
-
-        # We need to reset steps to "all" otherwise this test won't work
-        self.detailed_status_obj.args.steps = ["all"]
-
-        # Run the test
-        self.run_get_steps_to_display_test(status_test_variables.FULL_STEP_TRACKER)
-
     def test_apply_max_tasks(self):
         """
         The max_tasks filter has no default to test against as the default value is None
@@ -845,6 +927,22 @@ class TestFilterApplication(TestBaseDetailedStatus):
             expected_requested_statuses, self.detailed_status_obj.requested_statuses, ignore_order=True
         )
         self.assertEqual(requested_statuses_diff, {})
+
+    def test_apply_single_worker(self):
+        """
+        This tests the application of the workers filter with only one worker.
+        """
+        # Set the workers filter and run the test
+        self.detailed_status_obj.args.workers = ["other_worker"]
+        self.run_apply_filters_test(status_test_variables.REQUESTED_STATUSES_JUST_OTHER_WORKER)
+    
+    def test_apply_multiple_workers(self):
+        """
+        This tests the application of the workers filter with multiple worker.
+        """
+        # Set the workers filter and run the test
+        self.detailed_status_obj.args.workers = ["other_worker", "sample_worker"]
+        self.run_apply_filters_test(status_test_variables.ALL_REQUESTED_STATUSES)
 
     def test_apply_single_return_code(self):
         """
