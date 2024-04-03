@@ -1,10 +1,10 @@
-# Merlin Server Configuration
+# Containerized Server Configuration
 
 !!! warning
 
     It's recommended that you read through the [Configuration Overview](./index.md) page before proceeding with this module.
 
-The merlin server command allows users easy access to containerized broker and results servers for Merlin workflows. This allows users to run Merlin without a dedicated external server.
+The `merlin server` command allows users easy access to containerized broker and results servers for Merlin workflows. This allows users to run Merlin without a dedicated external server.
 
 The main configuration will be stored in the subdirectory called `server/` by default in the main Merlin configuration directory `~/.merlin`. However, different server images can be created for different use cases or studies by simplying creating a new directory to store local configuration files for Merlin server instances.
 
