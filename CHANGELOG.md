@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - New Priority.RETRY value for the Celery task priorities. This will be the new highest priority.
+- Documentation on how to run cross-node workflows with a containerized server (`merlin server`)
 
 ## [1.12.0]
 ### Added
