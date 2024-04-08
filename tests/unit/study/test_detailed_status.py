@@ -815,9 +815,9 @@ class TestFilterApplication(TestBaseDetailedStatus):
     inputs (that's what the TestFilterVerification class is for).
 
     This class will test 3 methods: get_steps_to_display (this applies the
-    steps, task_queues, and workers filters), apply_filters (this applies the
-    return_code and task_status filters), and apply_max_tasks_limit (this
-    applies the max_tasks filter).
+    steps and task_queues filters), apply_filters (this applies the return_code,
+    task_status, workers, and max_tasks filters), and apply_max_tasks_limit (this
+    applies just the max_tasks filter).
     """
 
     def test_apply_default_steps(self):
