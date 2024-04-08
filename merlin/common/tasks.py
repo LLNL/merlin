@@ -49,6 +49,7 @@ from merlin.config.utils import Priority, get_priority
 from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
 from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
+from merlin.study.status import read_status
 from merlin.utils import dict_deep_merge
 
 
@@ -471,12 +472,9 @@ def gather_statuses(
         # Read in the status data
         sample_workspace = f"{workspace}/{path}"
         status_filepath = f"{sample_workspace}/MERLIN_STATUS.json"
-        lock = FileLock(f"{sample_workspace}/status.lock")  # pylint: disable=E0110
+        lock_filepath = f"{sample_workspace}/status.lock"
         try:
-            # The status files will need locks when reading to avoid race conditions
-            with lock.acquire(timeout=10):
-                with open(status_filepath, "r") as status_file:
-                    status = json.load(status_file)
+            status = read_status(status_filepath, lock_filepath, raise_errors=True)
 
             # This for loop is just to get the step name that we don't have; it's really not even looping
             for step_name in status:
@@ -486,6 +484,7 @@ def gather_statuses(
                         # Add the status data to the statuses we'll write to the condensed file and remove this status file
                         dict_deep_merge(condensed_statuses, status)
                         files_to_remove.append(status_filepath)
+                        files_to_remove.append(lock_filepath)  # Remove the lock files as well as the status files
                 except KeyError:
                     LOG.warning(f"Key error when reading from {sample_workspace}")
         except Timeout:

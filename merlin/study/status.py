@@ -359,8 +359,7 @@ class Status:
             if matching_files:
                 LOG.debug(f"Found status file at '{status_filepath}'")
                 # Read in the statuses
-                lock = FileLock(f"{root}/status.lock")  # pylint: disable=E0110
-                statuses_read = read_status(status_filepath, lock)
+                statuses_read = read_status(status_filepath, f"{root}/status.lock")
 
                 # Merge the statuses we read with the dict tracking all statuses for this step
                 dict_deep_merge(step_statuses, statuses_read)
@@ -1084,28 +1083,62 @@ class DetailedStatus(Status):
             LOG.warning("No statuses to display.")
 
 
-def read_status(status_filepath: str, lock: FileLock, display_fnf_message: Optional[bool] = True) -> Dict:
+def read_status(
+    status_filepath: str,
+    lock_file: str,
+    display_fnf_message: bool = True,
+    raise_errors: bool = False,
+    timeout: int = 10
+) -> Dict:
     """
     Locks the status file for reading and returns its contents.
 
-    :param `status_filepath`: The path to the status file that we'll read from
-    :param `lock`: A FileLock object that we'll use to lock the file
-    :param `display_fnf_message`: If True, display the file not found warning. Otherwise don't.
+    :param status_filepath: The path to the status file that we'll read from.
+    :param lock_file: The path to the lock file that we'll use to create a FileLock.
+    :param display_fnf_message: If True, display the file not found warning. Otherwise don't.
+    :param raise_errors: A boolean indicating whether to ignore errors or raise them.
+    :param timeout: An integer representing how long to hold a lock for before timing out.
     :returns: A dict of the contents in the status file
     """
+    lock = FileLock(lock_file)
     try:
         # The status files will need locks when reading to avoid race conditions
-        with lock.acquire(timeout=10):
+        with lock.acquire(timeout=timeout):
             with open(status_filepath, "r") as status_file:
                 statuses_read = json.load(status_file)
     # Handle timeouts
-    except Timeout:
+    except Timeout as to_exc:
         LOG.warning(f"Timed out when trying to read status from {status_filepath}")
         statuses_read = {}
+        if raise_errors:
+            raise Timeout from to_exc
     # Handle FNF errors
-    except FileNotFoundError:
+    except FileNotFoundError as fnf_exc:
         if display_fnf_message:
             LOG.warning(f"Could not find {status_filepath}")
         statuses_read = {}
+        if raise_errors:
+            raise FileNotFoundError from fnf_exc
+    # Handle JSONDecode errors (this is likely due to an empty status file)
+    except json.decoder.JSONDecodeError as json_exc:
+        LOG.warning(f"JSONDecodeError raised when trying to read status from {status_filepath}")
+        if raise_errors:
+            raise json.decoder.JSONDecodeError from json_exc
 
     return statuses_read
+
+
+def write_status(status_to_write: Dict, status_filepath: str, lock_file: str, timeout: int = 10):
+    """
+    Locks the status file for writing. We're not catching any errors here since we likely want to
+    know if something went wrong in this process.
+
+    :param status_to_write: The status to write to the status file
+    :param status_filepath: The path to the status file that we'll write the status to
+    :param lock_file: The path to the lock file we'll use for this status write
+    :param timeout: A timeout value for the lock so it's always released eventually
+    """
+    lock = FileLock(lock_file)
+    with lock.acquire(timeout=timeout):
+        with open(status_filepath, "w") as status_file:
+            json.dump(status_to_write, status_file)
