@@ -1019,7 +1019,7 @@ class DetailedStatus(Status):
                     break
                 else:
                     invalid_filter = True
-                    print(f"Invalid input: {entry}. Input must be one of the following {ALL_VALID_FILTERS+valid_workers}")
+                    print(f"Invalid input: {entry}. Input must be one of the following {ALL_VALID_FILTERS + valid_workers}")
                     break
 
         if exit_requested:
