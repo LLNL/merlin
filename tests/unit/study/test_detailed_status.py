@@ -321,11 +321,11 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
             with patch("sys.stdout"):
                 # Run the method we're testing and capture the result
                 result = self.detailed_status_obj.get_user_filters()
-            
+
             calls = [call("How would you like to filter the tasks? ")]
             if max_tasks is not None:
                 calls.append(call("What limit would you like to set? (must be an integer greater than 0) "))
-            
+
             # Make sure the prompt is called with the initial prompt message
             # mock_input.assert_called_with("How would you like to filter the tasks? ")
             mock_input.assert_has_calls(calls)
@@ -458,7 +458,7 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         self.assertEqual(self.detailed_status_obj.args.return_code, None)
         self.assertEqual(self.detailed_status_obj.args.workers, [filter2])
         self.assertEqual(self.detailed_status_obj.args.max_tasks, None)
-    
+
     def test_get_user_filters_status_and_max_tasks(self):
         """
         This will test a combination of the task status and max tasks filters as inputs
@@ -473,7 +473,7 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         self.assertEqual(self.detailed_status_obj.args.return_code, None)
         self.assertEqual(self.detailed_status_obj.args.workers, None)
         self.assertEqual(self.detailed_status_obj.args.max_tasks, max_tasks)
-    
+
     def test_get_user_filters_return_code_and_workers(self):
         """
         This will test a combination of the return code and workers filters as inputs
@@ -502,7 +502,7 @@ class TestPromptFunctionality(TestBaseDetailedStatus):
         self.assertEqual(self.detailed_status_obj.args.return_code, [filter1])
         self.assertEqual(self.detailed_status_obj.args.workers, None)
         self.assertEqual(self.detailed_status_obj.args.max_tasks, max_tasks)
-    
+
     def test_get_user_filters_workers_and_max_tasks(self):
         """
         This will test a combination of the workers and max tasks filters as inputs
@@ -935,7 +935,7 @@ class TestFilterApplication(TestBaseDetailedStatus):
         # Set the workers filter and run the test
         self.detailed_status_obj.args.workers = ["other_worker"]
         self.run_apply_filters_test(status_test_variables.REQUESTED_STATUSES_JUST_OTHER_WORKER)
-    
+
     def test_apply_multiple_workers(self):
         """
         This tests the application of the workers filter with multiple worker.

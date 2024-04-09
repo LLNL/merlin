@@ -110,7 +110,7 @@ REQUESTED_STATUSES_JUST_OTHER_WORKER = {
             "restarts": 0,
             "workers": ["other_worker"],
         },
-    }
+    },
 }
 
 # This is the requested statuses with just the failed step

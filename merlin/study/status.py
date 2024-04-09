@@ -36,6 +36,7 @@ from argparse import Namespace
 from copy import deepcopy
 from datetime import datetime
 from glob import glob
+from traceback import print_exception
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -810,15 +811,20 @@ class DetailedStatus(Status):
         if self.args.max_tasks is not None:
             # Make sure the max_tasks variable is set to a reasonable number and store that value
             if self.args.max_tasks > self.num_requested_statuses:
-                LOG.debug(
+                LOG.warning(
                     f"'max_tasks' was set to {self.args.max_tasks} but only {self.num_requested_statuses} statuses exist. "
                     f"Setting 'max_tasks' to {self.num_requested_statuses}."
                 )
                 self.args.max_tasks = self.num_requested_statuses
 
         # Establish a map between keys and filters; Only create a key/val pair here if the filter is not None
-        filter_key_map = {key: value for key, value in zip(["status", "return_code", "workers"], 
-                          [self.args.task_status, self.args.return_code, self.args.workers]) if value is not None}
+        filter_key_map = {
+            key: value
+            for key, value in zip(
+                ["status", "return_code", "workers"], [self.args.task_status, self.args.return_code, self.args.workers]
+            )
+            if value is not None
+        }
 
         matches_found = 0
         filtered_statuses = {}
@@ -829,7 +835,9 @@ class DetailedStatus(Status):
                 try:
                     filtered_statuses[step_name][non_ws_key] = overall_step_info[non_ws_key]
                 except KeyError:
-                    LOG.debug(f"Tried to add {non_ws_key} to filtered_statuses dict but it was not found in requested_statuses[{step_name}]")
+                    LOG.debug(
+                        f"Tried to add {non_ws_key} to filtered_statuses dict but it was not found in requested_statuses[{step_name}]"
+                    )
 
             # Go through the actual statuses and filter them as necessary
             for sub_step_workspace, task_status_info in overall_step_info.items():
@@ -855,7 +863,7 @@ class DetailedStatus(Status):
                         break
                 else:
                     # If our filters aren't a match for this task then delete it
-                    LOG.debug(f"No matching filter for '{sub_step_workspace}'.")
+                    LOG.warning(f"No matching filter for '{sub_step_workspace}'.")
 
             # If we've hit the limit set by args.max_tasks, break out of the outer loop
             if matches_found == self.args.max_tasks:
@@ -926,7 +934,9 @@ class DetailedStatus(Status):
         super().load_requested_statuses()
 
         # Determine if there are filters to apply
-        filters_to_apply = (self.args.return_code is not None) or (self.args.task_status is not None) or (self.args.workers is not None)
+        filters_to_apply = (
+            (self.args.return_code is not None) or (self.args.task_status is not None) or (self.args.workers is not None)
+        )
 
         # Case where there are filters to apply
         if filters_to_apply:
@@ -990,7 +1000,7 @@ class DetailedStatus(Status):
             max_task_requested = False
 
             # Ensure every filter is valid
-            for i, entry in enumerate(user_filters):
+            for entry in user_filters:
                 invalid_filter = False
                 orig_entry = entry
                 entry = entry.upper()
@@ -1064,7 +1074,10 @@ class DetailedStatus(Status):
                     self.args.return_code.remove("RETRY")
 
             # If any status, return code, or workers filters were given, apply them
-            if any(list_var is not None and len(list_var) != 0 for list_var in [self.args.return_code, self.args.task_status, self.args.workers]):
+            if any(
+                list_var is not None and len(list_var) != 0
+                for list_var in [self.args.return_code, self.args.task_status, self.args.workers]
+            ):
                 self.apply_filters()  # This will also apply max_tasks if it's provided too
             # If just max_tasks was given, apply the limit and nothing else
             elif self.args.max_tasks is not None:
@@ -1084,11 +1097,7 @@ class DetailedStatus(Status):
 
 
 def read_status(
-    status_filepath: str,
-    lock_file: str,
-    display_fnf_message: bool = True,
-    raise_errors: bool = False,
-    timeout: int = 10
+    status_filepath: str, lock_file: str, display_fnf_message: bool = True, raise_errors: bool = False, timeout: int = 10
 ) -> Dict:
     """
     Locks the status file for reading and returns its contents.
@@ -1100,7 +1109,8 @@ def read_status(
     :param timeout: An integer representing how long to hold a lock for before timing out.
     :returns: A dict of the contents in the status file
     """
-    lock = FileLock(lock_file)
+    # Pylint complains that we're instantiating an abstract class but this is correct usage
+    lock = FileLock(lock_file)  # pylint: disable=abstract-class-instantiated
     try:
         # The status files will need locks when reading to avoid race conditions
         with lock.acquire(timeout=timeout):
@@ -1108,22 +1118,29 @@ def read_status(
                 statuses_read = json.load(status_file)
     # Handle timeouts
     except Timeout as to_exc:
-        LOG.warning(f"Timed out when trying to read status from {status_filepath}")
+        LOG.warning(f"Timed out when trying to read status from '{status_filepath}'")
         statuses_read = {}
         if raise_errors:
             raise Timeout from to_exc
     # Handle FNF errors
     except FileNotFoundError as fnf_exc:
         if display_fnf_message:
-            LOG.warning(f"Could not find {status_filepath}")
+            LOG.warning(f"Could not find '{status_filepath}'")
         statuses_read = {}
         if raise_errors:
             raise FileNotFoundError from fnf_exc
     # Handle JSONDecode errors (this is likely due to an empty status file)
     except json.decoder.JSONDecodeError as json_exc:
-        LOG.warning(f"JSONDecodeError raised when trying to read status from {status_filepath}")
+        LOG.warning(f"JSONDecodeError raised when trying to read status from '{status_filepath}'")
         if raise_errors:
             raise json.decoder.JSONDecodeError from json_exc
+    # Catch all exceptions so that we don't crash the workers
+    except Exception as exc:  # pylint: disable=broad-except
+        LOG.warning(
+            f"An exception was raised while trying to read status from '{status_filepath}'!\n{print_exception(type(exc), exc, exc.__traceback__)}"
+        )
+        if raise_errors:
+            raise exc
 
     return statuses_read
 
@@ -1138,7 +1155,14 @@ def write_status(status_to_write: Dict, status_filepath: str, lock_file: str, ti
     :param lock_file: The path to the lock file we'll use for this status write
     :param timeout: A timeout value for the lock so it's always released eventually
     """
-    lock = FileLock(lock_file)
-    with lock.acquire(timeout=timeout):
-        with open(status_filepath, "w") as status_file:
-            json.dump(status_to_write, status_file)
+    # Pylint complains that we're instantiating an abstract class but this is correct usage
+    try:
+        lock = FileLock(lock_file)  # pylint: disable=abstract-class-instantiated
+        with lock.acquire(timeout=timeout):
+            with open(status_filepath, "w") as status_file:
+                json.dump(status_to_write, status_file)
+    # Catch all exceptions so that we don't crash the workers
+    except Exception as exc:  # pylint: disable=broad-except
+        LOG.warning(
+            f"An exception was raised while trying to write status to '{status_filepath}'!\n{print_exception(type(exc), exc, exc.__traceback__)}"
+        )
