@@ -258,9 +258,9 @@ When it comes to configuring the `broker` and `results_backend` sections of your
 For Livermore Computing (LC) users we recommend configuring with either:
 
 - [Dedicated LaunchIT Servers](https://lc.llnl.gov/confluence/display/MERLIN/LaunchIT+Configuration)
-- [Containerized Servers](./merlin_server.md)
+- [Containerized Servers](./containerized_server.md)
 
 For all other users, we recommend configuring with either:
 
 - [Dedicated External Servers](./external_server.md)
-- [Containerized Servers](./merlin_server.md)
+- [Containerized Servers](./containerized_server.md)

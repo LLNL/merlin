@@ -15,10 +15,10 @@ nav:
   - User Guide:
     - User Guide Overview: "user_guide/index.md"
     - Installation: "user_guide/installation.md"
-    - Configuration: 
+    - Server Configuration: 
       - Configuration Overview: "user_guide/configuration/index.md"
       - External Server: "user_guide/configuration/external_server.md"
-      - Merlin Server: "user_guide/configuration/merlin_server.md"
+      - Containerized Server: "user_guide/configuration/containerized_server.md"
     - Command Line Interface: "user_guide/command_line.md"
     - Specification: "user_guide/specification.md"
     - Variables: "user_guide/variables.md"
