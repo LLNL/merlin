@@ -4,7 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.12.1]
 ### Added
 - New Priority.RETRY value for the Celery task priorities. This will be the new highest priority.
 - Support for the status command to handle multiple workers on the same step
