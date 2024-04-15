@@ -473,26 +473,32 @@ def gather_statuses(
         sample_workspace = f"{workspace}/{path}"
         status_filepath = f"{sample_workspace}/MERLIN_STATUS.json"
         lock_filepath = f"{sample_workspace}/status.lock"
-        try:
-            status = read_status(status_filepath, lock_filepath, raise_errors=True)
+        if os.path.exists(status_filepath):
+            try:
+                # NOTE: instead of leaving statuses as dicts read in by JSON, maybe they should each be their own object
+                status = read_status(status_filepath, lock_filepath, raise_errors=True)
 
-            # This for loop is just to get the step name that we don't have; it's really not even looping
-            for step_name in status:
-                try:
-                    # Make sure the status for this sample workspace is in a finished state (not initialized or running)
-                    if status[step_name][f"{condensed_workspace}/{path}"]["status"] not in ("INITIALIZED", "RUNNING"):
-                        # Add the status data to the statuses we'll write to the condensed file and remove this status file
-                        dict_deep_merge(condensed_statuses, status)
-                        files_to_remove.append(status_filepath)
-                        files_to_remove.append(lock_filepath)  # Remove the lock files as well as the status files
-                except KeyError:
-                    LOG.warning(f"Key error when reading from {sample_workspace}")
-        except Timeout:
-            # Raising this celery timeout instead will trigger a restart for this task
-            raise TimeoutError  # pylint: disable=W0707
-        except FileNotFoundError:
-            LOG.warning(f"Could not find {status_filepath} while trying to condense. Restarting this task...")
-            raise FileNotFoundError  # pylint: disable=W0707
+                # This for loop is just to get the step name that we don't have; it's really not even looping
+                for step_name in status:
+                    try:
+                        # Make sure the status for this sample workspace is in a finished state (not initialized or running)
+                        if status[step_name][f"{condensed_workspace}/{path}"]["status"] not in ("INITIALIZED", "RUNNING"):
+                            # Add the status data to the statuses we'll write to the condensed file and remove this status file
+                            dict_deep_merge(condensed_statuses, status)
+                            files_to_remove.append(status_filepath)
+                            files_to_remove.append(lock_filepath)  # Remove the lock files as well as the status files
+                    except KeyError:
+                        LOG.warning(f"Key error when reading from {sample_workspace}")
+            except Timeout:
+                # Raising this celery timeout instead will trigger a restart for this task
+                raise TimeoutError  # pylint: disable=W0707
+            except FileNotFoundError:
+                LOG.warning(f"Could not find {status_filepath} while trying to condense. Restarting this task...")
+                raise FileNotFoundError  # pylint: disable=W0707
+        else:
+            # Might be missing a status file in the output if we hit this but we don't want that
+            # to fully crash the workflow
+            LOG.debug(f"Could not find {status_filepath}, skipping this status file.")
 
     return condensed_statuses
 
