@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - New Priority.RETRY value for the Celery task priorities. This will be the new highest priority.
 - Support for the status command to handle multiple workers on the same step
+- Documentation on how to run cross-node workflows with a containerized server (`merlin server`)
 
 ### Changed
 - Modified some tests in `test_status.py` and `test_detailed_status.py` to accommodate bugfixes for the status commands
