@@ -571,8 +571,11 @@ class Status:
 
         # For local runs, there will be no task queue or worker name so delete these entries
         for celery_specific_key in CELERY_KEYS:
-            if not reformatted_statuses[celery_specific_key]:
-                del reformatted_statuses[celery_specific_key]
+            try:
+                if not reformatted_statuses[celery_specific_key]:
+                    del reformatted_statuses[celery_specific_key]
+            except KeyError:
+                pass
 
         return reformatted_statuses
 
