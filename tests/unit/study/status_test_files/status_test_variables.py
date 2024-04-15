@@ -57,18 +57,75 @@ TASKS_PER_STEP = {
 }
 NUM_ALL_REQUESTED_STATUSES = sum(TASKS_PER_STEP.values()) - TASKS_PER_STEP["unstarted_step"]
 
-# This is the requested statuses with just the failed step
-REQUESTED_STATUSES_JUST_FAILED_STEP = {
+# This is requested statuses with just the steps that were processed by 'other_worker'
+REQUESTED_STATUSES_JUST_OTHER_WORKER = {
+    "just_parameters_GREET.hello.LEAVE.goodbye": {
+        "parameters": {"cmd": {"GREET": "hello"}, "restart": {"LEAVE": "goodbye"}},
+        "task_queue": "just_parameters_queue",
+        "workers": ["other_worker"],
+        "just_parameters/GREET.hello.LEAVE.goodbye": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:30s",
+            "restarts": 0,
+            "workers": ["other_worker"],
+        },
+    },
+    "just_parameters_GREET.hola.LEAVE.adios": {
+        "parameters": {"cmd": {"GREET": "hola"}, "restart": {"LEAVE": "adios"}},
+        "task_queue": "just_parameters_queue",
+        "workers": ["other_worker"],
+        "just_parameters/GREET.hola.LEAVE.adios": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:01m:00s",
+            "run_time": "0d:00h:01m:00s",
+            "restarts": 0,
+            "workers": ["other_worker"],
+        },
+    },
     "fail_step": {
         "parameters": {"cmd": None, "restart": None},
         "task_queue": "fail_queue",
-        "worker_name": "other_worker",
+        "workers": ["other_worker"],
         "fail_step": {
             "status": "FAILED",
             "return_code": "MERLIN_SOFT_FAIL",
             "elapsed_time": "0d:00h:00m:00s",
             "run_time": "0d:00h:00m:00s",
             "restarts": 0,
+            "workers": ["other_worker"],
+        },
+    },
+    "cancel_step": {
+        "parameters": {"cmd": None, "restart": None},
+        "task_queue": "cancel_queue",
+        "workers": ["other_worker"],
+        "cancel_step": {
+            "status": "CANCELLED",
+            "return_code": "MERLIN_STOP_WORKERS",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0,
+            "workers": ["other_worker"],
+        },
+    },
+}
+
+# This is the requested statuses with just the failed step
+REQUESTED_STATUSES_JUST_FAILED_STEP = {
+    "fail_step": {
+        "parameters": {"cmd": None, "restart": None},
+        "task_queue": "fail_queue",
+        "workers": ["other_worker"],
+        "fail_step": {
+            "status": "FAILED",
+            "return_code": "MERLIN_SOFT_FAIL",
+            "elapsed_time": "0d:00h:00m:00s",
+            "run_time": "0d:00h:00m:00s",
+            "restarts": 0,
+            "workers": ["other_worker"],
         },
     }
 }
@@ -78,13 +135,14 @@ REQUESTED_STATUSES_JUST_CANCELLED_STEP = {
     "cancel_step": {
         "parameters": {"cmd": None, "restart": None},
         "task_queue": "cancel_queue",
-        "worker_name": "other_worker",
+        "workers": ["other_worker"],
         "cancel_step": {
             "status": "CANCELLED",
             "return_code": "MERLIN_STOP_WORKERS",
             "elapsed_time": "0d:00h:00m:00s",
             "run_time": "0d:00h:00m:00s",
             "restarts": 0,
+            "workers": ["other_worker"],
         },
     }
 }
@@ -94,25 +152,27 @@ REQUESTED_STATUSES_FAIL_AND_CANCEL = {
     "fail_step": {
         "parameters": {"cmd": None, "restart": None},
         "task_queue": "fail_queue",
-        "worker_name": "other_worker",
+        "workers": ["other_worker"],
         "fail_step": {
             "status": "FAILED",
             "return_code": "MERLIN_SOFT_FAIL",
             "elapsed_time": "0d:00h:00m:00s",
             "run_time": "0d:00h:00m:00s",
             "restarts": 0,
+            "workers": ["other_worker"],
         },
     },
     "cancel_step": {
         "parameters": {"cmd": None, "restart": None},
         "task_queue": "cancel_queue",
-        "worker_name": "other_worker",
+        "workers": ["other_worker"],
         "cancel_step": {
             "status": "CANCELLED",
             "return_code": "MERLIN_STOP_WORKERS",
             "elapsed_time": "0d:00h:00m:00s",
             "run_time": "0d:00h:00m:00s",
             "restarts": 0,
+            "workers": ["other_worker"],
         },
     },
 }
@@ -128,7 +188,7 @@ FORMATTED_STATUSES_FAIL_AND_CANCEL = {
     "cmd_parameters": ["-------", "-------"],
     "restart_parameters": ["-------", "-------"],
     "task_queue": ["fail_queue", "cancel_queue"],
-    "worker_name": ["other_worker", "other_worker"],
+    "workers": ["other_worker", "other_worker"],
 }
 
 # This variable holds the state_info dict of every step from VALID_WORKSPACE
@@ -141,9 +201,9 @@ DISPLAY_INFO = {
         "UNKNOWN": {"count": 0, "color": "\033[38;2;102;102;102m", "fill": "?"},
         "INITIALIZED": {"count": 0, "color": "\033[38;2;86;180;233m"},
         "RUNNING": {"count": 0, "color": "\033[38;2;0;114;178m"},
-        "DRY RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
+        "DRY_RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
         "TOTAL TASKS": {"total": 5},
-        "WORKER NAME": {"name": "sample_worker"},
+        "WORKER(S)": {"name": "sample_worker"},
         "TASK QUEUE": {"name": "just_samples_queue"},
         "AVG RUN TIME": "01m:30s",
         "RUN TIME STD DEV": "±21s",
@@ -155,9 +215,9 @@ DISPLAY_INFO = {
         "UNKNOWN": {"count": 0, "color": "\033[38;2;102;102;102m", "fill": "?"},
         "INITIALIZED": {"count": 0, "color": "\033[38;2;86;180;233m"},
         "RUNNING": {"count": 0, "color": "\033[38;2;0;114;178m"},
-        "DRY RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
+        "DRY_RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
         "TOTAL TASKS": {"total": 2},
-        "WORKER NAME": {"name": "other_worker"},
+        "WORKER(S)": {"name": "other_worker"},
         "TASK QUEUE": {"name": "just_parameters_queue"},
         "AVG RUN TIME": "01m:15s",
         "RUN TIME STD DEV": "±15s",
@@ -169,9 +229,9 @@ DISPLAY_INFO = {
         "UNKNOWN": {"count": 0, "color": "\033[38;2;102;102;102m", "fill": "?"},
         "INITIALIZED": {"count": 0, "color": "\033[38;2;86;180;233m"},
         "RUNNING": {"count": 0, "color": "\033[38;2;0;114;178m"},
-        "DRY RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
+        "DRY_RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
         "TOTAL TASKS": {"total": 10},
-        "WORKER NAME": {"name": "sample_worker"},
+        "WORKER(S)": {"name": "sample_worker"},
         "TASK QUEUE": {"name": "both_queue"},
         "AVG RUN TIME": "16s",
         "RUN TIME STD DEV": "±06s",
@@ -183,9 +243,9 @@ DISPLAY_INFO = {
         "UNKNOWN": {"count": 0, "color": "\033[38;2;102;102;102m", "fill": "?"},
         "INITIALIZED": {"count": 0, "color": "\033[38;2;86;180;233m"},
         "RUNNING": {"count": 0, "color": "\033[38;2;0;114;178m"},
-        "DRY RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
+        "DRY_RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
         "TOTAL TASKS": {"total": 1},
-        "WORKER NAME": {"name": "other_worker"},
+        "WORKER(S)": {"name": "other_worker"},
         "TASK QUEUE": {"name": "fail_queue"},
         "AVG RUN TIME": "00s",
         "RUN TIME STD DEV": "±00s",
@@ -197,9 +257,9 @@ DISPLAY_INFO = {
         "UNKNOWN": {"count": 0, "color": "\033[38;2;102;102;102m", "fill": "?"},
         "INITIALIZED": {"count": 0, "color": "\033[38;2;86;180;233m"},
         "RUNNING": {"count": 0, "color": "\033[38;2;0;114;178m"},
-        "DRY RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
+        "DRY_RUN": {"count": 0, "color": "\033[38;2;230;159;0m", "fill": "\\"},
         "TOTAL TASKS": {"total": 1},
-        "WORKER NAME": {"name": "other_worker"},
+        "WORKER(S)": {"name": "other_worker"},
         "TASK QUEUE": {"name": "cancel_queue"},
         "AVG RUN TIME": "00s",
         "RUN TIME STD DEV": "±00s",
@@ -236,37 +296,40 @@ ALL_REQUESTED_STATUSES = {
     "just_parameters_GREET.hello.LEAVE.goodbye": {
         "parameters": {"cmd": {"GREET": "hello"}, "restart": {"LEAVE": "goodbye"}},
         "task_queue": "just_parameters_queue",
-        "worker_name": "other_worker",
+        "workers": ["other_worker"],
         "just_parameters/GREET.hello.LEAVE.goodbye": {
             "status": "FINISHED",
             "return_code": "MERLIN_SUCCESS",
             "elapsed_time": "0d:00h:02m:00s",
             "run_time": "0d:00h:01m:30s",
             "restarts": 0,
+            "workers": ["other_worker"],
         },
     },
     "just_parameters_GREET.hola.LEAVE.adios": {
         "parameters": {"cmd": {"GREET": "hola"}, "restart": {"LEAVE": "adios"}},
         "task_queue": "just_parameters_queue",
-        "worker_name": "other_worker",
+        "workers": ["other_worker"],
         "just_parameters/GREET.hola.LEAVE.adios": {
             "status": "FINISHED",
             "return_code": "MERLIN_SUCCESS",
             "elapsed_time": "0d:00h:01m:00s",
             "run_time": "0d:00h:01m:00s",
             "restarts": 0,
+            "workers": ["other_worker"],
         },
     },
     "just_samples": {
         "parameters": {"cmd": None, "restart": None},
         "task_queue": "just_samples_queue",
-        "worker_name": "sample_worker",
+        "workers": ["sample_worker"],
         "just_samples/00": {
             "status": "FINISHED",
             "return_code": "MERLIN_SUCCESS",
             "elapsed_time": "0d:00h:02m:00s",
             "run_time": "0d:00h:01m:00s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "just_samples/01": {
             "status": "FINISHED",
@@ -274,6 +337,7 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:02m:00s",
             "run_time": "0d:00h:01m:15s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "just_samples/02": {
             "status": "FINISHED",
@@ -281,6 +345,7 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:02m:00s",
             "run_time": "0d:00h:01m:30s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "just_samples/03": {
             "status": "FINISHED",
@@ -288,6 +353,7 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:02m:00s",
             "run_time": "0d:00h:01m:45s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "just_samples/04": {
             "status": "FINISHED",
@@ -295,18 +361,20 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:02m:00s",
             "run_time": "0d:00h:02m:00s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
     },
     "params_and_samples_GREET.hello": {
         "parameters": {"cmd": {"GREET": "hello"}, "restart": None},
         "task_queue": "both_queue",
-        "worker_name": "sample_worker",
+        "workers": ["sample_worker"],
         "params_and_samples/GREET.hello/00": {
             "status": "FINISHED",
             "return_code": "MERLIN_SUCCESS",
             "elapsed_time": "0d:00h:00m:15s",
             "run_time": "0d:00h:00m:10s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "params_and_samples/GREET.hello/01": {
             "status": "FINISHED",
@@ -314,6 +382,7 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:00m:15s",
             "run_time": "0d:00h:00m:11s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "params_and_samples/GREET.hello/02": {
             "status": "FINISHED",
@@ -321,6 +390,7 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:00m:15s",
             "run_time": "0d:00h:00m:12s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "params_and_samples/GREET.hello/03": {
             "status": "FINISHED",
@@ -328,6 +398,7 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:00m:15s",
             "run_time": "0d:00h:00m:13s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "params_and_samples/GREET.hello/04": {
             "status": "FINISHED",
@@ -335,18 +406,20 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:00m:15s",
             "run_time": "0d:00h:00m:14s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
     },
     "params_and_samples_GREET.hola": {
         "parameters": {"cmd": {"GREET": "hola"}, "restart": None},
         "task_queue": "both_queue",
-        "worker_name": "sample_worker",
+        "workers": ["sample_worker"],
         "params_and_samples/GREET.hola/00": {
             "status": "FINISHED",
             "return_code": "MERLIN_SUCCESS",
             "elapsed_time": "0d:00h:00m:30s",
             "run_time": "0d:00h:00m:10s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "params_and_samples/GREET.hola/01": {
             "status": "FINISHED",
@@ -354,6 +427,7 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:00m:30s",
             "run_time": "0d:00h:00m:18s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "params_and_samples/GREET.hola/02": {
             "status": "FINISHED",
@@ -361,6 +435,7 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:00m:30s",
             "run_time": "0d:00h:00m:23s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "params_and_samples/GREET.hola/03": {
             "status": "FINISHED",
@@ -368,6 +443,7 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:00m:30s",
             "run_time": "0d:00h:00m:29s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
         "params_and_samples/GREET.hola/04": {
             "status": "FINISHED",
@@ -375,30 +451,33 @@ ALL_REQUESTED_STATUSES = {
             "elapsed_time": "0d:00h:00m:30s",
             "run_time": "0d:00h:00m:16s",
             "restarts": 0,
+            "workers": ["sample_worker"],
         },
     },
     "fail_step": {
         "parameters": {"cmd": None, "restart": None},
         "task_queue": "fail_queue",
-        "worker_name": "other_worker",
+        "workers": ["other_worker"],
         "fail_step": {
             "status": "FAILED",
             "return_code": "MERLIN_SOFT_FAIL",
             "elapsed_time": "0d:00h:00m:00s",
             "run_time": "0d:00h:00m:00s",
             "restarts": 0,
+            "workers": ["other_worker"],
         },
     },
     "cancel_step": {
         "parameters": {"cmd": None, "restart": None},
         "task_queue": "cancel_queue",
-        "worker_name": "other_worker",
+        "workers": ["other_worker"],
         "cancel_step": {
             "status": "CANCELLED",
             "return_code": "MERLIN_STOP_WORKERS",
             "elapsed_time": "0d:00h:00m:00s",
             "run_time": "0d:00h:00m:00s",
             "restarts": 0,
+            "workers": ["other_worker"],
         },
     },
 }
@@ -596,7 +675,7 @@ ALL_FORMATTED_STATUSES = {
         "fail_queue",
         "cancel_queue",
     ],
-    "worker_name": [
+    "workers": [
         "other_worker",
         "other_worker",
         "sample_worker",

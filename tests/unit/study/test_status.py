@@ -277,7 +277,7 @@ class TestMerlinStatus(unittest.TestCase):
         dummy_step_status = {
             "dummy_step_PARAM.1": {
                 "task_queue": "dummy_queue",
-                "worker_name": "dummy_worker",
+                "workers": "dummy_worker",
                 "dummy_step/PARAM.1/00": {
                     "status": "FINISHED",
                     "return_code": "MERLIN_SUCCESS",
@@ -295,7 +295,7 @@ class TestMerlinStatus(unittest.TestCase):
             },
             "dummy_step_PARAM.2": {
                 "task_queue": "dummy_queue",
-                "worker_name": "dummy_worker",
+                "workers": "dummy_worker",
                 "dummy_step/PARAM.2/00": {
                     "status": "FINISHED",
                     "return_code": "MERLIN_SUCCESS",
