@@ -349,7 +349,7 @@ def display_status_summary(  # pylint: disable=R0912
 
     :param `status_obj`: A Status object
     :param `non_workspace_keys`: A set of keys in requested_statuses that are not workspace keys.
-                                 This will be set("parameters", "task_queue", "worker_name)
+                                 This will be set("parameters", "task_queue", "workers")
     :param `test_mode`: If True, don't print anything and just return a dict of all the state info for each step
     :returns: A dict that's empty usually. If ran in test_mode it will be a dict of state_info for every step.
     """
@@ -369,7 +369,7 @@ def display_status_summary(  # pylint: disable=R0912
             "UNKNOWN": {"count": 0, "color": ANSI_COLORS["GREY"], "fill": "?"},
             "INITIALIZED": {"count": 0, "color": ANSI_COLORS["LIGHT_BLUE"]},
             "RUNNING": {"count": 0, "color": ANSI_COLORS["BLUE"]},
-            "DRY RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
+            "DRY_RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
             "TOTAL TASKS": {"total": status_obj.tasks_per_step[sstep]},
             "AVG RUN TIME": status_obj.run_time_info[sstep]["avg_run_time"],
             "RUN TIME STD DEV": status_obj.run_time_info[sstep]["run_time_std_dev"],
@@ -385,8 +385,9 @@ def display_status_summary(  # pylint: disable=R0912
             # If this was a non-local run we should have a task queue and worker name to add to state_info
             if "task_queue" in overall_step_info:
                 state_info["TASK QUEUE"] = {"name": overall_step_info["task_queue"]}
-            if "worker_name" in overall_step_info:
-                state_info["WORKER NAME"] = {"name": overall_step_info["worker_name"]}
+            if "workers" in overall_step_info:
+                worker_str = ", ".join(overall_step_info["workers"])
+                state_info["WORKER(S)"] = {"name": worker_str}
 
             # Loop through all workspaces for this step (if there's no samples for this step it'll just be one path)
             for sub_step_workspace, task_status_info in overall_step_info.items():
@@ -474,7 +475,7 @@ def display_progress_bar(  # pylint: disable=R0913,R0914
                 "INITIALIZED",
                 "RUNNING",
                 "TASK QUEUE",
-                "WORKER NAME",
+                "WORKER(S)",
                 "TOTAL TASKS",
                 "AVG RUN TIME",
                 "RUN TIME STD DEV",
