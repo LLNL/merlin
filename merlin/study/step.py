@@ -29,7 +29,6 @@
 ###############################################################################
 """This module represents all of the logic that goes into a step"""
 
-import json
 import logging
 import os
 import re
