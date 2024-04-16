@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0.
+# This file is part of Merlin, Version: 1.12.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -187,7 +187,7 @@ def regex_list_filter(regex, list_to_filter, match=True):
     return list(filter(r.search, list_to_filter))
 
 
-def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False):
+def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False, display_warning: bool = True):
     """
     Take a list of regex's, apply each regex to a list we're searching through,
     and append each result to a result list.
@@ -202,7 +202,8 @@ def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False):
         filter_results = set(regex_list_filter(regex, list_to_filter, match))
 
         if not filter_results:
-            LOG.warning(f"No regex match for {regex}.")
+            if display_warning:
+                LOG.warning(f"No regex match for {regex}.")
         else:
             result_list += filter_results
 
@@ -576,6 +577,11 @@ def dict_deep_merge(dict_a, dict_b, path=None):
         if key in dict_a:
             if isinstance(dict_a[key], dict) and isinstance(dict_b[key], dict):
                 dict_deep_merge(dict_a[key], dict_b[key], path + [str(key)])
+            elif key == "workers":  # specifically for status merging
+                all_workers = [dict_a[key], dict_b[key]]
+                dict_a[key] = list(set().union(*all_workers))
+            elif isinstance(dict_a[key], list) and isinstance(dict_a[key], list):
+                dict_a[key] += dict_b[key]
             elif dict_a[key] == dict_b[key]:
                 pass  # same leaf value
             else:

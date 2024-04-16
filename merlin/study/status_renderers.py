@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0
+# This file is part of Merlin, Version: 1.12.1
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -122,6 +122,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
             # Loop through each parameter token/val for this param type and create a row entry for each token/val
             for token, param_val in param_set.items():
+                param_val = str(param_val)
                 param_subtable.add_row(token, param_val, style="row_style")
 
             # Add the sub table for this parameter type to the list that will store both sub tables
@@ -135,7 +136,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         step_name: str,
         parameters: Dict[str, Dict[str, str]],
         task_queue: Optional[str] = None,
-        worker_name: Optional[str] = None,
+        workers: Optional[str] = None,
     ) -> Table:
         """
         Create each step entry in the display
@@ -143,7 +144,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         :param `step_name`: The name of the step that we're setting the layout for
         :param `parameters`: The parameters dict for this step
         :param `task_queue`: The name of the task queue associated with this step if one was provided
-        :param `worker_name`: The name of the worker that ran this step if one was provided
+        :param `workers`: The name of the worker(s) that ran this step if one was provided
         :returns: A rich Table object with info for one sub step (here a 'sub step' is referencing a step
                   with multiple parameters; each parameter set will have it's own entry in the output)
         """
@@ -156,8 +157,8 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
         # Top level contains step name and may contain task queue and worker name
         step_table.add_row("STEP:", step_name, style="Step Name")
-        if worker_name is not None:
-            step_table.add_row("WORKER NAME:", worker_name, style="Workspace")
+        if workers is not None:
+            step_table.add_row("WORKER(S):", ", ".join(workers), style="Workspace")
         if task_queue is not None:
             step_table.add_row("TASK QUEUE:", task_queue, style="Workspace")
 
@@ -180,7 +181,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         task_details = Table(title="Task Details")
 
         # Setup the columns
-        cols = ["Step Workspace", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts"]
+        cols = ["Step Workspace", "Status", "Return Code", "Elapsed Time", "Run Time", "Restarts", "Worker(s)"]
         for nominal_col_num, col in enumerate(cols):
             if col in list(self._theme_dict):
                 col_style = col
@@ -208,6 +209,8 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
                     # If we have a failed task then let's make that stand out by bolding and styling the whole row red
                     if status_info_val in ("FAILED", "UNKNOWN"):
                         row_style = "row_style_failed"
+                elif status_info_key == "workers":
+                    status_entry.append(", ".join(status_info_val))
                 else:
                     status_entry.append(str(status_info_val))
 
@@ -259,12 +262,12 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         # Build out the status table by sectioning it off at each step
         for step_name, overall_step_info in self._status_data.items():
             task_queue = overall_step_info["task_queue"] if "task_queue" in overall_step_info else None
-            worker_name = overall_step_info["worker_name"] if "worker_name" in overall_step_info else None
+            workers = overall_step_info["workers"] if "workers" in overall_step_info else None
 
             # Set up the top section of each step entry
             # (this section will have step name, task queue, worker name, and parameters)
             step_table = self.create_step_table(
-                step_name, overall_step_info["parameters"], task_queue=task_queue, worker_name=worker_name
+                step_name, overall_step_info["parameters"], task_queue=task_queue, workers=workers
             )
 
             # Set up the bottom section of each step entry

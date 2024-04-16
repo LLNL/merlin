@@ -4,6 +4,24 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.1]
+### Added
+- New Priority.RETRY value for the Celery task priorities. This will be the new highest priority.
+- Support for the status command to handle multiple workers on the same step
+- Documentation on how to run cross-node workflows with a containerized server (`merlin server`)
+
+### Changed
+- Modified some tests in `test_status.py` and `test_detailed_status.py` to accommodate bugfixes for the status commands
+
+### Fixed
+- Bugfixes for the status commands:
+  - Fixed "DRY RUN" naming convention so that it outputs in the progress bar properly
+  - Fixed issue where a step that was run with one sample would delete the status file upon condensing
+  - Fixed issue where multiple workers processing the same step would break the status file and cause the workflow to crash
+  - Added a catch for the JSONDecodeError that would potentially crash a run
+  - Added a FileLock to the status write in `_update_status_file()` of `MerlinStepRecord` to avoid potential race conditions (potentially related to JSONDecodeError above)
+  - Added in `export MANPAGER="less -r"` call behind the scenes for `detailed-status` to fix ASCII error
+
 ## [1.12.0]
 ### Added
 - A new command `merlin queue-info` that will print the status of your celery queues
