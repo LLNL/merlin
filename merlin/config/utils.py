@@ -77,8 +77,14 @@ def get_priority(priority: Priority) -> int:
     :param priority: The priority value that we want
     :returns: The priority value as an integer
     """
-    if priority not in Priority:
-        raise ValueError(f"Invalid priority: {priority}")
+    priority_err_msg = f"Invalid priority: {priority}"
+    try:
+        # In python 3.12+ if something is not in the enum it will just return False
+        if priority not in Priority:
+            raise ValueError(priority_err_msg)
+    # In python 3.11 and below, a TypeError is raised when looking for something in an enum that is not there
+    except TypeError:
+        raise ValueError(priority_err_msg)
 
     priority_map = determine_priority_map(CONFIG.broker.name.lower())
     return priority_map.get(priority, priority_map[Priority.MID])  # Default to MID priority for unknown priorities
