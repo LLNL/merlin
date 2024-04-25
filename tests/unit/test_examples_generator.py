@@ -64,11 +64,12 @@ def test_gather_all_examples():
         f"{EXAMPLES_DIR}/lsf/lsf_par.yaml",
         f"{EXAMPLES_DIR}/null_spec/null_chain.yaml",
         f"{EXAMPLES_DIR}/null_spec/null_spec.yaml",
-        f"{EXAMPLES_DIR}/openfoam_wf/openfoam_wf_template.yaml",
+        f"{EXAMPLES_DIR}/openfoam_wf/openfoam_wf_docker_template.yaml",
         f"{EXAMPLES_DIR}/openfoam_wf/openfoam_wf.yaml",
         f"{EXAMPLES_DIR}/openfoam_wf_no_docker/openfoam_wf_no_docker_template.yaml",
         f"{EXAMPLES_DIR}/openfoam_wf_no_docker/openfoam_wf_no_docker.yaml",
         f"{EXAMPLES_DIR}/openfoam_wf_singularity/openfoam_wf_singularity.yaml",
+        f"{EXAMPLES_DIR}/openfoam_wf_singularity/openfoam_wf_singularity_template.yaml",
         f"{EXAMPLES_DIR}/optimization/optimization_basic.yaml",
         f"{EXAMPLES_DIR}/remote_feature_demo/remote_feature_demo.yaml",
         f"{EXAMPLES_DIR}/restart/restart.yaml",
@@ -445,7 +446,7 @@ def test_setup_example_openfoam(temp_output_dir: str):
     example_name = "openfoam_wf"
     example_files = [
         "openfoam_wf.yaml",
-        "openfoam_wf_template.yaml",
+        "openfoam_wf_docker_template.yaml",
         "README.md",
         "requirements.txt",
         "scripts/make_samples.py",
@@ -492,6 +493,7 @@ def test_setup_example_openfoam_singularity(temp_output_dir: str):
     example_name = "openfoam_wf_singularity"
     example_files = [
         "openfoam_wf_singularity.yaml",
+        "openfoam_wf_singularity_template.yaml",
         "requirements.txt",
         "scripts/make_samples.py",
         "scripts/blockMesh_template.txt",
