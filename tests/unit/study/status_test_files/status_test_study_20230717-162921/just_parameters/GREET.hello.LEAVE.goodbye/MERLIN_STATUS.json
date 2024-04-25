@@ -1,0 +1,22 @@
+{
+    "just_parameters_GREET.hello.LEAVE.goodbye": {
+        "parameters": {
+            "cmd": {
+                "GREET": "hello"
+            },
+            "restart": {
+                "LEAVE": "goodbye"
+            }
+        },
+        "task_queue": "just_parameters_queue",
+        "workers": ["other_worker"],
+        "just_parameters/GREET.hello.LEAVE.goodbye": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:30s",
+            "restarts": 0,
+            "workers": ["other_worker"]
+        }
+    }
+}

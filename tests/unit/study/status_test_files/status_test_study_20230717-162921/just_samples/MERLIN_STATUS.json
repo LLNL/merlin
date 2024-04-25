@@ -1,0 +1,50 @@
+{
+    "just_samples": {
+        "parameters": {
+            "cmd": null,
+            "restart": null
+        },
+        "task_queue": "just_samples_queue",
+        "workers": ["sample_worker"],
+        "just_samples/00": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:00s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        },
+        "just_samples/01": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:15s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        },
+        "just_samples/02": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:30s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        },
+        "just_samples/03": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:01m:45s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        },
+        "just_samples/04": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:02m:00s",
+            "run_time": "0d:00h:02m:00s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        }
+    }
+}

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.11.1.
+# This file is part of Merlin, Version: 1.12.0.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -44,11 +44,15 @@ class DAG:
     independent chains of tasks.
     """
 
-    def __init__(self, maestro_adjacency_table, maestro_values, labels):
+    def __init__(
+        self, maestro_adjacency_table, maestro_values, column_labels, study_name, parameter_info
+    ):  # pylint: disable=R0913
         """
         :param `maestro_adjacency_table`: An ordered dict showing adjacency of nodes. Comes from a maestrowf ExecutionGraph.
         :param `maestro_values`: An ordered dict of the values at each node. Comes from a maestrowf ExecutionGraph.
-        :param `labels`: A list of labels provided in the spec file.
+        :param `column_labels`: A list of column labels provided in the spec file.
+        :param `study_name`: The name of the study
+        :param `parameter_info`: A dict containing information about parameters in the study
         """
         # We used to store the entire maestro ExecutionGraph here but now it's
         # unpacked so we're only storing the 2 attributes from it that we use:
@@ -56,9 +60,11 @@ class DAG:
         # to work for Celery.
         self.maestro_adjacency_table = maestro_adjacency_table
         self.maestro_values = maestro_values
+        self.column_labels = column_labels
+        self.study_name = study_name
+        self.parameter_info = parameter_info
         self.backwards_adjacency = {}
         self.calc_backwards_adjacency()
-        self.labels = labels
 
     def step(self, task_name):
         """Return a Step object for the given task name
@@ -66,7 +72,7 @@ class DAG:
         :param `task_name`: The task name.
         :return: A Merlin Step object.
         """
-        return Step(self.maestro_values[task_name])
+        return Step(self.maestro_values[task_name], self.study_name, self.parameter_info)
 
     def calc_depth(self, node, depths, current_depth=0):
         """Calculate the depth of the given node and its children.
@@ -176,7 +182,7 @@ class DAG:
         """
         step1 = self.step(task1)
         step2 = self.step(task2)
-        return step1.needs_merlin_expansion(self.labels) == step2.needs_merlin_expansion(self.labels)
+        return step1.check_if_expansion_needed(self.column_labels) == step2.check_if_expansion_needed(self.column_labels)
 
     def find_independent_chains(self, list_of_groups_of_chains):
         """
