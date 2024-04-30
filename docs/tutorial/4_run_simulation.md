@@ -72,8 +72,8 @@ In the `openfoam_wf_singularity` directory you should see the following:
   <figcaption>Fig 3. openfoam_wf Directory Structure</figcaption>
 </figure>
 
-- `openfoam_wf.yaml` -- this spec file is partially blank. You will fill in the gaps as you follow this module's steps.
-- `openfoam_wf_template.yaml` -- this is a complete spec file. You can always reference it as an example.
+- `openfoam_wf_singularity.yaml` -- this spec file is partially blank. You will fill in the gaps as you follow this module's steps.
+- `openfoam_wf_singularity_template.yaml` -- this is a complete spec file. You can always reference it as an example.
 - `scripts` -- This directory contains all the necessary scripts for this module.
     - We'll be exploring these scripts as we go with the tutorial.
 - `requirements.txt` -- this is a text file listing this workflow's python dependencies.
@@ -87,14 +87,14 @@ We are going to build a spec file that produces this DAG:
   <figcaption>Fig 4. OpenFOAM DAG</figcaption>
 </figure>
 
-**To start, open** `openfoam_wf.yaml` **using your favorite text editor.**
+**To start, open** `openfoam_wf_singularity.yaml` **using your favorite text editor.**
 
 It should look something like this:
 
 ???+ abstract "Initial Contents of the Spec"
 
     <!--codeinclude-->
-    [openfoam_wf.yaml](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf.yaml)
+    [openfoam_wf_singularity.yaml](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf_singularity.yaml)
     <!--/codeinclude-->
 
 ### Variables
@@ -102,7 +102,7 @@ It should look something like this:
 First we specify some variables to make our life easier. Locate the `env` block in our yaml spec:
 
 <!--codeinclude-->
-[](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf.yaml) lines:9-15
+[](../../merlin/examples/workflows/openfoam_wf_singularity/openfoam_wf_singularity.yaml) lines:9-15
 <!--/codeinclude-->
 
 The `OUTPUT_PATH` variable is set to tell Merlin where you want your output directory to be written. The default is the current working directory.
@@ -254,7 +254,7 @@ nonsimworkers:
 
 ### Putting It All Together
 
-By the end, your `openfoam_wf.yaml` should look like the template version in the same directory:
+By the end, your `openfoam_wf_singularity.yaml` should look like the template version in the same directory:
 
 ???+ abstract "Complete Spec File"
 
@@ -273,13 +273,13 @@ Now that you are done with the Specification file, use the following commands fr
 Create the DAG and send tasks to the server with:
 
 ```bash
-merlin run openfoam_wf.yaml
+merlin run openfoam_wf_singularity.yaml
 ```
 
 Open a new terminal window, then start the workers that will consume the tasks we just queued by using:
 
 ```bash
-merlin run-workers openfoam_wf.yaml
+merlin run-workers openfoam_wf_singularity.yaml
 ```
 
 But wait! We realize that 10 samples is not enough to train a good model. We would like to restart with 100 samples instead of 10 (should take about 6 minutes):
@@ -287,7 +287,7 @@ But wait! We realize that 10 samples is not enough to train a good model. We wou
 After sending the workers to start on their queues, we need to first stop the workers:
 
 ```bash
-merlin stop-workers --spec openfoam_wf.yaml
+merlin stop-workers --spec openfoam_wf_singularity.yaml
 ```
 
 !!! tip
@@ -297,25 +297,25 @@ merlin stop-workers --spec openfoam_wf.yaml
 We stopped these tasks from running but if we were to run the workflow again (with 100 samples instead of 10), we would continue running the 10 samples first! This is because the queues are still filled with the previous attempt's tasks. This can be seen with:
 
 ```bash
-merlin status openfoam_wf.yaml
+merlin status openfoam_wf_singularity.yaml
 ```
 
 We need to purge these queues first in order to repopulate them with the appropriate tasks. This is where we use the `merlin purge` command:
 
 ```bash
-merlin purge openfoam_wf.yaml
+merlin purge openfoam_wf_singularity.yaml
 ```
 
 Now we are free to repopulate the queues with the 100 samples. In our terminal window that's not designated for our workers, we'll queue up tasks again, this time with 100 samples:
 
 ```bash
-merlin run openfoam_wf.yaml --vars N_SAMPLES=100
+merlin run openfoam_wf_singularity.yaml --vars N_SAMPLES=100
 ```
 
 Then in our window for workers, we'll execute:
 
 ```bash
-merlin run-workers openfoam_wf.yaml
+merlin run-workers openfoam_wf_singularity.yaml
 ```
 
 To see your results, look inside the `learn` output directory. You should see a png that looks like this:
