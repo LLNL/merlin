@@ -615,7 +615,7 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
 
     overlap = spec.merlin["resources"]["overlap"]
     workers = spec.merlin["resources"]["workers"]
-    multi   = spec.merlin["resources"]["multi"]
+    multi = spec.merlin["resources"]["multi"]
 
     # Build kwargs dict for subprocess.Popen to use when we launch the worker
     kwargs, yenv = _create_kwargs(spec)
@@ -670,10 +670,10 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
         worker_cmd = os.path.expandvars(worker_cmd)
 
         if multi:
-            new_celery_cmd =  celery_cmd.replace("celery ", "celery multi start ")
-            new_celery_cmd =  new_celery_cmd.replace("--concurrency ", "--concurrency=")
-            new_celery_cmd =  new_celery_cmd.replace("--prefetch-multiplier ", "--prefetch-multiplier=")
-            new_celery_cmd =  new_celery_cmd.replace("%%", "%")
+            new_celery_cmd = celery_cmd.replace("celery ", "celery multi start ")
+            new_celery_cmd = new_celery_cmd.replace("--concurrency ", "--concurrency=")
+            new_celery_cmd = new_celery_cmd.replace("--prefetch-multiplier ", "--prefetch-multiplier=")
+            new_celery_cmd = new_celery_cmd.replace("%%", "%")
             new_celery_cmd += f" --pidfile=ms_{worker_name}%h.pid  --logfile=ms_{worker_name}%h.log"
             celery_cache.append(new_celery_cmd)
             worker_cache.append(worker_cmd)
