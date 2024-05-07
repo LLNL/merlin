@@ -210,6 +210,7 @@
         "properties": {
           "task_server": {"type": "string", "minLength": 1},
           "overlap": {"type": "boolean"},
+          "multi": {"type": "boolean"},
           "workers": {
             "type": "object",
             "patternProperties": {

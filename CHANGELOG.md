@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- The new 'multi' merlin resource keyword is available to start multiple celery workers on a node. Setting this variable to True will start the celery workers as daemons.
 
 ### Changed
 

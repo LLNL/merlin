@@ -76,7 +76,7 @@ STUDY_STEP_RUN = {
 
 PARAMETER = {"values", "label"}
 
-MERLIN_RESOURCES = {"task_server", "overlap", "workers"}
+MERLIN_RESOURCES = {"task_server", "multi", "overlap", "workers"}
 
 MERLIN = {"resources", "samples"}
 

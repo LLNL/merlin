@@ -41,7 +41,7 @@ PARAMETER = {"global.parameters": {}}
 
 MERLIN = {
     "merlin": {
-        "resources": {"task_server": "celery", "overlap": False, "workers": None},
+        "resources": {"task_server": "celery", "multi": False, "overlap": False, "workers": None},
         "samples": None,
     }
 }

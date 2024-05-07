@@ -615,6 +615,7 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
 
     overlap = spec.merlin["resources"]["overlap"]
     workers = spec.merlin["resources"]["workers"]
+    multi   = spec.merlin["resources"]["multi"]
 
     # Build kwargs dict for subprocess.Popen to use when we launch the worker
     kwargs, yenv = _create_kwargs(spec)
@@ -626,6 +627,11 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
     steps_provided = False if "all" in steps else True  # pylint: disable=R1719
     if steps_provided:
         workers_to_start = _get_workers_to_start(spec, steps)
+
+    last_worker_name = list(workers)[-1]
+
+    celery_cache = []
+    worker_cache = []
 
     for worker_name, worker_val in workers.items():
         # Only triggered if --steps flag provided
@@ -662,6 +668,23 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
         celery_cmd = os.path.expandvars(celery_com)
         worker_cmd = batch_worker_launch(spec, celery_cmd, nodes=worker_nodes, batch=worker_batch)
         worker_cmd = os.path.expandvars(worker_cmd)
+
+        if multi:
+            new_celery_cmd =  celery_cmd.replace("celery ", "celery multi start ")
+            new_celery_cmd =  new_celery_cmd.replace("--concurrency ", "--concurrency=")
+            new_celery_cmd =  new_celery_cmd.replace("--prefetch-multiplier ", "--prefetch-multiplier=")
+            new_celery_cmd =  new_celery_cmd.replace("%%", "%")
+            new_celery_cmd += f" --pidfile=ms_{worker_name}%h.pid  --logfile=ms_{worker_name}%h.log"
+            celery_cache.append(new_celery_cmd)
+            worker_cache.append(worker_cmd)
+
+            if worker_name == last_worker_name:
+                new_celery_cmd = ";".join(celery_cache)
+                new_celery_cmd += ";trap 'sleep infinity' EXIT"
+                worker_cmd = batch_worker_launch(spec, new_celery_cmd, nodes=worker_nodes, batch=worker_batch)
+                worker_cmd = os.path.expandvars(worker_cmd)
+            else:
+                continue
 
         LOG.debug(f"worker cmd={worker_cmd}")
 
