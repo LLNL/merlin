@@ -60,7 +60,7 @@ def valid_ipv4(ip: str) -> bool:  # pylint: disable=C0103
         return False
 
     for i in arr:
-        if int(i) < 0 and int(i) > 255:
+        if int(i) < 0 or int(i) > 255:
             return False
 
     return True
@@ -120,6 +120,15 @@ class ContainerConfig:  # pylint: disable=R0902
         self.pfile = data["pfile"] if "pfile" in data else self.PROCESS_FILE
         self.pass_file = data["pass_file"] if "pass_file" in data else self.PASSWORD_FILE
         self.user_file = data["user_file"] if "user_file" in data else self.USERS_FILE
+
+    def __eq__(self, other: "ContainerFormatConfig"):
+        """
+        Equality magic method used for testing this class
+        
+        :param other: Another ContainerFormatConfig object to check if they're the same
+        """
+        variables = ("format", "image_type", "image", "url", "config", "config_dir", "pfile", "pass_file", "user_file")
+        return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
 
     def get_format(self) -> str:
         """Getter method to get the container format"""
@@ -208,6 +217,15 @@ class ContainerFormatConfig:
         self.stop_command = data["stop_command"] if "stop_command" in data else self.STOP_COMMAND
         self.pull_command = data["pull_command"] if "pull_command" in data else self.PULL_COMMAND
 
+    def __eq__(self, other: "ContainerFormatConfig"):
+        """
+        Equality magic method used for testing this class
+        
+        :param other: Another ContainerFormatConfig object to check if they're the same
+        """
+        variables = ("command", "run_command", "stop_command", "pull_command")
+        return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
+
     def get_command(self) -> str:
         """Getter method to get the container command"""
         return self.command
@@ -242,6 +260,15 @@ class ProcessConfig:
         self.status = data["status"] if "status" in data else self.STATUS_COMMAND
         self.kill = data["kill"] if "kill" in data else self.KILL_COMMAND
 
+    def __eq__(self, other: "ProcessConfig"):
+        """
+        Equality magic method used for testing this class
+        
+        :param other: Another ProcessConfig object to check if they're the same
+        """
+        variables = ("status", "kill")
+        return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
+
     def get_status_command(self) -> str:
         """Getter method to get the status command"""
         return self.status
@@ -264,12 +291,10 @@ class ServerConfig:  # pylint: disable=R0903
     container_format: ContainerFormatConfig = None
 
     def __init__(self, data: dict) -> None:
-        if "container" in data:
-            self.container = ContainerConfig(data["container"])
-        if "process" in data:
-            self.process = ProcessConfig(data["process"])
-        if self.container.get_format() in data:
-            self.container_format = ContainerFormatConfig(data[self.container.get_format()])
+        self.container = ContainerConfig(data["container"]) if "container" in data else None
+        self.process = ProcessConfig(data["process"]) if "process" in data else None
+        container_format_data = data.get(self.container.get_format() if self.container else None)
+        self.container_format = ContainerFormatConfig(container_format_data) if container_format_data else None
 
 
 class RedisConfig:
