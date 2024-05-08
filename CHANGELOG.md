@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added tests for reading and writing status files, and status conflict handling
 - Added tests for the `dict_deep_merge` function
 
+### Changed
+
+### Fixed
+- Bugfix for output of `merlin example openfoam_wf_singularity`
+
+
 ## [1.12.1]
 ### Added
 - New Priority.RETRY value for the Celery task priorities. This will be the new highest priority.
