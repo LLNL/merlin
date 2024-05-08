@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added fixtures specifically for testing status functionality
 - Added tests for reading and writing status files, and status conflict handling
 - Added tests for the `dict_deep_merge` function
+- Pytest-mock as a dependency for the test suite (necessary for using mocks and fixtures in the same test)
 
 ### Changed
 
