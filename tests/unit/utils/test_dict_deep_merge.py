@@ -13,6 +13,7 @@ def run_invalid_check(dict_a: Any, dict_b: Any, expected_log: str, caplog: "Fixt
     :param dict_a: The value of dict_a that we're testing against
     :param dict_b: The value of dict_b that we're testing against
     :param expected_log: The log that we're expecting `dict_deep_merge` to write
+    :param caplog: A built-in fixture from the pytest library to capture logs
     """
 
     # Store initial value of dict_a
@@ -61,6 +62,7 @@ def test_dict_deep_merge_both_dicts_invalid(dict_a: Any, dict_b: Any, caplog: "F
 
     :param dict_a: The value of dict_a that we're testing against
     :param dict_b: The value of dict_b that we're testing against
+    :param caplog: A built-in fixture from the pytest library to capture logs
     """
 
     # The expected log that's output by dict_deep_merge
@@ -90,6 +92,7 @@ def test_dict_deep_merge_dict_a_invalid(dict_a: Any, dict_b: Dict[str, str], cap
 
     :param dict_a: The value of dict_a that we're testing against
     :param dict_b: The value of dict_b that we're testing against
+    :param caplog: A built-in fixture from the pytest library to capture logs
     """
 
     # The expected log that's output by dict_deep_merge
@@ -118,6 +121,7 @@ def test_dict_deep_merge_dict_b_invalid(dict_a: Dict[str, str], dict_b: Any, cap
 
     :param dict_a: The value of dict_a that we're testing against
     :param dict_b: The value of dict_b that we're testing against
+    :param caplog: A built-in fixture from the pytest library to capture logs
     """
 
     # The expected log that's output by dict_deep_merge
@@ -203,6 +207,8 @@ def test_dict_deep_merge_conflict_no_conflict_handler(caplog: "Fixture"):  # noq
     Test the `dict_deep_merge` function with a conflicting value in dict_b
     and no conflict handler. Since there's no conflict handler this should
     log a warning and ignore any merge for the key that has the conflict.
+
+    :param caplog: A built-in fixture from the pytest library to capture logs
     """
     dict_a = {"test_key": "existing_value"}
     dict_b = {"test_key": "new_value"}
