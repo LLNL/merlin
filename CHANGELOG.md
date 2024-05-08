@@ -4,6 +4,14 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Conflict handler option to the `dict_deep_merge` function in `utils.py`
+- Ability to add module-specific pytest fixtures
+- Added fixtures specifically for testing status functionality
+- Added tests for reading and writing status files, and status conflict handling
+- Added tests for the `dict_deep_merge` function
+
 ## [1.12.1]
 ### Added
 - New Priority.RETRY value for the Celery task priorities. This will be the new highest priority.
