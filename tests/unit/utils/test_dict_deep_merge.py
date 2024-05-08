@@ -1,14 +1,12 @@
 """
 Tests for the `dict_deep_merge` function defined in the `utils.py` module.
 """
-import logging
 import pytest
-from io import StringIO
 from typing import Any, Dict, List
 
 from merlin.utils import dict_deep_merge
 
-def run_invalid_check(dict_a: Any, dict_b: Any, expected_log: str):
+def run_invalid_check(dict_a: Any, dict_b: Any, expected_log: str, caplog: "Fixture"):  # noqa: F821
     """
     Helper function to run invalid input tests on the `dict_deep_merge` function.
 
@@ -16,12 +14,6 @@ def run_invalid_check(dict_a: Any, dict_b: Any, expected_log: str):
     :param dict_b: The value of dict_b that we're testing against
     :param expected_log: The log that we're expecting `dict_deep_merge` to write
     """
-
-    # Create a capture stream to capture logs
-    capture_stream = StringIO()
-    handler = logging.StreamHandler(capture_stream)
-    logger = logging.getLogger()
-    logger.addHandler(handler)
 
     # Store initial value of dict_a
     if isinstance(dict_a, list):
@@ -34,8 +26,7 @@ def run_invalid_check(dict_a: Any, dict_b: Any, expected_log: str):
     assert dict_a_initial == dict_a
 
     # Check that dict_deep_merge logs a warning
-    logger.removeHandler(handler)
-    assert expected_log in capture_stream.getvalue(), "Missing expected log message"
+    assert expected_log in caplog.text, "Missing expected log message"
 
 
 @pytest.mark.parametrize(
@@ -62,7 +53,7 @@ def run_invalid_check(dict_a: Any, dict_b: Any, expected_log: str):
         (True, True),
     ],
 )
-def test_dict_deep_merge_both_dicts_invalid(dict_a: Any, dict_b: Any):
+def test_dict_deep_merge_both_dicts_invalid(dict_a: Any, dict_b: Any, caplog: "Fixture"):  # noqa: F821
     """
     Test the `dict_deep_merge` function with both `dict_a` and `dict_b`
     parameters being an invalid type. This should log a message and do
@@ -77,7 +68,7 @@ def test_dict_deep_merge_both_dicts_invalid(dict_a: Any, dict_b: Any):
                    f"and dict_b '{dict_b}' are not dictionaries. Ignoring this merge call."
 
     # Run the actual test
-    run_invalid_check(dict_a, dict_b, expected_log)
+    run_invalid_check(dict_a, dict_b, expected_log, caplog)
 
 
 @pytest.mark.parametrize(
@@ -92,7 +83,7 @@ def test_dict_deep_merge_both_dicts_invalid(dict_a: Any, dict_b: Any):
         (True, {"test_key": "test_val"}),
     ],
 )
-def test_dict_deep_merge_dict_a_invalid(dict_a: Any, dict_b: Dict[str, str]):
+def test_dict_deep_merge_dict_a_invalid(dict_a: Any, dict_b: Dict[str, str], caplog: "Fixture"):  # noqa: F821
     """
     Test the `dict_deep_merge` function with the `dict_a` parameter
     being an invalid type. This should log a message and do nothing.
@@ -105,7 +96,7 @@ def test_dict_deep_merge_dict_a_invalid(dict_a: Any, dict_b: Dict[str, str]):
     expected_log = f"Problem with dict_deep_merge: dict_a '{dict_a}' is not a dictionary. Ignoring this merge call."
 
     # Run the actual test
-    run_invalid_check(dict_a, dict_b, expected_log)
+    run_invalid_check(dict_a, dict_b, expected_log, caplog)
 
 
 @pytest.mark.parametrize(
@@ -120,7 +111,7 @@ def test_dict_deep_merge_dict_a_invalid(dict_a: Any, dict_b: Dict[str, str]):
         ({"test_key": "test_val"}, True),
     ],
 )
-def test_dict_deep_merge_dict_b_invalid(dict_a: Dict[str, str], dict_b: Any):
+def test_dict_deep_merge_dict_b_invalid(dict_a: Dict[str, str], dict_b: Any, caplog: "Fixture"):  # noqa: F821
     """
     Test the `dict_deep_merge` function with the `dict_b` parameter
     being an invalid type. This should log a message and do nothing.
@@ -133,7 +124,7 @@ def test_dict_deep_merge_dict_b_invalid(dict_a: Dict[str, str], dict_b: Any):
     expected_log = f"Problem with dict_deep_merge: dict_b '{dict_b}' is not a dictionary. Ignoring this merge call."
 
     # Run the actual test
-    run_invalid_check(dict_a, dict_b, expected_log)
+    run_invalid_check(dict_a, dict_b, expected_log, caplog)
 
 @pytest.mark.parametrize(
     "dict_a, dict_b, expected",
@@ -207,7 +198,7 @@ def test_dict_deep_merge_same_leaf(dict_a: Dict[str, Any], dict_b: Dict[str, Any
     dict_deep_merge(dict_a, dict_b)
     assert dict_a["test_key"] == expected
 
-def test_dict_deep_merge_conflict_no_conflict_handler():
+def test_dict_deep_merge_conflict_no_conflict_handler(caplog: "Fixture"):  # noqa: F821
     """
     Test the `dict_deep_merge` function with a conflicting value in dict_b
     and no conflict handler. Since there's no conflict handler this should
@@ -216,19 +207,12 @@ def test_dict_deep_merge_conflict_no_conflict_handler():
     dict_a = {"test_key": "existing_value"}
     dict_b = {"test_key": "new_value"}
 
-    # Create a capture stream to capture logs
-    capture_stream = StringIO()
-    handler = logging.StreamHandler(capture_stream)
-    logger = logging.getLogger()
-    logger.addHandler(handler)
-
     # Call deep merge and make sure "test_key" in dict_a wasn't updated
     dict_deep_merge(dict_a, dict_b)
     assert dict_a["test_key"] == "existing_value"
 
     # Check that dict_deep_merge logs a warning
-    logger.removeHandler(handler)
-    assert f"Conflict at test_key. Ignoring the update to key 'test_key'." in capture_stream.getvalue(), "Missing expected log message"
+    assert f"Conflict at test_key. Ignoring the update to key 'test_key'." in caplog.text, "Missing expected log message"
 
 
 def test_dict_deep_merge_conflict_with_conflict_handler():
