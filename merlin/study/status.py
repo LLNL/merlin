@@ -37,10 +37,11 @@ from copy import deepcopy
 from datetime import datetime
 from glob import glob
 from traceback import print_exception
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from filelock import FileLock, Timeout
+from maestrowf.utils import get_duration
 from tabulate import tabulate
 
 from merlin.common.dumper import dump_handler
@@ -363,7 +364,7 @@ class Status:
                 statuses_read = read_status(status_filepath, f"{root}/status.lock")
 
                 # Merge the statuses we read with the dict tracking all statuses for this step
-                dict_deep_merge(step_statuses, statuses_read)
+                dict_deep_merge(step_statuses, statuses_read, conflict_handler=status_conflict_handler)
 
                 # Add full step name to the tracker and count number of statuses we just read in
                 for full_step_name, status_info in statuses_read.items():
@@ -391,7 +392,7 @@ class Status:
         for sstep in self.step_tracker["started_steps"]:
             step_workspace = f"{self.workspace}/{sstep}"
             step_statuses = self.get_step_statuses(step_workspace, sstep)
-            dict_deep_merge(self.requested_statuses, step_statuses)
+            dict_deep_merge(self.requested_statuses, step_statuses, conflict_handler=status_conflict_handler)
 
             # Calculate run time average and standard deviation for this step
             self.get_runtime_avg_std_dev(step_statuses, sstep)
@@ -532,7 +533,7 @@ class Status:
             # Loop through information for each step
             for step_info_key, step_info_value in overall_step_info.items():
                 # Skip the workers entry at the top level; this will be added in the else statement below on a task-by-task basis
-                if step_info_key == "workers":
+                if step_info_key == "workers" or step_info_key == "worker_name":
                     continue
                 # Format task queue entry
                 if step_info_key == "task_queue":
@@ -916,7 +917,7 @@ class DetailedStatus(Status):
                 self.args.max_tasks -= len(sub_step_workspaces)
 
             # Merge in the task statuses that we're allowing
-            dict_deep_merge(new_status_dict[step_name], overall_step_info)
+            dict_deep_merge(new_status_dict[step_name], overall_step_info, conflict_handler=status_conflict_handler)
 
         LOG.info(f"Limited the number of tasks to display to {max_tasks} tasks.")
 
@@ -1099,6 +1100,95 @@ class DetailedStatus(Status):
             LOG.warning("No statuses to display.")
 
 
+def status_conflict_handler(*args, **kwargs) -> Any:
+    """
+    The conflict handler function to apply to any status entries that have conflicting
+    values while merging two status files together.
+
+    kwargs should include:
+    - dict_a_val: The conflicting value from the dictionary that we're merging into
+    - dict_b_val: The conflicting value from the dictionary that we're pulling from
+    - key: The key into each dictionary that has a conflict
+    - path: The path down the dictionary tree that `dict_deep_merge` is currently at
+
+    When we're reading in status files, we're merging all of the statuses into one dictionary.
+    This function defines the merge rules in case there is a merge conflict. We ignore the list
+    and dictionary entries since `dict_deep_merge` from `utils.py` handles these scenarios already.
+
+    There are currently 4 rules:
+    - string-concatenate: take the two conflicting values and concatenate them in a string
+    - use-initial-and-log-warning: use the value from dict_a and log a warning message
+    - use-longest-time: use the longest time between the two conflicting values
+    - use-max: use the larger integer between the two conflicting values
+
+    :returns: The value to merge into dict_a at `key`
+    """
+    # Grab the arguments passed into this function
+    dict_a_val = kwargs.get("dict_a_val", None)
+    dict_b_val = kwargs.get("dict_b_val", None)
+    key = kwargs.get("key", None)
+    path = kwargs.get("path", None)
+
+    merge_rules = {
+        "task_queue": "string-concatenate",
+        "worker_name": "string-concatenate",
+        "status": "use-initial-and-log-warning",
+        "return_code": "use-initial-and-log-warning",
+        "elapsed_time": "use-longest-time",
+        "run_time": "use-longest-time",
+        "restarts": "use-max",
+    }
+
+    # TODO
+    # - make status tracking more modular (see https://lc.llnl.gov/gitlab/weave/merlin/-/issues/58)
+    # - once it's more modular, move the below code and the above merge_rules dict to a property in
+    #   one of the new status classes (the one that has condensing maybe? or upstream from that?)
+
+
+    # params = self.spec.get_parameters()
+    # for token in params.parameters:
+    #     merge_rules[token] = "use-initial-and-log-warning"
+
+    # Set parameter token key rules (commented for loop would be better but it's
+    # only possible if this conflict handler is contained within Status object; however,
+    # since this function needs to be imported outside of this file we can't do that)
+    if path is not None and "parameters" in path:
+        merge_rules[key] = "use-initial-and-log-warning"
+
+    try:
+        merge_rule = merge_rules[key]
+    except KeyError:
+        LOG.warning(f"The key '{key}' does not have a merge rule defined. Setting this merge to None.")
+        return None
+
+    merge_val = None
+
+    if merge_rule == "string-concatenate":
+        merge_val = f"{dict_a_val}, {dict_b_val}"
+    elif merge_rule == "use-initial-and-log-warning":
+        LOG.warning(
+            f"Conflict at key '{key}' while merging status files. Defaulting to initial value. " \
+            "This could lead to incorrect status information, you may want to re-run in debug mode and " \
+            "check the files in the output directory for this task."
+        )
+        merge_val = dict_a_val
+    elif merge_rule == "use-longest-time":
+        if dict_a_val == "--:--:--":
+            merge_val = dict_b_val
+        elif dict_b_val == "--:--:--":
+            merge_val = dict_a_val
+        else:
+            dict_a_time = convert_to_timedelta(dict_a_val)
+            dict_b_time = convert_to_timedelta(dict_b_val)
+            merge_val = get_duration(max(dict_a_time, dict_b_time))
+    elif merge_rule == "use-max":
+        merge_val = max(dict_a_val, dict_b_val)
+    else:
+        LOG.warning(f"The merge_rule '{merge_rule}' was provided but it has no implementation.")
+
+    return merge_val
+
+
 def read_status(
     status_filepath: str, lock_file: str, display_fnf_message: bool = True, raise_errors: bool = False, timeout: int = 10
 ) -> Dict:
@@ -1112,6 +1202,8 @@ def read_status(
     :param timeout: An integer representing how long to hold a lock for before timing out.
     :returns: A dict of the contents in the status file
     """
+    statuses_read = {}
+
     # Pylint complains that we're instantiating an abstract class but this is correct usage
     lock = FileLock(lock_file)  # pylint: disable=abstract-class-instantiated
     try:
@@ -1122,21 +1214,19 @@ def read_status(
     # Handle timeouts
     except Timeout as to_exc:
         LOG.warning(f"Timed out when trying to read status from '{status_filepath}'")
-        statuses_read = {}
         if raise_errors:
-            raise Timeout from to_exc
+            raise to_exc
     # Handle FNF errors
     except FileNotFoundError as fnf_exc:
         if display_fnf_message:
             LOG.warning(f"Could not find '{status_filepath}'")
-        statuses_read = {}
         if raise_errors:
-            raise FileNotFoundError from fnf_exc
+            raise fnf_exc
     # Handle JSONDecode errors (this is likely due to an empty status file)
     except json.decoder.JSONDecodeError as json_exc:
         LOG.warning(f"JSONDecodeError raised when trying to read status from '{status_filepath}'")
         if raise_errors:
-            raise json.decoder.JSONDecodeError from json_exc
+            raise json_exc
     # Catch all exceptions so that we don't crash the workers
     except Exception as exc:  # pylint: disable=broad-except
         LOG.warning(
