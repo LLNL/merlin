@@ -30,18 +30,18 @@
 """
 Tests for the Status class in the status.py module
 """
+import json
 import os
-import pytest
 import unittest
 from argparse import Namespace
 from copy import deepcopy
 from datetime import datetime
+from json.decoder import JSONDecodeError
 
-import json
+import pytest
 import yaml
 from deepdiff import DeepDiff
 from filelock import Timeout
-from json.decoder import JSONDecodeError
 
 from merlin.spec.expansion import get_spec_with_expansion
 from merlin.study.status import Status, read_status, status_conflict_handler, write_status
@@ -61,7 +61,9 @@ class TestStatusReading:
         be no errors thrown and the correct status dict should be returned.
         """
         actual_statuses = read_status(self.status_file, self.lock_file)
-        read_status_diff = DeepDiff(actual_statuses, status_test_variables.REQUESTED_STATUSES_JUST_CANCELLED_STEP, ignore_order=True)
+        read_status_diff = DeepDiff(
+            actual_statuses, status_test_variables.REQUESTED_STATUSES_JUST_CANCELLED_STEP, ignore_order=True
+        )
         assert read_status_diff == {}
 
     def test_timeout_raise_errors_disabled(self, mocker: "Fixture", caplog: "Fixture"):  # noqa: F821
@@ -75,7 +77,7 @@ class TestStatusReading:
         :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
         :param caplog: A built-in fixture from the pytest library to capture logs
         """
-    
+
         # Set the mock to raise a timeout
         mock_filelock = mocker.patch("merlin.study.status.FileLock")
         mock_lock = mocker.MagicMock()
@@ -100,7 +102,7 @@ class TestStatusReading:
 
         :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
         :param caplog: A built-in fixture from the pytest library to capture logs
-        """        
+        """
 
         # Set the mock to raise a timeout
         mock_filelock = mocker.patch("merlin.study.status.FileLock")
@@ -192,11 +194,10 @@ class TestStatusReading:
             read_status(status_empty_file, self.lock_file, raise_errors=True)
         assert f"JSONDecodeError raised when trying to read status from '{status_empty_file}'" in caplog.text
 
-    @pytest.mark.parametrize(
-        "exception",
-        [TypeError, ValueError, NotImplementedError, IOError, UnicodeError, OSError]
-    )
-    def test_broad_exception_handler_raise_errors_disabled(self, mocker: "Fixture", caplog: "Fixture", exception: Exception):  # noqa: F821
+    @pytest.mark.parametrize("exception", [TypeError, ValueError, NotImplementedError, IOError, UnicodeError, OSError])
+    def test_broad_exception_handler_raise_errors_disabled(
+        self, mocker: "Fixture", caplog: "Fixture", exception: Exception  # noqa: F821
+    ):
         """
         Test the broad exception handler with `raise_errors` disabled. This should
         log a warning and return an empty dict.
@@ -217,11 +218,10 @@ class TestStatusReading:
         assert actual_status == {}
         assert f"An exception was raised while trying to read status from '{self.status_file}'!" in caplog.text
 
-    @pytest.mark.parametrize(
-        "exception",
-        [TypeError, ValueError, NotImplementedError, IOError, UnicodeError, OSError]
-    )
-    def test_broad_exception_handler_raise_errors_enabled(self, mocker: "Fixture", caplog: "Fixture", exception: Exception):  # noqa: F821
+    @pytest.mark.parametrize("exception", [TypeError, ValueError, NotImplementedError, IOError, UnicodeError, OSError])
+    def test_broad_exception_handler_raise_errors_enabled(
+        self, mocker: "Fixture", caplog: "Fixture", exception: Exception  # noqa: F821
+    ):
         """
         Test the broad exception handler with `raise_errors` enabled. This should
         log a warning and raise whichever exception is passed in (see list of
@@ -271,11 +271,10 @@ class TestStatusWriting:
             dummy_status = json.load(sfp)
         assert dummy_status == self.status_to_write
 
-    @pytest.mark.parametrize(
-        "exception",
-        [TypeError, ValueError, NotImplementedError, IOError, UnicodeError, OSError]
-    )
-    def test_exception_raised(self, mocker: "Fixture", caplog: "Fixture", status_testing_dir: str, exception: Exception):  # noqa: F821
+    @pytest.mark.parametrize("exception", [TypeError, ValueError, NotImplementedError, IOError, UnicodeError, OSError])
+    def test_exception_raised(
+        self, mocker: "Fixture", caplog: "Fixture", status_testing_dir: str, exception: Exception  # noqa: F821
+    ):
         """
         Test the exception handler using several different exceptions defined in the
         parametrized list in the decorator above. This should log a warning and not
@@ -315,7 +314,7 @@ class TestStatusConflictHandler:
 
         :param caplog: A built-in fixture from the pytest library to capture logs
         """
-    
+
         # Create two dicts with conflicting parameter values
         key = "TOKEN"
         dict_a = {"parameters": {"cmd": {key: "value"}, "restart": None}}
@@ -324,19 +323,17 @@ class TestStatusConflictHandler:
 
         # Run the test
         merged_val = status_conflict_handler(
-            dict_a_val=dict_a["parameters"]["cmd"][key],
-            dict_b_val=dict_b["parameters"]["cmd"][key],
-            key=key,
-            path=path
+            dict_a_val=dict_a["parameters"]["cmd"][key], dict_b_val=dict_b["parameters"]["cmd"][key], key=key, path=path
         )
 
         # Check that everything ran properly
-        expected_log = f"Conflict at key '{key}' while merging status files. Defaulting to initial value. " \
-                        "This could lead to incorrect status information, you may want to re-run in debug mode and " \
-                        "check the files in the output directory for this task."
+        expected_log = (
+            f"Conflict at key '{key}' while merging status files. Defaulting to initial value. "
+            "This could lead to incorrect status information, you may want to re-run in debug mode and "
+            "check the files in the output directory for this task."
+        )
         assert merged_val == "value"
         assert expected_log in caplog.text
-        
 
     def test_non_existent_key(self, caplog: "Fixture"):  # noqa: F821
         """
@@ -363,7 +360,7 @@ class TestStatusConflictHandler:
         val2 = "new_task_queue"
         dict_a = {key: val1}
         dict_b = {key: val2}
-        
+
         # Run the test and make sure the values are being concatenated
         merged_val = status_conflict_handler(
             dict_a_val=dict_a[key],
@@ -394,9 +391,11 @@ class TestStatusConflictHandler:
         )
 
         # Check that everything ran properly
-        expected_log = f"Conflict at key '{key}' while merging status files. Defaulting to initial value. " \
-                        "This could lead to incorrect status information, you may want to re-run in debug mode and " \
-                        "check the files in the output directory for this task."
+        expected_log = (
+            f"Conflict at key '{key}' while merging status files. Defaulting to initial value. "
+            "This could lead to incorrect status information, you may want to re-run in debug mode and "
+            "check the files in the output directory for this task."
+        )
         assert merged_val == "SUCCESS"
         assert expected_log in caplog.text
 
@@ -453,7 +452,7 @@ class TestStatusConflictHandler:
             dict_b_val=dict_b[key],
             key=key,
         )
-        assert merged_val == "0d:"+long_time  # Time manipulation in status_conflict_handler will prepend '0d:'
+        assert merged_val == "0d:" + long_time  # Time manipulation in status_conflict_handler will prepend '0d:'
 
         # Run test with dict a having the longer time
         dict_a_2 = {key: long_time}
@@ -463,7 +462,7 @@ class TestStatusConflictHandler:
             dict_b_val=dict_b_2[key],
             key=key,
         )
-        assert merged_val_2 == "0d:"+long_time
+        assert merged_val_2 == "0d:" + long_time
 
     @pytest.mark.parametrize(
         "dict_a_val, dict_b_val, expected",
@@ -475,7 +474,7 @@ class TestStatusConflictHandler:
             (0, -1, 0),
             (23, 20, 23),
             (17, 21, 21),
-        ]
+        ],
     )
     def test_rule_use_max(self, dict_a_val: int, dict_b_val: int, expected: int):
         """

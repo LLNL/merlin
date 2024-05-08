@@ -1,10 +1,13 @@
 """
 Tests for the `dict_deep_merge` function defined in the `utils.py` module.
 """
-import pytest
+
 from typing import Any, Dict, List
 
+import pytest
+
 from merlin.utils import dict_deep_merge
+
 
 def run_invalid_check(dict_a: Any, dict_b: Any, expected_log: str, caplog: "Fixture"):  # noqa: F821
     """
@@ -46,9 +49,9 @@ def run_invalid_check(dict_a: Any, dict_b: Any, expected_log: str, caplog: "Fixt
         (10.5, None),
         (None, 10.5),
         (10.5, 10.5),
-        (("no","tuples"), None),
-        (None, ("no","tuples")),
-        (("no","tuples"), ("no","tuples")),
+        (("no", "tuples"), None),
+        (None, ("no", "tuples")),
+        (("no", "tuples"), ("no", "tuples")),
         (True, None),
         (None, True),
         (True, True),
@@ -66,8 +69,10 @@ def test_dict_deep_merge_both_dicts_invalid(dict_a: Any, dict_b: Any, caplog: "F
     """
 
     # The expected log that's output by dict_deep_merge
-    expected_log = f"Problem with dict_deep_merge: both dict_a '{dict_a}' " \
-                   f"and dict_b '{dict_b}' are not dictionaries. Ignoring this merge call."
+    expected_log = (
+        f"Problem with dict_deep_merge: both dict_a '{dict_a}' "
+        f"and dict_b '{dict_b}' are not dictionaries. Ignoring this merge call."
+    )
 
     # Run the actual test
     run_invalid_check(dict_a, dict_b, expected_log, caplog)
@@ -81,7 +86,7 @@ def test_dict_deep_merge_both_dicts_invalid(dict_a: Any, dict_b: Any, caplog: "F
         ("no strings allowed!", {"test_key": "test_val"}),
         (10, {"test_key": "test_val"}),
         (10.5, {"test_key": "test_val"}),
-        (("no","tuples"), {"test_key": "test_val"}),
+        (("no", "tuples"), {"test_key": "test_val"}),
         (True, {"test_key": "test_val"}),
     ],
 )
@@ -110,7 +115,7 @@ def test_dict_deep_merge_dict_a_invalid(dict_a: Any, dict_b: Dict[str, str], cap
         ({"test_key": "test_val"}, "no strings allowed!"),
         ({"test_key": "test_val"}, 10),
         ({"test_key": "test_val"}, 10.5),
-        ({"test_key": "test_val"}, ("no","tuples")),
+        ({"test_key": "test_val"}, ("no", "tuples")),
         ({"test_key": "test_val"}, True),
     ],
 )
@@ -130,16 +135,27 @@ def test_dict_deep_merge_dict_b_invalid(dict_a: Dict[str, str], dict_b: Any, cap
     # Run the actual test
     run_invalid_check(dict_a, dict_b, expected_log, caplog)
 
+
 @pytest.mark.parametrize(
     "dict_a, dict_b, expected",
     [
         ({"test_key": {}}, {"test_key": {}}, {}),  # Testing merge of two empty dicts
         ({"test_key": {}}, {"test_key": {"new_key": "new_val"}}, {"new_key": "new_val"}),  # Testing dict_a empty dict merge
-        ({"test_key": {"existing_key": "existing_val"}}, {"test_key": {}}, {"existing_key": "existing_val"}),  # Testing dict_b empty dict merge
-        ({"test_key": {"existing_key": "existing_val"}}, {"test_key": {"new_key": "new_val"}}, {"existing_key": "existing_val", "new_key": "new_val"}),  # Testing merge of dicts with content
+        (
+            {"test_key": {"existing_key": "existing_val"}},
+            {"test_key": {}},
+            {"existing_key": "existing_val"},
+        ),  # Testing dict_b empty dict merge
+        (
+            {"test_key": {"existing_key": "existing_val"}},
+            {"test_key": {"new_key": "new_val"}},
+            {"existing_key": "existing_val", "new_key": "new_val"},
+        ),  # Testing merge of dicts with content
     ],
 )
-def test_dict_deep_merge_dict_merge(dict_a: Dict[str, Dict[Any, Any]], dict_b: Dict[str, Dict[Any, Any]], expected: Dict[Any, Any]):
+def test_dict_deep_merge_dict_merge(
+    dict_a: Dict[str, Dict[Any, Any]], dict_b: Dict[str, Dict[Any, Any]], expected: Dict[Any, Any]
+):
     """
     Test the `dict_deep_merge` function with dicts that need to be merged.
     NOTE we're keeping the test values of this function simple since the other tests
@@ -152,20 +168,37 @@ def test_dict_deep_merge_dict_merge(dict_a: Dict[str, Dict[Any, Any]], dict_b: D
     dict_deep_merge(dict_a, dict_b)
     assert dict_a["test_key"] == expected
 
+
 @pytest.mark.parametrize(
     "dict_a, dict_b, expected",
     [
         ({"test_key": []}, {"test_key": []}, []),  # Testing merge of two empty lists
         ({"test_key": []}, {"test_key": ["new_val"]}, ["new_val"]),  # Testing dict_a empty list merge
         ({"test_key": ["existing_val"]}, {"test_key": []}, ["existing_val"]),  # Testing dict_b empty list merge
-        ({"test_key": ["existing_val"]}, {"test_key": ["new_val"]}, ["existing_val", "new_val"]),  # Testing merge of list of strings
+        (
+            {"test_key": ["existing_val"]},
+            {"test_key": ["new_val"]},
+            ["existing_val", "new_val"],
+        ),  # Testing merge of list of strings
         ({"test_key": [None]}, {"test_key": [None]}, [None, None]),  # Testing merge of list of None
         ({"test_key": [0]}, {"test_key": [1]}, [0, 1]),  # Testing merge of list of integers
         ({"test_key": [True]}, {"test_key": [False]}, [True, False]),  # Testing merge of list of bools
         ({"test_key": [0.0]}, {"test_key": [1.0]}, [0.0, 1.0]),  # Testing merge of list of floats
-        ({"test_key": [(True, False)]}, {"test_key": [(False, True)]}, [(True, False), (False, True)]),  # Testing merge of list of tuples
-        ({"test_key": [{"existing_key": "existing_val"}]}, {"test_key": [{"new_key": "new_val"}]}, [{"existing_key": "existing_val"}, {"new_key": "new_val"}]),  # Testing merge of list of dicts
-        ({"test_key": ["existing_val", 0]}, {"test_key": [True, 1.0, None]}, ["existing_val", 0, True, 1.0, None]),  # Testing merge of list of multiple types
+        (
+            {"test_key": [(True, False)]},
+            {"test_key": [(False, True)]},
+            [(True, False), (False, True)],
+        ),  # Testing merge of list of tuples
+        (
+            {"test_key": [{"existing_key": "existing_val"}]},
+            {"test_key": [{"new_key": "new_val"}]},
+            [{"existing_key": "existing_val"}, {"new_key": "new_val"}],
+        ),  # Testing merge of list of dicts
+        (
+            {"test_key": ["existing_val", 0]},
+            {"test_key": [True, 1.0, None]},
+            ["existing_val", 0, True, 1.0, None],
+        ),  # Testing merge of list of multiple types
     ],
 )
 def test_dict_deep_merge_list_merge(dict_a: Dict[str, List[Any]], dict_b: Dict[str, List[Any]], expected: List[Any]):
@@ -202,6 +235,7 @@ def test_dict_deep_merge_same_leaf(dict_a: Dict[str, Any], dict_b: Dict[str, Any
     dict_deep_merge(dict_a, dict_b)
     assert dict_a["test_key"] == expected
 
+
 def test_dict_deep_merge_conflict_no_conflict_handler(caplog: "Fixture"):  # noqa: F821
     """
     Test the `dict_deep_merge` function with a conflicting value in dict_b
@@ -218,7 +252,7 @@ def test_dict_deep_merge_conflict_no_conflict_handler(caplog: "Fixture"):  # noq
     assert dict_a["test_key"] == "existing_value"
 
     # Check that dict_deep_merge logs a warning
-    assert f"Conflict at test_key. Ignoring the update to key 'test_key'." in caplog.text, "Missing expected log message"
+    assert "Conflict at test_key. Ignoring the update to key 'test_key'." in caplog.text, "Missing expected log message"
 
 
 def test_dict_deep_merge_conflict_with_conflict_handler():
@@ -242,4 +276,3 @@ def test_dict_deep_merge_conflict_with_conflict_handler():
     # Call deep merge and make sure "test_key" in dict_a wasn't updated
     dict_deep_merge(dict_a, dict_b, conflict_handler=conflict_handler)
     assert dict_a["test_key"] == "existing_value, new_value"
-

@@ -532,8 +532,9 @@ class Status:
 
             # Loop through information for each step
             for step_info_key, step_info_value in overall_step_info.items():
-                # Skip the workers entry at the top level; this will be added in the else statement below on a task-by-task basis
-                if step_info_key == "workers" or step_info_key == "worker_name":
+                # Skip the workers entry at the top level;
+                # this will be added in the else statement below on a task-by-task basis
+                if step_info_key in ("workers", "worker_name"):
                     continue
                 # Format task queue entry
                 if step_info_key == "task_queue":
@@ -834,13 +835,15 @@ class DetailedStatus(Status):
         filtered_statuses = {}
         for step_name, overall_step_info in self.requested_statuses.items():
             filtered_statuses[step_name] = {}
-            # Add the non-workspace keys to the filtered_status dict so we don't accidentally miss any of this information while filtering
+            # Add the non-workspace keys to the filtered_status dict so we
+            # don't accidentally miss any of this information while filtering
             for non_ws_key in NON_WORKSPACE_KEYS:
                 try:
                     filtered_statuses[step_name][non_ws_key] = overall_step_info[non_ws_key]
                 except KeyError:
                     LOG.debug(
-                        f"Tried to add {non_ws_key} to filtered_statuses dict but it was not found in requested_statuses[{step_name}]"
+                        f"Tried to add {non_ws_key} to filtered_statuses dict "
+                        f"but it was not found in requested_statuses[{step_name}]"
                     )
 
             # Go through the actual statuses and filter them as necessary
@@ -1100,7 +1103,8 @@ class DetailedStatus(Status):
             LOG.warning("No statuses to display.")
 
 
-def status_conflict_handler(*args, **kwargs) -> Any:
+# Pylint complains that args is unused but we can ignore that
+def status_conflict_handler(*args, **kwargs) -> Any:  # pylint: disable=W0613
     """
     The conflict handler function to apply to any status entries that have conflicting
     values while merging two status files together.
@@ -1144,7 +1148,6 @@ def status_conflict_handler(*args, **kwargs) -> Any:
     # - once it's more modular, move the below code and the above merge_rules dict to a property in
     #   one of the new status classes (the one that has condensing maybe? or upstream from that?)
 
-
     # params = self.spec.get_parameters()
     # for token in params.parameters:
     #     merge_rules[token] = "use-initial-and-log-warning"
@@ -1167,8 +1170,8 @@ def status_conflict_handler(*args, **kwargs) -> Any:
         merge_val = f"{dict_a_val}, {dict_b_val}"
     elif merge_rule == "use-initial-and-log-warning":
         LOG.warning(
-            f"Conflict at key '{key}' while merging status files. Defaulting to initial value. " \
-            "This could lead to incorrect status information, you may want to re-run in debug mode and " \
+            f"Conflict at key '{key}' while merging status files. Defaulting to initial value. "
+            "This could lead to incorrect status information, you may want to re-run in debug mode and "
             "check the files in the output directory for this task."
         )
         merge_val = dict_a_val
@@ -1230,7 +1233,8 @@ def read_status(
     # Catch all exceptions so that we don't crash the workers
     except Exception as exc:  # pylint: disable=broad-except
         LOG.warning(
-            f"An exception was raised while trying to read status from '{status_filepath}'!\n{print_exception(type(exc), exc, exc.__traceback__)}"
+            f"An exception was raised while trying to read status from '{status_filepath}'!\n"
+            f"{print_exception(type(exc), exc, exc.__traceback__)}"
         )
         if raise_errors:
             raise exc
@@ -1257,5 +1261,6 @@ def write_status(status_to_write: Dict, status_filepath: str, lock_file: str, ti
     # Catch all exceptions so that we don't crash the workers
     except Exception as exc:  # pylint: disable=broad-except
         LOG.warning(
-            f"An exception was raised while trying to write status to '{status_filepath}'!\n{print_exception(type(exc), exc, exc.__traceback__)}"
+            f"An exception was raised while trying to write status to '{status_filepath}'!\n"
+            f"{print_exception(type(exc), exc, exc.__traceback__)}"
         )

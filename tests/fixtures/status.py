@@ -2,9 +2,12 @@
 Fixtures specifically for help testing the functionality related to
 status/detailed-status.
 """
+
 import os
-import pytest
 from pathlib import Path
+
+import pytest
+
 
 @pytest.fixture(scope="class")
 def status_testing_dir(temp_output_dir: str) -> str:
@@ -13,14 +16,15 @@ def status_testing_dir(temp_output_dir: str) -> str:
 
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     """
-    status_testing_dir = f"{temp_output_dir}/status_testing/"
-    if not os.path.exists(status_testing_dir):
-        os.mkdir(status_testing_dir)
+    testing_dir = f"{temp_output_dir}/status_testing/"
+    if not os.path.exists(testing_dir):
+        os.mkdir(testing_dir)
 
-    return status_testing_dir
+    return testing_dir
+
 
 @pytest.fixture(scope="class")
-def status_empty_file(status_testing_dir: str) -> str:
+def status_empty_file(status_testing_dir: str) -> str:  # pylint: disable=W0621
     """
     A pytest fixture to create an empty status file.
 

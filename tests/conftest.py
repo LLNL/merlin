@@ -50,11 +50,7 @@ from tests.celery_test_workers import CeleryTestWorkersManager
 # Loading in Module Specific Fixtures #
 #######################################
 pytest_plugins = [
-    fixture_file.replace("/", ".").replace(".py", "")
-    for fixture_file in glob(
-        "tests/fixtures/[!__]*.py",
-        recursive=True
-    )
+    fixture_file.replace("/", ".").replace(".py", "") for fixture_file in glob("tests/fixtures/[!__]*.py", recursive=True)
 ]
 
 
