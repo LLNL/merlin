@@ -30,6 +30,7 @@ def run_invalid_check(dict_a: Any, dict_b: Any, expected_log: str, caplog: "Fixt
     assert dict_a_initial == dict_a
 
     # Check that dict_deep_merge logs a warning
+    print(f"caplog.text: {caplog.text}")
     assert expected_log in caplog.text, "Missing expected log message"
 
 
@@ -69,10 +70,7 @@ def test_dict_deep_merge_both_dicts_invalid(dict_a: Any, dict_b: Any, caplog: "F
     """
 
     # The expected log that's output by dict_deep_merge
-    expected_log = (
-        f"Problem with dict_deep_merge: both dict_a '{dict_a}' "
-        f"and dict_b '{dict_b}' are not dictionaries. Ignoring this merge call."
-    )
+    expected_log = f"Problem with dict_deep_merge: dict_a '{dict_a}' is not a dict, dict_b '{dict_b}' is not a dict. Ignoring this merge call."
 
     # Run the actual test
     run_invalid_check(dict_a, dict_b, expected_log, caplog)
@@ -101,7 +99,7 @@ def test_dict_deep_merge_dict_a_invalid(dict_a: Any, dict_b: Dict[str, str], cap
     """
 
     # The expected log that's output by dict_deep_merge
-    expected_log = f"Problem with dict_deep_merge: dict_a '{dict_a}' is not a dictionary. Ignoring this merge call."
+    expected_log = f"Problem with dict_deep_merge: dict_a '{dict_a}' is not a dict. Ignoring this merge call."
 
     # Run the actual test
     run_invalid_check(dict_a, dict_b, expected_log, caplog)
@@ -130,7 +128,7 @@ def test_dict_deep_merge_dict_b_invalid(dict_a: Dict[str, str], dict_b: Any, cap
     """
 
     # The expected log that's output by dict_deep_merge
-    expected_log = f"Problem with dict_deep_merge: dict_b '{dict_b}' is not a dictionary. Ignoring this merge call."
+    expected_log = f"Problem with dict_deep_merge: dict_b '{dict_b}' is not a dict. Ignoring this merge call."
 
     # Run the actual test
     run_invalid_check(dict_a, dict_b, expected_log, caplog)

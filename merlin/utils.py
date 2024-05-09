@@ -557,28 +557,6 @@ def needs_merlin_expansion(
     return False
 
 
-def _both_inputs_are_dicts(dict_a: dict, dict_b: dict):
-    """
-    Helper function for `dict_deep_merge` to ensure both entries are dictionaries.
-
-    :param `dict_a`: A dict that we'll merge dict_b into
-    :param `dict_b`: A dict that we want to merge into dict_a
-    """
-    dict_a_is_dict = isinstance(dict_a, dict)
-    dict_b_is_dict = isinstance(dict_b, dict)
-    if not dict_a_is_dict or not dict_b_is_dict:
-        if not dict_a_is_dict and not dict_b_is_dict:
-            problem_str = f"both dict_a '{dict_a}' and dict_b '{dict_b}' are not dictionaries"
-        elif not dict_a_is_dict:
-            problem_str = f"dict_a '{dict_a}' is not a dictionary"
-        elif not dict_b_is_dict:
-            problem_str = f"dict_b '{dict_b}' is not a dictionary"
-
-        LOG.warning(f"Problem with dict_deep_merge: {problem_str}. Ignoring this merge call.")
-        return False
-    return True
-
-
 def dict_deep_merge(dict_a: dict, dict_b: dict, path: str = None, conflict_handler: Callable = None):
     """
     This function recursively merges dict_b into dict_a. The built-in
@@ -596,22 +574,14 @@ def dict_deep_merge(dict_a: dict, dict_b: dict, path: str = None, conflict_handl
     """
 
     # Check to make sure we have valid dict_a and dict_b input
-    if not _both_inputs_are_dicts(dict_a, dict_b):
+    msgs = [
+        f"{name} '{actual_dict}' is not a dict"
+        for name, actual_dict in [("dict_a", dict_a), ("dict_b", dict_b)]
+        if not isinstance(actual_dict, dict)
+    ]
+    if len(msgs) > 0:
+        LOG.warning(f"Problem with dict_deep_merge: {', '.join(msgs)}. Ignoring this merge call.")
         return
-
-    # # Check to make sure we have valid dict_a and dict_b input
-    # dict_a_is_dict = isinstance(dict_a, dict)
-    # dict_b_is_dict = isinstance(dict_b, dict)
-    # if not dict_a_is_dict or not dict_b_is_dict:
-    #     if not dict_a_is_dict and not dict_b_is_dict:
-    #         problem_str = f"both dict_a '{dict_a}' and dict_b '{dict_b}' are not dictionaries"
-    #     elif not dict_a_is_dict:
-    #         problem_str = f"dict_a '{dict_a}' is not a dictionary"
-    #     elif not dict_b_is_dict:
-    #         problem_str = f"dict_b '{dict_b}' is not a dictionary"
-
-    #     LOG.warning(f"Problem with dict_deep_merge: {problem_str}. Ignoring this merge call.")
-    #     return
 
     if path is None:
         path = []
