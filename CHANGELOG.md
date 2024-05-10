@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `RedisServerManager`: context to help with starting/stopping a redis server for tests
   - `CeleryWorkersManager`: context to help with starting/stopping workers for tests
 - Ability to copy and print the `Config` object from `merlin/config/__init__.py`
+- Conflict handler option to the `dict_deep_merge` function in `utils.py`
+- Ability to add module-specific pytest fixtures
+- Added fixtures specifically for testing status functionality
+- Added tests for reading and writing status files, and status conflict handling
+- Added tests for the `dict_deep_merge` function
+- Pytest-mock as a dependency for the test suite (necessary for using mocks and fixtures in the same test)
+
+### Changed
+
+### Fixed
+- Bugfix for output of `merlin example openfoam_wf_singularity`
+
 
 ## [1.12.1]
 ### Added

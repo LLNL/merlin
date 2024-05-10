@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0.
+# This file is part of Merlin, Version: 1.12.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -32,6 +32,7 @@ This module contains pytest fixtures to be used throughout the entire test suite
 """
 import os
 from copy import copy
+from glob import glob
 from time import sleep
 from typing import Dict
 
@@ -46,6 +47,16 @@ from tests.constants import CERT_FILES, SERVER_PASS
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.context_managers.server_manager import RedisServerManager
 from tests.utils import create_cert_files, create_pass_file
+
+
+#######################################
+# Loading in Module Specific Fixtures #
+#######################################
+
+
+pytest_plugins = [
+    fixture_file.replace("/", ".").replace(".py", "") for fixture_file in glob("tests/fixtures/[!__]*.py", recursive=True)
+]
 
 
 #######################################

@@ -13,3 +13,4 @@ alabaster
 johnnydep
 deepdiff
 pytest-order
+pytest-mock
