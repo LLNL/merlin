@@ -42,7 +42,6 @@ __all__ = (
     "HardFailException",
     "InvalidChainException",
     "RestartException",
-    "DeepMergeException",
     "NoWorkersException",
 )
 
@@ -94,16 +93,6 @@ class RestartException(Exception):
 
     def __init__(self):
         super().__init__()
-
-
-class DeepMergeException(Exception):
-    """
-    Exception to signal that there's a conflict when trying
-    to merge two dicts together
-    """
-
-    def __init__(self, message):
-        super().__init__(message)
 
 
 class NoWorkersException(Exception):

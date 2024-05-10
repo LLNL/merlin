@@ -212,16 +212,31 @@ class TestDumpFunctionality(TestBaseDetailedStatus):
         dump functionalities. The file needs to exist already for an append so it's
         better to keep these tests together.
         """
-        # Set filters for failed and cancelled tasks, and then reload the requested_statuses
-        self.detailed_status_obj.args.task_status = ["FAILED", "CANCELLED"]
-        self.detailed_status_obj.load_requested_statuses()
-
-        # Set the dump file
-        json_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/detailed_dump_test.json"
-        self.detailed_status_obj.args.dump = json_dump_file
+        # Need to create a new DetailedStatus object so that filters are loaded from the beginning
+        args = Namespace(
+            subparsers="detailed-status",
+            level="INFO",
+            detailed=True,
+            output_path=None,
+            task_server="celery",
+            dump=f"{status_test_variables.PATH_TO_TEST_FILES}/detailed_dump_test.json",  # Set the dump file
+            no_prompts=True,
+            max_tasks=None,
+            return_code=None,
+            steps=["all"],
+            task_queues=None,
+            task_status=["FAILED", "CANCELLED"],  # Set filters for failed and cancelled tasks
+            workers=None,
+            disable_pager=True,
+            disable_theme=False,
+            layout="default",
+        )
+        detailed_status_obj = DetailedStatus(
+            args=args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH
+        )
 
         # Run the json dump test (we should only get failed and cancelled statuses)
-        shared_tests.run_json_dump_test(self.detailed_status_obj, status_test_variables.REQUESTED_STATUSES_FAIL_AND_CANCEL)
+        shared_tests.run_json_dump_test(detailed_status_obj, status_test_variables.REQUESTED_STATUSES_FAIL_AND_CANCEL)
 
     def test_csv_dump_with_filters(self):
         """
@@ -229,17 +244,32 @@ class TestDumpFunctionality(TestBaseDetailedStatus):
         dump functionalities. The file needs to exist already for an append so it's
         better to keep these tests together.
         """
-        # Set filters for failed and cancelled tasks, and then reload the requested_statuses
-        self.detailed_status_obj.args.task_status = ["FAILED", "CANCELLED"]
-        self.detailed_status_obj.load_requested_statuses()
-
-        # Set the dump file
-        csv_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/detailed_dump_test.csv"
-        self.detailed_status_obj.args.dump = csv_dump_file
+        # Need to create a new DetailedStatus object so that filters are loaded from the beginning
+        args = Namespace(
+            subparsers="detailed-status",
+            level="INFO",
+            detailed=True,
+            output_path=None,
+            task_server="celery",
+            dump=f"{status_test_variables.PATH_TO_TEST_FILES}/detailed_dump_test.csv",  # Set the dump file
+            no_prompts=True,
+            max_tasks=None,
+            return_code=None,
+            steps=["all"],
+            task_queues=None,
+            task_status=["FAILED", "CANCELLED"],  # Set filters for failed and cancelled tasks
+            workers=None,
+            disable_pager=True,
+            disable_theme=False,
+            layout="default",
+        )
+        detailed_status_obj = DetailedStatus(
+            args=args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH
+        )
 
         # Run the csv dump test (we should only get failed and cancelled statuses)
         expected_output = shared_tests.build_row_list(status_test_variables.FORMATTED_STATUSES_FAIL_AND_CANCEL)
-        shared_tests.run_csv_dump_test(self.detailed_status_obj, expected_output)
+        shared_tests.run_csv_dump_test(detailed_status_obj, expected_output)
 
 
 class TestPromptFunctionality(TestBaseDetailedStatus):

@@ -33,6 +33,7 @@ integration test suite.
 """
 import os
 import subprocess
+from glob import glob
 from time import sleep
 from typing import Dict
 
@@ -43,6 +44,14 @@ from celery import Celery
 from celery.canvas import Signature
 
 from tests.celery_test_workers import CeleryTestWorkersManager
+
+
+#######################################
+# Loading in Module Specific Fixtures #
+#######################################
+pytest_plugins = [
+    fixture_file.replace("/", ".").replace(".py", "") for fixture_file in glob("tests/fixtures/[!__]*.py", recursive=True)
+]
 
 
 class RedisServerError(Exception):
