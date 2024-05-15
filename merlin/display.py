@@ -32,6 +32,7 @@
 Manages formatting for displaying information to the console.
 """
 import logging
+import os
 import pprint
 import shutil
 import subprocess
@@ -46,6 +47,7 @@ from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
 from merlin.study.status_renderers import status_renderer_factory
+from merlin.utils import get_package_versions
 
 
 LOG = logging.getLogger("merlin")
@@ -212,9 +214,9 @@ def display_multiple_configs(files, configs):
 # Might use args here in the future so we'll disable the pylint warning for now
 def print_info(args):  # pylint: disable=W0613
     """
-    Provide version and location information about python and pip to
-    facilitate user troubleshooting. 'merlin info' is a CLI tool only for
-    developer versions of Merlin.
+    Provide version and location information about python and packages to
+    facilitate user troubleshooting. Also provides info about server connections
+    and configurations.
 
     :param `args`: parsed CLI arguments
     """
@@ -225,14 +227,11 @@ def print_info(args):  # pylint: disable=W0613
     print("Python Configuration")
     print("-" * 25)
     print("")
-    info_calls = ["which python3", "python3 --version", "which pip3", "pip3 --version"]
-    info_str = ""
-    for cmd in info_calls:
-        info_str += 'echo " $ ' + cmd + '" && ' + cmd + "\n"
-        info_str += "echo \n"
-    info_str += r"echo \"echo \$PYTHONPATH\" && echo $PYTHONPATH"
-    _ = subprocess.run(info_str, shell=True)
-    print("")
+    package_list = ["pip", "merlin", "maestrowf", "celery", "kombu", "amqp", "redis"]
+    package_versions = get_package_versions(package_list)
+    print(package_versions)
+    pythonpath = os.environ.get("PYTHONPATH")
+    print(f"$PYTHONPATH: {pythonpath}")
 
 
 def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = False):  # noqa: F821

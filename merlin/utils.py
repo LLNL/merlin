@@ -37,6 +37,7 @@ import os
 import re
 import socket
 import subprocess
+import sys
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -44,8 +45,10 @@ from types import SimpleNamespace
 from typing import Callable, List, Optional, Union
 
 import numpy as np
+import pkg_resources
 import psutil
 import yaml
+from tabulate import tabulate
 
 
 try:
@@ -744,3 +747,26 @@ def ws_time_to_dt(ws_time: str) -> datetime:
     minute = int(ws_time[11:13])
     second = int(ws_time[13:])
     return datetime(year, month, day, hour=hour, minute=minute, second=second)
+
+
+def get_package_versions(package_list: List[str]) -> str:
+    """
+    Return a table of the versions and locations of installed packages, including python.
+    If the package is not installed says "Not installed"
+
+    :param `package_list`: A list of packages.
+    :returns: A string that's a formatted table.
+    """
+    table = []
+    for package in package_list:
+        try:
+            distribution = pkg_resources.get_distribution(package)
+            version = distribution.version
+            location = distribution.location
+            table.append([package, version, location])
+        except pkg_resources.DistributionNotFound:
+            table.append([package, "Not installed", "N/A"])
+
+    table.insert(0, ["python", sys.version.split()[0], sys.executable])
+    table_str = tabulate(table, headers=["Package", "Version", "Location"], tablefmt="simple")
+    return f"Python Packages\n\n{table_str}\n"

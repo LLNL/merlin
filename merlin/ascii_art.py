@@ -32,6 +32,7 @@
 
 from merlin import VERSION
 
+
 """
 Holds ascii art strings.
 """
