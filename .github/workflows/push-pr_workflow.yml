@@ -3,15 +3,6 @@ name: Python CI
 on: [push, pull_request]
 
 jobs:
-  print-context:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Print GitHub Context
-      run: |
-        echo "GitHub Context:"
-        echo "${{ toJson(github) }}"
-
   Changelog:
     name: CHANGELOG.md updated
     runs-on: ubuntu-latest
