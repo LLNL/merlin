@@ -35,7 +35,6 @@ import logging
 import os
 import pprint
 import shutil
-import subprocess
 import time
 import traceback
 from datetime import datetime
