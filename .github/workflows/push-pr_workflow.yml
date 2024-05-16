@@ -9,12 +9,18 @@ jobs:
     if: github.event_name == 'pull_request'
 
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout code
+      uses: actions/checkout@v2
 
     - name: Check that CHANGELOG has been updated
       run: |
         # If this step fails, this means you haven't updated the CHANGELOG.md file with notes on your contribution.
-        git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '^CHANGELOG.md$' && echo "Thanks for helping keep our CHANGELOG up-to-date!"
+if git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -q '^CHANGELOG.md$'; then
+          echo "Thanks for helping keep our CHANGELOG up-to-date!"
+        else
+          echo "Please update the CHANGELOG.md file with notes on your contribution."
+          exit 1
+        fi
 
   Lint:
     runs-on: ubuntu-latest
