@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0.
+# This file is part of Merlin, Version: 1.12.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,13 +41,11 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 import psutil
 import yaml
-
-from merlin.exceptions import DeepMergeException
 
 
 try:
@@ -187,7 +185,7 @@ def regex_list_filter(regex, list_to_filter, match=True):
     return list(filter(r.search, list_to_filter))
 
 
-def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False):
+def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False, display_warning: bool = True):
     """
     Take a list of regex's, apply each regex to a list we're searching through,
     and append each result to a result list.
@@ -202,7 +200,8 @@ def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False):
         filter_results = set(regex_list_filter(regex, list_to_filter, match))
 
         if not filter_results:
-            LOG.warning(f"No regex match for {regex}.")
+            if display_warning:
+                LOG.warning(f"No regex match for {regex}.")
         else:
             result_list += filter_results
 
@@ -558,28 +557,51 @@ def needs_merlin_expansion(
     return False
 
 
-def dict_deep_merge(dict_a, dict_b, path=None):
+def dict_deep_merge(dict_a: dict, dict_b: dict, path: str = None, conflict_handler: Callable = None):
     """
     This function recursively merges dict_b into dict_a. The built-in
     merge of dictionaries in python (dict(dict_a) | dict(dict_b)) does not do a
     deep merge so this function is necessary. This will only merge in new keys,
-    it will NOT update existing ones.
+    it will NOT update existing ones, unless you specify a conflict handler function.
     Credit to this stack overflow post: https://stackoverflow.com/a/7205107.
 
     :param `dict_a`: A dict that we'll merge dict_b into
     :param `dict_b`: A dict that we want to merge into dict_a
     :param `path`: The path down the dictionary tree that we're currently at
+    :param `conflict_handler`: An optional function to handle conflicts between values at the same key.
+                               The function should return the value to be used in the merged dictionary.
+                               The default behavior without this argument is to log a warning.
     """
+
+    # Check to make sure we have valid dict_a and dict_b input
+    msgs = [
+        f"{name} '{actual_dict}' is not a dict"
+        for name, actual_dict in [("dict_a", dict_a), ("dict_b", dict_b)]
+        if not isinstance(actual_dict, dict)
+    ]
+    if len(msgs) > 0:
+        LOG.warning(f"Problem with dict_deep_merge: {', '.join(msgs)}. Ignoring this merge call.")
+        return
+
     if path is None:
         path = []
     for key in dict_b:
         if key in dict_a:
             if isinstance(dict_a[key], dict) and isinstance(dict_b[key], dict):
-                dict_deep_merge(dict_a[key], dict_b[key], path + [str(key)])
+                dict_deep_merge(dict_a[key], dict_b[key], path=path + [str(key)], conflict_handler=conflict_handler)
+            elif isinstance(dict_a[key], list) and isinstance(dict_a[key], list):
+                dict_a[key] += dict_b[key]
             elif dict_a[key] == dict_b[key]:
                 pass  # same leaf value
             else:
-                raise DeepMergeException(f"Conflict at {'.'.join(path + [str(key)])}")
+                if conflict_handler is not None:
+                    merged_val = conflict_handler(
+                        dict_a_val=dict_a[key], dict_b_val=dict_b[key], key=key, path=path + [str(key)]
+                    )
+                    dict_a[key] = merged_val
+                else:
+                    # Want to just output a warning instead of raising an exception so that the workflow doesn't crash
+                    LOG.warning(f"Conflict at {'.'.join(path + [str(key)])}. Ignoring the update to key '{key}'.")
         else:
             dict_a[key] = dict_b[key]
 
@@ -613,6 +635,11 @@ def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
     """
     # make sure it's a string in case we get an int
     timestr = str(timestr)
+
+    # remove time unit characters (if any exist)
+    time_unit_chars = r"[dhms]"
+    timestr = re.sub(time_unit_chars, "", timestr)
+
     nfields = len(timestr.split(":"))
     if nfields > 4:
         raise ValueError(f"Cannot convert {timestr} to a timedelta. Valid format: days:hours:minutes:seconds.")

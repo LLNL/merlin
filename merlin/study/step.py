@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0.
+# This file is part of Merlin, Version: 1.12.1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,7 +29,6 @@
 ###############################################################################
 """This module represents all of the logic that goes into a step"""
 
-import json
 import logging
 import os
 import re
@@ -38,14 +37,13 @@ from copy import deepcopy
 from typing import Dict, Optional, Tuple
 
 from celery import current_task
-from filelock import FileLock
 from maestrowf.abstracts.enums import State
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.study.script_adapter import MerlinScriptAdapter
-from merlin.study.status import read_status
+from merlin.study.status import read_status, write_status
 from merlin.utils import needs_merlin_expansion
 
 
@@ -238,8 +236,7 @@ class MerlinStepRecord(_StepRecord):
 
         # If the status file already exists then we can just add to it
         if os.path.exists(status_filepath):
-            lock = FileLock(f"{self.workspace.value}/status.lock")  # pylint: disable=E0110
-            status_info = read_status(status_filepath, lock)
+            status_info = read_status(status_filepath, f"{self.workspace.value}/status.lock")
         else:
             # Create the parameter entries
             cmd_params = restart_params = None
@@ -259,15 +256,6 @@ class MerlinStepRecord(_StepRecord):
                 }
             }
 
-            # Add celery specific info
-            if task_server == "celery":
-                from merlin.celery import app  # pylint: disable=C0415
-
-                # If the tasks are always eager, this is a local run and we won't have workers running
-                if not app.conf.task_always_eager:
-                    status_info[self.name]["task_queue"] = get_current_queue()
-                    status_info[self.name]["worker_name"] = get_current_worker()
-
         # Put together a dict of status info
         status_info[self.name][self.condensed_workspace] = {
             "status": state_translator[self.status],
@@ -277,9 +265,29 @@ class MerlinStepRecord(_StepRecord):
             "restarts": self.restarts,
         }
 
+        # Add celery specific info
+        if task_server == "celery":
+            from merlin.celery import app  # pylint: disable=C0415
+
+            # If the tasks are always eager, this is a local run and we won't have workers running
+            if not app.conf.task_always_eager:
+                status_info[self.name]["task_queue"] = get_current_queue()
+
+                # Add the current worker to the workspace-specific status info
+                current_worker = get_current_worker()
+                if "workers" not in status_info[self.name][self.condensed_workspace]:
+                    status_info[self.name][self.condensed_workspace]["workers"] = [current_worker]
+                elif current_worker not in status_info[self.name][self.condensed_workspace]["workers"]:
+                    status_info[self.name][self.condensed_workspace]["workers"].append(current_worker)
+
+                # Add the current worker to the overall-step status info
+                if "workers" not in status_info[self.name]:
+                    status_info[self.name]["workers"] = [current_worker]
+                elif current_worker not in status_info[self.name]["workers"]:
+                    status_info[self.name]["workers"].append(current_worker)
+
         LOG.info(f"Writing status for {self.name} to '{status_filepath}...")
-        with open(status_filepath, "w") as status_file:
-            json.dump(status_info, status_file)
+        write_status(status_info, status_filepath, f"{self.workspace.value}/status.lock")
         LOG.info(f"Status for {self.name} successfully written.")
 
 
