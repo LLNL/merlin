@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pytest-mock as a dependency for the test suite (necessary for using mocks and fixtures in the same test)
 
 ### Changed
+- `merlin info` is cleaner and gives python package info
+- merlin version now prints with every banner message
 
 ### Fixed
 - Bugfix for output of `merlin example openfoam_wf_singularity`
