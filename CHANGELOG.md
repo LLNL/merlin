@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Bugfix for output of `merlin example openfoam_wf_singularity`
 - A bug with the CHANGELOG detection test when the target branch isn't in the ci runner history
+- Link to Merlin banner in readme
 
 
 ## [1.12.1]
