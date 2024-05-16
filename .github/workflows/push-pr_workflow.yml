@@ -11,6 +11,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # Checkout the whole history, in case the target is way far behind
 
     - name: Check that CHANGELOG has been updated
       run: |
