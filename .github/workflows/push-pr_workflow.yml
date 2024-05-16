@@ -14,6 +14,15 @@ jobs:
       with:
         fetch-depth: 0 # Checkout the whole history, in case the target is way far behind
 
+    - name: Check if target branch has been merged
+      run: |
+        if git merge-base --is-ancestor ${{ github.event.pull_request.base.sha }} ${{ github.sha }}; then
+          echo "Target branch has been merged into the source branch."
+        else
+          echo "Target branch has not been merged into the source branch. Please merge in target first."
+          exit 1
+        fi
+
     - name: Check that CHANGELOG has been updated
       run: |
         # If this step fails, this means you haven't updated the CHANGELOG.md file with notes on your contribution.
