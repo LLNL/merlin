@@ -12,11 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added tests for reading and writing status files, and status conflict handling
 - Added tests for the `dict_deep_merge` function
 - Pytest-mock as a dependency for the test suite (necessary for using mocks and fixtures in the same test)
+- New github action test to make sure target branch has been merged into the source first, so we know histories are ok
 
 ### Changed
+- `merlin info` is cleaner and gives python package info
+- merlin version now prints with every banner message
 
 ### Fixed
 - Bugfix for output of `merlin example openfoam_wf_singularity`
+- A bug with the CHANGELOG detection test when the target branch isn't in the ci runner history
+- Link to Merlin banner in readme
 
 
 ## [1.12.1]
