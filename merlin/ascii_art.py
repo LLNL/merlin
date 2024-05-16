@@ -30,6 +30,9 @@
 
 # pylint: skip-file
 
+from merlin import VERSION
+
+
 """
 Holds ascii art strings.
 """
@@ -127,6 +130,7 @@ def _make_banner():
     for hat_line, name_line in zip(hat_lines, name_lines):
         banner = banner + hat_line + name_line + "\n"
 
+    banner = banner + f"  v. {VERSION}\n"
     return banner
 
 
