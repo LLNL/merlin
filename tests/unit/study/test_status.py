@@ -31,15 +31,14 @@
 Tests for the Status class in the status.py module
 """
 import json
+import logging
 import os
 import unittest
 from argparse import Namespace
-from copy import deepcopy
 from datetime import datetime
 from json.decoder import JSONDecodeError
 
 import pytest
-import yaml
 from deepdiff import DeepDiff
 from filelock import Timeout
 
@@ -309,11 +308,12 @@ class TestStatusConflictHandler:
     def test_parameter_conflict(self, caplog: "Fixture"):  # noqa: F821
         """
         Test that conflicting parameters are handled properly. This is a special
-        case of the use-initial-and-log-warning rule since parameter tokens vary
+        case of the use-dict_b-and-log-debug rule since parameter tokens vary
         and have to be added to the `merge_rules` dict on the fly.
 
         :param caplog: A built-in fixture from the pytest library to capture logs
         """
+        caplog.set_level(logging.DEBUG)
 
         # Create two dicts with conflicting parameter values
         key = "TOKEN"
@@ -328,11 +328,11 @@ class TestStatusConflictHandler:
 
         # Check that everything ran properly
         expected_log = (
-            f"Conflict at key '{key}' while merging status files. Defaulting to initial value. "
+            f"Conflict at key '{key}' while merging status files. Using the updated value. "
             "This could lead to incorrect status information, you may want to re-run in debug mode and "
             "check the files in the output directory for this task."
         )
-        assert merged_val == "value"
+        assert merged_val == "new_value"
         assert expected_log in caplog.text
 
     def test_non_existent_key(self, caplog: "Fixture"):  # noqa: F821
@@ -369,14 +369,15 @@ class TestStatusConflictHandler:
         )
         assert merged_val == f"{val1}, {val2}"
 
-    def test_rule_use_initial_and_log_warning(self, caplog: "Fixture"):  # noqa: F821
+    def test_rule_use_initial_and_log_debug(self, caplog: "Fixture"):  # noqa: F821
         """
-        Test the use-initial-and-log-warning merge rule. This should
-        return the value passed in to `dict_a_val` and log a warning
+        Test the use-dict_b-and-log-debug merge rule. This should
+        return the value passed in to `dict_b_val` and log a debug
         message.
 
         :param caplog: A built-in fixture from the pytest library to capture logs
         """
+        caplog.set_level(logging.DEBUG)
 
         # Create two dicts with conflicting status values
         key = "status"
@@ -392,11 +393,11 @@ class TestStatusConflictHandler:
 
         # Check that everything ran properly
         expected_log = (
-            f"Conflict at key '{key}' while merging status files. Defaulting to initial value. "
+            f"Conflict at key '{key}' while merging status files. Using the updated value. "
             "This could lead to incorrect status information, you may want to re-run in debug mode and "
             "check the files in the output directory for this task."
         )
-        assert merged_val == "SUCCESS"
+        assert merged_val == "FAILED"
         assert expected_log in caplog.text
 
     def test_rule_use_longest_time_no_dict_a_time(self):
@@ -493,161 +494,140 @@ class TestStatusConflictHandler:
         assert merged_val == expected
 
 
-class TestMerlinStatus(unittest.TestCase):
+class TestMerlinStatus:
     """Test the logic for methods in the Status class."""
 
-    @classmethod
-    def setUpClass(cls):
-        """
-        We need to modify the path to the samples file in the expanded spec for these tests.
-        This will only happen once when these tests are initialized.
-        """
-        # Read in the contents of the expanded spec
-        with open(status_test_variables.EXPANDED_SPEC_PATH, "r") as expanded_file:
-            cls.initial_expanded_contents = yaml.load(expanded_file, yaml.Loader)
-
-        # Create a copy of the contents so we can reset the file when these tests are done
-        modified_contents = deepcopy(cls.initial_expanded_contents)
-
-        # Modify the samples file path
-        modified_contents["merlin"]["samples"]["file"] = status_test_variables.SAMPLES_PATH
-
-        # Write the new contents to the expanded spec
-        with open(status_test_variables.EXPANDED_SPEC_PATH, "w") as expanded_file:
-            yaml.dump(modified_contents, expanded_file)
-
-    @classmethod
-    def tearDownClass(cls):
-        """
-        When these tests are done we'll reset the contents of the expanded spec path
-        to their initial states.
-        """
-        with open(status_test_variables.EXPANDED_SPEC_PATH, "w") as expanded_file:
-            yaml.dump(cls.initial_expanded_contents, expanded_file)
-
-    def setUp(self):
-        """
-        We'll create an argparse namespace here that can be modified on a
-        test-by-test basis.
-        """
-        # We'll set all of the args needed to create the DetailedStatus object here and then
-        # just modify them on a test-by-test basis
-        self.args = Namespace(
-            subparsers="status",
-            level="INFO",
-            detailed=False,
-            output_path=None,
-            task_server="celery",
-            cb_help=False,
-            dump=None,
-            no_prompts=True,  # We'll set this to True here since it's easier to test this way
-        )
-
-    def test_spec_setup_nonexistent_file(self):
+    def test_spec_setup_nonexistent_file(self, status_args: Namespace):
         """
         Test the creation of a Status object using a nonexistent spec file.
         This should not let us create the object and instead throw an error.
-        """
-        with self.assertRaises(ValueError):
-            invalid_spec_path = f"{status_test_variables.PATH_TO_TEST_FILES}/nonexistent.yaml"
-            self.args.specification = invalid_spec_path
-            self.args.spec_provided = get_spec_with_expansion(self.args.specification)
-            _ = Status(args=self.args, spec_display=True, file_or_ws=invalid_spec_path)
 
-    def test_spec_setup_no_prompts(self):
+        :param status_args: A namespace of args needed for the status object
+        """
+        with pytest.raises(ValueError):
+            invalid_spec_path = f"{status_test_variables.PATH_TO_TEST_FILES}/nonexistent.yaml"
+            status_args.specification = invalid_spec_path
+            status_args.spec_provided = get_spec_with_expansion(status_args.specification)
+            _ = Status(args=status_args, spec_display=True, file_or_ws=invalid_spec_path)
+
+    def test_spec_setup_no_prompts(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
         """
         Test the creation of a Status object using a valid spec file with no
         prompts allowed. By default for this test class, no_prompts is True.
         This also tests that the attributes created upon initialization are
         correct. The methods covered here are _load_from_spec and _obtain_study,
         as well as any methods covered in assert_correct_attribute_creation
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
-        self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
-        status_obj = Status(args=self.args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
+        status_args.specification = status_test_variables.SPEC_PATH
+        status_args.spec_provided = get_spec_with_expansion(status_args.specification)
+        status_obj = Status(args=status_args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
         assert isinstance(status_obj, Status)
 
         shared_tests.assert_correct_attribute_creation(status_obj)
 
-    def test_prompt_for_study_with_valid_input(self):
+    def test_prompt_for_study_with_valid_input(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
         """
         This is testing the prompt that's displayed when multiple study output
         directories are found. This tests the _obtain_study method using valid inputs.
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to Status
-        self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
+        status_args.specification = status_test_variables.SPEC_PATH
+        status_args.spec_provided = get_spec_with_expansion(status_args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
-        status_obj = Status(args=self.args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
+        status_obj = Status(args=status_args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
         shared_tests.run_study_selector_prompt_valid_input(status_obj)
 
-    def test_prompt_for_study_with_invalid_input(self):
+    def test_prompt_for_study_with_invalid_input(
+        self, status_set_sample_path: "Fixture", status_args: Namespace  # noqa: F821
+    ):
         """
         This is testing the prompt that's displayed when multiple study output
         directories are found. This tests the _obtain_study method using invalid inputs.
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to Status
-        self.args.specification = status_test_variables.SPEC_PATH
-        self.args.spec_provided = get_spec_with_expansion(self.args.specification)
+        status_args.specification = status_test_variables.SPEC_PATH
+        status_args.spec_provided = get_spec_with_expansion(status_args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
-        status_obj = Status(args=self.args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
+        status_obj = Status(args=status_args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
         shared_tests.run_study_selector_prompt_invalid_input(status_obj)
 
-    def test_workspace_setup_nonexistent_workspace(self):
+    def test_workspace_setup_nonexistent_workspace(self, status_args: Namespace):
         """
         Test the creation of a Status object using a nonexistent workspace directory.
         This should not let us create the object and instead throw an error.
+
+        :param status_args: A namespace of args needed for the status object
         """
         # Testing non existent workspace (in reality main.py should deal with this for us but we'll check it just in case)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             invalid_workspace = f"{status_test_variables.PATH_TO_TEST_FILES}/nonexistent_20230101-000000/"
-            _ = Status(args=self.args, spec_display=False, file_or_ws=invalid_workspace)
+            _ = Status(args=status_args, spec_display=False, file_or_ws=invalid_workspace)
 
-    def test_workspace_setup_not_a_merlin_directory(self):
+    def test_workspace_setup_not_a_merlin_directory(self, status_args: Namespace):
         """
         Test the creation of a Status object using an existing directory that is NOT
         an output directory from a merlin study (i.e. the directory does not have a
         merlin_info/ subdirectory). This should not let us create the object and instead
         throw an error.
-        """
-        with self.assertRaises(ValueError):
-            _ = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.DUMMY_WORKSPACE_PATH)
 
-    def test_workspace_setup_valid_workspace(self):
+        :param status_args: A namespace of args needed for the status object
+        """
+        with pytest.raises(ValueError):
+            _ = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.DUMMY_WORKSPACE_PATH)
+
+    def test_workspace_setup_valid_workspace(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
         """
         Test the creation of a Status object using a valid workspace directory.
         This also tests that the attributes created upon initialization are
         correct. The _load_from_workspace method is covered here, as well as any
         methods covered in assert_correct_attribute_creation.
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
-        status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
         assert isinstance(status_obj, Status)
 
         shared_tests.assert_correct_attribute_creation(status_obj)
 
-    def test_json_formatter(self):
+    def test_json_formatter(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
         """
         Test the json formatter for the dump method. This covers the format_json_dump method.
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
         # Create a timestamp and the status object that we'll run tests on
         date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
 
         # Test json formatter
         json_format_diff = DeepDiff(status_obj.format_json_dump(date), {date: status_test_variables.ALL_REQUESTED_STATUSES})
-        self.assertEqual(json_format_diff, {})
+        assert json_format_diff == {}
 
-    def test_csv_formatter(self):
+    def test_csv_formatter(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
         """
         Test the csv formatter for the dump method. This covers the format_csv_dump method.
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
         # Create a timestamp and the status object that we'll run tests on
         date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
 
         # Build the correct format and store each row in a list (so we can ignore the order)
         correct_csv_format = {"time_of_status": [date] * len(status_test_variables.ALL_FORMATTED_STATUSES["step_name"])}
@@ -659,16 +639,19 @@ class TestMerlinStatus(unittest.TestCase):
 
         # Compare differences (should be none)
         csv_format_diff = DeepDiff(actual_csv_format, correct_csv_format, ignore_order=True)
-        self.assertEqual(csv_format_diff, {})
+        assert csv_format_diff == {}
 
-    def test_json_dump(self):
+    def test_json_dump(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
         """
         Test the json dump functionality. This tests both the write and append
         dump functionalities. The file needs to exist already for an append so it's
         better to keep these tests together. This covers the dump method.
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
         # Create the status object that we'll run tests on
-        status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
         # Set the dump file
         json_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/dump_test.json"
         status_obj.args.dump = json_dump_file
@@ -676,15 +659,18 @@ class TestMerlinStatus(unittest.TestCase):
         # Run the json dump test
         shared_tests.run_json_dump_test(status_obj, status_test_variables.ALL_REQUESTED_STATUSES)
 
-    def test_csv_dump(self):
+    def test_csv_dump(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
         """
         Test the csv dump functionality. This tests both the write and append
         dump functionalities. The file needs to exist already for an append so it's
         better to keep these tests together. This covers the format_status_for_csv
         and dump methods.
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
         # Create the status object that we'll run tests on
-        status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
 
         # Set the dump file
         csv_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/dump_test.csv"
@@ -694,15 +680,18 @@ class TestMerlinStatus(unittest.TestCase):
         expected_output = shared_tests.build_row_list(status_test_variables.ALL_FORMATTED_STATUSES)
         shared_tests.run_csv_dump_test(status_obj, expected_output)
 
-    def test_display(self):
+    def test_display(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
         """
         Test the status display functionality without actually displaying anything.
         Running the display in test_mode will just provide us with the state_info
         dict created for each step that is typically used for display. We'll ensure
         this state_info dict is created properly here. This covers the display method.
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
         # Create the status object that we'll run tests on
-        status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
 
         # Get the status info that display would use if it were printing output
         all_status_info = status_obj.display(test_mode=True)
@@ -717,12 +706,15 @@ class TestMerlinStatus(unittest.TestCase):
 
             # Make sure all the state info dicts for each step match what they should be
             state_info_diff = DeepDiff(state_info, status_test_variables.DISPLAY_INFO[step_name], ignore_order=True)
-            self.assertEqual(state_info_diff, {})
+            assert state_info_diff == {}
 
-    def test_get_runtime_avg_std_dev(self):
+    def test_get_runtime_avg_std_dev(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
         """
         Test the functionality that calculates the run time average and standard
         deviation for each step. This test covers the get_runtime_avg_std_dev method.
+
+        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_args: A namespace of args needed for the status object
         """
         dummy_step_status = {
             "dummy_step_PARAM.1": {
@@ -763,7 +755,7 @@ class TestMerlinStatus(unittest.TestCase):
             },
         }
 
-        status_obj = Status(args=self.args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
         status_obj.get_runtime_avg_std_dev(dummy_step_status, "dummy_step")
 
         # Set expected values
@@ -771,9 +763,5 @@ class TestMerlinStatus(unittest.TestCase):
         expected_std_dev = "±16m:40s"  # Std dev is 1000 seconds = 16m:40s
 
         # Make sure the values were calculated as expected
-        self.assertEqual(status_obj.run_time_info["dummy_step"]["avg_run_time"], expected_avg)
-        self.assertEqual(status_obj.run_time_info["dummy_step"]["run_time_std_dev"], expected_std_dev)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert status_obj.run_time_info["dummy_step"]["avg_run_time"] == expected_avg
+        assert status_obj.run_time_info["dummy_step"]["run_time_std_dev"] == expected_std_dev
