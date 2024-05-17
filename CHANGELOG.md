@@ -14,16 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pytest-mock as a dependency for the test suite (necessary for using mocks and fixtures in the same test)
 - New github action test to make sure target branch has been merged into the source first, so we know histories are ok
 - Check in the status commands to make sure we're not pulling statuses from nested workspaces
+- Added `setuptools` as a requirement for python 3.12 to recognize the `pkg_resources` library
 
 ### Changed
 - `merlin info` is cleaner and gives python package info
 - merlin version now prints with every banner message
 - Applying filters for `merlin detailed-status` will now log debug statements instead of warnings
+- Modified the unit tests for the `merlin status` command to use pytest rather than unittest
 
 ### Fixed
 - Bugfix for output of `merlin example openfoam_wf_singularity`
 - A bug with the CHANGELOG detection test when the target branch isn't in the ci runner history
 - Link to Merlin banner in readme
+- Issue with escape sequences in ascii art (caught by python 3.12)
 
 
 ## [1.12.1]
