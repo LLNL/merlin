@@ -348,7 +348,7 @@ class Status:
         :returns: True if we should skip this directory. False otherwise.
         """
         timestamp_regex = r"\d{8}-\d{6}$"
-        curr_dir = root.split("/")[-1]
+        curr_dir = os.path.split(root)[1]
         match = re.search(timestamp_regex, curr_dir)
 
         # If a workspace with a timestamp is found add it to the list and move to next dir
@@ -362,7 +362,6 @@ class Status:
                 return True
 
         return False
-
 
     def get_step_statuses(self, step_workspace: str, started_step_name: str) -> Dict[str, List[str]]:
         """
