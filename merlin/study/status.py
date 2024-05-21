@@ -339,36 +339,13 @@ class Status:
 
         return num_statuses
 
-    def move_to_next_dir(self, timestamp_dirs: List[str], root: str) -> bool:
-        """
-        Look for nested workspaces and skip them.
-
-        :param timestamp_dirs: A list of nested workspaces
-        :param root: The path to the directory we need to check
-        :returns: True if we should skip this directory. False otherwise.
-        """
-        timestamp_regex = r"\d{8}-\d{6}$"
-        curr_dir = os.path.split(root)[1]
-        match = re.search(timestamp_regex, curr_dir)
-
-        # If a workspace with a timestamp is found add it to the list and move to next dir
-        if match:
-            timestamp_dirs.append(curr_dir)
-            return True
-
-        # If a workspace with a timestamp wasn't found, look to see if we should skip this
-        for ts_dir in timestamp_dirs:
-            if ts_dir in root:
-                return True
-
-        return False
-
     def get_step_statuses(self, step_workspace: str, started_step_name: str) -> Dict[str, List[str]]:
         """
         Given a step workspace and the name of the step, read in all the statuses
         for the step and return them in a dict.
 
         :param step_workspace: The path to the step we're going to read statuses from
+        :param started_step_name: The name of the step that we're gathering statuses for
         :returns: A dict of statuses for the given step
         """
         step_statuses = {}
@@ -378,11 +355,11 @@ class Status:
 
         # Traverse the step workspace and look for MERLIN_STATUS files
         LOG.debug(f"Traversing '{step_workspace}' to find MERLIN_STATUS.json files...")
-        timestamp_dirs = []
-        for root, _, _ in os.walk(step_workspace):
-            # Skip any nested workspaces (iterative workflows may have this)
-            if self.move_to_next_dir(timestamp_dirs, root):
-                continue
+        for root, dirs, _ in os.walk(step_workspace, topdown=True):
+            # Look for nested workspaces and skip them
+            timestamp_regex = r"\d{8}-\d{6}$"
+            curr_dir = os.path.split(root)[1]
+            dirs[:] = [d for d in dirs if not re.search(timestamp_regex, curr_dir)]
 
             # Search for a status file
             status_filepath = os.path.join(root, "MERLIN_STATUS.json")

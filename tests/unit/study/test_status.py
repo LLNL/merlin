@@ -33,7 +33,6 @@ Tests for the Status class in the status.py module
 import json
 import logging
 import os
-import unittest
 from argparse import Namespace
 from datetime import datetime
 from json.decoder import JSONDecodeError
@@ -44,6 +43,7 @@ from filelock import Timeout
 
 from merlin.spec.expansion import get_spec_with_expansion
 from merlin.study.status import Status, read_status, status_conflict_handler, write_status
+from merlin.study.status_constants import NON_WORKSPACE_KEYS
 from tests.unit.study.status_test_files import shared_tests, status_test_variables
 
 
@@ -510,7 +510,7 @@ class TestMerlinStatus:
             status_args.spec_provided = get_spec_with_expansion(status_args.specification)
             _ = Status(args=status_args, spec_display=True, file_or_ws=invalid_spec_path)
 
-    def test_spec_setup_no_prompts(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
+    def test_spec_setup_no_prompts(self, status_spec_path: str, status_args: Namespace, status_output_workspace: str):
         """
         Test the creation of a Status object using a valid spec file with no
         prompts allowed. By default for this test class, no_prompts is True.
@@ -518,50 +518,55 @@ class TestMerlinStatus:
         correct. The methods covered here are _load_from_spec and _obtain_study,
         as well as any methods covered in assert_correct_attribute_creation
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_spec_path: The path to the spec file in our temporary output directory
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
         """
-        status_args.specification = status_test_variables.SPEC_PATH
+        status_args.specification = status_spec_path
         status_args.spec_provided = get_spec_with_expansion(status_args.specification)
-        status_obj = Status(args=status_args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
+        status_obj = Status(args=status_args, spec_display=True, file_or_ws=status_spec_path)
         assert isinstance(status_obj, Status)
 
         shared_tests.assert_correct_attribute_creation(status_obj)
 
-    def test_prompt_for_study_with_valid_input(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
+    def test_prompt_for_study_with_valid_input(
+        self, status_spec_path: str, status_args: Namespace, status_output_workspace: str
+    ):
         """
         This is testing the prompt that's displayed when multiple study output
         directories are found. This tests the _obtain_study method using valid inputs.
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_spec_path: The path to the spec file in our temporary output directory
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to Status
-        status_args.specification = status_test_variables.SPEC_PATH
+        status_args.specification = status_spec_path
         status_args.spec_provided = get_spec_with_expansion(status_args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
-        status_obj = Status(args=status_args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
+        status_obj = Status(args=status_args, spec_display=True, file_or_ws=status_spec_path)
         shared_tests.run_study_selector_prompt_valid_input(status_obj)
 
     def test_prompt_for_study_with_invalid_input(
-        self, status_set_sample_path: "Fixture", status_args: Namespace  # noqa: F821
+        self, status_spec_path: str, status_args: Namespace, status_output_workspace: str
     ):
         """
         This is testing the prompt that's displayed when multiple study output
         directories are found. This tests the _obtain_study method using invalid inputs.
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
+        :param status_spec_path: The path to the spec file in our temporary output directory
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
         """
         # We need to load in the MerlinSpec object and save it to the args we'll give to Status
-        status_args.specification = status_test_variables.SPEC_PATH
+        status_args.specification = status_spec_path
         status_args.spec_provided = get_spec_with_expansion(status_args.specification)
 
         # We're going to load in a status object without prompts first and then use that to call the method
         # that prompts the user for input
-        status_obj = Status(args=status_args, spec_display=True, file_or_ws=status_test_variables.SPEC_PATH)
+        status_obj = Status(args=status_args, spec_display=True, file_or_ws=status_spec_path)
         shared_tests.run_study_selector_prompt_invalid_input(status_obj)
 
     def test_workspace_setup_nonexistent_workspace(self, status_args: Namespace):
@@ -588,46 +593,46 @@ class TestMerlinStatus:
         with pytest.raises(ValueError):
             _ = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.DUMMY_WORKSPACE_PATH)
 
-    def test_workspace_setup_valid_workspace(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
+    def test_workspace_setup_valid_workspace(self, status_args: Namespace, status_output_workspace: str):
         """
         Test the creation of a Status object using a valid workspace directory.
         This also tests that the attributes created upon initialization are
         correct. The _load_from_workspace method is covered here, as well as any
         methods covered in assert_correct_attribute_creation.
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
         """
-        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_output_workspace)
         assert isinstance(status_obj, Status)
 
         shared_tests.assert_correct_attribute_creation(status_obj)
 
-    def test_json_formatter(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
+    def test_json_formatter(self, status_args: Namespace, status_output_workspace: str):
         """
         Test the json formatter for the dump method. This covers the format_json_dump method.
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
         """
         # Create a timestamp and the status object that we'll run tests on
         date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_output_workspace)
 
         # Test json formatter
         json_format_diff = DeepDiff(status_obj.format_json_dump(date), {date: status_test_variables.ALL_REQUESTED_STATUSES})
         assert json_format_diff == {}
 
-    def test_csv_formatter(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
+    def test_csv_formatter(self, status_args: Namespace, status_output_workspace: str):
         """
         Test the csv formatter for the dump method. This covers the format_csv_dump method.
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
         """
         # Create a timestamp and the status object that we'll run tests on
         date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_output_workspace)
 
         # Build the correct format and store each row in a list (so we can ignore the order)
         correct_csv_format = {"time_of_status": [date] * len(status_test_variables.ALL_FORMATTED_STATUSES["step_name"])}
@@ -641,57 +646,59 @@ class TestMerlinStatus:
         csv_format_diff = DeepDiff(actual_csv_format, correct_csv_format, ignore_order=True)
         assert csv_format_diff == {}
 
-    def test_json_dump(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
+    def test_json_dump(self, status_args: Namespace, status_output_workspace: str, status_testing_dir: str):
         """
         Test the json dump functionality. This tests both the write and append
         dump functionalities. The file needs to exist already for an append so it's
         better to keep these tests together. This covers the dump method.
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
+        :param status_testing_dir: The temporary output directory for status tests
         """
         # Create the status object that we'll run tests on
-        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_output_workspace)
         # Set the dump file
-        json_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/dump_test.json"
+        json_dump_file = f"{status_testing_dir}/dump_test.json"
         status_obj.args.dump = json_dump_file
 
         # Run the json dump test
         shared_tests.run_json_dump_test(status_obj, status_test_variables.ALL_REQUESTED_STATUSES)
 
-    def test_csv_dump(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
+    def test_csv_dump(self, status_args: Namespace, status_output_workspace: str, status_testing_dir: str):
         """
         Test the csv dump functionality. This tests both the write and append
         dump functionalities. The file needs to exist already for an append so it's
         better to keep these tests together. This covers the format_status_for_csv
         and dump methods.
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
+        :param status_testing_dir: The temporary output directory for status tests
         """
         # Create the status object that we'll run tests on
-        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_output_workspace)
 
         # Set the dump file
-        csv_dump_file = f"{status_test_variables.PATH_TO_TEST_FILES}/dump_test.csv"
+        csv_dump_file = f"{status_testing_dir}/dump_test.csv"
         status_obj.args.dump = csv_dump_file
 
         # Run the csv dump test
         expected_output = shared_tests.build_row_list(status_test_variables.ALL_FORMATTED_STATUSES)
         shared_tests.run_csv_dump_test(status_obj, expected_output)
 
-    def test_display(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
+    def test_display(self, status_args: Namespace, status_output_workspace: str):
         """
         Test the status display functionality without actually displaying anything.
         Running the display in test_mode will just provide us with the state_info
         dict created for each step that is typically used for display. We'll ensure
         this state_info dict is created properly here. This covers the display method.
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
         """
         # Create the status object that we'll run tests on
-        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_output_workspace)
 
         # Get the status info that display would use if it were printing output
         all_status_info = status_obj.display(test_mode=True)
@@ -708,13 +715,13 @@ class TestMerlinStatus:
             state_info_diff = DeepDiff(state_info, status_test_variables.DISPLAY_INFO[step_name], ignore_order=True)
             assert state_info_diff == {}
 
-    def test_get_runtime_avg_std_dev(self, status_set_sample_path: "Fixture", status_args: Namespace):  # noqa: F821
+    def test_get_runtime_avg_std_dev(self, status_args: Namespace, status_output_workspace: str):
         """
         Test the functionality that calculates the run time average and standard
         deviation for each step. This test covers the get_runtime_avg_std_dev method.
 
-        :param status_set_sample_path: A fixture to modify the sample path of the test spec
         :param status_args: A namespace of args needed for the status object
+        :param status_output_workspace: A fixture that sets up the output workspace we'll need for this test
         """
         dummy_step_status = {
             "dummy_step_PARAM.1": {
@@ -755,7 +762,7 @@ class TestMerlinStatus:
             },
         }
 
-        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_test_variables.VALID_WORKSPACE_PATH)
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_output_workspace)
         status_obj.get_runtime_avg_std_dev(dummy_step_status, "dummy_step")
 
         # Set expected values
@@ -765,3 +772,24 @@ class TestMerlinStatus:
         # Make sure the values were calculated as expected
         assert status_obj.run_time_info["dummy_step"]["avg_run_time"] == expected_avg
         assert status_obj.run_time_info["dummy_step"]["run_time_std_dev"] == expected_std_dev
+
+    def test_nested_workspace_ignored(self, status_args: Namespace, status_nested_workspace: str):
+        """
+        Test that nested workspaces are not counted in the status output.
+
+        :param status_args: A namespace of args needed for the status object
+        :param status_nested_workspace: The path to a workspace that has a nested workspace for testing
+        """
+
+        # Check that the initial loading process was correct
+        status_obj = Status(args=status_args, spec_display=False, file_or_ws=status_nested_workspace)
+        assert status_obj.num_requested_statuses == status_test_variables.NUM_ALL_REQUESTED_STATUSES
+
+        # Reset the requested status dict and re-run the test on just the directory that contains the
+        # nested workspace (in this case the 'just_samples' step)
+        status_obj.requested_statuses = {}
+        step_statuses = status_obj.get_step_statuses(f"{status_nested_workspace}/just_samples", "just_samples")
+        num_just_samples_statuses = 0
+        for overall_step_info in step_statuses.values():
+            num_just_samples_statuses += len(overall_step_info.keys() - NON_WORKSPACE_KEYS)  # Don't count non-workspace keys
+        assert num_just_samples_statuses == status_test_variables.TASKS_PER_STEP["just_samples"]
