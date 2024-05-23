@@ -1,16 +1,17 @@
 """
 Fixtures specifically for help testing the modules in the server/ directory.
 """
+import os
 import pytest
-import shutil
 from typing import Dict
 
 @pytest.fixture(scope="class")
-def server_container_config_data(temp_output_dir: str):
+def server_container_config_data(temp_output_dir: str) -> Dict[str, str]:
     """
     Fixture to provide sample data for ContainerConfig tests
 
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    :returns: A dict containing the necessary key/values for the ContainerConfig object
     """
     return {
         "format": "docker",
@@ -25,9 +26,11 @@ def server_container_config_data(temp_output_dir: str):
     }
 
 @pytest.fixture(scope="class")
-def server_container_format_config_data():
+def server_container_format_config_data() -> Dict[str, str]:
     """
     Fixture to provide sample data for ContainerFormatConfig tests
+
+    :returns: A dict containing the necessary key/values for the ContainerFormatConfig object
     """
     return {
         "command": "docker",
@@ -37,9 +40,11 @@ def server_container_format_config_data():
     }
 
 @pytest.fixture(scope="class")
-def server_process_config_data():
+def server_process_config_data() -> Dict[str, str]:
     """
     Fixture to provide sample data for ProcessConfig tests
+
+    :returns: A dict containing the necessary key/values for the ProcessConfig object
     """
     return {
         "status": "status {pid}",
@@ -51,13 +56,14 @@ def server_server_config(
     server_container_config_data: Dict[str, str],
     server_process_config_data: Dict[str, str],
     server_container_format_config_data: Dict[str, str],
-):
+) -> Dict[str, Dict[str, str]]:
     """
     Fixture to provide sample data for ServerConfig tests
 
     :param server_container_config_data: A pytest fixture of test data to pass to the ContainerConfig class
     :param server_process_config_data: A pytest fixture of test data to pass to the ProcessConfig class
     :param server_container_format_config_data: A pytest fixture of test data to pass to the ContainerFormatConfig class
+    :returns: A dictionary containing each of the configuration dicts we'll need
     """
     return {
         "container": server_container_config_data,
@@ -66,19 +72,63 @@ def server_server_config(
     }
 
 
-@pytest.fixture(scope="class")
-def server_redis_conf_file(temp_output_dir: str):
+@pytest.fixture(scope="session")
+def server_testing_dir(temp_output_dir: str) -> str:
     """
-    Fixture to copy the redis.conf file from the merlin/server/ directory to the
-    temporary output directory and provide the path to the copied file
+    Fixture to create a temporary output directory for tests related to the server functionality.
 
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    :returns: The path to the temporary testing directory for server tests
     """
-    # TODO
-    # - will probably have to do more than just copying over the conf file
-    # - likely want to create our own test conf file with the settings that
-    #   can be modified by RedisConf instead
-    path_to_redis_conf = f"{os.path.dirname(os.path.abspath(__file__))}/../../merlin/server/redis.conf"
-    path_to_copied_redis = f"{temp_output_dir}/redis.conf"
-    shutil.copy(path_to_redis_conf, path_to_copied_redis)
-    return path_to_copied_redis
+    testing_dir = f"{temp_output_dir}/server_testing/"
+    if not os.path.exists(testing_dir):
+        os.mkdir(testing_dir)
+
+    return testing_dir
+
+
+@pytest.fixture(scope="session")
+def server_redis_conf_file(server_testing_dir: str) -> str:
+    """
+    Fixture to copy the redis.conf file from the merlin/server/ directory to the
+    temporary output directory and provide the path to the copied file.
+
+    If a test will modify this file with a file write, you should make a copy of
+    this file to modify instead.
+
+    :param server_testing_dir: A pytest fixture that defines a path to the the output directory we'll write to
+    :returns: The path to the redis configuration file we'll use for testing
+    """
+    redis_conf_file = f"{server_testing_dir}/redis.conf"
+    file_contents = """
+    # ip address
+    bind 127.0.0.1
+
+    # port
+    port 6379
+
+    # password
+    requirepass merlin_password
+
+    # directory
+    dir ./
+
+    # snapshot
+    save 300 100
+
+    # db file
+    dbfilename dump.rdb
+
+    # append mode
+    appendfsync everysec
+
+    # append file
+    appendfilename appendonly.aof
+
+    # dummy trailing comment
+    """.strip().replace("    ", "")
+
+    with open(redis_conf_file, "w") as rcf:
+        rcf.write(file_contents)
+
+    return redis_conf_file

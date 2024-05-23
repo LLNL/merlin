@@ -1,8 +1,10 @@
 """
 Tests for the `server_util.py` module.
 """
+import filecmp
 import os
 import pytest
+import shutil
 from typing import Callable, Dict, Union
 
 from merlin.server.server_util import (
@@ -288,8 +290,60 @@ class TestServerConfig:
         assert config.container_format is None
 
 
-# class TestRedisConfig:
-#     """Tests for the RedisConfig class."""
+class TestRedisConfig:
+    """Tests for the RedisConfig class."""
 
-#     def test_parse(self, server_redis_conf_file):
-#         raise ValueError
+    def test_initialization(self, server_redis_conf_file: str):
+        """
+        Using a dummy redis configuration file, test that the initialization
+        of the RedisConfig class behaves as expected.
+
+        :param server_redis_conf_file: The path to a dummy redis configuration file
+        """
+        expected_entries = {
+            "bind": "127.0.0.1",
+            "port": "6379",
+            "requirepass": "merlin_password",
+            "dir": "./",
+            "save": "300 100",
+            "dbfilename": "dump.rdb",
+            "appendfsync": "everysec",
+            "appendfilename": "appendonly.aof",
+        }
+        expected_comments = {
+            "bind": "# ip address\n",
+            "port": "\n# port\n",
+            "requirepass": "\n# password\n",
+            "dir": "\n# directory\n",
+            "save": "\n# snapshot\n",
+            "dbfilename": "\n# db file\n",
+            "appendfsync": "\n# append mode\n",
+            "appendfilename": "\n# append file\n",
+        }
+        expected_trailing_comment = "\n# dummy trailing comment"
+        expected_entry_order = list(expected_entries.keys())
+        redis_config = RedisConfig(server_redis_conf_file)
+        assert redis_config.filename == server_redis_conf_file
+        assert not redis_config.changed
+        assert redis_config.entries == expected_entries
+        assert redis_config.entry_order == expected_entry_order
+        assert redis_config.comments == expected_comments
+        assert redis_config.trailing_comments == expected_trailing_comment
+
+    def test_write(self, server_redis_conf_file: str, server_testing_dir: str):
+        """
+        """
+        copy_redis_conf_file = f"{server_testing_dir}/redis_copy.conf"
+
+        # Create a RedisConf object with the basic redis conf file
+        redis_config = RedisConfig(server_redis_conf_file)
+
+        # Change the filepath of the redis config file to be the copy that we'll write to
+        redis_config.filename = copy_redis_conf_file
+
+        # Run the test
+        redis_config.write()
+
+        # Check that the contents of the copied file match the contents of the basic file
+        assert filecmp.cmp(server_redis_conf_file, copy_redis_conf_file)
+
