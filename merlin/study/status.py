@@ -344,7 +344,8 @@ class Status:
         Given a step workspace and the name of the step, read in all the statuses
         for the step and return them in a dict.
 
-        :param `step_workspace`: The path to the step we're going to read statuses from
+        :param step_workspace: The path to the step we're going to read statuses from
+        :param started_step_name: The name of the step that we're gathering statuses for
         :returns: A dict of statuses for the given step
         """
         step_statuses = {}
@@ -354,7 +355,12 @@ class Status:
 
         # Traverse the step workspace and look for MERLIN_STATUS files
         LOG.debug(f"Traversing '{step_workspace}' to find MERLIN_STATUS.json files...")
-        for root, _, _ in os.walk(step_workspace):
+        for root, dirs, _ in os.walk(step_workspace, topdown=True):
+            # Look for nested workspaces and skip them
+            timestamp_regex = r"\d{8}-\d{6}$"
+            curr_dir = os.path.split(root)[1]
+            dirs[:] = [d for d in dirs if not re.search(timestamp_regex, curr_dir)]
+
             # Search for a status file
             status_filepath = os.path.join(root, "MERLIN_STATUS.json")
             matching_files = glob(status_filepath)
@@ -869,8 +875,7 @@ class DetailedStatus(Status):
                     if matches_found == self.args.max_tasks:
                         break
                 else:
-                    # If our filters aren't a match for this task then delete it
-                    LOG.warning(f"No matching filter for '{sub_step_workspace}'.")
+                    LOG.debug(f"No matching filter for '{sub_step_workspace}'.")
 
             # If we've hit the limit set by args.max_tasks, break out of the outer loop
             if matches_found == self.args.max_tasks:
@@ -1121,7 +1126,7 @@ def status_conflict_handler(*args, **kwargs) -> Any:  # pylint: disable=W0613
 
     There are currently 4 rules:
     - string-concatenate: take the two conflicting values and concatenate them in a string
-    - use-initial-and-log-warning: use the value from dict_a and log a warning message
+    - use-dict_b-and-log-debug: use the value from dict_b and log a debug message
     - use-longest-time: use the longest time between the two conflicting values
     - use-max: use the larger integer between the two conflicting values
 
@@ -1136,8 +1141,8 @@ def status_conflict_handler(*args, **kwargs) -> Any:  # pylint: disable=W0613
     merge_rules = {
         "task_queue": "string-concatenate",
         "worker_name": "string-concatenate",
-        "status": "use-initial-and-log-warning",
-        "return_code": "use-initial-and-log-warning",
+        "status": "use-dict_b-and-log-debug",
+        "return_code": "use-dict_b-and-log-debug",
         "elapsed_time": "use-longest-time",
         "run_time": "use-longest-time",
         "restarts": "use-max",
@@ -1150,13 +1155,13 @@ def status_conflict_handler(*args, **kwargs) -> Any:  # pylint: disable=W0613
 
     # params = self.spec.get_parameters()
     # for token in params.parameters:
-    #     merge_rules[token] = "use-initial-and-log-warning"
+    #     merge_rules[token] = "use-dict_b-and-log-debug"
 
     # Set parameter token key rules (commented for loop would be better but it's
     # only possible if this conflict handler is contained within Status object; however,
     # since this function needs to be imported outside of this file we can't do that)
     if path is not None and "parameters" in path:
-        merge_rules[key] = "use-initial-and-log-warning"
+        merge_rules[key] = "use-dict_b-and-log-debug"
 
     try:
         merge_rule = merge_rules[key]
@@ -1168,13 +1173,13 @@ def status_conflict_handler(*args, **kwargs) -> Any:  # pylint: disable=W0613
 
     if merge_rule == "string-concatenate":
         merge_val = f"{dict_a_val}, {dict_b_val}"
-    elif merge_rule == "use-initial-and-log-warning":
-        LOG.warning(
-            f"Conflict at key '{key}' while merging status files. Defaulting to initial value. "
+    elif merge_rule == "use-dict_b-and-log-debug":
+        LOG.debug(
+            f"Conflict at key '{key}' while merging status files. Using the updated value. "
             "This could lead to incorrect status information, you may want to re-run in debug mode and "
             "check the files in the output directory for this task."
         )
-        merge_val = dict_a_val
+        merge_val = dict_b_val
     elif merge_rule == "use-longest-time":
         if dict_a_val == "--:--:--":
             merge_val = dict_b_val
