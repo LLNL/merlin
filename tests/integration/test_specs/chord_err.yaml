@@ -1,0 +1,37 @@
+description:
+    name: chord_err
+    description: test the chord err problem
+
+env:
+  variables:
+    OUTPUT_PATH: ./studies
+
+study:
+- name: process_samples
+  description: Process samples. Purposefully try to trigger the chord err
+  run:
+    cmd: |
+        if [ $(SAMPLE) == "RAISE" ];
+        then
+          exit $(MERLIN_RAISE_ERROR)
+        else
+          echo "Success for sample $(SAMPLE)"
+        fi
+- name: step_2
+  description: second step to see if this is triggered
+  run:
+    cmd: |
+        echo "Running step_2"
+    depends: [process_samples_*]
+      
+merlin:
+    samples:
+        column_labels: [SAMPLE]
+        file: $(MERLIN_INFO)/samples.csv
+        generate:
+            cmd: cp $(SPECROOT)/../samples_files/samples.csv $(MERLIN_INFO)/samples.csv
+    resources:
+        workers:
+            merlin_test_worker:
+                args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
+                steps: [process_samples, step_2]
