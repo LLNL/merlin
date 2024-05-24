@@ -840,8 +840,8 @@ def define_tests():  # pylint: disable=R0914,R0915
                     f"{OUTPUT_DIR}/process_samples/01/MERLIN_FINISHED",
                     negate=True,
                 ),
-                StepFileExists(  # Check that step 2 is actually started and completes
-                    "step_2",
+                StepFileExists(  # Check that step 3 is actually started and completes
+                    "step_3",
                     "MERLIN_FINISHED",
                     "chord_err",
                     OUTPUT_DIR,

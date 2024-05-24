@@ -6,6 +6,11 @@ env:
   variables:
     OUTPUT_PATH: ./studies
 
+global.parameters:
+  TEST_PARAM:
+    values: [2, 4]
+    label: TEST_PARAM.%%
+
 study:
 - name: process_samples
   description: Process samples. Purposefully try to trigger the chord err
@@ -17,12 +22,24 @@ study:
         else
           echo "Success for sample $(SAMPLE)"
         fi
-- name: step_2
-  description: second step to see if this is triggered
+- name: samples_and_params
+  description: step with samples and parameters
   run:
     cmd: |
-        echo "Running step_2"
+      echo "sample: $(SAMPLE); param: $(TEST_PARAM)"
+      if [ -f $(process_samples.workspace)/$(MERLIN_SAMPLE_PATH)/MERLIN_FINISHED ];
+      then
+        echo "MERLIN finished file found at $(process_samples.workspace)/$(MERLIN_SAMPLE_PATH)"
+      else
+        echo "MERLIN finished file NOT found at $(process_samples.workspace)/$(MERLIN_SAMPLE_PATH)"
+      fi
     depends: [process_samples_*]
+- name: step_3
+  description: funnel step
+  run:
+    cmd: |
+        echo "Running step_3"
+    depends: [samples_and_params_*]
       
 merlin:
     samples:
@@ -34,4 +51,4 @@ merlin:
         workers:
             merlin_test_worker:
                 args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
-                steps: [process_samples, step_2]
+                steps: [process_samples, samples_and_params, step_3]
