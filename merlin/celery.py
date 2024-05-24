@@ -36,10 +36,10 @@ import os
 from typing import Dict, Optional, Union
 
 import billiard
-import psutil
 import celery
+import psutil
 from celery import Celery, states
-from celery.backends.redis import RedisBackend
+from celery.backends.redis import RedisBackend  # noqa: F401 ; Needed for celery patch
 from celery.signals import worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
@@ -51,6 +51,7 @@ from merlin.utils import nested_namespace_to_dicts
 
 LOG: logging.Logger = logging.getLogger(__name__)
 
+
 def patch_celery():
     """
     Patch redis backend so that errors in chords don't break workflows.
@@ -59,8 +60,11 @@ def patch_celery():
 
     Credit to this function goes to: https://danidee10.github.io/2019/07/09/celery-chords.html
     """
+
     def _unpack_chord_result(
-        self, tup, decode,
+        self,
+        tup,
+        decode,
         EXCEPTION_STATES=states.EXCEPTION_STATES,
         PROPAGATE_STATES=states.PROPAGATE_STATES,
     ):

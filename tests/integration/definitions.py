@@ -830,7 +830,10 @@ def define_tests():  # pylint: disable=R0914,R0915
     }
     distributed_error_checks = {
         "check chord error continues wf": {
-            "cmds": [f"{workers} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}", f"{run} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}; sleep 5"],
+            "cmds": [
+                f"{workers} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+                f"{run} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}; sleep 5",
+            ],
             "conditions": [
                 HasReturnCode(),
                 PathExists(  # Check that the sample that's supposed to raise an error actually raises an error
