@@ -124,7 +124,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
         }
 
         # These are known valid step keywords not used in batch
-        self._ignored:  Set[str] = {
+        self._ignored: Set[str] = {
             "shell",
         }
 
@@ -245,7 +245,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         self._unsupported: Set[str] = set(list(self._unsupported) + new_unsupported)
 
         # These are known valid step keywords not used in batch
-        self._ignored:  Set[str] = {
+        self._ignored: Set[str] = {
             "shell",
         }
 
