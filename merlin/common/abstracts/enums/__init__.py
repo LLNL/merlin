@@ -48,3 +48,4 @@ class ReturnCode(IntEnum):
     DRY_OK = 103
     RETRY = 104
     STOP_WORKERS = 105
+    RAISE_ERROR = 106
