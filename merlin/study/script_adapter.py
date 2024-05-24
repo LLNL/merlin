@@ -180,7 +180,8 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             if key not in self._cmd_flags:
                 if key not in self._ignored:
                     LOG.warning("'%s' is not supported in parallel command -- ommitted.", key)
-                LOG.debug("'%s' is not supported in parallel command -- ommitted.", key)
+                else:
+                    LOG.debug("'%s' is not supported in parallel command -- ommitted.", key)
                 continue
             if value:
                 args += [self._cmd_flags[key], f"{str(value)}"]
@@ -296,7 +297,8 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
             if key not in self._cmd_flags:
                 if key not in self._ignored:
                     LOG.warning("'%s' is not supported in parallel command -- ommitted.", key)
-                LOG.debug("'%s' is not supported in parallel command -- ommitted.", key)
+                else:
+                    LOG.debug("'%s' is not supported in parallel command -- ommitted.", key)
                 continue
 
             if key == "walltime":
