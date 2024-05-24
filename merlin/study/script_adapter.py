@@ -123,6 +123,11 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "walltime",
         }
 
+        # These are known valid step keywords not used in batch
+        self._ignored:  Set[str] = {
+            "shell",
+        }
+
     def get_priority(self, priority):
         """This is implemented to override the abstract method and fix a pylint error"""
 
@@ -173,7 +178,9 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
         for key in supported:
             value = kwargs.get(key)
             if key not in self._cmd_flags:
-                LOG.warning("'%s' is not supported -- ommitted.", key)
+                if key not in self._ignored:
+                    LOG.warning("'%s' is not supported in parallel command -- ommitted.", key)
+                LOG.debug("'%s' is not supported in parallel command -- ommitted.", key)
                 continue
             if value:
                 args += [self._cmd_flags[key], f"{str(value)}"]
@@ -236,6 +243,11 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         ]
         self._unsupported: Set[str] = set(list(self._unsupported) + new_unsupported)
 
+        # These are known valid step keywords not used in batch
+        self._ignored:  Set[str] = {
+            "shell",
+        }
+
     def get_priority(self, priority):
         """This is implemented to override the abstract method and fix a pylint error"""
 
@@ -282,7 +294,9 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
                 continue
 
             if key not in self._cmd_flags:
-                LOG.warning("'%s' is not supported -- ommitted.", key)
+                if key not in self._ignored:
+                    LOG.warning("'%s' is not supported in parallel command -- ommitted.", key)
+                LOG.debug("'%s' is not supported in parallel command -- ommitted.", key)
                 continue
 
             if key == "walltime":
