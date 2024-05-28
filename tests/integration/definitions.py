@@ -41,6 +41,7 @@ Each test looks like:
 """
 
 import shutil
+import sys
 
 # Pylint complains that we didn't install this module but it's defined locally so ignore
 from conditions import (  # pylint: disable=E0401
@@ -62,6 +63,22 @@ OUTPUT_DIR = "cli_test_studies"
 CLEAN_MERLIN_SERVER = "rm -rf appendonly.aof dump.rdb merlin_server/"
 KILL_WORKERS = "pkill -9 -f '.*merlin_test_worker'"
 
+def is_python_version_above_37() -> bool:
+    """
+    Check if the python version is above or below 3.7.
+
+    :returns: True if python version is 3.8+. False otherwise.
+    """
+    if sys.version_info.major > 3:
+        return True
+    elif sys.version_info.major < 3:
+        return False
+
+    # If we're here then the major version is 3
+    if sys.version_info.minor >= 8:
+        return True
+
+    return False
 
 def get_worker_by_cmd(cmd: str, default: str) -> str:
     """
@@ -832,7 +849,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         "check chord error continues wf": {
             "cmds": [
                 f"{workers} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}",
-                f"{run} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}; sleep 20; tree {OUTPUT_DIR}",
+                f"{run} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}; sleep {5 if is_python_version_above_37() else 30}; tree {OUTPUT_DIR}",
             ],
             "conditions": [
                 HasReturnCode(),
