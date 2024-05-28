@@ -832,7 +832,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         "check chord error continues wf": {
             "cmds": [
                 f"{workers} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}",
-                f"{run} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}; sleep 10; tree {OUTPUT_DIR}",
+                f"{run} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}; sleep 20; tree {OUTPUT_DIR}",
             ],
             "conditions": [
                 HasReturnCode(),
