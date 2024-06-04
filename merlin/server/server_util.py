@@ -304,15 +304,13 @@ class RedisConfig:
     to write those changes into a redis readable config file.
     """
 
-    filename = ""
-    entry_order = []
-    entries = {}
-    comments = {}
-    trailing_comments = ""
-    changed = False
-
     def __init__(self, filename) -> None:
         self.filename = filename
+        self.changed = False
+        self.entry_order = []
+        self.entries = {}
+        self.comments = {}
+        self.trailing_comments = ""
         self.changed = False
         self.parse()
 
@@ -393,7 +391,7 @@ class RedisConfig:
         """Getter method to get the port from the redis config"""
         return self.get_config_value("port")
 
-    def set_port(self, port: str) -> bool:
+    def set_port(self, port: int) -> bool:
         """Validates and sets a given port"""
         if port is None:
             return False
@@ -428,59 +426,56 @@ class RedisConfig:
         """
         if directory is None:
             return False
+        # Create the directory if it doesn't exist
         if not os.path.exists(directory):
             os.mkdir(directory)
             LOG.info(f"Created directory {directory}")
-        # Validate the directory input
-        if os.path.exists(directory):
-            # Set the save directory to the redis config
-            if not self.set_config_value("dir", directory):
-                LOG.error("Unable to set directory for redis config")
-                return False
-        else:
-            LOG.error(f"Directory {directory} given does not exist and could not be created.")
+        # Set the save directory to the redis config
+        if not self.set_config_value("dir", directory):
+            LOG.error("Unable to set directory for redis config")
             return False
         LOG.info(f"Directory is set to {directory}")
         return True
 
-    def set_snapshot_seconds(self, seconds: int) -> bool:
-        """Sets the snapshot wait time"""
-        if seconds is None:
+    def set_snapshot(self, seconds: int = None, changes: int = None) -> bool:
+        """
+        Sets the 'seconds' and/or 'changes' values of the snapshot setting,
+        depending on what the user requests.
+        
+        :param seconds: The first value of snapshot to change. If we're leaving it the
+                        same this will be None.
+        :param changes: The second value of snapshot to change. If we're leaving it the
+                        same this will be None.
+        :returns: True if successful, False otherwise.
+        """
+
+        # If both values are None, this method is doing nothing
+        if seconds is None and changes is None:
             return False
-        # Set the snapshot second in the redis config
+
+        # Grab the snapshot value from the redis config
         value = self.get_config_value("save")
         if value is None:
             LOG.error("Unable to get exisiting parameter values for snapshot")
             return False
 
+        # Update the snapshot value
         value = value.split()
-        value[0] = str(seconds)
+        log_msg = ""
+        if seconds is not None:
+            value[0] = str(seconds)
+            log_msg += f"Snapshot wait time is set to {seconds} seconds. "
+        if changes is not None:
+            value[1] = str(changes)
+            log_msg += f"Snapshot threshold is set to {changes} changes."
         value = " ".join(value)
+
+        # Set the new snapshot value
         if not self.set_config_value("save", value):
-            LOG.error("Unable to set snapshot value seconds")
+            LOG.error("Unable to set snapshot value")
             return False
 
-        LOG.info(f"Snapshot wait time is set to {seconds} seconds")
-        return True
-
-    def set_snapshot_changes(self, changes: int) -> bool:
-        """Sets the snapshot threshold"""
-        if changes is None:
-            return False
-        # Set the snapshot changes into the redis config
-        value = self.get_config_value("save")
-        if value is None:
-            LOG.error("Unable to get exisiting parameter values for snapshot")
-            return False
-
-        value = value.split()
-        value[1] = str(changes)
-        value = " ".join(value)
-        if not self.set_config_value("save", value):
-            LOG.error("Unable to set snapshot value seconds")
-            return False
-
-        LOG.info(f"Snapshot threshold is set to {changes} changes")
+        LOG.info(log_msg)
         return True
 
     def set_snapshot_file(self, file: str) -> bool:
@@ -508,7 +503,7 @@ class RedisConfig:
                 LOG.error("Unable to set append_mode in redis config")
                 return False
         else:
-            LOG.error("Not a valid append_mode(Only valid modes are always, everysec, no)")
+            LOG.error("Not a valid append_mode (Only valid modes are always, everysec, no)")
             return False
 
         LOG.info(f"Append mode is set to {mode}")

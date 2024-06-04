@@ -98,9 +98,7 @@ def config_server(args: Namespace) -> None:  # pylint: disable=R0912
 
     redis_config.set_directory(args.directory)
 
-    redis_config.set_snapshot_seconds(args.snapshot_seconds)
-
-    redis_config.set_snapshot_changes(args.snapshot_changes)
+    redis_config.set_snapshot(seconds=args.snapshot_seconds, changes=args.snapshot_changes)
 
     redis_config.set_snapshot_file(args.snapshot_file)
 
