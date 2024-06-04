@@ -623,7 +623,7 @@ class RedisUsers:
         self.users[user].set_password(password)
         return True
 
-    def remove_user(self, user) -> bool:
+    def remove_user(self, user: str) -> bool:
         """Remove a user from the dict of users"""
         if user in self.users:
             del self.users[user]

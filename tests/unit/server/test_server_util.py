@@ -1,6 +1,8 @@
 """
 Tests for the `server_util.py` module.
 """
+import filecmp
+import hashlib
 import os
 import pytest
 from typing import Dict, Union
@@ -285,3 +287,168 @@ class TestServerConfig:
         assert config.process == ProcessConfig(server_process_config_data)
         assert config.container is None
         assert config.container_format is None
+
+class TestRedisUsers:
+    """
+    Tests for the RedisUsers class.
+    
+    TODO add integration test(s) for `apply_to_redis` method of this class.
+    """
+
+    class TestUser:
+        """Tests for the RedisUsers.User class"""
+
+        def test_initializaiton(self):
+            """Test the initialization process of the User class."""
+            user = RedisUsers.User()
+            assert user.status == "on"
+            assert user.hash_password == hashlib.sha256(b"password").hexdigest()
+            assert user.keys == "*"
+            assert user.channels == "*"
+            assert user.commands == "@all"
+
+        def test_parse_dict(self):
+            """Test the `parse_dict` method of the User class."""
+            test_dict = {
+                "status": "test_status",
+                "hash_password": "test_password",
+                "keys": "test_keys",
+                "channels": "test_channels",
+                "commands": "test_commands",
+            }
+            user = RedisUsers.User()
+            user.parse_dict(test_dict)
+            assert user.status == test_dict["status"]
+            assert user.hash_password == test_dict["hash_password"]
+            assert user.keys == test_dict["keys"]
+            assert user.channels == test_dict["channels"]
+            assert user.commands == test_dict["commands"]
+
+        def test_get_user_dict(self):
+            """Test the `get_user_dict` method of the User class."""
+            test_dict = {
+                "status": "test_status",
+                "hash_password": "test_password",
+                "keys": "test_keys",
+                "channels": "test_channels",
+                "commands": "test_commands",
+                "invalid_key": "invalid_val",
+            }
+            user = RedisUsers.User()
+            user.parse_dict(test_dict)  # Set the test values
+            actual_dict = user.get_user_dict()
+            assert "invalid_key" not in actual_dict  # Check that the invalid key isn't parsed
+
+            # Check that the values are as expected
+            for key, val in actual_dict.items():
+                if key == "status":
+                    assert val == "on"
+                else:
+                    assert val == test_dict[key]
+                    
+        def test_set_password(self):
+            """Test the `set_password` method of the User class."""
+            user = RedisUsers.User()
+            pass_to_set = "dummy_password"
+            user.set_password(pass_to_set)
+            assert user.hash_password == hashlib.sha256(bytes(pass_to_set, "utf-8")).hexdigest()
+
+    def test_initialization(self, server_redis_users_file: str, server_users: dict):
+        """
+        Test the initialization process of the RedisUsers class.
+
+        :param server_redis_users_file: The path to a dummy redis users file
+        :param server_users: A dict of test user configurations
+        """
+        redis_users = RedisUsers(server_redis_users_file)
+        assert redis_users.filename == server_redis_users_file
+        assert len(redis_users.users) == len(server_users)
+
+    def test_write(self, server_redis_users_file: str, server_testing_dir: str):
+        """
+        Test that the write functionality works by writing the contents of a dummy
+        users file to a blank users file.
+
+        :param server_redis_users_file: The path to a dummy redis users file
+        :param server_testing_dir: The path to the the temp output directory for server tests
+        """
+        copy_redis_users_file = f"{server_testing_dir}/redis_copy.users"
+
+        # Create a RedisUsers object with the basic redis users file
+        redis_users = RedisUsers(server_redis_users_file)
+
+        # Change the filepath of the redis users file to be the copy that we'll write to
+        redis_users.filename = copy_redis_users_file
+
+        # Run the test
+        redis_users.write()
+
+        # Check that the contents of the copied file match the contents of the basic file
+        assert filecmp.cmp(server_redis_users_file, copy_redis_users_file)
+
+    def test_add_user_nonexistent(self, server_redis_users_file: str):
+        """
+        Test the `add_user` method with a user that doesn't exists.
+        This should return True and add the user to the list of users.
+
+        :param server_redis_users_file: The path to a dummy redis users file
+        """
+        redis_users = RedisUsers(server_redis_users_file)
+        num_users_before = len(redis_users.users)
+        assert redis_users.add_user("new_user")
+        assert len(redis_users.users) == num_users_before + 1
+
+    def test_add_user_exists(self, server_redis_users_file: str):
+        """
+        Test the `add_user` method with a user that already exists.
+        This should return False.
+
+        :param server_redis_users_file: The path to a dummy redis users file
+        """
+        redis_users = RedisUsers(server_redis_users_file)
+        assert not redis_users.add_user("test_user")
+
+    def test_set_password_valid(self, server_redis_users_file: str):
+        """
+        Test the `set_password` method with a user that exists.
+        This should return True and change the password for the user.
+
+        :param server_redis_users_file: The path to a dummy redis users file
+        """
+        redis_users = RedisUsers(server_redis_users_file)
+        pass_to_set = "new_password"
+        assert redis_users.set_password("test_user", pass_to_set)
+        expected_hash_pass = hashlib.sha256(bytes(pass_to_set, "utf-8")).hexdigest()
+        assert redis_users.users["test_user"].hash_password == expected_hash_pass
+
+    def test_set_password_invalid(self, server_redis_users_file: str):
+        """
+        Test the `set_password` method with a user that doesn't exist.
+        This should return False.
+
+        :param server_redis_users_file: The path to a dummy redis users file
+        """
+        redis_users = RedisUsers(server_redis_users_file)
+        assert not redis_users.set_password("nonexistent_user", "new_password")
+
+    def test_remove_user_valid(self, server_redis_users_file: str):
+        """
+        Test the `remove_user` method with a user that exists.
+        This should return True and remove the user from the list of users.
+
+        :param server_redis_users_file: The path to a dummy redis users file
+        """
+        redis_users = RedisUsers(server_redis_users_file)
+        num_users_before = len(redis_users.users)
+        assert redis_users.remove_user("test_user")
+        assert len(redis_users.users) == num_users_before - 1
+
+    def test_remove_user_invalid(self, server_redis_users_file: str):
+        """
+        Test the `remove_user` method with a user that doesn't exist.
+        This should return False and not modify the user list.
+
+        :param server_redis_users_file: The path to a dummy redis users file
+        """
+        redis_users = RedisUsers(server_redis_users_file)
+        assert not redis_users.remove_user("nonexistent_user")
