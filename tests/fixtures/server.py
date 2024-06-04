@@ -3,6 +3,7 @@ Fixtures specifically for help testing the modules in the server/ directory.
 """
 import os
 import pytest
+import yaml
 from typing import Dict
 
 @pytest.fixture(scope="class")
@@ -90,8 +91,7 @@ def server_testing_dir(temp_output_dir: str) -> str:
 @pytest.fixture(scope="session")
 def server_redis_conf_file(server_testing_dir: str) -> str:
     """
-    Fixture to copy the redis.conf file from the merlin/server/ directory to the
-    temporary output directory and provide the path to the copied file.
+    Fixture to write a redis.conf file to the temporary output directory.
 
     If a test will modify this file with a file write, you should make a copy of
     this file to modify instead.
@@ -132,3 +132,47 @@ def server_redis_conf_file(server_testing_dir: str) -> str:
         rcf.write(file_contents)
 
     return redis_conf_file
+
+@pytest.fixture(scope="session")
+def server_users() -> dict:
+    """
+    Create a dictionary of two test users with identical configuration settings.
+
+    :returns: A dict containing the two test users and their settings
+    """
+    users = {
+        "default": {
+            "channels": '*',
+            "commands": '@all',
+            "hash_password": '1ba9249af0c73dacb0f9a70567126624076b5bee40de811e65f57eabcdaf490a',
+            "keys": '*',
+            "status": 'on',
+        },
+        "test_user": {
+            "channels": '*',
+            "commands": '@all',
+            "hash_password": '1ba9249af0c73dacb0f9a70567126624076b5bee40de811e65f57eabcdaf490a',
+            "keys": '*',
+            "status": 'on',
+        }
+    }
+    return users
+
+@pytest.fixture(scope="session")
+def server_redis_users_file(server_testing_dir: str, server_users: dict) -> str:
+    """
+    Fixture to write a redis.users file to the temporary output directory.
+
+    If a test will modify this file with a file write, you should make a copy of
+    this file to modify instead.
+
+    :param server_testing_dir: A pytest fixture that defines a path to the the output directory we'll write to
+    :param server_users: A dict of test user configurations
+    :returns: The path to the redis user configuration file we'll use for testing
+    """
+    redis_users_file = f"{server_testing_dir}/redis.users"
+
+    with open(redis_users_file, "w") as ruf:
+        yaml.dump(server_users, ruf)
+
+    return redis_users_file
