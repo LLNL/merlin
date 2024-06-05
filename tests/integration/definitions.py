@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.1.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -128,6 +128,7 @@ def define_tests():  # pylint: disable=R0914,R0915
     lsf = f"{examples}/lsf/lsf_par.yaml"
     mul_workers_demo = f"{dev_examples}/multiple_workers.yaml"
     cli_substitution_wf = f"{test_specs}/cli_substitution_test.yaml"
+    chord_err_wf = f"{test_specs}/chord_err.yaml"
 
     # Other shortcuts
     black = "black --check --target-version py36"
@@ -827,6 +828,30 @@ def define_tests():  # pylint: disable=R0914,R0915
             "run type": "distributed",
         },
     }
+    distributed_error_checks = {
+        "check chord error continues wf": {
+            "cmds": [
+                f"{workers} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}",
+                f"{run} {chord_err_wf} --vars OUTPUT_PATH=./{OUTPUT_DIR}; sleep 40; tree {OUTPUT_DIR}",
+            ],
+            "conditions": [
+                HasReturnCode(),
+                PathExists(  # Check that the sample that's supposed to raise an error actually raises an error
+                    f"{OUTPUT_DIR}/process_samples/01/MERLIN_FINISHED",
+                    negate=True,
+                ),
+                StepFileExists(  # Check that step 3 is actually started and completes
+                    "step_3",
+                    "MERLIN_FINISHED",
+                    "chord_err",
+                    OUTPUT_DIR,
+                ),
+            ],
+            "run type": "distributed",
+            "cleanup": KILL_WORKERS,
+            "num procs": 2,
+        }
+    }
 
     # combine and return test dictionaries
     all_tests = {}
@@ -849,6 +874,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         stop_workers_tests,
         query_workers_tests,
         distributed_tests,
+        distributed_error_checks,
     ]:
         all_tests.update(test_dict)
 

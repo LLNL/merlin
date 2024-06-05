@@ -4,7 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.12.2b1]
 ### Added
 - Conflict handler option to the `dict_deep_merge` function in `utils.py`
 - Ability to add module-specific pytest fixtures
@@ -13,15 +13,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added tests for the `dict_deep_merge` function
 - Pytest-mock as a dependency for the test suite (necessary for using mocks and fixtures in the same test)
 - New github action test to make sure target branch has been merged into the source first, so we know histories are ok
+- Check in the status commands to make sure we're not pulling statuses from nested workspaces
+- Added `setuptools` as a requirement for python 3.12 to recognize the `pkg_resources` library
+- Patch to celery results backend to stop ChordErrors being raised and breaking workflows when a single task fails
+- New step return code `$(MERLIN_RAISE_ERROR)` to force an error to be raised by a task (mainly for testing)
+  - Added description of this to docs
+- New test to ensure a single failed task won't break a workflow
 
 ### Changed
 - `merlin info` is cleaner and gives python package info
 - merlin version now prints with every banner message
+- Applying filters for `merlin detailed-status` will now log debug statements instead of warnings
+- Modified the unit tests for the `merlin status` command to use pytest rather than unittest
+- Added fixtures for `merlin status` tests that copy the workspace to a temporary directory so you can see exactly what's run in a test
 
 ### Fixed
 - Bugfix for output of `merlin example openfoam_wf_singularity`
 - A bug with the CHANGELOG detection test when the target branch isn't in the ci runner history
 - Link to Merlin banner in readme
+- Issue with escape sequences in ascii art (caught by python 3.12)
 
 
 ## [1.12.1]

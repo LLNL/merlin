@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.1.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -96,11 +96,11 @@ merlin_name_small = """
 
                                   
   __  __           _ _       
- |  \/  |         | (_)      
- | \  / | ___ _ __| |_ _ __  
- | |\/| |/ _ \ '__| | | '_ \ 
+ |  \\/  |         | (_)      
+ | \\  / | ___ _ __| |_ _ __  
+ | |\\/| |/ _ \\ '__| | | '_ \\ 
  | |  | |  __/ |  | | | | | |
- |_|  |_|\___|_|  |_|_|_| |_|
+ |_|  |_|\\___|_|  |_|_|_| |_|
                                    
  Machine Learning for HPC Workflows                                 
 
