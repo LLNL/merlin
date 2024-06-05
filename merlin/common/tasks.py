@@ -41,6 +41,7 @@ from typing import Any, Dict, List, Optional
 from celery import chain, chord, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
 from filelock import FileLock, Timeout
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
@@ -62,6 +63,7 @@ retry_exceptions = (
     RetryException,
     RestartException,
     FileNotFoundError,
+    RedisTimeoutError,
 )
 
 LOG = logging.getLogger(__name__)
@@ -181,6 +183,9 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             shutdown = shutdown_workers.s(None)
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
+        elif result == ReturnCode.RAISE_ERROR:
+            LOG.warning("*** Raising an error ***")
+            raise Exception("Exception raised by request from the user")
         else:
             LOG.warning(f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow.")
 

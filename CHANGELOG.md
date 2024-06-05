@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New github action test to make sure target branch has been merged into the source first, so we know histories are ok
 - Check in the status commands to make sure we're not pulling statuses from nested workspaces
 - Added `setuptools` as a requirement for python 3.12 to recognize the `pkg_resources` library
+- Patch to celery results backend to stop ChordErrors being raised and breaking workflows when a single task fails
+- New step return code `$(MERLIN_RAISE_ERROR)` to force an error to be raised by a task (mainly for testing)
+  - Added description of this to docs
+- New test to ensure a single failed task won't break a workflow
 
 ### Changed
 - `merlin info` is cleaner and gives python package info
