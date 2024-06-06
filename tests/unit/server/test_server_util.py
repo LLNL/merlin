@@ -30,8 +30,8 @@ def test_valid_ipv4_valid_ip(valid_ip: str):
     Test the `valid_ipv4` function with valid IPs.
     This should return True.
 
-    :param valid_ip: A valid port to test.
-                        These are pulled from the parametrized list defined above this test.
+    :param valid_ip: A valid port to test. These are pulled from the parametrized
+                     list defined above this test.
     """
     assert valid_ipv4(valid_ip)
 
@@ -47,8 +47,8 @@ def test_valid_ipv4_invalid_ip(invalid_ip: Union[str, None]):
     An IP is valid if every integer separated by the '.' delimiter are between 0 and 255.
     This should return False for both IPs tested here.
 
-    :param invalid_ip: An invalid port to test.
-                          These are pulled from the parametrized list defined above this test.
+    :param invalid_ip: An invalid port to test. These are pulled from the parametrized
+                       list defined above this test.
     """
     assert not valid_ipv4(invalid_ip)
 
@@ -63,8 +63,8 @@ def test_valid_port_valid_input(valid_input: int):
     Valid ports are ports between 1 and 65535.
     This should return True.
 
-    :param valid_input: A valid input value to test.
-                        These are pulled from the parametrized list defined above this test.
+    :param valid_input: A valid input value to test. These are pulled from the parametrized
+                        list defined above this test.
     """
     assert valid_port(valid_input)
 
@@ -79,8 +79,8 @@ def test_valid_port_invalid_input(invalid_input: int):
     Valid ports are ports between 1 and 65535.
     This should return False for each invalid input tested.
 
-    :param invalid_input: An invalid input value to test.
-                          These are pulled from the parametrized list defined above this test.
+    :param invalid_input: An invalid input value to test. These are pulled from the parametrized
+                          list defined above this test.
     """
     assert not valid_port(invalid_input)
 
@@ -90,7 +90,7 @@ class TestContainerConfig:
 
     def test_init_with_complete_data(self, server_container_config_data: Dict[str, str]):
         """
-        Tests that __init__ populates attributes correctly with complete data
+        Tests that __init__ populates attributes correctly with complete data.
 
         :param server_container_config_data: A pytest fixture of test data to pass to the ContainerConfig class
         """
@@ -107,7 +107,7 @@ class TestContainerConfig:
 
     def test_init_with_missing_data(self):
         """
-        Tests that __init__ uses defaults for missing data
+        Tests that __init__ uses defaults for missing data.
         """
         incomplete_data = {"format": "docker"}
         config = ContainerConfig(incomplete_data)
@@ -130,7 +130,7 @@ class TestContainerConfig:
     ])
     def test_get_path_methods(self, server_container_config_data: Dict[str, str], attr_name: str):
         """
-        Tests that get_*_path methods construct the correct path
+        Tests that get_*_path methods construct the correct path.
 
         :param server_container_config_data: A pytest fixture of test data to pass to the ContainerConfig class
         :param attr_name: Name of the attribute to be tested. These are pulled from the parametrized list defined above this test.
@@ -153,7 +153,7 @@ class TestContainerConfig:
     ])
     def test_getter_methods(self, server_container_config_data: Dict[str, str], getter_name: str, expected_attr: str):
         """
-        Tests that all getter methods return the correct attribute values
+        Tests that all getter methods return the correct attribute values.
 
         :param server_container_config_data: A pytest fixture of test data to pass to the ContainerConfig class
         :param getter_name: Name of the getter method to test. This is pulled from the parametrized list defined above this test.
@@ -163,20 +163,31 @@ class TestContainerConfig:
         getter = getattr(config, getter_name)
         assert getter() == server_container_config_data[expected_attr]
 
-    def test_get_container_password(self, server_container_config_data: Dict[str, str]):
+    def test_get_container_password(self, server_testing_dir: str, server_container_config_data: Dict[str, str]):
         """
-        Test that the get_container_password is reading the password file properly
+        Test that the `get_container_password` method is reading the password file properly.
 
+        :param server_testing_dir: The path to the the temp output directory for server tests
         :param server_container_config_data: A pytest fixture of test data to pass to the ContainerConfig class
         """
         # Write a fake password to the password file
-        test_password = "server-tests-password"
-        with open(server_container_config_data["pass_file"], "w") as pass_file:
+        test_password = "super-secret-password"
+        temp_pass_file = f"{server_testing_dir}/temp.pass"
+        with open(temp_pass_file, "w") as pass_file:
             pass_file.write(test_password)
 
-        # Run the test
-        config = ContainerConfig(server_container_config_data)
-        assert config.get_container_password() == test_password
+        # Use temp pass file
+        orig_pass_file = server_container_config_data["pass_file"]
+        server_container_config_data["pass_file"] = temp_pass_file
+
+        try:
+            # Run the test
+            config = ContainerConfig(server_container_config_data)
+            assert config.get_container_password() == test_password
+        except Exception as exc:
+            # If there was a problem, reset to the original password file
+            server_container_config_data["pass_file"] = orig_pass_file
+            raise exc
 
 
 class TestContainerFormatConfig:
@@ -184,7 +195,7 @@ class TestContainerFormatConfig:
 
     def test_init_with_complete_data(self, server_container_format_config_data: Dict[str, str]):
         """
-        Tests that __init__ populates attributes correctly with complete data
+        Tests that __init__ populates attributes correctly with complete data.
 
         :param server_container_format_config_data: A pytest fixture of test data to pass to the ContainerFormatConfig class
         """
@@ -196,7 +207,7 @@ class TestContainerFormatConfig:
 
     def test_init_with_missing_data(self):
         """
-        Tests that __init__ uses defaults for missing data
+        Tests that __init__ uses defaults for missing data.
         """
         incomplete_data = {"command": "docker"}
         config = ContainerFormatConfig(incomplete_data)
@@ -213,7 +224,7 @@ class TestContainerFormatConfig:
     ])
     def test_getter_methods(self, server_container_format_config_data: Dict[str, str], getter_name: str, expected_attr: str):
         """
-        Tests that all getter methods return the correct attribute values
+        Tests that all getter methods return the correct attribute values.
 
         :param server_container_format_config_data: A pytest fixture of test data to pass to the ContainerFormatConfig class
         :param getter_name: Name of the getter method to test. This is pulled from the parametrized list defined above this test.
@@ -229,7 +240,7 @@ class TestProcessConfig:
 
     def test_init_with_complete_data(self, server_process_config_data: Dict[str, str]):
         """
-        Tests that __init__ populates attributes correctly with complete data
+        Tests that __init__ populates attributes correctly with complete data.
 
         :param server_process_config_data: A pytest fixture of test data to pass to the ProcessConfig class
         """
@@ -239,7 +250,7 @@ class TestProcessConfig:
 
     def test_init_with_missing_data(self):
         """
-        Tests that __init__ uses defaults for missing data
+        Tests that __init__ uses defaults for missing data.
         """
         incomplete_data = {"status": "status {pid}"}
         config = ProcessConfig(incomplete_data)
@@ -252,7 +263,7 @@ class TestProcessConfig:
     ])
     def test_getter_methods(self, server_process_config_data: Dict[str, str], getter_name: str, expected_attr: str):
         """
-        Tests that all getter methods return the correct attribute values
+        Tests that all getter methods return the correct attribute values.
 
         :param server_process_config_data: A pytest fixture of test data to pass to the ProcessConfig class
         :param getter_name: Name of the getter method to test. This is pulled from the parametrized list defined above this test.
@@ -268,7 +279,7 @@ class TestServerConfig:
 
     def test_init_with_complete_data(self, server_server_config: Dict[str, str]):
         """
-        Tests that __init__ populates attributes correctly with complete data
+        Tests that __init__ populates attributes correctly with complete data.
 
         :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
         """
@@ -279,7 +290,7 @@ class TestServerConfig:
 
     def test_init_with_missing_data(self, server_process_config_data: Dict[str, str]):
         """
-        Tests that __init__ uses None for missing data
+        Tests that __init__ uses None for missing data.
 
         :param server_process_config_data: A pytest fixture of test data to pass to the ContainerConfig class
         """
@@ -298,7 +309,7 @@ class TestRedisUsers:
     """
 
     class TestUser:
-        """Tests for the RedisUsers.User class"""
+        """Tests for the RedisUsers.User class."""
 
         def test_initializaiton(self):
             """Test the initialization process of the User class."""
