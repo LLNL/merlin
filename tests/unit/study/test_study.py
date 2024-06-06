@@ -1,10 +1,13 @@
 """
 Tests for the maestroadapter.py module.
 """
+
 import os
 import shutil
 import tempfile
 import unittest
+
+import pytest
 
 from merlin.study.step import Step
 from merlin.study.study import MerlinStudy
@@ -38,6 +41,15 @@ study:
         procs: 1
         nodes: 1
         task_queue: hello_queue
+
+    - name: test_special_vars
+      description: test the special vars
+      run:
+        cmd: |
+            echo $(MERLIN_SPEC_ORIGINAL_TEMPLATE)
+            echo $(MERLIN_SPEC_EXECUTED_RUN)
+            echo $(MERLIN_SPEC_ARCHIVED_COPY)
+        task_queue: special_var_queue
 
 global.parameters:
     X2:
@@ -148,6 +160,7 @@ merlin:
 """
 
 
+# TODO many of these more resemble integration tests than unit tests, may want to review unit tests to make it more granular.
 def test_get_task_queue_default():
     """
     Given a steps dictionary that sets the task queue to `test_queue` return
@@ -231,11 +244,16 @@ class TestMerlinStudy(unittest.TestCase):
 
     @staticmethod
     def file_contains_string(f, string):
-        return string in open(f, "r").read()
+        result = False
+        with open(f, "r") as infile:
+            if string in infile.read():
+                result = True
+        return result
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
-        self.merlin_spec_filepath = os.path.join(self.tmpdir, "basic_ensemble.yaml")
+        self.base_name = "basic_ensemble"
+        self.merlin_spec_filepath = os.path.join(self.tmpdir, f"{self.base_name}.yaml")
 
         with open(self.merlin_spec_filepath, "w+") as _file:
             _file.write(MERLIN_SPEC)
@@ -251,25 +269,41 @@ class TestMerlinStudy(unittest.TestCase):
         object, the MerlinStudy should produce a new spec with all instances
         of $(OUTPUT_PATH), $(SPECROOT), and env labels and variables expanded.
         """
-        assert TestMerlinStudy.file_contains_string(
-            self.merlin_spec_filepath, "$(SPECROOT)"
-        )
-        assert TestMerlinStudy.file_contains_string(
-            self.merlin_spec_filepath, "$(OUTPUT_PATH)"
-        )
+        assert TestMerlinStudy.file_contains_string(self.merlin_spec_filepath, "$(SPECROOT)")
+        assert TestMerlinStudy.file_contains_string(self.merlin_spec_filepath, "$(OUTPUT_PATH)")
         assert TestMerlinStudy.file_contains_string(self.merlin_spec_filepath, "$PATH")
 
-        assert not TestMerlinStudy.file_contains_string(
-            self.study.expanded_spec.path, "$(SPECROOT)"
+        assert not TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "$(SPECROOT)")
+        assert not TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "$(OUTPUT_PATH)")
+        assert TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "$PATH")
+        assert not TestMerlinStudy.file_contains_string(self.study.expanded_spec.path, "PATH_VAR: $PATH")
+
+        # Special vars are in the second step of MERLIN_SPEC so grab that step here
+        original_special_var_step = self.study.original_spec.study[1]["run"]["cmd"]
+        expanded_special_var_step = self.study.expanded_spec.study[1]["run"]["cmd"]
+
+        # Make sure the special filepath variables aren't expanded in the original spec
+        assert "$(MERLIN_SPEC_ORIGINAL_TEMPLATE)" in original_special_var_step
+        assert "$(MERLIN_SPEC_EXECUTED_RUN)" in original_special_var_step
+        assert "$(MERLIN_SPEC_ARCHIVED_COPY)" in original_special_var_step
+
+        # Make sure the special filepath variables aren't left in their variable form in the expanded spec
+        assert "$(MERLIN_SPEC_ORIGINAL_TEMPLATE)" not in expanded_special_var_step
+        assert "$(MERLIN_SPEC_EXECUTED_RUN)" not in expanded_special_var_step
+        assert "$(MERLIN_SPEC_ARCHIVED_COPY)" not in expanded_special_var_step
+
+        # Make sure the special filepath variables we're expanded appropriately in the expanded spec
+        assert (
+            f"{self.base_name}.orig.yaml" in expanded_special_var_step
+            and "unit_test1.orig.yaml" not in expanded_special_var_step
         )
-        assert not TestMerlinStudy.file_contains_string(
-            self.study.expanded_spec.path, "$(OUTPUT_PATH)"
+        assert (
+            f"{self.base_name}.partial.yaml" in expanded_special_var_step
+            and "unit_test1.partial.yaml" not in expanded_special_var_step
         )
-        assert TestMerlinStudy.file_contains_string(
-            self.study.expanded_spec.path, "$PATH"
-        )
-        assert not TestMerlinStudy.file_contains_string(
-            self.study.expanded_spec.path, "PATH_VAR: $PATH"
+        assert (
+            f"{self.base_name}.expanded.yaml" in expanded_special_var_step
+            and "unit_test1.expanded.yaml" not in expanded_special_var_step
         )
 
     def test_column_label_conflict(self):
@@ -277,27 +311,30 @@ class TestMerlinStudy(unittest.TestCase):
         If there is a common key between Maestro's global.parameters and
         Merlin's sample/column_labels, an error should be raised.
         """
-        merlin_spec_conflict = os.path.join(self.tmpdir, "basic_ensemble_conflict.yaml")
+        merlin_spec_conflict: str = os.path.join(self.tmpdir, "basic_ensemble_conflict.yaml")
         with open(merlin_spec_conflict, "w+") as _file:
             _file.write(MERLIN_SPEC_CONFLICT)
-        try:
-            study_conflict = MerlinStudy(merlin_spec_conflict)
-        except ValueError:
-            pass
-        else:
-            assert False
+        # for some reason flake8 doesn't believe variables instantiated inside the try/with context are assigned
+        with pytest.raises(ValueError):
+            study_conflict: MerlinStudy = MerlinStudy(merlin_spec_conflict)
+            assert not study_conflict, "study_conflict completed construction without raising a ValueError."
 
+    # TODO the pertinent attribute for study_no_env should be examined and asserted to be empty
     def test_no_env(self):
         """
         A MerlinStudy should be able to support a MerlinSpec that does not contain
         the optional `env` section.
         """
-        merlin_spec_no_env_filepath = os.path.join(
-            self.tmpdir, "basic_ensemble_no_env.yaml"
-        )
+        merlin_spec_no_env_filepath: str = os.path.join(self.tmpdir, "basic_ensemble_no_env.yaml")
         with open(merlin_spec_no_env_filepath, "w+") as _file:
             _file.write(MERLIN_SPEC_NO_ENV)
         try:
-            study_no_env = MerlinStudy(merlin_spec_no_env_filepath)
+            study_no_env: MerlinStudy = MerlinStudy(merlin_spec_no_env_filepath)
+            bad_type_err: str = f"study_no_env failed construction, is type {type(study_no_env)}."
+            assert isinstance(study_no_env, MerlinStudy), bad_type_err
         except Exception as e:
-            assert False
+            assert False, f"Encountered unexpected exception, {e}, for viable MerlinSpec without optional 'env' section."
+
+
+if __name__ == "__main__":
+    unittest.main()

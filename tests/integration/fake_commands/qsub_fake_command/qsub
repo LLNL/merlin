@@ -1,0 +1,2 @@
+#!/bin/sh
+echo "pbs_version = 19.0.0\n<This is a fake qsub for testing>"

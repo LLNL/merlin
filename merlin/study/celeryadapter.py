@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,18 +37,22 @@ import socket
 import subprocess
 import time
 from contextlib import suppress
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
+from amqp.exceptions import ChannelError
+from celery import Celery
+from tabulate import tabulate
+
+from merlin.common.dumper import dump_handler
+from merlin.config import Config
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
-from merlin.utils import (
-    check_machines,
-    get_procs,
-    get_yaml_var,
-    is_running,
-    regex_list_filter,
-)
+from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
 
 LOG = logging.getLogger(__name__)
+
+# TODO figure out a better way to handle the import of celery app and CONFIG
 
 
 def run_celery(study, run_mode=None):
@@ -57,8 +61,10 @@ def run_celery(study, run_mode=None):
     configure Celery to run locally (without workers).
     """
     # Only import celery stuff if we want celery in charge
-    from merlin.celery import app
-    from merlin.common.tasks import queue_merlin_study
+    # Pylint complains about circular import between merlin.common.tasks -> merlin.router -> merlin.study.celeryadapter
+    # For now I think this is still the best way to do this so we'll ignore it
+    from merlin.celery import app  # pylint: disable=C0415
+    from merlin.common.tasks import queue_merlin_study  # pylint: disable=C0415, R0401
 
     adapter_config = study.get_adapter_config(override_type="local")
 
@@ -73,23 +79,31 @@ def run_celery(study, run_mode=None):
     queue_merlin_study(study, adapter_config)
 
 
-def get_running_queues():
+def get_running_queues(celery_app_name: str, test_mode: bool = False) -> List[str]:
     """
-    Check for running celery workers with -Q queues
-    and return a unique list of the queues
+    Check for running celery workers by looking at the currently running processes.
+    If there are running celery workers, we'll pull the queues from the -Q tag in the
+    process command. The list returned here will contain only unique celery queue names.
+    This must be run on the allocation where the workers are running.
 
-    Must be run on the allocation where the workers are running
+    :param `celery_app_name`: The name of the celery app (typically merlin here unless testing)
+    :param `test_mode`: If True, run this function in test mode
+    :returns: A unique list of celery queues with workers attached to them
     """
     running_queues = []
 
-    if not is_running("celery worker"):
+    if not is_running(f"{celery_app_name} worker"):
         return running_queues
 
-    procs = get_procs("celery")
+    proc_name = "celery" if not test_mode else "sh"
+    procs = get_procs(proc_name)
     for _, lcmd in procs:
         lcmd = list(filter(None, lcmd))
         cmdline = " ".join(lcmd)
         if "-Q" in cmdline:
+            if test_mode:
+                echo_cmd = lcmd.pop(2)
+                lcmd.extend(echo_cmd.split())
             running_queues.extend(lcmd[lcmd.index("-Q") + 1].split(","))
 
     running_queues = list(set(running_queues))
@@ -97,7 +111,7 @@ def get_running_queues():
     return running_queues
 
 
-def get_queues(app):
+def get_active_celery_queues(app):
     """Get all active queues and workers for a celery application.
 
     Unlike get_running_queues, this goes through the application's server.
@@ -112,7 +126,7 @@ def get_queues(app):
     :example:
 
     >>> from merlin.celery import app
-    >>> queues, workers = get_queues(app)
+    >>> queues, workers = get_active_celery_queues(app)
     >>> queue_names = [*queues]
     >>> workers_on_q0 = queues[queue_names[0]]
     >>> workers_not_on_q0 = [worker for worker in workers
@@ -132,40 +146,332 @@ def get_queues(app):
     return queues, [*active_workers]
 
 
-def query_celery_workers():
-    """Look for existing celery workers.
-
-    Send results to the log.
+def get_active_workers(app):
     """
+    This is the inverse of get_active_celery_queues() defined above. This function
+    builds a dict where the keys are worker names and the values are lists
+    of queues attached to the worker.
+
+    :param `app`: The celery application
+    :returns: A dict mapping active workers to queues
+    """
+    # Get the information we need from celery
+    i = app.control.inspect()
+    active_workers = i.active_queues()
+    if active_workers is None:
+        active_workers = {}
+
+    # Build the mapping dictionary
+    worker_queue_map = {}
+    for worker, queues in active_workers.items():
+        for queue in queues:
+            if worker in worker_queue_map:
+                worker_queue_map[worker].append(queue["name"])
+            else:
+                worker_queue_map[worker] = [queue["name"]]
+
+    return worker_queue_map
+
+
+def celerize_queues(queues: List[str], config: Optional[Dict] = None):
+    """
+    Celery requires a queue tag to be prepended to their
+    queues so this function will 'celerize' every queue in
+    a list you provide it by prepending the queue tag.
+
+    :param `queues`: A list of queues that need the queue tag prepended.
+    :param `config`: A dict of configuration settings
+    """
+    if config is None:
+        from merlin.config.configfile import CONFIG as config  # pylint: disable=C0415
+
+    for i, queue in enumerate(queues):
+        queues[i] = f"{config.celery.queue_tag}{queue}"
+
+
+def _build_output_table(worker_list, output_table):
+    """
+    Helper function for query-status that will build a table
+    that we'll use as output.
+
+    :param `worker_list`: A list of workers to add to the table
+    :param `output_table`: A list of tuples where each entry is
+                           of the form (worker name, associated queues)
+    """
+    from merlin.celery import app  # pylint: disable=C0415
+
+    # Get a mapping between workers and the queues they're watching
+    worker_queue_map = get_active_workers(app)
+
+    # Loop through the list of workers and add an entry in the table
+    # of the form (worker name, queues attached to this worker)
+    for worker in worker_list:
+        if "celery@" not in worker:
+            worker = f"celery@{worker}"
+        output_table.append((worker, ", ".join(worker_queue_map[worker])))
+
+
+def query_celery_workers(spec_worker_names, queues, workers_regex):
+    """
+    Look for existing celery workers. Filter by spec, queues, or
+    worker names if provided by user. At the end, print a table
+    of workers and their associated queues.
+
+    :param `spec_worker_names`: The worker names defined in a spec file
+    :param `queues`: A list of queues to filter by
+    :param `workers_regex`: A list of regexs to filter by
+    """
+    from merlin.celery import app  # pylint: disable=C0415
+
+    # Ping all workers and grab which ones are running
     workers = get_workers_from_app()
-    if workers:
-        LOG.info("Found these connected workers:")
-        for worker in workers:
-            LOG.info(worker)
-    else:
+    if not workers:
         LOG.warning("No workers found!")
+        return
 
+    # Remove prepended celery tag while we filter
+    workers = [worker.replace("celery@", "") for worker in workers]
+    workers_to_query = []
 
-def query_celery_queues(queues):
-    """Return stats for queues specified.
-
-    Send results to the log.
-    """
-    from merlin.celery import app
-
-    connection = app.connection()
-    found_queues = []
-    try:
-        channel = connection.channel()
+    # --queues flag
+    if queues:
+        # Get a mapping between queues and the workers watching them
+        queue_worker_map, _ = get_active_celery_queues(app)
+        # Remove duplicates and prepend the celery queue tag to all queues
+        queues = list(set(queues))
+        celerize_queues(queues)
+        # Add the workers associated to each queue to the list of workers we're
+        # going to query
         for queue in queues:
             try:
-                name, jobs, consumers = channel.queue_declare(queue=queue, passive=True)
-                found_queues.append((name, jobs, consumers))
-            except BaseException:
-                LOG.warning(f"Cannot find queue {queue} on server.")
-    finally:
-        connection.close()
-    return found_queues
+                workers_to_query.extend(queue_worker_map[queue])
+            except KeyError:
+                LOG.warning(f"No workers connected to {queue}.")
+
+    # --spec flag
+    if spec_worker_names:
+        apply_list_of_regex(spec_worker_names, workers, workers_to_query)
+
+    # --workers flag
+    if workers_regex:
+        apply_list_of_regex(workers_regex, workers, workers_to_query)
+
+    # Remove any potential duplicates
+    workers = set(workers)
+    workers_to_query = set(workers_to_query)
+
+    # If there were filters and nothing was found then we can't display a table
+    if (queues or spec_worker_names or workers_regex) and not workers_to_query:
+        LOG.warning("No workers found that match your filters.")
+        return
+
+    # Build the output table based on our filters
+    table = []
+    if workers_to_query:
+        _build_output_table(workers_to_query, table)
+    else:
+        _build_output_table(workers, table)
+
+    # Display the output table
+    LOG.info("Found these connected workers:")
+    print(tabulate(table, headers=["Workers", "Queues"]))
+    print()
+
+
+def build_csv_queue_info(query_return: List[Tuple[str, int, int]], date: str) -> Dict[str, List]:
+    """
+    Build the lists of column labels and queue info to write to the csv file.
+
+    :param query_return: The output of `query_queues`
+    :param date: A timestamp for us to mark when this status occurred
+    :returns: A dict of queue information to dump to a csv file
+    """
+    # Build the list of labels if necessary
+    csv_to_dump = {"time": [date]}
+    for queue_name, queue_stats in query_return.items():
+        csv_to_dump[f"{queue_name}:tasks"] = [str(queue_stats["jobs"])]
+        csv_to_dump[f"{queue_name}:consumers"] = [str(queue_stats["consumers"])]
+
+    return csv_to_dump
+
+
+def build_json_queue_info(query_return: List[Tuple[str, int, int]], date: str) -> Dict:
+    """
+    Build the dict of queue info to dump to the json file.
+
+    :param query_return: The output of `query_queues`
+    :param date: A timestamp for us to mark when this status occurred
+    :returns: A dictionary that's ready to dump to a json outfile
+    """
+    # Get the datetime so we can track different entries and initalize a new json entry
+    json_to_dump = {date: {}}
+
+    # Add info for each queue (name)
+    for queue_name, queue_stats in query_return.items():
+        json_to_dump[date][queue_name] = {"tasks": queue_stats["jobs"], "consumers": queue_stats["consumers"]}
+
+    return json_to_dump
+
+
+def dump_celery_queue_info(query_return: List[Tuple[str, int, int]], dump_file: str):
+    """
+    Format the information we're going to dump in a way that the Dumper class can
+    understand and add a timestamp to the info.
+
+    :param query_return: The output of `query_queues`
+    :param dump_file: The filepath of the file we'll dump queue info to
+    """
+    # Get a timestamp for this dump
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Handle different file types
+    if dump_file.endswith(".csv"):
+        # Build the lists of information/labels we'll need
+        dump_info = build_csv_queue_info(query_return, date)
+    elif dump_file.endswith(".json"):
+        # Build the dict of info to dump to the json file
+        dump_info = build_json_queue_info(query_return, date)
+
+    # Dump the information
+    dump_handler(dump_file, dump_info)
+
+
+def _get_specific_queues(queues: set, specific_queues: List[str], spec: "MerlinSpec", verbose=True) -> set:  # noqa: F821
+    """
+    Search for specific queues that the user asked for. The queues that cannot be found will not
+    be returned. The queues that can be found will be added to a set and returned.
+
+    :param queues: Either an empty set or a set of queues from `spec`
+    :param specific_queues: The list of queues that we're going to search for
+    :param spec: A `MerlinSpec` object or None
+    :param verbose: If True, display log messages. Otherwise, don't.
+    :returns: A set of the specific queues that were found to exist.
+    """
+    if verbose:
+        LOG.info(f"Filtering queues to query by these specific queues: {specific_queues}")
+
+    # Add the queue tag from celery if necessary
+    celerize_queues(specific_queues)
+    # Remove any potential duplicates and create a new set to store the queues we'll want to check
+    specific_queues = set(specific_queues)
+    specific_queues_to_check = set()
+
+    for specific_queue in specific_queues:
+        # If the user provided the --spec flag too then we'll need to check that this
+        # specific queue exists in the spec that they provided
+        add_specific_queue = True
+        if spec and specific_queue not in queues:
+            if verbose:
+                LOG.warning(
+                    f"Either couldn't find {specific_queue} in the existing queues for the spec file provided or "
+                    "this queue doesn't go with the steps provided with the --steps option. Ignoring this queue."
+                )
+            add_specific_queue = False
+
+        # Add the full queue name to the set of queues we'll check
+        if add_specific_queue:
+            specific_queues_to_check.add(specific_queue)
+
+    return specific_queues_to_check
+
+
+def build_set_of_queues(
+    spec: "MerlinSpec",  # noqa: F821
+    steps: List[str],
+    specific_queues: List[str],
+    verbose: Optional[bool] = True,
+    app: Optional["Celery"] = None,  # noqa: F821
+) -> set:
+    """
+    Build a set of queues to query based on the parameters given here.
+
+    :param spec: A `MerlinSpec` object or None
+    :param steps: Spaced-separated list of stepnames to query. Default is all
+    :param specific_queues: A list of queue names to query or None
+    :param verbose: A bool to determine whether to output log statements or not
+    :param app: A celery app object, if left out we'll just import it
+    :returns: A set of queues to investigate
+    """
+    if app is None:
+        from merlin.celery import app  # pylint: disable=C0415
+
+    queues = set()
+    # If the user provided a spec file, get the queues from that spec
+    if spec:
+        if verbose:
+            LOG.info(f"Querying queues for steps = {steps}")
+        queues = set(spec.get_queue_list(steps))
+
+    # If the user provided specific queues, search for those
+    if specific_queues:
+        queues = _get_specific_queues(queues, specific_queues, spec, verbose=verbose)
+
+    # Default behavior with no options provided; display active queues
+    if not spec and not specific_queues:
+        if verbose:
+            LOG.info("Querying active queues")
+        existing_queues, _ = get_active_celery_queues(app)
+
+        # Check if there's any active queues currently
+        if len(existing_queues) == 0:
+            if verbose:
+                LOG.warning("No active queues found. Are your workers running yet?")
+            return set()
+
+        # Set the queues we're going to check to be all existing queues by default
+        queues = set(existing_queues.keys())
+
+    return queues
+
+
+def query_celery_queues(queues: List[str], app: Celery = None, config: Config = None) -> Dict[str, List[str]]:
+    """
+    Build a dict of information about the number of jobs and consumers attached
+    to specific queues that we want information on.
+
+    :param queues: A list of the queues we want to know about
+    :param app: The celery application (this will be none unless testing)
+    :param config: The configuration object that has the broker name (this will be none unless testing)
+    :returns: A dict of info on the number of jobs and consumers for each queue in `queues`
+    """
+    if app is None:
+        from merlin.celery import app  # pylint: disable=C0415
+    if config is None:
+        from merlin.config.configfile import CONFIG as config  # pylint: disable=C0415
+
+    # Initialize the dictionary with the info we want about our queues
+    queue_info = {queue: {"consumers": 0, "jobs": 0} for queue in queues}
+
+    # Open a connection via our Celery app
+    with app.connection() as conn:
+        # Open a channel inside our connection
+        with conn.channel() as channel:
+            # Loop through all the queues we're searching for
+            for queue in queues:
+                try:
+                    # Count the number of jobs and consumers for each queue
+                    _, queue_info[queue]["jobs"], queue_info[queue]["consumers"] = channel.queue_declare(
+                        queue=queue, passive=True
+                    )
+                # Redis likes to throw this error when a queue we're looking for has no jobs
+                except ChannelError:
+                    pass
+
+    # Redis doesn't keep track of consumers attached to queues like rabbit does
+    # so we have to count this ourselves here
+    if config.broker.name in ("rediss", "redis"):
+        # Get a dict of active queues by querying the celery app
+        active_queues = app.control.inspect().active_queues()
+        if active_queues is not None:
+            # Loop through each active queue that was found
+            for active_queue_list in active_queues.values():
+                # Loop through each queue that each worker is watching
+                for active_queue in active_queue_list:
+                    # If this is a queue we're looking for, increment the consumer count
+                    if active_queue["name"] in queues:
+                        queue_info[active_queue["name"]]["consumers"] += 1
+
+    return queue_info
 
 
 def get_workers_from_app():
@@ -175,7 +481,7 @@ def get_workers_from_app():
     :return: A list of all connected workers
     :rtype: list
     """
-    from merlin.celery import app
+    from merlin.celery import app  # pylint: disable=C0415
 
     i = app.control.inspect()
     workers = i.ping()
@@ -184,10 +490,111 @@ def get_workers_from_app():
     return [*workers]
 
 
-def start_celery_workers(spec, steps, celery_args, just_return_command):
+def check_celery_workers_processing(queues_in_spec: List[str], app: Celery) -> bool:
+    """
+    Query celery to see if any workers are still processing tasks.
+
+    :param queues_in_spec: A list of queues to check if tasks are still active in
+    :param app: The celery app that we're querying
+    :returns: True if workers are still processing tasks, False otherwise
+    """
+    # Query celery for active tasks
+    active_tasks = app.control.inspect().active()
+
+    # Search for the queues we provided if necessary
+    if active_tasks is not None:
+        for tasks in active_tasks.values():
+            for task in tasks:
+                if task["delivery_info"]["routing_key"] in queues_in_spec:
+                    return True
+
+    return False
+
+
+def _get_workers_to_start(spec, steps):
+    """
+    Helper function to return a set of workers to start based on
+    the steps provided by the user.
+
+    :param `spec`: A MerlinSpec object
+    :param `steps`: A list of steps to start workers for
+
+    :returns: A set of workers to start
+    """
+    workers_to_start = []
+    step_worker_map = spec.get_step_worker_map()
+    for step in steps:
+        try:
+            workers_to_start.extend(step_worker_map[step])
+        except KeyError:
+            LOG.warning(f"Cannot start workers for step: {step}. This step was not found.")
+
+    workers_to_start = set(workers_to_start)
+    LOG.debug(f"workers_to_start: {workers_to_start}")
+
+    return workers_to_start
+
+
+def _create_kwargs(spec):
+    """
+    Helper function to handle creating the kwargs dict that
+    we'll pass to subprocess.Popen when we launch the worker.
+
+    :param `spec`: A MerlinSpec object
+    :returns: A tuple where the first entry is the kwargs and
+              the second entry is variables defined in the spec
+    """
+    # Get the environment from the spec and the shell
+    spec_env = spec.environment
+    shell_env = os.environ.copy()
+    yaml_vars = None
+
+    # If the environment from the spec has anything in it,
+    # read in the variables and save them to the shell environment
+    if spec_env:
+        yaml_vars = get_yaml_var(spec_env, "variables", {})
+        for var_name, var_val in yaml_vars.items():
+            shell_env[str(var_name)] = str(var_val)
+            # For expandvars
+            os.environ[str(var_name)] = str(var_val)
+
+    # Create the kwargs dict
+    kwargs = {"env": shell_env, "shell": True, "universal_newlines": True}
+    return kwargs, yaml_vars
+
+
+def _get_steps_to_start(wsteps, steps, steps_provided):
+    """
+    Determine which steps to start workers for.
+
+    :param `wsteps`: A list of steps associated with a worker
+    :param `steps`: A list of steps to start provided by the user
+    :param `steps`: A bool representing whether the user gave specific
+                    steps to start or not
+    :returns: A list of steps to start workers for
+    """
+    steps_to_start = []
+    if steps_provided:
+        for wstep in wsteps:
+            if wstep in steps:
+                steps_to_start.append(wstep)
+    else:
+        steps_to_start.extend(wsteps)
+
+    return steps_to_start
+
+
+def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_command):  # pylint: disable=R0914,R0915
     """Start the celery workers on the allocation
 
-    specs       Tuple of (YAMLSpecification, MerlinSpec)
+    :param MerlinSpec spec:             A MerlinSpec object representing our study
+    :param list steps:                  A list of steps to start workers for
+    :param str celery_args:             A string of arguments to provide to the celery workers
+    :param bool disable_logs:           A boolean flag to turn off the celery logs for the workers
+    :param bool just_return_command:    When True, workers aren't started and just the launch command(s)
+                                        are returned
+    :side effect:                       Starts subprocesses for each worker we launch
+    :returns:                           A string of all the worker launch commands
     ...
 
     example config:
@@ -209,38 +616,25 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
     overlap = spec.merlin["resources"]["overlap"]
     workers = spec.merlin["resources"]["workers"]
 
-    senv = spec.environment
-    spenv = os.environ.copy()
-    yenv = None
-    if senv:
-        yenv = get_yaml_var(senv, "variables", {})
-        for k, v in yenv.items():
-            spenv[str(k)] = str(v)
-            # For expandvars
-            os.environ[str(k)] = str(v)
+    # Build kwargs dict for subprocess.Popen to use when we launch the worker
+    kwargs, yenv = _create_kwargs(spec)
 
     worker_list = []
     local_queues = []
 
-    for worker_name, worker_val in workers.items():
-        worker_machines = get_yaml_var(worker_val, "machines", None)
-        if worker_machines:
-            LOG.debug("check machines = ", check_machines(worker_machines))
-            if not check_machines(worker_machines):
-                continue
+    # Get the workers we need to start if we're only starting certain steps
+    steps_provided = False if "all" in steps else True  # pylint: disable=R1719
+    if steps_provided:
+        workers_to_start = _get_workers_to_start(spec, steps)
 
-            if yenv:
-                output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
-                if output_path and not os.path.exists(output_path):
-                    hostname = socket.gethostname()
-                    LOG.error(
-                        f"The output path, {output_path}, is not accessible on this host, {hostname}"
-                    )
-            else:
-                LOG.warning(
-                    "The env:variables section does not have an OUTPUT_PATH"
-                    "specified, multi-machine checks cannot be performed."
-                )
+    for worker_name, worker_val in workers.items():
+        # Only triggered if --steps flag provided
+        if steps_provided and worker_name not in workers_to_start:
+            continue
+
+        skip_loop_step: bool = examine_and_log_machines(worker_val, yenv)
+        if skip_loop_step:
+            continue
 
         worker_args = get_yaml_var(worker_val, "args", celery_args)
         with suppress(KeyError):
@@ -248,129 +642,145 @@ def start_celery_workers(spec, steps, celery_args, just_return_command):
                 worker_args = ""
 
         worker_nodes = get_yaml_var(worker_val, "nodes", None)
-
         worker_batch = get_yaml_var(worker_val, "batch", None)
 
+        # Get the correct steps to start workers for
         wsteps = get_yaml_var(worker_val, "steps", steps)
-        queues = spec.make_queue_string(wsteps).split(",")
+        steps_to_start = _get_steps_to_start(wsteps, steps, steps_provided)
+        queues = spec.make_queue_string(steps_to_start)
 
         # Check for missing arguments
-        verify_args(spec, worker_args, worker_name, overlap)
+        worker_args = verify_args(spec, worker_args, worker_name, overlap, disable_logs=disable_logs)
 
         # Add a per worker log file (debug)
         if LOG.isEnabledFor(logging.DEBUG):
             LOG.debug("Redirecting worker output to individual log files")
-            worker_args += f" --logfile %p.%i"
+            worker_args += " --logfile %p.%i"
 
-        # Get the celery command
-        celery_com = launch_celery_workers(
-            spec, steps=wsteps, worker_args=worker_args, just_return_command=True
-        )
-
+        # Get the celery command & add it to the batch launch command
+        celery_com = get_celery_cmd(queues, worker_args=worker_args, just_return_command=True)
         celery_cmd = os.path.expandvars(celery_com)
-
-        worker_cmd = batch_worker_launch(
-            spec, celery_cmd, nodes=worker_nodes, batch=worker_batch
-        )
-
+        worker_cmd = batch_worker_launch(spec, celery_cmd, nodes=worker_nodes, batch=worker_batch)
         worker_cmd = os.path.expandvars(worker_cmd)
 
-        try:
-            kwargs = {"env": spenv, "shell": True, "universal_newlines": True}
-            # These cannot be used with a detached process
-            # "stdout":               subprocess.PIPE,
-            # "stderr":               subprocess.PIPE,
+        LOG.debug(f"worker cmd={worker_cmd}")
 
-            LOG.debug(f"worker cmd={worker_cmd}")
-            LOG.debug(f"env={spenv}")
+        if just_return_command:
+            worker_list = ""
+            print(worker_cmd)
+            continue
 
-            if just_return_command:
-                worker_list = ""
-                print(worker_cmd)
-                continue
+        # Get the running queues
+        running_queues = []
+        running_queues.extend(local_queues)
+        queues = queues.split(",")
+        if not overlap:
+            running_queues.extend(get_running_queues("merlin"))
+            # Cache the queues from this worker to use to test
+            # for existing queues in any subsequent workers.
+            # If overlap is True, then do not check the local queues.
+            # This will allow multiple workers to pull from the same
+            # queue.
+            local_queues.extend(queues)
 
-            found = []
-            running_queues = []
+        # Search for already existing queues and log a warning if we try to start one that already exists
+        found = []
+        for q in queues:  # pylint: disable=C0103
+            if q in running_queues:
+                found.append(q)
+        if found:
+            LOG.warning(
+                f"A celery worker named '{worker_name}' is already configured/running for queue(s) = {' '.join(found)}"
+            )
+            continue
 
-            running_queues.extend(local_queues)
-            if not overlap:
-                running_queues.extend(get_running_queues())
-                # Cache the queues from this worker to use to test
-                # for existing queues in any subsequent workers.
-                # If overlap is True, then do not check the local queues.
-                # This will allow multiple workers to pull from the same
-                # queue.
-                local_queues.extend(queues)
-
-            for q in queues:
-                if q in running_queues:
-                    found.append(q)
-
-            if found:
-                LOG.warning(
-                    f"A celery worker named '{worker_name}' is already configured/running for queue(s) = {' '.join(found)}"
-                )
-                continue
-
-            _ = subprocess.Popen(worker_cmd, **kwargs)
-
-            worker_list.append(worker_cmd)
-
-        except Exception as e:
-            LOG.error(f"Cannot start celery workers, {e}")
-            raise
+        # Start the worker
+        launch_celery_worker(worker_cmd, worker_list, kwargs)
 
     # Return a string with the worker commands for logging
     return str(worker_list)
 
 
-def verify_args(spec, worker_args, worker_name, overlap):
+def examine_and_log_machines(worker_val, yenv) -> bool:
+    """
+    Examines whether a worker should be skipped in a step of start_celery_workers(), logs errors in output path for a celery
+    worker.
+    """
+    worker_machines = get_yaml_var(worker_val, "machines", None)
+    if worker_machines:
+        LOG.debug(f"check machines = {check_machines(worker_machines)}")
+        if not check_machines(worker_machines):
+            return True
+
+        if yenv:
+            output_path = get_yaml_var(yenv, "OUTPUT_PATH", None)
+            if output_path and not os.path.exists(output_path):
+                hostname = socket.gethostname()
+                LOG.error(f"The output path, {output_path}, is not accessible on this host, {hostname}")
+        else:
+            LOG.warning(
+                "The env:variables section does not have an OUTPUT_PATH specified, multi-machine checks cannot be performed."
+            )
+        return False
+    return False
+
+
+def verify_args(spec, worker_args, worker_name, overlap, disable_logs=False):
     """Examines the args passed to a worker for completeness."""
     parallel = batch_check_parallel(spec)
     if parallel:
         if "--concurrency" not in worker_args:
-            LOG.warning(
-                "The worker arg --concurrency [1-4] is recommended "
-                "when running parallel tasks"
-            )
+            LOG.warning("The worker arg --concurrency [1-4] is recommended when running parallel tasks")
         if "--prefetch-multiplier" not in worker_args:
-            LOG.warning(
-                "The worker arg --prefetch-multiplier 1 is "
-                "recommended when running parallel tasks"
-            )
+            LOG.warning("The worker arg --prefetch-multiplier 1 is recommended when running parallel tasks")
         if "fair" not in worker_args:
-            LOG.warning(
-                "The worker arg -O fair is recommended when running parallel tasks"
-            )
+            LOG.warning("The worker arg -O fair is recommended when running parallel tasks")
 
     if "-n" not in worker_args:
         nhash = ""
         if overlap:
             nhash = time.strftime("%Y%m%d-%H%M%S")
         # TODO: Once flux fixes their bug, change this back to %h
+        # %h in Celery is short for hostname including domain name
         worker_args += f" -n {worker_name}{nhash}.%%h"
 
-    if "-l" not in worker_args:
+    if not disable_logs and "-l" not in worker_args:
         worker_args += f" -l {logging.getLevelName(LOG.getEffectiveLevel())}"
 
+    return worker_args
 
-def launch_celery_workers(spec, steps=None, worker_args="", just_return_command=False):
+
+def launch_celery_worker(worker_cmd, worker_list, kwargs):
     """
-    Launch celery workers for the specified MerlinStudy.
+    Using the worker launch command provided, launch a celery worker.
+    :param str worker_cmd:      The celery command to launch a worker
+    :param list worker_list:    A list of worker launch commands
+    :param dict kwargs:         A dictionary containing additional keyword args to provide
+                                to subprocess.Popen
 
-    spec                MerlinSpec object
-    steps               The steps in the spec to tie the workers to
+    :side effect:               Launches a celery worker via a subprocess
+    """
+    try:
+        _ = subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
+        worker_list.append(worker_cmd)
+    except Exception as e:  # pylint: disable=C0103
+        LOG.error(f"Cannot start celery workers, {e}")
+        raise
+
+
+def get_celery_cmd(queue_names, worker_args="", just_return_command=False):
+    """
+    Get the appropriate command to launch celery workers for the specified MerlinStudy.
+    queue_names         The name(s) of the queue(s) to associate a worker with
     worker_args         Optional celery arguments for the workers
     just_return_command Don't execute, just return the command
     """
-    queues = spec.make_queue_string(steps)
-    worker_command = " ".join(["celery -A merlin worker", worker_args, "-Q", queues])
+    worker_command = " ".join(["celery -A merlin worker", worker_args, "-Q", queue_names])
     if just_return_command:
         return worker_command
-    else:
-        # This only runs celery locally the user would need to
-        # add all of the flux config themselves.
-        pass
+    # If we get down here, this only runs celery locally the user would need to
+    # add all of the flux config themselves.
+    return ""
 
 
 def purge_celery_tasks(queues, force):
@@ -388,10 +798,10 @@ def purge_celery_tasks(queues, force):
         force_com = " -f "
     purge_command = " ".join(["celery -A merlin purge", force_com, "-Q", queues])
     LOG.debug(purge_command)
-    return subprocess.call(purge_command.split())
+    return subprocess.run(purge_command, shell=True).returncode
 
 
-def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
+def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):  # pylint: disable=R0912
     """Send a stop command to celery workers.
 
     Default behavior is to stop all connected workers.
@@ -410,16 +820,17 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     >>> stop_celery_workers()
 
     """
-    from merlin.celery import app
+    from merlin.celery import app  # pylint: disable=C0415
 
-    LOG.debug(
-        f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}"
-    )
-    active_queues, _ = get_queues(app)
+    LOG.debug(f"Sending stop to queues: {queues}, worker_regex: {worker_regex}, spec_worker_names: {spec_worker_names}")
+    active_queues, _ = get_active_celery_queues(app)
 
     # If not specified, get all the queues
     if queues is None:
         queues = [*active_queues]
+    # Celery adds the queue tag in front of each queue so we add that here
+    else:
+        celerize_queues(queues)
 
     # Find the set of all workers attached to all of those queues
     all_workers = set()
@@ -434,29 +845,27 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
 
     LOG.debug(f"Pre-filter worker stop list: {all_workers}")
 
-    print(f"all_workers: {all_workers}")
-    print(f"spec_worker_names: {spec_worker_names}")
-    if (
-        spec_worker_names is None or len(spec_worker_names) == 0
-    ) and worker_regex is None:
+    # Stop workers with no flags
+    if (spec_worker_names is None or len(spec_worker_names) == 0) and worker_regex is None:
         workers_to_stop = list(all_workers)
+    # Flag handling
     else:
         workers_to_stop = []
+        # --spec flag
         if (spec_worker_names is not None) and len(spec_worker_names) > 0:
-            for worker_name in spec_worker_names:
-                print(
-                    f"Result of regex_list_filter: {regex_list_filter(worker_name, all_workers)}"
-                )
-                workers_to_stop += regex_list_filter(
-                    worker_name, all_workers, match=False
-                )
+            apply_list_of_regex(spec_worker_names, all_workers, workers_to_stop)
+        # --workers flag
         if worker_regex is not None:
-            workers_to_stop += regex_list_filter(worker_regex, workers_to_stop)
+            LOG.debug(f"Searching for workers to stop based on the following regex's: {worker_regex}")
+            apply_list_of_regex(worker_regex, all_workers, workers_to_stop)
 
-    print(f"workers_to_stop: {workers_to_stop}")
+    # Remove duplicates
+    workers_to_stop = list(set(workers_to_stop))
+    LOG.debug(f"Post-filter worker stop list: {workers_to_stop}")
+
     if workers_to_stop:
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
-        return app.control.broadcast("shutdown", destination=workers_to_stop)
+        app.control.broadcast("shutdown", destination=workers_to_stop)
     else:
         LOG.warning("No workers found to stop")
 
@@ -470,10 +879,10 @@ def create_celery_config(config_dir, data_file_name, data_file_path):
     :param `data_file_path`: The full data file path.
     """
     # This will need to come from the server interface
-    MERLIN_CONFIG = os.path.join(config_dir, data_file_name)
+    MERLIN_CONFIG = os.path.join(config_dir, data_file_name)  # pylint: disable=C0103
 
     if os.path.isfile(MERLIN_CONFIG):
-        from merlin.common.security import encrypt
+        from merlin.common.security import encrypt  # pylint: disable=C0415
 
         encrypt.init_key()
         LOG.info(f"The config file already exists, {MERLIN_CONFIG}")
@@ -487,6 +896,6 @@ def create_celery_config(config_dir, data_file_name, data_file_path):
 
     LOG.info(f"The file {MERLIN_CONFIG} is ready to be edited for your system.")
 
-    from merlin.common.security import encrypt
+    from merlin.common.security import encrypt  # pylint: disable=C0415
 
     encrypt.init_key()

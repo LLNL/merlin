@@ -1,0 +1,81 @@
+description:
+  description: A simple ensemble of echo commands run by flux.
+  name: flux_test
+
+batch:
+  type: flux
+  nodes: 1
+  queue: pbatch
+  walltime: 10:00:00
+  flux_start_opts: -o,-S,log-filename=flux_test.out
+
+env:
+  variables:
+    OUTPUT_PATH: ./studies
+    N_SAMPLES: 10
+    SCRIPTS: $(SPECROOT)/../../../merlin/examples/workflows/flux/scripts
+
+study:
+- description: Echo the params
+  name: runs 
+  run:
+    cmd: $(LAUNCHER) echo "$(V1) $(V2)" > flux_run.out
+    task_queue: flux_test
+    nodes: 1
+    procs: 1
+    cores per task: 1
+
+- description: Dump flux info
+  name: data
+  run:
+    cmd: |
+      $(SCRIPTS)/flux_info.py > flux_timings.out
+    depends: [runs*]
+    task_queue: flux_test
+
+- description: step that uses vlauncher
+  name: vlauncher_test
+  run:
+    cmd: |
+      MERLIN_NODES=6
+      MERLIN_PROCS=3
+      MERLIN_CORES=2
+      $(VLAUNCHER) echo "step that uses vlauncher"
+    task_queue: flux_test
+
+- description: test vlauncher step defaults
+  name: vlauncher_test_step_defaults
+  run:
+    cmd: |
+      $(VLAUNCHER) echo "test vlauncher step defaults"
+    task_queue: flux_test
+    nodes: 6
+    procs: 3
+    cores per task: 2
+    gpus: 1
+
+- description: test vlauncher no step defaults
+  name: vlauncher_test_no_step_defaults
+  run:
+    cmd: |
+      $(VLAUNCHER) echo "test vlauncher no step defaults"
+    task_queue: flux_test
+
+global.parameters:
+  STUDY:
+    label: STUDY.%%
+    values:
+    - FLUXTEST
+
+merlin:
+  resources:
+    task_server: celery
+    workers:
+      simworkers:
+        args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
+        steps: [runs, data]
+  samples:
+    column_labels: [V1, V2]
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: python3 $(SCRIPTS)/make_samples.py -dims 2 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy 

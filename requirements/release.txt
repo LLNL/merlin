@@ -2,10 +2,13 @@ cached_property
 celery[redis,sqlalchemy]>=5.0.3
 coloredlogs
 cryptography
+importlib_metadata<5.0.0; python_version == '3.7'
 importlib_resources; python_version < '3.7'
-maestrowf==1.1.7dev0
+maestrowf>=1.1.9dev1
 numpy
 parse
 psutil>=5.1.0
 pyyaml>=5.1.2
+setuptools
 tabulate
+redis>=4.3.4

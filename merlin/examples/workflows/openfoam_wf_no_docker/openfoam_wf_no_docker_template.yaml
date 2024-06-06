@@ -3,6 +3,7 @@ description:
     description: |
       A parameter study that includes initializing, running,
       post-processing, collecting, learning and vizualizing OpenFOAM runs
+      without using docker.
 
 
 env:

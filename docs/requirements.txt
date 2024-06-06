@@ -1,0 +1,9 @@
+markdown-grid-tables
+mkdocs
+mkdocs-codeinclude-plugin
+mkdocs-gen-files
+mkdocs-glightbox
+mkdocs-literate-nav
+mkdocs-material
+mkdocstrings
+mkdocstrings-python

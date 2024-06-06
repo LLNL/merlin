@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,36 +37,91 @@ import shutil
 import sys
 import time
 from contextlib import suppress
-from subprocess import PIPE, Popen
+from subprocess import TimeoutExpired, run
 
-from test_definitions import OUTPUT_DIR, define_tests
+from tabulate import tabulate
+
+from tests.integration.definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
 
 
-def run_single_test(name, test, test_label="", buffer_length=50):
-    dot_length = buffer_length - len(name) - len(str(test_label))
-    print(f"TEST {test_label}: {name}{'.'*dot_length}", end="")
-    command = test[0]
-    conditions = test[1]
+def get_definition_issues(test):
+    """
+    Function to make sure the test definition was written properly.
+    :param `test`: The test definition we're checking
+    :returns: A list of errors found with the test definition
+    """
+    errors = []
+    # Check that commands were provided
+    try:
+        commands = test["cmds"]
+        if not isinstance(commands, list):
+            commands = [commands]
+    except KeyError:
+        errors.append("'cmds' flag not defined")
+        commands = None
+
+    # Check that conditions were provided
+    if "conditions" not in test:
+        errors.append("'conditions' flag not defined")
+
+    # Check that correct number of cmds were given depending on
+    # the number of processes we'll need to start
+    if commands:
+        if "num procs" not in test:
+            num_procs = 1
+        else:
+            num_procs = test["num procs"]
+
+        if num_procs == 1 and len(commands) != 1:
+            errors.append(f"Need 1 'cmds' since 'num procs' is 1 but {len(commands)} 'cmds' were given")
+        elif num_procs == 2 and len(commands) != 2:
+            errors.append(f"Need 2 'cmds' since 'num procs' is 2 but {len(commands)} 'cmds' were given")
+
+    return errors
+
+
+def run_single_test(test):
+    """
+    Runs a single test and returns whether it passed or not
+    and information about the test for logging purposes.
+    :param `test`: A dictionary that defines the test
+    :returns: A tuple of type (bool, dict) where the bool
+                represents if the test passed and the dict
+                contains info about the test.
+    """
+    # Parse the test definition
+    commands = test.pop("cmds", None)
+    if not isinstance(commands, list):
+        commands = [commands]
+    conditions = test.pop("conditions", None)
     if not isinstance(conditions, list):
         conditions = [conditions]
+    cleanup = test.pop("cleanup", None)
+    num_procs = test.pop("num procs", 1)
 
     start_time = time.time()
-    process = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
-    stdout, stderr = process.communicate()
+    # As of now the only time we need 2 processes is to test stop-workers
+    # Therefore we only care about the result of the second process
+    if num_procs == 2:
+        # First command should start the workers
+        try:
+            run(commands[0], timeout=8, capture_output=True, shell=True)
+        except TimeoutExpired:
+            pass
+        # Second command should stop the workers
+        result = run(commands[1], capture_output=True, text=True, shell=True)
+    else:
+        # Run the commands
+        result = run(commands[0], capture_output=True, text=True, shell=True)
     end_time = time.time()
     total_time = end_time - start_time
-    if stdout is not None:
-        stdout = stdout.decode("utf-8")
-    if stderr is not None:
-        stderr = stderr.decode("utf-8")
-    return_code = process.returncode
 
     info = {
         "total_time": total_time,
-        "command": command,
-        "stdout": stdout,
-        "stderr": stderr,
-        "return_code": return_code,
+        "command": commands,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "return_code": result.returncode,
         "violated_condition": None,
     }
 
@@ -77,6 +132,11 @@ def run_single_test(name, test, test_label="", buffer_length=50):
         if passed is False:
             info["violated_condition"] = (condition, i, len(conditions))
             break
+
+    if cleanup:
+        end_process = run(cleanup, capture_output=True, text=True, shell=True)
+        info["end_stdout"] = end_process.stdout
+        info["end_stderr"] = end_process.stderr
 
     return passed, info
 
@@ -90,7 +150,7 @@ def clear_test_studies_dir():
         shutil.rmtree(f"./{OUTPUT_DIR}")
 
 
-def process_test_result(passed, info, is_verbose, exit):
+def process_test_result(passed, info, is_verbose, exit_on_failure):
     """
     Process and print test results to the console.
     """
@@ -98,21 +158,18 @@ def process_test_result(passed, info, is_verbose, exit):
     if passed is False and "merlin: command not found" in info["stderr"]:
         print(f"\nMissing from environment:\n\t{info['stderr']}")
         return None
-    elif passed is False:
+    if passed is False:
         print("FAIL")
-        if exit is True:
+        if exit_on_failure is True:
             return None
     else:
         print("pass")
 
     if info["violated_condition"] is not None:
-        message = info["violated_condition"][0]
-        condition_id = info["violated_condition"][1] + 1
-        n_conditions = info["violated_condition"][2]
-        print(
-            f"\tCondition {condition_id} of {n_conditions}: "
-            + str(info["violated_condition"][0])
-        )
+        msg: str = str(info["violated_condition"][0])
+        condition_id: str = info["violated_condition"][1] + 1
+        n_conditions: str = info["violated_condition"][2]
+        print(f"\tCondition {condition_id} of {n_conditions}: {msg}")
     if is_verbose is True:
         print(f"\tcommand: {info['command']}")
         print(f"\telapsed time: {round(info['total_time'], 2)} s")
@@ -120,15 +177,24 @@ def process_test_result(passed, info, is_verbose, exit):
             print(f"\treturn code: {info['return_code']}")
         if info["stderr"] != "":
             print(f"\tstderr:\n{info['stderr']}")
+        if info["stdout"] != "":
+            print(f"\tstdout:\n{info['stdout']}")
 
     return passed
 
 
-def run_tests(args, tests):
+def filter_tests_to_run(args, tests):
     """
-    Run all inputted tests.
-    :param `tests`: a dictionary of
-        {"test_name" : ("test_command", [conditions])}
+    Filter which tests to run based on args. The tests to
+    run will be what makes up the args.ids list. This function
+    will return whether we're being selective with what tests
+    we run and also the number of tests that match the filter.
+    :param `args`: CLI args given by user
+    :param `tests`: a dict of all the tests that exist
+    :returns: a tuple where the first entry is a bool on whether
+              we filtered the tests at all and the second entry
+              is an int representing the number of tests we're
+              going to run.
     """
     selective = False
     n_to_run = len(tests)
@@ -137,14 +203,27 @@ def run_tests(args, tests):
             raise ValueError(f"Test ids must be between 1 and {len(tests)}, inclusive.")
         selective = True
         n_to_run = len(args.ids)
-    elif args.local is not None:
+    elif args.local is not None or args.distributed is not None:
         args.ids = []
         n_to_run = 0
         selective = True
         for test_id, test in enumerate(tests.values()):
-            if len(test) == 3 and test[2] == "local":
+            run_type = test.pop("run type", None)
+            if (args.local and run_type == "local") or (args.distributed and run_type == "distributed"):
                 args.ids.append(test_id + 1)
                 n_to_run += 1
+
+    return selective, n_to_run
+
+
+# TODO split this function up so it's not as large (this will fix the pylint issue here too)
+def run_tests(args, tests):  # pylint: disable=R0914
+    """
+    Run all inputted tests.
+    :param `tests`: a dictionary of
+        {"test_name" : ("test_command", [conditions])}
+    """
+    selective, n_to_run = filter_tests_to_run(args, tests)
 
     print(f"Running {n_to_run} integration tests...")
     start_time = time.time()
@@ -156,14 +235,32 @@ def run_tests(args, tests):
         if selective and test_label not in args.ids:
             total += 1
             continue
-        try:
-            passed, info = run_single_test(test_name, test, test_label)
-        except BaseException as e:
-            print(e)
+        dot_length = 50 - len(test_name) - len(str(test_label))
+        print(f"TEST {test_label}: {test_name}{'.' * dot_length}", end="")
+        # Check the format of the test definition
+        definition_issues = get_definition_issues(test)
+        if definition_issues:
+            print("FAIL")
+            print(f"\tTest with name '{test_name}' has problems with its' test definition. Skipping...")
+            if args.verbose:
+                print(f"\tFound {len(definition_issues)} problems with the definition of '{test_name}':")
+                for error in definition_issues:
+                    print(f"\t- {error}")
+            total += 1
             passed = False
-            info = None
+            if args.exit:
+                result = None
+            else:
+                result = False
+        else:
+            try:
+                passed, info = run_single_test(test)
+            except Exception as e:  # pylint: disable=C0103,W0718
+                print(e)
+                passed = False
+                info = None
+            result = process_test_result(passed, info, args.verbose, args.exit)
 
-        result = process_test_result(passed, info, args.verbose, args.exit)
         clear_test_studies_dir()
         if result is None:
             print("Exiting early")
@@ -178,25 +275,24 @@ def run_tests(args, tests):
     if failures == 0:
         print(f"Done. {n_to_run} tests passed in {round(total_time, 2)} s.")
         return 0
-    print(
-        f"Done. {failures} tests out of {n_to_run} failed after {round(total_time, 2)} s.\n"
-    )
+    print(f"Done. {failures} tests out of {n_to_run} failed after {round(total_time, 2)} s.\n")
     return 1
 
 
 def setup_argparse():
+    """
+    Using ArgumentParser, define the arguments allowed for this script.
+    :returns: An ArgumentParser object
+    """
     parser = argparse.ArgumentParser(description="run_tests cli parser")
     parser.add_argument(
         "--exit",
         action="store_true",
         help="Flag for stopping all testing upon first failure",
     )
-    parser.add_argument(
-        "--verbose", action="store_true", help="Flag for more detailed output messages"
-    )
-    parser.add_argument(
-        "--local", action="store_true", default=None, help="Run only local tests"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Flag for more detailed output messages")
+    parser.add_argument("--local", action="store_true", default=None, help="Run only local tests")
+    parser.add_argument("--distributed", action="store_true", default=None, help="Run only distributed tests")
     parser.add_argument(
         "--ids",
         action="store",
@@ -204,10 +300,27 @@ def setup_argparse():
         type=int,
         nargs="+",
         default=None,
-        help="Provide space-delimited ids of tests you want to run."
-        "Example: '--ids 1 5 8 13'",
+        help="Provide space-delimited ids of tests you want to run. Example: '--ids 1 5 8 13'",
+    )
+    parser.add_argument(
+        "--display-tests", action="store_true", default=False, help="Display a table format of test names and ids"
     )
     return parser
+
+
+def display_tests(tests):
+    """
+    Helper function to display a table of tests and associated ids.
+    Helps choose which test to run if you're trying to debug and use
+    the --id flag.
+    :param `tests`: A dict of tests (Dict)
+    """
+    test_names = list(tests.keys())
+    test_table = [(i + 1, test_names[i]) for i in range(len(test_names))]
+    test_table.insert(0, ("ID", "Test Name"))
+    print()
+    print(tabulate(test_table, headers="firstrow"))
+    print()
 
 
 def main():
@@ -219,10 +332,14 @@ def main():
 
     tests = define_tests()
 
+    if args.display_tests:
+        display_tests(tests)
+        return
+
     clear_test_studies_dir()
     result = run_tests(args, tests)
-    return result
+    sys.exit(result)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

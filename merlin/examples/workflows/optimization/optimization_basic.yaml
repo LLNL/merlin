@@ -1,0 +1,195 @@
+description:
+  name: $(WORKFLOW_NAME)_ITER_$(ITER)
+  description: |-
+   Design Optimization Template
+   To use,
+   1. Specify the first three variables here (N_DIMS, TEST_FUNCTION, DEBUG)
+   2. Run the template_config file in current directory using `python template_config.py`
+   3. Merlin run as usual (merlin run optimization.yaml)
+   * MAX_ITER and the N_SAMPLES options use default values unless using DEBUG mode
+   * BOUNDS_X and UNCERTS_X are configured using the template_config.py scripts
+
+
+env:
+  variables:
+    # These three are necessary for template_config.py
+    N_DIMS: 2
+    TEST_FUNCTION: "rosenbrock"
+    DEBUG: 0
+    SEED: 4321
+
+    METHOD: 'trust-constr'
+    EMAIL_ADDRESS: "NONE"  #enter your email address here, or override this with --vars
+    RUN_TYPE: "run --local"
+
+    ITER: 1
+    MAX_ITER: "2"
+    PREV_TIMESTAMP: 0
+    PREV_ITER: 0
+
+    BOUNDS_X: "[[-2,2],[-2,2]]"
+    UNCERTS_X: "[0.1, 0.1]"
+
+    # pick_new_inputs step
+    SEARCH_SCALE: 0.30
+    N_SAMPLES: "3" # Number of new samples per iteration around the predicted new point
+    N_EXPLOIT: "3" # Number of new samples per iteration around the current best
+    N_SAMPLES_LINE: "3" # Number between predicted best and current best
+    N_SAMPLES_START: "12" # Number to initialize
+
+    WORKFLOW_NAME: $(TEST_FUNCTION)_optimization
+    SCRIPTS: $(SPECROOT)/scripts
+    OUTPUT_PATH: ~/optimization_runs
+    PREV_WORKSPACE_DIR: 0
+
+
+study:
+    - name: run_simulation
+      description: Run the desired simulation
+      run:
+        cmd: |-
+          python3 $(SCRIPTS)/test_functions.py -function $(TEST_FUNCTION) -ID "$(ITER)_$(MERLIN_SAMPLE_ID)" -inputs  $(INPUT_1)  $(INPUT_2) 
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        task_queue: simulation
+
+    - name: collector
+      description: Collect the results into a single file and make an npz of some features
+      run:
+        cmd: |-
+          python3 $(SCRIPTS)/collector.py -sim_dirs "$(run_simulation.workspace)/$(MERLIN_GLOB_PATH)"
+        nodes: 1
+        procs: 1
+        depends: [run_simulation_*]
+        task_queue: simulation_postprocess
+
+    - name: clean_up_simulation
+      description: Cleans up the merlin sample paths of the run_simulation step
+      run:
+        cmd: |-
+          #rm -rf $(run_simulation.workspace)/$(MERLIN_SAMPLE_PATH)
+          echo "skipped"
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [collector]
+        task_queue: simulation_postprocess
+
+    - name: learner
+      description: Train an ML model on the simulation
+      run:
+        cmd: |-
+          cp $(collector.workspace)/current_results.npz current_results.npz
+          if [ $(ITER) -ge "2" ] ; then
+              echo "Copying the npz file from previous iteration"
+              spellbook stack-npz all_iter_results.npz $(PREV_WORKSPACE_DIR)/collector/*.npz current_results.npz
+          else
+              cp current_results.npz all_iter_results.npz
+          fi
+          python3 -c "import numpy as np; all_results_npz=np.load('all_iter_results.npz');np.savez('learner.npz',X=all_results_npz['X'],y=all_results_npz['y'].ravel())"
+
+          spellbook learn -regressor RandomForestRegressor -infile learner.npz -outfile surrogate.pkl
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [clean_up_simulation]
+        task_queue: learner
+
+    - name: optimizer
+      description: Optimizer
+      run:
+        cmd: |-
+          python3 $(SCRIPTS)/optimizer.py -learner_dir "$(learner.workspace)" -bounds "$(BOUNDS_X)" -input_uncerts "$(UNCERTS_X)" -method "$(METHOD)"
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [collector, learner]
+        task_queue: learner
+
+    - name: pick_new_inputs
+      description: Picking new simulations to run in the next iteration
+      run:
+        cmd: |-
+          spellbook make-samples -dims $(N_DIMS) -x0 $(optimizer.workspace)/optimum.npy -x1 $(optimizer.workspace)/old_best.npy -n_line $(N_SAMPLES_LINE) -scale_factor $(SEARCH_SCALE) -scale "$(BOUNDS_X)" -n $(N_SAMPLES) -sample_type lhd -outfile new_explore_samples.npy -seed $(SEED) --hard-bounds
+          spellbook make-samples -dims $(N_DIMS) -x0 $(optimizer.workspace)/optimum.npy -scale_factor 0.05 -scale "$(BOUNDS_X)" -sample_type star -outfile new_explore_star_samples.npy -seed $(SEED) --hard-bounds
+          # Add points near current best too
+          spellbook make-samples -dims $(N_DIMS) -x0 $(optimizer.workspace)/old_best.npy -scale_factor $(SEARCH_SCALE) -scale "$(BOUNDS_X)" -n $(N_EXPLOIT) -sample_type lhd -outfile new_exploit_samples.npy -seed $(SEED) --hard-bounds
+
+          # combine them
+          python3 -c "import numpy as np; np.save('new_samples.npy',np.vstack((np.load('new_explore_samples.npy'),np.load('new_exploit_samples.npy'),np.load('new_explore_star_samples.npy'))))"
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [optimizer]
+        task_queue: learner
+
+    - name: visualizer
+      description: Either launches new simulations or iterated with inputs from previous step
+      run:
+        cmd: |-
+          # Add an if statment to make sure it is rosenbrock function and 2D
+          if [ $(N_DIMS) -ne "2" ] ; then
+              echo "We currently don't have a way of visualizing anything other than 2D"
+          else
+              python3 $(SCRIPTS)/visualizer.py -study_dir $(MERLIN_WORKSPACE) -scale "$(BOUNDS_X)"
+          fi
+
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [pick_new_inputs]
+        task_queue: learner
+
+    - name: iterate
+      description: Either launches new simulations or iterated with inputs from previous step
+      run:
+        cmd: |-
+          mv $(optimizer.workspace)/optimization_results.json optimization_results_iter_$(ITER).json
+          mv $(visualizer.workspace)/results.png results_iter_$(ITER).png
+
+          # Checking if e-mail address is present
+          if [ "$(EMAIL_ADDRESS)" = "NONE" ]; then
+              echo "Done iteration $(ITER) in $(MERLIN_WORKSPACE)"
+          else
+              echo "Done iteration $(ITER) in $(MERLIN_WORKSPACE)" | mail -s "Merlin Status for $(WORKFLOW_NAME)" -a optimization_results_iter_$(ITER).json -a results_iter_$(ITER).png $(EMAIL_ADDRESS)
+          fi
+
+          if [ $(ITER) -ge $(MAX_ITER) ] ; then
+              echo "Max iterations reached"
+          else
+              next_iter=$(ITER)
+              ((next_iter=next_iter+1))
+              echo "Starting iteration " $next_iter
+              merlin $(RUN_TYPE) $(MERLIN_INFO)/*partial.yaml --samplesfile $(pick_new_inputs.workspace)/new_samples.npy --vars ITER=$next_iter PREV_TIMESTAMP=$(MERLIN_TIMESTAMP) PREV_ITER=$(ITER) PREV_WORKSPACE_DIR=$(MERLIN_WORKSPACE)
+          fi
+        cores per task: 1
+        nodes: 1
+        procs: 1
+        depends: [visualizer]
+        task_queue: learner
+
+merlin:
+  resources:
+    overlap: true
+    task_server: celery
+    workers:
+      all_workers:
+        args: -O fair --prefetch-multiplier 1 -E -l info --concurrency 20
+        steps: [all]
+  samples:
+    column_labels:
+    
+    - INPUT_1
+    
+    - INPUT_2
+    
+    file: $(MERLIN_INFO)/samples.npy
+    generate:
+      cmd: |-
+          spellbook make-samples -dims $(N_DIMS) -n $(N_SAMPLES_START) -sample_type lhs -outfile=$(MERLIN_INFO)/samples.npy -scale "$(BOUNDS_X)" -seed $(SEED)

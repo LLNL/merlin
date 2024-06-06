@@ -3,6 +3,9 @@ import shutil
 import tempfile
 import unittest
 
+import yaml
+from jsonschema import ValidationError
+
 from merlin.spec.specification import MerlinSpec
 
 
@@ -78,6 +81,31 @@ global.parameters:
     N_NEW:
         values : [100]
         label  : N_NEW.%%
+"""
+
+INVALID_MERLIN = """
+description:
+    name: basic_ensemble_invalid_merlin
+    description: Template yaml to ensure our custom merlin block verification works as intended
+
+batch:
+    type: local
+
+study:
+    - name: step1
+      description: |
+         this won't actually run
+      run:
+        cmd: |
+          echo "if this is printed something is bad"
+
+merlin:
+    resources:
+        task_server: celery
+        overlap: false
+        workers:
+            worker1:
+                steps: []
 """
 
 
@@ -166,13 +194,79 @@ class TestSpecNoMerlin(unittest.TestCase):
     def test_default_merlin_block(self):
         self.assertEqual(self.spec.merlin["resources"]["task_server"], "celery")
         self.assertEqual(self.spec.merlin["resources"]["overlap"], False)
-        self.assertEqual(
-            self.spec.merlin["resources"]["workers"]["default_worker"]["steps"], ["all"]
-        )
-        self.assertEqual(
-            self.spec.merlin["resources"]["workers"]["default_worker"]["batch"], None
-        )
-        self.assertEqual(
-            self.spec.merlin["resources"]["workers"]["default_worker"]["nodes"], None
-        )
+        self.assertEqual(self.spec.merlin["resources"]["workers"]["default_worker"]["steps"], ["all"])
+        self.assertEqual(self.spec.merlin["resources"]["workers"]["default_worker"]["batch"], None)
+        self.assertEqual(self.spec.merlin["resources"]["workers"]["default_worker"]["nodes"], None)
         self.assertEqual(self.spec.merlin["samples"], None)
+
+
+class TestCustomVerification(unittest.TestCase):
+    """
+    Tests to make sure our custom verification on merlin specific parts of our
+    spec files is working as intended. Verification happens in
+    merlin/spec/specification.py
+
+    NOTE: reset_spec() should be called at the end of each test to make sure the
+          test file is reset.
+
+    CREATING A NEW VERIFICATION TEST:
+        1. Read in the spec with self.read_spec()
+        2. Modify the spec with an invalid value to test for (e.g. a bad step, a bad walltime, etc.)
+        3. Update the spec file with self.update_spec(spec)
+        4. Assert that the correct error is thrown
+        5. Reset the spec file with self.reset_spec()
+    """
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.merlin_spec_filepath = os.path.join(self.tmpdir, "merlin_verification.yaml")
+        self.write_spec(INVALID_MERLIN)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def reset_spec(self):
+        self.write_spec(INVALID_MERLIN)
+
+    def write_spec(self, spec):
+        with open(self.merlin_spec_filepath, "w+") as _file:
+            _file.write(spec)
+
+    def read_spec(self):
+        with open(self.merlin_spec_filepath, "r") as yamfile:
+            spec = yaml.load(yamfile, yaml.Loader)
+        return spec
+
+    def update_spec(self, spec):
+        with open(self.merlin_spec_filepath, "w") as yamfile:
+            yaml.dump(spec, yamfile, yaml.Dumper)
+
+    def test_invalid_step(self):
+        # Read in the existing spec and update it with our bad step
+        spec = self.read_spec()
+        spec["merlin"]["resources"]["workers"]["worker1"]["steps"].append("bad_step")
+        self.update_spec(spec)
+
+        # Assert that the invalid format was caught
+        with self.assertRaises(ValueError):
+            MerlinSpec.load_specification(self.merlin_spec_filepath)
+
+        # Reset the spec to the default value
+        self.reset_spec()
+
+    def test_invalid_walltime(self):
+        # Read in INVALID_MERLIN spec
+        spec = self.read_spec()
+
+        invalid_walltimes = ["", -1]
+
+        # Loop through the invalid walltimes and make sure they're all caught
+        for time in invalid_walltimes:
+            spec["batch"]["walltime"] = time
+            self.update_spec(spec)
+
+            with self.assertRaises((ValidationError, ValueError)):
+                MerlinSpec.load_specification(self.merlin_spec_filepath)
+
+        # Reset the spec
+        self.reset_spec()

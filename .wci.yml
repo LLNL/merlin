@@ -1,0 +1,12 @@
+name: Merlin
+
+icon: https://raw.githubusercontent.com/LLNL/merlin/main/docs/images/merlin_icon.png
+
+headline: Enabling Machine Learning HPC Workflows
+
+description: The Merlin workflow framework targets large-scale scientific machine learning (ML) workflows in High Performance Computing (HPC) environments. Merlin is a producer-consumer workflow model that enables multi-machine, cross-batch job, dynamically allocated yet persistent workflows capable of utilizing surge-compute resources. Key features are a flexible and intuitive HPC-centric interface, low per-task overhead, multi-tiered fault recovery, and a hierarchical sampling algorithm that allows for highly scalable task execution and queuing to ensembles of millions of tasks.
+
+documentation:
+  general: https://merlin.readthedocs.io/
+  installation: https://merlin.readthedocs.io/en/latest/modules/installation/installation.html
+  tutorial: https://merlin.readthedocs.io/en/latest/tutorial.html

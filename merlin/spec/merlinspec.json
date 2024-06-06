@@ -1,0 +1,292 @@
+{
+  "DESCRIPTION": {
+    "type": "object",
+    "properties": {
+      "name": {"type": "string", "minLength": 1},
+      "description": {"type": "string", "minLength": 1}
+    },
+    "required": [
+      "name",
+      "description"
+    ]
+  },
+  "PARAM": {
+    "type": "object",
+    "properties": {
+      "values": {
+        "type": "array"
+      },
+      "label": {"type": "string", "minLength": 1}
+    },
+    "required": [
+      "values",
+      "label"
+    ]
+  },
+  "STUDY_STEP": {
+    "type": "object",
+    "properties": {
+      "name": {"type": "string", "minLength": 1},
+      "description": {"type": "string", "minLength": 1},
+      "run": {
+        "type": "object",
+        "properties": {
+          "cmd": {"type": "string", "minLength": 1},
+          "depends": {"type": "array", "uniqueItems": true},
+          "pre": {"type": "string", "minLength": 1},
+          "post": {"type": "string", "minLength": 1},
+          "restart": {"type": "string", "minLength": 1},
+          "slurm": {"type": "string", "minLength": 1},
+          "lsf": {"type": "string", "minLength": 1},
+          "num resource set": {"type": "integer", "minimum": 1},
+          "launch distribution": {"type": "string", "minLength": 1},
+          "exit_on_error": {"type": "integer", "minimum": 0, "maximum": 1},
+          "shell": {"type": "string", "minLength": 1},
+          "flux": {"type": "string", "minLength": 1},
+          "batch": {
+            "type": "object", 
+            "properties": {
+              "type": {"type": "string", "minLength": 1}
+            }
+          },
+          "gpus per task": {"type": "integer", "minimum": 0},
+          "max_retries": {"type": "integer", "minimum": 1},
+          "task_queue": {"type": "string", "minLength": 1},
+          "nodes": {
+            "anyOf": [
+              {"type": "integer", "minimum": 1},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]
+          },
+          "procs": {
+            "anyOf": [
+              {"type": "integer", "minimum": 1},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},
+          "gpus": {
+            "anyOf": [
+              {"type": "integer", "minimum": 0},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},
+          "cores per task": {
+            "anyOf": [
+              {"type": "integer", "minimum": 1},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},
+          "tasks per rs": {
+            "anyOf": [
+              {"type": "integer", "minimum": 1},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},
+          "rs per node": {
+            "anyOf": [
+              {"type": "integer", "minimum": 1},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},
+          "cpus per rs": {
+            "anyOf": [
+              {"type": "integer", "minimum": 1},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},            
+          "bind": {
+            "anyOf": [
+              {"type": "string", "minLength": 1},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},
+          "bind gpus": {
+            "anyOf": [
+              {"type": "string", "minLength": 1},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},            
+          "walltime": {
+            "anyOf": [
+              {"type": "string", "minLength": 1},
+              {"type": "integer", "minimum": 0},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},
+          "reservation": {"type": "string", "minLength": 1},
+          "exclusive": {
+            "anyOf": [
+              {"type": "boolean"},
+              {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+            ]},
+          "nested": {"type": "boolean"},
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "HELD", "MINIMAL", "LOW", "MEDIUM", "HIGH", "EXPEDITED",
+                  "held", "minimal", "low", "medium", "high", "expedited",
+                  "Held", "Minimal", "Low", "Medium", "High", "Expedited"
+                ]
+              },
+              {"type": "number", "minimum": 0.0, "maximum": 1.0}
+            ]
+          },
+          "qos": {"type": "string", "minLength": 1}
+        },
+        "required": [
+          "cmd"
+        ]
+      }
+    },
+    "required": [
+      "name",
+      "description",
+      "run"
+    ]
+  },
+  "ENV": {
+    "type": "object",
+    "properties": {
+      "variables": {
+        "type": "object",
+        "patternProperties": {
+          "^.*": {
+            "anyOf": [
+                {"type": "string", "minLength": 1},
+                {"type": "number"},
+                {"type": "array"}
+            ]
+          }
+        }
+      },
+      "labels": {"type": "object"},
+      "sources": {"type": "array"},
+      "dependencies": {
+        "type": "object",
+        "properties": {
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {"type": "string", "minLength": 1},
+                "path": {"type": "string", "minLength": 1}
+              },
+              "required": [
+                "name",
+                "path"
+              ]
+            }
+          },
+          "git": {
+            "type": "array",
+            "items": {
+              "properties": {
+                "name": {"type": "string", "minLength": 1},
+                "path": {"type": "string", "minLength": 1},
+                "url": {"type": "string", "minLength": 1},
+                "tag": {"type": "string", "minLength": 1}
+              },
+              "required": [
+                "name",
+                "path",
+                "url"
+              ]
+            }
+          },
+          "spack": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string", "minLength": 1},
+              "package_name": {"type": "string", "minLength": 1}
+            },
+            "required": [
+              "type",
+              "package_name"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "MERLIN": {
+    "type": "object",
+    "properties": {
+      "resources": {
+        "type": "object",
+        "properties": {
+          "task_server": {"type": "string", "minLength": 1},
+          "overlap": {"type": "boolean"},
+          "workers": {
+            "type": "object",
+            "patternProperties": {
+              "^.+": {
+                "type": "object",
+                "properties": {
+                  "args": {"type": "string", "minLength": 1},
+                  "steps": {"type": "array", "uniqueItems": true},
+                  "nodes": {
+                    "anyOf": [
+                      {"type": "null"},
+                      {"type": "integer", "minimum": 1}
+                    ]
+                  },
+                  "batch": {
+                    "anyOf": [
+                      {"type": "null"},
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {"type": "string", "minLength": 1}
+                        }
+                      }
+                    ]
+                  },
+                  "machines": {"type": "array", "uniqueItems": true}
+                }
+              }
+            },
+            "minProperties": 1
+          }  
+        }
+      },
+      "samples": {
+        "anyOf": [
+          {"type": "null"},
+          {
+            "type": "object",
+            "properties": {
+              "generate": {
+                "type": "object",
+                "properties": {
+                  "cmd": {"type": "string", "minLength": 1}
+                },
+                "required": ["cmd"]
+              },
+              "file": {"type": "string", "minLength": 1},
+              "column_labels": {"type": "array", "uniqueItems": true},
+              "level_max_dirs": {"type": "integer", "minimum": 1}
+            }
+          }
+        ]
+      }
+    }
+  },
+  "BATCH": {
+    "type": "object",
+    "properties": {
+      "type": {"type": "string", "minLength": 1},
+      "bank": {"type": "string", "minLength": 1},
+      "queue": {"type": "string", "minLength": 1},
+      "dry_run": {"type": "boolean"},
+      "shell": {"type": "string", "minLength": 1},
+      "flux_path": {"type": "string", "minLength": 1},
+      "flux_start_opts": {"type": "string", "minLength": 1},
+      "flux_exec_workers": {"type": "boolean"},
+      "launch_pre": {"type": "string", "minLength": 1},
+      "launch_args": {"type": "string", "minLength": 1},
+      "worker_launch": {"type": "string", "minLength": 1},
+      "nodes": {"type": "integer", "minimum": 1},
+      "walltime": {
+        "anyOf": [
+          {"type": "string", "minLength": 1},
+          {"type": "integer", "minimum": 0},
+          {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
+        ]
+      }
+    }
+  }
+}

@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -37,15 +37,18 @@ import os
 import re
 import socket
 import subprocess
-from contextlib import contextmanager, suppress
+import sys
+from contextlib import contextmanager
 from copy import deepcopy
-from datetime import timedelta
+from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Union
+from typing import Callable, List, Optional, Union
 
 import numpy as np
+import pkg_resources
 import psutil
 import yaml
+from tabulate import tabulate
 
 
 try:
@@ -56,7 +59,7 @@ except ImportError:
 
 LOG = logging.getLogger(__name__)
 ARRAY_FILE_FORMATS = ".npy, .csv, .tab"
-DEFAULT_FLUX_VERSION = "0.13"
+DEFAULT_FLUX_VERSION = "0.48.0"
 
 
 def get_user_process_info(user=None, attrs=None):
@@ -78,12 +81,7 @@ def get_user_process_info(user=None, attrs=None):
 
     if user == "all_users":
         return [p.info for p in psutil.process_iter(attrs=attrs)]
-    else:
-        return [
-            p.info
-            for p in psutil.process_iter(attrs=attrs)
-            if user in p.info["username"]
-        ]
+    return [p.info for p in psutil.process_iter(attrs=attrs) if user in p.info["username"]]
 
 
 def check_pid(pid, user=None):
@@ -95,8 +93,8 @@ def check_pid(pid, user=None):
         all processes
     """
     user_processes = get_user_process_info(user=user)
-    for p in user_processes:
-        if int(p["pid"]) == pid:
+    for process in user_processes:
+        if int(process["pid"]) == pid:
             return True
     return False
 
@@ -153,14 +151,14 @@ def is_running(name, all_users=False):
     if all_users:
         cmd[1] = "aux"
 
+    # pylint: disable=consider-using-with
     try:
-        ps = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, encoding="utf8"
-        ).communicate()[0]
+        process_status = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()[0]
     except TypeError:
-        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+        process_status = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+    # pylint: enable=consider-using-with
 
-    if name in ps:
+    if name in process_status:
         return True
 
     return False
@@ -184,10 +182,31 @@ def regex_list_filter(regex, list_to_filter, match=True):
 
     :return `new_list`
     """
-    r = re.compile(regex)
+    r = re.compile(regex)  # pylint: disable=C0103
     if match:
         return list(filter(r.match, list_to_filter))
     return list(filter(r.search, list_to_filter))
+
+
+def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False, display_warning: bool = True):
+    """
+    Take a list of regex's, apply each regex to a list we're searching through,
+    and append each result to a result list.
+
+    :param `regex_list`: A list of regular expressions to apply to the list_to_filter
+    :param `list_to_filter`: A list that we'll apply regexs to
+    :param `result_list`: A list that we'll append results of the regex filters to
+    :param `match`: A bool where when true we use re.match for applying the regex,
+                    when false we use re.search for applying the regex.
+    """
+    for regex in regex_list:
+        filter_results = set(regex_list_filter(regex, list_to_filter, match))
+
+        if not filter_results:
+            if display_warning:
+                LOG.warning(f"No regex match for {regex}.")
+        else:
+            result_list += filter_results
 
 
 def load_yaml(filepath):
@@ -211,15 +230,14 @@ def get_yaml_var(entry, var, default):
     :param `var`: a yaml key
     :param `default`: default value in the absence of data
     """
-    ret = default
 
-    if isinstance(entry, dict):
-        with suppress(KeyError):
-            ret = entry[var]
-    else:
-        with suppress(AttributeError):
-            ret = getattr(entry, var)
-    return ret
+    try:
+        return entry[var]
+    except (TypeError, KeyError):
+        try:
+            return getattr(entry, var)
+        except AttributeError:
+            return default
 
 
 def load_array_file(filename, ndmin=2):
@@ -239,7 +257,7 @@ def load_array_file(filename, ndmin=2):
 
     # Don't change binary-stored numpy arrays; just check dimensions
     if protocol == "npy":
-        array = np.load(filename)
+        array = np.load(filename, allow_pickle=True)
         if array.ndim < ndmin:
             LOG.error(
                 f"Array in {filename} has fewer than the required \
@@ -247,9 +265,9 @@ def load_array_file(filename, ndmin=2):
             )
     # Make sure text files load as strings with minimum number of dimensions
     elif protocol == "csv":
-        array = np.loadtxt(filename, delimiter=",", ndmin=ndmin, dtype=np.str)
+        array = np.loadtxt(filename, delimiter=",", ndmin=ndmin, dtype=str)
     elif protocol == "tab":
-        array = np.loadtxt(filename, ndmin=ndmin, dtype=np.str)
+        array = np.loadtxt(filename, ndmin=ndmin, dtype=str)
     else:
         raise TypeError(
             f"{protocol} is not a valid array file extension.\
@@ -274,8 +292,40 @@ def determine_protocol(fname):
     return protocol
 
 
+def verify_filepath(filepath: str) -> str:
+    """
+    Verify that the filepath argument is a valid
+    file.
+
+    :param [str] `filepath`: the path of a file
+
+    :return: the verified absolute filepath with expanded environment variables.
+    :rtype: str
+    """
+    filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
+    if not os.path.isfile(filepath):
+        raise ValueError(f"'{filepath}' is not a valid filepath")
+    return filepath
+
+
+def verify_dirpath(dirpath: str) -> str:
+    """
+    Verify that the dirpath argument is a valid
+    directory.
+
+    :param [str] `dirpath`: the path of a directory
+
+    :return: returns the absolute path with expanded environment vars for a given dirpath.
+    :rtype: str
+    """
+    dirpath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
+    if not os.path.isdir(dirpath):
+        raise ValueError(f"'{dirpath}' is not a valid directory path")
+    return dirpath
+
+
 @contextmanager
-def cd(path):
+def cd(path):  # pylint: disable=C0103
     """
     TODO
     """
@@ -289,7 +339,7 @@ def cd(path):
 
 def pickle_data(filepath, content):
     """Dump content to a pickle file"""
-    with open(filepath, "w") as f:
+    with open(filepath, "w") as f:  # pylint: disable=C0103
         pickle.dump(content, f)
 
 
@@ -304,6 +354,7 @@ def get_source_root(filepath):
 
     parent = os.path.dirname(filepath)
     # Walk backwards testing for integers.
+    break_point = parent.split(sep)[-1]  # Initial value for lgtm.com
     for _, _dir in enumerate(parent.split(sep)[::-1]):
         try:
             int(_dir)
@@ -349,22 +400,22 @@ def nested_dict_to_namespaces(dic):
     return recurse(new_dic)
 
 
-def nested_namespace_to_dicts(ns):
+def nested_namespace_to_dicts(namespaces):
     """Code for recursively converting namespaces of namespaces
     into dictionaries instead.
     """
 
-    def recurse(ns):
-        if not isinstance(ns, SimpleNamespace):
-            return ns
-        for key, val in list(ns.__dict__.items()):
-            setattr(ns, key, recurse(val))
-        return ns.__dict__
+    def recurse(namespaces):
+        if not isinstance(namespaces, SimpleNamespace):
+            return namespaces
+        for key, val in list(namespaces.__dict__.items()):
+            setattr(namespaces, key, recurse(val))
+        return namespaces.__dict__
 
-    if not isinstance(ns, SimpleNamespace):
-        raise TypeError(f"{ns} is not a SimpleNamespace")
+    if not isinstance(namespaces, SimpleNamespace):
+        raise TypeError(f"{namespaces} is not a SimpleNamespace")
 
-    new_ns = deepcopy(ns)
+    new_ns = deepcopy(namespaces)
     return recurse(new_ns)
 
 
@@ -377,50 +428,71 @@ def get_flux_version(flux_path, no_errors=False):
     """
     cmd = [flux_path, "version"]
 
-    ps = None
+    process = None
 
     try:
-        ps = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, encoding="utf8"
-        ).communicate()
-    except FileNotFoundError as e:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, encoding="utf8").communicate()  # pylint: disable=R1732
+    except FileNotFoundError as e:  # pylint: disable=C0103
         if not no_errors:
             LOG.error(f"The flux path {flux_path} canot be found")
-            LOG.error(f"Suppress this error with no_errors=True")
+            LOG.error("Suppress this error with no_errors=True")
             raise e
 
     try:
-        flux_ver = re.search(r"\s*([\d.]+)", ps[0]).group(1)
-    except (ValueError, TypeError) as e:
+        flux_ver = re.search(r"\s*([\d.]+)", process[0]).group(1)
+    except (ValueError, TypeError) as e:  # pylint: disable=C0103
         if not no_errors:
-            LOG.error(f"The flux version canot be determined")
-            LOG.error(f"Suppress this error with no_errors=True")
+            LOG.error("The flux version cannot be determined")
+            LOG.error("Suppress this error with no_errors=True")
             raise e
-        else:
-            flux_ver = DEFAULT_FLUX_VERSION
-            LOG.warning(f"Using syntax for default version: {flux_ver}")
+        flux_ver = DEFAULT_FLUX_VERSION
+        LOG.warning(f"Using syntax for default version: {flux_ver}")
 
     return flux_ver
 
 
 def get_flux_cmd(flux_path, no_errors=False):
     """
-    Return the flux command as string
+    Return the flux run command as string
 
     :param `flux_path`: the full path to the flux bin
     :param `no_errors`: a flag to determine if this a test run to ignore errors
     """
-    # The default is for flux version >= 0.13,
+    # The default is for flux version >= 0.48.x
     # this may change in the future.
-    flux_cmd = "flux mini run"
+    flux_cmd = "flux run"
 
     flux_ver = get_flux_version(flux_path, no_errors=no_errors)
 
     vers = [int(n) for n in flux_ver.split(".")]
+    if vers[0] == 0 and vers[1] < 48:
+        flux_cmd = "flux mini run"
+
     if vers[0] == 0 and vers[1] < 13:
         flux_cmd = "flux wreckrun"
 
     return flux_cmd
+
+
+def get_flux_alloc(flux_path, no_errors=False):
+    """
+    Return the flux alloc command as string
+
+    :param `flux_path`: the full path to the flux bin
+    :param `no_errors`: a flag to determine if this a test run to ignore errors
+    """
+    # The default is for flux version >= 0.48.x
+    # this may change in the future.
+    flux_alloc = f"{flux_path} alloc"
+
+    flux_ver = get_flux_version(flux_path, no_errors=no_errors)
+
+    vers = [int(n) for n in flux_ver.split(".")]
+
+    if vers[0] == 0 and vers[1] < 48:
+        flux_alloc = f"{flux_path} mini alloc"
+
+    return flux_alloc
 
 
 def check_machines(machines):
@@ -461,6 +533,102 @@ def contains_shell_ref(string):
     return False
 
 
+def needs_merlin_expansion(
+    cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords: Optional[bool] = True
+) -> bool:
+    """
+    Check if the cmd or restart cmd provided have variables that need expansion.
+
+    :param `cmd`: The command inside a study step to check for expansion
+    :param `restart_cmd`: The restart command inside a study step to check for expansion
+    :param `labels`: A list of labels to check for inside `cmd` and `restart_cmd`
+    :return : True if the cmd has any of the default keywords or spec
+        specified sample column labels. False otherwise.
+    """
+    sample_keywords = ["MERLIN_SAMPLE_ID", "MERLIN_SAMPLE_PATH", "merlin_sample_id", "merlin_sample_path"]
+    if include_sample_keywords:
+        labels += sample_keywords
+
+    for label in labels:
+        if f"$({label})" in cmd:
+            return True
+        # The restart may need expansion while the cmd does not.
+        if restart_cmd and f"$({label})" in restart_cmd:
+            return True
+
+    # If we got through all the labels and no expansion was needed then these commands don't need expansion
+    return False
+
+
+def dict_deep_merge(dict_a: dict, dict_b: dict, path: str = None, conflict_handler: Callable = None):
+    """
+    This function recursively merges dict_b into dict_a. The built-in
+    merge of dictionaries in python (dict(dict_a) | dict(dict_b)) does not do a
+    deep merge so this function is necessary. This will only merge in new keys,
+    it will NOT update existing ones, unless you specify a conflict handler function.
+    Credit to this stack overflow post: https://stackoverflow.com/a/7205107.
+
+    :param `dict_a`: A dict that we'll merge dict_b into
+    :param `dict_b`: A dict that we want to merge into dict_a
+    :param `path`: The path down the dictionary tree that we're currently at
+    :param `conflict_handler`: An optional function to handle conflicts between values at the same key.
+                               The function should return the value to be used in the merged dictionary.
+                               The default behavior without this argument is to log a warning.
+    """
+
+    # Check to make sure we have valid dict_a and dict_b input
+    msgs = [
+        f"{name} '{actual_dict}' is not a dict"
+        for name, actual_dict in [("dict_a", dict_a), ("dict_b", dict_b)]
+        if not isinstance(actual_dict, dict)
+    ]
+    if len(msgs) > 0:
+        LOG.warning(f"Problem with dict_deep_merge: {', '.join(msgs)}. Ignoring this merge call.")
+        return
+
+    if path is None:
+        path = []
+    for key in dict_b:
+        if key in dict_a:
+            if isinstance(dict_a[key], dict) and isinstance(dict_b[key], dict):
+                dict_deep_merge(dict_a[key], dict_b[key], path=path + [str(key)], conflict_handler=conflict_handler)
+            elif isinstance(dict_a[key], list) and isinstance(dict_a[key], list):
+                dict_a[key] += dict_b[key]
+            elif dict_a[key] == dict_b[key]:
+                pass  # same leaf value
+            else:
+                if conflict_handler is not None:
+                    merged_val = conflict_handler(
+                        dict_a_val=dict_a[key], dict_b_val=dict_b[key], key=key, path=path + [str(key)]
+                    )
+                    dict_a[key] = merged_val
+                else:
+                    # Want to just output a warning instead of raising an exception so that the workflow doesn't crash
+                    LOG.warning(f"Conflict at {'.'.join(path + [str(key)])}. Ignoring the update to key '{key}'.")
+        else:
+            dict_a[key] = dict_b[key]
+
+
+def find_vlaunch_var(vlaunch_var: str, step_cmd: str, accept_no_matches=False) -> str:
+    """
+    Given a variable used for VLAUNCHER and the step cmd value, find
+    the variable.
+
+    :param `vlaunch_var`: The name of the VLAUNCHER variable (without MERLIN_)
+    :param `step_cmd`: The string for the cmd of a step
+    :param `accept_no_matches`: If True, return None if we couldn't find the variable. Otherwise, raise an error.
+    :returns: the `vlaunch_var` variable or None
+    """
+    matches = list(re.findall(rf"^(?!#).*MERLIN_{vlaunch_var}=\d+", step_cmd, re.MULTILINE))
+
+    if matches:
+        return f"${{MERLIN_{vlaunch_var}}}"
+
+    if accept_no_matches:
+        return None
+    raise ValueError(f"VLAUNCHER used but could not find MERLIN_{vlaunch_var} in the step.")
+
+
 # Time utilities
 def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
     """Convert a timestring to a timedelta object.
@@ -470,47 +638,47 @@ def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
     """
     # make sure it's a string in case we get an int
     timestr = str(timestr)
+
+    # remove time unit characters (if any exist)
+    time_unit_chars = r"[dhms]"
+    timestr = re.sub(time_unit_chars, "", timestr)
+
     nfields = len(timestr.split(":"))
     if nfields > 4:
-        raise ValueError(
-            f"Cannot convert {timestr} to a timedelta. Valid format: days:hours:minutes:seconds."
-        )
-    _, d, h, m, s = (":0" * 10 + timestr).rsplit(":", 4)
+        raise ValueError(f"Cannot convert {timestr} to a timedelta. Valid format: days:hours:minutes:seconds.")
+    _, d, h, m, s = (":0" * 10 + timestr).rsplit(":", 4)  # pylint: disable=C0103
     tdelta = timedelta(days=int(d), hours=int(h), minutes=int(m), seconds=int(s))
     return tdelta
 
 
-def _repr_timedelta_HMS(td: timedelta) -> str:
+def _repr_timedelta_HMS(time_delta: timedelta) -> str:  # pylint: disable=C0103
     """Represent a timedelta object as a string in hours:minutes:seconds"""
-    hours, remainder = divmod(td.total_seconds(), 3600)
+    hours, remainder = divmod(time_delta.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
     hours, minutes, seconds = int(hours), int(minutes), int(seconds)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-def _repr_timedelta_FSD(td: timedelta) -> str:
+def _repr_timedelta_FSD(time_delta: timedelta) -> str:  # pylint: disable=C0103
     """Represent a timedelta as a flux standard duration string, using seconds.
 
     flux standard duration (FSD) is a floating point number with a single character suffix: s,m,h or d.
     This uses seconds for simplicity.
     """
-    fsd = f"{td.total_seconds()}s"
+    fsd = f"{time_delta.total_seconds()}s"
     return fsd
 
 
-def repr_timedelta(td: timedelta, method: str = "HMS") -> str:
+def repr_timedelta(time_delta: timedelta, method: str = "HMS") -> str:
     """Represent a timedelta object as a string using a particular method.
 
     method - HMS: 'hours:minutes:seconds'
     method - FSD: flux standard duration: 'seconds.s'"""
     if method == "HMS":
-        return _repr_timedelta_HMS(td)
-    elif method == "FSD":
-        return _repr_timedelta_FSD(td)
-    else:
-        raise ValueError(
-            "Invalid method for formatting timedelta! Valid choices: HMS, FSD"
-        )
+        return _repr_timedelta_HMS(time_delta)
+    if method == "FSD":
+        return _repr_timedelta_FSD(time_delta)
+    raise ValueError("Invalid method for formatting timedelta! Valid choices: HMS, FSD")
 
 
 def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") -> str:
@@ -529,3 +697,76 @@ def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") 
     tdelta = convert_to_timedelta(timestring)
     LOG.debug(f"Timedelta object is: {tdelta}")
     return repr_timedelta(tdelta, method=format_method)
+
+
+def pretty_format_hms(timestring: str) -> str:
+    """
+    Given an HMS timestring, format it so it removes blank entries and adds
+    labels.
+
+    :param `timestring`: the HMS timestring we'll format
+    :returns: a formatted timestring
+
+    Examples:
+        - "00:00:34:00" -> "34m"
+        - "01:00:00:25" -> "01d:25s"
+        - "00:19:44:28" -> "19h:44m:28s"
+    """
+    # Create labels and split the timestring
+    labels = ["d", "h", "m", "s"]
+    parsed_ts = timestring.split(":")
+    if len(parsed_ts) > 4:
+        raise ValueError("The timestring to label must be in the format DD:HH:MM:SS")
+
+    # Label each integer with its corresponding unit
+    labeled_time_list = []
+    for i in range(1, len(parsed_ts) + 1):
+        if parsed_ts[-i] != "00":
+            labeled_time_list.append(parsed_ts[-i] + labels[-i])
+
+    # Join the labeled time list into a string.
+    if len(labeled_time_list) == 0:
+        labeled_time_list.append("00s")
+    labeled_time_list.reverse()
+    labeled_time_string = ":".join(labeled_time_list)
+
+    return labeled_time_string
+
+
+def ws_time_to_dt(ws_time: str) -> datetime:
+    """
+    Converts a workspace timestring to a datetime object.
+
+    :param `ws_time`: A workspace timestring in the format YYYYMMDD-HHMMSS
+    :returns: A datetime object created from the workspace timestring
+    """
+    year = int(ws_time[:4])
+    month = int(ws_time[4:6])
+    day = int(ws_time[6:8])
+    hour = int(ws_time[9:11])
+    minute = int(ws_time[11:13])
+    second = int(ws_time[13:])
+    return datetime(year, month, day, hour=hour, minute=minute, second=second)
+
+
+def get_package_versions(package_list: List[str]) -> str:
+    """
+    Return a table of the versions and locations of installed packages, including python.
+    If the package is not installed says "Not installed"
+
+    :param `package_list`: A list of packages.
+    :returns: A string that's a formatted table.
+    """
+    table = []
+    for package in package_list:
+        try:
+            distribution = pkg_resources.get_distribution(package)
+            version = distribution.version
+            location = distribution.location
+            table.append([package, version, location])
+        except pkg_resources.DistributionNotFound:
+            table.append([package, "Not installed", "N/A"])
+
+    table.insert(0, ["python", sys.version.split()[0], sys.executable])
+    table_str = tabulate(table, headers=["Package", "Version", "Location"], tablefmt="simple")
+    return f"Python Packages\n\n{table_str}\n"

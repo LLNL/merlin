@@ -18,11 +18,7 @@ def load_samples(sample_file_path):
 def serialize_samples(sample_file_paths, outfile, nproc):
     """Writes out collection of samples, one entry per line"""
     with ProcessPoolExecutor(max_workers=nproc) as executor:
-        all_samples = [
-            sample
-            for sample_list in executor.map(load_samples, sample_file_paths)
-            for sample in sample_list
-        ]
+        all_samples = [sample for sample_list in executor.map(load_samples, sample_file_paths) for sample in sample_list]
 
     with open(outfile, "w") as outfile:
         for sample in all_samples:
@@ -30,30 +26,29 @@ def serialize_samples(sample_file_paths, outfile, nproc):
 
 
 def setup_argparse():
-    parser = argparse.ArgumentParser(
-        description="Read in samples from list of output files"
-    )
+    parser = argparse.ArgumentParser(description="Read in samples from list of output files")
 
-    parser.add_argument(
-        "sample_file_paths", help="paths to sample output files", default="", nargs="+"
-    )
+    parser.add_argument("sample_file_paths", help="paths to sample output files", default="", nargs="+")
 
     parser.add_argument("--np", help="number of processors to use", type=int, default=1)
 
-    parser.add_argument(
-        "-outfile", help="Collected sample outputs", default="all_names.txt"
-    )
+    parser.add_argument("-outfile", help="Collected sample outputs", default="all_names.txt")
     return parser
 
 
 def main():
-    parser = setup_argparse()
-    args = parser.parse_args()
+    try:
+        parser = setup_argparse()
+        args = parser.parse_args()
 
-    # Collect sample files into single file
-    sample_paths = [sample_path for sample_path in args.sample_file_paths]
-    serialize_samples(sample_paths, args.outfile, args.np)
+        # Collect sample files into single file
+        sample_paths = [sample_path for sample_path in args.sample_file_paths]
+        serialize_samples(sample_paths, args.outfile, args.np)
+        sys.exit()
+    except Exception as ex:
+        print(ex)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

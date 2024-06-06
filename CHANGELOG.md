@@ -4,7 +4,370 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.2b1]
+### Added
+- Conflict handler option to the `dict_deep_merge` function in `utils.py`
+- Ability to add module-specific pytest fixtures
+- Added fixtures specifically for testing status functionality
+- Added tests for reading and writing status files, and status conflict handling
+- Added tests for the `dict_deep_merge` function
+- Pytest-mock as a dependency for the test suite (necessary for using mocks and fixtures in the same test)
+- New github action test to make sure target branch has been merged into the source first, so we know histories are ok
+- Check in the status commands to make sure we're not pulling statuses from nested workspaces
+- Added `setuptools` as a requirement for python 3.12 to recognize the `pkg_resources` library
+- Patch to celery results backend to stop ChordErrors being raised and breaking workflows when a single task fails
+- New step return code `$(MERLIN_RAISE_ERROR)` to force an error to be raised by a task (mainly for testing)
+  - Added description of this to docs
+- New test to ensure a single failed task won't break a workflow
 
+### Changed
+- `merlin info` is cleaner and gives python package info
+- merlin version now prints with every banner message
+- Applying filters for `merlin detailed-status` will now log debug statements instead of warnings
+- Modified the unit tests for the `merlin status` command to use pytest rather than unittest
+- Added fixtures for `merlin status` tests that copy the workspace to a temporary directory so you can see exactly what's run in a test
+
+### Fixed
+- Bugfix for output of `merlin example openfoam_wf_singularity`
+- A bug with the CHANGELOG detection test when the target branch isn't in the ci runner history
+- Link to Merlin banner in readme
+- Issue with escape sequences in ascii art (caught by python 3.12)
+
+
+## [1.12.1]
+### Added
+- New Priority.RETRY value for the Celery task priorities. This will be the new highest priority.
+- Support for the status command to handle multiple workers on the same step
+- Documentation on how to run cross-node workflows with a containerized server (`merlin server`)
+
+### Changed
+- Modified some tests in `test_status.py` and `test_detailed_status.py` to accommodate bugfixes for the status commands
+
+### Fixed
+- Bugfixes for the status commands:
+  - Fixed "DRY RUN" naming convention so that it outputs in the progress bar properly
+  - Fixed issue where a step that was run with one sample would delete the status file upon condensing
+  - Fixed issue where multiple workers processing the same step would break the status file and cause the workflow to crash
+  - Added a catch for the JSONDecodeError that would potentially crash a run
+  - Added a FileLock to the status write in `_update_status_file()` of `MerlinStepRecord` to avoid potential race conditions (potentially related to JSONDecodeError above)
+  - Added in `export MANPAGER="less -r"` call behind the scenes for `detailed-status` to fix ASCII error
+
+## [1.12.0]
+### Added
+- A new command `merlin queue-info` that will print the status of your celery queues
+  - By default this will only pull information from active queues
+  - There are options to look for specific queues (`--specific-queues`), queues defined in certain spec files (`--spec`; this is the same functionality as the `merlin status` command prior to this update), and queues attached to certain steps (`--steps`)
+  - Queue info can be dumped to outfiles with `--dump`
+- A new command `merlin detailed-status` that displays task-by-task status information about your study
+  - This has options to filter by return code, task queues, task statuses, and workers
+  - You can set a limit on the number of tasks to display
+  - There are 3 options to modify the output display
+- Docs for all of the monitoring commands
+- New file `merlin/study/status.py` dedicated to work relating to the status command
+  - Contains the Status and DetailedStatus classes
+- New file `merlin/study/status_renderers.py` dedicated to formatting the output for the detailed-status command
+- New file `merlin/common/dumper.py` containing a Dumper object to help dump output to outfiles
+- Study name and parameter info now stored in the DAG and MerlinStep objects
+- Added functions to `merlin/display.py` that help display status information:
+  - `display_task_by_task_status` handles the display for the `merlin detailed-status` command
+  - `display_status_summary` handles the display for the `merlin status` command
+  - `display_progress_bar` generates and displays a progress bar
+- Added new methods to the MerlinSpec class:
+  - get_worker_step_map()
+  - get_queue_step_relationship()
+  - get_tasks_per_step()
+  - get_step_param_map()
+- Added methods to the MerlinStepRecord class to mark status changes for tasks as they run (follows Maestro's StepRecord format mostly)
+- Added methods to the Step class:
+  - establish_params()
+  - name_no_params()
+- Added a property paramater_labels to the MerlinStudy class
+- Added two new utility functions:
+  - dict_deep_merge() that deep merges two dicts into one
+  - ws_time_to_dt() that converts a workspace timestring (YYYYMMDD-HHMMSS) to a datetime object
+- A new celery task `condense_status_files` to be called when sets of samples finish
+- Added a celery config setting `worker_cancel_long_running_tasks_on_connection_loss` since this functionality is about to change in the next version of celery
+- Tests for the Status and DetailedStatus classes
+  - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
+- Pytest fixtures in the `conftest.py` file of the integration test suite
+  - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
+- Tests for the `celeryadapter.py` module
+- New CeleryTestWorkersManager context to help with starting/stopping workers for tests
+
+### Changed
+- Reformatted the entire `merlin status` command
+  - Now accepts both spec files and workspace directories as arguments
+  - Removed the --steps flag
+  - Replaced the --csv flag with the --dump flag
+  - New functionality:
+    - Shows step_by_step progress bar for tasks
+    - Displays a summary of task statuses below the progress bar
+- Split the `add_chains_to_chord` function in `merlin/common/tasks.py` into two functions:
+  - `get_1d_chain` which converts a 2D list of chains into a 1D list
+  - `launch_chain` which launches the 1D chain
+- Pulled the needs_merlin_expansion() method out of the Step class and made it a function instead
+- Removed `tabulate_info` function; replaced with tabulate from the tabulate library
+- Moved `verify_filepath` and `verify_dirpath` from `merlin/main.py` to `merlin/utils.py`
+- The entire documentation has been ported to MkDocs and re-organized
+  - *Dark Mode*
+  - New "Getting Started" example for a simple setup tutorial
+  - More detail on configuration instructions
+  - There's now a full page on installation instructions
+  - More detail on explaining the spec file
+  - More detail with the CLI page
+  - New "Running Studies" page to explain different ways to run studies, restart them, and accomplish command line substitution
+  - New "Interpreting Output" page to help users understand how the output workspace is generated in more detail
+  - New "Examples" page has been added
+  - Updated "FAQ" page to include more links to helpful locations throughout the documentation
+  - Set up a place to store API docs
+  - New "Contact" page with info on reaching Merlin devs
+- The Merlin tutorial defaults to using Singularity rather than Docker for the OpenFoam example. Minor tutorial fixes have also been applied.
+
+### Fixed
+- The `merlin status` command so that it's consistent in its output whether using redis or rabbitmq as the broker
+- The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
+- Add the restart keyword to the specification docs
+- Cyclical imports and config imports that could easily cause ci issues
+
+## [1.11.1]
+### Fixed
+- Typo in `batch.py` that caused lsf launches to fail (`ALL_SGPUS` changed to `ALL_GPUS`)
+
+## [1.11.0]
+### Added
+- New reserved variable:
+  - `VLAUNCHER`: The same functionality as the `LAUNCHER` variable, but will substitute shell variables `MERLIN_NODES`, `MERLIN_PROCS`, `MERLIN_CORES`, and `MERLIN_GPUS` for nodes, procs, cores per task, and gpus
+
+### Changed
+- Hardcoded Sphinx v5.3.0 requirement is now removed so we can use latest Sphinx
+
+### Fixed
+- A bug where the filenames in iterative workflows kept appending `.out`, `.partial`, or `.expanded` to the filenames stored in the `merlin_info/` subdirectory
+- A bug where a skewed sample hierarchy was created when a restart was necessary in the `add_merlin_expanded_chain_to_chord` task
+
+## [1.10.3]
+### Added
+- The *.conf regex for the recursive-include of the merlin server directory so that pip will add it to the wheel
+- A note to the docs for how to fix an issue where the `merlin server start` command hangs
+
+### Changed
+- Bump certifi from 2022.12.7 to 2023.7.22 in /docs
+- Bump pygments from 2.13.0 to 2.15.0 in /docs
+- Bump requests from 2.28.1 to 2.31.0 in /docs
+
+## [1.10.2]
+### Fixed
+- A bug where the .orig, .partial, and .expanded file names were using the study name rather than the original file name
+- A bug where the openfoam_wf_singularity example was not being found
+- Some build warnings in the docs (unknown targets, duplicate targets, title underlines too short, etc.)
+- A bug where when the output path contained a variable that was overridden, the overridden variable was not changed in the output_path
+- A bug where permission denied errors happened when checking for system scheduler
+
+### Added
+- Tests for ensuring `$(MERLIN_SPEC_ORIGINAL_TEMPLATE)`, `$(MERLIN_SPEC_ARCHIVED_COPY)`, and `$(MERLIN_SPEC_EXECUTED_RUN)` are stored correctly
+- A pdf download format for the docs
+- Tests for cli substitutions
+
+### Changed
+- The ProvenanceYAMLFileHasRegex condition for integration tests now saves the study name and spec file name as attributes instead of just the study name
+  - This lead to minor changes in 3 tests ("local override feature demo", "local pgen feature demo", and "remote feature demo") with what we pass to this specific condition
+- Updated scikit-learn requirement for the openfoam_wf_singularity example
+- Uncommented Latex support in the docs configuration to get pdf builds working
+
+## [1.10.1]
+### Fixed
+- A bug where assigning a worker all steps also assigned steps to the default worker
+
+### Added
+- Tests to make sure the default worker is being assigned properly
+
+### Changed
+- Requirement name in examples/workflows/remote_feature_demo/requirements.txt and examples/workflows/feature_demo/requirements.txt from sklearn to scikit-learn since sklearn is now deprecated
+
+## [1.10.0]
+### Fixed
+- Pip wheel wasn't including .sh files for merlin examples
+- The learn.py script in the openfoam_wf* examples will now create the missing Energy v Lidspeed plot
+- Fixed the flags associated with the `stop-workers` command (--spec, --queues, --workers)
+- Fixed the --step flag for the `run-workers` command
+- Fixed most of the pylint errors that we're showing up when you ran `make check-style`
+  - Some errors have been disabled rather than fixed. These include:
+    - Any pylint errors in merlin_template.py since it's deprecated now
+    - A "duplicate code" instance between a function in `expansion.py` and a method in `study.py`
+      - The function is explicitly not creating a MerlinStudy object so the code *must* be duplicate here
+    - Invalid-name (C0103): These errors typically relate to the names of short variables (i.e. naming files something like f or errors e)
+    - Unused-argument (W0613): These have been disabled for celery-related functions since celery *does* use these arguments behind the scenes
+    - Broad-exception (W0718): Pylint wants a more specific exception but sometimes it's ok to have a broad exception
+    - Import-outside-toplevel (C0415): Sometimes it's necessary for us to import inside a function. Where this is the case, these errors are disabled
+    - Too-many-statements (R0915): This is disabled for the `setup_argparse` function in `main.py` since it's necessary to be big. It's disabled in `tasks.py` and `celeryadapter.py` too until we can get around to refactoring some code there
+    - No-else-return (R1705): These are disabled in `router.py` until we refactor the file
+    - Consider-using-with (R1732): Pylint wants us to consider using with for calls to subprocess.run or subprocess.Popen but it's not necessary
+    - Too-many-arguments (R0913): These are disabled for functions that I believe *need* to have several arguments
+      - Note: these could be fixed by using *args and **kwargs but it makes the code harder to follow so I'm opting to not do that
+    - Too-many-local-variables (R0914): These are disabled for functions that have a lot of variables
+      - It may be a good idea at some point to go through these and try to find ways to shorten the number of variables used or split the functions up
+    - Too-many-branches (R0912): These are disabled for certain functions that require a good amount of branching
+      - Might be able to fix this in the future if we split functions up more
+    - Too-few-public-methods (R0903): These are disabled for classes we may add to in the future or "wrapper" classes
+    - Attribute-defined-outside-init (W0201): These errors are only disabled in `specification.py` as they occur in class methods so init() won't be called
+- Fixed an issue where the walltime value in the batch block was being converted to an integer instead of remaining in HH:MM:SS format
+
+### Added
+- Now loads np.arrays of dtype='object', allowing mix-type sample npy
+- Added a singularity container openfoam_wf example
+- Added flux native worker launch support
+- Added PBS flux launch support
+- Added check_for_flux, check_for_slurm, check_for_lsf, and check_for_pbs utility functions
+- Tests for the `stop-workers` command
+- A function in `run_tests.py` to check that an integration test definition is formatted correctly
+- A new dev_workflow example `multiple_workers.yaml` that's used for testing the `stop-workers` command
+- Ability to start 2 subprocesses for a single test
+- Added the --distributed and --display-tests flags to run_tests.py
+  - --distributed: only run distributed tests
+  - --display-tests: displays a table of all existing tests and the id associated with each test
+- Added the --disable-logs flag to the `run-workers` command
+- Merlin will now assign `default_worker` to any step not associated with a worker
+- Added `get_step_worker_map()` as a method in `specification.py`
+- Added `tabulate_info()` function in `display.py` to help with table formatting
+- Added get_flux_alloc function for new flux version >= 0.48.x interface change
+- New flags to the `query-workers` command
+  - `--queues`: query workers based on the queues they're associated with
+  - `--workers`: query workers based on a regex of the names you're looking for
+  - `--spec`: query workers based on the workers defined in a spec file
+
+### Changed
+- Changed celery_regex to celery_slurm_regex in test_definitions.py
+- Reformatted how integration tests are defined and part of how they run
+  - Test values are now dictionaries rather than tuples
+  - Stopped using `subprocess.Popen()` and `subprocess.communicate()` to run tests and now instead use `subprocess.run()` for simplicity and to keep things up-to-date with the latest subprocess release (`run()` will call `Popen()` and `communicate()` under the hood so we don't have to handle that anymore)
+- Rewrote the README in the integration tests folder to explain the new integration test format
+- Reformatted `start_celery_workers()` in `celeryadapter.py` file. This involved:
+  - Modifying `verify_args()` to return the arguments it verifies/updates
+  - Changing `launch_celery_worker()` to launch the subprocess (no longer builds the celery command)
+  - Creating `get_celery_cmd()` to do what `launch_celery_worker()` used to do and build the celery command to run
+  - Creating `_get_steps_to_start()`, `_create_kwargs()`, and `_get_workers_to_start()` as helper functions to simplify logic in `start_celery_workers()`
+- Modified the `merlinspec.json` file:
+  - the minimum `gpus per task` is now 0 instead of 1
+  - variables defined in the `env` block of a spec file can now be arrays
+- Refactored `batch.py`:
+  - Merged 4 functions (`check_for_slurm`, `check_for_lsf`, `check_for_flux`, and `check_for_pbs`) into 1 function named `check_for_scheduler`
+    - Modified `get_batch_type` to accommodate this change
+  - Added a function `parse_batch_block` to handle all the logic of reading in the batch block and storing it in one dict
+  - Added a function `get_flux_launch` to help decrease the amount of logic taking place in `batch_worker_launch`
+  - Modified `batch_worker_launch` to use the new `parse_batch_block` function
+  - Added a function `construct_scheduler_legend` to build a dict that keeps as much information as we need about each scheduler stored in one place
+  - Cleaned up the `construct_worker_launch_command` function to utilize the newly added functions and decrease the amount of repeated code
+- Changed get_flux_cmd for new flux version >=0.48.x interface
+- The `query-workers` command now prints a table as its' output
+  - Each row of the `Workers` column has the name of an active worker
+  - Each row of the `Queues` column has a list of queues associated with the active worker
+
+## [1.9.1]
+### Fixed
+- Added merlin/spec/merlinspec.json to MANIFEST.in so pip will actually install it when ran
+- Fixed a bug where "from celery import Celery" was failing on python 3.7
+- Numpy error about numpy.str not existing from a new numpy release
+- Made merlin server configurations into modules that can be loaded and written to users
+
+## [1.9.0]
+### Added
+- Added support for Python 3.11
+- Update docker docs for new rabbitmq and redis server versions
+- Added lgtm.com Badge for README.md
+- More fixes for lgtm checks.
+- Added merlin server command as a container option for broker and results_backend servers.
+- Added new documentation for merlin server in docs and tutorial
+- Added the flux_exec batch argument to allow for flux exec arguments,
+  e.g. flux_exec: flux exec -r "0-1" to run celery workers only on
+  ranks 0 and 1 of a multi-rank allocation
+- Additional argument in test definitions to allow for a post "cleanup" command
+- Capability for non-user block in yaml
+- .readthedocs.yaml and requirements.txt files for docs
+- Small modifications to the Tutorial, Getting Started, Command Line, and Contributing pages in the docs
+- Compatibility with the newest version of Maestro (v. 1.1.9dev1)
+- JSON schema validation for Merlin spec files
+- New tests related to JSON schema validation
+- Instructions in the "Contributing" page of the docs on how to add new blocks/fields to the spec file
+- Brief explanation of the $(LAUNCHER) variable in the "Variables" page of the docs
+
+### Changed
+- Removed support for Python 3.6
+- Rename lgtm.yml to .lgtm.yml
+- New shortcuts in specification file (sample_vector, sample_names, spec_original_template, spec_executed_run, spec_archived_copy)
+- Update requirements to require redis 4.3.4 for acl user channel support
+- Added ssl to the broker and results backend server checks when "merlin info" is called
+- Removed theme_override.css from docs/_static/ since it is no longer needed with the updated version of sphinx
+- Updated docs/Makefile to include a pip install for requirements and a clean command
+- Update to the Tutorial and Contributing pages in the docs
+- Changed what is stored in a Merlin DAG
+  - We no longer store the entire Maestro ExecutionGraph object
+  - We now only store the adjacency table and values obtained from the ExecutionGraph object
+- Modified spec verification
+- Update to require maestrowf 1.9.1dev1 or later
+
+### Fixed
+- Fixed return values from scripts with main() to fix testing errors. 
+- CI test for CHANGELOG modifcations
+- Typo "cert_req" to "cert_reqs" in the merlin config docs
+- Removed emoji from issue templates that were breaking doc builds
+- Including .temp template files in MANIFEST
+- Styling in the footer for docs
+- Horizontal scroll overlap in the variables page of the docs
+- Reordered small part of Workflow Specification page in the docs in order to put "samples" back in the merlin block
+
+## [1.8.5]
+### Added
+- Code updates to satisfy lgtm CI security checker
+
+### Fixed
+- A bug in the ssl config was not returning the proper values
+
+## [1.8.4]
+### Added
+- Auto-release of pypi packages
+- Workflows Community Initiative metadata file
+
+### Fixed
+- Old references to stale branches
+
+## [1.8.3]
+### Added
+- Test for `merlin example list`
+- Python 3.10 to testing
+
+### Fixed
+- The Optimization workflow example now has a ready to use workflow (`optimization_basic.yaml`). This solves the issue faced before with `merlin example list`.
+- Redis dependency handled implictly by celery for cross-compatibility
+
+## [1.8.2]
+### Added
+- Re-enabled distributed integration testing. Added additional examination to distributed testing.
+
+### Fixed
+- 'shell' added to unsupported and new_unsupported lists in script_adapter.py, prevents
+  `'shell' is not supported -- ommitted` message.
+- Makefile target for install-merlin fixed so venv is properly activated to install merlin
+
+### Changed
+- Updated the optimization workflow example with a new python template editor script
+- CI now splits linting and testing into different tasks for better utilization of
+  parallel runners, significant and scalable speed gain over previous setup
+- CI now uses caching to restore environment of dependencies, reducing CI runtime
+  significantly again beyond the previous improvement. Examines for potential updates to
+  dependencies so the environment doesn't become stale.
+- CI now examines that the CHANGELOG is updated on PRs.
+- Added PyLint pipeline to Github Actions CI (currently no-fail-exit).
+- Corrected integration test for dependency to only examine release dependencies.
+- PyLint adherence for: celery.py, opennplib.py, config/__init__.py, broker.py,
+	configfile.py, formatter.py, main.py, router.py
+- Integrated Black and isort into CI
+
+## [1.8.1]
+
+### Fixed
+- merlin purge queue name conflict & shell quote escape
+- task priority support for amqp, amqps, rediss, redis+socket brokers
+- Flake8 compliance
 
 ## [1.8.0]
 

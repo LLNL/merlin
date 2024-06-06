@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -90,7 +90,7 @@ def scale_samples(samples_norm, limits, limits_norm=(0, 1), do_log=False):
     if not hasattr(do_log, "__iter__"):
         do_log = ndims * [do_log]
     logs = np.asarray(do_log)
-    lims_norm = np.array([limits_norm for i in logs])
+    lims_norm = np.array([limits_norm] * len(logs))
     _lims = []
     for limit, log in zip(limits, logs):
         if log:

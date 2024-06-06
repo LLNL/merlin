@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+"""This module handles expanding variables in the merlin spec"""
 
 import logging
 from collections import ChainMap
@@ -36,7 +37,7 @@ from os.path import expanduser, expandvars
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
-from merlin.utils import contains_shell_ref, contains_token
+from merlin.utils import contains_shell_ref, contains_token, verify_filepath
 
 
 MAESTRO_RESERVED = {"SPECROOT", "WORKSPACE", "LAUNCHER"}
@@ -56,6 +57,7 @@ PROVENANCE_REPLACE = {
     "MERLIN_HARD_FAIL",
     "MERLIN_RETRY",
     "MERLIN_STOP_WORKERS",
+    "MERLIN_RAISE_ERROR",
 }
 MERLIN_RESERVED = STEP_AWARE | PROVENANCE_REPLACE
 RESERVED = MAESTRO_RESERVED | MERLIN_RESERVED
@@ -81,12 +83,14 @@ def expand_line(line, var_dict, env_vars=False):
     Expand one line of text by substituting user variables,
     optionally environment variables, as well as variables in 'var_dict'.
     """
+    # fmt: off
     if (
         (not contains_token(line))
         and (not contains_shell_ref(line))
         and ("~" not in line)
     ):
         return line
+    # fmt: on
     for key, val in var_dict.items():
         if key in line:
             line = line.replace(var_ref(key), str(val))
@@ -121,10 +125,10 @@ def expand_env_vars(spec):
         if isinstance(section, str):
             return expandvars(expanduser(section))
         if isinstance(section, dict):
-            for k, v in section.items():
-                if k in ["cmd", "restart"]:
+            for key, val in section.items():
+                if key in ["cmd", "restart"]:
                     continue
-                section[k] = recurse(v)
+                section[key] = recurse(val)
         elif isinstance(section, list):
             for i, elem in enumerate(deepcopy(section)):
                 section[i] = recurse(elem)
@@ -159,25 +163,19 @@ def determine_user_variables(*user_var_dicts):
     determined_results = {}
     for key, val in all_var_dicts.items():
         if key in RESERVED:
-            raise ValueError(
-                f"Cannot reassign value of reserved word '{key}'! Reserved words are: {RESERVED}."
-            )
+            raise ValueError(f"Cannot reassign value of reserved word '{key}'! Reserved words are: {RESERVED}.")
         new_val = str(val)
         if contains_token(new_val):
-            for determined_key in determined_results.keys():
+            for determined_key, determined_val in determined_results.items():
                 var_determined_key = var_ref(determined_key)
                 if var_determined_key in new_val:
-                    new_val = new_val.replace(
-                        var_determined_key, determined_results[determined_key]
-                    )
+                    new_val = new_val.replace(var_determined_key, determined_val)
         new_val = expandvars(expanduser(new_val))
         determined_results[key.upper()] = new_val
     return determined_results
 
 
-def parameter_substitutions_for_sample(
-    sample, labels, sample_id, relative_path_to_sample
-):
+def parameter_substitutions_for_sample(sample, labels, sample_id, relative_path_to_sample):
     """
     :param sample : The sample to do substitution for.
     :param labels : The column labels of the sample.
@@ -218,9 +216,13 @@ def parameter_substitutions_for_cmd(glob_path, sample_paths):
     substitutions.append(("$(MERLIN_HARD_FAIL)", str(int(ReturnCode.HARD_FAIL))))
     substitutions.append(("$(MERLIN_RETRY)", str(int(ReturnCode.RETRY))))
     substitutions.append(("$(MERLIN_STOP_WORKERS)", str(int(ReturnCode.STOP_WORKERS))))
+    substitutions.append(("$(MERLIN_RAISE_ERROR)", str(int(ReturnCode.RAISE_ERROR))))
     return substitutions
 
 
+# There's similar code inside study.py but the whole point of this function is to not use
+# the MerlinStudy object so we disable this pylint error
+# pylint: disable=duplicate-code
 def expand_spec_no_study(filepath, override_vars=None):
     """
     Get the expanded text of a spec without creating
@@ -243,10 +245,14 @@ def expand_spec_no_study(filepath, override_vars=None):
     return expand_by_line(spec_text, evaluated_uvars)
 
 
+# pylint: enable=duplicate-code
+
+
 def get_spec_with_expansion(filepath, override_vars=None):
     """
     Return a MerlinSpec with overrides and expansion, without
     creating a MerlinStudy.
     """
+    filepath = verify_filepath(filepath)
     expanded_spec_text = expand_spec_no_study(filepath, override_vars)
     return MerlinSpec.load_spec_from_string(expanded_spec_text)

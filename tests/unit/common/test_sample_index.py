@@ -1,6 +1,5 @@
 import os
 import shutil
-import unittest
 from contextlib import suppress
 
 from merlin.common.sample_index_factory import create_hierarchy, read_hierarchy
@@ -25,9 +24,7 @@ def clear(func):
 
 @clear
 def test_index_file_writing():
-    indx = create_hierarchy(
-        1000000000, 10000, [100000000, 10000000, 1000000], root=TEST_DIR
-    )
+    indx = create_hierarchy(1000000000, 10000, [100000000, 10000000, 1000000], root=TEST_DIR)
     indx.write_directories()
     indx.write_multiple_sample_index_files()
     indx2 = read_hierarchy(TEST_DIR)
@@ -35,9 +32,7 @@ def test_index_file_writing():
 
 
 def test_bundle_retrieval():
-    indx = create_hierarchy(
-        1000000000, 10000, [100000000, 10000000, 1000000], root=TEST_DIR
-    )
+    indx = create_hierarchy(1000000000, 10000, [100000000, 10000000, 1000000], root=TEST_DIR)
     expected = f"{TEST_DIR}/0/0/0/samples0-10000.ext"
     result = indx.get_path_to_sample(123)
     assert expected == result
@@ -98,9 +93,7 @@ def test_directory_writing():
     clear_test_tree()
 
     path = os.path.join(TEST_DIR)
-    indx = create_hierarchy(
-        1000000000, 10000, [100000000, 10000000, 1000000], root=path
-    )
+    indx = create_hierarchy(1000000000, 10000, [100000000, 10000000, 1000000], root=path)
     indx.write_directories()
 
 

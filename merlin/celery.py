@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -33,57 +33,101 @@ from __future__ import absolute_import, print_function
 
 import logging
 import os
+from typing import Dict, Optional, Union
 
 import billiard
+import celery
 import psutil
-from celery import Celery
+from celery import Celery, states
+from celery.backends.redis import RedisBackend  # noqa: F401 ; Needed for celery patch
 from celery.signals import worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
 from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
 from merlin.config.utils import Priority, get_priority
-from merlin.router import route_for_task
 from merlin.utils import nested_namespace_to_dicts
 
 
-LOG = logging.getLogger(__name__)
+LOG: logging.Logger = logging.getLogger(__name__)
+
+
+def patch_celery():
+    """
+    Patch redis backend so that errors in chords don't break workflows.
+    Celery has error callbacks but they do not work properly on chords that
+    are nested within chains.
+
+    Credit to this function goes to: https://danidee10.github.io/2019/07/09/celery-chords.html
+    """
+
+    def _unpack_chord_result(
+        self,
+        tup,
+        decode,
+        EXCEPTION_STATES=states.EXCEPTION_STATES,
+        PROPAGATE_STATES=states.PROPAGATE_STATES,
+    ):
+        _, tid, state, retval = decode(tup)
+
+        if state in EXCEPTION_STATES:
+            retval = self.exception_to_python(retval)
+        if state in PROPAGATE_STATES:
+            # retval is an Exception
+            retval = f"{retval.__class__.__name__}: {str(retval)}"
+
+        return retval
+
+    celery.backends.redis.RedisBackend._unpack_chord_result = _unpack_chord_result
+
+    return celery
+
+
+# This function has to have specific args/return values for celery so ignore pylint
+def route_for_task(name, args, kwargs, options, task=None, **kw):  # pylint: disable=W0613,R1710
+    """
+    Custom task router for queues
+    """
+    if ":" in name:
+        queue, _ = name.split(":")
+        return {"queue": queue}
+
 
 merlin.common.security.encrypt_backend_traffic.set_backend_funcs()
 
 
-broker_ssl = True
-results_ssl = False
+BROKER_SSL: bool = True
+RESULTS_SSL: bool = False
+BROKER_URI: Optional[str] = ""
+RESULTS_BACKEND_URI: Optional[str] = ""
 try:
     BROKER_URI = broker.get_connection_string()
-    LOG.debug(f"broker: {broker.get_connection_string(include_password=False)}")
-    broker_ssl = broker.get_ssl_config()
-    LOG.debug(f"broker_ssl = {broker_ssl}")
+    LOG.debug("broker: %s", broker.get_connection_string(include_password=False))
+    BROKER_SSL = broker.get_ssl_config()
+    LOG.debug("broker_ssl = %s", BROKER_SSL)
     RESULTS_BACKEND_URI = results_backend.get_connection_string()
-    results_ssl = results_backend.get_ssl_config(celery_check=True)
-    LOG.debug(
-        f"results: {results_backend.get_connection_string(include_password=False)}"
-    )
-    LOG.debug(f"results: redis_backed_use_ssl = {results_ssl}")
+    RESULTS_SSL = results_backend.get_ssl_config(celery_check=True)
+    LOG.debug("results: %s", results_backend.get_connection_string(include_password=False))
+    LOG.debug("results: redis_backed_use_ssl = %s", RESULTS_SSL)
 except ValueError:
     # These variables won't be set if running with '--local'.
     BROKER_URI = None
     RESULTS_BACKEND_URI = None
 
 # initialize app with essential properties
-app = Celery(
+app: Celery = patch_celery().Celery(
     "merlin",
     broker=BROKER_URI,
     backend=RESULTS_BACKEND_URI,
-    broker_use_ssl=broker_ssl,
-    redis_backend_use_ssl=results_ssl,
+    broker_use_ssl=BROKER_SSL,
+    redis_backend_use_ssl=RESULTS_SSL,
     task_routes=(route_for_task,),
 )
 
 # set task priority defaults to prioritize workflow tasks over task-expansion tasks
-task_priority_defaults = {
+task_priority_defaults: Dict[str, Union[int, Priority]] = {
     "task_queue_max_priority": 10,
-    "task_default_priority": get_priority(Priority.mid),
+    "task_default_priority": get_priority(Priority.MID),
 }
 if CONFIG.broker.name.lower() == "redis":
     app.conf.broker_transport_options = {
@@ -97,15 +141,15 @@ app.conf.update(**celeryconfig.DICT)
 
 # load config overrides from app.yaml
 if (
-    (not hasattr(CONFIG.celery, "override"))
+    not hasattr(CONFIG.celery, "override")
     or (CONFIG.celery.override is None)
-    or (len(nested_namespace_to_dicts(CONFIG.celery.override)) == 0)
+    or (not nested_namespace_to_dicts(CONFIG.celery.override))  # only true if len == 0
 ):
     LOG.debug("Skipping celery config override; 'celery.override' field is empty.")
 else:
-    override_dict = nested_namespace_to_dicts(CONFIG.celery.override)
-    override_str = ""
-    i = 0
+    override_dict: Dict = nested_namespace_to_dicts(CONFIG.celery.override)
+    override_str: str = ""
+    i: int = 0
     for k, v in override_dict.items():
         if k not in str(app.conf.__dict__):
             raise ValueError(f"'{k}' is not a celery configuration.")
@@ -114,7 +158,8 @@ else:
             override_str += "\n"
         i += 1
     LOG.info(
-        f"Overriding default celery config with 'celery.override' in 'app.yaml':\n{override_str}"
+        "Overriding default celery config with 'celery.override' in 'app.yaml':\n%s",
+        override_str,
     )
     app.conf.update(**override_dict)
 
@@ -122,8 +167,9 @@ else:
 app.autodiscover_tasks(["merlin.common"])
 
 
+# Pylint believes the args are unused, I believe they're used after decoration
 @worker_process_init.connect()
-def setup(**kwargs):
+def setup(**kwargs):  # pylint: disable=W0613
     """
     Set affinity for the worker on startup (works on toss3 nodes)
 
@@ -131,10 +177,12 @@ def setup(**kwargs):
     """
     if "CELERY_AFFINITY" in os.environ and int(os.environ["CELERY_AFFINITY"]) > 1:
         # Number of cpus between workers.
-        cpu_skip = int(os.environ["CELERY_AFFINITY"])
-        npu = psutil.cpu_count()
-        p = psutil.Process()
-        current = billiard.current_process()
-        prefork_id = current._identity[0] - 1  # range 0:nworkers-1
-        cpu_slot = (prefork_id * cpu_skip) % npu
-        p.cpu_affinity(list(range(cpu_slot, cpu_slot + cpu_skip)))
+        cpu_skip: int = int(os.environ["CELERY_AFFINITY"])
+        npu: int = psutil.cpu_count()
+        process: psutil.Process = psutil.Process()
+        # pylint is upset that typing accesses a protected class, ignoring W0212
+        # pylint is upset that billiard doesn't have a current_process() method - it does
+        current: billiard.process._MainProcess = billiard.current_process()  # pylint: disable=W0212, E1101
+        prefork_id: int = current._identity[0] - 1  # pylint: disable=W0212  # range 0:nworkers-1
+        cpu_slot: int = (prefork_id * cpu_skip) % npu
+        process.cpu_affinity(list(range(cpu_slot, cpu_slot + cpu_skip)))

@@ -1,0 +1,141 @@
+description:
+    name: $(NAME)
+    description: Run 10 hello worlds.
+
+batch:
+    type: local
+
+env:
+    variables:
+        OUTPUT_PATH: ./studies
+        N_SAMPLES: 10
+        WORKER_NAME: demo_worker
+        VERIFY_QUEUE: default_verify_queue
+        NAME: feature_demo
+
+        SCRIPTS: $(MERLIN_INFO)/scripts
+        HELLO: $(SCRIPTS)/hello_world.py
+        FEATURES: $(SCRIPTS)/features.json
+
+study:
+    - name: hello
+      description: |
+         process a sample with hello world
+      run:
+        cmd: |
+          python3 $(HELLO) -outfile hello_world_output_$(MERLIN_SAMPLE_ID).json $(X0) $(X1) $(X2)
+        task_queue: hello_queue
+        max_retries: 1
+
+    - name: collect
+      description: |
+         process the output of the hello world samples, extracting specific features;
+      run:
+         cmd: |
+             echo $(MERLIN_GLOB_PATH)
+             echo $(hello.workspace)
+             ls $(hello.workspace)/X2.$(X2)/$(MERLIN_GLOB_PATH)/hello_world_output_*.json > files_to_collect.txt
+             spellbook collect -outfile results.json -instring "$(cat files_to_collect.txt)"
+         depends: [hello_*]
+         task_queue: collect_queue
+
+    - name: translate
+      description: |
+         process the output of the hello world samples some more
+      run:
+         cmd: spellbook translate -input $(collect.workspace)/results.json -output results.npz -schema $(FEATURES)
+         depends: [collect]
+         task_queue: translate_queue
+
+    - name: learn
+      description: |
+         train a learner on the results
+      run:
+         cmd: spellbook learn -infile $(translate.workspace)/results.npz
+         depends: [translate]
+         task_queue: learn_queue
+
+    - name: make_new_samples
+      description: |
+         make a grid of new samples to pass to the predictor
+      run:
+         cmd: spellbook make-samples -n $(N_NEW) -sample_type grid -outfile grid_$(N_NEW).npy
+         task_queue: make_samples_queue
+
+    - name: predict
+      description: |
+         make a new prediction from new samples
+      run:
+         cmd: spellbook predict -infile $(make_new_samples.workspace)/grid_$(N_NEW).npy -outfile prediction_$(N_NEW).npy -reg $(learn.workspace)/random_forest_reg.pkl
+         depends: [learn, make_new_samples]
+         task_queue: predict_queue
+
+    - name: verify
+      description: |
+         if learn and predict succeeded, output a dir to signal study completion
+      run:
+         cmd: |
+            if [[ -f $(learn.workspace)/random_forest_reg.pkl && -f $(predict.workspace)/prediction_$(N_NEW).npy ]]
+            then
+                touch FINISHED
+                exit $(MERLIN_SUCCESS)
+            else
+                exit $(MERLIN_SOFT_FAIL)
+            fi
+         depends: [learn, predict]
+         task_queue: $(VERIFY_QUEUE)
+
+    - name: python3_hello
+      description: |
+          do something in python
+      run:
+          cmd: |
+            print("OMG is this in python?")
+            print("Variable X2 is $(X2)")
+          shell: /usr/bin/env python3
+          task_queue: pyth3_q
+
+    - name: python2_hello
+      description: |
+          do something in python2, because change is bad
+      run:
+          cmd: |
+            print "OMG is this in python2? Change is bad."
+            print "Variable X2 is $(X2)"
+          shell: /usr/bin/env python2
+          task_queue: pyth2_hello
+
+    - name: stop_workers
+      description: Stop workers
+      run:
+          cmd: |
+             exit $(MERLIN_STOP_WORKERS)
+          depends: [verify]
+          task_queue: $(VERIFY_QUEUE)
+
+global.parameters:
+    X2:
+        values : [0.5]
+        label  : X2.%%
+    N_NEW:
+        values : [10]
+        label  : N_NEW.%%
+
+merlin:
+    resources:
+        task_server: celery
+        overlap: False
+        workers:
+            $(WORKER_NAME):
+                args: -l INFO --concurrency 3 --prefetch-multiplier 1 -Ofair
+    samples:
+        generate:
+            cmd: |
+                cp -r $(SPECROOT)/scripts $(SCRIPTS)
+
+                spellbook make-samples -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
+        # can be a file glob of numpy sample files.
+        file: $(MERLIN_INFO)/samples.npy
+        column_labels: [X0, X1]
+        level_max_dirs: 25
+

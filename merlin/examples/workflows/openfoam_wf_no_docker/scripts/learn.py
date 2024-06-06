@@ -26,7 +26,7 @@ outputs = np.load(outputs_dir + "/data.npz")
 U = outputs["arr_0"]
 enstrophy = outputs["arr_1"]
 
-energy_byhand = np.sum(np.sum(U ** 2, axis=3), axis=2) / U.shape[2] / 2
+energy_byhand = np.sum(np.sum(U**2, axis=3), axis=2) / U.shape[2] / 2
 enstrophy_all = np.sum(enstrophy, axis=2)
 
 X = np.load(inputs_dir + "/samples.npy")
@@ -103,13 +103,13 @@ ax[0][1].set_xlim([x_min, x_max])
 ax[0][1].set_ylim([y_min, y_max])
 
 
-y_pred_all = regr.predict(X)
-input_enstrophy = ax[1][1].scatter(X[:, 0], 10 ** y[:, 1], s=100, edgecolors="black")
+ax[1][1].scatter(X[:, 0], 10 ** y[:, 1])
 ax[1][1].set_xlabel(r"Lidspeed ($\frac{m}{s}$)", fontsize=fontsize)
 ax[1][1].set_ylabel(r"$Energy$", fontsize=fontsize)
 ax[1][1].set_title("Average Energy Variation with Lidspeed")
 ax[1][1].grid()
-
+ax[1][1].set_xlim([np.min(X[:, 0]), np.max(X[:, 0])])
+ax[1][1].set_ylim([np.min(10 ** y[:, 1]), np.max(10 ** y[:, 1])])
 
 input_energy = ax[1][0].scatter(
     X[:, 0],

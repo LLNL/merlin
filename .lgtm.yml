@@ -1,0 +1,35 @@
+##########################################################################################
+# Customize file classifications.                                                        #
+# Results from files under any classifier will be excluded from LGTM                     #
+# statistics.                                                                            #
+##########################################################################################
+
+##########################################################################################
+# Use the `path_classifiers` block to define changes to the default classification of    #
+# files.                                                                                 #
+##########################################################################################
+
+path_classifiers:
+  test:
+    # Exclude all files to ovveride lgtm defaults
+    - exclude: /
+    # Classify all files in the top-level directories tests/ 
+    # and merlin/examples as test code.
+    - tests
+    - merlin/examples
+
+#########################################################################################
+# Use the `queries` block to change the default display of query results.               #
+# The py/clear-text-logging-sensitive-data exclusion is due to cert and password        #
+# keywords being flagged as security leaks.                                             #
+#########################################################################################
+
+queries:
+  - include: "*"
+  - exclude: "py/clear-text-logging-sensitive-data"
+
+extraction:
+  python:
+    python_setup:
+      version: "3"
+

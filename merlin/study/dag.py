@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -44,14 +44,27 @@ class DAG:
     independent chains of tasks.
     """
 
-    def __init__(self, maestro_dag, labels):
+    def __init__(
+        self, maestro_adjacency_table, maestro_values, column_labels, study_name, parameter_info
+    ):  # pylint: disable=R0913
         """
-        :param `maestro_dag`: A maestrowf ExecutionGraph.
+        :param `maestro_adjacency_table`: An ordered dict showing adjacency of nodes. Comes from a maestrowf ExecutionGraph.
+        :param `maestro_values`: An ordered dict of the values at each node. Comes from a maestrowf ExecutionGraph.
+        :param `column_labels`: A list of column labels provided in the spec file.
+        :param `study_name`: The name of the study
+        :param `parameter_info`: A dict containing information about parameters in the study
         """
-        self.dag = maestro_dag
+        # We used to store the entire maestro ExecutionGraph here but now it's
+        # unpacked so we're only storing the 2 attributes from it that we use:
+        # the adjacency table and the values. This had to happen to get pickle
+        # to work for Celery.
+        self.maestro_adjacency_table = maestro_adjacency_table
+        self.maestro_values = maestro_values
+        self.column_labels = column_labels
+        self.study_name = study_name
+        self.parameter_info = parameter_info
         self.backwards_adjacency = {}
         self.calc_backwards_adjacency()
-        self.labels = labels
 
     def step(self, task_name):
         """Return a Step object for the given task name
@@ -59,7 +72,7 @@ class DAG:
         :param `task_name`: The task name.
         :return: A Merlin Step object.
         """
-        return Step(self.dag.values[task_name])
+        return Step(self.maestro_values[task_name], self.study_name, self.parameter_info)
 
     def calc_depth(self, node, depths, current_depth=0):
         """Calculate the depth of the given node and its children.
@@ -116,7 +129,7 @@ class DAG:
 
         :return: list of children of this task.
         """
-        return self.dag.adjacency_table[task_name]
+        return self.maestro_adjacency_table[task_name]
 
     def num_children(self, task_name):
         """Find the number of children for the given task in the dag.
@@ -156,8 +169,8 @@ class DAG:
 
     def calc_backwards_adjacency(self):
         """initializes our backwards adjacency table"""
-        for parent in self.dag.adjacency_table:
-            for task_name in self.dag.adjacency_table[parent]:
+        for parent in self.maestro_adjacency_table:
+            for task_name in self.maestro_adjacency_table[parent]:
                 if task_name in self.backwards_adjacency:
                     self.backwards_adjacency[task_name].append(parent)
                 else:
@@ -169,9 +182,7 @@ class DAG:
         """
         step1 = self.step(task1)
         step2 = self.step(task2)
-        return step1.needs_merlin_expansion(
-            self.labels
-        ) == step2.needs_merlin_expansion(self.labels)
+        return step1.check_if_expansion_needed(self.column_labels) == step2.check_if_expansion_needed(self.column_labels)
 
     def find_independent_chains(self, list_of_groups_of_chains):
         """
@@ -197,25 +208,14 @@ class DAG:
         for group in list_of_groups_of_chains:
             for chain in group:
                 for task_name in chain:
-
                     if self.num_children(task_name) == 1 and task_name != "_source":
-
                         child = self.children(task_name)[0]
 
-                        if self.num_parents(child) == 1:
+                        if self.num_parents(child) == 1 and self.compatible_merlin_expansion(child, task_name):
+                            self.find_chain(child, list_of_groups_of_chains).remove(child)
+                            chain.append(child)
 
-                            if self.compatible_merlin_expansion(child, task_name):
-
-                                self.find_chain(child, list_of_groups_of_chains).remove(
-                                    child
-                                )
-
-                                chain.append(child)
-
-        new_list = [
-            [chain for chain in group if len(chain) > 0]
-            for group in list_of_groups_of_chains
-        ]
+        new_list = [[chain for chain in group if len(chain) > 0] for group in list_of_groups_of_chains]
         new_list_2 = [group for group in new_list if len(group) > 0]
 
         return new_list_2

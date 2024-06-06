@@ -30,6 +30,9 @@ ARCHIVE_DIR
 *_OUTPUT/
 *_OUTPUT_D/
 *_ensemble_*/
+studies/
+appendonlydir/
+cli_test_studies/
 
 # Scheduler logs
 flux.out
@@ -66,3 +69,4 @@ jupyter/testDistributedSamples.py
 dist/
 build/
 .DS_Store
+.vscode/

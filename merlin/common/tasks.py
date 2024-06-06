@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -31,30 +31,27 @@
 """Test tasks."""
 from __future__ import absolute_import, unicode_literals
 
-from datetime import datetime
-
+import json
 import logging
 import os
+from typing import Any, Dict, List, Optional
 
+# Need to disable an overwrite warning here since celery has an exception that we need that directly
+# overwrites a python built-in exception
 from celery import chain, chord, group, shared_task, signature
-from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError
+from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
+from filelock import FileLock, Timeout
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
 from merlin.config.utils import Priority, get_priority
-from merlin.exceptions import (
-    HardFailException,
-    InvalidChainException,
-    RestartException,
-    RetryException,
-)
+from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
 from merlin.router import stop_workers
-from merlin.spec.expansion import (
-    parameter_substitutions_for_cmd,
-    parameter_substitutions_for_sample,
-)
-from merlin.study.step import Step
+from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
+from merlin.study.status import read_status, status_conflict_handler
+from merlin.utils import dict_deep_merge
 
 
 retry_exceptions = (
@@ -65,25 +62,28 @@ retry_exceptions = (
     OperationalError,
     RetryException,
     RestartException,
+    FileNotFoundError,
+    RedisTimeoutError,
 )
 
 LOG = logging.getLogger(__name__)
 
 STOP_COUNTDOWN = 60
 
+# TODO: most of the pylint errors that are disabled in this file are the ones listed below.
+# We should refactor this file so that we use more functions to solve all of these errors
+# R0912: too many branches
+# R0913: too many arguments
+# R0914: too many local variables
+# R0915: too many statements
 
-def log_result(result, step_dir, result_file):
-    now = datetime.now().strftime("%c")
-    cmd = f"flock --timeout 60 {result_file} echo '{now},{step_dir},{result}' >> {result_file}"
-    _ = os.system(cmd)
-
-@shared_task(
+@shared_task(  # noqa: C901
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority(Priority.high),
+    priority=get_priority(Priority.HIGH),
 )
-def merlin_step(self, *args, **kwargs):
+def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noqa: C901 pylint: disable=R0912,R0915
     """
     Executes a Merlin Step
     :param args: The arguments, one of which should be an instance of Step
@@ -92,39 +92,46 @@ def merlin_step(self, *args, **kwargs):
 
     Example kwargs dict:
     {"adapter_config": {'type':'local'},
-     "next_in_chain": <Step object> } # merlin_step will be added to the current chord
-                                      # with next_in_chain as an argument
+     "next_in_chain": <Step object>} # merlin_step will be added to the current chord
+                                     # with next_in_chain as an argument
     """
-    step = None
+    from merlin.study.step import Step  # pylint: disable=C0415
+
+    step: Optional[Step] = None
     LOG.debug(f"args is {len(args)} long")
 
-    for a in args:
-        if isinstance(a, Step):
-            step = a
+    arg: Any
+    for arg in args:
+        if isinstance(arg, Step):
+            step = arg
         else:
-            LOG.debug(f"discard argument {a}")
+            LOG.debug(f"discard argument {arg}, not of type Step.")
 
-    config = kwargs.pop("adapter_config", {"type": "local"})
-    next_in_chain = kwargs.pop("next_in_chain", None)
+    config: Dict[str, str] = kwargs.pop("adapter_config", {"type": "local"})
+    next_in_chain: Optional[Step] = kwargs.pop("next_in_chain", None)
 
     if step:
         self.max_retries = step.max_retries
-        step_name = step.name()
-        step_dir = step.get_workspace()
-        LOG.error(self.request.id)
+        step_name: str = step.name()
+        step_dir: str = step.get_workspace()
         LOG.debug(f"merlin_step: step_name '{step_name}' step_dir '{step_dir}'")
-        finished_filename = os.path.join(step_dir, "MERLIN_FINISHED")
+        finished_filename: str = os.path.join(step_dir, "MERLIN_FINISHED")
+
         # if we've already finished this task, skip it
+        result: ReturnCode
         if os.path.exists(finished_filename):
             LOG.info(f"Skipping step '{step_name}' in '{step_dir}'.")
             result = ReturnCode.OK
         else:
+            LOG.info(f"Executing step '{step_name}' in '{step_dir}'...")
             result = step.execute(config)
-        log_result(result, step_dir, f'{step_dir}/../results_log.txt')
+            step.mstep.mark_end(result)
+
         if result == ReturnCode.OK:
             LOG.info(f"Step '{step_name}' in '{step_dir}' finished successfully.")
             # touch a file indicating we're done with this step
-            open(finished_filename, "a").close()
+            with open(finished_filename, "a"):
+                pass
         elif result == ReturnCode.DRY_OK:
             LOG.info(f"Dry-ran step '{step_name}' in '{step_dir}'.")
         elif result == ReturnCode.RESTART:
@@ -133,52 +140,54 @@ def merlin_step(self, *args, **kwargs):
                 LOG.info(
                     f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})..."
                 )
-                self.retry(countdown=step.retry_delay)
+                step.mstep.mark_restart()
+                self.retry(countdown=step.retry_delay, priority=get_priority(Priority.RETRY))
             except MaxRetriesExceededError:
                 LOG.warning(
-                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
+                    f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command,
+                    but has already reached its retry limit ({self.max_retries}). Continuing with workflow."""
                 )
                 result = ReturnCode.SOFT_FAIL
+                # Need to call mark_end again since we switched from RESTART to SOFT_FAIL
+                step.mstep.mark_end(result, max_retries=True)
         elif result == ReturnCode.RETRY:
             step.restart = False
             try:
                 LOG.info(
                     f"Step '{step_name}' in '{step_dir}' is being retried ({self.request.retries + 1}/{self.max_retries})..."
                 )
-                self.retry(countdown=step.retry_delay)
+                step.mstep.mark_restart()
+                self.retry(countdown=step.retry_delay, priority=get_priority(Priority.RETRY))
             except MaxRetriesExceededError:
                 LOG.warning(
-                    f"*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command, but has already reached its retry limit ({self.max_retries}). Continuing with workflow."
+                    f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command,
+                    but has already reached its retry limit ({self.max_retries}). Continuing with workflow."""
                 )
                 result = ReturnCode.SOFT_FAIL
+                # Need to call mark_end again since we switched from RETRY to SOFT_FAIL
+                step.mstep.mark_end(result, max_retries=True)
         elif result == ReturnCode.SOFT_FAIL:
-            LOG.warning(
-                f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow."
-            )
+            LOG.warning(f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow.")
         elif result == ReturnCode.HARD_FAIL:
-
             # stop all workers attached to this queue
             step_queue = step.get_task_queue()
-            LOG.error(
-                f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow."
-            )
-            LOG.error(
-                f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!"
-            )
+            LOG.error(f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow.")
+            LOG.error(f"*** Shutting down all workers connected to this queue ({step_queue}) in {STOP_COUNTDOWN} secs!")
             shutdown = shutdown_workers.s([step_queue])
             shutdown.set(queue=step_queue)
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
-
             raise HardFailException
         elif result == ReturnCode.STOP_WORKERS:
             LOG.warning(f"*** Shutting down all workers in {STOP_COUNTDOWN} secs!")
             shutdown = shutdown_workers.s(None)
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
+        elif result == ReturnCode.RAISE_ERROR:
+            LOG.warning("*** Raising an error ***")
+            raise Exception("Exception raised by request from the user")
         else:
-            LOG.warning(
-                f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow."
-            )
+            LOG.warning(f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow.")
+
         # queue off the next task in a chain while adding it to the current chord so that the chordfinisher actually
         # waits for the next task in the chain
         if next_in_chain is not None:
@@ -205,7 +214,7 @@ def is_chain_expandable(chain_, labels):
 
     """
 
-    array_of_bools = [step.needs_merlin_expansion(labels) for step in chain_]
+    array_of_bools = [step.check_if_expansion_needed(labels) for step in chain_]
 
     needs_expansion = all(array_of_bools)
 
@@ -248,9 +257,9 @@ def prepare_chain_workspace(sample_index, chain_):
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority(Priority.low),
+    priority=get_priority(Priority.LOW),
 )
-def add_merlin_expanded_chain_to_chord(
+def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
     self,
     task_type,
     chain_,
@@ -271,18 +280,18 @@ def add_merlin_expanded_chain_to_chord(
     :param adapter_config: The adapter config.
     :param min_sample_id: offset to use for the sample_index.
     """
+    num_samples = len(samples)
     # Use the index to get a path to each sample
-    LOG.debug(f"recursing with {len(samples)} samples {samples}")
+    LOG.debug(f"recursing with {num_samples} samples {samples}")
     if sample_index.is_grandparent_of_leaf or sample_index.is_parent_of_leaf:
         all_chains = []
-        LOG.debug(f"gathering up {len(samples)} relative paths")
+        LOG.debug(f"gathering up {num_samples} relative paths")
         relative_paths = [
-            os.path.dirname(sample_index.get_path_to_sample(sample_id + min_sample_id))
-            for sample_id in range(len(samples))
+            os.path.dirname(sample_index.get_path_to_sample(sample_id + min_sample_id)) for sample_id in range(num_samples)
         ]
+        top_lvl_workspace = chain_[0].get_workspace()
         LOG.debug(f"recursing grandparent with relative paths {relative_paths}")
         for step in chain_:
-
             # Make a list of new task objects with modified cmd and workspace
             # based off of the parameter substitutions and relative_path for
             # a given sample.
@@ -292,9 +301,7 @@ def add_merlin_expanded_chain_to_chord(
             for sample_id, sample in enumerate(samples):
                 new_step = task_type.s(
                     step.clone_changing_workspace_and_cmd(
-                        new_workspace=os.path.join(
-                            workspace, relative_paths[sample_id]
-                        ),
+                        new_workspace=os.path.join(workspace, relative_paths[sample_id]),
                         cmd_replacement_pairs=parameter_substitutions_for_sample(
                             sample,
                             labels,
@@ -303,46 +310,59 @@ def add_merlin_expanded_chain_to_chord(
                         ),
                     ),
                     adapter_config=adapter_config,
+                    top_lvl_workspace=top_lvl_workspace,
                 )
                 new_step.set(queue=step.get_task_queue())
                 new_step.set(task_id=os.path.join(workspace, relative_paths[sample_id]))
                 new_chain.append(new_step)
 
             all_chains.append(new_chain)
-        LOG.debug(f"adding chain to chord")
-        add_chains_to_chord(self, all_chains)
-        LOG.debug(f"chain added to chord")
+
+        # Only need to condense status files if there's more than 1 sample
+        if num_samples > 1:
+            condense_sig = condense_status_files.s(
+                sample_index=sample_index,
+                workspace=top_lvl_workspace,
+                condensed_workspace=chain_[0].mstep.condensed_workspace,
+            ).set(
+                queue=chain_[0].get_task_queue(),
+            )
+        else:
+            condense_sig = None
+
+        LOG.debug("adding chain to chord")
+        chain_1d = get_1d_chain(all_chains)
+        launch_chain(self, chain_1d, condense_sig=condense_sig)
+        LOG.debug("chain added to chord")
     else:
         # recurse down the sample_index hierarchy
-        LOG.debug(f"recursing down sample_index hierarchy")
-        for next_index in sample_index.children.values():
-            next_index.name = os.path.join(sample_index.name, next_index.name)
-            LOG.debug("generating next step")
-            next_step = add_merlin_expanded_chain_to_chord.s(
-                task_type,
-                chain_,
-                samples[
-                    next_index.min - min_sample_id : next_index.max - min_sample_id
-                ],
-                labels,
-                next_index,
-                adapter_config,
-                next_index.min,
-            )
-            next_step.set(queue=chain_[0].get_task_queue())
-            LOG.debug(
-                f"recursing with range {next_index.min}:{next_index.max}, {next_index.name} {signature(next_step)}"
-            )
-            LOG.debug(
-                f"queuing samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}..."
-            )
-            if self.request.is_eager:
-                next_step.delay()
-            else:
-                self.add_to_chord(next_step, lazy=False)
-            LOG.debug(
-                f"queued for samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}"
-            )
+        try:
+            LOG.debug("recursing down sample_index hierarchy")
+            for next_index in sample_index.children.values():
+                next_index_name_before = next_index.name
+                next_index.name = os.path.join(sample_index.name, next_index.name)
+                LOG.debug("generating next step")
+                next_step = add_merlin_expanded_chain_to_chord.s(
+                    task_type,
+                    chain_,
+                    samples[next_index.min - min_sample_id : next_index.max - min_sample_id],
+                    labels,
+                    next_index,
+                    adapter_config,
+                    next_index.min,
+                )
+                next_step.set(queue=chain_[0].get_task_queue())
+                LOG.debug(f"recursing with range {next_index.min}:{next_index.max}, {next_index.name} {signature(next_step)}")
+                LOG.debug(f"queuing samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}...")
+                if self.request.is_eager:
+                    next_step.delay()
+                else:
+                    self.add_to_chord(next_step, lazy=False)
+                LOG.debug(f"queued for samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}")
+        except retry_exceptions as e:
+            # Reset the index to what it was before so we don't accidentally create a bunch of extra samples upon restart
+            next_index.name = next_index_name_before
+            raise e
 
     return ReturnCode.OK
 
@@ -358,7 +378,6 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
     LOG.debug(f"simple chain with {chain_}")
     all_chains = []
     for step in chain_:
-
         # Make a list of new task signatures with modified cmd and workspace
         # based off of the parameter substitutions and relative_path for
         # a given sample.
@@ -370,24 +389,52 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
             )
         ]
         all_chains.append(new_steps)
-    add_chains_to_chord(self, all_chains)
+    chain_1d = get_1d_chain(all_chains)
+    launch_chain(self, chain_1d)
 
 
-def add_chains_to_chord(self, all_chains):
+def launch_chain(self: "Task", chain_1d: List["Signature"], condense_sig: "Signature" = None):  # noqa: F821
     """
-    Adds chains to the current chord.
-    :param self: The current task whose chord we will add the chains' tasks to.
-    :param all_chains: Two-dimensional list of chains [chain_length][number_of_chains]
-    """
+    Given a 1D chain, appropriately launch the signatures it contains.
+    If this is a local run, launch the signatures instantly.
+    Otherwise, there's two cases:
+    a. The chain is dealing with samples (i.e. we'll need to condense status files)
+       so create a new chord and add it to the current chord
+    b. The chain is NOT dealing with samples so we can just add the signatures to the current chord
 
-    if len(all_chains) == 1:
-        # enqueue the steps as a single parallel group
-        LOG.debug(f"launching group with {signature(all_chains[0][0])}")
-        for sig in all_chains[0]:
-            if self.request.is_eager:
+    :param `self`: The current task
+    :param `chain_1d`: A 1-dimensional list of signatures to launch
+    :param `condense_sig`: A signature for condensing the status files. None if condensing isn't needed.
+    """
+    # If there's nothing in the chain then we won't have to launch anything so check that first
+    if chain_1d:
+        # Case 1: local run; launch signatures instantly
+        if self.request.is_eager:
+            for sig in chain_1d:
                 sig.delay()
+        # Case 2: non-local run; signatures need to be added to the current chord
+        else:
+            # Case a: we're dealing with a sample hierarchy and need to condense status files when we're done executing tasks
+            if condense_sig:
+                # This chord makes it so we'll process all tasks in chain_1d, then condense the status files when they're done
+                sample_chord = chord(chain_1d, condense_sig)
+                self.add_to_chord(sample_chord, lazy=False)
+            # Case b: no condensing is needed so just add all the signatures to the chord
             else:
-                self.add_to_chord(sig, lazy=False)
+                for sig in chain_1d:
+                    self.add_to_chord(sig, lazy=False)
+
+
+def get_1d_chain(all_chains: List[List["Signature"]]) -> List["Signature"]:  # noqa: F821
+    """
+    Convert a 2D list of chains into a 1D list.
+    :param all_chains: Two-dimensional list of chains [chain_length][number_of_chains]
+    :returns: A one-dimensional list representing a chain of tasks
+    """
+    chain_steps = []
+    if len(all_chains) == 1:
+        # Steps will be enqueued in a single parallel group
+        chain_steps = all_chains[0]
 
     if len(all_chains) > 1:
         # in this case, we need to make a chain.
@@ -398,27 +445,142 @@ def add_chains_to_chord(self, all_chains):
         # during execution of a task belonging to that chord,
         # so we set up a chain by passing the child member of a chain in as an
         # argument to the signature of the parent member of a chain.
-        chain_steps = []
         length = len(all_chains[0])
         for i in range(length):
             # Do the following in reverse order because the replace method
             # generates a new task signature, so we need to make
             # sure we are modifying task signatures before adding them to the
             # kwargs.
-            for g in reversed(range(len(all_chains))):
-                if g < len(all_chains) - 1:
-                    new_kwargs = signature(all_chains[g][i]).kwargs.update(
-                        {"next_in_chain": all_chains[g + 1][i]}
+            for j in reversed(range(len(all_chains))):
+                if j < len(all_chains) - 1:
+                    # fmt: off
+                    new_kwargs = signature(all_chains[j][i]).kwargs.update(
+                        {"next_in_chain": all_chains[j + 1][i]}
                     )
-                    all_chains[g][i] = all_chains[g][i].replace(kwargs=new_kwargs)
+                    # fmt: on
+                    all_chains[j][i] = all_chains[j][i].replace(kwargs=new_kwargs)
             chain_steps.append(all_chains[0][i])
 
-        for sig in chain_steps:
-            LOG.debug(f"launching chain {signature(sig)}")
-            if self.request.is_eager:
-                sig.delay()
-            else:
-                self.add_to_chord(sig, lazy=False)
+    return chain_steps
+
+
+def gather_statuses(
+    sample_index: "SampleIndex", workspace: str, condensed_workspace: str, files_to_remove: List[str]  # noqa: F821
+) -> Dict:
+    """
+    Traverse the sample index and gather all of the statuses into one.
+
+    :param `sample_index`: A SampleIndex object to track this specific sample hierarchy
+    :param `workspace`: The full workspace path to the step we're condensing for
+    :param `condensed_workspace`: A shortened version of `workspace` that's saved in the status files
+    :param `files_to_remove`: An empty list that we'll add filepaths to that need removed
+    :returns: A dict of condensed statuses
+    """
+    LOG.info(f"Gathering statuses to condense for '{condensed_workspace}'")
+    condensed_statuses = {}
+    for path, _ in sample_index.traverse(conditional=lambda c: c.is_parent_of_leaf):
+        # Read in the status data
+        sample_workspace = f"{workspace}/{path}"
+        status_filepath = f"{sample_workspace}/MERLIN_STATUS.json"
+        lock_filepath = f"{sample_workspace}/status.lock"
+        if os.path.exists(status_filepath):
+            try:
+                # NOTE: instead of leaving statuses as dicts read in by JSON, maybe they should each be their own object
+                status = read_status(status_filepath, lock_filepath, raise_errors=True)
+
+                # This for loop is just to get the step name that we don't have; it's really not even looping
+                for step_name in status:
+                    try:
+                        # Make sure the status for this sample workspace is in a finished state (not initialized or running)
+                        if status[step_name][f"{condensed_workspace}/{path}"]["status"] not in ("INITIALIZED", "RUNNING"):
+                            # Add the status data to the statuses we'll write to the condensed file and remove this status file
+                            dict_deep_merge(condensed_statuses, status, conflict_handler=status_conflict_handler)
+                            files_to_remove.append(status_filepath)
+                            files_to_remove.append(lock_filepath)  # Remove the lock files as well as the status files
+                    except KeyError:
+                        LOG.warning(f"Key error when reading from {sample_workspace}")
+            except Timeout:
+                # Raising this celery timeout instead will trigger a restart for this task
+                raise TimeoutError  # pylint: disable=W0707
+            except FileNotFoundError:
+                LOG.warning(f"Could not find {status_filepath} while trying to condense. Restarting this task...")
+                raise FileNotFoundError  # pylint: disable=W0707
+        else:
+            # Might be missing a status file in the output if we hit this but we don't want that
+            # to fully crash the workflow
+            LOG.debug(f"Could not find {status_filepath}, skipping this status file.")
+
+    return condensed_statuses
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=retry_exceptions,
+    retry_backoff=True,
+    priority=get_priority(Priority.LOW),
+)
+def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pylint: disable=R0914,W0613
+    """
+    After a section of the sample tree has finished, condense the status files.
+
+    kwargs should look like so:
+    kwargs = {
+        "sample_index": SampleIndex Object,
+        "workspace": str representing the step's workspace
+    }
+    """
+    # Get the sample index object that we'll use for condensing
+    sample_index = kwargs.pop("sample_index", None)
+    if not sample_index:
+        LOG.warning("Sample index not found. Cannot condense status files.")
+        return None
+
+    # Get the full step (or step/parameter) workspace
+    workspace = kwargs.pop("workspace", None)
+    if not workspace:
+        LOG.warning("Workspace not found. Cannot condense status files.")
+        return None
+
+    # Get a condensed version of the workspace
+    condensed_workspace = kwargs.pop("condensed_workspace", None)
+    if not condensed_workspace:
+        LOG.warning("Condensed workspace not provided. Cannot condense status files.")
+        return None
+
+    # Read in all the statuses from this sample index
+    files_to_remove = []
+    condensed_statuses = gather_statuses(sample_index, workspace, condensed_workspace, files_to_remove)
+
+    # If there are statuses to write to the condensed status file then write them
+    if condensed_statuses:
+        condensed_status_filepath = f"{workspace}/MERLIN_STATUS.json"
+        condensed_lock_file = f"{workspace}/status.lock"
+        lock = FileLock(condensed_lock_file)  # pylint: disable=E0110
+        try:
+            # Lock the file to avoid race conditions
+            with lock.acquire(timeout=20):
+                # If the condensed file already exists, grab the statuses from it
+                LOG.info(f"Condensing statuses for '{condensed_workspace}' to '{condensed_status_filepath}'")
+                if os.path.exists(condensed_status_filepath):
+                    with open(condensed_status_filepath, "r") as condensed_status_file:
+                        existing_condensed_statuses = json.load(condensed_status_file)
+                    # Merging the statuses we're condensing into the already existing statuses
+                    # because it's faster at scale than vice versa
+                    dict_deep_merge(existing_condensed_statuses, condensed_statuses, conflict_handler=status_conflict_handler)
+                    condensed_statuses = existing_condensed_statuses
+
+                # Write the condensed statuses to the condensed status file
+                with open(condensed_status_filepath, "w") as condensed_status_file:
+                    json.dump(condensed_statuses, condensed_status_file)
+
+                # Remove the status files we just condensed
+                for file_to_remove in files_to_remove:
+                    LOG.debug(f"Removing '{file_to_remove}'.")
+                    os.remove(file_to_remove)
+        except Timeout:
+            # Raising this celery timeout instead will trigger a restart for this task
+            raise TimeoutError  # pylint: disable=W0707
+
     return ReturnCode.OK
 
 
@@ -426,9 +588,9 @@ def add_chains_to_chord(self, all_chains):
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
-    priority=get_priority(Priority.low),
+    priority=get_priority(Priority.LOW),
 )
-def expand_tasks_with_samples(
+def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
     self,
     dag,
     chain_,
@@ -437,7 +599,6 @@ def expand_tasks_with_samples(
     task_type,
     adapter_config,
     level_max_dirs,
-    **kwargs,
 ):
     """
     Generate a group of celery chains of tasks from a chain of task names, using merlin
@@ -453,9 +614,7 @@ def expand_tasks_with_samples(
     """
     LOG.debug(f"expand_tasks_with_samples called with chain,{chain_}\n")
     # Figure out how many directories there are, make a glob string
-    directory_sizes = uniform_directories(
-        len(samples), bundle_size=1, level_max_dirs=level_max_dirs
-    )
+    directory_sizes = uniform_directories(len(samples), bundle_size=1, level_max_dirs=level_max_dirs)
 
     glob_path = "*/" * len(directory_sizes)
 
@@ -479,11 +638,7 @@ def expand_tasks_with_samples(
     # sub in globs prior to expansion
     # sub the glob command
     steps = [
-        step.clone_changing_workspace_and_cmd(
-            cmd_replacement_pairs=parameter_substitutions_for_cmd(
-                glob_path, sample_paths
-            )
-        )
+        step.clone_changing_workspace_and_cmd(cmd_replacement_pairs=parameter_substitutions_for_cmd(glob_path, sample_paths))
         for step in steps
     ]
 
@@ -497,7 +652,7 @@ def expand_tasks_with_samples(
     if needs_expansion:
         # prepare_chain_workspace(sample_index, steps)
         sample_index.name = ""
-        LOG.debug(f"queuing merlin expansion tasks")
+        LOG.debug("queuing merlin expansion tasks")
         found_tasks = False
         conditions = [
             lambda c: c.is_great_grandparent_of_leaf,
@@ -507,11 +662,9 @@ def expand_tasks_with_samples(
         ]
         for condition in conditions:
             if not found_tasks:
-                for next_index_path, next_index in sample_index.traverse(
-                    conditional=condition
-                ):
+                for next_index_path, next_index in sample_index.traverse(conditional=condition):
                     LOG.info(
-                        f"generating next step for range {next_index.min}:{next_index.max} {next_index.max-next_index.min}"
+                        f"generating next step for range {next_index.min}:{next_index.max} {next_index.max - next_index.min}"
                     )
                     next_index.name = next_index_path
 
@@ -529,20 +682,17 @@ def expand_tasks_with_samples(
                     if self.request.is_eager:
                         sig.delay()
                     else:
-                        LOG.info(
-                            f"queuing expansion task {next_index.min}:{next_index.max}"
-                        )
+                        LOG.info(f"queuing expansion task {next_index.min}:{next_index.max}")
                         self.add_to_chord(sig, lazy=False)
-                    LOG.info(
-                        f"merlin expansion task {next_index.min}:{next_index.max} queued"
-                    )
+                    LOG.info(f"merlin expansion task {next_index.min}:{next_index.max} queued")
                     found_tasks = True
     else:
-        LOG.debug(f"queuing simple chain task")
+        LOG.debug("queuing simple chain task")
         add_simple_chain_to_chord(self, task_type, steps, adapter_config)
-        LOG.debug(f"simple chain task queued")
+        LOG.debug("simple chain task queued")
 
 
+# Pylint complains that "self" is unused but it's needed behind the scenes with celery
 @shared_task(
     bind=True,
     autoretry_for=retry_exceptions,
@@ -550,9 +700,9 @@ def expand_tasks_with_samples(
     acks_late=False,
     reject_on_worker_lost=False,
     name="merlin:shutdown_workers",
-    priority=get_priority(Priority.high),
+    priority=get_priority(Priority.HIGH),
 )
-def shutdown_workers(self, shutdown_queues):
+def shutdown_workers(self, shutdown_queues):  # pylint: disable=W0613
     """
     This task issues a call to shutdown workers.
 
@@ -565,17 +715,19 @@ def shutdown_workers(self, shutdown_queues):
     if shutdown_queues is not None:
         LOG.warning(f"Shutting down workers in queues {shutdown_queues}!")
     else:
-        LOG.warning(f"Shutting down workers in all queues!")
+        LOG.warning("Shutting down workers in all queues!")
     return stop_workers("celery", None, shutdown_queues, None)
 
 
+# Pylint complains that these args are unused but celery passes args
+# here behind the scenes and won't work if these aren't here
 @shared_task(
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     name="merlin:chordfinisher",
-    priority=get_priority(Priority.low),
+    priority=get_priority(Priority.LOW),
 )
-def chordfinisher(*args, **kwargs):
+def chordfinisher(*args, **kwargs):  # pylint: disable=W0613
     """.
     It turns out that chain(group,group) in celery does not execute one group
     after another, but executes the groups as if they were independent from
@@ -590,7 +742,7 @@ def chordfinisher(*args, **kwargs):
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     name="merlin:queue_merlin_study",
-    priority=get_priority(Priority.low),
+    priority=get_priority(Priority.LOW),
 )
 def queue_merlin_study(study, adapter):
     """
@@ -620,9 +772,7 @@ def queue_merlin_study(study, adapter):
                     for gchain in chain_group
                 ]
             ),
-            chordfinisher.s().set(
-                queue=egraph.step(chain_group[0][0]).get_task_queue()
-            ),
+            chordfinisher.s().set(queue=egraph.step(chain_group[0][0]).get_task_queue()),
         )
         for chain_group in groups_of_chains[1:]
     )

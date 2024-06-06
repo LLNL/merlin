@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -35,6 +35,11 @@ from parse import parse
 
 from merlin.common.sample_index import MAX_SAMPLE, SampleIndex
 from merlin.utils import cd
+
+
+# These pylint errors I've disabled are for "too many arguments"
+# and "too many local variables". I think the functions are still clear
+# pylint: disable=R0913,R0914
 
 
 def create_hierarchy(
@@ -150,9 +155,7 @@ def create_hierarchy_from_max_sample(
             bundle_id += 1
         child_id += 1
     num_bundles = bundle_id - start_bundle_id
-    return SampleIndex(
-        min_sample, max_sample, children, root, num_bundles=num_bundles, address=address
-    )
+    return SampleIndex(min_sample, max_sample, children, root, num_bundles=num_bundles, address=address)
 
 
 def read_hierarchy(path):
@@ -167,9 +170,7 @@ def read_hierarchy(path):
         with open("sample_index.txt", "r") as _file:
             token = _file.readline()
             while token:
-                parsed_token = parse(
-                    "{type}:{ID}\tname:{name}\tsamples:[{min:d},{max:d})\n", token
-                )
+                parsed_token = parse("{type}:{ID}\tname:{name}\tsamples:[{min:d},{max:d})\n", token)
                 if parsed_token["type"] == "DIR":
                     subhierarchy = read_hierarchy(parsed_token["name"])
                     subhierarchy.address = parsed_token["ID"]
@@ -187,7 +188,5 @@ def read_hierarchy(path):
                 min_sample = min(min_sample, parsed_token["min"])
                 max_sample = max(max_sample, parsed_token["max"])
                 token = _file.readline()
-    top_index = SampleIndex(
-        min_sample, max_sample, children, path, leafid=-1, num_bundles=num_bundles
-    )
+    top_index = SampleIndex(min_sample, max_sample, children, path, leafid=-1, num_bundles=num_bundles)
     return top_index

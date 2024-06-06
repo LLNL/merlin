@@ -23,6 +23,7 @@ done:
 import json
 import os
 import subprocess
+from typing import IO, Dict, Union
 
 import flux
 from flux import kvs
@@ -38,54 +39,56 @@ try:
     kvs.get(f, "lwj")
 
     for d in kvs.walk("lwj", flux_handle=f):
-        try:
-            # print(type(d))
-            fdir = "lwj.{0}".format(d[0])
+        # print(type(d))
+        fdir = "lwj.{0}".format(d[0])
 
-            qcreate = "{0}.create-time".format(fdir)
-            create_time = kvs.get(f, qcreate)
+        qcreate = "{0}.create-time".format(fdir)
+        create_time = kvs.get(f, qcreate)
 
-            qstart = "{0}.starting-time".format(fdir)
-            start_time = kvs.get(f, qstart)
+        qstart = "{0}.starting-time".format(fdir)
+        start_time = kvs.get(f, qstart)
 
-            qrun = "{0}.running-time".format(fdir)
-            start_time = kvs.get(f, qrun)
+        qrun = "{0}.running-time".format(fdir)
+        start_time = kvs.get(f, qrun)
 
-            qcomplete = "{0}.complete-time".format(fdir)
-            complete_time = kvs.get(f, qcomplete)
+        qcomplete = "{0}.complete-time".format(fdir)
+        complete_time = kvs.get(f, qcomplete)
 
-            qcompleting = "{0}.completing-time".format(fdir)
-            completing_time = kvs.get(f, qcompleting)
+        qcompleting = "{0}.completing-time".format(fdir)
+        completing_time = kvs.get(f, qcompleting)
 
-            qwall = "{0}.walltime".format(fdir)
-            wall_time = kvs.get(f, qwall)
+        qwall = "{0}.walltime".format(fdir)
+        wall_time = kvs.get(f, qwall)
 
-            print(
-                f"Job {d[0]}: create: {create_time} start {start_time} run {start_time} completing {completing_time} complete {complete_time} wall {wall_time}"
-            )
-        except BaseException:
-            pass
-except BaseException:
+        print(
+            f"Job {d[0]}: create: {create_time} start {start_time} run {start_time} completing {completing_time} complete {complete_time} wall {wall_time}"
+        )
+
+except KeyError:
     top_dir = "job"
 
-    def get_data_dict(key):
-        kwargs = {
+    def get_data_dict(key: str) -> Dict:
+        kwargs: Dict[str, Union[str, bool, os.Environ]] = {
             "env": os.environ,
             "shell": True,
             "universal_newlines": True,
             "stdout": subprocess.PIPE,
             "stderr": subprocess.PIPE,
         }
-        flux_com = f"flux kvs get {key}"
-        p = subprocess.Popen(flux_com, **kwargs)
+        flux_com: str = f"flux kvs get {key}"
+        p: subprocess.Popen = subprocess.Popen(flux_com, **kwargs)
+        stdout: IO[str]
+        stderr: IO[str]
         stdout, stderr = p.communicate()
 
-        data = {}
-        for l in stdout.split("/n"):
-            for s in l.strip().split():
-                if "timestamp" in s:
-                    jstring = s.replace("'", '"')
-                    d = json.loads(jstring)
+        data: Dict = {}
+        line: str
+        for line in stdout.split("/n"):
+            token: str
+            for token in line.strip().split():
+                if "timestamp" in token:
+                    jstring: str = token.replace("'", '"')
+                    d: Dict = json.loads(jstring)
                     data[d["name"]] = d["timestamp"]
 
         return data

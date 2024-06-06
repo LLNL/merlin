@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -32,17 +32,7 @@
 from enum import IntEnum
 
 
-__all__ = (
-    "ReturnCode",
-    "OK_VALUE",
-    "ERROR_VALUE",
-    "RESTART_VALUE",
-    "SOFT_FAIL_VALUE",
-    "HARD_FAIL_VALUE",
-    "DRY_OK_VALUE",
-    "RETRY_VALUE",
-    "STOP_WORKERS_VALUE",
-)
+__all__ = ("ReturnCode",)
 
 
 class ReturnCode(IntEnum):
@@ -58,3 +48,4 @@ class ReturnCode(IntEnum):
     DRY_OK = 103
     RETRY = 104
     STOP_WORKERS = 105
+    RAISE_ERROR = 106

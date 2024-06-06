@@ -1,0 +1,52 @@
+{
+    "params_and_samples_GREET.hola": {
+        "parameters": {
+            "cmd": {
+                "GREET": "hola"
+            },
+            "restart": null
+        },
+        "task_queue": "both_queue",
+        "workers": ["sample_worker"],
+        "params_and_samples/GREET.hola/00": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:10s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        },
+        "params_and_samples/GREET.hola/01": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:18s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        },
+        "params_and_samples/GREET.hola/02": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:23s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        },
+        "params_and_samples/GREET.hola/03": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:29s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        },
+        "params_and_samples/GREET.hola/04": {
+            "status": "FINISHED",
+            "return_code": "MERLIN_SUCCESS",
+            "elapsed_time": "0d:00h:00m:30s",
+            "run_time": "0d:00h:00m:16s",
+            "restarts": 0,
+            "workers": ["sample_worker"]
+        }
+    }
+}

@@ -1,12 +1,12 @@
 ###############################################################################
-# Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
 # Written by the Merlin dev team, listed in the CONTRIBUTORS file.
 # <merlin@llnl.gov>
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.8.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -59,12 +59,14 @@ MYSQL_CONFIG_FILENAMES = {
 }
 
 
+# fmt: off
 MYSQL_CONNECTION_STRING = (
     "db+mysql+mysqldb://{user}:{password}@{server}/mlsi"
     "?ssl_ca={ssl_ca}"
     "&ssl_cert={ssl_cert}"
     "&ssl_key={ssl_key}"
 )
+# fmt: on
 
 
 SQLITE_CONNECTION_STRING = "db+sqlite:///results.db"
@@ -98,7 +100,7 @@ def get_backend_password(password_file, certs_path=None):
         # The password was given instead of the filepath.
         password = password_file.strip()
     else:
-        with open(password_filepath, "r") as f:
+        with open(password_filepath, "r") as f:  # pylint: disable=C0103
             line = f.readline().strip()
             password = quote(line, safe="")
 
@@ -149,9 +151,9 @@ def get_redis(certs_path=None, include_password=True, ssl=False):  # noqa C901
             password = CONFIG.results_backend.password
 
         if include_password:
-            spass = "%s:%s@" % (username, password)
+            spass = f"{username}:{password}@"
         else:
-            spass = "%s:%s@" % (username, "******")
+            spass = f"{username}:******@"
     except (KeyError, AttributeError):
         spass = ""
         LOG.debug(f"Results backend: redis using default password = {spass}")
@@ -181,7 +183,7 @@ def get_mysql_config(certs_path, mysql_certs):
 
     certs = {}
     for key, filename in mysql_certs.items():
-        for f in files:
+        for f in files:  # pylint: disable=C0103
             if not f == filename:
                 continue
 
@@ -213,7 +215,7 @@ def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
 
     if not server:
         msg = f"Results backend: server {server} does not have a configuration"
-        raise Exception(msg)
+        raise TypeError(msg)  # TypeError since server is None and not str
 
     password = get_backend_password(password_file, certs_path=certs_path)
 
@@ -223,8 +225,9 @@ def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
     mysql_config = get_mysql_config(certs_path, mysql_certs)
 
     if not mysql_config:
-        msg = f"The connection information for MySQL could not be set, cannot find:\n {mysql_certs}\ncheck the celery/certs path or set the ssl information in the app.yaml file."
-        raise Exception(msg)
+        msg = f"""The connection information for MySQL could not be set, cannot find:\n
+        {mysql_certs}\ncheck the celery/certs path or set the ssl information in the app.yaml file."""
+        raise TypeError(msg)  # TypeError since mysql_config is None when it shouldn't be
 
     mysql_config["user"] = CONFIG.results_backend.username
     if include_password:
@@ -273,18 +276,16 @@ def _resolve_backend_string(backend, certs_path, include_password):
     if "mysql" in backend:
         return get_mysql(certs_path=certs_path, include_password=include_password)
 
-    elif "sqlite" in backend:
+    if "sqlite" in backend:
         return SQLITE_CONNECTION_STRING
 
-    elif backend == "redis":
+    if backend == "redis":
         return get_redis(certs_path=certs_path, include_password=include_password)
 
-    elif backend == "rediss":
-        return get_redis(
-            certs_path=certs_path, include_password=include_password, ssl=True
-        )
-    else:
-        return None
+    if backend == "rediss":
+        return get_redis(certs_path=certs_path, include_password=include_password, ssl=True)
+
+    return None
 
 
 def get_ssl_config(celery_check=False):
@@ -298,11 +299,13 @@ def get_ssl_config(celery_check=False):
     try:
         results_backend = CONFIG.results_backend.url.split(":")[0]
     except AttributeError:
+        # The results_backend may not have a url
         pass
 
     try:
         results_backend = CONFIG.results_backend.name.lower()
     except AttributeError:
+        # The results_backend may not have a name
         pass
 
     if results_backend not in BACKENDS:
@@ -313,9 +316,7 @@ def get_ssl_config(celery_check=False):
     except AttributeError:
         certs_path = None
 
-    results_backend_ssl = get_ssl_entries(
-        "Results Backend", results_backend, CONFIG.results_backend, certs_path
-    )
+    results_backend_ssl = get_ssl_entries("Results Backend", results_backend, CONFIG.results_backend, certs_path)
 
     if results_backend == "rediss":
         if not results_backend_ssl:

@@ -1,0 +1,85 @@
+description:
+    name: openfoam_wf_template
+    description: |
+      A parameter study that includes initializing, running,
+      post-processing, collecting, learning and visualizing OpenFOAM runs
+      using docker.
+
+
+env:
+    variables:
+        OUTPUT_PATH: ./openfoam_wf_output
+
+        SCRIPTS: $(MERLIN_INFO)/scripts
+        N_SAMPLES: 100
+
+
+merlin:
+    samples:
+        generate:
+            cmd: |
+                cp -r $(SPECROOT)/scripts $(MERLIN_INFO)/
+
+                # Generates the samples
+                python $(SCRIPTS)/make_samples.py -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples
+        file: $(MERLIN_INFO)/samples.npy
+        column_labels: [LID_SPEED, VISCOSITY]
+    resources:
+        workers:
+            nonsimworkers:
+                args: -l INFO --concurrency 1
+                steps: [setup, combine_outputs, learn]
+            simworkers:
+                args: -l INFO --concurrency 10 --prefetch-multiplier 1 -Ofair
+                steps: [sim_runs]
+
+
+study:
+    - name: setup
+      description: |
+                Installs necessary python packages and imports the cavity directory
+                from the docker container
+      run:
+          cmd: |
+              pip install -r $(SPECROOT)/requirements.txt
+
+              # Set up the cavity directory in the MERLIN_INFO directory
+              source $(SCRIPTS)/cavity_setup.sh $(MERLIN_INFO)
+
+    - name: sim_runs
+      description: |
+                  Edits the Lidspeed and viscosity then runs OpenFOAM simulation
+                  using the icoFoam solver
+      run:
+          cmd: |
+              cp -r $(MERLIN_INFO)/cavity cavity/
+              cd cavity
+
+              ## Edits default values for viscosity and lidspeed with
+              #  values specified by samples section of the merlin block
+              sed -i '' "18s/.*/nu              [0 2 -1 0 0 0 0] $(VISCOSITY);/" constant/transportProperties
+              sed -i '' "26s/.*/        value           uniform ($(LID_SPEED) 0 0);/" 0/U
+
+              cd ..
+              cp $(SCRIPTS)/run_openfoam .
+
+              # Creating a unique OpenFOAM docker container for each sample and using it to run the simulation
+              CONTAINER_NAME='OPENFOAM_ICO_$(MERLIN_SAMPLE_ID)'
+              docker container run -ti --rm -v $(pwd):/cavity -w /cavity --name=${CONTAINER_NAME} cfdengine/openfoam ./run_openfoam $(LID_SPEED)
+              docker wait ${CONTAINER_NAME}
+          depends: [setup]
+          task_queue: simqueue
+
+    - name: combine_outputs
+      description: Combines the outputs of the previous step
+      run:
+          cmd: |
+              python $(SCRIPTS)/combine_outputs.py -data $(sim_runs.workspace) -merlin_paths $(MERLIN_PATHS_ALL)
+          depends: [sim_runs_*]
+
+    - name: learn
+      description: Learns the output of the openfoam simulations using input parameters
+      run:
+          cmd: |
+              python $(SCRIPTS)/learn.py -workspace $(MERLIN_WORKSPACE)
+          depends: [combine_outputs]
