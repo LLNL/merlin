@@ -9,6 +9,9 @@ from pathlib import Path
 import pytest
 
 
+# pylint: disable=redefined-outer-name
+
+
 @pytest.fixture(scope="class")
 def status_testing_dir(temp_output_dir: str) -> str:
     """
@@ -24,7 +27,7 @@ def status_testing_dir(temp_output_dir: str) -> str:
 
 
 @pytest.fixture(scope="class")
-def status_empty_file(status_testing_dir: str) -> str:  # pylint: disable=W0621
+def status_empty_file(status_testing_dir: str) -> str:
     """
     A pytest fixture to create an empty status file.
 

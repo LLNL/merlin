@@ -1,6 +1,7 @@
 """
 Tests for the `encrypt.py` and `encrypt_backend_traffic.py` files.
 """
+
 import os
 
 import celery

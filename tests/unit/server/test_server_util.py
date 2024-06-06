@@ -1,11 +1,13 @@
 """
 Tests for the `server_util.py` module.
 """
+
 import filecmp
 import hashlib
 import os
-import pytest
 from typing import Dict, Union
+
+import pytest
 
 from merlin.server.server_util import (
     AppYaml,
@@ -16,15 +18,19 @@ from merlin.server.server_util import (
     RedisUsers,
     ServerConfig,
     valid_ipv4,
-    valid_port
+    valid_port,
 )
 
-@pytest.mark.parametrize("valid_ip", [
-    "0.0.0.0",
-    "127.0.0.1",
-    "14.105.200.58",
-    "255.255.255.255",
-])
+
+@pytest.mark.parametrize(
+    "valid_ip",
+    [
+        "0.0.0.0",
+        "127.0.0.1",
+        "14.105.200.58",
+        "255.255.255.255",
+    ],
+)
 def test_valid_ipv4_valid_ip(valid_ip: str):
     """
     Test the `valid_ipv4` function with valid IPs.
@@ -35,12 +41,16 @@ def test_valid_ipv4_valid_ip(valid_ip: str):
     """
     assert valid_ipv4(valid_ip)
 
-@pytest.mark.parametrize("invalid_ip", [
-    "256.0.0.1",
-    "-1.0.0.1",
-    None,
-    "127.0.01",
-])
+
+@pytest.mark.parametrize(
+    "invalid_ip",
+    [
+        "256.0.0.1",
+        "-1.0.0.1",
+        None,
+        "127.0.01",
+    ],
+)
 def test_valid_ipv4_invalid_ip(invalid_ip: Union[str, None]):
     """
     Test the `valid_ipv4` function with invalid IPs.
@@ -52,11 +62,15 @@ def test_valid_ipv4_invalid_ip(invalid_ip: Union[str, None]):
     """
     assert not valid_ipv4(invalid_ip)
 
-@pytest.mark.parametrize("valid_input", [
-    1,
-    433,
-    65535,
-])
+
+@pytest.mark.parametrize(
+    "valid_input",
+    [
+        1,
+        433,
+        65535,
+    ],
+)
 def test_valid_port_valid_input(valid_input: int):
     """
     Test the `valid_port` function with valid port numbers.
@@ -68,11 +82,15 @@ def test_valid_port_valid_input(valid_input: int):
     """
     assert valid_port(valid_input)
 
-@pytest.mark.parametrize("invalid_input", [
-    -1,
-    0,
-    65536,
-])
+
+@pytest.mark.parametrize(
+    "invalid_input",
+    [
+        -1,
+        0,
+        65536,
+    ],
+)
 def test_valid_port_invalid_input(invalid_input: int):
     """
     Test the `valid_port` function with invalid inputs.
@@ -121,13 +139,16 @@ class TestContainerConfig:
         assert config.pass_file == ContainerConfig.PASSWORD_FILE
         assert config.user_file == ContainerConfig.USERS_FILE
 
-    @pytest.mark.parametrize("attr_name", [
-        "image",
-        "config",
-        "pfile",
-        "pass_file",
-        "user_file",
-    ])
+    @pytest.mark.parametrize(
+        "attr_name",
+        [
+            "image",
+            "config",
+            "pfile",
+            "pass_file",
+            "user_file",
+        ],
+    )
     def test_get_path_methods(self, server_container_config_data: Dict[str, str], attr_name: str):
         """
         Tests that get_*_path methods construct the correct path.
@@ -140,17 +161,20 @@ class TestContainerConfig:
         expected_path = os.path.join(server_container_config_data["config_dir"], server_container_config_data[attr_name])
         assert get_path_method() == expected_path
 
-    @pytest.mark.parametrize("getter_name, expected_attr", [
-        ("get_format", "format"),
-        ("get_image_type", "image_type"),
-        ("get_image_name", "image"),
-        ("get_image_url", "url"),
-        ("get_config_name", "config"),
-        ("get_config_dir", "config_dir"),
-        ("get_pfile_name", "pfile"),
-        ("get_pass_file_name", "pass_file"),
-        ("get_user_file_name", "user_file"),
-    ])
+    @pytest.mark.parametrize(
+        "getter_name, expected_attr",
+        [
+            ("get_format", "format"),
+            ("get_image_type", "image_type"),
+            ("get_image_name", "image"),
+            ("get_image_url", "url"),
+            ("get_config_name", "config"),
+            ("get_config_dir", "config_dir"),
+            ("get_pfile_name", "pfile"),
+            ("get_pass_file_name", "pass_file"),
+            ("get_user_file_name", "user_file"),
+        ],
+    )
     def test_getter_methods(self, server_container_config_data: Dict[str, str], getter_name: str, expected_attr: str):
         """
         Tests that all getter methods return the correct attribute values.
@@ -216,12 +240,15 @@ class TestContainerFormatConfig:
         assert config.stop_command == config.STOP_COMMAND
         assert config.pull_command == config.PULL_COMMAND
 
-    @pytest.mark.parametrize("getter_name, expected_attr", [
-        ("get_command", "command"),
-        ("get_run_command", "run_command"),
-        ("get_stop_command", "stop_command"),
-        ("get_pull_command", "pull_command"),
-    ])
+    @pytest.mark.parametrize(
+        "getter_name, expected_attr",
+        [
+            ("get_command", "command"),
+            ("get_run_command", "run_command"),
+            ("get_stop_command", "stop_command"),
+            ("get_pull_command", "pull_command"),
+        ],
+    )
     def test_getter_methods(self, server_container_format_config_data: Dict[str, str], getter_name: str, expected_attr: str):
         """
         Tests that all getter methods return the correct attribute values.
@@ -257,10 +284,13 @@ class TestProcessConfig:
         assert config.status == incomplete_data["status"]
         assert config.kill == config.KILL_COMMAND
 
-    @pytest.mark.parametrize("getter_name, expected_attr", [
-        ("get_status_command", "status"),
-        ("get_kill_command", "kill"),
-    ])
+    @pytest.mark.parametrize(
+        "getter_name, expected_attr",
+        [
+            ("get_status_command", "status"),
+            ("get_kill_command", "kill"),
+        ],
+    )
     def test_getter_methods(self, server_process_config_data: Dict[str, str], getter_name: str, expected_attr: str):
         """
         Tests that all getter methods return the correct attribute values.
@@ -304,7 +334,7 @@ class TestServerConfig:
 class TestRedisUsers:
     """
     Tests for the RedisUsers class.
-    
+
     TODO add integration test(s) for `apply_to_redis` method of this class.
     """
 
@@ -358,7 +388,7 @@ class TestRedisUsers:
                     assert val == "on"
                 else:
                     assert val == test_dict[key]
-                    
+
         def test_set_password(self):
             """Test the `set_password` method of the User class."""
             user = RedisUsers.User()

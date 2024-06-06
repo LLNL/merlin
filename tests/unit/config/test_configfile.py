@@ -1,6 +1,7 @@
 """
 Tests for the configfile.py module.
 """
+
 import getpass
 import os
 import shutil

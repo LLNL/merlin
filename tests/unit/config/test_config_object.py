@@ -1,6 +1,7 @@
 """
 Test the functionality of the Config object.
 """
+
 from copy import copy, deepcopy
 from types import SimpleNamespace
 

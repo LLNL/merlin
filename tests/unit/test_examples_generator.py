@@ -1,6 +1,7 @@
 """
 Tests for the `merlin/examples/generator.py` module.
 """
+
 import os
 from typing import List
 

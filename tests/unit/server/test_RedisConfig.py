@@ -4,12 +4,15 @@ Tests for the RedisConfig class of the `server_util.py` module.
 This class is especially large so that's why these tests have been
 moved to their own file.
 """
+
 import filecmp
 import logging
-import pytest
 from typing import Any
 
+import pytest
+
 from merlin.server.server_util import RedisConfig
+
 
 class TestRedisConfig:
     """Tests for the RedisConfig class."""
@@ -73,10 +76,7 @@ class TestRedisConfig:
         # Check that the contents of the copied file match the contents of the basic file
         assert filecmp.cmp(server_redis_conf_file, copy_redis_conf_file)
 
-    @pytest.mark.parametrize("key, val, expected_return", [
-        ("port", 1234, True),
-        ("invalid_key", "dummy_val", False)
-    ])
+    @pytest.mark.parametrize("key, val, expected_return", [("port", 1234, True), ("invalid_key", "dummy_val", False)])
     def test_set_config_value(self, server_redis_conf_file: str, key: str, val: Any, expected_return: bool):
         """
         Test the `set_config_value` method with valid and invalid keys.
@@ -95,17 +95,20 @@ class TestRedisConfig:
         else:
             assert not redis_config.changes_made()
 
-    @pytest.mark.parametrize("key, expected_val", [
-        ("bind", "127.0.0.1"),
-        ("port", "6379"),
-        ("requirepass", "merlin_password"),
-        ("dir", "./"),
-        ("save", "300 100"),
-        ("dbfilename", "dump.rdb"),
-        ("appendfsync", "everysec"),
-        ("appendfilename", "appendonly.aof"),
-        ("invalid_key", None)
-    ])
+    @pytest.mark.parametrize(
+        "key, expected_val",
+        [
+            ("bind", "127.0.0.1"),
+            ("port", "6379"),
+            ("requirepass", "merlin_password"),
+            ("dir", "./"),
+            ("save", "300 100"),
+            ("dbfilename", "dump.rdb"),
+            ("appendfsync", "everysec"),
+            ("appendfilename", "appendonly.aof"),
+            ("invalid_key", None),
+        ],
+    )
     def test_get_config_value(self, server_redis_conf_file: str, key: str, expected_val: str):
         """
         Test the `get_config_value` method with valid and invalid keys.
@@ -117,18 +120,16 @@ class TestRedisConfig:
         redis_conf = RedisConfig(server_redis_conf_file)
         assert redis_conf.get_config_value(key) == expected_val
 
-    @pytest.mark.parametrize("ip_to_set", [
-        "127.0.0.1",  # Most common IP
-        "0.0.0.0",  # Edge case (low)
-        "255.255.255.255",  # Edge case (high)
-        "123.222.199.20",  # Random valid IP
-    ])
-    def test_set_ip_address_valid(
-        self,
-        caplog: "Fixture",  # noqa: F821
-        server_redis_conf_file: str,
-        ip_to_set: str
-    ):
+    @pytest.mark.parametrize(
+        "ip_to_set",
+        [
+            "127.0.0.1",  # Most common IP
+            "0.0.0.0",  # Edge case (low)
+            "255.255.255.255",  # Edge case (high)
+            "123.222.199.20",  # Random valid IP
+        ],
+    )
+    def test_set_ip_address_valid(self, caplog: "Fixture", server_redis_conf_file: str, ip_to_set: str):  # noqa: F821
         """
         Test the `set_ip_address` method with valid ips. These should all return True
         and set the 'bind' value to whatever `ip_to_set` is.
@@ -143,11 +144,14 @@ class TestRedisConfig:
         assert f"Ipaddress is set to {ip_to_set}" in caplog.text, "Missing expected log message"
         assert redis_config.get_ip_address() == ip_to_set
 
-    @pytest.mark.parametrize("ip_to_set, expected_log", [
-        (None, None),  # No IP
-        ("0.0.0", "Invalid IPv4 address given."),  # Invalid IPv4
-        ("bind-unset", "Unable to set ip address for redis config"),  # Special invalid case where bind doesn't exist
-    ])
+    @pytest.mark.parametrize(
+        "ip_to_set, expected_log",
+        [
+            (None, None),  # No IP
+            ("0.0.0", "Invalid IPv4 address given."),  # Invalid IPv4
+            ("bind-unset", "Unable to set ip address for redis config"),  # Special invalid case where bind doesn't exist
+        ],
+    )
     def test_set_ip_address_invalid(
         self,
         caplog: "Fixture",  # noqa: F821
@@ -174,12 +178,15 @@ class TestRedisConfig:
         if expected_log is not None:
             assert expected_log in caplog.text, "Missing expected log message"
 
-    @pytest.mark.parametrize("port_to_set", [
-        6379,  # Most common port
-        1,  # Edge case (low)
-        65535,  # Edge case (high)
-        12345,  # Random valid port
-    ])
+    @pytest.mark.parametrize(
+        "port_to_set",
+        [
+            6379,  # Most common port
+            1,  # Edge case (low)
+            65535,  # Edge case (high)
+            12345,  # Random valid port
+        ],
+    )
     def test_set_port_valid(
         self,
         caplog: "Fixture",  # noqa: F821
@@ -200,12 +207,15 @@ class TestRedisConfig:
         assert redis_config.get_port() == port_to_set
         assert f"Port is set to {port_to_set}" in caplog.text, "Missing expected log message"
 
-    @pytest.mark.parametrize("port_to_set, expected_log", [
-        (None, None),  # No port
-        (0, "Invalid port given."),  # Edge case (low)
-        (65536, "Invalid port given."),  # Edge case (high)
-        ("port-unset", "Unable to set port for redis config"),  # Special invalid case where port doesn't exist
-    ])
+    @pytest.mark.parametrize(
+        "port_to_set, expected_log",
+        [
+            (None, None),  # No port
+            (0, "Invalid port given."),  # Edge case (low)
+            (65536, "Invalid port given."),  # Edge case (high)
+            ("port-unset", "Unable to set port for redis config"),  # Special invalid case where port doesn't exist
+        ],
+    )
     def test_set_port_invalid(
         self,
         caplog: "Fixture",  # noqa: F821
@@ -232,10 +242,13 @@ class TestRedisConfig:
         if expected_log is not None:
             assert expected_log in caplog.text, "Missing expected log message"
 
-    @pytest.mark.parametrize("pass_to_set, expected_return", [
-        ("valid_password", True),  # Valid password
-        (None, False),  # Invalid password
-    ])
+    @pytest.mark.parametrize(
+        "pass_to_set, expected_return",
+        [
+            ("valid_password", True),  # Valid password
+            (None, False),  # Invalid password
+        ],
+    )
     def test_set_password(
         self,
         caplog: "Fixture",  # noqa: F821
@@ -289,7 +302,7 @@ class TestRedisConfig:
         """
         redis_config = RedisConfig(server_redis_conf_file)
         assert not redis_config.set_directory(None)
-        assert redis_config.get_config_value("dir") != None
+        assert redis_config.get_config_value("dir") is not None
 
     def test_set_directory_dir_unset(
         self,
@@ -327,8 +340,10 @@ class TestRedisConfig:
         save_val = redis_conf.get_config_value("save").split()
         assert save_val[0] == str(snap_sec_to_set)
         assert save_val[1] == str(snap_changes_to_set)
-        expected_log = f"Snapshot wait time is set to {snap_sec_to_set} seconds. " \
-                       f"Snapshot threshold is set to {snap_changes_to_set} changes"
+        expected_log = (
+            f"Snapshot wait time is set to {snap_sec_to_set} seconds. "
+            f"Snapshot threshold is set to {snap_changes_to_set} changes"
+        )
         assert expected_log in caplog.text, "Missing expected log message"
 
     def test_set_snapshot_just_seconds(self, caplog: "Fixture", server_redis_conf_file: str):  # noqa: F821
@@ -432,11 +447,14 @@ class TestRedisConfig:
         assert redis_conf.get_config_value("dbfilename") != filename
         assert "Unable to set snapshot_file name" in caplog.text, "Missing expected log message"
 
-    @pytest.mark.parametrize("mode_to_set", [
-        "always",
-        "everysec",
-        "no",
-    ])
+    @pytest.mark.parametrize(
+        "mode_to_set",
+        [
+            "always",
+            "everysec",
+            "no",
+        ],
+    )
     def test_set_append_mode_valid(
         self,
         caplog: "Fixture",  # noqa: F821
