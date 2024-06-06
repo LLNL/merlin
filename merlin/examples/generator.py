@@ -90,7 +90,7 @@ def list_examples():
     for example_dir in gather_example_dirs():
         directory = os.path.join(os.path.join(EXAMPLES_DIR, example_dir), "")
         specs = glob.glob(directory + "*.yaml")
-        for spec in specs:
+        for spec in sorted(specs):
             if "template" in spec:
                 continue
             with open(spec) as f:  # pylint: disable=C0103
