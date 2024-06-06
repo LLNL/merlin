@@ -170,6 +170,8 @@ def test_list_examples():
     ]
     expected = "\n" + tabulate(expected_rows, expected_headers) + "\n"
     actual = list_examples()
+    print(f"actual:\n{actual}")
+    print(f"expected:\n{expected}")
     assert actual == expected
 
 
@@ -221,6 +223,8 @@ def test_setup_example_no_outdir(examples_testing_dir: str):
     except AssertionError as exc:
         os.chdir(cwd)
         raise AssertionError from exc
+    finally:
+        os.chdir(cwd)
 
 
 def test_setup_example_outdir_exists(examples_testing_dir: str):
