@@ -6,72 +6,6 @@ import pytest
 import yaml
 from typing import Dict
 
-@pytest.fixture(scope="class")
-def server_container_config_data(temp_output_dir: str) -> Dict[str, str]:
-    """
-    Fixture to provide sample data for ContainerConfig tests
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    :returns: A dict containing the necessary key/values for the ContainerConfig object
-    """
-    return {
-        "format": "docker",
-        "image_type": "postgres",
-        "image": "postgres:latest",
-        "url": "postgres://localhost",
-        "config": "postgres.conf",
-        "config_dir": "/path/to/config",
-        "pfile": "merlin_server_postgres.pf",
-        "pass_file": f"{temp_output_dir}/postgres.pass",
-        "user_file": "postgres.users",
-    }
-
-@pytest.fixture(scope="class")
-def server_container_format_config_data() -> Dict[str, str]:
-    """
-    Fixture to provide sample data for ContainerFormatConfig tests
-
-    :returns: A dict containing the necessary key/values for the ContainerFormatConfig object
-    """
-    return {
-        "command": "docker",
-        "run_command": "{command} run --name {name} -d {image}",
-        "stop_command": "{command} stop {name}",
-        "pull_command": "{command} pull {url}",
-    }
-
-@pytest.fixture(scope="class")
-def server_process_config_data() -> Dict[str, str]:
-    """
-    Fixture to provide sample data for ProcessConfig tests
-
-    :returns: A dict containing the necessary key/values for the ProcessConfig object
-    """
-    return {
-        "status": "status {pid}",
-        "kill": "terminate {pid}",
-    }
-
-@pytest.fixture(scope="class")
-def server_server_config(
-    server_container_config_data: Dict[str, str],
-    server_process_config_data: Dict[str, str],
-    server_container_format_config_data: Dict[str, str],
-) -> Dict[str, Dict[str, str]]:
-    """
-    Fixture to provide sample data for ServerConfig tests
-
-    :param server_container_config_data: A pytest fixture of test data to pass to the ContainerConfig class
-    :param server_process_config_data: A pytest fixture of test data to pass to the ProcessConfig class
-    :param server_container_format_config_data: A pytest fixture of test data to pass to the ContainerFormatConfig class
-    :returns: A dictionary containing each of the configuration dicts we'll need
-    """
-    return {
-        "container": server_container_config_data,
-        "process": server_process_config_data,
-        "docker": server_container_format_config_data,
-    }
-
 
 @pytest.fixture(scope="session")
 def server_testing_dir(temp_output_dir: str) -> str:
@@ -81,7 +15,7 @@ def server_testing_dir(temp_output_dir: str) -> str:
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     :returns: The path to the temporary testing directory for server tests
     """
-    testing_dir = f"{temp_output_dir}/server_testing/"
+    testing_dir = f"{temp_output_dir}/server_testing"
     if not os.path.exists(testing_dir):
         os.mkdir(testing_dir)
 
@@ -96,7 +30,7 @@ def server_redis_conf_file(server_testing_dir: str) -> str:
     If a test will modify this file with a file write, you should make a copy of
     this file to modify instead.
 
-    :param server_testing_dir: A pytest fixture that defines a path to the the output directory we'll write to
+    :param server_testing_dir: A pytest fixture that defines a path to the output directory we'll write to
     :returns: The path to the redis configuration file we'll use for testing
     """
     redis_conf_file = f"{server_testing_dir}/redis.conf"
@@ -133,6 +67,26 @@ def server_redis_conf_file(server_testing_dir: str) -> str:
 
     return redis_conf_file
 
+
+@pytest.fixture(scope="session")
+def server_redis_pass_file(server_testing_dir: str) -> str:
+    """
+    Fixture to create a redis password file in the temporary output directory.
+
+    If a test will modify this file with a file write, you should make a copy of
+    this file to modify instead.
+
+    :param server_testing_dir: A pytest fixture that defines a path to the output directory we'll write to
+    :returns: The path to the redis password file
+    """
+    redis_pass_file = f"{server_testing_dir}/redis.pass"
+
+    with open(redis_pass_file, "w") as rpf:
+        rpf.write("server-tests-password")
+
+    return redis_pass_file
+
+
 @pytest.fixture(scope="session")
 def server_users() -> dict:
     """
@@ -158,6 +112,7 @@ def server_users() -> dict:
     }
     return users
 
+
 @pytest.fixture(scope="session")
 def server_redis_users_file(server_testing_dir: str, server_users: dict) -> str:
     """
@@ -166,7 +121,7 @@ def server_redis_users_file(server_testing_dir: str, server_users: dict) -> str:
     If a test will modify this file with a file write, you should make a copy of
     this file to modify instead.
 
-    :param server_testing_dir: A pytest fixture that defines a path to the the output directory we'll write to
+    :param server_testing_dir: A pytest fixture that defines a path to the output directory we'll write to
     :param server_users: A dict of test user configurations
     :returns: The path to the redis user configuration file we'll use for testing
     """
@@ -176,3 +131,82 @@ def server_redis_users_file(server_testing_dir: str, server_users: dict) -> str:
         yaml.dump(server_users, ruf)
 
     return redis_users_file
+
+
+@pytest.fixture(scope="class")
+def server_container_config_data(
+    server_testing_dir: str,
+    server_redis_conf_file: str,
+    server_redis_pass_file: str,
+    server_redis_users_file: str,
+) -> Dict[str, str]:
+    """
+    Fixture to provide sample data for ContainerConfig tests.
+
+    :param server_testing_dir: A pytest fixture that defines a path to the output directory we'll write to
+    :param server_redis_conf_file: A pytest fixture that defines a path to a redis configuration file
+    :param server_redis_pass_file: A pytest fixture that defines a path to a redis password file
+    :param server_redis_users_file: A pytest fixture that defines a path to a redis users file
+    :returns: A dict containing the necessary key/values for the ContainerConfig object
+    """
+
+    return {
+        "format": "singularity",
+        "image_type": "redis",
+        "image": "redis_latest.sif",
+        "url": "docker://redis",
+        "config": server_redis_conf_file.split("/")[-1],
+        "config_dir": server_testing_dir,
+        "pfile": "merlin_server.pf",
+        "pass_file": server_redis_pass_file.split("/")[-1],
+        "user_file": server_redis_users_file.split("/")[-1],
+    }
+
+
+@pytest.fixture(scope="class")
+def server_container_format_config_data() -> Dict[str, str]:
+    """
+    Fixture to provide sample data for ContainerFormatConfig tests
+
+    :returns: A dict containing the necessary key/values for the ContainerFormatConfig object
+    """
+    return {
+        "command": "singularity",
+        "run_command": "{command} run -H {home_dir} {image} {config}",
+        "stop_command": "kill",
+        "pull_command": "{command} pull {image} {url}",
+    }
+
+
+@pytest.fixture(scope="class")
+def server_process_config_data() -> Dict[str, str]:
+    """
+    Fixture to provide sample data for ProcessConfig tests
+
+    :returns: A dict containing the necessary key/values for the ProcessConfig object
+    """
+    return {
+        "status": "pgrep -P {pid}",
+        "kill": "kill {pid}",
+    }
+
+
+@pytest.fixture(scope="class")
+def server_server_config(
+    server_container_config_data: Dict[str, str],
+    server_process_config_data: Dict[str, str],
+    server_container_format_config_data: Dict[str, str],
+) -> Dict[str, Dict[str, str]]:
+    """
+    Fixture to provide sample data for ServerConfig tests
+
+    :param server_container_config_data: A pytest fixture of test data to pass to the ContainerConfig class
+    :param server_process_config_data: A pytest fixture of test data to pass to the ProcessConfig class
+    :param server_container_format_config_data: A pytest fixture of test data to pass to the ContainerFormatConfig class
+    :returns: A dictionary containing each of the configuration dicts we'll need
+    """
+    return {
+        "container": server_container_config_data,
+        "process": server_process_config_data,
+        "singularity": server_container_format_config_data,
+    }
