@@ -3,6 +3,7 @@ Tests for the `merlin/examples/generator.py` module.
 """
 
 import os
+import pytest
 from typing import List
 
 from tabulate import tabulate
@@ -83,32 +84,27 @@ def test_gather_all_examples():
     assert sorted(actual) == sorted(expected)
 
 
-def test_write_example_dir(temp_output_dir: str):
+def test_write_example_dir(examples_testing_dir: str):
     """
     Test the `write_example` function with the src_path as a directory.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    :param examples_testing_dir: The path to the the temp output directory for examples tests
     """
-    generator_dir = EXAMPLES_GENERATOR_DIR.format(temp_output_dir=temp_output_dir)
     dir_to_copy = f"{EXAMPLES_DIR}/feature_demo/"
+    dst_dir = f"{examples_testing_dir}/write_example_dir"
+    write_example(dir_to_copy, dst_dir)
+    assert sorted(os.listdir(dir_to_copy)) == sorted(os.listdir(dst_dir))
 
-    write_example(dir_to_copy, generator_dir)
-    assert sorted(os.listdir(dir_to_copy)) == sorted(os.listdir(generator_dir))
 
-
-def test_write_example_file(temp_output_dir: str):
+def test_write_example_file(examples_testing_dir: str):
     """
     Test the `write_example` function with the src_path as a file.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    :param examples_testing_dir: The path to the the temp output directory for examples tests
     """
-    generator_dir = EXAMPLES_GENERATOR_DIR.format(temp_output_dir=temp_output_dir)
-    create_dir(generator_dir)
-
-    dst_path = f"{generator_dir}/flux_par.yaml"
     file_to_copy = f"{EXAMPLES_DIR}/flux/flux_par.yaml"
-
-    write_example(file_to_copy, generator_dir)
+    dst_path = f"{examples_testing_dir}/flux_par.yaml"
+    write_example(file_to_copy, dst_path)
     assert os.path.exists(dst_path)
 
 
@@ -174,6 +170,8 @@ def test_list_examples():
     ]
     expected = "\n" + tabulate(expected_rows, expected_headers) + "\n"
     actual = list_examples()
+    print(f"expected:\n{expected}")
+    print(f"actual:\n{actual}")
     assert actual == expected
 
 
@@ -185,7 +183,7 @@ def test_setup_example_invalid_name():
     assert setup_example("invalid_example_name", None) is None
 
 
-def test_setup_example_no_outdir(temp_output_dir: str):
+def test_setup_example_no_outdir(examples_testing_dir: str):
     """
     Test the `setup_example` function with an invalid example name.
     This should create a directory with the example name (in this case hello)
@@ -194,14 +192,12 @@ def test_setup_example_no_outdir(temp_output_dir: str):
     the `setup_example` function creates the hello/ subdirectory in a directory with
     the name of this test (setup_no_outdir).
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    :param examples_testing_dir: The path to the the temp output directory for examples tests
     """
     cwd = os.getcwd()
 
     # Create the temp path to store this setup and move into that directory
-    generator_dir = EXAMPLES_GENERATOR_DIR.format(temp_output_dir=temp_output_dir)
-    create_dir(generator_dir)
-    setup_example_dir = os.path.join(generator_dir, "setup_no_outdir")
+    setup_example_dir = os.path.join(examples_testing_dir, "setup_no_outdir")
     create_dir(setup_example_dir)
     os.chdir(setup_example_dir)
 
@@ -229,37 +225,226 @@ def test_setup_example_no_outdir(temp_output_dir: str):
         raise AssertionError from exc
 
 
-def test_setup_example_outdir_exists(temp_output_dir: str):
+def test_setup_example_outdir_exists(examples_testing_dir: str):
     """
     Test the `setup_example` function with an output directory that already exists.
     This should just return None.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    :param examples_testing_dir: The path to the the temp output directory for examples tests
     """
-    generator_dir = EXAMPLES_GENERATOR_DIR.format(temp_output_dir=temp_output_dir)
-    create_dir(generator_dir)
-
-    assert setup_example("hello", generator_dir) is None
+    assert setup_example("hello", examples_testing_dir) is None
 
 
-#####################################
-# Tests for setting up each example #
-#####################################
-
-
-def run_setup_example(temp_output_dir: str, example_name: str, example_files: List[str], expected_return: str):
+@pytest.mark.parametrize(
+    "example_name, example_files, expected_return",
+    [
+        (
+            "feature_demo",
+            [
+                ".gitignore",
+                "feature_demo.yaml",
+                "requirements.txt",
+                "scripts/features.json",
+                "scripts/hello_world.py",
+                "scripts/pgen.py",
+            ],
+            "feature_demo",
+        ),
+        (
+            "flux_local",
+            [
+                "flux_local.yaml",
+                "flux_par_restart.yaml",
+                "flux_par.yaml",
+                "paper.yaml",
+                "requirements.txt",
+                "scripts/flux_info.py",
+                "scripts/hello_sleep.c",
+                "scripts/hello.c",
+                "scripts/make_samples.py",
+                "scripts/paper_workers.sbatch",
+                "scripts/test_workers.sbatch",
+                "scripts/workers.sbatch",
+                "scripts/workers.bsub",
+            ],
+            "flux",
+        ),
+        (
+            "lsf_par",
+            [
+                "lsf_par_srun.yaml",
+                "lsf_par.yaml",
+                "scripts/hello.c",
+                "scripts/make_samples.py",
+            ],
+            "lsf",
+        ),
+        (
+            "slurm_par",
+            [
+                "slurm_par.yaml",
+                "slurm_par_restart.yaml",
+                "requirements.txt",
+                "scripts/hello.c",
+                "scripts/make_samples.py",
+                "scripts/test_workers.sbatch",
+                "scripts/workers.sbatch",
+            ],
+            "slurm",
+        ),
+        (
+            "hello",
+            [
+                "hello_samples.yaml",
+                "hello.yaml",
+                "my_hello.yaml",
+                "requirements.txt",
+                "make_samples.py",
+            ],
+            "hello",
+        ),
+        (
+            "hpc_demo",
+            [
+                "hpc_demo.yaml",
+                "cumulative_sample_processor.py",
+                "faker_sample.py",
+                "sample_collector.py",
+                "sample_processor.py",
+                "requirements.txt",
+            ],
+            "hpc_demo",
+        ),
+        (
+            "iterative_demo",
+            [
+                "iterative_demo.yaml",
+                "cumulative_sample_processor.py",
+                "faker_sample.py",
+                "sample_collector.py",
+                "sample_processor.py",
+                "requirements.txt",
+            ],
+            "iterative_demo",
+        ),
+        (
+            "null_spec",
+            [
+                "null_spec.yaml",
+                "null_chain.yaml",
+                ".gitignore",
+                "Makefile",
+                "requirements.txt",
+                "scripts/aggregate_chain_output.sh",
+                "scripts/aggregate_output.sh",
+                "scripts/check_completion.sh",
+                "scripts/kill_all.sh",
+                "scripts/launch_chain_job.py",
+                "scripts/launch_jobs.py",
+                "scripts/make_samples.py",
+                "scripts/read_output_chain.py",
+                "scripts/read_output.py",
+                "scripts/search.sh",
+                "scripts/submit_chain.sbatch",
+                "scripts/submit.sbatch",
+            ],
+            "null_spec",
+        ),
+        (
+            "openfoam_wf",
+            [
+                "openfoam_wf.yaml",
+                "openfoam_wf_docker_template.yaml",
+                "README.md",
+                "requirements.txt",
+                "scripts/make_samples.py",
+                "scripts/blockMesh_template.txt",
+                "scripts/cavity_setup.sh",
+                "scripts/combine_outputs.py",
+                "scripts/learn.py",
+                "scripts/mesh_param_script.py",
+                "scripts/run_openfoam",
+            ],
+            "openfoam_wf",
+        ),
+        (
+            "openfoam_wf_no_docker",
+            [
+                "openfoam_wf_no_docker.yaml",
+                "openfoam_wf_no_docker_template.yaml",
+                "requirements.txt",
+                "scripts/make_samples.py",
+                "scripts/blockMesh_template.txt",
+                "scripts/cavity_setup.sh",
+                "scripts/combine_outputs.py",
+                "scripts/learn.py",
+                "scripts/mesh_param_script.py",
+                "scripts/run_openfoam",
+            ],
+            "openfoam_wf_no_docker",
+        ),
+        (
+            "openfoam_wf_singularity",
+            [
+                "openfoam_wf_singularity.yaml",
+                "openfoam_wf_singularity_template.yaml",
+                "requirements.txt",
+                "scripts/make_samples.py",
+                "scripts/blockMesh_template.txt",
+                "scripts/cavity_setup.sh",
+                "scripts/combine_outputs.py",
+                "scripts/learn.py",
+                "scripts/mesh_param_script.py",
+                "scripts/run_openfoam",
+            ],
+            "openfoam_wf_singularity",
+        ),
+        (
+            "optimization_basic",
+            [
+                "optimization_basic.yaml",
+                "requirements.txt",
+                "template_config.py",
+                "template_optimization.temp",
+                "scripts/collector.py",
+                "scripts/optimizer.py",
+                "scripts/test_functions.py",
+                "scripts/visualizer.py",
+            ],
+            "optimization",
+        ),
+        (
+            "remote_feature_demo",
+            [
+                ".gitignore",
+                "remote_feature_demo.yaml",
+                "requirements.txt",
+                "scripts/features.json",
+                "scripts/hello_world.py",
+                "scripts/pgen.py",
+            ],
+            "remote_feature_demo",
+        ),
+        ("restart", ["restart.yaml", "scripts/make_samples.py"], "restart"),
+        ("restart_delay", ["restart_delay.yaml", "scripts/make_samples.py"], "restart_delay"),
+    ],
+)
+def test_setup_example(examples_testing_dir: str, example_name: str, example_files: List[str], expected_return: str):
     """
-    Helper function to run tests for the `setup_example` function.
+    Run tests for the `setup_example` function.
+    Each test will consist of:
+    1. The name of the example to setup
+    2. A list of files that we're expecting to be setup
+    3. The expected return value
+    Each test is a tuple in the parametrize decorator above this test function.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    :param examples_testing_dir: The path to the the temp output directory for examples tests
     :param example_name: The name of the example to setup
     :param example_files: A list of filenames that should be copied by setup_example
     :param expected_return: The expected return value from `setup_example`
     """
     # Create the temp path to store this setup
-    generator_dir = EXAMPLES_GENERATOR_DIR.format(temp_output_dir=temp_output_dir)
-    create_dir(generator_dir)
-    setup_example_dir = os.path.join(generator_dir, f"setup_{example_name}")
+    setup_example_dir = os.path.join(examples_testing_dir, f"setup_{example_name}")
 
     # Ensure that the example name is returned
     actual = setup_example(example_name, setup_example_dir)
@@ -271,317 +456,16 @@ def run_setup_example(temp_output_dir: str, example_name: str, example_files: Li
         assert os.path.exists(file)
 
 
-def test_setup_example_feature_demo(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the feature_demo example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "feature_demo"
-    example_files = [
-        ".gitignore",
-        "feature_demo.yaml",
-        "requirements.txt",
-        "scripts/features.json",
-        "scripts/hello_world.py",
-        "scripts/pgen.py",
-    ]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_flux(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the flux example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_files = [
-        "flux_local.yaml",
-        "flux_par_restart.yaml",
-        "flux_par.yaml",
-        "paper.yaml",
-        "requirements.txt",
-        "scripts/flux_info.py",
-        "scripts/hello_sleep.c",
-        "scripts/hello.c",
-        "scripts/make_samples.py",
-        "scripts/paper_workers.sbatch",
-        "scripts/test_workers.sbatch",
-        "scripts/workers.sbatch",
-        "scripts/workers.bsub",
-    ]
-
-    run_setup_example(temp_output_dir, "flux_local", example_files, "flux")
-
-
-def test_setup_example_lsf(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the lsf example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-
-    # TODO should there be a workers.bsub for this example?
-    example_files = [
-        "lsf_par_srun.yaml",
-        "lsf_par.yaml",
-        "scripts/hello.c",
-        "scripts/make_samples.py",
-    ]
-
-    run_setup_example(temp_output_dir, "lsf_par", example_files, "lsf")
-
-
-def test_setup_example_slurm(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the slurm example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_files = [
-        "slurm_par.yaml",
-        "slurm_par_restart.yaml",
-        "requirements.txt",
-        "scripts/hello.c",
-        "scripts/make_samples.py",
-        "scripts/test_workers.sbatch",
-        "scripts/workers.sbatch",
-    ]
-
-    run_setup_example(temp_output_dir, "slurm_par", example_files, "slurm")
-
-
-def test_setup_example_hello(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the hello example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "hello"
-    example_files = [
-        "hello_samples.yaml",
-        "hello.yaml",
-        "my_hello.yaml",
-        "requirements.txt",
-        "make_samples.py",
-    ]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_hpc(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the hpc_demo example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "hpc_demo"
-    example_files = [
-        "hpc_demo.yaml",
-        "cumulative_sample_processor.py",
-        "faker_sample.py",
-        "sample_collector.py",
-        "sample_processor.py",
-        "requirements.txt",
-    ]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_iterative(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the iterative_demo example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "iterative_demo"
-    example_files = [
-        "iterative_demo.yaml",
-        "cumulative_sample_processor.py",
-        "faker_sample.py",
-        "sample_collector.py",
-        "sample_processor.py",
-        "requirements.txt",
-    ]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_null(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the null_spec example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "null_spec"
-    example_files = [
-        "null_spec.yaml",
-        "null_chain.yaml",
-        ".gitignore",
-        "Makefile",
-        "requirements.txt",
-        "scripts/aggregate_chain_output.sh",
-        "scripts/aggregate_output.sh",
-        "scripts/check_completion.sh",
-        "scripts/kill_all.sh",
-        "scripts/launch_chain_job.py",
-        "scripts/launch_jobs.py",
-        "scripts/make_samples.py",
-        "scripts/read_output_chain.py",
-        "scripts/read_output.py",
-        "scripts/search.sh",
-        "scripts/submit_chain.sbatch",
-        "scripts/submit.sbatch",
-    ]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_openfoam(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the openfoam_wf example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "openfoam_wf"
-    example_files = [
-        "openfoam_wf.yaml",
-        "openfoam_wf_docker_template.yaml",
-        "README.md",
-        "requirements.txt",
-        "scripts/make_samples.py",
-        "scripts/blockMesh_template.txt",
-        "scripts/cavity_setup.sh",
-        "scripts/combine_outputs.py",
-        "scripts/learn.py",
-        "scripts/mesh_param_script.py",
-        "scripts/run_openfoam",
-    ]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_openfoam_no_docker(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the openfoam_wf_no_docker example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "openfoam_wf_no_docker"
-    example_files = [
-        "openfoam_wf_no_docker.yaml",
-        "openfoam_wf_no_docker_template.yaml",
-        "requirements.txt",
-        "scripts/make_samples.py",
-        "scripts/blockMesh_template.txt",
-        "scripts/cavity_setup.sh",
-        "scripts/combine_outputs.py",
-        "scripts/learn.py",
-        "scripts/mesh_param_script.py",
-        "scripts/run_openfoam",
-    ]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_openfoam_singularity(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the openfoam_wf_singularity example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "openfoam_wf_singularity"
-    example_files = [
-        "openfoam_wf_singularity.yaml",
-        "openfoam_wf_singularity_template.yaml",
-        "requirements.txt",
-        "scripts/make_samples.py",
-        "scripts/blockMesh_template.txt",
-        "scripts/cavity_setup.sh",
-        "scripts/combine_outputs.py",
-        "scripts/learn.py",
-        "scripts/mesh_param_script.py",
-        "scripts/run_openfoam",
-    ]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_optimization(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the optimization example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_files = [
-        "optimization_basic.yaml",
-        "requirements.txt",
-        "template_config.py",
-        "template_optimization.temp",
-        "scripts/collector.py",
-        "scripts/optimizer.py",
-        "scripts/test_functions.py",
-        "scripts/visualizer.py",
-    ]
-
-    run_setup_example(temp_output_dir, "optimization_basic", example_files, "optimization")
-
-
-def test_setup_example_remote_feature_demo(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the remote_feature_demo example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "remote_feature_demo"
-    example_files = [
-        ".gitignore",
-        "remote_feature_demo.yaml",
-        "requirements.txt",
-        "scripts/features.json",
-        "scripts/hello_world.py",
-        "scripts/pgen.py",
-    ]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_restart(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the restart example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "restart"
-    example_files = ["restart.yaml", "scripts/make_samples.py"]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_restart_delay(temp_output_dir: str):
-    """
-    Test the `setup_example` function for the restart_delay example.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    example_name = "restart_delay"
-    example_files = ["restart_delay.yaml", "scripts/make_samples.py"]
-
-    run_setup_example(temp_output_dir, example_name, example_files, example_name)
-
-
-def test_setup_example_simple_chain(temp_output_dir: str):
+def test_setup_example_simple_chain(examples_testing_dir: str):
     """
     Test the `setup_example` function for the simple_chain example.
+    This example just writes a single file so we can't run it in the `test_setup_example` test.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    :param examples_testing_dir: The path to the the temp output directory for examples tests
     """
 
     # Create the temp path to store this setup
-    generator_dir = EXAMPLES_GENERATOR_DIR.format(temp_output_dir=temp_output_dir)
-    create_dir(generator_dir)
-    output_file = os.path.join(generator_dir, "simple_chain.yaml")
+    output_file = os.path.join(examples_testing_dir, "simple_chain.yaml")
 
     # Ensure that the example name is returned
     actual = setup_example("simple_chain", output_file)
