@@ -60,7 +60,7 @@ EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflo
 def gather_example_dirs():
     """Get all the example directories"""
     result = {}
-    for directory in os.listdir(EXAMPLES_DIR):
+    for directory in sorted(os.listdir(EXAMPLES_DIR)):
         result[directory] = directory
     return result
 
