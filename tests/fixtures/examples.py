@@ -3,7 +3,9 @@ Fixtures specifically for help testing the modules in the examples/ directory.
 """
 
 import os
+
 import pytest
+
 
 @pytest.fixture(scope="session")
 def examples_testing_dir(temp_output_dir: str) -> str:

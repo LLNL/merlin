@@ -3,9 +3,9 @@ Tests for the `merlin/examples/generator.py` module.
 """
 
 import os
-import pytest
 from typing import List
 
+import pytest
 from tabulate import tabulate
 
 from merlin.examples.generator import (
