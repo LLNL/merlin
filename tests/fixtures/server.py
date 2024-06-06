@@ -210,3 +210,65 @@ def server_server_config(
         "process": server_process_config_data,
         "singularity": server_container_format_config_data,
     }
+
+
+@pytest.fixture(scope="function")
+def server_app_yaml_contents(
+    server_redis_pass_file: str,
+    server_container_config_data: Dict[str, str],
+    server_process_config_data: Dict[str, str],
+) -> Dict[str, str]:
+    """
+    Fixture to create the contents of an app.yaml file.
+
+    :param server_redis_pass_file: A pytest fixture that defines a path to a redis password file
+    :param server_container_config_data: A pytest fixture of test data to pass to the ContainerConfig class
+    :param server_process_config_data: A pytest fixture of test data to pass to the ProcessConfig class
+    :returns: A dict with typical app.yaml contents
+    """
+    contents = {
+        "broker": {
+            "cert_reqs": "none",
+            "name": "redis",
+            "password": server_redis_pass_file,
+            "port": 6379,
+            "server": "127.0.0.1",
+            "username": "default",
+            "vhost": "testhost",
+        },
+        "container": server_container_config_data,
+        "process": server_process_config_data,
+        "results_backend": {
+            "cert_reqs": "none",
+            "db_num": 0,
+            "name": "redis",
+            "password": server_redis_pass_file,
+            "port": 6379,
+            "server": "127.0.0.1",
+            "username": "default",
+        }
+    }
+    return contents
+
+
+@pytest.fixture(scope="function")
+def server_app_yaml(server_testing_dir: str, server_app_yaml_contents: dict) -> str:
+    """
+    Fixture to create an app.yaml file in the temporary output directory.
+
+    If a test will modify this file with a file write, you should make a copy of
+    this file to modify instead.
+
+    NOTE this must be function scoped since server_app_yaml_contents is function scoped.
+
+    :param server_testing_dir: A pytest fixture that defines a path to the output directory we'll write to
+    :param server_app_yaml_contents: A pytest fixture that creates a dict of contents for an app.yaml file
+    :returns: The path to the app.yaml file
+    """
+    app_yaml_file = f"{server_testing_dir}/app.yaml"
+
+    if not os.path.exists(app_yaml_file):
+        with open(app_yaml_file, "w") as ayf:
+            yaml.dump(server_app_yaml_contents, ayf)
+
+    return app_yaml_file
