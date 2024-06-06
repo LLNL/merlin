@@ -1,6 +1,7 @@
 """
 Tests for the `sample_index.py` and `sample_index_factory.py` files.
 """
+
 import os
 
 import pytest

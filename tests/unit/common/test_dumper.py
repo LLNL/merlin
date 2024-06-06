@@ -1,20 +1,26 @@
 """
 Tests for the `dumper.py` file.
 """
+
 import csv
 import json
 import os
-import pytest
-
 from datetime import datetime
 from time import sleep
 
+import pytest
+
 from merlin.common.dumper import dump_handler
 
+
 NUM_ROWS = 5
-CSV_INFO_TO_DUMP = {"row_num": [i for i in range(1, NUM_ROWS+1)], "other_info": [f"test_info_{i}" for i in range(1, NUM_ROWS+1)]}
-JSON_INFO_TO_DUMP = {str(i): {f"other_info_{i}": f"test_info_{i}"} for i in range(1, NUM_ROWS+1)}
+CSV_INFO_TO_DUMP = {
+    "row_num": [i for i in range(1, NUM_ROWS + 1)],
+    "other_info": [f"test_info_{i}" for i in range(1, NUM_ROWS + 1)],
+}
+JSON_INFO_TO_DUMP = {str(i): {f"other_info_{i}": f"test_info_{i}"} for i in range(1, NUM_ROWS + 1)}
 DUMP_HANDLER_DIR = "{temp_output_dir}/dump_handler"
+
 
 def test_dump_handler_invalid_dump_file():
     """
@@ -24,6 +30,7 @@ def test_dump_handler_invalid_dump_file():
     with pytest.raises(ValueError) as excinfo:
         dump_handler("bad_file.txt", CSV_INFO_TO_DUMP)
     assert "Invalid file type for bad_file.txt. Supported file types are: ['csv', 'json']" in str(excinfo.value)
+
 
 def get_output_file(temp_dir: str, file_name: str):
     """
@@ -37,6 +44,7 @@ def get_output_file(temp_dir: str, file_name: str):
         os.mkdir(dump_dir)
     dump_file = f"{dump_dir}/{file_name}"
     return dump_file
+
 
 def run_csv_dump_test(dump_file: str, fmode: str):
     """
@@ -52,16 +60,17 @@ def run_csv_dump_test(dump_file: str, fmode: str):
         reader = csv.reader(df)
         written_data = list(reader)
 
-    expected_rows = NUM_ROWS*2 if fmode == "a" else NUM_ROWS
-    assert len(written_data) == expected_rows+1  # Adding one because of the header row
+    expected_rows = NUM_ROWS * 2 if fmode == "a" else NUM_ROWS
+    assert len(written_data) == expected_rows + 1  # Adding one because of the header row
     for i, row in enumerate(written_data):
         assert len(row) == 2  # Check number of columns
         if i == 0:  # Checking the header row
             assert row[0] == "row_num"
             assert row[1] == "other_info"
         else:  # Checking the data rows
-            assert row[0] == str(CSV_INFO_TO_DUMP["row_num"][(i%NUM_ROWS)-1])
-            assert row[1] == str(CSV_INFO_TO_DUMP["other_info"][(i%NUM_ROWS)-1])
+            assert row[0] == str(CSV_INFO_TO_DUMP["row_num"][(i % NUM_ROWS) - 1])
+            assert row[1] == str(CSV_INFO_TO_DUMP["other_info"][(i % NUM_ROWS) - 1])
+
 
 def test_dump_handler_csv_write(temp_output_dir: str):
     """
@@ -80,6 +89,7 @@ def test_dump_handler_csv_write(temp_output_dir: str):
     # Assert that everything ran properly
     run_csv_dump_test(dump_file, "w")
 
+
 def test_dump_handler_csv_append(temp_output_dir: str):
     """
     This is really testing the write method of the Dumper class with the file write mode set to append.
@@ -93,12 +103,13 @@ def test_dump_handler_csv_append(temp_output_dir: str):
 
     # Run the first call to create the csv file
     dump_handler(dump_file, CSV_INFO_TO_DUMP)
-    
+
     # Run the second call to append to the csv file
     dump_handler(dump_file, CSV_INFO_TO_DUMP)
 
     # Assert that everything ran properly
     run_csv_dump_test(dump_file, "a")
+
 
 def test_dump_handler_json_write(temp_output_dir: str):
     """
@@ -120,6 +131,7 @@ def test_dump_handler_json_write(temp_output_dir: str):
         contents = json.load(df)
     assert contents == JSON_INFO_TO_DUMP
 
+
 def test_dump_handler_json_append(temp_output_dir: str):
     """
     This is really testing the write method of the Dumper class with the file write mode set to append.
@@ -137,7 +149,7 @@ def test_dump_handler_json_append(temp_output_dir: str):
     dump_handler(dump_file, first_dump)
 
     # Sleep so we don't accidentally get the same timestamp
-    sleep(.5)
+    sleep(0.5)
 
     # Run the second call to append to the file
     timestamp_2 = str(datetime.now())

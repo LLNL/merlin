@@ -13,8 +13,10 @@ import yaml
 
 from tests.unit.study.status_test_files import status_test_variables
 
+# pylint: disable=redefined-outer-name
 
-@pytest.fixture(scope="session")
+
+@pytest.fixture(scope="class")
 def status_testing_dir(temp_output_dir: str) -> str:
     """
     A pytest fixture to set up a temporary directory to write files to for testing status.
@@ -29,7 +31,7 @@ def status_testing_dir(temp_output_dir: str) -> str:
     return testing_dir
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="class")
 def status_empty_file(status_testing_dir: str) -> str:  # pylint: disable=W0621
     """
     A pytest fixture to create an empty status file.

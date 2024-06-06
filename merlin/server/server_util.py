@@ -124,7 +124,7 @@ class ContainerConfig:  # pylint: disable=R0902
     def __eq__(self, other: "ContainerFormatConfig"):
         """
         Equality magic method used for testing this class
-        
+
         :param other: Another ContainerFormatConfig object to check if they're the same
         """
         variables = ("format", "image_type", "image", "url", "config", "config_dir", "pfile", "pass_file", "user_file")
@@ -220,7 +220,7 @@ class ContainerFormatConfig:
     def __eq__(self, other: "ContainerFormatConfig"):
         """
         Equality magic method used for testing this class
-        
+
         :param other: Another ContainerFormatConfig object to check if they're the same
         """
         variables = ("command", "run_command", "stop_command", "pull_command")
@@ -263,7 +263,7 @@ class ProcessConfig:
     def __eq__(self, other: "ProcessConfig"):
         """
         Equality magic method used for testing this class
-        
+
         :param other: Another ProcessConfig object to check if they're the same
         """
         variables = ("status", "kill")
@@ -441,7 +441,7 @@ class RedisConfig:
         """
         Sets the 'seconds' and/or 'changes' values of the snapshot setting,
         depending on what the user requests.
-        
+
         :param seconds: The first value of snapshot to change. If we're leaving it the
                         same this will be None.
         :param changes: The second value of snapshot to change. If we're leaving it the

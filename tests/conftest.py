@@ -49,6 +49,9 @@ from tests.context_managers.server_manager import RedisServerManager
 from tests.utils import create_cert_files, create_pass_file
 
 
+# pylint: disable=redefined-outer-name
+
+
 #######################################
 # Loading in Module Specific Fixtures #
 #######################################
@@ -114,7 +117,7 @@ def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
 
 
 @pytest.fixture(scope="session")
-def merlin_server_dir(temp_output_dir: str) -> str:  # pylint: disable=redefined-outer-name
+def merlin_server_dir(temp_output_dir: str) -> str:
     """
     The path to the merlin_server directory that will be created by the `redis_server` fixture.
 
@@ -128,7 +131,7 @@ def merlin_server_dir(temp_output_dir: str) -> str:  # pylint: disable=redefined
 
 
 @pytest.fixture(scope="session")
-def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:  # pylint: disable=redefined-outer-name
+def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:
     """
     Start a redis server instance that runs on localhost:6379. This will yield the
     redis server uri that can be used to create a connection with celery.
@@ -149,7 +152,7 @@ def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:  # 
 
 
 @pytest.fixture(scope="session")
-def celery_app(redis_server: str) -> Celery:  # pylint: disable=redefined-outer-name
+def celery_app(redis_server: str) -> Celery:
     """
     Create the celery app to be used throughout our integration tests.
 
@@ -160,7 +163,7 @@ def celery_app(redis_server: str) -> Celery:  # pylint: disable=redefined-outer-
 
 
 @pytest.fixture(scope="session")
-def sleep_sig(celery_app: Celery) -> Signature:  # pylint: disable=redefined-outer-name
+def sleep_sig(celery_app: Celery) -> Signature:
     """
     Create a task registered to our celery app and return a signature for it.
     Once requested by a test, you can set the queue you'd like to send this to
@@ -192,7 +195,7 @@ def worker_queue_map() -> Dict[str, str]:
 
 
 @pytest.fixture(scope="class")
-def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):  # pylint: disable=redefined-outer-name
+def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):
     """
     Launch the workers on the celery app fixture using the worker and queue names
     defined in the worker_queue_map fixture.
@@ -235,7 +238,7 @@ def test_encryption_key() -> bytes:
 
 
 @pytest.fixture(scope="function")
-def config(merlin_server_dir: str, test_encryption_key: bytes):  # pylint: disable=redefined-outer-name
+def config(merlin_server_dir: str, test_encryption_key: bytes):
     """
     DO NOT USE THIS FIXTURE IN A TEST, USE `redis_config` OR `rabbit_config` INSTEAD.
     This fixture is intended to be used strictly by the `redis_config` and `rabbit_config`

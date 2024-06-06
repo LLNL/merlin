@@ -1,6 +1,7 @@
 """
 Tests for the `results_backend.py` file.
 """
+
 import os
 from ssl import CERT_NONE
 from typing import Any, Dict

@@ -1,10 +1,15 @@
 """
 Fixtures specifically for help testing the modules in the server/ directory.
 """
+
 import os
+from typing import Dict, Union
+
 import pytest
 import yaml
-from typing import Dict, Union
+
+
+# pylint: disable=redefined-outer-name
 
 
 @pytest.fixture(scope="session")
@@ -60,7 +65,9 @@ def server_redis_conf_file(server_testing_dir: str) -> str:
     appendfilename appendonly.aof
 
     # dummy trailing comment
-    """.strip().replace("    ", "")
+    """.strip().replace(
+        "    ", ""
+    )
 
     with open(redis_conf_file, "w") as rcf:
         rcf.write(file_contents)
@@ -96,19 +103,19 @@ def server_users() -> Dict[str, Dict[str, str]]:
     """
     users = {
         "default": {
-            "channels": '*',
-            "commands": '@all',
-            "hash_password": '1ba9249af0c73dacb0f9a70567126624076b5bee40de811e65f57eabcdaf490a',
-            "keys": '*',
-            "status": 'on',
+            "channels": "*",
+            "commands": "@all",
+            "hash_password": "1ba9249af0c73dacb0f9a70567126624076b5bee40de811e65f57eabcdaf490a",
+            "keys": "*",
+            "status": "on",
         },
         "test_user": {
-            "channels": '*',
-            "commands": '@all',
-            "hash_password": '1ba9249af0c73dacb0f9a70567126624076b5bee40de811e65f57eabcdaf490a',
-            "keys": '*',
-            "status": 'on',
-        }
+            "channels": "*",
+            "commands": "@all",
+            "hash_password": "1ba9249af0c73dacb0f9a70567126624076b5bee40de811e65f57eabcdaf490a",
+            "keys": "*",
+            "status": "on",
+        },
     }
     return users
 
@@ -246,7 +253,7 @@ def server_app_yaml_contents(
             "port": 6379,
             "server": "127.0.0.1",
             "username": "default",
-        }
+        },
     }
     return contents
 

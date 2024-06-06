@@ -1,6 +1,7 @@
 """
 Tests for the `util_sampling.py` file.
 """
+
 import numpy as np
 import pytest
 
