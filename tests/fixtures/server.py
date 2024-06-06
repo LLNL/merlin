@@ -4,7 +4,7 @@ Fixtures specifically for help testing the modules in the server/ directory.
 import os
 import pytest
 import yaml
-from typing import Dict
+from typing import Dict, Union
 
 
 @pytest.fixture(scope="session")
@@ -88,7 +88,7 @@ def server_redis_pass_file(server_testing_dir: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def server_users() -> dict:
+def server_users() -> Dict[str, Dict[str, str]]:
     """
     Create a dictionary of two test users with identical configuration settings.
 
@@ -217,7 +217,7 @@ def server_app_yaml_contents(
     server_redis_pass_file: str,
     server_container_config_data: Dict[str, str],
     server_process_config_data: Dict[str, str],
-) -> Dict[str, str]:
+) -> Dict[str, Union[str, int]]:
     """
     Fixture to create the contents of an app.yaml file.
 
@@ -255,9 +255,6 @@ def server_app_yaml_contents(
 def server_app_yaml(server_testing_dir: str, server_app_yaml_contents: dict) -> str:
     """
     Fixture to create an app.yaml file in the temporary output directory.
-
-    If a test will modify this file with a file write, you should make a copy of
-    this file to modify instead.
 
     NOTE this must be function scoped since server_app_yaml_contents is function scoped.
 
