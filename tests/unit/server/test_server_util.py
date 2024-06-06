@@ -12,6 +12,7 @@ from merlin.server.server_util import (
     ContainerConfig,
     ContainerFormatConfig,
     ProcessConfig,
+    RedisConfig,
     RedisUsers,
     ServerConfig,
     valid_ipv4,
@@ -288,6 +289,7 @@ class TestServerConfig:
         assert config.container is None
         assert config.container_format is None
 
+
 class TestRedisUsers:
     """
     Tests for the RedisUsers class.
@@ -452,3 +454,71 @@ class TestRedisUsers:
         """
         redis_users = RedisUsers(server_redis_users_file)
         assert not redis_users.remove_user("nonexistent_user")
+
+
+class TestAppYaml:
+    """Tests for the AppYaml class."""
+
+    def test_initialization(self, server_app_yaml: str, server_app_yaml_contents: dict):
+        """
+        Test the initialization process of the AppYaml class.
+
+        :param server_app_yaml: The path to an app.yaml file
+        :param server_app_yaml_contents: A dict of app.yaml configurations
+        """
+        app_yaml = AppYaml(server_app_yaml)
+        assert app_yaml.get_data() == server_app_yaml_contents
+
+    def test_apply_server_config(self, server_app_yaml: str, server_server_config: Dict[str, str]):
+        """
+        Test the `apply_server_config` method. This should update the data attribute.
+
+        :param server_app_yaml: The path to an app.yaml file
+        :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+        """
+        app_yaml = AppYaml(server_app_yaml)
+        server_config = ServerConfig(server_server_config)
+        redis_config = RedisConfig(server_config.container.get_config_path())
+        app_yaml.apply_server_config(server_config)
+
+        assert app_yaml.data[app_yaml.broker_name]["name"] == server_config.container.get_image_type()
+        assert app_yaml.data[app_yaml.broker_name]["username"] == "default"
+        assert app_yaml.data[app_yaml.broker_name]["password"] == server_config.container.get_pass_file_path()
+        assert app_yaml.data[app_yaml.broker_name]["server"] == redis_config.get_ip_address()
+        assert app_yaml.data[app_yaml.broker_name]["port"] == redis_config.get_port()
+
+        assert app_yaml.data[app_yaml.results_name]["name"] == server_config.container.get_image_type()
+        assert app_yaml.data[app_yaml.results_name]["username"] == "default"
+        assert app_yaml.data[app_yaml.results_name]["password"] == server_config.container.get_pass_file_path()
+        assert app_yaml.data[app_yaml.results_name]["server"] == redis_config.get_ip_address()
+        assert app_yaml.data[app_yaml.results_name]["port"] == redis_config.get_port()
+
+    def test_update_data(self, server_app_yaml: str):
+        """
+        Test the `update_data` method. This should update the data attribute.
+
+        :param server_app_yaml: The path to an app.yaml file
+        """
+        app_yaml = AppYaml(server_app_yaml)
+        new_data = {app_yaml.broker_name: {"username": "new_user"}}
+        app_yaml.update_data(new_data)
+
+        assert app_yaml.data[app_yaml.broker_name]["username"] == "new_user"
+
+    def test_write(self, server_app_yaml: str, server_testing_dir: str):
+        """
+        Test the `write` method. This should write data to a file.
+
+        :param server_app_yaml: The path to an app.yaml file
+        :param server_testing_dir: The path to the the temp output directory for server tests
+        """
+        copy_app_yaml = f"{server_testing_dir}/app_copy.yaml"
+
+        # Create a AppYaml object with the basic app.yaml file
+        app_yaml = AppYaml(server_app_yaml)
+
+        # Run the test
+        app_yaml.write(copy_app_yaml)
+
+        # Check that the contents of the copied file match the contents of the basic file
+        assert filecmp.cmp(server_app_yaml, copy_app_yaml)
