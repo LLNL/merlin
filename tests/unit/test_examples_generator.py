@@ -112,11 +112,44 @@ def test_list_examples():
     """Test the `list_examples` function to see if it gives us all of the examples that we want."""
     expected_headers = ["name", "description"]
     expected_rows = [
+        ["feature_demo", "Run 10 hello worlds."],
+        ["flux_local", "Run a scan through Merlin/Maestro"],
+        ["flux_par", "A simple ensemble of parallel MPI jobs run by flux."],
+        ["flux_par_restart", "A simple ensemble of parallel MPI jobs run by flux."],
+        ["paper_flux", "Use flux to run single core MPI jobs and record timings."],
+        ["hello", "a very simple merlin workflow"],
+        ["hello_samples", "a very simple merlin workflow, with samples"],
+        ["hpc_demo", "Demo running a workflow on HPC machines"],
+        ["iterative_demo", "Demo of a workflow with self driven iteration/looping"],
+        ["lsf_par", "A simple ensemble of parallel MPI jobs run by lsf (jsrun)."],
+        ["lsf_par_srun", "A simple ensemble of parallel MPI jobs run by lsf using the srun wrapper (srun)."],
+        [
+            "null_chain",
+            "Run N_SAMPLES steps of TIME seconds each at CONC concurrency.\n"
+            "May be used to measure overhead in merlin.\n"
+            "Iterates thru a chain of workflows.",
+        ],
+        [
+            "null_spec",
+            "run N_SAMPLES null steps at CONC concurrency for TIME seconds each. May be used to measure overhead in merlin.",
+        ],
+        [
+            "openfoam_wf",
+            "A parameter study that includes initializing, running,\n"
+            "post-processing, collecting, learning and visualizing OpenFOAM runs\n"
+            "using docker.",
+        ],
         [
             "openfoam_wf_no_docker",
             "A parameter study that includes initializing, running,\n"
             "post-processing, collecting, learning and vizualizing OpenFOAM runs\n"
             "without using docker.",
+        ],
+        [
+            "openfoam_wf_singularity",
+            "A parameter study that includes initializing, running,\n"
+            "post-processing, collecting, learning and visualizing OpenFOAM runs\n"
+            "using singularity.",
         ],
         [
             "optimization_basic",
@@ -128,50 +161,15 @@ def test_list_examples():
             "* MAX_ITER and the N_SAMPLES options use default values unless using DEBUG mode\n"
             "* BOUNDS_X and UNCERTS_X are configured using the template_config.py scripts",
         ],
-        ["feature_demo", "Run 10 hello worlds."],
-        ["flux_local", "Run a scan through Merlin/Maestro"],
-        ["flux_par", "A simple ensemble of parallel MPI jobs run by flux."],
-        ["flux_par_restart", "A simple ensemble of parallel MPI jobs run by flux."],
-        ["paper_flux", "Use flux to run single core MPI jobs and record timings."],
-        ["lsf_par", "A simple ensemble of parallel MPI jobs run by lsf (jsrun)."],
-        ["lsf_par_srun", "A simple ensemble of parallel MPI jobs run by lsf using the srun wrapper (srun)."],
+        ["remote_feature_demo", "Run 10 hello worlds."],
         ["restart", "A simple ensemble of with restarts."],
         ["restart_delay", "A simple ensemble of with restart delay times."],
         ["simple_chain", "test to see that chains are not run in parallel"],
         ["slurm_par", "A simple ensemble of parallel MPI jobs run by slurm (srun)."],
         ["slurm_par_restart", "A simple ensemble of parallel MPI jobs run by slurm (srun)."],
-        ["remote_feature_demo", "Run 10 hello worlds."],
-        ["hello", "a very simple merlin workflow"],
-        ["hello_samples", "a very simple merlin workflow, with samples"],
-        ["hpc_demo", "Demo running a workflow on HPC machines"],
-        [
-            "openfoam_wf",
-            "A parameter study that includes initializing, running,\n"
-            "post-processing, collecting, learning and visualizing OpenFOAM runs\n"
-            "using docker.",
-        ],
-        [
-            "openfoam_wf_singularity",
-            "A parameter study that includes initializing, running,\n"
-            "post-processing, collecting, learning and visualizing OpenFOAM runs\n"
-            "using singularity.",
-        ],
-        [
-            "null_chain",
-            "Run N_SAMPLES steps of TIME seconds each at CONC concurrency.\n"
-            "May be used to measure overhead in merlin.\n"
-            "Iterates thru a chain of workflows.",
-        ],
-        [
-            "null_spec",
-            "run N_SAMPLES null steps at CONC concurrency for TIME seconds each. May be used to measure overhead in merlin.",
-        ],
-        ["iterative_demo", "Demo of a workflow with self driven iteration/looping"],
     ]
     expected = "\n" + tabulate(expected_rows, expected_headers) + "\n"
     actual = list_examples()
-    print(f"expected:\n{expected}")
-    print(f"actual:\n{actual}")
     assert actual == expected
 
 
