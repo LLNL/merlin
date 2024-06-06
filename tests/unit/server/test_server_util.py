@@ -169,7 +169,7 @@ class TestContainerConfig:
         :param server_container_config_data: A pytest fixture of test data to pass to the ContainerConfig class
         """
         # Write a fake password to the password file
-        test_password = "super-secret-password"
+        test_password = "server-tests-password"
         with open(server_container_config_data["pass_file"], "w") as pass_file:
             pass_file.write(test_password)
 
@@ -274,7 +274,7 @@ class TestServerConfig:
         config = ServerConfig(server_server_config)
         assert config.container == ContainerConfig(server_server_config["container"])
         assert config.process == ProcessConfig(server_server_config["process"])
-        assert config.container_format == ContainerFormatConfig(server_server_config["docker"])
+        assert config.container_format == ContainerFormatConfig(server_server_config["singularity"])
 
     def test_init_with_missing_data(self, server_process_config_data: Dict[str, str]):
         """
