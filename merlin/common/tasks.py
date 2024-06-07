@@ -77,6 +77,7 @@ STOP_COUNTDOWN = 60
 # R0914: too many local variables
 # R0915: too many statements
 
+
 @shared_task(  # noqa: C901
     bind=True,
     autoretry_for=retry_exceptions,
