@@ -92,8 +92,8 @@ def generate_password(length, pass_command: str = None) -> str:
     :return:: string value with given length
     """
     if pass_command:
-        process = subprocess.run(pass_command.split(), shell=True, stdout=subprocess.PIPE)
-        return process.stdout
+        process = subprocess.run(pass_command, shell=True, capture_output=True, text=True)
+        return process.stdout.strip()
 
     characters = list(string.ascii_letters + string.digits + "!@#$%^&*()")
 
