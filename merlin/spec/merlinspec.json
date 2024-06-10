@@ -221,7 +221,8 @@
                   "nodes": {
                     "anyOf": [
                       {"type": "null"},
-                      {"type": "integer", "minimum": 1}
+                      {"type": "integer", "minimum": 1},
+                      {"type": "string", "pattern": "^\\$\\(\\w+\\)$"}
                     ]
                   },
                   "batch": {
@@ -279,7 +280,12 @@
       "launch_pre": {"type": "string", "minLength": 1},
       "launch_args": {"type": "string", "minLength": 1},
       "worker_launch": {"type": "string", "minLength": 1},
-      "nodes": {"type": "integer", "minimum": 1},
+      "nodes": {
+        "anyOf": [
+          {"type": "integer", "minimum": 1},
+          {"type": "string","pattern": "^\\$\\(\\w+\\)$"}
+        ]
+      },
       "walltime": {
         "anyOf": [
           {"type": "string", "minLength": 1},

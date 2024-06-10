@@ -26,12 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Applying filters for `merlin detailed-status` will now log debug statements instead of warnings
 - Modified the unit tests for the `merlin status` command to use pytest rather than unittest
 - Added fixtures for `merlin status` tests that copy the workspace to a temporary directory so you can see exactly what's run in a test
+- Batch block and workers now allow for variables to be used in node settings
 
 ### Fixed
 - Bugfix for output of `merlin example openfoam_wf_singularity`
 - A bug with the CHANGELOG detection test when the target branch isn't in the ci runner history
 - Link to Merlin banner in readme
 - Issue with escape sequences in ascii art (caught by python 3.12)
+- Bug where Flux wasn't identifying total number of nodes on an allocation
 
 
 ## [1.12.1]

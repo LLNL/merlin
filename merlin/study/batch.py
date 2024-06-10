@@ -134,6 +134,14 @@ def get_node_count(default=1):
         the environment cannot be determined.
     :param returns: (int) The number of nodes to use.
     """
+
+    # If flux is the scheduler, we can get the size of the allocation with this
+    try:
+        get_size_proc = subprocess.run("flux getattr size", shell=True, capture_output=True, text=True)
+        return int(get_size_proc.stdout)
+    except Exception:
+        pass
+
     if "SLURM_JOB_NUM_NODES" in os.environ:
         return int(os.environ["SLURM_JOB_NUM_NODES"])
 
