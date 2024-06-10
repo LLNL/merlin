@@ -146,5 +146,4 @@ def setup_example(name, outdir):
 
     LOG.info(f"Copying example '{name}' to {outdir}")
     write_example(src_path, outdir)
-    print(f"example: {example}")
     return example
