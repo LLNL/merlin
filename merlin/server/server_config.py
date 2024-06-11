@@ -119,7 +119,7 @@ def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
     server_init = False
     redis_config = {}
     line = redis_stdout.readline()
-    while line != "" or line is not None:
+    while line != b"" and line is not None:
         if not server_init:
             values = [ln for ln in line.split() if b"=" in ln]
             for val in values:
