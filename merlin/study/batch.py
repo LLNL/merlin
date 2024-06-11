@@ -137,7 +137,8 @@ def get_node_count(parsed_batch: Dict, default=1):
 
     # Flux version check
     flux_ver = get_flux_version(parsed_batch["flux exe"], no_errors=True)
-    if int(flux_ver.split(".")[1]) < 17:
+    major, minor, _ = map(int, flux_ver.split("."))
+    if major < 1 and minor < 17:
         raise ValueError("Flux version is too old. Supported versions are 0.17.0+.")
 
     # If flux is the scheduler, we can get the size of the allocation with this
