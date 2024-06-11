@@ -425,6 +425,7 @@ def process_server(args: Namespace):
     Route to the correct function based on the command
     given via the CLI
     """
+    os.environ["LC_ALL"] = "C"  # Necessary for Redis to configure LOCALE
     if args.commands == "init":
         init_server()
     elif args.commands == "start":
