@@ -314,6 +314,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
                     top_lvl_workspace=top_lvl_workspace,
                 )
                 new_step.set(queue=step.get_task_queue())
+                new_step.set(task_id=os.path.join(workspace, relative_paths[sample_id]))
                 new_chain.append(new_step)
 
             all_chains.append(new_chain)
@@ -382,7 +383,12 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
         # based off of the parameter substitutions and relative_path for
         # a given sample.
 
-        new_steps = [task_type.s(step, adapter_config=adapter_config).set(queue=step.get_task_queue())]
+        new_steps = [
+            task_type.s(step, adapter_config=adapter_config).set(
+                queue=step.get_task_queue(),
+                task_id=step.get_workspace(),
+            )
+        ]
         all_chains.append(new_steps)
     chain_1d = get_1d_chain(all_chains)
     launch_chain(self, chain_1d)
