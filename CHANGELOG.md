@@ -27,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified the unit tests for the `merlin status` command to use pytest rather than unittest
 - Added fixtures for `merlin status` tests that copy the workspace to a temporary directory so you can see exactly what's run in a test
 - Batch block and workers now allow for variables to be used in node settings
-
 - Task id is now the path to the directory
 
 ### Fixed
