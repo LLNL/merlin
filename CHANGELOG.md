@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Applying filters for `merlin detailed-status` will now log debug statements instead of warnings
 - Modified the unit tests for the `merlin status` command to use pytest rather than unittest
 - Added fixtures for `merlin status` tests that copy the workspace to a temporary directory so you can see exactly what's run in a test
+- Batch block and workers now allow for variables to be used in node settings
 
 - Task id is now the path to the directory
 
@@ -34,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A bug with the CHANGELOG detection test when the target branch isn't in the ci runner history
 - Link to Merlin banner in readme
 - Issue with escape sequences in ascii art (caught by python 3.12)
+- Bug where Flux wasn't identifying total number of nodes on an allocation
+  - Not supporting Flux versions below 0.17.0
 
 
 ## [1.12.1]

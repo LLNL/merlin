@@ -295,6 +295,11 @@ def define_tests():  # pylint: disable=R0914,R0915
             "conditions": [HasReturnCode(), HasRegex(r"default_worker", negate=True)],
             "run type": "local",
         },
+        "run-workers echo variable for worker nodes": {
+            "cmds": f"{workers_flux} {flux_native} --echo",
+            "conditions": [HasReturnCode(), HasRegex(r"-N 4")],
+            "run type": "local",
+        },
     }
     wf_format_tests = {
         "local minimum_format": {

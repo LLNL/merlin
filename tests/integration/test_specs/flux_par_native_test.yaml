@@ -14,6 +14,7 @@ env:
     OUTPUT_PATH: ./studies
     N_SAMPLES: 10
     SCRIPTS: $(SPECROOT)/../../../merlin/examples/workflows/flux/scripts
+    WORKER_NODES: 4
 
 study:
 - description: Build the code
@@ -71,6 +72,7 @@ merlin:
       simworkers:
         args: -l INFO --concurrency 1 --prefetch-multiplier 1 -Ofair
         steps: [runs, data]
+        nodes: $(WORKER_NODES)
   samples:
     column_labels: [V1, V2]
     file: $(MERLIN_INFO)/samples.npy
