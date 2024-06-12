@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.1.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -48,3 +48,4 @@ class ReturnCode(IntEnum):
     DRY_OK = 103
     RETRY = 104
     STOP_WORKERS = 105
+    RAISE_ERROR = 106

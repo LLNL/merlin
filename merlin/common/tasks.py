@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.1.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,6 +41,7 @@ from typing import Any, Dict, List, Optional
 from celery import chain, chord, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
 from filelock import FileLock, Timeout
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
@@ -49,7 +50,7 @@ from merlin.config.utils import Priority, get_priority
 from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
 from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
-from merlin.study.status import read_status
+from merlin.study.status import read_status, status_conflict_handler
 from merlin.utils import dict_deep_merge
 
 
@@ -62,6 +63,7 @@ retry_exceptions = (
     RetryException,
     RestartException,
     FileNotFoundError,
+    RedisTimeoutError,
 )
 
 LOG = logging.getLogger(__name__)
@@ -181,6 +183,9 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             shutdown = shutdown_workers.s(None)
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
+        elif result == ReturnCode.RAISE_ERROR:
+            LOG.warning("*** Raising an error ***")
+            raise Exception("Exception raised by request from the user")
         else:
             LOG.warning(f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow.")
 
@@ -309,6 +314,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
                     top_lvl_workspace=top_lvl_workspace,
                 )
                 new_step.set(queue=step.get_task_queue())
+                new_step.set(task_id=os.path.join(workspace, relative_paths[sample_id]))
                 new_chain.append(new_step)
 
             all_chains.append(new_chain)
@@ -377,7 +383,12 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
         # based off of the parameter substitutions and relative_path for
         # a given sample.
 
-        new_steps = [task_type.s(step, adapter_config=adapter_config).set(queue=step.get_task_queue())]
+        new_steps = [
+            task_type.s(step, adapter_config=adapter_config).set(
+                queue=step.get_task_queue(),
+                task_id=step.get_workspace(),
+            )
+        ]
         all_chains.append(new_steps)
     chain_1d = get_1d_chain(all_chains)
     launch_chain(self, chain_1d)
@@ -484,7 +495,7 @@ def gather_statuses(
                         # Make sure the status for this sample workspace is in a finished state (not initialized or running)
                         if status[step_name][f"{condensed_workspace}/{path}"]["status"] not in ("INITIALIZED", "RUNNING"):
                             # Add the status data to the statuses we'll write to the condensed file and remove this status file
-                            dict_deep_merge(condensed_statuses, status)
+                            dict_deep_merge(condensed_statuses, status, conflict_handler=status_conflict_handler)
                             files_to_remove.append(status_filepath)
                             files_to_remove.append(lock_filepath)  # Remove the lock files as well as the status files
                     except KeyError:
@@ -556,7 +567,7 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pyl
                         existing_condensed_statuses = json.load(condensed_status_file)
                     # Merging the statuses we're condensing into the already existing statuses
                     # because it's faster at scale than vice versa
-                    dict_deep_merge(existing_condensed_statuses, condensed_statuses)
+                    dict_deep_merge(existing_condensed_statuses, condensed_statuses, conflict_handler=status_conflict_handler)
                     condensed_statuses = existing_condensed_statuses
 
                 # Write the condensed statuses to the condensed status file

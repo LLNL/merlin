@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.1.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,6 +29,9 @@
 ###############################################################################
 
 # pylint: skip-file
+
+from merlin import VERSION
+
 
 """
 Holds ascii art strings.
@@ -93,11 +96,11 @@ merlin_name_small = """
 
                                   
   __  __           _ _       
- |  \/  |         | (_)      
- | \  / | ___ _ __| |_ _ __  
- | |\/| |/ _ \ '__| | | '_ \ 
+ |  \\/  |         | (_)      
+ | \\  / | ___ _ __| |_ _ __  
+ | |\\/| |/ _ \\ '__| | | '_ \\ 
  | |  | |  __/ |  | | | | | |
- |_|  |_|\___|_|  |_|_|_| |_|
+ |_|  |_|\\___|_|  |_|_|_| |_|
                                    
  Machine Learning for HPC Workflows                                 
 
@@ -127,6 +130,7 @@ def _make_banner():
     for hat_line, name_line in zip(hat_lines, name_lines):
         banner = banner + hat_line + name_line + "\n"
 
+    banner = banner + f"  v. {VERSION}\n"
     return banner
 
 
