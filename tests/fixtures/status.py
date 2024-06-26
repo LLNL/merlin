@@ -13,6 +13,7 @@ import yaml
 
 from tests.unit.study.status_test_files import status_test_variables
 
+
 # pylint: disable=redefined-outer-name
 
 

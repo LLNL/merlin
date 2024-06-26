@@ -75,20 +75,16 @@ def test_parse_redis_output_with_basic_input(line: Union[None, bytes], expected_
 @pytest.mark.parametrize(
     "lines, expected_config",
     [
-        (   # Testing setting vars before initialized message
-            b"port=6379 blah blah server=127.0.0.1\n"
-            b"Server initialized\n"
-            b"Ready to accept connections",
+        (  # Testing setting vars before initialized message
+            b"port=6379 blah blah server=127.0.0.1\nServer initialized\nReady to accept connections",
             {"port": "6379", "server": "127.0.0.1"},
         ),
-        (   # Testing setting vars after initialized message
-            b"Server initialized\n"
-            b"port=6379 blah blah server=127.0.0.1\n"
-            b"Ready to accept connections",
+        (  # Testing setting vars after initialized message
+            b"Server initialized\nport=6379 blah blah server=127.0.0.1\nReady to accept connections",
             {},
         ),
-        (   # Testing setting vars before + after initialized message
-            b"blah blah max_connections=100 blah"
+        (  # Testing setting vars before + after initialized message
+            b"blah blah max_connections=100 blah\n"
             b"Server initialized\n"
             b"port=6379 blah blah server=127.0.0.1\n"
             b"Ready to accept connections",

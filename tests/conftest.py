@@ -97,6 +97,7 @@ def create_encryption_file(key_filepath: str, encryption_key: bytes, app_yaml_fi
 ######### Fixture Definitions #########
 #######################################
 
+
 @pytest.fixture(scope="session")
 def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
     """
