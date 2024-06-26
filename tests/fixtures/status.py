@@ -16,7 +16,7 @@ from tests.unit.study.status_test_files import status_test_variables
 # pylint: disable=redefined-outer-name
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="session")
 def status_testing_dir(temp_output_dir: str) -> str:
     """
     A pytest fixture to set up a temporary directory to write files to for testing status.
