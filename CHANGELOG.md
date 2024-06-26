@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Issue with escape sequences in ascii art (caught by python 3.12)
 - Bug where Flux wasn't identifying total number of nodes on an allocation
   - Not supporting Flux versions below 0.17.0
+- Removed dead lgtm link
 
 
 ## [1.12.1]
