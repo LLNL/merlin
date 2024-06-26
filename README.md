@@ -3,7 +3,6 @@
 ![Activity](https://img.shields.io/github/commit-activity/m/LLNL/merlin)
 [![Issues](https://img.shields.io/github/issues/LLNL/merlin)](https://github.com/LLNL/merlin/issues)
 [![Pull requests](https://img.shields.io/github/issues-pr/LLNL/merlin)](https://github.com/LLNL/merlin/pulls)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/LLNL/merlin.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/LLNL/merlin/context:python)
 
 ![Merlin](https://raw.githubusercontent.com/LLNL/merlin/main/docs/assets/images/merlin_banner_white.png)
 
