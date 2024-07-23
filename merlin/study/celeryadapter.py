@@ -47,6 +47,7 @@ from tabulate import tabulate
 from merlin.common.dumper import dump_handler
 from merlin.config import Config
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
+from merlin.study.celerymanageradapter import add_monitor_workers, remove_monitor_workers
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
 
@@ -762,6 +763,13 @@ def launch_celery_worker(worker_cmd, worker_list, kwargs):
     """
     try:
         _ = subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
+        # Get the worker name from worker_cmd and add to be monitored by celery manager
+        worker_cmd_list = worker_cmd.split()
+        worker_name = worker_cmd_list[worker_cmd_list.index("-n")+1].replace("%h", kwargs["env"]["HOSTNAME"])
+        worker_name = "celery@" + worker_name
+        add_monitor_workers(workers=(worker_name, ))
+        LOG.info(f"Added {worker_name} to be monitored")
+        
         worker_list.append(worker_cmd)
     except Exception as e:  # pylint: disable=C0103
         LOG.error(f"Cannot start celery workers, {e}")
@@ -866,6 +874,7 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     if workers_to_stop:
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
         app.control.broadcast("shutdown", destination=workers_to_stop)
+        remove_monitor_workers(workers=workers_to_stop)
     else:
         LOG.warning("No workers found to stop")
 
