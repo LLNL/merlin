@@ -117,9 +117,9 @@ class CeleryManager():
             worker_results = {worker: status for d in ping_result for worker, status in d.items()}
             print("Worker result from ping", worker_results)
 
-        # If running set the status on redis that it is running
-        for worker in list(worker_results.keys()):
-            self.redis_connection.hset(worker, "status", WorkerStatus.running)
+            # If running set the status on redis that it is running
+            for worker in list(worker_results.keys()):
+                self.redis_connection.hset(worker, "status", WorkerStatus.running)
 
         # If not running attempt to restart it
         for worker in workers:
