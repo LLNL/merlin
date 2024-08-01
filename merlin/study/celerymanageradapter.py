@@ -27,17 +27,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-from merlin.study.celerymanager import CeleryManager, WORKER_INFO
+from merlin.study.celerymanager import CeleryManager, WORKER_INFO, WorkerStatus
 
 def add_monitor_workers(workers: list):
+    """
+    Adds a worker to be monitored by the celery manager.
+    :param list workers:        A list of tuples which includes (worker_name, pid)
+    """
     if workers is None or len(workers) <= 0:
         return
     
     redis_connection = CeleryManager.get_worker_status_redis_connection()
     for worker in workers:
-        if redis_connection.exists(worker):
-            redis_connection.hset(worker, "monitored", 1)
-        redis_connection.hmset(name=worker, mapping=WORKER_INFO)
+        if redis_connection.exists(worker[0]):
+            redis_connection.hset(worker[0], "monitored", 1)
+            redis_connection.hset(worker[0], "pid", worker[1])
+        worker_info = WORKER_INFO
+        worker_info["pid"] = worker[1]
+        redis_connection.hmset(name=worker[0], mapping=worker_info)
     redis_connection.quit()
 
 def remove_monitor_workers(workers: list):
@@ -47,6 +54,8 @@ def remove_monitor_workers(workers: list):
     for worker in workers:
         if redis_connection.exists(worker):
             redis_connection.hset(worker, "monitored", 0)
+            redis_connection.hset(worker, "status", WorkerStatus.stopped)
+            
     redis_connection.quit()
 
 def is_manager_runnning() -> bool:

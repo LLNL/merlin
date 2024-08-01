@@ -32,6 +32,7 @@ from merlin.config.configfile import CONFIG
 from merlin.config.results_backend import get_backend_password
 import os
 import redis
+import subprocess
 import time
 
 
@@ -43,6 +44,7 @@ class WorkerStatus:
 
 WORKER_INFO = {
     "status" : WorkerStatus.running,
+    "pid": -1,
     "monitored": 1,
     "num_unresponsive": 0,
 }
@@ -74,13 +76,48 @@ class CeleryManager():
                            port=CONFIG.results_backend.port,
                            db=db_num,
                            username=CONFIG.results_backend.username,
-                           password=password)
+                           password=password,
+                           decode_responses=True)
 
-    def get_celery_worker_status(worker):
-        pass
+    def get_celery_workers_status(self, workers):
+        from merlin.celery import app 
 
-    def restart_celery_worker(worker):
-        pass
+        celery_app = app.control
+        ping_result = celery_app.ping(workers, timeout=self.query_timeout)
+        worker_results = {worker: status for d in ping_result for worker, status in d.items()}
+        print("Worker result from ping", worker_results)
+        return worker_results
+
+    def stop_celery_worker(self, worker):
+        """
+        Stop a celery worker by first broadcasting shutdown. If unsuccessful kill the worker with pid
+        :param CeleryManager self:      CeleryManager attempting the stop.
+        :param str worker:              Worker that is being stopped.
+        """
+        from merlin.celery import app
+
+        app.control.broadcast("shutdown", destination=(worker, ))
+
+        
+
+    def restart_celery_worker(self, worker):
+        # Stop the worker that is currently running
+
+
+        # Start the worker again with the args saved in redis db
+        worker_args_connect = self.get_worker_args_redis_connection()
+        worker_status_connect = self.get_worker_status_redis_connection()
+        # Get the args and remove the worker_cmd from the hash set
+        args = worker_args_connect.hgetall(worker)
+        worker_cmd = args["worker_cmd"]
+        del args["worker_cmd"]
+        # Run the subprocess for the worker and save the PID
+        process = subprocess.Popen(worker_cmd, *args)
+        worker_status_connect.hset(worker, "pid", process.pid)
+
+        worker_args_connect.quit()
+        worker_status_connect.quit()
+        
 
     def check_pid(pid):        
         """ Check For the existence of a unix pid. """
@@ -103,19 +140,15 @@ class CeleryManager():
 
         #while True:
         # Get the list of running workers
-        workers = [i.decode("ascii") for i in self.redis_connection.keys()]
+        workers = self.redis_connection.keys()
         workers.remove("manager")
         workers = [worker for worker in workers if int(self.redis_connection.hget(worker, "monitored"))]
         print("Current Monitored Workers", workers)
+        self.restart_celery_worker(workers[0])
         
         # Check/ Ping each worker to see if they are still running
         if workers:
-            from merlin.celery import app 
-
-            celery_app = app.control
-            ping_result = celery_app.ping(workers, timeout=self.query_timeout)
-            worker_results = {worker: status for d in ping_result for worker, status in d.items()}
-            print("Worker result from ping", worker_results)
+            worker_results = self.get_celery_workers_status(workers)
 
             # If running set the status on redis that it is running
             for worker in list(worker_results.keys()):
