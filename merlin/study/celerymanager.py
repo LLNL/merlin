@@ -51,7 +51,13 @@ WORKER_INFO = {
 
 class CeleryManager():
 
-    def __init__(self, query_frequency=60, query_timeout=0.5, worker_timeout=180):
+    def __init__(self, query_frequency:int=60, query_timeout:float=0.5, worker_timeout:int=180):
+        """
+        Initializer for Celery Manager
+        @param int query_frequency:     The frequency at which workers will be queried with ping commands
+        @param float query_timeout:     The timeout for the query pings that are sent to workers
+        @param int worker_timeout:      The sum total(query_frequency*tries) time before an attempt is made to restart worker. 
+        """
         self.redis_connection = self.get_worker_status_redis_connection()
         self.query_frequency = query_frequency
         self.query_timeout = query_timeout
@@ -97,8 +103,6 @@ class CeleryManager():
         from merlin.celery import app
 
         app.control.broadcast("shutdown", destination=(worker, ))
-
-        
 
     def restart_celery_worker(self, worker):
         # Stop the worker that is currently running
