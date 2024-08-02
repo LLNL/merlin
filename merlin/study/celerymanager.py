@@ -115,8 +115,17 @@ class CeleryManager():
         args = worker_args_connect.hgetall(worker)
         worker_cmd = args["worker_cmd"]
         del args["worker_cmd"]
+        kwargs = args
+        for key in args:
+            if args[key].startswith("link:"):
+                kwargs[key] = worker_args_connect.hgetall(args[key].split(":", 1)[1])
+            elif args[key] == "True":
+                kwargs[key] = True
+            elif args[key] == "False":
+                kwargs[key] = False
+
         # Run the subprocess for the worker and save the PID
-        process = subprocess.Popen(worker_cmd, *args)
+        process = subprocess.Popen(worker_cmd, **kwargs)
         worker_status_connect.hset(worker, "pid", process.pid)
 
         worker_args_connect.quit()
@@ -148,7 +157,6 @@ class CeleryManager():
         workers.remove("manager")
         workers = [worker for worker in workers if int(self.redis_connection.hget(worker, "monitored"))]
         print("Current Monitored Workers", workers)
-        self.restart_celery_worker(workers[0])
         
         # Check/ Ping each worker to see if they are still running
         if workers:

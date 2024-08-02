@@ -772,8 +772,22 @@ def launch_celery_worker(worker_cmd, worker_list, kwargs):
 
         # Adding the worker args to redis db
         redis_connection = CeleryManager.get_worker_args_redis_connection()
-        args = kwargs['env']
+        args = kwargs
+        # Save worker command with the arguements
         args["worker_cmd"] = worker_cmd
+        # Store the nested dictionaries into a separate key with a link.
+        # Note: This only support single nested dicts(for simplicity) and
+        #       further nesting can be accomplished by making this recursive.
+        for key in kwargs:
+            if type(kwargs[key]) is dict:
+                key_name = worker_name+"_"+key
+                redis_connection.hmset(name=key_name, mapping=kwargs[key])
+                args[key] = "link:"+key_name
+            if type(kwargs[key]) is bool:
+                if kwargs[key]:
+                    args[key] = "True"
+                else:
+                    args[key] = "False"
         redis_connection.hmset(name=worker_name, mapping=args)
         redis_connection.quit()
 
