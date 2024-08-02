@@ -80,7 +80,7 @@ class CeleryManager():
             password = CONFIG.results_backend.password
         return redis.Redis(host=CONFIG.results_backend.server,
                            port=CONFIG.results_backend.port,
-                           db=db_num,
+                           db=CONFIG.results_backend.db_num+db_num, #Increment db_num to avoid conflicts
                            username=CONFIG.results_backend.username,
                            password=password,
                            decode_responses=True)
