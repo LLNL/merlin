@@ -106,8 +106,10 @@ class CeleryManager():
         # Get the PID associated with the pid
         worker_status_connect = self.get_worker_status_redis_connection()
         worker_pid = int(worker_status_connect.hget(worker, "pid"))
-        # Check to see if the pid exists
-        if psutil.pid_exists(worker_pid):
+        worker_status = worker_status_connect.hget(worker, "status")
+        worker_status_connect.quit()
+        # Check to see if the pid exists and worker is set as running
+        if worker_status == WorkerStatus.running and psutil.pid_exists(worker_pid):
             # Check to see if the pid is associated with celery
             worker_process = psutil.Process(worker_pid)
             if "celery" in worker_process.name():
@@ -190,8 +192,8 @@ class CeleryManager():
                             # If successful set the status to running and reset num_unresponsive
                             self.redis_connection.hset(worker, "status", WorkerStatus.running)
                             self.redis_connection.hset(worker, "num_unresponsive", 0)
-                            # If failed set the status to stopped
-                            self.redis_connection.hset(worker, "status", WorkerStatus.stopped)
+                            # If failed set the status to stalled
+                            self.redis_connection.hset(worker, "status", WorkerStatus.stalled)
                     else:
                         self.redis_connection.hset(worker, "num_unresponsive", num_unresponsive)
             # Sleep for the query_frequency for the next iteration
