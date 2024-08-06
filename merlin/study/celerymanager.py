@@ -31,6 +31,7 @@
 from merlin.config.configfile import CONFIG
 from merlin.config.results_backend import get_backend_password
 import os
+import psutil
 import redis
 import subprocess
 import time
@@ -91,23 +92,42 @@ class CeleryManager():
         celery_app = app.control
         ping_result = celery_app.ping(workers, timeout=self.query_timeout)
         worker_results = {worker: status for d in ping_result for worker, status in d.items()}
-        print("Worker result from ping", worker_results)
         return worker_results
 
     def stop_celery_worker(self, worker):
         """
-        Stop a celery worker by first broadcasting shutdown. If unsuccessful kill the worker with pid
+        Stop a celery worker by kill the worker with pid
         :param CeleryManager self:      CeleryManager attempting the stop.
         :param str worker:              Worker that is being stopped.
-        """
-        from merlin.celery import app
 
-        app.control.broadcast("shutdown", destination=(worker, ))
+        :return bool:                   The result of whether a worker was stopped.
+        """
+
+        # Get the PID associated with the pid
+        worker_status_connect = self.get_worker_status_redis_connection()
+        worker_pid = int(worker_status_connect.hget(worker, "pid"))
+        # Check to see if the pid exists
+        if psutil.pid_exists(worker_pid):
+            # Check to see if the pid is associated with celery
+            worker_process = psutil.Process(worker_pid)
+            if "celery" in worker_process.name():
+                # Kill the pid if both conditions are right
+                worker_process.kill()
+                return True
+        return False
 
     def restart_celery_worker(self, worker):
+        """
+        Restart a celery worker with the same arguements and parameters during its creation
+        :param CeleryManager self:      CeleryManager attempting the stop.
+        :param str worker:              Worker that is being restarted.
+
+        :return bool:                   The result of whether a worker was restarted.
+        """
+
         # Stop the worker that is currently running
-
-
+        if not self.stop_celery_worker(worker):
+            return False
         # Start the worker again with the args saved in redis db
         worker_args_connect = self.get_worker_args_redis_connection()
         worker_status_connect = self.get_worker_status_redis_connection()
@@ -130,59 +150,53 @@ class CeleryManager():
 
         worker_args_connect.quit()
         worker_status_connect.quit()
-        
 
-    def check_pid(pid):        
-        """ Check For the existence of a unix pid. """
-        try:
-            os.kill(pid, 0)
-        except OSError:
-            return False
-        else:
-            return True
+        return True
+
     
     def run(self):
+        """
+        Main manager loop
+        """
+
         manager_info = {
             "status": "Running",
             "process id": os.getpid(),
         }
         self.redis_connection.hmset(name="manager", mapping=manager_info)
 
+        while True: #TODO Make it so that it will stop after a list of workers is stopped
+            # Get the list of running workers
+            workers = self.redis_connection.keys()
+            workers.remove("manager")
+            workers = [worker for worker in workers if int(self.redis_connection.hget(worker, "monitored"))]
 
+            # Check/ Ping each worker to see if they are still running
+            if workers:
+                worker_results = self.get_celery_workers_status(workers)
 
+                # If running set the status on redis that it is running
+                for worker in list(worker_results.keys()):
+                    self.redis_connection.hset(worker, "status", WorkerStatus.running)
 
-        #while True:
-        # Get the list of running workers
-        workers = self.redis_connection.keys()
-        workers.remove("manager")
-        workers = [worker for worker in workers if int(self.redis_connection.hget(worker, "monitored"))]
-        print("Current Monitored Workers", workers)
-        
-        # Check/ Ping each worker to see if they are still running
-        if workers:
-            worker_results = self.get_celery_workers_status(workers)
-
-            # If running set the status on redis that it is running
-            for worker in list(worker_results.keys()):
-                self.redis_connection.hset(worker, "status", WorkerStatus.running)
-
-        # If not running attempt to restart it
-        for worker in workers:
-            if worker not in worker_results:
-                # If time where the worker is unresponsive is less than the worker time out then just increment
-                num_unresponsive = int(self.redis_connection.hget(worker, "num_unresponsive"))+1
-                if num_unresponsive*self.query_frequency < self.worker_timeout:
-                    # Attempt to restart worker
-
-                    # If successful set the status to running
-                    
-                    # If failed set the status to stopped
-                    #TODO Try to restart the worker
-                    continue
-                else:
-                    self.redis_connection.hset(worker, "num_unresponsive", num_unresponsive)
-        
-            #time.sleep(self.query_frequency)
+            # If not running attempt to restart it
+            for worker in workers:
+                if worker not in worker_results:
+                    # If time where the worker is unresponsive is less than the worker time out then just increment
+                    num_unresponsive = int(self.redis_connection.hget(worker, "num_unresponsive"))+1
+                    if num_unresponsive*self.query_frequency < self.worker_timeout:
+                        # Attempt to restart worker
+                        if self.restart_celery_worker(worker):
+                            # If successful set the status to running and reset num_unresponsive
+                            self.redis_connection.hset(worker, "status", WorkerStatus.running)
+                            self.redis_connection.hset(worker, "num_unresponsive", 0)
+                            # If failed set the status to stopped
+                            self.redis_connection.hset(worker, "status", WorkerStatus.stopped)
+                    else:
+                        self.redis_connection.hset(worker, "num_unresponsive", num_unresponsive)
+            # Sleep for the query_frequency for the next iteration
+            print("Finished checking")
+            time.sleep(self.query_frequency)
         
 if __name__ == "__main__":
     cm = CeleryManager()
