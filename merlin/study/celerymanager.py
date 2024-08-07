@@ -155,7 +155,7 @@ class CeleryManager():
 
         return True
 
-    
+    #TODO add some logs
     def run(self):
         """
         Main manager loop
@@ -172,6 +172,7 @@ class CeleryManager():
             workers = self.redis_connection.keys()
             workers.remove("manager")
             workers = [worker for worker in workers if int(self.redis_connection.hget(worker, "monitored"))]
+            print(f"Monitoring {workers} workers")
 
             # Check/ Ping each worker to see if they are still running
             if workers:
@@ -197,7 +198,6 @@ class CeleryManager():
                     else:
                         self.redis_connection.hset(worker, "num_unresponsive", num_unresponsive)
             # Sleep for the query_frequency for the next iteration
-            print("Finished checking")
             time.sleep(self.query_frequency)
         
 if __name__ == "__main__":
