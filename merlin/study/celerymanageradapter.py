@@ -83,22 +83,21 @@ def run_manager(query_frequency:int = 60, query_timeout:float = 0.5, worker_time
     
 
 def start_manager(query_frequency:int = 60, query_timeout:float = 0.5, worker_timeout:int = 180) -> bool:
-    process = subprocess.Popen(f"merlin manager run -qf {query_frequency} -qt {query_timeout} -wt {worker_timeout}".split(),
-        start_new_session=True,
+    process = subprocess.Popen(f"merlin manager run -qf {query_frequency} -qt {query_timeout} -wt {worker_timeout}",
+        shell=True,
         close_fds=True,
         stdout=subprocess.PIPE,
     )
-    redis_connection = CeleryManager.get_worker_args_redis_connection()
-    redis_connection.hset("manager", "pid", process.pid)
-    redis_connection.quit()
     return True
 
 def stop_manager() -> bool:
-    redis_connection = CeleryManager.get_worker_args_redis_connection()
-    manager_pid = redis_connection.hget("manager", "pid")
+    redis_connection = CeleryManager.get_worker_status_redis_connection()
+    manager_pid = int(redis_connection.hget("manager", "pid"))
     manager_status = redis_connection.hget("manager", "status")
+    print(redis_connection.hgetall("manager"))
     redis_connection.quit()
     
+    print(manager_status, psutil.pid_exists(manager_pid))
     # Check to make sure that the manager is running and the pid exists
     if manager_status == WorkerStatus.running and psutil.pid_exists(manager_pid):
         psutil.Process(manager_pid).terminate()
