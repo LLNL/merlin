@@ -27,9 +27,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-from merlin.study.celerymanager import CeleryManager, WORKER_INFO, WorkerStatus
-import psutil
 import subprocess
+
+import psutil
+
+from merlin.study.celerymanager import WORKER_INFO, CeleryManager, WorkerStatus
+
 
 def add_monitor_workers(workers: list):
     """

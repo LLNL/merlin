@@ -28,13 +28,15 @@
 # SOFTWARE.
 ###############################################################################
 
-from merlin.config.configfile import CONFIG
-from merlin.config.results_backend import get_backend_password
 import os
-import psutil
-import redis
 import subprocess
 import time
+
+import psutil
+import redis
+
+from merlin.config.configfile import CONFIG
+from merlin.config.results_backend import get_backend_password
 
 
 class WorkerStatus:
