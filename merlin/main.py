@@ -401,15 +401,13 @@ def process_example(args: Namespace) -> None:
         setup_example(args.workflow, args.path)
 
 
-def process_manager(args : Namespace):
+def process_manager(args: Namespace):
     if args.command == "run":
-        run_manager(query_frequency=args.query_frequency,
-                    query_timeout=args.query_timeout,
-                    worker_timeout=args.worker_timeout)
+        run_manager(query_frequency=args.query_frequency, query_timeout=args.query_timeout, worker_timeout=args.worker_timeout)
     elif args.command == "start":
-        if start_manager(query_frequency=args.query_frequency,
-                         query_timeout=args.query_timeout,
-                         worker_timeout=args.worker_timeout):
+        if start_manager(
+            query_frequency=args.query_frequency, query_timeout=args.query_timeout, worker_timeout=args.worker_timeout
+        ):
             LOG.info("Manager started successfully.")
     elif args.command == "stop":
         if stop_manager():
@@ -418,7 +416,6 @@ def process_manager(args : Namespace):
             LOG.error("Unable to stop manager.")
     else:
         print("Run manager with a command. Try 'merlin manager -h' for more details")
-
 
 
 def process_monitor(args):
@@ -919,7 +916,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
     )
 
     # merlin manager
-    manager : ArgumentParser = subparsers.add_parser(
+    manager: ArgumentParser = subparsers.add_parser(
         "manager",
         help="Watchdog application to manage workers",
         description="A daemon process that helps to restart and communicate with workers while running.",

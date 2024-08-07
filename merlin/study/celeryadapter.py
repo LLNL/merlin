@@ -766,7 +766,7 @@ def launch_celery_worker(worker_cmd, worker_list, kwargs):
         process = subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
         # Get the worker name from worker_cmd and add to be monitored by celery manager
         worker_cmd_list = worker_cmd.split()
-        worker_name = worker_cmd_list[worker_cmd_list.index("-n")+1].replace("%h", kwargs["env"]["HOSTNAME"])
+        worker_name = worker_cmd_list[worker_cmd_list.index("-n") + 1].replace("%h", kwargs["env"]["HOSTNAME"])
         worker_name = "celery@" + worker_name
         worker_list.append(worker_cmd)
 
@@ -780,9 +780,9 @@ def launch_celery_worker(worker_cmd, worker_list, kwargs):
         #       further nesting can be accomplished by making this recursive.
         for key in kwargs:
             if type(kwargs[key]) is dict:
-                key_name = worker_name+"_"+key
+                key_name = worker_name + "_" + key
                 redis_connection.hmset(name=key_name, mapping=kwargs[key])
-                args[key] = "link:"+key_name
+                args[key] = "link:" + key_name
             if type(kwargs[key]) is bool:
                 if kwargs[key]:
                     args[key] = "True"
@@ -792,7 +792,7 @@ def launch_celery_worker(worker_cmd, worker_list, kwargs):
         redis_connection.quit()
 
         # Adding the worker to redis db to be monitored
-        add_monitor_workers(workers=((worker_name, process.pid), ))
+        add_monitor_workers(workers=((worker_name, process.pid),))
         LOG.info(f"Added {worker_name} to be monitored")
     except Exception as e:  # pylint: disable=C0103
         LOG.error(f"Cannot start celery workers, {e}")

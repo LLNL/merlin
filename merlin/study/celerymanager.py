@@ -45,27 +45,28 @@ class WorkerStatus:
     stopped = "Stopped"
     rebooting = "Rebooting"
 
+
 WORKER_INFO = {
-    "status" : WorkerStatus.running,
+    "status": WorkerStatus.running,
     "pid": -1,
     "monitored": 1,
     "num_unresponsive": 0,
 }
 
-class CeleryManager():
 
-    def __init__(self, query_frequency:int=60, query_timeout:float=0.5, worker_timeout:int=180):
+class CeleryManager:
+    def __init__(self, query_frequency: int = 60, query_timeout: float = 0.5, worker_timeout: int = 180):
         """
         Initializer for Celery Manager
         @param int query_frequency:     The frequency at which workers will be queried with ping commands
         @param float query_timeout:     The timeout for the query pings that are sent to workers
-        @param int worker_timeout:      The sum total(query_frequency*tries) time before an attempt is made to restart worker. 
+        @param int worker_timeout:      The sum total(query_frequency*tries) time before an attempt is made to restart worker.
         """
         self.redis_connection = self.get_worker_status_redis_connection()
         self.query_frequency = query_frequency
         self.query_timeout = query_timeout
         self.worker_timeout = worker_timeout
-    
+
     @staticmethod
     def get_worker_status_redis_connection():
         """
@@ -93,12 +94,14 @@ class CeleryManager():
             password = get_backend_password(password_file)
         except IOError:
             password = CONFIG.results_backend.password
-        return redis.Redis(host=CONFIG.results_backend.server,
-                           port=CONFIG.results_backend.port,
-                           db=CONFIG.results_backend.db_num+db_num, #Increment db_num to avoid conflicts
-                           username=CONFIG.results_backend.username,
-                           password=password,
-                           decode_responses=True)
+        return redis.Redis(
+            host=CONFIG.results_backend.server,
+            port=CONFIG.results_backend.port,
+            db=CONFIG.results_backend.db_num + db_num,  # Increment db_num to avoid conflicts
+            username=CONFIG.results_backend.username,
+            password=password,
+            decode_responses=True,
+        )
 
     def get_celery_workers_status(self, workers):
         """
@@ -108,7 +111,7 @@ class CeleryManager():
 
         :return dict:                   The result dictionary for each worker and the response.
         """
-        from merlin.celery import app 
+        from merlin.celery import app
 
         celery_app = app.control
         ping_result = celery_app.ping(workers, timeout=self.query_timeout)
@@ -176,7 +179,7 @@ class CeleryManager():
 
         return True
 
-    #TODO add some logs
+    # TODO add some logs
     def run(self):
         """
         Main manager loop
@@ -188,7 +191,7 @@ class CeleryManager():
         }
         self.redis_connection.hmset(name="manager", mapping=manager_info)
 
-        while True: #TODO Make it so that it will stop after a list of workers is stopped
+        while True:  # TODO Make it so that it will stop after a list of workers is stopped
             # Get the list of running workers
             workers = self.redis_connection.keys()
             workers.remove("manager")
@@ -207,8 +210,8 @@ class CeleryManager():
             for worker in workers:
                 if worker not in worker_results:
                     # If time where the worker is unresponsive is less than the worker time out then just increment
-                    num_unresponsive = int(self.redis_connection.hget(worker, "num_unresponsive"))+1
-                    if num_unresponsive*self.query_frequency < self.worker_timeout:
+                    num_unresponsive = int(self.redis_connection.hget(worker, "num_unresponsive")) + 1
+                    if num_unresponsive * self.query_frequency < self.worker_timeout:
                         # Attempt to restart worker
                         if self.restart_celery_worker(worker):
                             # If successful set the status to running and reset num_unresponsive
@@ -220,7 +223,8 @@ class CeleryManager():
                         self.redis_connection.hset(worker, "num_unresponsive", num_unresponsive)
             # Sleep for the query_frequency for the next iteration
             time.sleep(self.query_frequency)
-        
+
+
 if __name__ == "__main__":
     cm = CeleryManager()
     cm.run()
