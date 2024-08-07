@@ -35,7 +35,6 @@ import time
 import psutil
 import redis
 
-from merlin.config.configfile import CONFIG
 from merlin.config.results_backend import get_backend_password
 
 
@@ -89,6 +88,7 @@ class CeleryManager:
 
         :return Redis:          Redis connections object that can be used to access values for the manager.
         """
+        from merlin.config.configfile import CONFIG
         password_file = CONFIG.results_backend.password
         try:
             password = get_backend_password(password_file)
