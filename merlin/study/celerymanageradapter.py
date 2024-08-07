@@ -76,6 +76,10 @@ def is_manager_runnning() -> bool:
     return manager_status["status"] == WorkerStatus.running and psutil.pid_exists(manager_status["pid"])
 
 def run_manager(query_frequency:int = 60, query_timeout:float = 0.5, worker_timeout:int = 180) -> bool:
+    """
+    A process locking function that calls the celery manager with proper arguments.
+    :params:        See CeleryManager for more information regarding the parameters
+    """
     celerymanager = CeleryManager(query_frequency=query_frequency,
                                   query_timeout=query_timeout,
                                   worker_timeout=worker_timeout)
@@ -83,7 +87,13 @@ def run_manager(query_frequency:int = 60, query_timeout:float = 0.5, worker_time
     
 
 def start_manager(query_frequency:int = 60, query_timeout:float = 0.5, worker_timeout:int = 180) -> bool:
-    process = subprocess.Popen(f"merlin manager run -qf {query_frequency} -qt {query_timeout} -wt {worker_timeout}",
+    """
+    A Non-locking function that calls the celery manager with proper arguments.
+    :params:        See CeleryManager for more information regarding the parameters
+
+    :return bool:       True if the manager was started successfully.
+    """
+    subprocess.Popen(f"merlin manager run -qf {query_frequency} -qt {query_timeout} -wt {worker_timeout}",
         shell=True,
         close_fds=True,
         stdout=subprocess.PIPE,
@@ -91,6 +101,11 @@ def start_manager(query_frequency:int = 60, query_timeout:float = 0.5, worker_ti
     return True
 
 def stop_manager() -> bool:
+    """
+    Stop the manager process using it's pid.
+
+    :return bool:       True if the manager was stopped successfully and False otherwise.
+    """
     redis_connection = CeleryManager.get_worker_status_redis_connection()
     manager_pid = int(redis_connection.hget("manager", "pid"))
     manager_status = redis_connection.hget("manager", "status")

@@ -66,14 +66,26 @@ class CeleryManager():
     
     @staticmethod
     def get_worker_status_redis_connection():
+        """
+        Get the redis connection for info regarding the worker and manager status.
+        """
         return CeleryManager.get_redis_connection(1)
 
     @staticmethod
     def get_worker_args_redis_connection():
+        """
+        Get the redis connection for info regarding the args used to generate each worker.
+        """
         return CeleryManager.get_redis_connection(2)
 
     @staticmethod
     def get_redis_connection(db_num):
+        """
+        Generic redis connection function to get the results backend redis server with a given db number increment.
+        :param int db_num:      Increment number for the db from the one provided in the config file.
+
+        :return Redis:          Redis connections object that can be used to access values for the manager.
+        """
         password_file = CONFIG.results_backend.password
         try:
             password = get_backend_password(password_file)
@@ -87,6 +99,13 @@ class CeleryManager():
                            decode_responses=True)
 
     def get_celery_workers_status(self, workers):
+        """
+        Get the worker status of a current worker that is being managed
+        :param CeleryManager self:      CeleryManager attempting the stop.
+        :param list workers:            Workers that are checked.
+
+        :return dict:                   The result dictionary for each worker and the response.
+        """
         from merlin.celery import app 
 
         celery_app = app.control
