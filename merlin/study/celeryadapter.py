@@ -502,15 +502,22 @@ def check_celery_workers_processing(queues_in_spec: List[str], app: Celery) -> b
     """
     # Query celery for active tasks
     active_tasks = app.control.inspect().active()
+    result = False
 
-    # Search for the queues we provided if necessary
-    if active_tasks is not None:
-        for tasks in active_tasks.values():
-            for task in tasks:
-                if task["delivery_info"]["routing_key"] in queues_in_spec:
-                    return True
+    with CeleryManager.get_worker_status_redis_connection() as redis_connection:
+        # Search for the queues we provided if necessary
+        if active_tasks is not None:
+            for worker, tasks in active_tasks.items():
+                for task in tasks:
+                    if task["delivery_info"]["routing_key"] in queues_in_spec:
+                        result = True
 
-    return False
+                # Set the entry in the Redis DB for the manager to signify if the worker
+                # is still doing work
+                worker_still_processing = 1 if result else 0
+                redis_connection.hset(worker, "processing_work", worker_still_processing)
+
+    return result
 
 
 def _get_workers_to_start(spec, steps):
@@ -771,25 +778,24 @@ def launch_celery_worker(worker_cmd, worker_list, kwargs):
         worker_list.append(worker_cmd)
 
         # Adding the worker args to redis db
-        redis_connection = CeleryManager.get_worker_args_redis_connection()
-        args = kwargs
-        # Save worker command with the arguements
-        args["worker_cmd"] = worker_cmd
-        # Store the nested dictionaries into a separate key with a link.
-        # Note: This only support single nested dicts(for simplicity) and
-        #       further nesting can be accomplished by making this recursive.
-        for key in kwargs:
-            if type(kwargs[key]) is dict:
-                key_name = worker_name + "_" + key
-                redis_connection.hmset(name=key_name, mapping=kwargs[key])
-                args[key] = "link:" + key_name
-            if type(kwargs[key]) is bool:
-                if kwargs[key]:
-                    args[key] = "True"
-                else:
-                    args[key] = "False"
-        redis_connection.hmset(name=worker_name, mapping=args)
-        redis_connection.quit()
+        with CeleryManager.get_worker_args_redis_connection() as redis_connection:
+            args = kwargs
+            # Save worker command with the arguements
+            args["worker_cmd"] = worker_cmd
+            # Store the nested dictionaries into a separate key with a link.
+            # Note: This only support single nested dicts(for simplicity) and
+            #       further nesting can be accomplished by making this recursive.
+            for key in kwargs:
+                if type(kwargs[key]) is dict:
+                    key_name = worker_name + "_" + key
+                    redis_connection.hmset(name=key_name, mapping=kwargs[key])
+                    args[key] = "link:" + key_name
+                if type(kwargs[key]) is bool:
+                    if kwargs[key]:
+                        args[key] = "True"
+                    else:
+                        args[key] = "False"
+            redis_connection.hmset(name=worker_name, mapping=args)
 
         # Adding the worker to redis db to be monitored
         add_monitor_workers(workers=((worker_name, process.pid),))

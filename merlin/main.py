@@ -402,6 +402,15 @@ def process_example(args: Namespace) -> None:
 
 
 def process_manager(args: Namespace):
+    """
+    Process the command for managing the workers.
+
+    This function interprets the command provided in the `args` namespace and
+    executes the corresponding manager function. It supports three commands:
+    "run", "start", and "stop".
+
+    :param args: parsed CLI arguments
+    """
     if args.command == "run":
         run_manager(query_frequency=args.query_frequency, query_timeout=args.query_timeout, worker_timeout=args.worker_timeout)
     elif args.command == "start":
@@ -409,6 +418,8 @@ def process_manager(args: Namespace):
             query_frequency=args.query_frequency, query_timeout=args.query_timeout, worker_timeout=args.worker_timeout
         ):
             LOG.info("Manager started successfully.")
+        else:
+            LOG.error("Unable to start manager")
     elif args.command == "stop":
         if stop_manager():
             LOG.info("Manager stopped successfully.")
@@ -924,6 +935,41 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
     )
     manager.set_defaults(func=process_manager)
 
+    def add_manager_options(manager_parser: ArgumentParser):
+        """
+        Add shared options for manager subcommands.
+
+        The `manager run` and `manager start` subcommands have the same options.
+        Rather than writing duplicate code for these we'll use this function
+        to add the arguments to these subcommands.
+
+        :param manager_parser: The ArgumentParser object to add these options to
+        """
+        manager_parser.add_argument(
+            "-qf",
+            "--query_frequency",
+            action="store",
+            type=int,
+            default=60,
+            help="The frequency at which workers will be queried for response.",
+        )
+        manager_parser.add_argument(
+            "-qt",
+            "--query_timeout",
+            action="store",
+            type=float,
+            default=0.5,
+            help="The timeout for the query response that are sent to workers.",
+        )
+        manager_parser.add_argument(
+            "-wt",
+            "--worker_timeout",
+            action="store",
+            type=int,
+            default=180,
+            help="The sum total (query_frequency*tries) time before an attempt is made to restart worker.",
+        )
+
     manager_commands: ArgumentParser = manager.add_subparsers(dest="command")
     manager_run = manager_commands.add_parser(
         "run",
@@ -931,30 +977,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         description="Run manager",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
-    manager_run.add_argument(
-        "-qf",
-        "--query_frequency",
-        action="store",
-        type=int,
-        default=60,
-        help="The frequency at which workers will be queried for response.",
-    )
-    manager_run.add_argument(
-        "-qt",
-        "--query_timeout",
-        action="store",
-        type=float,
-        default=0.5,
-        help="The timeout for the query response that are sent to workers.",
-    )
-    manager_run.add_argument(
-        "-wt",
-        "--worker_timeout",
-        action="store",
-        type=int,
-        default=180,
-        help="The sum total(query_frequency*tries) time before an attempt is made to restart worker.",
-    )
+    add_manager_options(manager_run)
     manager_run.set_defaults(func=process_manager)
     manager_start = manager_commands.add_parser(
         "start",
@@ -962,30 +985,7 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
         description="Start manager",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
-    manager_start.add_argument(
-        "-qf",
-        "--query_frequency",
-        action="store",
-        type=int,
-        default=60,
-        help="The frequency at which workers will be queried for response.",
-    )
-    manager_start.add_argument(
-        "-qt",
-        "--query_timeout",
-        action="store",
-        type=float,
-        default=0.5,
-        help="The timeout for the query response that are sent to workers.",
-    )
-    manager_start.add_argument(
-        "-wt",
-        "--worker_timeout",
-        action="store",
-        type=int,
-        default=180,
-        help="The sum total(query_frequency*tries) time before an attempt is made to restart worker.",
-    )
+    add_manager_options(manager_start)
     manager_start.set_defaults(func=process_manager)
     manager_stop = manager_commands.add_parser(
         "stop",
