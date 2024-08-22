@@ -35,6 +35,7 @@ import time
 import psutil
 import redis
 
+from merlin.managers.redis_connection import RedisConnectionManager
 
 LOG = logging.getLogger(__name__)
 
@@ -55,54 +56,54 @@ WORKER_INFO = {
 }
 
 
-class RedisConnectionManager:
-    """
-    A context manager for handling redis connections.
-    This will ensure safe opening and closing of Redis connections.
-    """
+# class RedisConnectionManager:
+#     """
+#     A context manager for handling redis connections.
+#     This will ensure safe opening and closing of Redis connections.
+#     """
 
-    def __init__(self, db_num: int):
-        self.db_num = db_num
-        self.connection = None
+#     def __init__(self, db_num: int):
+#         self.db_num = db_num
+#         self.connection = None
 
-    def __enter__(self):
-        self.connection = self.get_redis_connection()
-        return self.connection
+#     def __enter__(self):
+#         self.connection = self.get_redis_connection()
+#         return self.connection
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.connection:
-            LOG.debug(f"MANAGER: Closing connection at db_num: {self.db_num}")
-            self.connection.close()
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         if self.connection:
+#             LOG.debug(f"MANAGER: Closing connection at db_num: {self.db_num}")
+#             self.connection.close()
 
-    def get_redis_connection(self) -> redis.Redis:
-        """
-        Generic redis connection function to get the results backend redis server with a given db number increment.
+#     def get_redis_connection(self) -> redis.Redis:
+#         """
+#         Generic redis connection function to get the results backend redis server with a given db number increment.
 
-        :return: Redis connection object that can be used to access values for the manager.
-        """
-        # from merlin.config.results_backend import get_backend_password
-        from merlin.config import results_backend
-        from merlin.config.configfile import CONFIG
+#         :return: Redis connection object that can be used to access values for the manager.
+#         """
+#         # from merlin.config.results_backend import get_backend_password
+#         from merlin.config import results_backend
+#         from merlin.config.configfile import CONFIG
 
-        conn_string = results_backend.get_connection_string()
-        base, _ = conn_string.rsplit("/", 1)
-        new_db_num = CONFIG.results_backend.db_num + self.db_num
-        conn_string = f"{base}/{new_db_num}"
-        LOG.debug(f"MANAGER: Connecting to redis at db_num: {new_db_num}")
-        return redis.from_url(conn_string, decode_responses=True)
-        # password_file = CONFIG.results_backend.password
-        # try:
-        #     password = get_backend_password(password_file)
-        # except IOError:
-        #     password = CONFIG.results_backend.password
-        # return redis.Redis(
-        #     host=CONFIG.results_backend.server,
-        #     port=CONFIG.results_backend.port,
-        #     db=CONFIG.results_backend.db_num + self.db_num,  # Increment db_num to avoid conflicts
-        #     username=CONFIG.results_backend.username,
-        #     password=password,
-        #     decode_responses=True,
-        # )
+#         conn_string = results_backend.get_connection_string()
+#         base, _ = conn_string.rsplit("/", 1)
+#         new_db_num = CONFIG.results_backend.db_num + self.db_num
+#         conn_string = f"{base}/{new_db_num}"
+#         LOG.debug(f"MANAGER: Connecting to redis at db_num: {new_db_num}")
+#         return redis.from_url(conn_string, decode_responses=True)
+#         # password_file = CONFIG.results_backend.password
+#         # try:
+#         #     password = get_backend_password(password_file)
+#         # except IOError:
+#         #     password = CONFIG.results_backend.password
+#         # return redis.Redis(
+#         #     host=CONFIG.results_backend.server,
+#         #     port=CONFIG.results_backend.port,
+#         #     db=CONFIG.results_backend.db_num + self.db_num,  # Increment db_num to avoid conflicts
+#         #     username=CONFIG.results_backend.username,
+#         #     password=password,
+#         #     decode_responses=True,
+#         # )
 
 
 class CeleryManager:

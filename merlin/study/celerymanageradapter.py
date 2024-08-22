@@ -32,7 +32,7 @@ import subprocess
 
 import psutil
 
-from merlin.study.celerymanager import WORKER_INFO, CeleryManager, WorkerStatus
+from merlin.managers.celerymanager import WORKER_INFO, CeleryManager, WorkerStatus
 
 
 LOG = logging.getLogger(__name__)

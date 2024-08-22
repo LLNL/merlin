@@ -46,8 +46,8 @@ from tabulate import tabulate
 
 from merlin.common.dumper import dump_handler
 from merlin.config import Config
+from merlin.managers.celerymanager import CeleryManager
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
-from merlin.study.celerymanager import CeleryManager
 from merlin.study.celerymanageradapter import add_monitor_workers, remove_monitor_workers
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
