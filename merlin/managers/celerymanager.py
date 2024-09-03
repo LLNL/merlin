@@ -50,60 +50,10 @@ class WorkerStatus:
 WORKER_INFO = {
     "status": WorkerStatus.running,
     "pid": -1,
-    "monitored": 1,
+    "monitored": 1,  # This setting is for debug mode
     "num_unresponsive": 0,
     "processing_work": 1,
 }
-
-
-# class RedisConnectionManager:
-#     """
-#     A context manager for handling redis connections.
-#     This will ensure safe opening and closing of Redis connections.
-#     """
-
-#     def __init__(self, db_num: int):
-#         self.db_num = db_num
-#         self.connection = None
-
-#     def __enter__(self):
-#         self.connection = self.get_redis_connection()
-#         return self.connection
-
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         if self.connection:
-#             LOG.debug(f"MANAGER: Closing connection at db_num: {self.db_num}")
-#             self.connection.close()
-
-#     def get_redis_connection(self) -> redis.Redis:
-#         """
-#         Generic redis connection function to get the results backend redis server with a given db number increment.
-
-#         :return: Redis connection object that can be used to access values for the manager.
-#         """
-#         # from merlin.config.results_backend import get_backend_password
-#         from merlin.config import results_backend
-#         from merlin.config.configfile import CONFIG
-
-#         conn_string = results_backend.get_connection_string()
-#         base, _ = conn_string.rsplit("/", 1)
-#         new_db_num = CONFIG.results_backend.db_num + self.db_num
-#         conn_string = f"{base}/{new_db_num}"
-#         LOG.debug(f"MANAGER: Connecting to redis at db_num: {new_db_num}")
-#         return redis.from_url(conn_string, decode_responses=True)
-#         # password_file = CONFIG.results_backend.password
-#         # try:
-#         #     password = get_backend_password(password_file)
-#         # except IOError:
-#         #     password = CONFIG.results_backend.password
-#         # return redis.Redis(
-#         #     host=CONFIG.results_backend.server,
-#         #     port=CONFIG.results_backend.port,
-#         #     db=CONFIG.results_backend.db_num + self.db_num,  # Increment db_num to avoid conflicts
-#         #     username=CONFIG.results_backend.username,
-#         #     password=password,
-#         #     decode_responses=True,
-#         # )
 
 
 class CeleryManager:
@@ -156,6 +106,7 @@ class CeleryManager:
             worker_pid = int(worker_status_connect.hget(worker, "pid"))
             worker_status = worker_status_connect.hget(worker, "status")
 
+        # TODO be wary of stalled state workers (should not happen since we use psutil.Process.kill())
         # Check to see if the pid exists and worker is set as running
         if worker_status == WorkerStatus.running and psutil.pid_exists(worker_pid):
             # Check to see if the pid is associated with celery
@@ -174,9 +125,8 @@ class CeleryManager:
         :return:        The result of whether a worker was restarted.
         """
 
-        # Stop the worker that is currently running
-        if not self.stop_celery_worker(worker):
-            return False
+        # Stop the worker that is currently running (if possible)
+        self.stop_celery_worker(worker)
 
         # Start the worker again with the args saved in redis db
         with (
@@ -218,7 +168,7 @@ class CeleryManager:
 
         with self.get_worker_status_redis_connection() as redis_connection:
             LOG.debug(f"MANAGER: setting manager key in redis to hold the following info {manager_info}")
-            redis_connection.hmset(name="manager", mapping=manager_info)
+            redis_connection.hset("manager", mapping=manager_info)
 
             # TODO figure out what to do with "processing_work" entry for the merlin monitor
             while True:  # TODO Make it so that it will stop after a list of workers is stopped
@@ -251,10 +201,10 @@ class CeleryManager:
                                 # If successful set the status to running and reset num_unresponsive
                                 redis_connection.hset(worker, "status", WorkerStatus.running)
                                 redis_connection.hset(worker, "num_unresponsive", 0)
-                                # If failed set the status to stalled
-                                redis_connection.hset(worker, "status", WorkerStatus.stalled)
                                 LOG.info(f"MANAGER: Worker '{worker}' restarted.")
                             else:
+                                # If failed set the status to stalled
+                                redis_connection.hset(worker, "status", WorkerStatus.stalled)
                                 LOG.error(f"MANAGER: Could not restart worker '{worker}'.")
                         else:
                             redis_connection.hset(worker, "num_unresponsive", num_unresponsive)

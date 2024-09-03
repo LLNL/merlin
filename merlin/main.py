@@ -360,7 +360,7 @@ def stop_workers(args):
                 LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
 
     # Send stop command to router
-    router.stop_workers(args.task_server, worker_names, args.queues, args.workers)
+    router.stop_workers(args.task_server, worker_names, args.queues, args.workers, args.level.upper())
 
 
 def print_info(args):
@@ -414,12 +414,13 @@ def process_manager(args: Namespace):
     if args.command == "run":
         run_manager(query_frequency=args.query_frequency, query_timeout=args.query_timeout, worker_timeout=args.worker_timeout)
     elif args.command == "start":
-        if start_manager(
-            query_frequency=args.query_frequency, query_timeout=args.query_timeout, worker_timeout=args.worker_timeout
-        ):
+        try:
+            start_manager(
+                query_frequency=args.query_frequency, query_timeout=args.query_timeout, worker_timeout=args.worker_timeout
+            )
             LOG.info("Manager started successfully.")
-        else:
-            LOG.error("Unable to start manager")
+        except Exception as e:
+            LOG.error(f"Unable to start manager.\n{e}")
     elif args.command == "stop":
         if stop_manager():
             LOG.info("Manager stopped successfully.")

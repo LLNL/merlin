@@ -46,7 +46,7 @@ from tabulate import tabulate
 
 from merlin.common.dumper import dump_handler
 from merlin.config import Config
-from merlin.managers.celerymanager import CeleryManager
+from merlin.managers.celerymanager import CeleryManager, WorkerStatus
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.study.celerymanageradapter import add_monitor_workers, remove_monitor_workers
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
@@ -838,7 +838,7 @@ def purge_celery_tasks(queues, force):
     return subprocess.run(purge_command, shell=True).returncode
 
 
-def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):  # pylint: disable=R0912
+def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None, debug_lvl="INFO"):  # pylint: disable=R0912
     """Send a stop command to celery workers.
 
     Default behavior is to stop all connected workers.
@@ -903,7 +903,8 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
     if workers_to_stop:
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
         app.control.broadcast("shutdown", destination=workers_to_stop)
-        remove_monitor_workers(workers=workers_to_stop)
+        remove_entry = False if debug_lvl == "DEBUG" else True
+        remove_monitor_workers(workers=workers_to_stop, worker_status=WorkerStatus.stopped, remove_entry=remove_entry)
     else:
         LOG.warning("No workers found to stop")
 

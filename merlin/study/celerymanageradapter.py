@@ -67,7 +67,11 @@ def add_monitor_workers(workers: list):
     LOG.info(f"MANAGER: Manager is monitoring the following workers {monitored_workers}.")
 
 
-def remove_monitor_workers(workers: list):
+def remove_monitor_workers(
+    workers: list,
+    worker_status: WorkerStatus = None,
+    remove_entry: bool = True
+):
     """
     Remove workers from being monitored by the celery manager.
     :param list workers:        A worker names
@@ -78,7 +82,10 @@ def remove_monitor_workers(workers: list):
         for worker in workers:
             if redis_connection.exists(worker):
                 redis_connection.hset(worker, "monitored", 0)
-                redis_connection.hset(worker, "status", WorkerStatus.stopped)
+                if worker_status is not None:
+                    redis_connection.hset(worker, "status", worker_status)
+                if remove_entry:
+                    redis_connection.delete(worker)
 
 
 def is_manager_runnning() -> bool:
