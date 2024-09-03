@@ -190,7 +190,7 @@ def get_workers(task_server):
         return []
 
 
-def stop_workers(task_server, spec_worker_names, queues, workers_regex):
+def stop_workers(task_server, spec_worker_names, queues, workers_regex, debug_lvl):
     """
     Stops workers.
 
@@ -198,12 +198,13 @@ def stop_workers(task_server, spec_worker_names, queues, workers_regex):
     :param `spec_worker_names`: Worker names to stop, drawn from a spec.
     :param `queues`     : The queues to stop
     :param `workers_regex`    : Regex for workers to stop
+    :param debug_lvl: The debug level to use (INFO, DEBUG, ERROR, etc.)
     """
     LOG.info("Stopping workers...")
 
     if task_server == "celery":  # pylint: disable=R1705
         # Stop workers
-        stop_celery_workers(queues, spec_worker_names, workers_regex)
+        stop_celery_workers(queues, spec_worker_names, workers_regex, debug_lvl)
     else:
         LOG.error("Celery is not specified as the task server!")
 
