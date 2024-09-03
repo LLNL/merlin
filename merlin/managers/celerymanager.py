@@ -33,9 +33,9 @@ import subprocess
 import time
 
 import psutil
-import redis
 
 from merlin.managers.redis_connection import RedisConnectionManager
+
 
 LOG = logging.getLogger(__name__)
 
@@ -156,9 +156,9 @@ class CeleryManager:
         """
         Main manager loop for monitoring and managing Celery workers.
 
-        This method continuously monitors the status of Celery workers by 
-        checking their health and attempting to restart any that are 
-        unresponsive. It updates the Redis database with the current 
+        This method continuously monitors the status of Celery workers by
+        checking their health and attempting to restart any that are
+        unresponsive. It updates the Redis database with the current
         status of the manager and the workers.
         """
         manager_info = {

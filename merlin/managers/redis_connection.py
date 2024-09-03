@@ -31,7 +31,9 @@
 This module stores a manager for redis connections.
 """
 import logging
+
 import redis
+
 
 LOG = logging.getLogger(__name__)
 
@@ -61,8 +63,8 @@ class RedisConnectionManager:
 
         :return: Redis connection object that can be used to access values for the manager.
         """
-        from merlin.config.results_backend import get_backend_password
         from merlin.config.configfile import CONFIG
+        from merlin.config.results_backend import get_backend_password
 
         password_file = CONFIG.results_backend.password
         try:

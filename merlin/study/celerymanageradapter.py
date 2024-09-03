@@ -67,11 +67,7 @@ def add_monitor_workers(workers: list):
     LOG.info(f"MANAGER: Manager is monitoring the following workers {monitored_workers}.")
 
 
-def remove_monitor_workers(
-    workers: list,
-    worker_status: WorkerStatus = None,
-    remove_entry: bool = True
-):
+def remove_monitor_workers(workers: list, worker_status: WorkerStatus = None, remove_entry: bool = True):
     """
     Remove workers from being monitored by the celery manager.
     :param list workers:        A worker names
