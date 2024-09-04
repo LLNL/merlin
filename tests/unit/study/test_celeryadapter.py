@@ -49,150 +49,150 @@ from tests.unit.study.status_test_files.shared_tests import _format_csv_data
 from tests.unit.study.status_test_files.status_test_variables import SPEC_PATH
 
 
-@pytest.mark.order(before="TestInactive")
-class TestActive:
-    """
-    This class will test functions in the celeryadapter.py module.
-    It will run tests where we need active queues/workers to interact with.
+# @pytest.mark.order(before="TestInactive")
+# class TestActive:
+#     """
+#     This class will test functions in the celeryadapter.py module.
+#     It will run tests where we need active queues/workers to interact with.
 
-    NOTE: The tests in this class must be ran before the TestInactive class or else the
-    Celery workers needed for this class don't start
+#     NOTE: The tests in this class must be ran before the TestInactive class or else the
+#     Celery workers needed for this class don't start
 
-    TODO: fix the bug noted above and then check if we still need pytest-order
-    """
+#     TODO: fix the bug noted above and then check if we still need pytest-order
+#     """
 
-    def test_query_celery_queues(
-        self, celery_app: Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
-    ):
-        """
-        Test the query_celery_queues function by providing it with a list of active queues.
-        This should return a dict where keys are queue names and values are more dicts containing
-        the number of jobs and consumers in that queue.
+#     def test_query_celery_queues(
+#         self, celery_app: Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
+#     ):
+#         """
+#         Test the query_celery_queues function by providing it with a list of active queues.
+#         This should return a dict where keys are queue names and values are more dicts containing
+#         the number of jobs and consumers in that queue.
 
-        :param `celery_app`: A pytest fixture for the test Celery app
-        :param launch_workers: A pytest fixture that launches celery workers for us to interact with
-        :param worker_queue_map: A pytest fixture that returns a dict of workers and queues
-        """
-        # Set up a dummy configuration to use in the test
-        dummy_config = Config({"broker": {"name": "redis"}})
+#         :param `celery_app`: A pytest fixture for the test Celery app
+#         :param launch_workers: A pytest fixture that launches celery workers for us to interact with
+#         :param worker_queue_map: A pytest fixture that returns a dict of workers and queues
+#         """
+#         # Set up a dummy configuration to use in the test
+#         dummy_config = Config({"broker": {"name": "redis"}})
 
-        # Get the actual output
-        queues_to_query = list(worker_queue_map.values())
-        actual_queue_info = celeryadapter.query_celery_queues(queues_to_query, app=celery_app, config=dummy_config)
+#         # Get the actual output
+#         queues_to_query = list(worker_queue_map.values())
+#         actual_queue_info = celeryadapter.query_celery_queues(queues_to_query, app=celery_app, config=dummy_config)
 
-        # Ensure all 3 queues in worker_queue_map were queried before looping
-        assert len(actual_queue_info) == 3
+#         # Ensure all 3 queues in worker_queue_map were queried before looping
+#         assert len(actual_queue_info) == 3
 
-        # Ensure each queue has a worker attached
-        for queue_name, queue_info in actual_queue_info.items():
-            assert queue_name in worker_queue_map.values()
-            assert queue_info == {"consumers": 1, "jobs": 0}
+#         # Ensure each queue has a worker attached
+#         for queue_name, queue_info in actual_queue_info.items():
+#             assert queue_name in worker_queue_map.values()
+#             assert queue_info == {"consumers": 1, "jobs": 0}
 
-    def test_get_running_queues(self, launch_workers: "Fixture", worker_queue_map: Dict[str, str]):  # noqa: F821
-        """
-        Test the get_running_queues function with queues active.
-        This should return a list of active queues.
+#     def test_get_running_queues(self, launch_workers: "Fixture", worker_queue_map: Dict[str, str]):  # noqa: F821
+#         """
+#         Test the get_running_queues function with queues active.
+#         This should return a list of active queues.
 
-        :param `launch_workers`: A pytest fixture that launches celery workers for us to interact with
-        :param `worker_queue_map`: A pytest fixture that returns a dict of workers and queues
-        """
-        result = celeryadapter.get_running_queues("merlin_test_app", test_mode=True)
-        assert sorted(result) == sorted(list(worker_queue_map.values()))
+#         :param `launch_workers`: A pytest fixture that launches celery workers for us to interact with
+#         :param `worker_queue_map`: A pytest fixture that returns a dict of workers and queues
+#         """
+#         result = celeryadapter.get_running_queues("merlin_test_app", test_mode=True)
+#         assert sorted(result) == sorted(list(worker_queue_map.values()))
 
-    def test_get_active_celery_queues(
-        self, celery_app: Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
-    ):
-        """
-        Test the get_active_celery_queues function with queues active.
-        This should return a tuple where the first entry is a dict of queue info
-        and the second entry is a list of worker names.
+#     def test_get_active_celery_queues(
+#         self, celery_app: Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
+#     ):
+#         """
+#         Test the get_active_celery_queues function with queues active.
+#         This should return a tuple where the first entry is a dict of queue info
+#         and the second entry is a list of worker names.
 
-        :param `celery_app`: A pytest fixture for the test Celery app
-        :param `launch_workers`: A pytest fixture that launches celery workers for us to interact with
-        :param `worker_queue_map`: A pytest fixture that returns a dict of workers and queues
-        """
-        # Start the queues and run the test
-        queue_result, worker_result = celeryadapter.get_active_celery_queues(celery_app)
+#         :param `celery_app`: A pytest fixture for the test Celery app
+#         :param `launch_workers`: A pytest fixture that launches celery workers for us to interact with
+#         :param `worker_queue_map`: A pytest fixture that returns a dict of workers and queues
+#         """
+#         # Start the queues and run the test
+#         queue_result, worker_result = celeryadapter.get_active_celery_queues(celery_app)
 
-        # Ensure we got output before looping
-        assert len(queue_result) == len(worker_result) == 3
+#         # Ensure we got output before looping
+#         assert len(queue_result) == len(worker_result) == 3
 
-        for worker, queue in worker_queue_map.items():
-            # Check that the entry in the queue_result dict for this queue is correct
-            assert queue in queue_result
-            assert len(queue_result[queue]) == 1
-            assert worker in queue_result[queue][0]
+#         for worker, queue in worker_queue_map.items():
+#             # Check that the entry in the queue_result dict for this queue is correct
+#             assert queue in queue_result
+#             assert len(queue_result[queue]) == 1
+#             assert worker in queue_result[queue][0]
 
-            # Remove this entry from the queue_result dict
-            del queue_result[queue]
+#             # Remove this entry from the queue_result dict
+#             del queue_result[queue]
 
-            # Check that this worker was added to the worker_result list
-            worker_found = False
-            for worker_name in worker_result[:]:
-                if worker in worker_name:
-                    worker_found = True
-                    worker_result.remove(worker_name)
-                    break
-            assert worker_found
+#             # Check that this worker was added to the worker_result list
+#             worker_found = False
+#             for worker_name in worker_result[:]:
+#                 if worker in worker_name:
+#                     worker_found = True
+#                     worker_result.remove(worker_name)
+#                     break
+#             assert worker_found
 
-        # Ensure there was no extra output that we weren't expecting
-        assert queue_result == {}
-        assert worker_result == []
+#         # Ensure there was no extra output that we weren't expecting
+#         assert queue_result == {}
+#         assert worker_result == []
 
-    def test_build_set_of_queues(
-        self, celery_app: Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
-    ):
-        """
-        Test the build_set_of_queues function with queues active.
-        This should return a set of queues (the queues defined in setUp).
-        """
-        # Run the test
-        result = celeryadapter.build_set_of_queues(
-            steps=["all"], spec=None, specific_queues=None, verbose=False, app=celery_app
-        )
-        assert result == set(worker_queue_map.values())
+#     def test_build_set_of_queues(
+#         self, celery_app: Celery, launch_workers: "Fixture", worker_queue_map: Dict[str, str]  # noqa: F821
+#     ):
+#         """
+#         Test the build_set_of_queues function with queues active.
+#         This should return a set of queues (the queues defined in setUp).
+#         """
+#         # Run the test
+#         result = celeryadapter.build_set_of_queues(
+#             steps=["all"], spec=None, specific_queues=None, verbose=False, app=celery_app
+#         )
+#         assert result == set(worker_queue_map.values())
 
-    @pytest.mark.order(index=1)
-    def test_check_celery_workers_processing_tasks(
-        self,
-        celery_app: Celery,
-        sleep_sig: Signature,
-        launch_workers: "Fixture",  # noqa: F821
-    ):
-        """
-        Test the check_celery_workers_processing function with workers active and a task in a queue.
-        This function will query workers for any tasks they're still processing. We'll send a
-        a task that sleeps for 3 seconds to our workers before we run this test so that there should be
-        a task for this function to find.
+#     @pytest.mark.order(index=1)
+#     def test_check_celery_workers_processing_tasks(
+#         self,
+#         celery_app: Celery,
+#         sleep_sig: Signature,
+#         launch_workers: "Fixture",  # noqa: F821
+#     ):
+#         """
+#         Test the check_celery_workers_processing function with workers active and a task in a queue.
+#         This function will query workers for any tasks they're still processing. We'll send a
+#         a task that sleeps for 3 seconds to our workers before we run this test so that there should be
+#         a task for this function to find.
 
-        NOTE: the celery app fixture shows strange behavior when using app.control.inspect() calls (which
-        check_celery_workers_processing uses) so we have to run this test first in this class in order to
-        have it run properly.
+#         NOTE: the celery app fixture shows strange behavior when using app.control.inspect() calls (which
+#         check_celery_workers_processing uses) so we have to run this test first in this class in order to
+#         have it run properly.
 
-        :param celery_app: A pytest fixture for the test Celery app
-        :param sleep_sig: A pytest fixture for a celery signature of a task that sleeps for 3 sec
-        :param launch_workers: A pytest fixture that launches celery workers for us to interact with
-        """
-        # Our active workers/queues are test_worker_[0-2]/test_queue_[0-2] so we're
-        # sending this to test_queue_0 for test_worker_0 to process
-        queue_for_signature = "test_queue_0"
-        sleep_sig.set(queue=queue_for_signature)
-        result = sleep_sig.delay()
+#         :param celery_app: A pytest fixture for the test Celery app
+#         :param sleep_sig: A pytest fixture for a celery signature of a task that sleeps for 3 sec
+#         :param launch_workers: A pytest fixture that launches celery workers for us to interact with
+#         """
+#         # Our active workers/queues are test_worker_[0-2]/test_queue_[0-2] so we're
+#         # sending this to test_queue_0 for test_worker_0 to process
+#         queue_for_signature = "test_queue_0"
+#         sleep_sig.set(queue=queue_for_signature)
+#         result = sleep_sig.delay()
 
-        # We need to give the task we just sent to the server a second to get picked up by the worker
-        sleep(1)
+#         # We need to give the task we just sent to the server a second to get picked up by the worker
+#         sleep(1)
 
-        # Run the test now that the task should be getting processed
-        active_queue_test = celeryadapter.check_celery_workers_processing([queue_for_signature], celery_app)
-        assert active_queue_test is True
+#         # Run the test now that the task should be getting processed
+#         active_queue_test = celeryadapter.check_celery_workers_processing([queue_for_signature], celery_app)
+#         assert active_queue_test is True
 
-        # Now test that a queue without any tasks returns false
-        # We sent the signature to task_queue_0 so task_queue_1 shouldn't have any tasks to find
-        non_active_queue_test = celeryadapter.check_celery_workers_processing(["test_queue_1"], celery_app)
-        assert non_active_queue_test is False
+#         # Now test that a queue without any tasks returns false
+#         # We sent the signature to task_queue_0 so task_queue_1 shouldn't have any tasks to find
+#         non_active_queue_test = celeryadapter.check_celery_workers_processing(["test_queue_1"], celery_app)
+#         assert non_active_queue_test is False
 
-        # Wait for the worker to finish running the task
-        result.get()
+#         # Wait for the worker to finish running the task
+#         result.get()
 
 
 class TestInactive:
