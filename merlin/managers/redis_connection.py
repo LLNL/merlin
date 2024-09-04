@@ -71,6 +71,12 @@ class RedisConnectionManager:
             password = get_backend_password(password_file)
         except IOError:
             password = CONFIG.results_backend.password
+
+        has_ssl = hasattr(CONFIG.results_backend, "cert_reqs")
+        ssl_cert_reqs = "required"
+        if has_ssl:
+            ssl_cert_reqs = CONFIG.results_backend.cert_reqs
+
         return redis.Redis(
             host=CONFIG.results_backend.server,
             port=CONFIG.results_backend.port,
@@ -78,6 +84,6 @@ class RedisConnectionManager:
             username=CONFIG.results_backend.username,
             password=password,
             decode_responses=True,
-            ssl=True,
-            ssl_cert_reqs=CONFIG.results_backend.cert_reqs,
+            ssl=has_ssl,
+            ssl_cert_reqs=ssl_cert_reqs,
         )
