@@ -78,9 +78,7 @@ for ii, concurrency in enumerate(concurrencies):
         if real_time > 1440:
             real_time = 1440
         submit: str = "submit.sbatch"
-        command: str = (
-            f"sbatch -J c{concurrency}s{sample}r{args.run_id} --time {real_time} -N {nodes[ii]} -p {partition} -A {account} {submit} {sample} {int(concurrency/nodes[ii])} {args.run_id} {concurrency}"
-        )
+        command: str = f"sbatch -J c{concurrency}s{sample}r{args.run_id} --time {real_time} -N {nodes[ii]} -p {partition} -A {account} {submit} {sample} {int(concurrency/nodes[ii])} {args.run_id} {concurrency}"
         shutil.copyfile(os.path.join(submit_path, submit), submit)
         shutil.copyfile(args.spec_path, "spec.yaml")
         shutil.copyfile(args.script_path, os.path.join("scripts", "make_samples.py"))
