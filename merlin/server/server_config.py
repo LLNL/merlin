@@ -136,6 +136,31 @@ def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
     return False, "Reached end of redis output without seeing 'Ready to accept connections'"
 
 
+def write_container_command_files(config_dir: str) -> bool:
+    """
+    Write the yaml files that contain instructions on how to
+    run certain commands for each container type.
+
+    :param config_dir: The path to the configuration dir where we'll write files
+    :returns: True if successful. False otherwise.
+    """
+    files = [i + ".yaml" for i in CONTAINER_TYPES]
+    for file in files:
+        file_path = os.path.join(config_dir, file)
+        if os.path.exists(file_path):
+            LOG.info(f"{file} already exists.")
+            continue
+        LOG.info(f"Copying file {file} to configuration directory.")
+        try:
+            with resources.path("merlin.server", file) as config_file:
+                with open(file_path, "w") as outfile, open(config_file, "r") as infile:
+                    outfile.write(infile.read())
+        except OSError:
+            LOG.error(f"Destination location {config_dir} is not writable.")
+            return False
+    return True
+
+
 def create_server_config() -> bool:
     """
     Create main configuration file for merlin server in the
@@ -158,20 +183,8 @@ def create_server_config() -> bool:
             LOG.error(err)
             return False
 
-    files = [i + ".yaml" for i in CONTAINER_TYPES]
-    for file in files:
-        file_path = os.path.join(config_dir, file)
-        if os.path.exists(file_path):
-            LOG.info(f"{file} already exists.")
-            continue
-        LOG.info(f"Copying file {file} to configuration directory.")
-        try:
-            with resources.path("merlin.server", file) as config_file:
-                with open(file_path, "w") as outfile, open(config_file, "r") as infile:
-                    outfile.write(infile.read())
-        except OSError:
-            LOG.error(f"Destination location {config_dir} is not writable.")
-            return False
+    if not write_container_command_files(config_dir):
+        return False
 
     # Load Merlin Server Configuration and apply it to app.yaml
     with resources.path("merlin.server", MERLIN_SERVER_CONFIG) as merlin_server_config:
@@ -189,6 +202,7 @@ def create_server_config() -> bool:
         return False
 
     if not os.path.exists(server_config.container.get_config_dir()):
+        print("inside get_config_dir if statement")
         LOG.info("Creating merlin server directory.")
         os.mkdir(server_config.container.get_config_dir())
 
