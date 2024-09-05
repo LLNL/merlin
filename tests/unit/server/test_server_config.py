@@ -289,3 +289,82 @@ def test_create_server_config_no_server_dir(
     assert create_server_config()
     assert os.path.exists(nonexistent_dir)
     assert "Creating merlin server directory." in caplog.text
+
+
+def test_config_merlin_server_no_server_config(mocker: "Fixture", caplog: "Fixture"):  # noqa: F821
+    """
+    Test the `config_merlin_server` function with the call to `pull_server_config()`
+    returning None. This should log an error and return False.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param caplog: A built-in fixture from the pytest library to capture logs
+    """
+    mocker.patch("merlin.server.server_config.pull_server_config", return_value=None)
+    assert not config_merlin_server()
+    assert 'Try to run "merlin server init" again to reinitialize values.' in caplog.text
+
+
+def test_config_merlin_server_pass_user_exist(
+    mocker: "Fixture",  # noqa: F821
+    caplog: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_server_config: Dict[str, str],
+):
+    """
+    Tests the `config_merlin_server` function with a password file and user file already
+    existing. This should log 2 messages and return None.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param caplog: A built-in fixture from the pytest library to capture logs
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    """
+    caplog.set_level(logging.INFO)
+
+    # Create the password file and user file
+    pass_file = f"{server_testing_dir}/existent_pass_file.txt"
+    user_file = f"{server_testing_dir}/existent_user_file.txt"
+    with open(pass_file, "w"), open(user_file, "w"):
+        pass
+
+    # Mock necessary calls
+    mocker.patch("merlin.server.server_config.pull_server_config", return_value=ServerConfig(server_server_config))
+    mocker.patch("merlin.server.server_util.ContainerConfig.get_pass_file_path", return_value=pass_file)
+    mocker.patch("merlin.server.server_util.ContainerConfig.get_user_file_path", return_value=user_file)
+
+    assert config_merlin_server() is None
+    assert "Password file already exists. Skipping password generation step." in caplog.text
+    assert "User file already exists." in caplog.text
+
+
+def test_config_merlin_server_pass_user_dont_exist(
+    mocker: "Fixture",  # noqa: F821
+    caplog: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_server_config: Dict[str, str],
+):
+    """
+    Tests the `config_merlin_server` function with a password file and user file that don't
+    already exist. This should log 2 messages, create the files, and return None.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param caplog: A built-in fixture from the pytest library to capture logs
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    """
+    caplog.set_level(logging.INFO)
+
+    # Create vars for the nonexistent password file and user file
+    pass_file = f"{server_testing_dir}/nonexistent_pass_file.txt"
+    user_file = f"{server_testing_dir}/nonexistent_user_file.txt"
+
+    # Mock necessary calls
+    mocker.patch("merlin.server.server_config.pull_server_config", return_value=ServerConfig(server_server_config))
+    mocker.patch("merlin.server.server_util.ContainerConfig.get_pass_file_path", return_value=pass_file)
+    mocker.patch("merlin.server.server_util.ContainerConfig.get_user_file_path", return_value=user_file)
+
+    assert config_merlin_server() is None
+    assert os.path.exists(pass_file)
+    assert os.path.exists(user_file)
+    assert "Creating password file for merlin server container." in caplog.text
+    assert f"User {os.environ.get('USER')} created in user file for merlin server container" in caplog.text

@@ -223,9 +223,6 @@ def config_merlin_server():
     if os.path.exists(pass_file):
         LOG.info("Password file already exists. Skipping password generation step.")
     else:
-        # if "pass_command" in server_config["container"]:
-        #     password = generate_password(PASSWORD_LENGTH, server_config["container"]["pass_command"])
-        # else:
         password = generate_password(PASSWORD_LENGTH)
 
         with open(pass_file, "w+") as f:  # pylint: disable=C0103
