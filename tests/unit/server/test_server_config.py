@@ -10,8 +10,10 @@ from typing import Dict, Tuple, Union
 
 import pytest
 
-from merlin.server.server_util import CONTAINER_TYPES, ServerConfig
+from merlin.server.server_util import CONTAINER_TYPES, MERLIN_SERVER_SUBDIR, ServerConfig
 from merlin.server.server_config import (
+    LOCAL_APP_YAML,
+    MERLIN_CONFIG_DIR,
     PASSWORD_LENGTH,
     check_process_file_format,
     config_merlin_server,
@@ -368,3 +370,147 @@ def test_config_merlin_server_pass_user_dont_exist(
     assert os.path.exists(user_file)
     assert "Creating password file for merlin server container." in caplog.text
     assert f"User {os.environ.get('USER')} created in user file for merlin server container" in caplog.text
+
+
+def setup_pull_server_config_mock(
+    mocker: "Fixture",
+    server_testing_dir: str,
+    server_app_yaml_contents: Dict[str, Union[str, int]],
+    server_server_config: Dict[str, Dict[str, str]],
+):
+    """
+    Setup the necessary mocker calls for the `pull_server_config` function.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_app_yaml_contents: A dict of app.yaml configurations
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    """
+    mocker.patch("merlin.server.server_util.AppYaml.get_data", return_value=server_app_yaml_contents)
+    mocker.patch('merlin.server.server_config.MERLIN_CONFIG_DIR', server_testing_dir)
+    mock_data = mocker.mock_open(read_data=str(server_server_config))
+    mocker.patch("builtins.open", mock_data)
+
+
+@pytest.mark.parametrize(
+    "key_to_delete, expected_log_message",
+    [
+        ("container", 'Unable to find "container" object in {default_app_yaml}'),
+        ("container.format", 'Unable to find "format" in {default_app_yaml}'),
+        ("process", 'Process config not found in {default_app_yaml}'),
+    ]
+)
+def test_pull_server_config_missing_config_keys(
+    mocker: "Fixture",  # noqa: F821
+    caplog: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_app_yaml_contents: Dict[str, Union[str, int]],
+    server_server_config: Dict[str, Dict[str, str]],
+    key_to_delete: str,
+    expected_log_message: str,
+):
+    """
+    Test the `pull_server_config` function with missing container-related keys in the
+    app.yaml file contents. This should log an error message and return None.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param caplog: A built-in fixture from the pytest library to capture logs
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_app_yaml_contents: A dict of app.yaml configurations
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    :param key_to_delete: The key to delete from the app.yaml contents
+    :param expected_log_message: The expected log message when the key is missing
+    """
+    # Handle nested key deletion
+    keys = key_to_delete.split('.')
+    temp_app_yaml = server_app_yaml_contents
+    for key in keys[:-1]:
+        temp_app_yaml = temp_app_yaml[key]
+    del temp_app_yaml[keys[-1]]
+
+    setup_pull_server_config_mock(mocker, server_testing_dir, server_app_yaml_contents, server_server_config)
+
+    assert pull_server_config() is None
+    default_app_yaml = os.path.join(MERLIN_CONFIG_DIR, "app.yaml")
+    assert expected_log_message.format(default_app_yaml=default_app_yaml) in caplog.text
+
+
+@pytest.mark.parametrize("key_to_delete", ["command", "run_command", "stop_command", "pull_command"])
+def test_pull_server_config_missing_format_needed_keys(
+    mocker: "Fixture",  # noqa: F821
+    caplog: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_app_yaml_contents: Dict[str, Union[str, int]],
+    server_container_format_config_data: Dict[str, str],
+    server_server_config: Dict[str, Dict[str, str]],
+    key_to_delete: str,
+):
+    """
+    Test the `pull_server_config` function with necessary format keys missing in the
+    singularity.yaml file contents. This should log an error message and return None.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param caplog: A built-in fixture from the pytest library to capture logs
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_app_yaml_contents: A dict of app.yaml configurations
+    :param server_container_format_config_data: A pytest fixture of test data to pass to the ContainerFormatConfig class
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    :param key_to_delete: The key to delete from the singularity.yaml contents
+    """
+    del server_container_format_config_data[key_to_delete]
+    setup_pull_server_config_mock(mocker, server_testing_dir, server_app_yaml_contents, server_server_config)
+
+    assert pull_server_config() is None
+    format_file_basename = server_app_yaml_contents["container"]["format"] + ".yaml"
+    format_file = os.path.join(server_testing_dir, MERLIN_SERVER_SUBDIR)
+    format_file = os.path.join(format_file, format_file_basename)
+    assert f'Unable to find necessary "{key_to_delete}" value in format config file {format_file}' in caplog.text
+
+
+@pytest.mark.parametrize("key_to_delete", ["status", "kill"])
+def test_pull_server_config_missing_process_needed_key(
+    mocker: "Fixture",  # noqa: F821
+    caplog: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_app_yaml_contents: Dict[str, Union[str, int]],
+    server_process_config_data: Dict[str, str],
+    server_server_config: Dict[str, Dict[str, str]],
+    key_to_delete: str,
+):
+    """
+    Test the `pull_server_config` function with necessary process keys missing.
+    This should log an error message and return None.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param caplog: A built-in fixture from the pytest library to capture logs
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_app_yaml_contents: A dict of app.yaml configurations
+    :param server_process_config_data: A pytest fixture of test data to pass to the ProcessConfig class
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    :param key_to_delete: The key to delete from the process config entry
+    """
+    del server_process_config_data[key_to_delete]
+    setup_pull_server_config_mock(mocker, server_testing_dir, server_app_yaml_contents, server_server_config)
+
+    assert pull_server_config() is None
+    default_app_yaml = os.path.join(MERLIN_CONFIG_DIR, "app.yaml")
+    assert f'Process necessary "{key_to_delete}" command configuration not found in {default_app_yaml}' in caplog.text
+
+
+def test_pull_server_config_no_issues(
+    mocker: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_app_yaml_contents: Dict[str, Union[str, int]],
+    server_server_config: Dict[str, Dict[str, str]],
+):
+    """
+    Test the `pull_server_config` function without any problems. This should
+    return a ServerConfig object.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_app_yaml_contents: A dict of app.yaml configurations
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    """
+    setup_pull_server_config_mock(mocker, server_testing_dir, server_app_yaml_contents, server_server_config)
+    assert isinstance(pull_server_config(), ServerConfig)
