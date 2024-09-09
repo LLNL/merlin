@@ -34,12 +34,12 @@ import csv
 import json
 import os
 from datetime import datetime
-from time import sleep
+# from time import sleep
 from typing import Dict
 
-import pytest
+# import pytest
 from celery import Celery
-from celery.canvas import Signature
+# from celery.canvas import Signature
 from deepdiff import DeepDiff
 
 from merlin.config import Config
