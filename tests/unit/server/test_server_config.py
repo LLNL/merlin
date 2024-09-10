@@ -28,6 +28,11 @@ from merlin.server.server_config import (
     write_container_command_files,
 )
 
+try:
+    from importlib import resources
+except ImportError:
+    import importlib_resources as resources
+
 
 def test_generate_password_no_pass_command():
     """
@@ -514,3 +519,177 @@ def test_pull_server_config_no_issues(
     """
     setup_pull_server_config_mock(mocker, server_testing_dir, server_app_yaml_contents, server_server_config)
     assert isinstance(pull_server_config(), ServerConfig)
+
+
+def test_pull_server_image_no_server_config(mocker: "Fixture", caplog: "Fixture"):  # noqa: F821
+    """
+    Test the `pull_server_image` function with no server config being found.
+    This should return False and log an error message.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param caplog: A built-in fixture from the pytest library to capture logs
+    """
+    mocker.patch("merlin.server.server_config.pull_server_config", return_value=None)
+    assert not pull_server_image()
+    assert 'Try to run "merlin server init" again to reinitialize values.' in caplog.text
+
+
+def setup_pull_server_image_mock(
+    mocker: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_server_config: Dict[str, Dict[str, str]],
+    config_dir: str,
+    config_file: str,
+    image_file: str,
+    create_config_file: bool = False,
+    create_image_file: bool = False,
+
+):
+    """
+    Set up the necessary mock calls for the `pull_server_image` function.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class  
+    """
+    image_url = "docker://redis"
+    image_path = f"{server_testing_dir}/{image_file}"
+    mocker.patch("merlin.server.server_config.pull_server_config", return_value=ServerConfig(server_server_config))
+    mocker.patch("merlin.server.server_util.ContainerConfig.get_config_dir", return_value=config_dir)
+    mocker.patch("merlin.server.server_util.ContainerConfig.get_config_name", return_value=config_file)
+    mocker.patch("merlin.server.server_util.ContainerConfig.get_image_url", return_value=image_url)
+    mocker.patch("merlin.server.server_util.ContainerConfig.get_image_path", return_value=image_path)
+
+    if create_config_file:
+        if not os.path.exists(config_dir):
+            os.mkdir(config_dir)
+        with open(os.path.join(config_dir, config_file), "w"):
+            pass
+    
+    if create_image_file:
+        with open(image_path, "w"):
+            pass
+
+
+def test_pull_server_image_no_image_path_no_config_path(
+    mocker: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_server_config: Dict[str, Dict[str, str]],
+):
+    """
+    Test the `pull_server_image` function with no image path and no configuration
+    path. This should run a subprocess for the image path and create the configuration
+    file. It should also return True.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class  
+    """
+    # Set up mock calls to simulate the setup of this function
+    config_dir = f"{server_testing_dir}/config_dir"
+    config_file = "nonexistent.yaml"
+    image_file = "nonexistent.sif"
+    setup_pull_server_image_mock(
+        mocker,
+        server_testing_dir,
+        server_server_config,
+        config_dir,
+        config_file,
+        image_file
+    )
+    mocked_subprocess = mocker.patch("subprocess.run")
+
+    # Mock the open function
+    read_data = "Mocked file content"
+    mocked_open = mocker.mock_open(read_data=read_data)
+    mocker.patch("builtins.open", mocked_open)
+
+    # Call the function
+    assert pull_server_image()
+
+    # Assert that the subprocess call to pull the image was called
+    mocked_subprocess.assert_called_once()
+
+    # Assert that open was called with the correct arguments
+    mocked_open.assert_any_call(os.path.join(config_dir, config_file), "w")
+    with resources.path("merlin.server", config_file) as file:
+        mocked_open.assert_any_call(file, "r")
+    assert mocked_open.call_count == 2
+
+    # Assert that the write method was called with the expected content
+    mocked_open().write.assert_called_once_with(read_data)
+
+
+def test_pull_server_image_both_paths_exist(
+    mocker: "Fixture",  # noqa: F821
+    caplog: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_server_config: Dict[str, Dict[str, str]],
+):
+    """
+    Test the `pull_server_image` function with both an image path and a configuration
+    path that both exist. This should log two messages and return True.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param caplog: A built-in fixture from the pytest library to capture logs
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class 
+    """
+    caplog.set_level(logging.INFO)
+
+    # Set up mock calls to simulate the setup of this function
+    config_dir = f"{server_testing_dir}/config_dir"
+    config_file = "existent.yaml"
+    image_file = "existent.sif"
+    setup_pull_server_image_mock(
+        mocker,
+        server_testing_dir,
+        server_server_config,
+        config_dir,
+        config_file,
+        image_file,
+        create_config_file=True,
+        create_image_file=True,
+    )
+
+    assert pull_server_image()
+    assert f"{image_file} already exists." in caplog.text
+    assert "Redis configuration file already exist." in caplog.text
+
+
+def test_pull_server_image_os_error(
+    mocker: "Fixture",
+    caplog: "Fixture",  # noqa: F821
+    server_testing_dir: str,
+    server_server_config: Dict[str, Dict[str, str]],
+):
+    """
+    Test the `pull_server_image` function with an image path but no configuration
+    path. We'll force this to raise an OSError when writing to the configuration file
+    to ensure it's handled properly. This should log an error and return False.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param caplog: A built-in fixture from the pytest library to capture logs
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    """
+    # Set up mock calls to simulate the setup of this function
+    config_dir = f"{server_testing_dir}/config_dir"
+    config_file = "existent.yaml"
+    image_file = "nonexistent.sif"
+    setup_pull_server_image_mock(
+        mocker,
+        server_testing_dir,
+        server_server_config,
+        config_dir,
+        config_file,
+        image_file,
+        create_image_file=True,
+    )
+
+    # Mock the open function
+    mocker.patch("builtins.open", side_effect=OSError)
+
+    # Run the test
+    assert not pull_server_image()
+    assert f"Destination location {config_dir} is not writable." in caplog.text
