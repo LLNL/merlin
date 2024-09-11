@@ -7,6 +7,7 @@ import logging
 import os
 import string
 from typing import Dict, Tuple, Union
+import yaml
 
 import pytest
 
@@ -15,6 +16,7 @@ from merlin.server.server_config import (
     LOCAL_APP_YAML,
     MERLIN_CONFIG_DIR,
     PASSWORD_LENGTH,
+    ServerStatus,
     check_process_file_format,
     config_merlin_server,
     create_server_config,
@@ -587,8 +589,8 @@ def test_pull_server_image_no_image_path_no_config_path(
     """
     # Set up mock calls to simulate the setup of this function
     config_dir = f"{server_testing_dir}/config_dir"
-    config_file = "nonexistent.yaml"
-    image_file = "nonexistent.sif"
+    config_file = "pull_server_image_no_image_path_no_config_path_config_nonexistent.yaml"
+    image_file = "pull_server_image_no_image_path_no_config_path_image_nonexistent.sif"
     setup_pull_server_image_mock(
         mocker,
         server_testing_dir,
@@ -639,8 +641,8 @@ def test_pull_server_image_both_paths_exist(
 
     # Set up mock calls to simulate the setup of this function
     config_dir = f"{server_testing_dir}/config_dir"
-    config_file = "existent.yaml"
-    image_file = "existent.sif"
+    config_file = "pull_server_image_both_paths_exist_config.yaml"
+    image_file = "pull_server_image_both_paths_exist_image.sif"
     setup_pull_server_image_mock(
         mocker,
         server_testing_dir,
@@ -675,8 +677,8 @@ def test_pull_server_image_os_error(
     """
     # Set up mock calls to simulate the setup of this function
     config_dir = f"{server_testing_dir}/config_dir"
-    config_file = "existent.yaml"
-    image_file = "nonexistent.sif"
+    config_file = "pull_server_image_os_error_config.yaml"
+    image_file = "pull_server_image_os_error_config_nonexistent.sif"
     setup_pull_server_image_mock(
         mocker,
         server_testing_dir,
@@ -693,3 +695,160 @@ def test_pull_server_image_os_error(
     # Run the test
     assert not pull_server_image()
     assert f"Destination location {config_dir} is not writable." in caplog.text
+
+
+@pytest.mark.parametrize("server_config_exists, config_exists, image_exists, pfile_exists, expected_status", [
+    (False, True, True, True, ServerStatus.NOT_INITALIZED),  # No server config
+    (True, False, True, True, ServerStatus.NOT_INITALIZED),  # Config dir does not exist
+    (True, True, False, True, ServerStatus.MISSING_CONTAINER),  # Image path does not exist
+    (True, True, True, False, ServerStatus.NOT_RUNNING),  # Pfile path does not exist
+])
+def test_get_server_status_initial_checks(
+    mocker: "Fixture",  # noqa: F821
+    server_server_config: Dict[str, Dict[str, str]],
+    server_config_exists: bool,
+    config_exists: bool,
+    image_exists: bool,
+    pfile_exists: bool,
+    expected_status: ServerStatus,
+):
+    """
+    Test the `get_server_status` function for the initial conditional checks that it looks for.
+    These checks include:
+    - no server configuration -> should return NOT_INITIALIZED
+    - no config directory path -> should return NOT_INITIALIZED
+    - no image path -> should return MISSING_CONTAINER
+    - no password file -> should return NOT_RUNNING
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    :param server_config_exists: A boolean to denote whether the server config exists in this test or not
+    :param config_exists: A boolean to denote whether the config dir exists in this test or not
+    :param image_exists: A boolean to denote whether the image path exists in this test or not
+    :param pfile_exists: A boolean to denote whether the password file exists in this test or not
+    :param expected_status: The status we're expecting `get_server_status` to return for this test
+    """
+    # Mock the necessary calls
+    if server_config_exists:
+        mocker.patch("merlin.server.server_config.pull_server_config", return_value=ServerConfig(server_server_config))
+        mocker.patch("merlin.server.server_util.ContainerConfig.get_config_dir", return_value="config_dir")
+        mocker.patch("merlin.server.server_util.ContainerConfig.get_image_path", return_value="image_path")
+        mocker.patch("merlin.server.server_util.ContainerConfig.get_pfile_path", return_value="pfile_path")
+
+        # Mock os.path.exists to return the desired values
+        mocker.patch("os.path.exists", side_effect=lambda path: {
+            "config_dir": config_exists,
+            "image_path": image_exists,
+            "pfile_path": pfile_exists
+        }.get(path, False))
+    else:
+        mocker.patch("merlin.server.server_config.pull_server_config", return_value=None)
+
+    # Call the function and assert the expected status
+    assert get_server_status() == expected_status
+
+
+@pytest.mark.parametrize("stdout_val, expected_status", [
+    (b"", ServerStatus.NOT_RUNNING),  # No stdout from subprocess
+    (b"Successfully started", ServerStatus.RUNNING),  # Stdout from subprocess exists
+])
+def test_get_server_status_subprocess_check(
+    mocker: "Fixture",  # noqa: F821
+    server_server_config: Dict[str, Dict[str, str]],
+    stdout_val: bytes,
+    expected_status: ServerStatus,
+):
+    """
+    Test the `get_server_status` function with empty stdout return from the subprocess run.
+    This should return a NOT_RUNNING status.
+
+    :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
+    """
+    mocker.patch("merlin.server.server_config.pull_server_config", return_value=ServerConfig(server_server_config))
+    mocker.patch("os.path.exists", return_value=True)
+    mocker.patch("merlin.server.server_config.pull_process_file", return_value={"parent_pid": 123})
+    mock_run = mocker.patch("subprocess.run")
+    mock_run.return_value.stdout = stdout_val
+
+    assert get_server_status() == expected_status
+
+
+@pytest.mark.parametrize("data_to_test, expected_result", [
+    ({"image_pid": 123, "port": 6379, "hostname": "dummy_server"}, False),  # No parent_pid entry
+    ({"parent_pid": 123, "port": 6379, "hostname": "dummy_server"}, False),  # No image_pid entry
+    ({"parent_pid": 123, "image_pid": 456, "hostname": "dummy_server"}, False),  # No port entry
+    ({"parent_pid": 123, "image_pid": 123, "port": 6379}, False),  # No hostname entry
+    ({"parent_pid": 123, "image_pid": 123, "port": 6379, "hostname": "dummy_server"}, True),  # All required entries exist
+])
+def test_check_process_file_format(data_to_test: Dict[str, Union[int, str]], expected_result: bool):
+    """
+    Test the `check_process_file_format` function. The first 4 parametrized tests above should all
+    return False as they're all missing a required key. The final parametrized test above should return
+    True since it has every required key.
+
+    :param data_to_test: The data dict that we'll pass in to the `check_process_file_format` function
+    :param expected_result: The return value we expect based on `data_to_test`
+    """
+    assert check_process_file_format(data_to_test) == expected_result
+
+
+def test_pull_process_file_valid_file(server_testing_dir: str, server_process_file_contents: Dict[str, Union[int, str]]):
+    """
+    Test the `pull_process_file` function with a valid process file. This test will create a test
+    process file with valid contents that `pull_process_file` will read in and return.
+
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_process_file_contents: A fixture representing process file contents
+    """
+    # Create the valid process file in our temp testing directory
+    process_filepath = f"{server_testing_dir}/valid_process_file.yaml"
+    with open(process_filepath, 'w') as process_file:
+       yaml.dump(server_process_file_contents, process_file)
+
+    # Run the test
+    assert pull_process_file(process_filepath) == server_process_file_contents
+
+
+def test_pull_process_file_invalid_file(server_testing_dir: str, server_process_file_contents: Dict[str, Union[int, str]]):
+    """
+    Test the `pull_process_file` function with an invalid process file. This test will create a test
+    process file with invalid contents that `pull_process_file` will try to read in. Once it sees
+    that the file is invalid it will return None.
+
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_process_file_contents: A fixture representing process file contents
+    """
+    # Remove a key from the process file contents so that it's no longer valid
+    del server_process_file_contents["hostname"]
+
+    # Create the invalid process file in our temp testing directory
+    process_filepath = f"{server_testing_dir}/invalid_process_file.yaml"
+    with open(process_filepath, 'w') as process_file:
+       yaml.dump(server_process_file_contents, process_file)
+
+    # Run the test
+    assert pull_process_file(process_filepath) is None
+
+
+def test_dump_process_file_invalid_file(server_process_file_contents: Dict[str, Union[int, str]]):
+    """
+    Test the `dump_process_file` function with invalid process file data. This should return False.
+
+    :param server_process_file_contents: A fixture representing process file contents
+    """
+    # Remove a key from the process file contents so that it's no longer valid and run the test
+    del server_process_file_contents["parent_pid"]
+    assert not dump_process_file(server_process_file_contents, "some_filepath.yaml")
+
+
+def test_dump_process_file_valid_file(server_testing_dir: str, server_process_file_contents: Dict[str, Union[int, str]]):
+    """
+    Test the `dump_process_file` function with invalid process file data. This should return False.
+
+    :param server_testing_dir: The path to the the temp output directory for server tests
+    :param server_process_file_contents: A fixture representing process file contents
+    """
+    process_filepath = f"{server_testing_dir}/dumped_process_file.yaml"
+    assert dump_process_file(server_process_file_contents, process_filepath)
+    assert os.path.exists(process_filepath)

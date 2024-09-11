@@ -276,3 +276,9 @@ def server_app_yaml(server_testing_dir: str, server_app_yaml_contents: dict) -> 
             yaml.dump(server_app_yaml_contents, ayf)
 
     return app_yaml_file
+
+
+@pytest.fixture(scope="function")
+def server_process_file_contents() -> str:
+    """Fixture to represent process file contents."""
+    return {"parent_pid": 123, "image_pid": 456, "port": 6379, "hostname": "dummy_server"}
