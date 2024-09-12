@@ -34,14 +34,9 @@ import csv
 import json
 import os
 from datetime import datetime
-
-# from time import sleep
 from typing import Dict
 
-# import pytest
 from celery import Celery
-
-# from celery.canvas import Signature
 from deepdiff import DeepDiff
 
 from merlin.config import Config
@@ -51,6 +46,9 @@ from tests.unit.study.status_test_files.shared_tests import _format_csv_data
 from tests.unit.study.status_test_files.status_test_variables import SPEC_PATH
 
 
+# from time import sleep
+# import pytest
+# from celery.canvas import Signature
 # @pytest.mark.order(before="TestInactive")
 # class TestActive:
 #     """

@@ -779,7 +779,7 @@ def launch_celery_worker(worker_cmd, worker_list, kwargs):
 
         # Adding the worker args to redis db
         with CeleryManager.get_worker_args_redis_connection() as redis_connection:
-            args = kwargs
+            args = kwargs.copy()
             # Save worker command with the arguements
             args["worker_cmd"] = worker_cmd
             # Store the nested dictionaries into a separate key with a link.
