@@ -80,7 +80,7 @@ class TestSampleIndex:
 
     NOTE to see output of creating any hierarchy, change `write_all_hierarchies` to True.
     The results of each hierarchy will be written to:
-    /tmp/`whoami`/pytest/pytest-of-`whoami`/pytest-current/integration_outfiles_current/test_sample_index/<name of the test>
+    /tmp/`whoami`/pytest/pytest-of-`whoami`/pytest-current/python_{major}.{minor}.{micro}_current/test_sample_index/<name of the test>
     """
 
     write_all_hierarchies = False

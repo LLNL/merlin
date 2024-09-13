@@ -31,6 +31,7 @@
 This module contains pytest fixtures to be used throughout the entire test suite.
 """
 import os
+import sys
 from copy import copy
 from glob import glob
 from time import sleep
@@ -110,7 +111,9 @@ def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
     """
     # Log the cwd, then create and move into the temporary one
     cwd = os.getcwd()
-    temp_integration_outfile_dir = tmp_path_factory.mktemp("integration_outfiles_")
+    temp_integration_outfile_dir = tmp_path_factory.mktemp(
+        f"python_{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}_"
+    )
     os.chdir(temp_integration_outfile_dir)
 
     yield temp_integration_outfile_dir

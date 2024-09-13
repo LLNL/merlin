@@ -56,7 +56,7 @@ class RedisServerManager:
     def initialize_server(self):
         """
         Initialize the setup for the local redis server. We'll write the folder to:
-        /tmp/`whoami`/pytest-of-`whoami`/pytest-current/integration_outfiles_current/
+        /tmp/`whoami`/pytest-of-`whoami`/pytest-current/python_{major}.{minor}.{micro}_current/
         We'll set the password to be 'merlin-test-server' so it'll be easy to shutdown if necessary
         """
         subprocess.run(
