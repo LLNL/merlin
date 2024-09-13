@@ -328,8 +328,8 @@ def pull_server_image() -> bool:
             with resources.path("merlin.server", config_file) as file:
                 with open(os.path.join(config_dir, config_file), "w") as outfile, open(file, "r") as infile:
                     outfile.write(infile.read())
-        except OSError:
-            LOG.error(f"Destination location {config_dir} is not writable.")
+        except OSError as exc:
+            LOG.error(f"Destination location {config_dir} is not writable. Raised from:\n{exc}")
             return False
     else:
         LOG.info("Redis configuration file already exist.")
