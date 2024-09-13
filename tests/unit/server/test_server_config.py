@@ -596,6 +596,7 @@ def test_pull_server_image_no_image_path_no_config_path(
     # Mock the open function
     read_data = "Mocked file content"
     mocked_open = mocker.mock_open(read_data=read_data)
+    mocked_open.write = mocker.Mock()
     mocker.patch("builtins.open", mocked_open)
 
     # Call the function
