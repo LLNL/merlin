@@ -77,7 +77,7 @@ class ServerStatus(enum.Enum):
     """
 
     RUNNING = 0
-    NOT_INITALIZED = 1
+    NOT_INITIALIZED = 1
     MISSING_CONTAINER = 2
     NOT_RUNNING = 3
     ERROR = 4
@@ -349,10 +349,10 @@ def get_server_status():
     """
     server_config = pull_server_config()
     if not server_config:
-        return ServerStatus.NOT_INITALIZED
+        return ServerStatus.NOT_INITIALIZED
 
     if not os.path.exists(server_config.container.get_config_dir()):
-        return ServerStatus.NOT_INITALIZED
+        return ServerStatus.NOT_INITIALIZED
 
     if not os.path.exists(server_config.container.get_image_path()):
         return ServerStatus.MISSING_CONTAINER

@@ -698,8 +698,8 @@ def test_pull_server_image_os_error(
 
 
 @pytest.mark.parametrize("server_config_exists, config_exists, image_exists, pfile_exists, expected_status", [
-    (False, True, True, True, ServerStatus.NOT_INITALIZED),  # No server config
-    (True, False, True, True, ServerStatus.NOT_INITALIZED),  # Config dir does not exist
+    (False, True, True, True, ServerStatus.NOT_INITIALIZED),  # No server config
+    (True, False, True, True, ServerStatus.NOT_INITIALIZED),  # Config dir does not exist
     (True, True, False, True, ServerStatus.MISSING_CONTAINER),  # Image path does not exist
     (True, True, True, False, ServerStatus.NOT_RUNNING),  # Pfile path does not exist
 ])
