@@ -555,6 +555,9 @@ def setup_pull_server_image_mock(
     """
     image_url = "docker://redis"
     image_path = f"{server_testing_dir}/{image_file}"
+
+    os.makedirs(config_dir, exist_ok=True)
+
     mocker.patch("merlin.server.server_config.pull_server_config", return_value=ServerConfig(server_server_config))
     mocker.patch("merlin.server.server_util.ContainerConfig.get_config_dir", return_value=config_dir)
     mocker.patch("merlin.server.server_util.ContainerConfig.get_config_name", return_value=config_file)
@@ -562,8 +565,6 @@ def setup_pull_server_image_mock(
     mocker.patch("merlin.server.server_util.ContainerConfig.get_image_path", return_value=image_path)
 
     if create_config_file:
-        if not os.path.exists(config_dir):
-            os.mkdir(config_dir)
         with open(os.path.join(config_dir, config_file), "w"):
             pass
 
