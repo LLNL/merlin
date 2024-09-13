@@ -70,7 +70,9 @@ class RedisConnectionManager:
         try:
             password = get_backend_password(password_file)
         except IOError:
-            password = CONFIG.results_backend.password
+            password = None
+            if hasattr(CONFIG.results_backend, "password"):
+                password = CONFIG.results_backend.password
 
         has_ssl = hasattr(CONFIG.results_backend, "cert_reqs")
         ssl_cert_reqs = "required"
