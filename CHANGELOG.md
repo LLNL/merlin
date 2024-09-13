@@ -15,9 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `RedisServerManager`: context to help with starting/stopping a redis server for tests
   - `CeleryWorkersManager`: context to help with starting/stopping workers for tests
 - Ability to copy and print the `Config` object from `merlin/config/__init__.py`
+- Equality method to the `ContainerFormatConfig` and `ContainerConfig` objects from `merlin/server/server_util.py`
 
 ### Changed
 - Split the `start_server` and `config_server` functions of `merlin/server/server_commands.py` into multiple functions to make testing easier
+- Split the `create_server_config` function of `merlin/server/server_config.py` into two functions to make testing easier
+- Combined `set_snapshot_seconds` and `set_snapshot_changes` methods of `RedisConfig` into one method `set_snapshot`
 
 ## [1.12.2b1]
 ### Added
