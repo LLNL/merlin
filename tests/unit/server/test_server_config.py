@@ -589,7 +589,7 @@ def test_pull_server_image_no_image_path_no_config_path(
     """
     # Set up mock calls to simulate the setup of this function
     config_dir = f"{server_testing_dir}/config_dir"
-    config_file = "pull_server_image_no_image_path_no_config_path_config_nonexistent.yaml"
+    config_file = "redis.conf"
     image_file = "pull_server_image_no_image_path_no_config_path_image_nonexistent.sif"
     setup_pull_server_image_mock(mocker, server_testing_dir, server_server_config, config_dir, config_file, image_file)
     mocked_subprocess = mocker.patch("subprocess.run")

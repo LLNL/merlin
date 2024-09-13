@@ -297,7 +297,7 @@ def pull_server_image() -> bool:
     """
     Fetch the server image using singularity.
 
-    :return:: True if success and False if fail
+    :return: True if success and False if fail
     """
     server_config = pull_server_config()
     if not server_config:
