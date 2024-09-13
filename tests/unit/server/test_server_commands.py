@@ -1,12 +1,14 @@
 """
 Tests for the `server_commands.py` module.
 """
+
 import logging
 import os
-import pytest
 import subprocess
 from argparse import Namespace
 from typing import Dict, List
+
+import pytest
 
 from merlin.server.server_commands import (
     check_for_not_running_server,
@@ -17,7 +19,7 @@ from merlin.server.server_commands import (
     start_redis_container,
     start_server,
     status_server,
-    stop_server
+    stop_server,
 )
 from merlin.server.server_config import ServerStatus
 from merlin.server.server_util import ServerConfig
@@ -75,10 +77,13 @@ def test_config_server_no_server_config(
     assert 'Try to run "merlin server init" again to reinitialize values.' in caplog.text
 
 
-@pytest.mark.parametrize("server_status, status_name", [
-    (ServerStatus.RUNNING, "running"),
-    (ServerStatus.NOT_RUNNING, "not_running"),
-])
+@pytest.mark.parametrize(
+    "server_status, status_name",
+    [
+        (ServerStatus.RUNNING, "running"),
+        (ServerStatus.NOT_RUNNING, "not_running"),
+    ],
+)
 def test_config_server_add_user_remove_user_success(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
@@ -93,7 +98,7 @@ def test_config_server_add_user_remove_user_success(
     the server status being set to RUNNING. For each scenario we should expect:
     - RUNNING -> RedisUsers.write and RedisUsers.apply_to_redis are both called twice
     - NOT_RUNNING -> RedisUsers.write is called twice and RedisUsers.apply_to_redis is not called at all
-    
+
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
     :param caplog: A built-in fixture from the pytest library to capture logs
     :param server_testing_dir: The path to the the temp output directory for server tests
@@ -130,7 +135,6 @@ def test_config_server_add_user_remove_user_failure(
     caplog: "Fixture",  # noqa: F821
     server_config_server_args: Namespace,
     server_server_config: Dict[str, Dict[str, str]],
-
 ):
     """
     Test the `config_server` function by attempting to add a user that already exists (we do this through mock)
@@ -160,12 +164,21 @@ def test_config_server_add_user_remove_user_failure(
     assert f"User '{user_to_add_and_remove}' doesn't exist within current users." in caplog.text
 
 
-@pytest.mark.parametrize("server_status, expected_log_msgs", [
-    (ServerStatus.NOT_INITIALIZED, ["Merlin server has not been initialized.", "Please initalize server by running 'merlin server init'"]),
-    (ServerStatus.MISSING_CONTAINER, ["Unable to find server image.", "Ensure there is a .sif file in merlin server directory."]),
-    (ServerStatus.NOT_RUNNING, ["Merlin server is not running."]),
-    (ServerStatus.RUNNING, ["Merlin server is running."]),
-])
+@pytest.mark.parametrize(
+    "server_status, expected_log_msgs",
+    [
+        (
+            ServerStatus.NOT_INITIALIZED,
+            ["Merlin server has not been initialized.", "Please initalize server by running 'merlin server init'"],
+        ),
+        (
+            ServerStatus.MISSING_CONTAINER,
+            ["Unable to find server image.", "Ensure there is a .sif file in merlin server directory."],
+        ),
+        (ServerStatus.NOT_RUNNING, ["Merlin server is not running."]),
+        (ServerStatus.RUNNING, ["Merlin server is running."]),
+    ],
+)
 def test_status_server(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
@@ -187,13 +200,28 @@ def test_status_server(
         assert expected_log_msg in caplog.text
 
 
-@pytest.mark.parametrize("server_status, expected_result, expected_log_msg", [
-    (ServerStatus.NOT_INITIALIZED, False, "Merlin server has not been intitialized. Please run 'merlin server init' first."),
-    (ServerStatus.MISSING_CONTAINER, False, "Merlin server has not been intitialized. Please run 'merlin server init' first."),
-    (ServerStatus.NOT_RUNNING, True, None),
-    (ServerStatus.RUNNING, False, """Merlin server already running.
-                              Stop current server with 'merlin server stop' before attempting to start a new server."""),
-])
+@pytest.mark.parametrize(
+    "server_status, expected_result, expected_log_msg",
+    [
+        (
+            ServerStatus.NOT_INITIALIZED,
+            False,
+            "Merlin server has not been intitialized. Please run 'merlin server init' first.",
+        ),
+        (
+            ServerStatus.MISSING_CONTAINER,
+            False,
+            "Merlin server has not been intitialized. Please run 'merlin server init' first.",
+        ),
+        (ServerStatus.NOT_RUNNING, True, None),
+        (
+            ServerStatus.RUNNING,
+            False,
+            """Merlin server already running.
+                              Stop current server with 'merlin server stop' before attempting to start a new server.""",
+        ),
+    ],
+)
 def test_check_for_not_running_server(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
@@ -248,7 +276,7 @@ def test_start_redis_container_invalid_image_path(
     assert start_redis_container(ServerConfig(server_server_config)) is None
     assert f"Unable to find image at {os.path.join(server_testing_dir, image_file)}" in caplog.text
 
-    
+
 def test_start_redis_container_invalid_config_path(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
@@ -301,7 +329,7 @@ def test_server_started_no_redis_start(mocker: "Fixture", caplog: "Fixture"):  #
     """
     mock_process = mocker.Mock()
     mock_process.stdout = mocker.Mock()
-    
+
     expected_redis_out_msg = "Reached end of redis output without seeing 'Ready to accept connections'"
     mocker.patch("merlin.server.server_commands.parse_redis_output", return_value=(False, expected_redis_out_msg))
 
@@ -327,9 +355,8 @@ def test_server_started_process_file_dump_fail(
     mock_process = mocker.Mock()
     mock_process.pid = 1234
     mock_process.stdout = mocker.Mock()
-    
+
     image_pid = 5678
-    expected_redis_out_msg = "Reached end of redis output without seeing 'Ready to accept connections'"
     mocker.patch("merlin.server.server_commands.parse_redis_output", return_value=(True, {"pid": image_pid}))
     mocker.patch("merlin.server.server_commands.dump_process_file", return_value=False)
 
@@ -337,11 +364,14 @@ def test_server_started_process_file_dump_fail(
     assert "Unable to create process file for container." in caplog.text
 
 
-@pytest.mark.parametrize("server_status", [
-    ServerStatus.NOT_RUNNING,
-    ServerStatus.MISSING_CONTAINER,
-    ServerStatus.NOT_INITIALIZED,
-])
+@pytest.mark.parametrize(
+    "server_status",
+    [
+        ServerStatus.NOT_RUNNING,
+        ServerStatus.MISSING_CONTAINER,
+        ServerStatus.NOT_INITIALIZED,
+    ],
+)
 def test_server_started_server_not_running(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
@@ -360,9 +390,8 @@ def test_server_started_server_not_running(
     mock_process = mocker.Mock()
     mock_process.pid = 1234
     mock_process.stdout = mocker.Mock()
-    
+
     image_pid = 5678
-    expected_redis_out_msg = "Reached end of redis output without seeing 'Ready to accept connections'"
     mocker.patch("merlin.server.server_commands.parse_redis_output", return_value=(True, {"pid": image_pid}))
     mocker.patch("merlin.server.server_commands.dump_process_file", return_value=True)
     mocker.patch("merlin.server.server_commands.get_server_status", return_value=server_status)
@@ -371,7 +400,7 @@ def test_server_started_server_not_running(
     assert "Unable to start merlin server." in caplog.text
 
 
-def test_server_started_no_issues(mocker: "Fixture",server_server_config: Dict[str, Dict[str, str]]):  # noqa: F821
+def test_server_started_no_issues(mocker: "Fixture", server_server_config: Dict[str, Dict[str, str]]):  # noqa: F821
     """
     Test the `server_started` function with no issues starting the server.
     This should return True.
@@ -383,13 +412,9 @@ def test_server_started_no_issues(mocker: "Fixture",server_server_config: Dict[s
     mock_process = mocker.Mock()
     mock_process.pid = 1234
     mock_process.stdout = mocker.Mock()
-    
+
     image_pid = 5678
-    expected_redis_out_msg = "Reached end of redis output without seeing 'Ready to accept connections'"
-    mocker.patch(
-        "merlin.server.server_commands.parse_redis_output",
-        return_value=(True, {"pid": image_pid, "port": 6379})
-    )
+    mocker.patch("merlin.server.server_commands.parse_redis_output", return_value=(True, {"pid": image_pid, "port": 6379}))
     mocker.patch("merlin.server.server_commands.dump_process_file", return_value=True)
     mocker.patch("merlin.server.server_commands.get_server_status", return_value=ServerStatus.RUNNING)
 
@@ -472,15 +497,16 @@ def test_start_server_successful_start(
     assert start_server()
 
 
-@pytest.mark.parametrize("server_status", [
-    ServerStatus.NOT_RUNNING,
-    ServerStatus.MISSING_CONTAINER,
-    ServerStatus.NOT_INITIALIZED,
-])
+@pytest.mark.parametrize(
+    "server_status",
+    [
+        ServerStatus.NOT_RUNNING,
+        ServerStatus.MISSING_CONTAINER,
+        ServerStatus.NOT_INITIALIZED,
+    ],
+)
 def test_stop_server_server_not_running(
-    mocker: "Fixture",  # noqa: F821
-    caplog: "Fixture",  # noqa: F821
-    server_status: ServerStatus
+    mocker: "Fixture", caplog: "Fixture", server_status: ServerStatus  # noqa: F821  # noqa: F821
 ):
     """
     Test the `stop_server` function with a server that's not running. This should log two messages
@@ -497,7 +523,7 @@ def test_stop_server_server_not_running(
     assert "Start a merlin server first with 'merlin server start'" in caplog.text
 
 
-def test_stop_server_no_server_config(mocker: "Fixture", caplog: "Fixture"):
+def test_stop_server_no_server_config(mocker: "Fixture", caplog: "Fixture"):  # noqa: F821
     """
     Test the `stop_server` function with no server config being pulled. This should log a message
     and return False.
@@ -569,7 +595,9 @@ def test_stop_server_stop_command_is_not_kill(
     :param caplog: A built-in fixture from the pytest library to capture logs
     :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
     """
-    mocker.patch("merlin.server.server_commands.get_server_status", side_effect=[ServerStatus.RUNNING, ServerStatus.NOT_RUNNING])
+    mocker.patch(
+        "merlin.server.server_commands.get_server_status", side_effect=[ServerStatus.RUNNING, ServerStatus.NOT_RUNNING]
+    )
     mocker.patch("merlin.server.server_commands.pull_server_config", return_value=ServerConfig(server_server_config))
     mocker.patch("merlin.server.server_commands.pull_process_file", return_value={"parent_pid": 123})
     custom_stop_command = "not a kill command"
@@ -580,16 +608,15 @@ def test_stop_server_stop_command_is_not_kill(
     mock_run.assert_called_with(custom_stop_command.split(), stdout=subprocess.PIPE)
 
 
-@pytest.mark.parametrize("server_status", [
-    ServerStatus.NOT_RUNNING,
-    ServerStatus.MISSING_CONTAINER,
-    ServerStatus.NOT_INITIALIZED,
-])
-def test_restart_server_server_not_running(
-    mocker: "Fixture",  # noqa: F821
-    caplog: "Fixture",  # noqa: F821
-    server_status: ServerStatus
-):
+@pytest.mark.parametrize(
+    "server_status",
+    [
+        ServerStatus.NOT_RUNNING,
+        ServerStatus.MISSING_CONTAINER,
+        ServerStatus.NOT_INITIALIZED,
+    ],
+)
+def test_restart_server_server_not_running(mocker: "Fixture", caplog: "Fixture", server_status: ServerStatus):  # noqa: F821
     """
     Test the `restart_server` function with a server that's not running.
     This should log two messages and return False.

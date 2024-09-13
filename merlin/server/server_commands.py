@@ -199,7 +199,7 @@ def check_for_not_running_server() -> bool:
     if current_status in status_errors:
         LOG.info(status_errors[current_status])
         return False
-    
+
     return True
 
 

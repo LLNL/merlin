@@ -7,13 +7,11 @@ import logging
 import os
 import string
 from typing import Dict, Tuple, Union
-import yaml
 
 import pytest
+import yaml
 
-from merlin.server.server_util import CONTAINER_TYPES, MERLIN_SERVER_SUBDIR, ServerConfig
 from merlin.server.server_config import (
-    LOCAL_APP_YAML,
     MERLIN_CONFIG_DIR,
     PASSWORD_LENGTH,
     ServerStatus,
@@ -29,6 +27,8 @@ from merlin.server.server_config import (
     pull_server_image,
     write_container_command_files,
 )
+from merlin.server.server_util import CONTAINER_TYPES, MERLIN_SERVER_SUBDIR, ServerConfig
+
 
 try:
     from importlib import resources
@@ -136,7 +136,7 @@ def test_write_container_command_files_with_existing_files(
     :param server_testing_dir: The path to the the temp output directory for server tests
     """
     caplog.set_level(logging.INFO)
-    mocker.patch('os.path.exists', return_value=True)
+    mocker.patch("os.path.exists", return_value=True)
     assert write_container_command_files(server_testing_dir)
     file_names = [f"{container}.yaml" for container in CONTAINER_TYPES]
     for file in file_names:
@@ -159,7 +159,7 @@ def test_write_container_command_files_with_nonexisting_files(
     caplog.set_level(logging.INFO)
 
     # Mock the os.path.exists function so it returns False
-    mocker.patch('os.path.exists', return_value=False)
+    mocker.patch("os.path.exists", return_value=False)
 
     # Mock the resources.path context manager
     mock_path = mocker.patch("merlin.server.server_config.resources.path")
@@ -209,7 +209,7 @@ def test_create_server_config_merlin_config_dir_nonexistent(
     :param server_testing_dir: The path to the the temp output directory for server tests
     """
     nonexistent_dir = f"{server_testing_dir}/merlin_config_dir"
-    mocker.patch('merlin.server.server_config.MERLIN_CONFIG_DIR', nonexistent_dir)
+    mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", nonexistent_dir)
     assert not create_server_config()
     assert f"Unable to find main merlin configuration directory at {nonexistent_dir}" in caplog.text
 
@@ -230,8 +230,8 @@ def test_create_server_config_server_subdir_nonexistent_oserror(
 
     # Mock MERLIN_CONFIG_DIR and MERLIN_SERVER_SUBDIR
     nonexistent_server_subdir = "test_create_server_config_server_subdir_nonexistent"
-    mocker.patch('merlin.server.server_config.MERLIN_CONFIG_DIR', server_testing_dir)
-    mocker.patch('merlin.server.server_config.MERLIN_SERVER_SUBDIR', nonexistent_server_subdir)
+    mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
+    mocker.patch("merlin.server.server_config.MERLIN_SERVER_SUBDIR", nonexistent_server_subdir)
 
     # Mock os.mkdir so it raises an OSError
     err_msg = "File not writeable"
@@ -257,7 +257,7 @@ def test_create_server_config_no_server_config(
     # Mock the necessary variables/functions to get us to the pull_server_config call
     mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
     mocker.patch("merlin.server.server_config.write_container_command_files", return_value=True)
-    mock_open_func = mocker.mock_open(read_data='key: value')
+    mock_open_func = mocker.mock_open(read_data="key: value")
     mocker.patch("builtins.open", mock_open_func)
 
     # Mock the pull_server_config call (what we're actually testing) and run the test
@@ -287,7 +287,7 @@ def test_create_server_config_no_server_dir(
     # Mock the necessary variables/functions to get us to the get_config_dir call
     mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
     mocker.patch("merlin.server.server_config.write_container_command_files", return_value=True)
-    mock_open_func = mocker.mock_open(read_data='key: value')
+    mock_open_func = mocker.mock_open(read_data="key: value")
     mocker.patch("builtins.open", mock_open_func)
     mocker.patch("merlin.server.server_config.pull_server_config", return_value=ServerConfig(server_server_config))
 
@@ -380,7 +380,7 @@ def test_config_merlin_server_pass_user_dont_exist(
 
 
 def setup_pull_server_config_mock(
-    mocker: "Fixture",
+    mocker: "Fixture",  # noqa: F821
     server_testing_dir: str,
     server_app_yaml_contents: Dict[str, Union[str, int]],
     server_server_config: Dict[str, Dict[str, str]],
@@ -394,7 +394,7 @@ def setup_pull_server_config_mock(
     :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
     """
     mocker.patch("merlin.server.server_util.AppYaml.get_data", return_value=server_app_yaml_contents)
-    mocker.patch('merlin.server.server_config.MERLIN_CONFIG_DIR', server_testing_dir)
+    mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
     mock_data = mocker.mock_open(read_data=str(server_server_config))
     mocker.patch("builtins.open", mock_data)
 
@@ -404,8 +404,8 @@ def setup_pull_server_config_mock(
     [
         ("container", 'Unable to find "container" object in {default_app_yaml}'),
         ("container.format", 'Unable to find "format" in {default_app_yaml}'),
-        ("process", 'Process config not found in {default_app_yaml}'),
-    ]
+        ("process", "Process config not found in {default_app_yaml}"),
+    ],
 )
 def test_pull_server_config_missing_config_keys(
     mocker: "Fixture",  # noqa: F821
@@ -429,7 +429,7 @@ def test_pull_server_config_missing_config_keys(
     :param expected_log_message: The expected log message when the key is missing
     """
     # Handle nested key deletion
-    keys = key_to_delete.split('.')
+    keys = key_to_delete.split(".")
     temp_app_yaml = server_app_yaml_contents
     for key in keys[:-1]:
         temp_app_yaml = temp_app_yaml[key]
@@ -545,14 +545,13 @@ def setup_pull_server_image_mock(
     image_file: str,
     create_config_file: bool = False,
     create_image_file: bool = False,
-
 ):
     """
     Set up the necessary mock calls for the `pull_server_image` function.
 
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
     :param server_testing_dir: The path to the the temp output directory for server tests
-    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class  
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
     """
     image_url = "docker://redis"
     image_path = f"{server_testing_dir}/{image_file}"
@@ -567,7 +566,7 @@ def setup_pull_server_image_mock(
             os.mkdir(config_dir)
         with open(os.path.join(config_dir, config_file), "w"):
             pass
-    
+
     if create_image_file:
         with open(image_path, "w"):
             pass
@@ -585,20 +584,13 @@ def test_pull_server_image_no_image_path_no_config_path(
 
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
     :param server_testing_dir: The path to the the temp output directory for server tests
-    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class  
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
     """
     # Set up mock calls to simulate the setup of this function
     config_dir = f"{server_testing_dir}/config_dir"
     config_file = "pull_server_image_no_image_path_no_config_path_config_nonexistent.yaml"
     image_file = "pull_server_image_no_image_path_no_config_path_image_nonexistent.sif"
-    setup_pull_server_image_mock(
-        mocker,
-        server_testing_dir,
-        server_server_config,
-        config_dir,
-        config_file,
-        image_file
-    )
+    setup_pull_server_image_mock(mocker, server_testing_dir, server_server_config, config_dir, config_file, image_file)
     mocked_subprocess = mocker.patch("subprocess.run")
 
     # Mock the open function
@@ -635,7 +627,7 @@ def test_pull_server_image_both_paths_exist(
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
     :param caplog: A built-in fixture from the pytest library to capture logs
     :param server_testing_dir: The path to the the temp output directory for server tests
-    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class 
+    :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
     """
     caplog.set_level(logging.INFO)
 
@@ -660,7 +652,7 @@ def test_pull_server_image_both_paths_exist(
 
 
 def test_pull_server_image_os_error(
-    mocker: "Fixture",
+    mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
     server_testing_dir: str,
     server_server_config: Dict[str, Dict[str, str]],
@@ -697,12 +689,15 @@ def test_pull_server_image_os_error(
     assert f"Destination location {config_dir} is not writable." in caplog.text
 
 
-@pytest.mark.parametrize("server_config_exists, config_exists, image_exists, pfile_exists, expected_status", [
-    (False, True, True, True, ServerStatus.NOT_INITIALIZED),  # No server config
-    (True, False, True, True, ServerStatus.NOT_INITIALIZED),  # Config dir does not exist
-    (True, True, False, True, ServerStatus.MISSING_CONTAINER),  # Image path does not exist
-    (True, True, True, False, ServerStatus.NOT_RUNNING),  # Pfile path does not exist
-])
+@pytest.mark.parametrize(
+    "server_config_exists, config_exists, image_exists, pfile_exists, expected_status",
+    [
+        (False, True, True, True, ServerStatus.NOT_INITIALIZED),  # No server config
+        (True, False, True, True, ServerStatus.NOT_INITIALIZED),  # Config dir does not exist
+        (True, True, False, True, ServerStatus.MISSING_CONTAINER),  # Image path does not exist
+        (True, True, True, False, ServerStatus.NOT_RUNNING),  # Pfile path does not exist
+    ],
+)
 def test_get_server_status_initial_checks(
     mocker: "Fixture",  # noqa: F821
     server_server_config: Dict[str, Dict[str, str]],
@@ -736,11 +731,12 @@ def test_get_server_status_initial_checks(
         mocker.patch("merlin.server.server_util.ContainerConfig.get_pfile_path", return_value="pfile_path")
 
         # Mock os.path.exists to return the desired values
-        mocker.patch("os.path.exists", side_effect=lambda path: {
-            "config_dir": config_exists,
-            "image_path": image_exists,
-            "pfile_path": pfile_exists
-        }.get(path, False))
+        mocker.patch(
+            "os.path.exists",
+            side_effect=lambda path: {"config_dir": config_exists, "image_path": image_exists, "pfile_path": pfile_exists}.get(
+                path, False
+            ),
+        )
     else:
         mocker.patch("merlin.server.server_config.pull_server_config", return_value=None)
 
@@ -748,10 +744,13 @@ def test_get_server_status_initial_checks(
     assert get_server_status() == expected_status
 
 
-@pytest.mark.parametrize("stdout_val, expected_status", [
-    (b"", ServerStatus.NOT_RUNNING),  # No stdout from subprocess
-    (b"Successfully started", ServerStatus.RUNNING),  # Stdout from subprocess exists
-])
+@pytest.mark.parametrize(
+    "stdout_val, expected_status",
+    [
+        (b"", ServerStatus.NOT_RUNNING),  # No stdout from subprocess
+        (b"Successfully started", ServerStatus.RUNNING),  # Stdout from subprocess exists
+    ],
+)
 def test_get_server_status_subprocess_check(
     mocker: "Fixture",  # noqa: F821
     server_server_config: Dict[str, Dict[str, str]],
@@ -774,13 +773,16 @@ def test_get_server_status_subprocess_check(
     assert get_server_status() == expected_status
 
 
-@pytest.mark.parametrize("data_to_test, expected_result", [
-    ({"image_pid": 123, "port": 6379, "hostname": "dummy_server"}, False),  # No parent_pid entry
-    ({"parent_pid": 123, "port": 6379, "hostname": "dummy_server"}, False),  # No image_pid entry
-    ({"parent_pid": 123, "image_pid": 456, "hostname": "dummy_server"}, False),  # No port entry
-    ({"parent_pid": 123, "image_pid": 123, "port": 6379}, False),  # No hostname entry
-    ({"parent_pid": 123, "image_pid": 123, "port": 6379, "hostname": "dummy_server"}, True),  # All required entries exist
-])
+@pytest.mark.parametrize(
+    "data_to_test, expected_result",
+    [
+        ({"image_pid": 123, "port": 6379, "hostname": "dummy_server"}, False),  # No parent_pid entry
+        ({"parent_pid": 123, "port": 6379, "hostname": "dummy_server"}, False),  # No image_pid entry
+        ({"parent_pid": 123, "image_pid": 456, "hostname": "dummy_server"}, False),  # No port entry
+        ({"parent_pid": 123, "image_pid": 123, "port": 6379}, False),  # No hostname entry
+        ({"parent_pid": 123, "image_pid": 123, "port": 6379, "hostname": "dummy_server"}, True),  # All required entries exist
+    ],
+)
 def test_check_process_file_format(data_to_test: Dict[str, Union[int, str]], expected_result: bool):
     """
     Test the `check_process_file_format` function. The first 4 parametrized tests above should all
@@ -803,8 +805,8 @@ def test_pull_process_file_valid_file(server_testing_dir: str, server_process_fi
     """
     # Create the valid process file in our temp testing directory
     process_filepath = f"{server_testing_dir}/valid_process_file.yaml"
-    with open(process_filepath, 'w') as process_file:
-       yaml.dump(server_process_file_contents, process_file)
+    with open(process_filepath, "w") as process_file:
+        yaml.dump(server_process_file_contents, process_file)
 
     # Run the test
     assert pull_process_file(process_filepath) == server_process_file_contents
@@ -824,8 +826,8 @@ def test_pull_process_file_invalid_file(server_testing_dir: str, server_process_
 
     # Create the invalid process file in our temp testing directory
     process_filepath = f"{server_testing_dir}/invalid_process_file.yaml"
-    with open(process_filepath, 'w') as process_file:
-       yaml.dump(server_process_file_contents, process_file)
+    with open(process_filepath, "w") as process_file:
+        yaml.dump(server_process_file_contents, process_file)
 
     # Run the test
     assert pull_process_file(process_filepath) is None
