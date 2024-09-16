@@ -101,7 +101,7 @@ def define_tests():  # pylint: disable=R0914,R0915
     celery_pbs_regex = rf"(qsub\s+.*)?{celery_regex}"
 
     # Shortcuts for Merlin commands
-    err_lvl = "-lvl error"
+    err_lvl = "-lvl debug"
     workers = f"merlin {err_lvl} run-workers"
     workers_flux = get_worker_by_cmd("flux", workers)
     workers_pbs = get_worker_by_cmd("qsub", workers)
