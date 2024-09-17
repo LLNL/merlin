@@ -66,6 +66,8 @@ class RedisConnectionManager:
         from merlin.config.configfile import CONFIG
         from merlin.config.results_backend import get_backend_password
 
+        LOG.debug(f"MANAGER: CONFIG.results_backend: {CONFIG.results_backend}")
+
         password_file = CONFIG.results_backend.password
         try:
             password = get_backend_password(password_file)
