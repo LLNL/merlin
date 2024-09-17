@@ -63,18 +63,18 @@ class RedisConnectionManager:
 
         :return: Redis connection object that can be used to access values for the manager.
         """
-        from merlin.config.configfile import CONFIG
-        from merlin.config.results_backend import get_backend_password
+        from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
+        from merlin.config.results_backend import get_backend_password  # pylint: disable=import-outside-toplevel
 
-        LOG.info(f"MANAGER: CONFIG.results_backend: {CONFIG.results_backend}")
+        password_file = CONFIG.results_backend.password if hasattr(CONFIG.results_backend, "password") else None
 
-        password_file = CONFIG.results_backend.password
-        try:
-            password = get_backend_password(password_file)
-        except IOError:
-            password = None
-            if hasattr(CONFIG.results_backend, "password"):
-                password = CONFIG.results_backend.password
+        password = None
+        if password_file is not None:
+            try:
+                password = get_backend_password(password_file)
+            except IOError:
+                if hasattr(CONFIG.results_backend, "password"):
+                    password = CONFIG.results_backend.password
 
         has_ssl = hasattr(CONFIG.results_backend, "cert_reqs")
         ssl_cert_reqs = "required"
