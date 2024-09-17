@@ -67,6 +67,12 @@ class RedisConnectionManager:
         from merlin.config.results_backend import get_backend_password  # pylint: disable=import-outside-toplevel
 
         password_file = CONFIG.results_backend.password if hasattr(CONFIG.results_backend, "password") else None
+        server = CONFIG.results_backend.server if hasattr(CONFIG.results_backend, "server") else None
+        port = CONFIG.results_backend.port if hasattr(CONFIG.results_backend, "port") else None
+        results_db_num = CONFIG.results_backend.db_num if hasattr(CONFIG.results_backend, "db_num") else None
+        username = CONFIG.results_backend.username if hasattr(CONFIG.results_backend, "username") else None
+        has_ssl = hasattr(CONFIG.results_backend, "cert_reqs")
+        ssl_cert_reqs = CONFIG.results_backend.cert_reqs if has_ssl else "required"
 
         password = None
         if password_file is not None:
@@ -76,16 +82,11 @@ class RedisConnectionManager:
                 if hasattr(CONFIG.results_backend, "password"):
                     password = CONFIG.results_backend.password
 
-        has_ssl = hasattr(CONFIG.results_backend, "cert_reqs")
-        ssl_cert_reqs = "required"
-        if has_ssl:
-            ssl_cert_reqs = CONFIG.results_backend.cert_reqs
-
         return redis.Redis(
-            host=CONFIG.results_backend.server,
-            port=CONFIG.results_backend.port,
-            db=CONFIG.results_backend.db_num + self.db_num,  # Increment db_num to avoid conflicts
-            username=CONFIG.results_backend.username,
+            host=server,
+            port=port,
+            db=results_db_num + self.db_num,  # Increment db_num to avoid conflicts
+            username=username,
             password=password,
             decode_responses=True,
             ssl=has_ssl,
