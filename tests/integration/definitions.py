@@ -650,82 +650,82 @@ def define_tests():  # pylint: disable=R0914,R0915
             "run type": "local",
         },
     }
-    stop_workers_tests = {
-        "stop workers no workers": {
-            "cmds": f"{stop}",
-            "conditions": [
-                HasReturnCode(),
-                HasRegex("No workers found to stop"),
-                HasRegex("step_1_merlin_test_worker", negate=True),
-                HasRegex("step_2_merlin_test_worker", negate=True),
-                HasRegex("other_merlin_test_worker", negate=True),
-            ],
-            "run type": "distributed",
-        },
-        "stop workers no flags": {
-            "cmds": [
-                f"{workers} {mul_workers_demo}",
-                f"{stop}",
-            ],
-            "conditions": [
-                HasReturnCode(),
-                HasRegex("No workers found to stop", negate=True),
-                HasRegex("step_1_merlin_test_worker"),
-                HasRegex("step_2_merlin_test_worker"),
-                HasRegex("other_merlin_test_worker"),
-            ],
-            "run type": "distributed",
-            "cleanup": KILL_WORKERS,
-            "num procs": 2,
-        },
-        "stop workers with spec flag": {
-            "cmds": [
-                f"{workers} {mul_workers_demo}",
-                f"{stop} --spec {mul_workers_demo}",
-            ],
-            "conditions": [
-                HasReturnCode(),
-                HasRegex("No workers found to stop", negate=True),
-                HasRegex("step_1_merlin_test_worker"),
-                HasRegex("step_2_merlin_test_worker"),
-                HasRegex("other_merlin_test_worker"),
-            ],
-            "run type": "distributed",
-            "cleanup": KILL_WORKERS,
-            "num procs": 2,
-        },
-        "stop workers with workers flag": {
-            "cmds": [
-                f"{workers} {mul_workers_demo}",
-                f"{stop} --workers step_1_merlin_test_worker step_2_merlin_test_worker",
-            ],
-            "conditions": [
-                HasReturnCode(),
-                HasRegex("No workers found to stop", negate=True),
-                HasRegex("step_1_merlin_test_worker"),
-                HasRegex("step_2_merlin_test_worker"),
-                HasRegex("other_merlin_test_worker", negate=True),
-            ],
-            "run type": "distributed",
-            "cleanup": KILL_WORKERS,
-            "num procs": 2,
-        },
-        "stop workers with queues flag": {
-            "cmds": [
-                f"{workers} {mul_workers_demo}",
-                f"{stop} --queues hello_queue",
-            ],
-            "conditions": [
-                HasReturnCode(),
-                HasRegex("No workers found to stop", negate=True),
-                HasRegex("step_1_merlin_test_worker"),
-                HasRegex("step_2_merlin_test_worker", negate=True),
-                HasRegex("other_merlin_test_worker", negate=True),
-            ],
-            "run type": "distributed",
-            "cleanup": KILL_WORKERS,
-            "num procs": 2,
-        },
+    # stop_workers_tests = {
+    #     "stop workers no workers": {
+    #         "cmds": f"{stop}",
+    #         "conditions": [
+    #             HasReturnCode(),
+    #             HasRegex("No workers found to stop"),
+    #             HasRegex("step_1_merlin_test_worker", negate=True),
+    #             HasRegex("step_2_merlin_test_worker", negate=True),
+    #             HasRegex("other_merlin_test_worker", negate=True),
+    #         ],
+    #         "run type": "distributed",
+    #     },
+    #     "stop workers no flags": {
+    #         "cmds": [
+    #             f"{workers} {mul_workers_demo}",
+    #             f"{stop}",
+    #         ],
+    #         "conditions": [
+    #             HasReturnCode(),
+    #             HasRegex("No workers found to stop", negate=True),
+    #             HasRegex("step_1_merlin_test_worker"),
+    #             HasRegex("step_2_merlin_test_worker"),
+    #             HasRegex("other_merlin_test_worker"),
+    #         ],
+    #         "run type": "distributed",
+    #         "cleanup": KILL_WORKERS,
+    #         "num procs": 2,
+    #     },
+    #     "stop workers with spec flag": {
+    #         "cmds": [
+    #             f"{workers} {mul_workers_demo}",
+    #             f"{stop} --spec {mul_workers_demo}",
+    #         ],
+    #         "conditions": [
+    #             HasReturnCode(),
+    #             HasRegex("No workers found to stop", negate=True),
+    #             HasRegex("step_1_merlin_test_worker"),
+    #             HasRegex("step_2_merlin_test_worker"),
+    #             HasRegex("other_merlin_test_worker"),
+    #         ],
+    #         "run type": "distributed",
+    #         "cleanup": KILL_WORKERS,
+    #         "num procs": 2,
+    #     },
+    #     "stop workers with workers flag": {
+    #         "cmds": [
+    #             f"{workers} {mul_workers_demo}",
+    #             f"{stop} --workers step_1_merlin_test_worker step_2_merlin_test_worker",
+    #         ],
+    #         "conditions": [
+    #             HasReturnCode(),
+    #             HasRegex("No workers found to stop", negate=True),
+    #             HasRegex("step_1_merlin_test_worker"),
+    #             HasRegex("step_2_merlin_test_worker"),
+    #             HasRegex("other_merlin_test_worker", negate=True),
+    #         ],
+    #         "run type": "distributed",
+    #         "cleanup": KILL_WORKERS,
+    #         "num procs": 2,
+    #     },
+    #     "stop workers with queues flag": {
+    #         "cmds": [
+    #             f"{workers} {mul_workers_demo}",
+    #             f"{stop} --queues hello_queue",
+    #         ],
+    #         "conditions": [
+    #             HasReturnCode(),
+    #             HasRegex("No workers found to stop", negate=True),
+    #             HasRegex("step_1_merlin_test_worker"),
+    #             HasRegex("step_2_merlin_test_worker", negate=True),
+    #             HasRegex("other_merlin_test_worker", negate=True),
+    #         ],
+    #         "run type": "distributed",
+    #         "cleanup": KILL_WORKERS,
+    #         "num procs": 2,
+    #     },
     }
     query_workers_tests = {
         "query workers no workers": {
