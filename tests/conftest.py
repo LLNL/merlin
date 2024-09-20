@@ -100,6 +100,22 @@ def create_encryption_file(key_filepath: str, encryption_key: bytes, app_yaml_fi
 
 
 @pytest.fixture(scope="session")
+def path_to_test_specs() -> str:
+    """
+    Fixture to provide the path to the directory containing test specifications.
+
+    This fixture returns the absolute path to the 'test_specs' directory 
+    within the 'integration' folder of the test directory. It expands 
+    environment variables and user home directory as necessary.
+
+    Returns:
+        The absolute path to the 'test_specs' directory.
+    """
+    path_to_test_dir = os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__))))
+    return os.path.join(path_to_test_dir, os.path.join("integration", "test_specs"))
+
+
+@pytest.fixture(scope="session")
 def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
     """
     This fixture will create a temporary directory to store output files of integration tests.
@@ -130,7 +146,7 @@ def merlin_server_dir(temp_output_dir: str) -> str:
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     :returns: The path to the merlin_server directory that will be created by the `redis_server` fixture
     """
-    server_dir = f"{temp_output_dir}/merlin_server"
+    server_dir = os.path.join(temp_output_dir, "merlin_server")
     if not os.path.exists(server_dir):
         os.mkdir(server_dir)
     return server_dir
@@ -146,11 +162,14 @@ def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:
     :param test_encryption_key: An encryption key to be used for testing
     :yields: The local redis server uri
     """
+    os.environ["CELERY_ENV"] = "test"
     with RedisServerManager(merlin_server_dir, SERVER_PASS) as redis_server_manager:
         redis_server_manager.initialize_server()
         redis_server_manager.start_server()
         create_encryption_file(
-            f"{merlin_server_dir}/encrypt_data_key", test_encryption_key, app_yaml_filepath=f"{merlin_server_dir}/app.yaml"
+            os.path.join(merlin_server_dir, "encrypt_data_key"),
+            test_encryption_key,
+            app_yaml_filepath=os.path.join(merlin_server_dir, "app.yaml"),
         )
         # Yield the redis_server uri to any fixtures/tests that may need it
         yield redis_server_manager.redis_server_uri
@@ -165,6 +184,7 @@ def celery_app(redis_server: str) -> Celery:
     :param redis_server: The redis server uri we'll use to connect to redis
     :returns: The celery app object we'll use for testing
     """
+    os.environ["CELERY_ENV"] = "test"
     return Celery("merlin_test_app", broker=redis_server, backend=redis_server)
 
 
@@ -258,7 +278,7 @@ def config(merlin_server_dir: str, test_encryption_key: bytes):
     orig_config = copy(CONFIG)
 
     # Create an encryption key file (if it doesn't already exist)
-    key_file = f"{merlin_server_dir}/encrypt_data_key"
+    key_file = os.path.join(merlin_server_dir, "encrypt_data_key")
     create_encryption_file(key_file, test_encryption_key)
 
     # Set the broker configuration for testing
@@ -305,7 +325,7 @@ def redis_broker_config(
     :param merlin_server_dir: The directory to the merlin test server configuration
     :param config: The fixture that sets up most of the CONFIG object for testing
     """
-    pass_file = f"{merlin_server_dir}/redis.pass"
+    pass_file = os.path.join(merlin_server_dir, "redis.pass")
     create_pass_file(pass_file)
 
     CONFIG.broker.password = pass_file
@@ -326,7 +346,7 @@ def redis_results_backend_config(
     :param merlin_server_dir: The directory to the merlin test server configuration
     :param config: The fixture that sets up most of the CONFIG object for testing
     """
-    pass_file = f"{merlin_server_dir}/redis.pass"
+    pass_file = os.path.join(merlin_server_dir, "redis.pass")
     create_pass_file(pass_file)
 
     CONFIG.results_backend.password = pass_file
@@ -347,7 +367,7 @@ def rabbit_broker_config(
     :param merlin_server_dir: The directory to the merlin test server configuration
     :param config: The fixture that sets up most of the CONFIG object for testing
     """
-    pass_file = f"{merlin_server_dir}/rabbit.pass"
+    pass_file = os.path.join(merlin_server_dir, "rabbit.pass")
     create_pass_file(pass_file)
 
     CONFIG.broker.password = pass_file
@@ -368,7 +388,7 @@ def mysql_results_backend_config(
     :param merlin_server_dir: The directory to the merlin test server configuration
     :param config: The fixture that sets up most of the CONFIG object for testing
     """
-    pass_file = f"{merlin_server_dir}/mysql.pass"
+    pass_file = os.path.join(merlin_server_dir, "mysql.pass")
     create_pass_file(pass_file)
 
     create_cert_files(merlin_server_dir, CERT_FILES)
