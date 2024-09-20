@@ -726,7 +726,7 @@ def define_tests():  # pylint: disable=R0914,R0915
     #         "cleanup": KILL_WORKERS,
     #         "num procs": 2,
     #     },
-    }
+    # }
     query_workers_tests = {
         "query workers no workers": {
             "cmds": f"{query}",
