@@ -137,7 +137,7 @@ jobs:
   # TODO make this setup inheritable and then create unit/local/integration tests off of it?
   Local-test-suite:
     needs: common-setup
-    # runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
     # env: 
     #   GO_VERSION: 1.18.1
     #   SINGULARITY_VERSION: 3.9.9
@@ -209,6 +209,7 @@ jobs:
 
   Integration-tests:
     needs: common-setup
+    runs-on: ubuntu-latest
     steps:
     - name: Install merlin and setup redis as the broker
       run: |
