@@ -82,7 +82,78 @@ jobs:
         python3 -m pylint merlin --rcfile=setup.cfg --exit-zero
         python3 -m pylint tests --rcfile=setup.cfg --exit-zero
 
+  Common-setup:
+    runs-on: ubuntu-latest
+    env: 
+      GO_VERSION: 1.18.1
+      SINGULARITY_VERSION: 3.9.9
+      OS: linux
+      ARCH: amd64
+
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache Python dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip3 install -r requirements/dev.txt
+
+    - name: Cache Singularity build artifacts
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
+          /usr/local/go
+        key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+    - name: Install singularity
+      run: |
+        sudo apt-get update && sudo apt-get install -y \
+          build-essential \
+          libssl-dev \
+          uuid-dev \
+          libgpgme11-dev \
+          squashfs-tools \
+          libseccomp-dev \
+          pkg-config
+        wget https://go.dev/dl/go$GO_VERSION.$OS-$ARCH.tar.gz
+        sudo tar -C /usr/local -xzf go$GO_VERSION.$OS-$ARCH.tar.gz
+        rm go$GO_VERSION.$OS-$ARCH.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        wget https://github.com/sylabs/singularity/releases/download/v$SINGULARITY_VERSION/singularity-ce-$SINGULARITY_VERSION.tar.gz
+        tar -xzf singularity-ce-$SINGULARITY_VERSION.tar.gz
+        cd singularity-ce-$SINGULARITY_VERSION
+        ./mconfig && \
+          make -C ./builddir && \
+          sudo make -C ./builddir install
+
+    - name: Install merlin to run unit tests
+      run: |
+        pip3 install -e .
+        merlin config
+
+    - name: Install CLI task dependencies generated from the 'feature demo' workflow
+      run: |
+        merlin example feature_demo
+        pip3 install -r feature_demo/requirements.txt
+
   Local-test-suite:
+    needs: Common-setup
     runs-on: ubuntu-latest
     env: 
       GO_VERSION: 1.18.1
@@ -161,12 +232,12 @@ jobs:
         python3 tests/integration/run_tests.py --verbose --local
 
   # TODO:
-  # - check if `merlin config` works just fine or if --broker redis is necessary
   # - create common-setup job again but with correct caches
   # - make local/integration tests depend on common-setup and check caches (see if this works)
   # - see if local tests even need singularity
   #    - likely will for now but won't once server tests are ported to pytest
   Integration-tests:
+    needs: Common-setup
     runs-on: ubuntu-latest
     env: 
       GO_VERSION: 1.18.1
