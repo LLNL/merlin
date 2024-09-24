@@ -105,7 +105,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ os.runner }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install dependencies
       run: |
@@ -186,7 +186,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ os.runner }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install dependencies
       run: |
