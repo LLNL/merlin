@@ -101,11 +101,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache Python dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+    # - name: Cache Python dependencies
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: ~/.cache/pip
+    #     key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install dependencies
       run: |
@@ -113,13 +113,13 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
 
-    - name: Cache Singularity build artifacts
-      uses: actions/cache@v2
-      with:
-        path: |
-          ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
-          /usr/local/go
-        key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+    # - name: Cache Singularity build artifacts
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
+    #       /usr/local/go
+    #     key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install singularity
       run: |
@@ -172,11 +172,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache Python dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+    # - name: Cache Python dependencies
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: ~/.cache/pip
+    #     key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install dependencies
       run: |
@@ -184,13 +184,13 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
 
-    - name: Cache Singularity build artifacts
-      uses: actions/cache@v2
-      with:
-        path: |
-          ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
-          /usr/local/go
-        key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+    # - name: Cache Singularity build artifacts
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
+    #       /usr/local/go
+    #     key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install singularity
       run: |
@@ -256,11 +256,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache Python dependencies
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+    # - name: Cache Python dependencies
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: ~/.cache/pip
+    #     key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install dependencies
       run: |
@@ -273,13 +273,13 @@ jobs:
         pip3 install -e .
         merlin config
 
-    - name: Cache Singularity build artifacts
-      uses: actions/cache@v2
-      with:
-        path: |
-          ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
-          /usr/local/go
-        key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+    # - name: Cache Singularity build artifacts
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: |
+    #       ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
+    #       /usr/local/go
+    #     key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install singularity
       run: |
