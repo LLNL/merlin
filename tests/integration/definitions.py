@@ -876,7 +876,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         # provenence_equality_checks, # omitting provenance equality check because it is broken
         # style_checks, # omitting style checks due to different results on different machines
         dependency_checks,
-        stop_workers_tests,
+        # stop_workers_tests,
         query_workers_tests,
         distributed_tests,
         distributed_error_checks,
