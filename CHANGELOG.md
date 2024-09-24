@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Split the `start_server` and `config_server` functions of `merlin/server/server_commands.py` into multiple functions to make testing easier
 - Split the `create_server_config` function of `merlin/server/server_config.py` into two functions to make testing easier
 - Combined `set_snapshot_seconds` and `set_snapshot_changes` methods of `RedisConfig` into one method `set_snapshot`
+- Moved stop-workers to a pytest test
 
 ## [1.12.2b1]
 ### Added
