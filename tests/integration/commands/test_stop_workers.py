@@ -6,14 +6,14 @@ import os
 import re
 import shutil
 import subprocess
-import yaml
 from enum import Enum
 from typing import List
 
+import yaml
 from celery import Celery
 
-from tests.integration.conditions import HasRegex
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
+from tests.integration.conditions import HasRegex
 
 
 class WorkerMessages(Enum):
@@ -22,6 +22,7 @@ class WorkerMessages(Enum):
     that we're expecting (or not expecting) to see from the
     tests in this module.
     """
+
     NO_WORKERS_MSG = "No workers found to stop"
     STEP_1_WORKER = "step_1_merlin_test_worker"
     STEP_2_WORKER = "step_2_merlin_test_worker"
@@ -59,14 +60,14 @@ class TestStopWorkers:
 
         # Initialize an empty dictionary to hold worker_info
         worker_info = {}
-        
+
         # Access workers and steps from spec_contents
         workers = spec_contents["merlin"]["resources"]["workers"]
-        study_steps = {step['name']: step['run']['task_queue'] for step in spec_contents['study']}
+        study_steps = {step["name"]: step["run"]["task_queue"] for step in spec_contents["study"]}
 
         # Grab the concurrency and queues from each worker and add it to the worker_info dict
         for worker_name, worker_settings in workers.items():
-            match = re.search(r'--concurrency\s+(\d+)', worker_settings["args"])
+            match = re.search(r"--concurrency\s+(\d+)", worker_settings["args"])
             concurrency = int(match.group(1)) if match else 1
             queues = [study_steps[step] for step in worker_settings["steps"]]
             worker_info[worker_name] = {"concurrency": concurrency, "queues": queues}
@@ -237,7 +238,7 @@ class TestStopWorkers:
         for condition in conditions:
             condition.ingest_info(info)
             assert condition.passes
-        
+
     def test_no_flags(
         self,
         redis_server: str,
@@ -336,7 +337,7 @@ class TestStopWorkers:
             path_to_test_specs,
             merlin_server_dir,
             conditions,
-            flag=f"--spec {os.path.join(path_to_test_specs, 'multiple_workers.yaml')}"
+            flag=f"--spec {os.path.join(path_to_test_specs, 'multiple_workers.yaml')}",
         )
 
     def test_workers_flag(
@@ -387,7 +388,7 @@ class TestStopWorkers:
             path_to_test_specs,
             merlin_server_dir,
             conditions,
-            flag=f"--workers {WorkerMessages.STEP_1_WORKER.value} {WorkerMessages.STEP_2_WORKER.value}"
+            flag=f"--workers {WorkerMessages.STEP_1_WORKER.value} {WorkerMessages.STEP_2_WORKER.value}",
         )
 
     def test_queues_flag(
@@ -438,5 +439,5 @@ class TestStopWorkers:
             path_to_test_specs,
             merlin_server_dir,
             conditions,
-            flag=f"--queues hello_queue"
+            flag=f"--queues hello_queue",
         )

@@ -104,8 +104,8 @@ def path_to_test_specs() -> str:
     """
     Fixture to provide the path to the directory containing test specifications.
 
-    This fixture returns the absolute path to the 'test_specs' directory 
-    within the 'integration' folder of the test directory. It expands 
+    This fixture returns the absolute path to the 'test_specs' directory
+    within the 'integration' folder of the test directory. It expands
     environment variables and user home directory as necessary.
 
     Returns:
