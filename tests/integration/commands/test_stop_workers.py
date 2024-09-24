@@ -336,7 +336,7 @@ class TestStopWorkers:
             path_to_test_specs,
             merlin_server_dir,
             conditions,
-            flag=f"--spec {os.path.join(path_to_test_specs, "multiple_workers.yaml")}"
+            flag=f"--spec {os.path.join(path_to_test_specs, 'multiple_workers.yaml')}"
         )
 
     def test_workers_flag(

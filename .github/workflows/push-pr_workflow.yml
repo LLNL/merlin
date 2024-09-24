@@ -105,7 +105,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install dependencies
       run: |
@@ -160,9 +160,12 @@ jobs:
       run: |
         python3 tests/integration/run_tests.py --verbose --local
 
-  # TODO get this and local-test-suite working
-  # - probably need to move the python 3.x call to this below
-  # - not sure if we need --broker redis in the Install step below
+  # TODO:
+  # - check if `merlin config` works just fine or if --broker redis is necessary
+  # - create common-setup job again but with correct caches
+  # - make local/integration tests depend on common-setup and check caches (see if this works)
+  # - see if local tests even need singularity
+  #    - likely will for now but won't once server tests are ported to pytest
   Integration-tests:
     runs-on: ubuntu-latest
     env: 
@@ -186,7 +189,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
     - name: Install dependencies
       run: |
