@@ -10,7 +10,6 @@ from enum import Enum
 from typing import List
 
 import yaml
-from celery import Celery
 
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.integration.conditions import HasRegex
@@ -439,5 +438,5 @@ class TestStopWorkers:
             path_to_test_specs,
             merlin_server_dir,
             conditions,
-            flag=f"--queues hello_queue",
+            flag="--queues hello_queue",
         )

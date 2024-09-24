@@ -109,7 +109,7 @@ def define_tests():  # pylint: disable=R0914,R0915
     run = f"merlin {err_lvl} run"
     restart = f"merlin {err_lvl} restart"
     purge = "merlin purge"
-    stop = "merlin stop-workers"
+    # stop = "merlin stop-workers"
     query = "merlin query-workers"
 
     # Shortcuts for example workflow paths
