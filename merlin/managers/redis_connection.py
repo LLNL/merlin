@@ -71,8 +71,6 @@ class RedisConnectionManager:
         port = CONFIG.results_backend.port if hasattr(CONFIG.results_backend, "port") else None
         results_db_num = CONFIG.results_backend.db_num if hasattr(CONFIG.results_backend, "db_num") else None
         username = CONFIG.results_backend.username if hasattr(CONFIG.results_backend, "username") else None
-        has_ssl = hasattr(CONFIG.results_backend, "cert_reqs")
-        ssl_cert_reqs = CONFIG.results_backend.cert_reqs if has_ssl else "required"
 
         password = None
         if password_file is not None:
@@ -82,13 +80,21 @@ class RedisConnectionManager:
                 if hasattr(CONFIG.results_backend, "password"):
                     password = CONFIG.results_backend.password
 
-        return redis.Redis(
-            host=server,
-            port=port,
-            db=results_db_num + self.db_num,  # Increment db_num to avoid conflicts
-            username=username,
-            password=password,
-            decode_responses=True,
-            ssl=has_ssl,
-            ssl_cert_reqs=ssl_cert_reqs,
-        )
+        # Base configuration for Redis connection (this does not have ssl)
+        redis_config = {
+            "host": server,
+            "port": port,
+            "db": results_db_num + self.db_num,  # Increment db_num to avoid conflicts
+            "username": username,
+            "password": password,
+            "decode_responses": True,
+        }
+
+        # Add ssl settings if necessary
+        if CONFIG.results_backend.name == "rediss":
+            redis_config.update({
+                "ssl": True,
+                "ssl_cert_reqs": getattr(CONFIG.results_backend, "cert_reqs", "required"),
+            })
+
+        return redis.Redis(**redis_config)
