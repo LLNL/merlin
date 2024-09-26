@@ -1,5 +1,5 @@
 """
-Tests for the `merlin stop-workers` command.
+Tests for the `merlin query-workers` command.
 """
 
 import os
@@ -16,22 +16,22 @@ class WorkerMessages(Enum):
     tests in this module.
     """
 
-    NO_WORKERS_MSG = "No workers found to stop"
+    NO_WORKERS_MSG = "No workers found!"
     STEP_1_WORKER = "step_1_merlin_test_worker"
     STEP_2_WORKER = "step_2_merlin_test_worker"
     OTHER_WORKER = "other_merlin_test_worker"
 
 
-class TestStopWorkers(BaseWorkerInteractionTests):
+class TestQueryWorkers(BaseWorkerInteractionTests):
     """
-    Tests for the `merlin stop-workers` command. Most of these tests will:
+    Tests for the `merlin query-workers` command. Most of these tests will:
     1. Start workers from a spec file used for testing
         - Use CeleryWorkerManager for this to ensure safe stoppage of workers
           if something goes wrong
-    2. Run the `merlin stop-workers` command from a subprocess
+    2. Run the `merlin query-workers` command from a subprocess
     """
 
-    command_to_test = "merlin stop-workers"
+    command_to_test = "merlin query-workers"
 
     def test_no_workers(
         self,
@@ -41,9 +41,9 @@ class TestStopWorkers(BaseWorkerInteractionTests):
         merlin_server_dir: str,
     ):
         """
-        Test the `merlin stop-workers` command with no workers started in the first place.
+        Test the `merlin query-workers` command with no workers started in the first place.
 
-        Run the `merlin stop-workers` command and ensure that a "no workers found" message
+        Run the `merlin query-workers` command and ensure that a "no workers found" message
         is written to the output. To see more information on exactly what this test is doing,
         see the `run_test_without_workers()` method of the base class.
 
@@ -82,11 +82,11 @@ class TestStopWorkers(BaseWorkerInteractionTests):
         merlin_server_dir: str,
     ):
         """
-        Test the `merlin stop-workers` command with no flags.
+        Test the `merlin query-workers` command with no flags.
 
-        Run the `merlin stop-workers` command and ensure that all workers are stopped.
+        Run the `merlin query-workers` command and ensure that all workers are queried.
         To see more information on exactly what this test is doing, see the
-        `run_test_with_workers()` method of the base class.
+        `run_test_with_workers()` method.
 
         Parameters:
             redis_server:
@@ -109,10 +109,10 @@ class TestStopWorkers(BaseWorkerInteractionTests):
                 created by the `redis_server` fixture.
         """
         conditions = [
-            HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # Some workers should be stopped
-            HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be stopped
-            HasRegex(WorkerMessages.STEP_2_WORKER.value),  # This worker should be stopped
-            HasRegex(WorkerMessages.OTHER_WORKER.value),  # This worker should be stopped
+            HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # Some workers should be found
+            HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be queried
+            HasRegex(WorkerMessages.STEP_2_WORKER.value),  # This worker should be queried
+            HasRegex(WorkerMessages.OTHER_WORKER.value),  # This worker should be queried
         ]
         self.run_test_with_workers(path_to_test_specs, merlin_server_dir, conditions, self.command_to_test)
 
@@ -125,11 +125,11 @@ class TestStopWorkers(BaseWorkerInteractionTests):
         merlin_server_dir: str,
     ):
         """
-        Test the `merlin stop-workers` command with the `--spec` flag.
+        Test the `merlin query-workers` command with the `--spec` flag.
 
-        Run the `merlin stop-workers` command with the `--spec` flag and ensure that all
-        workers are stopped. To see more information on exactly what this test is doing,
-        see the `run_test_with_workers()` method of the base class.
+        Run the `merlin query-workers` command with the `--spec` flag and ensure that all
+        workers are queried. To see more information on exactly what this test is doing,
+        see the `run_test_with_workers()` method.
 
         Parameters:
             redis_server:
@@ -152,10 +152,10 @@ class TestStopWorkers(BaseWorkerInteractionTests):
                 created by the `redis_server` fixture.
         """
         conditions = [
-            HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # Some workers should be stopped
-            HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be stopped
-            HasRegex(WorkerMessages.STEP_2_WORKER.value),  # This worker should be stopped
-            HasRegex(WorkerMessages.OTHER_WORKER.value),  # This worker should be stopped
+            HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # Some workers should be queried
+            HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be queried
+            HasRegex(WorkerMessages.STEP_2_WORKER.value),  # This worker should be queried
+            HasRegex(WorkerMessages.OTHER_WORKER.value),  # This worker should be queried
         ]
         self.run_test_with_workers(
             path_to_test_specs,
@@ -174,12 +174,11 @@ class TestStopWorkers(BaseWorkerInteractionTests):
         merlin_server_dir: str,
     ):
         """
-        Test the `merlin stop-workers` command with the `--workers` flag.
+        Test the `merlin query-workers` command with the `--workers` flag.
 
-        Run the `merlin stop-workers` command with the `--workers` flag and ensure that
-        only the workers given with this flag are stopped. To see more information on
-        exactly what this test is doing, see the `run_test_with_workers()` method of the
-        base class.
+        Run the `merlin query-workers` command with the `--workers` flag and ensure that
+        only the workers given with this flag are queried. To see more information on
+        exactly what this test is doing, see the `run_test_with_workers()` method.
 
         Parameters:
             redis_server:
@@ -202,10 +201,10 @@ class TestStopWorkers(BaseWorkerInteractionTests):
                 created by the `redis_server` fixture.
         """
         conditions = [
-            HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # Some workers should be stopped
-            HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be stopped
-            HasRegex(WorkerMessages.STEP_2_WORKER.value),  # This worker should be stopped
-            HasRegex(WorkerMessages.OTHER_WORKER.value, negate=True),  # This worker should NOT be stopped
+            HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # Some workers should be queried
+            HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be queried
+            HasRegex(WorkerMessages.STEP_2_WORKER.value),  # This worker should be queried
+            HasRegex(WorkerMessages.OTHER_WORKER.value, negate=True),  # This worker should NOT be queried
         ]
         self.run_test_with_workers(
             path_to_test_specs,
@@ -224,12 +223,11 @@ class TestStopWorkers(BaseWorkerInteractionTests):
         merlin_server_dir: str,
     ):
         """
-        Test the `merlin stop-workers` command with the `--queues` flag.
+        Test the `merlin query-workers` command with the `--queues` flag.
 
-        Run the `merlin stop-workers` command with the `--queues` flag and ensure that
-        only the workers attached to the given queues are stopped. To see more information
-        on exactly what this test is doing, see the `run_test_with_workers()` method of the
-        base class.
+        Run the `merlin query-workers` command with the `--queues` flag and ensure that
+        only the workers attached to the given queues are queried. To see more information
+        on exactly what this test is doing, see the `run_test_with_workers()` method.
 
         Parameters:
             redis_server:
@@ -252,10 +250,10 @@ class TestStopWorkers(BaseWorkerInteractionTests):
                 created by the `redis_server` fixture.
         """
         conditions = [
-            HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # One workers should be stopped
-            HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be stopped
-            HasRegex(WorkerMessages.STEP_2_WORKER.value, negate=True),  # This worker should NOT be stopped
-            HasRegex(WorkerMessages.OTHER_WORKER.value, negate=True),  # This worker should NOT be stopped
+            HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # One worker should be queried
+            HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be queried
+            HasRegex(WorkerMessages.STEP_2_WORKER.value, negate=True),  # This worker should NOT be queried
+            HasRegex(WorkerMessages.OTHER_WORKER.value, negate=True),  # This worker should NOT be queried
         ]
         self.run_test_with_workers(
             path_to_test_specs,
