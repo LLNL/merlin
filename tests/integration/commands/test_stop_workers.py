@@ -160,6 +160,7 @@ class TestStopWorkers(BaseStopWorkersAndQueryWorkersTest):
                 created by the `redis_server` fixture.
         """
         from merlin.celery import app as celery_app
+
         conditions = [
             HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # Some workers should be stopped
             HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be stopped
@@ -213,6 +214,7 @@ class TestStopWorkers(BaseStopWorkersAndQueryWorkersTest):
                 created by the `redis_server` fixture.
         """
         from merlin.celery import app as celery_app
+
         conditions = [
             HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # Some workers should be stopped
             HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be stopped
@@ -229,7 +231,6 @@ class TestStopWorkers(BaseStopWorkersAndQueryWorkersTest):
             active_queues = celery_app.control.inspect().active_queues()
             worker_name = f"celery@{WorkerMessages.OTHER_WORKER.value}"
             assert worker_name in active_queues
-
 
     def test_queues_flag(
         self,
@@ -268,6 +269,7 @@ class TestStopWorkers(BaseStopWorkersAndQueryWorkersTest):
                 created by the `redis_server` fixture.
         """
         from merlin.celery import app as celery_app
+
         conditions = [
             HasRegex(WorkerMessages.NO_WORKERS_MSG.value, negate=True),  # One workers should be stopped
             HasRegex(WorkerMessages.STEP_1_WORKER.value),  # This worker should be stopped
@@ -283,7 +285,8 @@ class TestStopWorkers(BaseStopWorkersAndQueryWorkersTest):
         ):
             active_queues = celery_app.control.inspect().active_queues()
             workers_that_should_be_alive = [
-                f"celery@{WorkerMessages.OTHER_WORKER.value}", f"celery@{WorkerMessages.STEP_2_WORKER.value}"
+                f"celery@{WorkerMessages.OTHER_WORKER.value}",
+                f"celery@{WorkerMessages.STEP_2_WORKER.value}",
             ]
             for worker_name in workers_that_should_be_alive:
                 assert worker_name in active_queues
