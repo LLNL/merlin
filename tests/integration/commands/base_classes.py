@@ -5,6 +5,7 @@ the integration tests in this command directory.
 
 import os
 import subprocess
+from contextlib import contextmanager
 from typing import List
 
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
@@ -12,12 +13,13 @@ from tests.integration.conditions import Condition
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd, load_workers_from_spec
 
 
-class BaseWorkerInteractionTests:
+class BaseStopWorkersAndQueryWorkersTest:
     """
-    Base class for tests that interact with the worker in some way.
+    Base class for `stop-workers` and `query-workers` tests.
     Contains necessary methods for executing the tests.
     """
 
+    @contextmanager
     def run_test_with_workers(
         self,
         path_to_test_specs: str,
@@ -27,9 +29,12 @@ class BaseWorkerInteractionTests:
         flag: str = None,
     ):
         """
-        Helper function to run common testing logic for tests with workers started.
+        Helper method to run common testing logic for tests with workers started.
+        This method must also be a context manager so we can check the status of the
+        workers prior to the CeleryWorkersManager running it's exit code that shuts down
+        all active workers.
 
-        This function will:
+        This method will:
         0. Read in the necessary fixtures as parameters. These fixtures grab paths to
            our test specs and the merlin server directory created from starting the
            containerized redis server.
@@ -40,6 +45,9 @@ class BaseWorkerInteractionTests:
            directory so that merlin will connect to it when we run our test
         4. Run the test command that's provided and check that the conditions given are
            passing.
+        5. Yield control back to the calling method.
+        6. Safely terminate workers that may have not been stopped once the calling method
+           completes.
 
         Parameters:
             path_to_test_specs:
@@ -81,7 +89,9 @@ class BaseWorkerInteractionTests:
 
             # Ensure all test conditions are satisfied
             check_test_conditions(conditions, info)
-    
+
+            yield
+
     def run_test_without_workers(self, merlin_server_dir: str, conditions: List[Condition], command: str):
         """
         Helper function to run common testing logic for tests with no workers started.
@@ -109,7 +119,7 @@ class BaseWorkerInteractionTests:
         copy_app_yaml_to_cwd(merlin_server_dir)
 
         # Run the test
-        result = subprocess.run(self.command_to_test, capture_output=True, text=True, shell=True)
+        result = subprocess.run(command, capture_output=True, text=True, shell=True)
         info = {
             "stdout": result.stdout,
             "stderr": result.stderr,

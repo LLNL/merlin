@@ -124,7 +124,6 @@ def define_tests():  # pylint: disable=R0914,R0915
     flux_restart = f"{examples}/flux/flux_par_restart.yaml"
     flux_native = f"{test_specs}/flux_par_native_test.yaml"
     lsf = f"{examples}/lsf/lsf_par.yaml"
-    mul_workers_demo = f"{dev_examples}/multiple_workers.yaml"
     cli_substitution_wf = f"{test_specs}/cli_substitution_test.yaml"
     chord_err_wf = f"{test_specs}/chord_err.yaml"
 

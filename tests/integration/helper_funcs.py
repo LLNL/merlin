@@ -4,13 +4,14 @@ test suite.
 """
 
 import os
-import shutil
 import re
+import shutil
 from typing import Dict, List
 
 import yaml
 
 from tests.integration.conditions import Condition
+
 
 def load_workers_from_spec(spec_filepath: str) -> dict:
     """

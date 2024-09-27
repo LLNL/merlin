@@ -5,7 +5,7 @@ Tests for the `merlin query-workers` command.
 import os
 from enum import Enum
 
-from tests.integration.commands.base_classes import BaseWorkerInteractionTests
+from tests.integration.commands.base_classes import BaseStopWorkersAndQueryWorkersTest
 from tests.integration.conditions import HasRegex
 
 
@@ -22,7 +22,7 @@ class WorkerMessages(Enum):
     OTHER_WORKER = "other_merlin_test_worker"
 
 
-class TestQueryWorkers(BaseWorkerInteractionTests):
+class TestQueryWorkers(BaseStopWorkersAndQueryWorkersTest):
     """
     Tests for the `merlin query-workers` command. Most of these tests will:
     1. Start workers from a spec file used for testing
@@ -114,7 +114,8 @@ class TestQueryWorkers(BaseWorkerInteractionTests):
             HasRegex(WorkerMessages.STEP_2_WORKER.value),  # This worker should be queried
             HasRegex(WorkerMessages.OTHER_WORKER.value),  # This worker should be queried
         ]
-        self.run_test_with_workers(path_to_test_specs, merlin_server_dir, conditions, self.command_to_test)
+        with self.run_test_with_workers(path_to_test_specs, merlin_server_dir, conditions, self.command_to_test):
+            pass
 
     def test_spec_flag(
         self,
@@ -157,13 +158,14 @@ class TestQueryWorkers(BaseWorkerInteractionTests):
             HasRegex(WorkerMessages.STEP_2_WORKER.value),  # This worker should be queried
             HasRegex(WorkerMessages.OTHER_WORKER.value),  # This worker should be queried
         ]
-        self.run_test_with_workers(
+        with self.run_test_with_workers(
             path_to_test_specs,
             merlin_server_dir,
             conditions,
             self.command_to_test,
             flag=f"--spec {os.path.join(path_to_test_specs, 'multiple_workers.yaml')}",
-        )
+        ):
+            pass
 
     def test_workers_flag(
         self,
@@ -206,13 +208,14 @@ class TestQueryWorkers(BaseWorkerInteractionTests):
             HasRegex(WorkerMessages.STEP_2_WORKER.value),  # This worker should be queried
             HasRegex(WorkerMessages.OTHER_WORKER.value, negate=True),  # This worker should NOT be queried
         ]
-        self.run_test_with_workers(
+        with self.run_test_with_workers(
             path_to_test_specs,
             merlin_server_dir,
             conditions,
             self.command_to_test,
             flag=f"--workers {WorkerMessages.STEP_1_WORKER.value} {WorkerMessages.STEP_2_WORKER.value}",
-        )
+        ):
+            pass
 
     def test_queues_flag(
         self,
@@ -255,10 +258,11 @@ class TestQueryWorkers(BaseWorkerInteractionTests):
             HasRegex(WorkerMessages.STEP_2_WORKER.value, negate=True),  # This worker should NOT be queried
             HasRegex(WorkerMessages.OTHER_WORKER.value, negate=True),  # This worker should NOT be queried
         ]
-        self.run_test_with_workers(
+        with self.run_test_with_workers(
             path_to_test_specs,
             merlin_server_dir,
             conditions,
             self.command_to_test,
             flag="--queues hello_queue",
-        )
+        ):
+            pass

@@ -80,8 +80,9 @@ class CeleryWorkersManager:
             try:
                 if str(pid) in ps_proc.stdout:
                     os.kill(pid, signal.SIGKILL)
-            except ProcessLookupError as exc:
-                raise ProcessLookupError(f"PID {pid} not found. Output of 'ps ux':\n{ps_proc.stdout}") from exc
+            # If the process can't be found then it doesn't exist anymore
+            except ProcessLookupError:
+                pass
 
     def _is_worker_ready(self, worker_name: str, verbose: bool = False) -> bool:
         """
