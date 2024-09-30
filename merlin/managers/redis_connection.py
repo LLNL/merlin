@@ -92,9 +92,11 @@ class RedisConnectionManager:
 
         # Add ssl settings if necessary
         if CONFIG.results_backend.name == "rediss":
-            redis_config.update({
-                "ssl": True,
-                "ssl_cert_reqs": getattr(CONFIG.results_backend, "cert_reqs", "required"),
-            })
+            redis_config.update(
+                {
+                    "ssl": True,
+                    "ssl_cert_reqs": getattr(CONFIG.results_backend, "cert_reqs", "required"),
+                }
+            )
 
         return redis.Redis(**redis_config)
