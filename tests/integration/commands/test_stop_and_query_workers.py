@@ -439,4 +439,5 @@ class TestStopAndQueryWorkersCommands:
                 for worker_name in workers_that_should_be_alive:
                     assert worker_name in active_queues
 
+
 # pylint: enable=unused-argument,import-outside-toplevel,too-many-arguments
