@@ -102,11 +102,11 @@ def check_test_conditions(conditions: List[Condition], info: Dict[str, str]):
         condition.ingest_info(info)
         try:
             assert condition.passes
-        except AssertionError:
+        except AssertionError as exc:
             error_message = (
                 f"Condition failed: {condition}\n"
                 f"Captured stdout: {info['stdout']}\n"
                 f"Captured stderr: {info['stderr']}\n"
                 f"Return code: {info['return_code']}\n"
             )
-            raise AssertionError(error_message)
+            raise AssertionError(error_message) from exc
