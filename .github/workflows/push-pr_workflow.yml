@@ -83,7 +83,6 @@ jobs:
         python3 -m pylint tests --rcfile=setup.cfg --exit-zero
 
   Local-test-suite:
-    needs: Common-setup
     runs-on: ubuntu-latest
     env: 
       GO_VERSION: 1.18.1
@@ -116,9 +115,6 @@ jobs:
 
     - name: Install singularity
       run: |
-        ls /usr/local/bin/
-        ls /usr/local/libexec/
-        ls /usr/local/etc/
         sudo apt-get update && sudo apt-get install -y \
           build-essential \
           libssl-dev \
@@ -157,7 +153,6 @@ jobs:
         python3 tests/integration/run_tests.py --verbose --local
 
   Integration-tests:
-    needs: Common-setup
     runs-on: ubuntu-latest
     env: 
       GO_VERSION: 1.18.1
@@ -195,9 +190,6 @@ jobs:
 
     - name: Install singularity
       run: |
-        ls /usr/local/bin/
-        ls /usr/local/libexec/
-        ls /usr/local/etc/
         sudo apt-get update && sudo apt-get install -y \
           build-essential \
           libssl-dev \
