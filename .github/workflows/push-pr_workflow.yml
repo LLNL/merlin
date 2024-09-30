@@ -119,10 +119,15 @@ jobs:
         path: |
           ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
           /usr/local/bin/singularity
+          /usr/local/libexec/singularity
+          /usr/local/etc/singularity
         key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}-${{ env.SINGULARITY_VERSION }}
 
     - name: Install singularity
       run: |
+        ls /usr/local/bin/
+        ls /usr/local/libexec/
+        ls /usr/local/etc/
         sudo apt-get update && sudo apt-get install -y \
           build-essential \
           libssl-dev \
@@ -190,6 +195,8 @@ jobs:
         path: |
           ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
           /usr/local/bin/singularity
+          /usr/local/libexec/singularity
+          /usr/local/etc/singularity
         key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}-${{ env.SINGULARITY_VERSION }}
 
     # - name: Cache Singularity build artifacts
@@ -200,6 +207,9 @@ jobs:
 
     - name: Install singularity
       run: |
+        ls /usr/local/bin/
+        ls /usr/local/libexec/
+        ls /usr/local/etc/
         sudo apt-get update && sudo apt-get install -y \
           build-essential \
           libssl-dev \
@@ -280,6 +290,8 @@ jobs:
         path: |
           ${{ github.workspace }}/singularity-ce-$SINGULARITY_VERSION
           /usr/local/bin/singularity
+          /usr/local/libexec/singularity
+          /usr/local/etc/singularity
         key: ${{ runner.os }}-singularity-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}-${{ env.SINGULARITY_VERSION }}
 
     # - name: Cache Singularity build artifacts
@@ -290,6 +302,9 @@ jobs:
 
     - name: Install singularity
       run: |
+        ls /usr/local/bin/
+        ls /usr/local/libexec/
+        ls /usr/local/etc/
         sudo apt-get update && sudo apt-get install -y \
           build-essential \
           libssl-dev \
