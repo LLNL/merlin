@@ -43,12 +43,14 @@ FORMATS = {
 }
 
 
-def setup_logging(logger, log_level="INFO", colors=True):
+def setup_logging(logger: logging.Logger, log_level: str = "INFO", colors: bool = True):
     """
     Setup and configure Python logging.
 
-    :param `logger`: a logging.Logger object
-    :param  `log_level`: logger level
+    Args:
+        logger: A logging.Logger object.
+        log_level: Logger level.
+        colors: If True use colored logs.
     """
     formatter = logging.Formatter()
     handler = logging.StreamHandler(sys.stdout)

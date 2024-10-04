@@ -424,7 +424,7 @@ def build_set_of_queues(
     return queues
 
 
-def query_celery_queues(queues: List[str], app: Celery = None, config: Config = None) -> Dict[str, List[str]]:
+def query_celery_queues(queues: List[str], app: Celery = None, config: Config = None) -> Dict[str, Dict[str, int]]:
     """
     Build a dict of information about the number of jobs and consumers attached
     to specific queues that we want information on.

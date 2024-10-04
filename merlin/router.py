@@ -38,7 +38,9 @@ decoupled from the logic the tasks are running.
 import logging
 import os
 import time
+from argparse import Namespace
 from typing import Dict, List, Tuple
+
 
 from merlin.exceptions import NoWorkersException
 from merlin.study.celeryadapter import (
@@ -55,6 +57,8 @@ from merlin.study.celeryadapter import (
     start_celery_workers,
     stop_celery_workers,
 )
+from merlin.spec.specification import MerlinSpec
+from merlin.study.study import MerlinStudy
 
 
 try:
@@ -70,12 +74,21 @@ LOG = logging.getLogger(__name__)
 # and try to resolve them
 
 
-def run_task_server(study, run_mode=None):
+def run_task_server(study: MerlinStudy, run_mode: str = None):
     """
-    Creates the task server interface for communicating the tasks.
+    Creates the task server interface for managing task communications.
 
-    :param `study`: The MerlinStudy object
-    :param `run_mode`: The type of run mode, e.g. local, batch
+    This function determines which server to send tasks to. It checks if
+    Celery is set as the task server; if not, it logs an error message.
+    The run mode can be specified to determine how tasks should be executed.
+
+    Args:
+        study: The study object representing the current 
+                experiment setup, containing configuration 
+                details for the task server.
+        run_mode: The type of run mode to use for 
+                    task execution. This can include options 
+                    such as 'local' or 'batch'.
     """
     if study.expanded_spec.merlin["resources"]["task_server"] == "celery":
         run_celery(study, run_mode)
@@ -83,14 +96,36 @@ def run_task_server(study, run_mode=None):
         LOG.error("Celery is not specified as the task server!")
 
 
-def launch_workers(spec, steps, worker_args="", disable_logs=False, just_return_command=False):
+def launch_workers(
+    spec: MerlinSpec,
+    steps: List[str],
+    worker_args: str = "",
+    disable_logs: bool = False,
+    just_return_command: bool = False,
+) -> str:
     """
-    Launches workers for the specified study.
+    Launches workers for the specified study based on the provided 
+    specification and steps.
 
-    :param `specs`: Tuple of (YAMLSpecification, MerlinSpec)
-    :param `steps`: The steps in the spec to tie the workers to
-    :param `worker_args`: Optional arguments for the workers
-    :param `just_return_command`: Don't execute, just return the command
+    This function checks if Celery is configured as the task server 
+    and initiates the specified workers accordingly. It provides options 
+    for additional worker arguments, logging control, and command-only 
+    execution without launching the workers.
+
+    Args:
+        spec: Specification details necessary for launching the workers.
+        steps: The specific steps in the specification that the workers
+                will be associated with.
+        worker_args: Additional arguments to be passed to the workers.
+                    Defaults to an empty string.
+        disable_logs: Flag to disable logging during worker execution.
+                        Defaults to False.
+        just_return_command: If True, the function will not execute the
+                            command but will return it instead. Defaults
+                            to False.
+
+    Returns:
+        A string of the worker launch command(s).
     """
     if spec.merlin["resources"]["task_server"] == "celery":  # pylint: disable=R1705
         # Start workers
@@ -101,15 +136,29 @@ def launch_workers(spec, steps, worker_args="", disable_logs=False, just_return_
         return "No workers started"
 
 
-def purge_tasks(task_server, spec, force, steps):
+def purge_tasks(task_server: str, spec: MerlinSpec, force: bool, steps: List[str]) -> int:
     """
-    Purges all tasks.
+    Purges all tasks from the specified task server.
 
-    :param `task_server`: The task server from which to purge tasks.
-    :param `spec`: A MerlinSpec object
-    :param `force`: Purge without asking for confirmation
-    :param `steps`: Space-separated list of stepnames defining queues to purge,
-        default is all steps
+    This function removes tasks from the designated queues associated 
+    with the specified steps. It operates without confirmation if 
+    the `force` parameter is set to True. The function logs the 
+    steps being purged and checks if Celery is the configured task 
+    server before proceeding.
+
+    Args:
+        task_server: The task server from which to purge tasks. 
+                    Expected value is 'celery'.
+        spec: A MerlinSpec object containing the configuration 
+                needed to generate queue specifications.
+        force: If True, purge the tasks without any confirmation prompt.
+        steps: A space-separated list of step names that define 
+                which queues to purge. If not specified, 
+                defaults to purging all steps.
+
+    Returns:
+        The result of the purge operation; -1 if the task server is not
+            supported (i.e., not Celery).
     """
     LOG.info(f"Purging queues for steps = {steps}")
 
@@ -124,12 +173,20 @@ def purge_tasks(task_server, spec, force, steps):
 
 def dump_queue_info(task_server: str, query_return: List[Tuple[str, int, int]], dump_file: str):
     """
-    Format the information we're going to dump in a way that the Dumper class can
-    understand and add a timestamp to the info.
+    Formats and dumps queue information for the specified task server.
 
-    :param task_server: The task server from which to query queues
-    :param query_return: The output of `query_queues`
-    :param dump_file: The filepath of the file we'll dump queue info to
+    This function prepares the queue data returned from the queue 
+    query and formats it in a way that the `Dumper` class can process. 
+    It also adds a timestamp to the information before dumping it 
+    to the specified file.
+
+    Args:
+        task_server: The task server from which to query queues, 
+                        expected to be 'celery'.
+        query_return: The output from the `query_queues` function,
+                        containing tuples of queue information.
+        dump_file: The filepath where the queue information will 
+                    be dumped.
     """
     if task_server == "celery":
         dump_celery_queue_info(query_return, dump_file)
@@ -139,19 +196,36 @@ def dump_queue_info(task_server: str, query_return: List[Tuple[str, int, int]], 
 
 def query_queues(
     task_server: str,
-    spec: "MerlinSpec",  # noqa: F821
+    spec: MerlinSpec,
     steps: List[str],
     specific_queues: List[str],
     verbose: bool = True,
-):
+) -> Dict[str, Dict[str, int]]:
     """
-    Queries status of queues.
+    Queries the status of queues from the specified task server.
 
-    :param task_server: The task server from which to query queues
-    :param spec: A MerlinSpec object or None
-    :param steps: Spaced-separated list of stepnames to query. Default is all
-    :param specific_queues: A list of queue names to query or None
-    :param verbose: A bool to determine whether to output log statements or not
+    This function checks the status of queues tied to a given task 
+    server, building a list of queues based on the provided steps 
+    and specific queue names. It supports querying Celery task 
+    servers and returns the results in a structured format. 
+    Logging behavior can be controlled with the verbose parameter.
+
+    Args:
+        task_server: The task server from which to query queues, 
+                    expected to be 'celery'.
+        spec: A MerlinSpec object used to define the configuration of
+                queues. Can also be None.
+        steps: A space-separated list of step names to query. Default
+                is to query all available steps if this is empty.
+        specific_queues: A list of specific queue names to query. Can
+                        be empty or None to query all relevant queues.
+        verbose: If True, enables logging of query operations. Defaults
+                to True.
+
+    Returns:
+        A dictionary where the keys are queue names and the values are
+            dictionaries containing the number of workers (consumers)
+            and tasks (jobs) attached to each queue.
     """
     if task_server == "celery":  # pylint: disable=R1705
         # Build a set of queues to query and query them
@@ -159,14 +233,19 @@ def query_queues(
         return query_celery_queues(queues)
     else:
         LOG.error("Celery is not specified as the task server!")
-        return []
+        return {}
 
 
-def query_workers(task_server, spec_worker_names, queues, workers_regex):
+def query_workers(task_server: str, spec_worker_names: List[str], queues: List[str], workers_regex: str):
     """
-    Gets info from workers.
+    Retrieves information from workers associated with the specified task server.
 
-    :param `task_server`: The task server to query.
+    Args:
+        task_server: The task server to query; must be 'celery'.
+        spec_worker_names: A list of specific worker names to query.
+        queues: A list of queues to search for associated workers.
+        workers_regex: A regex pattern used to filter worker names 
+                        during the query.
     """
     LOG.info("Searching for workers...")
 
@@ -176,12 +255,17 @@ def query_workers(task_server, spec_worker_names, queues, workers_regex):
         LOG.error("Celery is not specified as the task server!")
 
 
-def get_workers(task_server):
-    """Get all workers.
+def get_workers(task_server: str) -> List[str]:
+    """
+    This function queries the designated task server to obtain a list of all 
+    workers that are currently connected.
 
-    :param `task_server`: The task server to query.
-    :return: A list of all connected workers
-    :rtype: list
+    Args:
+        task_server: The task server to query.
+
+    Returns:
+        A list of all connected workers. If the task server is not supported,
+            an empty list is returned.
     """
     if task_server == "celery":  # pylint: disable=R1705
         return get_workers_from_app()
@@ -190,14 +274,18 @@ def get_workers(task_server):
         return []
 
 
-def stop_workers(task_server, spec_worker_names, queues, workers_regex):
+def stop_workers(task_server: str, spec_worker_names: List[str], queues: List[str], workers_regex: str):
     """
-    Stops workers.
+    This function sends a command to stop workers that match the specified 
+    criteria from the designated task server.
 
-    :param `task_server`: The task server from which to stop workers.
-    :param `spec_worker_names`: Worker names to stop, drawn from a spec.
-    :param `queues`     : The queues to stop
-    :param `workers_regex`    : Regex for workers to stop
+    Args:
+        task_server: The task server from which to stop workers; 
+                        currently only supports 'celery'.
+        spec_worker_names: A list of worker names to stop, as defined 
+                            in a specification.
+        queues: A list of queues from which to stop associated workers.
+        workers_regex: A regex pattern used to filter the workers to stop.
     """
     LOG.info("Stopping workers...")
 
@@ -208,14 +296,24 @@ def stop_workers(task_server, spec_worker_names, queues, workers_regex):
         LOG.error("Celery is not specified as the task server!")
 
 
-def create_config(task_server: str, config_dir: str, broker: str, test: str) -> None:
+def create_config(task_server: str, config_dir: str, broker: str, test: str):
     """
-    Create a config for the given task server.
+    Create a configuration app.yaml that Merlin will use to connect to the
+    specified task server.
 
-    :param [str] `task_server`: The task server from which to stop workers.
-    :param [str] `config_dir`: Optional directory to install the config.
-    :param [str] `broker`: string indicated the broker, used to check for redis.
-    :param [str] `test`: string indicating if the app.yaml is used for testing.
+    This function generates a configuration file for the given task server, 
+    primarily supporting the 'celery' task server. It creates the necessary 
+    directories if they do not exist and determines the appropriate configuration 
+    file based on the provided broker and testing parameters.
+
+    Args:
+        task_server: The task server for which to create the configuration.
+                    Currently supports only 'celery'.
+        config_dir: The directory where the configuration files will be installed.
+                    If the directory does not exist, it will be created.
+        broker: A string indicating the broker type; currently used to check for 'redis'.
+        test: A string that indicates whether the application should use a test 
+                configuration file. If set, a test configuration is created.
     """
     if test:
         LOG.info("Creating test config ...")
@@ -240,10 +338,21 @@ def create_config(task_server: str, config_dir: str, broker: str, test: str) -> 
 
 def get_active_queues(task_server: str) -> Dict[str, List[str]]:
     """
-    Get a dictionary of active queues and the workers attached to these queues.
+    Retrieve a dictionary of active queues and their associated workers for the specified task server.
 
-    :param `task_server`: The task server to query for active queues
-    :returns: A dict where keys are queue names and values are a list of workers watching them
+    This function queries the given task server for its active queues and gathers 
+    information about which workers are currently monitoring these queues. It supports 
+    the 'celery' task server and returns a structured dictionary containing the queue 
+    names as keys and lists of worker names as values.
+
+    Args:
+        task_server: The task server to query for active queues. 
+                    Currently supports only 'celery'.
+    
+    Returns:
+        A dictionary where:\n
+            - The keys are the names of the active queues.
+            - The values are lists of worker names that are currently attached to those queues.
     """
     active_queues = {}
 
@@ -257,15 +366,24 @@ def get_active_queues(task_server: str) -> Dict[str, List[str]]:
     return active_queues
 
 
-def wait_for_workers(sleep: int, task_server: str, spec: "MerlinSpec"):  # noqa
+def wait_for_workers(sleep: int, task_server: str, spec: MerlinSpec):  # noqa
     """
-    Wait on workers to start up. Check on worker start 10 times with `sleep` seconds between
-    each check. If no workers are started in time, raise an error to kill the monitor (there
-    was likely an issue with the task server that caused worker launch to fail).
+    Wait for workers to start up by checking their status at regular intervals.
 
-    :param `sleep`: An integer representing the amount of seconds to sleep between each check
-    :param `task_server`: The task server from which to look for workers
-    :param `spec`: A MerlinSpec object representing the spec we're monitoring
+    This function monitors the specified task server for the startup of worker processes.
+    It checks for the existence of the expected workers up to 10 times, sleeping for a 
+    specified number of seconds between each check. If no workers are detected after 
+    the maximum number of attempts, it raises an error to terminate the monitoring 
+    process, indicating a potential issue with the task server.
+
+    Args:
+        sleep: The number of seconds to pause between each check for worker status.
+        task_server: The task server from which to query for worker status.
+        spec: An instance of the MerlinSpec class that contains the specification 
+                for the workers being monitored.
+
+    Raises:
+        NoWorkersException: If no workers are detected after the maximum number of checks.
     """
     # Get the names of the workers that we're looking for
     worker_names = spec.get_worker_names()
@@ -297,9 +415,12 @@ def check_workers_processing(queues_in_spec: List[str], task_server: str) -> boo
     """
     Check if any workers are still processing tasks by querying the task server.
 
-    :param `queues_in_spec`: A list of queues to check if tasks are still active in
-    :param `task_server`: The task server from which to query
-    :returns: True if workers are still processing tasks, False otherwise
+    Args:
+        queues_in_spec: A list of queue names to check for active tasks.
+        task_server: The task server from which to query the processing status.
+
+    Returns:
+        True if workers are still processing tasks, False otherwise.
     """
     result = False
 
@@ -313,13 +434,22 @@ def check_workers_processing(queues_in_spec: List[str], task_server: str) -> boo
     return result
 
 
-def check_merlin_status(args: "Namespace", spec: "MerlinSpec") -> bool:  # noqa
+def check_merlin_status(args: Namespace, spec: MerlinSpec) -> bool:  # noqa
     """
-    Function to check merlin workers and queues to keep the allocation alive
+    Function to check Merlin workers and queues to keep the allocation alive.
 
-    :param `args`: parsed CLI arguments
-    :param `spec`: the parsed spec.yaml as a MerlinSpec object
-    :returns: True if there are still tasks being processed, False otherwise
+    This function monitors the status of workers and jobs within the specified task server 
+    and the provided Merlin specification. It checks for active tasks and workers, ensuring 
+    that the allocation remains valid.
+
+    Args:
+        args: Parsed command-line interface arguments, including task server 
+                specifications and sleep duration.
+        spec: The parsed spec.yaml as a MerlinSpec object, containing queue 
+                and worker definitions.
+
+    Returns:
+        True if there are still tasks being processed, False otherwise.
     """
     # Initialize the variable to track if there are still active tasks
     active_tasks = False
