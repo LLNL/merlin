@@ -1,5 +1,5 @@
 """
-This module will contain the base class used for testing
+This module will contain the testing logic for
 the `stop-workers` and `query-workers` commands.
 """
 

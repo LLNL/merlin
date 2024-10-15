@@ -42,6 +42,7 @@ import yaml
 from _pytest.tmpdir import TempPathFactory
 from celery import Celery
 from celery.canvas import Signature
+from redis import Redis
 
 from merlin.config.configfile import CONFIG
 from tests.constants import CERT_FILES, SERVER_PASS
@@ -57,9 +58,10 @@ from tests.utils import create_cert_files, create_pass_file
 # Loading in Module Specific Fixtures #
 #######################################
 
-
 pytest_plugins = [
-    fixture_file.replace("/", ".").replace(".py", "") for fixture_file in glob("tests/fixtures/[!__]*.py", recursive=True)
+    fixture_file.replace("/", ".").replace(".py", "") 
+    for fixture_file in glob("tests/fixtures/**/*.py", recursive=True)
+    if not fixture_file.endswith("__init__.py")
 ]
 
 
@@ -112,7 +114,23 @@ def path_to_test_specs() -> str:
         The absolute path to the 'test_specs' directory.
     """
     path_to_test_dir = os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__))))
-    return os.path.join(path_to_test_dir, os.path.join("integration", "test_specs"))
+    return os.path.join(path_to_test_dir, "integration", "test_specs")
+
+
+@pytest.fixture(scope="session")
+def path_to_merlin_codebase() -> str:
+    """
+    Fixture to provide the path to the directory containing the Merlin code.
+
+    This fixture returns the absolute path to the 'merlin' directory at the
+    top level of this repository. It expands environment variables and user
+    home directory as necessary.
+
+    Returns:
+        The absolute path to the 'merlin' directory.
+    """
+    path_to_test_dir = os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__))))
+    return os.path.join(path_to_test_dir, "..", "merlin")
 
 
 @pytest.fixture(scope="session")
@@ -175,6 +193,22 @@ def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:
         yield redis_server_manager.redis_server_uri
         # The server will be stopped once this context reaches the end of it's execution here
 
+
+@pytest.fixture(scope="session")
+def redis_client(redis_server: str) -> Redis:
+    """
+    Fixture that provides a Redis client instance for the test session.
+    It connects to this client using the url created from the `redis_server`
+    fixture.
+
+    Args:
+        redis_server: The redis server uri we'll use to connect to redis
+
+    Returns:
+        An instance of the Redis client that can be used to interact
+            with the Redis server.
+    """
+    return Redis.from_url(url=redis_server)
 
 @pytest.fixture(scope="session")
 def celery_app(redis_server: str) -> Celery:
