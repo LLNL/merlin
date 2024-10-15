@@ -17,12 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `CeleryWorkersManager`: context to help with starting/stopping workers for tests
 - Ability to copy and print the `Config` object from `merlin/config/__init__.py`
 - Equality method to the `ContainerFormatConfig` and `ContainerConfig` objects from `merlin/server/server_util.py`
+- Added additional tests for the `merlin run` command
 
 ### Changed
 - Split the `start_server` and `config_server` functions of `merlin/server/server_commands.py` into multiple functions to make testing easier
 - Split the `create_server_config` function of `merlin/server/server_config.py` into two functions to make testing easier
 - Combined `set_snapshot_seconds` and `set_snapshot_changes` methods of `RedisConfig` into one method `set_snapshot`
 - Moved stop-workers and query-workers integration tests to pytest tests
+- Ported `run and purge feature demo` test to pytest
 
 ## [1.12.2b1]
 ### Added
