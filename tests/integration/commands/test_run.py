@@ -12,6 +12,7 @@ from redis import Redis
 
 from merlin.spec.specification import MerlinSpec
 from tests.context_managers.celery_task_manager import CeleryTaskManager
+from tests.fixture_types import FixtureModification, FixtureRedis, FixtureStr
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd
 
 
@@ -22,7 +23,7 @@ class TestRunCommand:
 
     demo_workflow = os.path.join("examples", "workflows", "feature_demo", "feature_demo.yaml")
 
-    def setup_test_environment(self, merlin_server_dir: str, run_command_testing_dir: str):
+    def setup_test_environment(self, merlin_server_dir: FixtureStr, run_command_testing_dir: FixtureStr):
         """
         Setup the test environment for these tests by:
         1. Moving into the temporary output directory created specifically for these tests.
@@ -112,12 +113,12 @@ class TestRunCommandDistributed(TestRunCommand):
 
     def test_distributed_run(
         self,
-        redis_client: Redis,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        path_to_merlin_codebase: str,
-        merlin_server_dir: str,
-        run_command_testing_dir: str,
+        redis_client: FixtureRedis,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        path_to_merlin_codebase: FixtureStr,
+        merlin_server_dir: FixtureStr,
+        run_command_testing_dir: FixtureStr,
     ):
         """
         This test verifies that tasks can be successfully sent to a Redis server
@@ -171,12 +172,12 @@ class TestRunCommandDistributed(TestRunCommand):
 
     def test_samplesfile_option(
         self,
-        redis_client: Redis,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        path_to_merlin_codebase: str,
-        merlin_server_dir: str,
-        run_command_testing_dir: str,
+        redis_client: FixtureRedis,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        path_to_merlin_codebase: FixtureStr,
+        merlin_server_dir: FixtureStr,
+        run_command_testing_dir: FixtureStr,
     ):
         """
         This test verifies that passing in a samples filepath from the command line will
@@ -233,12 +234,12 @@ class TestRunCommandDistributed(TestRunCommand):
 
     def test_pgen_and_pargs_options(
         self,
-        redis_client: Redis,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        path_to_merlin_codebase: str,
-        merlin_server_dir: str,
-        run_command_testing_dir: str,
+        redis_client: FixtureRedis,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        path_to_merlin_codebase: FixtureStr,
+        merlin_server_dir: FixtureStr,
+        run_command_testing_dir: FixtureStr,
     ):
         """
         Test the `--pgen` and `--pargs` options with the `merlin run` command.
@@ -307,12 +308,12 @@ class TestRunCommandLocal(TestRunCommand):
 
     def test_dry_run(
         self,
-        redis_client: Redis,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        path_to_merlin_codebase: str,
-        merlin_server_dir: str,
-        run_command_testing_dir: str,
+        redis_client: FixtureRedis,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        path_to_merlin_codebase: FixtureStr,
+        merlin_server_dir: FixtureStr,
+        run_command_testing_dir: FixtureStr,
     ):
         """
         Test the `merlin run` command's `--dry` option. This should create all the output
@@ -373,12 +374,12 @@ class TestRunCommandLocal(TestRunCommand):
 
     def test_local_run(
         self,
-        redis_client: Redis,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        path_to_merlin_codebase: str,
-        merlin_server_dir: str,
-        run_command_testing_dir: str,
+        redis_client: FixtureRedis,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        path_to_merlin_codebase: FixtureStr,
+        merlin_server_dir: FixtureStr,
+        run_command_testing_dir: FixtureStr,
     ):
         """
         This test verifies that tasks can be successfully executed locally using
@@ -424,7 +425,3 @@ class TestRunCommandLocal(TestRunCommand):
                 if not dirnames:
                     # Check for the existence of the MERLIN_FINISHED file
                     assert "MERLIN_FINISHED" in filenames, f"Expected a MERLIN_FINISHED file in list of files for {dirpath} but did not find one"
-
-# TODO
-# - commit these changes
-# - do something similar for `merlin purge` tests

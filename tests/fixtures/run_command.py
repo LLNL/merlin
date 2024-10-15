@@ -5,9 +5,11 @@ import os
 
 import pytest
 
+from tests.fixture_types import FixtureStr
+
 
 @pytest.fixture(scope="session")
-def run_command_testing_dir(temp_output_dir: str) -> str:
+def run_command_testing_dir(temp_output_dir: FixtureStr) -> FixtureStr:
     """
     Fixture to create a temporary output directory for tests related to testing the
     `merlin run` functionality.

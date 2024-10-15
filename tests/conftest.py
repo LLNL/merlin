@@ -48,6 +48,16 @@ from merlin.config.configfile import CONFIG
 from tests.constants import CERT_FILES, SERVER_PASS
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.context_managers.server_manager import RedisServerManager
+from tests.fixture_types import (
+    FixtureBytes,
+    FixtureCelery,
+    FixtureDict,
+    FixtureInt,
+    FixtureModification,
+    FixtureRedis,
+    FixtureSignature,
+    FixtureStr,
+)
 from tests.utils import create_cert_files, create_pass_file
 
 
@@ -102,7 +112,7 @@ def create_encryption_file(key_filepath: str, encryption_key: bytes, app_yaml_fi
 
 
 @pytest.fixture(scope="session")
-def path_to_test_specs() -> str:
+def path_to_test_specs() -> FixtureStr:
     """
     Fixture to provide the path to the directory containing test specifications.
 
@@ -118,7 +128,7 @@ def path_to_test_specs() -> str:
 
 
 @pytest.fixture(scope="session")
-def path_to_merlin_codebase() -> str:
+def path_to_merlin_codebase() -> FixtureStr:
     """
     Fixture to provide the path to the directory containing the Merlin code.
 
@@ -134,7 +144,7 @@ def path_to_merlin_codebase() -> str:
 
 
 @pytest.fixture(scope="session")
-def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
+def temp_output_dir(tmp_path_factory: TempPathFactory) -> FixtureStr:
     """
     This fixture will create a temporary directory to store output files of integration tests.
     The temporary directory will be stored at /tmp/`whoami`/pytest-of-`whoami`/. There can be at most
@@ -157,7 +167,7 @@ def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
 
 
 @pytest.fixture(scope="session")
-def merlin_server_dir(temp_output_dir: str) -> str:
+def merlin_server_dir(temp_output_dir: FixtureStr) -> FixtureStr:
     """
     The path to the merlin_server directory that will be created by the `redis_server` fixture.
 
@@ -171,7 +181,7 @@ def merlin_server_dir(temp_output_dir: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:
+def redis_server(merlin_server_dir: FixtureStr, test_encryption_key: FixtureBytes) -> FixtureStr:
     """
     Start a redis server instance that runs on localhost:6379. This will yield the
     redis server uri that can be used to create a connection with celery.
@@ -195,7 +205,7 @@ def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:
 
 
 @pytest.fixture(scope="session")
-def redis_client(redis_server: str) -> Redis:
+def redis_client(redis_server: FixtureStr) -> FixtureRedis:
     """
     Fixture that provides a Redis client instance for the test session.
     It connects to this client using the url created from the `redis_server`
@@ -211,7 +221,7 @@ def redis_client(redis_server: str) -> Redis:
     return Redis.from_url(url=redis_server)
 
 @pytest.fixture(scope="session")
-def celery_app(redis_server: str) -> Celery:
+def celery_app(redis_server: FixtureStr) -> FixtureCelery:
     """
     Create the celery app to be used throughout our integration tests.
 
@@ -223,7 +233,7 @@ def celery_app(redis_server: str) -> Celery:
 
 
 @pytest.fixture(scope="session")
-def sleep_sig(celery_app: Celery) -> Signature:
+def sleep_sig(celery_app: FixtureCelery) -> FixtureSignature:
     """
     Create a task registered to our celery app and return a signature for it.
     Once requested by a test, you can set the queue you'd like to send this to
@@ -245,7 +255,7 @@ def sleep_sig(celery_app: Celery) -> Signature:
 
 
 @pytest.fixture(scope="session")
-def worker_queue_map() -> Dict[str, str]:
+def worker_queue_map() -> FixtureDict[str, str]:
     """
     Worker and queue names to be used throughout tests
 
@@ -255,7 +265,7 @@ def worker_queue_map() -> Dict[str, str]:
 
 
 @pytest.fixture(scope="class")
-def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):
+def launch_workers(celery_app: FixtureCelery, worker_queue_map: FixtureDict[str, str]):
     """
     Launch the workers on the celery app fixture using the worker and queue names
     defined in the worker_queue_map fixture.
@@ -273,7 +283,7 @@ def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):
 
 
 @pytest.fixture(scope="session")
-def test_encryption_key() -> bytes:
+def test_encryption_key() -> FixtureBytes:
     """
     An encryption key to be used for tests that need it.
 
@@ -298,7 +308,7 @@ def test_encryption_key() -> bytes:
 
 
 @pytest.fixture(scope="function")
-def config(merlin_server_dir: str, test_encryption_key: bytes):
+def config(merlin_server_dir: FixtureStr, test_encryption_key: FixtureBytes) -> FixtureModification:
     """
     DO NOT USE THIS FIXTURE IN A TEST, USE `redis_config` OR `rabbit_config` INSTEAD.
     This fixture is intended to be used strictly by the `redis_config` and `rabbit_config`
@@ -350,8 +360,8 @@ def config(merlin_server_dir: str, test_encryption_key: bytes):
 
 @pytest.fixture(scope="function")
 def redis_broker_config(
-    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
-):
+    merlin_server_dir: FixtureStr, config: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
     """
     This fixture is intended to be used for testing any functionality in the codebase
     that uses the CONFIG object with a Redis broker and results_backend.
@@ -371,8 +381,8 @@ def redis_broker_config(
 
 @pytest.fixture(scope="function")
 def redis_results_backend_config(
-    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
-):
+    merlin_server_dir: FixtureStr, config: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
     """
     This fixture is intended to be used for testing any functionality in the codebase
     that uses the CONFIG object with a Redis results_backend.
@@ -392,8 +402,8 @@ def redis_results_backend_config(
 
 @pytest.fixture(scope="function")
 def rabbit_broker_config(
-    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
-):
+    merlin_server_dir: FixtureStr, config: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
     """
     This fixture is intended to be used for testing any functionality in the codebase
     that uses the CONFIG object with a RabbitMQ broker.
@@ -413,8 +423,8 @@ def rabbit_broker_config(
 
 @pytest.fixture(scope="function")
 def mysql_results_backend_config(
-    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
-):
+    merlin_server_dir: FixtureStr, config: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
     """
     This fixture is intended to be used for testing any functionality in the codebase
     that uses the CONFIG object with a MySQL results_backend.

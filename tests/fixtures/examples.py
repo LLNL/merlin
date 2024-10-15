@@ -6,9 +6,11 @@ import os
 
 import pytest
 
+from tests.fixture_types import FixtureStr
+
 
 @pytest.fixture(scope="session")
-def examples_testing_dir(temp_output_dir: str) -> str:
+def examples_testing_dir(temp_output_dir: FixtureStr) -> FixtureStr:
     """
     Fixture to create a temporary output directory for tests related to the examples functionality.
 

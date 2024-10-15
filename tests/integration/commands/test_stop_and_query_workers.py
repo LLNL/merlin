@@ -12,6 +12,7 @@ from typing import List
 import pytest
 
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
+from tests.fixture_types import FixtureModification, FixtureStr
 from tests.integration.conditions import Condition, HasRegex
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd, load_workers_from_spec
 
@@ -46,8 +47,8 @@ class TestStopAndQueryWorkersCommands:
     @contextmanager
     def run_test_with_workers(
         self,
-        path_to_test_specs: str,
-        merlin_server_dir: str,
+        path_to_test_specs: FixtureStr,
+        merlin_server_dir: FixtureStr,
         conditions: List[Condition],
         command: str,
         flag: str = None,
@@ -137,10 +138,10 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_no_workers(
         self,
-        redis_server: str,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        merlin_server_dir: str,
+        redis_server: FixtureStr,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        merlin_server_dir: FixtureStr,
         command_to_test: str,
     ):
         """
@@ -202,11 +203,11 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_no_flags(
         self,
-        redis_server: str,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        path_to_test_specs: str,
-        merlin_server_dir: str,
+        redis_server: FixtureStr,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        path_to_test_specs: FixtureStr,
+        merlin_server_dir: FixtureStr,
         command_to_test: str,
     ):
         """
@@ -256,11 +257,11 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_spec_flag(
         self,
-        redis_server: str,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        path_to_test_specs: str,
-        merlin_server_dir: str,
+        redis_server: FixtureStr,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        path_to_test_specs: FixtureStr,
+        merlin_server_dir: FixtureStr,
         command_to_test: str,
     ):
         """
@@ -316,11 +317,11 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_workers_flag(
         self,
-        redis_server: str,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        path_to_test_specs: str,
-        merlin_server_dir: str,
+        redis_server: FixtureStr,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        path_to_test_specs: FixtureStr,
+        merlin_server_dir: FixtureStr,
         command_to_test: str,
     ):
         """
@@ -377,11 +378,11 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_queues_flag(
         self,
-        redis_server: str,
-        redis_results_backend_config: "Fixture",  # noqa: F821
-        redis_broker_config: "Fixture",  # noqa: F821
-        path_to_test_specs: str,
-        merlin_server_dir: str,
+        redis_server: FixtureStr,
+        redis_results_backend_config: FixtureModification,
+        redis_broker_config: FixtureModification,
+        path_to_test_specs: FixtureStr,
+        merlin_server_dir: FixtureStr,
         command_to_test: str,
     ):
         """
