@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `CeleryWorkersManager`: context to help with starting/stopping workers for tests
 - Ability to copy and print the `Config` object from `merlin/config/__init__.py`
 - Equality method to the `ContainerFormatConfig` and `ContainerConfig` objects from `merlin/server/server_util.py`
-- Added additional tests for the `merlin run` command
+- Added additional tests for the `merlin run` and `merlin purge` commands
+- Aliased types to represent different types of pytest fixtures
 
 ### Changed
 - Split the `start_server` and `config_server` functions of `merlin/server/server_commands.py` into multiple functions to make testing easier
