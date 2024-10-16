@@ -176,8 +176,8 @@ class StepFileExists(StudyOutputAware):
         """
         param_glob = ""
         if self.params:
-            param_glob = "*/"
-        return f"{self.dirpath_glob}/{self.step}/{param_glob}{self.filename}"
+            param_glob = "*"
+        return os.path.join(self.dirpath_glob, self.step, param_glob, self.filename)
 
     def file_exists(self):
         """Check if the file path created by glob_string exists"""
