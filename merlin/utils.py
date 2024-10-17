@@ -42,7 +42,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pkg_resources
@@ -468,7 +468,7 @@ def verify_dirpath(dirpath: str) -> str:
 
 
 @contextmanager
-def cd(path: str) -> Generator[None]:  # pylint: disable=C0103
+def cd(path: str):  # pylint: disable=C0103
     """
     Context manager for changing the current working directory.
 
