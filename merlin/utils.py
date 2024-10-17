@@ -233,7 +233,7 @@ def expandvars2(path: str) -> str:
 
     This function expands shell-style variable references (e.g., $VAR) 
     in the input path using the current environment variables. It also 
-    ensures that any escaped dollar signs (e.g., \$) are not expanded.
+    ensures that any escaped dollar signs (e.g., \\$) are not expanded.
 
     Args:
         path: The input path containing shell variable references to be expanded.
@@ -779,7 +779,7 @@ def contains_token(string: str) -> bool:
     Check if the given string contains a token of the form $(STR).
 
     This function uses a regular expression to search for tokens 
-    that match the pattern $(<word\>), where <word\> consists of 
+    that match the pattern $(<word\\>), where <word\\> consists of 
     alphanumeric characters and underscores. It returns True if 
     such a token is found; otherwise, it returns False.
 
@@ -800,7 +800,7 @@ def contains_shell_ref(string: str) -> bool:
     Check if the given string contains a shell variable reference.
 
     This function searches for shell variable references in the 
-    format of $<variable\> or ${<variable\>}, where <variable\> 
+    format of $<variable\\> or ${<variable\\>}, where <variable\\> 
     consists of alphanumeric characters and underscores. It returns 
     True if a match is found; otherwise, it returns False.
 
@@ -927,7 +927,7 @@ def find_vlaunch_var(vlaunch_var: str, step_cmd: str, accept_no_matches: bool = 
             If False, raises a ValueError. Defaults to False.
 
     Returns:
-        The variable in the format '${MERLIN_<vlaunch_var\>}' if found, otherwise None 
+        The variable in the format '${MERLIN_<vlaunch_var\\>}' if found, otherwise None 
             (if `accept_no_matches` is True) or raises a ValueError (if False).
 
     Raises:
