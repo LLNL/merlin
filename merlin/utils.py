@@ -71,12 +71,12 @@ def get_user_process_info(user: str = None, attrs: List[str] = None) -> List[Dic
     It can also return information for all users if specified.
 
     Args:
-        user: The username for which to retrieve process information.
-                If set to 'all_users', retrieves processes for all users.
-                Defaults to the current user's username if not provided.
-        attrs: A list of attributes to include in the process information. 
-                Defaults to ["pid", "name", "username", "cmdline"] if None. 
-                If "username" is not included in the list, it will be added.
+        user: The username for which to retrieve process information. If set to
+            'all_users', retrieves processes for all users. Defaults to the current
+            user's username if not provided.
+        attrs: A list of attributes to include in the process information. Defaults
+            to ["pid", "name", "username", "cmdline"] if None. If "username" is not
+            included in the list, it will be added.
 
     Returns:
         A list of dictionaries containing the specified attributes for each process 
@@ -106,13 +106,13 @@ def check_pid(pid: int, user: str = None) -> bool:
 
     Args:
         pid: The process ID to check for in the process list.
-        user: The username for which to check the process. 
-                If set to 'all_users', checks processes for all users. 
-                Defaults to the current user's username if not provided.
+        user: The username for which to check the process. If set to 'all_users',
+            checks processes for all users. Defaults to the current user's username
+            if not provided.
 
     Returns:
-        True if the specified PID is found in the process list for the 
-            given user, False otherwise.
+        True if the specified PID is found in the process list for the given user,
+            False otherwise.
     """
     user_processes = get_user_process_info(user=user)
     for process in user_processes:
@@ -131,13 +131,13 @@ def get_pid(name: str, user: str = None) -> List[int]:
 
     Args:
         name: The name of the process to search for.
-        user: The username for which to retrieve the process IDs. 
-                If set to 'all_users', retrieves processes for all users. 
-                Defaults to the current user's username if not provided.
+        user: The username for which to retrieve the process IDs. If set to
+            'all_users', retrieves processes for all users. Defaults to the
+            current user's username if not provided.
 
     Returns:
-        A list of PIDs for processes matching the specified name. 
-            Returns None if no matching processes are found.
+        A list of PIDs for processes matching the specified name. Returns None
+            if no matching processes are found.
     """
     user_processes = get_user_process_info(user=user)
     name_list = [p["pid"] for p in user_processes if name in p["name"]]
@@ -158,8 +158,8 @@ def get_procs(name: str, user: str = None) -> List[Tuple[int, str]]:
     Args:
         name: The name of the process to search for.
         user: The username for which to retrieve the process information. 
-                If set to 'all_users', retrieves processes for all users. 
-                Defaults to the current user's username if not provided.
+            If set to 'all_users', retrieves processes for all users. 
+            Defaults to the current user's username if not provided.
 
     Returns:
         A list of tuples, each containing the PID and command line of processes
@@ -180,10 +180,11 @@ def is_running_psutil(cmd: str, user: str = None) -> bool:
     process information instead of making a call to the 'ps' command.
 
     Args:
-        cmd: The command or command line snippet to search for in running processes.
-        user: The username for which to check running processes. 
-                If set to 'all_users', checks processes for all users. 
-                Defaults to the current user's username if not provided.
+        cmd: The command or command line snippet to search for in running
+            processes.
+        user: The username for which to check running processes. If set to
+            'all_users', checks processes for all users. Defaults to the
+            current user's username if not provided.
 
     Returns:
         True if at least one matching process is found; otherwise, False.
@@ -202,8 +203,8 @@ def is_running(name: str, all_users: bool = False) -> bool:
 
     Args:
         name: The name of the process to search for.
-        all_users: If True, checks for processes across all users. 
-                    Defaults to False, which checks only the current user's processes.
+        all_users: If True, checks for processes across all users. Defaults
+            to False, which checks only the current user's processes.
 
     Returns:
         True if a process with the specified name is found; otherwise, False.
@@ -256,9 +257,9 @@ def regex_list_filter(regex: str, list_to_filter: List[str], match: bool = True)
     Args:
         regex: The regular expression to use for filtering the list.
         list_to_filter: The list of strings to be filtered based on the regex.
-        match: If True, uses re.match to filter items that match 
-                the regex from the start. If False, uses re.search 
-                to filter items that contain the regex pattern. 
+        match: If True, uses re.match to filter items that match the regex from
+            the start. If False, uses re.search to filter items that contain the
+            regex pattern.
 
     Returns:
         A new list containing the filtered items that match the regex.
@@ -285,13 +286,12 @@ def apply_list_of_regex(
     a warning if a regex does not match any item in the list.
 
     Args:
-        regex_list: A list of regular expressions to apply to the list_to_filter.
+        regex_list: A list of regular expressions to apply to the `list_to_filter`.
         list_to_filter: The list of strings that the regex patterns will be applied to.
         result_list: The list where results of the regex filters will be appended.
-        match: If True, uses re.match for applying the regex. 
-                If False, uses re.search.
+        match: If True, uses re.match for applying the regex. If False, uses re.search.
         display_warning: If True, displays a warning message when no matches are
-                            found for a regex. 
+            found for a regex. 
 
     Side Effect:
         This function modifies the `result_list` in place.
@@ -579,8 +579,7 @@ def nested_dict_to_namespaces(dic: Dict) -> SimpleNamespace:
         dic: The nested dictionary to be converted.
 
     Returns:
-        A SimpleNamespace object representing the nested structure 
-            of the input dictionary.
+        A SimpleNamespace object representing the nested structure of the input dictionary.
 
     Raises:
         TypeError: If the input is not a dictionary.
@@ -643,8 +642,8 @@ def get_flux_version(flux_path: str, no_errors: bool = False) -> str:
 
     Args:
         flux_path: The full path to the Flux binary.
-        no_errors: A flag to suppress error messages and 
-            exceptions. If set to True, errors will be logged but not raised. 
+        no_errors: A flag to suppress error messages and exceptions. If set to
+            True, errors will be logged but not raised. 
 
     Returns:
         The version of Flux as a string.
@@ -1063,11 +1062,10 @@ def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") 
 
     Args:
         timestring: A string representing time in the format
-                    '[days]:[hours]:[minutes]:seconds' (where days, hours,
-                    and minutes are optional), or an integer representing
-                    time in seconds.
+            '[days]:[hours]:[minutes]:seconds' (where days, hours, and
+            minutes are optional), or an integer representing time in seconds.
         format_method: The method to use for formatting. Must be either
-                        'HMS' or 'FSD'.
+            'HMS' or 'FSD'.
 
     Returns:
         A string representation of the converted timestring formatted 
@@ -1090,18 +1088,19 @@ def pretty_format_hms(timestring: str) -> str:
 
     Args:
         timestring: A timestring formatted as 'DD:HH:MM:SS'. Each component
-                    represents days, hours, minutes, and seconds, respectively.
-                    Only the last four components are relevant and may include
-                    leading zeros.
+            represents days, hours, minutes, and seconds, respectively.
+            Only the last four components are relevant and may include
+            leading zeros.
 
     Returns:
         A formatted timestring with non-zero components labeled appropriately.
 
     Raises:
         ValueError: If the input timestring contains more than four components 
-                    or is not in the expected format.
+            or is not in the expected format.
 
     Examples:
+        ```
         >>> pretty_format_hms("00:00:34:00")
         '34m'
         >>> pretty_format_hms("01:00:00:25")
@@ -1110,6 +1109,7 @@ def pretty_format_hms(timestring: str) -> str:
         '19h:44m:28s'
         >>> pretty_format_hms("00:00:00:00")
         '00s'
+        ```
     """
     # Create labels and split the timestring
     labels = ["d", "h", "m", "s"]

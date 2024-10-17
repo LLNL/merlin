@@ -69,12 +69,17 @@ DEFAULT_LOG_LEVEL = "INFO"
 
 
 class HelpParser(ArgumentParser):
-    """This class overrides the error message of the argument parser to
-    print the help message when an error happens."""
+    """
+    This class overrides the error message of the argument parser to
+    print the help message when an error happens.
+
+    Methods:
+        error: Override the error message of the `ArgumentParser` class.
+    """
 
     def error(self, message: str):
         """
-        Override the error message of the ArgumentParser class.
+        Override the error message of the `ArgumentParser` class.
 
         Args:
             message: The error message to log.
@@ -143,11 +148,13 @@ def parse_override_vars(
 
 def get_merlin_spec_with_override(args: Namespace) -> Tuple[MerlinSpec, str]:
     """
-    Shared command to retrieve a `MerlinSpec` object and an expanded filepath.
+    Shared command to retrieve a [`MerlinSpec`][spec.specification.MerlinSpec] object
+    and an expanded filepath.
 
     This function processes parsed command-line interface (CLI) arguments to validate 
     and expand the specified filepath and any associated variables. It then constructs 
-    and returns a `MerlinSpec` object based on the provided specification. 
+    and returns a [`MerlinSpec`][spec.specification.MerlinSpec] object based on the
+    provided specification.
 
     Args:
         args: Parsed CLI arguments containing:\n
@@ -155,8 +162,9 @@ def get_merlin_spec_with_override(args: Namespace) -> Tuple[MerlinSpec, str]:
             - `variables`: optional variable overrides to customize the spec.
 
     Returns:
-        spec: An instance of the `MerlinSpec` class with the 
-              expanded configuration based on the provided filepath and variables.
+        spec (spec.specification.MerlinSpec): An instance of the
+            [`MerlinSpec`][spec.specification.MerlinSpec] class with the expanded
+            configuration based on the provided filepath and variables.
         filepath: The expanded filepath derived from the specification.
     """
     filepath = verify_filepath(args.specification)
@@ -301,22 +309,23 @@ def query_status(args: Namespace):
     CLI command for querying the status of studies.
 
     This function processes the given command-line arguments to determine the 
-    status of a study. It constructs either a `Status` object or a `DetailedStatus` 
-    object based on the specified command and the arguments provided. The function 
-    handles validations for the task server input and the output format specified 
-    for status dumping.
+    status of a study. It constructs either a [`Status`][study.status.Status] object
+    or a [`DetailedStatus`][study.status.DetailedStatus] object based on the specified
+    command and the arguments provided. The function handles validations for the task
+    server input and the output format specified for status dumping.
 
     Object mapping:
-        - `merlin status` -> `Status` object
-        - `merlin detailed-status` -> `DetailedStatus` object
+        - `merlin status` -> [`Status`][study.status.Status] object
+        - `merlin detailed-status` -> [`DetailedStatus`][study.status.DetailedStatus]
+        object
 
     Args:
         args: Parsed CLI arguments containing user inputs for the status query.
 
     Raises:
         ValueError: 
-            If the task server specified is not supported (only "celery" is valid).
-            If the --dump filename provided does not end with ".csv" or ".json".
+            - If the task server specified is not supported (only "celery" is valid).
+            - If the --dump filename provided does not end with ".csv" or ".json".
     """
     print(banner_small)
 
@@ -374,10 +383,10 @@ def query_queues(args: Namespace):
 
     Raises:
         ValueError: 
-            If a specification is not provided when steps are specified and the 
+            - If a specification is not provided when steps are specified and the 
             steps do not include "all".
-            If variables are included without a corresponding specification.
-            If the specified dump filename does not end with '.json' or '.csv'.
+            - If variables are included without a corresponding specification.
+            - If the specified dump filename does not end with '.json' or '.csv'.
     """
     print(banner_small)
 
@@ -491,7 +500,7 @@ def print_info(args: Namespace):
     display.print_info(args)
 
 
-def config_merlin(args: Namespace) -> None:
+def config_merlin(args: Namespace):
     """
     CLI command to set up the default Merlin configuration.
 
@@ -970,8 +979,8 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
     specification.
 
     Args:
-        subparsers: An instance of ArgumentParser for adding command-line subcommands related 
-            to worker management.
+        subparsers: An instance of ArgumentParser for adding command-line subcommands
+            related to worker management.
     """
     # merlin run-workers
     run_workers: ArgumentParser = subparsers.add_parser(

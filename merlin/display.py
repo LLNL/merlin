@@ -86,6 +86,9 @@ class ConnProcess(Process):
         _pconn: The parent connection for inter-process communication.
         _cconn: The child connection for inter-process communication.
         exception: Stores the exception raised during the process run.
+
+    Methods:
+        run: Executes the process's main logic.
     """
 
     def __init__(self, *args, **kwargs):
@@ -322,10 +325,11 @@ def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = 
     unless the prompts are disabled through the no-prompts flag.
 
     Args:
-        status_obj: An instance of DetailedStatus containing information
-                    about the current state of tasks.
-        test_mode: If True, runs the function in testing mode, suppressing output
-                    and reducing the task limit for prompts. Defaults to False.
+        status_obj (study.status.DetailedStatus): An instance of
+            [`DetailedStatus`][study.status.DetailedStatus] containing information about
+            the current state of tasks.
+        test_mode: If True, runs the function in testing mode, suppressing output and
+            reducing the task limit for prompts. Defaults to False.
     """
     args = status_obj.args
     try:
@@ -387,12 +391,11 @@ def _display_summary(state_info: Dict[str, str], cb_help: bool):
     symbols if specified.
 
     Args:
-        state_info: A dictionary containing information related 
-                    to task states for a step. Each entry should 
-                    correspond to a specific task state with its 
-                    associated properties (e.g., count, total, name).
-        cb_help: If True, provides colorblind assistance by using symbols 
-                in the display. Defaults to False for standard output.
+        state_info: A dictionary containing information related to task states
+            for a step. Each entry should correspond to a specific task state
+            with its associated properties (e.g., count, total, name).
+        cb_help: If True, provides colorblind assistance by using symbols in the
+            display. Defaults to False for standard output.
     """
     # Build a summary list of task info
     print("\nSUMMARY:")
@@ -439,12 +442,12 @@ def display_status_summary(  # pylint: disable=R0912
     it suppresses output and returns a dictionary of state information instead.
 
     Args:
-        status_obj: An instance of Status containing information about task states
-                    and associated data for the study.
+        status_obj (study.status.Status): An instance of [`Status`][study.status.Status] containing
+            information about task states and associated data for the study.
         non_workspace_keys: A set of keys in requested_statuses that are not workspace keys. 
-                            Typically includes keys like "parameters", "task_queue", and "workers".
+            Typically includes keys like "parameters", "task_queue", and "workers".
         test_mode: If True, runs in test mode; suppresses printing and returns a dictionary 
-                    of state information for each step. Defaults to False.
+            of state information for each step. Defaults to False.
 
     Returns:
         An empty dictionary in regular mode. In test mode, returns a dictionary containing 
@@ -552,9 +555,8 @@ def display_progress_bar(  # pylint: disable=R0913,R0914
     Args:
         current: Current progress value.
         total: Total value representing 100% completion.
-        state_info: Dictionary containing state information about tasks.
-                    This can override color settings and modifies 
-                    how the progress bar is displayed.
+        state_info: Dictionary containing state information about tasks. This can override
+            color settings and modifies how the progress bar is displayed.
         prefix: Optional prefix string to display before the progress bar.
         suffix: Optional suffix string to display after the progress bar.
         decimals: Number of decimal places to display in the percentage (default is 1).
