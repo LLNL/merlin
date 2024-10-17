@@ -32,6 +32,7 @@
 SampleIndex factory methods
 """
 from parse import parse
+from typing import List
 
 from merlin.common.sample_index import MAX_SAMPLE, SampleIndex
 from merlin.utils import cd
@@ -43,27 +44,38 @@ from merlin.utils import cd
 
 
 def create_hierarchy(
-    num_samples,
-    bundle_size,
-    directory_sizes=None,
-    root=".",
-    start_sample_id=0,
-    start_bundle_id=0,
-    address="",
-    n_digits=1,
-):
+    num_samples: int,
+    bundle_size: int,
+    directory_sizes: List[int] = None,
+    root: str = ".",
+    start_sample_id: int = 0,
+    start_bundle_id: int = 0,
+    address: str = "",
+    n_digits: int = 1,
+) -> SampleIndex:
     """
-    SampleIndex Hierarchy Factory method. Wraps
-    create_hierarchy_from_max_sample, which is a max_sample-based API, not a
-    numSample-based API like this method.
+    Factory method to create a [`SampleIndex`][common.sample_index.SampleIndex]
+    hierarchy based on the number of samples.
 
-    :param num_samples: The total number of samples.
-    :bundle_size: The max number of samples a bundle file is responsible for.
-    :directory_sizes: The number of samples each directory is responsible
-        for - a list, one value for each level in the directory hierarchy.
-    :root: The root path of this index. Defaults to ".".
-    :start_sample_id: The start of the sample count. Defaults to 0.
-    :n_digits: The number of digits to pad the directories with
+    This method wraps the
+    [`create_hierarchy_from_max_sample`][common.sample_index_factory.create_hierarchy_from_max_sample]
+    function, which operates on a maximum sample basis rather than a total
+    sample count.
+
+    Args:
+        num_samples: The total number of samples.
+        bundle_size: The maximum number of samples a bundle file can handle.
+        directory_sizes: A list specifying the number of samples each directory
+            is responsible for.
+        root: The root path of the index.
+        start_sample_id: The starting sample ID.
+        start_bundle_id: The starting bundle ID.
+        address: An optional address prefix for the hierarchy.
+        n_digits: The number of digits to pad the directory names.
+
+    Returns:
+        (common.sample_index.SampleIndex): The root [`SampleIndex`][common.sample_index.SampleIndex]
+            object representing the hierarchy.
     """
     if directory_sizes is None:
         directory_sizes = []
@@ -80,29 +92,37 @@ def create_hierarchy(
 
 
 def create_hierarchy_from_max_sample(
-    max_sample,
-    bundle_size,
-    directory_sizes=None,
-    root=".",
-    start_bundle_id=0,
-    min_sample=0,
-    address="",
-    n_digits=1,
-):
-    """ "
-    Construct the SampleIndex based off the total number of samples and the
-    chunking size at each depth in the hierarchy.
+    max_sample: int,
+    bundle_size: int,
+    directory_sizes: List[int] = None,
+    root: str = ".",
+    start_bundle_id: int = 0,
+    min_sample: int = 0,
+    address: str = "",
+    n_digits: int = 1,
+) -> SampleIndex:
+    """
+    Constructs a [`SampleIndex`][common.sample_index.SampleIndex] hierarchy based on
+    the maximum sample ID and chunking size at each depth.
 
-    This method will add new SampleIndex objects as this SampleIndex's
-    children if directory_sizes is not the empty set.
+    This method adds new [`SampleIndex`][common.sample_index.SampleIndex] objects as
+    children if `directory_sizes` is provided.
 
-    :param max_sample: The max Sample ID this hierarchy is responsible for.
-    :bundle_size: The max number of samples a bundle file is responsible for.
-    :directory_sizes: The number of samples each directory is responsible
-        for - a list, one value for each level in the directory hierarchy.
-    :bundle_id: The current bundle_id count.
-    :min_sample: The start of the sample count.
-    :n_digits: The number of digits to pad the directories with
+    Args:
+        max_sample: The maximum Sample ID this hierarchy is responsible for.
+        bundle_size: The maximum number of samples a bundle file can handle.
+        directory_sizes: A list specifying the number of samples each directory
+            is responsible for.
+        root: The root path of this index.
+        start_bundle_id: The starting bundle ID.
+        min_sample: The starting sample ID.
+        address: An optional address prefix for the hierarchy.
+        n_digits: The number of digits to pad the directory names.
+
+    Returns:
+        (common.sample_index.SampleIndex): The root
+            [`SampleIndex`][common.sample_index.SampleIndex] object representing
+            the constructed hierarchy.
     """
     if directory_sizes is None:
         directory_sizes = []
@@ -158,9 +178,23 @@ def create_hierarchy_from_max_sample(
     return SampleIndex(min_sample, max_sample, children, root, num_bundles=num_bundles, address=address)
 
 
-def read_hierarchy(path):
+def read_hierarchy(path: str) -> SampleIndex:
     """
-    TODO
+    Reads a hierarchy from a specified path and constructs a
+    [`SampleIndex`][common.sample_index.SampleIndex].
+
+    This function reads a file named "sample_index.txt" in the given path, 
+    parsing its contents to create a hierarchical structure of
+    [`SampleIndex`][common.sample_index.SampleIndex] objects based on the
+    information found in the file.
+
+    Args:
+        path: The directory path where the sample index file is located.
+
+    Returns:
+        (common.sample_index.SampleIndex): The root
+            [`SampleIndex`][common.sample_index.SampleIndex] object representing
+            the hierarchy read from the file.
     """
     children = {}
     min_sample = MAX_SAMPLE
