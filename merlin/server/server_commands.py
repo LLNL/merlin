@@ -203,12 +203,12 @@ def check_for_not_running_server() -> bool:
     return True
 
 
-def start_redis_container(server_config: ServerConfig) -> subprocess.Popen:
+def start_container(server_config: ServerConfig) -> subprocess.Popen:
     """
-    Given a server configuration, use it to start up a container that hosts redis.
+    Given a server configuration, use it to start up a container.
 
-    :param server_config: The ServerConfig instance that holds information about the redis server to start
-    :returns: A subprocess started with subprocess.Popen that's executing the command to start the container
+    :param server_config: The ServerConfig instance that holds information about the server to start.
+    :returns: A subprocess started with subprocess.Popen that's executing the command to start the container.
     """
     image_path = server_config.container.get_image_path()
     config_path = server_config.container.get_config_path()
