@@ -17,6 +17,7 @@ from merlin.server.server_config import (
     ServerStatus,
     check_process_file_format,
     config_merlin_server,
+    copy_container_command_files,
     create_server_config,
     dump_process_file,
     generate_password,
@@ -25,7 +26,6 @@ from merlin.server.server_config import (
     pull_process_file,
     pull_server_config,
     pull_server_image,
-    write_container_command_files,
 )
 from merlin.server.server_util import CONTAINER_TYPES, MERLIN_SERVER_SUBDIR, ServerConfig
 
@@ -121,13 +121,13 @@ def test_parse_redis_output_with_vars(lines: bytes, expected_config: Tuple[bool,
     assert expected_config == actual_vars
 
 
-def test_write_container_command_files_with_existing_files(
+def test_copy_container_command_files_with_existing_files(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
     server_testing_dir: str,
 ):
     """
-    Test the `write_container_command_files` function with files that already exist.
+    Test the `copy_container_command_files` function with files that already exist.
     This should skip trying to create the files, log 3 "file already exists" messages,
     and return True.
 
@@ -137,19 +137,19 @@ def test_write_container_command_files_with_existing_files(
     """
     caplog.set_level(logging.INFO)
     mocker.patch("os.path.exists", return_value=True)
-    assert write_container_command_files(server_testing_dir)
+    assert copy_container_command_files(server_testing_dir)
     file_names = [f"{container}.yaml" for container in CONTAINER_TYPES]
     for file in file_names:
         assert f"{file} already exists." in caplog.text
 
 
-def test_write_container_command_files_with_nonexisting_files(
+def test_copy_container_command_files_with_nonexisting_files(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
     server_testing_dir: str,
 ):
     """
-    Test the `write_container_command_files` function with files that don't already exist.
+    Test the `copy_container_command_files` function with files that don't already exist.
     This should create the files, log messages for each file, and return True
 
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
@@ -169,19 +169,19 @@ def test_write_container_command_files_with_nonexisting_files(
     mock_data = mocker.mock_open(read_data="mocked data")
     mocker.patch("builtins.open", mock_data)
 
-    assert write_container_command_files(server_testing_dir)
+    assert copy_container_command_files(server_testing_dir)
     file_names = [f"{container}.yaml" for container in CONTAINER_TYPES]
     for file in file_names:
         assert f"Copying file {file} to configuration directory." in caplog.text
 
 
-def test_write_container_command_files_with_oserror(
+def test_copy_container_command_files_with_oserror(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
     server_testing_dir: str,
 ):
     """
-    Test the `write_container_command_files` function with an OSError being raised.
+    Test the `copy_container_command_files` function with an OSError being raised.
     This should log an error message and return False.
 
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
@@ -191,7 +191,7 @@ def test_write_container_command_files_with_oserror(
     # Mock the open function to raise an OSError
     mocker.patch("builtins.open", side_effect=OSError("File not writeable"))
 
-    assert not write_container_command_files(server_testing_dir)
+    assert not copy_container_command_files(server_testing_dir)
     assert f"Destination location {server_testing_dir} is not writable." in caplog.text
 
 
@@ -256,7 +256,7 @@ def test_create_server_config_no_server_config(
 
     # Mock the necessary variables/functions to get us to the pull_server_config call
     mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
-    mocker.patch("merlin.server.server_config.write_container_command_files", return_value=True)
+    mocker.patch("merlin.server.server_config.copy_container_command_files", return_value=True)
     mock_open_func = mocker.mock_open(read_data="key: value")
     mocker.patch("builtins.open", mock_open_func)
 
@@ -286,7 +286,7 @@ def test_create_server_config_no_server_dir(
 
     # Mock the necessary variables/functions to get us to the get_config_dir call
     mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
-    mocker.patch("merlin.server.server_config.write_container_command_files", return_value=True)
+    mocker.patch("merlin.server.server_config.copy_container_command_files", return_value=True)
     mock_open_func = mocker.mock_open(read_data="key: value")
     mocker.patch("builtins.open", mock_open_func)
     mocker.patch("merlin.server.server_config.pull_server_config", return_value=ServerConfig(server_server_config))

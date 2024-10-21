@@ -245,9 +245,9 @@ def start_container(server_config: ServerConfig) -> subprocess.Popen:
 
 def server_started(process: subprocess.Popen, server_config: ServerConfig) -> bool:
     """
-    Check that the server spun up by `start_redis_container` was started properly.
+    Check that the server spun up by `start_container` was started properly.
 
-    :param process: The subprocess that was started by `start_redis_container`
+    :param process: The subprocess that was started by `start_container`
     :param server_config: The ServerConfig instance that holds information about the redis server to start
     :returns: True if the server started properly. False otherwise.
     """
@@ -288,7 +288,7 @@ def start_server() -> bool:  # pylint: disable=R0911
         LOG.error('Try to run "merlin server init" again to reinitialize values.')
         return False
 
-    process = start_redis_container(server_config)
+    process = start_container(server_config)
     if process is None:
         return False
 
