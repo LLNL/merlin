@@ -430,7 +430,7 @@ def process_server(args: Namespace):
         if lc_all_val != "C":
             raise ValueError(f"The 'LC_ALL' environment variable is currently set to {lc_all_val} but it must be set to 'C'.")
     except KeyError:
-        LOG.debug(f"The 'LC_ALL' environment variable was not set. Setting this to 'C'.")
+        LOG.debug("The 'LC_ALL' environment variable was not set. Setting this to 'C'.")
         os.environ["LC_ALL"] = "C"  # Necessary for Redis to configure LOCALE
 
     if args.commands == "init":
