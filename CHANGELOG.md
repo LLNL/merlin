@@ -4,6 +4,24 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Several new unit tests for the following subdirectories:
+  - `merlin/common/`
+  - `merlin/config/`
+  - `merlin/examples/`
+  - `merlin/server/`
+- Context managers for the `conftest.py` file to ensure safe spin up and shutdown of fixtures
+  - `RedisServerManager`: context to help with starting/stopping a redis server for tests
+  - `CeleryWorkersManager`: context to help with starting/stopping workers for tests
+- Ability to copy and print the `Config` object from `merlin/config/__init__.py`
+- Equality method to the `ContainerFormatConfig` and `ContainerConfig` objects from `merlin/server/server_util.py`
+
+### Changed
+- Split the `start_server` and `config_server` functions of `merlin/server/server_commands.py` into multiple functions to make testing easier
+- Split the `create_server_config` function of `merlin/server/server_config.py` into two functions to make testing easier
+- Combined `set_snapshot_seconds` and `set_snapshot_changes` methods of `RedisConfig` into one method `set_snapshot`
+
 ## [1.12.2b1]
 ### Added
 - Conflict handler option to the `dict_deep_merge` function in `utils.py`
@@ -95,8 +113,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - this required adding a decent amount of test files to help with the tests; these can be found under the tests/unit/study/status_test_files directory
 - Pytest fixtures in the `conftest.py` file of the integration test suite
   - NOTE: an export command `export LC_ALL='C'` had to be added to fix a bug in the WEAVE CI. This can be removed when we resolve this issue for the `merlin server` command
-- Tests for the `celeryadapter.py` module
-- New CeleryTestWorkersManager context to help with starting/stopping workers for tests
+- Coverage to the test suite. This includes adding tests for:
+  - `merlin/common/`
+  - `merlin/config/`
+  - `merlin/examples/`
+  - `celeryadapter.py`
+- Context managers for the `conftest.py` file to ensure safe spin up and shutdown of fixtures
+  - `RedisServerManager`: context to help with starting/stopping a redis server for tests
+  - `CeleryWorkersManager`: context to help with starting/stopping workers for tests
+- Ability to copy and print the `Config` object from `merlin/config/__init__.py`
 
 ### Changed
 - Reformatted the entire `merlin status` command
@@ -132,7 +157,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `merlin monitor` command will now keep an allocation up if the queues are empty and workers are still processing tasks
 - Add the restart keyword to the specification docs
 - Cyclical imports and config imports that could easily cause ci issues
-
 ## [1.11.1]
 ### Fixed
 - Typo in `batch.py` that caused lsf launches to fail (`ALL_SGPUS` changed to `ALL_GPUS`)

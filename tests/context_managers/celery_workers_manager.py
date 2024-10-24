@@ -42,7 +42,7 @@ from typing import Dict, List, Type
 from celery import Celery
 
 
-class CeleryTestWorkersManager:
+class CeleryWorkersManager:
     """
     A class to handle the setup and teardown of celery workers.
     This should be treated as a context and used with python's
@@ -135,7 +135,7 @@ class CeleryTestWorkersManager:
         app.worker_main instead of the normal "celery -A <app name> worker" command to launch the workers
         since our celery app is created in a pytest fixture and is unrecognizable by the celery command.
         For each worker, the output of it's logs are sent to
-        /tmp/`whoami`/pytest-of-`whoami`/pytest-current/integration_outfiles_current/ under a file with a name
+        /tmp/`whoami`/pytest-of-`whoami`/pytest-current/python_{major}.{minor}.{micro}_current/ under a file with a name
         similar to: test_worker_*.log.
         NOTE: pytest-current/ will have the results of the most recent test run. If you want to see a previous run
         check under pytest-<integer value>/. HOWEVER, only the 3 most recent test runs will be saved.

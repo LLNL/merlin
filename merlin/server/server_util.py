@@ -60,7 +60,7 @@ def valid_ipv4(ip: str) -> bool:  # pylint: disable=C0103
         return False
 
     for i in arr:
-        if int(i) < 0 and int(i) > 255:
+        if int(i) < 0 or int(i) > 255:
             return False
 
     return True
@@ -120,6 +120,15 @@ class ContainerConfig:  # pylint: disable=R0902
         self.pfile = data["pfile"] if "pfile" in data else self.PROCESS_FILE
         self.pass_file = data["pass_file"] if "pass_file" in data else self.PASSWORD_FILE
         self.user_file = data["user_file"] if "user_file" in data else self.USERS_FILE
+
+    def __eq__(self, other: "ContainerFormatConfig"):
+        """
+        Equality magic method used for testing this class
+
+        :param other: Another ContainerFormatConfig object to check if they're the same
+        """
+        variables = ("format", "image_type", "image", "url", "config", "config_dir", "pfile", "pass_file", "user_file")
+        return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
 
     def get_format(self) -> str:
         """Getter method to get the container format"""
@@ -208,6 +217,15 @@ class ContainerFormatConfig:
         self.stop_command = data["stop_command"] if "stop_command" in data else self.STOP_COMMAND
         self.pull_command = data["pull_command"] if "pull_command" in data else self.PULL_COMMAND
 
+    def __eq__(self, other: "ContainerFormatConfig"):
+        """
+        Equality magic method used for testing this class
+
+        :param other: Another ContainerFormatConfig object to check if they're the same
+        """
+        variables = ("command", "run_command", "stop_command", "pull_command")
+        return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
+
     def get_command(self) -> str:
         """Getter method to get the container command"""
         return self.command
@@ -242,6 +260,15 @@ class ProcessConfig:
         self.status = data["status"] if "status" in data else self.STATUS_COMMAND
         self.kill = data["kill"] if "kill" in data else self.KILL_COMMAND
 
+    def __eq__(self, other: "ProcessConfig"):
+        """
+        Equality magic method used for testing this class
+
+        :param other: Another ProcessConfig object to check if they're the same
+        """
+        variables = ("status", "kill")
+        return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
+
     def get_status_command(self) -> str:
         """Getter method to get the status command"""
         return self.status
@@ -264,12 +291,10 @@ class ServerConfig:  # pylint: disable=R0903
     container_format: ContainerFormatConfig = None
 
     def __init__(self, data: dict) -> None:
-        if "container" in data:
-            self.container = ContainerConfig(data["container"])
-        if "process" in data:
-            self.process = ProcessConfig(data["process"])
-        if self.container.get_format() in data:
-            self.container_format = ContainerFormatConfig(data[self.container.get_format()])
+        self.container = ContainerConfig(data["container"]) if "container" in data else None
+        self.process = ProcessConfig(data["process"]) if "process" in data else None
+        container_format_data = data.get(self.container.get_format() if self.container else None)
+        self.container_format = ContainerFormatConfig(container_format_data) if container_format_data else None
 
 
 class RedisConfig:
@@ -279,15 +304,13 @@ class RedisConfig:
     to write those changes into a redis readable config file.
     """
 
-    filename = ""
-    entry_order = []
-    entries = {}
-    comments = {}
-    trailing_comments = ""
-    changed = False
-
     def __init__(self, filename) -> None:
         self.filename = filename
+        self.changed = False
+        self.entry_order = []
+        self.entries = {}
+        self.comments = {}
+        self.trailing_comments = ""
         self.changed = False
         self.parse()
 
@@ -368,7 +391,7 @@ class RedisConfig:
         """Getter method to get the port from the redis config"""
         return self.get_config_value("port")
 
-    def set_port(self, port: str) -> bool:
+    def set_port(self, port: int) -> bool:
         """Validates and sets a given port"""
         if port is None:
             return False
@@ -403,59 +426,56 @@ class RedisConfig:
         """
         if directory is None:
             return False
+        # Create the directory if it doesn't exist
         if not os.path.exists(directory):
             os.mkdir(directory)
             LOG.info(f"Created directory {directory}")
-        # Validate the directory input
-        if os.path.exists(directory):
-            # Set the save directory to the redis config
-            if not self.set_config_value("dir", directory):
-                LOG.error("Unable to set directory for redis config")
-                return False
-        else:
-            LOG.error(f"Directory {directory} given does not exist and could not be created.")
+        # Set the save directory to the redis config
+        if not self.set_config_value("dir", directory):
+            LOG.error("Unable to set directory for redis config")
             return False
         LOG.info(f"Directory is set to {directory}")
         return True
 
-    def set_snapshot_seconds(self, seconds: int) -> bool:
-        """Sets the snapshot wait time"""
-        if seconds is None:
+    def set_snapshot(self, seconds: int = None, changes: int = None) -> bool:
+        """
+        Sets the 'seconds' and/or 'changes' values of the snapshot setting,
+        depending on what the user requests.
+
+        :param seconds: The first value of snapshot to change. If we're leaving it the
+                        same this will be None.
+        :param changes: The second value of snapshot to change. If we're leaving it the
+                        same this will be None.
+        :returns: True if successful, False otherwise.
+        """
+
+        # If both values are None, this method is doing nothing
+        if seconds is None and changes is None:
             return False
-        # Set the snapshot second in the redis config
+
+        # Grab the snapshot value from the redis config
         value = self.get_config_value("save")
         if value is None:
             LOG.error("Unable to get exisiting parameter values for snapshot")
             return False
 
+        # Update the snapshot value
         value = value.split()
-        value[0] = str(seconds)
+        log_msg = ""
+        if seconds is not None:
+            value[0] = str(seconds)
+            log_msg += f"Snapshot wait time is set to {seconds} seconds. "
+        if changes is not None:
+            value[1] = str(changes)
+            log_msg += f"Snapshot threshold is set to {changes} changes."
         value = " ".join(value)
+
+        # Set the new snapshot value
         if not self.set_config_value("save", value):
-            LOG.error("Unable to set snapshot value seconds")
+            LOG.error("Unable to set snapshot value")
             return False
 
-        LOG.info(f"Snapshot wait time is set to {seconds} seconds")
-        return True
-
-    def set_snapshot_changes(self, changes: int) -> bool:
-        """Sets the snapshot threshold"""
-        if changes is None:
-            return False
-        # Set the snapshot changes into the redis config
-        value = self.get_config_value("save")
-        if value is None:
-            LOG.error("Unable to get exisiting parameter values for snapshot")
-            return False
-
-        value = value.split()
-        value[1] = str(changes)
-        value = " ".join(value)
-        if not self.set_config_value("save", value):
-            LOG.error("Unable to set snapshot value seconds")
-            return False
-
-        LOG.info(f"Snapshot threshold is set to {changes} changes")
+        LOG.info(log_msg)
         return True
 
     def set_snapshot_file(self, file: str) -> bool:
@@ -483,7 +503,7 @@ class RedisConfig:
                 LOG.error("Unable to set append_mode in redis config")
                 return False
         else:
-            LOG.error("Not a valid append_mode(Only valid modes are always, everysec, no)")
+            LOG.error("Not a valid append_mode (Only valid modes are always, everysec, no)")
             return False
 
         LOG.info(f"Append mode is set to {mode}")
@@ -603,7 +623,7 @@ class RedisUsers:
         self.users[user].set_password(password)
         return True
 
-    def remove_user(self, user) -> bool:
+    def remove_user(self, user: str) -> bool:
         """Remove a user from the dict of users"""
         if user in self.users:
             del self.users[user]
