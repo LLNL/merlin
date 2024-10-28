@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0
+# This file is part of Merlin, Version: 1.12.2b1
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -38,7 +38,9 @@ VALID_RETURN_CODES = ("SUCCESS", "SOFT_FAIL", "HARD_FAIL", "STOP_WORKERS", "REST
 VALID_EXIT_FILTERS = ("E", "EXIT")
 ALL_VALID_FILTERS = VALID_STATUS_FILTERS + VALID_RETURN_CODES + VALID_EXIT_FILTERS + ("MAX_TASKS",)
 
-CELERY_KEYS = set(["task_queue", "worker_name"])
+# Listing worker_name below since it was used in v1.12.0 so if you try to run "merlin status" on a study
+# ran with 1.12.0, then you'll need this key here for everything to function
+CELERY_KEYS = set(["task_queue", "workers", "worker_name"])
 RUN_TIME_STAT_KEYS = set(["avg_run_time", "run_time_std_dev"])
 NON_WORKSPACE_KEYS = CELERY_KEYS.union(RUN_TIME_STAT_KEYS)
 NON_WORKSPACE_KEYS.add("parameters")

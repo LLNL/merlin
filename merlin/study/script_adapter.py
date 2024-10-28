@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -470,6 +470,8 @@ class MerlinScriptAdapter(LocalScriptAdapter):
             step.restart = False
         elif retcode == ReturnCode.STOP_WORKERS:
             LOG.debug("Execution returned status STOP_WORKERS")
+        elif retcode == ReturnCode.RAISE_ERROR:
+            LOG.debug("Execution returned status RAISE_ERROR")
         else:
             LOG.warning(f"Unrecognized Merlin Return code: {retcode}, returning SOFT_FAIL")
             submission_record.add_info("retcode", retcode)

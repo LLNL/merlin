@@ -9,12 +9,29 @@ jobs:
     if: github.event_name == 'pull_request'
 
     steps:
-    - uses: actions/checkout@v1
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # Checkout the whole history, in case the target is way far behind
+
+    - name: Check if target branch has been merged
+      run: |
+        if git merge-base --is-ancestor ${{ github.event.pull_request.base.sha }} ${{ github.sha }}; then
+          echo "Target branch has been merged into the source branch."
+        else
+          echo "Target branch has not been merged into the source branch. Please merge in target first."
+          exit 1
+        fi
 
     - name: Check that CHANGELOG has been updated
       run: |
         # If this step fails, this means you haven't updated the CHANGELOG.md file with notes on your contribution.
-        git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep '^CHANGELOG.md$' && echo "Thanks for helping keep our CHANGELOG up-to-date!"
+        if git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -q '^CHANGELOG.md$'; then
+          echo "Thanks for helping keep our CHANGELOG up-to-date!"
+        else
+          echo "Please update the CHANGELOG.md file with notes on your contribution."
+          exit 1
+        fi
 
   Lint:
     runs-on: ubuntu-latest
@@ -95,6 +112,7 @@ jobs:
         python3 -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
+        pip freeze
     
     - name: Install singularity
       run: |

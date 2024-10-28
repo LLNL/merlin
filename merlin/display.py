@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -32,9 +32,9 @@
 Manages formatting for displaying information to the console.
 """
 import logging
+import os
 import pprint
 import shutil
-import subprocess
 import time
 import traceback
 from datetime import datetime
@@ -46,6 +46,7 @@ from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
 from merlin.study.status_renderers import status_renderer_factory
+from merlin.utils import get_package_versions
 
 
 LOG = logging.getLogger("merlin")
@@ -212,9 +213,9 @@ def display_multiple_configs(files, configs):
 # Might use args here in the future so we'll disable the pylint warning for now
 def print_info(args):  # pylint: disable=W0613
     """
-    Provide version and location information about python and pip to
-    facilitate user troubleshooting. 'merlin info' is a CLI tool only for
-    developer versions of Merlin.
+    Provide version and location information about python and packages to
+    facilitate user troubleshooting. Also provides info about server connections
+    and configurations.
 
     :param `args`: parsed CLI arguments
     """
@@ -225,14 +226,11 @@ def print_info(args):  # pylint: disable=W0613
     print("Python Configuration")
     print("-" * 25)
     print("")
-    info_calls = ["which python3", "python3 --version", "which pip3", "pip3 --version"]
-    info_str = ""
-    for cmd in info_calls:
-        info_str += 'echo " $ ' + cmd + '" && ' + cmd + "\n"
-        info_str += "echo \n"
-    info_str += r"echo \"echo \$PYTHONPATH\" && echo $PYTHONPATH"
-    _ = subprocess.run(info_str, shell=True)
-    print("")
+    package_list = ["pip", "merlin", "maestrowf", "celery", "kombu", "amqp", "redis"]
+    package_versions = get_package_versions(package_list)
+    print(package_versions)
+    pythonpath = os.environ.get("PYTHONPATH")
+    print(f"$PYTHONPATH: {pythonpath}")
 
 
 def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = False):  # noqa: F821
@@ -349,7 +347,7 @@ def display_status_summary(  # pylint: disable=R0912
 
     :param `status_obj`: A Status object
     :param `non_workspace_keys`: A set of keys in requested_statuses that are not workspace keys.
-                                 This will be set("parameters", "task_queue", "worker_name)
+                                 This will be set("parameters", "task_queue", "workers")
     :param `test_mode`: If True, don't print anything and just return a dict of all the state info for each step
     :returns: A dict that's empty usually. If ran in test_mode it will be a dict of state_info for every step.
     """
@@ -369,7 +367,7 @@ def display_status_summary(  # pylint: disable=R0912
             "UNKNOWN": {"count": 0, "color": ANSI_COLORS["GREY"], "fill": "?"},
             "INITIALIZED": {"count": 0, "color": ANSI_COLORS["LIGHT_BLUE"]},
             "RUNNING": {"count": 0, "color": ANSI_COLORS["BLUE"]},
-            "DRY RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
+            "DRY_RUN": {"count": 0, "color": ANSI_COLORS["ORANGE"], "fill": "\\"},
             "TOTAL TASKS": {"total": status_obj.tasks_per_step[sstep]},
             "AVG RUN TIME": status_obj.run_time_info[sstep]["avg_run_time"],
             "RUN TIME STD DEV": status_obj.run_time_info[sstep]["run_time_std_dev"],
@@ -385,8 +383,9 @@ def display_status_summary(  # pylint: disable=R0912
             # If this was a non-local run we should have a task queue and worker name to add to state_info
             if "task_queue" in overall_step_info:
                 state_info["TASK QUEUE"] = {"name": overall_step_info["task_queue"]}
-            if "worker_name" in overall_step_info:
-                state_info["WORKER NAME"] = {"name": overall_step_info["worker_name"]}
+            if "workers" in overall_step_info:
+                worker_str = ", ".join(overall_step_info["workers"])
+                state_info["WORKER(S)"] = {"name": worker_str}
 
             # Loop through all workspaces for this step (if there's no samples for this step it'll just be one path)
             for sub_step_workspace, task_status_info in overall_step_info.items():
@@ -474,7 +473,7 @@ def display_progress_bar(  # pylint: disable=R0913,R0914
                 "INITIALIZED",
                 "RUNNING",
                 "TASK QUEUE",
-                "WORKER NAME",
+                "WORKER(S)",
                 "TOTAL TASKS",
                 "AVG RUN TIME",
                 "RUN TIME STD DEV",

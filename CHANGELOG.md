@@ -4,6 +4,58 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.2b1]
+### Added
+- Conflict handler option to the `dict_deep_merge` function in `utils.py`
+- Ability to add module-specific pytest fixtures
+- Added fixtures specifically for testing status functionality
+- Added tests for reading and writing status files, and status conflict handling
+- Added tests for the `dict_deep_merge` function
+- Pytest-mock as a dependency for the test suite (necessary for using mocks and fixtures in the same test)
+- New github action test to make sure target branch has been merged into the source first, so we know histories are ok
+- Check in the status commands to make sure we're not pulling statuses from nested workspaces
+- Added `setuptools` as a requirement for python 3.12 to recognize the `pkg_resources` library
+- Patch to celery results backend to stop ChordErrors being raised and breaking workflows when a single task fails
+- New step return code `$(MERLIN_RAISE_ERROR)` to force an error to be raised by a task (mainly for testing)
+  - Added description of this to docs
+- New test to ensure a single failed task won't break a workflow
+
+### Changed
+- `merlin info` is cleaner and gives python package info
+- merlin version now prints with every banner message
+- Applying filters for `merlin detailed-status` will now log debug statements instead of warnings
+- Modified the unit tests for the `merlin status` command to use pytest rather than unittest
+- Added fixtures for `merlin status` tests that copy the workspace to a temporary directory so you can see exactly what's run in a test
+- Batch block and workers now allow for variables to be used in node settings
+- Task id is now the path to the directory
+
+### Fixed
+- Bugfix for output of `merlin example openfoam_wf_singularity`
+- A bug with the CHANGELOG detection test when the target branch isn't in the ci runner history
+- Link to Merlin banner in readme
+- Issue with escape sequences in ascii art (caught by python 3.12)
+- Bug where Flux wasn't identifying total number of nodes on an allocation
+  - Not supporting Flux versions below 0.17.0
+
+
+## [1.12.1]
+### Added
+- New Priority.RETRY value for the Celery task priorities. This will be the new highest priority.
+- Support for the status command to handle multiple workers on the same step
+- Documentation on how to run cross-node workflows with a containerized server (`merlin server`)
+
+### Changed
+- Modified some tests in `test_status.py` and `test_detailed_status.py` to accommodate bugfixes for the status commands
+
+### Fixed
+- Bugfixes for the status commands:
+  - Fixed "DRY RUN" naming convention so that it outputs in the progress bar properly
+  - Fixed issue where a step that was run with one sample would delete the status file upon condensing
+  - Fixed issue where multiple workers processing the same step would break the status file and cause the workflow to crash
+  - Added a catch for the JSONDecodeError that would potentially crash a run
+  - Added a FileLock to the status write in `_update_status_file()` of `MerlinStepRecord` to avoid potential race conditions (potentially related to JSONDecodeError above)
+  - Added in `export MANPAGER="less -r"` call behind the scenes for `detailed-status` to fix ASCII error
+
 ## [1.12.0]
 ### Added
 - A new command `merlin queue-info` that will print the status of your celery queues

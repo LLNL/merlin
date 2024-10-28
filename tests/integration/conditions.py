@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -307,8 +307,9 @@ class PathExists(Condition):
     A condition for checking if a path to a file or directory exists
     """
 
-    def __init__(self, pathname) -> None:
+    def __init__(self, pathname, negate=False) -> None:
         self.pathname = pathname
+        self.negate = negate
 
     def path_exists(self) -> bool:
         """Check if a path exists"""
@@ -319,7 +320,7 @@ class PathExists(Condition):
 
     @property
     def passes(self):
-        return self.path_exists()
+        return not self.path_exists() if self.negate else self.path_exists()
 
 
 class FileHasRegex(Condition):

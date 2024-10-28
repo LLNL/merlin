@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,6 +41,7 @@ from typing import Any, Dict, List, Optional
 from celery import chain, chord, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
 from filelock import FileLock, Timeout
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
@@ -49,6 +50,7 @@ from merlin.config.utils import Priority, get_priority
 from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
 from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
+from merlin.study.status import read_status, status_conflict_handler
 from merlin.utils import dict_deep_merge
 
 
@@ -61,6 +63,7 @@ retry_exceptions = (
     RetryException,
     RestartException,
     FileNotFoundError,
+    RedisTimeoutError,
 )
 
 LOG = logging.getLogger(__name__)
@@ -139,7 +142,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                     f"Step '{step_name}' in '{step_dir}' is being restarted ({self.request.retries + 1}/{self.max_retries})..."
                 )
                 step.mstep.mark_restart()
-                self.retry(countdown=step.retry_delay)
+                self.retry(countdown=step.retry_delay, priority=get_priority(Priority.RETRY))
             except MaxRetriesExceededError:
                 LOG.warning(
                     f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RESTART command,
@@ -155,7 +158,7 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
                     f"Step '{step_name}' in '{step_dir}' is being retried ({self.request.retries + 1}/{self.max_retries})..."
                 )
                 step.mstep.mark_restart()
-                self.retry(countdown=step.retry_delay)
+                self.retry(countdown=step.retry_delay, priority=get_priority(Priority.RETRY))
             except MaxRetriesExceededError:
                 LOG.warning(
                     f"""*** Step '{step_name}' in '{step_dir}' exited with a MERLIN_RETRY command,
@@ -180,6 +183,9 @@ def merlin_step(self, *args: Any, **kwargs: Any) -> Optional[ReturnCode]:  # noq
             shutdown = shutdown_workers.s(None)
             shutdown.set(queue=step.get_task_queue())
             shutdown.apply_async(countdown=STOP_COUNTDOWN)
+        elif result == ReturnCode.RAISE_ERROR:
+            LOG.warning("*** Raising an error ***")
+            raise Exception("Exception raised by request from the user")
         else:
             LOG.warning(f"**** Step '{step_name}' in '{step_dir}' had unhandled exit code {result}. Continuing with workflow.")
 
@@ -308,17 +314,22 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
                     top_lvl_workspace=top_lvl_workspace,
                 )
                 new_step.set(queue=step.get_task_queue())
+                new_step.set(task_id=os.path.join(workspace, relative_paths[sample_id]))
                 new_chain.append(new_step)
 
             all_chains.append(new_chain)
 
-        condense_sig = condense_status_files.s(
-            sample_index=sample_index,
-            workspace=top_lvl_workspace,
-            condensed_workspace=chain_[0].mstep.condensed_workspace,
-        ).set(
-            queue=chain_[0].get_task_queue(),
-        )
+        # Only need to condense status files if there's more than 1 sample
+        if num_samples > 1:
+            condense_sig = condense_status_files.s(
+                sample_index=sample_index,
+                workspace=top_lvl_workspace,
+                condensed_workspace=chain_[0].mstep.condensed_workspace,
+            ).set(
+                queue=chain_[0].get_task_queue(),
+            )
+        else:
+            condense_sig = None
 
         LOG.debug("adding chain to chord")
         chain_1d = get_1d_chain(all_chains)
@@ -372,7 +383,12 @@ def add_simple_chain_to_chord(self, task_type, chain_, adapter_config):
         # based off of the parameter substitutions and relative_path for
         # a given sample.
 
-        new_steps = [task_type.s(step, adapter_config=adapter_config).set(queue=step.get_task_queue())]
+        new_steps = [
+            task_type.s(step, adapter_config=adapter_config).set(
+                queue=step.get_task_queue(),
+                task_id=step.get_workspace(),
+            )
+        ]
         all_chains.append(new_steps)
     chain_1d = get_1d_chain(all_chains)
     launch_chain(self, chain_1d)
@@ -467,29 +483,33 @@ def gather_statuses(
         # Read in the status data
         sample_workspace = f"{workspace}/{path}"
         status_filepath = f"{sample_workspace}/MERLIN_STATUS.json"
-        lock = FileLock(f"{sample_workspace}/status.lock")  # pylint: disable=E0110
-        try:
-            # The status files will need locks when reading to avoid race conditions
-            with lock.acquire(timeout=10):
-                with open(status_filepath, "r") as status_file:
-                    status = json.load(status_file)
+        lock_filepath = f"{sample_workspace}/status.lock"
+        if os.path.exists(status_filepath):
+            try:
+                # NOTE: instead of leaving statuses as dicts read in by JSON, maybe they should each be their own object
+                status = read_status(status_filepath, lock_filepath, raise_errors=True)
 
-            # This for loop is just to get the step name that we don't have; it's really not even looping
-            for step_name in status:
-                try:
-                    # Make sure the status for this sample workspace is in a finished state (not initialized or running)
-                    if status[step_name][f"{condensed_workspace}/{path}"]["status"] not in ("INITIALIZED", "RUNNING"):
-                        # Add the status data to the statuses we'll write to the condensed file and remove this status file
-                        dict_deep_merge(condensed_statuses, status)
-                        files_to_remove.append(status_filepath)
-                except KeyError:
-                    LOG.warning(f"Key error when reading from {sample_workspace}")
-        except Timeout:
-            # Raising this celery timeout instead will trigger a restart for this task
-            raise TimeoutError  # pylint: disable=W0707
-        except FileNotFoundError:
-            LOG.warning(f"Could not find {status_filepath} while trying to condense. Restarting this task...")
-            raise FileNotFoundError  # pylint: disable=W0707
+                # This for loop is just to get the step name that we don't have; it's really not even looping
+                for step_name in status:
+                    try:
+                        # Make sure the status for this sample workspace is in a finished state (not initialized or running)
+                        if status[step_name][f"{condensed_workspace}/{path}"]["status"] not in ("INITIALIZED", "RUNNING"):
+                            # Add the status data to the statuses we'll write to the condensed file and remove this status file
+                            dict_deep_merge(condensed_statuses, status, conflict_handler=status_conflict_handler)
+                            files_to_remove.append(status_filepath)
+                            files_to_remove.append(lock_filepath)  # Remove the lock files as well as the status files
+                    except KeyError:
+                        LOG.warning(f"Key error when reading from {sample_workspace}")
+            except Timeout:
+                # Raising this celery timeout instead will trigger a restart for this task
+                raise TimeoutError  # pylint: disable=W0707
+            except FileNotFoundError:
+                LOG.warning(f"Could not find {status_filepath} while trying to condense. Restarting this task...")
+                raise FileNotFoundError  # pylint: disable=W0707
+        else:
+            # Might be missing a status file in the output if we hit this but we don't want that
+            # to fully crash the workflow
+            LOG.debug(f"Could not find {status_filepath}, skipping this status file.")
 
     return condensed_statuses
 
@@ -547,7 +567,7 @@ def condense_status_files(self, *args: Any, **kwargs: Any) -> ReturnCode:  # pyl
                         existing_condensed_statuses = json.load(condensed_status_file)
                     # Merging the statuses we're condensing into the already existing statuses
                     # because it's faster at scale than vice versa
-                    dict_deep_merge(existing_condensed_statuses, condensed_statuses)
+                    dict_deep_merge(existing_condensed_statuses, condensed_statuses, conflict_handler=status_conflict_handler)
                     condensed_statuses = existing_condensed_statuses
 
                 # Write the condensed statuses to the condensed status file

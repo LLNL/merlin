@@ -58,17 +58,47 @@ not connected> quit
 
 ## The Fixture Process Explained
 
-Pytest fixtures play a fundamental role in establishing a consistent foundation for test execution,
-thus ensuring reliable and predictable test outcomes. This section will delve into essential aspects
-of these fixtures, including how to integrate fixtures into tests, the utilization of fixtures within other fixtures,
-their scope, and the yielding of fixture results.
+In the world of pytest testing, fixtures are like the building blocks that create a sturdy foundation for your tests.
+They ensure that every test starts from the same fresh ground, leading to reliable and consistent results. This section
+will dive into the nitty-gritty of these fixtures, showing you how they're architected in this test suite, how to use
+them in your tests here, how to combine them for more complex scenarios, how long they stick around during testing, and
+what it means to yield a fixture.
+
+### Fixture Architecture
+
+Fixtures can be defined in two locations:
+
+1. `tests/conftest.py`: This file located at the root of the test suite houses common fixtures that are utilized
+across various test modules
+2. `tests/fixtures/`: This directory contains specific test module fixtures. Each fixture file is named according
+to the module(s) that the fixtures defined within are for.
+
+Credit for this setup must be given to [this Medium article](https://medium.com/@nicolaikozel/modularizing-pytest-fixtures-fd40315c5a93).
+
+#### Fixture Naming Conventions
+
+For fixtures defined within the `tests/fixtures/` directory, the fixture name should be prefixed by the name of the
+fixture file they are defined in.
+
+#### Importing Fixtures as Plugins
+
+Fixtures located in the `tests/fixtures/` directory are technically plugins. Therefore, to use them we must
+register them as plugins within the `conftest.py` file (see the top of said file for the implementation).
+This allows them to be discovered and used by test modules throughout the suite.
+
+**You do not have to register the fixtures you define as plugins in `conftest.py` since the registration there
+uses `glob` to grab everything from the `tests/fixtures/` directory automatically.**
 
 ### How to Integrate Fixtures Into Tests
 
 Probably the most important part of fixtures is understanding how to use them. Luckily, this process is very
-simple and can be dumbed down to 2 steps:
+simple and can be dumbed down to just a couple steps:
 
-1. Create a fixture in the `conftest.py` file by using the `@pytest.fixture` decorator. For example:
+0. **[Module-specific fixtures only]** If you're creating a module-specific fixture (i.e. a fixture that won't be used throughout the entire test
+suite), then create a file in the `tests/fixtures/` directory.
+
+1. Create a fixture in either the `conftest.py` file or the file you created in the `tests/fixtures/` directory
+by using the `@pytest.fixture` decorator. For example:
 
 ```
 @pytest.fixture
@@ -131,10 +161,10 @@ scopes come to save the day.
 
 ### Fixture Scopes
 
-There are several different scopes that you can set for fixtures. The majority of our fixtures use a `session`
-scope so that we only have to create the fixtures one time (as some of them can take a few seconds to set up).
-The goal is to create fixtures with the most general use-case in mind so that we can re-use them for larger
-scopes, which helps with efficiency.
+There are several different scopes that you can set for fixtures. The majority of our fixtures in `conftest.py`
+use a `session` scope so that we only have to create the fixtures one time (as some of them can take a few seconds
+to set up). The goal is to create fixtures with the most general use-case in mind so that we can re-use them for
+larger scopes, which helps with efficiency.
 
 For more info on scopes, see
 [Pytest's Fixture Scope documentation](https://docs.pytest.org/en/6.2.x/fixture.html#scope-sharing-fixtures-across-classes-modules-packages-or-session).

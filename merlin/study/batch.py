@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.0.
+# This file is part of Merlin, Version: 1.12.2b1.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -40,7 +40,7 @@ import os
 import subprocess
 from typing import Dict, Optional, Union
 
-from merlin.utils import convert_timestring, get_flux_alloc, get_yaml_var
+from merlin.utils import convert_timestring, get_flux_alloc, get_flux_version, get_yaml_var
 
 
 LOG = logging.getLogger(__name__)
@@ -126,7 +126,7 @@ def get_batch_type(scheduler_legend, default=None):
     return default
 
 
-def get_node_count(default=1):
+def get_node_count(parsed_batch: Dict, default=1):
     """
     Determine a default node count based on the environment.
 
@@ -134,6 +134,20 @@ def get_node_count(default=1):
         the environment cannot be determined.
     :param returns: (int) The number of nodes to use.
     """
+
+    # Flux version check
+    flux_ver = get_flux_version(parsed_batch["flux exe"], no_errors=True)
+    major, minor, _ = map(int, flux_ver.split("."))
+    if major < 1 and minor < 17:
+        raise ValueError("Flux version is too old. Supported versions are 0.17.0+.")
+
+    # If flux is the scheduler, we can get the size of the allocation with this
+    try:
+        get_size_proc = subprocess.run("flux getattr size", shell=True, capture_output=True, text=True)
+        return int(get_size_proc.stdout)
+    except Exception:
+        pass
+
     if "SLURM_JOB_NUM_NODES" in os.environ:
         return int(os.environ["SLURM_JOB_NUM_NODES"])
 
@@ -246,7 +260,7 @@ def batch_worker_launch(
 
     # Get the number of nodes from the environment if unset
     if nodes is None or nodes == "all":
-        nodes = get_node_count(default=1)
+        nodes = get_node_count(parsed_batch, default=1)
     elif not isinstance(nodes, int):
         raise TypeError("Nodes was passed into batch_worker_launch with an invalid type (likely a string other than 'all').")
 
