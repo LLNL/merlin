@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -235,6 +235,12 @@ def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
     else:
         mysql_config["password"] = "******"
     mysql_config["server"] = server
+
+    # Ensure the ssl_key, ssl_ca, and ssl_cert keys are all set
+    if mysql_certs == MYSQL_CONFIG_FILENAMES:
+        for key, cert_file in mysql_certs.items():
+            if key not in mysql_config:
+                mysql_config[key] = os.path.join(certs_path, cert_file)
 
     return MYSQL_CONNECTION_STRING.format(**mysql_config)
 

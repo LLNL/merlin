@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -77,7 +77,7 @@ class ServerStatus(enum.Enum):
     """
 
     RUNNING = 0
-    NOT_INITALIZED = 1
+    NOT_INITIALIZED = 1
     MISSING_CONTAINER = 2
     NOT_RUNNING = 3
     ERROR = 4
@@ -92,8 +92,8 @@ def generate_password(length, pass_command: str = None) -> str:
     :return:: string value with given length
     """
     if pass_command:
-        process = subprocess.run(pass_command.split(), shell=True, stdout=subprocess.PIPE)
-        return process.stdout
+        process = subprocess.run(pass_command, shell=True, capture_output=True, text=True)
+        return process.stdout.strip()
 
     characters = list(string.ascii_letters + string.digits + "!@#$%^&*()")
 
@@ -119,7 +119,7 @@ def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
     server_init = False
     redis_config = {}
     line = redis_stdout.readline()
-    while line != "" or line is not None:
+    while line != b"" and line is not None:
         if not server_init:
             values = [ln for ln in line.split() if b"=" in ln]
             for val in values:
@@ -134,6 +134,31 @@ def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
         line = redis_stdout.readline()
 
     return False, "Reached end of redis output without seeing 'Ready to accept connections'"
+
+
+def copy_container_command_files(config_dir: str) -> bool:
+    """
+    Copy the yaml files that contain instructions on how to run certain commands
+    for each container type to the config directory.
+
+    :param config_dir: The path to the configuration dir where we'll copy files.
+    :returns: True if successful. False otherwise.
+    """
+    files = [i + ".yaml" for i in CONTAINER_TYPES]
+    for file in files:
+        file_path = os.path.join(config_dir, file)
+        if os.path.exists(file_path):
+            LOG.info(f"{file} already exists.")
+            continue
+        LOG.info(f"Copying file {file} to configuration directory.")
+        try:
+            with resources.path("merlin.server", file) as config_file:
+                with open(file_path, "w") as outfile, open(config_file, "r") as infile:
+                    outfile.write(infile.read())
+        except OSError:
+            LOG.error(f"Destination location {config_dir} is not writable.")
+            return False
+    return True
 
 
 def create_server_config() -> bool:
@@ -158,20 +183,8 @@ def create_server_config() -> bool:
             LOG.error(err)
             return False
 
-    files = [i + ".yaml" for i in CONTAINER_TYPES]
-    for file in files:
-        file_path = os.path.join(config_dir, file)
-        if os.path.exists(file_path):
-            LOG.info(f"{file} already exists.")
-            continue
-        LOG.info(f"Copying file {file} to configuration directory.")
-        try:
-            with resources.path("merlin.server", file) as config_file:
-                with open(file_path, "w") as outfile, open(config_file, "r") as infile:
-                    outfile.write(infile.read())
-        except OSError:
-            LOG.error(f"Destination location {config_dir} is not writable.")
-            return False
+    if not copy_container_command_files(config_dir):
+        return False
 
     # Load Merlin Server Configuration and apply it to app.yaml
     with resources.path("merlin.server", MERLIN_SERVER_CONFIG) as merlin_server_config:
@@ -209,9 +222,6 @@ def config_merlin_server():
     if os.path.exists(pass_file):
         LOG.info("Password file already exists. Skipping password generation step.")
     else:
-        # if "pass_command" in server_config["container"]:
-        #     password = generate_password(PASSWORD_LENGTH, server_config["container"]["pass_command"])
-        # else:
         password = generate_password(PASSWORD_LENGTH)
 
         with open(pass_file, "w+") as f:  # pylint: disable=C0103
@@ -287,7 +297,7 @@ def pull_server_image() -> bool:
     """
     Fetch the server image using singularity.
 
-    :return:: True if success and False if fail
+    :return: True if success and False if fail
     """
     server_config = pull_server_config()
     if not server_config:
@@ -318,8 +328,8 @@ def pull_server_image() -> bool:
             with resources.path("merlin.server", config_file) as file:
                 with open(os.path.join(config_dir, config_file), "w") as outfile, open(file, "r") as infile:
                     outfile.write(infile.read())
-        except OSError:
-            LOG.error(f"Destination location {config_dir} is not writable.")
+        except OSError as exc:
+            LOG.error(f"Destination location {config_dir} is not writable. Raised from:\n{exc}")
             return False
     else:
         LOG.info("Redis configuration file already exist.")
@@ -339,10 +349,10 @@ def get_server_status():
     """
     server_config = pull_server_config()
     if not server_config:
-        return ServerStatus.NOT_INITALIZED
+        return ServerStatus.NOT_INITIALIZED
 
     if not os.path.exists(server_config.container.get_config_dir()):
-        return ServerStatus.NOT_INITALIZED
+        return ServerStatus.NOT_INITIALIZED
 
     if not os.path.exists(server_config.container.get_image_path()):
         return ServerStatus.MISSING_CONTAINER
