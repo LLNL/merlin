@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -41,7 +41,7 @@ from subprocess import TimeoutExpired, run
 
 from tabulate import tabulate
 
-from tests.integration.definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
+from definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
 
 
 def get_definition_issues(test):

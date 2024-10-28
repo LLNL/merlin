@@ -4,25 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-### Added
-- Several new unit tests for the following subdirectories:
-  - `merlin/common/`
-  - `merlin/config/`
-  - `merlin/examples/`
-  - `merlin/server/`
-- Context managers for the `conftest.py` file to ensure safe spin up and shutdown of fixtures
-  - `RedisServerManager`: context to help with starting/stopping a redis server for tests
-  - `CeleryWorkersManager`: context to help with starting/stopping workers for tests
-- Ability to copy and print the `Config` object from `merlin/config/__init__.py`
-- Equality method to the `ContainerFormatConfig` and `ContainerConfig` objects from `merlin/server/server_util.py`
-
-### Changed
-- Split the `start_server` and `config_server` functions of `merlin/server/server_commands.py` into multiple functions to make testing easier
-- Split the `create_server_config` function of `merlin/server/server_config.py` into two functions to make testing easier
-- Combined `set_snapshot_seconds` and `set_snapshot_changes` methods of `RedisConfig` into one method `set_snapshot`
-
-## [1.12.2b1]
+## [1.12.2]
 ### Added
 - Conflict handler option to the `dict_deep_merge` function in `utils.py`
 - Ability to add module-specific pytest fixtures
@@ -37,6 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New step return code `$(MERLIN_RAISE_ERROR)` to force an error to be raised by a task (mainly for testing)
   - Added description of this to docs
 - New test to ensure a single failed task won't break a workflow
+- Several new unit tests for the following subdirectories:
+  - `merlin/common/`
+  - `merlin/config/`
+  - `merlin/examples/`
+  - `merlin/server/`
+- Context managers for the `conftest.py` file to ensure safe spin up and shutdown of fixtures
+  - `RedisServerManager`: context to help with starting/stopping a redis server for tests
+  - `CeleryWorkersManager`: context to help with starting/stopping workers for tests
+- Ability to copy and print the `Config` object from `merlin/config/__init__.py`
+- Equality method to the `ContainerFormatConfig` and `ContainerConfig` objects from `merlin/server/server_util.py`
 
 ### Changed
 - `merlin info` is cleaner and gives python package info
@@ -46,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added fixtures for `merlin status` tests that copy the workspace to a temporary directory so you can see exactly what's run in a test
 - Batch block and workers now allow for variables to be used in node settings
 - Task id is now the path to the directory
+- Split the `start_server` and `config_server` functions of `merlin/server/server_commands.py` into multiple functions to make testing easier
+- Split the `create_server_config` function of `merlin/server/server_config.py` into two functions to make testing easier
+- Combined `set_snapshot_seconds` and `set_snapshot_changes` methods of `RedisConfig` into one method `set_snapshot`
 
 ### Fixed
 - Bugfix for output of `merlin example openfoam_wf_singularity`
