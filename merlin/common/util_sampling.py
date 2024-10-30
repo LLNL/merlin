@@ -70,13 +70,13 @@ def scale_samples(
         - The function follows the sklearn convention, requiring 
           samples to be provided as an (nsamples, ndims) array.
         - To transform 1-D arrays, reshape them accordingly:
-            ```
+            ```python
             >>> samples = samples.reshape((-1, 1))  # ndims = 1
             >>> samples = samples.reshape((1, -1))  # nsamples = 1
             ```
 
     Example:
-        ```
+        ```python
         >>> # Turn 0:1 samples into -1:1
         >>> import numpy as np
         >>> norm_values = np.linspace(0,1,5).reshape((-1,1))

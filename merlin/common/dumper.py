@@ -47,7 +47,7 @@ class Dumper:  # pylint: disable=R0903
 
     Example:
         CSV usage:
-        ```
+        ```python
         dumper = Dumper("populations.csv")
         # Eugene, OR has a population of 175096
         # Livermore, CA has a population of 86803
@@ -61,7 +61,7 @@ class Dumper:  # pylint: disable=R0903
 
     Example:
         JSON usage:
-        ```
+        ```python
         dumper = Dumper("populations.json")
         population_data = {
             "OR": {"Eugene": 175096, "Portland": 641162},
