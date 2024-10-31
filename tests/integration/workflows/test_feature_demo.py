@@ -1,57 +1,106 @@
 """
 This module contains tests for the feature_demo workflow.
 """
-import inspect
-import os
-import signal
 import subprocess
-from time import sleep
-from subprocess import TimeoutExpired
 
-# from tests.context_managers.celery_task_manager import CeleryTaskManager
-# from tests.context_managers.celery_workers_manager import CeleryWorkersManager
-from tests.fixture_types import FixtureInt, FixtureModification, FixtureRedis, FixtureStr, FixtureTuple
-from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd, load_workers_from_spec
+from tests.fixture_types import FixtureInt, FixtureStr
+from tests.integration.conditions import StepFinishedFilesCount
 
-
-# NOTE maybe this workflow only needs to run twice?
-# - once for a normal run
-#   - can test e2e, data passing, and step execution order with a single run
-# - another time for error testing
 
 class TestFeatureDemo:
     """
     Tests for the feature_demo workflow.
     """
-    demo_workflow = os.path.join("examples", "workflows", "feature_demo", "feature_demo.yaml")
-
-    def get_test_name(self):
-        """
-        """
-        stack = inspect.stack()
-        return stack[1].function
 
     def test_end_to_end_run(
         self,
         feature_demo_testing_dir: FixtureStr,
         feature_demo_num_samples: FixtureInt,
         feature_demo_name: FixtureStr,
-        feature_demo_run_workflow: FixtureTuple[str, str],
+        feature_demo_run_workflow: subprocess.CompletedProcess,
     ):
         """
         Test that the workflow runs from start to finish with no problems.
-        """
-        # TODO check if the workflow ran to completion in 30 seconds
-        # if not assert a failure happened
-        # - to check, see if all MERLIN_FINISHED files exist
 
-        StepFinishedFilesCount(
-            step="hello",
-            study_name=feature_demo_name,
-            output_path=feature_demo_testing_dir,
-            num_parameters=1,
-            num_samples=feature_demo_num_samples,
-        )
+        This will check that each step has the proper amount of `MERLIN_FINISHED` files.
+        The workflow will be run via the
+        [`feature_demo_run_workflow`][fixtures.feature_demo.feature_demo_run_workflow]
+        fixture.
+
+        Args:
+            feature_demo_testing_dir: The directory containing the output of the feature
+                demo run.
+            feature_demo_num_samples: The number of samples we give to the feature demo run.
+            feature_demo_name: The name of the feature demo study.
+            feature_demo_run_workflow: A fixture to run the feature demo study.
+        """
+        conditions = [
+            StepFinishedFilesCount(
+                step="hello",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                num_parameters=1,
+                num_samples=feature_demo_num_samples,
+            ),
+            StepFinishedFilesCount(
+                step="python2_hello",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="python3_hello",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="collect",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="translate",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="learn",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="make_new_samples",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="predict",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="verify",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+        ]
+        for condition in conditions:
+            assert condition.passes
 
     def test_step_execution_order(self):
         """

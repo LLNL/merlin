@@ -2,12 +2,14 @@
 Fixtures specifically for help testing the feature_demo workflow.
 """
 import os
+import subprocess
+from time import sleep
 
 import pytest
 
 from tests.context_managers.celery_task_manager import CeleryTaskManager
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
-from tests.fixture_types import FixtureInt, FixtureModification, FixtureRedis, FixtureStr, FixtureTuple
+from tests.fixture_types import FixtureInt, FixtureModification, FixtureRedis, FixtureStr
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd, load_workers_from_spec
 
 
@@ -51,7 +53,7 @@ def feature_demo_name() -> FixtureStr:
     should still run the same thing.
 
     Returns:
-        An string representing the name to use for the feature_demo workflow.
+        A string representing the name to use for the feature_demo workflow.
     """
     return "feature_demo_test"
 
@@ -66,17 +68,48 @@ def feature_demo_run_workflow(
     feature_demo_testing_dir: FixtureStr,
     feature_demo_num_samples: FixtureInt,
     feature_demo_name: FixtureStr,
-) -> FixtureTuple[str, str]:
+) -> subprocess.CompletedProcess:
     """
-    """
-    from merlin.celery import app as celery_app
-        
-    # os.chdir(feature_demo_testing_dir)
-    copy_app_yaml_to_cwd(merlin_server_dir)
-    feature_demo_path = os.path.join(path_to_merlin_codebase, self.demo_workflow)
-    # test_output_path = os.path.join(feature_demo_testing_dir, self.get_test_name())
-    test_name = self.get_test_name()
+    Run the feature demo workflow.
 
+    This fixture sets up and executes the feature demo workflow using the specified configurations
+    and parameters. It prepares the environment by modifying the CONFIG object to connect to a
+    Redis server and runs the demo workflow with the provided sample size and name. It utilizes
+    context managers to safely send tasks to the server and start up workers. The workflow is given
+    30 seconds to complete which should be plenty of time.
+
+    Args:
+        redis_client: A fixture that connects us to a redis client that we can interact with.
+        redis_results_backend_config_class: A fixture that modifies the CONFIG object so that it
+            points the results backend configuration to the containerized redis server we start up
+            with the [`redis_server`][conftest.redis_server] fixture. The CONFIG object is what merlin
+            uses to connect to a server.
+        redis_broker_config_class: A fixture that modifies the CONFIG object so that it points
+            the broker configuration to the containerized redis server we start up with the
+            [`redis_server`][conftest.redis_server] fixture. The CONFIG object is what merlin uses
+            to connect to a server.
+        path_to_merlin_codebase: A fixture to provide the path to the directory containing Merlin's
+            core functionality.
+        merlin_server_dir: A fixture to provide the path to the merlin_server directory that will be
+            created by the [`redis_server`][conftest.redis_server] fixture.
+        feature_demo_testing_dir: The path to the temp output directory for feature_demo workflow tests.
+        feature_demo_num_samples: An integer representing the number of samples to use in the feature_demo
+            workflow.
+        feature_demo_name: A string representing the name to use for the feature_demo workflow.
+
+    Returns:
+        The completed process object containing information about the execution of the workflow, including
+            return code, stdout, and stderr.
+    """
+    # TODO might want to generalize the logic in this function into a new function that runs workflows
+    from merlin.celery import app as celery_app
+    
+    # Setup the test
+    copy_app_yaml_to_cwd(merlin_server_dir)
+    demo_workflow = os.path.join("examples", "workflows", "feature_demo", "feature_demo.yaml")
+    feature_demo_path = os.path.join(path_to_merlin_codebase, demo_workflow)
+
+    # Create the variables to pass in to the workflow
     vars_to_substitute = [
         f"N_SAMPLES={feature_demo_num_samples}",
         f"NAME={feature_demo_name}",
@@ -86,6 +119,7 @@ def feature_demo_run_workflow(
     run_workers_proc = None
 
     with CeleryTaskManager(celery_app, redis_client) as CTM:
+        # Send the tasks to the server
         run_proc = subprocess.run(
             f"merlin run {feature_demo_path} --vars {' '.join(vars_to_substitute)}",
             shell=True,
@@ -108,5 +142,4 @@ def feature_demo_run_workflow(
             # Let the workflow try to run for 30 seconds
             sleep(30)
 
-    stdout, stderr = run_workers_proc.communicate()
-    return stdout, stderr
+    return run_workers_proc

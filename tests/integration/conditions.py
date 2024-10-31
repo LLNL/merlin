@@ -34,7 +34,6 @@ from glob import glob
 from re import search
 
 
-# TODO when moving command line tests to pytest, change Condition boolean returns to assertions
 class Condition(ABC):
     """Abstract Condition class that other conditions will inherit from"""
 
@@ -131,7 +130,7 @@ class StudyOutputAware(Condition):
         """
         self.study_name = study_name
         self.output_path = output_path
-        self.dirpath_glob = f"{self.output_path}/{self.study_name}" f"_[0-9]*-[0-9]*"
+        self.dirpath_glob = os.path.join(self.output_path, f"{self.study_name}_[0-9]*-[0-9]*")
 
     def glob(self, glob_string):
         """
@@ -154,7 +153,7 @@ class StepFileExists(StudyOutputAware):
     A StudyOutputAware that checks for a particular file's existence.
     """
 
-    def __init__(self, step, filename, study_name, output_path, params=False):  # pylint: disable=R0913
+    def __init__(self, step, filename, study_name, output_path, params=False, samples=False):  # pylint: disable=R0913
         """
         :param `step`: the name of a step
         :param `filename`: name of file to search for in step's workspace directory
@@ -165,6 +164,7 @@ class StepFileExists(StudyOutputAware):
         self.step = step
         self.filename = filename
         self.params = params
+        self.samples = samples
 
     def __str__(self):
         return f"{__class__.__name__} expected to find file '{self.glob_string}', but file did not exist"
@@ -174,10 +174,9 @@ class StepFileExists(StudyOutputAware):
         """
         Returns a regex string for the glob library to recursively find files with.
         """
-        param_glob = ""
-        if self.params:
-            param_glob = "*"
-        return os.path.join(self.dirpath_glob, self.step, param_glob, self.filename)
+        param_glob = "*" if self.params else ""
+        samples_glob = "**" if self.samples else ""
+        return os.path.join(self.dirpath_glob, self.step, param_glob, samples_glob, self.filename)
 
     def file_exists(self):
         """Check if the file path created by glob_string exists"""
@@ -241,6 +240,90 @@ class StepFileHasRegex(StudyOutputAware):
     @property
     def passes(self):
         return self.contains()
+
+
+# TODO when writing API docs for tests make sure this looks correct and has functioning links
+# - Do we want to list expected_count, glob_string, and passes as methods since they're already attributes?
+class StepFinishedFilesCount(StudyOutputAware):
+    """
+    A [`StudyOutputAware`][integration.conditions.StudyOutputAware] that checks for the
+    exact number of `MERLIN_FINISHED` files in a specified step's output directory based
+    on the number of parameters and samples.
+
+    Attributes:
+        step: The name of the step to check.
+        study_name: The name of the study.
+        output_path: The output path of the study.
+        num_parameters: The number of parameters for the step.
+        num_samples: The number of samples for the step.
+        expected_count: The expected number of `MERLIN_FINISHED` files based on parameters and samples.
+        glob_string: The glob pattern to find `MERLIN_FINISHED` files in the specified step's output directory.
+        passes: Checks if the count of `MERLIN_FINISHED` files matches the expected count.
+
+    Methods:
+        expected_count: Calculates the expected number of `MERLIN_FINISHED` files.
+        glob_string: Constructs the glob pattern for searching `MERLIN_FINISHED` files.
+        count_finished_files: Counts the number of `MERLIN_FINISHED` files found.
+        passes: Checks if the count of `MERLIN_FINISHED` files matches the expected count.
+    """
+
+    def __init__(self, step: str, study_name: str, output_path: str, num_parameters: int = 0, num_samples: int = 0):
+        super().__init__(study_name, output_path)
+        self.step = step
+        self.num_parameters = num_parameters
+        self.num_samples = num_samples
+
+    @property
+    def expected_count(self) -> int:
+        """
+        Calculate the expected number of `MERLIN_FINISHED` files.
+        
+        Returns:
+            The expected number of `MERLIN_FINISHED` files.
+        """
+        if self.num_parameters > 0 and self.num_samples > 0:
+            return self.num_parameters * self.num_samples
+        elif self.num_parameters > 0:
+            return self.num_parameters
+        elif self.num_samples > 0:
+            return self.num_samples
+        else:
+            return 1  # Default case when there are no parameters or samples
+
+    @property
+    def glob_string(self) -> str:
+        """
+        Glob pattern to find `MERLIN_FINISHED` files in the specified step's output directory.
+        
+        Returns:
+            A glob pattern to find `MERLIN_FINISHED` files.
+        """
+        param_glob = "*" if self.num_parameters > 0 else ""
+        samples_glob = "**" if self.num_samples > 0 else ""
+        return os.path.join(self.dirpath_glob, self.step, param_glob, samples_glob, "MERLIN_FINISHED")
+
+    def count_finished_files(self) -> int:
+        """
+        Count the number of `MERLIN_FINISHED` files found.
+
+        Returns:
+            The actual number of `MERLIN_FINISHED` files that exist in the step's output directory.
+        """
+        finished_files = glob(self.glob_string)  # Adjust the glob pattern as needed
+        return len(finished_files)
+
+    @property
+    def passes(self) -> bool:
+        """
+        Check if the count of `MERLIN_FINISHED` files matches the expected count.
+        
+        Returns:
+            True if the expected count matches the actual count. False otherwise.
+        """
+        return self.count_finished_files() == self.expected_count
+
+    def __str__(self) -> str:
+        return f"{__class__.__name__} expected {self.expected_count} `MERLIN_FINISHED` files, but found {self.count_finished_files()}"
 
 
 class ProvenanceYAMLFileHasRegex(HasRegex):
