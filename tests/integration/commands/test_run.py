@@ -110,8 +110,8 @@ class TestRunCommandDistributed(TestRunCommand):
     def test_distributed_run(
         self,
         redis_client: FixtureRedis,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -123,12 +123,12 @@ class TestRunCommandDistributed(TestRunCommand):
         Args:
             redis_client:
                 A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect
@@ -171,8 +171,8 @@ class TestRunCommandDistributed(TestRunCommand):
     def test_samplesfile_option(
         self,
         redis_client: FixtureRedis,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -185,12 +185,12 @@ class TestRunCommandDistributed(TestRunCommand):
         Args:
             redis_client:
                 A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect
@@ -237,8 +237,8 @@ class TestRunCommandDistributed(TestRunCommand):
     def test_pgen_and_pargs_options(
         self,
         redis_client: FixtureRedis,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -253,12 +253,12 @@ class TestRunCommandDistributed(TestRunCommand):
         Args:
             redis_client:
                 A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect
@@ -314,8 +314,8 @@ class TestRunCommandLocal(TestRunCommand):
     def test_dry_run(
         self,
         redis_client: FixtureRedis,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -332,12 +332,12 @@ class TestRunCommandLocal(TestRunCommand):
         Args:
             redis_client:
                 A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect
@@ -386,8 +386,8 @@ class TestRunCommandLocal(TestRunCommand):
     def test_local_run(
         self,
         redis_client: FixtureRedis,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -399,12 +399,12 @@ class TestRunCommandLocal(TestRunCommand):
         Args:
             redis_client:
                 A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect

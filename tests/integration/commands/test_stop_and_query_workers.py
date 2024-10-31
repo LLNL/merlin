@@ -139,8 +139,8 @@ class TestStopAndQueryWorkersCommands:
     def test_no_workers(
         self,
         redis_server: FixtureStr,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
     ):
@@ -163,12 +163,12 @@ class TestStopAndQueryWorkersCommands:
             redis_server:
                 A fixture that starts a containerized redis server instance that runs on
                 localhost:6379.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect
@@ -204,8 +204,8 @@ class TestStopAndQueryWorkersCommands:
     def test_no_flags(
         self,
         redis_server: FixtureStr,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         path_to_test_specs: FixtureStr,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
@@ -222,12 +222,12 @@ class TestStopAndQueryWorkersCommands:
             redis_server:
                 A fixture that starts a containerized redis server instance that runs on
                 localhost:6379.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect
@@ -258,8 +258,8 @@ class TestStopAndQueryWorkersCommands:
     def test_spec_flag(
         self,
         redis_server: FixtureStr,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         path_to_test_specs: FixtureStr,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
@@ -277,12 +277,12 @@ class TestStopAndQueryWorkersCommands:
             redis_server:
                 A fixture that starts a containerized redis server instance that runs on
                 localhost:6379.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect
@@ -318,8 +318,8 @@ class TestStopAndQueryWorkersCommands:
     def test_workers_flag(
         self,
         redis_server: FixtureStr,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         path_to_test_specs: FixtureStr,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
@@ -337,12 +337,12 @@ class TestStopAndQueryWorkersCommands:
             redis_server:
                 A fixture that starts a containerized redis server instance that runs on
                 localhost:6379.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect
@@ -379,8 +379,8 @@ class TestStopAndQueryWorkersCommands:
     def test_queues_flag(
         self,
         redis_server: FixtureStr,
-        redis_results_backend_config: FixtureModification,
-        redis_broker_config: FixtureModification,
+        redis_results_backend_config_function: FixtureModification,
+        redis_broker_config_function: FixtureModification,
         path_to_test_specs: FixtureStr,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
@@ -398,12 +398,12 @@ class TestStopAndQueryWorkersCommands:
             redis_server:
                 A fixture that starts a containerized redis server instance that runs on
                 localhost:6379.
-            redis_results_backend_config:
+            redis_results_backend_config_function:
                 A fixture that modifies the CONFIG object so that it points the results
                 backend configuration to the containerized redis server we start up with
                 the `redis_server` fixture. The CONFIG object is what merlin uses to connect
                 to a server.
-            redis_broker_config:
+            redis_broker_config_function:
                 A fixture that modifies the CONFIG object so that it points the broker
                 configuration to the containerized redis server we start up with the
                 `redis_server` fixture. The CONFIG object is what merlin uses to connect
