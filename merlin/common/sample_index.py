@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -453,8 +453,8 @@ class SampleIndex:
 
         # Replace if we already have something at this address.
         if delete_me is not None:
-            self.children.__delitem__(full_address)
             SampleIndex.check_valid_addresses_for_insertion(full_address, sub_tree)
+            self.children.__delitem__(full_address)
             self.children[full_address] = sub_tree
             return
         raise KeyError

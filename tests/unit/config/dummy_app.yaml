@@ -1,0 +1,33 @@
+broker:
+  cert_reqs: none
+  name: redis
+  password: redis.pass
+  port: '6379'
+  server: 127.0.0.1
+  username: default
+  vhost: host4gunny
+celery:
+  override:
+    visibility_timeout: 86400
+container:
+  config: redis.conf
+  config_dir: ./merlin_server/
+  format: singularity
+  image: redis_latest.sif
+  image_type: redis
+  pass_file: redis.pass
+  pfile: merlin_server.pf
+  url: docker://redis
+  user_file: redis.users
+process:
+  kill: kill {pid}
+  status: pgrep -P {pid}
+results_backend:
+  cert_reqs: none
+  db_num: 0
+  encryption_key: encrypt_data_key
+  name: redis
+  password: redis.pass
+  port: '6379'
+  server: 127.0.0.1
+  username: default

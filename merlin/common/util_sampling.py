@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -36,6 +36,7 @@ from typing import List, Tuple, Union
 import numpy as np
 
 
+# TODO should we move this to merlin-spellbook?
 def scale_samples(
     samples_norm: np.ndarray,
     limits: List[Tuple[int, int]],
