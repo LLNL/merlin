@@ -20,7 +20,7 @@ from argparse import Namespace
 from celery import Celery
 from celery.canvas import Signature
 from redis import Redis
-from typing import Any, Annotated, Dict, TypeVar
+from typing import Any, Annotated, Dict, Tuple, TypeVar
 
 # TODO convert unit test type hinting to use these
 # - likely will do this when I work on API docs for test library
@@ -37,3 +37,4 @@ FixtureNamespace = Annotated[Namespace, pytest.fixture]
 FixtureRedis = Annotated[Redis, pytest.fixture]
 FixtureSignature = Annotated[Signature, pytest.fixture]
 FixtureStr = Annotated[str, pytest.fixture]
+FixtureTuple = Annotated[Tuple[K, V], pytest.fixture]
