@@ -4,7 +4,7 @@ This module contains tests for the feature_demo workflow.
 import subprocess
 
 from tests.fixture_types import FixtureInt, FixtureStr
-from tests.integration.conditions import StepFinishedFilesCount
+from tests.integration.conditions import ProvenanceYAMLFileHasRegex, StepFinishedFilesCount
 
 
 class TestFeatureDemo:
@@ -35,7 +35,14 @@ class TestFeatureDemo:
             feature_demo_run_workflow: A fixture to run the feature demo study.
         """
         conditions = [
-            StepFinishedFilesCount(
+            ProvenanceYAMLFileHasRegex(  # This condition will check that variable substitution worked
+                regex=f"N_SAMPLES: {feature_demo_num_samples}",
+                spec_file_name="feature_demo",
+                study_name=feature_demo_name,
+                output_path=feature_demo_testing_dir,
+                provenance_type="expanded",
+            ),
+            StepFinishedFilesCount(  # The rest of the conditions will ensure every step ran to completion
                 step="hello",
                 study_name=feature_demo_name,
                 output_path=feature_demo_testing_dir,
