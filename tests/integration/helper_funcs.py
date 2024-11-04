@@ -2,15 +2,19 @@
 This module contains helper functions for the integration
 test suite.
 """
-
 import os
 import re
 import shutil
+import subprocess
+from time import sleep
 from typing import Dict, List
 
 import yaml
 
 from merlin.spec.expansion import get_spec_with_expansion
+from tests.context_managers.celery_task_manager import CeleryTaskManager
+from tests.context_managers.celery_workers_manager import CeleryWorkersManager
+from tests.fixture_types import FixtureRedis
 from tests.integration.conditions import Condition
 
 
@@ -104,3 +108,58 @@ def check_test_conditions(conditions: List[Condition], info: Dict[str, str]):
                 f"Return code: {info['return_code']}\n"
             )
             raise AssertionError(error_message) from exc
+
+
+def run_workflow(redis_client: FixtureRedis, workflow_path: str, vars_to_substitute: List[str]) -> subprocess.CompletedProcess:
+    """
+    Run a Merlin workflow using the `merlin run` and `merlin run-workers` commands.
+
+    This function executes a Merlin workflow using a specified path to a study and variables to
+    configure the study with. It utilizes context managers to safely send tasks to the server
+    and start up workers. The tasks are given 15 seconds to be sent to the server. Once tasks
+    exist on the server, the workflow is given 30 seconds to run to completion, which should be
+    plenty of time.
+
+    Args:
+        redis_client: A fixture that connects us to a redis client that we can interact with.
+        workflow_path: The path to the study that we're going to run here
+        vars_to_substitute: A list of variables in the form ["VAR_NAME=var_value"] to be modified
+            in the workflow.
+
+    Returns:
+        The completed process object containing information about the execution of the workflow, including
+            return code, stdout, and stderr.
+    """
+    from merlin.celery import app as celery_app
+
+    run_workers_proc = None
+
+    with CeleryTaskManager(celery_app, redis_client) as CTM:
+        # Send the tasks to the server
+        try:
+            run_proc = subprocess.run(
+                f"merlin run {workflow_path} --vars {' '.join(vars_to_substitute)}",
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise TimeoutError("Could not send tasks to the server within the allotted time.") from exc
+
+        # We use a context manager to start workers so that they'll safely stop even if this test fails
+        with CeleryWorkersManager(celery_app) as CWM:
+            # Start the workers then add them to the context manager so they can be stopped safely later
+            run_workers_proc = subprocess.Popen(
+                f"merlin run-workers {workflow_path}".split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                start_new_session=True
+            )
+            CWM.add_run_workers_process(run_workers_proc.pid)
+
+            # Let the workflow try to run for 30 seconds
+            sleep(30)
+
+    return run_workers_proc

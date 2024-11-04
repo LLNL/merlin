@@ -3,14 +3,11 @@ Fixtures specifically for help testing the feature_demo workflow.
 """
 import os
 import subprocess
-from time import sleep
 
 import pytest
 
-from tests.context_managers.celery_task_manager import CeleryTaskManager
-from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.fixture_types import FixtureInt, FixtureModification, FixtureRedis, FixtureStr
-from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd, load_workers_from_spec
+from tests.integration.helper_funcs import copy_app_yaml_to_cwd, run_workflow
 
 
 @pytest.fixture(scope="session")
@@ -74,9 +71,7 @@ def feature_demo_run_workflow(
 
     This fixture sets up and executes the feature demo workflow using the specified configurations
     and parameters. It prepares the environment by modifying the CONFIG object to connect to a
-    Redis server and runs the demo workflow with the provided sample size and name. It utilizes
-    context managers to safely send tasks to the server and start up workers. The workflow is given
-    30 seconds to complete which should be plenty of time.
+    Redis server and runs the demo workflow with the provided sample size and name.
 
     Args:
         redis_client: A fixture that connects us to a redis client that we can interact with.
@@ -100,10 +95,7 @@ def feature_demo_run_workflow(
     Returns:
         The completed process object containing information about the execution of the workflow, including
             return code, stdout, and stderr.
-    """
-    # TODO might want to generalize the logic in this function into a new function that runs workflows
-    from merlin.celery import app as celery_app
-    
+    """    
     # Setup the test
     copy_app_yaml_to_cwd(merlin_server_dir)
     demo_workflow = os.path.join("examples", "workflows", "feature_demo", "feature_demo.yaml")
@@ -116,30 +108,5 @@ def feature_demo_run_workflow(
         f"OUTPUT_PATH={feature_demo_testing_dir}"
     ]
 
-    run_workers_proc = None
-
-    with CeleryTaskManager(celery_app, redis_client) as CTM:
-        # Send the tasks to the server
-        run_proc = subprocess.run(
-            f"merlin run {feature_demo_path} --vars {' '.join(vars_to_substitute)}",
-            shell=True,
-            capture_output=True,
-            text=True,
-        )
-
-        # We use a context manager to start workers so that they'll safely stop even if this test fails
-        with CeleryWorkersManager(celery_app) as CWM:
-            # Start the workers then add them to the context manager so they can be stopped safely later
-            run_workers_proc = subprocess.Popen(
-                f"merlin run-workers {feature_demo_path}".split(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                start_new_session=True
-            )
-            CWM.add_run_workers_process(run_workers_proc.pid)
-
-            # Let the workflow try to run for 30 seconds
-            sleep(30)
-
-    return run_workers_proc
+    # Run the workflow
+    return run_workflow(redis_client, feature_demo_path, vars_to_substitute)

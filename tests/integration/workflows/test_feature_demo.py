@@ -109,21 +109,22 @@ class TestFeatureDemo:
         for condition in conditions:
             assert condition.passes
 
-    def test_step_execution_order(self):
-        """
-        Test that steps are executed in the correct order.
-        """
-        # TODO build a list with the correct order that steps should be ran
-        # TODO compare the list against the logs from the worker
+    # TODO implement the below tests
+    # def test_step_execution_order(self):
+    #     """
+    #     Test that steps are executed in the correct order.
+    #     """
+    #     # TODO build a list with the correct order that steps should be ran
+    #     # TODO compare the list against the logs from the worker
 
-    def test_workflow_error_handling(self):
-        """
-        Test the behavior when errors arise during the worfklow.
+    # def test_workflow_error_handling(self):
+    #     """
+    #     Test the behavior when errors arise during the worfklow.
 
-        TODO should this test both soft and hard fails? should this test all return codes?
-        """
+    #     TODO should this test both soft and hard fails? should this test all return codes?
+    #     """
 
-    def test_data_passing(self):
-        """
-        Test that data can be successfully passed between steps using built-in Merlin variables.
-        """
+    # def test_data_passing(self):
+    #     """
+    #     Test that data can be successfully passed between steps using built-in Merlin variables.
+    #     """
