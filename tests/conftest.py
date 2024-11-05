@@ -35,7 +35,7 @@ import sys
 from copy import copy
 from glob import glob
 from time import sleep
-from typing import Dict
+from typing import Callable, Dict
 
 import pytest
 import yaml
@@ -167,6 +167,34 @@ def path_to_merlin_codebase() -> FixtureStr:
     """
     path_to_test_dir = os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__))))
     return os.path.join(path_to_test_dir, "..", "merlin")
+
+
+@pytest.fixture(scope="session")
+def create_testing_dir() -> Callable:
+    """
+    Fixture to create a temporary testing directory.
+
+    Returns:
+        A function that creates the testing directory.
+    """
+
+    def _create_testing_dir(base_dir: str, sub_dir: str) -> str:
+        """
+        Helper function to create a temporary testing directory.
+
+        Args:
+            base_dir: The base directory where the testing directory will be created.
+            sub_dir: The name of the subdirectory to create.
+
+        Returns:
+            The path to the created testing directory.
+        """
+        testing_dir = os.path.join(base_dir, sub_dir)
+        if not os.path.exists(testing_dir):
+            os.makedirs(testing_dir)  # Use makedirs to create intermediate directories if needed
+        return testing_dir
+    
+    return _create_testing_dir
 
 
 @pytest.fixture(scope="session")

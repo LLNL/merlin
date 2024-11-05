@@ -6,27 +6,24 @@ import subprocess
 
 import pytest
 
-from tests.fixture_types import FixtureInt, FixtureModification, FixtureRedis, FixtureStr
+from tests.fixture_types import FixtureCallable, FixtureInt, FixtureModification, FixtureRedis, FixtureStr
 from tests.integration.helper_funcs import copy_app_yaml_to_cwd, run_workflow
 
 
 @pytest.fixture(scope="session")
-def feature_demo_testing_dir(temp_output_dir: FixtureStr) -> FixtureStr:
+def feature_demo_testing_dir(create_testing_dir: FixtureCallable, temp_output_dir: FixtureStr) -> FixtureStr:
     """
     Fixture to create a temporary output directory for tests related to testing the
     feature_demo workflow.
 
     Args:
+        create_testing_dir: A fixture which returns a function that creates the testing directory.
         temp_output_dir: The path to the temporary ouptut directory we'll be using for this test run.
     
     Returns:
         The path to the temporary testing directory for feature_demo workflow tests.
     """
-    testing_dir = f"{temp_output_dir}/feature_demo_testing"
-    if not os.path.exists(testing_dir):
-        os.mkdir(testing_dir)
-
-    return testing_dir
+    return create_testing_dir(temp_output_dir, "feature_demo_testing")
 
 
 @pytest.fixture(scope="session")

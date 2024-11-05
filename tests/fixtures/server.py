@@ -9,25 +9,25 @@ from typing import Dict, Union
 import pytest
 import yaml
 
-from tests.fixture_types import FixtureDict, FixtureNamespace, FixtureStr
+from tests.fixture_types import FixtureCallable, FixtureDict, FixtureNamespace, FixtureStr
 
 
 # pylint: disable=redefined-outer-name
 
 
 @pytest.fixture(scope="session")
-def server_testing_dir(temp_output_dir: FixtureStr) -> FixtureStr:
+def server_testing_dir(create_testing_dir: FixtureCallable, temp_output_dir: FixtureStr) -> FixtureStr:
     """
     Fixture to create a temporary output directory for tests related to the server functionality.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    :returns: The path to the temporary testing directory for server tests
-    """
-    testing_dir = f"{temp_output_dir}/server_testing"
-    if not os.path.exists(testing_dir):
-        os.mkdir(testing_dir)
+    Args:
+        create_testing_dir: A fixture which returns a function that creates the testing directory.
+        temp_output_dir: The path to the temporary ouptut directory we'll be using for this test run.
 
-    return testing_dir
+    Returns:
+        The path to the temporary testing directory for server tests.
+    """
+    return create_testing_dir(temp_output_dir, "server_testing")
 
 
 @pytest.fixture(scope="session")

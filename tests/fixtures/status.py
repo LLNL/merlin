@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.fixture_types import FixtureNamespace, FixtureStr
+from tests.fixture_types import FixtureCallable, FixtureNamespace, FixtureStr
 from tests.unit.study.status_test_files import status_test_variables
 
 
@@ -19,18 +19,18 @@ from tests.unit.study.status_test_files import status_test_variables
 
 
 @pytest.fixture(scope="session")
-def status_testing_dir(temp_output_dir: FixtureStr) -> FixtureStr:
+def status_testing_dir(create_testing_dir: FixtureCallable, temp_output_dir: FixtureStr) -> FixtureStr:
     """
     A pytest fixture to set up a temporary directory to write files to for testing status.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    :returns: The path to the temporary testing directory for status testing
-    """
-    testing_dir = f"{temp_output_dir}/status_testing/"
-    if not os.path.exists(testing_dir):
-        os.mkdir(testing_dir)
+    Args:
+        create_testing_dir: A fixture which returns a function that creates the testing directory.
+        temp_output_dir: The path to the temporary ouptut directory we'll be using for this test run.
 
-    return testing_dir
+    Returns:
+        The path to the temporary testing directory for status tests.
+    """
+    return create_testing_dir(temp_output_dir, "status_testing")
 
 
 @pytest.fixture(scope="class")
