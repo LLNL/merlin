@@ -256,7 +256,7 @@ class StepFinishedFilesCount(StudyOutputAware):
         output_path: The output path of the study.
         num_parameters: The number of parameters for the step.
         num_samples: The number of samples for the step.
-        expected_count: The expected number of `MERLIN_FINISHED` files based on parameters and samples.
+        expected_count: The expected number of `MERLIN_FINISHED` files based on parameters and samples or explicitly set.
         glob_string: The glob pattern to find `MERLIN_FINISHED` files in the specified step's output directory.
         passes: Checks if the count of `MERLIN_FINISHED` files matches the expected count.
 
@@ -267,11 +267,12 @@ class StepFinishedFilesCount(StudyOutputAware):
         passes: Checks if the count of `MERLIN_FINISHED` files matches the expected count.
     """
 
-    def __init__(self, step: str, study_name: str, output_path: str, num_parameters: int = 0, num_samples: int = 0):
+    def __init__(self, step: str, study_name: str, output_path: str, num_parameters: int = 0, num_samples: int = 0, expected_count: int = None):
         super().__init__(study_name, output_path)
         self.step = step
         self.num_parameters = num_parameters
         self.num_samples = num_samples
+        self._expected_count = expected_count
 
     @property
     def expected_count(self) -> int:
@@ -281,14 +282,19 @@ class StepFinishedFilesCount(StudyOutputAware):
         Returns:
             The expected number of `MERLIN_FINISHED` files.
         """
+        # Return the explicitly set expected count if given
+        if self._expected_count is not None:
+            return self._expected_count  
+
+        # Otherwise calculate the correct number of MERLIN_FINISHED files to expect
         if self.num_parameters > 0 and self.num_samples > 0:
             return self.num_parameters * self.num_samples
-        elif self.num_parameters > 0:
+        if self.num_parameters > 0:
             return self.num_parameters
-        elif self.num_samples > 0:
+        if self.num_samples > 0:
             return self.num_samples
-        else:
-            return 1  # Default case when there are no parameters or samples
+
+        return 1  # Default case when there are no parameters or samples
 
     @property
     def glob_string(self) -> str:
