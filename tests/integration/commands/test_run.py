@@ -10,11 +10,14 @@ import subprocess
 from typing import Dict, Union
 
 from merlin.spec.expansion import get_spec_with_expansion
-from tests.fixture_data_classes import RedisBrokerAndBackend
 from tests.context_managers.celery_task_manager import CeleryTaskManager
-from tests.fixture_types import FixtureModification, FixtureRedis, FixtureStr
+from tests.fixture_data_classes import RedisBrokerAndBackend
+from tests.fixture_types import FixtureStr
 from tests.integration.conditions import HasReturnCode, PathExists
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd
+
+
+# pylint: disable=import-outside-toplevel,unused-argument
 
 
 class TestRunCommand:
@@ -209,7 +212,7 @@ class TestRunCommandDistributed(TestRunCommand):
             ]
             check_test_conditions(conditions, test_info)
 
-    def test_pgen_and_pargs_options(
+    def test_pgen_and_pargs_options(  # pylint: disable=too-many-locals
         self,
         redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
@@ -238,8 +241,7 @@ class TestRunCommandDistributed(TestRunCommand):
         from merlin.celery import app as celery_app
 
         # Setup test vars and the testing environment
-        new_x2_min, new_x2_max = 1, 2
-        new_n_new_min, new_n_new_max = 5, 15
+        bounds = {"X2": (1, 2), "N_NEW": (5, 15)}
         pgen_filepath = os.path.join(
             os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__)))), "pgen.py"
         )
@@ -248,7 +250,13 @@ class TestRunCommandDistributed(TestRunCommand):
         with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client):
             # Send tasks to the server
             test_info = self.run_merlin_command(
-                f'merlin run {feature_demo} --vars NAME=run_command_test_pgen_and_pargs_options --pgen {pgen_filepath} --parg "X2_MIN:{new_x2_min}" --parg "X2_MAX:{new_x2_max}" --parg "N_NAME_MIN:{new_n_new_min}" --parg "N_NAME_MAX:{new_n_new_max}"'
+                f"merlin run {feature_demo} "
+                "--vars NAME=run_command_test_pgen_and_pargs_options "
+                f"--pgen {pgen_filepath} "
+                f'--parg "X2_MIN:{bounds["X2"][0]}" '
+                f'--parg "X2_MAX:{bounds["X2"][1]}" '
+                f'--parg "N_NAME_MIN:{bounds["N_NEW"][0]}" '
+                f'--parg "N_NAME_MAX:{bounds["N_NEW"][1]}"'
             )
 
             # Check that the test ran properly and created the correct directories/files
@@ -258,12 +266,10 @@ class TestRunCommandDistributed(TestRunCommand):
             check_test_conditions(conditions, test_info)
 
             # Read in the parameters from the expanded yaml and ensure they're within the new bounds we provided
-            expanded_spec = get_spec_with_expansion(expanded_yaml)
-            params = expanded_spec.get_parameters()
-            for x2_param in params.parameters["X2"]:
-                assert new_x2_min <= x2_param <= new_x2_max
-            for n_new_param in params.parameters["N_NEW"]:
-                assert new_n_new_min <= n_new_param <= new_n_new_max
+            params = get_spec_with_expansion(expanded_yaml).get_parameters()
+            for param_name, (min_val, max_val) in bounds.items():
+                for param in params.parameters[param_name]:
+                    assert min_val <= param <= max_val
 
 
 class TestRunCommandLocal(TestRunCommand):
@@ -272,7 +278,7 @@ class TestRunCommandLocal(TestRunCommand):
     than in a distributed manner.
     """
 
-    def test_dry_run(
+    def test_dry_run(  # pylint: disable=too-many-locals
         self,
         redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
@@ -308,15 +314,10 @@ class TestRunCommandLocal(TestRunCommand):
 
         # Check that the test ran properly and created the correct directories/files
         expected_workspace_path = self.get_output_workspace_from_logs(test_info)
-        conditions = [
-            HasReturnCode(),
-            PathExists(expected_workspace_path),
-        ]
-        check_test_conditions(conditions, test_info)
+        check_test_conditions([HasReturnCode(), PathExists(expected_workspace_path)], test_info)
 
         # Check that every step was ran by looking for an existing output workspace
-        spec = get_spec_with_expansion(feature_demo)
-        for step in spec.get_study_steps():
+        for step in get_spec_with_expansion(feature_demo).get_study_steps():
             step_directory = os.path.join(expected_workspace_path, step.name)
             assert os.path.exists(step_directory), f"Output directory for step '{step.name}' not found: {step_directory}"
 
@@ -328,9 +329,10 @@ class TestRunCommandLocal(TestRunCommand):
                     unexpected_files = [
                         file for file in filenames if file not in allowed_dry_run_files and not file.endswith(".sh")
                     ]
-                    assert (
-                        not unexpected_files
-                    ), f"Unexpected files found in {dirpath}: {unexpected_files}. Expected only .sh files or {allowed_dry_run_files}."
+                    assert not unexpected_files, (
+                        f"Unexpected files found in {dirpath}: {unexpected_files}. "
+                        f"Expected only .sh files or {allowed_dry_run_files}."
+                    )
 
                     # Check that there is exactly one .sh file
                     sh_file_count = sum(1 for file in filenames if file.endswith(".sh"))
@@ -372,16 +374,10 @@ class TestRunCommandLocal(TestRunCommand):
 
         # Check that the test ran properly and created the correct directories/files
         expected_workspace_path = self.get_output_workspace_from_logs(test_info)
-
-        conditions = [
-            HasReturnCode(),
-            PathExists(expected_workspace_path),
-        ]
-        check_test_conditions(conditions, test_info)
+        check_test_conditions([HasReturnCode(), PathExists(expected_workspace_path)], test_info)
 
         # Check that every step was ran by looking for an existing output workspace and MERLIN_FINISHED files
-        spec = get_spec_with_expansion(feature_demo)
-        for step in spec.get_study_steps():
+        for step in get_spec_with_expansion(feature_demo).get_study_steps():
             step_directory = os.path.join(expected_workspace_path, step.name)
             assert os.path.exists(step_directory), f"Output directory for step '{step.name}' not found: {step_directory}"
             for dirpath, dirnames, filenames in os.walk(step_directory):
@@ -391,3 +387,6 @@ class TestRunCommandLocal(TestRunCommand):
                     assert (
                         "MERLIN_FINISHED" in filenames
                     ), f"Expected a MERLIN_FINISHED file in list of files for {dirpath} but did not find one"
+
+
+# pylint: enable=import-outside-toplevel,unused-argument

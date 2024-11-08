@@ -250,7 +250,7 @@ class TestInactive:
         This should return an empty list.
         """
         result = celeryadapter.get_running_queues("merlin_test_app", test_mode=True)
-        assert result == []
+        assert not result
 
     def test_get_active_celery_queues(self, celery_app: Celery):
         """
@@ -261,8 +261,8 @@ class TestInactive:
         :param `celery_app`: A pytest fixture for the test Celery app
         """
         queue_result, worker_result = celeryadapter.get_active_celery_queues(celery_app)
-        assert queue_result == {}
-        assert worker_result == []
+        assert not queue_result
+        assert not worker_result
 
     def test_check_celery_workers_processing_tasks(self, celery_app: Celery, worker_queue_map: Dict[str, str]):
         """
@@ -476,7 +476,7 @@ class TestInactive:
 
                 # Make sure the rest of the csv file was created as expected
                 dump_diff = DeepDiff(csv_dump_output, expected_output)
-                assert dump_diff == {}
+                assert not dump_diff
         finally:
             try:
                 os.remove(outfile)
@@ -513,7 +513,7 @@ class TestInactive:
             # There should only be one entry in the json dump file so this will only 'loop' once
             for dump_entry in json_df_contents.values():
                 json_dump_diff = DeepDiff(dump_entry, expected_output)
-                assert json_dump_diff == {}
+                assert not json_dump_diff
         finally:
             try:
                 os.remove(outfile)

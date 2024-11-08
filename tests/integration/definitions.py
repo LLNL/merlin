@@ -108,14 +108,12 @@ def define_tests():  # pylint: disable=R0914,R0915
     workers_lsf = get_worker_by_cmd("jsrun", workers)
     run = f"merlin {err_lvl} run"
     restart = f"merlin {err_lvl} restart"
-    purge = "merlin purge"
 
     # Shortcuts for example workflow paths
     examples = "merlin/examples/workflows"
     dev_examples = "merlin/examples/dev_workflows"
     test_specs = "tests/integration/test_specs"
     demo = f"{examples}/feature_demo/feature_demo.yaml"
-    remote_demo = f"{examples}/remote_feature_demo/remote_feature_demo.yaml"
     demo_pgen = f"{examples}/feature_demo/scripts/pgen.py"
     simple = f"{examples}/simple_chain/simple_chain.yaml"
     slurm = f"{test_specs}/slurm_test.yaml"
@@ -125,7 +123,6 @@ def define_tests():  # pylint: disable=R0914,R0915
     flux_native = f"{test_specs}/flux_par_native_test.yaml"
     lsf = f"{examples}/lsf/lsf_par.yaml"
     cli_substitution_wf = f"{test_specs}/cli_substitution_test.yaml"
-    chord_err_wf = f"{test_specs}/chord_err.yaml"
 
     # Other shortcuts
     black = "black --check --target-version py36"

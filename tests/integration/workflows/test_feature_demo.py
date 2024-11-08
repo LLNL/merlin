@@ -5,7 +5,6 @@ This module contains tests for the feature_demo workflow.
 import subprocess
 
 from tests.fixture_data_classes import FeatureDemoSetup
-from tests.fixture_types import FixtureInt, FixtureStr
 from tests.integration.conditions import ProvenanceYAMLFileHasRegex, StepFinishedFilesCount
 
 
@@ -14,7 +13,9 @@ class TestFeatureDemo:
     Tests for the feature_demo workflow.
     """
 
-    def test_end_to_end_run(self, feature_demo_setup: FeatureDemoSetup, feature_demo_run_workflow: subprocess.CompletedProcess):
+    def test_end_to_end_run(
+        self, feature_demo_setup: FeatureDemoSetup, feature_demo_run_workflow: subprocess.CompletedProcess
+    ):
         """
         Test that the workflow runs from start to finish with no problems.
 

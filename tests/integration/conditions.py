@@ -228,7 +228,7 @@ class StepFileHasRegex(StudyOutputAware):
             with open(filename, "r") as textfile:
                 filetext = textfile.read()
             return self.is_within(filetext)
-        except Exception:  # pylint: disable=W0718
+        except Exception:  # pylint: disable=broad-except
             return False
 
     def is_within(self, text):
@@ -267,7 +267,16 @@ class StepFinishedFilesCount(StudyOutputAware):
         passes: Checks if the count of `MERLIN_FINISHED` files matches the expected count.
     """
 
-    def __init__(self, step: str, study_name: str, output_path: str, num_parameters: int = 0, num_samples: int = 0, expected_count: int = None):
+    # All of these parameters are necessary for this Condition so we'll ignore pylint
+    def __init__(
+        self,
+        step: str,
+        study_name: str,
+        output_path: str,
+        num_parameters: int = 0,
+        num_samples: int = 0,
+        expected_count: int = None,
+    ):  # pylint: disable=too-many-arguments
         super().__init__(study_name, output_path)
         self.step = step
         self.num_parameters = num_parameters
@@ -278,13 +287,13 @@ class StepFinishedFilesCount(StudyOutputAware):
     def expected_count(self) -> int:
         """
         Calculate the expected number of `MERLIN_FINISHED` files.
-        
+
         Returns:
             The expected number of `MERLIN_FINISHED` files.
         """
         # Return the explicitly set expected count if given
         if self._expected_count is not None:
-            return self._expected_count  
+            return self._expected_count
 
         # Otherwise calculate the correct number of MERLIN_FINISHED files to expect
         if self.num_parameters > 0 and self.num_samples > 0:
@@ -300,7 +309,7 @@ class StepFinishedFilesCount(StudyOutputAware):
     def glob_string(self) -> str:
         """
         Glob pattern to find `MERLIN_FINISHED` files in the specified step's output directory.
-        
+
         Returns:
             A glob pattern to find `MERLIN_FINISHED` files.
         """
@@ -322,14 +331,17 @@ class StepFinishedFilesCount(StudyOutputAware):
     def passes(self) -> bool:
         """
         Check if the count of `MERLIN_FINISHED` files matches the expected count.
-        
+
         Returns:
             True if the expected count matches the actual count. False otherwise.
         """
         return self.count_finished_files() == self.expected_count
 
     def __str__(self) -> str:
-        return f"{__class__.__name__} expected {self.expected_count} `MERLIN_FINISHED` files, but found {self.count_finished_files()}"
+        return (
+            f"{__class__.__name__} expected {self.expected_count} `MERLIN_FINISHED` "
+            f"files, but found {self.count_finished_files()}"
+        )
 
 
 class ProvenanceYAMLFileHasRegex(HasRegex):
@@ -428,7 +440,7 @@ class FileHasRegex(Condition):
             with open(self.filename, "r") as f:  # pylint: disable=C0103
                 filetext = f.read()
             return self.is_within(filetext)
-        except Exception:  # pylint: disable=W0718
+        except Exception:  # pylint: disable=broad-except
             return False
 
     def is_within(self, text):

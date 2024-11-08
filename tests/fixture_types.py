@@ -15,18 +15,21 @@ The types here will be defined as such:
 - `FixtureSignature`: A fixture that returns a Celery Signature object
 - `FixtureStr`: A fixture that returns a string
 """
-import pytest
+
 from argparse import Namespace
+from typing import Annotated, Any, Callable, Dict, Tuple, TypeVar
+
+import pytest
 from celery import Celery
 from celery.canvas import Signature
 from redis import Redis
-from typing import Any, Annotated, Callable, Dict, Tuple, TypeVar
+
 
 # TODO convert unit test type hinting to use these
 # - likely will do this when I work on API docs for test library
 
-K = TypeVar('K')
-V = TypeVar('V')
+K = TypeVar("K")
+V = TypeVar("V")
 
 FixtureBytes = Annotated[bytes, pytest.fixture]
 FixtureCallable = Annotated[Callable, pytest.fixture]

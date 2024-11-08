@@ -2,14 +2,13 @@
 This module contains helper functions for the integration
 test suite.
 """
+
 import os
 import re
 import shutil
 import subprocess
 from time import sleep
 from typing import Dict, List
-
-import yaml
 
 from merlin.spec.expansion import get_spec_with_expansion
 from tests.context_managers.celery_task_manager import CeleryTaskManager
@@ -130,14 +129,14 @@ def run_workflow(redis_client: FixtureRedis, workflow_path: str, vars_to_substit
         The completed process object containing information about the execution of the workflow, including
             return code, stdout, and stderr.
     """
-    from merlin.celery import app as celery_app
+    from merlin.celery import app as celery_app  # pylint: disable=import-outside-toplevel
 
     run_workers_proc = None
 
-    with CeleryTaskManager(celery_app, redis_client) as CTM:
+    with CeleryTaskManager(celery_app, redis_client):
         # Send the tasks to the server
         try:
-            run_proc = subprocess.run(
+            subprocess.run(
                 f"merlin run {workflow_path} --vars {' '.join(vars_to_substitute)}",
                 shell=True,
                 capture_output=True,
@@ -148,16 +147,16 @@ def run_workflow(redis_client: FixtureRedis, workflow_path: str, vars_to_substit
             raise TimeoutError("Could not send tasks to the server within the allotted time.") from exc
 
         # We use a context manager to start workers so that they'll safely stop even if this test fails
-        with CeleryWorkersManager(celery_app) as CWM:
+        with CeleryWorkersManager(celery_app) as celery_worker_manager:
             # Start the workers then add them to the context manager so they can be stopped safely later
-            run_workers_proc = subprocess.Popen(
+            run_workers_proc = subprocess.Popen(  # pylint: disable=consider-using-with
                 f"merlin run-workers {workflow_path}".split(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                start_new_session=True
+                start_new_session=True,
             )
-            CWM.add_run_workers_process(run_workers_proc.pid)
+            celery_worker_manager.add_run_workers_process(run_workers_proc.pid)
 
             # Let the workflow try to run for 30 seconds
             sleep(30)

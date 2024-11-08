@@ -11,9 +11,9 @@ from typing import List
 
 import pytest
 
-from tests.fixture_data_classes import RedisBrokerAndBackend
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
-from tests.fixture_types import FixtureModification, FixtureStr
+from tests.fixture_data_classes import RedisBrokerAndBackend
+from tests.fixture_types import FixtureStr
 from tests.integration.conditions import Condition, HasRegex
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd, load_workers_from_spec
 
@@ -46,7 +46,7 @@ class TestStopAndQueryWorkersCommands:
     """
 
     @contextmanager
-    def run_test_with_workers(
+    def run_test_with_workers(  # pylint: disable=too-many-arguments
         self,
         path_to_test_specs: FixtureStr,
         merlin_server_dir: FixtureStr,

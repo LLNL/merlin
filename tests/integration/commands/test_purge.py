@@ -8,9 +8,9 @@ import subprocess
 from typing import Dict, List, Tuple, Union
 
 from merlin.spec.expansion import get_spec_with_expansion
-from tests.fixture_data_classes import RedisBrokerAndBackend
 from tests.context_managers.celery_task_manager import CeleryTaskManager
-from tests.fixture_types import FixtureModification, FixtureRedis, FixtureStr
+from tests.fixture_data_classes import RedisBrokerAndBackend
+from tests.fixture_types import FixtureRedis, FixtureStr
 from tests.integration.conditions import HasRegex, HasReturnCode
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd
 
@@ -228,7 +228,7 @@ class TestPurgeCommand:
             # Check that the Redis server still has no tasks
             self.check_queues(redis_broker_and_backend_function.client, queues_in_spec, expected_task_count=0)
 
-    def test_no_options_N(
+    def test_no_options_n(
         self,
         redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
@@ -342,7 +342,7 @@ class TestPurgeCommand:
 
         with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client) as celery_task_manager:
             # Send tasks to the server for every queue in the spec
-            queues_in_spec, num_queues = self.setup_tasks(celery_task_manager, feature_demo)
+            queues_in_spec, _ = self.setup_tasks(celery_task_manager, feature_demo)
 
             # Run the purge test
             steps_to_purge = ["hello", "collect"]
@@ -358,4 +358,6 @@ class TestPurgeCommand:
             check_test_conditions(conditions, test_info)
 
             # Check on the Redis queues to ensure they were not purged
-            self.check_queues(redis_broker_and_backend_function.client, queues_in_spec, expected_task_count=1, steps_to_purge=steps_to_purge)
+            self.check_queues(
+                redis_broker_and_backend_function.client, queues_in_spec, expected_task_count=1, steps_to_purge=steps_to_purge
+            )

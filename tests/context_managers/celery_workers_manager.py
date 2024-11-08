@@ -182,7 +182,7 @@ class CeleryWorkersManager:
         echo_process = subprocess.Popen(  # pylint: disable=consider-using-with
             f"echo 'celery -A merlin_test_app {' '.join(worker_launch_cmd)}'; sleep inf",
             shell=True,
-            preexec_fn=os.setpgrp,  # Make this the parent of the group so we can kill the 'sleep inf' that's spun up
+            start_new_session=True,  # Make this the parent of the group so we can kill the 'sleep inf' that's spun up
         )
         self.echo_processes[worker_name] = echo_process.pid
 
@@ -215,7 +215,7 @@ class CeleryWorkersManager:
         Add a process ID for a `merlin run-workers` process to the
         set that tracks all `merlin run-workers` processes that are
         currently running.
-        
+
         Warning:
             The process that's added here must utilize the
             `start_new_session=True` setting of subprocess.Popen. This

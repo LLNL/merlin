@@ -5,7 +5,6 @@ This module contains tests for the feature_demo workflow.
 import subprocess
 
 from tests.fixture_data_classes import ChordErrorSetup
-from tests.fixture_types import FixtureStr
 from tests.integration.conditions import HasRegex, StepFinishedFilesCount
 from tests.integration.helper_funcs import check_test_conditions
 

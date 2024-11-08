@@ -8,8 +8,11 @@ import subprocess
 import pytest
 
 from tests.fixture_data_classes import FeatureDemoSetup, RedisBrokerAndBackend
-from tests.fixture_types import FixtureCallable, FixtureInt, FixtureModification, FixtureRedis, FixtureStr
+from tests.fixture_types import FixtureCallable, FixtureInt, FixtureStr
 from tests.integration.helper_funcs import copy_app_yaml_to_cwd, run_workflow
+
+
+# pylint: disable=redefined-outer-name
 
 
 @pytest.fixture(scope="session")
@@ -65,18 +68,18 @@ def feature_demo_setup(
     Fixture for setting up the environment required for testing the feature demo workflow.
 
     This fixture prepares the necessary configuration and paths for executing tests related
-    to the feature demo workflow. It aggregates the required parameters into a single 
+    to the feature demo workflow. It aggregates the required parameters into a single
     [`FeatureDemoSetup`][fixture_data_classes.FeatureDemoSetup] data class instance, which
     simplifies the management of these parameters in tests.
 
     Args:
-        feature_demo_testing_dir: The path to the temporary output directory where 
+        feature_demo_testing_dir: The path to the temporary output directory where
             feature demo workflow tests will store their results.
-        feature_demo_num_samples: An integer representing the number of samples 
+        feature_demo_num_samples: An integer representing the number of samples
             to use in the feature demo workflow.
-        feature_demo_name: A string representing the name to use for the feature 
+        feature_demo_name: A string representing the name to use for the feature
             demo workflow.
-        path_to_merlin_codebase: The base path to the Merlin codebase, which is 
+        path_to_merlin_codebase: The base path to the Merlin codebase, which is
             used to locate the feature demo YAML file.
 
     Returns:

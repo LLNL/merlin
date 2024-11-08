@@ -8,8 +8,11 @@ import subprocess
 import pytest
 
 from tests.fixture_data_classes import ChordErrorSetup, RedisBrokerAndBackend
-from tests.fixture_types import FixtureCallable, FixtureModification, FixtureRedis, FixtureStr
+from tests.fixture_types import FixtureCallable, FixtureStr
 from tests.integration.helper_funcs import copy_app_yaml_to_cwd, run_workflow
+
+
+# pylint: disable=redefined-outer-name
 
 
 @pytest.fixture(scope="session")
@@ -51,7 +54,7 @@ def chord_err_setup(
     Fixture for setting up the environment required for testing the chord error workflow.
 
     This fixture prepares the necessary configuration and paths for executing tests related
-    to the chord error workflow. It aggregates the required parameters into a single 
+    to the chord error workflow. It aggregates the required parameters into a single
     [`ChordErrorSetup`][fixture_data_classes.ChordErrorSetup] data class instance, which
     simplifies the management of these parameters in tests.
 
@@ -59,7 +62,7 @@ def chord_err_setup(
         chord_err_testing_dir: The path to the temporary output directory where chord error
             workflow tests will store their results.
         chord_err_name: A string representing the name to use for the chord error workflow.
-        path_to_test_specs: The base path to the Merlin test specs directory, which is 
+        path_to_test_specs: The base path to the Merlin test specs directory, which is
             used to locate the chord error YAML file.
 
     Returns:

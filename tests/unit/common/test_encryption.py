@@ -89,7 +89,10 @@ class TestEncryption:
         assert key_gen_contents != ""
 
     def test_get_key(
-        self, merlin_server_dir: str, test_encryption_key: bytes, redis_results_backend_config_function: "fixture"  # noqa: F821
+        self,
+        merlin_server_dir: str,
+        test_encryption_key: bytes,
+        redis_results_backend_config_function: "fixture",  # noqa: F821
     ):
         """
         Test the `_get_key` function.

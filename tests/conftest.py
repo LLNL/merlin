@@ -35,24 +35,23 @@ import sys
 from copy import copy
 from glob import glob
 from time import sleep
-from typing import Callable, Dict
 
 import pytest
 import yaml
 from _pytest.tmpdir import TempPathFactory
 from celery import Celery
-from celery.canvas import Signature
 from redis import Redis
 
 from merlin.config.configfile import CONFIG
 from tests.constants import CERT_FILES, SERVER_PASS
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.context_managers.server_manager import RedisServerManager
+from tests.fixture_data_classes import RedisBrokerAndBackend
 from tests.fixture_types import (
     FixtureBytes,
+    FixtureCallable,
     FixtureCelery,
     FixtureDict,
-    FixtureInt,
     FixtureModification,
     FixtureRedis,
     FixtureSignature,
@@ -70,7 +69,7 @@ from tests.utils import create_cert_files, create_pass_file
 
 fixture_glob = os.path.join("tests", "fixtures", "**", "*.py")
 pytest_plugins = [
-    fixture_file.replace(os.sep, ".").replace(".py", "") 
+    fixture_file.replace(os.sep, ".").replace(".py", "")
     for fixture_file in glob(fixture_glob, recursive=True)
     if not fixture_file.endswith("__init__.py")
 ]
@@ -120,11 +119,11 @@ def setup_redis_config(config_type: str, merlin_server_dir: str):
     pass_file = os.path.join(merlin_server_dir, "redis.pass")
     create_pass_file(pass_file)
 
-    if config_type == 'broker':
+    if config_type == "broker":
         CONFIG.broker.password = pass_file
         CONFIG.broker.port = port
         CONFIG.broker.name = name
-    elif config_type == 'results_backend':
+    elif config_type == "results_backend":
         CONFIG.results_backend.password = pass_file
         CONFIG.results_backend.port = port
         CONFIG.results_backend.name = name
@@ -170,7 +169,7 @@ def path_to_merlin_codebase() -> FixtureStr:
 
 
 @pytest.fixture(scope="session")
-def create_testing_dir() -> Callable:
+def create_testing_dir() -> FixtureCallable:
     """
     Fixture to create a temporary testing directory.
 
@@ -193,7 +192,7 @@ def create_testing_dir() -> Callable:
         if not os.path.exists(testing_dir):
             os.makedirs(testing_dir)  # Use makedirs to create intermediate directories if needed
         return testing_dir
-    
+
     return _create_testing_dir
 
 
@@ -273,6 +272,7 @@ def redis_client(redis_server: FixtureStr) -> FixtureRedis:
             with the Redis server.
     """
     return Redis.from_url(url=redis_server)
+
 
 @pytest.fixture(scope="session")
 def celery_app(redis_server: FixtureStr) -> FixtureCelery:
@@ -372,7 +372,7 @@ def _config(merlin_server_dir: FixtureStr, test_encryption_key: FixtureBytes):
     Args:
         merlin_server_dir: The directory to the merlin test server configuration
         test_encryption_key: An encryption key to be used for testing
-    
+
     Yields:
         This function yields control back to the test function, allowing tests to run
             with the modified CONFIG settings.
@@ -433,12 +433,13 @@ def config_function(merlin_server_dir: FixtureStr, test_encryption_key: FixtureB
     Args:
         merlin_server_dir: The directory to the merlin test server configuration
         test_encryption_key: An encryption key to be used for testing
-    
+
     Yields:
         This function yields control back to the test function, allowing tests to run
             with the modified CONFIG settings.
     """
     yield from _config(merlin_server_dir, test_encryption_key)
+
 
 @pytest.fixture(scope="class")
 def config_class(merlin_server_dir: FixtureStr, test_encryption_key: FixtureBytes) -> FixtureModification:
@@ -601,3 +602,81 @@ def mysql_results_backend_config(
     CONFIG.results_backend.ca_certs = CERT_FILES["ssl_ca"]
 
     yield
+
+
+@pytest.fixture(scope="function")
+def redis_broker_and_backend_function(
+    redis_client: FixtureRedis,
+    redis_server: FixtureStr,
+    redis_broker_config_function: FixtureModification,
+    redis_results_backend_config_function: FixtureModification,
+):
+    """
+    Fixture for setting up Redis broker and backend for function-scoped tests.
+
+    This fixture creates an instance of `RedisBrokerAndBackend`, which
+    encapsulates all necessary Redis-related fixtures required for
+    establishing connections to Redis as both a broker and a backend
+    during function-scoped tests.
+
+    Args:
+        redis_client: A fixture that provides a client for interacting with the
+            Redis server.
+        redis_server: A fixture providing the connection string to the Redis
+            server instance.
+        redis_broker_config_function: A fixture that modifies the configuration
+            to point to the Redis server used as the message broker for
+            function-scoped tests.
+        redis_results_backend_config_function: A fixture that modifies the
+            configuration to point to the Redis server used for storing results
+            in function-scoped tests.
+
+    Returns:
+        An instance containing the Redis client, server connection string, and
+            configuration modifications for both the broker and backend.
+    """
+    return RedisBrokerAndBackend(
+        client=redis_client,
+        server=redis_server,
+        broker_config=redis_broker_config_function,
+        results_backend_config=redis_results_backend_config_function,
+    )
+
+
+@pytest.fixture(scope="class")
+def redis_broker_and_backend_class(
+    redis_client: FixtureRedis,
+    redis_server: FixtureStr,
+    redis_broker_config_class: FixtureModification,
+    redis_results_backend_config_class: FixtureModification,
+) -> RedisBrokerAndBackend:
+    """
+    Fixture for setting up Redis broker and backend for class-scoped tests.
+
+    This fixture creates an instance of `RedisBrokerAndBackend`, which
+    encapsulates all necessary Redis-related fixtures required for
+    establishing connections to Redis as both a broker and a backend
+    during class-scoped tests.
+
+    Args:
+        redis_client: A fixture that provides a client for interacting with the
+            Redis server.
+        redis_server: A fixture providing the connection string to the Redis
+            server instance.
+        redis_broker_config_function: A fixture that modifies the configuration
+            to point to the Redis server used as the message broker for
+            class-scoped tests.
+        redis_results_backend_config_function: A fixture that modifies the
+            configuration to point to the Redis server used for storing results
+            in class-scoped tests.
+
+    Returns:
+        An instance containing the Redis client, server connection string, and
+            configuration modifications for both the broker and backend.
+    """
+    return RedisBrokerAndBackend(
+        client=redis_client,
+        server=redis_server,
+        broker_config=redis_broker_config_class,
+        results_backend_config=redis_results_backend_config_class,
+    )

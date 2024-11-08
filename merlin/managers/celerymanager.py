@@ -130,7 +130,6 @@ class CeleryManager:
 
         # Start the worker again with the args saved in redis db
         with self.get_worker_args_redis_connection() as worker_args_connect, self.get_worker_status_redis_connection() as worker_status_connect:
-
             # Get the args and remove the worker_cmd from the hash set
             args = worker_args_connect.hgetall(worker)
             worker_cmd = args["worker_cmd"]

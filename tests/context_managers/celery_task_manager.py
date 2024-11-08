@@ -2,6 +2,7 @@
 Module to define functionality for sending tasks to the server
 and ensuring they're cleared from the server when the test finishes.
 """
+
 from types import TracebackType
 from typing import List, Type
 
@@ -67,14 +68,42 @@ class CeleryTaskManager:
                 task that was sent to the server.
         """
         valid_kwargs = [
-            'add_to_parent', 'chain', 'chord', 'compression', 'connection',
-            'countdown', 'eta', 'exchange', 'expires', 'group_id',
-            'group_index', 'headers', 'ignore_result', 'link', 'link_error',
-            'parent_id', 'priority', 'producer', 'publisher', 'queue',
-            'replaced_task_nesting', 'reply_to', 'result_cls', 'retries',
-            'retry', 'retry_policy', 'root_id', 'route_name', 'router',
-            'routing_key', 'serializer', 'shadow', 'soft_time_limit', 'task_id',
-            'task_type', 'time_limit'
+            "add_to_parent",
+            "chain",
+            "chord",
+            "compression",
+            "connection",
+            "countdown",
+            "eta",
+            "exchange",
+            "expires",
+            "group_id",
+            "group_index",
+            "headers",
+            "ignore_result",
+            "link",
+            "link_error",
+            "parent_id",
+            "priority",
+            "producer",
+            "publisher",
+            "queue",
+            "replaced_task_nesting",
+            "reply_to",
+            "result_cls",
+            "retries",
+            "retry",
+            "retry_policy",
+            "root_id",
+            "route_name",
+            "router",
+            "routing_key",
+            "serializer",
+            "shadow",
+            "soft_time_limit",
+            "task_id",
+            "task_type",
+            "time_limit",
         ]
         send_task_kwargs = {key: kwargs.pop(key) for key in valid_kwargs if key in kwargs}
 
@@ -117,7 +146,7 @@ class CeleryTaskManager:
             queues.extend(matching_queues)
 
             # Get any queues that start with '[merlin]'
-            cursor, matching_queues = self.redis_client.scan(cursor=cursor, match="\[merlin\]*")
+            cursor, matching_queues = self.redis_client.scan(cursor=cursor, match="\\[merlin\\]*")
             queues.extend(matching_queues)
 
             if cursor == 0:

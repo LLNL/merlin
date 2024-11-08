@@ -1,6 +1,7 @@
 """
 This module houses dataclasses to be used with pytest fixtures.
 """
+
 from dataclasses import dataclass
 
 from tests.fixture_types import FixtureInt, FixtureModification, FixtureRedis, FixtureStr
@@ -9,11 +10,11 @@ from tests.fixture_types import FixtureInt, FixtureModification, FixtureRedis, F
 @dataclass
 class RedisBrokerAndBackend:
     """
-    Data class to encapsulate all Redis-related fixtures required for 
+    Data class to encapsulate all Redis-related fixtures required for
     establishing connections to Redis for both the broker and backend.
 
-    This class simplifies the management of Redis fixtures by grouping 
-    them into a single object, reducing the number of individual fixture 
+    This class simplifies the management of Redis fixtures by grouping
+    them into a single object, reducing the number of individual fixture
     imports needed in tests that require Redis functionality.
 
     Attributes:
@@ -27,6 +28,7 @@ class RedisBrokerAndBackend:
             configuration to point to the Redis server used for storing
             results.
     """
+
     client: FixtureRedis
     server: FixtureStr
     results_backend_config: FixtureModification
@@ -50,6 +52,7 @@ class FeatureDemoSetup:
         name: A string representing the name to use for the feature_demo workflow.
         path: The path to the feature demo YAML file.
     """
+
     testing_dir: FixtureStr
     num_samples: FixtureInt
     name: FixtureStr
@@ -71,6 +74,7 @@ class ChordErrorSetup:
         name: A string representing the name to use for the chord_err workflow.
         path: The path to the chord error YAML file.
     """
+
     testing_dir: FixtureStr
     name: FixtureStr
     path: FixtureStr

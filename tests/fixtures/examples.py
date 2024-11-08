@@ -2,9 +2,6 @@
 Fixtures specifically for help testing the modules in the examples/ directory.
 """
 
-import os
-from typing import Callable
-
 import pytest
 
 from tests.fixture_types import FixtureCallable, FixtureStr

@@ -1,7 +1,6 @@
 """
 Fixtures specifically for help testing the `merlin run` command.
 """
-import os
 
 import pytest
 
@@ -17,7 +16,7 @@ def run_command_testing_dir(create_testing_dir: FixtureCallable, temp_output_dir
     Args:
         create_testing_dir: A fixture which returns a function that creates the testing directory.
         temp_output_dir: The path to the temporary ouptut directory we'll be using for this test run.
-    
+
     Returns:
         The path to the temporary testing directory for `merlin run` tests.
     """
