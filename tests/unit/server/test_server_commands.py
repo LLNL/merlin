@@ -16,7 +16,7 @@ from merlin.server.server_commands import (
     init_server,
     restart_server,
     server_started,
-    start_redis_container,
+    start_container,
     start_server,
     status_server,
     stop_server,
@@ -249,14 +249,14 @@ def test_check_for_not_running_server(
         assert expected_log_msg in caplog.text
 
 
-def test_start_redis_container_invalid_image_path(
+def test_start_container_invalid_image_path(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
     server_testing_dir: str,
     server_server_config: Dict[str, Dict[str, str]],
 ):
     """
-    Test the `start_redis_container` function with a nonexistent image path.
+    Test the `start_container` function with a nonexistent image path.
     This should log an error and return None.
 
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
@@ -266,25 +266,25 @@ def test_start_redis_container_invalid_image_path(
     """
     image_file = "nonexistent.image"
     server_server_config["container"]["image"] = image_file
-    server_server_config["container"]["config"] = "start_redis_container.config"
+    server_server_config["container"]["config"] = "start_container.config"
 
     # Create the config path so we ensure it exists
     config_path = f"{server_testing_dir}/{server_server_config['container']['config']}"
     with open(config_path, "w"):
         pass
 
-    assert start_redis_container(ServerConfig(server_server_config)) is None
+    assert start_container(ServerConfig(server_server_config)) is None
     assert f"Unable to find image at {os.path.join(server_testing_dir, image_file)}" in caplog.text
 
 
-def test_start_redis_container_invalid_config_path(
+def test_start_container_invalid_config_path(
     mocker: "Fixture",  # noqa: F821
     caplog: "Fixture",  # noqa: F821
     server_testing_dir: str,
     server_server_config: Dict[str, Dict[str, str]],
 ):
     """
-    Test the `start_redis_container` function with a nonexistent config path.
+    Test the `start_container` function with a nonexistent config path.
     This should log an error and return None.
 
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
@@ -293,7 +293,7 @@ def test_start_redis_container_invalid_config_path(
     :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
     """
     config_file = "nonexistent.config"
-    server_server_config["container"]["image"] = "start_redis_container.image"
+    server_server_config["container"]["image"] = "start_container.image"
     server_server_config["container"]["config"] = config_file
 
     # Create the config path so we ensure it exists
@@ -301,13 +301,13 @@ def test_start_redis_container_invalid_config_path(
     with open(image_path, "w"):
         pass
 
-    assert start_redis_container(ServerConfig(server_server_config)) is None
+    assert start_container(ServerConfig(server_server_config)) is None
     assert f"Unable to find config file at {os.path.join(server_testing_dir, config_file)}" in caplog.text
 
 
-def test_start_redis_container_valid_paths(mocker: "Fixture", server_server_config: Dict[str, Dict[str, str]]):  # noqa: F821
+def test_start_container_valid_paths(mocker: "Fixture", server_server_config: Dict[str, Dict[str, str]]):  # noqa: F821
     """
-    Test the `start_redis_container` function with valid image and config paths.
+    Test the `start_container` function with valid image and config paths.
     This should return a subprocess.
 
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
@@ -316,7 +316,7 @@ def test_start_redis_container_valid_paths(mocker: "Fixture", server_server_conf
     expected_return = "fake subprocess"
     mocker.patch("subprocess.Popen", return_value=expected_return)
     mocker.patch("os.path.exists", return_value=True)
-    assert start_redis_container(ServerConfig(server_server_config)) == expected_return
+    assert start_container(ServerConfig(server_server_config)) == expected_return
 
 
 def test_server_started_no_redis_start(mocker: "Fixture", caplog: "Fixture"):  # noqa: F821
@@ -453,7 +453,7 @@ def test_start_server_redis_container_startup_fail(mocker: "Fixture"):  # noqa: 
     """
     mocker.patch("merlin.server.server_commands.check_for_not_running_server", return_value=True)
     mocker.patch("merlin.server.server_commands.pull_server_config", return_value=True)
-    mocker.patch("merlin.server.server_commands.start_redis_container", return_value=None)
+    mocker.patch("merlin.server.server_commands.start_container", return_value=None)
     assert not start_server()
 
 
@@ -465,7 +465,7 @@ def test_start_server_server_did_not_start(mocker: "Fixture"):  # noqa: F821
     """
     mocker.patch("merlin.server.server_commands.check_for_not_running_server", return_value=True)
     mocker.patch("merlin.server.server_commands.pull_server_config", return_value=True)
-    mocker.patch("merlin.server.server_commands.start_redis_container", return_value=True)
+    mocker.patch("merlin.server.server_commands.start_container", return_value=True)
     mocker.patch("merlin.server.server_commands.server_started", return_value=False)
     assert not start_server()
 
@@ -486,7 +486,7 @@ def test_start_server_successful_start(
     """
     mocker.patch("merlin.server.server_commands.check_for_not_running_server", return_value=True)
     mocker.patch("merlin.server.server_commands.pull_server_config", return_value=ServerConfig(server_server_config))
-    mocker.patch("merlin.server.server_commands.start_redis_container", return_value=True)
+    mocker.patch("merlin.server.server_commands.start_container", return_value=True)
     mocker.patch("merlin.server.server_commands.server_started", return_value=True)
     mocker.patch("merlin.server.server_commands.RedisUsers")
     mocker.patch("merlin.server.server_commands.RedisConfig")

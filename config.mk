@@ -18,7 +18,7 @@ else
 endif
 
 VER?=1.0.0
-VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+
+VSTRING=[0-9]\+\.[0-9]\+\.[0-9]\+\(b[0-9]\+\)\?
 YEAR=20[0-9][0-9]
 NEW_YEAR?=2023
 CHANGELOG_VSTRING="## \[$(VSTRING)\]"

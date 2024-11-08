@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -203,12 +203,12 @@ def check_for_not_running_server() -> bool:
     return True
 
 
-def start_redis_container(server_config: ServerConfig) -> subprocess.Popen:
+def start_container(server_config: ServerConfig) -> subprocess.Popen:
     """
-    Given a server configuration, use it to start up a container that hosts redis.
+    Given a server configuration, use it to start up a container.
 
-    :param server_config: The ServerConfig instance that holds information about the redis server to start
-    :returns: A subprocess started with subprocess.Popen that's executing the command to start the container
+    :param server_config: The ServerConfig instance that holds information about the server to start.
+    :returns: A subprocess started with subprocess.Popen that's executing the command to start the container.
     """
     image_path = server_config.container.get_image_path()
     config_path = server_config.container.get_config_path()
@@ -245,9 +245,9 @@ def start_redis_container(server_config: ServerConfig) -> subprocess.Popen:
 
 def server_started(process: subprocess.Popen, server_config: ServerConfig) -> bool:
     """
-    Check that the server spun up by `start_redis_container` was started properly.
+    Check that the server spun up by `start_container` was started properly.
 
-    :param process: The subprocess that was started by `start_redis_container`
+    :param process: The subprocess that was started by `start_container`
     :param server_config: The ServerConfig instance that holds information about the redis server to start
     :returns: True if the server started properly. False otherwise.
     """
@@ -288,7 +288,7 @@ def start_server() -> bool:  # pylint: disable=R0911
         LOG.error('Try to run "merlin server init" again to reinitialize values.')
         return False
 
-    process = start_redis_container(server_config)
+    process = start_container(server_config)
     if process is None:
         return False
 

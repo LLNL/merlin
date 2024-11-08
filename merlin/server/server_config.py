@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -136,12 +136,12 @@ def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
     return False, "Reached end of redis output without seeing 'Ready to accept connections'"
 
 
-def write_container_command_files(config_dir: str) -> bool:
+def copy_container_command_files(config_dir: str) -> bool:
     """
-    Write the yaml files that contain instructions on how to
-    run certain commands for each container type.
+    Copy the yaml files that contain instructions on how to run certain commands
+    for each container type to the config directory.
 
-    :param config_dir: The path to the configuration dir where we'll write files
+    :param config_dir: The path to the configuration dir where we'll copy files.
     :returns: True if successful. False otherwise.
     """
     files = [i + ".yaml" for i in CONTAINER_TYPES]
@@ -183,7 +183,7 @@ def create_server_config() -> bool:
             LOG.error(err)
             return False
 
-    if not write_container_command_files(config_dir):
+    if not copy_container_command_files(config_dir):
         return False
 
     # Load Merlin Server Configuration and apply it to app.yaml

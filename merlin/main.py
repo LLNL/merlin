@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -455,7 +455,14 @@ def process_server(args: Namespace):
     Route to the correct function based on the command
     given via the CLI
     """
-    os.environ["LC_ALL"] = "C"  # Necessary for Redis to configure LOCALE
+    try:
+        lc_all_val = os.environ["LC_ALL"]
+        if lc_all_val != "C":
+            raise ValueError(f"The 'LC_ALL' environment variable is currently set to {lc_all_val} but it must be set to 'C'.")
+    except KeyError:
+        LOG.debug("The 'LC_ALL' environment variable was not set. Setting this to 'C'.")
+        os.environ["LC_ALL"] = "C"  # Necessary for Redis to configure LOCALE
+
     if args.commands == "init":
         init_server()
     elif args.commands == "start":
