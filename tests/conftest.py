@@ -176,24 +176,6 @@ def create_testing_dir() -> FixtureCallable:
     Returns:
         A function that creates the testing directory.
     """
-    if not os.path.exists(key_filepath):
-        with open(key_filepath, "w") as key_file:
-            key_file.write(encryption_key.decode("utf-8"))
-
-    if app_yaml_filepath is not None:
-        # Load up the app.yaml that was created by starting the server
-        with open(app_yaml_filepath, "r") as app_yaml_file:
-            app_yaml = yaml.load(app_yaml_file, yaml.Loader)
-
-        # Modify the path to the encryption key and then save it
-        app_yaml["results_backend"]["encryption_key"] = key_filepath
-        with open(app_yaml_filepath, "w") as app_yaml_file:
-            yaml.dump(app_yaml, app_yaml_file)
-
-
-#######################################
-######### Fixture Definitions #########
-#######################################
 
     def _create_testing_dir(base_dir: str, sub_dir: str) -> str:
         """
