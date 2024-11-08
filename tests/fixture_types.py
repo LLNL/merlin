@@ -56,14 +56,12 @@ else:
         This class is necessary to allow FixtureDict to be subscriptable
         when using it to type hint.
         """
-        pass
 
     class FixtureTuple(Generic[K, V], Tuple[K, V]):
         """
         This class is necessary to allow FixtureTuple to be subscriptable
         when using it to type hint.
         """
-        pass
 
     FixtureBytes = pytest.fixture
     FixtureCallable = pytest.fixture
