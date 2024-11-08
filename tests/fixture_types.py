@@ -16,8 +16,10 @@ The types here will be defined as such:
 - `FixtureStr`: A fixture that returns a string
 """
 
+import sys
 from argparse import Namespace
-from typing import Annotated, Any, Callable, Dict, Tuple, TypeVar
+from collections.abc import Callable
+from typing import Any, Dict, Generic, Tuple, TypeVar
 
 import pytest
 from celery import Celery
@@ -31,14 +33,38 @@ from redis import Redis
 K = TypeVar("K")
 V = TypeVar("V")
 
-FixtureBytes = Annotated[bytes, pytest.fixture]
-FixtureCallable = Annotated[Callable, pytest.fixture]
-FixtureCelery = Annotated[Celery, pytest.fixture]
-FixtureDict = Annotated[Dict[K, V], pytest.fixture]
-FixtureInt = Annotated[int, pytest.fixture]
-FixtureModification = Annotated[Any, pytest.fixture]
-FixtureNamespace = Annotated[Namespace, pytest.fixture]
-FixtureRedis = Annotated[Redis, pytest.fixture]
-FixtureSignature = Annotated[Signature, pytest.fixture]
-FixtureStr = Annotated[str, pytest.fixture]
-FixtureTuple = Annotated[Tuple[K, V], pytest.fixture]
+# TODO when we drop support for Python 3.8, remove this if/else statement
+# Check Python version
+if sys.version_info >= (3, 9):
+    from typing import Annotated
+
+    FixtureBytes = Annotated[bytes, pytest.fixture]
+    FixtureCallable = Annotated[Callable, pytest.fixture]
+    FixtureCelery = Annotated[Celery, pytest.fixture]
+    FixtureDict = Annotated[Dict[K, V], pytest.fixture]
+    FixtureInt = Annotated[int, pytest.fixture]
+    FixtureModification = Annotated[Any, pytest.fixture]
+    FixtureNamespace = Annotated[Namespace, pytest.fixture]
+    FixtureRedis = Annotated[Redis, pytest.fixture]
+    FixtureSignature = Annotated[Signature, pytest.fixture]
+    FixtureStr = Annotated[str, pytest.fixture]
+    FixtureTuple = Annotated[Tuple[K, V], pytest.fixture]
+else:
+    # Fallback for Python 3.7 and 3.8
+    class FixtureDict(Generic[K, V], Dict[K, V]):
+        pass
+
+    class FixtureTuple(Generic[K, V], Tuple[K, V]):
+        pass
+
+    FixtureBytes = pytest.fixture
+    FixtureCallable = pytest.fixture
+    FixtureCelery = pytest.fixture
+    FixtureDict = FixtureDict
+    FixtureInt = pytest.fixture
+    FixtureModification = pytest.fixture
+    FixtureNamespace = pytest.fixture
+    FixtureRedis = pytest.fixture
+    FixtureSignature = pytest.fixture
+    FixtureStr = Fixture
+    FixtureTuple = pytest.fixture
