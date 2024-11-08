@@ -19,13 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Equality method to the `ContainerFormatConfig` and `ContainerConfig` objects from `merlin/server/server_util.py`
 - Added additional tests for the `merlin run` and `merlin purge` commands
 - Aliased types to represent different types of pytest fixtures
+- New test condition `StepFinishedFilesCount` to help search for `MERLIN_FINISHED` files in output workspaces
+- Added "Unit-tests" GitHub action to run the unit test suite
 
 ### Changed
 - Split the `start_server` and `config_server` functions of `merlin/server/server_commands.py` into multiple functions to make testing easier
 - Split the `create_server_config` function of `merlin/server/server_config.py` into two functions to make testing easier
 - Combined `set_snapshot_seconds` and `set_snapshot_changes` methods of `RedisConfig` into one method `set_snapshot`
-- Moved stop-workers and query-workers integration tests to pytest tests
-- Ported `run and purge feature demo` test to pytest
+- Ported all distributed tests of the integration test suite to pytest
+  - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
+  - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
 
 ## [1.12.2b1]
 ### Added
