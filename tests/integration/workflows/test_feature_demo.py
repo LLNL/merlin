@@ -2,6 +2,7 @@
 This module contains tests for the feature_demo workflow.
 """
 
+import shutil
 import subprocess
 
 from tests.fixture_data_classes import FeatureDemoSetup
@@ -43,13 +44,6 @@ class TestFeatureDemo:
                 output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
                 num_samples=feature_demo_setup.num_samples,
-            ),
-            StepFinishedFilesCount(
-                step="python2_hello",
-                study_name=feature_demo_setup.name,
-                output_path=feature_demo_setup.testing_dir,
-                num_parameters=1,
-                num_samples=0,
             ),
             StepFinishedFilesCount(
                 step="python3_hello",
@@ -101,6 +95,19 @@ class TestFeatureDemo:
                 num_samples=0,
             ),
         ]
+
+        # GitHub actions doesn't have a python2 path so we'll conditionally add this check
+        if shutil.which("python2"):
+            conditions.append(
+                StepFinishedFilesCount(
+                    step="python2_hello",
+                    study_name=feature_demo_setup.name,
+                    output_path=feature_demo_setup.testing_dir,
+                    num_parameters=1,
+                    num_samples=0,
+                )
+            )
+
         for condition in conditions:
             assert condition.passes
 
