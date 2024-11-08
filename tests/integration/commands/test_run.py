@@ -6,6 +6,7 @@ for the `merlin run` command.
 import csv
 import os
 import re
+import shutil
 import subprocess
 from typing import Dict, Union
 
@@ -13,7 +14,7 @@ from merlin.spec.expansion import get_spec_with_expansion
 from tests.context_managers.celery_task_manager import CeleryTaskManager
 from tests.fixture_data_classes import RedisBrokerAndBackend
 from tests.fixture_types import FixtureStr
-from tests.integration.conditions import HasReturnCode, PathExists
+from tests.integration.conditions import HasReturnCode, PathExists, StepFinishedFilesCount
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd
 
 
@@ -368,25 +369,99 @@ class TestRunCommandLocal(TestRunCommand):
 
         # Run the test and grab the output workspace generated from it
         study_name = "run_command_test_local_run"
+        num_samples = 8
         test_info = self.run_merlin_command(
-            f"merlin run {feature_demo} --vars NAME={study_name} OUTPUT_PATH={run_command_testing_dir} --local"
+            f"merlin run {feature_demo} --vars NAME={study_name} OUTPUT_PATH={run_command_testing_dir} N_SAMPLES={num_samples} --local"
         )
 
         # Check that the test ran properly and created the correct directories/files
         expected_workspace_path = self.get_output_workspace_from_logs(test_info)
-        check_test_conditions([HasReturnCode(), PathExists(expected_workspace_path)], test_info)
+        conditions = [
+            HasReturnCode(),
+            PathExists(expected_workspace_path),
+            StepFinishedFilesCount(  # The rest of the conditions will ensure every step ran to completion
+                step="hello",
+                study_name=study_name,
+                output_path=run_command_testing_dir,
+                num_parameters=1,
+                num_samples=num_samples,
+            ),
+            StepFinishedFilesCount(
+                step="python3_hello",
+                study_name=study_name,
+                output_path=run_command_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="collect",
+                study_name=study_name,
+                output_path=run_command_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="translate",
+                study_name=study_name,
+                output_path=run_command_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="learn",
+                study_name=study_name,
+                output_path=run_command_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="make_new_samples",
+                study_name=study_name,
+                output_path=run_command_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="predict",
+                study_name=study_name,
+                output_path=run_command_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+            StepFinishedFilesCount(
+                step="verify",
+                study_name=study_name,
+                output_path=run_command_testing_dir,
+                num_parameters=1,
+                num_samples=0,
+            ),
+        ]
 
-        # Check that every step was ran by looking for an existing output workspace and MERLIN_FINISHED files
-        for step in get_spec_with_expansion(feature_demo).get_study_steps():
-            step_directory = os.path.join(expected_workspace_path, step.name)
-            assert os.path.exists(step_directory), f"Output directory for step '{step.name}' not found: {step_directory}"
-            for dirpath, dirnames, filenames in os.walk(step_directory):
-                # Check if the current directory has no subdirectories (leaf directory)
-                if not dirnames:
-                    # Check for the existence of the MERLIN_FINISHED file
-                    assert (
-                        "MERLIN_FINISHED" in filenames
-                    ), f"Expected a MERLIN_FINISHED file in list of files for {dirpath} but did not find one"
+        # GitHub actions doesn't have a python2 path so we'll conditionally add this check
+        if shutil.which("python2"):
+            conditions.append(
+                StepFinishedFilesCount(
+                    step="python2_hello",
+                    study_name=study_name,
+                    output_path=run_command_testing_dir,
+                    num_parameters=1,
+                    num_samples=0,
+                )
+            )
+
+        check_test_conditions(conditions, test_info)
+
+        # # Check that every step was ran by looking for an existing output workspace and MERLIN_FINISHED files
+        # for step in get_spec_with_expansion(feature_demo).get_study_steps():
+        #     step_directory = os.path.join(expected_workspace_path, step.name)
+        #     assert os.path.exists(step_directory), f"Output directory for step '{step.name}' not found: {step_directory}"
+        #     for dirpath, dirnames, filenames in os.walk(step_directory):
+        #         # Check if the current directory has no subdirectories (leaf directory)
+        #         if not dirnames:
+        #             # Check for the existence of the MERLIN_FINISHED file
+        #             assert (
+        #                 "MERLIN_FINISHED" in filenames
+        #             ), f"Expected a MERLIN_FINISHED file in list of files for {dirpath} but did not find one"
 
 
 # pylint: enable=import-outside-toplevel,unused-argument
