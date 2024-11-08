@@ -1,8 +1,10 @@
 """
 This module contains tests for the feature_demo workflow.
 """
+
 import subprocess
 
+from tests.fixture_data_classes import FeatureDemoSetup
 from tests.fixture_types import FixtureInt, FixtureStr
 from tests.integration.conditions import ProvenanceYAMLFileHasRegex, StepFinishedFilesCount
 
@@ -12,13 +14,7 @@ class TestFeatureDemo:
     Tests for the feature_demo workflow.
     """
 
-    def test_end_to_end_run(
-        self,
-        feature_demo_testing_dir: FixtureStr,
-        feature_demo_num_samples: FixtureInt,
-        feature_demo_name: FixtureStr,
-        feature_demo_run_workflow: subprocess.CompletedProcess,
-    ):
+    def test_end_to_end_run(self, feature_demo_setup: FeatureDemoSetup, feature_demo_run_workflow: subprocess.CompletedProcess):
         """
         Test that the workflow runs from start to finish with no problems.
 
@@ -28,80 +24,78 @@ class TestFeatureDemo:
         fixture.
 
         Args:
-            feature_demo_testing_dir: The directory containing the output of the feature
-                demo run.
-            feature_demo_num_samples: The number of samples we give to the feature demo run.
-            feature_demo_name: The name of the feature demo study.
+            feature_demo_setup: A fixture that returns a
+                [`FeatureDemoSetup`][fixture_data_classes.FeatureDemoSetup] instance.
             feature_demo_run_workflow: A fixture to run the feature demo study.
         """
         conditions = [
             ProvenanceYAMLFileHasRegex(  # This condition will check that variable substitution worked
-                regex=f"N_SAMPLES: {feature_demo_num_samples}",
+                regex=f"N_SAMPLES: {feature_demo_setup.num_samples}",
                 spec_file_name="feature_demo",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 provenance_type="expanded",
             ),
             StepFinishedFilesCount(  # The rest of the conditions will ensure every step ran to completion
                 step="hello",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
-                num_samples=feature_demo_num_samples,
+                num_samples=feature_demo_setup.num_samples,
             ),
             StepFinishedFilesCount(
                 step="python2_hello",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
                 num_samples=0,
             ),
             StepFinishedFilesCount(
                 step="python3_hello",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
                 num_samples=0,
             ),
             StepFinishedFilesCount(
                 step="collect",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
                 num_samples=0,
             ),
             StepFinishedFilesCount(
                 step="translate",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
                 num_samples=0,
             ),
             StepFinishedFilesCount(
                 step="learn",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
                 num_samples=0,
             ),
             StepFinishedFilesCount(
                 step="make_new_samples",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
                 num_samples=0,
             ),
             StepFinishedFilesCount(
                 step="predict",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
                 num_samples=0,
             ),
             StepFinishedFilesCount(
                 step="verify",
-                study_name=feature_demo_name,
-                output_path=feature_demo_testing_dir,
+                study_name=feature_demo_setup.name,
+                output_path=feature_demo_setup.testing_dir,
                 num_parameters=1,
                 num_samples=0,
             ),

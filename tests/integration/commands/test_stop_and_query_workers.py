@@ -11,13 +11,14 @@ from typing import List
 
 import pytest
 
+from tests.fixture_data_classes import RedisBrokerAndBackend
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.fixture_types import FixtureModification, FixtureStr
 from tests.integration.conditions import Condition, HasRegex
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd, load_workers_from_spec
 
 
-# pylint: disable=unused-argument,import-outside-toplevel,too-many-arguments
+# pylint: disable=unused-argument,import-outside-toplevel
 
 
 class WorkerMessages(Enum):
@@ -138,9 +139,7 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_no_workers(
         self,
-        redis_server: FixtureStr,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
     ):
@@ -160,19 +159,8 @@ class TestStopAndQueryWorkersCommands:
            passing.
 
         Parameters:
-            redis_server:
-                A fixture that starts a containerized redis server instance that runs on
-                localhost:6379.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             merlin_server_dir:
                 A fixture to provide the path to the merlin_server directory that will be
                 created by the `redis_server` fixture.
@@ -203,9 +191,7 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_no_flags(
         self,
-        redis_server: FixtureStr,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_test_specs: FixtureStr,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
@@ -219,19 +205,8 @@ class TestStopAndQueryWorkersCommands:
         `run_test_with_workers()` method.
 
         Parameters:
-            redis_server:
-                A fixture that starts a containerized redis server instance that runs on
-                localhost:6379.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_test_specs:
                 A fixture to provide the path to the directory containing test specifications.
             merlin_server_dir:
@@ -257,9 +232,7 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_spec_flag(
         self,
-        redis_server: FixtureStr,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_test_specs: FixtureStr,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
@@ -274,19 +247,8 @@ class TestStopAndQueryWorkersCommands:
         is doing, see the `run_test_with_workers()` method.
 
         Parameters:
-            redis_server:
-                A fixture that starts a containerized redis server instance that runs on
-                localhost:6379.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_test_specs:
                 A fixture to provide the path to the directory containing test specifications.
             merlin_server_dir:
@@ -317,9 +279,7 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_workers_flag(
         self,
-        redis_server: FixtureStr,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_test_specs: FixtureStr,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
@@ -334,19 +294,8 @@ class TestStopAndQueryWorkersCommands:
         test is doing, see the `run_test_with_workers()` method.
 
         Parameters:
-            redis_server:
-                A fixture that starts a containerized redis server instance that runs on
-                localhost:6379.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_test_specs:
                 A fixture to provide the path to the directory containing test specifications.
             merlin_server_dir:
@@ -378,9 +327,7 @@ class TestStopAndQueryWorkersCommands:
     @pytest.mark.parametrize("command_to_test", ["merlin stop-workers", "merlin query-workers"])
     def test_queues_flag(
         self,
-        redis_server: FixtureStr,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_test_specs: FixtureStr,
         merlin_server_dir: FixtureStr,
         command_to_test: str,
@@ -395,19 +342,8 @@ class TestStopAndQueryWorkersCommands:
         test is doing, see the `run_test_with_workers()` method.
 
         Parameters:
-            redis_server:
-                A fixture that starts a containerized redis server instance that runs on
-                localhost:6379.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_test_specs:
                 A fixture to provide the path to the directory containing test specifications.
             merlin_server_dir:
@@ -441,4 +377,4 @@ class TestStopAndQueryWorkersCommands:
                     assert worker_name in active_queues
 
 
-# pylint: enable=unused-argument,import-outside-toplevel,too-many-arguments
+# pylint: enable=unused-argument,import-outside-toplevel

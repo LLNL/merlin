@@ -1,11 +1,14 @@
 """
 This module contains tests for the feature_demo workflow.
 """
+
 import subprocess
 
+from tests.fixture_data_classes import ChordErrorSetup
 from tests.fixture_types import FixtureStr
 from tests.integration.conditions import HasRegex, StepFinishedFilesCount
 from tests.integration.helper_funcs import check_test_conditions
+
 
 class TestChordError:
     """
@@ -14,17 +17,16 @@ class TestChordError:
 
     def test_chord_error_continues(
         self,
-        chord_err_testing_dir: FixtureStr,
-        chord_err_name: FixtureStr,
-        chord_err_run_workflow: subprocess.CompletedProcess
+        chord_err_setup: ChordErrorSetup,
+        chord_err_run_workflow: subprocess.CompletedProcess,
     ):
         """
         Test that this workflow continues through to the end of its execution, even
         though a ChordError will be raised.
 
         Args:
-            chord_err_testing_dir: The directory containing the output of the chord error run.
-            chord_err_name: The name of the chord error study.
+            chord_err_setup: A fixture that returns a [`ChordErrorSetup`][fixture_data_classes.ChordErrorSetup]
+                instance.
             chord_err_run_workflow: A fixture to run the chord error study.
         """
 
@@ -32,22 +34,22 @@ class TestChordError:
             HasRegex("Exception raised by request from the user"),
             StepFinishedFilesCount(  # Check that the `process_samples` step has only 2 MERLIN_FINISHED files
                 step="process_samples",
-                study_name=chord_err_name,
-                output_path=chord_err_testing_dir,
+                study_name=chord_err_setup.name,
+                output_path=chord_err_setup.testing_dir,
                 expected_count=2,
                 num_samples=3,
             ),
             StepFinishedFilesCount(  # Check that the `samples_and_params` step has all of its MERLIN_FINISHED files
                 step="samples_and_params",
-                study_name=chord_err_name,
-                output_path=chord_err_testing_dir,
+                study_name=chord_err_setup.name,
+                output_path=chord_err_setup.testing_dir,
                 num_parameters=2,
                 num_samples=3,
             ),
             StepFinishedFilesCount(  # Check that the final step has a MERLIN_FINISHED file
                 step="step_3",
-                study_name=chord_err_name,
-                output_path=chord_err_testing_dir,
+                study_name=chord_err_setup.name,
+                output_path=chord_err_setup.testing_dir,
                 num_parameters=0,
                 num_samples=0,
             ),

@@ -2,18 +2,18 @@
 This module will contain the testing logic
 for the `merlin run` command.
 """
+
 import csv
 import os
 import re
 import subprocess
-from typing import Dict, Tuple, Union
-
-from redis import Redis
+from typing import Dict, Union
 
 from merlin.spec.expansion import get_spec_with_expansion
+from tests.fixture_data_classes import RedisBrokerAndBackend
 from tests.context_managers.celery_task_manager import CeleryTaskManager
 from tests.fixture_types import FixtureModification, FixtureRedis, FixtureStr
-from tests.integration.conditions import HasReturnCode, PathExists, StepFileExists
+from tests.integration.conditions import HasReturnCode, PathExists
 from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd
 
 
@@ -25,10 +25,7 @@ class TestRunCommand:
     demo_workflow = os.path.join("examples", "workflows", "feature_demo", "feature_demo.yaml")
 
     def setup_test_environment(
-        self,
-        path_to_merlin_codebase: FixtureStr,
-        merlin_server_dir: FixtureStr,
-        run_command_testing_dir: FixtureStr
+        self, path_to_merlin_codebase: FixtureStr, merlin_server_dir: FixtureStr, run_command_testing_dir: FixtureStr
     ) -> str:
         """
         Setup the test environment for these tests by:
@@ -79,10 +76,10 @@ class TestRunCommand:
         """
         Extracts the workspace path from the provided standard output and error logs.
 
-        This method searches for a specific message indicating the study workspace 
-        in the combined logs (both stdout and stderr). The expected message format 
-        is: "Study workspace is '<workspace_path>'". If the message is found, 
-        the method returns the extracted workspace path. If the message is not 
+        This method searches for a specific message indicating the study workspace
+        in the combined logs (both stdout and stderr). The expected message format
+        is: "Study workspace is '<workspace_path>'". If the message is found,
+        the method returns the extracted workspace path. If the message is not
         found, an assertion error is raised.
 
         Args:
@@ -109,9 +106,7 @@ class TestRunCommandDistributed(TestRunCommand):
 
     def test_distributed_run(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -121,18 +116,8 @@ class TestRunCommandDistributed(TestRunCommand):
         using the `merlin run` command with no flags.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -147,7 +132,7 @@ class TestRunCommandDistributed(TestRunCommand):
         # Setup the testing environment
         feature_demo = self.setup_test_environment(path_to_merlin_codebase, merlin_server_dir, run_command_testing_dir)
 
-        with CeleryTaskManager(celery_app, redis_client) as CTM:
+        with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client):
             # Send tasks to the server
             test_info = self.run_merlin_command(f"merlin run {feature_demo} --vars NAME=run_command_test_distributed_run")
 
@@ -161,18 +146,16 @@ class TestRunCommandDistributed(TestRunCommand):
             for queue in queues_in_spec.values():
                 # Brackets are special chars in regex so we have to add \ to make them literal
                 queue = queue.replace("[", "\\[").replace("]", "\\]")
-                matching_queues_on_server = redis_client.keys(pattern=f"{queue}*")
+                matching_queues_on_server = redis_broker_and_backend_function.client.keys(pattern=f"{queue}*")
 
                 # Make sure any queues that exist on the server have tasks in them
                 for matching_queue in matching_queues_on_server:
-                    tasks = redis_client.lrange(matching_queue, 0, -1)
+                    tasks = redis_broker_and_backend_function.client.lrange(matching_queue, 0, -1)
                     assert len(tasks) > 0
 
     def test_samplesfile_option(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -183,18 +166,8 @@ class TestRunCommandDistributed(TestRunCommand):
         in to the merlin_info subdirectory.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -217,28 +190,28 @@ class TestRunCommandDistributed(TestRunCommand):
         ]
         sample_filename = "test_samplesfile.csv"
         new_samples_file = os.path.join(run_command_testing_dir, sample_filename)
-        with open(new_samples_file, mode='w', newline='') as file:
+        with open(new_samples_file, mode="w", newline="") as file:
             writer = csv.writer(file)
             writer.writerows(data)
 
-        with CeleryTaskManager(celery_app, redis_client) as CTM:
+        with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client):
             # Send tasks to the server
-            test_info = self.run_merlin_command(f"merlin run {feature_demo} --vars NAME=run_command_test_samplesfile_option --samplesfile {new_samples_file}")
+            test_info = self.run_merlin_command(
+                f"merlin run {feature_demo} --vars NAME=run_command_test_samplesfile_option --samplesfile {new_samples_file}"
+            )
 
             # Check that the test ran properly and created the correct directories/files
             expected_workspace_path = self.get_output_workspace_from_logs(test_info)
             conditions = [
                 HasReturnCode(),
                 PathExists(expected_workspace_path),
-                PathExists(os.path.join(expected_workspace_path, "merlin_info", sample_filename))
+                PathExists(os.path.join(expected_workspace_path, "merlin_info", sample_filename)),
             ]
             check_test_conditions(conditions, test_info)
 
     def test_pgen_and_pargs_options(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -251,18 +224,8 @@ class TestRunCommandDistributed(TestRunCommand):
         and `N_NEW_MAX`.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -277,10 +240,12 @@ class TestRunCommandDistributed(TestRunCommand):
         # Setup test vars and the testing environment
         new_x2_min, new_x2_max = 1, 2
         new_n_new_min, new_n_new_max = 5, 15
-        pgen_filepath = os.path.join(os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__)))), "pgen.py")
+        pgen_filepath = os.path.join(
+            os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__)))), "pgen.py"
+        )
         feature_demo = self.setup_test_environment(path_to_merlin_codebase, merlin_server_dir, run_command_testing_dir)
-        
-        with CeleryTaskManager(celery_app, redis_client) as CTM:
+
+        with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client):
             # Send tasks to the server
             test_info = self.run_merlin_command(
                 f'merlin run {feature_demo} --vars NAME=run_command_test_pgen_and_pargs_options --pgen {pgen_filepath} --parg "X2_MIN:{new_x2_min}" --parg "X2_MAX:{new_x2_max}" --parg "N_NAME_MIN:{new_n_new_min}" --parg "N_NAME_MAX:{new_n_new_max}"'
@@ -289,11 +254,7 @@ class TestRunCommandDistributed(TestRunCommand):
             # Check that the test ran properly and created the correct directories/files
             expected_workspace_path = self.get_output_workspace_from_logs(test_info)
             expanded_yaml = os.path.join(expected_workspace_path, "merlin_info", "feature_demo.expanded.yaml")
-            conditions = [
-                HasReturnCode(),
-                PathExists(expected_workspace_path),
-                PathExists(os.path.join(expanded_yaml))
-            ]
+            conditions = [HasReturnCode(), PathExists(expected_workspace_path), PathExists(os.path.join(expanded_yaml))]
             check_test_conditions(conditions, test_info)
 
             # Read in the parameters from the expanded yaml and ensure they're within the new bounds we provided
@@ -313,9 +274,7 @@ class TestRunCommandLocal(TestRunCommand):
 
     def test_dry_run(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -330,18 +289,8 @@ class TestRunCommandLocal(TestRunCommand):
             & stopping workers.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -356,7 +305,7 @@ class TestRunCommandLocal(TestRunCommand):
 
         # Run the test and grab the output workspace generated from it
         test_info = self.run_merlin_command(f"merlin run {feature_demo} --vars NAME=run_command_test_dry_run --local --dry")
-        
+
         # Check that the test ran properly and created the correct directories/files
         expected_workspace_path = self.get_output_workspace_from_logs(test_info)
         conditions = [
@@ -371,23 +320,27 @@ class TestRunCommandLocal(TestRunCommand):
             step_directory = os.path.join(expected_workspace_path, step.name)
             assert os.path.exists(step_directory), f"Output directory for step '{step.name}' not found: {step_directory}"
 
-            allowed_dry_run_files = {"MERLIN_STATUS.json", "status.lock"}            
+            allowed_dry_run_files = {"MERLIN_STATUS.json", "status.lock"}
             for dirpath, dirnames, filenames in os.walk(step_directory):
                 # Check if the current directory has no subdirectories (leaf directory)
                 if not dirnames:
                     # Check for unexpected files
-                    unexpected_files = [file for file in filenames if file not in allowed_dry_run_files and not file.endswith(".sh")]
-                    assert not unexpected_files, f"Unexpected files found in {dirpath}: {unexpected_files}. Expected only .sh files or {allowed_dry_run_files}."
+                    unexpected_files = [
+                        file for file in filenames if file not in allowed_dry_run_files and not file.endswith(".sh")
+                    ]
+                    assert (
+                        not unexpected_files
+                    ), f"Unexpected files found in {dirpath}: {unexpected_files}. Expected only .sh files or {allowed_dry_run_files}."
 
                     # Check that there is exactly one .sh file
                     sh_file_count = sum(1 for file in filenames if file.endswith(".sh"))
-                    assert sh_file_count == 1, f"Expected exactly one .sh file in {dirpath} but found {sh_file_count} .sh files."
+                    assert (
+                        sh_file_count == 1
+                    ), f"Expected exactly one .sh file in {dirpath} but found {sh_file_count} .sh files."
 
     def test_local_run(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
         run_command_testing_dir: FixtureStr,
@@ -397,18 +350,8 @@ class TestRunCommandLocal(TestRunCommand):
         the `merlin run` command with the `--local` flag.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -429,7 +372,7 @@ class TestRunCommandLocal(TestRunCommand):
 
         # Check that the test ran properly and created the correct directories/files
         expected_workspace_path = self.get_output_workspace_from_logs(test_info)
-        
+
         conditions = [
             HasReturnCode(),
             PathExists(expected_workspace_path),
@@ -445,4 +388,6 @@ class TestRunCommandLocal(TestRunCommand):
                 # Check if the current directory has no subdirectories (leaf directory)
                 if not dirnames:
                     # Check for the existence of the MERLIN_FINISHED file
-                    assert "MERLIN_FINISHED" in filenames, f"Expected a MERLIN_FINISHED file in list of files for {dirpath} but did not find one"
+                    assert (
+                        "MERLIN_FINISHED" in filenames
+                    ), f"Expected a MERLIN_FINISHED file in list of files for {dirpath} but did not find one"

@@ -2,11 +2,13 @@
 This module will contain the testing logic
 for the `merlin purge` command.
 """
+
 import os
 import subprocess
 from typing import Dict, List, Tuple, Union
 
 from merlin.spec.expansion import get_spec_with_expansion
+from tests.fixture_data_classes import RedisBrokerAndBackend
 from tests.context_managers.celery_task_manager import CeleryTaskManager
 from tests.fixture_types import FixtureModification, FixtureRedis, FixtureStr
 from tests.integration.conditions import HasRegex, HasReturnCode
@@ -26,7 +28,7 @@ class TestPurgeCommand:
         1. Copying the app.yaml file created by the `redis_server` fixture to the cwd so that
            Merlin can connect to the test server.
         2. Obtaining the path to the feature_demo spec that we'll use for these tests.
-        
+
         Args:
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
@@ -41,15 +43,15 @@ class TestPurgeCommand:
         copy_app_yaml_to_cwd(merlin_server_dir)
         return os.path.join(path_to_merlin_codebase, self.demo_workflow)
 
-    def setup_tasks(self, CTM: CeleryTaskManager, spec_file: str) -> Tuple[Dict[str, str], int]:
+    def setup_tasks(self, celery_task_manager: CeleryTaskManager, spec_file: str) -> Tuple[Dict[str, str], int]:
         """
         Helper method to setup tasks in the specified queues.
-        
+
         This method sends tasks named 'task_for_{queue}' to each queue defined in the
         provided spec file and returns the total number of queues that received tasks.
 
         Args:
-            CTM:
+            celery_task_manager:
                 A context manager for managing Celery tasks, used to send tasks to the server.
             spec_file:
                 The path to the spec file from which queues will be extracted.
@@ -63,7 +65,7 @@ class TestPurgeCommand:
         queues_in_spec = spec.get_task_queues()
 
         for queue in queues_in_spec.values():
-            CTM.send_task(f"task_for_{queue}", queue=queue)
+            celery_task_manager.send_task(f"task_for_{queue}", queue=queue)
 
         return queues_in_spec, len(queues_in_spec.values())
 
@@ -76,7 +78,7 @@ class TestPurgeCommand:
     ) -> Dict[str, Union[str, int]]:
         """
         Helper method to run the purge command.
-        
+
         Args:
             spec_file: The path to the spec file from which queues will be purged.
             input_value: Any input we need to send to the subprocess.
@@ -87,16 +89,12 @@ class TestPurgeCommand:
             The result from executing the command in a subprocess.
         """
         purge_cmd = (
-            "merlin purge" + (" -f" if force else "") + f" {spec_file}" +
-            (f" --steps {' '.join(steps_to_purge)}" if steps_to_purge is not None else "")
+            "merlin purge"
+            + (" -f" if force else "")
+            + f" {spec_file}"
+            + (f" --steps {' '.join(steps_to_purge)}" if steps_to_purge is not None else "")
         )
-        result = subprocess.run(
-            purge_cmd,
-            shell=True,
-            capture_output=True,
-            text=True,
-            input=input_value
-        )
+        result = subprocess.run(purge_cmd, shell=True, capture_output=True, text=True, input=input_value)
         return {
             "stdout": result.stdout,
             "stderr": result.stderr,
@@ -133,13 +131,13 @@ class TestPurgeCommand:
                 if steps_to_purge and matching_queue in [queues_in_spec[step] for step in steps_to_purge]:
                     assert len(tasks) == 0, f"Expected 0 tasks in {matching_queue}, found {len(tasks)}."
                 else:
-                    assert len(tasks) == expected_task_count, f"Expected {expected_task_count} tasks in {matching_queue}, found {len(tasks)}."
+                    assert (
+                        len(tasks) == expected_task_count
+                    ), f"Expected {expected_task_count} tasks in {matching_queue}, found {len(tasks)}."
 
     def test_no_options_tasks_exist_y(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
     ):
@@ -150,18 +148,8 @@ class TestPurgeCommand:
         tasks from the server.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -169,13 +157,13 @@ class TestPurgeCommand:
                 A fixture to provide the path to the merlin_server directory that will be
                 created by the `redis_server` fixture.
         """
-        from merlin.celery import app as celery_app
+        from merlin.celery import app as celery_app  # pylint: disable=import-outside-toplevel
 
         feature_demo = self.setup_test(path_to_merlin_codebase, merlin_server_dir)
 
-        with CeleryTaskManager(celery_app, redis_client) as CTM:
+        with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client) as celery_task_manager:
             # Send tasks to the server for every queue in the spec
-            queues_in_spec, num_queues = self.setup_tasks(CTM, feature_demo)
+            queues_in_spec, num_queues = self.setup_tasks(celery_task_manager, feature_demo)
 
             # Run the purge test
             test_info = self.run_purge(feature_demo, input_value="y")
@@ -189,13 +177,11 @@ class TestPurgeCommand:
             check_test_conditions(conditions, test_info)
 
             # Check on the Redis queues to ensure they were purged
-            self.check_queues(redis_client, queues_in_spec, expected_task_count=0)
+            self.check_queues(redis_broker_and_backend_function.client, queues_in_spec, expected_task_count=0)
 
     def test_no_options_no_tasks_y(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
     ):
@@ -206,18 +192,8 @@ class TestPurgeCommand:
         messages purged" log.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -225,18 +201,18 @@ class TestPurgeCommand:
                 A fixture to provide the path to the merlin_server directory that will be
                 created by the `redis_server` fixture.
         """
-        from merlin.celery import app as celery_app
+        from merlin.celery import app as celery_app  # pylint: disable=import-outside-toplevel
 
         feature_demo = self.setup_test(path_to_merlin_codebase, merlin_server_dir)
 
-        with CeleryTaskManager(celery_app, redis_client) as CTM:
+        with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client):
             # Get the queues from the spec file
             spec = get_spec_with_expansion(feature_demo)
             queues_in_spec = spec.get_task_queues()
             num_queues = len(queues_in_spec.values())
 
             # Check that there are no tasks in the queues before we run the purge command
-            self.check_queues(redis_client, queues_in_spec, expected_task_count=0)
+            self.check_queues(redis_broker_and_backend_function.client, queues_in_spec, expected_task_count=0)
 
             # Run the purge test
             test_info = self.run_purge(feature_demo, input_value="y")
@@ -250,14 +226,11 @@ class TestPurgeCommand:
             check_test_conditions(conditions, test_info)
 
             # Check that the Redis server still has no tasks
-            self.check_queues(redis_client, queues_in_spec, expected_task_count=0)
-
+            self.check_queues(redis_broker_and_backend_function.client, queues_in_spec, expected_task_count=0)
 
     def test_no_options_N(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
     ):
@@ -268,18 +241,8 @@ class TestPurgeCommand:
         command without purging the tasks.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -287,13 +250,13 @@ class TestPurgeCommand:
                 A fixture to provide the path to the merlin_server directory that will be
                 created by the `redis_server` fixture.
         """
-        from merlin.celery import app as celery_app
+        from merlin.celery import app as celery_app  # pylint: disable=import-outside-toplevel
 
         feature_demo = self.setup_test(path_to_merlin_codebase, merlin_server_dir)
 
-        with CeleryTaskManager(celery_app, redis_client) as CTM:
+        with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client) as celery_task_manager:
             # Send tasks to the server for every queue in the spec
-            queues_in_spec, num_queues = self.setup_tasks(CTM, feature_demo)
+            queues_in_spec, num_queues = self.setup_tasks(celery_task_manager, feature_demo)
 
             # Run the purge test
             test_info = self.run_purge(feature_demo, input_value="N")
@@ -307,13 +270,11 @@ class TestPurgeCommand:
             check_test_conditions(conditions, test_info)
 
             # Check on the Redis queues to ensure they were not purged
-            self.check_queues(redis_client, queues_in_spec, expected_task_count=1)
+            self.check_queues(redis_broker_and_backend_function.client, queues_in_spec, expected_task_count=1)
 
     def test_force_option(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
     ):
@@ -323,18 +284,8 @@ class TestPurgeCommand:
         immediately purge all tasks.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -342,13 +293,13 @@ class TestPurgeCommand:
                 A fixture to provide the path to the merlin_server directory that will be
                 created by the `redis_server` fixture.
         """
-        from merlin.celery import app as celery_app
+        from merlin.celery import app as celery_app  # pylint: disable=import-outside-toplevel
 
         feature_demo = self.setup_test(path_to_merlin_codebase, merlin_server_dir)
 
-        with CeleryTaskManager(celery_app, redis_client) as CTM:
+        with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client) as celery_task_manager:
             # Send tasks to the server for every queue in the spec
-            queues_in_spec, num_queues = self.setup_tasks(CTM, feature_demo)
+            queues_in_spec, num_queues = self.setup_tasks(celery_task_manager, feature_demo)
 
             # Run the purge test
             test_info = self.run_purge(feature_demo, force=True)
@@ -362,13 +313,11 @@ class TestPurgeCommand:
             check_test_conditions(conditions, test_info)
 
             # Check on the Redis queues to ensure they were purged
-            self.check_queues(redis_client, queues_in_spec, expected_task_count=0)
+            self.check_queues(redis_broker_and_backend_function.client, queues_in_spec, expected_task_count=0)
 
     def test_steps_option(
         self,
-        redis_client: FixtureRedis,
-        redis_results_backend_config_function: FixtureModification,
-        redis_broker_config_function: FixtureModification,
+        redis_broker_and_backend_function: RedisBrokerAndBackend,
         path_to_merlin_codebase: FixtureStr,
         merlin_server_dir: FixtureStr,
     ):
@@ -378,18 +327,8 @@ class TestPurgeCommand:
         associated with the steps provided.
 
         Args:
-            redis_client:
-                A fixture that connects us to a redis client that we can interact with.
-            redis_results_backend_config_function:
-                A fixture that modifies the CONFIG object so that it points the results
-                backend configuration to the containerized redis server we start up with
-                the `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
-            redis_broker_config_function:
-                A fixture that modifies the CONFIG object so that it points the broker
-                configuration to the containerized redis server we start up with the
-                `redis_server` fixture. The CONFIG object is what merlin uses to connect
-                to a server.
+            redis_broker_and_backend_function: Fixture for setting up Redis broker and
+                backend for function-scoped tests.
             path_to_merlin_codebase:
                 A fixture to provide the path to the directory containing Merlin's core
                 functionality.
@@ -397,13 +336,13 @@ class TestPurgeCommand:
                 A fixture to provide the path to the merlin_server directory that will be
                 created by the `redis_server` fixture.
         """
-        from merlin.celery import app as celery_app
+        from merlin.celery import app as celery_app  # pylint: disable=import-outside-toplevel
 
         feature_demo = self.setup_test(path_to_merlin_codebase, merlin_server_dir)
 
-        with CeleryTaskManager(celery_app, redis_client) as CTM:
+        with CeleryTaskManager(celery_app, redis_broker_and_backend_function.client) as celery_task_manager:
             # Send tasks to the server for every queue in the spec
-            queues_in_spec, num_queues = self.setup_tasks(CTM, feature_demo)
+            queues_in_spec, num_queues = self.setup_tasks(celery_task_manager, feature_demo)
 
             # Run the purge test
             steps_to_purge = ["hello", "collect"]
@@ -419,4 +358,4 @@ class TestPurgeCommand:
             check_test_conditions(conditions, test_info)
 
             # Check on the Redis queues to ensure they were not purged
-            self.check_queues(redis_client, queues_in_spec, expected_task_count=1, steps_to_purge=steps_to_purge)
+            self.check_queues(redis_broker_and_backend_function.client, queues_in_spec, expected_task_count=1, steps_to_purge=steps_to_purge)
