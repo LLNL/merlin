@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Merlin manager capability to monitor celery workers.
 - Added additional tests for the `merlin run` and `merlin purge` commands
 - Aliased types to represent different types of pytest fixtures
 - New test condition `StepFinishedFilesCount` to help search for `MERLIN_FINISHED` files in output workspaces

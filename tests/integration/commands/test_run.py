@@ -370,11 +370,7 @@ class TestRunCommandLocal(TestRunCommand):
         # Run the test and grab the output workspace generated from it
         study_name = "run_command_test_local_run"
         num_samples = 8
-        vars_dict = {
-            "NAME": study_name,
-            "OUTPUT_PATH": run_command_testing_dir,
-            "N_SAMPLES": num_samples
-        }
+        vars_dict = {"NAME": study_name, "OUTPUT_PATH": run_command_testing_dir, "N_SAMPLES": num_samples}
         vars_str = " ".join(f"{key}={value}" for key, value in vars_dict.items())
         command = f"merlin run {feature_demo} --vars {vars_str} --local"
         test_info = self.run_merlin_command(command)

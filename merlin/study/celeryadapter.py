@@ -46,9 +46,7 @@ from tabulate import tabulate
 
 from merlin.common.dumper import dump_handler
 from merlin.config import Config
-from merlin.managers.celerymanager import CeleryManager, WorkerStatus
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
-from merlin.study.celerymanageradapter import add_monitor_workers, remove_monitor_workers
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
 
@@ -502,22 +500,15 @@ def check_celery_workers_processing(queues_in_spec: List[str], app: Celery) -> b
     """
     # Query celery for active tasks
     active_tasks = app.control.inspect().active()
-    result = False
 
-    with CeleryManager.get_worker_status_redis_connection() as redis_connection:
-        # Search for the queues we provided if necessary
-        if active_tasks is not None:
-            for worker, tasks in active_tasks.items():
-                for task in tasks:
-                    if task["delivery_info"]["routing_key"] in queues_in_spec:
-                        result = True
+    # Search for the queues we provided if necessary
+    if active_tasks is not None:
+        for tasks in active_tasks.values():
+            for task in tasks:
+                if task["delivery_info"]["routing_key"] in queues_in_spec:
+                    return True
 
-                # Set the entry in the Redis DB for the manager to signify if the worker
-                # is still doing work
-                worker_still_processing = 1 if result else 0
-                redis_connection.hset(worker, "processing_work", worker_still_processing)
-
-    return result
+    return False
 
 
 def _get_workers_to_start(spec, steps):
@@ -770,36 +761,8 @@ def launch_celery_worker(worker_cmd, worker_list, kwargs):
     :side effect:               Launches a celery worker via a subprocess
     """
     try:
-        process = subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
-        # Get the worker name from worker_cmd and add to be monitored by celery manager
-        worker_cmd_list = worker_cmd.split()
-        worker_name = worker_cmd_list[worker_cmd_list.index("-n") + 1].replace("%h", kwargs["env"]["HOSTNAME"])
-        worker_name = "celery@" + worker_name
+        _ = subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
         worker_list.append(worker_cmd)
-
-        # Adding the worker args to redis db
-        with CeleryManager.get_worker_args_redis_connection() as redis_connection:
-            args = kwargs.copy()
-            # Save worker command with the arguements
-            args["worker_cmd"] = worker_cmd
-            # Store the nested dictionaries into a separate key with a link.
-            # Note: This only support single nested dicts(for simplicity) and
-            #       further nesting can be accomplished by making this recursive.
-            for key in kwargs:
-                if type(kwargs[key]) is dict:
-                    key_name = worker_name + "_" + key
-                    redis_connection.hmset(name=key_name, mapping=kwargs[key])
-                    args[key] = "link:" + key_name
-                if type(kwargs[key]) is bool:
-                    if kwargs[key]:
-                        args[key] = "True"
-                    else:
-                        args[key] = "False"
-            redis_connection.hmset(name=worker_name, mapping=args)
-
-        # Adding the worker to redis db to be monitored
-        add_monitor_workers(workers=((worker_name, process.pid),))
-        LOG.info(f"Added {worker_name} to be monitored")
     except Exception as e:  # pylint: disable=C0103
         LOG.error(f"Cannot start celery workers, {e}")
         raise
@@ -838,7 +801,7 @@ def purge_celery_tasks(queues, force):
     return subprocess.run(purge_command, shell=True).returncode
 
 
-def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None, debug_lvl="INFO"):  # pylint: disable=R0912
+def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):  # pylint: disable=R0912
     """Send a stop command to celery workers.
 
     Default behavior is to stop all connected workers.
@@ -903,8 +866,6 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None, 
     if workers_to_stop:
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
         app.control.broadcast("shutdown", destination=workers_to_stop)
-        remove_entry = False if debug_lvl == "DEBUG" else True
-        remove_monitor_workers(workers=workers_to_stop, worker_status=WorkerStatus.stopped, remove_entry=remove_entry)
     else:
         LOG.warning("No workers found to stop")
 
