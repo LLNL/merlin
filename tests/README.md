@@ -4,16 +4,20 @@ This directory utilizes pytest to create and run our test suite.
 
 This directory is organized like so:
 - `conftest.py` - The script containing common fixtures for our tests
+- `constants.py` - Constant values to be used throughout the test suite.
+- `fixture_data_classes.py` - Dataclasses to help group pytest fixtures together, reducing the required number of imports.
+- `fixture_types.py` - Aliases for type hinting fixtures.
 - `context_managers/` - The directory containing context managers used for testing
     - `celery_workers_manager.py` - A context manager used to manage celery workers for integration testing
     - `server_manager.py` - A context manager used to manage the redis server used for integration testing
 - `fixtures/` - The directory containing specific test module fixtures
     - `<test_module_name>.py` - Fixtures for specific test modules
 - `integration/` - The directory containing integration tests
-    <!-- - `test_*.py` - The actual test scripts to run -->
     - `definitions.py` - The test definitions
     - `run_tests.py` - The script to run the tests defined in `definitions.py`
     - `conditions.py` - The conditions to test against
+    - `commands/` - The directory containing tests for commands of the Merlin library.
+    - `workflows/` The directory containing tests for entire workflow runs.
 - `unit/` - The directory containing unit tests
     - `test_*.py` - The actual test scripts to run
 
