@@ -248,7 +248,7 @@ class CeleryWorkersManager:
 
         # Terminate the echo process and its sleep inf subprocess
         if self.echo_processes[worker_name] is not None:
-            os.killpg(os.getpgid(self.echo_processes[worker_name]), signal.SIGTERM)
+            os.killpg(os.getpgid(self.echo_processes[worker_name]), signal.SIGKILL)
             sleep(2)
 
     def stop_all_workers(self):
@@ -256,7 +256,7 @@ class CeleryWorkersManager:
         Stop all of the running workers and the processes associated with them.
         """
         for run_worker_pid in self.run_worker_processes:
-            os.killpg(os.getpgid(run_worker_pid), signal.SIGTERM)
+            os.killpg(os.getpgid(run_worker_pid), signal.SIGKILL)
 
         for worker_name in self.running_workers:
             self.stop_worker(worker_name)
