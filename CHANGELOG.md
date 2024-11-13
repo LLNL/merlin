@@ -4,6 +4,21 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Added additional tests for the `merlin run` and `merlin purge` commands
+- Aliased types to represent different types of pytest fixtures
+- New test condition `StepFinishedFilesCount` to help search for `MERLIN_FINISHED` files in output workspaces
+- Added "Unit-tests" GitHub action to run the unit test suite
+- Added `CeleryTaskManager` context manager to the test suite to ensure tasks are safely purged from queues if tests fail
+- Added `command-tests`, `workflow-tests`, and `integration-tests` to the Makefile
+
+### Changed
+- Ported all distributed tests of the integration test suite to pytest
+  - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
+  - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
+- Removed `e2e-distributed*` definitions from the Makefile
+
 ## [1.12.2]
 ### Added
 - Conflict handler option to the `dict_deep_merge` function in `utils.py`

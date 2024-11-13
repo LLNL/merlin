@@ -9,27 +9,29 @@ from typing import Dict, Union
 import pytest
 import yaml
 
+from tests.fixture_types import FixtureCallable, FixtureDict, FixtureNamespace, FixtureStr
+
 
 # pylint: disable=redefined-outer-name
 
 
 @pytest.fixture(scope="session")
-def server_testing_dir(temp_output_dir: str) -> str:
+def server_testing_dir(create_testing_dir: FixtureCallable, temp_output_dir: FixtureStr) -> FixtureStr:
     """
     Fixture to create a temporary output directory for tests related to the server functionality.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    :returns: The path to the temporary testing directory for server tests
-    """
-    testing_dir = f"{temp_output_dir}/server_testing"
-    if not os.path.exists(testing_dir):
-        os.mkdir(testing_dir)
+    Args:
+        create_testing_dir: A fixture which returns a function that creates the testing directory.
+        temp_output_dir: The path to the temporary ouptut directory we'll be using for this test run.
 
-    return testing_dir
+    Returns:
+        The path to the temporary testing directory for server tests.
+    """
+    return create_testing_dir(temp_output_dir, "server_testing")
 
 
 @pytest.fixture(scope="session")
-def server_redis_conf_file(server_testing_dir: str) -> str:
+def server_redis_conf_file(server_testing_dir: FixtureStr) -> FixtureStr:
     """
     Fixture to write a redis.conf file to the temporary output directory.
 
@@ -77,7 +79,7 @@ def server_redis_conf_file(server_testing_dir: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def server_redis_pass_file(server_testing_dir: str) -> str:
+def server_redis_pass_file(server_testing_dir: FixtureStr) -> FixtureStr:
     """
     Fixture to create a redis password file in the temporary output directory.
 
@@ -96,7 +98,7 @@ def server_redis_pass_file(server_testing_dir: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def server_users() -> Dict[str, Dict[str, str]]:
+def server_users() -> FixtureDict[str, Dict[str, str]]:
     """
     Create a dictionary of two test users with identical configuration settings.
 
@@ -122,7 +124,7 @@ def server_users() -> Dict[str, Dict[str, str]]:
 
 
 @pytest.fixture(scope="session")
-def server_redis_users_file(server_testing_dir: str, server_users: dict) -> str:
+def server_redis_users_file(server_testing_dir: FixtureStr, server_users: FixtureDict[str, Dict[str, str]]) -> FixtureStr:
     """
     Fixture to write a redis.users file to the temporary output directory.
 
@@ -143,11 +145,11 @@ def server_redis_users_file(server_testing_dir: str, server_users: dict) -> str:
 
 @pytest.fixture(scope="class")
 def server_container_config_data(
-    server_testing_dir: str,
-    server_redis_conf_file: str,
-    server_redis_pass_file: str,
-    server_redis_users_file: str,
-) -> Dict[str, str]:
+    server_testing_dir: FixtureStr,
+    server_redis_conf_file: FixtureStr,
+    server_redis_pass_file: FixtureStr,
+    server_redis_users_file: FixtureStr,
+) -> FixtureDict[str, str]:
     """
     Fixture to provide sample data for ContainerConfig tests.
 
@@ -172,7 +174,7 @@ def server_container_config_data(
 
 
 @pytest.fixture(scope="class")
-def server_container_format_config_data() -> Dict[str, str]:
+def server_container_format_config_data() -> FixtureDict[str, str]:
     """
     Fixture to provide sample data for ContainerFormatConfig tests
 
@@ -187,7 +189,7 @@ def server_container_format_config_data() -> Dict[str, str]:
 
 
 @pytest.fixture(scope="class")
-def server_process_config_data() -> Dict[str, str]:
+def server_process_config_data() -> FixtureDict[str, str]:
     """
     Fixture to provide sample data for ProcessConfig tests
 
@@ -201,10 +203,10 @@ def server_process_config_data() -> Dict[str, str]:
 
 @pytest.fixture(scope="class")
 def server_server_config(
-    server_container_config_data: Dict[str, str],
-    server_process_config_data: Dict[str, str],
-    server_container_format_config_data: Dict[str, str],
-) -> Dict[str, Dict[str, str]]:
+    server_container_config_data: FixtureDict[str, str],
+    server_process_config_data: FixtureDict[str, str],
+    server_container_format_config_data: FixtureDict[str, str],
+) -> FixtureDict[str, FixtureDict[str, str]]:
     """
     Fixture to provide sample data for ServerConfig tests
 
@@ -222,10 +224,10 @@ def server_server_config(
 
 @pytest.fixture(scope="function")
 def server_app_yaml_contents(
-    server_redis_pass_file: str,
-    server_container_config_data: Dict[str, str],
-    server_process_config_data: Dict[str, str],
-) -> Dict[str, Union[str, int]]:
+    server_redis_pass_file: FixtureStr,
+    server_container_config_data: FixtureDict[str, str],
+    server_process_config_data: FixtureDict[str, str],
+) -> FixtureDict[str, Union[str, int]]:
     """
     Fixture to create the contents of an app.yaml file.
 
@@ -260,7 +262,7 @@ def server_app_yaml_contents(
 
 
 @pytest.fixture(scope="function")
-def server_app_yaml(server_testing_dir: str, server_app_yaml_contents: dict) -> str:
+def server_app_yaml(server_testing_dir: FixtureStr, server_app_yaml_contents: FixtureDict[str, Union[str, int]]) -> FixtureStr:
     """
     Fixture to create an app.yaml file in the temporary output directory.
 
@@ -280,13 +282,13 @@ def server_app_yaml(server_testing_dir: str, server_app_yaml_contents: dict) -> 
 
 
 @pytest.fixture(scope="function")
-def server_process_file_contents() -> str:
+def server_process_file_contents() -> FixtureDict[str, Union[str, int]]:
     """Fixture to represent process file contents."""
     return {"parent_pid": 123, "image_pid": 456, "port": 6379, "hostname": "dummy_server"}
 
 
 @pytest.fixture(scope="function")
-def server_config_server_args() -> Namespace:
+def server_config_server_args() -> FixtureNamespace:
     """
     Setup an argparse Namespace with all args that the `config_server`
     function will need. These can be modified on a test-by-test basis.

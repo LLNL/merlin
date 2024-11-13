@@ -35,18 +35,28 @@ import sys
 from copy import copy
 from glob import glob
 from time import sleep
-from typing import Dict
 
 import pytest
 import yaml
 from _pytest.tmpdir import TempPathFactory
 from celery import Celery
-from celery.canvas import Signature
+from redis import Redis
 
 from merlin.config.configfile import CONFIG
 from tests.constants import CERT_FILES, SERVER_PASS
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
 from tests.context_managers.server_manager import RedisServerManager
+from tests.fixture_data_classes import RedisBrokerAndBackend
+from tests.fixture_types import (
+    FixtureBytes,
+    FixtureCallable,
+    FixtureCelery,
+    FixtureDict,
+    FixtureModification,
+    FixtureRedis,
+    FixtureSignature,
+    FixtureStr,
+)
 from tests.utils import create_cert_files, create_pass_file
 
 
@@ -57,9 +67,11 @@ from tests.utils import create_cert_files, create_pass_file
 # Loading in Module Specific Fixtures #
 #######################################
 
-
+fixture_glob = os.path.join("tests", "fixtures", "**", "*.py")
 pytest_plugins = [
-    fixture_file.replace("/", ".").replace(".py", "") for fixture_file in glob("tests/fixtures/[!__]*.py", recursive=True)
+    fixture_file.replace(os.sep, ".").replace(".py", "")
+    for fixture_file in glob(fixture_glob, recursive=True)
+    if not fixture_file.endswith("__init__.py")
 ]
 
 
@@ -94,13 +106,98 @@ def create_encryption_file(key_filepath: str, encryption_key: bytes, app_yaml_fi
             yaml.dump(app_yaml, app_yaml_file)
 
 
+def setup_redis_config(config_type: str, merlin_server_dir: str):
+    """
+    Sets up the Redis configuration for either broker or results backend.
+
+    Args:
+        config_type: The type of configuration to set up ('broker' or 'results_backend').
+        merlin_server_dir: The directory to the merlin test server configuration.
+    """
+    port = 6379
+    name = "redis"
+    pass_file = os.path.join(merlin_server_dir, "redis.pass")
+    create_pass_file(pass_file)
+
+    if config_type == "broker":
+        CONFIG.broker.password = pass_file
+        CONFIG.broker.port = port
+        CONFIG.broker.name = name
+    elif config_type == "results_backend":
+        CONFIG.results_backend.password = pass_file
+        CONFIG.results_backend.port = port
+        CONFIG.results_backend.name = name
+    else:
+        raise ValueError("Invalid config_type. Must be 'broker' or 'results_backend'.")
+
+
 #######################################
 ######### Fixture Definitions #########
 #######################################
 
 
 @pytest.fixture(scope="session")
-def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
+def path_to_test_specs() -> FixtureStr:
+    """
+    Fixture to provide the path to the directory containing test specifications.
+
+    This fixture returns the absolute path to the 'test_specs' directory
+    within the 'integration' folder of the test directory. It expands
+    environment variables and user home directory as necessary.
+
+    Returns:
+        The absolute path to the 'test_specs' directory.
+    """
+    path_to_test_dir = os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__))))
+    return os.path.join(path_to_test_dir, "integration", "test_specs")
+
+
+@pytest.fixture(scope="session")
+def path_to_merlin_codebase() -> FixtureStr:
+    """
+    Fixture to provide the path to the directory containing the Merlin code.
+
+    This fixture returns the absolute path to the 'merlin' directory at the
+    top level of this repository. It expands environment variables and user
+    home directory as necessary.
+
+    Returns:
+        The absolute path to the 'merlin' directory.
+    """
+    path_to_test_dir = os.path.abspath(os.path.expandvars(os.path.expanduser(os.path.dirname(__file__))))
+    return os.path.join(path_to_test_dir, "..", "merlin")
+
+
+@pytest.fixture(scope="session")
+def create_testing_dir() -> FixtureCallable:
+    """
+    Fixture to create a temporary testing directory.
+
+    Returns:
+        A function that creates the testing directory.
+    """
+
+    def _create_testing_dir(base_dir: str, sub_dir: str) -> str:
+        """
+        Helper function to create a temporary testing directory.
+
+        Args:
+            base_dir: The base directory where the testing directory will be created.
+            sub_dir: The name of the subdirectory to create.
+
+        Returns:
+            The path to the created testing directory.
+        """
+        testing_dir = os.path.join(base_dir, sub_dir)
+        if not os.path.exists(testing_dir):
+            os.makedirs(testing_dir)  # Use makedirs to create intermediate directories if needed
+        return testing_dir
+
+    return _create_testing_dir
+
+
+@pytest.fixture(scope="session")
+def temp_output_dir(tmp_path_factory: TempPathFactory) -> FixtureStr:
     """
     This fixture will create a temporary directory to store output files of integration tests.
     The temporary directory will be stored at /tmp/`whoami`/pytest-of-`whoami`/. There can be at most
@@ -123,21 +220,21 @@ def temp_output_dir(tmp_path_factory: TempPathFactory) -> str:
 
 
 @pytest.fixture(scope="session")
-def merlin_server_dir(temp_output_dir: str) -> str:
+def merlin_server_dir(temp_output_dir: FixtureStr) -> FixtureStr:
     """
     The path to the merlin_server directory that will be created by the `redis_server` fixture.
 
     :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
     :returns: The path to the merlin_server directory that will be created by the `redis_server` fixture
     """
-    server_dir = f"{temp_output_dir}/merlin_server"
+    server_dir = os.path.join(temp_output_dir, "merlin_server")
     if not os.path.exists(server_dir):
         os.mkdir(server_dir)
     return server_dir
 
 
 @pytest.fixture(scope="session")
-def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:
+def redis_server(merlin_server_dir: FixtureStr, test_encryption_key: FixtureBytes) -> FixtureStr:
     """
     Start a redis server instance that runs on localhost:6379. This will yield the
     redis server uri that can be used to create a connection with celery.
@@ -146,11 +243,14 @@ def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:
     :param test_encryption_key: An encryption key to be used for testing
     :yields: The local redis server uri
     """
+    os.environ["CELERY_ENV"] = "test"
     with RedisServerManager(merlin_server_dir, SERVER_PASS) as redis_server_manager:
         redis_server_manager.initialize_server()
         redis_server_manager.start_server()
         create_encryption_file(
-            f"{merlin_server_dir}/encrypt_data_key", test_encryption_key, app_yaml_filepath=f"{merlin_server_dir}/app.yaml"
+            os.path.join(merlin_server_dir, "encrypt_data_key"),
+            test_encryption_key,
+            app_yaml_filepath=os.path.join(merlin_server_dir, "app.yaml"),
         )
         # Yield the redis_server uri to any fixtures/tests that may need it
         yield redis_server_manager.redis_server_uri
@@ -158,18 +258,36 @@ def redis_server(merlin_server_dir: str, test_encryption_key: bytes) -> str:
 
 
 @pytest.fixture(scope="session")
-def celery_app(redis_server: str) -> Celery:
+def redis_client(redis_server: FixtureStr) -> FixtureRedis:
+    """
+    Fixture that provides a Redis client instance for the test session.
+    It connects to this client using the url created from the `redis_server`
+    fixture.
+
+    Args:
+        redis_server: The redis server uri we'll use to connect to redis
+
+    Returns:
+        An instance of the Redis client that can be used to interact
+            with the Redis server.
+    """
+    return Redis.from_url(url=redis_server)
+
+
+@pytest.fixture(scope="session")
+def celery_app(redis_server: FixtureStr) -> FixtureCelery:
     """
     Create the celery app to be used throughout our integration tests.
 
     :param redis_server: The redis server uri we'll use to connect to redis
     :returns: The celery app object we'll use for testing
     """
+    os.environ["CELERY_ENV"] = "test"
     return Celery("merlin_test_app", broker=redis_server, backend=redis_server)
 
 
 @pytest.fixture(scope="session")
-def sleep_sig(celery_app: Celery) -> Signature:
+def sleep_sig(celery_app: FixtureCelery) -> FixtureSignature:
     """
     Create a task registered to our celery app and return a signature for it.
     Once requested by a test, you can set the queue you'd like to send this to
@@ -191,7 +309,7 @@ def sleep_sig(celery_app: Celery) -> Signature:
 
 
 @pytest.fixture(scope="session")
-def worker_queue_map() -> Dict[str, str]:
+def worker_queue_map() -> FixtureDict[str, str]:
     """
     Worker and queue names to be used throughout tests
 
@@ -201,7 +319,7 @@ def worker_queue_map() -> Dict[str, str]:
 
 
 @pytest.fixture(scope="class")
-def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):
+def launch_workers(celery_app: FixtureCelery, worker_queue_map: FixtureDict[str, str]):
     """
     Launch the workers on the celery app fixture using the worker and queue names
     defined in the worker_queue_map fixture.
@@ -219,7 +337,7 @@ def launch_workers(celery_app: Celery, worker_queue_map: Dict[str, str]):
 
 
 @pytest.fixture(scope="session")
-def test_encryption_key() -> bytes:
+def test_encryption_key() -> FixtureBytes:
     """
     An encryption key to be used for tests that need it.
 
@@ -243,28 +361,33 @@ def test_encryption_key() -> bytes:
 #######################################
 
 
-@pytest.fixture(scope="function")
-def config(merlin_server_dir: str, test_encryption_key: bytes):
+def _config(merlin_server_dir: FixtureStr, test_encryption_key: FixtureBytes):
     """
-    DO NOT USE THIS FIXTURE IN A TEST, USE `redis_config` OR `rabbit_config` INSTEAD.
-    This fixture is intended to be used strictly by the `redis_config` and `rabbit_config`
-    fixtures. It sets up the CONFIG object but leaves certain broker settings unset.
+    Sets up the configuration for testing purposes by modifying the global CONFIG object.
 
-    :param merlin_server_dir: The directory to the merlin test server configuration
-    :param test_encryption_key: An encryption key to be used for testing
+    This helper function prepares the broker and results backend configurations for testing
+    by creating necessary encryption key files and resetting the CONFIG object to its
+    original state after the tests are executed.
+
+    Args:
+        merlin_server_dir: The directory to the merlin test server configuration
+        test_encryption_key: An encryption key to be used for testing
+
+    Yields:
+        This function yields control back to the test function, allowing tests to run
+            with the modified CONFIG settings.
     """
-
     # Create a copy of the CONFIG option so we can reset it after the test
     orig_config = copy(CONFIG)
 
     # Create an encryption key file (if it doesn't already exist)
-    key_file = f"{merlin_server_dir}/encrypt_data_key"
+    key_file = os.path.join(merlin_server_dir, "encrypt_data_key")
     create_encryption_file(key_file, test_encryption_key)
 
     # Set the broker configuration for testing
-    CONFIG.broker.password = None  # This will be updated in `redis_broker_config` or `rabbit_broker_config`
-    CONFIG.broker.port = None  # This will be updated in `redis_broker_config` or `rabbit_broker_config`
-    CONFIG.broker.name = None  # This will be updated in `redis_broker_config` or `rabbit_broker_config`
+    CONFIG.broker.password = None  # This will be updated in `redis_broker_config_*` or `rabbit_broker_config`
+    CONFIG.broker.port = None  # This will be updated in `redis_broker_config_*` or `rabbit_broker_config`
+    CONFIG.broker.name = None  # This will be updated in `redis_broker_config_*` or `rabbit_broker_config`
     CONFIG.broker.server = "127.0.0.1"
     CONFIG.broker.username = "default"
     CONFIG.broker.vhost = "host4testing"
@@ -272,11 +395,11 @@ def config(merlin_server_dir: str, test_encryption_key: bytes):
 
     # Set the results_backend configuration for testing
     CONFIG.results_backend.password = (
-        None  # This will be updated in `redis_results_backend_config` or `mysql_results_backend_config`
+        None  # This will be updated in `redis_results_backend_config_function` or `mysql_results_backend_config`
     )
-    CONFIG.results_backend.port = None  # This will be updated in `redis_results_backend_config`
+    CONFIG.results_backend.port = None  # This will be updated in `redis_results_backend_config_function`
     CONFIG.results_backend.name = (
-        None  # This will be updated in `redis_results_backend_config` or `mysql_results_backend_config`
+        None  # This will be updated in `redis_results_backend_config_function` or `mysql_results_backend_config`
     )
     CONFIG.results_backend.dbname = None  # This will be updated in `mysql_results_backend_config`
     CONFIG.results_backend.server = "127.0.0.1"
@@ -295,51 +418,149 @@ def config(merlin_server_dir: str, test_encryption_key: bytes):
 
 
 @pytest.fixture(scope="function")
-def redis_broker_config(
-    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
-):
+def config_function(merlin_server_dir: FixtureStr, test_encryption_key: FixtureBytes) -> FixtureModification:
     """
-    This fixture is intended to be used for testing any functionality in the codebase
-    that uses the CONFIG object with a Redis broker and results_backend.
+    Sets up the configuration for testing with a function scope.
 
-    :param merlin_server_dir: The directory to the merlin test server configuration
-    :param config: The fixture that sets up most of the CONFIG object for testing
+    Warning:
+        DO NOT USE THIS FIXTURE IN A TEST, USE ONE OF THE SERVER SPECIFIC CONFIGURATIONS
+        (LIKE `redis_broker_config_function`, `rabbit_broker_config`, etc.) INSTEAD.
+
+    This fixture modifies the global CONFIG object to prepare the broker and results backend
+    configurations for testing. It creates necessary encryption key files and ensures that
+    the original configuration is restored after the tests are executed.
+
+    Args:
+        merlin_server_dir: The directory to the merlin test server configuration
+        test_encryption_key: An encryption key to be used for testing
+
+    Yields:
+        This function yields control back to the test function, allowing tests to run
+            with the modified CONFIG settings.
     """
-    pass_file = f"{merlin_server_dir}/redis.pass"
-    create_pass_file(pass_file)
+    yield from _config(merlin_server_dir, test_encryption_key)
 
-    CONFIG.broker.password = pass_file
-    CONFIG.broker.port = 6379
-    CONFIG.broker.name = "redis"
 
+@pytest.fixture(scope="class")
+def config_class(merlin_server_dir: FixtureStr, test_encryption_key: FixtureBytes) -> FixtureModification:
+    """
+    Sets up the configuration for testing with a class scope.
+
+    Warning:
+        DO NOT USE THIS FIXTURE IN A TEST, USE ONE OF THE SERVER SPECIFIC CONFIGURATIONS
+        (LIKE `redis_broker_config_class`, `rabbit_broker_config`, etc.) INSTEAD.
+
+    This fixture modifies the global CONFIG object to prepare the broker and results backend
+    configurations for testing. It creates necessary encryption key files and ensures that
+    the original configuration is restored after the tests are executed.
+
+    Args:
+        merlin_server_dir: The directory to the merlin test server configuration
+        test_encryption_key: An encryption key to be used for testing
+
+    Yields:
+        This function yields control back to the test function, allowing tests to run
+            with the modified CONFIG settings.
+    """
+    yield from _config(merlin_server_dir, test_encryption_key)
+
+
+@pytest.fixture(scope="function")
+def redis_broker_config_function(
+    merlin_server_dir: FixtureStr, config_function: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
+    """
+    Fixture for configuring the Redis broker for testing with a function scope.
+
+    This fixture sets up the CONFIG object to use a Redis broker for testing any functionality
+    in the codebase that interacts with the broker. It modifies the configuration to point
+    to the specified Redis broker settings.
+
+    Args:
+        merlin_server_dir: The directory to the merlin test server configuration.
+        config_function: The fixture that sets up most of the CONFIG object for testing.
+
+    Yields:
+        This function yields control back to the test function, allowing tests to run
+            with the modified CONFIG settings.
+    """
+    setup_redis_config("broker", merlin_server_dir)
+    yield
+
+
+@pytest.fixture(scope="class")
+def redis_broker_config_class(
+    merlin_server_dir: FixtureStr, config_class: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
+    """
+    Fixture for configuring the Redis broker for testing with a class scope.
+
+    This fixture sets up the CONFIG object to use a Redis broker for testing any functionality
+    in the codebase that interacts with the broker. It modifies the configuration to point
+    to the specified Redis broker settings.
+
+    Args:
+        merlin_server_dir: The directory to the merlin test server configuration.
+        config_function: The fixture that sets up most of the CONFIG object for testing.
+
+    Yields:
+        This function yields control back to the test function, allowing tests to run
+            with the modified CONFIG settings.
+    """
+    setup_redis_config("broker", merlin_server_dir)
     yield
 
 
 @pytest.fixture(scope="function")
-def redis_results_backend_config(
-    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
-):
+def redis_results_backend_config_function(
+    merlin_server_dir: FixtureStr, config_function: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
     """
-    This fixture is intended to be used for testing any functionality in the codebase
-    that uses the CONFIG object with a Redis results_backend.
+    Fixture for configuring the Redis results backend for testing with a function scope.
 
-    :param merlin_server_dir: The directory to the merlin test server configuration
-    :param config: The fixture that sets up most of the CONFIG object for testing
+    This fixture sets up the CONFIG object to use a Redis results backend for testing any
+    functionality in the codebase that interacts with the results backend. It modifies the
+    configuration to point to the specified Redis results backend settings.
+
+    Args:
+        merlin_server_dir: The directory to the merlin test server configuration.
+        config_function: The fixture that sets up most of the CONFIG object for testing.
+
+    Yields:
+        This function yields control back to the test function, allowing tests to run
+            with the modified CONFIG settings.
     """
-    pass_file = f"{merlin_server_dir}/redis.pass"
-    create_pass_file(pass_file)
+    setup_redis_config("results_backend", merlin_server_dir)
+    yield
 
-    CONFIG.results_backend.password = pass_file
-    CONFIG.results_backend.port = 6379
-    CONFIG.results_backend.name = "redis"
 
+@pytest.fixture(scope="class")
+def redis_results_backend_config_class(
+    merlin_server_dir: FixtureStr, config_class: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
+    """
+    Fixture for configuring the Redis results backend for testing with a class scope.
+
+    This fixture sets up the CONFIG object to use a Redis results backend for testing any
+    functionality in the codebase that interacts with the results backend. It modifies the
+    configuration to point to the specified Redis results backend settings.
+
+    Args:
+        merlin_server_dir: The directory to the merlin test server configuration.
+        config_function: The fixture that sets up most of the CONFIG object for testing.
+
+    Yields:
+        This function yields control back to the test function, allowing tests to run
+            with the modified CONFIG settings.
+    """
+    setup_redis_config("results_backend", merlin_server_dir)
     yield
 
 
 @pytest.fixture(scope="function")
 def rabbit_broker_config(
-    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
-):
+    merlin_server_dir: FixtureStr, config_function: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
     """
     This fixture is intended to be used for testing any functionality in the codebase
     that uses the CONFIG object with a RabbitMQ broker.
@@ -347,7 +568,7 @@ def rabbit_broker_config(
     :param merlin_server_dir: The directory to the merlin test server configuration
     :param config: The fixture that sets up most of the CONFIG object for testing
     """
-    pass_file = f"{merlin_server_dir}/rabbit.pass"
+    pass_file = os.path.join(merlin_server_dir, "rabbit.pass")
     create_pass_file(pass_file)
 
     CONFIG.broker.password = pass_file
@@ -359,8 +580,8 @@ def rabbit_broker_config(
 
 @pytest.fixture(scope="function")
 def mysql_results_backend_config(
-    merlin_server_dir: str, config: "fixture"  # noqa: F821 pylint: disable=redefined-outer-name,unused-argument
-):
+    merlin_server_dir: FixtureStr, config_function: FixtureModification  # pylint: disable=redefined-outer-name,unused-argument
+) -> FixtureModification:
     """
     This fixture is intended to be used for testing any functionality in the codebase
     that uses the CONFIG object with a MySQL results_backend.
@@ -368,7 +589,7 @@ def mysql_results_backend_config(
     :param merlin_server_dir: The directory to the merlin test server configuration
     :param config: The fixture that sets up most of the CONFIG object for testing
     """
-    pass_file = f"{merlin_server_dir}/mysql.pass"
+    pass_file = os.path.join(merlin_server_dir, "mysql.pass")
     create_pass_file(pass_file)
 
     create_cert_files(merlin_server_dir, CERT_FILES)
@@ -381,3 +602,81 @@ def mysql_results_backend_config(
     CONFIG.results_backend.ca_certs = CERT_FILES["ssl_ca"]
 
     yield
+
+
+@pytest.fixture(scope="function")
+def redis_broker_and_backend_function(
+    redis_client: FixtureRedis,
+    redis_server: FixtureStr,
+    redis_broker_config_function: FixtureModification,
+    redis_results_backend_config_function: FixtureModification,
+):
+    """
+    Fixture for setting up Redis broker and backend for function-scoped tests.
+
+    This fixture creates an instance of `RedisBrokerAndBackend`, which
+    encapsulates all necessary Redis-related fixtures required for
+    establishing connections to Redis as both a broker and a backend
+    during function-scoped tests.
+
+    Args:
+        redis_client: A fixture that provides a client for interacting with the
+            Redis server.
+        redis_server: A fixture providing the connection string to the Redis
+            server instance.
+        redis_broker_config_function: A fixture that modifies the configuration
+            to point to the Redis server used as the message broker for
+            function-scoped tests.
+        redis_results_backend_config_function: A fixture that modifies the
+            configuration to point to the Redis server used for storing results
+            in function-scoped tests.
+
+    Returns:
+        An instance containing the Redis client, server connection string, and
+            configuration modifications for both the broker and backend.
+    """
+    return RedisBrokerAndBackend(
+        client=redis_client,
+        server=redis_server,
+        broker_config=redis_broker_config_function,
+        results_backend_config=redis_results_backend_config_function,
+    )
+
+
+@pytest.fixture(scope="class")
+def redis_broker_and_backend_class(
+    redis_client: FixtureRedis,
+    redis_server: FixtureStr,
+    redis_broker_config_class: FixtureModification,
+    redis_results_backend_config_class: FixtureModification,
+) -> RedisBrokerAndBackend:
+    """
+    Fixture for setting up Redis broker and backend for class-scoped tests.
+
+    This fixture creates an instance of `RedisBrokerAndBackend`, which
+    encapsulates all necessary Redis-related fixtures required for
+    establishing connections to Redis as both a broker and a backend
+    during class-scoped tests.
+
+    Args:
+        redis_client: A fixture that provides a client for interacting with the
+            Redis server.
+        redis_server: A fixture providing the connection string to the Redis
+            server instance.
+        redis_broker_config_function: A fixture that modifies the configuration
+            to point to the Redis server used as the message broker for
+            class-scoped tests.
+        redis_results_backend_config_function: A fixture that modifies the
+            configuration to point to the Redis server used for storing results
+            in class-scoped tests.
+
+    Returns:
+        An instance containing the Redis client, server connection string, and
+            configuration modifications for both the broker and backend.
+    """
+    return RedisBrokerAndBackend(
+        client=redis_client,
+        server=redis_server,
+        broker_config=redis_broker_config_class,
+        results_backend_config=redis_results_backend_config_class,
+    )
