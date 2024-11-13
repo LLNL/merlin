@@ -114,9 +114,11 @@ except ValueError:
     BROKER_URI = None
     RESULTS_BACKEND_URI = None
 
+app_name = "merlin_test_app" if os.getenv("CELERY_ENV") == "test" else "merlin"
+
 # initialize app with essential properties
 app: Celery = patch_celery().Celery(
-    "merlin",
+    app_name,
     broker=BROKER_URI,
     backend=RESULTS_BACKEND_URI,
     broker_use_ssl=BROKER_SSL,
