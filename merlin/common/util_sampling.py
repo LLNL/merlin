@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -35,6 +35,7 @@ Utility functions for sampling.
 import numpy as np
 
 
+# TODO should we move this to merlin-spellbook?
 def scale_samples(samples_norm, limits, limits_norm=(0, 1), do_log=False):
     """Scale samples to new limits, either log10 or linearly.
 
