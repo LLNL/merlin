@@ -27,3 +27,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+
+"""
+Files in the `study/` directory handle the logic of constructing
+and executing full Merlin studies. This logic includes:\n
+- Putting together batch worker launch commands
+- Hosting an interface for Celery commands
+- Obtaining the DAG from Maestro and modifying it for use with Celery
+- Creating an interface for different schedulers
+- Displaying the status of studies
+- Handling the logic for entire studies _and_ single steps in studies
+"""
