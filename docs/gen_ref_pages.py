@@ -9,6 +9,7 @@ nav = mkdocs_gen_files.Nav()
 IGNORE_PATTERNS = [
     Path("merlin/examples/workflows"),
     Path("merlin/examples/dev_workflows"),
+    Path("merlin/data"),
     "*/ascii_art.py",
 ]
 
