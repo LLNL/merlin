@@ -29,8 +29,8 @@
 ###############################################################################
 """
 This file contains all of the constants used for the status command.
-Separating this from status.py and status_renderers.py helps with circular
-import issues.
+Separating this from [`status.py`][study.status] and [`status_renderers.py`][study.status_renderers]
+helps with circular import issues.
 """
 
 VALID_STATUS_FILTERS = ("INITIALIZED", "RUNNING", "FINISHED", "FAILED", "CANCELLED", "DRY_RUN", "UNKNOWN")
