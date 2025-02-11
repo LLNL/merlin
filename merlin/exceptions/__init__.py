@@ -103,3 +103,12 @@ class NoWorkersException(Exception):
 
     def __init__(self, message):
         super().__init__(message)
+
+
+class BackendNotSupportedException(Exception):
+    """
+    Exception to signal that the provided backend is not supported by Merlin.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
