@@ -32,6 +32,15 @@ class MerlinBackendFactory:
             "rediss": "redis"
         }
 
+    def get_supported_backends(self):
+        """
+        Get a list of the supported backends in Merlin.
+
+        Returns:
+            A list of names representing the supported backends in Merlin.
+        """
+        return list(self._backends.keys())
+
     def get_backend(self, backend: str) -> ResultsBackend:
         """
         Get backend handler for whichever backend the user is using.

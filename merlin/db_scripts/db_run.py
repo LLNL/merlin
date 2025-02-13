@@ -1,67 +1,35 @@
 """
 """
-from dataclasses import dataclass, field, asdict
-from typing import Dict, List
-import uuid
+from typing import List
 
 from merlin.backends.results_backend import ResultsBackend
-
-
-@dataclass
-class RunInfo:
-    """
-    A dataclass to store all of the information for a run.
-
-    Attributes:
-        id: The unique ID for the run.
-        study_id: The unique ID of the study this run is associated with.
-        workspace: The path to the output workspace.
-        queues: The task queues used for this run.
-        parent: The ID of the parent run (if any).
-        child: The ID of the child run (if any).
-        run_complete: Wether the run is complete.
-        parameters: The parameters used in this run.
-        samples: The samples used in this run.
-        additional_data: For any extra data not explicitly defined.
-    """
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    study_id: str
-    workspace: str = None
-    queues: List[str] = field(default_factory=list)
-    parent: str = None 
-    child: str = None
-    run_complete: bool = False
-    parameters: Dict = field(default_factory=dict)  # TODO NOT YET IMPLEMENTED
-    samples: Dict = field(default_factory=dict)  # TODO NOT YET IMPLEMENTED
-    additional_data: Dict = field(default_factory=dict)
-
-    def to_dict(self) -> Dict:
-        """
-        Convert the run data to a dictionary for storage in the database.
-        """
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: Dict) -> "RunInfo":
-        """
-        Create a `RunInfo` instance from a dictionary.
-        """
-        return cls(
-            id=data.get("id"),
-            study_id=data.get("study_id"),
-            workspace=data.get("workspace"),
-            queues=data.get("queues", ["merlin"]),
-            parent=data.get("parent", None),
-            child=data.get("child", None),
-            run_complete=data.get("run_complete", False),
-            parameters=data.get("parameters", {})
-            samples=data.get("samples", {})
-            additional_data=data.get("additional_data", {})
-        )
+from merlin.db_scripts.data_formats import RunInfo
 
 
 class DatabaseRun:
     """
+    A class representing a run in the database.
+
+    This class provides methods to interact with and manage a run's data, including 
+    retrieving information about the run, updating its state, and saving or deleting 
+    it from the database.
+
+    Attributes:
+        run_info: An instance of the `RunInfo` class containing the run's metadata.
+        backend: An instance of the `ResultsBackend` class used to interact 
+            with the database.
+        run_complete: Property to get or set the completion status of the run.
+
+    Methods:
+        delete: Class method to delete a run from the database by its ID.
+        get_id: Retrieve the ID of the run.
+        get_study_id: Retrieve the ID of the study associated with this run.
+        get_workspace: Retrieve the path to the output workspace for this run.
+        get_queues: Retrieve the task queues used for this run.
+        get_parent: Retrieve the ID of the parent run that launched this run (if any).
+        get_child: Retrieve the ID of the child run launched by this run (if any).
+        load: Class method to load a run from the database by its ID.
+        save: Save the current state of the run to the database.
     """
 
     def __init__(self, run_info: RunInfo, backend: ResultsBackend):
@@ -84,6 +52,9 @@ class DatabaseRun:
     def run_complete(self, value: bool):
         """
         Update the run's completion status.
+
+        Args:
+            value: The completion status of the run.
         """
         self.run_info.run_complete = value
         self.save()
@@ -150,16 +121,7 @@ class DatabaseRun:
         """
         Save the current state of this run to the database.
         """
-        # TODO flush out logic in backend class to set this (might require more work here)
-        self.backend.set(self.get_id(), self.run_info)
-
-        # # Assuming the parent study's name is required to save the run
-        # study_name = self._data.get("study_name")
-        # if study_name:
-        #     self.backend.set(f"{study_name}:{self.id}", self._data)
-
-        # run_data = self.run_info.to_dict()
-        # self.backend.set(f"run:{self.run_info.run_id}", run_data)
+        self.backend.save_run(self.run_info)
 
     @classmethod
     def load(cls, run_id: str, backend: ResultsBackend) -> "DatabaseRun":
@@ -168,14 +130,12 @@ class DatabaseRun:
 
         Args:
             run_id: The ID of the run to load.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] object.
+            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseRun` instance.
         """
-        # TODO 
-
-        run_data = self.backend.get(run_id)
+        run_data = backend.get(run_id)
         if not run_data:
             raise ValueError(f"Run with ID {run_id} not found in the database.")
         
@@ -189,7 +149,7 @@ class DatabaseRun:
 
         Args:
             run_id: The ID of the run to delete.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] object.
+            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
         """
         # TODO make sure this deletes everything for the run
         self.backend.delete(run_id)
