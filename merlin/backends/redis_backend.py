@@ -75,6 +75,8 @@ class RedisBackend(ResultsBackend):
 
     def __init__(self, backend_name: str):
         super().__init__(backend_name)
+        # TODO have this database use a different db number than Celery does
+        # - do we want a new database for each type of information? i.e. one for studies, one for runs, etc.?
         self.client: Redis = Redis.from_url(url=get_connection_string(), decode_responses=True)
 
     def _serialize_data_class(self, data_class: BaseDataClass) -> Dict[str, str]:
@@ -88,7 +90,7 @@ class RedisBackend(ResultsBackend):
         Returns:
             A dictionary of information that Redis can interpret.
         """
-        LOG.info("Deserializing data from Redis...")
+        LOG.debug("Deserializing data from Redis...")
         serialized_data = {}
 
         for field in data_class.fields():
@@ -100,7 +102,7 @@ class RedisBackend(ResultsBackend):
             else:
                 serialized_data[field.name] = str(field_value)
 
-        LOG.info("Successfully deserialized data.")
+        LOG.debug("Successfully deserialized data.")
         return serialized_data
 
     def _deserialize_data_class(self, retrieval_data: Dict[str, str], data_class: BaseDataClass) -> BaseDataClass:
@@ -114,7 +116,7 @@ class RedisBackend(ResultsBackend):
         Returns:
             A [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance.
         """
-        LOG.info("Deserializing data from Redis...")
+        LOG.debug("Deserializing data from Redis...")
         deserialized_data = {}
 
         for key, val in retrieval_data.items():
@@ -129,7 +131,7 @@ class RedisBackend(ResultsBackend):
             else:
                 deserialized_data[key] = str(val)
 
-        LOG.info("Successfully deserialized data.")
+        LOG.debug("Successfully deserialized data.")
         return data_class.from_dict(deserialized_data)
 
     def _create_data_class_entry(self, data_class: BaseDataClass, key: str):

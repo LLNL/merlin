@@ -1,6 +1,7 @@
 """
 """
 import logging
+import os
 from typing import Dict, List
 
 from merlin.backends.results_backend import ResultsBackend
@@ -24,8 +25,11 @@ class DatabaseRun:
         run_complete: Property to get or set the completion status of the run.
 
     Methods:
-         __str__:
-            Provide a string representation of the `DatabaseRun` instance.
+        get_metadata_file:
+            Retrieve the path to the metadata file for this run.
+
+        get_metadata_filepath (classmethod):
+            Retrieve the path to the metadata file for a given workspace.
 
         get_id:
             Retrieve the ID of the run.
@@ -49,10 +53,16 @@ class DatabaseRun:
             Retrieve any additional data saved to this run.
 
         save:
-            Save the current state of the run to the database.
+            Save the current state of the run to the database and dump its metadata.
+
+        dump_metadata:
+            Dump all metadata for this run to a JSON file.
 
         load (classmethod):
             Load a `DatabaseRun` instance from the database by its ID.
+
+        load_from_metadata_file (classmethod):
+            Load a `DatabaseRun` instance from a metadata file.
 
         delete (classmethod):
             Delete a run from the database by its ID.
@@ -61,6 +71,7 @@ class DatabaseRun:
     def __init__(self, run_info: RunInfo, backend: ResultsBackend):
         self.run_info: RunInfo = run_info
         self.backend: ResultsBackend = backend
+        self._metadata_file = self.get_metadata_filepath(self.get_workspace())
 
     def __str__(self) -> str:
         """
@@ -104,6 +115,30 @@ class DatabaseRun:
         """
         self.run_info.run_complete = value
         self.save()
+
+    def get_metadata_file(self) -> str:
+        """
+        Get the path to the metadata file for this run.
+
+        Returns:
+            The path to the metadata file for this run
+        """
+        return self._metadata_file
+
+    @classmethod
+    def get_metadata_filepath(cls, workspace: str) -> str:
+        """
+        Get the path to the metadata file for a given workspace.
+        This is needed for the [`load_from_metadata_file`][merlin.db_scripts.db_run.DatabaseRun.load_from_metadata_file]
+        method as it can't use the non-classmethod version of this method.
+
+        Args:
+            workspace: The workspace directory for the run.
+
+        Returns:
+            The path to the metadata file.
+        """
+        return os.path.join(workspace, "merlin_info", "run_metadata.json")
 
     def get_id(self) -> str:
         """
@@ -174,9 +209,17 @@ class DatabaseRun:
 
     def save(self):
         """
-        Save the current state of this run to the database.
+        Save the current state of this run to the database. This will also re-dump
+        the metadata of this run to the output workspace in case something was updated.
         """
         self.backend.save_run(self.run_info)
+        self.dump_metadata()
+
+    def dump_metadata(self):
+        """
+        Dump all of the metadata for this run to a json file.
+        """
+        self.run_info.dump_to_json_file(self.get_metadata_file())
 
     @classmethod
     def load(cls, run_id: str, backend: ResultsBackend) -> "DatabaseRun":
@@ -195,6 +238,20 @@ class DatabaseRun:
             raise RunNotFoundError(f"Run with ID {run_id} not found in the database.")
         
         return cls(run_info, backend)
+
+    @classmethod
+    def load_from_metadata_file(cls, metadata_file: str, backend: ResultsBackend) -> "DatabaseRun":
+        """
+        Load a run from a metadata file.
+
+        Args:
+            metadata_file: The path to the metadata file to load from.
+            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+
+        Returns:
+            A `DatabaseRun` instance.
+        """
+        return cls(RunInfo.load_from_json_file(metadata_file), backend)
 
     @classmethod
     def delete(cls, run_id: str, backend: ResultsBackend):

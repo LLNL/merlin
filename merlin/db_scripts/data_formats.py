@@ -2,11 +2,13 @@
 """
 import json
 import logging
+import os
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import Field, dataclass, field, fields, asdict
 from typing import Dict, List, Tuple, Type, TypeVar
 
+from filelock import FileLock
 
 LOG = logging.getLogger("merlin")
 T = TypeVar("T", bound="BaseDataClass")
@@ -40,6 +42,12 @@ class BaseDataClass(ABC):
 
         from_json (classmethod):
             Create an instance of the dataclass from a JSON string.
+
+        dump_to_json_file:
+            Dump the data of this dataclass to a JSON file.
+
+        load_from_json_file (classmethod):
+            Load the data stored in a JSON file to this dataclass.
 
         fields:
             Retrieve the fields associated with this dataclass instance or class.
@@ -97,6 +105,59 @@ class BaseDataClass(ABC):
         data = json.loads(json_str)
         return cls.from_dict(data)
 
+    def dump_to_json_file(self, filepath: str):
+        """
+        Dump the data of this dataclass to a JSON file.
+
+        Args:
+            filepath: The path to the JSON file where the data will be written.
+
+        Raises:
+            ValueError: If the `filepath` is not provided or is invalid.
+        """
+        if not filepath:
+            raise ValueError("A valid file path must be provided.")
+
+        # Ensure the directory for the file exists
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+        # Create a lock file alongside the target JSON file
+        lock_file = f"{filepath}.lock"
+        with FileLock(lock_file):
+            # Write the data to the JSON file
+            temp_filepath = f"{filepath}.tmp"  # Use a temporary file for atomic writes
+            with open(temp_filepath, "w") as json_file:
+                json.dump(self.to_dict(), json_file, indent=4)
+
+            # Replace the temporary file with the target file
+            os.replace(temp_filepath, filepath)
+
+        LOG.info(f"Data successfully dumped to {filepath}.")
+
+    @classmethod
+    def load_from_json_file(cls: Type[T], filepath: str) -> T:
+        """
+        Load the data stored in a JSON file to this dataclass.
+
+        Args:
+            filepath: The path to the JSON file where the data is located.
+
+        Raises:
+            ValueError: If the `filepath` is not provided or is invalid.
+        """
+        if not filepath or not os.path.exists(filepath):
+            raise ValueError("A valid file path must be provided.")
+
+        # Create a lock file alongside the target JSON file
+        lock_file = f"{filepath}.lock"
+        with FileLock(lock_file):
+            with open(filepath, "r") as json_file:
+                # Parse the JSON data into a dictionary
+                data = json.load(json_file)
+
+        # Use from_dict to create an instance of the dataclass
+        return cls.from_dict(data)
+
     def fields(self) -> Tuple[Field]:
         """
         Get the fields associated with this instance. Added this method so that the dataclass.fields
@@ -152,7 +213,6 @@ class BaseDataClass(ABC):
                 )
                 self.additional_data[field_name] = new_value
 
-
 @dataclass
 class StudyInfo(BaseDataClass):
     """
@@ -187,20 +247,27 @@ class RunInfo(BaseDataClass):
     Attributes:
         additional_data: For any extra data not explicitly defined.
         child: The ID of the child run (if any).
-        fields_allowed_to_be_updated: A list of field names that are allowed to be updated.
+        fields_allowed_to_be_updated: A list of field names that are allowed
+            to be updated.
         id: The unique ID for the run.
         parameters: The parameters used in this run.
         parent: The ID of the parent run (if any).
         queues: The task queues used for this run.
         run_complete: Wether the run is complete.
         samples: The samples used in this run.
+        steps: A list of unique step IDs that are executed in this run.
+            Each ID will correspond to a `StepInfo` entry.
         study_id: The unique ID of the study this run is associated with.
+            Corresponds with a `StudyInfo` entry.
+        workers: A list of worker names executing tasks for this run.
         workspace: The path to the output workspace.
     """
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     study_id: str = None
     workspace: str = None
+    steps: List[str] = field(default_factory=list)  # TODO NOT YET IMPLEMENTED
     queues: List[str] = field(default_factory=list)
+    workers: List[str] = field(default_factory=list)  # TODO NOT YET IMPLEMENTED; should this be list of worker names or ids?
     parent: str = None
     child: str = None
     run_complete: bool = False
@@ -216,3 +283,7 @@ class RunInfo(BaseDataClass):
             A list of fields that are allowed to be updated in this class.
         """
         return ["parent", "child", "run_complete", "additional_data"]
+
+# TODO create a StepInfo class to store information about a step
+# - Can probably link this to status
+# - Each step should have entries for parameters/samples but only those that are actually used in the step
