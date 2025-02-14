@@ -1,8 +1,13 @@
 """
 """
+import logging
+from typing import Dict, List
+
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_formats import RunInfo, StudyInfo
 from merlin.db_scripts.db_run import DatabaseRun
+
+LOG = logging.getLogger("merlin")
 
 
 class DatabaseStudy:
@@ -19,21 +24,62 @@ class DatabaseStudy:
             with the database.
 
     Methods:
-        create_run: Create a new run for this study and save it to the database.
-        delete: Class method to delete a study from the database.
-        get_all_runs: Retrieve all runs associated with this study.
-        get_id: Retrieve the ID of the study.
-        get_name: Retrieve the name of the study.
-        get_run: Retrieve a specific run associated with this study by its ID.
-        load: Class method to load a study from the database by its name.
-        remove_all_runs: Remove all runs associated with this study from the database.
-        remove_run: Remove a specific run associated with this study by its ID.
-        save: Save the current state of the study to the database.
+        __str__:
+            Provide a string representation of the `DatabaseStudy` instance.
+
+        get_id:
+            Retrieve the unique ID of the study.
+
+        get_name:
+            Retrieve the name of the study.
+
+        get_additional_data:
+            Retrieve any additional metadata associated with the study.
+
+        create_run:
+            Create a new run for this study and save it to the database.
+
+        get_run:
+            Retrieve a specific run associated with this study by its ID.
+
+        get_all_runs:
+            Retrieve all runs associated with this study.
+
+        delete_run:
+            Remove a specific run associated with this study by its ID.
+
+        delete_all_runs:
+            Remove all runs associated with this study from the database.
+
+        save:
+            Save the current state of the study to the database.
+
+        load (classmethod):
+            Load a `DatabaseStudy` instance from the database by its name.
+
+        delete (classmethod):
+            Delete a study from the database by its name. Optionally, remove all associated runs.
     """
 
     def __init__(self, study_info: StudyInfo, backend: ResultsBackend):
         self.study_info: StudyInfo = study_info
         self.backend: ResultsBackend = backend
+
+    def __str__(self) -> str:
+        """
+        Provide a string representation of the `DatabaseRun` instance.
+
+        Returns:
+            A human-readable string representation of the `DatabaseRun` instance.
+        """
+        return (
+            f"DatabaseStudy("
+            f"id={self.get_id()}, "
+            f"name={self.get_name()}, "
+            f"runs={[run.__str__() for run in self.get_all_runs()]}, "
+            f"additional_data={self.get_additional_data()}, "
+            f"backend={self.backend.get_name()})"
+        )
 
     def get_id(self) -> str:
         """
@@ -52,6 +98,15 @@ class DatabaseStudy:
             The name for this study.
         """
         return self.study_info.name
+
+    def get_additional_data(self) -> Dict:
+        """
+        Get any additional data saved to this study.
+
+        Returns:
+            Additional data saved to this study.
+        """
+        return self.study_info.additional_data
 
     def create_run(self, *args, **kwargs) -> DatabaseRun:
         """
@@ -92,7 +147,6 @@ class DatabaseStudy:
 
         return db_run
 
-
     def get_run(self, run_id: str) -> DatabaseRun:
         """
         Given an ID, get the associated run from the database.
@@ -106,7 +160,7 @@ class DatabaseStudy:
         """
         return DatabaseRun.load(run_id, self.backend)
 
-    def get_all_runs(self):
+    def get_all_runs(self) -> List[DatabaseRun]:
         """
         Get every run associated with this study.
 
@@ -115,7 +169,7 @@ class DatabaseStudy:
         """
         return [self.get_run(run_id) for run_id in self.study_info.runs]
 
-    def remove_run(self, run_id: str):
+    def delete_run(self, run_id: str):
         """
         Given an ID, remove the associated run from the database.
 
@@ -124,8 +178,9 @@ class DatabaseStudy:
         """
         DatabaseRun.delete(run_id, self.backend)
         self.study_info.runs.remove(run_id)
+        self.save()
 
-    def remove_all_runs(self):
+    def delete_all_runs(self):
         """
         Remove every run associated with this study.
         """
@@ -160,21 +215,17 @@ class DatabaseStudy:
         return cls(study_info, backend)
 
     @classmethod
-    def delete(cls, study_id: str, backend: ResultsBackend, remove_all_runs: bool = True):
+    def delete(cls, study_name: str, backend: ResultsBackend, remove_associated_runs: bool = True):
         """
         Delete a study from the database.
 
         By default, this will remove all of the runs associated with the study from the database.
 
         Args:
-            study_id: The ID of the study to load.
+            study_name: The name of the study to delete.
             backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
-            remove_all_runs: If True, remove all of the runs associated with this study from the db.
+            remove_associated_runs: If True, remove all of the runs associated with this study from the db.
         """
-        # Remove all runs associated with this study if necessary
-        if remove_all_runs:
-            current_study = cls.load(study_id, backend)
-            current_study.remove_all_runs()
-        
-        # Remove the actual study entry
-        backend.delete(study_id)
+        LOG.info(f"Deleting study '{study_name}' from the database...")
+        backend.delete_study(study_name, remove_associated_runs=remove_associated_runs)
+        LOG.info(f"Study '{study_name}' has been successfully deleted.")

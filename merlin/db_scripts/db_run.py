@@ -1,10 +1,12 @@
 """
 """
-from typing import List
+import logging
+from typing import Dict, List
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_formats import RunInfo
 
+LOG = logging.getLogger("merlin")
 
 class DatabaseRun:
     """
@@ -21,20 +23,63 @@ class DatabaseRun:
         run_complete: Property to get or set the completion status of the run.
 
     Methods:
-        delete: Class method to delete a run from the database by its ID.
-        get_id: Retrieve the ID of the run.
-        get_study_id: Retrieve the ID of the study associated with this run.
-        get_workspace: Retrieve the path to the output workspace for this run.
-        get_queues: Retrieve the task queues used for this run.
-        get_parent: Retrieve the ID of the parent run that launched this run (if any).
-        get_child: Retrieve the ID of the child run launched by this run (if any).
-        load: Class method to load a run from the database by its ID.
-        save: Save the current state of the run to the database.
+         __str__:
+            Provide a string representation of the `DatabaseRun` instance.
+
+        get_id:
+            Retrieve the ID of the run.
+
+        get_study_id:
+            Retrieve the ID of the study associated with this run.
+
+        get_workspace:
+            Retrieve the path to the output workspace for this run.
+
+        get_queues:
+            Retrieve the task queues used for this run.
+
+        get_parent:
+            Retrieve the ID of the parent run that launched this run (if any).
+
+        get_child:
+            Retrieve the ID of the child run launched by this run (if any).
+
+        get_additional_data:
+            Retrieve any additional data saved to this run.
+
+        save:
+            Save the current state of the run to the database.
+
+        load (classmethod):
+            Load a `DatabaseRun` instance from the database by its ID.
+
+        delete (classmethod):
+            Delete a run from the database by its ID.
     """
 
     def __init__(self, run_info: RunInfo, backend: ResultsBackend):
         self.run_info: RunInfo = run_info
         self.backend: ResultsBackend = backend
+
+    def __str__(self) -> str:
+        """
+        Provide a string representation of the `DatabaseRun` instance.
+
+        Returns:
+            A human-readable string representation of the `DatabaseRun` instance.
+        """
+        return (
+            f"DatabaseRun("
+            f"id={self.get_id()}, "
+            f"study_id={self.get_study_id()}, "
+            f"workspace={self.get_workspace()}, "
+            f"queues={self.get_queues()}, "
+            f"parent={self.get_parent()}, "
+            f"child={self.get_child()}, "
+            f"run_complete={self.run_complete}, "
+            f"additional_data={self.get_additional_data()}, "
+            f"backend={self.backend.get_name()})"
+        )
 
     @property
     def run_complete(self) -> bool:
@@ -117,6 +162,15 @@ class DatabaseRun:
         """
         return self.run_info.child
 
+    def get_additional_data(self) -> Dict:
+        """
+        Get any additional data saved to this run.
+
+        Returns:
+            Additional data saved to this run.
+        """
+        return self.run_info.additional_data
+
     def save(self):
         """
         Save the current state of this run to the database.
@@ -135,11 +189,10 @@ class DatabaseRun:
         Returns:
             A `DatabaseRun` instance.
         """
-        run_data = backend.get(run_id)
-        if not run_data:
+        run_info = backend.retrieve_run(run_id)
+        if not run_info:
             raise ValueError(f"Run with ID {run_id} not found in the database.")
         
-        run_info = RunInfo.from_dict(run_data)
         return cls(run_info, backend)
 
     @classmethod
@@ -151,6 +204,7 @@ class DatabaseRun:
             run_id: The ID of the run to delete.
             backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
         """
-        # TODO make sure this deletes everything for the run
-        self.backend.delete(run_id)
+        LOG.info(f"Deleting run with id '{run_id}' from the database...")
+        backend.delete_run(run_id)
+        LOG.info(f"Run with id '{run_id}' has been successfully deleted.")
     

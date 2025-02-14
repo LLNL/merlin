@@ -28,21 +28,49 @@ class RedisBackend(ResultsBackend):
         client: The Redis client used for database operations.
 
     Methods:
-        _create_data_class_entry: Store a [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] 
-            instance as a hash in the Redis database.
-        _deserialize_data_class: Convert data retrieved from Redis into a 
+        _create_data_class_entry:
+            Store a [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance
+            as a hash in the Redis database.
+
+        _update_data_class_entry:
+            Update an existing data class entry in the Redis database with new information.
+
+        _serialize_data_class:
+            Convert a [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance
+            into a format that Redis can interpret.
+
+        _deserialize_data_class:
+            Convert data retrieved from Redis into a
             [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance.
-        _serialize_data_class: Convert a [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] 
-            instance into a format that Redis can interpret.
-        _update_run: Update an existing run entry in the Redis database.
-        _update_study: Update an existing study entry in the Redis database.
-        retrieve_all_studies: Retrieve all studies currently stored in the Redis database.
-        retrieve_run: Retrieve a [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] object 
-            from the Redis database by its ID.
-        retrieve_study: Retrieve a [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object 
-            from the Redis database by its name.
-        save_run: Save a [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] object to the Redis database.
-        save_study: Save a [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object to the Redis database.
+
+        save_study:
+            Save a [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object to the Redis database.
+            If a study with the same name exists, it will update the existing entry.
+
+        retrieve_study:
+            Retrieve a [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object from the Redis
+            database by its name.
+
+        retrieve_all_studies:
+            Retrieve all studies currently stored in the Redis database.
+
+        delete_study:
+            Delete a study from the Redis database by its name. Optionally, remove all associated runs.
+
+        save_run:
+            Save a [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] object to the Redis database. If a run
+            with the same ID exists, it will update the existing entry.
+
+        retrieve_run:
+            Retrieve a [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] object from the Redis database
+            by its ID.
+
+        retrieve_all_runs:
+            Retrieve all runs currently stored in the Redis database.
+
+        delete_run:
+            Delete a run from the Redis database by its ID. This will also remove the run from the associated
+            study's list of runs.
     """
 
     def __init__(self, backend_name: str):
@@ -116,40 +144,33 @@ class RedisBackend(ResultsBackend):
         serialized_data = self._serialize_data_class(data_class)
         self.client.hset(key, mapping=serialized_data)
 
-    def _update_study(self, updated_study: StudyInfo):
+    def _update_data_class_entry(self, updated_data_class: BaseDataClass, key: str):
         """
-        Update an existing study entry in the Redis database with new information.
+        Update an existing data class entry in the Redis database with new information.
+        A 'data class' here refers to classes defined in merlin.db_scripts.data_formats.
 
-        This method retrieves the existing study data from Redis, merges the runs from the 
-        existing study with the new runs (avoiding duplicates), and updates the study entry 
-        in the database.
+        This method retrieves the existing data of the data class we're updating from Redis, updates
+        its fields with the new data provided in the `updated_data_class` object, and saves the updated
+        data back to the database.
 
         Args:
-            updated_study: A [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object 
-                containing the updated study information.
+            updated_data_class: A [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance 
+                containing the updated information.
         """
-        LOG.info("Updating an existing study entry in Redis...")
-        # Study exists, retrieve the existing data
-        existing_study_key = f"study:{updated_study.id}"
-        existing_study_data = self.client.hgetall(existing_study_key)
+        # Get the existing data from Redis and convert it to an instance of BaseDataClass
+        existing_data = self.client.hgetall(key)
+        existing_data_class = self._deserialize_data_class(existing_data, type(updated_data_class))
 
-        # Merge existing runs with new runs (avoiding duplicates)
-        existing_runs = json.loads(existing_study_data.get("runs", []))
-        updated_runs = list(set(existing_runs + updated_study.runs))
-
-        # Update the study data
-        updated_study_info = StudyInfo(
-            id=updated_study.id,
-            name=updated_study.name,
-            runs=updated_runs,
-        )
-        updated_study_data = self._serialize_data_class(updated_study_info)
-        self.client.hset(existing_study_key, mapping=updated_study_data)
-        LOG.info(f"Successfully updated study '{updated_study.name}' with id '{updated_study.id}'.")
+        # Update the fields and save it to Redis
+        existing_data_class.update_fields(updated_data_class.to_dict())
+        updated_study_data = self._serialize_data_class(existing_data_class)
+        self.client.hset(key, mapping=updated_study_data)
 
     def save_study(self, study: StudyInfo):
         """
         Given a StudyInfo object, enter all of it's information to the Redis database.
+        If a study with `study.id` already exists, this will override everything in that
+        entry.
 
         Args:
             study: A [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] instance.
@@ -160,18 +181,15 @@ class RedisBackend(ResultsBackend):
         if existing_study_id:
             LOG.debug(f"existing_study_id: {existing_study_id}.")
             LOG.debug(f"study.id: {study.id}")
-            if study.id != existing_study_id:
-                raise ValueError(
-                    f"ID mismatch. StudyInfo contains ID '{study.id}' but ID in database is '{existing_study_id}'." \
-                    "When the StudyInfo object was created, did you load it in with DatabaseStudy.load?"
-                )
-            self._update_study(study)
+            LOG.info(f"Attempting to update study with id '{study.id}'...")
+            self._update_data_class_entry(study, f"study:{study.id}")
+            LOG.info(f"Successfully updated study with id '{study.id}'.")
         # Study does not yet exist so create a new study entry
         else:
             LOG.info("Creating a study entry in Redis...")
             self._create_data_class_entry(study, f"study:{study.id}")
             self.client.hset("study:name", study.name, study.id)
-            LOG.info("Successfully created a study entry.")
+            LOG.info(f"Successfully created a study with id '{study.id}' in Redis.")
 
         LOG.info(f"Study with name '{study.name}' saved to Redis under id '{study.id}'.")
 
@@ -225,29 +243,37 @@ class RedisBackend(ResultsBackend):
         LOG.info(f"Successfully retrieved {len(all_studies)} studies from Redis.")
         return all_studies
 
-    def _update_run(self, updated_run: RunInfo):
+    def delete_study(self, study_name: str, remove_associated_runs: bool = True):
         """
-        Update an existing run entry in the Redis database with new information.
-
-        This method retrieves the existing run data from Redis, updates its fields with the 
-        new data provided in the `updated_run` object, and saves the updated run back to the database.
+        Given the name of the study, find it in the database and remove that entry.
 
         Args:
-            updated_run: A [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] object 
-                containing the updated run information.
+            study_name: The name of the study to remove from the database.
+            remove_associated_runs: If true, remove the runs associated with this study.
         """
-        # Get the existing data from Redis and convert it to a RunInfo object
-        run_key = f"run:{updated_run.id}"
-        existing_data = self.client.hgetall(run_key)
-        existing_run = self._deserialize_data_class(existing_data, RunInfo)
+        LOG.info(f"Attempting to delete study '{study_name}' from Redis...")
 
-        # Update the fields in the existing run and save it to Redis
-        existing_run.update_fields(updated_run.to_dict())
-        updated_run_data = self._serialize_data_class(existing_run)
-        self.client.hset(run_key, mapping=updated_run_data)
+        # Retrieve the study using the retrieve_study method
+        study = self.retrieve_study(study_name)
+        if study is None:
+            raise ValueError(f"Study with name '{study_name}' does not exist in the database.")
 
-        LOG.info(f"Successfully updated run with id '{updated_run.id}'.")
-        
+        # Delete all associated runs
+        if remove_associated_runs:
+            for run_id in study.runs:
+                self.delete_run(run_id)  # Use the existing delete_run method
+
+        # Delete the study's hash entry
+        study_key = f"study:{study.id}"
+        LOG.info(f"Deleting study hash with key '{study_key}'...")
+        self.client.delete(study_key)
+
+        # Remove the study's name-to-ID mapping
+        LOG.info(f"Removing study name-to-ID mapping for '{study_name}'...")
+        self.client.hdel("study:name", study_name)
+
+        LOG.info(f"Successfully deleted study '{study_name}' and all associated data from Redis.")
+
     def save_run(self, run: RunInfo):
         """
         Given a RunInfo object, enter all of it's information to the backend database.
@@ -257,9 +283,13 @@ class RedisBackend(ResultsBackend):
         """
         run_key = f"run:{run.id}"
         if self.client.exists(run_key):
-            self._update_run(run)
+            LOG.info(f"Attempting to update run with id '{run.id}'...")
+            self._update_data_class_entry(run, run_key)
+            LOG.info(f"Successfully updated run with id '{run.id}'.")
         else:
+            LOG.info("Creating a run entry in Redis...")
             self._create_data_class_entry(run, run_key)
+            LOG.info(f"Successfully created a run with id '{run.id}' in Redis.")
 
     def retrieve_run(self, run_id: str) -> RunInfo:
         """
@@ -273,4 +303,65 @@ class RedisBackend(ResultsBackend):
             return None
 
         data_from_redis = self.client.hgetall(run_key)
-        return self._deserialize_data_class(data_from_redis, RunInfo)   
+        return self._deserialize_data_class(data_from_redis, RunInfo)
+
+    def retrieve_all_runs(self) -> List[RunInfo]:
+        """
+        Query the Redis database for every study that's currently stored.
+
+        Returns:
+            A list of [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] objects.
+        """
+        LOG.info("Fetching all runs from Redis...")
+
+        run_pattern = "run:*"
+        all_runs = []
+
+        # Loop through all runs
+        for run_key in self.client.scan_iter(match=run_pattern):
+            run_id = run_key.split(":")[1]  # Extract the ID
+            try:
+                run_info = self.retrieve_run(run_id)
+                if run_info:
+                    all_runs.append(run_info)
+                else:
+                    # Shouldn't hit this since we're looping with scan
+                    LOG.warning(f"Run with id '{run_id}' could not be retrieved or does not exist.")
+            except Exception as e:
+                LOG.error(f"Error retrieving run with id '{run_id}': {e}")
+
+        LOG.info(f"Successfully retrieved {len(all_runs)} runs from Redis.")
+        return all_runs
+
+    def delete_run(self, run_id: str):
+        """
+        Given a run id, find it in the database and remove that entry. This will also
+        delete the run id from the list of runs in the associated study's entry.
+
+        Args:
+            run_id: The id of the run to delete.
+        """
+        LOG.info(f"Attempting to delete run with id '{run_id}' from Redis...")
+        run = self.retrieve_run(run_id)
+        if run is None:
+            raise ValueError(f"Run with id '{run_id}' does not exist in the database.")
+        
+        LOG.debug(f"The run being deleted is associated with study '{run.study_id}'. Removing this run from that study's list of runs...")
+        study_data = self.client.hgetall(f"study:{run.study_id}")
+        if not study_data:
+            LOG.warning(
+                f"Study with id '{run.study_id}' does not exist in the database. Ignoring the removal of this run from that study's list of runs."
+            )
+        else:
+            study_info = self._deserialize_data_class(study_data, StudyInfo)
+            study_info.runs.remove(run_id)
+            self.save_study(study_info)
+            LOG.debug("Successfully removed this run from the associated study.")
+
+        # Delete the run's hash entry
+        run_key = f"run:{run.id}"
+        LOG.debug(f"Deleting run hash with key '{run_key}'...")
+        self.client.delete(run_key)
+        LOG.debug("Successfully removed run hash from Redis.")
+
+        LOG.info(f"Successfully deleted run '{run_id}' and all associated data from Redis.")

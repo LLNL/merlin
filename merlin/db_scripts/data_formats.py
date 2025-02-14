@@ -29,12 +29,26 @@ class BaseDataClass(ABC):
             Must be defined in subclasses.
 
     Methods:
-        fields: Retrieve the fields associated with this dataclass instance or class.
-        from_dict: Create an instance of the dataclass from a dictionary.
-        from_json: Create an instance of the dataclass from a JSON string.
-        to_dict: Convert the dataclass instance to a dictionary.
-        to_json: Serialize the dataclass instance to a JSON string.
-        update_fields: Update the fields of the dataclass based on a given dictionary of updates.
+        to_dict:
+            Convert the dataclass instance to a dictionary.
+
+        to_json:
+            Serialize the dataclass instance to a JSON string.
+
+        from_dict (classmethod):
+            Create an instance of the dataclass from a dictionary.
+
+        from_json (classmethod):
+            Create an instance of the dataclass from a JSON string.
+
+        fields:
+            Retrieve the fields associated with this dataclass instance or class.
+
+        fields (classmethod):
+            Retrieve the fields associated with the dataclass class itself.
+
+        update_fields:
+            Update the fields of the dataclass based on a given dictionary of updates.
     """
     additional_data: Dict = field(default_factory=dict)
 
@@ -187,7 +201,7 @@ class RunInfo(BaseDataClass):
     study_id: str = None
     workspace: str = None
     queues: List[str] = field(default_factory=list)
-    parent: str = None 
+    parent: str = None
     child: str = None
     run_complete: bool = False
     parameters: Dict = field(default_factory=dict)  # TODO NOT YET IMPLEMENTED
