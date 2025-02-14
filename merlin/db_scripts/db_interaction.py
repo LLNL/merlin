@@ -7,6 +7,7 @@ from merlin.backends.backend_factory import backend_factory
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_formats import RunInfo, StudyInfo
 from merlin.db_scripts.db_study import DatabaseRun, DatabaseStudy
+from merlin.exceptions import StudyNotFoundError
 
 LOG = logging.getLogger("merlin")
 
@@ -78,7 +79,7 @@ class MerlinDatabase:
         try:
             db_study = self.get_study(study_name)
             LOG.info(f"Study with name '{study_name}' already has an entry in the database.")
-        except ValueError:  # TODO create a StudyNotFoundError
+        except StudyNotFoundError:
             LOG.info(f"Study with name '{study_name}' does not yet have an entry in the database. Creating one...")
             study_info = StudyInfo(name=study_name)
             db_study = DatabaseStudy(study_info, self.backend)
@@ -150,7 +151,7 @@ class MerlinDatabase:
         """
         try:
             db_study = self.get_study(study_name)
-        except ValueError:
+        except StudyNotFoundError:
             db_study = self.create_study(study_name)
         
         return db_study.create_run(workspace=workspace, queues=queues, *args, **kwargs)
@@ -196,5 +197,3 @@ class MerlinDatabase:
         # - can add a -f flag to ignore this prompt (like purge)
         for run in all_runs:
             self.delete_run(run.id)
-
-    

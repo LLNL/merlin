@@ -6,6 +6,7 @@ from typing import Dict, List
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_formats import RunInfo, StudyInfo
 from merlin.db_scripts.db_run import DatabaseRun
+from merlin.exceptions import StudyNotFoundError
 
 LOG = logging.getLogger("merlin")
 
@@ -210,7 +211,7 @@ class DatabaseStudy:
         """
         study_info = backend.retrieve_study(study_name)
         if study_info is None:
-            raise ValueError(f"Study with name '{study_name}' not found in the database.")
+            raise StudyNotFoundError(f"Study with name '{study_name}' not found in the database.")
         
         return cls(study_info, backend)
 

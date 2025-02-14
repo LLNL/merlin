@@ -112,3 +112,23 @@ class BackendNotSupportedException(Exception):
 
     def __init__(self, message):
         super().__init__(message)
+
+
+class StudyNotFoundError(Exception):
+    """
+    Exception to signal that the study you were looking for cannot be found in
+    Merlin's database.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class RunNotFoundError(Exception):
+    """
+    Exception to signal that the run you were looking for cannot be found in
+    Merlin's database.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)

@@ -5,6 +5,7 @@ from typing import Dict, List
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_formats import RunInfo
+from merlin.exceptions import RunNotFoundError
 
 LOG = logging.getLogger("merlin")
 
@@ -191,7 +192,7 @@ class DatabaseRun:
         """
         run_info = backend.retrieve_run(run_id)
         if not run_info:
-            raise ValueError(f"Run with ID {run_id} not found in the database.")
+            raise RunNotFoundError(f"Run with ID {run_id} not found in the database.")
         
         return cls(run_info, backend)
 
