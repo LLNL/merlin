@@ -156,7 +156,7 @@ class MerlinDatabase:
         
         return db_study.create_run(workspace=workspace, queues=queues, *args, **kwargs)
 
-    def get_run(self, run_id: str):
+    def get_run(self, run_id: str) -> DatabaseRun:
         """
         Given a run id, retrieve the associated run from the database.
 
@@ -168,6 +168,21 @@ class MerlinDatabase:
                 the run that was queried.
         """
         return DatabaseRun.load(run_id, self.backend)
+
+    def get_run_from_workspace(self, workspace: str) -> DatabaseRun:
+        """
+        Given an output workspace for a run, find the run metadata file and load
+        the run from it.
+
+        Args:
+            workspace: The output workspace for a run.
+
+        Returns:
+            A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
+                the run that was queried.
+        """
+        run_metadata_filepath = DatabaseRun.get_metadata_filepath(workspace)
+        return DatabaseRun.load_from_metadata_file(run_metadata_filepath, self.backend)
 
     def get_all_runs(self) -> List[DatabaseRun]:
         """

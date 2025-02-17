@@ -47,6 +47,7 @@ from merlin.common.abstracts.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
 from merlin.config.utils import Priority, get_priority
+from merlin.db_scripts.db_interaction import MerlinDatabase
 from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
 from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
@@ -742,6 +743,29 @@ def chordfinisher(*args, **kwargs):  # pylint: disable=W0613
 @shared_task(
     autoretry_for=retry_exceptions,
     retry_backoff=True,
+    name="merlin:mark_run_as_complete",
+    priority=get_priority(Priority.LOW),
+)
+def mark_run_as_complete(study_workspace: str) -> str:
+    """
+    Mark this run as complete and save that to the database.
+
+    Args:
+        study_workspace: The output workspace for this run.
+
+    Returns:
+        A string denoting that this run has completed.
+    """
+    merlin_db = MerlinDatabase()
+    db_run = merlin_db.get_run_from_workspace(study_workspace)
+    db_run.run_complete = True
+    db_run.save()
+    return "Run Completed"
+
+
+@shared_task(
+    autoretry_for=retry_exceptions,
+    retry_backoff=True,
     name="merlin:queue_merlin_study",
     priority=get_priority(Priority.LOW),
 )
@@ -777,5 +801,10 @@ def queue_merlin_study(study, adapter):
         )
         for chain_group in groups_of_chains[1:]
     )
+
+    # Append the final task that marks the run as complete
+    final_task = mark_run_as_complete.si(study.workspace).set(queue=egraph.step(groups_of_chains[1][0][0]).get_task_queue())
+    celery_dag = celery_dag | final_task
+
     LOG.info("Launching tasks.")
     return celery_dag.delay(None)

@@ -114,7 +114,6 @@ class DatabaseRun:
             value: The completion status of the run.
         """
         self.run_info.run_complete = value
-        self.save()
 
     def get_metadata_file(self) -> str:
         """

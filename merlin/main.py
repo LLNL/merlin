@@ -52,6 +52,7 @@ from tabulate import tabulate
 
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
+from merlin.db_scripts.db_interaction import MerlinDatabase
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
@@ -161,6 +162,15 @@ def process_run(args: Namespace) -> None:
         pgen_file=args.pgen_file,
         pargs=args.pargs,
     )
+
+    merlin_db = MerlinDatabase()
+    db_run = merlin_db.create_run(
+        study_name=study.expanded_spec.name,
+        workspace=study.workspace,
+        queues=study.expanded_spec.get_queue_list(["all"]),
+        workers=study.expanded_spec.get_worker_names(),
+    )
+
     router.run_task_server(study, args.run_mode)
 
 
