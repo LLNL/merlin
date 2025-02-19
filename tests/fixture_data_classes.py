@@ -78,3 +78,26 @@ class ChordErrorSetup:
     testing_dir: FixtureStr
     name: FixtureStr
     path: FixtureStr
+
+
+@dataclass
+class MonitorAutoRestartSetup:
+    """
+    TODO fix this docstring!!!
+    
+    Data class to encapsulate all chord-error-related fixtures required
+    for testing the chord error workflow.
+
+    This class simplifies the management of chord error setup fixtures
+    by grouping them into a single object, reducing the number of individual
+    fixture imports needed in tests that require chord error setup.
+
+    Attributes:
+        testing_dir: The path to the temp output directory for chord_err workflow tests.
+        name: A string representing the name to use for the chord_err workflow.
+        path: The path to the chord error YAML file.
+    """
+
+    testing_dir: FixtureStr
+    name: FixtureStr
+    path: FixtureStr
