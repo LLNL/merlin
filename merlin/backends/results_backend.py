@@ -57,6 +57,15 @@ class ResultsBackend(ABC):
         """
         return self.backend_name
 
+    def get_version(self) -> str:
+        """
+        Query the backend for the current version.
+
+        Returns:
+            A string representing the current version of the backend.
+        """
+        pass
+
     @abstractmethod
     def save_study(self, study: StudyInfo):
         """

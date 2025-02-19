@@ -52,6 +52,7 @@ from tabulate import tabulate
 
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
+from merlin.db_scripts.db_commands import database_delete, database_get, database_info
 from merlin.db_scripts.db_interaction import MerlinDatabase
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
@@ -457,6 +458,21 @@ def process_server(args: Namespace):
         config_server(args)
 
 
+def process_database(args: Namespace):
+    """
+    Process database commands by routing to the correct function.
+
+    Args:
+        args: An argparse Namespace containing user arguments.
+    """
+    if args.commands == "info":
+        database_info()
+    elif args.commands == "get":
+        database_get(args)
+    elif args.commands == "delete":
+        database_delete(args)
+
+
 # Pylint complains that there's too many statements here and wants us
 # to split the function up but that wouldn't make much sense so we ignore it
 def setup_argparse() -> None:  # pylint: disable=R0915
@@ -803,6 +819,138 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         type=str,
         # default="appendonly.aof",
         help="Set append only filename for merlin server container.",
+    )
+
+    # merlin database
+    database: ArgumentParser = subparsers.add_parser(
+        "database",
+        help="Interact with Merlin's database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    database.set_defaults(func=process_database)
+
+    database_commands: ArgumentParser = database.add_subparsers(dest="commands")
+
+    # Subcommand: database info
+    database_info: ArgumentParser = database_commands.add_parser(
+        "info",
+        help="Print information about the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: database delete
+    database_delete: ArgumentParser = database_commands.add_parser(
+        "delete",
+        help="Delete information stored in the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Add subcommands for delete
+    delete_subcommands = database_delete.add_subparsers(dest="delete_type", required=True)
+
+    # Subcommand: delete study
+    delete_study = delete_subcommands.add_parser(  # TODO perhaps this should just take in a spec file instead of the study name?
+        "study",
+        help="Delete a specific study by name.",  # TODO add option to delete by ID here as well
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_study.add_argument(
+        "study",
+        type=str,
+        help="The name of the study to delete.",
+    )
+    delete_study.add_argument(
+        "-k",
+        "--keep-associated-runs",
+        action="store_true",
+        help="Keep runs associated with the study.",
+    )
+
+    # Subcommand: delete run
+    delete_run = delete_subcommands.add_parser(
+        "run",
+        help="Delete a specific run by ID.",  # TODO add option to delete by workspace here as well
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_run.add_argument(
+        "run",
+        type=str,
+        help="The ID of the run to delete.",
+    )
+    # TODO implement the below option
+    # delete_run.add_argument(
+    #     "--delete-workspace",
+    #     action="store_true",
+    #     help="Delete the output workspace for the run.",
+    # )
+
+    # Subcommand: delete all-studies
+    delete_all_studies = delete_subcommands.add_parser(
+        "all-studies",
+        help="Delete all studies from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: delete all-runs
+    delete_all_runs = delete_subcommands.add_parser(
+        "all-runs",
+        help="Delete all runs from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # TODO implement the below logic
+    # # Subcommand: delete everything
+    # delete_everything = delete_subcommands.add_parser(
+    #     "everything",
+    #     help="Delete everything from the database.",
+    #     formatter_class=ArgumentDefaultsHelpFormatter,
+    # )
+
+    # Subcommand: database get
+    database_get: ArgumentParser = database_commands.add_parser(
+        "get",
+        help="Get information stored in the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Add subcommands for get
+    get_subcommands = database_get.add_subparsers(dest="get_type", required=True)
+
+    get_study = get_subcommands.add_parser(  # TODO perhaps this should just take in a spec file instead of the study name?
+        "study",
+        help="Get a specific study by name.",  # TODO add option to get by ID here as well
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    get_study.add_argument(
+        "study",
+        type=str,
+        help="The name of the study to get.",
+    )
+
+    # Subcommand: get run
+    get_run = get_subcommands.add_parser(
+        "run",
+        help="Get a specific run by ID.",  # TODO add option to get by workspace here as well
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    get_run.add_argument(
+        "run",
+        type=str,
+        help="The ID of the run to get.",
+    )
+
+    # Subcommand: get all-studies
+    get_all_studies = get_subcommands.add_parser(
+        "all-studies",
+        help="Get all studies from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: get all-runs
+    get_all_runs = get_subcommands.add_parser(
+        "all-runs",
+        help="Get all runs from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
     return parser

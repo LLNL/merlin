@@ -267,9 +267,9 @@ class RunInfo(BaseDataClass):
     workspace: str = None
     steps: List[str] = field(default_factory=list)  # TODO NOT YET IMPLEMENTED
     queues: List[str] = field(default_factory=list)
-    workers: List[str] = field(default_factory=list)  # TODO NOT YET IMPLEMENTED; should this be list of worker names or ids?
-    parent: str = None
-    child: str = None
+    workers: List[str] = field(default_factory=list)  # TODO This is currently a list of worker names; for the manager, we might want to make a new dataclass for these and link by id instead
+    parent: str = None  # TODO NOT YET IMPLEMENTED; do we even have a good way that this and `child` can be set?
+    child: str = None  # TODO NOT YET IMPLEMENTED
     run_complete: bool = False
     parameters: Dict = field(default_factory=dict)  # TODO NOT YET IMPLEMENTED
     samples: Dict = field(default_factory=dict)  # TODO NOT YET IMPLEMENTED

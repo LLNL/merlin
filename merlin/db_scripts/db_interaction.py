@@ -65,6 +65,24 @@ class MerlinDatabase:
         from merlin.config.configfile import CONFIG
         self.backend: ResultsBackend = backend_factory.get_backend(CONFIG.results_backend.name.lower())
 
+    def get_db_type(self) -> str:
+        """
+        Retrieve the type of backend.
+
+        Returns:
+            The type of backend (e.g. redis, sql, etc.).
+        """
+        return self.backend.get_name()
+
+    def get_db_version(self) -> str:
+        """
+        Get the version of the backend.
+
+        Returns:
+            The version number of the backend.
+        """
+        return self.backend.get_version()
+
     def create_study(self, study_name: str) -> DatabaseStudy:
         """
         Create [`DatabaseStudy`][merlin.db_scripts.db_study.DatabaseStudy] instance and save

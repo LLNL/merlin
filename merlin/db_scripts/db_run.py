@@ -73,7 +73,7 @@ class DatabaseRun:
         self.backend: ResultsBackend = backend
         self._metadata_file = self.get_metadata_filepath(self.get_workspace())
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         """
         Provide a string representation of the `DatabaseRun` instance.
 
@@ -86,12 +86,54 @@ class DatabaseRun:
             f"study_id={self.get_study_id()}, "
             f"workspace={self.get_workspace()}, "
             f"queues={self.get_queues()}, "
+            f"workers={self.get_workers()}, "
             f"parent={self.get_parent()}, "
             f"child={self.get_child()}, "
             f"run_complete={self.run_complete}, "
             f"additional_data={self.get_additional_data()}, "
             f"backend={self.backend.get_name()})"
         )
+
+    def __str__(self) -> str:
+        """
+        Provide a string representation of the `DatabaseRun` instance.
+
+        Returns:
+            A human-readable string representation of the `DatabaseRun` instance.
+        """
+        run_id = self.get_id()
+        return (
+            f"Run with ID {run_id}\n"
+            f"------------{'-'*len(run_id)}\n"
+            f"Workspace: {self.get_workspace()}\n"
+            f"Study ID: {self.get_study_id()}\n"
+            f"Queues: {self.get_queues()}\n"
+            f"Workers: {self.get_workers()}\n"
+            f"Parent: {self.get_parent()}\n"
+            f"Child: {self.get_child()}\n"
+            f"Run Complete: {self.run_complete}\n"
+            f"Additional Data: {self.get_additional_data()}\n\n"
+        )
+
+    def _get_latest_data(self) -> RunInfo:
+        """
+        Retrieve the latest data for the run from the database.
+
+        Returns:
+            A [`RunInfo`][merlin.db_scripts.db_formats.RunInfo] object
+                containing the latest data.
+        """
+        return self.backend.retrieve_run(self.run_info.id)
+
+    def reload_data(self):
+        """
+        Reload the latest data for this run from the database and update the
+        [`RunInfo`][merlin.db_scripts.db_formats.RunInfo] object.
+        """
+        updated_run_info = self.backend.retrieve_run(self.run_info.id)
+        if not updated_run_info:
+            raise RunNotFoundError(f"Run with ID {self.run_info.id} not found in the database.")
+        self.run_info = updated_run_info
 
     @property
     def run_complete(self) -> bool:
@@ -103,7 +145,7 @@ class DatabaseRun:
         Returns:
             True if the study is complete. False, otherwise.
         """
-        return self.run_info.run_complete
+        return self._get_latest_data().run_complete
 
     @run_complete.setter
     def run_complete(self, value: bool):
@@ -175,6 +217,15 @@ class DatabaseRun:
         """
         return self.run_info.queues
 
+    def get_workers(self) -> List[str]:
+        """
+        Get the workers that were used for this run.
+
+        Returns:
+            A list of strings representing the workers that were used for this run.
+        """
+        return self.run_info.workers
+
     def get_parent(self) -> str:
         """
         Get the ID of the run that launched this run (if any).
@@ -184,7 +235,7 @@ class DatabaseRun:
         Returns:
             The ID of the run that launched this run.
         """
-        return self.run_info.parent
+        return self._get_latest_data().parent
 
     def get_child(self) -> str:
         """
@@ -195,7 +246,7 @@ class DatabaseRun:
         Returns:
             The ID of the run that was launched by this run.
         """
-        return self.run_info.child
+        return self._get_latest_data().child
 
     def get_additional_data(self) -> Dict:
         """
@@ -204,7 +255,7 @@ class DatabaseRun:
         Returns:
             Additional data saved to this run.
         """
-        return self.run_info.additional_data
+        return self._get_latest_data().additional_data
 
     def save(self):
         """

@@ -8,7 +8,7 @@ import json
 from redis import Redis
 
 from merlin.backends.results_backend import ResultsBackend
-from merlin.config.results_backend import get_connection_string
+from merlin.config.results_backend import get_backend_password
 from merlin.db_scripts.data_formats import BaseDataClass, RunInfo, StudyInfo
 
 LOG = logging.getLogger("merlin")
@@ -77,7 +77,34 @@ class RedisBackend(ResultsBackend):
         super().__init__(backend_name)
         # TODO have this database use a different db number than Celery does
         # - do we want a new database for each type of information? i.e. one for studies, one for runs, etc.?
-        self.client: Redis = Redis.from_url(url=get_connection_string(), decode_responses=True)
+        from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
+
+        password_file = CONFIG.results_backend.password if hasattr(CONFIG.results_backend, "password") else None
+        server = CONFIG.results_backend.server if hasattr(CONFIG.results_backend, "server") else None
+        port = CONFIG.results_backend.port if hasattr(CONFIG.results_backend, "port") else None
+        results_db_num = CONFIG.results_backend.db_num if hasattr(CONFIG.results_backend, "db_num") else None
+        username = CONFIG.results_backend.username if hasattr(CONFIG.results_backend, "username") else None
+        has_ssl = hasattr(CONFIG.results_backend, "cert_reqs")
+        ssl_cert_reqs = CONFIG.results_backend.cert_reqs if has_ssl else "required"
+
+        password = None
+        if password_file is not None:
+            try:
+                password = get_backend_password(password_file)
+            except IOError:
+                if hasattr(CONFIG.results_backend, "password"):
+                    password = CONFIG.results_backend.password
+
+        self.client: Redis = Redis(
+            host=server,
+            port=port,
+            db=results_db_num,
+            username=username,
+            password=password,
+            decode_responses=True,
+            ssl=has_ssl,
+            ssl_cert_reqs=ssl_cert_reqs,
+        )
 
     def _serialize_data_class(self, data_class: BaseDataClass) -> Dict[str, str]:
         """
@@ -167,6 +194,16 @@ class RedisBackend(ResultsBackend):
         existing_data_class.update_fields(updated_data_class.to_dict())
         updated_study_data = self._serialize_data_class(existing_data_class)
         self.client.hset(key, mapping=updated_study_data)
+
+    def get_version(self) -> str:
+        """
+        Query the Redis backend for the current version.
+
+        Returns:
+            A string representing the current version of Redis.
+        """
+        client_info = self.client.info()
+        return client_info.get("redis_version", "N/A")        
 
     def save_study(self, study: StudyInfo):
         """

@@ -66,12 +66,12 @@ class DatabaseStudy:
         self.study_info: StudyInfo = study_info
         self.backend: ResultsBackend = backend
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         """
-        Provide a string representation of the `DatabaseRun` instance.
+        Provide a string representation of the `DatabaseStudy` instance.
 
         Returns:
-            A human-readable string representation of the `DatabaseRun` instance.
+            A human-readable string representation of the `DatabaseStudy` instance.
         """
         return (
             f"DatabaseStudy("
@@ -81,6 +81,42 @@ class DatabaseStudy:
             f"additional_data={self.get_additional_data()}, "
             f"backend={self.backend.get_name()})"
         )
+
+    def __str__(self) -> str:
+        """
+        Provide a string representation of the `DatabaseStudy` instance.
+
+        Returns:
+            A human-readable string representation of the `DatabaseStudy` instance.
+        """
+        study_id = self.get_id()
+        return (
+            f"Study with ID {study_id}\n"
+            f"------------{'-'*len(run_id)}\n"
+            f"Name: {self.get_name()}\n"
+            f"Runs: {self.get_all_runs()}\n"
+            f"Additional Data: {self.get_additional_data()}\n\n"
+        )
+
+    def _get_latest_data(self) -> StudyInfo:
+        """
+        Retrieve the latest dynamic data for the study from the database.
+
+        Returns:
+            A [`StudyInfo`][merlin.db_scripts.db_formats.StudyInfo] object
+                containing the latest dynamic data.
+        """
+        return self.backend.retrieve_study(self.study_info.name)
+
+    def reload_data(self):
+        """
+        Reload the latest data for this study from the database and update the
+        [`StudyInfo`][merlin.db_scripts.db_formats.StudyInfo] object.
+        """
+        updated_study_info = self.backend.retrieve_study(self.study_info.name)
+        if not updated_study_info:
+            raise StudyNotFoundError(f"Study with name {self.study_info.name} not found in the database.")
+        self.study_info = updated_study_info
 
     def get_id(self) -> str:
         """
@@ -107,7 +143,7 @@ class DatabaseStudy:
         Returns:
             Additional data saved to this study.
         """
-        return self.study_info.additional_data
+        return self._get_latest_data().additional_data
 
     def create_run(self, *args, **kwargs) -> DatabaseRun:
         """
@@ -168,7 +204,7 @@ class DatabaseStudy:
         Returns:
             A list of [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instances.
         """
-        return [self.get_run(run_id) for run_id in self.study_info.runs]
+        return [self.get_run(run_id) for run_id in self._get_latest_data().runs]
 
     def delete_run(self, run_id: str):
         """
