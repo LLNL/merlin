@@ -1,4 +1,6 @@
 """
+This module contains the functionality necessary to interact with runs
+stored in Merlin's database.
 """
 import logging
 import os
@@ -8,19 +10,21 @@ from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_formats import RunInfo
 from merlin.exceptions import RunNotFoundError
 
+
 LOG = logging.getLogger("merlin")
+
 
 class DatabaseRun:
     """
     A class representing a run in the database.
 
-    This class provides methods to interact with and manage a run's data, including 
-    retrieving information about the run, updating its state, and saving or deleting 
+    This class provides methods to interact with and manage a run's data, including
+    retrieving information about the run, updating its state, and saving or deleting
     it from the database.
 
     Attributes:
         run_info: An instance of the `RunInfo` class containing the run's metadata.
-        backend: An instance of the `ResultsBackend` class used to interact 
+        backend: An instance of the `ResultsBackend` class used to interact
             with the database.
         run_complete: Property to get or set the completion status of the run.
 
@@ -198,7 +202,7 @@ class DatabaseRun:
             The ID for the study associated with this run.
         """
         return self.run_info.study_id
-    
+
     def get_workspace(self) -> str:
         """
         Get the path to the output workspace for this run.
@@ -286,7 +290,7 @@ class DatabaseRun:
         run_info = backend.retrieve_run(run_id)
         if not run_info:
             raise RunNotFoundError(f"Run with ID {run_id} not found in the database.")
-        
+
         return cls(run_info, backend)
 
     @classmethod
@@ -315,4 +319,3 @@ class DatabaseRun:
         LOG.info(f"Deleting run with id '{run_id}' from the database...")
         backend.delete_run(run_id)
         LOG.info(f"Run with id '{run_id}' has been successfully deleted.")
-    

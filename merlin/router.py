@@ -42,7 +42,7 @@ import time
 from typing import Dict, List, Tuple
 
 from merlin.db_scripts.db_run import DatabaseRun
-from merlin.exceptions import NoWorkersException
+from merlin.exceptions import InvalidTaskServerError, NoWorkersException, RestartException
 from merlin.spec.specification import MerlinSpec
 from merlin.study.celeryadapter import (
     build_set_of_queues,
@@ -142,7 +142,7 @@ def dump_queue_info(task_server: str, query_return: List[Tuple[str, int, int]], 
 
 def query_queues(
     task_server: str,
-    spec: "MerlinSpec",  # noqa: F821
+    spec: MerlinSpec,
     steps: List[str],
     specific_queues: List[str],
     verbose: bool = True,
@@ -260,7 +260,7 @@ def get_active_queues(task_server: str) -> Dict[str, List[str]]:
     return active_queues
 
 
-def wait_for_workers(sleep: int, task_server: str, spec: "MerlinSpec" = None, worker_names: List[str] = None):  # noqa
+def wait_for_workers(sleep: int, task_server: str, spec: MerlinSpec = None, worker_names: List[str] = None):
     """
     Wait on workers to start up. Check on worker start 10 times with `sleep` seconds between
     each check. If no workers are started in time, raise an error to kill the monitor (there
@@ -312,7 +312,7 @@ def check_workers_processing(queues_in_spec: List[str], task_server: str) -> boo
     result = False
 
     if task_server == "celery":
-        from merlin.celery import app
+        from merlin.celery import app  # pylint: disable=import-outside-toplevel
 
         result = check_celery_workers_processing(queues_in_spec, app)
     else:
@@ -360,14 +360,19 @@ def monitor_run(run: DatabaseRun, task_server: str, sleep: int) -> bool:
 
             # If queues are empty, workers aren't processing tasks, and the run isn't complete, restart the workflow
             if not active_tasks and not run.run_complete:
-                LOG.info(f"Monitor: Determined that the run with workspace '{run.get_workspace()}' needs restarted. Restarting now...")
-                restart_proc = subprocess.run(f"merlin restart {run.get_workspace()}", shell=True, capture_output=True, text=True)
+                LOG.info(
+                    f"Monitor: Determined that the run with workspace '{run.get_workspace()}' needs restarted. "
+                    "Restarting now..."
+                )
+                restart_proc = subprocess.run(
+                    f"merlin restart {run.get_workspace()}", shell=True, capture_output=True, text=True
+                )
 
                 if restart_proc.returncode != 0:
                     LOG.error(f"Monitor: Failed to restart workflow: {restart_proc.stderr}")
                     raise RestartException(f"Restart process failed with error: {restart_proc.stderr}")
-                else:
-                    LOG.info(f"Monitor: Workflow restarted successfully: {restart_proc.stdout}")
+
+                LOG.info(f"Monitor: Workflow restarted successfully: {restart_proc.stdout}")
 
                 # Set active tasks to true so this monitor stays alive
                 active_tasks = True
@@ -377,7 +382,7 @@ def monitor_run(run: DatabaseRun, task_server: str, sleep: int) -> bool:
     return active_tasks
 
 
-def check_merlin_status(args: "Namespace", spec: "MerlinSpec") -> bool:  # noqa
+def check_merlin_status(args: "Namespace", spec: MerlinSpec) -> bool:  # noqa
     """
     Function to check merlin workers and queues to keep the allocation alive
 

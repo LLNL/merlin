@@ -1,4 +1,6 @@
 """
+This module contains a backend factory class that acts as an abstraction
+layer for loading a results backend.
 """
 from typing import Dict
 
@@ -24,13 +26,9 @@ class MerlinBackendFactory:
 
     def __init__(self):
         # Map canonical backend names to their classes
-        self._backends: Dict[str, ResultsBackend] = {
-            "redis": RedisBackend
-        }
+        self._backends: Dict[str, ResultsBackend] = {"redis": RedisBackend}
         # Map aliases to canonical backend names
-        self._backend_aliases: Dict[str, str] = {
-            "rediss": "redis"
-        }
+        self._backend_aliases: Dict[str, str] = {"rediss": "redis"}
 
     def get_supported_backends(self):
         """
@@ -50,7 +48,7 @@ class MerlinBackendFactory:
 
         Returns:
             An instantiation of a [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] object.
-        
+
         Raises:
             BackendNotSupportedError: If the requested backend is not supported.
         """
@@ -59,7 +57,7 @@ class MerlinBackendFactory:
 
         # Get the correct backend class
         backend_object = self._backends.get(backend)
-        
+
         if backend_object is None:
             raise BackendNotSupportedException(f"Backend unsupported by Merlin: {backend}.")
 

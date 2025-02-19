@@ -1,13 +1,16 @@
 """
+This module contains the functionality necessary to interact with everything
+stored in Merlin's database.
 """
 import logging
 from typing import List
 
 from merlin.backends.backend_factory import backend_factory
 from merlin.backends.results_backend import ResultsBackend
-from merlin.db_scripts.data_formats import RunInfo, StudyInfo
+from merlin.db_scripts.data_formats import StudyInfo
 from merlin.db_scripts.db_study import DatabaseRun, DatabaseStudy
 from merlin.exceptions import StudyNotFoundError
+
 
 LOG = logging.getLogger("merlin")
 
@@ -21,8 +24,8 @@ class MerlinDatabase:
     """
     A class that provides a high-level interface for interacting with the database backend.
 
-    This class abstracts the interaction with different types of backend implementations 
-    (e.g., Redis, SQLAlchemy) and provides methods to manage studies and their associated 
+    This class abstracts the interaction with different types of backend implementations
+    (e.g., Redis, SQLAlchemy) and provides methods to manage studies and their associated
     runs in the database.
 
     Attributes:
@@ -62,7 +65,8 @@ class MerlinDatabase:
     """
 
     def __init__(self):
-        from merlin.config.configfile import CONFIG
+        from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
+
         self.backend: ResultsBackend = backend_factory.get_backend(CONFIG.results_backend.name.lower())
 
     def get_db_type(self) -> str:
@@ -171,7 +175,7 @@ class MerlinDatabase:
             db_study = self.get_study(study_name)
         except StudyNotFoundError:
             db_study = self.create_study(study_name)
-        
+
         return db_study.create_run(workspace=workspace, queues=queues, *args, **kwargs)
 
     def get_run(self, run_id: str) -> DatabaseRun:

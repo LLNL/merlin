@@ -1,14 +1,18 @@
 """
+This module houses dataclasses that define the format of the data
+that's stored in Merlin's database.
 """
 import json
 import logging
 import os
 import uuid
 from abc import ABC, abstractmethod
-from dataclasses import Field, dataclass, field, fields, asdict
+from dataclasses import Field, asdict, dataclass, field
+from dataclasses import fields as dataclass_fields
 from typing import Dict, List, Tuple, Type, TypeVar
 
 from filelock import FileLock
+
 
 LOG = logging.getLogger("merlin")
 T = TypeVar("T", bound="BaseDataClass")
@@ -17,15 +21,15 @@ T = TypeVar("T", bound="BaseDataClass")
 @dataclass
 class BaseDataClass(ABC):
     """
-    A base class for dataclasses that provides common serialization, deserialization, and 
+    A base class for dataclasses that provides common serialization, deserialization, and
     update functionality, with support for additional data.
 
-    This class is designed to be extended by other dataclasses and includes methods for 
-    converting instances to and from dictionaries or JSON, managing fields, and updating 
+    This class is designed to be extended by other dataclasses and includes methods for
+    converting instances to and from dictionaries or JSON, managing fields, and updating
     field values with validation.
 
     Attributes:
-        additional_data: A dictionary to store any extra data not explicitly defined 
+        additional_data: A dictionary to store any extra data not explicitly defined
             as fields in the dataclass.
         fields_allowed_to_be_updated: A list of field names that are allowed to be updated.
             Must be defined in subclasses.
@@ -58,12 +62,13 @@ class BaseDataClass(ABC):
         update_fields:
             Update the fields of the dataclass based on a given dictionary of updates.
     """
+
     additional_data: Dict = field(default_factory=dict)
 
     def to_dict(self) -> Dict:
         """
         Convert the dataclass to a dictionary.
-        
+
         Returns:
             The dataclass as a dictionary.
         """
@@ -123,7 +128,7 @@ class BaseDataClass(ABC):
 
         # Create a lock file alongside the target JSON file
         lock_file = f"{filepath}.lock"
-        with FileLock(lock_file):
+        with FileLock(lock_file):  # pylint: disable=abstract-class-instantiated
             # Write the data to the JSON file
             temp_filepath = f"{filepath}.tmp"  # Use a temporary file for atomic writes
             with open(temp_filepath, "w") as json_file:
@@ -150,7 +155,7 @@ class BaseDataClass(ABC):
 
         # Create a lock file alongside the target JSON file
         lock_file = f"{filepath}.lock"
-        with FileLock(lock_file):
+        with FileLock(lock_file):  # pylint: disable=abstract-class-instantiated
             with open(filepath, "r") as json_file:
                 # Parse the JSON data into a dictionary
                 data = json.load(json_file)
@@ -158,7 +163,7 @@ class BaseDataClass(ABC):
         # Use from_dict to create an instance of the dataclass
         return cls.from_dict(data)
 
-    def fields(self) -> Tuple[Field]:
+    def get_instance_fields(self) -> Tuple[Field]:
         """
         Get the fields associated with this instance. Added this method so that the dataclass.fields
         doesn't have to be imported each time you want this info.
@@ -166,10 +171,10 @@ class BaseDataClass(ABC):
         Returns:
             A tuple of dataclass.Field objects representing the fields in this data class.
         """
-        return fields(self)
+        return dataclass_fields(self)
 
     @classmethod
-    def fields(cls) -> Tuple[Field]:
+    def get_class_fields(cls) -> Tuple[Field]:
         """
         Get the fields associated with this object. Added this method so that the dataclass.fields
         doesn't have to be imported each time you want this info.
@@ -177,7 +182,7 @@ class BaseDataClass(ABC):
         Returns:
             A tuple of dataclass.Field objects representing the fields in this data class.
         """
-        return fields(cls)
+        return dataclass_fields(cls)
 
     @property
     @abstractmethod
@@ -188,7 +193,6 @@ class BaseDataClass(ABC):
         Returns:
             A list of fields that are allowed to be updated in this class.
         """
-        pass
 
     def update_fields(self, updates: Dict):
         """
@@ -213,6 +217,7 @@ class BaseDataClass(ABC):
                 )
                 self.additional_data[field_name] = new_value
 
+
 @dataclass
 class StudyInfo(BaseDataClass):
     """
@@ -224,7 +229,8 @@ class StudyInfo(BaseDataClass):
         name: The name of the study.
         runs: A list of runs associated with this study.
     """
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
     name: str = None
     runs: List[str] = field(default_factory=list)
 
@@ -240,7 +246,7 @@ class StudyInfo(BaseDataClass):
 
 
 @dataclass
-class RunInfo(BaseDataClass):
+class RunInfo(BaseDataClass):  # pylint: disable=too-many-instance-attributes
     """
     A dataclass to store all of the information for a run.
 
@@ -262,12 +268,15 @@ class RunInfo(BaseDataClass):
         workers: A list of worker names executing tasks for this run.
         workspace: The path to the output workspace.
     """
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
     study_id: str = None
     workspace: str = None
     steps: List[str] = field(default_factory=list)  # TODO NOT YET IMPLEMENTED
     queues: List[str] = field(default_factory=list)
-    workers: List[str] = field(default_factory=list)  # TODO This is currently a list of worker names; for the manager, we might want to make a new dataclass for these and link by id instead
+    # TODO The below entry is currently a list of worker names
+    # - for the manager, we might want to make a new dataclass for workers and link by id here instead
+    workers: List[str] = field(default_factory=list)
     parent: str = None  # TODO NOT YET IMPLEMENTED; do we even have a good way that this and `child` can be set?
     child: str = None  # TODO NOT YET IMPLEMENTED
     run_complete: bool = False
@@ -282,7 +291,8 @@ class RunInfo(BaseDataClass):
         Returns:
             A list of fields that are allowed to be updated in this class.
         """
-        return ["parent", "child", "run_complete", "additional_data"]
+        return ["parent", "child", "run_complete", "additional_data", "workers"]
+
 
 # TODO create a StepInfo class to store information about a step
 # - Can probably link this to status

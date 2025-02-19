@@ -1,9 +1,12 @@
 """
+This module acts as an interface for users to interact with Merlin's
+database.
 """
 import logging
 from argparse import Namespace
 
 from merlin.db_scripts.db_interaction import MerlinDatabase
+
 
 LOG = logging.getLogger("merlin")
 
@@ -26,7 +29,7 @@ def database_info():
     print("Studies:")
     print(f"- Total studies: {len(db_studies)}")
     # TODO add something about recent studies that looks like so:
-    # - Recent Studies: 
+    # - Recent Studies:
     #     1. Study ID: 123, Name: "Experiment A"
     #     2. Study ID: 124, Name: "Experiment B"
     #     3. Study ID: 125, Name: "Experiment C"
@@ -79,7 +82,7 @@ def database_delete(args: Namespace):
     merlin_db = MerlinDatabase()
 
     if args.delete_type == "study":
-        merlin_db.get_study(args.study, remove_associated_runs=(not args.keep_associated_runs))
+        merlin_db.delete_study(args.study, remove_associated_runs=(not args.keep_associated_runs))
     elif args.delete_type == "all-studies":
         merlin_db.delete_all_studies()
     elif args.delete_type == "run":

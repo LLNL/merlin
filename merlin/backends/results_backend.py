@@ -1,14 +1,16 @@
 """
+This module contains the base class for all supported
+backends in Merlin.
 """
 from abc import ABC, abstractmethod
-from typing import Any, List
+from typing import List
 
 from merlin.db_scripts.data_formats import RunInfo, StudyInfo
 
 
 class ResultsBackend(ABC):
     """
-    Abstract base class for a results backend, which provides methods to save and retrieve 
+    Abstract base class for a results backend, which provides methods to save and retrieve
     information from a backend database.
 
     This class defines the interface that must be implemented by any concrete backend.
@@ -42,7 +44,8 @@ class ResultsBackend(ABC):
             Retrieve all runs currently stored in the backend database.
 
         delete_run:
-            Delete a run from the backend database by its ID. This will also remove the run from the associated study's list of runs.
+            Delete a run from the backend database by its ID. This will also remove the run from the associated study's
+                list of runs.
     """
 
     def __init__(self, backend_name: str):
@@ -64,7 +67,6 @@ class ResultsBackend(ABC):
         Returns:
             A string representing the current version of the backend.
         """
-        pass
 
     @abstractmethod
     def save_study(self, study: StudyInfo):
@@ -75,7 +77,6 @@ class ResultsBackend(ABC):
         Args:
             study_info: A [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] instance.
         """
-        pass
 
     @abstractmethod
     def retrieve_study(self, study_name: str) -> StudyInfo:
@@ -88,7 +89,6 @@ class ResultsBackend(ABC):
         Returns:
             A [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] instance.
         """
-        pass
 
     @abstractmethod
     def retrieve_all_studies(self) -> List[StudyInfo]:
@@ -98,7 +98,6 @@ class ResultsBackend(ABC):
         Returns:
             A list of [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] objects.
         """
-        pass
 
     @abstractmethod
     def delete_study(self, study_name: str, remove_associated_runs: bool = True):
@@ -109,7 +108,6 @@ class ResultsBackend(ABC):
             study_name: The name of the study to remove from the database.
             remove_associated_runs: If true, remove the runs associated with this study.
         """
-        pass
 
     @abstractmethod
     def save_run(self, run: RunInfo):
@@ -119,7 +117,6 @@ class ResultsBackend(ABC):
         Args:
             study_info: A [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] instance.
         """
-        pass
 
     @abstractmethod
     def retrieve_run(self, run_id: str) -> RunInfo:
@@ -128,11 +125,10 @@ class ResultsBackend(ABC):
 
         Args:
             run_id: The ID of the run to retrieve.
-            
+
         Returns:
             A [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] instance.
         """
-        pass
 
     @abstractmethod
     def retrieve_all_runs(self) -> List[RunInfo]:
@@ -142,7 +138,6 @@ class ResultsBackend(ABC):
         Returns:
             A list of [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] objects.
         """
-        pass
 
     @abstractmethod
     def delete_run(self, run_id: str):
@@ -153,4 +148,3 @@ class ResultsBackend(ABC):
         Args:
             run_id: The id of the run to delete.
         """
-        pass

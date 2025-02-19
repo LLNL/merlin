@@ -1,4 +1,6 @@
 """
+This module contains the functionality necessary to interact with studies
+stored in Merlin's database.
 """
 import logging
 from typing import Dict, List
@@ -8,6 +10,7 @@ from merlin.db_scripts.data_formats import RunInfo, StudyInfo
 from merlin.db_scripts.db_run import DatabaseRun
 from merlin.exceptions import StudyNotFoundError
 
+
 LOG = logging.getLogger("merlin")
 
 
@@ -15,13 +18,13 @@ class DatabaseStudy:
     """
     A class representing a study in the database.
 
-    This class provides methods to interact with and manage a study's data, including 
-    creating, retrieving, and removing runs associated with the study, as well as saving 
+    This class provides methods to interact with and manage a study's data, including
+    creating, retrieving, and removing runs associated with the study, as well as saving
     or deleting the study itself from the database.
 
     Attributes:
         study_info: An instance of the `StudyInfo` class containing the study's metadata.
-        backend: An instance of the `ResultsBackend` class used to interact 
+        backend: An instance of the `ResultsBackend` class used to interact
             with the database.
 
     Methods:
@@ -92,7 +95,7 @@ class DatabaseStudy:
         study_id = self.get_id()
         return (
             f"Study with ID {study_id}\n"
-            f"------------{'-'*len(run_id)}\n"
+            f"------------{'-'*len(study_id)}\n"
             f"Name: {self.get_name()}\n"
             f"Runs: {self.get_all_runs()}\n"
             f"Additional Data: {self.get_additional_data()}\n\n"
@@ -145,7 +148,7 @@ class DatabaseStudy:
         """
         return self._get_latest_data().additional_data
 
-    def create_run(self, *args, **kwargs) -> DatabaseRun:
+    def create_run(self, *args, **kwargs) -> DatabaseRun:  # pylint: disable=unused-argument
         """
         Create a run for this study. This will create a [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun]
         instance and link it to this study.
@@ -158,7 +161,7 @@ class DatabaseStudy:
                 the run that was created.
         """
         # Get all valid fields for the RunInfo dataclass
-        valid_fields = {f.name for f in RunInfo.fields()}
+        valid_fields = {f.name for f in RunInfo.get_class_fields()}
 
         # Separate valid fields from additional data
         valid_kwargs = {}
@@ -222,7 +225,7 @@ class DatabaseStudy:
         Remove every run associated with this study.
         """
         for run_id in self.study_info.runs:
-            self.remove_run(run_id)
+            self.delete_run(run_id)
 
     def save(self):
         """
@@ -248,7 +251,7 @@ class DatabaseStudy:
         study_info = backend.retrieve_study(study_name)
         if study_info is None:
             raise StudyNotFoundError(f"Study with name '{study_name}' not found in the database.")
-        
+
         return cls(study_info, backend)
 
     @classmethod

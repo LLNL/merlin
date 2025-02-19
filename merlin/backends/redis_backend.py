@@ -1,15 +1,17 @@
 """
+This module contains the functionality required to interact with a
+Redis backend.
 """
-import logging
-from dataclasses import fields
-from typing import Any, Dict, List
-
 import json
+import logging
+from typing import Dict, List
+
 from redis import Redis
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.config.results_backend import get_backend_password
 from merlin.db_scripts.data_formats import BaseDataClass, RunInfo, StudyInfo
+
 
 LOG = logging.getLogger("merlin")
 
@@ -20,7 +22,7 @@ LOG = logging.getLogger("merlin")
 # - instead of calling get_connection_string that logic could be handled in the base class?
 class RedisBackend(ResultsBackend):
     """
-    A Redis-based implementation of the `ResultsBackend` interface for storing and retrieving 
+    A Redis-based implementation of the `ResultsBackend` interface for storing and retrieving
     studies and runs in a Redis database.
 
     Attributes:
@@ -120,7 +122,7 @@ class RedisBackend(ResultsBackend):
         LOG.debug("Deserializing data from Redis...")
         serialized_data = {}
 
-        for field in data_class.fields():
+        for field in data_class.get_instance_fields():
             field_value = getattr(data_class, field.name)
             if isinstance(field_value, (list, dict)):
                 serialized_data[field.name] = json.dumps(field_value)
@@ -151,8 +153,8 @@ class RedisBackend(ResultsBackend):
                 deserialized_data[key] = json.loads(val)
             elif val == "null":
                 deserialized_data[key] = None
-            elif val == "True" or val == "False":
-                deserialized_data[key] = True if val == "True" else False
+            elif val in ("True", "False"):
+                deserialized_data[key] = val == "True"
             elif val.isdigit():
                 deserialized_data[key] = float(val)
             else:
@@ -183,7 +185,7 @@ class RedisBackend(ResultsBackend):
         data back to the database.
 
         Args:
-            updated_data_class: A [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance 
+            updated_data_class: A [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance
                 containing the updated information.
         """
         # Get the existing data from Redis and convert it to an instance of BaseDataClass
@@ -203,7 +205,7 @@ class RedisBackend(ResultsBackend):
             A string representing the current version of Redis.
         """
         client_info = self.client.info()
-        return client_info.get("redis_version", "N/A")        
+        return client_info.get("redis_version", "N/A")
 
     def save_study(self, study: StudyInfo):
         """
@@ -238,7 +240,7 @@ class RedisBackend(ResultsBackend):
 
         Args:
             study_name: The name of the study to retrieve.
-            
+
         Returns:
             A [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] instance
                 or None if the study does not yet exist in the database.
@@ -249,7 +251,7 @@ class RedisBackend(ResultsBackend):
             return None
 
         data_from_redis = self.client.hgetall(f"study:{study_id}")
-        return self._deserialize_data_class(data_from_redis, StudyInfo)   
+        return self._deserialize_data_class(data_from_redis, StudyInfo)
 
     def retrieve_all_studies(self) -> List[StudyInfo]:
         """
@@ -275,8 +277,8 @@ class RedisBackend(ResultsBackend):
                     all_studies.append(study_info)
                 else:
                     LOG.warning(f"Study '{study_name}' could not be retrieved or does not exist.")
-            except Exception as e:
-                LOG.error(f"Error retrieving study '{study_name}': {e}")
+            except Exception as exc:  # pylint: disable=broad-except
+                LOG.error(f"Error retrieving study '{study_name}': {exc}")
 
         # Return the list of StudyInfo objects
         LOG.info(f"Successfully retrieved {len(all_studies)} studies from Redis.")
@@ -366,8 +368,8 @@ class RedisBackend(ResultsBackend):
                 else:
                     # Shouldn't hit this since we're looping with scan
                     LOG.warning(f"Run with id '{run_id}' could not be retrieved or does not exist.")
-            except Exception as e:
-                LOG.error(f"Error retrieving run with id '{run_id}': {e}")
+            except Exception as exc:  # pylint: disable=broad-except
+                LOG.error(f"Error retrieving run with id '{run_id}': {exc}")
 
         LOG.info(f"Successfully retrieved {len(all_runs)} runs from Redis.")
         return all_runs
@@ -384,12 +386,16 @@ class RedisBackend(ResultsBackend):
         run = self.retrieve_run(run_id)
         if run is None:
             raise ValueError(f"Run with id '{run_id}' does not exist in the database.")
-        
-        LOG.debug(f"The run being deleted is associated with study '{run.study_id}'. Removing this run from that study's list of runs...")
+
+        LOG.debug(
+            f"The run being deleted is associated with study '{run.study_id}'. "
+            "Removing this run from that study's list of runs..."
+        )
         study_data = self.client.hgetall(f"study:{run.study_id}")
         if not study_data:
             LOG.warning(
-                f"Study with id '{run.study_id}' does not exist in the database. Ignoring the removal of this run from that study's list of runs."
+                f"Study with id '{run.study_id}' does not exist in the database. "
+                "Ignoring the removal of this run from that study's list of runs."
             )
         else:
             study_info = self._deserialize_data_class(study_data, StudyInfo)
