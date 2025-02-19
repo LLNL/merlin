@@ -96,7 +96,7 @@ class DatabaseStudy:
         study_id = self.get_id()
         return (
             f"Study with ID {study_id}\n"
-            f"------------{'-'*len(study_id)}\n"
+            f"------------{'-' * len(study_id)}\n"
             f"Name: {self.get_name()}\n"
             f"Runs: {self.get_all_runs()}\n"
             f"Additional Data: {self.get_additional_data()}\n\n"

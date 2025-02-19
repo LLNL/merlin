@@ -109,7 +109,7 @@ class DatabaseRun:
         run_id = self.get_id()
         return (
             f"Run with ID {run_id}\n"
-            f"------------{'-'*len(run_id)}\n"
+            f"------------{'-' * len(run_id)}\n"
             f"Workspace: {self.get_workspace()}\n"
             f"Study ID: {self.get_study_id()}\n"
             f"Queues: {self.get_queues()}\n"

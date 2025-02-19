@@ -91,8 +91,8 @@ class RestartException(Exception):
     the restart command if present , else retry.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class NoWorkersException(Exception):
