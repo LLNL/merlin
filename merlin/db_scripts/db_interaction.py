@@ -2,6 +2,7 @@
 This module contains the functionality necessary to interact with everything
 stored in Merlin's database.
 """
+
 import logging
 from typing import List
 

@@ -2,6 +2,7 @@
 This module contains the functionality necessary to interact with studies
 stored in Merlin's database.
 """
+
 import logging
 from typing import Dict, List
 

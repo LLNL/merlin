@@ -2,6 +2,7 @@
 This module houses dataclasses that define the format of the data
 that's stored in Merlin's database.
 """
+
 import json
 import logging
 import os

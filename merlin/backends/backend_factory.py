@@ -2,6 +2,7 @@
 This module contains a backend factory class that acts as an abstraction
 layer for loading a results backend.
 """
+
 from typing import Dict
 
 from merlin.backends.redis_backend import RedisBackend

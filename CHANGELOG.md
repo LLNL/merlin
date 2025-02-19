@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- New `merlin database` command to interact with new database functionality
+  - `merlin database info`: prints some basic information about the database
+  - `merlin database get`: allows you to retrieve and print entries in the database
+  - `merlin database delete`: allows you to delete entries in the database
+- Added `db_scripts/` folder containing several new files all pertaining to database interaction
+  - `db_commands`: an interface for user commands of `merlin database` to be processed
+  - `db_interaction`: houses the `MerlinDatabase` class, used as the main point of contact for interactions with the database
+  - `db_study`: houses the `DatabaseStudy` class, used specifically for interacting with study entries in the database
+  - `db_run`: houses the `DatabaseRun` class, used specifically for interacting with run entries in the database
+- Added `backends/` folder containing a new OOP way to interact with results backend databases
+  - `results_backend`: houses an abstract class `ResultsBackend` that defines what every supported backend implement in Merlin
+  - `redis_backend`: houses the `RedisBackend` class that defines specific interactions with the Redis database
+  - `backend_factory`: houses a factory class `MerlinBackendFactory` that initializes an appropriate `ResultsBackend` instance
+- A new celery task called `mark_run_as_complete` that is automatically added to the task queue associated with the final step in a workflow
 - Added additional tests for the `merlin run` and `merlin purge` commands
 - Aliased types to represent different types of pytest fixtures
 - New test condition `StepFinishedFilesCount` to help search for `MERLIN_FINISHED` files in output workspaces
@@ -14,10 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `command-tests`, `workflow-tests`, and `integration-tests` to the Makefile
 
 ### Changed
+- Changed the `merlin monitor` command so that it will now attempt to restart workflows automatically if a workflow is hanging
 - Ported all distributed tests of the integration test suite to pytest
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
   - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
 - Removed `e2e-distributed*` definitions from the Makefile
+
+### Deprecated
+- The `--steps` argument of the `merlin monitor` command is now deprecated and will be removed in Version 1.14.0.
 
 ## [1.12.2]
 ### Added

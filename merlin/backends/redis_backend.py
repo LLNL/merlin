@@ -2,6 +2,7 @@
 This module contains the functionality required to interact with a
 Redis backend.
 """
+
 import json
 import logging
 from typing import Dict, List

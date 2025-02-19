@@ -2,6 +2,7 @@
 This module contains the functionality necessary to interact with runs
 stored in Merlin's database.
 """
+
 import logging
 import os
 from typing import Dict, List

@@ -2,6 +2,7 @@
 This module contains the base class for all supported
 backends in Merlin.
 """
+
 from abc import ABC, abstractmethod
 from typing import List
 

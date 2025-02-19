@@ -2,6 +2,7 @@
 This module acts as an interface for users to interact with Merlin's
 database.
 """
+
 import logging
 from argparse import Namespace
 
