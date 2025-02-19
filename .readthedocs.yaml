@@ -11,5 +11,6 @@ python:
 
 mkdocs:
   fail_on_warning: false
+  configuration: mkdocs.yml
 
 formats: [pdf]
