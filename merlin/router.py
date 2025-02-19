@@ -38,6 +38,7 @@ decoupled from the logic the tasks are running.
 import logging
 import os
 import time
+from importlib import resources
 from typing import Dict, List, Tuple
 
 from merlin.exceptions import NoWorkersException
@@ -55,12 +56,6 @@ from merlin.study.celeryadapter import (
     start_celery_workers,
     stop_celery_workers,
 )
-
-
-try:
-    from importlib import resources
-except ImportError:
-    import importlib_resources as resources
 
 
 LOG = logging.getLogger(__name__)
