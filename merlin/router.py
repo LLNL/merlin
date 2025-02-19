@@ -57,10 +57,7 @@ from merlin.study.celeryadapter import (
 )
 
 
-try:
-    from importlib import resources
-except ImportError:
-    import importlib_resources as resources
+from importlib import resources
 
 
 LOG = logging.getLogger(__name__)

@@ -86,7 +86,7 @@ Need help? <merlin@llnl.gov>
 
 ## Quick Start
 
-Note: Merlin supports Python 3.6+.
+Note: Merlin supports Python 3.8+.
 
 To install Merlin and its dependencies, run:
 
