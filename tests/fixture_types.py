@@ -50,7 +50,7 @@ if sys.version_info >= (3, 9):
     FixtureStr = Annotated[str, pytest.fixture]
     FixtureTuple = Annotated[Tuple[K, V], pytest.fixture]
 else:
-    # Fallback for Python 3.7 and 3.8
+    # Fallback for Python 3.8
     class FixtureDict(Generic[K, V], Dict[K, V]):
         """
         This class is necessary to allow FixtureDict to be subscriptable

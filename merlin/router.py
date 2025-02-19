@@ -39,6 +39,7 @@ import logging
 import os
 import subprocess
 import time
+from importlib import resources
 from typing import Dict, List, Tuple
 
 from merlin.db_scripts.db_run import DatabaseRun
@@ -58,12 +59,6 @@ from merlin.study.celeryadapter import (
     start_celery_workers,
     stop_celery_workers,
 )
-
-
-try:
-    from importlib import resources
-except ImportError:
-    import importlib_resources as resources
 
 
 LOG = logging.getLogger(__name__)

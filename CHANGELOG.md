@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `redis_backend`: houses the `RedisBackend` class that defines specific interactions with the Redis database
   - `backend_factory`: houses a factory class `MerlinBackendFactory` that initializes an appropriate `ResultsBackend` instance
 - A new celery task called `mark_run_as_complete` that is automatically added to the task queue associated with the final step in a workflow
+- Added support for Python 3.12 and 3.13
 - Added additional tests for the `merlin run` and `merlin purge` commands
 - Aliased types to represent different types of pytest fixtures
 - New test condition `StepFinishedFilesCount` to help search for `MERLIN_FINISHED` files in output workspaces
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Changed the `merlin monitor` command so that it will now attempt to restart workflows automatically if a workflow is hanging
+- Dropped support for Python 3.7
 - Ported all distributed tests of the integration test suite to pytest
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
   - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
