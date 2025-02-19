@@ -138,9 +138,9 @@ check-flake8:
 
 check-black:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py38 $(MRLN); \
-	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py38 $(TEST); \
-	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py38 *.py; \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version $(PY_TARGET_VER) $(MRLN); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version $(PY_TARGET_VER) $(TEST); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version $(PY_TARGET_VER) *.py; \
 
 
 check-isort:
@@ -182,9 +182,9 @@ fix-style:
 	$(PYTHON) -m isort -w $(MAX_LINE_LENGTH) $(MRLN); \
 	$(PYTHON) -m isort -w $(MAX_LINE_LENGTH) $(TEST); \
 	$(PYTHON) -m isort -w $(MAX_LINE_LENGTH) *.py; \
-	$(PYTHON) -m black --target-version py38 -l $(MAX_LINE_LENGTH) $(MRLN); \
-	$(PYTHON) -m black --target-version py38 -l $(MAX_LINE_LENGTH) $(TEST); \
-	$(PYTHON) -m black --target-version py38 -l $(MAX_LINE_LENGTH) *.py; \
+	$(PYTHON) -m black --target-version $(PY_TARGET_VER) -l $(MAX_LINE_LENGTH) $(MRLN); \
+	$(PYTHON) -m black --target-version $(PY_TARGET_VER) -l $(MAX_LINE_LENGTH) $(TEST); \
+	$(PYTHON) -m black --target-version $(PY_TARGET_VER) -l $(MAX_LINE_LENGTH) *.py; \
 
 
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
