@@ -84,7 +84,7 @@ class ChordErrorSetup:
 class MonitorAutoRestartSetup:
     """
     TODO fix this docstring!!!
-    
+
     Data class to encapsulate all chord-error-related fixtures required
     for testing the chord error workflow.
 
