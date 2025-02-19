@@ -132,3 +132,12 @@ class RunNotFoundError(Exception):
 
     def __init__(self, message):
         super().__init__(message)
+
+
+class InvalidTaskServerError(Exception):
+    """
+    Exception to signal that the task server the user provided is not supported by Merlin.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)

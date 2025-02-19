@@ -37,10 +37,13 @@ decoupled from the logic the tasks are running.
 """
 import logging
 import os
+import subprocess
 import time
 from typing import Dict, List, Tuple
 
+from merlin.db_scripts.db_run import DatabaseRun
 from merlin.exceptions import NoWorkersException
+from merlin.spec.specification import MerlinSpec
 from merlin.study.celeryadapter import (
     build_set_of_queues,
     check_celery_workers_processing,
@@ -257,7 +260,7 @@ def get_active_queues(task_server: str) -> Dict[str, List[str]]:
     return active_queues
 
 
-def wait_for_workers(sleep: int, task_server: str, spec: "MerlinSpec"):  # noqa
+def wait_for_workers(sleep: int, task_server: str, spec: "MerlinSpec" = None, worker_names: List[str] = None):  # noqa
     """
     Wait on workers to start up. Check on worker start 10 times with `sleep` seconds between
     each check. If no workers are started in time, raise an error to kill the monitor (there
@@ -267,8 +270,13 @@ def wait_for_workers(sleep: int, task_server: str, spec: "MerlinSpec"):  # noqa
     :param `task_server`: The task server from which to look for workers
     :param `spec`: A MerlinSpec object representing the spec we're monitoring
     """
-    # Get the names of the workers that we're looking for
-    worker_names = spec.get_worker_names()
+    if spec is None and worker_names is None:
+        raise ValueError("Need either spec or worker names. Both were 'None'.")
+
+    if spec:
+        # Get the names of the workers that we're looking for
+        worker_names = spec.get_worker_names()
+
     LOG.info(f"Checking for the following workers: {worker_names}")
 
     # Loop until workers are detected
@@ -313,6 +321,62 @@ def check_workers_processing(queues_in_spec: List[str], task_server: str) -> boo
     return result
 
 
+def monitor_run(run: DatabaseRun, task_server: str, sleep: int) -> bool:
+    """
+    Monitors a run of a study to ensure that the allocation stays alive.
+
+    Args:
+        run: A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
+            the run that's going to be monitored.
+        task_server: The task server that the user is using.
+        sleep: The amount of time to sleep in seconds between each check for workers.
+
+    Returns:
+        True if the monitor needs to keep monitoring this run. False otherwise.
+    """
+    # Wait for workers to spin up before doing anything
+    wait_for_workers(sleep, task_server, worker_names=run.get_workers())
+
+    active_tasks = False
+
+    if task_server == "celery":
+        # Check if queues are empty
+        queues_in_run = run.get_queues()
+        queue_status = query_celery_queues(queues_in_run)
+
+        total_jobs = 0
+        for queue_info in queue_status.values():
+            total_jobs += queue_info["jobs"]
+
+        if total_jobs > 0:
+            active_tasks = True
+            LOG.info("Monitor: Found tasks in queues, keeping allocation alive.")
+        else:
+            # Here, queues are empty, now check if workers are still processing tasks
+            active_tasks = check_workers_processing(queues_in_run, task_server)
+
+            if active_tasks:
+                LOG.info("Monitor: Found workers processing tasks, keeping allocation alive.")
+
+            # If queues are empty, workers aren't processing tasks, and the run isn't complete, restart the workflow
+            if not active_tasks and not run.run_complete:
+                LOG.info(f"Monitor: Determined that the run with workspace '{run.get_workspace()}' needs restarted. Restarting now...")
+                restart_proc = subprocess.run(f"merlin restart {run.get_workspace()}", shell=True, capture_output=True, text=True)
+
+                if restart_proc.returncode != 0:
+                    LOG.error(f"Monitor: Failed to restart workflow: {restart_proc.stderr}")
+                    raise RestartException(f"Restart process failed with error: {restart_proc.stderr}")
+                else:
+                    LOG.info(f"Monitor: Workflow restarted successfully: {restart_proc.stdout}")
+
+                # Set active tasks to true so this monitor stays alive
+                active_tasks = True
+    else:
+        raise InvalidTaskServerError("Celery is not specified as the task server!")
+
+    return active_tasks
+
+
 def check_merlin_status(args: "Namespace", spec: "MerlinSpec") -> bool:  # noqa
     """
     Function to check merlin workers and queues to keep the allocation alive
@@ -354,7 +418,7 @@ def check_merlin_status(args: "Namespace", spec: "MerlinSpec") -> bool:  # noqa
 
     # If there are no workers, wait for the workers to start
     if total_consumers == 0:
-        wait_for_workers(args.sleep, args.task_server, spec)
+        wait_for_workers(args.sleep, args.task_server, spec=spec)
 
     # If we're here, workers have started and jobs should be queued
     if total_jobs > 0:

@@ -803,7 +803,11 @@ def queue_merlin_study(study, adapter):
     )
 
     # Append the final task that marks the run as complete
-    final_task = mark_run_as_complete.si(study.workspace).set(queue=egraph.step(groups_of_chains[1][0][0]).get_task_queue())
+    final_task = mark_run_as_complete.si(
+        study.workspace
+    ).set(
+        queue=egraph.step(groups_of_chains[-1][-1][-1]).get_task_queue()  # Use the task queue from the final step to execute this task
+    )
     celery_dag = celery_dag | final_task
 
     LOG.info("Launching tasks.")
