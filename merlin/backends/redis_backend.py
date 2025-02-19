@@ -10,7 +10,6 @@ from typing import Dict, List
 from redis import Redis
 
 from merlin.backends.results_backend import ResultsBackend
-from merlin.config.results_backend import get_backend_password
 from merlin.db_scripts.data_formats import BaseDataClass, RunInfo, StudyInfo
 
 
@@ -81,6 +80,7 @@ class RedisBackend(ResultsBackend):
         # TODO have this database use a different db number than Celery does
         # - do we want a new database for each type of information? i.e. one for studies, one for runs, etc.?
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
+        from merlin.config.results_backend import get_backend_password  # pylint: disable=import-outside-toplevel
 
         password_file = CONFIG.results_backend.password if hasattr(CONFIG.results_backend, "password") else None
         server = CONFIG.results_backend.server if hasattr(CONFIG.results_backend, "server") else None
