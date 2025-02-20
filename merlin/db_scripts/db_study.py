@@ -110,16 +110,17 @@ class DatabaseStudy:
             A [`StudyInfo`][merlin.db_scripts.db_formats.StudyInfo] object
                 containing the latest dynamic data.
         """
-        return self.backend.retrieve_study(self.study_info.name)
+        return self.backend.retrieve_study(self.get_name())
 
     def reload_data(self):
         """
         Reload the latest data for this study from the database and update the
         [`StudyInfo`][merlin.db_scripts.db_formats.StudyInfo] object.
         """
-        updated_study_info = self.backend.retrieve_study(self.study_info.name)
+        study_name = self.get_name()
+        updated_study_info = self.backend.retrieve_study(study_name)
         if not updated_study_info:
-            raise StudyNotFoundError(f"Study with name {self.study_info.name} not found in the database.")
+            raise StudyNotFoundError(f"Study with name {study_name} not found in the database.")
         self.study_info = updated_study_info
 
     def get_id(self) -> str:

@@ -80,34 +80,13 @@ class RedisBackend(ResultsBackend):
         # TODO have this database use a different db number than Celery does
         # - do we want a new database for each type of information? i.e. one for studies, one for runs, etc.?
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
-        from merlin.config.results_backend import get_backend_password  # pylint: disable=import-outside-toplevel
+        from merlin.config.results_backend import get_backend_password, get_connection_string  # pylint: disable=import-outside-toplevel
 
-        password_file = CONFIG.results_backend.password if hasattr(CONFIG.results_backend, "password") else None
-        server = CONFIG.results_backend.server if hasattr(CONFIG.results_backend, "server") else None
-        port = CONFIG.results_backend.port if hasattr(CONFIG.results_backend, "port") else None
-        results_db_num = CONFIG.results_backend.db_num if hasattr(CONFIG.results_backend, "db_num") else None
-        username = CONFIG.results_backend.username if hasattr(CONFIG.results_backend, "username") else None
-        has_ssl = hasattr(CONFIG.results_backend, "cert_reqs")
-        ssl_cert_reqs = CONFIG.results_backend.cert_reqs if has_ssl else "required"
+        redis_config = {"url": get_connection_string(), "decode_responses": True}
+        if CONFIG.results_backend.name == "rediss":
+            redis_config.update({"ssl_cert_reqs": getattr(CONFIG.results_backend, "cert_reqs", "required")})
 
-        password = None
-        if password_file is not None:
-            try:
-                password = get_backend_password(password_file)
-            except IOError:
-                if hasattr(CONFIG.results_backend, "password"):
-                    password = CONFIG.results_backend.password
-
-        self.client: Redis = Redis(
-            host=server,
-            port=port,
-            db=results_db_num,
-            username=username,
-            password=password,
-            decode_responses=True,
-            ssl=has_ssl,
-            ssl_cert_reqs=ssl_cert_reqs,
-        )
+        self.client: Redis = Redis.from_url(**redis_config)
 
     def _serialize_data_class(self, data_class: BaseDataClass) -> Dict[str, str]:
         """
