@@ -1,14 +1,16 @@
 description:
-    name: monitor_auto_restart_test.yaml
+    name: monitor_auto_restart_test
     description: a spec that helps test the monitor's auto restart functionality
 
+env:
+    variables:
+        OUTPUT_PATH: .
+
 study:
-    - name: step1
+    - name: step_1
       description: step 1
       run:
         cmd: |
             echo "Running step 1..."
-            sleep 120
+            sleep 30
             echo "Finished running step 1."
-        restart: |
-            echo "Restarted step 1."
