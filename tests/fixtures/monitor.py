@@ -3,11 +3,10 @@ Fixtures specifically for help testing the monitor command.
 """
 
 import os
-import subprocess
 
 import pytest
 
-from tests.fixture_data_classes import MonitorSetup, RedisBrokerAndBackend
+from tests.fixture_data_classes import MonitorSetup
 from tests.fixture_types import FixtureCallable, FixtureStr
 
 

@@ -80,7 +80,7 @@ class RedisBackend(ResultsBackend):
         # TODO have this database use a different db number than Celery does
         # - do we want a new database for each type of information? i.e. one for studies, one for runs, etc.?
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
-        from merlin.config.results_backend import get_backend_password, get_connection_string  # pylint: disable=import-outside-toplevel
+        from merlin.config.results_backend import get_connection_string  # pylint: disable=import-outside-toplevel
 
         redis_config = {"url": get_connection_string(), "decode_responses": True}
         if CONFIG.results_backend.name == "rediss":

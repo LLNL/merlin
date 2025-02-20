@@ -5,12 +5,12 @@ This module will contain the testing logic for the `merlin monitor` command.
 import subprocess
 from time import sleep
 
-from tests.fixture_data_classes import MonitorSetup, RedisBrokerAndBackend
-from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd, run_workflow
 from tests.context_managers.celery_task_manager import CeleryTaskManager
 from tests.context_managers.celery_workers_manager import CeleryWorkersManager
-from tests.integration.conditions import HasRegex, StepFileExists, StepFileHasRegex
+from tests.fixture_data_classes import MonitorSetup, RedisBrokerAndBackend
 from tests.fixture_types import FixtureStr
+from tests.integration.conditions import HasRegex, StepFileExists
+from tests.integration.helper_funcs import check_test_conditions, copy_app_yaml_to_cwd
 
 
 class TestMonitor:
@@ -18,7 +18,10 @@ class TestMonitor:
     Tests for the `merlin monitor` command.
     """
 
-    def test_auto_restart(self, monitor_setup: MonitorSetup, redis_broker_and_backend_class: RedisBrokerAndBackend, merlin_server_dir: FixtureStr):
+    # TODO this is huge, can we split it up somehow?
+    def test_auto_restart(
+        self, monitor_setup: MonitorSetup, redis_broker_and_backend_class: RedisBrokerAndBackend, merlin_server_dir: FixtureStr
+    ):
         """
         Test that the monitor automatically restarts the workflow when:
         1. There are no tasks in the queues
@@ -50,7 +53,7 @@ class TestMonitor:
         copy_app_yaml_to_cwd(merlin_server_dir)
 
         run_workers_proc = restart_workers_proc = monitor_stdout = monitor_stderr = None
-        with CeleryTaskManager(celery_app, redis_broker_and_backend_class.client) as celery_task_manager:
+        with CeleryTaskManager(celery_app, redis_broker_and_backend_class.client):
             # Send the tasks to the server
             try:
                 subprocess.run(
@@ -104,7 +107,7 @@ class TestMonitor:
         # Define our test conditions
         study_name = "monitor_auto_restart_test"
         conditions = [
-            HasRegex("Monitor: Determined that the run with workspace '.*' needs restarted\. Restarting now\.\.\."),
+            HasRegex(r"Monitor: Determined that the run with workspace '.*' needs restarted\. Restarting now\.\.\."),
             HasRegex("Monitor: Workflow restarted successfully:"),
             HasRegex("Monitor: Failed to restart workflow:", negate=True),
             StepFileExists("step_1", "MERLIN_FINISHED", study_name, monitor_setup.testing_dir),
@@ -119,4 +122,3 @@ class TestMonitor:
             "stderr": monitor_stderr + workers_stderr,
         }
         check_test_conditions(conditions, info)
-
