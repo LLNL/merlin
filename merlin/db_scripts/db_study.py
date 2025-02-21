@@ -96,10 +96,7 @@ class DatabaseStudy:
         study_id = self.get_id()
         runs_str = "Runs:\n"
         for run in self.get_all_runs():
-            runs_str += (
-                f"  - ID: {run.get_id()}\n"
-                f"    Workspace: {run.get_workspace()}\n"
-            )
+            runs_str += f"  - ID: {run.get_id()}\n" f"    Workspace: {run.get_workspace()}\n"
         return (
             f"Study with ID {study_id}\n"
             f"------------{'-' * len(study_id)}\n"

@@ -881,12 +881,10 @@ def setup_argparse() -> None:  # pylint: disable=R0915
 
     # TODO enable support for deletion of study by name, ID, or passing in spec file
     # Subcommand: delete study
-    delete_study = (
-        delete_subcommands.add_parser(
-            "study",
-            help="Delete a specific study by name.",
-            formatter_class=ArgumentDefaultsHelpFormatter,
-        )
+    delete_study = delete_subcommands.add_parser(
+        "study",
+        help="Delete a specific study by name.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
     )
     delete_study.add_argument(
         "study",
