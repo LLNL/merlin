@@ -31,3 +31,5 @@ There are several commands used specifically for monitoring studies (see [Monito
 - [Querying Queues and Workers](./queues_and_workers.md): This module will discuss how queues and workers can be queried with the [`merlin queue-info`](../command_line.md#queue-info-merlin-queue-info) and the [`merlin query-workers`](../command_line.md#query-workers-merlin-query-workers) commands.
 
 - [Monitoring Studies for Persistent Allocations](./monitor_for_allocation.md): Here we'll discuss how allocations can be kept alive using the [`merlin monitor`](../command_line.md#monitor-merlin-monitor) command.
+
+- [The Database Command](./database.md): This module will cover the [`merlin database`](../command_line.md#database-merlin-database) command.

@@ -541,6 +541,7 @@ merlin stop-workers [OPTIONS]
 
 The Merlin library comes equipped with several commands to help monitor your workflow:
 
+- *[database](#database-merlin-database)*: Interact with Merlin's backend database
 - *[detailed-status](#detailed-status-merlin-detailed-status)*: Display task-by-task status information for a study
 - *[monitor](#monitor-merlin-monitor)*: Keep your allocation alive while tasks are being processed
 - *[query-workers](#query-workers-merlin-query-workers)*: Communicate with Celery to view information on active workers
@@ -548,6 +549,238 @@ The Merlin library comes equipped with several commands to help monitor your wor
 - *[status](#status-merlin-status)*: Display a summary of the status of a study
 
 More information on all of these commands can be found below and in the [Monitoring documentation](./monitoring/index.md).
+
+### Database (`merlin database`)
+
+This command allows you to interact with Merlin's backend database by viewing database info, retrieving and printing entries, and deleting entries.
+
+More information on this command can be found below or at [The Database Command](./monitoring/database.md) page.
+
+<!-- TODO add this to the above paragraph when the reference guide is finished -->
+<!-- If you really want to understand the architecture of this database, see [General Database Architecture](../reference_guide/database/index.md) in Merlin's [Reference Guide](../reference_guide/index.md). -->
+
+**Usage:**
+
+```
+merlin database [OPTIONS] COMMAND ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Commands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [info](#database-info-merlin-database-info) | Print general information about the database |
+| [get](#database-get-merlin-database-get) | Retrieve and print entries from the database |
+| [delete](#database-delete-merlin-database-delete) | Delete entries from the database |
+
+#### Database Info (`merlin database info`)
+
+The `info` subcommand prints general information about the database, including the database type, version, and brief details about the existing entries.
+
+**Usage:**
+
+```bash
+merlin database info [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+#### Database Get (`merlin database get`)
+
+The `get` subcommand allows users to retrieve entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get [OPTIONS] SUBCOMMAND ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Subcommands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [study](#get-study-merlin-database-get-study) | Retrieve and print a specific study from the database |
+| [run](#get-run-merlin-database-get-run) | Retrieve and print a specific run from the database |
+| [all-studies](#get-all-studies-merlin-database-get-all-studies) | Retrieve and print all studies from the database |
+| [all-runs](#get-all-runs-merlin-database-get-all-runs) | Retrieve and print all runs from the database |
+
+##### Get Study (`merlin database get study`)
+
+The `get study` subcommand allows users to retrieve specific study entries from the database by study name and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get study [OPTIONS] STUDY_NAME
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get Run (`merlin database get run`)
+
+The `get run` subcommand allows users to retrieve specific run entries from the database by run ID and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get run [OPTIONS] RUN_ID
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Studies (`merlin database get all-studies`)
+
+The `get all-studies` subcommand allows users to retrieve all study entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-studies [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Runs (`merlin database get all-runs`)
+
+The `get all-runs` subcommand allows users to retrieve all run entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-runs [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+#### Database Delete (`merlin database delete`)
+
+The `delete` subcommand allows users to delete entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete [OPTIONS] SUBCOMMAND ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Subcommands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [study](#delete-study-merlin-database-delete-study) | Delete a specific study from the database |
+| [run](#delete-run-merlin-database-delete-run) | Delete a specific run from the database |
+| [all-studies](#delete-all-studies-merlin-database-delete-all-studies) | Delete all studies from the database |
+| [all-runs](#delete-all-runs-merlin-database-delete-all-runs) | Delete all runs from the database |
+
+##### Delete Study (`merlin database delete study`)
+
+!!! warning
+
+    By default, this command will also delete all of the runs associated with a study. To disable this, use the `-k` option mentioned in the table below.
+
+The `delete study` subcommand allows users to delete specific study entries from the database by study name.
+
+**Usage:**
+
+```bash
+merlin database delete study [OPTIONS] STUDY_NAME
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-k`, `--keep-associated-runs`   | boolean |  Keep runs associated with the study that's being deleted | `False` |
+
+##### Delete Run (`merlin database delete run`)
+
+The `delete run` subcommand allows users to delete specific run entries from the database by run ID.
+
+**Usage:**
+
+```bash
+merlin database delete run [OPTIONS] RUN_ID
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete All-Studies (`merlin database delete all-studies`)
+
+!!! warning
+
+    This command will also delete all of the runs in the database, essentially clearing the entire database.
+
+The `delete all-studies` subcommand allows users to delete all study entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-studies [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete All-Runs (`merlin database delete all-runs`)
+
+The `delete all-runs` subcommand allows users to delete all run entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-runs [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
 
 ### Detailed Status (`merlin detailed-status`)
 
