@@ -85,7 +85,7 @@ def database_delete(args: Namespace):
     if args.delete_type == "study":
         merlin_db.delete_study(args.study, remove_associated_runs=(not args.keep_associated_runs))
     elif args.delete_type == "all-studies":
-        merlin_db.delete_all_studies()
+        merlin_db.delete_all_studies(remove_associated_runs=(not args.keep_associated_runs))
     elif args.delete_type == "run":
         merlin_db.delete_run(args.run)
     elif args.delete_type == "all-runs":

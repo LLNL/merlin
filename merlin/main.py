@@ -879,11 +879,12 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Add subcommands for delete
     delete_subcommands = db_delete.add_subparsers(dest="delete_type", required=True)
 
+    # TODO enable support for deletion of study by name, ID, or passing in spec file
     # Subcommand: delete study
     delete_study = (
-        delete_subcommands.add_parser(  # TODO perhaps this should just take in a spec file instead of the study name?
+        delete_subcommands.add_parser(
             "study",
-            help="Delete a specific study by name.",  # TODO add option to delete by ID here as well
+            help="Delete a specific study by name.",
             formatter_class=ArgumentDefaultsHelpFormatter,
         )
     )
@@ -899,10 +900,11 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         help="Keep runs associated with the study.",
     )
 
+    # TODO enable support for deletion of run by workspace or ID
     # Subcommand: delete run
     delete_run = delete_subcommands.add_parser(
         "run",
-        help="Delete a specific run by ID.",  # TODO add option to delete by workspace here as well
+        help="Delete a specific run by ID.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     delete_run.add_argument(
@@ -910,7 +912,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         type=str,
         help="The ID of the run to delete.",
     )
-    # TODO implement the below option
+    # TODO implement the below option; this removes the output workspace from file system
     # delete_run.add_argument(
     #     "--delete-workspace",
     #     action="store_true",
@@ -918,10 +920,16 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # )
 
     # Subcommand: delete all-studies
-    delete_subcommands.add_parser(
+    delete_all_studies = delete_subcommands.add_parser(
         "all-studies",
         help="Delete all studies from the database.",
         formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_all_studies.add_argument(
+        "-k",
+        "--keep-associated-runs",
+        action="store_true",
+        help="Keep runs associated with the studies.",
     )
 
     # Subcommand: delete all-runs
@@ -949,9 +957,11 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Add subcommands for get
     get_subcommands = db_get.add_subparsers(dest="get_type", required=True)
 
-    get_study = get_subcommands.add_parser(  # TODO perhaps this should just take in a spec file instead of the study name?
+    # TODO enable support for retrieval of study by name, ID, or passing in spec file
+    # Subcommand: get study
+    get_study = get_subcommands.add_parser(
         "study",
-        help="Get a specific study by name.",  # TODO add option to get by ID here as well
+        help="Get a specific study by name.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     get_study.add_argument(
@@ -960,10 +970,11 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         help="The name of the study to get.",
     )
 
+    # TODO enable support for retrieval of run by workspace or ID
     # Subcommand: get run
     get_run = get_subcommands.add_parser(
         "run",
-        help="Get a specific run by ID.",  # TODO add option to get by workspace here as well
+        help="Get a specific run by ID.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     get_run.add_argument(

@@ -94,11 +94,17 @@ class DatabaseStudy:
             A human-readable string representation of the `DatabaseStudy` instance.
         """
         study_id = self.get_id()
+        runs_str = "Runs:\n"
+        for run in self.get_all_runs():
+            runs_str += (
+                f"  - ID: {run.get_id()}\n"
+                f"    Workspace: {run.get_workspace()}\n"
+            )
         return (
             f"Study with ID {study_id}\n"
             f"------------{'-' * len(study_id)}\n"
             f"Name: {self.get_name()}\n"
-            f"Runs: {self.get_all_runs()}\n"
+            f"{runs_str}"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 
