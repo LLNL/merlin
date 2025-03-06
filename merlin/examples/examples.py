@@ -27,7 +27,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-"""This module contains example spec files with explanations of each block"""
+"""
+This module contains example specification files for Merlin workflows, 
+along with detailed explanations of each block in the specification.
+
+The examples and templates are useful for understanding how to structure 
+Merlin workflows, define tasks, manage parameters, and configure resources.
+"""
 
 # Taken from https://lc.llnl.gov/mlsi/docs/merlin/merlin_config.html
 TEMPLATE_FILE_CONTENTS = """
