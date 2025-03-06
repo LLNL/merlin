@@ -29,7 +29,7 @@
 ###############################################################################
 
 """
-SampleIndex factory methods
+This module houses [`SampleIndex`][common.sample_index.SampleIndex] factory methods.
 """
 from parse import parse
 from typing import List
@@ -63,15 +63,15 @@ def create_hierarchy(
     sample count.
 
     Args:
-        num_samples: The total number of samples.
-        bundle_size: The maximum number of samples a bundle file can handle.
-        directory_sizes: A list specifying the number of samples each directory
+        num_samples (int): The total number of samples.
+        bundle_size (int): The maximum number of samples a bundle file can handle.
+        directory_sizes (List[int]): A list specifying the number of samples each directory
             is responsible for.
-        root: The root path of the index.
-        start_sample_id: The starting sample ID.
-        start_bundle_id: The starting bundle ID.
-        address: An optional address prefix for the hierarchy.
-        n_digits: The number of digits to pad the directory names.
+        root (str): The root path of the index.
+        start_sample_id (int): The starting sample ID.
+        start_bundle_id (int): The starting bundle ID.
+        address (str): An optional address prefix for the hierarchy.
+        n_digits (int): The number of digits to pad the directory names.
 
     Returns:
         (common.sample_index.SampleIndex): The root [`SampleIndex`][common.sample_index.SampleIndex]

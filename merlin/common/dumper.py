@@ -45,6 +45,16 @@ class Dumper:  # pylint: disable=R0903
     The dumper class is intended to help write information to files.
     Currently, the supported file types to dump to are csv and json.
 
+    Attributes:
+        file_name (str): The name of the file to write data to.
+        file_type (str): The type of the file (either "csv" or "json") determined
+            from the file name.
+
+    Methods:
+        write: Writes information to the specified output file based on the file type.
+        _csv_write: Writes information to a CSV file.
+        _json_write: Writes information to a JSON file.
+
     Example:
         CSV usage:
         ```python

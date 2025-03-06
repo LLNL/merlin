@@ -81,17 +81,17 @@ class Status:
     and provides methods to display and dump status information.
 
     Attributes:
-        args: Command-line arguments provided by the user.
-        full_step_name_map: A mapping of overall step names to full step names.
-        num_requested_statuses: Counts the number of task statuses in the `requested_statuses`
+        args (Namespace): Command-line arguments provided by the user.
+        full_step_name_map (Dict[str, Set[str]]): A mapping of overall step names to full step names.
+        num_requested_statuses (int): Counts the number of task statuses in the `requested_statuses`
             dictionary.
-        requested_statuses: A dictionary storing the statuses that the user wants to view.
-        run_time_info: A dictionary storing runtime statistics for each step.
+        requested_statuses (Dict): A dictionary storing the statuses that the user wants to view.
+        run_time_info (Dict[str, Dict]): A dictionary storing runtime statistics for each step.
         spec (spec.specification.MerlinSpec): A [`MerlinSpec`][spec.specification.MerlinSpec]
             object loaded from the workspace or spec file.
-        step_tracker: A dictionary tracking started and unstarted steps.
-        tasks_per_step: A mapping of tasks per step for accurate totals.
-        workspace: The path to the workspace containing study data.
+        step_tracker (Dict[str, List[str]]): A dictionary tracking started and unstarted steps.
+        tasks_per_step (Dict[str, int]): A mapping of tasks per step for accurate totals.
+        workspace (str): The path to the workspace containing study data.
 
     Methods:
         display: Displays a high-level summary of the status.
@@ -108,6 +108,17 @@ class Status:
     """
 
     def __init__(self, args: Namespace, spec_display: bool, file_or_ws: str):
+        """
+        Initializes the `Status` object, which manages and retrieves status information for studies.
+
+        Args:
+            args: Command-line arguments provided by the user, including filters and options
+                for displaying or dumping status information.
+            spec_display: A flag indicating whether the status should be loaded from a specification
+                file (`True`) or from a workspace (`False`).
+            file_or_ws: The path to the specification file or workspace, depending on the value of
+                `spec_display`.
+        """
         # Save the args to this class instance and check if the steps filter was given
         self.args: Namespace = args
 
@@ -762,7 +773,7 @@ class DetailedStatus(Status):
         requested_statuses (Dict): A dictionary holding the statuses requested by the user.
         spec (spec.specification.MerlinSpec): A [`MerlinSpec`][spec.specification.MerlinSpec]
             object loaded from the workspace or spec file.
-        steps_filter_provided: Indicates if a specific steps filter was provided.
+        steps_filter_provided (bool): Indicates if a specific steps filter was provided.
 
     Methods:
         apply_filters: Applies user-defined filters to the requested statuses.
@@ -776,6 +787,18 @@ class DetailedStatus(Status):
     """
 
     def __init__(self, args: Namespace, spec_display: bool, file_or_ws: str):
+        """
+        Initializes the `DetailedStatus` object, extending the functionality of the `Status` class
+        to include filtering and detailed task-by-task status handling.
+
+        Args:
+            args: Command-line arguments provided by the user, including options
+                for filtering, displaying, or dumping detailed task statuses.
+            spec_display: A flag indicating whether the status should be loaded from a 
+                specification file (`True`) or from a workspace (`False`).
+            file_or_ws: The path to the specification file or workspace, depending on the 
+                value of `spec_display`.
+        """
         args_copy = Namespace(**vars(args))
         super().__init__(args, spec_display, file_or_ws)
 

@@ -29,7 +29,9 @@
 ###############################################################################
 
 """
-Merlin script adapter module
+This module stores the functionality for adapting bash scripts to use schedulers.
+
+Supported schedulers are currently: Flux, LSF, and Slurm.
 """
 
 import logging
@@ -37,14 +39,14 @@ import os
 from typing import Dict, List, Set, Tuple, Union
 
 from maestrowf.abstracts.enums import StepPriority
-from maestrowf.abstracts.scriptadapter import ScriptAdapter
+from maestrowf.abstracts.interfaces.scriptadapter import ScriptAdapter
 from maestrowf.datastructures.core.study import StudyStep
 from maestrowf.interfaces.script import SubmissionRecord
 from maestrowf.interfaces.script.localscriptadapter import LocalScriptAdapter
 from maestrowf.interfaces.script.slurmscriptadapter import SlurmScriptAdapter
 from maestrowf.utils import start_process
 
-from merlin.common.abstracts.enums import ReturnCode
+from merlin.common.enums import ReturnCode
 from merlin.utils import convert_timestring, find_vlaunch_var
 
 
@@ -86,9 +88,9 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
     in a Celery worker.
 
     Attributes:
-        key: A unique key identifier for the adapter.
-        _cmd_flags: A dictionary containing command flags for LSF execution.
-        _unsupported: A set of parameters that are unsupported by this adapter.
+        key (str): A unique key identifier for the adapter.
+        _cmd_flags (Dict[str, str]): A dictionary containing command flags for LSF execution.
+        _unsupported (Set[str]): A set of parameters that are unsupported by this adapter.
 
     Methods:
         get_header: Generates the header for LSF execution scripts.
@@ -247,9 +249,9 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
     is designed for workflows that execute SLURM parallel jobs in a Celery worker.
 
     Attributes:
-        key: A unique identifier for the adapter, set to "merlin-slurm".
-        _cmd_flags: A dictionary containing command flags for SLURM.
-        _unsupported: A set of command flags that are not supported by this adapter.
+        key (str): A unique identifier for the adapter, set to "merlin-slurm".
+        _cmd_flags (Dict[str, str]): A dictionary containing command flags for SLURM.
+        _unsupported (Set[str]): A set of command flags that are not supported by this adapter.
 
     Methods:
         get_header: Generates the header for SLURM execution scripts.
@@ -416,9 +418,9 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
     shell in which scripts are executed.
 
     Attributes:
-        key: A unique identifier for the adapter, set to "merlin-flux".
-        _cmd_flags: A dictionary containing command-line flags for the flux command.
-        _unsupported: A set of command flags that are not supported by this adapter.
+        key (str): A unique identifier for the adapter, set to "merlin-flux".
+        _cmd_flags (Dict[str, str]): A dictionary containing command-line flags for the flux command.
+        _unsupported (Set[str]): A set of command flags that are not supported by this adapter.
 
     Methods:
         get_priority: Retrieves the priority of the step.
@@ -533,11 +535,11 @@ class MerlinScriptAdapter(LocalScriptAdapter):
     manages the execution of scripts with appropriate logging and error handling.
 
     Attributes:
-        batch_adapter: An instance of a batch adapter used for executing scripts
+        batch_adapter (ScriptAdapter): An instance of a batch adapter used for executing scripts
             based on the specified batch type.
-        batch_type: The type of batch processing to be used, derived from
+        batch_type (str): The type of batch processing to be used, derived from
             the provided keyword arguments.
-        key: A unique identifier for the adapter, set to "merlin-local".
+        key (str): A unique identifier for the adapter, set to "merlin-local".
 
     Methods:
         submit: Executes a workflow step locally.

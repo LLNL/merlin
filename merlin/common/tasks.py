@@ -49,7 +49,7 @@ from celery.result import AsyncResult
 from filelock import FileLock, Timeout
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from merlin.common.abstracts.enums import ReturnCode
+from merlin.common.enums import ReturnCode
 from merlin.common.sample_index import uniform_directories, SampleIndex
 from merlin.common.sample_index_factory import create_hierarchy
 from merlin.config.utils import Priority, get_priority
@@ -125,7 +125,7 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C
             ```
 
     Returns:
-        (common.abstracts.enums.ReturnCode): The result of the step
+        (common.enums.ReturnCode): The result of the step
             execution, which can indicate success, various failure modes,
             or a request to retry.
     """
@@ -665,8 +665,8 @@ def condense_status_files(self: Task, *args: Any, **kwargs: Any) -> ReturnCode: 
               condensed status.
 
     Returns:
-        A [`ReturnCode.OK`][common.abstracts.enums.ReturnCode] message if the
-            operation was successful. None, otherwise.
+        (common.enums.ReturnCode): A [`ReturnCode.OK`][common.enums.ReturnCode]
+            message if the operation was successful. None, otherwise.
 
     Raises:
         TimeoutError: If the file lock cannot be acquired within the 

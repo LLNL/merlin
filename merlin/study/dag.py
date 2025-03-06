@@ -46,15 +46,15 @@ class DAG:
     independent chains of tasks.
 
     Attributes:
-        backwards_adjacency: A dictionary mapping each task to its parent tasks for reverse
+        backwards_adjacency (Dict): A dictionary mapping each task to its parent tasks for reverse
             traversal.
-        column_labels: A list of column labels provided in the spec file.
-        maestro_adjacency_table: An ordered dict showing adjacency of nodes. Comes from
+        column_labels (List[str]): A list of column labels provided in the spec file.
+        maestro_adjacency_table (OrderedDict): An ordered dict showing adjacency of nodes. Comes from
             a maestrowf `ExecutionGraph`.
-        maestro_values: An ordered dict of the values at each node. Comes from a maestrowf
+        maestro_values (OrderedDict): An ordered dict of the values at each node. Comes from a maestrowf
             `ExecutionGraph`.
-        parameter_info: A dict containing information about parameters in the study.
-        study_name: The name of the study.
+        parameter_info (Dict): A dict containing information about parameters in the study.
+        study_name (str): The name of the study.
 
     Methods:
         calc_backwards_adjacency: Initializes the backwards adjacency table.
@@ -80,6 +80,22 @@ class DAG:
         study_name: str,
         parameter_info: Dict,
     ):  # pylint: disable=R0913
+        """
+        Initializes a DAG object, which represents a task graph used by Merlin for staging tasks
+        in Celery. The DAG is initialized from a Maestro `ExecutionGraph` by unpacking its adjacency
+        table and node values.
+
+        Args:
+            maestro_adjacency_table: An ordered dictionary representing the adjacency
+                relationships between tasks in the graph. This comes from a Maestro `ExecutionGraph`.
+            maestro_values: An ordered dictionary containing the values or metadata
+                associated with each task in the graph. This also comes from a Maestro `ExecutionGraph`.
+            column_labels: A list of column labels provided in the specification file,
+                typically used to identify parameters or task attributes.
+            study_name: The name of the study to which this DAG belongs.
+            parameter_info: A dictionary containing information about the parameters in the study,
+                such as their names and values.
+        """
         # We used to store the entire maestro ExecutionGraph here but now it's
         # unpacked so we're only storing the 2 attributes from it that we use:
         # the adjacency table and the values. This had to happen to get pickle
@@ -133,7 +149,7 @@ class DAG:
         to figure out how to coalesce chains across depths.
 
         Args:
-            depths (dict): The dictionary of depths to group by.
+            depths: The dictionary of depths to group by.
 
         Returns:
             A list of lists of lists ordered by depth.
@@ -305,7 +321,7 @@ class DAG:
                 [`group_by_depth`][study.dag.DAG.group_by_depth].
 
         Returns:
-            list: Adjusted list of groups of chains to maximize parallelism.
+            Adjusted list of groups of chains to maximize parallelism.
 
         Example:
             Given input chains, the method may return a modified structure that allows

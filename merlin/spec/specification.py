@@ -69,10 +69,10 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         environment (Dict): A dictionary representing the environment section of the spec file.
         globals (Dict): A dictionary representing global parameters in the spec file.
         merlin (Dict): A dictionary representing the merlin section of the spec file.
-        sections: A dictionary of all sections in the spec file.
+        sections (Dict): A dictionary of all sections in the spec file.
         study (Dict): A dictionary representing the study section of the spec file.
         user (Dict): A dictionary representing the user section of the spec file.
-        yaml_sections: A dictionary for YAML representation of the sections.
+        yaml_sections (Dict): A dictionary for YAML representation of the sections.
 
     Methods:
         check_section: Checks sections of the spec file for unrecognized keys.
@@ -102,6 +102,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     # Pylint says this call to super is useless but we'll leave it in case we want to add to __init__ in the future
     def __init__(self):  # pylint: disable=W0246
+        """Initializes a MerlinSpec object."""
         super().__init__()
 
     @property

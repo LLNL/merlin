@@ -69,10 +69,10 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
     It will separate the display on a step-by-step basis, similar to Maestro's 'narrow' status display.
 
     Attributes:
-        disable_theme: Flag to disable theming for the display.
-        disable_pager: Flag to disable pager functionality for the display.
-        _theme_dict: A dictionary containing the theme settings for various status types.
-        _status_table: A Table object that contains the formatted status information.
+        disable_theme (bool): Flag to disable theming for the display.
+        disable_pager (bool): Flag to disable pager functionality for the display.
+        _theme_dict (Dict[str, str]): A dictionary containing the theme settings for various status types.
+        _status_table (Table): A Table object that contains the formatted status information.
 
     Methods:
         create_param_table: Creates the parameter section of the display.
@@ -82,7 +82,17 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         render: Performs the actual printing of the status table with optional theme customization.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: List, **kwargs: Dict):
+        """
+        Initializes the `MerlinDefaultRenderer` instance, which handles the default status formatting
+        for task-by-task display, with optional theming and pager functionality.
+
+        Args:
+            *args: Positional arguments passed to the superclass (`BaseStatusRenderer`).
+            **kwargs: Keyword arguments used to configure the renderer. Supported keys include:\n
+                - disable_theme (bool, optional): If `True`, disables theming for the display. Defaults to `False`.
+                - disable_pager (bool, optional): If `True`, disables pager functionality for the display. Defaults to `False`.
+        """
         super().__init__(*args, **kwargs)
 
         self.disable_theme: bool = kwargs.pop("disable_theme", False)
@@ -377,8 +387,8 @@ class MerlinFlatRenderer(FlatStatusRenderer):
     all statuses together in a single table, similar to Maestro's 'flat' status display.
 
     Attributes:
-        disable_theme: A flag indicating whether to disable theme customization for the output.
-        disable_pager: A flag indicating whether to disable the use of a pager for long outputs.
+        disable_theme (bool): A flag indicating whether to disable theme customization for the output.
+        disable_pager (bool): A flag indicating whether to disable the use of a pager for long outputs.
 
     Methods:
         layout: Sets up the layout of the display, formatting the status data and study title.
@@ -470,7 +480,7 @@ class MerlinStatusRendererFactory(StatusRendererFactory):
     type and user preferences regarding theme and pager usage.
 
     Attributes:
-        _layouts: A dictionary mapping layout names to their corresponding renderer
+        _layouts (Dict[str, BaseStatusRenderer]): A dictionary mapping layout names to their corresponding renderer
             classes. Currently includes "table" for
             [`MerlinFlatRenderer`][study.status_renderers.MerlinFlatRenderer] and
             "default" for [`MerlinDefaultRenderer`][study.status_renderers.MerlinDefaultRenderer].

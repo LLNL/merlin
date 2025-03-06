@@ -42,7 +42,7 @@ from copy import deepcopy
 from os.path import expanduser, expandvars
 from typing import Dict, List, Tuple
 
-from merlin.common.abstracts.enums import ReturnCode
+from merlin.common.enums import ReturnCode
 from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import contains_shell_ref, contains_token, verify_filepath

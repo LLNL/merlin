@@ -60,7 +60,7 @@ def _encrypt_encode(*args, **kwargs) -> bytes:
         **kwargs: Keyword arguments passed to the original encode method.
 
     Returns:
-        The encrypted encoded data.
+        The encrypted encoded data in bytes format.
     """
     return encrypt.encrypt(old_encode(*args, **kwargs))
 
@@ -78,7 +78,7 @@ def _decrypt_decode(self: Backend, payload: bytes) -> Any:
         payload: The encrypted data to be decrypted.
 
     Returns:
-        The decoded data after decryption.
+        The decoded data after decryption. Can be any format.
     """
     return old_decode(self, encrypt.decrypt(payload))
 

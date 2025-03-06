@@ -44,7 +44,7 @@ from maestrowf.datastructures.core.study import StudyStep
 from maestrowf.datastructures.environment import Variable
 from maestrowf.interfaces.script import SubmissionRecord
 
-from merlin.common.abstracts.enums import ReturnCode
+from merlin.common.enums import ReturnCode
 from merlin.study.script_adapter import MerlinScriptAdapter
 from merlin.study.status import read_status, write_status
 from merlin.utils import needs_merlin_expansion
@@ -94,7 +94,7 @@ class MerlinStepRecord(_StepRecord):
     a re-submit message and handle status updates.
 
     Attributes:
-        condensed_workspace: A condensed version of the workspace path.
+        condensed_workspace (str): A condensed version of the workspace path.
         elapsed_time (str): The total elapsed time for the step execution.
         jobid (List[int]): A list of job identifiers assigned by the scheduler.
         maestro_step (StudyStep): The StudyStep object associated with this step.
@@ -115,6 +115,8 @@ class MerlinStepRecord(_StepRecord):
 
     def __init__(self, workspace: str, maestro_step: StudyStep, merlin_step: "Step", **kwargs):
         """
+        Initializes the `MerlinStepRecord` class which helps track the status of a step.
+
         Args:
             workspace: The output workspace for this step.
             maestro_step: The
@@ -366,13 +368,13 @@ class Step:
     executed by calling the [`execute`][study.step.Step.execute] method.
 
     Attributes:
-        max_retries: Returns the maximum number of retries for this step.
-        mstep: The Maestro StepRecord object associated with this step.
-        parameter_info: A dictionary containing information about parameters in the study.
-        params: A dictionary containing command parameters for the step, including 'cmd' and 'restart_cmd'.
-        restart: Property to get or set the restart status of the step.
-        retry_delay: Returns the retry delay for the step (default is 1).
-        study_name: The name of the study this step belongs to.
+        max_retries (int): Returns the maximum number of retries for this step.
+        mstep (_StepRecord): The Maestro StepRecord object associated with this step.
+        parameter_info (dict): A dictionary containing information about parameters in the study.
+        params (Dict): A dictionary containing command parameters for the step, including 'cmd' and 'restart_cmd'.
+        restart (bool): Property to get or set the restart status of the step.
+        retry_delay (int): Returns the retry delay for the step (default is 1).
+        study_name (str): The name of the study this step belongs to.
 
     Methods:
         check_if_expansion_needed: Checks if command expansion is needed based on specified labels.
@@ -391,8 +393,10 @@ class Step:
 
     def __init__(self, maestro_step_record: _StepRecord, study_name: str, parameter_info: Dict):
         """
+        Initializes the `Step` object which acts as a way to track everything about a step.
+
         Args:
-            maestro_step_record: The StepRecord object.
+            maestro_step_record: The `StepRecord` object.
             study_name: The name of the study
             parameter_info: A dict containing information about parameters in the study
         """
@@ -661,7 +665,7 @@ class Step:
                 dry run (setup only, no execution).
 
         Returns:
-            A [ReturnCode][common.abstracts.enums.ReturnCode] object representing
+            (common.enums.ReturnCode): A [`ReturnCode`][common.enums.ReturnCode] object representing
                 the result of the execution.
         """
         # Update shell if the task overrides the default value from the batch section

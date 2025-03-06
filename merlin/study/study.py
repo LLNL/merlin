@@ -46,7 +46,7 @@ from maestrowf.datastructures.core.studyenvironment import StudyEnvironment
 from maestrowf.maestro import load_parameter_generator
 from maestrowf.utils import create_dictionary
 
-from merlin.common.abstracts.enums import ReturnCode
+from merlin.common.enums import ReturnCode
 from merlin.spec import defaults
 from merlin.spec.expansion import determine_user_variables, expand_by_line, expand_env_vars, expand_line
 from merlin.spec.override import error_override_vars, replace_override_vars
@@ -72,28 +72,28 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
 
     Attributes:
         dag (study.dag.DAG): Directed acyclic graph representing the execution flow of the study.
-        dry_run: Flag indicating whether to perform a dry run of the workflow.
+        dry_run (bool): Flag indicating whether to perform a dry run of the workflow.
         expanded_spec (spec.specification.MerlinSpec): The expanded specification after applying overrides.
-        filepath: Path to the desired specification file.
-        flux_command: Command for running flux jobs, if applicable.
-        info: Path to the 'merlin_info' directory within the workspace.
-        level_max_dirs: The number of directories at each level of the sample hierarchy.
-        no_errors: Flag to ignore some errors for testing purposes.
+        filepath (str): Path to the desired specification file.
+        flux_command (str): Command for running flux jobs, if applicable.
+        info (str): Path to the 'merlin_info' directory within the workspace.
+        level_max_dirs (int): The number of directories at each level of the sample hierarchy.
+        no_errors (bool): Flag to ignore some errors for testing purposes.
         original_spec (spec.specification.MerlinSpec): The original specification loaded
             from the filepath.
-        output_path: Path to the output directory for the study.
-        override_vars: Dictionary of variables to override in the specification.
-        parameter_labels: List of parameter labels used in the study.
-        pargs: Arguments for the parameter generator.
-        pgen_file: Filepath for the parameter generator, if applicable.
-        restart_dir: Filepath to restart the study, if applicable.
-        sample_labels: The column labels of the samples.
-        samples: The samples in the study.
-        samples_file: File to load samples from, if specified.
-        special_vars: Dictionary of special variables used in the study.
-        timestamp: Timestamp representing the start time of the study.
-        user_vars: The user-defined variables in the study.
-        workspace: Path to the workspace directory for the study.
+        output_path (str): Path to the output directory for the study.
+        override_vars (Dict[str, Union[str, int]]): Dictionary of variables to override in the specification.
+        parameter_labels (List[str]): List of parameter labels used in the study.
+        pargs (List[str]): Arguments for the parameter generator.
+        pgen_file (str): Filepath for the parameter generator, if applicable.
+        restart_dir (str): Filepath to restart the study, if applicable.
+        sample_labels (List[str]): The column labels of the samples.
+        samples (np.ndarray): The samples in the study.
+        samples_file (str): File to load samples from, if specified.
+        special_vars (Dict[str, str]): Dictionary of special variables used in the study.
+        timestamp (str): Timestamp representing the start time of the study.
+        user_vars (Dict[str, str]): The user-defined variables in the study.
+        workspace (str): Path to the workspace directory for the study.
 
     Methods:
         generate_samples: Executes a command to generate sample data if the sample file is missing.
@@ -119,6 +119,21 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         pgen_file: str = None,
         pargs: List[str] = None,
     ):
+        """
+        Initializes a MerlinStudy object, which represents a study run based on a specification file.
+
+        Args:
+            filepath: Path to the specification file for the study.
+            override_vars: Dictionary of variables to override in the specification.
+            restart_dir: Path to the directory for restarting the study.
+            samples_file: Path to a file containing sample data. If specified, the samples 
+                will be loaded from this file.
+            dry_run: Flag indicating whether to perform a dry run of the workflow 
+                without executing tasks.
+            no_errors: Flag to suppress certain errors for testing purposes.
+            pgen_file: Path to a parameter generator file.
+            pargs: Arguments for the parameter generator.
+        """
         self.filepath: str = filepath
         self.original_spec: MerlinSpec = MerlinSpec.load_specification(filepath)
         self.override_vars: Dict = override_vars
@@ -229,7 +244,7 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         function to obtain a dictionary of expanded variables.
 
         Args:
-            spec: The specification object containing the environment from which
+            spec (spec.specification.MerlinSpec): The specification object containing the environment from which
                 to extract user-defined variables. The environment should have keys
                 "variables" and/or "labels" that contain the relevant data.
 
@@ -275,7 +290,7 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         accurately reflects all applied configurations.
 
         Returns:
-            A new instance of the [`MerlinSpec`][spec.specification.MerlinSpec]
+            (spec.specification.MerlinSpec): A new instance of the [`MerlinSpec`][spec.specification.MerlinSpec]
                 class that contains the fully expanded specification.
         """
         # get specification including defaults and cli-overridden user variables
@@ -560,7 +575,7 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         expands any tokens or shell references, and updates paths accordingly.
 
         Returns:
-            The expanded specification object.
+            (spec.specification.MerlinSpec): The expanded specification object.
 
         Raises:
             ValueError: If the expanded name for the workspace contains invalid 

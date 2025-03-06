@@ -240,7 +240,7 @@ def parse_batch_block(batch: Dict) -> Dict:
             configuration file.
 
     Returns:
-        Dict: A dictionary containing parsed information from the batch block, 
+        A dictionary containing parsed information from the batch block, 
             including:\n
             - `btype`: The type of batch job (default is 'local').
             - `nodes`: The number of nodes to use (default is None).
@@ -423,18 +423,19 @@ def construct_scheduler_legend(parsed_batch: Dict, nodes: int) -> Dict:
         nodes: The number of nodes to use in the launch command.
 
     Returns:
-        A dictionary containing scheduler-related information, structured as follows:\n
-        - For each scheduler (e.g., 'flux', 'lsf', 'pbs', 'slurm'):\n
-            \t- `bank` (str): The flag to add a bank to the launch command.
-            - `check cmd` (List[str]): The command to run to check if this is the main
-                scheduler for the cluster.
-            - `expected check output` (bytes): The expected output from running
-                the check command.
-            - `launch` (str): The initial launch command for the scheduler.
-            - `queue` (str): The flag to add a queue to the launch command (if
-                applicable).
-            - `walltime` (str): The flag to add a walltime to the launch command
-                (if applicable).
+        A dictionary containing scheduler-related information, structured as
+            follows:\n
+            - For each scheduler (e.g., 'flux', 'lsf', 'pbs', 'slurm'):\n
+                - `bank` (str): The flag to add a bank to the launch command.
+                - `check cmd` (List[str]): The command to run to check if this is the main
+                    scheduler for the cluster.
+                - `expected check output` (bytes): The expected output from running
+                    the check command.
+                - `launch` (str): The initial launch command for the scheduler.
+                - `queue` (str): The flag to add a queue to the launch command (if
+                    applicable).
+                - `walltime` (str): The flag to add a walltime to the launch command
+                    (if applicable).
     """
     scheduler_legend = {
         "flux": {

@@ -53,7 +53,7 @@ def _get_key_path() -> str:
     "~/.merlin/encrypt_data_key".
 
     Returns:
-        The absolute path to the encryption key file.
+        A string representing the absolute path to the encryption key file.
 
     Raises:
         ValueError: If there is an issue retrieving the key path from the configuration.
@@ -93,7 +93,7 @@ def _get_key() -> bytes:
     saves it to the specified path.
 
     Returns:
-        The encryption key.
+        The encryption key in bytes format.
 
     Raises:
         IOError: If there is an issue reading the key file or generating a new key.
@@ -122,7 +122,7 @@ def encrypt(payload: bytes) -> bytes:
         payload: The data to be encrypted. Must be in bytes format.
 
     Returns:
-        The encrypted data.
+        The encrypted data in bytes format.
     """
     key = _get_key()
     f = Fernet(key)
@@ -138,7 +138,7 @@ def decrypt(payload: bytes) -> bytes:
         payload: The encrypted data to be decrypted. Must be in bytes format.
 
     Returns:
-        The decrypted data.
+        The decrypted data in bytes format.
     """
     key = _get_key()
     f = Fernet(key)
