@@ -27,7 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-"""This module contains priority handling"""
+"""This module contains priority handling for brokers."""
 
 import enum
 from typing import Dict
@@ -36,7 +36,18 @@ from merlin.config.configfile import CONFIG
 
 
 class Priority(enum.Enum):
-    """Enumerated Priorities"""
+    """
+    Enumerated Priorities.
+
+    This enumeration defines the different priority levels that can be used
+    for message handling with brokers.
+
+    Attributes:
+        HIGH (int): Represents the highest priority level.
+        MID (int): Represents the medium priority level.
+        LOW (int): Represents the lowest priority level.
+        RETRY (int): Represents the priority level for retrying messages.
+    """
 
     HIGH = 1
     MID = 2
@@ -45,21 +56,53 @@ class Priority(enum.Enum):
 
 
 def is_rabbit_broker(broker: str) -> bool:
-    """Check if the broker is a rabbit server"""
+    """
+    Check if the given broker is a RabbitMQ server.
+
+    This function checks whether the provided broker name matches any of the
+    RabbitMQ-related broker types.
+
+    Args:
+        broker: The name of the broker to check.
+
+    Returns:
+        True if the broker is a RabbitMQ server, False otherwise.
+    """
     return broker in ["rabbitmq", "amqps", "amqp"]
 
 
 def is_redis_broker(broker: str) -> bool:
-    """Check if the broker is a redis server"""
+    """
+    Check if the given broker is a Redis server.
+
+    This function checks whether the provided broker name matches any of the
+    Redis-related broker types.
+
+    Args:
+        broker: The name of the broker to check.
+
+    Returns:
+        True if the broker is a Redis server, False otherwise.
+    """
     return broker in ["redis", "rediss", "redis+socket"]
 
 
 def determine_priority_map(broker_name: str) -> Dict[Priority, int]:
     """
-    Returns the priority mapping for the given broker name.
+    Determine the priority mapping for the given broker name.
 
-    :param broker_name: The name of the broker that we need the priority map for
-    :returns: The priority map associated with `broker_name`
+    This function returns a mapping of [`Priority`][config.utils.Priority]
+    enum values to integer priority levels based on the type of broker provided.
+
+    Args:
+        broker_name: The name of the broker for which to determine the priority map.
+
+    Returns:
+        (Dict[config.utils.Priority, int]): A dictionary mapping
+            [`Priority`][config.utils.Priority] enum values to integer levels.
+
+    Raises:
+        ValueError: If the broker name is not supported.
     """
     if is_rabbit_broker(broker_name):
         return {Priority.LOW: 1, Priority.MID: 5, Priority.HIGH: 9, Priority.RETRY: 10}
@@ -71,11 +114,24 @@ def determine_priority_map(broker_name: str) -> Dict[Priority, int]:
 
 def get_priority(priority: Priority) -> int:
     """
-    Gets the priority level as an integer based on the broker.
-    For a rabbit broker a low priority is 1 and high is 10. For redis it's the opposite.
+    Get the integer priority level for a given [`Priority`][config.utils.Priority]
+    enum value.
 
-    :param priority: The priority value that we want
-    :returns: The priority value as an integer
+    This function determines the priority level as an integer based on the
+    broker configuration. For RabbitMQ brokers, lower numbers represent lower
+    priorities, while for Redis brokers, higher numbers represent lower
+    priorities.
+
+    Args:
+        priority (config.utils.Priority): The [`Priority`][config.utils.Priority]
+            enum value for which to get the integer level.
+
+    Returns:
+        The integer priority level corresponding to the given [`Priority`][config.utils.Priority].
+
+    Raises:
+        ValueError: If the provided `priority` is invalid or not part of the
+            [`Priority`][config.utils.Priority] enum.
     """
     priority_err_msg = f"Invalid priority: {priority}"
     try:
