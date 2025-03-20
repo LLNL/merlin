@@ -36,23 +36,40 @@ from merlin.log_formatter import FORMATS
 
 
 DICT = {
+    # -------- SERIALIZER SETTINGS --------
     "task_serializer": "pickle",
     "accept_content": ["pickle"],
     "result_serializer": "pickle",
+    # ----------- TASK SETTINGS -----------
     "task_acks_late": True,
     "task_reject_on_worker_lost": True,
     "task_publish_retry_policy": {
         "interval_start": 10,
         "interval_step": 10,
-        "interval_max": 60,
+        "interval_max": 300,
     },
-    "redis_max_connections": 100000,
+    "task_default_queue": "merlin",
+    # ---------- BROKER SETTINGS ----------
     "broker_transport_options": {
         "visibility_timeout": 60 * 60 * 24,
         "max_connections": 100,
+        "socket_timeout": 300,
+        "retry_policy": {
+            "timeout": 500,
+        }
     },
+    "broker_connection_timeout": 60,
     "broker_pool_limit": 0,
-    "task_default_queue": "merlin",
+    # --------- BACKEND SETTINGS ----------
+    "result_backend_always_retry": True,
+    "result_backend_max_retries": 20,
+    # ---------- REDIS SETTINGS -----------
+    "redis_max_connections": 100000,
+    "redis_retry_on_timeout": True,
+    "redis_socket_connect_timeout": 300,
+    "redis_socket_timeout": 300,
+    "redis_socket_keepalive": True,
+    # ---------- WORKER SETTINGS ----------
     "worker_log_color": True,
     "worker_log_format": FORMATS["DEFAULT"],
     "worker_task_log_format": FORMATS["WORKER"],

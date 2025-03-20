@@ -39,8 +39,9 @@ from typing import Any, Dict, List, Optional
 # Need to disable an overwrite warning here since celery has an exception that we need that directly
 # overwrites a python built-in exception
 from celery import chain, chord, group, shared_task, signature
-from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
+from celery.exceptions import MaxRetriesExceededError, OperationalError as CeleryOperationalError, TimeoutError as CeleryTimeoutError
 from filelock import FileLock, Timeout
+from kombu.exceptions import OperationalError as KombuOperationalError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.common.abstracts.enums import ReturnCode
@@ -56,15 +57,22 @@ from merlin.utils import dict_deep_merge
 
 
 retry_exceptions = (
+    # Python Built-in Exceptions
     IOError,
     OSError,
     AttributeError,
     TimeoutError,
-    OperationalError,
+    FileNotFoundError,
+    # Celery Exceptions
+    CeleryOperationalError,
+    CeleryTimeoutError,
+    # Kombu Exceptions
+    KombuOperationalError,
+    # Redis Exceptions
+    RedisTimeoutError,
+    # Merlin Exceptions
     RetryException,
     RestartException,
-    FileNotFoundError,
-    RedisTimeoutError,
 )
 
 LOG = logging.getLogger(__name__)
