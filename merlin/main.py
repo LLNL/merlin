@@ -56,6 +56,7 @@ from merlin.db_scripts.db_commands import database_delete, database_get, databas
 from merlin.db_scripts.db_interaction import MerlinDatabase
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
+from merlin.monitor.monitor import Monitor
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
@@ -433,31 +434,8 @@ def process_monitor(args):
             LOG.info("Monitor: found tasks in queues and/or tasks being processed")
             time.sleep(args.sleep)
     else:
-        merlin_db = MerlinDatabase()
-        db_study = merlin_db.get_study(spec.name)
-
-        index = 0
-        while True:
-            all_runs = db_study.get_all_runs()  # Always refresh the list at the start of the loop
-            if index >= len(all_runs):  # Break if there are no more runs to process
-                break
-
-            run = all_runs[index]
-            run_workspace = run.get_workspace()
-            LOG.info(f"Monitor: Monitoring run with workspace '{run_workspace}'...")
-
-            if run.run_complete:
-                LOG.info(
-                    f"Monitor: Determined that run with workspace '{run_workspace}' has already completed. Moving on to the next run."
-                )
-                index += 1
-                continue
-
-            while router.monitor_run(run, args.task_server, args.sleep):
-                time.sleep(args.sleep)
-
-            LOG.info(f"Monitor: Run with workspace '{run_workspace}' has completed. Moving on to the next run.")
-            index += 1
+        monitor = Monitor(spec, args.sleep, args.task_server)
+        monitor.monitor_all_runs()
 
     LOG.info("Monitor: ... stop condition met")
 
