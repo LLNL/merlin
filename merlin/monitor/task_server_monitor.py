@@ -1,13 +1,14 @@
 """
-This module defines the `TaskServerMonitor` abstract base class, which serves as a common interface 
-for monitoring task servers. Task servers are responsible for managing the execution of tasks and 
-workers in distributed systems, and this class provides an abstraction for monitoring their health 
+This module defines the `TaskServerMonitor` abstract base class, which serves as a common interface
+for monitoring task servers. Task servers are responsible for managing the execution of tasks and
+workers in distributed systems, and this class provides an abstraction for monitoring their health
 and progress.
 
-The `TaskServerMonitor` class is intended to be subclassed for specific task server implementations 
-(e.g., Celery, TaskVine). Subclasses must implement all abstract methods to provide task server-specific 
+The `TaskServerMonitor` class is intended to be subclassed for specific task server implementations
+(e.g., Celery, TaskVine). Subclasses must implement all abstract methods to provide task server-specific
 functionality, such as waiting for workers and checking task queues.
 """
+
 from abc import ABC, abstractmethod
 from typing import List
 

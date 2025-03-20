@@ -1,15 +1,16 @@
 """
-This module provides the `Monitor` class, which is responsible for monitoring the progress of 
-Merlin workflows. It ensures that workers are running, tasks are being processed, and workflows 
-are restarted if needed to prevent hanging. The `Monitor` class uses worker and task monitors 
+This module provides the `Monitor` class, which is responsible for monitoring the progress of
+Merlin workflows. It ensures that workers are running, tasks are being processed, and workflows
+are restarted if needed to prevent hanging. The `Monitor` class uses worker and task monitors
 to manage the health and progress of workflows.
 
-The module interacts with the Merlin database to retrieve study and run information and 
+The module interacts with the Merlin database to retrieve study and run information and
 uses the `monitor_factory` to create monitors for task and worker systems (e.g., Celery).
 
-Exceptions such as Redis timeouts, Kombu operational errors, and other runtime issues are 
+Exceptions such as Redis timeouts, Kombu operational errors, and other runtime issues are
 handled gracefully to ensure that monitoring continues without interruption.
 """
+
 import logging
 import subprocess
 import time
@@ -20,15 +21,19 @@ from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.db_scripts.db_interaction import MerlinDatabase
 from merlin.db_scripts.db_run import DatabaseRun
+from merlin.exceptions import RestartException
 from merlin.monitor.monitor_factory import monitor_factory
+from merlin.monitor.task_server_monitor import TaskServerMonitor
 from merlin.spec.specification import MerlinSpec
+
 
 LOG = logging.getLogger(__name__)
 
+
 class Monitor:
     """
-    The `Monitor` class is responsible for monitoring the progress of Merlin workflows. It ensures 
-    that workers are running, tasks are being processed, and workflows are restarted if necessary 
+    The `Monitor` class is responsible for monitoring the progress of Merlin workflows. It ensures
+    that workers are running, tasks are being processed, and workflows are restarted if necessary
     to prevent hanging. As a side-effect of the monitor, the users allocation will remain alive for
     however long the monitor lives. The class interacts with the Merlin database to retrieve study
     and run information and uses a task server monitor to help manage workflow health.
@@ -47,7 +52,7 @@ class Monitor:
 
     def __init__(self, spec: MerlinSpec, sleep: int, task_server: str):
         """
-        Initializes the `Monitor` instance with the given Merlin specification, sleep interval, 
+        Initializes the `Monitor` instance with the given Merlin specification, sleep interval,
         and task server type. The task server monitor is created using the
         [`monitor_factory`][monitor.monitor_factory.MonitorFactory].
 
@@ -62,18 +67,18 @@ class Monitor:
 
     def monitor_all_runs(self):
         """
-        Monitors all runs of the current study until they are complete. For each run, it checks 
-        if the run is already complete. If not, it monitors the run until it finishes. This 
+        Monitors all runs of the current study until they are complete. For each run, it checks
+        if the run is already complete. If not, it monitors the run until it finishes. This
         method ensures that all runs in the study are processed. This is necessary to be able to
         monitor iterative workflows.
 
-        The method retrieves all runs from the database and iterates through them sequentially. 
+        The method retrieves all runs from the database and iterates through them sequentially.
         If a run is incomplete, it calls [`monitor_single_run`][monitor.monitor.Monitor.monitor_single_run]
         to monitor it until completion.
         """
         merlin_db = MerlinDatabase()
         db_study = merlin_db.get_study(self.spec.name)
-    
+
         index = 0
         while True:
             # Always refresh the list at the start of the loop; there could be new runs (think iterative studies)
@@ -87,7 +92,8 @@ class Monitor:
 
             if run.run_complete:
                 LOG.info(
-                    f"Monitor: Determined that run with workspace '{run_workspace}' has already completed. Moving on to the next run."
+                    f"Monitor: Determined that run with workspace '{run_workspace}' has already completed. "
+                    "Moving on to the next run."
                 )
                 index += 1
                 continue
@@ -101,7 +107,7 @@ class Monitor:
 
     def monitor_single_run(self, run: DatabaseRun):
         """
-        Monitors a single run of a study until it completes to ensure that the allocation stays alive 
+        Monitors a single run of a study until it completes to ensure that the allocation stays alive
         and workflows are restarted if necessary.
 
         Args:
@@ -162,7 +168,7 @@ class Monitor:
     def restart_workflow(self, run: DatabaseRun):
         """
         Restart a run of a workflow.
-        
+
         Args:
             run: A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
                 the run that's going to be restarted.
@@ -170,9 +176,7 @@ class Monitor:
         Raises:
             RestartException: If the workflow restart process fails.
         """
-        restart_proc = subprocess.run(
-            f"merlin restart {run.get_workspace()}", shell=True, capture_output=True, text=True
-        )
+        restart_proc = subprocess.run(f"merlin restart {run.get_workspace()}", shell=True, capture_output=True, text=True)
         if restart_proc.returncode != 0:
             LOG.error(f"Monitor: Failed to restart workflow: {restart_proc.stderr}")
             raise RestartException(f"Restart process failed with error: {restart_proc.stderr}")

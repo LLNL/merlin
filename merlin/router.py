@@ -37,13 +37,11 @@ decoupled from the logic the tasks are running.
 """
 import logging
 import os
-import subprocess
 import time
 from importlib import resources
 from typing import Dict, List, Tuple
 
-from merlin.db_scripts.db_run import DatabaseRun
-from merlin.exceptions import InvalidTaskServerError, NoWorkersException, RestartException
+from merlin.exceptions import NoWorkersException
 from merlin.spec.specification import MerlinSpec
 from merlin.study.celeryadapter import (
     build_set_of_queues,
@@ -234,6 +232,10 @@ def create_config(task_server: str, config_dir: str, broker: str, test: str) -> 
             create_celery_config(config_dir, config_file, data_file)
     else:
         LOG.error("Only celery can be configured currently.")
+
+
+# TODO in Merlin 1.14 delete all of the below functions since we're deprecating the old version of the monitor
+# and a lot of this stuff is in the new monitor classes
 
 
 def get_active_queues(task_server: str) -> Dict[str, List[str]]:

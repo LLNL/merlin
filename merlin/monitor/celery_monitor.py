@@ -4,7 +4,7 @@ This module provides the `CeleryMonitor` class, a concrete implementation of the
 Celery task servers. Celery is a distributed task queue system commonly used for executing
 asynchronous tasks and managing worker nodes.
 
-The `CeleryMonitor` class combines task and worker monitoring functionality specific to Celery. 
+The `CeleryMonitor` class combines task and worker monitoring functionality specific to Celery.
 It provides methods to:
 
 - Wait for workers to start.
@@ -12,6 +12,7 @@ It provides methods to:
 - Monitor worker activity.
 - Run health checks to ensure workers are alive and functioning.
 """
+
 import logging
 import time
 from typing import List, Set
@@ -20,6 +21,7 @@ from merlin.db_scripts.db_run import DatabaseRun
 from merlin.exceptions import NoWorkersException
 from merlin.monitor.task_server_monitor import TaskServerMonitor
 from merlin.study.celeryadapter import get_workers_from_app, query_celery_queues
+
 
 LOG = logging.getLogger(__name__)
 
@@ -39,12 +41,12 @@ class CeleryMonitor(TaskServerMonitor):
         check_tasks: Checks the status of tasks in the Celery queues for a given workflow run.
     """
 
-    def wait_for_workers(self, worker_names: List[str], sleep: int):
+    def wait_for_workers(self, workers: List[str], sleep: int):
         """
         Wait for Celery workers to start up.
 
         Args:
-            worker_names: A list of worker names to wait for.
+            workers: A list of worker names or IDs to wait for.
             sleep: The interval (in seconds) between checks for worker availability.
 
         Raises:
@@ -57,7 +59,7 @@ class CeleryMonitor(TaskServerMonitor):
             LOG.debug(f"CeleryMonitor: checking for workers, running workers = {worker_status} ...")
 
             # Check if any of the desired workers have started
-            check = any(any(iwn in iws for iws in worker_status) for iwn in worker_names)
+            check = any(any(iwn in iws for iws in worker_status) for iwn in workers)
             if check:
                 break
 
@@ -98,21 +100,20 @@ class CeleryMonitor(TaskServerMonitor):
         Args:
             workers: A list of worker names or IDs to restart.
         """
-        LOG.warning(f"CeleryMonitor: Worker '{worker}' has died. Attempting to restart...")
-        try:
-            for worker in workers:
+        for worker in workers:
+            try:
+                LOG.warning(f"CeleryMonitor: Worker '{worker}' has died. Attempting to restart...")
                 # TODO figure out the restart logic; will likely need stuff from manager branch
-                pass
-            LOG.info(f"CeleryMonitor: Worker '{worker}' has been successfully restarted.")
-        except Exception as e:
-            LOG.error(f"CeleryMonitor: Failed to restart worker '{worker}'. Error: {e}")
+                LOG.info(f"CeleryMonitor: Worker '{worker}' has been successfully restarted.")
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                LOG.error(f"CeleryMonitor: Failed to restart worker '{worker}'. Error: {e}")
 
     def _get_dead_workers(self, workers: List[str]) -> Set[str]:
         """
         Identify unresponsive Celery workers from a given list.
 
-        This function sends a ping to all specified workers and identifies 
-        which workers did not respond within the given timeout. 
+        This function sends a ping to all specified workers and identifies
+        which workers did not respond within the given timeout.
 
         Args:
             workers: A list of Celery worker names to check.
@@ -120,24 +121,26 @@ class CeleryMonitor(TaskServerMonitor):
         Returns:
             Set[str]: A set of unresponsive worker names.
         """
+        from merlin.celery import app  # pylint: disable=import-outside-toplevel
+
         # Send ping to all workers
-        responses = app.control.ping(destination=workers, timeout=5.0)  # TODO May want to customize timeout like manager does 
+        responses = app.control.ping(destination=workers, timeout=5.0)  # TODO May want to customize timeout like manager does
 
         # Extract unresponsive workers
         unresponsive_workers = set()
         for response in responses:
             for worker, reply in response.items():
-                if not reply.get('ok') == 'pong':
+                if not reply.get("ok") == "pong":
                     unresponsive_workers.add(worker)
                     LOG.debug(f"CeleryMonitor: Unresponsive worker '{worker}' gave this reply when pinged: {reply}")
 
         if unresponsive_workers:
             LOG.warning(f"CeleryMonitor: Found unresponsive workers: {unresponsive_workers}")
         else:
-            LOG.info(f"CeleryMonitor: All workers are alive and responsive.")
+            LOG.info("CeleryMonitor: All workers are alive and responsive.")
 
         return unresponsive_workers
-    
+
     def run_worker_health_check(self, workers: List[str]):
         """
         Check the health of Celery workers and restart any that are dead.

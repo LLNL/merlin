@@ -15,6 +15,12 @@ from merlin.db_scripts.data_formats import BaseDataClass, RunInfo, StudyInfo
 
 LOG = logging.getLogger("merlin")
 
+# TODO
+# 2. Port work from manager branch over here to make it so workers can be auto-restarted
+#    - Need to determine how RedisConnectionManager will fit in with the RedisBackend class first
+#    - Definitely need the work in celeryadapter where the worker launch command is saved to Redis
+#    - Do we want to have query_frequency and stuff like that enabled here like it is for manager?
+
 
 # TODO might be able to use this in place of RedisConnectionManager for manager
 # TODO might be able to make ResultsBackend classes replace the config/results_backend.py file
