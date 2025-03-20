@@ -107,7 +107,7 @@ class TestMonitor:
         # Define our test conditions
         study_name = "monitor_auto_restart_test"
         conditions = [
-            HasRegex(r"Monitor: Determined that the run with workspace '.*' needs restarted\. Restarting now\.\.\."),
+            HasRegex("Monitor: Restarting workflow for run with workspace"),
             HasRegex("Monitor: Workflow restarted successfully:"),
             HasRegex("Monitor: Failed to restart workflow:", negate=True),
             StepFileExists("step_1", "MERLIN_FINISHED", study_name, monitor_setup.testing_dir),

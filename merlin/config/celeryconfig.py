@@ -55,8 +55,8 @@ DICT = {
         "max_connections": 100,
         "socket_timeout": 300,
         "retry_policy": {
-            "timeout": 500,
-        }
+            "timeout": 600,
+        },
     },
     "broker_connection_timeout": 60,
     "broker_pool_limit": 0,

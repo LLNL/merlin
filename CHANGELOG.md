@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `results_backend`: houses an abstract class `ResultsBackend` that defines what every supported backend implement in Merlin
   - `redis_backend`: houses the `RedisBackend` class that defines specific interactions with the Redis database
   - `backend_factory`: houses a factory class `MerlinBackendFactory` that initializes an appropriate `ResultsBackend` instance
+- Added `monitors/` folder containing a refactored, OOP approach to handling the `merlin monitor` command
+  - `celery_monitor`: houses the `CeleryMonitor` class a concrete subclass of `TaskServerMonitor` for monitoring Celery task servers
+  - `monitor_factory`: houses a factory class `MonitorFactory` that initializes an appropriate `TaskServerMonitor` instance
+  - `monitor`: houses the `Monitor` class, used as the top-level point of interaction for the monitor command
+  - `task_server_monitor`: houses the `TaskServerMonitor` ABC class, which serves as a common interface for monitoring task servers
 - A new celery task called `mark_run_as_complete` that is automatically added to the task queue associated with the final step in a workflow
 - Added support for Python 3.12 and 3.13
 - Added additional tests for the `merlin run` and `merlin purge` commands
@@ -29,7 +34,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `command-tests`, `workflow-tests`, and `integration-tests` to the Makefile
 
 ### Changed
-- Changed the `merlin monitor` command so that it will now attempt to restart workflows automatically if a workflow is hanging
+- Updated the `merlin monitor` command
+  - it will now attempt to restart workflows automatically if a workflow is hanging
+  - it utilizes an object oriented approach in the backend now
+- Celery's default settings have been updated to add:
+  - `interval_max: 300` -> tasks will retry for up to 5 minutes instead of 1 minute like it previously was
+  - new `broker_transport_options`:
+    - `socket_timeout: 300` -> increases the socket timeout to 5 minutes instead of the default 2 minutes
+    - `retry_policy: {timeout: 600}` -> sets the maximum amount of time that Celery will keep trying to connect to the broker to 10 minutes
+  - `broker_connection_timeout: 60` -> establishing a connection to the broker will not timeout for an entire minute now instead of the previous 4 seconds
+  - new generic backend settings:
+    - `result_backend_always_retry: True` -> backend will now auto-retry on the event of recoverable exceptions
+    - `result_backend_max_retries: 20` -> maximum number of retries in the event of recoverable exceptions
+  - new Redis specific settings:
+    - `redis_retry_on_timeout: True` -> retries read/write operations on TimeoutError to the Redis server
+    - `redis_socket_connect_timeout: 300` -> 5 minute socket timeout for connections to Redis
+    - `redis_socket_timeout: 300` -> 5 minute socket timeout for read/write operations to Redis
+    - `redis_socket_keepalive: True` -> socket TCP keepalive to keep connections healthy to the Redis server
 - Dropped support for Python 3.7
 - Ported all distributed tests of the integration test suite to pytest
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
