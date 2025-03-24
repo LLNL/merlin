@@ -52,6 +52,7 @@ from tabulate import tabulate
 
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
+from merlin.config.config_commands import create_template_config, update_backend, update_broker
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
@@ -384,8 +385,16 @@ def config_merlin(args: Namespace) -> None:
     if output_dir is None:
         user_home: str = os.path.expanduser("~")
         output_dir: str = os.path.join(user_home, ".merlin")
+    config_file = os.path.join(output_dir, "app.yaml")
 
-    router.create_config(args.task_server, output_dir, args.broker, args.test)
+    # Default `merlin config` functionality
+    if not os.path.exists(config_file) or not args.commands:
+        create_template_config(args.task_server, output_dir, args.broker)
+
+    if args.commands == "broker":
+        update_broker(args, config_file)
+    elif args.commands == "backend":
+        update_backend(args, config_file)
 
 
 def process_example(args: Namespace) -> None:
@@ -624,13 +633,47 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         help="Optional broker type, backend will be redis\
                             Default: rabbitmq",
     )
-    mconfig.add_argument(
-        "--test",
-        type=str,
-        default=None,
-        help="A config used in the testing suite (or for exemplative purposes).\
-                            Default: rabbitmq",
+    mconfig_subparsers = mconfig.add_subparsers(dest="commands", help="Subcommands for 'config'")
+
+    # Subcommand: merlin config broker
+    config_broker_parser = mconfig_subparsers.add_parser(
+        "broker", help="Update broker settings in app.yaml"
     )
+    # config_broker_parser.set_defaults(func=update_broker)
+    config_broker_parser.add_argument(
+        "-t",
+        "--type",
+        required=True,
+        choices=["redis", "rabbitmq"],
+        help="Type of broker to configure (redis or rabbitmq).",
+    )
+    config_broker_parser.add_argument("-u", "--username", help="Broker username (only for rabbitmq)")
+    config_broker_parser.add_argument("-pf", "--password-file", help="Path to password file")
+    config_broker_parser.add_argument("-s", "--server", help="The URL of the server")
+    config_broker_parser.add_argument("-p", "--port", type=int, help="Broker port")
+    config_broker_parser.add_argument("-v", "--vhost", help="Broker vhost (only for rabbitmq)")
+    config_broker_parser.add_argument("-c", "--cert-reqs", help="Broker cert requirements")
+    config_broker_parser.add_argument("-d", "--db-num", type=int, help="Redis database number (only for redis).")
+
+    # Subcommand: merlin config backend
+    config_backend_parser = mconfig_subparsers.add_parser(
+        "backend", help="Update results backend settings in app.yaml"
+    )
+    # config_backend_parser.set_defaults(func=update_backend)
+    config_backend_parser.add_argument(
+        "-t",
+        "--type",
+        required=True,
+        choices=["redis"],
+        help="Type of results backend to configure.",
+    )
+    config_backend_parser.add_argument("-u", "--username", help="Backend username")
+    config_backend_parser.add_argument("-pf", "--password-file", help="Path to password file")
+    config_backend_parser.add_argument("-s", "--server", help="The URL of the server")
+    config_backend_parser.add_argument("-p", "--port", help="Backend port")
+    config_backend_parser.add_argument("-d", "--db-num", help="Backend database number")
+    config_backend_parser.add_argument("-c", "--cert-reqs", help="Backend cert requirements")
+    config_backend_parser.add_argument("-e", "--encryption-key", help="Path to encryption key file")
 
     # merlin example
     example: ArgumentParser = subparsers.add_parser(
