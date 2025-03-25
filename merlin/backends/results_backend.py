@@ -6,7 +6,7 @@ backends in Merlin.
 from abc import ABC, abstractmethod
 from typing import List
 
-from merlin.db_scripts.data_formats import RunInfo, StudyInfo
+from merlin.db_scripts.data_models import RunModel, StudyModel, WorkerModel
 
 
 class ResultsBackend(ABC):
@@ -24,10 +24,10 @@ class ResultsBackend(ABC):
             Get the name of the backend.
 
         save_study:
-            Save a [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object to the backend database.
+            Save a [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] object to the backend database.
 
         retrieve_study:
-            Retrieve a [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object from the backend database by its name.
+            Retrieve a [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] object from the backend database by its name.
 
         retrieve_all_studies:
             Retrieve all studies currently stored in the backend database.
@@ -36,10 +36,10 @@ class ResultsBackend(ABC):
             Delete a study from the backend database by its name. Optionally, remove all associated runs.
 
         save_run:
-            Save a [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] object to the backend database.
+            Save a [`RunModel`][merlin.db_scripts.data_formats.RunModel] object to the backend database.
 
         retrieve_run:
-            Retrieve a [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] object from the backend database by its ID.
+            Retrieve a [`RunModel`][merlin.db_scripts.data_formats.RunModel] object from the backend database by its ID.
 
         retrieve_all_runs:
             Retrieve all runs currently stored in the backend database.
@@ -61,6 +61,7 @@ class ResultsBackend(ABC):
         """
         return self.backend_name
 
+    @abstractmethod
     def get_version(self) -> str:
         """
         Query the backend for the current version.
@@ -70,17 +71,17 @@ class ResultsBackend(ABC):
         """
 
     @abstractmethod
-    def save_study(self, study: StudyInfo):
+    def save_study(self, study: StudyModel):
         """
-        Given a [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object, enter all of
+        Given a [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] object, enter all of
         it's information to the backend database.
 
         Args:
-            study_info: A [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] instance.
+            study: A [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] instance.
         """
 
     @abstractmethod
-    def retrieve_study(self, study_name: str) -> StudyInfo:
+    def retrieve_study(self, study_name: str) -> StudyModel:
         """
         Given a study's name, retrieve it from the backend database.
 
@@ -88,16 +89,16 @@ class ResultsBackend(ABC):
             study_name: The name of the study to retrieve.
 
         Returns:
-            A [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] instance.
+            A [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] instance.
         """
 
     @abstractmethod
-    def retrieve_all_studies(self) -> List[StudyInfo]:
+    def retrieve_all_studies(self) -> List[StudyModel]:
         """
         Query the backend database for every study that's currently stored.
 
         Returns:
-            A list of [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] objects.
+            A list of [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] objects.
         """
 
     @abstractmethod
@@ -111,16 +112,17 @@ class ResultsBackend(ABC):
         """
 
     @abstractmethod
-    def save_run(self, run: RunInfo):
+    def save_run(self, run: RunModel):
         """
-        Given a RunInfo object, enter all of it's information to the backend database.
+        Given a [`RunModel`][merlin.db_scripts.data_formats.RunModel] object, enter all of
+        it's information to the backend database.
 
         Args:
-            study_info: A [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] instance.
+            run: A [`RunModel`][merlin.db_scripts.data_formats.RunModel] instance.
         """
 
     @abstractmethod
-    def retrieve_run(self, run_id: str) -> RunInfo:
+    def retrieve_run(self, run_id: str) -> RunModel:
         """
         Given a run's id, retrieve it from the backend database.
 
@@ -128,16 +130,16 @@ class ResultsBackend(ABC):
             run_id: The ID of the run to retrieve.
 
         Returns:
-            A [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] instance.
+            A [`RunModel`][merlin.db_scripts.data_formats.RunModel] instance.
         """
 
     @abstractmethod
-    def retrieve_all_runs(self) -> List[RunInfo]:
+    def retrieve_all_runs(self) -> List[RunModel]:
         """
-        Query the backend database for every study that's currently stored.
+        Query the backend database for every run that's currently stored.
 
         Returns:
-            A list of [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] objects.
+            A list of [`RunModel`][merlin.db_scripts.data_formats.RunModel] objects.
         """
 
     @abstractmethod
@@ -148,4 +150,56 @@ class ResultsBackend(ABC):
 
         Args:
             run_id: The id of the run to delete.
+        """
+
+    @abstractmethod
+    def save_worker(self, worker: WorkerModel):
+        """
+        Given a [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] object, enter
+        all of it's information to the backend database.
+
+        Args:
+            worker: A [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] instance.
+        """
+
+    @abstractmethod
+    def retrieve_worker(self, worker_id: str) -> WorkerModel:
+        """
+        Given a worker's id, retrieve it from the backend database.
+
+        Args:
+            worker_id: The ID of the worker to retrieve.
+
+        Returns:
+            A [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] instance.
+        """
+
+    @abstractmethod
+    def retrieve_worker_by_name(self, worker_name: str) -> WorkerModel:
+        """
+        Given a worker's name, retrieve it from the backend database.
+
+        Args:
+            worker_name: The name of the worker to retrieve.
+
+        Returns:
+            A [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] instance.
+        """
+
+    @abstractmethod
+    def retrieve_all_workers(self) -> List[WorkerModel]:
+        """
+        Query the backend database for every worker that's currently stored.
+
+        Returns:
+            A list of [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] objects.
+        """
+
+    @abstractmethod
+    def delete_worker(self, worker_id: str):
+        """
+        Given a worker id, find it in the database and remove that entry.
+
+        Args:
+            worker_id: The id of the worker to delete.
         """

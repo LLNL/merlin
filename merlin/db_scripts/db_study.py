@@ -7,7 +7,7 @@ import logging
 from typing import Dict, List
 
 from merlin.backends.results_backend import ResultsBackend
-from merlin.db_scripts.data_formats import RunInfo, StudyInfo
+from merlin.db_scripts.data_models import RunModel, StudyModel
 from merlin.db_scripts.db_run import DatabaseRun
 from merlin.exceptions import StudyNotFoundError
 
@@ -24,7 +24,7 @@ class DatabaseStudy:
     or deleting the study itself from the database.
 
     Attributes:
-        study_info: An instance of the `StudyInfo` class containing the study's metadata.
+        study_info: An instance of the `StudyModel` class containing the study's metadata.
         backend: An instance of the `ResultsBackend` class used to interact
             with the database.
 
@@ -66,8 +66,8 @@ class DatabaseStudy:
             Delete a study from the database by its name. Optionally, remove all associated runs.
     """
 
-    def __init__(self, study_info: StudyInfo, backend: ResultsBackend):
-        self.study_info: StudyInfo = study_info
+    def __init__(self, study_info: StudyModel, backend: ResultsBackend):
+        self.study_info: StudyModel = study_info
         self.backend: ResultsBackend = backend
 
     def __repr__(self) -> str:
@@ -105,20 +105,10 @@ class DatabaseStudy:
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 
-    def _get_latest_data(self) -> StudyInfo:
-        """
-        Retrieve the latest dynamic data for the study from the database.
-
-        Returns:
-            A [`StudyInfo`][merlin.db_scripts.db_formats.StudyInfo] object
-                containing the latest dynamic data.
-        """
-        return self.backend.retrieve_study(self.get_name())
-
     def reload_data(self):
         """
         Reload the latest data for this study from the database and update the
-        [`StudyInfo`][merlin.db_scripts.db_formats.StudyInfo] object.
+        [`StudyModel`][merlin.db_scripts.db_formats.StudyModel] object.
         """
         study_name = self.get_name()
         updated_study_info = self.backend.retrieve_study(study_name)
@@ -151,7 +141,8 @@ class DatabaseStudy:
         Returns:
             Additional data saved to this study.
         """
-        return self._get_latest_data().additional_data
+        self.reload_data()
+        return self.study_info.additional_data
 
     def create_run(self, *args, **kwargs) -> DatabaseRun:  # pylint: disable=unused-argument
         """
@@ -165,8 +156,8 @@ class DatabaseStudy:
             A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
                 the run that was created.
         """
-        # Get all valid fields for the RunInfo dataclass
-        valid_fields = {f.name for f in RunInfo.get_class_fields()}
+        # Get all valid fields for the RunModel dataclass
+        valid_fields = {f.name for f in RunModel.get_class_fields()}
 
         # Separate valid fields from additional data
         valid_kwargs = {}
@@ -177,8 +168,8 @@ class DatabaseStudy:
             else:
                 additional_data[key] = val
 
-        # Create the RunInfo object and save it to the backend
-        new_run = RunInfo(
+        # Create the RunModel object and save it to the backend
+        new_run = RunModel(
             study_id=self.get_id(),
             **valid_kwargs,
             additional_data=additional_data,
@@ -212,7 +203,8 @@ class DatabaseStudy:
         Returns:
             A list of [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instances.
         """
-        return [self.get_run(run_id) for run_id in self._get_latest_data().runs]
+        self.reload_data()
+        return [self.get_run(run_id) for run_id in self.study_info.runs]
 
     def delete_run(self, run_id: str):
         """

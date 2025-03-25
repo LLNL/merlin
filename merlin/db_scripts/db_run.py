@@ -8,7 +8,7 @@ import os
 from typing import Dict, List
 
 from merlin.backends.results_backend import ResultsBackend
-from merlin.db_scripts.data_formats import RunInfo
+from merlin.db_scripts.data_models import RunModel
 from merlin.exceptions import RunNotFoundError
 
 
@@ -24,7 +24,7 @@ class DatabaseRun:
     it from the database.
 
     Attributes:
-        run_info: An instance of the `RunInfo` class containing the run's metadata.
+        run_info: An instance of the `RunModel` class containing the run's metadata.
         backend: An instance of the `ResultsBackend` class used to interact
             with the database.
         run_complete: Property to get or set the completion status of the run.
@@ -73,8 +73,8 @@ class DatabaseRun:
             Delete a run from the database by its ID.
     """
 
-    def __init__(self, run_info: RunInfo, backend: ResultsBackend):
-        self.run_info: RunInfo = run_info
+    def __init__(self, run_info: RunModel, backend: ResultsBackend):
+        self.run_info: RunModel = run_info
         self.backend: ResultsBackend = backend
         self._metadata_file = self.get_metadata_filepath(self.get_workspace())
 
@@ -120,20 +120,10 @@ class DatabaseRun:
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 
-    def _get_latest_data(self) -> RunInfo:
-        """
-        Retrieve the latest data for the run from the database.
-
-        Returns:
-            A [`RunInfo`][merlin.db_scripts.db_formats.RunInfo] object
-                containing the latest data.
-        """
-        return self.backend.retrieve_run(self.run_info.id)
-
     def reload_data(self):
         """
         Reload the latest data for this run from the database and update the
-        [`RunInfo`][merlin.db_scripts.db_formats.RunInfo] object.
+        [`RunModel`][merlin.db_scripts.db_formats.RunModel] object.
         """
         updated_run_info = self.backend.retrieve_run(self.run_info.id)
         if not updated_run_info:
@@ -150,7 +140,8 @@ class DatabaseRun:
         Returns:
             True if the study is complete. False, otherwise.
         """
-        return self._get_latest_data().run_complete
+        self.reload_data()
+        return self.run_info.run_complete
 
     @run_complete.setter
     def run_complete(self, value: bool):
@@ -240,7 +231,8 @@ class DatabaseRun:
         Returns:
             The ID of the run that launched this run.
         """
-        return self._get_latest_data().parent
+        self.reload_data()
+        return self.run_info.parent
 
     def get_child(self) -> str:
         """
@@ -251,7 +243,8 @@ class DatabaseRun:
         Returns:
             The ID of the run that was launched by this run.
         """
-        return self._get_latest_data().child
+        self.reload_data()
+        return self.run_info.child
 
     def get_additional_data(self) -> Dict:
         """
@@ -260,7 +253,8 @@ class DatabaseRun:
         Returns:
             Additional data saved to this run.
         """
-        return self._get_latest_data().additional_data
+        self.reload_data()
+        return self.run_info.additional_data
 
     def save(self):
         """
@@ -306,7 +300,7 @@ class DatabaseRun:
         Returns:
             A `DatabaseRun` instance.
         """
-        return cls(RunInfo.load_from_json_file(metadata_file), backend)
+        return cls(RunModel.load_from_json_file(metadata_file), backend)
 
     @classmethod
     def delete(cls, run_id: str, backend: ResultsBackend):

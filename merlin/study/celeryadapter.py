@@ -44,8 +44,10 @@ from amqp.exceptions import ChannelError
 from celery import Celery
 from tabulate import tabulate
 
+from merlin.common.abstracts.enums import WorkerStatus
 from merlin.common.dumper import dump_handler
 from merlin.config import Config
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
@@ -695,7 +697,7 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
             continue
 
         # Start the worker
-        launch_celery_worker(worker_cmd, worker_list, kwargs)
+        launch_celery_worker(worker_cmd, worker_list, worker_args, queues, kwargs)
 
     # Return a string with the worker commands for logging
     return str(worker_list)
@@ -750,7 +752,7 @@ def verify_args(spec, worker_args, worker_name, overlap, disable_logs=False):
     return worker_args
 
 
-def launch_celery_worker(worker_cmd, worker_list, kwargs):
+def launch_celery_worker(worker_cmd, worker_list, worker_args, queues, kwargs):
     """
     Using the worker launch command provided, launch a celery worker.
     :param str worker_cmd:      The celery command to launch a worker
@@ -761,8 +763,26 @@ def launch_celery_worker(worker_cmd, worker_list, kwargs):
     :side effect:               Launches a celery worker via a subprocess
     """
     try:
-        _ = subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
+        worker_proc = subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
         worker_list.append(worker_cmd)
+
+        print(f"queues: {queues}")
+
+        # Grab the worker name from the launch command
+        worker_cmd_list = worker_cmd.split()
+        worker_name = worker_cmd_list[worker_cmd_list.index("-n") + 1].replace("%h", kwargs["env"]["HOSTNAME"])
+        worker_name = "celery@" + worker_name
+
+        # Initialize or update the worker in the database
+        merlin_db = MerlinDatabase()
+        db_worker = merlin_db.create_worker(worker_name)
+        db_worker.set_launch_cmd(worker_cmd)
+        db_worker.set_queues(queues)
+        db_worker.set_args(worker_args)
+        db_worker.set_status(WorkerStatus.RUNNING)
+        db_worker.set_pid(worker_proc.pid)
+        db_worker.set_heartbeat_timestamp(datetime.now())
+        db_worker.set_latest_start_time(datetime.now())
     except Exception as e:  # pylint: disable=C0103
         LOG.error(f"Cannot start celery workers, {e}")
         raise
@@ -865,7 +885,18 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
 
     if workers_to_stop:
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
+        # Send the shutdown signal
         app.control.broadcast("shutdown", destination=workers_to_stop)
+
+        # Update the database to set the worker status to STOPPED
+        for worker_name in workers_to_stop:
+            merlin_db = MerlinDatabase()
+            db_worker = merlin_db.get_worker_by_name(worker_name)
+            if db_worker is not None:
+                db_worker.set_status(WorkerStatus.STOPPED)
+                LOG.info(f"Updated status for worker '{worker_name}' to STOPPED in the database.")
+            else:
+                LOG.warning(f"Worker '{worker_name}' not found in the database.")
     else:
         LOG.warning("No workers found to stop")
 

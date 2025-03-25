@@ -4,13 +4,16 @@ stored in Merlin's database.
 """
 
 import logging
-from typing import List
+from typing import Dict, List
 
 from merlin.backends.backend_factory import backend_factory
 from merlin.backends.results_backend import ResultsBackend
-from merlin.db_scripts.data_formats import StudyInfo
-from merlin.db_scripts.db_study import DatabaseRun, DatabaseStudy
-from merlin.exceptions import StudyNotFoundError
+from merlin.common.abstracts.enums import WorkerStatus
+from merlin.db_scripts.data_models import StudyModel, WorkerModel
+from merlin.db_scripts.db_run import DatabaseRun
+from merlin.db_scripts.db_study import DatabaseStudy
+from merlin.db_scripts.db_worker import DatabaseWorker
+from merlin.exceptions import StudyNotFoundError, WorkerNotFoundError
 
 
 LOG = logging.getLogger("merlin")
@@ -104,7 +107,7 @@ class MerlinDatabase:
             LOG.info(f"Study with name '{study_name}' already has an entry in the database.")
         except StudyNotFoundError:
             LOG.info(f"Study with name '{study_name}' does not yet have an entry in the database. Creating one...")
-            study_info = StudyInfo(name=study_name)
+            study_info = StudyModel(name=study_name)
             db_study = DatabaseStudy(study_info, self.backend)
             db_study.save()
 
@@ -131,6 +134,8 @@ class MerlinDatabase:
             A list of [`DatabaseStudy`][merlin.db_scripts.db_study.DatabaseStudy] instances.
         """
         all_studies = self.backend.retrieve_all_studies()
+        if not all_studies:
+            return []
         return [DatabaseStudy(study, self.backend) for study in all_studies]
 
     def delete_study(self, study_name: str, remove_associated_runs: bool = True):
@@ -159,7 +164,7 @@ class MerlinDatabase:
         for study in all_studies:
             self.delete_study(study.name, remove_associated_runs=remove_associated_runs)
 
-    def create_run(self, study_name: str, workspace: str, queues: List[str], *args, **kwargs):
+    def create_run(self, study_name: str, workspace: str, queues: List[str], *args, **kwargs) -> DatabaseRun:
         """
         Given a study name, create a run for this study. If the study does not yet exist in
         the database, an entry will be created for it prior to the run being created.
@@ -215,6 +220,8 @@ class MerlinDatabase:
             A list of [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instances.
         """
         all_runs = self.backend.retrieve_all_runs()
+        if not all_runs:
+            return []
         return [DatabaseRun(run, self.backend) for run in all_runs]
 
     def delete_run(self, run_id: str):
@@ -235,3 +242,114 @@ class MerlinDatabase:
         # - can add a -f flag to ignore this prompt (like purge)
         for run in all_runs:
             self.delete_run(run.id)
+
+    def create_study(self, study_name: str) -> DatabaseStudy:
+        """
+        Create [`DatabaseStudy`][merlin.db_scripts.db_study.DatabaseStudy] instance and save
+        it to the database, if one does not already exist.
+
+        Args:
+            study_name: The name of the study to create.
+
+        Returns:
+            A [`DatabaseStudy`][merlin.db_scripts.db_study.DatabaseStudy] instance.
+        """
+        try:
+            db_study = self.get_study(study_name)
+            LOG.info(f"Study with name '{study_name}' already has an entry in the database.")
+        except StudyNotFoundError:
+            LOG.info(f"Study with name '{study_name}' does not yet have an entry in the database. Creating one...")
+            study_info = StudyModel(name=study_name)
+            db_study = DatabaseStudy(study_info, self.backend)
+            db_study.save()
+
+        return db_study
+
+    def create_worker(self, name: str) -> DatabaseWorker:
+        """
+        Create a new worker in the database and return a
+        [`DatabaseWorker`][merlin.db_scripts.db_worker.DatabaseWorker] instance.
+
+        Args:
+            name: The name of the worker.
+
+        Returns:
+            A [`DatabaseWorker`][merlin.db_scripts.db_worker.DatabaseWorker] instance
+                representing the newly created worker.
+        """
+        try:
+            db_worker = self.get_worker_by_name(name)
+            LOG.info(f"Worker with name '{name}' already has an entry in the database.")
+        except WorkerNotFoundError:
+            LOG.info(f"Worker with name '{name}' does not yet have an entry in the database. Creating one...")
+            worker_info = WorkerModel(name=name)
+            db_worker = DatabaseWorker(worker_info, self.backend)
+            db_worker.save()
+        return db_worker
+
+    def get_worker(self, worker_id: str) -> DatabaseWorker:
+        """
+        Given a worker id, retrieve the associated worker from the database.
+
+        Args:
+            worker_id: The name of the worker to retrieve.
+
+        Returns:
+            A [`DatabaseWorker`][merlin.db_scripts.db_worker.DatabaseWorker] instance representing
+                the worker that was queried.
+        """
+        return DatabaseWorker.load(worker_id, self.backend)
+    
+    def get_worker_by_name(self, worker_name: str) -> DatabaseWorker:
+        """
+        Given a worker name, retrieve the associated worker from the database.
+
+        Args:
+            worker_name: The name of the worker to retrieve.
+
+        Returns:
+            A [`DatabaseWorker`][merlin.db_scripts.db_worker.DatabaseWorker] instance representing
+                the worker that was queried.
+        """
+        return DatabaseWorker.load_by_name(worker_name, self.backend)
+    
+    def get_all_workers(self) -> List[DatabaseWorker]:
+        """
+        Get every worker that's currently in the database.
+
+        Returns:
+            A list of [`DatabaseWorker`][merlin.db_scripts.db_worker.DatabaseWorker] instances.
+        """
+        all_workers = self.backend.retrieve_all_workers()
+        if not all_workers:
+            return []
+        return [DatabaseWorker(worker, self.backend) for worker in all_workers]
+    
+    def delete_worker(self, worker_id: str):
+        """
+        Given a worker id, remove the associated worker from the database.
+
+        Args:
+            worker_id: The id of the worker to remove.
+        """
+        DatabaseWorker.delete(worker_id, self.backend)
+
+    def delete_worker_by_name(self, worker_name: str):
+        """
+        Given a worker name, remove the associated worker from the database.
+
+        Args:
+            worker_name: The name of the worker to remove.
+        """
+        worker = self.get_worker_by_name(worker_name)
+        DatabaseWorker.delete(worker.get_id(), self.backend)
+
+    def delete_all_workers(self):
+        """
+        Remove every worker in the database.
+        """
+        # TODO how do we want to handle this in runs? do we delete those entries as well?
+        # - if so will we need a 'runs' entry in WorkerModel?
+        all_workers = self.backend.retrieve_all_workers()
+        for worker in all_workers:
+            self.delete_worker(worker.id)

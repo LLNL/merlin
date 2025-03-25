@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `merlin database delete`: allows you to delete entries in the database
 - Added `db_scripts/` folder containing several new files all pertaining to database interaction
   - `db_commands`: an interface for user commands of `merlin database` to be processed
-  - `db_interaction`: houses the `MerlinDatabase` class, used as the main point of contact for interactions with the database
+  - `merlin_db`: houses the `MerlinDatabase` class, used as the main point of contact for interactions with the database
   - `db_study`: houses the `DatabaseStudy` class, used specifically for interacting with study entries in the database
   - `db_run`: houses the `DatabaseRun` class, used specifically for interacting with run entries in the database
 - Added `backends/` folder containing a new OOP way to interact with results backend databases

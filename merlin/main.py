@@ -53,7 +53,7 @@ from tabulate import tabulate
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.db_scripts.db_commands import database_delete, database_get, database_info
-from merlin.db_scripts.db_interaction import MerlinDatabase
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
 from merlin.monitor.monitor import Monitor
@@ -895,6 +895,18 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     #     help="Delete the output workspace for the run.",
     # )
 
+    # Subcommand: delete worker
+    delete_worker = delete_subcommands.add_parser(
+        "worker",
+        help="Delete a specific worker by ID or name.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_worker.add_argument(
+        "worker",
+        type=str,
+        help="The ID or name of the worker to delete.",
+    )
+
     # Subcommand: delete all-studies
     delete_all_studies = delete_subcommands.add_parser(
         "all-studies",
@@ -912,6 +924,13 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     delete_subcommands.add_parser(
         "all-runs",
         help="Delete all runs from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: delete all-workers
+    delete_subcommands.add_parser(
+        "all-workers",
+        help="Delete all workers from the database.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
@@ -970,6 +989,25 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     get_subcommands.add_parser(
         "all-runs",
         help="Get all runs from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand get worker
+    get_worker = get_subcommands.add_parser(
+        "worker",
+        help="Get a specific worker by ID.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    get_worker.add_argument(
+        "worker",
+        type=str,
+        help="The ID of the worker to get.",
+    )
+
+    # Subcommand: get all-workers
+    get_subcommands.add_parser(
+        "all-workers",
+        help="Get all workers from the database.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 

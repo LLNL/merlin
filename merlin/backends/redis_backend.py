@@ -5,21 +5,22 @@ Redis backend.
 
 import json
 import logging
+from datetime import datetime
 from typing import Dict, List
 
 from redis import Redis
 
 from merlin.backends.results_backend import ResultsBackend
-from merlin.db_scripts.data_formats import BaseDataClass, RunInfo, StudyInfo
+from merlin.db_scripts.data_models import BaseDataModel, RunModel, StudyModel, WorkerModel
+from merlin.exceptions import WorkerNotFoundError
 
 
 LOG = logging.getLogger("merlin")
 
 # TODO
-# 2. Port work from manager branch over here to make it so workers can be auto-restarted
-#    - Need to determine how RedisConnectionManager will fit in with the RedisBackend class first
-#    - Definitely need the work in celeryadapter where the worker launch command is saved to Redis
-#    - Do we want to have query_frequency and stuff like that enabled here like it is for manager?
+# 1. Add the work that Ryan did in celeryadapter where the worker launch command is saved to Redis
+#  - Will need to instantiate this RedisBackend class I think... not sure
+# 2. Integrate this work with the monitor command to enable worker restarts
 
 
 # TODO might be able to use this in place of RedisConnectionManager for manager
@@ -37,26 +38,26 @@ class RedisBackend(ResultsBackend):
 
     Methods:
         _create_data_class_entry:
-            Store a [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance
+            Store a [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance
             as a hash in the Redis database.
 
         _update_data_class_entry:
             Update an existing data class entry in the Redis database with new information.
 
         _serialize_data_class:
-            Convert a [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance
+            Convert a [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance
             into a format that Redis can interpret.
 
         _deserialize_data_class:
             Convert data retrieved from Redis into a
-            [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance.
+            [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance.
 
         save_study:
-            Save a [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object to the Redis database.
+            Save a [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] object to the Redis database.
             If a study with the same name exists, it will update the existing entry.
 
         retrieve_study:
-            Retrieve a [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] object from the Redis
+            Retrieve a [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] object from the Redis
             database by its name.
 
         retrieve_all_studies:
@@ -66,11 +67,11 @@ class RedisBackend(ResultsBackend):
             Delete a study from the Redis database by its name. Optionally, remove all associated runs.
 
         save_run:
-            Save a [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] object to the Redis database. If a run
+            Save a [`RunModel`][merlin.db_scripts.data_formats.RunModel] object to the Redis database. If a run
             with the same ID exists, it will update the existing entry.
 
         retrieve_run:
-            Retrieve a [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] object from the Redis database
+            Retrieve a [`RunModel`][merlin.db_scripts.data_formats.RunModel] object from the Redis database
             by its ID.
 
         retrieve_all_runs:
@@ -83,8 +84,6 @@ class RedisBackend(ResultsBackend):
 
     def __init__(self, backend_name: str):
         super().__init__(backend_name)
-        # TODO have this database use a different db number than Celery does
-        # - do we want a new database for each type of information? i.e. one for studies, one for runs, etc.?
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
         from merlin.config.results_backend import get_connection_string  # pylint: disable=import-outside-toplevel
 
@@ -94,13 +93,13 @@ class RedisBackend(ResultsBackend):
 
         self.client: Redis = Redis.from_url(**redis_config)
 
-    def _serialize_data_class(self, data_class: BaseDataClass) -> Dict[str, str]:
+    def _serialize_data_class(self, data_class: BaseDataModel) -> Dict[str, str]:
         """
-        Given a [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance,
+        Given a [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance,
         convert it's data into a format that the Redis database can interpret.
 
         Args:
-            data_class: A [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance.
+            data_class: A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance.
 
         Returns:
             A dictionary of information that Redis can interpret.
@@ -112,6 +111,8 @@ class RedisBackend(ResultsBackend):
             field_value = getattr(data_class, field.name)
             if isinstance(field_value, (list, dict)):
                 serialized_data[field.name] = json.dumps(field_value)
+            elif isinstance(field_value, datetime):
+                serialized_data[field.name] = field_value.isoformat()
             elif field_value is None:
                 serialized_data[field.name] = "null"
             else:
@@ -120,16 +121,16 @@ class RedisBackend(ResultsBackend):
         LOG.debug("Successfully deserialized data.")
         return serialized_data
 
-    def _deserialize_data_class(self, retrieval_data: Dict[str, str], data_class: BaseDataClass) -> BaseDataClass:
+    def _deserialize_data_class(self, retrieval_data: Dict[str, str], data_class: BaseDataModel) -> BaseDataModel:
         """
         Given data that was retrieved by Redis, convert it into a data_class instance.
 
         Args:
             retrieval_data: The data retrieved by Redis that we need to deserialize.
-            data_class: A [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] object.
+            data_class: A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] object.
 
         Returns:
-            A [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance.
+            A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance.
         """
         LOG.debug("Deserializing data from Redis...")
         deserialized_data = {}
@@ -141,6 +142,8 @@ class RedisBackend(ResultsBackend):
                 deserialized_data[key] = None
             elif val in ("True", "False"):
                 deserialized_data[key] = val == "True"
+            elif self._is_iso_datetime(val):
+                deserialized_data[key] = datetime.fromisoformat(val)
             elif val.isdigit():
                 deserialized_data[key] = float(val)
             else:
@@ -148,20 +151,36 @@ class RedisBackend(ResultsBackend):
 
         LOG.debug("Successfully deserialized data.")
         return data_class.from_dict(deserialized_data)
-
-    def _create_data_class_entry(self, data_class: BaseDataClass, key: str):
+    
+    def _is_iso_datetime(self, value: str) -> bool:
         """
-        Given a [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance and
+        Check if a string is in ISO 8601 datetime format.
+
+        Args:
+            value: The string to check.
+
+        Returns:
+            True if the string is in ISO 8601 format, False otherwise.
+        """
+        try:
+            datetime.fromisoformat(value)
+            return True
+        except ValueError:
+            return False
+
+    def _create_data_class_entry(self, data_class: BaseDataModel, key: str):
+        """
+        Given a [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance and
         a key, store the contents of the `data_class` as a hash at `key` in the Redis database.
 
         Args:
-            data_class: A [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance.
+            data_class: A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance.
             key: The location to store the contents of `data_class` in the Redis database.
         """
         serialized_data = self._serialize_data_class(data_class)
         self.client.hset(key, mapping=serialized_data)
 
-    def _update_data_class_entry(self, updated_data_class: BaseDataClass, key: str):
+    def _update_data_class_entry(self, updated_data_class: BaseDataModel, key: str):
         """
         Update an existing data class entry in the Redis database with new information.
         A 'data class' here refers to classes defined in merlin.db_scripts.data_formats.
@@ -171,10 +190,10 @@ class RedisBackend(ResultsBackend):
         data back to the database.
 
         Args:
-            updated_data_class: A [`BaseDataClass`][merlin.db_scripts.data_formats.BaseDataClass] instance
+            updated_data_class: A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance
                 containing the updated information.
         """
-        # Get the existing data from Redis and convert it to an instance of BaseDataClass
+        # Get the existing data from Redis and convert it to an instance of BaseDataModel
         existing_data = self.client.hgetall(key)
         existing_data_class = self._deserialize_data_class(existing_data, type(updated_data_class))
 
@@ -193,14 +212,14 @@ class RedisBackend(ResultsBackend):
         client_info = self.client.info()
         return client_info.get("redis_version", "N/A")
 
-    def save_study(self, study: StudyInfo):
+    def save_study(self, study: StudyModel):
         """
-        Given a StudyInfo object, enter all of it's information to the Redis database.
+        Given a StudyModel object, enter all of it's information to the Redis database.
         If a study with `study.id` already exists, this will override everything in that
         entry.
 
         Args:
-            study: A [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] instance.
+            study: A [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] instance.
         """
         existing_study_id = self.client.hget("study:name", study.name)
 
@@ -220,7 +239,7 @@ class RedisBackend(ResultsBackend):
 
         LOG.info(f"Study with name '{study.name}' saved to Redis under id '{study.id}'.")
 
-    def retrieve_study(self, study_name: str) -> StudyInfo:
+    def retrieve_study(self, study_name: str) -> StudyModel:
         """
         Given a study's name, retrieve it from the Redis database.
 
@@ -228,7 +247,7 @@ class RedisBackend(ResultsBackend):
             study_name: The name of the study to retrieve.
 
         Returns:
-            A [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] instance
+            A [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] instance
                 or None if the study does not yet exist in the database.
         """
         study_id = self.client.hget("study:name", study_name)
@@ -237,27 +256,29 @@ class RedisBackend(ResultsBackend):
             return None
 
         data_from_redis = self.client.hgetall(f"study:{study_id}")
-        return self._deserialize_data_class(data_from_redis, StudyInfo)
+        return self._deserialize_data_class(data_from_redis, StudyModel)
 
-    def retrieve_all_studies(self) -> List[StudyInfo]:
+    def retrieve_all_studies(self) -> List[StudyModel]:
         """
         Query the Redis database for every study that's currently stored.
 
         Returns:
-            A list of [`StudyInfo`][merlin.db_scripts.data_formats.StudyInfo] objects.
+            A list of [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] objects.
         """
         LOG.info("Fetching all studies from Redis...")
 
         # Retrieve all study names
         study_names = self.client.hkeys("study:name")
+        if not study_names:
+            return []
         LOG.debug(f"Found {len(study_names)} studies in Redis.")
 
         all_studies = []
 
-        # Loop through each study name and retrieve its StudyInfo
+        # Loop through each study name and retrieve its StudyModel
         for study_name in study_names:
             try:
-                # Use the existing retrieve_study method to get the StudyInfo object
+                # Use the existing retrieve_study method to get the StudyModel object
                 study_info = self.retrieve_study(study_name)
                 if study_info:
                     all_studies.append(study_info)
@@ -266,7 +287,7 @@ class RedisBackend(ResultsBackend):
             except Exception as exc:  # pylint: disable=broad-except
                 LOG.error(f"Error retrieving study '{study_name}': {exc}")
 
-        # Return the list of StudyInfo objects
+        # Return the list of StudyModel objects
         LOG.info(f"Successfully retrieved {len(all_studies)} studies from Redis.")
         return all_studies
 
@@ -301,12 +322,12 @@ class RedisBackend(ResultsBackend):
 
         LOG.info(f"Successfully deleted study '{study_name}' and all associated data from Redis.")
 
-    def save_run(self, run: RunInfo):
+    def save_run(self, run: RunModel):
         """
-        Given a RunInfo object, enter all of it's information to the backend database.
+        Given a RunModel object, enter all of it's information to the backend database.
 
         Args:
-            run: A [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] instance.
+            run: A [`RunModel`][merlin.db_scripts.data_formats.RunModel] instance.
         """
         run_key = f"run:{run.id}"
         if self.client.exists(run_key):
@@ -318,7 +339,7 @@ class RedisBackend(ResultsBackend):
             self._create_data_class_entry(run, run_key)
             LOG.info(f"Successfully created a run with id '{run.id}' in Redis.")
 
-    def retrieve_run(self, run_id: str) -> RunInfo:
+    def retrieve_run(self, run_id: str) -> RunModel:
         """
         Given a run's id, retrieve it from the Redis database.
 
@@ -330,14 +351,14 @@ class RedisBackend(ResultsBackend):
             return None
 
         data_from_redis = self.client.hgetall(run_key)
-        return self._deserialize_data_class(data_from_redis, RunInfo)
+        return self._deserialize_data_class(data_from_redis, RunModel)
 
-    def retrieve_all_runs(self) -> List[RunInfo]:
+    def retrieve_all_runs(self) -> List[RunModel]:
         """
         Query the Redis database for every study that's currently stored.
 
         Returns:
-            A list of [`RunInfo`][merlin.db_scripts.data_formats.RunInfo] objects.
+            A list of [`RunModel`][merlin.db_scripts.data_formats.RunModel] objects.
         """
         LOG.info("Fetching all runs from Redis...")
 
@@ -384,7 +405,7 @@ class RedisBackend(ResultsBackend):
                 "Ignoring the removal of this run from that study's list of runs."
             )
         else:
-            study_info = self._deserialize_data_class(study_data, StudyInfo)
+            study_info = self._deserialize_data_class(study_data, StudyModel)
             study_info.runs.remove(run_id)
             self.save_study(study_info)
             LOG.debug("Successfully removed this run from the associated study.")
@@ -396,3 +417,136 @@ class RedisBackend(ResultsBackend):
         LOG.debug("Successfully removed run hash from Redis.")
 
         LOG.info(f"Successfully deleted run '{run_id}' and all associated data from Redis.")
+    
+    def save_worker(self, worker: WorkerModel):
+        """
+        Given a [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] object, enter
+        all of it's information to the backend database.
+
+        Args:
+            worker: A [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] instance.
+        """
+        existing_worker_id = self.client.hget("worker:name", worker.name)
+        worker_key = f"worker:{worker.id}"
+        if existing_worker_id:
+            LOG.info(f"Attempting to update worker with id '{worker.id}'...")
+            self._update_data_class_entry(worker, worker_key)
+            LOG.info(f"Successfully updated worker with id '{worker.id}'.")
+        else:
+            LOG.info("Creating a worker entry in Redis...")
+            self._create_data_class_entry(worker, worker_key)
+            self.client.hset("worker:name", worker.name, worker.id)
+            LOG.info(f"Successfully created a worker with id '{worker.id}' in Redis.")
+
+    def retrieve_worker(self, worker_id: str) -> WorkerModel:
+        """
+        Given a worker's id, retrieve it from the backend database.
+
+        Args:
+            worker_id: The ID of the worker to retrieve.
+
+        Returns:
+            A [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] instance.
+        """
+        if not worker_id.startswith("worker:"):
+            worker_id = f"worker:{worker_id}"
+
+        if not self.client.exists(worker_id):
+            return None
+
+        data_from_redis = self.client.hgetall(worker_id)
+        return self._deserialize_data_class(data_from_redis, WorkerModel)
+    
+    def retrieve_worker_by_name(self, worker_name: str) -> WorkerModel:
+        """
+        Given a worker's name, retrieve it from the backend database.
+
+        Args:
+            worker_name: The name of the worker to retrieve.
+
+        Returns:
+            A [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] instance.
+        """
+        worker_id = self.client.hget("worker:name", worker_name)
+        
+        if worker_id is None:
+            return None
+
+        data_from_redis = self.client.hgetall(f"worker:{worker_id}")
+        return self._deserialize_data_class(data_from_redis, WorkerModel)
+
+    def retrieve_all_workers(self) -> List[WorkerModel]:
+        """
+        Query the backend database for every worker that's currently stored.
+
+        Returns:
+            A list of [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] objects.
+        """
+        LOG.info("Retrieving all workers from Redis...")
+
+        # Retrieve all worker ids
+        worker_ids = self.client.keys("worker:*")
+        if not worker_ids:
+            return None
+        worker_ids.remove("worker:name")
+        LOG.debug(f"Found {len(worker_ids)} workers in Redis.")
+
+        all_workers = []
+
+        # Loop through each worker id and retrieve its WorkerModel
+        for worker_id in worker_ids:
+            try:
+                worker_info = self.retrieve_worker(worker_id)
+                if worker_info:
+                    all_workers.append(worker_info)
+                else:
+                    LOG.warning(f"Worker with ID '{worker_id}' could not be retrieved or does not exist.")
+            except Exception as exc:  # pylint: disable=broad-except
+                LOG.error(f"Error retrieving worker with ID '{worker_id}': {exc}")
+
+        # Return the list of WorkerModel objects
+        LOG.info(f"Successfully retrieved {len(all_workers)} workers from Redis.")
+        return all_workers
+
+    def delete_worker(self, worker_id: str):
+        """
+        Given a worker id, find it in the database and remove that entry.
+
+        Args:
+            worker_id: The id of the worker to delete.
+        """
+        LOG.info(f"Attempting to delete worker with id '{worker_id}' from Redis...")
+        
+        # Retrieve the worker to ensure it exists and get its name
+        worker = self.retrieve_worker(worker_id)
+        if worker is None:
+            raise WorkerNotFoundError(f"Worker with ID '{worker_id}' not found in the database.")
+        
+        # Delete the worker from the name index and Redis
+        self.client.hdel("worker:name", worker.name)
+        self.client.delete(f"worker:{worker.id}")
+
+        LOG.info(f"Successfully deleted worker with ID '{worker_id}'.")
+
+    def delete_worker_by_name(self, worker_name: str):
+        """
+        Delete a worker from the backend database by its name.
+
+        Args:
+            worker_name: The name of the worker to delete.
+
+        Raises:
+            WorkerNotFoundError: If no worker with the given name is found.
+        """
+        LOG.info(f"Attempting to delete worker with name '{worker_name}' from Redis...")
+        
+        # Retrieve the worker to ensure it exists and get its ID
+        worker = self.retrieve_worker_by_name(worker_name)
+        if worker is None:
+            raise WorkerNotFoundError(f"Worker with name '{worker_name}' not found in the database.")
+
+        # Delete the worker from the name index and Redis
+        self.client.hdel("worker:name", worker.name)
+        self.client.delete(f"worker:{worker.id}")
+
+        LOG.info(f"Successfully deleted worker with name '{worker_name}'.")

@@ -10,17 +10,20 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import Field, asdict, dataclass, field
 from dataclasses import fields as dataclass_fields
+from datetime import datetime
 from typing import Dict, List, Tuple, Type, TypeVar
 
 from filelock import FileLock
 
+from merlin.common.abstracts.enums import WorkerStatus
+
 
 LOG = logging.getLogger("merlin")
-T = TypeVar("T", bound="BaseDataClass")
+T = TypeVar("T", bound="BaseDataModel")
 
 
 @dataclass
-class BaseDataClass(ABC):
+class BaseDataModel(ABC):
     """
     A base class for dataclasses that provides common serialization, deserialization, and
     update functionality, with support for additional data.
@@ -220,15 +223,17 @@ class BaseDataClass(ABC):
 
 
 @dataclass
-class StudyInfo(BaseDataClass):
+class StudyModel(BaseDataModel):
     """
     A dataclass to store all of the information for a study.
 
     Attributes:
-        fields_allowed_to_be_updated: A list of field names that are allowed to be updated.
-        id: The unique ID for the study.
-        name: The name of the study.
-        runs: A list of runs associated with this study.
+        additional_data (Dict): For any extra data not explicitly defined.
+        fields_allowed_to_be_updated (List[str]): A list of field names that are
+            allowed to be updated.
+        id (str): The unique ID for the study.
+        name (str): The name of the study.
+        runs (List[str]): A list of runs associated with this study.
     """
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
@@ -238,7 +243,7 @@ class StudyInfo(BaseDataClass):
     @property
     def fields_allowed_to_be_updated(self) -> List[str]:
         """
-        Define the fields that are allowed to be updated for a `StudyInfo` object.
+        Define the fields that are allowed to be updated for a `StudyModel` object.
 
         Returns:
             A list of fields that are allowed to be updated in this class.
@@ -247,27 +252,28 @@ class StudyInfo(BaseDataClass):
 
 
 @dataclass
-class RunInfo(BaseDataClass):  # pylint: disable=too-many-instance-attributes
+class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
     """
     A dataclass to store all of the information for a run.
 
     Attributes:
-        additional_data: For any extra data not explicitly defined.
-        child: The ID of the child run (if any).
-        fields_allowed_to_be_updated: A list of field names that are allowed
+        additional_data (Dict): For any extra data not explicitly defined.
+        child (str): The ID of the child run (if any).
+        fields_allowed_to_be_updated (List[str]): A list of field names that are allowed
             to be updated.
-        id: The unique ID for the run.
-        parameters: The parameters used in this run.
-        parent: The ID of the parent run (if any).
-        queues: The task queues used for this run.
-        run_complete: Wether the run is complete.
-        samples: The samples used in this run.
-        steps: A list of unique step IDs that are executed in this run.
+        id (str): The unique ID for the run.
+        parameters (Dict): The parameters used in this run.
+        parent (str): The ID of the parent run (if any).
+        queues (List[str]): The task queues used for this run.
+        run_complete (bool): Wether the run is complete.
+        samples (Dict): The samples used in this run.
+        steps (List[str]): A list of unique step IDs that are executed in this run.
             Each ID will correspond to a `StepInfo` entry.
-        study_id: The unique ID of the study this run is associated with.
-            Corresponds with a `StudyInfo` entry.
-        workers: A list of worker names executing tasks for this run.
-        workspace: The path to the output workspace.
+        study_id (str): The unique ID of the study this run is associated with.
+            Corresponds with a `StudyModel` entry.
+        workers (List[str]): A list of worker ids executing tasks for this run. Each ID
+            will correspond with a `WorkerModel` entry.
+        workspace (str): The path to the output workspace.
     """
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
@@ -287,12 +293,56 @@ class RunInfo(BaseDataClass):  # pylint: disable=too-many-instance-attributes
     @property
     def fields_allowed_to_be_updated(self) -> List[str]:
         """
-        Define the fields that are allowed to be updated for a `RunInfo` object.
+        Define the fields that are allowed to be updated for a `RunModel` object.
 
         Returns:
             A list of fields that are allowed to be updated in this class.
         """
         return ["parent", "child", "run_complete", "additional_data", "workers"]
+
+
+@dataclass
+class WorkerModel(BaseDataModel):
+    """
+    A dataclass to store information about a worker process.
+
+    Attributes:
+        additional_data (Dict): For any extra data not explicitly defined.
+        args (Dict): A dictionary of arguments used to configure the worker.
+        fields_allowed_to_be_updated (List[str]): A list of field names that are
+            allowed to be updated.
+        heartbeat_timestamp (datetime): The last time the worker sent a heartbeat signal.
+        host (str): The hostname or IP address of the machine running the worker.
+        id (str): A unique identifier for the worker. Defaults to a UUID string.
+        latest_start_time (datetime): The timestamp when the worker process was last started.
+        launch_cmd (str): The command used to launch the worker process.
+        name (str): The name of the worker, if specified.
+        pid (str): The process ID (PID) of the worker process.
+        queues (List[str]): A list of task queues the worker is listening to.
+        restart_count (int): The number of times this worker has been restarted.
+        status (WorkerStatus): The current status of the worker (e.g., running, stopped).
+    """
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
+    name: str = None
+    launch_cmd: str = None
+    queues: List[str] = field(default_factory=list)
+    args: Dict = field(default_factory=dict)
+    pid: str = None
+    status: WorkerStatus = WorkerStatus.STOPPED
+    heartbeat_timestamp: datetime = field(default_factory=datetime.now)
+    latest_start_time: datetime = field(default_factory=datetime.now)
+    host: str = None
+    restart_count: int = 0
+
+    @property
+    def fields_allowed_to_be_updated(self) -> List[str]:
+        """
+        Define the fields that are allowed to be updated for a `WorkerModel` object.
+
+        Returns:
+            A list of fields that are allowed to be updated in this class.
+        """
+        return ["launch_cmd", "queues", "args", "pid", "status", "heartbeat_timestamp", "latest_start_time", "host", "restart_count"]
 
 
 # TODO create a StepInfo class to store information about a step
