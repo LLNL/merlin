@@ -6,7 +6,9 @@ database.
 import logging
 import uuid
 from argparse import Namespace
+from typing import Callable, List
 
+from merlin.db_scripts.db_entity import DatabaseEntity
 from merlin.db_scripts.merlin_db import MerlinDatabase
 
 
@@ -72,35 +74,67 @@ def database_get(args: Namespace):
     """
     merlin_db = MerlinDatabase()
 
-    if args.get_type == "study":
-        print(merlin_db.get_study(args.study))
-    elif args.get_type == "all-studies":
-        all_studies = merlin_db.get_all_studies()
-        if all_studies:
-            for study in all_studies:
-                print(study)
+    def get_by_uuid_or_name(get_by_uuid: Callable, get_by_name: Callable, identifiers: List[str]):
+        """
+        Attempts to retrieve items using UUIDs first, and falls back to retrieving by names if the
+        UUIDs are invalid.
+
+        Args:
+            get_by_uuid: Function to retrieve items using UUIDs.
+            get_by_name: Function to retrieve items using names.
+            identifiers: List of identifiers to retrieve the items (either UUIDs or names).
+
+        Returns:
+            The retrieved items from the database.
+        """
+        results = []
+        for identifier in identifiers:
+            try:
+                uuid.UUID(identifier)
+                results.append(get_by_uuid(identifier))
+            except ValueError:
+                results.append(get_by_name(identifier))
+        return results
+
+    def print_items(items: List[DatabaseEntity], empty_message: str):
+        """
+        Prints a list of items or logs a message if the list is empty.
+
+        Args:
+            items: List of items to print.
+            empty_message: Message to log if the list is empty.
+        """
+        if items:
+            for item in items:
+                print(item)
         else:
-            LOG.info("No studies found in the database.")
-    elif args.get_type == "run":
-        print(merlin_db.get_run(args.run))
-    elif args.get_type == "all-runs":
-        all_runs = merlin_db.get_all_runs()
-        if all_runs:
-            for run in all_runs:
-                print(run)
-        else:
-            LOG.info("No runs found in the database.")
-    elif args.get_type == "worker":
-        print(merlin_db.get_worker(args.worker))
-    elif args.get_type == "all-workers":
-        all_workers = merlin_db.get_all_workers()
-        if all_workers:
-            for worker in all_workers:
-                print(worker)
-        else:
-            LOG.info("No workers found in the database")
+            LOG.info(empty_message)
+
+    # Dispatch table for get operations
+    operations = {
+        "study": lambda: print_items(
+            get_by_uuid_or_name(merlin_db.get_study, merlin_db.get_study_by_name, args.study),
+            "No studies found for the given identifiers."
+        ),
+        "run": lambda: print_items(
+            get_by_uuid_or_name(merlin_db.get_run, merlin_db.get_run_by_workspace, args.run),
+            "No runs found for the given identifiers."
+        ),
+        "worker": lambda: print_items(
+            get_by_uuid_or_name(merlin_db.get_worker, merlin_db.get_worker_by_name, args.worker),
+            "No workers found for the given identifiers."
+        ),
+        "all-studies": lambda: print_items(merlin_db.get_all_studies(), "No studies found in the database."),
+        "all-runs": lambda: print_items(merlin_db.get_all_runs(), "No runs found in the database."),
+        "all-workers": lambda: print_items(merlin_db.get_all_workers(), "No workers found in the database."),
+    }
+
+    # Execute the appropriate operation or log an error
+    operation = operations.get(args.get_type)
+    if operation:
+        operation()
     else:
-        LOG.error("No valid delete option provided.")
+        LOG.error("No valid get option provided.")
 
 
 def database_delete(args: Namespace):
@@ -113,10 +147,24 @@ def database_delete(args: Namespace):
     merlin_db = MerlinDatabase()
 
     if args.delete_type == "study":
-        merlin_db.delete_study(args.study, remove_associated_runs=(not args.keep_associated_runs))
+        # try:
+        #     uuid.UUID(args.study)
+        #     merlin_db.delete_study(args.study, (not args.keep_associated_runs))
+        # except ValueError:
+        #      # If it's not a valid UUID, assume it's a worker name
+        #     merlin_db.delete_study_by_name(args.study, remove_associated_runs=(not args.keep_associated_runs))
+
+        merlin_db.delete_study_by_name(args.study, remove_associated_runs=(not args.keep_associated_runs))
     elif args.delete_type == "all-studies":
         merlin_db.delete_all_studies(remove_associated_runs=(not args.keep_associated_runs))
     elif args.delete_type == "run":
+        # try:
+        #     uuid.UUID(args.run)
+        #     merlin_db.delete_run(args.run)
+        # except ValueError:
+        #      # If it's not a valid UUID, assume it's a worker name
+        #     merlin_db.delete_run_by_workspace(args.run)
+
         merlin_db.delete_run(args.run)
     elif args.delete_type == "all-runs":
         merlin_db.delete_all_runs()

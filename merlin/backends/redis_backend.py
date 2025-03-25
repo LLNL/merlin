@@ -239,7 +239,27 @@ class RedisBackend(ResultsBackend):
 
         LOG.info(f"Study with name '{study.name}' saved to Redis under id '{study.id}'.")
 
-    def retrieve_study(self, study_name: str) -> StudyModel:
+    def retrieve_study(self, study_id: str) -> StudyModel:
+        """
+        Given a study's id, retrieve it from the Redis database.
+
+        Args:
+            study_id: The name of the study to retrieve.
+
+        Returns:
+            A [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] instance
+                or None if the study does not yet exist in the database.
+        """
+        if not study_id.startswith("study:"):
+            study_id = f"study:{study_id}"
+
+        if not self.client.exists(study_id):
+            return None
+
+        data_from_redis = self.client.hgetall(study_id)
+        return self._deserialize_data_class(data_from_redis, StudyModel)
+    
+    def retrieve_study_by_name(self, study_name: str) -> StudyModel:
         """
         Given a study's name, retrieve it from the Redis database.
 
@@ -265,27 +285,27 @@ class RedisBackend(ResultsBackend):
         Returns:
             A list of [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] objects.
         """
-        LOG.info("Fetching all studies from Redis...")
+        LOG.info("Retrieving all studies from Redis...")
 
-        # Retrieve all study names
-        study_names = self.client.hkeys("study:name")
-        if not study_names:
-            return []
-        LOG.debug(f"Found {len(study_names)} studies in Redis.")
+        # Retrieve all study ids
+        study_ids = self.client.keys("study:*")
+        if not study_ids:
+            return None
+        study_ids.remove("study:name")
+        LOG.debug(f"Found {len(study_ids)} studies in Redis.")
 
         all_studies = []
 
-        # Loop through each study name and retrieve its StudyModel
-        for study_name in study_names:
+        # Loop through each study id and retrieve its StudyModel
+        for study_id in study_ids:
             try:
-                # Use the existing retrieve_study method to get the StudyModel object
-                study_info = self.retrieve_study(study_name)
+                study_info = self.retrieve_study(study_id)
                 if study_info:
                     all_studies.append(study_info)
                 else:
-                    LOG.warning(f"Study '{study_name}' could not be retrieved or does not exist.")
+                    LOG.warning(f"Study with ID '{study_id}' could not be retrieved or does not exist.")
             except Exception as exc:  # pylint: disable=broad-except
-                LOG.error(f"Error retrieving study '{study_name}': {exc}")
+                LOG.error(f"Error retrieving study with ID '{study_id}': {exc}")
 
         # Return the list of StudyModel objects
         LOG.info(f"Successfully retrieved {len(all_studies)} studies from Redis.")

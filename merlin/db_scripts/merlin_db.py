@@ -26,11 +26,10 @@ LOG = logging.getLogger("merlin")
 #     an instance of the ResultsBackend class
 class MerlinDatabase:
     """
-    A class that provides a high-level interface for interacting with the database backend.
+    A class that provides a high-level interface for interacting with database entities.
 
     This class abstracts the interaction with different types of backend implementations
-    (e.g., Redis, SQLAlchemy) and provides methods to manage studies and their associated
-    runs in the database.
+    (e.g., Redis, SQLAlchemy) and provides methods to manage database entities.
 
     Attributes:
         backend: An instance of a backend class (e.g., RedisBackend, SQLAlchemyBackend) used
@@ -103,7 +102,7 @@ class MerlinDatabase:
             A [`DatabaseStudy`][merlin.db_scripts.db_study.DatabaseStudy] instance.
         """
         try:
-            db_study = self.get_study(study_name)
+            db_study = self.get_study_by_name(study_name)
             LOG.info(f"Study with name '{study_name}' already has an entry in the database.")
         except StudyNotFoundError:
             LOG.info(f"Study with name '{study_name}' does not yet have an entry in the database. Creating one...")
@@ -113,7 +112,20 @@ class MerlinDatabase:
 
         return db_study
 
-    def get_study(self, study_name: str) -> DatabaseStudy:
+    def get_study(self, study_id: str) -> DatabaseStudy:
+        """
+        Given a study id, retrieve the associated study from the database.
+
+        Args:
+            study_id: The id of the study to retrieve.
+
+        Returns:
+            A [`DatabaseStudy`][merlin.db_scripts.db_study.DatabaseStudy] instance representing
+                the study that was queried.
+        """
+        return DatabaseStudy.load(study_id, self.backend)
+    
+    def get_study_by_name(self, study_name: str) -> DatabaseRun:
         """
         Given a study name, retrieve the associated study from the database.
 
@@ -124,7 +136,7 @@ class MerlinDatabase:
             A [`DatabaseStudy`][merlin.db_scripts.db_study.DatabaseStudy] instance representing
                 the study that was queried.
         """
-        return DatabaseStudy.load(study_name, self.backend)
+        return DatabaseStudy.load_by_name(study_name, self.backend)
 
     def get_all_studies(self) -> List[DatabaseStudy]:
         """
@@ -138,7 +150,19 @@ class MerlinDatabase:
             return []
         return [DatabaseStudy(study, self.backend) for study in all_studies]
 
-    def delete_study(self, study_name: str, remove_associated_runs: bool = True):
+    # def delete_study(self, study_id: str, remove_associated_runs: bool = True):
+    #     """
+    #     Given a study id, remove the associated study from the database. As a consequence
+    #     of this action, any runs associated with this study will also be removed, unless
+    #     `remove_associated_runs` is set to `False`.
+
+    #     Args:
+    #         study_id: The id of the study to remove.
+    #         remove_associated_runs: If True, remove all runs associated with the study.
+    #     """
+    #     DatabaseStudy.delete(study_id, self.backend, remove_associated_runs=remove_associated_runs)
+
+    def delete_study_by_name(self, study_name: str, remove_associated_runs: bool = True):
         """
         Given a study name, remove the associated study from the database. As a consequence
         of this action, any runs associated with this study will also be removed, unless
@@ -178,7 +202,7 @@ class MerlinDatabase:
             A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance.
         """
         try:
-            db_study = self.get_study(study_name)
+            db_study = self.get_study_by_name(study_name)
         except StudyNotFoundError:
             db_study = self.create_study(study_name)
 
@@ -196,6 +220,19 @@ class MerlinDatabase:
                 the run that was queried.
         """
         return DatabaseRun.load(run_id, self.backend)
+    
+    def get_run_by_workspace(self, workspace: str) -> DatabaseRun:
+        """
+        Given a run workspace, retrieve the associated run from the database.
+
+        Args:
+            run_workspace: The workspace of the run to retrieve.
+
+        Returns:
+            A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
+                the run that was queried.
+        """
+        return DatabaseRun.load_by_workspace(workspace, self.backend)
 
     def get_run_from_workspace(self, workspace: str) -> DatabaseRun:
         """
@@ -242,28 +279,6 @@ class MerlinDatabase:
         # - can add a -f flag to ignore this prompt (like purge)
         for run in all_runs:
             self.delete_run(run.id)
-
-    def create_study(self, study_name: str) -> DatabaseStudy:
-        """
-        Create [`DatabaseStudy`][merlin.db_scripts.db_study.DatabaseStudy] instance and save
-        it to the database, if one does not already exist.
-
-        Args:
-            study_name: The name of the study to create.
-
-        Returns:
-            A [`DatabaseStudy`][merlin.db_scripts.db_study.DatabaseStudy] instance.
-        """
-        try:
-            db_study = self.get_study(study_name)
-            LOG.info(f"Study with name '{study_name}' already has an entry in the database.")
-        except StudyNotFoundError:
-            LOG.info(f"Study with name '{study_name}' does not yet have an entry in the database. Creating one...")
-            study_info = StudyModel(name=study_name)
-            db_study = DatabaseStudy(study_info, self.backend)
-            db_study.save()
-
-        return db_study
 
     def create_worker(self, name: str) -> DatabaseWorker:
         """

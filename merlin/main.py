@@ -956,26 +956,41 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Subcommand: get study
     get_study = get_subcommands.add_parser(
         "study",
-        help="Get a specific study by name.",
+        help="Get one or more studies by ID or name.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     get_study.add_argument(
         "study",
         type=str,
-        help="The name of the study to get.",
+        nargs="+",
+        help="A space-delimited list of IDs or names of the studies to get.",
     )
 
     # TODO enable support for retrieval of run by workspace or ID
     # Subcommand: get run
     get_run = get_subcommands.add_parser(
         "run",
-        help="Get a specific run by ID.",
+        help="Get one or more runs by ID or workspace.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     get_run.add_argument(
         "run",
         type=str,
-        help="The ID of the run to get.",
+        nargs="+",
+        help="A space-delimited list of IDs or workspaces of the runs to get.",
+    )
+
+    # Subcommand get worker
+    get_worker = get_subcommands.add_parser(
+        "worker",
+        help="Get one or more workers by ID or name.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    get_worker.add_argument(
+        "worker",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs or names of the workers to get.",
     )
 
     # Subcommand: get all-studies
@@ -990,18 +1005,6 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         "all-runs",
         help="Get all runs from the database.",
         formatter_class=ArgumentDefaultsHelpFormatter,
-    )
-
-    # Subcommand get worker
-    get_worker = get_subcommands.add_parser(
-        "worker",
-        help="Get a specific worker by ID.",
-        formatter_class=ArgumentDefaultsHelpFormatter,
-    )
-    get_worker.add_argument(
-        "worker",
-        type=str,
-        help="The ID of the worker to get.",
     )
 
     # Subcommand: get all-workers

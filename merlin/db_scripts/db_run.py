@@ -125,9 +125,10 @@ class DatabaseRun(DatabaseEntity):
         Reload the latest data for this run from the database and update the
         [`RunModel`][merlin.db_scripts.db_formats.RunModel] object.
         """
-        updated_entity_info = self.backend.retrieve_run(self.entity_info.id)
+        run_id = self.get_id()
+        updated_entity_info = self.backend.retrieve_run(run_id)
         if not updated_entity_info:
-            raise RunNotFoundError(f"Run with ID {self.entity_info.id} not found in the database.")
+            raise RunNotFoundError(f"Run with ID {run_id} not found in the database.")
         self.entity_info = updated_entity_info
 
     @property
@@ -254,7 +255,7 @@ class DatabaseRun(DatabaseEntity):
     @classmethod
     def load(cls, run_id: str, backend: ResultsBackend) -> "DatabaseRun":
         """
-        Load a run from the database.
+        Load a run from the database by id.
 
         Args:
             run_id: The ID of the run to load.
@@ -268,6 +269,21 @@ class DatabaseRun(DatabaseEntity):
             raise RunNotFoundError(f"Run with ID {run_id} not found in the database.")
 
         return cls(entity_info, backend)
+    
+    @classmethod
+    def load_by_workspace(cls, run_workspace: str, backend: ResultsBackend) -> "DatabaseRun":
+        """
+        Load a run from the database by workspace.
+
+        Args:
+            run_workspace: The workspace of the run to load.
+            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+
+        Returns:
+            A `DatabaseRun` instance.
+        """
+        metadata_file = os.path.join(run_workspace, "merlin_info", "run_metadata.json")
+        return cls.load_from_metadata_file(metadata_file, backend)
 
     @classmethod
     def load_from_metadata_file(cls, metadata_file: str, backend: ResultsBackend) -> "DatabaseRun":
