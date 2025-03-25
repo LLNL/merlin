@@ -9,13 +9,14 @@ from typing import Dict, List
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import RunModel
+from merlin.db_scripts.db_entity import DatabaseEntity
 from merlin.exceptions import RunNotFoundError
 
 
 LOG = logging.getLogger("merlin")
 
 
-class DatabaseRun:
+class DatabaseRun(DatabaseEntity):
     """
     A class representing a run in the database.
 
@@ -24,7 +25,7 @@ class DatabaseRun:
     it from the database.
 
     Attributes:
-        run_info: An instance of the `RunModel` class containing the run's metadata.
+        entity_info: An instance of the `RunModel` class containing the run's metadata.
         backend: An instance of the `ResultsBackend` class used to interact
             with the database.
         run_complete: Property to get or set the completion status of the run.
@@ -74,8 +75,7 @@ class DatabaseRun:
     """
 
     def __init__(self, run_info: RunModel, backend: ResultsBackend):
-        self.run_info: RunModel = run_info
-        self.backend: ResultsBackend = backend
+        super().__init__(run_info, backend)
         self._metadata_file = self.get_metadata_filepath(self.get_workspace())
 
     def __repr__(self) -> str:
@@ -125,10 +125,10 @@ class DatabaseRun:
         Reload the latest data for this run from the database and update the
         [`RunModel`][merlin.db_scripts.db_formats.RunModel] object.
         """
-        updated_run_info = self.backend.retrieve_run(self.run_info.id)
-        if not updated_run_info:
-            raise RunNotFoundError(f"Run with ID {self.run_info.id} not found in the database.")
-        self.run_info = updated_run_info
+        updated_entity_info = self.backend.retrieve_run(self.entity_info.id)
+        if not updated_entity_info:
+            raise RunNotFoundError(f"Run with ID {self.entity_info.id} not found in the database.")
+        self.entity_info = updated_entity_info
 
     @property
     def run_complete(self) -> bool:
@@ -141,7 +141,7 @@ class DatabaseRun:
             True if the study is complete. False, otherwise.
         """
         self.reload_data()
-        return self.run_info.run_complete
+        return self.entity_info.run_complete
 
     @run_complete.setter
     def run_complete(self, value: bool):
@@ -151,7 +151,7 @@ class DatabaseRun:
         Args:
             value: The completion status of the run.
         """
-        self.run_info.run_complete = value
+        self.entity_info.run_complete = value
 
     def get_metadata_file(self) -> str:
         """
@@ -177,15 +177,6 @@ class DatabaseRun:
         """
         return os.path.join(workspace, "merlin_info", "run_metadata.json")
 
-    def get_id(self) -> str:
-        """
-        Get the ID for this run.
-
-        Returns:
-            The ID for this run.
-        """
-        return self.run_info.id
-
     def get_study_id(self) -> str:
         """
         Get the ID for the study associated with this run.
@@ -193,7 +184,7 @@ class DatabaseRun:
         Returns:
             The ID for the study associated with this run.
         """
-        return self.run_info.study_id
+        return self.entity_info.study_id
 
     def get_workspace(self) -> str:
         """
@@ -202,7 +193,7 @@ class DatabaseRun:
         Returns:
             A string representing the output workspace for this run.
         """
-        return self.run_info.workspace
+        return self.entity_info.workspace
 
     def get_queues(self) -> List[str]:
         """
@@ -211,7 +202,7 @@ class DatabaseRun:
         Returns:
             A list of strings representing the queues that were used for this run.
         """
-        return self.run_info.queues
+        return self.entity_info.queues
 
     def get_workers(self) -> List[str]:
         """
@@ -220,7 +211,7 @@ class DatabaseRun:
         Returns:
             A list of strings representing the workers that were used for this run.
         """
-        return self.run_info.workers
+        return self.entity_info.workers
 
     def get_parent(self) -> str:
         """
@@ -232,7 +223,7 @@ class DatabaseRun:
             The ID of the run that launched this run.
         """
         self.reload_data()
-        return self.run_info.parent
+        return self.entity_info.parent
 
     def get_child(self) -> str:
         """
@@ -244,31 +235,21 @@ class DatabaseRun:
             The ID of the run that was launched by this run.
         """
         self.reload_data()
-        return self.run_info.child
-
-    def get_additional_data(self) -> Dict:
-        """
-        Get any additional data saved to this run.
-
-        Returns:
-            Additional data saved to this run.
-        """
-        self.reload_data()
-        return self.run_info.additional_data
+        return self.entity_info.child
 
     def save(self):
         """
         Save the current state of this run to the database. This will also re-dump
         the metadata of this run to the output workspace in case something was updated.
         """
-        self.backend.save_run(self.run_info)
+        self.backend.save_run(self.entity_info)
         self.dump_metadata()
 
     def dump_metadata(self):
         """
         Dump all of the metadata for this run to a json file.
         """
-        self.run_info.dump_to_json_file(self.get_metadata_file())
+        self.entity_info.dump_to_json_file(self.get_metadata_file())
 
     @classmethod
     def load(cls, run_id: str, backend: ResultsBackend) -> "DatabaseRun":
@@ -282,11 +263,11 @@ class DatabaseRun:
         Returns:
             A `DatabaseRun` instance.
         """
-        run_info = backend.retrieve_run(run_id)
-        if not run_info:
+        entity_info = backend.retrieve_run(run_id)
+        if not entity_info:
             raise RunNotFoundError(f"Run with ID {run_id} not found in the database.")
 
-        return cls(run_info, backend)
+        return cls(entity_info, backend)
 
     @classmethod
     def load_from_metadata_file(cls, metadata_file: str, backend: ResultsBackend) -> "DatabaseRun":

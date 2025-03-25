@@ -7,17 +7,14 @@ from typing import Dict, List
 from merlin.backends.results_backend import ResultsBackend
 from merlin.common.abstracts.enums import WorkerStatus
 from merlin.db_scripts.data_models import WorkerModel
+from merlin.db_scripts.db_entity import DatabaseEntity
 from merlin.exceptions import WorkerNotFoundError
 
 LOG = logging.getLogger("merlin")
 
-class DatabaseWorker:
+class DatabaseWorker(DatabaseEntity):
     """
     """
-
-    def __init__(self, worker_info: WorkerModel, backend: ResultsBackend):
-        self.worker_info: WorkerModel = worker_info
-        self.backend: ResultsBackend = backend
 
     def __repr__(self) -> str:
         """
@@ -73,19 +70,10 @@ class DatabaseWorker:
         [`RunModel`][merlin.db_scripts.db_formats.RunModel] object.
         """
         worker_id = self.get_id()
-        updated_worker_info = self.backend.retrieve_worker(worker_id)
-        if not updated_worker_info:
+        updated_entity_info = self.backend.retrieve_worker(worker_id)
+        if not updated_entity_info:
             raise WorkerNotFoundError(f"Worker with ID {worker_id} not found in the database.")
-        self.worker_info = updated_worker_info
-    
-    def get_id(self) -> str:
-        """
-        Get the ID for this worker.
-
-        Returns:
-            The ID for this worker.
-        """
-        return self.worker_info.id
+        self.entity_info = updated_entity_info
 
     def get_name(self) -> str:
         """
@@ -94,7 +82,7 @@ class DatabaseWorker:
         Returns:
             The name for this worker.
         """
-        return self.worker_info.name
+        return self.entity_info.name
     
     def get_launch_cmd(self) -> str:
         """
@@ -103,7 +91,7 @@ class DatabaseWorker:
         Returns:
             The command used to launch this worker.
         """
-        return self.worker_info.launch_cmd
+        return self.entity_info.launch_cmd
     
     def set_launch_cmd(self, launch_cmd: str):
         """
@@ -112,7 +100,7 @@ class DatabaseWorker:
         Args:
             launch_cmd: The launch command used to start this worker.
         """
-        self.worker_info.launch_cmd = launch_cmd
+        self.entity_info.launch_cmd = launch_cmd
         self.save()
     
     def get_queues(self) -> List[str]:
@@ -122,7 +110,7 @@ class DatabaseWorker:
         Returns:
             A list of strings representing the queues that were assigned to this worker.
         """
-        return self.worker_info.queues
+        return self.entity_info.queues
     
     def set_queues(self, queues: List[str]):
         """
@@ -131,7 +119,7 @@ class DatabaseWorker:
         Args:
             queues: The queues that this worker is watching.
         """
-        self.worker_info.queues = queues
+        self.entity_info.queues = queues
         self.save()
     
     def get_args(self) -> Dict:
@@ -141,7 +129,7 @@ class DatabaseWorker:
         Returns:
             A dictionary of arguments for this worker.
         """
-        return self.worker_info.args
+        return self.entity_info.args
     
     def set_args(self, args: str):
         """
@@ -150,7 +138,7 @@ class DatabaseWorker:
         Args:
             args: The arguments used by this worker.
         """
-        self.worker_info.args = args
+        self.entity_info.args = args
         self.save()
     
     def get_pid(self) -> str:
@@ -161,7 +149,7 @@ class DatabaseWorker:
             The process ID for this worker.
         """
         self.reload_data()
-        return self.worker_info.pid
+        return self.entity_info.pid
     
     def set_pid(self, pid: str):
         """
@@ -170,7 +158,7 @@ class DatabaseWorker:
         Args:
             pid: The new PID of this worker.
         """
-        self.worker_info.pid = pid
+        self.entity_info.pid = pid
         self.save()
 
     def get_status(self) -> WorkerStatus:
@@ -182,7 +170,7 @@ class DatabaseWorker:
                 the status of this worker.
         """
         self.reload_data()
-        return self.worker_info.status
+        return self.entity_info.status
     
     def set_status(self, status: WorkerStatus):
         """
@@ -192,7 +180,7 @@ class DatabaseWorker:
             status: A [`WorkerStatus`][common.abstracts.enums.WorkerStatus] enum representing
                 the new status of the worker.
         """
-        self.worker_info.status = status
+        self.entity_info.status = status
         self.save()
     
     def get_heartbeat_timestamp(self) -> str:
@@ -203,7 +191,7 @@ class DatabaseWorker:
             The last heartbeat timestamp we received from this worker
         """
         self.reload_data()
-        return self.worker_info.heartbeat_timestamp
+        return self.entity_info.heartbeat_timestamp
     
     def set_heartbeat_timestamp(self, heartbeat_timestamp: datetime):
         """
@@ -212,7 +200,7 @@ class DatabaseWorker:
         Args:
             heartbeat_timestamp: The latest heartbeat timestamp of this worker.
         """
-        self.worker_info.heartbeat_timestamp = heartbeat_timestamp
+        self.entity_info.heartbeat_timestamp = heartbeat_timestamp
         self.save()
     
     def get_latest_start_time(self) -> datetime:
@@ -223,7 +211,7 @@ class DatabaseWorker:
             A datetime object representing the last time this worker was started.
         """
         self.reload_data()
-        return self.worker_info.latest_start_time
+        return self.entity_info.latest_start_time
     
     def set_latest_start_time(self, latest_start_time: datetime):
         """
@@ -233,7 +221,7 @@ class DatabaseWorker:
         Args:
             latest_start_time: The latest start time of this worker.
         """
-        self.worker_info.latest_start_time = latest_start_time
+        self.entity_info.latest_start_time = latest_start_time
         self.save()
     
     def get_host(self) -> str:
@@ -244,7 +232,7 @@ class DatabaseWorker:
             The name of the host that this worker is running on.
         """
         self.reload_data()
-        return self.worker_info.host
+        return self.entity_info.host
     
     def set_host(self, host: str):
         """
@@ -253,7 +241,7 @@ class DatabaseWorker:
         Args:
             host: The name of the host that this worker is now running on
         """
-        self.worker_info.host = host
+        self.entity_info.host = host
         self.save()
 
     def get_restart_count(self) -> int:
@@ -264,30 +252,20 @@ class DatabaseWorker:
             The number of times that this worker has been restarted.
         """
         self.reload_data()
-        return self.worker_info.restart_count
+        return self.entity_info.restart_count
     
     def increment_restart_count(self):
         """
         Add another restart to the restart count.
         """
-        self.worker_info.restart_count = self.get_restart_count() + 1
+        self.entity_info.restart_count = self.get_restart_count() + 1
         self.save()
-    
-    def get_additional_data(self) -> Dict:
-        """
-        Get any additional data saved to this study.
-
-        Returns:
-            Additional data saved to this study.
-        """
-        self.reload_data()
-        return self.worker_info.additional_data
     
     def save(self):
         """
         Save the current state of this worker to the database.
         """
-        self.backend.save_worker(self.worker_info)
+        self.backend.save_worker(self.entity_info)
 
     @classmethod
     def load(cls, worker_id: str, backend: ResultsBackend) -> "DatabaseWorker":
@@ -301,11 +279,11 @@ class DatabaseWorker:
         Returns:
             A `DatabaseWorker` instance.
         """
-        worker_info = backend.retrieve_worker(worker_id)
-        if not worker_info:
+        entity_info = backend.retrieve_worker(worker_id)
+        if not entity_info:
             raise WorkerNotFoundError(f"Worker with ID {worker_id} not found in the database.")
 
-        return cls(worker_info, backend)
+        return cls(entity_info, backend)
     
     @classmethod
     def load_by_name(cls, worker_name: str, backend: ResultsBackend) -> "DatabaseWorker":
@@ -322,11 +300,11 @@ class DatabaseWorker:
         Raises:
             WorkerNotFoundError: If no worker with the given name is found in the database.
         """
-        worker_info = backend.retrieve_worker_by_name(worker_name)
-        if not worker_info:
+        entity_info = backend.retrieve_worker_by_name(worker_name)
+        if not entity_info:
             raise WorkerNotFoundError(f"Worker with name '{worker_name}' not found in the database.")
 
-        return cls(worker_info, backend)
+        return cls(entity_info, backend)
     
     @classmethod
     def delete(cls, worker_id: str, backend: ResultsBackend):

@@ -7,6 +7,7 @@ import logging
 from typing import Dict, List
 
 from merlin.backends.results_backend import ResultsBackend
+from merlin.db_scripts.db_entity import DatabaseEntity
 from merlin.db_scripts.data_models import RunModel, StudyModel
 from merlin.db_scripts.db_run import DatabaseRun
 from merlin.exceptions import StudyNotFoundError
@@ -15,7 +16,7 @@ from merlin.exceptions import StudyNotFoundError
 LOG = logging.getLogger("merlin")
 
 
-class DatabaseStudy:
+class DatabaseStudy(DatabaseEntity):
     """
     A class representing a study in the database.
 
@@ -24,7 +25,7 @@ class DatabaseStudy:
     or deleting the study itself from the database.
 
     Attributes:
-        study_info: An instance of the `StudyModel` class containing the study's metadata.
+        entity_info: An instance of the `StudyModel` class containing the study's metadata.
         backend: An instance of the `ResultsBackend` class used to interact
             with the database.
 
@@ -65,10 +66,6 @@ class DatabaseStudy:
         delete (classmethod):
             Delete a study from the database by its name. Optionally, remove all associated runs.
     """
-
-    def __init__(self, study_info: StudyModel, backend: ResultsBackend):
-        self.study_info: StudyModel = study_info
-        self.backend: ResultsBackend = backend
 
     def __repr__(self) -> str:
         """
@@ -111,19 +108,10 @@ class DatabaseStudy:
         [`StudyModel`][merlin.db_scripts.db_formats.StudyModel] object.
         """
         study_name = self.get_name()
-        updated_study_info = self.backend.retrieve_study(study_name)
-        if not updated_study_info:
+        updated_entity_info = self.backend.retrieve_study(study_name)
+        if not updated_entity_info:
             raise StudyNotFoundError(f"Study with name {study_name} not found in the database.")
-        self.study_info = updated_study_info
-
-    def get_id(self) -> str:
-        """
-        Get the ID for this study.
-
-        Returns:
-            The ID for this study.
-        """
-        return self.study_info.id
+        self.entity_info = updated_entity_info
 
     def get_name(self) -> str:
         """
@@ -132,17 +120,7 @@ class DatabaseStudy:
         Returns:
             The name for this study.
         """
-        return self.study_info.name
-
-    def get_additional_data(self) -> Dict:
-        """
-        Get any additional data saved to this study.
-
-        Returns:
-            Additional data saved to this study.
-        """
-        self.reload_data()
-        return self.study_info.additional_data
+        return self.entity_info.name
 
     def create_run(self, *args, **kwargs) -> DatabaseRun:  # pylint: disable=unused-argument
         """
@@ -178,7 +156,7 @@ class DatabaseStudy:
         db_run.save()
 
         # Add the run ID to the study's list of runs
-        self.study_info.runs.append(new_run.id)
+        self.entity_info.runs.append(new_run.id)
         self.save()  # Save the updated study to the backend
 
         return db_run
@@ -204,7 +182,7 @@ class DatabaseStudy:
             A list of [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instances.
         """
         self.reload_data()
-        return [self.get_run(run_id) for run_id in self.study_info.runs]
+        return [self.get_run(run_id) for run_id in self.entity_info.runs]
 
     def delete_run(self, run_id: str):
         """
@@ -214,21 +192,21 @@ class DatabaseStudy:
             run_id: The ID of the run to remove.
         """
         DatabaseRun.delete(run_id, self.backend)
-        self.study_info.runs.remove(run_id)
+        self.entity_info.runs.remove(run_id)
         self.save()
 
     def delete_all_runs(self):
         """
         Remove every run associated with this study.
         """
-        for run_id in self.study_info.runs:
+        for run_id in self.entity_info.runs:
             self.delete_run(run_id)
 
     def save(self):
         """
         Save the current state of this study to the database.
         """
-        self.backend.save_study(self.study_info)
+        self.backend.save_study(self.entity_info)
 
     @classmethod
     def load(cls, study_name: str, backend: ResultsBackend) -> "DatabaseStudy":
@@ -245,11 +223,11 @@ class DatabaseStudy:
         Raises:
             ValueError: If the study can't be retrieved from the database.
         """
-        study_info = backend.retrieve_study(study_name)
-        if study_info is None:
+        entity_info = backend.retrieve_study(study_name)
+        if entity_info is None:
             raise StudyNotFoundError(f"Study with name '{study_name}' not found in the database.")
 
-        return cls(study_info, backend)
+        return cls(entity_info, backend)
 
     @classmethod
     def delete(cls, study_name: str, backend: ResultsBackend, remove_associated_runs: bool = True):
