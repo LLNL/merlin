@@ -56,15 +56,7 @@ def database_info():
 
     print()
 
-# TODO
-# - clean up this function
-# - do we want to enforce every ResultsBackend instantiation to have retrieve_worker and retrieve_worker_by_name?
-#   - maybe we can just condense this to `retrieve_worker` and then the instantiated classes can handle the rest under the hood?
-# - add functionality to delete runs so you can delete runs by workspace
-# - add functionality to delete studies so you can delete studies by ID
-# - add worker monitor functionality to the monitor class
-# - figure out what to do with worker IDs in run entries
-# - add docstrings to all of the new methods across all files (see files_changed_march_24)
+
 def database_get(args: Namespace):
     """
     Handles the delegation of get operations to Merlin's database.
@@ -74,7 +66,7 @@ def database_get(args: Namespace):
     """
     merlin_db = MerlinDatabase()
 
-    def get_by_uuid_or_name(get_by_uuid: Callable, get_by_name: Callable, identifiers: List[str]):
+    def get_by_uuid_or_name(get_by_uuid: Callable, get_by_name: Callable, identifiers: List[str]) -> List[DatabaseEntity]:
         """
         Attempts to retrieve items using UUIDs first, and falls back to retrieving by names if the
         UUIDs are invalid.
@@ -146,38 +138,37 @@ def database_delete(args: Namespace):
     """
     merlin_db = MerlinDatabase()
 
-    if args.delete_type == "study":
-        # try:
-        #     uuid.UUID(args.study)
-        #     merlin_db.delete_study(args.study, (not args.keep_associated_runs))
-        # except ValueError:
-        #      # If it's not a valid UUID, assume it's a worker name
-        #     merlin_db.delete_study_by_name(args.study, remove_associated_runs=(not args.keep_associated_runs))
+    def delete_by_uuid_or_name(delete_by_uuid: Callable, delete_by_name: Callable, identifiers: List[str]):
+        """
+        Attempts to retrieve items using UUIDs first, and falls back to retrieving by names if the
+        UUIDs are invalid.
 
-        merlin_db.delete_study_by_name(args.study, remove_associated_runs=(not args.keep_associated_runs))
-    elif args.delete_type == "all-studies":
-        merlin_db.delete_all_studies(remove_associated_runs=(not args.keep_associated_runs))
-    elif args.delete_type == "run":
-        # try:
-        #     uuid.UUID(args.run)
-        #     merlin_db.delete_run(args.run)
-        # except ValueError:
-        #      # If it's not a valid UUID, assume it's a worker name
-        #     merlin_db.delete_run_by_workspace(args.run)
+        Args:
+            delete_by_uuid: Function to delete items using UUIDs.
+            delete_by_name: Function to delete items using names.
+            identifiers: List of identifiers to delete (either UUIDs or names).
+        """
+        for identifier in identifiers:
+            try:
+                uuid.UUID(identifier)
+                delete_by_uuid(identifier)
+            except ValueError:
+                delete_by_name(identifier)
 
-        merlin_db.delete_run(args.run)
-    elif args.delete_type == "all-runs":
-        merlin_db.delete_all_runs()
-    elif args.delete_type == "worker":
-        try:
-            uuid.UUID(args.worker)
-            merlin_db.delete_worker(args.worker)
-        except ValueError:
-             # If it's not a valid UUID, assume it's a worker name
-            merlin_db.delete_worker_by_name(args.worker)
-    elif args.delete_type == "all-workers":
-        merlin_db.delete_all_workers()
-    # elif args.delete_type == "everything":
-    #     # TODO implement this logic
+    # Dispatch table for get operations
+    operations = {
+        "study": lambda: delete_by_uuid_or_name(merlin_db.delete_study, merlin_db.delete_study_by_name, args.study),
+        "run": lambda: delete_by_uuid_or_name(merlin_db.delete_run, merlin_db.delete_run_by_workspace, args.run),
+        "worker": lambda: delete_by_uuid_or_name(merlin_db.delete_worker, merlin_db.delete_worker_by_name, args.worker),
+        "all-studies": lambda: merlin_db.delete_all_studies(),
+        "all-runs": lambda: merlin_db.delete_all_runs(),
+        "all-workers": lambda: merlin_db.delete_all_workers(),
+        # TODO need an operation to flush the entire database
+    }
+
+    # Execute the appropriate operation or log an error
+    operation = operations.get(args.delete_type)
+    if operation:
+        operation()
     else:
         LOG.error("No valid delete option provided.")

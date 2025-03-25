@@ -861,32 +861,33 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Subcommand: delete study
     delete_study = delete_subcommands.add_parser(
         "study",
-        help="Delete a specific study by name.",
+        help="Delete one or more studies by ID or name.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     delete_study.add_argument(
         "study",
         type=str,
-        help="The name of the study to delete.",
+        nargs="+",
+        help="A space-delimited list of IDs or names of studies to delete.",
     )
     delete_study.add_argument(
         "-k",
         "--keep-associated-runs",
         action="store_true",
-        help="Keep runs associated with the study.",
+        help="Keep runs associated with the studies.",
     )
 
-    # TODO enable support for deletion of run by workspace or ID
     # Subcommand: delete run
     delete_run = delete_subcommands.add_parser(
         "run",
-        help="Delete a specific run by ID.",
+        help="Delete one or more runs by ID or workspace.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     delete_run.add_argument(
         "run",
         type=str,
-        help="The ID of the run to delete.",
+        nargs="+",
+        help="A space-delimited list of IDs or workspaces of runs to delete.",
     )
     # TODO implement the below option; this removes the output workspace from file system
     # delete_run.add_argument(
@@ -898,13 +899,14 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Subcommand: delete worker
     delete_worker = delete_subcommands.add_parser(
         "worker",
-        help="Delete a specific worker by ID or name.",
+        help="Delete one or more workers by ID or name.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     delete_worker.add_argument(
         "worker",
         type=str,
-        help="The ID or name of the worker to delete.",
+        nargs="+",
+        help="A space-delimited list of IDs or names of workers to delete.",
     )
 
     # Subcommand: delete all-studies

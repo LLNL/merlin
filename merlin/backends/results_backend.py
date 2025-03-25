@@ -81,7 +81,19 @@ class ResultsBackend(ABC):
         """
 
     @abstractmethod
-    def retrieve_study(self, study_name: str) -> StudyModel:
+    def retrieve_study(self, study_id: str) -> StudyModel:
+        """
+        Given a study's id, retrieve it from the backend database.
+
+        Args:
+            study_id: The id of the study to retrieve.
+
+        Returns:
+            A [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] instance.
+        """
+
+    @abstractmethod
+    def retrieve_study_by_name(self, study_name: str) -> StudyModel:
         """
         Given a study's name, retrieve it from the backend database.
 

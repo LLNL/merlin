@@ -311,20 +311,20 @@ class RedisBackend(ResultsBackend):
         LOG.info(f"Successfully retrieved {len(all_studies)} studies from Redis.")
         return all_studies
 
-    def delete_study(self, study_name: str, remove_associated_runs: bool = True):
+    def delete_study(self, study_id: str, remove_associated_runs: bool = True):
         """
-        Given the name of the study, find it in the database and remove that entry.
+        Given the id of the study, find it in the database and remove that entry.
 
         Args:
-            study_name: The name of the study to remove from the database.
+            study_id: The id of the study to remove from the database.
             remove_associated_runs: If true, remove the runs associated with this study.
         """
-        LOG.info(f"Attempting to delete study '{study_name}' from Redis...")
+        LOG.info(f"Attempting to delete study with id '{study_id}' from Redis...")
 
         # Retrieve the study using the retrieve_study method
-        study = self.retrieve_study(study_name)
+        study = self.retrieve_study(study_id)
         if study is None:
-            raise ValueError(f"Study with name '{study_name}' does not exist in the database.")
+            raise ValueError(f"Study with id '{study_id}' does not exist in the database.")
 
         # Delete all associated runs
         if remove_associated_runs:
@@ -332,15 +332,15 @@ class RedisBackend(ResultsBackend):
                 self.delete_run(run_id)  # Use the existing delete_run method
 
         # Delete the study's hash entry
-        study_key = f"study:{study.id}"
+        study_key = f"study:{study_id}"
         LOG.info(f"Deleting study hash with key '{study_key}'...")
         self.client.delete(study_key)
 
         # Remove the study's name-to-ID mapping
-        LOG.info(f"Removing study name-to-ID mapping for '{study_name}'...")
-        self.client.hdel("study:name", study_name)
+        LOG.info(f"Removing study name-to-ID mapping for '{study.name}'...")
+        self.client.hdel("study:name", study.name)
 
-        LOG.info(f"Successfully deleted study '{study_name}' and all associated data from Redis.")
+        LOG.info(f"Successfully deleted study with id '{study_id}' and all associated data from Redis.")
 
     def save_run(self, run: RunModel):
         """
@@ -547,26 +547,3 @@ class RedisBackend(ResultsBackend):
         self.client.delete(f"worker:{worker.id}")
 
         LOG.info(f"Successfully deleted worker with ID '{worker_id}'.")
-
-    def delete_worker_by_name(self, worker_name: str):
-        """
-        Delete a worker from the backend database by its name.
-
-        Args:
-            worker_name: The name of the worker to delete.
-
-        Raises:
-            WorkerNotFoundError: If no worker with the given name is found.
-        """
-        LOG.info(f"Attempting to delete worker with name '{worker_name}' from Redis...")
-        
-        # Retrieve the worker to ensure it exists and get its ID
-        worker = self.retrieve_worker_by_name(worker_name)
-        if worker is None:
-            raise WorkerNotFoundError(f"Worker with name '{worker_name}' not found in the database.")
-
-        # Delete the worker from the name index and Redis
-        self.client.hdel("worker:name", worker.name)
-        self.client.delete(f"worker:{worker.id}")
-
-        LOG.info(f"Successfully deleted worker with name '{worker_name}'.")

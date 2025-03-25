@@ -251,17 +251,17 @@ class DatabaseStudy(DatabaseEntity):
         return cls(entity_info, backend)
 
     @classmethod
-    def delete(cls, study_name: str, backend: ResultsBackend, remove_associated_runs: bool = True):
+    def delete(cls, study_id: str, backend: ResultsBackend, remove_associated_runs: bool = True):
         """
-        Delete a study from the database.
+        Delete a study from the database by id.
 
         By default, this will remove all of the runs associated with the study from the database.
 
         Args:
-            study_name: The name of the study to delete.
+            study_id: The name of the study to delete.
             backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
             remove_associated_runs: If True, remove all of the runs associated with this study from the db.
         """
-        LOG.info(f"Deleting study '{study_name}' from the database...")
-        backend.delete_study(study_name, remove_associated_runs=remove_associated_runs)
-        LOG.info(f"Study '{study_name}' has been successfully deleted.")
+        LOG.info(f"Deleting study with id '{study_id}' from the database...")
+        backend.delete_study(study_id, remove_associated_runs=remove_associated_runs)
+        LOG.info(f"Study '{study_id}' has been successfully deleted.")

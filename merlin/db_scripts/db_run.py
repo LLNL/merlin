@@ -269,21 +269,6 @@ class DatabaseRun(DatabaseEntity):
             raise RunNotFoundError(f"Run with ID {run_id} not found in the database.")
 
         return cls(entity_info, backend)
-    
-    @classmethod
-    def load_by_workspace(cls, run_workspace: str, backend: ResultsBackend) -> "DatabaseRun":
-        """
-        Load a run from the database by workspace.
-
-        Args:
-            run_workspace: The workspace of the run to load.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
-
-        Returns:
-            A `DatabaseRun` instance.
-        """
-        metadata_file = os.path.join(run_workspace, "merlin_info", "run_metadata.json")
-        return cls.load_from_metadata_file(metadata_file, backend)
 
     @classmethod
     def load_from_metadata_file(cls, metadata_file: str, backend: ResultsBackend) -> "DatabaseRun":
@@ -302,7 +287,7 @@ class DatabaseRun(DatabaseEntity):
     @classmethod
     def delete(cls, run_id: str, backend: ResultsBackend):
         """
-        Delete a run from the database.
+        Delete a run from the database by id.
 
         Args:
             run_id: The ID of the run to delete.

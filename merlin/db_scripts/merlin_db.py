@@ -150,17 +150,17 @@ class MerlinDatabase:
             return []
         return [DatabaseStudy(study, self.backend) for study in all_studies]
 
-    # def delete_study(self, study_id: str, remove_associated_runs: bool = True):
-    #     """
-    #     Given a study id, remove the associated study from the database. As a consequence
-    #     of this action, any runs associated with this study will also be removed, unless
-    #     `remove_associated_runs` is set to `False`.
+    def delete_study(self, study_id: str, remove_associated_runs: bool = True):
+        """
+        Given a study id, remove the associated study from the database. As a consequence
+        of this action, any runs associated with this study will also be removed, unless
+        `remove_associated_runs` is set to `False`.
 
-    #     Args:
-    #         study_id: The id of the study to remove.
-    #         remove_associated_runs: If True, remove all runs associated with the study.
-    #     """
-    #     DatabaseStudy.delete(study_id, self.backend, remove_associated_runs=remove_associated_runs)
+        Args:
+            study_id: The id of the study to remove.
+            remove_associated_runs: If True, remove all runs associated with the study.
+        """
+        DatabaseStudy.delete(study_id, self.backend, remove_associated_runs=remove_associated_runs)
 
     def delete_study_by_name(self, study_name: str, remove_associated_runs: bool = True):
         """
@@ -172,7 +172,8 @@ class MerlinDatabase:
             study_name: The name of the study to remove.
             remove_associated_runs: If True, remove all runs associated with the study.
         """
-        DatabaseStudy.delete(study_name, self.backend, remove_associated_runs=remove_associated_runs)
+        study = self.get_study_by_name(study_name)
+        self.delete_study(study.get_id(), remove_associated_runs=remove_associated_runs)
 
     def delete_all_studies(self, remove_associated_runs: bool = True):
         """
@@ -182,11 +183,14 @@ class MerlinDatabase:
             remove_associated_runs: If True, remove all runs associated with every study we delete.
                 Essentially removes all runs as well as all studies.
         """
-        all_studies = self.backend.retrieve_all_studies()
-        # TODO should display studies to user and ask them if it's still ok to delete them
-        # - can add a -f flag to ignore this prompt (like purge)
-        for study in all_studies:
-            self.delete_study(study.name, remove_associated_runs=remove_associated_runs)
+        all_studies = self.get_all_studies()
+        if all_studies:
+            # TODO should display studies to user and ask them if it's still ok to delete them
+            # - can add a -f flag to ignore this prompt (like purge)
+            for study in all_studies:
+                self.delete_study(study.get_id(), remove_associated_runs=remove_associated_runs)
+        else:
+            LOG.warning("No studies found in the database.")
 
     def create_run(self, study_name: str, workspace: str, queues: List[str], *args, **kwargs) -> DatabaseRun:
         """
@@ -220,21 +224,8 @@ class MerlinDatabase:
                 the run that was queried.
         """
         return DatabaseRun.load(run_id, self.backend)
-    
+
     def get_run_by_workspace(self, workspace: str) -> DatabaseRun:
-        """
-        Given a run workspace, retrieve the associated run from the database.
-
-        Args:
-            run_workspace: The workspace of the run to retrieve.
-
-        Returns:
-            A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
-                the run that was queried.
-        """
-        return DatabaseRun.load_by_workspace(workspace, self.backend)
-
-    def get_run_from_workspace(self, workspace: str) -> DatabaseRun:
         """
         Given an output workspace for a run, find the run metadata file and load
         the run from it.
@@ -270,15 +261,28 @@ class MerlinDatabase:
         """
         DatabaseRun.delete(run_id, self.backend)
 
+    def delete_run_by_workspace(self, run_workspace: str):
+        """
+        Given a run workspace, remove the associated run from the database.
+
+        Args:
+            run_workspace: The workspace of the run to remove.
+        """
+        run = self.get_run_by_workspace(run_workspace)
+        self.delete_run(run.get_id())
+
     def delete_all_runs(self):
         """
         Remove every run in the database.
         """
-        all_runs = self.backend.retrieve_all_runs()
-        # TODO should display runs to user and ask them if it's still ok to delete them
-        # - can add a -f flag to ignore this prompt (like purge)
-        for run in all_runs:
-            self.delete_run(run.id)
+        all_runs = self.get_all_runs()
+        if all_runs:
+            # TODO should display runs to user and ask them if it's still ok to delete them
+            # - can add a -f flag to ignore this prompt (like purge)
+            for run in all_runs:
+                self.delete_run(run.get_id())
+        else:
+            LOG.warning("No runs found in the database.")
 
     def create_worker(self, name: str) -> DatabaseWorker:
         """
@@ -357,7 +361,7 @@ class MerlinDatabase:
             worker_name: The name of the worker to remove.
         """
         worker = self.get_worker_by_name(worker_name)
-        DatabaseWorker.delete(worker.get_id(), self.backend)
+        self.delete_worker(worker.get_id())
 
     def delete_all_workers(self):
         """
@@ -365,6 +369,9 @@ class MerlinDatabase:
         """
         # TODO how do we want to handle this in runs? do we delete those entries as well?
         # - if so will we need a 'runs' entry in WorkerModel?
-        all_workers = self.backend.retrieve_all_workers()
-        for worker in all_workers:
-            self.delete_worker(worker.id)
+        all_workers = self.get_all_workers()
+        if all_workers:
+            for worker in all_workers:
+                self.delete_worker(worker.get_id())
+        else:
+            LOG.warning("No workers found in the database.")
