@@ -1,14 +1,19 @@
 """
-This module contains the functionality necessary to interact with studies
-stored in Merlin's database.
+Module for managing database entities related to studies.
+
+This module provides functionality for interacting with studies stored in a database, 
+including creating, retrieving, updating, and deleting studies and their associated runs. 
+It defines the `DatabaseStudy` class, which extends the abstract base class
+[`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity], to encapsulate study-specific
+operations and behaviors.
 """
 
 import logging
-from typing import Dict, List
+from typing import List
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.db_entity import DatabaseEntity
-from merlin.db_scripts.data_models import RunModel, StudyModel
+from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.db_run import DatabaseRun
 from merlin.exceptions import StudyNotFoundError
 
@@ -25,22 +30,31 @@ class DatabaseStudy(DatabaseEntity):
     or deleting the study itself from the database.
 
     Attributes:
-        entity_info: An instance of the `StudyModel` class containing the study's metadata.
-        backend: An instance of the `ResultsBackend` class used to interact
-            with the database.
+        entity_info (db_scripts.data_models.StudyModel): An instance of the `StudyModel`
+            class containing the study's metadata.
+        backend (backends.results_backend.ResultsBackend): An instance of the `ResultsBackend`
+            class used to interact with the database.
 
     Methods:
-        __str__:
+        __repr__:
             Provide a string representation of the `DatabaseStudy` instance.
 
+        __str__:
+            Provide a human-readable string representation of the `DatabaseStudy` instance.
+
+        reload_data:
+            Reload the latest data for this study from the database.
+
         get_id:
-            Retrieve the unique ID of the study.
+            Retrieve the unique ID of the study. _Implementation found in
+                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+
+        get_additional_data:
+            Retrieve any additional metadata associated with the study. _Implementation found in
+                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
 
         get_name:
             Retrieve the name of the study.
-
-        get_additional_data:
-            Retrieve any additional metadata associated with the study.
 
         create_run:
             Create a new run for this study and save it to the database.
@@ -60,11 +74,14 @@ class DatabaseStudy(DatabaseEntity):
         save:
             Save the current state of the study to the database.
 
-        load (classmethod):
-            Load a `DatabaseStudy` instance from the database by its name.
+        load:
+            (classmethod) Load a `DatabaseStudy` instance from the database by its ID.
 
-        delete (classmethod):
-            Delete a study from the database by its name. Optionally, remove all associated runs.
+        load_by_name:
+            (classmethod) Load a `DatabaseStudy` instance from the database by its name.
+
+        delete:
+            (classmethod) Delete a study from the database by its ID. Optionally, remove all associated runs.
     """
 
     def __repr__(self) -> str:
@@ -105,7 +122,11 @@ class DatabaseStudy(DatabaseEntity):
     def reload_data(self):
         """
         Reload the latest data for this study from the database and update the
-        [`StudyModel`][merlin.db_scripts.db_formats.StudyModel] object.
+        [`StudyModel`][db_scripts.db_formats.StudyModel] object.
+
+        Raises:
+            (exceptions.StudyNotFoundError): If an entry for this study was not
+                found in the database.
         """
         study_id = self.get_id()
         updated_entity_info = self.backend.retrieve_study(study_id)
@@ -124,14 +145,14 @@ class DatabaseStudy(DatabaseEntity):
 
     def create_run(self, *args, **kwargs) -> DatabaseRun:  # pylint: disable=unused-argument
         """
-        Create a run for this study. This will create a [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun]
+        Create a run for this study. This will create a [`DatabaseRun`][db_scripts.db_run.DatabaseRun]
         instance and link it to this study.
 
         As a side effect of this method, a new run will be added to the database. Additionally,
         the current status of this study will updated to include this new run.
 
         Returns:
-            A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
+            A [`DatabaseRun`][db_scripts.db_run.DatabaseRun] instance representing
                 the run that was created.
         """
         # Get all valid fields for the RunModel dataclass
@@ -169,7 +190,7 @@ class DatabaseStudy(DatabaseEntity):
             run_id: The ID of the run to retrieve.
 
         Returns:
-            A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
+            A [`DatabaseRun`][db_scripts.db_run.DatabaseRun] instance representing
                 the run that was queried.
         """
         return DatabaseRun.load(run_id, self.backend)
@@ -179,7 +200,7 @@ class DatabaseStudy(DatabaseEntity):
         Get every run associated with this study.
 
         Returns:
-            A list of [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instances.
+            A list of [`DatabaseRun`][db_scripts.db_run.DatabaseRun] instances.
         """
         self.reload_data()
         return [self.get_run(run_id) for run_id in self.entity_info.runs]
@@ -215,13 +236,14 @@ class DatabaseStudy(DatabaseEntity):
 
         Args:
             study_id: The id of the study to load.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseStudy` instance.
 
         Raises:
-            ValueError: If the study can't be retrieved from the database.
+            (exceptions.StudyNotFoundError): If an entry for study with id `study_id` was not
+                found in the database.
         """
         entity_info = backend.retrieve_study(study_id)
         if entity_info is None:
@@ -236,13 +258,14 @@ class DatabaseStudy(DatabaseEntity):
 
         Args:
             study_name: The name of the study to load.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseStudy` instance.
 
         Raises:
-            ValueError: If the study can't be retrieved from the database.
+            (exceptions.StudyNotFoundError): If an entry for study with name `study_name` was
+                not found in the database.
         """
         entity_info = backend.retrieve_study_by_name(study_name)
         if entity_info is None:
@@ -259,7 +282,7 @@ class DatabaseStudy(DatabaseEntity):
 
         Args:
             study_id: The name of the study to delete.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
             remove_associated_runs: If True, remove all of the runs associated with this study from the db.
         """
         LOG.info(f"Deleting study with id '{study_id}' from the database...")

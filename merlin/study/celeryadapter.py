@@ -752,21 +752,24 @@ def verify_args(spec, worker_args, worker_name, overlap, disable_logs=False):
     return worker_args
 
 
-def launch_celery_worker(worker_cmd, worker_list, worker_args, queues, kwargs):
+def launch_celery_worker(worker_cmd: str, worker_list: List[str], worker_args: Dict, queues: List[str], kwargs: Dict):
     """
-    Using the worker launch command provided, launch a celery worker.
-    :param str worker_cmd:      The celery command to launch a worker
-    :param list worker_list:    A list of worker launch commands
-    :param dict kwargs:         A dictionary containing additional keyword args to provide
-                                to subprocess.Popen
+    Launch a Celery worker using the provided command and update its state in the database.
 
-    :side effect:               Launches a celery worker via a subprocess
+    This function uses the `subprocess.Popen` method to start a Celery worker process based on
+    the provided launch command. It also updates the worker's metadata in the database, including
+    its launch command, queues, arguments, status, process ID, and timestamps.
+
+    Args:
+        worker_cmd: The command used to launch the Celery worker.
+        worker_list: A list to which the worker's launch command will be appended.
+        worker_args: A dictionary of arguments for the worker.
+        queues: A list of task queues assigned to the worker.
+        kwargs: Additional keyword arguments to pass to `subprocess.Popen`, such as environment variables.
     """
     try:
         worker_proc = subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
         worker_list.append(worker_cmd)
-
-        print(f"queues: {queues}")
 
         # Grab the worker name from the launch command
         worker_cmd_list = worker_cmd.split()

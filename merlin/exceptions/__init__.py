@@ -114,7 +114,7 @@ class InvalidTaskServerError(Exception):
         super().__init__(message)
 
 
-class BackendNotSupportedException(Exception):
+class BackendNotSupportedError(Exception):
     """
     Exception to signal that the provided backend is not supported by Merlin.
     """

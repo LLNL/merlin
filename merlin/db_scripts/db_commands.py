@@ -140,7 +140,7 @@ def database_delete(args: Namespace):
 
     def delete_by_uuid_or_name(delete_by_uuid: Callable, delete_by_name: Callable, identifiers: List[str]):
         """
-        Attempts to retrieve items using UUIDs first, and falls back to retrieving by names if the
+        Attempts to delete items using UUIDs first, and falls back to deleting by names if the
         UUIDs are invalid.
 
         Args:

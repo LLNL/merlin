@@ -1,4 +1,10 @@
 """
+Module for managing database entities related to workers.
+
+This module provides functionality for interacting with workers stored in a database, 
+including creating, retrieving, updating, and deleting workers. It defines the `DatabaseWorker` 
+class, which extends the abstract base class [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity],
+to encapsulate worker-specific operations and behaviors.
 """
 import logging
 from datetime import datetime
@@ -6,7 +12,6 @@ from typing import Dict, List
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.common.abstracts.enums import WorkerStatus
-from merlin.db_scripts.data_models import WorkerModel
 from merlin.db_scripts.db_entity import DatabaseEntity
 from merlin.exceptions import WorkerNotFoundError
 
@@ -14,6 +19,104 @@ LOG = logging.getLogger("merlin")
 
 class DatabaseWorker(DatabaseEntity):
     """
+    A class representing a worker in the database.
+
+    This class provides methods to interact with and manage a worker's data, including
+    retrieving information about the worker, updating its state, and saving or deleting
+    it from the database.
+
+    Attributes:
+        entity_info (db_scripts.data_models.WorkerModel): An instance of the `WorkerModel`
+            class containing the worker's metadata.
+        backend (backends.results_backend.ResultsBackend): An instance of the `ResultsBackend`
+            class used to interact with the database.
+
+    Methods:
+        __repr__:
+            Provide a string representation of the `DatabaseWorker` instance.
+
+        __str__:
+            Provide a human-readable string representation of the `DatabaseWorker` instance.
+
+        reload_data:
+            Reload the latest data for this worker from the database.
+
+        get_id:
+            Retrieve the ID of the worker. _Implementation found in
+                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+
+        get_additional_data:
+            Retrieve any additional data saved to this worker. _Implementation found in
+                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
+
+        get_name:
+            Retrieve the name of this worker.
+
+        get_launch_cmd:
+            Retrieve the command used to launch this worker.
+
+        set_launch_cmd:
+            Update the launch command used to start this worker.
+
+        get_queues:
+            Retrieve the task queues assigned to this worker.
+
+        set_queues:
+            Update the queues this worker is watching.
+
+        get_args:
+            Retrieve the arguments for this worker.
+
+        set_args:
+            Update the arguments used by this worker.
+
+        get_pid:
+            Retrieve the process ID for this worker.
+
+        set_pid:
+            Update the process ID for this worker.
+
+        get_status:
+            Retrieve the status of this worker.
+
+        set_status:
+            Update the status of this worker.
+
+        get_heartbeat_timestamp:
+            Retrieve the last heartbeat timestamp of this worker.
+
+        set_heartbeat_timestamp:
+            Update the latest heartbeat timestamp of this worker.
+
+        get_latest_start_time:
+            Retrieve the time this worker was last started.
+
+        set_latest_start_time:
+            Update the latest start time of this worker.
+
+        get_host:
+            Retrieve the hostname where this worker is running.
+
+        set_host:
+            Update the hostname for this worker.
+
+        get_restart_count:
+            Retrieve the number of times this worker has been restarted.
+
+        increment_restart_count:
+            Increment the restart count for this worker.
+
+        save:
+            Save the current state of this worker to the database.
+
+        load:
+            (classmethod) Load a `DatabaseWorker` instance from the database by its ID.
+
+        load_by_name:
+            (classmethod) Load a `DatabaseWorker` instance from the database by its name.
+
+        delete:
+            (classmethod) Delete a worker from the database by its ID.
     """
 
     def __repr__(self) -> str:
@@ -67,7 +170,11 @@ class DatabaseWorker(DatabaseEntity):
     def reload_data(self):
         """
         Reload the latest data for this run from the database and update the
-        [`RunModel`][merlin.db_scripts.db_formats.RunModel] object.
+        [`RunModel`][db_scripts.db_formats.RunModel] object.
+
+        Raises:
+            (exceptions.WorkerNotFoundError): If an entry for this worker was
+                not found in the database.
         """
         worker_id = self.get_id()
         updated_entity_info = self.backend.retrieve_worker(worker_id)
@@ -274,10 +381,14 @@ class DatabaseWorker(DatabaseEntity):
 
         Args:
             worker_id: The ID of the worker to load.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseWorker` instance.
+
+        Raises:
+            (exceptions.WorkerNotFoundError): If an entry for worker with id `worker_id` was
+                not found in the database.
         """
         entity_info = backend.retrieve_worker(worker_id)
         if not entity_info:
@@ -292,13 +403,14 @@ class DatabaseWorker(DatabaseEntity):
 
         Args:
             worker_name: The name of the worker to load.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseWorker` instance.
 
         Raises:
-            WorkerNotFoundError: If no worker with the given name is found in the database.
+            (exceptions.WorkerNotFoundError): If no worker with the given name is found in
+                the database.
         """
         entity_info = backend.retrieve_worker_by_name(worker_name)
         if not entity_info:
@@ -313,7 +425,7 @@ class DatabaseWorker(DatabaseEntity):
 
         Args:
             worker_id: The ID of the worker to delete.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
         LOG.info(f"Deleting worker with id '{worker_id}' from the database...")
         backend.delete_worker(worker_id)

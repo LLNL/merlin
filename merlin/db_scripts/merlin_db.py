@@ -28,43 +28,67 @@ class MerlinDatabase:
     """
     A class that provides a high-level interface for interacting with database entities.
 
-    This class abstracts the interaction with different types of backend implementations
-    (e.g., Redis, SQLAlchemy) and provides methods to manage database entities.
+    This class abstracts the interaction with various database backends (e.g., Redis, SQLAlchemy)
+    and provides methods to manage database entities. It ensures that database operations are
+    consistent and centralized, allowing for the creation, retrieval, and deletion of entities.
 
     Attributes:
         backend: An instance of a backend class (e.g., RedisBackend, SQLAlchemyBackend) used
             to interact with the database.
 
     Methods:
-        create_study:
-            Create a new study in the database if it does not already exist.
+        General:\n
+            - [`get_db_type`][db_scripts.merlin_db.MerlinDatabase.get_db_type]: Retrieve the type
+                of the backend being used (e.g., Redis, SQL).
+            - [`get_db_version`][db_scripts.merlin_db.MerlinDatabase.get_db_version]: Retrieve the
+                version of the backend.
 
-        get_study:
-            Retrieve a specific study from the database by its name.
+        Study Management:\n
+            - [`create_study`][db_scripts.merlin_db.MerlinDatabase.create_study]: Create a new study
+                in the database if it does not already exist.
+            - [`get_study`][db_scripts.merlin_db.MerlinDatabase.get_study]: Retrieve a specific study
+                by its ID.
+            - [`get_study_by_name`][db_scripts.merlin_db.MerlinDatabase.get_study_by_name]: Retrieve
+                a specific study by its name.
+            - [`get_all_studies`][db_scripts.merlin_db.MerlinDatabase.get_all_studies]: Retrieve all
+                studies currently stored in the database.
+            - [`delete_study`][db_scripts.merlin_db.MerlinDatabase.delete_study]: Remove a specific
+                study by its ID, with an option to also remove associated runs.
+            - [`delete_study_by_name`][db_scripts.merlin_db.MerlinDatabase.delete_study_by_name]: Remove
+                a specific study by its name, with an option to also remove associated runs.
+            - [`delete_all_studies`][db_scripts.merlin_db.MerlinDatabase.delete_all_studies]: Remove
+                all studies from the database, with an option to also remove associated runs.
 
-        get_all_studies:
-            Retrieve all studies currently stored in the database.
+        Run Management:\n
+            - [`create_run`][db_scripts.merlin_db.MerlinDatabase.create_run]: Create a new run for a
+                study. If the study does not exist, it will be created first.
+            - [`get_run`][db_scripts.merlin_db.MerlinDatabase.get_run]: Retrieve a specific run by its ID.
+            - [`get_run_by_workspace`][db_scripts.merlin_db.MerlinDatabase.get_run_by_workspace]: Retrieve
+                a specific run by its workspace.
+            - [`get_all_runs`][db_scripts.merlin_db.MerlinDatabase.get_all_runs]: Retrieve all runs
+                currently stored in the database.
+            - [`delete_run`][db_scripts.merlin_db.MerlinDatabase.delete_run]: Remove a specific run by
+                its ID.
+            - [`delete_run_by_workspace`][db_scripts.merlin_db.MerlinDatabase.delete_run_by_workspace]:
+                Remove a specific run by its workspace.
+            - [`delete_all_runs`][db_scripts.merlin_db.MerlinDatabase.delete_all_runs]: Remove all runs
+                from the database.
 
-        delete_study:
-            Remove a specific study from the database by its name. Optionally, remove associated runs.
-
-        delete_all_studies:
-            Remove all studies from the database. Optionally, remove associated runs.
-
-        create_run:
-            Create a new run for a study. If the study does not exist, it will be created first.
-
-        get_run:
-            Retrieve a specific run from the database by its ID.
-
-        get_all_runs:
-            Retrieve all runs currently stored in the database.
-
-        delete_run:
-            Remove a specific run from the database by its ID.
-
-        delete_all_runs:
-            Remove all runs currently stored in the database.
+        Worker Management:\n
+            - [`create_worker`][db_scripts.merlin_db.MerlinDatabase.create_worker]: Create a new worker
+                in the database.
+            - [`get_worker`][db_scripts.merlin_db.MerlinDatabase.get_worker]: Retrieve a specific worker
+                by its ID.
+            - [`get_worker_by_name`][db_scripts.merlin_db.MerlinDatabase.get_worker_by_name]: Retrieve a
+                specific worker by its name.
+            - [`get_all_workers`][db_scripts.merlin_db.MerlinDatabase.get_all_workers]: Retrieve all workers
+                currently stored in the database.
+            - [`delete_worker`][db_scripts.merlin_db.MerlinDatabase.delete_worker]: Remove a specific worker
+                by its ID.
+            - [`delete_worker_by_name`][db_scripts.merlin_db.MerlinDatabase.delete_worker_by_name]: Remove
+                a specific worker by its name.
+            - [`delete_all_workers`][db_scripts.merlin_db.MerlinDatabase.delete_all_workers]: Remove all
+                workers from the database.
     """
 
     def __init__(self):

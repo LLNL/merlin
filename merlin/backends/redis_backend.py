@@ -34,30 +34,30 @@ class RedisBackend(ResultsBackend):
 
     Attributes:
         backend_name (str): The name of the backend (e.g., "redis").
-        client: The Redis client used for database operations.
+        client (Redis): The Redis client used for database operations.
 
     Methods:
         _create_data_class_entry:
-            Store a [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance
+            Store a [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance
             as a hash in the Redis database.
 
         _update_data_class_entry:
             Update an existing data class entry in the Redis database with new information.
 
         _serialize_data_class:
-            Convert a [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance
+            Convert a [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance
             into a format that Redis can interpret.
 
         _deserialize_data_class:
             Convert data retrieved from Redis into a
-            [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance.
+            [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
 
         save_study:
-            Save a [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] object to the Redis database.
+            Save a [`StudyModel`][db_scripts.data_models.StudyModel] object to the Redis database.
             If a study with the same name exists, it will update the existing entry.
 
         retrieve_study:
-            Retrieve a [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] object from the Redis
+            Retrieve a [`StudyModel`][db_scripts.data_models.StudyModel] object from the Redis
             database by its name.
 
         retrieve_all_studies:
@@ -67,11 +67,11 @@ class RedisBackend(ResultsBackend):
             Delete a study from the Redis database by its name. Optionally, remove all associated runs.
 
         save_run:
-            Save a [`RunModel`][merlin.db_scripts.data_formats.RunModel] object to the Redis database. If a run
+            Save a [`RunModel`][db_scripts.data_models.RunModel] object to the Redis database. If a run
             with the same ID exists, it will update the existing entry.
 
         retrieve_run:
-            Retrieve a [`RunModel`][merlin.db_scripts.data_formats.RunModel] object from the Redis database
+            Retrieve a [`RunModel`][db_scripts.data_models.RunModel] object from the Redis database
             by its ID.
 
         retrieve_all_runs:
@@ -95,11 +95,11 @@ class RedisBackend(ResultsBackend):
 
     def _serialize_data_class(self, data_class: BaseDataModel) -> Dict[str, str]:
         """
-        Given a [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance,
+        Given a [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance,
         convert it's data into a format that the Redis database can interpret.
 
         Args:
-            data_class: A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance.
+            data_class: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
 
         Returns:
             A dictionary of information that Redis can interpret.
@@ -127,10 +127,10 @@ class RedisBackend(ResultsBackend):
 
         Args:
             retrieval_data: The data retrieved by Redis that we need to deserialize.
-            data_class: A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] object.
+            data_class: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] object.
 
         Returns:
-            A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance.
+            A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
         """
         LOG.debug("Deserializing data from Redis...")
         deserialized_data = {}
@@ -170,11 +170,11 @@ class RedisBackend(ResultsBackend):
 
     def _create_data_class_entry(self, data_class: BaseDataModel, key: str):
         """
-        Given a [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance and
+        Given a [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance and
         a key, store the contents of the `data_class` as a hash at `key` in the Redis database.
 
         Args:
-            data_class: A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance.
+            data_class: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
             key: The location to store the contents of `data_class` in the Redis database.
         """
         serialized_data = self._serialize_data_class(data_class)
@@ -183,14 +183,14 @@ class RedisBackend(ResultsBackend):
     def _update_data_class_entry(self, updated_data_class: BaseDataModel, key: str):
         """
         Update an existing data class entry in the Redis database with new information.
-        A 'data class' here refers to classes defined in merlin.db_scripts.data_formats.
+        A 'data class' here refers to classes defined in merlin.db_scripts.data_models.
 
         This method retrieves the existing data of the data class we're updating from Redis, updates
         its fields with the new data provided in the `updated_data_class` object, and saves the updated
         data back to the database.
 
         Args:
-            updated_data_class: A [`BaseDataModel`][merlin.db_scripts.data_formats.BaseDataModel] instance
+            updated_data_class: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance
                 containing the updated information.
         """
         # Get the existing data from Redis and convert it to an instance of BaseDataModel
@@ -219,7 +219,7 @@ class RedisBackend(ResultsBackend):
         entry.
 
         Args:
-            study: A [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] instance.
+            study: A [`StudyModel`][db_scripts.data_models.StudyModel] instance.
         """
         existing_study_id = self.client.hget("study:name", study.name)
 
@@ -247,7 +247,7 @@ class RedisBackend(ResultsBackend):
             study_id: The name of the study to retrieve.
 
         Returns:
-            A [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] instance
+            A [`StudyModel`][db_scripts.data_models.StudyModel] instance
                 or None if the study does not yet exist in the database.
         """
         if not study_id.startswith("study:"):
@@ -267,7 +267,7 @@ class RedisBackend(ResultsBackend):
             study_name: The name of the study to retrieve.
 
         Returns:
-            A [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] instance
+            A [`StudyModel`][db_scripts.data_models.StudyModel] instance
                 or None if the study does not yet exist in the database.
         """
         study_id = self.client.hget("study:name", study_name)
@@ -283,7 +283,7 @@ class RedisBackend(ResultsBackend):
         Query the Redis database for every study that's currently stored.
 
         Returns:
-            A list of [`StudyModel`][merlin.db_scripts.data_formats.StudyModel] objects.
+            A list of [`StudyModel`][db_scripts.data_models.StudyModel] objects.
         """
         LOG.info("Retrieving all studies from Redis...")
 
@@ -347,7 +347,7 @@ class RedisBackend(ResultsBackend):
         Given a RunModel object, enter all of it's information to the backend database.
 
         Args:
-            run: A [`RunModel`][merlin.db_scripts.data_formats.RunModel] instance.
+            run: A [`RunModel`][db_scripts.data_models.RunModel] instance.
         """
         run_key = f"run:{run.id}"
         if self.client.exists(run_key):
@@ -378,7 +378,7 @@ class RedisBackend(ResultsBackend):
         Query the Redis database for every study that's currently stored.
 
         Returns:
-            A list of [`RunModel`][merlin.db_scripts.data_formats.RunModel] objects.
+            A list of [`RunModel`][db_scripts.data_models.RunModel] objects.
         """
         LOG.info("Fetching all runs from Redis...")
 
@@ -440,11 +440,11 @@ class RedisBackend(ResultsBackend):
     
     def save_worker(self, worker: WorkerModel):
         """
-        Given a [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] object, enter
+        Given a [`WorkerModel`][db_scripts.data_models.WorkerModel] object, enter
         all of it's information to the backend database.
 
         Args:
-            worker: A [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] instance.
+            worker: A [`WorkerModel`][db_scripts.data_models.WorkerModel] instance.
         """
         existing_worker_id = self.client.hget("worker:name", worker.name)
         worker_key = f"worker:{worker.id}"
@@ -466,7 +466,7 @@ class RedisBackend(ResultsBackend):
             worker_id: The ID of the worker to retrieve.
 
         Returns:
-            A [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] instance.
+            A [`WorkerModel`][db_scripts.data_models.WorkerModel] instance.
         """
         if not worker_id.startswith("worker:"):
             worker_id = f"worker:{worker_id}"
@@ -485,7 +485,7 @@ class RedisBackend(ResultsBackend):
             worker_name: The name of the worker to retrieve.
 
         Returns:
-            A [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] instance.
+            A [`WorkerModel`][db_scripts.data_models.WorkerModel] instance.
         """
         worker_id = self.client.hget("worker:name", worker_name)
         
@@ -500,7 +500,7 @@ class RedisBackend(ResultsBackend):
         Query the backend database for every worker that's currently stored.
 
         Returns:
-            A list of [`WorkerModel`][merlin.db_scripts.data_formats.WorkerModel] objects.
+            A list of [`WorkerModel`][db_scripts.data_models.WorkerModel] objects.
         """
         LOG.info("Retrieving all workers from Redis...")
 

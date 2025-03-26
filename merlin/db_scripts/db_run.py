@@ -1,11 +1,15 @@
 """
-This module contains the functionality necessary to interact with runs
-stored in Merlin's database.
+Module for managing database entities related to runs.
+
+This module provides functionality for interacting with runs stored in a database, 
+including creating, retrieving, updating, and deleting runs. It defines the `DatabaseRun` 
+class, which extends the abstract base class [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity],
+to encapsulate run-specific operations and behaviors.
 """
 
 import logging
 import os
-from typing import Dict, List
+from typing import List
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import RunModel
@@ -25,20 +29,35 @@ class DatabaseRun(DatabaseEntity):
     it from the database.
 
     Attributes:
-        entity_info: An instance of the `RunModel` class containing the run's metadata.
-        backend: An instance of the `ResultsBackend` class used to interact
-            with the database.
-        run_complete: Property to get or set the completion status of the run.
+        entity_info (db_scripts.data_models.RunModel): An instance of the `RunModel` class
+            containing the run's metadata.
+        backend (backends.results_backend.ResultsBackend): An instance of the `ResultsBackend`
+            class used to interact with the database.
+        run_complete (bool): A property to get or set the completion status of the run.
 
     Methods:
+        __repr__:
+            Provide a string representation of the `DatabaseRun` instance.
+
+        __str__:
+            Provide a human-readable string representation of the `DatabaseRun` instance.
+
+        reload_data:
+            Reload the latest data for this run from the database.
+
+        get_id:
+            Retrieve the ID of the run. _Implementation found in
+                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+
+        get_additional_data:
+            Retrieve any additional data saved to this run. _Implementation found in
+                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
+
         get_metadata_file:
             Retrieve the path to the metadata file for this run.
 
-        get_metadata_filepath (classmethod):
-            Retrieve the path to the metadata file for a given workspace.
-
-        get_id:
-            Retrieve the ID of the run.
+        get_metadata_filepath:
+            (classmethod) Retrieve the path to the metadata file for a given workspace.
 
         get_study_id:
             Retrieve the ID of the study associated with this run.
@@ -49,14 +68,14 @@ class DatabaseRun(DatabaseEntity):
         get_queues:
             Retrieve the task queues used for this run.
 
+        get_workers:
+            Retrieve the workers used for this run.
+
         get_parent:
             Retrieve the ID of the parent run that launched this run (if any).
 
         get_child:
             Retrieve the ID of the child run launched by this run (if any).
-
-        get_additional_data:
-            Retrieve any additional data saved to this run.
 
         save:
             Save the current state of the run to the database and dump its metadata.
@@ -64,17 +83,26 @@ class DatabaseRun(DatabaseEntity):
         dump_metadata:
             Dump all metadata for this run to a JSON file.
 
-        load (classmethod):
-            Load a `DatabaseRun` instance from the database by its ID.
+        load:
+            (classmethod) Load a `DatabaseRun` instance from the database by its ID.
 
-        load_from_metadata_file (classmethod):
-            Load a `DatabaseRun` instance from a metadata file.
+        load_from_metadata_file:
+            (classmethod) Load a `DatabaseRun` instance from a metadata file.
 
-        delete (classmethod):
-            Delete a run from the database by its ID.
+        delete:
+            (classmethod) Delete a run from the database by its ID.
     """
 
     def __init__(self, run_info: RunModel, backend: ResultsBackend):
+        """
+        Initialize a `DatabaseRun` instance.
+
+        Args:
+            run_info (db_scripts.data_models.RunModel): The data model containing
+                information about the run.
+            backend (backends.results_backend.ResultsBackend): The backend instance used to
+                interact with the database.
+        """
         super().__init__(run_info, backend)
         self._metadata_file = self.get_metadata_filepath(self.get_workspace())
 
@@ -123,7 +151,11 @@ class DatabaseRun(DatabaseEntity):
     def reload_data(self):
         """
         Reload the latest data for this run from the database and update the
-        [`RunModel`][merlin.db_scripts.db_formats.RunModel] object.
+        [`RunModel`][db_scripts.data_models.RunModel] object.
+
+        Raises:
+            (exceptions.RunNotFoundError): If an entry for this run was not found
+                in the database.
         """
         run_id = self.get_id()
         updated_entity_info = self.backend.retrieve_run(run_id)
@@ -167,7 +199,7 @@ class DatabaseRun(DatabaseEntity):
     def get_metadata_filepath(cls, workspace: str) -> str:
         """
         Get the path to the metadata file for a given workspace.
-        This is needed for the [`load_from_metadata_file`][merlin.db_scripts.db_run.DatabaseRun.load_from_metadata_file]
+        This is needed for the [`load_from_metadata_file`][db_scripts.db_run.DatabaseRun.load_from_metadata_file]
         method as it can't use the non-classmethod version of this method.
 
         Args:
@@ -259,10 +291,14 @@ class DatabaseRun(DatabaseEntity):
 
         Args:
             run_id: The ID of the run to load.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseRun` instance.
+
+        Raises:
+            (exceptions.RunNotFoundError): If an entry for run with id `run_id` was not found
+                in the database.
         """
         entity_info = backend.retrieve_run(run_id)
         if not entity_info:
@@ -277,7 +313,7 @@ class DatabaseRun(DatabaseEntity):
 
         Args:
             metadata_file: The path to the metadata file to load from.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseRun` instance.
@@ -291,7 +327,7 @@ class DatabaseRun(DatabaseEntity):
 
         Args:
             run_id: The ID of the run to delete.
-            backend: A [`ResultsBackend`][merlin.backends.results_backend.ResultsBackend] instance.
+            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
         LOG.info(f"Deleting run with id '{run_id}' from the database...")
         backend.delete_run(run_id)
