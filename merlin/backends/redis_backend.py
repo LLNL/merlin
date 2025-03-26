@@ -151,7 +151,7 @@ class RedisBackend(ResultsBackend):
 
         LOG.debug("Successfully deserialized data.")
         return data_class.from_dict(deserialized_data)
-    
+
     def _is_iso_datetime(self, value: str) -> bool:
         """
         Check if a string is in ISO 8601 datetime format.
@@ -258,7 +258,7 @@ class RedisBackend(ResultsBackend):
 
         data_from_redis = self.client.hgetall(study_id)
         return self._deserialize_data_class(data_from_redis, StudyModel)
-    
+
     def retrieve_study_by_name(self, study_name: str) -> StudyModel:
         """
         Given a study's name, retrieve it from the Redis database.
@@ -437,7 +437,7 @@ class RedisBackend(ResultsBackend):
         LOG.debug("Successfully removed run hash from Redis.")
 
         LOG.info(f"Successfully deleted run '{run_id}' and all associated data from Redis.")
-    
+
     def save_worker(self, worker: WorkerModel):
         """
         Given a [`WorkerModel`][db_scripts.data_models.WorkerModel] object, enter
@@ -476,7 +476,7 @@ class RedisBackend(ResultsBackend):
 
         data_from_redis = self.client.hgetall(worker_id)
         return self._deserialize_data_class(data_from_redis, WorkerModel)
-    
+
     def retrieve_worker_by_name(self, worker_name: str) -> WorkerModel:
         """
         Given a worker's name, retrieve it from the backend database.
@@ -488,7 +488,7 @@ class RedisBackend(ResultsBackend):
             A [`WorkerModel`][db_scripts.data_models.WorkerModel] instance.
         """
         worker_id = self.client.hget("worker:name", worker_name)
-        
+
         if worker_id is None:
             return None
 
@@ -536,12 +536,12 @@ class RedisBackend(ResultsBackend):
             worker_id: The id of the worker to delete.
         """
         LOG.info(f"Attempting to delete worker with id '{worker_id}' from Redis...")
-        
+
         # Retrieve the worker to ensure it exists and get its name
         worker = self.retrieve_worker(worker_id)
         if worker is None:
             raise WorkerNotFoundError(f"Worker with ID '{worker_id}' not found in the database.")
-        
+
         # Delete the worker from the name index and Redis
         self.client.hdel("worker:name", worker.name)
         self.client.delete(f"worker:{worker.id}")

@@ -106,15 +106,15 @@ def database_get(args: Namespace):
     operations = {
         "study": lambda: print_items(
             get_by_uuid_or_name(merlin_db.get_study, merlin_db.get_study_by_name, args.study),
-            "No studies found for the given identifiers."
+            "No studies found for the given identifiers.",
         ),
         "run": lambda: print_items(
             get_by_uuid_or_name(merlin_db.get_run, merlin_db.get_run_by_workspace, args.run),
-            "No runs found for the given identifiers."
+            "No runs found for the given identifiers.",
         ),
         "worker": lambda: print_items(
             get_by_uuid_or_name(merlin_db.get_worker, merlin_db.get_worker_by_name, args.worker),
-            "No workers found for the given identifiers."
+            "No workers found for the given identifiers.",
         ),
         "all-studies": lambda: print_items(merlin_db.get_all_studies(), "No studies found in the database."),
         "all-runs": lambda: print_items(merlin_db.get_all_runs(), "No runs found in the database."),
@@ -160,9 +160,9 @@ def database_delete(args: Namespace):
         "study": lambda: delete_by_uuid_or_name(merlin_db.delete_study, merlin_db.delete_study_by_name, args.study),
         "run": lambda: delete_by_uuid_or_name(merlin_db.delete_run, merlin_db.delete_run_by_workspace, args.run),
         "worker": lambda: delete_by_uuid_or_name(merlin_db.delete_worker, merlin_db.delete_worker_by_name, args.worker),
-        "all-studies": lambda: merlin_db.delete_all_studies(),
-        "all-runs": lambda: merlin_db.delete_all_runs(),
-        "all-workers": lambda: merlin_db.delete_all_workers(),
+        "all-studies": merlin_db.delete_all_studies,
+        "all-runs": merlin_db.delete_all_runs,
+        "all-workers": merlin_db.delete_all_workers,
         # TODO need an operation to flush the entire database
     }
 

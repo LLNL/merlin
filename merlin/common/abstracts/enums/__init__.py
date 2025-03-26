@@ -29,7 +29,7 @@
 ###############################################################################
 
 """Package for providing enumerations for interfaces"""
-from enum import IntEnum, StrEnum
+from enum import Enum, IntEnum
 
 
 __all__ = ("ReturnCode",)
@@ -50,10 +50,12 @@ class ReturnCode(IntEnum):
     STOP_WORKERS = 105
     RAISE_ERROR = 106
 
-class WorkerStatus(StrEnum):
+
+class WorkerStatus(Enum):
     """
     Status of Merlin workers.
     """
+
     RUNNING = "running"
     STALLED = "stalled"
     STOPPED = "stopped"

@@ -9,6 +9,7 @@ from merlin.backends.redis_backend import RedisBackend
 from merlin.backends.results_backend import ResultsBackend
 from merlin.exceptions import BackendNotSupportedError
 
+
 # TODO add register_backend call to this when we create task server interface?
 # TODO could this factory replace the functions in config/results_backend.py?
 # - Perhaps it should be a class outside of this?

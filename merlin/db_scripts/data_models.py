@@ -322,6 +322,7 @@ class WorkerModel(BaseDataModel):
         restart_count (int): The number of times this worker has been restarted.
         status (WorkerStatus): The current status of the worker (e.g., running, stopped).
     """
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
     name: str = None
     launch_cmd: str = None
@@ -342,7 +343,17 @@ class WorkerModel(BaseDataModel):
         Returns:
             A list of fields that are allowed to be updated in this class.
         """
-        return ["launch_cmd", "queues", "args", "pid", "status", "heartbeat_timestamp", "latest_start_time", "host", "restart_count"]
+        return [
+            "launch_cmd",
+            "queues",
+            "args",
+            "pid",
+            "status",
+            "heartbeat_timestamp",
+            "latest_start_time",
+            "host",
+            "restart_count",
+        ]
 
 
 # TODO create a StepInfo class to store information about a step

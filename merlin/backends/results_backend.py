@@ -135,12 +135,12 @@ class ResultsBackend(ABC):
         """
 
     @abstractmethod
-    def delete_study(self, study_name: str, remove_associated_runs: bool = True):
+    def delete_study(self, study_id: str, remove_associated_runs: bool = True):
         """
-        Given the name of the study, find it in the database and remove that entry.
+        Given the id of the study, find it in the database and remove that entry.
 
         Args:
-            study_name: The name of the study to remove from the database.
+            study_id: The id of the study to remove from the database.
             remove_associated_runs: If true, remove the runs associated with this study.
         """
 

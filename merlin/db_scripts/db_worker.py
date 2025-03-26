@@ -1,11 +1,12 @@
 """
 Module for managing database entities related to workers.
 
-This module provides functionality for interacting with workers stored in a database, 
-including creating, retrieving, updating, and deleting workers. It defines the `DatabaseWorker` 
+This module provides functionality for interacting with workers stored in a database,
+including creating, retrieving, updating, and deleting workers. It defines the `DatabaseWorker`
 class, which extends the abstract base class [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity],
 to encapsulate worker-specific operations and behaviors.
 """
+
 import logging
 from datetime import datetime
 from typing import Dict, List
@@ -15,7 +16,9 @@ from merlin.common.abstracts.enums import WorkerStatus
 from merlin.db_scripts.db_entity import DatabaseEntity
 from merlin.exceptions import WorkerNotFoundError
 
+
 LOG = logging.getLogger("merlin")
+
 
 class DatabaseWorker(DatabaseEntity):
     """
@@ -166,7 +169,7 @@ class DatabaseWorker(DatabaseEntity):
             f"Restart Count: {self.get_restart_count()}\n"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
-    
+
     def reload_data(self):
         """
         Reload the latest data for this run from the database and update the
@@ -190,7 +193,7 @@ class DatabaseWorker(DatabaseEntity):
             The name for this worker.
         """
         return self.entity_info.name
-    
+
     def get_launch_cmd(self) -> str:
         """
         Get the command used to launch this worker.
@@ -199,7 +202,7 @@ class DatabaseWorker(DatabaseEntity):
             The command used to launch this worker.
         """
         return self.entity_info.launch_cmd
-    
+
     def set_launch_cmd(self, launch_cmd: str):
         """
         Set the launch command used to start this worker.
@@ -209,7 +212,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.entity_info.launch_cmd = launch_cmd
         self.save()
-    
+
     def get_queues(self) -> List[str]:
         """
         Get the task queues that were assigned to this worker.
@@ -218,7 +221,7 @@ class DatabaseWorker(DatabaseEntity):
             A list of strings representing the queues that were assigned to this worker.
         """
         return self.entity_info.queues
-    
+
     def set_queues(self, queues: List[str]):
         """
         Set the queues that this worker is watching.
@@ -228,7 +231,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.entity_info.queues = queues
         self.save()
-    
+
     def get_args(self) -> Dict:
         """
         Get the arguments for this worker.
@@ -237,7 +240,7 @@ class DatabaseWorker(DatabaseEntity):
             A dictionary of arguments for this worker.
         """
         return self.entity_info.args
-    
+
     def set_args(self, args: str):
         """
         Set the arguments used by this worker.
@@ -247,7 +250,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.entity_info.args = args
         self.save()
-    
+
     def get_pid(self) -> str:
         """
         Get the process ID for this worker.
@@ -257,7 +260,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.reload_data()
         return self.entity_info.pid
-    
+
     def set_pid(self, pid: str):
         """
         Set the PID of this worker.
@@ -278,7 +281,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.reload_data()
         return self.entity_info.status
-    
+
     def set_status(self, status: WorkerStatus):
         """
         Set the status of this worker.
@@ -289,7 +292,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.entity_info.status = status
         self.save()
-    
+
     def get_heartbeat_timestamp(self) -> str:
         """
         Get the last heartbeat timestamp of this worker.
@@ -299,7 +302,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.reload_data()
         return self.entity_info.heartbeat_timestamp
-    
+
     def set_heartbeat_timestamp(self, heartbeat_timestamp: datetime):
         """
         Set the latest heartbeat timestamp of this worker.
@@ -309,7 +312,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.entity_info.heartbeat_timestamp = heartbeat_timestamp
         self.save()
-    
+
     def get_latest_start_time(self) -> datetime:
         """
         Get the time that this worker was last started.
@@ -319,7 +322,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.reload_data()
         return self.entity_info.latest_start_time
-    
+
     def set_latest_start_time(self, latest_start_time: datetime):
         """
         Set the latest start time of this worker. This will be set on worker
@@ -330,7 +333,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.entity_info.latest_start_time = latest_start_time
         self.save()
-    
+
     def get_host(self) -> str:
         """
         Get the hostname where this worker is running.
@@ -340,7 +343,7 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.reload_data()
         return self.entity_info.host
-    
+
     def set_host(self, host: str):
         """
         Set the host of this worker.
@@ -360,14 +363,14 @@ class DatabaseWorker(DatabaseEntity):
         """
         self.reload_data()
         return self.entity_info.restart_count
-    
+
     def increment_restart_count(self):
         """
         Add another restart to the restart count.
         """
         self.entity_info.restart_count = self.get_restart_count() + 1
         self.save()
-    
+
     def save(self):
         """
         Save the current state of this worker to the database.
@@ -375,27 +378,27 @@ class DatabaseWorker(DatabaseEntity):
         self.backend.save_worker(self.entity_info)
 
     @classmethod
-    def load(cls, worker_id: str, backend: ResultsBackend) -> "DatabaseWorker":
+    def load(cls, entity_id: str, backend: ResultsBackend) -> "DatabaseWorker":
         """
         Load a worker from the database by ID.
 
         Args:
-            worker_id: The ID of the worker to load.
+            entity_id: The ID of the worker to load.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseWorker` instance.
 
         Raises:
-            (exceptions.WorkerNotFoundError): If an entry for worker with id `worker_id` was
+            (exceptions.WorkerNotFoundError): If an entry for worker with id `entity_id` was
                 not found in the database.
         """
-        entity_info = backend.retrieve_worker(worker_id)
+        entity_info = backend.retrieve_worker(entity_id)
         if not entity_info:
-            raise WorkerNotFoundError(f"Worker with ID {worker_id} not found in the database.")
+            raise WorkerNotFoundError(f"Worker with ID {entity_id} not found in the database.")
 
         return cls(entity_info, backend)
-    
+
     @classmethod
     def load_by_name(cls, worker_name: str, backend: ResultsBackend) -> "DatabaseWorker":
         """
@@ -417,16 +420,16 @@ class DatabaseWorker(DatabaseEntity):
             raise WorkerNotFoundError(f"Worker with name '{worker_name}' not found in the database.")
 
         return cls(entity_info, backend)
-    
+
     @classmethod
-    def delete(cls, worker_id: str, backend: ResultsBackend):
+    def delete(cls, entity_id: str, backend: ResultsBackend):
         """
         Delete a worker from the database.
 
         Args:
-            worker_id: The ID of the worker to delete.
+            entity_id: The ID of the worker to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting worker with id '{worker_id}' from the database...")
-        backend.delete_worker(worker_id)
-        LOG.info(f"Worker with id '{worker_id}' has been successfully deleted.")
+        LOG.info(f"Deleting worker with id '{entity_id}' from the database...")
+        backend.delete_worker(entity_id)
+        LOG.info(f"Worker with id '{entity_id}' has been successfully deleted.")

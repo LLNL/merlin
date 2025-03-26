@@ -4,11 +4,10 @@ stored in Merlin's database.
 """
 
 import logging
-from typing import Dict, List
+from typing import List
 
 from merlin.backends.backend_factory import backend_factory
 from merlin.backends.results_backend import ResultsBackend
-from merlin.common.abstracts.enums import WorkerStatus
 from merlin.db_scripts.data_models import StudyModel, WorkerModel
 from merlin.db_scripts.db_run import DatabaseRun
 from merlin.db_scripts.db_study import DatabaseStudy
@@ -148,7 +147,7 @@ class MerlinDatabase:
                 the study that was queried.
         """
         return DatabaseStudy.load(study_id, self.backend)
-    
+
     def get_study_by_name(self, study_name: str) -> DatabaseRun:
         """
         Given a study name, retrieve the associated study from the database.
@@ -342,7 +341,7 @@ class MerlinDatabase:
                 the worker that was queried.
         """
         return DatabaseWorker.load(worker_id, self.backend)
-    
+
     def get_worker_by_name(self, worker_name: str) -> DatabaseWorker:
         """
         Given a worker name, retrieve the associated worker from the database.
@@ -355,7 +354,7 @@ class MerlinDatabase:
                 the worker that was queried.
         """
         return DatabaseWorker.load_by_name(worker_name, self.backend)
-    
+
     def get_all_workers(self) -> List[DatabaseWorker]:
         """
         Get every worker that's currently in the database.
@@ -367,7 +366,7 @@ class MerlinDatabase:
         if not all_workers:
             return []
         return [DatabaseWorker(worker, self.backend) for worker in all_workers]
-    
+
     def delete_worker(self, worker_id: str):
         """
         Given a worker id, remove the associated worker from the database.

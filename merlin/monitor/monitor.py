@@ -19,8 +19,8 @@ import traceback
 from kombu.exceptions import OperationalError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.db_scripts.db_run import DatabaseRun
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import RestartException
 from merlin.monitor.monitor_factory import monitor_factory
 from merlin.monitor.task_server_monitor import TaskServerMonitor

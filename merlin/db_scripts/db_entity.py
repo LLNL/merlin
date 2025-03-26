@@ -1,11 +1,11 @@
 """
-This module defines the `DatabaseEntity` abstract base class, which serves as a common interface 
-for interacting with database entities such as studies, runs, and workers. The `DatabaseEntity` 
-class provides a standardized structure for managing these entities, including methods for 
+This module defines the `DatabaseEntity` abstract base class, which serves as a common interface
+for interacting with database entities such as studies, runs, and workers. The `DatabaseEntity`
+class provides a standardized structure for managing these entities, including methods for
 saving, deleting, reloading, and retrieving additional metadata.
 
-Classes that inherit from `DatabaseEntity` must implement the abstract methods defined in the base 
-class, ensuring consistency across different types of database entities. This abstraction reduces 
+Classes that inherit from `DatabaseEntity` must implement the abstract methods defined in the base
+class, ensuring consistency across different types of database entities. This abstraction reduces
 code duplication and promotes maintainability by centralizing shared functionality.
 """
 

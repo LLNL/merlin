@@ -1,8 +1,8 @@
 """
 Module for managing database entities related to runs.
 
-This module provides functionality for interacting with runs stored in a database, 
-including creating, retrieving, updating, and deleting runs. It defines the `DatabaseRun` 
+This module provides functionality for interacting with runs stored in a database,
+including creating, retrieving, updating, and deleting runs. It defines the `DatabaseRun`
 class, which extends the abstract base class [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity],
 to encapsulate run-specific operations and behaviors.
 """
@@ -285,24 +285,24 @@ class DatabaseRun(DatabaseEntity):
         self.entity_info.dump_to_json_file(self.get_metadata_file())
 
     @classmethod
-    def load(cls, run_id: str, backend: ResultsBackend) -> "DatabaseRun":
+    def load(cls, entity_id: str, backend: ResultsBackend) -> "DatabaseRun":
         """
         Load a run from the database by id.
 
         Args:
-            run_id: The ID of the run to load.
+            entity_id: The ID of the run to load.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseRun` instance.
 
         Raises:
-            (exceptions.RunNotFoundError): If an entry for run with id `run_id` was not found
+            (exceptions.RunNotFoundError): If an entry for run with id `entity_id` was not found
                 in the database.
         """
-        entity_info = backend.retrieve_run(run_id)
+        entity_info = backend.retrieve_run(entity_id)
         if not entity_info:
-            raise RunNotFoundError(f"Run with ID {run_id} not found in the database.")
+            raise RunNotFoundError(f"Run with ID {entity_id} not found in the database.")
 
         return cls(entity_info, backend)
 
@@ -321,14 +321,14 @@ class DatabaseRun(DatabaseEntity):
         return cls(RunModel.load_from_json_file(metadata_file), backend)
 
     @classmethod
-    def delete(cls, run_id: str, backend: ResultsBackend):
+    def delete(cls, entity_id: str, backend: ResultsBackend):
         """
         Delete a run from the database by id.
 
         Args:
-            run_id: The ID of the run to delete.
+            entity_id: The ID of the run to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting run with id '{run_id}' from the database...")
-        backend.delete_run(run_id)
-        LOG.info(f"Run with id '{run_id}' has been successfully deleted.")
+        LOG.info(f"Deleting run with id '{entity_id}' from the database...")
+        backend.delete_run(entity_id)
+        LOG.info(f"Run with id '{entity_id}' has been successfully deleted.")

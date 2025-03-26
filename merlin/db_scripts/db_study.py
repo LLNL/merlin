@@ -1,8 +1,8 @@
 """
 Module for managing database entities related to studies.
 
-This module provides functionality for interacting with studies stored in a database, 
-including creating, retrieving, updating, and deleting studies and their associated runs. 
+This module provides functionality for interacting with studies stored in a database,
+including creating, retrieving, updating, and deleting studies and their associated runs.
 It defines the `DatabaseStudy` class, which extends the abstract base class
 [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity], to encapsulate study-specific
 operations and behaviors.
@@ -12,8 +12,8 @@ import logging
 from typing import List
 
 from merlin.backends.results_backend import ResultsBackend
-from merlin.db_scripts.db_entity import DatabaseEntity
 from merlin.db_scripts.data_models import RunModel
+from merlin.db_scripts.db_entity import DatabaseEntity
 from merlin.db_scripts.db_run import DatabaseRun
 from merlin.exceptions import StudyNotFoundError
 
@@ -230,27 +230,27 @@ class DatabaseStudy(DatabaseEntity):
         self.backend.save_study(self.entity_info)
 
     @classmethod
-    def load(cls, study_id: str, backend: ResultsBackend) -> "DatabaseStudy":
+    def load(cls, entity_id: str, backend: ResultsBackend) -> "DatabaseStudy":
         """
         Load a study from the database by id.
 
         Args:
-            study_id: The id of the study to load.
+            entity_id: The id of the study to load.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
             A `DatabaseStudy` instance.
 
         Raises:
-            (exceptions.StudyNotFoundError): If an entry for study with id `study_id` was not
+            (exceptions.StudyNotFoundError): If an entry for study with id `entity_id` was not
                 found in the database.
         """
-        entity_info = backend.retrieve_study(study_id)
+        entity_info = backend.retrieve_study(entity_id)
         if entity_info is None:
-            raise StudyNotFoundError(f"Study with id '{study_id}' not found in the database.")
+            raise StudyNotFoundError(f"Study with id '{entity_id}' not found in the database.")
 
         return cls(entity_info, backend)
-    
+
     @classmethod
     def load_by_name(cls, study_name: str, backend: ResultsBackend) -> "DatabaseStudy":
         """
@@ -274,17 +274,17 @@ class DatabaseStudy(DatabaseEntity):
         return cls(entity_info, backend)
 
     @classmethod
-    def delete(cls, study_id: str, backend: ResultsBackend, remove_associated_runs: bool = True):
+    def delete(cls, entity_id: str, backend: ResultsBackend, remove_associated_runs: bool = True):
         """
         Delete a study from the database by id.
 
         By default, this will remove all of the runs associated with the study from the database.
 
         Args:
-            study_id: The name of the study to delete.
+            entity_id: The name of the study to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
             remove_associated_runs: If True, remove all of the runs associated with this study from the db.
         """
-        LOG.info(f"Deleting study with id '{study_id}' from the database...")
-        backend.delete_study(study_id, remove_associated_runs=remove_associated_runs)
-        LOG.info(f"Study '{study_id}' has been successfully deleted.")
+        LOG.info(f"Deleting study with id '{entity_id}' from the database...")
+        backend.delete_study(entity_id, remove_associated_runs=remove_associated_runs)
+        LOG.info(f"Study '{entity_id}' has been successfully deleted.")
