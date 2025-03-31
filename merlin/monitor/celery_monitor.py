@@ -17,7 +17,7 @@ import logging
 import time
 from typing import List, Set
 
-from merlin.db_scripts.db_run import DatabaseRun
+from merlin.db_scripts.run_entity import RunEntity
 from merlin.exceptions import NoWorkersException
 from merlin.monitor.task_server_monitor import TaskServerMonitor
 from merlin.study.celeryadapter import get_workers_from_app, query_celery_queues
@@ -155,12 +155,12 @@ class CeleryMonitor(TaskServerMonitor):
         if dead_workers:
             self._restart_workers(dead_workers)
 
-    def check_tasks(self, run: DatabaseRun) -> bool:
+    def check_tasks(self, run: RunEntity) -> bool:
         """
         Check the status of tasks in Celery queues for the given workflow run.
 
         Args:
-            run: A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
+            run: A [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instance representing
                 the workflow run whose tasks are being monitored.
 
         Returns:

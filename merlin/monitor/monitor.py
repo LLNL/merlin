@@ -19,7 +19,7 @@ import traceback
 from kombu.exceptions import OperationalError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from merlin.db_scripts.db_run import DatabaseRun
+from merlin.db_scripts.run_entity import RunEntity
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import RestartException
 from merlin.monitor.monitor_factory import monitor_factory
@@ -77,12 +77,12 @@ class Monitor:
         to monitor it until completion.
         """
         merlin_db = MerlinDatabase()
-        db_study = merlin_db.get_study_by_name(self.spec.name)
+        study_entity = merlin_db.get_study_by_name(self.spec.name)
 
         index = 0
         while True:
             # Always refresh the list at the start of the loop; there could be new runs (think iterative studies)
-            all_runs = db_study.get_all_runs()
+            all_runs = study_entity.get_all_runs()
             if index >= len(all_runs):  # Break if there are no more runs to process
                 break
 
@@ -105,13 +105,13 @@ class Monitor:
 
             index += 1
 
-    def monitor_single_run(self, run: DatabaseRun):
+    def monitor_single_run(self, run: RunEntity):
         """
         Monitors a single run of a study until it completes to ensure that the allocation stays alive
         and workflows are restarted if necessary.
 
         Args:
-            run: A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
+            run: A [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instance representing
                 the run that's going to be monitored.
         """
         run_workspace = run.get_workspace()
@@ -165,12 +165,12 @@ class Monitor:
 
         LOG.info(f"Monitor: Run with workspace '{run_workspace}' has completed.")
 
-    def restart_workflow(self, run: DatabaseRun):
+    def restart_workflow(self, run: RunEntity):
         """
         Restart a run of a workflow.
 
         Args:
-            run: A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
+            run: A [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instance representing
                 the run that's going to be restarted.
 
         Raises:

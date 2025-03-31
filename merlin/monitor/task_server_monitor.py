@@ -12,7 +12,7 @@ functionality, such as waiting for workers and checking task queues.
 from abc import ABC, abstractmethod
 from typing import List
 
-from merlin.db_scripts.db_run import DatabaseRun
+from merlin.db_scripts.run_entity import RunEntity
 
 
 class TaskServerMonitor(ABC):
@@ -67,12 +67,12 @@ class TaskServerMonitor(ABC):
         """
 
     @abstractmethod
-    def check_tasks(self, run: DatabaseRun) -> bool:
+    def check_tasks(self, run: RunEntity) -> bool:
         """
         Check the status of tasks in the given workflow run.
 
         Args:
-            run: A [`DatabaseRun`][merlin.db_scripts.db_run.DatabaseRun] instance representing
+            run: A [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instance representing
                 the workflow run whose tasks are being monitored.
 
         Returns:

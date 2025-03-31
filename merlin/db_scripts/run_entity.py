@@ -2,7 +2,7 @@
 Module for managing database entities related to runs.
 
 This module provides functionality for interacting with runs stored in a database,
-including creating, retrieving, updating, and deleting runs. It defines the `DatabaseRun`
+including creating, retrieving, updating, and deleting runs. It defines the `RunEntity`
 class, which extends the abstract base class [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity],
 to encapsulate run-specific operations and behaviors.
 """
@@ -20,7 +20,7 @@ from merlin.exceptions import RunNotFoundError
 LOG = logging.getLogger("merlin")
 
 
-class DatabaseRun(DatabaseEntity):
+class RunEntity(DatabaseEntity):
     """
     A class representing a run in the database.
 
@@ -37,10 +37,10 @@ class DatabaseRun(DatabaseEntity):
 
     Methods:
         __repr__:
-            Provide a string representation of the `DatabaseRun` instance.
+            Provide a string representation of the `RunEntity` instance.
 
         __str__:
-            Provide a human-readable string representation of the `DatabaseRun` instance.
+            Provide a human-readable string representation of the `RunEntity` instance.
 
         reload_data:
             Reload the latest data for this run from the database.
@@ -84,10 +84,10 @@ class DatabaseRun(DatabaseEntity):
             Dump all metadata for this run to a JSON file.
 
         load:
-            (classmethod) Load a `DatabaseRun` instance from the database by its ID.
+            (classmethod) Load a `RunEntity` instance from the database by its ID.
 
         load_from_metadata_file:
-            (classmethod) Load a `DatabaseRun` instance from a metadata file.
+            (classmethod) Load a `RunEntity` instance from a metadata file.
 
         delete:
             (classmethod) Delete a run from the database by its ID.
@@ -95,7 +95,7 @@ class DatabaseRun(DatabaseEntity):
 
     def __init__(self, run_info: RunModel, backend: ResultsBackend):
         """
-        Initialize a `DatabaseRun` instance.
+        Initialize a `RunEntity` instance.
 
         Args:
             run_info (db_scripts.data_models.RunModel): The data model containing
@@ -108,13 +108,13 @@ class DatabaseRun(DatabaseEntity):
 
     def __repr__(self) -> str:
         """
-        Provide a string representation of the `DatabaseRun` instance.
+        Provide a string representation of the `RunEntity` instance.
 
         Returns:
-            A human-readable string representation of the `DatabaseRun` instance.
+            A human-readable string representation of the `RunEntity` instance.
         """
         return (
-            f"DatabaseRun("
+            f"RunEntity("
             f"id={self.get_id()}, "
             f"study_id={self.get_study_id()}, "
             f"workspace={self.get_workspace()}, "
@@ -129,10 +129,10 @@ class DatabaseRun(DatabaseEntity):
 
     def __str__(self) -> str:
         """
-        Provide a string representation of the `DatabaseRun` instance.
+        Provide a string representation of the `RunEntity` instance.
 
         Returns:
-            A human-readable string representation of the `DatabaseRun` instance.
+            A human-readable string representation of the `RunEntity` instance.
         """
         run_id = self.get_id()
         return (
@@ -199,7 +199,7 @@ class DatabaseRun(DatabaseEntity):
     def get_metadata_filepath(cls, workspace: str) -> str:
         """
         Get the path to the metadata file for a given workspace.
-        This is needed for the [`load_from_metadata_file`][db_scripts.db_run.DatabaseRun.load_from_metadata_file]
+        This is needed for the [`load_from_metadata_file`][db_scripts.run_entity.RunEntity.load_from_metadata_file]
         method as it can't use the non-classmethod version of this method.
 
         Args:
@@ -285,7 +285,7 @@ class DatabaseRun(DatabaseEntity):
         self.entity_info.dump_to_json_file(self.get_metadata_file())
 
     @classmethod
-    def load(cls, entity_id: str, backend: ResultsBackend) -> "DatabaseRun":
+    def load(cls, entity_id: str, backend: ResultsBackend) -> "RunEntity":
         """
         Load a run from the database by id.
 
@@ -294,7 +294,7 @@ class DatabaseRun(DatabaseEntity):
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
-            A `DatabaseRun` instance.
+            A `RunEntity` instance.
 
         Raises:
             (exceptions.RunNotFoundError): If an entry for run with id `entity_id` was not found
@@ -307,7 +307,7 @@ class DatabaseRun(DatabaseEntity):
         return cls(entity_info, backend)
 
     @classmethod
-    def load_from_metadata_file(cls, metadata_file: str, backend: ResultsBackend) -> "DatabaseRun":
+    def load_from_metadata_file(cls, metadata_file: str, backend: ResultsBackend) -> "RunEntity":
         """
         Load a run from a metadata file.
 
@@ -316,7 +316,7 @@ class DatabaseRun(DatabaseEntity):
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
-            A `DatabaseRun` instance.
+            A `RunEntity` instance.
         """
         return cls(RunModel.load_from_json_file(metadata_file), backend)
 

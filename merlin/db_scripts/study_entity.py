@@ -3,7 +3,7 @@ Module for managing database entities related to studies.
 
 This module provides functionality for interacting with studies stored in a database,
 including creating, retrieving, updating, and deleting studies and their associated runs.
-It defines the `DatabaseStudy` class, which extends the abstract base class
+It defines the `StudyEntity` class, which extends the abstract base class
 [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity], to encapsulate study-specific
 operations and behaviors.
 """
@@ -14,14 +14,14 @@ from typing import List
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.db_entity import DatabaseEntity
-from merlin.db_scripts.db_run import DatabaseRun
+from merlin.db_scripts.run_entity import RunEntity
 from merlin.exceptions import StudyNotFoundError
 
 
 LOG = logging.getLogger("merlin")
 
 
-class DatabaseStudy(DatabaseEntity):
+class StudyEntity(DatabaseEntity):
     """
     A class representing a study in the database.
 
@@ -37,10 +37,10 @@ class DatabaseStudy(DatabaseEntity):
 
     Methods:
         __repr__:
-            Provide a string representation of the `DatabaseStudy` instance.
+            Provide a string representation of the `StudyEntity` instance.
 
         __str__:
-            Provide a human-readable string representation of the `DatabaseStudy` instance.
+            Provide a human-readable string representation of the `StudyEntity` instance.
 
         reload_data:
             Reload the latest data for this study from the database.
@@ -75,10 +75,10 @@ class DatabaseStudy(DatabaseEntity):
             Save the current state of the study to the database.
 
         load:
-            (classmethod) Load a `DatabaseStudy` instance from the database by its ID.
+            (classmethod) Load a `StudyEntity` instance from the database by its ID.
 
         load_by_name:
-            (classmethod) Load a `DatabaseStudy` instance from the database by its name.
+            (classmethod) Load a `StudyEntity` instance from the database by its name.
 
         delete:
             (classmethod) Delete a study from the database by its ID. Optionally, remove all associated runs.
@@ -86,13 +86,13 @@ class DatabaseStudy(DatabaseEntity):
 
     def __repr__(self) -> str:
         """
-        Provide a string representation of the `DatabaseStudy` instance.
+        Provide a string representation of the `StudyEntity` instance.
 
         Returns:
-            A human-readable string representation of the `DatabaseStudy` instance.
+            A human-readable string representation of the `StudyEntity` instance.
         """
         return (
-            f"DatabaseStudy("
+            f"StudyEntity("
             f"id={self.get_id()}, "
             f"name={self.get_name()}, "
             f"runs={[run.__str__() for run in self.get_all_runs()]}, "
@@ -102,10 +102,10 @@ class DatabaseStudy(DatabaseEntity):
 
     def __str__(self) -> str:
         """
-        Provide a string representation of the `DatabaseStudy` instance.
+        Provide a string representation of the `StudyEntity` instance.
 
         Returns:
-            A human-readable string representation of the `DatabaseStudy` instance.
+            A human-readable string representation of the `StudyEntity` instance.
         """
         study_id = self.get_id()
         runs_str = "Runs:\n"
@@ -143,16 +143,16 @@ class DatabaseStudy(DatabaseEntity):
         """
         return self.entity_info.name
 
-    def create_run(self, *args, **kwargs) -> DatabaseRun:  # pylint: disable=unused-argument
+    def create_run(self, *args, **kwargs) -> RunEntity:  # pylint: disable=unused-argument
         """
-        Create a run for this study. This will create a [`DatabaseRun`][db_scripts.db_run.DatabaseRun]
+        Create a run for this study. This will create a [`RunEntity`][db_scripts.run_entity.RunEntity]
         instance and link it to this study.
 
         As a side effect of this method, a new run will be added to the database. Additionally,
         the current status of this study will updated to include this new run.
 
         Returns:
-            A [`DatabaseRun`][db_scripts.db_run.DatabaseRun] instance representing
+            A [`RunEntity`][db_scripts.run_entity.RunEntity] instance representing
                 the run that was created.
         """
         # Get all valid fields for the RunModel dataclass
@@ -173,16 +173,16 @@ class DatabaseStudy(DatabaseEntity):
             **valid_kwargs,
             additional_data=additional_data,
         )
-        db_run = DatabaseRun(new_run, self.backend)
-        db_run.save()
+        run_entity = RunEntity(new_run, self.backend)
+        run_entity.save()
 
         # Add the run ID to the study's list of runs
         self.entity_info.runs.append(new_run.id)
         self.save()  # Save the updated study to the backend
 
-        return db_run
+        return run_entity
 
-    def get_run(self, run_id: str) -> DatabaseRun:
+    def get_run(self, run_id: str) -> RunEntity:
         """
         Given an ID, get the associated run from the database.
 
@@ -190,17 +190,17 @@ class DatabaseStudy(DatabaseEntity):
             run_id: The ID of the run to retrieve.
 
         Returns:
-            A [`DatabaseRun`][db_scripts.db_run.DatabaseRun] instance representing
+            A [`RunEntity`][db_scripts.run_entity.RunEntity] instance representing
                 the run that was queried.
         """
-        return DatabaseRun.load(run_id, self.backend)
+        return RunEntity.load(run_id, self.backend)
 
-    def get_all_runs(self) -> List[DatabaseRun]:
+    def get_all_runs(self) -> List[RunEntity]:
         """
         Get every run associated with this study.
 
         Returns:
-            A list of [`DatabaseRun`][db_scripts.db_run.DatabaseRun] instances.
+            A list of [`RunEntity`][db_scripts.run_entity.RunEntity] instances.
         """
         self.reload_data()
         return [self.get_run(run_id) for run_id in self.entity_info.runs]
@@ -212,7 +212,7 @@ class DatabaseStudy(DatabaseEntity):
         Args:
             run_id: The ID of the run to remove.
         """
-        DatabaseRun.delete(run_id, self.backend)
+        RunEntity.delete(run_id, self.backend)
         self.entity_info.runs.remove(run_id)
         self.save()
 
@@ -230,7 +230,7 @@ class DatabaseStudy(DatabaseEntity):
         self.backend.save_study(self.entity_info)
 
     @classmethod
-    def load(cls, entity_id: str, backend: ResultsBackend) -> "DatabaseStudy":
+    def load(cls, entity_id: str, backend: ResultsBackend) -> "StudyEntity":
         """
         Load a study from the database by id.
 
@@ -239,7 +239,7 @@ class DatabaseStudy(DatabaseEntity):
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
-            A `DatabaseStudy` instance.
+            A `StudyEntity` instance.
 
         Raises:
             (exceptions.StudyNotFoundError): If an entry for study with id `entity_id` was not
@@ -252,7 +252,7 @@ class DatabaseStudy(DatabaseEntity):
         return cls(entity_info, backend)
 
     @classmethod
-    def load_by_name(cls, study_name: str, backend: ResultsBackend) -> "DatabaseStudy":
+    def load_by_name(cls, study_name: str, backend: ResultsBackend) -> "StudyEntity":
         """
         Load a study from the database by study name.
 
@@ -261,7 +261,7 @@ class DatabaseStudy(DatabaseEntity):
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
-            A `DatabaseStudy` instance.
+            A `StudyEntity` instance.
 
         Raises:
             (exceptions.StudyNotFoundError): If an entry for study with name `study_name` was
