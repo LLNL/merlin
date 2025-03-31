@@ -52,6 +52,15 @@ class RedisBackend(ResultsBackend):
             Convert data retrieved from Redis into a
             [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
 
+        get_version:
+            Query Redis for the current version.
+
+        get_connection_string:
+            Retrieve the connection string used to connect to Redis.
+
+        flush_database:
+            Remove every entry in the Redis database.
+
         save_study:
             Save a [`StudyModel`][db_scripts.data_models.StudyModel] object to the Redis database.
             If a study with the same name exists, it will update the existing entry.
@@ -211,6 +220,22 @@ class RedisBackend(ResultsBackend):
         """
         client_info = self.client.info()
         return client_info.get("redis_version", "N/A")
+    
+    def get_connection_string(self):
+        """
+        Get the connection string to Redis.
+
+        Returns:
+            A string representing the connection to Redis.
+        """
+        from merlin.config.results_backend import get_connection_string  # pylint: disable=import-outside-toplevel
+        return get_connection_string(include_password=False)
+    
+    def flush_database(self):
+        """
+        Remove everything stored in Redis.
+        """
+        self.client.flushdb()
 
     def save_study(self, study: StudyModel):
         """

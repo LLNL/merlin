@@ -41,6 +41,10 @@ class MerlinDatabase:
                 of the backend being used (e.g., Redis, SQL).
             - [`get_db_version`][db_scripts.merlin_db.MerlinDatabase.get_db_version]: Retrieve the
                 version of the backend.
+            - [`get_connection_string`][db_scripts.merlin_db.MerlinDatabase.get_connection_string]:
+                Retrieve the backend connection string.
+            - [`delete_everything`][db_scritps.merlin_db.MerlinDatabase.delete_everything]: Removes
+                every entry from the database.
 
         Study Management:\n
             - [`create_study`][db_scripts.merlin_db.MerlinDatabase.create_study]: Create a new study
@@ -112,6 +116,15 @@ class MerlinDatabase:
             The version number of the backend.
         """
         return self.backend.get_version()
+    
+    def get_connection_string(self):
+        """
+        Get the connection string to the backend.
+
+        Returns:
+            The connection string to the backend.
+        """
+        return self.backend.get_connection_string()
 
     def create_study(self, study_name: str) -> DatabaseStudy:
         """
@@ -398,3 +411,31 @@ class MerlinDatabase:
                 self.delete_worker(worker.get_id())
         else:
             LOG.warning("No workers found in the database.")
+
+    def delete_everything(self, force: bool = False):
+        """
+        Flush the entire database. This will ask users for a confirmation unless
+        `force` is set to True.
+
+        Args:
+            force: If True, ignore confirmation from the user.
+        """
+        flush_database = False
+        if force:
+            flush_database = True
+        else:
+            # Ask the user for confirmation
+            valid_inputs = ["y", "n"]
+            user_input = input("Are you sure you want to flush the entire database? (y/n): ").strip().lower()
+            while user_input not in valid_inputs:
+                user_input = input("Invalid input. Use 'y' for 'yes' or 'n' for 'no': ").strip().lower()
+
+            if user_input == "y":
+                flush_database = True
+        
+        if flush_database:
+            LOG.info("Flushing the database...")
+            self.backend.flush_database()
+            LOG.info("Database successfully flushed.")
+        else:
+            LOG.info("Database flush cancelled.")

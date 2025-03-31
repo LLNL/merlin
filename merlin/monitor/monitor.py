@@ -77,7 +77,7 @@ class Monitor:
         to monitor it until completion.
         """
         merlin_db = MerlinDatabase()
-        db_study = merlin_db.get_study(self.spec.name)
+        db_study = merlin_db.get_study_by_name(self.spec.name)
 
         index = 0
         while True:
@@ -128,7 +128,7 @@ class Monitor:
         while not run_complete:
             try:
                 # Run worker health check (checks for dead workers and restarts them if necessary)
-                # self.task_server_monitor.run_worker_health_check(run.get_queues())
+                # self.task_server_monitor.run_worker_health_check(run.get_workers())
 
                 # Check if any tasks are currently in the queues
                 active_tasks = self.task_server_monitor.check_tasks(run)

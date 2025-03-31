@@ -26,6 +26,12 @@ class ResultsBackend(ABC):
         get_version:
             Query the backend for the current version.
 
+        get_connection_string:
+            Retrieve the connection string used to connect to the backend.
+
+        flush_database:
+            Remove every entry in the database.
+
         save_study:
             Save a [`StudyModel`][db_scripts.data_models.StudyModel] object to the backend database.
 
@@ -89,6 +95,21 @@ class ResultsBackend(ABC):
 
         Returns:
             A string representing the current version of the backend.
+        """
+
+    @abstractmethod
+    def get_connection_string(self) -> str:
+        """
+        Query the backend for the connection string.
+
+        Returns:
+            A string representing the connection to the backend.
+        """
+
+    @abstractmethod
+    def flush_database(self):
+        """
+        Remove everything stored in the database.
         """
 
     @abstractmethod

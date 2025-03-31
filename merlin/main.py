@@ -857,7 +857,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Add subcommands for delete
     delete_subcommands = db_delete.add_subparsers(dest="delete_type", required=True)
 
-    # TODO enable support for deletion of study by name, ID, or passing in spec file
+    # TODO enable support for deletion of study by passing in spec file
     # Subcommand: delete study
     delete_study = delete_subcommands.add_parser(
         "study",
@@ -936,13 +936,18 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
-    # TODO implement the below logic
-    # # Subcommand: delete everything
-    # delete_everything = delete_subcommands.add_parser(
-    #     "everything",
-    #     help="Delete everything from the database.",
-    #     formatter_class=ArgumentDefaultsHelpFormatter,
-    # )
+    # Subcommand: delete everything
+    delete_everything = delete_subcommands.add_parser(
+        "everything",
+        help="Delete everything from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_everything.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Delete everything in the database without confirmation.",
+    )
 
     # Subcommand: database get
     db_get: ArgumentParser = database_commands.add_parser(
@@ -954,7 +959,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Add subcommands for get
     get_subcommands = db_get.add_subparsers(dest="get_type", required=True)
 
-    # TODO enable support for retrieval of study by name, ID, or passing in spec file
+    # TODO enable support for retrieval of study by passing in spec file
     # Subcommand: get study
     get_study = get_subcommands.add_parser(
         "study",
@@ -968,7 +973,6 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         help="A space-delimited list of IDs or names of the studies to get.",
     )
 
-    # TODO enable support for retrieval of run by workspace or ID
     # Subcommand: get run
     get_run = get_subcommands.add_parser(
         "run",

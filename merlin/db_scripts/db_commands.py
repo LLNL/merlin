@@ -29,6 +29,7 @@ def database_info():
     print("General Information:")
     print(f"- Database Type: {merlin_db.get_db_type()}")
     print(f"- Database Version: {merlin_db.get_db_version()}")
+    print(f"- Connection String: {merlin_db.get_connection_string()}")
 
     print()
     print("Studies:")
@@ -163,7 +164,7 @@ def database_delete(args: Namespace):
         "all-studies": merlin_db.delete_all_studies,
         "all-runs": merlin_db.delete_all_runs,
         "all-workers": merlin_db.delete_all_workers,
-        # TODO need an operation to flush the entire database
+        "everything": lambda: merlin_db.delete_everything(force=args.force),
     }
 
     # Execute the appropriate operation or log an error
