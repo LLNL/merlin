@@ -77,7 +77,7 @@ class Monitor:
         to monitor it until completion.
         """
         merlin_db = MerlinDatabase()
-        study_entity = merlin_db.get_study_by_name(self.spec.name)
+        study_entity = merlin_db.get_study(self.spec.name)
 
         index = 0
         while True:

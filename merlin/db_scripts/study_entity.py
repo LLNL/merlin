@@ -75,13 +75,10 @@ class StudyEntity(DatabaseEntity):
             Save the current state of the study to the database.
 
         load:
-            (classmethod) Load a `StudyEntity` instance from the database by its ID.
-
-        load_by_name:
-            (classmethod) Load a `StudyEntity` instance from the database by its name.
+            (classmethod) Load a `StudyEntity` instance from the database by its ID or name.
 
         delete:
-            (classmethod) Delete a study from the database by its ID. Optionally, remove all associated runs.
+            (classmethod) Delete a study from the database by its ID or name. Optionally, remove all associated runs.
     """
 
     def __repr__(self) -> str:
@@ -129,7 +126,7 @@ class StudyEntity(DatabaseEntity):
                 found in the database.
         """
         study_id = self.get_id()
-        updated_entity_info = self.backend.retrieve_study(study_id)
+        updated_entity_info = self.backend.retrieve(study_id, "study")
         if not updated_entity_info:
             raise StudyNotFoundError(f"Study with id {study_id} not found in the database.")
         self.entity_info = updated_entity_info
@@ -227,15 +224,15 @@ class StudyEntity(DatabaseEntity):
         """
         Save the current state of this study to the database.
         """
-        self.backend.save_study(self.entity_info)
+        self.backend.save(self.entity_info)
 
     @classmethod
-    def load(cls, entity_id: str, backend: ResultsBackend) -> "StudyEntity":
+    def load(cls, entity_id_or_name: str, backend: ResultsBackend) -> "StudyEntity":
         """
         Load a study from the database by id.
 
         Args:
-            entity_id: The id of the study to load.
+            entity_id_or_name: The id or name of the study to load.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
@@ -245,46 +242,27 @@ class StudyEntity(DatabaseEntity):
             (exceptions.StudyNotFoundError): If an entry for study with id `entity_id` was not
                 found in the database.
         """
-        entity_info = backend.retrieve_study(entity_id)
+        entity_info = backend.retrieve(entity_id_or_name, "study")
         if entity_info is None:
-            raise StudyNotFoundError(f"Study with id '{entity_id}' not found in the database.")
+            raise StudyNotFoundError(f"Study with id or name '{entity_id_or_name}' not found in the database.")
 
         return cls(entity_info, backend)
 
     @classmethod
-    def load_by_name(cls, study_name: str, backend: ResultsBackend) -> "StudyEntity":
-        """
-        Load a study from the database by study name.
-
-        Args:
-            study_name: The name of the study to load.
-            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
-
-        Returns:
-            A `StudyEntity` instance.
-
-        Raises:
-            (exceptions.StudyNotFoundError): If an entry for study with name `study_name` was
-                not found in the database.
-        """
-        entity_info = backend.retrieve_study_by_name(study_name)
-        if entity_info is None:
-            raise StudyNotFoundError(f"Study with name '{study_name}' not found in the database.")
-
-        return cls(entity_info, backend)
-
-    @classmethod
-    def delete(cls, entity_id: str, backend: ResultsBackend, remove_associated_runs: bool = True):
+    def delete(cls, entity_id_or_name: str, backend: ResultsBackend, remove_associated_runs: bool = True):
         """
         Delete a study from the database by id.
 
         By default, this will remove all of the runs associated with the study from the database.
 
         Args:
-            entity_id: The name of the study to delete.
+            entity_id_or_name: The name of the study to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
             remove_associated_runs: If True, remove all of the runs associated with this study from the db.
         """
-        LOG.info(f"Deleting study with id '{entity_id}' from the database...")
-        backend.delete_study(entity_id, remove_associated_runs=remove_associated_runs)
-        LOG.info(f"Study '{entity_id}' has been successfully deleted.")
+        LOG.info(f"Deleting study with id '{entity_id_or_name}' from the database...")
+        if remove_associated_runs:
+            self = cls.load(entity_id_or_name, backend)
+            self.delete_all_runs()
+        backend.delete(entity_id_or_name, "study")
+        LOG.info(f"Study '{entity_id_or_name}' has been successfully deleted.")

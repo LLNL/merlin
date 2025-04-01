@@ -5,7 +5,7 @@ layer for loading a results backend.
 
 from typing import Dict
 
-from merlin.backends.redis_backend import RedisBackend
+from merlin.backends.redis.redis_backend import RedisBackend
 from merlin.backends.results_backend import ResultsBackend
 from merlin.exceptions import BackendNotSupportedError
 

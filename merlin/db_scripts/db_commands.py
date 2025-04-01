@@ -4,7 +4,6 @@ database.
 """
 
 import logging
-import uuid
 from argparse import Namespace
 from typing import Callable, List
 
@@ -22,7 +21,6 @@ def database_info():
     merlin_db = MerlinDatabase()
     db_studies = merlin_db.get_all_studies()
     db_runs = merlin_db.get_all_runs()
-    db_workers = merlin_db.get_all_workers()
 
     print("Merlin Database Information")
     print("---------------------------")
@@ -52,10 +50,6 @@ def database_info():
     #     (and 42 more runs)
 
     print()
-    print("Workers:")
-    print(f"- Total workers: {len(db_workers)}")
-
-    print()
 
 
 def database_get(args: Namespace):
@@ -67,26 +61,22 @@ def database_get(args: Namespace):
     """
     merlin_db = MerlinDatabase()
 
-    def get_by_uuid_or_name(get_by_uuid: Callable, get_by_name: Callable, identifiers: List[str]) -> List[DatabaseEntity]:
+    def build_list_of_entities(get_entity: Callable, identifiers: List[str]) -> List[DatabaseEntity]:
         """
-        Attempts to retrieve items using UUIDs first, and falls back to retrieving by names if the
-        UUIDs are invalid.
+        Builds a list of entities by retrieving them using the provided function.
 
         Args:
-            get_by_uuid: Function to retrieve items using UUIDs.
-            get_by_name: Function to retrieve items using names.
-            identifiers: List of identifiers to retrieve the items (either UUIDs or names).
+            get_entity: A callable function that takes an identifier as input and retrieves the
+                corresponding entity.
+            identifiers: A list of identifiers used to retrieve the entities.
 
         Returns:
-            The retrieved items from the database.
+            A list of [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity] objects retrieved using the
+                `get_entity` function.
         """
         results = []
         for identifier in identifiers:
-            try:
-                uuid.UUID(identifier)
-                results.append(get_by_uuid(identifier))
-            except ValueError:
-                results.append(get_by_name(identifier))
+            results.append(get_entity(identifier))
         return results
 
     def print_items(items: List[DatabaseEntity], empty_message: str):
@@ -106,20 +96,15 @@ def database_get(args: Namespace):
     # Dispatch table for get operations
     operations = {
         "study": lambda: print_items(
-            get_by_uuid_or_name(merlin_db.get_study, merlin_db.get_study_by_name, args.study),
+            build_list_of_entities(merlin_db.get_study, args.study),
             "No studies found for the given identifiers.",
         ),
         "run": lambda: print_items(
-            get_by_uuid_or_name(merlin_db.get_run, merlin_db.get_run_by_workspace, args.run),
+            build_list_of_entities(merlin_db.get_run, args.run),
             "No runs found for the given identifiers.",
-        ),
-        "worker": lambda: print_items(
-            get_by_uuid_or_name(merlin_db.get_worker, merlin_db.get_worker_by_name, args.worker),
-            "No workers found for the given identifiers.",
         ),
         "all-studies": lambda: print_items(merlin_db.get_all_studies(), "No studies found in the database."),
         "all-runs": lambda: print_items(merlin_db.get_all_runs(), "No runs found in the database."),
-        "all-workers": lambda: print_items(merlin_db.get_all_workers(), "No workers found in the database."),
     }
 
     # Execute the appropriate operation or log an error
@@ -139,31 +124,26 @@ def database_delete(args: Namespace):
     """
     merlin_db = MerlinDatabase()
 
-    def delete_by_uuid_or_name(delete_by_uuid: Callable, delete_by_name: Callable, identifiers: List[str]):
+    def delete_list_of_entities(delete_entity: Callable, identifiers: List[str], **kwargs):
         """
-        Attempts to delete items using UUIDs first, and falls back to deleting by names if the
-        UUIDs are invalid.
+        Deletes a list of entities using the provided delete function.
 
         Args:
-            delete_by_uuid: Function to delete items using UUIDs.
-            delete_by_name: Function to delete items using names.
-            identifiers: List of identifiers to delete (either UUIDs or names).
+            delete_entity: The function responsible for deleting an entity.
+            identifiers: A list of entity identifiers to delete.
+            kwargs: Additional arguments to pass to the delete function.
         """
         for identifier in identifiers:
-            try:
-                uuid.UUID(identifier)
-                delete_by_uuid(identifier)
-            except ValueError:
-                delete_by_name(identifier)
+            delete_entity(identifier, **kwargs)
 
     # Dispatch table for get operations
     operations = {
-        "study": lambda: delete_by_uuid_or_name(merlin_db.delete_study, merlin_db.delete_study_by_name, args.study),
-        "run": lambda: delete_by_uuid_or_name(merlin_db.delete_run, merlin_db.delete_run_by_workspace, args.run),
-        "worker": lambda: delete_by_uuid_or_name(merlin_db.delete_worker, merlin_db.delete_worker_by_name, args.worker),
+        "study": lambda: delete_list_of_entities(
+            merlin_db.delete_study, args.study, remove_associated_runs=not args.keep_associated_runs
+        ),
+        "run": lambda: delete_list_of_entities(merlin_db.delete_run, args.run),
         "all-studies": merlin_db.delete_all_studies,
         "all-runs": merlin_db.delete_all_runs,
-        "all-workers": merlin_db.delete_all_workers,
         "everything": lambda: merlin_db.delete_everything(force=args.force),
     }
 

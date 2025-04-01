@@ -151,3 +151,12 @@ class WorkerNotFoundError(Exception):
 
     def __init__(self, message):
         super().__init__(message)
+
+
+class UnsupportedDataModelError(Exception):
+    """
+    Exception to signal that the data model you're trying to use is not supported.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
