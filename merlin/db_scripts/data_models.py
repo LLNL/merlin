@@ -299,12 +299,63 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
             A list of fields that are allowed to be updated in this class.
         """
         return ["parent", "child", "run_complete", "additional_data", "workers"]
+    
+
+@dataclass
+class LogicalWorkerModel(BaseDataModel):
+    """
+    Represents a high-level definition of a Celery worker, as defined by the user.
+
+    Logical workers are abstract representations of workers that define their behavior 
+    and configuration, such as the queues they listen to and their name. They are unique 
+    based on their name and queues, and do not correspond directly to any running process. 
+    Instead, they serve as templates or logical definitions from which physical workers 
+    are created.
+
+    Note:
+        Logical workers are abstract and do not represent actual running processes. They are
+        used to define worker behavior and configuration at a high level, while physical workers
+        represent the actual running instances of these logical definitions.
+
+    Attributes:
+        additional_data (Dict): For any extra data not explicitly defined.
+        fields_allowed_to_be_updated (List[str]): A list of field names that are
+            allowed to be updated.
+        id (str): A unique identifier for the logical worker. Defaults to a UUID string.
+        name (str): The name of the logical worker.
+        physical_workers (List[str]): A list of unique IDs of the physical worker instances
+            created from this logical instance. Corresponds with
+            [`PhyiscalWorkerModel`][db_scripts.data_models.PhysicalWorkerModel] entries.
+        queues (List[str]): A list of task queues the worker is listening to.
+        run_ids (List[str]): A list of unique IDs of the runs using this worker.
+            Corresponds with [`RunModel`][db_scripts.data_models.RunModel] entries.
+    """
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
+    name: str = None
+    run_ids: List[str] = field(default_factory=list)
+    queues: List[str] = field(default_factory=list)
+    physical_workers: List[str] = field(default_factory=list)
+
+    @property
+    def fields_allowed_to_be_updated(self) -> List[str]:
+        """
+        Define the fields that are allowed to be updated for a `LogicalWorkerModel` object.
+
+        Returns:
+            A list of fields that are allowed to be updated in this class.
+        """
+        return ["run_ids", "physical_workers"]
 
 
 @dataclass
-class WorkerModel(BaseDataModel):
+class PhysicalWorkerModel(BaseDataModel):
     """
-    A dataclass to store information about a worker process.
+    Represents a running instance of a Celery worker, created from a logical worker definition.
+
+    Physical workers are the actual implementations of logical workers, running as processes on a host machine. 
+    They are responsible for executing tasks defined in the queues specified by their corresponding logical worker. 
+    Each physical worker is uniquely identified and includes runtime-specific details such as its PID, status, and 
+    heartbeat timestamp.
 
     Attributes:
         additional_data (Dict): For any extra data not explicitly defined.
@@ -313,20 +364,17 @@ class WorkerModel(BaseDataModel):
             allowed to be updated.
         heartbeat_timestamp (datetime): The last time the worker sent a heartbeat signal.
         host (str): The hostname or IP address of the machine running the worker.
-        id (str): A unique identifier for the worker. Defaults to a UUID string.
+        id (str): A unique identifier for the physical worker. Defaults to a UUID string.
         latest_start_time (datetime): The timestamp when the worker process was last started.
         launch_cmd (str): The command used to launch the worker process.
-        name (str): The name of the worker, if specified.
+        name (str): The name of the physical worker.
         pid (str): The process ID (PID) of the worker process.
-        queues (List[str]): A list of task queues the worker is listening to.
         restart_count (int): The number of times this worker has been restarted.
         status (WorkerStatus): The current status of the worker (e.g., running, stopped).
     """
-
     id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
-    name: str = None
+    name: str = None  # Will be of the form celery@worker_name.hostname
     launch_cmd: str = None
-    queues: List[str] = field(default_factory=list)
     args: Dict = field(default_factory=dict)
     pid: str = None
     status: WorkerStatus = WorkerStatus.STOPPED
@@ -338,20 +386,18 @@ class WorkerModel(BaseDataModel):
     @property
     def fields_allowed_to_be_updated(self) -> List[str]:
         """
-        Define the fields that are allowed to be updated for a `WorkerModel` object.
+        Define the fields that are allowed to be updated for a `PhysicalWorkerModel` object.
 
         Returns:
             A list of fields that are allowed to be updated in this class.
         """
         return [
             "launch_cmd",
-            "queues",
             "args",
             "pid",
             "status",
             "heartbeat_timestamp",
             "latest_start_time",
-            "host",
             "restart_count",
         ]
 
