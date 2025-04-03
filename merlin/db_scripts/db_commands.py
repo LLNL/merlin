@@ -21,6 +21,7 @@ def database_info():
     merlin_db = MerlinDatabase()
     db_studies = merlin_db.get_all_studies()
     db_runs = merlin_db.get_all_runs()
+    db_logical_workers = merlin_db.get_all_logical_workers()
 
     print("Merlin Database Information")
     print("---------------------------")
@@ -31,7 +32,7 @@ def database_info():
 
     print()
     print("Studies:")
-    print(f"- Total studies: {len(db_studies)}")
+    print(f"- Total: {len(db_studies)}")
     # TODO add something about recent studies that looks like so:
     # - Recent Studies:
     #     1. Study ID: 123, Name: "Experiment A"
@@ -41,13 +42,18 @@ def database_info():
 
     print()
     print("Runs:")
-    print(f"- Total runs: {len(db_runs)}")
+    print(f"- Total: {len(db_runs)}")
     # TODO add something about recent runs that looks like so:
     # - Recent Runs:
     #     1. Run ID: 456, Workspace: "/path/to/workspace"
     #     2. Run ID: 457, Workspace: "/path/to/workspace"
     #     3. Run ID: 458, Workspace: "/path/to/workspace"
     #     (and 42 more runs)
+
+    print()
+    print()
+    print("Logical Workers:")
+    print(f"- Total: {len(db_logical_workers)}")
 
     print()
 
@@ -103,8 +109,15 @@ def database_get(args: Namespace):
             build_list_of_entities(merlin_db.get_run, args.run),
             "No runs found for the given identifiers.",
         ),
+        "logical-worker": lambda: print_items(
+            build_list_of_entities(merlin_db.get_logical_worker, args.worker),
+            "No logical workers found for the given identifiers.",
+        ),
         "all-studies": lambda: print_items(merlin_db.get_all_studies(), "No studies found in the database."),
         "all-runs": lambda: print_items(merlin_db.get_all_runs(), "No runs found in the database."),
+        "all-logical-workers": lambda: print_items(
+            merlin_db.get_all_logical_workers(), "No logical workers found in the database."
+        ),
     }
 
     # Execute the appropriate operation or log an error
@@ -142,8 +155,10 @@ def database_delete(args: Namespace):
             merlin_db.delete_study, args.study, remove_associated_runs=not args.keep_associated_runs
         ),
         "run": lambda: delete_list_of_entities(merlin_db.delete_run, args.run),
+        "logical-worker": lambda: delete_list_of_entities(merlin_db.delete_logical_worker, args.worker),
         "all-studies": merlin_db.delete_all_studies,
         "all-runs": merlin_db.delete_all_runs,
+        "all-logical-workers": merlin_db.delete_all_logical_workers,
         "everything": lambda: merlin_db.delete_everything(force=args.force),
     }
 

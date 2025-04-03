@@ -144,7 +144,6 @@ class Monitor:
                 # workflow so restart it
                 run_complete = run.run_complete  # Re-query db for this value
                 if not active_tasks and not run_complete:
-                    LOG.info(f"Monitor: Restarting workflow for run with workspace '{run_workspace}'...")
                     self.restart_workflow(run)
 
                 if not run_complete:
@@ -176,6 +175,7 @@ class Monitor:
         Raises:
             RestartException: If the workflow restart process fails.
         """
+        LOG.info(f"Monitor: Restarting workflow for run with workspace '{run.get_workspace()}'...")
         restart_proc = subprocess.run(f"merlin restart {run.get_workspace()}", shell=True, capture_output=True, text=True)
         if restart_proc.returncode != 0:
             LOG.error(f"Monitor: Failed to restart workflow: {restart_proc.stderr}")

@@ -1,20 +1,15 @@
 """
 Module for managing database entities related to studies.
 
-This module provides functionality for interacting with studies stored in a database,
-including creating, retrieving, updating, and deleting studies and their associated runs.
-It defines the `StudyEntity` class, which extends the abstract base class
+This module defines the `StudyEntity` class, which extends the abstract base class
 [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity], to encapsulate study-specific
 operations and behaviors.
 """
 
 import logging
-from typing import List
 
 from merlin.backends.results_backend import ResultsBackend
-from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.db_entity import DatabaseEntity
-from merlin.db_scripts.run_entity import RunEntity
 from merlin.exceptions import StudyNotFoundError
 
 
@@ -26,8 +21,8 @@ class StudyEntity(DatabaseEntity):
     A class representing a study in the database.
 
     This class provides methods to interact with and manage a study's data, including
-    creating, retrieving, and removing runs associated with the study, as well as saving
-    or deleting the study itself from the database.
+    retrieving, adding, and removing run IDs from the list of runs associated with the
+    study, as well as saving or deleting the study itself from the database.
 
     Attributes:
         entity_info (db_scripts.data_models.StudyModel): An instance of the `StudyModel`
@@ -56,20 +51,14 @@ class StudyEntity(DatabaseEntity):
         get_name:
             Retrieve the name of the study.
 
-        create_run:
-            Create a new run for this study and save it to the database.
+        get_runs:
+            Retrieve the IDs of the runs associated with this study.
 
-        get_run:
-            Retrieve a specific run associated with this study by its ID.
+        add_run:
+            Add a run ID to the list of runs.
 
-        get_all_runs:
-            Retrieve all runs associated with this study.
-
-        delete_run:
-            Remove a specific run associated with this study by its ID.
-
-        delete_all_runs:
-            Remove all runs associated with this study from the database.
+        remove_run:
+            Remove a run ID from the list of runs.
 
         save:
             Save the current state of the study to the database.
@@ -92,7 +81,7 @@ class StudyEntity(DatabaseEntity):
             f"StudyEntity("
             f"id={self.get_id()}, "
             f"name={self.get_name()}, "
-            f"runs={[run.__str__() for run in self.get_all_runs()]}, "
+            f"runs={self.get_runs()}, "
             f"additional_data={self.get_additional_data()}, "
             f"backend={self.backend.get_name()})"
         )
@@ -105,14 +94,11 @@ class StudyEntity(DatabaseEntity):
             A human-readable string representation of the `StudyEntity` instance.
         """
         study_id = self.get_id()
-        runs_str = "Runs:\n"
-        for run in self.get_all_runs():
-            runs_str += f"  - ID: {run.get_id()}\n" f"    Workspace: {run.get_workspace()}\n"
         return (
             f"Study with ID {study_id}\n"
             f"------------{'-' * len(study_id)}\n"
             f"Name: {self.get_name()}\n"
-            f"{runs_str}"
+            f"Runs: {self.get_runs()}\n"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 
@@ -140,85 +126,39 @@ class StudyEntity(DatabaseEntity):
         """
         return self.entity_info.name
 
-    def create_run(self, *args, **kwargs) -> RunEntity:  # pylint: disable=unused-argument
+    def get_runs(self):
         """
-        Create a run for this study. This will create a [`RunEntity`][db_scripts.run_entity.RunEntity]
-        instance and link it to this study.
-
-        As a side effect of this method, a new run will be added to the database. Additionally,
-        the current status of this study will updated to include this new run.
+        Get every run of this study.
 
         Returns:
-            A [`RunEntity`][db_scripts.run_entity.RunEntity] instance representing
-                the run that was created.
-        """
-        # Get all valid fields for the RunModel dataclass
-        valid_fields = {f.name for f in RunModel.get_class_fields()}
-
-        # Separate valid fields from additional data
-        valid_kwargs = {}
-        additional_data = {}
-        for key, val in kwargs.items():
-            if key in valid_fields:
-                valid_kwargs[key] = val
-            else:
-                additional_data[key] = val
-
-        # Create the RunModel object and save it to the backend
-        new_run = RunModel(
-            study_id=self.get_id(),
-            **valid_kwargs,
-            additional_data=additional_data,
-        )
-        run_entity = RunEntity(new_run, self.backend)
-        run_entity.save()
-
-        # Add the run ID to the study's list of runs
-        self.entity_info.runs.append(new_run.id)
-        self.save()  # Save the updated study to the backend
-
-        return run_entity
-
-    def get_run(self, run_id: str) -> RunEntity:
-        """
-        Given an ID, get the associated run from the database.
-
-        Args:
-            run_id: The ID of the run to retrieve.
-
-        Returns:
-            A [`RunEntity`][db_scripts.run_entity.RunEntity] instance representing
-                the run that was queried.
-        """
-        return RunEntity.load(run_id, self.backend)
-
-    def get_all_runs(self) -> List[RunEntity]:
-        """
-        Get every run associated with this study.
-
-        Returns:
-            A list of [`RunEntity`][db_scripts.run_entity.RunEntity] instances.
+            A list of run ids.
         """
         self.reload_data()
-        return [self.get_run(run_id) for run_id in self.entity_info.runs]
-
-    def delete_run(self, run_id: str):
+        return self.entity_info.runs
+    
+    def add_run(self, run_id: str):
         """
-        Given an ID, remove the associated run from the database.
+        Add a new run id to the list of runs.
+
+        Args:
+            run_id: The id of the run to add.
+        """
+        self.entity_info.runs.append(run_id)
+        self.save()
+    
+    def remove_run(self, run_id: str):
+        """
+        Remove a run id from the list of runs.
+
+        Does *not* delete a [`RunEntity`][db_scripts.run_entity.RunEntity] from the
+        database. This will only remove the run's id from the list in this study entity.
 
         Args:
             run_id: The ID of the run to remove.
         """
-        RunEntity.delete(run_id, self.backend)
+        self.reload_data()
         self.entity_info.runs.remove(run_id)
         self.save()
-
-    def delete_all_runs(self):
-        """
-        Remove every run associated with this study.
-        """
-        for run_id in self.entity_info.runs:
-            self.delete_run(run_id)
 
     def save(self):
         """
@@ -249,7 +189,7 @@ class StudyEntity(DatabaseEntity):
         return cls(entity_info, backend)
 
     @classmethod
-    def delete(cls, entity_id_or_name: str, backend: ResultsBackend, remove_associated_runs: bool = True):
+    def delete(cls, entity_id_or_name: str, backend: ResultsBackend):
         """
         Delete a study from the database by id.
 
@@ -258,11 +198,7 @@ class StudyEntity(DatabaseEntity):
         Args:
             entity_id_or_name: The name of the study to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
-            remove_associated_runs: If True, remove all of the runs associated with this study from the db.
         """
         LOG.info(f"Deleting study with id '{entity_id_or_name}' from the database...")
-        if remove_associated_runs:
-            self = cls.load(entity_id_or_name, backend)
-            self.delete_all_runs()
         backend.delete(entity_id_or_name, "study")
         LOG.info(f"Study '{entity_id_or_name}' has been successfully deleted.")

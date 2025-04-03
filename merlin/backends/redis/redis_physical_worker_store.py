@@ -47,6 +47,7 @@ class RedisPhysicalWorkerStore:
             client: A Redis client instance used to interact with the Redis database.
         """
         self.client: Redis = client
+        self.key: str = "physical_worker"
 
     def save(self, worker: PhysicalWorkerModel):
         """
@@ -56,8 +57,8 @@ class RedisPhysicalWorkerStore:
         Args:
             worker: A [`PhysicalWorkerModel`][db_scripts.data_models.PhysicalWorkerModel] instance.
         """
-        existing_worker_id = self.client.hget("physical_worker:name", worker.name)
-        worker_key = f"physical_worker:{worker.id}"
+        existing_worker_id = self.client.hget(f"{self.key}:name", worker.name)
+        worker_key = f"{self.key}:{worker.id}"
         if existing_worker_id:
             LOG.info(f"Attempting to update worker with id '{worker.id}'...")
             update_data_class_entry(worker, worker_key, self.client)
@@ -65,7 +66,7 @@ class RedisPhysicalWorkerStore:
         else:
             LOG.info("Creating a worker entry in Redis...")
             create_data_class_entry(worker, worker_key, self.client)
-            self.client.hset("worker:name", worker.name, worker.id)
+            self.client.hset(f"{self.key}:name", worker.name, worker.id)
             LOG.info(f"Successfully created a worker with id '{worker.id}' in Redis.")
 
     def retrieve(self, identifier: str, by_name: bool = False) -> PhysicalWorkerModel:
@@ -82,13 +83,13 @@ class RedisPhysicalWorkerStore:
         """
         if by_name:
             # Retrieve the worker ID using the name-to-ID mapping
-            worker_id = self.client.hget("worker:name", identifier)
+            worker_id = self.client.hget(f"{self.key}:name", identifier)
             if worker_id is None:
                 return None
-            worker_id = f"worker:{worker_id}"
+            worker_id = f"{self.key}:{worker_id}"
         else:
             # Ensure the worker ID has the correct prefix
-            worker_id = identifier if identifier.startswith("worker:") else f"worker:{identifier}"
+            worker_id = identifier if identifier.startswith(f"{self.key}:") else f"{self.key}:{identifier}"
 
         # Check if the worker exists in Redis
         if worker_id is None or not self.client.exists(worker_id):
@@ -108,10 +109,10 @@ class RedisPhysicalWorkerStore:
         LOG.info("Retrieving all workers from Redis...")
 
         # Retrieve all worker ids
-        worker_ids = self.client.keys("worker:*")
+        worker_ids = self.client.keys(f"{self.key}:*")
         if not worker_ids:
             return None
-        worker_ids.remove("worker:name")
+        worker_ids.remove(f"{self.key}:name")
         LOG.debug(f"Found {len(worker_ids)} workers in Redis.")
 
         all_workers = []
@@ -147,8 +148,8 @@ class RedisPhysicalWorkerStore:
             raise WorkerNotFoundError(f"Worker with {id_type} '{identifier}' not found in the database.")
 
         # Delete the worker from the name index and Redis
-        self.client.hdel("worker:name", worker.name)
-        self.client.delete(f"worker:{worker.id}")
+        self.client.hdel(f"{self.key}:name", worker.name)
+        self.client.delete(f"{self.key}:{worker.id}")
 
         LOG.info(f"Successfully deleted worker with {id_type} '{identifier}'.")
 

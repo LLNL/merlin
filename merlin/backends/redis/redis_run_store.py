@@ -2,8 +2,7 @@
 Module for managing runs in a Redis database using the `RedisRunStore` class.
 
 This module provides functionality to save, retrieve, and delete runs stored in a Redis database.
-It uses the [`RunModel`][db_scripts.data_models.RunModel] module to represent run data and interacts
-with studies via the `RedisStudyStore`.
+It uses the [`RunModel`][db_scripts.data_models.RunModel] module to represent run data.
 """
 import logging
 from typing import List
@@ -48,6 +47,7 @@ class RedisRunStore:
             client: A Redis client instance used to interact with the Redis database.
         """
         self.client: Redis = client
+        self.key: str = "run"
 
     def save(self, run: RunModel):
         """
@@ -56,7 +56,7 @@ class RedisRunStore:
         Args:
             run: A [`RunModel`][db_scripts.data_models.RunModel] instance.
         """
-        run_key = f"run:{run.id}"
+        run_key = f"{self.key}:{run.id}"
         if self.client.exists(run_key):
             LOG.info(f"Attempting to update run with id '{run.id}'...")
             update_data_class_entry(run, run_key, self.client)
@@ -73,7 +73,7 @@ class RedisRunStore:
         Args:
             run_id: The id of a run to retrieve.
         """
-        run_key = f"run:{run_id}"
+        run_key = run_id if run_id.startswith(f"{self.key}:") else f"{self.key}:{run_id}"
         if not self.client.exists(run_key):
             return None
 
@@ -89,7 +89,7 @@ class RedisRunStore:
         """
         LOG.info("Fetching all runs from Redis...")
 
-        run_pattern = "run:*"
+        run_pattern = f"{self.key}:*"
         all_runs = []
 
         # Loop through all runs
@@ -121,25 +121,8 @@ class RedisRunStore:
         if run is None:
             raise ValueError(f"Run with id '{run_id}' does not exist in the database.")
 
-        LOG.debug(
-            f"The run being deleted is associated with study '{run.study_id}'. "
-            "Removing this run from that study's list of runs..."
-        )
-        study_data = self.client.hgetall(f"study:{run.study_id}")
-        if not study_data:
-            LOG.warning(
-                f"Study with id '{run.study_id}' does not exist in the database. "
-                "Ignoring the removal of this run from that study's list of runs."
-            )
-        else:
-            study_info = deserialize_data_class(study_data, StudyModel)
-            study_info.runs.remove(run_id)
-            study_store = RedisStudyStore(self.client)
-            study_store.save(study_info)
-            LOG.debug("Successfully removed this run from the associated study.")
-
         # Delete the run's hash entry
-        run_key = f"run:{run.id}"
+        run_key = f"{self.key}:{run.id}"
         LOG.debug(f"Deleting run hash with key '{run_key}'...")
         self.client.delete(run_key)
         LOG.debug("Successfully removed run hash from Redis.")

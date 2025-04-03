@@ -767,7 +767,7 @@ def mark_run_as_complete(study_workspace: str) -> str:
         A string denoting that this run has completed.
     """
     merlin_db = MerlinDatabase()
-    run_entity = merlin_db.get_run_by_workspace(study_workspace)
+    run_entity = merlin_db.get_run(study_workspace)
     run_entity.run_complete = True
     run_entity.save()
     return "Run Completed"

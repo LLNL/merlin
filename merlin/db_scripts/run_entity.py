@@ -71,6 +71,12 @@ class RunEntity(DatabaseEntity):
         get_workers:
             Retrieve the workers used for this run.
 
+        add_worker:
+            Add a worker to the list of workers used for this run.
+
+        remove_worker:
+            Remove a worker from the list of workers used for this run.
+
         get_parent:
             Retrieve the ID of the parent run that launched this run (if any).
 
@@ -233,15 +239,39 @@ class RunEntity(DatabaseEntity):
             A list of strings representing the queues that were used for this run.
         """
         return self.entity_info.queues
-
+    
     def get_workers(self) -> List[str]:
         """
-        Get the workers that were used for this run.
+        Get the logical workers that this run is using.
 
         Returns:
-            A list of strings representing the workers that were used for this run.
+            A list of logical worker ids.
         """
         return self.entity_info.workers
+    
+    def add_worker(self, worker_id: str):
+        """
+        Add a new worker id to the list of workers.
+
+        Args:
+            worker_id: The id of the worker to add.
+        """
+        self.entity_info.workers.append(worker_id)
+        self.save()
+
+    def remove_worker(self, worker_id: str):
+        """
+        Remove a worker id from the list of workers associated with this run.
+
+        Does *not* delete a [`LogicalWorkerEntity`][db_scripts.logical_worker_entity.LogicalWorkerEntity]
+        from the database. This will only remove the worker's id from the list in this run.
+
+        Args:
+            worker_id: The ID of the worker to remove.
+        """
+        self.reload_data()
+        self.entity_info.workers.remove(worker_id)
+        self.save()
 
     def get_parent(self) -> str:
         """

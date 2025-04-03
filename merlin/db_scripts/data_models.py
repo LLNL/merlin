@@ -3,6 +3,7 @@ This module houses dataclasses that define the format of the data
 that's stored in Merlin's database.
 """
 
+import hashlib
 import json
 import logging
 import os
@@ -208,6 +209,8 @@ class BaseDataModel(ABC):
         """
         # Iterate through the updates
         for field_name, new_value in updates.items():
+            if field_name == "id":
+                continue
             if field_name not in self.fields_allowed_to_be_updated and getattr(self, field_name) != updates[field_name]:
                 # Log a warning for unauthorized updates
                 LOG.warning(f"Field '{field_name}' is not allowed to be updated. Ignoring the change.")
@@ -272,7 +275,7 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
         study_id (str): The unique ID of the study this run is associated with.
             Corresponds with a `StudyModel` entry.
         workers (List[str]): A list of worker ids executing tasks for this run. Each ID
-            will correspond with a `WorkerModel` entry.
+            will correspond with a `LogicalWorkerModel` entry.
         workspace (str): The path to the output workspace.
     """
 
@@ -327,14 +330,48 @@ class LogicalWorkerModel(BaseDataModel):
             created from this logical instance. Corresponds with
             [`PhyiscalWorkerModel`][db_scripts.data_models.PhysicalWorkerModel] entries.
         queues (List[str]): A list of task queues the worker is listening to.
-        run_ids (List[str]): A list of unique IDs of the runs using this worker.
+        runs (List[str]): A list of unique IDs of the runs using this worker.
             Corresponds with [`RunModel`][db_scripts.data_models.RunModel] entries.
     """
-    id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
     name: str = None
-    run_ids: List[str] = field(default_factory=list)
     queues: List[str] = field(default_factory=list)
+    id: str = None  # pylint: disable=invalid-name
+    runs: List[str] = field(default_factory=list)
     physical_workers: List[str] = field(default_factory=list)
+
+    def __post_init__(self):
+        """
+        Generate and save a UUID based on the values of `name` and `queues`, to help ensure that
+        each logical worker is unique to these values.
+
+        Raises:
+            TypeError: When name or queues are not provided to the constructor.
+        """
+        if self.name is None or not self.queues:
+            raise TypeError("The `name` and `queues` arguments of LogicalWorkerModel are required.")
+        
+        generated_id = self.generate_id(self.name, self.queues)
+        if self.id != generated_id:
+            if self.id is not None:
+                LOG.warning(f"ID '{self.id}' for LogicalWorkerModel was provided but it will be overwritten.")
+            self.id = generated_id
+
+    @classmethod
+    def generate_id(cls, name: str, queues: List[str]) -> uuid.UUID:
+        """
+        Generate a UUID based on the values of `name` and `queues`.
+
+        Args:
+            name: The name of the logical worker.
+            queues: The queues that the logical worker is assigned.
+
+        Returns:
+            A UUID based on the values of `name` and `queues`.
+        """
+        unique_string = f"{name}:{','.join(sorted(queues))}"
+        hex_string = hashlib.md5(unique_string.encode("UTF-8")).hexdigest()
+        return str(uuid.UUID(hex=hex_string))
+
 
     @property
     def fields_allowed_to_be_updated(self) -> List[str]:
@@ -344,7 +381,7 @@ class LogicalWorkerModel(BaseDataModel):
         Returns:
             A list of fields that are allowed to be updated in this class.
         """
-        return ["run_ids", "physical_workers"]
+        return ["runs", "physical_workers"]
 
 
 @dataclass

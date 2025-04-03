@@ -165,13 +165,25 @@ def process_run(args: Namespace) -> None:
         pargs=args.pargs,
     )
 
+    # Initialize the database
     merlin_db = MerlinDatabase()
-    merlin_db.create_run(
+
+    # Create a run entry
+    run_entity = merlin_db.create_run(
         study_name=study.expanded_spec.name,
         workspace=study.workspace,
         queues=study.expanded_spec.get_queue_list(["all"]),
-        workers=study.expanded_spec.get_worker_names(),
     )
+
+    # Create a logical worker entry
+    step_queue_map = study.expanded_spec.get_task_queues(omit_tag=True)
+    for worker, steps in study.expanded_spec.get_worker_step_map().items():
+        worker_queues = [step_queue_map[step] for step in steps]
+        logical_worker_entity = merlin_db.create_logical_worker(worker, worker_queues)
+
+        # Add the run id to the worker entry and the worker id to the run entry
+        logical_worker_entity.add_run(run_entity.get_id())
+        run_entity.add_worker(logical_worker_entity.get_id())
 
     router.run_task_server(study, args.run_mode)
 
@@ -896,17 +908,17 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     #     help="Delete the output workspace for the run.",
     # )
 
-    # Subcommand: delete worker
-    delete_worker = delete_subcommands.add_parser(
-        "worker",
-        help="Delete one or more workers by ID or name.",
+    # Subcommand: delete logical-worker
+    delete_logical_worker = delete_subcommands.add_parser(
+        "logical-worker",
+        help="Delete one or more logical workers by ID.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
-    delete_worker.add_argument(
+    delete_logical_worker.add_argument(
         "worker",
         type=str,
         nargs="+",
-        help="A space-delimited list of IDs or names of workers to delete.",
+        help="A space-delimited list of IDs of logical workers to delete.",
     )
 
     # Subcommand: delete all-studies
@@ -929,10 +941,10 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
-    # Subcommand: delete all-workers
+    # Subcommand: delete all-logical-workers
     delete_subcommands.add_parser(
-        "all-workers",
-        help="Delete all workers from the database.",
+        "all-logical-workers",
+        help="Delete all logical workers from the database.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
@@ -986,17 +998,17 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         help="A space-delimited list of IDs or workspaces of the runs to get.",
     )
 
-    # Subcommand get worker
-    get_worker = get_subcommands.add_parser(
-        "worker",
-        help="Get one or more workers by ID or name.",
+    # Subcommand get logical-worker
+    get_logical_worker = get_subcommands.add_parser(
+        "logical-worker",
+        help="Get one or more logical workers by ID or name.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
-    get_worker.add_argument(
+    get_logical_worker.add_argument(
         "worker",
         type=str,
         nargs="+",
-        help="A space-delimited list of IDs or names of the workers to get.",
+        help="A space-delimited list of IDs of the logical workers to get.",
     )
 
     # Subcommand: get all-studies
@@ -1013,10 +1025,10 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
-    # Subcommand: get all-workers
+    # Subcommand: get all-logical-workers
     get_subcommands.add_parser(
-        "all-workers",
-        help="Get all workers from the database.",
+        "all-logical-workers",
+        help="Get all logical workers from the database.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 

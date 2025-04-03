@@ -48,6 +48,7 @@ class RedisStudyStore:
             client: A Redis client instance used to interact with the Redis database.
         """
         self.client: Redis = client
+        self.key: str = "study"
 
     def save(self, study: StudyModel):
         """
@@ -58,20 +59,20 @@ class RedisStudyStore:
         Args:
             study: A [`StudyModel`][db_scripts.data_models.StudyModel] instance.
         """
-        existing_study_id = self.client.hget("study:name", study.name)
+        existing_study_id = self.client.hget(f"{self.key}:name", study.name)
 
         # Study already exists so update the existing study
         if existing_study_id:
             LOG.debug(f"existing_study_id: {existing_study_id}.")
             LOG.debug(f"study.id: {study.id}")
             LOG.info(f"Attempting to update study with id '{study.id}'...")
-            update_data_class_entry(study, f"study:{study.id}", self.client)
+            update_data_class_entry(study, f"{self.key}:{study.id}", self.client)
             LOG.info(f"Successfully updated study with id '{study.id}'.")
         # Study does not yet exist so create a new study entry
         else:
             LOG.info("Creating a study entry in Redis...")
-            create_data_class_entry(study, f"study:{study.id}", self.client)
-            self.client.hset("study:name", study.name, study.id)
+            create_data_class_entry(study, f"{self.key}:{study.id}", self.client)
+            self.client.hset(f"{self.key}:name", study.name, study.id)
             LOG.info(f"Successfully created a study with id '{study.id}' in Redis.")
 
         LOG.info(f"Study with name '{study.name}' saved to Redis under id '{study.id}'.")
@@ -90,13 +91,13 @@ class RedisStudyStore:
         """
         if by_name:
             # Retrieve the study ID using the name-to-ID mapping
-            study_id = self.client.hget("study:name", identifier)
+            study_id = self.client.hget(f"{self.key}:name", identifier)
             if study_id is None:
                 return None
-            study_id = f"study:{study_id}"
+            study_id = f"{self.key}:{study_id}"
         else:
             # Ensure the study ID has the correct prefix
-            study_id = identifier if identifier.startswith("study:") else f"study:{identifier}"
+            study_id = identifier if identifier.startswith(f"{self.key}:") else f"{self.key}:{identifier}"
 
         # Check if the study exists in Redis
         if study_id is None or not self.client.exists(study_id):
@@ -116,10 +117,10 @@ class RedisStudyStore:
         LOG.info("Retrieving all studies from Redis...")
 
         # Retrieve all study ids
-        study_ids = self.client.keys("study:*")
+        study_ids = self.client.keys(f"{self.key}:*")
         if not study_ids:
             return None
-        study_ids.remove("study:name")
+        study_ids.remove(f"{self.key}:name")
         LOG.debug(f"Found {len(study_ids)} studies in Redis.")
 
         all_studies = []
@@ -156,12 +157,12 @@ class RedisStudyStore:
             raise ValueError(f"Study with {id_type} '{identifier}' does not exist in the database.")
 
         # Delete the study's hash entry
-        study_key = f"study:{study.id}"
+        study_key = f"{self.key}:{study.id}"
         LOG.info(f"Deleting study hash with key '{study_key}'...")
         self.client.delete(study_key)
 
         # Remove the study's name-to-ID mapping
         LOG.info(f"Removing study name-to-ID mapping for '{study.name}'...")
-        self.client.hdel("study:name", study.name)
+        self.client.hdel(f"{self.key}:name", study.name)
 
         LOG.info(f"Successfully deleted study with {id_type} '{identifier}' and all associated data from Redis.")

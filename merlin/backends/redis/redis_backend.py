@@ -181,7 +181,7 @@ class RedisBackend(ResultsBackend):
         Raises:
             ValueError: If the `store_type` is invalid.
         """
-        LOG.info(f"Retrieving '{entity_identifier}' from store '{store_type}'.")
+        LOG.debug(f"Retrieving '{entity_identifier}' from store '{store_type}'.")
         store = self._get_store_by_type(store_type)
         if store_type in ["study", "physical_worker"]:
             try:
