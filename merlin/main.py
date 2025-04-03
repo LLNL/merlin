@@ -175,7 +175,7 @@ def process_run(args: Namespace) -> None:
         queues=study.expanded_spec.get_queue_list(["all"]),
     )
 
-    # Create a logical worker entry
+    # Create logical worker entries
     step_queue_map = study.expanded_spec.get_task_queues(omit_tag=True)
     for worker, steps in study.expanded_spec.get_worker_step_map().items():
         worker_queues = [step_queue_map[step] for step in steps]
@@ -219,9 +219,21 @@ def launch_workers(args):
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
+
+    # Initialize the database
+    merlin_db = MerlinDatabase()
+
+    # Create logical worker entries
+    step_queue_map = spec.get_task_queues(omit_tag=True)
+    for worker, steps in spec.get_worker_step_map().items():
+        worker_queues = [step_queue_map[step] for step in steps]
+        merlin_db.create_logical_worker(worker, worker_queues)
+    
+    # Launch the workers
     launch_worker_status = router.launch_workers(
         spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only
     )
+    
     if args.worker_echo_only:
         print(launch_worker_status)
     else:
@@ -921,6 +933,19 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         help="A space-delimited list of IDs of logical workers to delete.",
     )
 
+    # Subcommand: delete physical-worker
+    delete_physical_worker = delete_subcommands.add_parser(
+        "physical-worker",
+        help="Delete one or more physical workers by ID.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_physical_worker.add_argument(
+        "worker",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs of physical workers to delete.",
+    )
+
     # Subcommand: delete all-studies
     delete_all_studies = delete_subcommands.add_parser(
         "all-studies",
@@ -945,6 +970,13 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     delete_subcommands.add_parser(
         "all-logical-workers",
         help="Delete all logical workers from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: delete all-physical-workers
+    delete_subcommands.add_parser(
+        "all-physical-workers",
+        help="Delete all physical workers from the database.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
@@ -1001,7 +1033,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Subcommand get logical-worker
     get_logical_worker = get_subcommands.add_parser(
         "logical-worker",
-        help="Get one or more logical workers by ID or name.",
+        help="Get one or more logical workers by ID.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     get_logical_worker.add_argument(
@@ -1009,6 +1041,19 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         type=str,
         nargs="+",
         help="A space-delimited list of IDs of the logical workers to get.",
+    )
+
+    # Subcommand get physical-worker
+    get_physical_worker = get_subcommands.add_parser(
+        "physical-worker",
+        help="Get one or more physical workers by ID or name.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    get_physical_worker.add_argument(
+        "worker",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs or names of the physical workers to get.",
     )
 
     # Subcommand: get all-studies
@@ -1029,6 +1074,13 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     get_subcommands.add_parser(
         "all-logical-workers",
         help="Get all logical workers from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: get all-physical-workers
+    get_subcommands.add_parser(
+        "all-physical-workers",
+        help="Get all physical workers from the database.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 

@@ -404,12 +404,14 @@ class PhysicalWorkerModel(BaseDataModel):
         id (str): A unique identifier for the physical worker. Defaults to a UUID string.
         latest_start_time (datetime): The timestamp when the worker process was last started.
         launch_cmd (str): The command used to launch the worker process.
+        logical_worker_id (str): The ID of the logical worker that this was created from.
         name (str): The name of the physical worker.
         pid (str): The process ID (PID) of the worker process.
         restart_count (int): The number of times this worker has been restarted.
         status (WorkerStatus): The current status of the worker (e.g., running, stopped).
     """
     id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
+    logical_worker_id: str = None
     name: str = None  # Will be of the form celery@worker_name.hostname
     launch_cmd: str = None
     args: Dict = field(default_factory=dict)

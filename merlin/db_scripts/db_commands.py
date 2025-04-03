@@ -149,14 +149,14 @@ def database_delete(args: Namespace):
         for identifier in identifiers:
             delete_entity(identifier, **kwargs)
 
-    # Dispatch table for get operations
+    # Dispatch table for delete operations
     operations = {
         "study": lambda: delete_list_of_entities(
             merlin_db.delete_study, args.study, remove_associated_runs=not args.keep_associated_runs
         ),
         "run": lambda: delete_list_of_entities(merlin_db.delete_run, args.run),
         "logical-worker": lambda: delete_list_of_entities(merlin_db.delete_logical_worker, args.worker),
-        "all-studies": merlin_db.delete_all_studies,
+        "all-studies": lambda: merlin_db.delete_all_studies(remove_associated_runs=not args.keep_associated_runs),
         "all-runs": merlin_db.delete_all_runs,
         "all-logical-workers": merlin_db.delete_all_logical_workers,
         "everything": lambda: merlin_db.delete_everything(force=args.force),

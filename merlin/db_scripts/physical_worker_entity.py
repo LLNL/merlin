@@ -191,6 +191,15 @@ class PhysicalWorkerEntity(DatabaseEntity):
             raise WorkerNotFoundError(f"Worker with ID {worker_id} not found in the database.")
         self.entity_info = updated_entity_info
 
+    def get_logical_worker_id(self) -> str:
+        """
+        Get the ID of the logical worker that this physical worker was created from.
+
+        Returns:
+            The ID of the logical worker that this physical worker was created from.
+        """
+        return self.entity_info.logical_worker_id
+
     def get_name(self) -> str:
         """
         Get the name of this worker.
