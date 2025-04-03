@@ -40,12 +40,14 @@ import celery
 import psutil
 from celery import Celery, states
 from celery.backends.redis import RedisBackend  # noqa: F401 ; Needed for celery patch
-from celery.signals import worker_process_init
+from celery.signals import celeryd_init, worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
+from merlin.common.abstracts.enums import WorkerStatus
 from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
 from merlin.config.utils import Priority, get_priority
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.utils import nested_namespace_to_dicts
 
 
@@ -169,9 +171,47 @@ else:
 app.autodiscover_tasks(["merlin.common"])
 
 
+@celeryd_init.connect
+def store_worker_info(sender=None, **kwargs):
+    """
+    Store information about each physical worker instance in the database.
+
+    When workers first start up, the `celeryd_init` signal is the first signal
+    that they receive. This specific function will create a
+    [`PhysicalWorkerModel`][db_scripts.data_models.PhysicalWorkerModel] and
+    store it in the database. It does this through the use of the
+    [`MerlinDatabase`][db_scripts.merlin_db.MerlinDatabase] class.
+
+    Args:
+        sender: The hostname of the worker that was just started
+    """
+    if sender is not None:
+        options = kwargs.get("options", None)
+        if options is not None:
+            try:
+                # Sender name is of the form celery@worker_name.%hostname
+                worker_name, host = sender.split("@")[1].split(".%")
+                merlin_db = MerlinDatabase()
+                logical_worker = merlin_db.get_logical_worker(worker_name=worker_name, queues=options.get("queues"))
+                physical_worker = merlin_db.create_physical_worker(
+                    name=sender,
+                    host=host,
+                    status=WorkerStatus.RUNNING,
+                    logical_worker_id=logical_worker.get_id(),
+                )
+                logical_worker.add_physical_worker(physical_worker.get_id())
+            # Without this exception catcher, celery does not output any errors that happen here
+            except Exception as exc:
+                LOG.error(f"An error occurred when processing store_worker_info: {exc}")
+        else:
+            LOG.warning("On worker connect could not retrieve worker options from Celery.")
+    else:
+        LOG.warning("On worker connect no sender was provided from Celery.")
+
+
 # Pylint believes the args are unused, I believe they're used after decoration
-@worker_process_init.connect()
-def setup(**kwargs):  # pylint: disable=W0613
+@worker_process_init.connect
+def setup(sender=None, conf=None, **kwargs):  # pylint: disable=W0613
     """
     Set affinity for the worker on startup (works on toss3 nodes)
 

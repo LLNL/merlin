@@ -151,7 +151,7 @@ class MerlinDatabase:
         try:
             entity = entity_class.load(identifier, self.backend)
             LOG.info(log_message_exists)
-        except Exception:  # Replace with specific exception for "not found"
+        except Exception:
             LOG.info(log_message_create)
             model = model_class(**model_kwargs)
             entity = entity_class(model, self.backend)
@@ -441,7 +441,7 @@ class MerlinDatabase:
             queues=queues,
         )
 
-    def get_logical_worker(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None):
+    def get_logical_worker(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None) -> LogicalWorkerEntity:
         """
         Retrieve a logical worker by either its ID or by its name and queues.
 
@@ -538,7 +538,6 @@ class MerlinDatabase:
             entity_class=PhysicalWorkerEntity,
             model_class=PhysicalWorkerModel,
             identifier=name,
-            backend=self.backend,
             log_message_exists=f"Physical worker with name '{name}' already has an entry in the database.",
             log_message_create=log_message_create,
             name=name,

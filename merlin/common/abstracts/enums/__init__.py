@@ -54,6 +54,12 @@ class ReturnCode(IntEnum):
 class WorkerStatus(Enum):
     """
     Status of Merlin workers.
+
+    Attributes:
+        RUNNING (str): Indicates the worker is running. String value: "running".
+        STALLED (str): Indicates the worker is running but hasn't been processing work. String value: "stalled".
+        STOPPED (str): Indicates the worker is not running. String value: "stopped".
+        REBOOTING (str): Indicates the worker is actively restarting itself. String value: "rebooting".
     """
 
     RUNNING = "running"

@@ -22,6 +22,7 @@ def database_info():
     db_studies = merlin_db.get_all_studies()
     db_runs = merlin_db.get_all_runs()
     db_logical_workers = merlin_db.get_all_logical_workers()
+    db_physical_workers = merlin_db.get_all_physical_workers()
 
     print("Merlin Database Information")
     print("---------------------------")
@@ -51,9 +52,12 @@ def database_info():
     #     (and 42 more runs)
 
     print()
-    print()
     print("Logical Workers:")
     print(f"- Total: {len(db_logical_workers)}")
+
+    print()
+    print("Physical Workers:")
+    print(f"- Total: {len(db_physical_workers)}")
 
     print()
 
@@ -113,10 +117,17 @@ def database_get(args: Namespace):
             build_list_of_entities(merlin_db.get_logical_worker, args.worker),
             "No logical workers found for the given identifiers.",
         ),
+        "physical-worker": lambda: print_items(
+            build_list_of_entities(merlin_db.get_physical_worker, args.worker),
+            "No physical workers found for the given identifiers.",
+        ),
         "all-studies": lambda: print_items(merlin_db.get_all_studies(), "No studies found in the database."),
         "all-runs": lambda: print_items(merlin_db.get_all_runs(), "No runs found in the database."),
         "all-logical-workers": lambda: print_items(
             merlin_db.get_all_logical_workers(), "No logical workers found in the database."
+        ),
+        "all-physical-workers": lambda: print_items(
+            merlin_db.get_all_physical_workers(), "No physical workers found in the database."
         ),
     }
 
@@ -156,9 +167,11 @@ def database_delete(args: Namespace):
         ),
         "run": lambda: delete_list_of_entities(merlin_db.delete_run, args.run),
         "logical-worker": lambda: delete_list_of_entities(merlin_db.delete_logical_worker, args.worker),
+        "physical-worker": lambda: delete_list_of_entities(merlin_db.delete_physical_worker, args.worker),
         "all-studies": lambda: merlin_db.delete_all_studies(remove_associated_runs=not args.keep_associated_runs),
         "all-runs": merlin_db.delete_all_runs,
         "all-logical-workers": merlin_db.delete_all_logical_workers,
+        "all-physical-workers": merlin_db.delete_all_physical_workers,
         "everything": lambda: merlin_db.delete_everything(force=args.force),
     }
 

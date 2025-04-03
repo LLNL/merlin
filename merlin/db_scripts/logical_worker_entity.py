@@ -203,7 +203,7 @@ class LogicalWorkerEntity(DatabaseEntity):
         Args:
             physical_worker_id: The id of the physical worker to add.
         """
-        self.entity_info.physical_worker.append(physical_worker_id)
+        self.entity_info.physical_workers.append(physical_worker_id)
         self.save()
     
     def remove_physical_worker(self, physical_worker_id: str):

@@ -140,6 +140,7 @@ class PhysicalWorkerEntity(DatabaseEntity):
             f"PhysicalWorkerEntity("
             f"id={self.get_id()}, "
             f"name={self.get_name()}, "
+            f"logical_worker_id={self.get_logical_worker_id()}, "
             f"launch_cmd={self.get_launch_cmd()}, "
             f"args={self.get_args()}, "
             f"pid={self.get_pid()}, "
@@ -164,6 +165,7 @@ class PhysicalWorkerEntity(DatabaseEntity):
             f"Worker with ID {worker_id}\n"
             f"------------{'-' * len(worker_id)}\n"
             f"Name: {self.get_name()}\n"
+            f"Logical Worker ID: {self.get_logical_worker_id()}\n"
             f"Launch Command: {self.get_launch_cmd()}\n"
             f"Args: {self.get_args()}\n"
             f"Process ID: {self.get_pid()}\n"
@@ -360,7 +362,7 @@ class PhysicalWorkerEntity(DatabaseEntity):
         """
         Save the current state of this worker to the database.
         """
-        self.backend.save_worker(self.entity_info)
+        self.backend.save(self.entity_info)
 
     @classmethod
     def load(cls, entity_id: str, backend: ResultsBackend) -> "PhysicalWorkerEntity":
