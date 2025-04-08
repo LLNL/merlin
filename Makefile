@@ -34,12 +34,13 @@ include config.mk
 .PHONY : install-workflow-deps
 .PHONY : install-dev
 .PHONY : unit-tests
+.PHONY : command-tests
+.PHONY : workflow-tests
+.PHONY : integration-tests
 .PHONY : e2e-tests
 .PHONY : e2e-tests-diagnostic
 .PHONY : e2e-tests-local
 .PHONY : e2e-tests-local-diagnostic
-.PHONY : e2e-tests-distributed
-.PHONY : e2e-tests-distributed-diagnostic
 .PHONY : tests
 .PHONY : check-flake8
 .PHONY : check-black
@@ -89,6 +90,18 @@ unit-tests:
 	. $(VENV)/bin/activate; \
 	$(PYTHON) -m pytest -v --order-scope=module $(UNIT); \
 
+command-tests:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m pytest -v $(TEST)/integration/commands/; \
+
+
+workflow-tests:
+	. $(VENV)/bin/activate; \
+	$(PYTHON) -m pytest -v $(TEST)/integration/workflows/; \
+
+
+integration-tests: command-tests workflow-tests
+
 
 # run CLI tests - these require an active install of merlin in a venv
 e2e-tests:
@@ -111,18 +124,8 @@ e2e-tests-local-diagnostic:
 	$(PYTHON) $(TEST)/integration/run_tests.py --local --verbose
 
 
-e2e-tests-distributed:
-	. $(VENV)/bin/activate; \
-	$(PYTHON) $(TEST)/integration/run_tests.py --distributed; \
-
-
-e2e-tests-distributed-diagnostic:
-	. $(VENV)/bin/activate; \
-	$(PYTHON) $(TEST)/integration/run_tests.py --distributed --verbose
-
-
 # run unit and CLI tests
-tests: unit-tests e2e-tests
+tests: unit-tests integration-tests e2e-tests
 
 
 check-flake8:
@@ -135,9 +138,9 @@ check-flake8:
 
 check-black:
 	. $(VENV)/bin/activate; \
-	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py38 $(MRLN); \
-	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py38 $(TEST); \
-	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version py38 *.py; \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version $(PY_TARGET_VER) $(MRLN); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version $(PY_TARGET_VER) $(TEST); \
+	$(PYTHON) -m black --check --line-length $(MAX_LINE_LENGTH) --target-version $(PY_TARGET_VER) *.py; \
 
 
 check-isort:
@@ -179,9 +182,9 @@ fix-style:
 	$(PYTHON) -m isort -w $(MAX_LINE_LENGTH) $(MRLN); \
 	$(PYTHON) -m isort -w $(MAX_LINE_LENGTH) $(TEST); \
 	$(PYTHON) -m isort -w $(MAX_LINE_LENGTH) *.py; \
-	$(PYTHON) -m black --target-version py38 -l $(MAX_LINE_LENGTH) $(MRLN); \
-	$(PYTHON) -m black --target-version py38 -l $(MAX_LINE_LENGTH) $(TEST); \
-	$(PYTHON) -m black --target-version py38 -l $(MAX_LINE_LENGTH) *.py; \
+	$(PYTHON) -m black --target-version $(PY_TARGET_VER) -l $(MAX_LINE_LENGTH) $(MRLN); \
+	$(PYTHON) -m black --target-version $(PY_TARGET_VER) -l $(MAX_LINE_LENGTH) $(TEST); \
+	$(PYTHON) -m black --target-version $(PY_TARGET_VER) -l $(MAX_LINE_LENGTH) *.py; \
 
 
 # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.

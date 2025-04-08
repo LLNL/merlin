@@ -39,6 +39,7 @@ import logging
 import os
 import time
 from argparse import Namespace
+from importlib import resources
 from typing import Dict, List, Tuple
 
 from merlin.exceptions import NoWorkersException
@@ -58,12 +59,6 @@ from merlin.study.celeryadapter import (
     stop_celery_workers,
 )
 from merlin.study.study import MerlinStudy
-
-
-try:
-    from importlib import resources
-except ImportError:
-    import importlib_resources as resources
 
 
 LOG = logging.getLogger(__name__)
