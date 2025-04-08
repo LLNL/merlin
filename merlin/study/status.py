@@ -424,8 +424,8 @@ class Status:
 
         Returns:
             A dictionary with two keys:\n
-                - "started_steps": A list of steps that have been started.
-                - "unstarted_steps": A list of steps that have not been started.
+                - `started_steps`: A list of steps that have been started.
+                - `unstarted_steps`: A list of steps that have not been started.
 
         Example:
             ```python
@@ -972,8 +972,8 @@ class DetailedStatus(Status):
 
         Returns:
             A dictionary containing two lists:\n
-                - "started": A list of steps that have been started.
-                - "unstarted": A list of steps that have not yet been started.
+                - `started`: A list of steps that have been started.
+                - `unstarted`: A list of steps that have not yet been started.
         """
         existing_steps = self.spec.get_study_step_names()
 

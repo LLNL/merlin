@@ -551,8 +551,8 @@ def query_celery_queues(queues: List[str], app: Celery = None, config: Config = 
     Returns:
         A dictionary where each key is a queue name and the value is another dictionary
             containing:\n
-            - "jobs": The number of jobs in the queue.
-            - "consumers": The number of consumers attached to the queue.
+            - `jobs`: The number of jobs in the queue.
+            - `consumers`: The number of consumers attached to the queue.
     """
     if app is None:
         from merlin.celery import app  # pylint: disable=C0415

@@ -1100,7 +1100,7 @@ def pretty_format_hms(timestring: str) -> str:
             or is not in the expected format.
 
     Examples:
-        ```
+        ```python
         >>> pretty_format_hms("00:00:34:00")
         '34m'
         >>> pretty_format_hms("01:00:00:25")

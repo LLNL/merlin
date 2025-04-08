@@ -33,6 +33,6 @@ The `security` package contains functionality for managing encryption within Mer
 ensuring secure communication and data protection.
 
 Modules:
-    - `encrypt.py`: Handles general encryption logic.
-    - `encrypt_backend_traffic.py`: Provides functions for encrypting backend traffic.
+    encrypt.py: Handles general encryption logic.
+    encrypt_backend_traffic.py: Provides functions for encrypting backend traffic.
 """

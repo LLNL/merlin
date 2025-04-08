@@ -731,9 +731,9 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         Returns:
             A dictionary where each key is a variable name and each value
                 is a dictionary containing:\n
-                - "values": The values associated with the variable, 
+                - `values`: The values associated with the variable, 
                     or None if not defined.
-                - "label": The label of the variable as defined in the 
+                - `label`: The label of the variable as defined in the 
                     parameter generator script.
         """
         if filepath:

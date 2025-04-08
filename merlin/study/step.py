@@ -659,9 +659,9 @@ class Step:
         Args:
             adapter_config (dict): A dictionary containing configuration 
                 for the maestro script adapter, including:\n
-                - "shell": The shell to use for execution.
-                - "batch_type": The type of batch processing to use.
-                - "dry_run": A boolean indicating whether to perform a 
+                - `shell`: The shell to use for execution.
+                - `batch_type`: The type of batch processing to use.
+                - `dry_run`: A boolean indicating whether to perform a 
                 dry run (setup only, no execution).
 
         Returns:

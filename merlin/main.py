@@ -592,12 +592,12 @@ def process_server(args: Namespace):
         args: Parsed command-line arguments, which includes:\n
             - `commands`: The server management command to execute. 
               Possible values are:
-                - "init": Initialize the server.
-                - "start": Start the server.
-                - "stop": Stop the server.
-                - "status": Check the server status.
-                - "restart": Restart the server.
-                - "config": Configure the server.
+                - `init`: Initialize the server.
+                - `start`: Start the server.
+                - `stop`: Stop the server.
+                - `status`: Check the server status.
+                - `restart`: Restart the server.
+                - `config`: Configure the server.
     """
     try:
         lc_all_val = os.environ["LC_ALL"]

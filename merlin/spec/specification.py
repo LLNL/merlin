@@ -128,7 +128,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
     def sections(self) -> Dict:
         """
         Returns a nested dictionary of all sections of the specification as referenced by
-        [Maestro's `YAMLSpecification` class][https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/specification/yamlspecification.html].
+        [Maestro's `YAMLSpecification` class](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/specification/yamlspecification.html).
         The structure is aligned with the expectations of Maestro's `YAMLSpecification` class.
 
         Returns:
