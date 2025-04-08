@@ -49,8 +49,8 @@ def format_label(label_to_format: str, delimiter: str = "_") -> str:
     """
     Format a string by replacing a specified delimiter with spaces and capitalizing each word.
 
-    This function takes a string that uses a specific delimiter to separate words and returns a 
-    more readable version of that string, where the words are separated by spaces and each word 
+    This function takes a string that uses a specific delimiter to separate words and returns a
+    more readable version of that string, where the words are separated by spaces and each word
     is capitalized.
 
     Args:
@@ -130,8 +130,8 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         and their corresponding values.
 
         Args:
-            parameters: A dictionary where each key is a command type (e.g., "cmd", "restart") 
-                and each value is another dictionary containing token-value pairs. 
+            parameters: A dictionary where each key is a command type (e.g., "cmd", "restart")
+                and each value is another dictionary containing token-value pairs.
                 Example format: `{"cmd": {"TOKEN1": "value1"}, "restart": {"TOKEN2": "value1"}}`.
 
         Returns:
@@ -177,8 +177,8 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         """
         Create each step entry in the display.
 
-        This method constructs a formatted table entry for a specific step in the process, including 
-        relevant details such as the step name, associated task queue, worker(s), and any parameters 
+        This method constructs a formatted table entry for a specific step in the process, including
+        relevant details such as the step name, associated task queue, worker(s), and any parameters
         related to the step. Each parameter set will be displayed in a sub-table format.
 
         Args:
@@ -189,7 +189,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
             workers: The name(s) of the worker(s) that executed this step, if provided.
 
         Returns:
-            A rich Table object containing the formatted information for the specified step, 
+            A rich Table object containing the formatted information for the specified step,
                 including its parameters and any associated task queue or worker details.
         """
         # Initialize the table that will have our step entry information
@@ -218,8 +218,8 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         """
         Create the task details section of the display.
 
-        This method constructs a formatted table that displays detailed information about various tasks, 
-        including their statuses, return codes, elapsed times, run times, restarts, and associated workers. 
+        This method constructs a formatted table that displays detailed information about various tasks,
+        including their statuses, return codes, elapsed times, run times, restarts, and associated workers.
         Each task is represented as a row in the table, with specific styling applied based on the task's status.
 
         Args:
@@ -228,7 +228,7 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
                 run time, restarts, and workers.
 
         Returns:
-            A rich Table object containing the formatted task details, structured for easy readability 
+            A rich Table object containing the formatted task details, structured for easy readability
                 and visual distinction based on task status.
         """
         # Initialize the task details table
@@ -276,21 +276,19 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
 
         return task_details
 
-    def layout(
-        self, status_data: Dict, study_title: str = None, status_time: str = None
-    ):  # pylint: disable=W0237
+    def layout(self, status_data: Dict, study_title: str = None, status_time: str = None):  # pylint: disable=W0237
         """
         Setup the overall layout of the display.
 
-        This method configures the main display layout for the status data, including setting up 
-        the title with optional study information and timestamp. It organizes the status data into 
+        This method configures the main display layout for the status data, including setting up
+        the title with optional study information and timestamp. It organizes the status data into
         a structured table format, displaying each step's details along with associated task information.
 
         Args:
-            status_data: A dictionary containing status data to be displayed, where each key 
+            status_data: A dictionary containing status data to be displayed, where each key
                 represents a step and its associated information.
             study_title: A title for the study to be displayed at the top of the output.
-            status_time: A timestamp to be included in the title, indicating when the status 
+            status_time: A timestamp to be included in the title, indicating when the status
                 data was captured.
 
         Raises:
@@ -348,8 +346,8 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
         """
         Do the actual printing of the status table.
 
-        This method is responsible for rendering the status table to the console, applying any specified 
-        theme settings for visual customization. It handles the enabling or disabling of themes and 
+        This method is responsible for rendering the status table to the console, applying any specified
+        theme settings for visual customization. It handles the enabling or disabling of themes and
         manages the output display, either using a pager for long outputs or printing directly to the console.
 
         Args:
@@ -401,21 +399,19 @@ class MerlinFlatRenderer(FlatStatusRenderer):
         self.disable_theme: bool = kwargs.pop("disable_theme", False)
         self.disable_pager: bool = kwargs.pop("disable_pager", False)
 
-    def layout(
-        self, status_data: Dict[str, List[Union[str, int]]], study_title: str = None
-    ):  # pylint: disable=W0221
+    def layout(self, status_data: Dict[str, List[Union[str, int]]], study_title: str = None):  # pylint: disable=W0221
         """
         Set up the layout of the display for the status information.
 
         This method processes the provided status data by removing unnecessary parameters,
-        capitalizing the column labels, and preparing the data for display. It also allows 
+        capitalizing the column labels, and preparing the data for display. It also allows
         for an optional study title to be displayed at the top of the output.
 
         Args:
             status_data: A dictionary containing status information to be displayed. The
                 keys represent the status categories, and the values are lists of
                 corresponding status values.
-            study_title: The title of the study to display at the top of the output. 
+            study_title: The title of the study to display at the top of the output.
                 If provided, it will be included in the layout.
         """
         if "cmd_parameters" in status_data:
@@ -433,17 +429,17 @@ class MerlinFlatRenderer(FlatStatusRenderer):
         """
         Render the status table to the console.
 
-        This method is responsible for displaying the formatted status information 
-        in the console. It applies any specified theme settings to customize the 
-        appearance of the output. If the theme is disabled, it sets all theme 
-        attributes to 'none'. The method also handles the output display, either 
-        printing directly to the console or using a pager for long outputs based 
+        This method is responsible for displaying the formatted status information
+        in the console. It applies any specified theme settings to customize the
+        appearance of the output. If the theme is disabled, it sets all theme
+        attributes to 'none'. The method also handles the output display, either
+        printing directly to the console or using a pager for long outputs based
         on the `disable_pager` attribute.
 
         Args:
-            theme (Dict[str, str], optional): A dictionary of theme settings that 
-                customize the appearance of the output. The keys represent the 
-                theme attributes, and the values are the corresponding settings. 
+            theme (Dict[str, str], optional): A dictionary of theme settings that
+                customize the appearance of the output. The keys represent the
+                theme attributes, and the values are the corresponding settings.
                 If not provided, the default theme settings will be used.
         """
         # Apply any theme customization
@@ -474,9 +470,9 @@ class MerlinStatusRendererFactory(StatusRendererFactory):
     """
     This class keeps track of all available status layouts for Merlin.
 
-    The `MerlinStatusRendererFactory` is responsible for managing different 
-    status layout renderers used in the Merlin application. It provides a 
-    method to retrieve the appropriate renderer based on the specified layout 
+    The `MerlinStatusRendererFactory` is responsible for managing different
+    status layout renderers used in the Merlin application. It provides a
+    method to retrieve the appropriate renderer based on the specified layout
     type and user preferences regarding theme and pager usage.
 
     Attributes:
@@ -486,7 +482,7 @@ class MerlinStatusRendererFactory(StatusRendererFactory):
             "default" for [`MerlinDefaultRenderer`][study.status_renderers.MerlinDefaultRenderer].
 
     Methods:
-        get_renderer: Retrieves an instance of the specified layout renderer, applying 
+        get_renderer: Retrieves an instance of the specified layout renderer, applying
             user preferences for theme and pager settings.
     """
 
@@ -503,7 +499,9 @@ class MerlinStatusRendererFactory(StatusRendererFactory):
             "default": MerlinDefaultRenderer,
         }
 
-    def get_renderer(self, layout: str, disable_theme: bool, disable_pager: bool) -> BaseStatusRenderer:  # pylint: disable=W0221
+    def get_renderer(
+        self, layout: str, disable_theme: bool, disable_pager: bool
+    ) -> BaseStatusRenderer:  # pylint: disable=W0221
         """
         Get handle for specific layout renderer to instantiate.
 

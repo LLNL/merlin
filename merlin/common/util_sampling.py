@@ -41,13 +41,13 @@ def scale_samples(
     samples_norm: np.ndarray,
     limits: List[Tuple[int, int]],
     limits_norm: Tuple[int, int] = (0, 1),
-    do_log: Union[bool, List[bool]] = False
+    do_log: Union[bool, List[bool]] = False,
 ) -> np.ndarray:
     """
     Scale samples to new limits, either logarithmically or linearly.
 
-    This function transforms normalized samples to specified limits, 
-    allowing for both linear and logarithmic scaling based on the 
+    This function transforms normalized samples to specified limits,
+    allowing for both linear and logarithmic scaling based on the
     provided parameters.
 
     Args:
@@ -58,7 +58,7 @@ def scale_samples(
         limits_norm: The (min, max) values from which `samples_norm` were
             derived. Defaults to (0, 1).
         do_log: Indicates whether to apply log10 scaling to each dimension.
-            This can be a single boolean or a list of length ndims. Defaults 
+            This can be a single boolean or a list of length ndims. Defaults
             to a list of `ndims` containing `False`.
 
     Returns:
@@ -68,7 +68,7 @@ def scale_samples(
         ValueError: If `samples_norm` does not have two dimensions.
 
     Notes:
-        - The function follows the sklearn convention, requiring 
+        - The function follows the sklearn convention, requiring
           samples to be provided as an (nsamples, ndims) array.
         - To transform 1-D arrays, reshape them accordingly:
             ```python

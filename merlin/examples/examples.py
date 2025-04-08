@@ -28,10 +28,10 @@
 # SOFTWARE.
 ###############################################################################
 """
-This module contains example specification files for Merlin workflows, 
+This module contains example specification files for Merlin workflows,
 along with detailed explanations of each block in the specification.
 
-The examples and templates are useful for understanding how to structure 
+The examples and templates are useful for understanding how to structure
 Merlin workflows, define tasks, manage parameters, and configure resources.
 """
 

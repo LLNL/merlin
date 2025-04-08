@@ -94,13 +94,13 @@ def generate_password(length, pass_command: str = None) -> str:
     """
     Generates a password for a Redis container.
 
-    If a specific command is provided, the password will be generated using the output 
-    of the given command. Otherwise, a random password will be created by combining 
+    If a specific command is provided, the password will be generated using the output
+    of the given command. Otherwise, a random password will be created by combining
     characters (letters, digits, and special symbols) based on the specified length.
 
     Args:
         length (int): The desired length of the password.
-        pass_command (str, optional): A shell command to generate the password. 
+        pass_command (str, optional): A shell command to generate the password.
             If provided, the command's output will be used as the password.
 
     Returns:
@@ -126,8 +126,8 @@ def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
     """
     Parses the Redis output from a Redis container.
 
-    This function processes the Redis container's output to extract necessary information, 
-    such as configuration details and server state. It determines whether the server was 
+    This function processes the Redis container's output to extract necessary information,
+    such as configuration details and server state. It determines whether the server was
     successfully initialized and ready to accept connections, or if an error occurred.
 
     Args:
@@ -191,9 +191,9 @@ def create_server_config() -> bool:
     """
     Creates the main configuration file for the Merlin server in the Merlin configuration directory.
 
-    This function checks for the existence of the Merlin configuration directory and creates a default 
-    server configuration if none exists. It also copies necessary container command files, applies the 
-    server configuration to `app.yaml`, and initializes the server configuration directory. If the 
+    This function checks for the existence of the Merlin configuration directory and creates a default
+    server configuration if none exists. It also copies necessary container command files, applies the
+    server configuration to `app.yaml`, and initializes the server configuration directory. If the
     configuration already exists, it will not overwrite it.
 
     Returns:
@@ -242,8 +242,8 @@ def config_merlin_server():
     """
     Configures the Merlin server with necessary settings, including username and password.
 
-    This function sets up the Merlin server by generating and storing a password file, creating a user file, 
-    and configuring Redis settings. If the password or user files already exist, it skips the respective 
+    This function sets up the Merlin server by generating and storing a password file, creating a user file,
+    and configuring Redis settings. If the password or user files already exist, it skips the respective
     setup steps. The function ensures that default and environment-specific users are added to the user file.
     """
 
@@ -284,8 +284,8 @@ def pull_server_config() -> ServerConfig:
     """
     Retrieves the main configuration file and its corresponding format configuration file for the Merlin server.
 
-    This function reads the `app.yaml` configuration file and additional format-specific configuration files 
-    to construct a complete configuration dictionary. It validates the presence of required keys in the format 
+    This function reads the `app.yaml` configuration file and additional format-specific configuration files
+    to construct a complete configuration dictionary. It validates the presence of required keys in the format
     and process configurations. If any required configuration is missing, an error is logged and `None` is returned.
 
     Returns:
@@ -335,8 +335,8 @@ def pull_server_image() -> bool:
     """
     Fetches the server image and ensures the necessary configuration files are in place.
 
-    This function retrieves the server image from a specified URL and saves it locally if it does not already exist. 
-    Additionally, it copies the default Redis configuration file to the appropriate location if it is missing. 
+    This function retrieves the server image from a specified URL and saves it locally if it does not already exist.
+    Additionally, it copies the default Redis configuration file to the appropriate location if it is missing.
     The function relies on the server configuration to determine the image URL, image path, and configuration file details.
 
     Returns:
@@ -384,8 +384,8 @@ def get_server_status() -> ServerStatus:
     """
     Determines the current status of the server.
 
-    This function checks the server's state by verifying the existence of necessary files, 
-    including configuration files, the container image, and the process file. It also checks 
+    This function checks the server's state by verifying the existence of necessary files,
+    including configuration files, the container image, and the process file. It also checks
     if the server process is actively running.
 
     Returns:
@@ -427,7 +427,7 @@ def check_process_file_format(data: Dict) -> bool:
     """
     Validates the format of a process file.
 
-    This function checks if the given process file data (in dictionary format) contains all the 
+    This function checks if the given process file data (in dictionary format) contains all the
     required keys: "parent_pid", "image_pid", "port", and "hostname".
 
     Args:
@@ -447,8 +447,8 @@ def pull_process_file(file_path: str) -> Dict:
     """
     Reads and parses data from a process file.
 
-    This function attempts to load the contents of a process file located at the specified 
-    file path. If the file exists and its format is valid, the data is returned as a dictionary. 
+    This function attempts to load the contents of a process file located at the specified
+    file path. If the file exists and its format is valid, the data is returned as a dictionary.
     If the format is invalid or the file cannot be processed, `None` is returned.
 
     Args:
@@ -468,9 +468,9 @@ def dump_process_file(data: Dict, file_path: str) -> bool:
     """
     Writes process data to a specified file.
 
-    This function takes a dictionary containing process data and writes it to the specified 
-    file path in YAML format. Before writing, the function validates the format of the data. 
-    If the data format is invalid, the function returns `False`. If the operation is successful, 
+    This function takes a dictionary containing process data and writes it to the specified
+    file path in YAML format. Before writing, the function validates the format of the data.
+    If the data format is invalid, the function returns `False`. If the operation is successful,
     it returns `True`.
 
     Args:
@@ -478,7 +478,7 @@ def dump_process_file(data: Dict, file_path: str) -> bool:
         file_path (str): The path to the file where the data will be written.
 
     Returns:
-        True if the data is successfully written to the file, False if the data 
+        True if the data is successfully written to the file, False if the data
             format is invalid or the operation fails.
     """
     if not check_process_file_format(data):

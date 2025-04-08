@@ -108,7 +108,7 @@ class Dumper:  # pylint: disable=R0903
         """
         Writes information to the specified output file.
 
-        This method determines the file type and calls the appropriate 
+        This method determines the file type and calls the appropriate
         method to write the data.
 
         Args:
@@ -160,17 +160,17 @@ class Dumper:  # pylint: disable=R0903
 
 def dump_handler(dump_file: str, dump_info: Dict):
     """
-    Handles the process of creating a Dumper object and writing data 
+    Handles the process of creating a Dumper object and writing data
     to an output file.
 
-    This function checks if the specified dump file exists to determine 
-    the appropriate file write mode (append or write). It then creates 
-    a Dumper object and writes the provided information to the file, 
+    This function checks if the specified dump file exists to determine
+    the appropriate file write mode (append or write). It then creates
+    a Dumper object and writes the provided information to the file,
     logging the process.
 
     Args:
         dump_file: The filepath to the file where data will be dumped.
-        dump_info: A dictionary containing the information to be written 
+        dump_info: A dictionary containing the information to be written
             to the `dump_file`.
     """
     # Create a dumper object to help us write to dump_file

@@ -33,7 +33,7 @@ from __future__ import absolute_import, print_function
 
 import logging
 import os
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import billiard
 import celery
@@ -86,12 +86,12 @@ def patch_celery():
 
 # This function has to have specific args/return values for celery so ignore pylint
 def route_for_task(
-        name: str,
-        args: List[Any],
-        kwargs: Dict[Any, Any],
-        options: Dict[Any, Any],
-        task: celery.Task = None,
-        **kw: Dict[Any, Any],
+    name: str,
+    args: List[Any],
+    kwargs: Dict[Any, Any],
+    options: Dict[Any, Any],
+    task: celery.Task = None,
+    **kw: Dict[Any, Any],
 ) -> Dict[Any, Any]:  # pylint: disable=W0613,R1710
     """
     Custom task router for Celery queues.
@@ -106,11 +106,11 @@ def route_for_task(
         options: Additional options for the task.
         task: The task instance (default is None).
         **kw: Additional keyword arguments.
-    
+
     Returns:
-        A dictionary specifying the queue to route the task to. 
-            If the task name contains a colon, it returns a dictionary with 
-            the key "queue" set to the queue name. Otherwise, it returns 
+        A dictionary specifying the queue to route the task to.
+            If the task name contains a colon, it returns a dictionary with
+            the key "queue" set to the queue name. Otherwise, it returns
             an empty dictionary.
     """
     if ":" in name:

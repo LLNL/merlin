@@ -28,8 +28,8 @@
 # SOFTWARE.
 ###############################################################################
 """
-This module provides functionality to handle overriding variables in a spec file 
-via the command-line interface. It includes functions to validate and replace variables 
+This module provides functionality to handle overriding variables in a spec file
+via the command-line interface. It includes functions to validate and replace variables
 in the spec file or environment block based on user-provided overrides.
 """
 

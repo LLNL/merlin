@@ -13,6 +13,7 @@ IGNORE_PATTERNS = [
     "*/ascii_art.py",
 ]
 
+
 def should_ignore(path):
     """Check if the given path matches any ignore patterns."""
     for pattern in IGNORE_PATTERNS:
@@ -22,6 +23,7 @@ def should_ignore(path):
         if path.match(pattern):
             return True
     return False
+
 
 for path in sorted(Path("merlin").rglob("*.py")):
     if should_ignore(path):

@@ -48,7 +48,7 @@ def new_dir(path: str):
     """
     Create a new directory at the specified path if it does not already exist.
 
-    This function attempts to create the directory and suppresses any 
+    This function attempts to create the directory and suppresses any
     OSError that may occur if the directory already exists.
 
     Args:
@@ -58,16 +58,12 @@ def new_dir(path: str):
         os.makedirs(path)
 
 
-def uniform_directories(
-    num_samples: int = MAX_SAMPLE,
-    bundle_size: int = 1,
-    level_max_dirs: int = 100
-) -> List[int]:
+def uniform_directories(num_samples: int = MAX_SAMPLE, bundle_size: int = 1, level_max_dirs: int = 100) -> List[int]:
     """
     Create a directory hierarchy with uniformly increasing directory sizes.
 
-    This function generates a list of directory sizes, starting from 
-    the specified `bundle_size` and increasing by a factor of 
+    This function generates a list of directory sizes, starting from
+    the specified `bundle_size` and increasing by a factor of
     `level_max_dirs` until the total number of samples is reached.
 
     Args:
@@ -99,7 +95,7 @@ class SampleIndex:
         address (str): The full address of this node.
         children (Dict[str, SampleIndex]): A dictionary containing the direct children of this node, which are also
             of type SampleIndex.
-        depth (int): (class attribute) A class variable indicating the current depth in the 
+        depth (int): (class attribute) A class variable indicating the current depth in the
             hierarchy, primarily used for pretty printing.
         is_leaf (bool): Returns whether this node is a leaf in the hierarchy.
         is_directory (bool): Returns whether this node is a directory (not a leaf).
@@ -194,7 +190,7 @@ class SampleIndex:
         """
         Indicates whether this node is a leaf in the hierarchy.
 
-        A leaf node is defined as a node that has no children. This property 
+        A leaf node is defined as a node that has no children. This property
         returns True if the node has no children, and False otherwise.
         """
         return len(self.children) == 0
@@ -204,8 +200,8 @@ class SampleIndex:
         """
         Indicates whether this node is a directory (not a leaf).
 
-        A directory node is defined as a node that has one or more children. 
-        This property returns True if the node has children, and False if it 
+        A directory node is defined as a node that has one or more children.
+        This property returns True if the node has children, and False if it
         is a leaf node.
         """
         return len(self.children) > 0
@@ -215,8 +211,8 @@ class SampleIndex:
         """
         Indicates whether this node is the direct parent of a leaf.
 
-        This property checks if the current node is a directory and if any of 
-        its children are leaf nodes. It returns True if at least one child is 
+        This property checks if the current node is a directory and if any of
+        its children are leaf nodes. It returns True if at least one child is
         a leaf, and False otherwise.
         """
         if not self.is_directory:
@@ -231,8 +227,8 @@ class SampleIndex:
         """
         Indicates whether this node is the parent of a parent of a leaf.
 
-        This property checks if the current node is a directory and if any of 
-        its children are parents of leaf nodes. It returns True if at least 
+        This property checks if the current node is a directory and if any of
+        its children are parents of leaf nodes. It returns True if at least
         one child is a parent of a leaf, and False otherwise.
         """
         if not self.is_directory:
@@ -247,8 +243,8 @@ class SampleIndex:
         """
         Indicates whether this node is the parent of a grandparent of a leaf.
 
-        This property checks if the current node is a directory and if any of 
-        its children are grandparents of leaf nodes. It returns True if at 
+        This property checks if the current node is a directory and if any of
+        its children are grandparents of leaf nodes. It returns True if at
         least one child is a grandparent of a leaf, and False otherwise.
         """
         if not self.is_directory:
@@ -266,17 +262,17 @@ class SampleIndex:
         top_level: bool = True,
     ) -> Generator[Tuple[str, "SampleIndex"]]:
         """
-        Traverse the tree structure and yield the full path and associated node 
+        Traverse the tree structure and yield the full path and associated node
         for each node that meets the specified conditional criteria.
 
-        This method allows for flexible traversal of the tree, either from 
-        the top down or bottom up, depending on the `bottom_up` parameter. 
-        Nodes are yielded based on whether they satisfy the provided 
+        This method allows for flexible traversal of the tree, either from
+        the top down or bottom up, depending on the `bottom_up` parameter.
+        Nodes are yielded based on whether they satisfy the provided
         conditional function.
 
         Notes:
-            - The method uses a "SKIP ME" placeholder to manage the 
-            recursion flow, ensuring that the traversal can skip 
+            - The method uses a "SKIP ME" placeholder to manage the
+            recursion flow, ensuring that the traversal can skip
             non-qualifying nodes without breaking the iteration.
 
         Args:
@@ -293,7 +289,7 @@ class SampleIndex:
                 for recursive calls.
 
         Yields:
-            A tuple containing the full path to the node and the 
+            A tuple containing the full path to the node and the
                 associated [`SampleIndex`][common.sample_index.SampleIndex] node
                 that meets the conditional criteria.
         """
@@ -320,7 +316,7 @@ class SampleIndex:
         """
         Traverse all nodes in the [`SampleIndex`][common.sample_index.SampleIndex].
 
-        This method returns a generator that yields all nodes in the 
+        This method returns a generator that yields all nodes in the
         [`SampleIndex`][common.sample_index.SampleIndex], regardless of their type
         (leaf or directory). The traversal order can be controlled by the `bottom_up`
         parameter.
@@ -344,7 +340,7 @@ class SampleIndex:
         """
         Traverse all Bundles (leaf nodes) in the [`SampleIndex`][common.sample_index.SampleIndex].
 
-        This method returns a generator that yields only the leaf nodes 
+        This method returns a generator that yields only the leaf nodes
         (Bundles) in the [`SampleIndex`][common.sample_index.SampleIndex].
         It filters the nodes based on their type, ensuring that only leaves are returned.
 
@@ -363,18 +359,18 @@ class SampleIndex:
         """
         Traverse all Directories in the [`SampleIndex`][common.sample_index.SampleIndex].
 
-        This method returns a generator that yields all directory nodes 
+        This method returns a generator that yields all directory nodes
         in the [`SampleIndex`][common.sample_index.SampleIndex]. The
         traversal order can be controlled by the `bottom_up` parameter.
 
         Notes:
             This method calls the [`traverse`][common.sample_index.SampleIndex.traverse]
-            method with a conditional that checks if a node is a directory, ensuring only 
+            method with a conditional that checks if a node is a directory, ensuring only
             directories are yielded.
 
         Args:
-            bottom_up: If True, yields leaf directories first, moving 
-                upwards through the tree. If False, yields top-level 
+            bottom_up: If True, yields leaf directories first, moving
+                upwards through the tree. If False, yields top-level
                 directories first.
 
         Yields:
@@ -389,10 +385,10 @@ class SampleIndex:
         """
         Check if the provided address is valid for insertion into the subtree.
 
-        This method traverses all nodes in the given subtree and verifies 
-        that no existing node's address conflicts with the specified 
-        `full_address`. If any node's address starts with the `full_address`, 
-        a TypeError is raised, indicating that the insertion would create 
+        This method traverses all nodes in the given subtree and verifies
+        that no existing node's address conflicts with the specified
+        `full_address`. If any node's address starts with the `full_address`,
+        a TypeError is raised, indicating that the insertion would create
         an invalid state.
 
         Args:
@@ -401,7 +397,7 @@ class SampleIndex:
             sub_tree: The subtree in which the address will be checked.
 
         Raises:
-            TypeError: If any node in the subtree has an address that 
+            TypeError: If any node in the subtree has an address that
                 conflicts with the `full_address`.
         """
         for _, node in sub_tree.traverse_all():
@@ -413,9 +409,9 @@ class SampleIndex:
         Retrieve the subtree associated with the given full address.
 
         This method allows for accessing nodes in the
-        [`SampleIndex`][common.sample_index.SampleIndex] using 
-        the full address. If the full address matches the current node's 
-        address, the node itself is returned. Otherwise, it recursively 
+        [`SampleIndex`][common.sample_index.SampleIndex] using
+        the full address. If the full address matches the current node's
+        address, the node itself is returned. Otherwise, it recursively
         searches through the children to find the corresponding node.
 
         Args:
@@ -425,7 +421,7 @@ class SampleIndex:
             The node associated with the specified full address.
 
         Raises:
-            KeyError: If no node with the specified full address exists 
+            KeyError: If no node with the specified full address exists
                 in the [`SampleIndex`][common.sample_index.SampleIndex].
         """
         if full_address == self.address:
@@ -439,7 +435,7 @@ class SampleIndex:
         """
         Set or replace the subtree associated with the given full address.
 
-        This method allows for inserting or updating a node in the 
+        This method allows for inserting or updating a node in the
         [`SampleIndex`][common.sample_index.SampleIndex]. If the full
         address matches the current node's address, a KeyError is raised
         to prevent self-assignment. The method searches through the children
@@ -453,8 +449,8 @@ class SampleIndex:
                 address.
 
         Raises:
-            KeyError: If the full address matches the current node's 
-                address or if no matching child node is found for 
+            KeyError: If the full address matches the current node's
+                address or if no matching child node is found for
                 insertion.
         """
         if full_address == self.address:
@@ -483,8 +479,8 @@ class SampleIndex:
         """
         Create a new directory associated with this node in the graph.
 
-        This method checks if the current node is a directory and, if so, 
-        creates a new directory at the specified path using the node's 
+        This method checks if the current node is a directory and, if so,
+        creates a new directory at the specified path using the node's
         name. The directory is created using the
         [`new_dir`][common.sample_index.new_dir] function.
 
@@ -498,16 +494,16 @@ class SampleIndex:
         """
         Create the directory tree associated with this node and its children.
 
-        This method initiates the creation of the directory structure 
-        starting from the current node. It first creates the directory for 
-        the current node and then recursively creates directories for all 
-        child nodes. The base path can be specified, and the directories 
+        This method initiates the creation of the directory structure
+        starting from the current node. It first creates the directory for
+        the current node and then recursively creates directories for all
+        child nodes. The base path can be specified, and the directories
         will be created relative to this path.
 
         Args:
             path: The base path where the directory tree will be created.
                 Defaults to the current directory ("."), meaning the
-                directories will be created in the current working 
+                directories will be created in the current working
                 directory.
         """
         self.write_directory(path)
@@ -519,18 +515,18 @@ class SampleIndex:
         Retrieve the file path to the bundle file associated with the specified
         sample ID.
 
-        This method constructs the path to the bundle file by traversing the 
-        directory structure represented by the current node and its children. 
-        It checks each child node to determine if the provided `sample_id` 
-        falls within the range defined by the child's `min` and `max` attributes. 
-        If a matching child is found, the method recursively calls itself to 
+        This method constructs the path to the bundle file by traversing the
+        directory structure represented by the current node and its children.
+        It checks each child node to determine if the provided `sample_id`
+        falls within the range defined by the child's `min` and `max` attributes.
+        If a matching child is found, the method recursively calls itself to
         build the complete path.
 
         Notes:
-            - This method assumes that the global numbering system is known 
-            and that the `min` and `max` attributes of child nodes are 
+            - This method assumes that the global numbering system is known
+            and that the `min` and `max` attributes of child nodes are
             correctly defined.
-            - If no matching child is found, the method will return the 
+            - If no matching child is found, the method will return the
             current node's name as the base path.
 
         Args:
@@ -539,7 +535,7 @@ class SampleIndex:
                 known global numbering system.
 
         Returns:
-            The constructed file path to the bundle file associated 
+            The constructed file path to the bundle file associated
                 with the specified `sample_id`.
         """
         path = self.name
@@ -552,17 +548,17 @@ class SampleIndex:
         """
         Write the index file associated with this node.
 
-        This method creates an index file named "sample_index.txt" in the 
-        specified directory path. The index file contains information about 
-        the child nodes of the current node. For each child, it records 
-        whether the child is a leaf or a directory, along with its address, 
+        This method creates an index file named "sample_index.txt" in the
+        specified directory path. The index file contains information about
+        the child nodes of the current node. For each child, it records
+        whether the child is a leaf or a directory, along with its address,
         name, and the range of sample IDs it covers.
 
         Notes:
-            - This method will only execute if the current node is identified 
+            - This method will only execute if the current node is identified
             as a directory
             ([`self.is_directory`][common.sample_index.SampleIndex.is_directory]).
-            - The index file format includes lines for each child in the 
+            - The index file format includes lines for each child in the
             following format:
                 - For leaf nodes: `BUNDLE:<address>\tname:<name>\tSAMPLES:[<min>, <max>)`
                 - For directory nodes: `DIR:<address>\tname:<name>\tSAMPLES:[<min>, <max>)`
@@ -594,10 +590,10 @@ class SampleIndex:
         """
         Write index files that correspond to the location in the directory hierarchy.
 
-        This method generates index files for the current node and all its 
-        children, allowing for a structured representation of the sample 
-        indices in the directory hierarchy. It first writes a single index 
-        file for the current node and then recursively writes index files 
+        This method generates index files for the current node and all its
+        children, allowing for a structured representation of the sample
+        indices in the directory hierarchy. It first writes a single index
+        file for the current node and then recursively writes index files
         for each child node.
 
         Args:
@@ -620,8 +616,8 @@ class SampleIndex:
         """
         Create a delimited string representation of the directories in the index.
 
-        This method generates a string that lists the directories in the 
-        current index, separated by the specified delimiter. The user can 
+        This method generates a string that lists the directories in the
+        current index, separated by the specified delimiter. The user can
         choose to include only the leaf directories or all directories.
 
         Notes:
@@ -655,21 +651,21 @@ class SampleIndex:
         Return a string representation of the
         [`SampleIndex`][common.sample_index.SampleIndex] object.
 
-        This method provides a formatted string that represents the current 
-        node in the sample index, including its address, type (BUNDLE or 
-        DIRECTORY), and relevant attributes such as minimum and maximum 
-        sample IDs. If the node is a directory, it recursively includes 
+        This method provides a formatted string that represents the current
+        node in the sample index, including its address, type (BUNDLE or
+        DIRECTORY), and relevant attributes such as minimum and maximum
+        sample IDs. If the node is a directory, it recursively includes
         the string representations of its child nodes.
 
         Notes:
-            - The method uses a class variable `depth` to manage indentation 
+            - The method uses a class variable `depth` to manage indentation
             levels for nested directories, enhancing readability.
-            - The output format varies depending on whether the node is a 
+            - The output format varies depending on whether the node is a
             leaf or a directory.
 
         Returns:
             A formatted string representation of the
-                [`SampleIndex`][common.sample_index.SampleIndex] object, 
+                [`SampleIndex`][common.sample_index.SampleIndex] object,
                 including its children if applicable.
         """
         SampleIndex.depth = SampleIndex.depth + 1

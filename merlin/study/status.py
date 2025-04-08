@@ -76,8 +76,8 @@ class Status:
     Handles the management and retrieval of status information for studies.
 
     This class is responsible for loading specifications, tracking the status of steps,
-    calculating runtime statistics, and formatting status information for output in 
-    various formats (JSON, CSV). It interacts with the file system to read status files 
+    calculating runtime statistics, and formatting status information for output in
+    various formats (JSON, CSV). It interacts with the file system to read status files
     and provides methods to display and dump status information.
 
     Attributes:
@@ -794,9 +794,9 @@ class DetailedStatus(Status):
         Args:
             args: Command-line arguments provided by the user, including options
                 for filtering, displaying, or dumping detailed task statuses.
-            spec_display: A flag indicating whether the status should be loaded from a 
+            spec_display: A flag indicating whether the status should be loaded from a
                 specification file (`True`) or from a workspace (`False`).
-            file_or_ws: The path to the specification file or workspace, depending on the 
+            file_or_ws: The path to the specification file or workspace, depending on the
                 value of `spec_display`.
         """
         args_copy = Namespace(**vars(args))
@@ -1051,11 +1051,11 @@ class DetailedStatus(Status):
 
     def apply_filters(self):
         """
-        Apply filters based on the provided command-line arguments for workers, return code, 
+        Apply filters based on the provided command-line arguments for workers, return code,
         and task status, as well as enforce a maximum task limit if specified.
 
-        This method processes the `requested_statuses` to filter out entries that do not match 
-        the specified criteria. It ensures that the filtering is done in-place to optimize performance 
+        This method processes the `requested_statuses` to filter out entries that do not match
+        the specified criteria. It ensures that the filtering is done in-place to optimize performance
         and avoid a two-pass algorithm, which can be inefficient with a large number of statuses.
         """
         if self.args.max_tasks is not None:
@@ -1136,12 +1136,12 @@ class DetailedStatus(Status):
 
     def apply_max_tasks_limit(self):
         """
-        Filter the dictionary of statuses to ensure that the number of displayed tasks does not exceed 
+        Filter the dictionary of statuses to ensure that the number of displayed tasks does not exceed
         the specified maximum limit.
 
-        This method checks the current value of `max_tasks` and adjusts it if it exceeds the number 
-        of available statuses. It then iterates through the `requested_statuses`, removing excess 
-        entries to comply with the `max_tasks` limit. The method also merges the allowed task statuses 
+        This method checks the current value of `max_tasks` and adjusts it if it exceeds the number
+        of available statuses. It then iterates through the `requested_statuses`, removing excess
+        entries to comply with the `max_tasks` limit. The method also merges the allowed task statuses
         into a new dictionary and updates the `requested_statuses` accordingly.
         """
         # Make sure the max_tasks variable is set to a reasonable number and store that value
@@ -1203,13 +1203,13 @@ class DetailedStatus(Status):
 
     def get_user_filters(self) -> bool:
         """
-        Prompt the user to specify filters for the statuses to display. The user can choose from 
-        several filtering options, including setting a maximum number of tasks, filtering by status, 
+        Prompt the user to specify filters for the statuses to display. The user can choose from
+        several filtering options, including setting a maximum number of tasks, filtering by status,
         return code, or worker, or exiting the filter prompt without applying any filters.
 
-        The method displays available filter options and their descriptions, then collects and 
-        validates the user's input. If the user provides valid filters, they are stored in the 
-        corresponding attributes. If the user opts to exit, the method returns True; otherwise, 
+        The method displays available filter options and their descriptions, then collects and
+        validates the user's input. If the user provides valid filters, they are stored in the
+        corresponding attributes. If the user opts to exit, the method returns True; otherwise,
         it returns False.
 
         Possible filtering options include:\n
@@ -1303,13 +1303,13 @@ class DetailedStatus(Status):
 
     def get_user_max_tasks(self):
         """
-        Prompt the user to specify a maximum limit for the number of tasks to display. 
+        Prompt the user to specify a maximum limit for the number of tasks to display.
 
-        The method repeatedly requests input from the user until a valid integer greater than 0 
-        is provided. Once a valid input is received, it sets the `max_tasks` attribute in the 
+        The method repeatedly requests input from the user until a valid integer greater than 0
+        is provided. Once a valid input is received, it sets the `max_tasks` attribute in the
         `args` object to the specified limit.
 
-        This method ensures that the user input is validated and handles any exceptions 
+        This method ensures that the user input is validated and handles any exceptions
         related to invalid input types or values.
 
         Raises:
@@ -1332,15 +1332,15 @@ class DetailedStatus(Status):
 
     def filter_via_prompts(self):
         """
-        Interact with the user to determine how many and which tasks should be displayed, 
+        Interact with the user to determine how many and which tasks should be displayed,
         preventing terminal overload by limiting the output to a manageable number of tasks.
 
-        This method prompts the user for filtering options, including task statuses, return codes, 
-        and worker specifications. It also handles the case where the user opts to exit without 
+        This method prompts the user for filtering options, including task statuses, return codes,
+        and worker specifications. It also handles the case where the user opts to exit without
         applying any filters. If filters are provided, it applies them accordingly.
 
         Warning:
-            The method includes specific handling for the "RESTART" and "RETRY" return codes, 
+            The method includes specific handling for the "RESTART" and "RETRY" return codes,
             which are currently not implemented, and issues warnings if these filters are selected.
         """
         # Get the filters from the user
@@ -1370,12 +1370,12 @@ class DetailedStatus(Status):
         """
         Displays a task-by-task view of the statuses based on the user-defined filters.
 
-        This method checks for any requested statuses and, if found, invokes the 
-        `display_status_task_by_task` function to present the tasks accordingly. 
+        This method checks for any requested statuses and, if found, invokes the
+        `display_status_task_by_task` function to present the tasks accordingly.
         If no statuses are available to display, it logs a warning message.
 
         Args:
-            test_mode: If set to True, the method runs in testing mode, suppressing 
+            test_mode: If set to True, the method runs in testing mode, suppressing
                 any output to the terminal. This is useful for unit testing or debugging
                 without cluttering the output.
         """
@@ -1389,18 +1389,18 @@ class DetailedStatus(Status):
 # Pylint complains that args is unused but we can ignore that
 def status_conflict_handler(*args, **kwargs) -> Any:  # pylint: disable=W0613
     """
-    Handles conflicts that arise when merging two status files by applying specific merge rules 
+    Handles conflicts that arise when merging two status files by applying specific merge rules
     to conflicting values.
 
-    This function is designed to be used during the merging process of status entries, where 
-    conflicting values may exist. It defines how to resolve these conflicts based on predefined 
+    This function is designed to be used during the merging process of status entries, where
+    conflicting values may exist. It defines how to resolve these conflicts based on predefined
     rules, ensuring that the merged dictionary maintains integrity and clarity.
 
     The merge rules currently implemented are:\n
     - **string-concatenate**: Concatenates the two conflicting string values.
-    - **use-dict_b-and-log-debug**: Uses the value from dict_b and logs a debug message indicating 
+    - **use-dict_b-and-log-debug**: Uses the value from dict_b and logs a debug message indicating
       the conflict.
-    - **use-longest-time**: Chooses the longest time value between the two conflicting entries, 
+    - **use-longest-time**: Chooses the longest time value between the two conflicting entries,
       converting them to a timedelta for comparison.
     - **use-max**: Selects the maximum integer value from the two conflicting entries.
 
@@ -1411,7 +1411,7 @@ def status_conflict_handler(*args, **kwargs) -> Any:  # pylint: disable=W0613
     - `dict_b_val`: The conflicting value from the dictionary that we are merging from (dict_b).
     - `key`: The key in each dictionary that has a conflict.
     - `path`: The current path in the dictionary tree during the merge process.
-    
+
     Returns:
         The resolved value to merge into dict_a at the specified key.
     """
@@ -1486,16 +1486,16 @@ def read_status(
     """
     Locks the status file for reading and returns its contents.
 
-    This function attempts to read the contents of a status file while ensuring that the file is 
-    locked to prevent race conditions. It handles various exceptions that may occur during the 
+    This function attempts to read the contents of a status file while ensuring that the file is
+    locked to prevent race conditions. It handles various exceptions that may occur during the
     reading process, including file not found errors and JSON decoding errors.
 
     Args:
         status_filepath: The path to the status file that will be read.
         lock_file: The path to the lock file used to create a FileLock.
-        display_fnf_message: If True, displays a warning message if the file is not found. 
+        display_fnf_message: If True, displays a warning message if the file is not found.
         raise_errors: If True, raises exceptions when errors occur.
-        timeout: The maximum time (in seconds) to hold the lock before timing out. 
+        timeout: The maximum time (in seconds) to hold the lock before timing out.
 
     Returns:
         A dictionary containing the contents of the status file.
@@ -1547,15 +1547,15 @@ def write_status(status_to_write: Dict, status_filepath: str, lock_file: str, ti
     """
     Locks the status file for writing and writes the provided status to the file.
 
-    This function ensures that the status file is locked during the write operation to prevent 
-    race conditions. It does not catch errors during the writing process, as it is important to 
+    This function ensures that the status file is locked during the write operation to prevent
+    race conditions. It does not catch errors during the writing process, as it is important to
     be aware of any issues that may arise.
 
     Args:
         status_to_write: The status data to write to the status file.
         status_filepath: The path to the status file where the status will be written.
         lock_file: The path to the lock file used to create a FileLock for the write operation.
-        timeout: The maximum time (in seconds) to hold the lock before timing out. 
+        timeout: The maximum time (in seconds) to hold the lock before timing out.
 
     Raises:
         Exception: Any exceptions that occur during the writing process will be logged, but not caught.

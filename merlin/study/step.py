@@ -34,14 +34,13 @@ import os
 import re
 from contextlib import suppress
 from copy import deepcopy
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from celery import current_task
 from maestrowf.abstracts.enums import State
 from maestrowf.abstracts.interfaces.scriptadapter import ScriptAdapter
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
-from maestrowf.datastructures.environment import Variable
 from maestrowf.interfaces.script import SubmissionRecord
 
 from merlin.common.enums import ReturnCode
@@ -161,7 +160,7 @@ class MerlinStepRecord(_StepRecord):
         that the step is marked as running and to facilitate job submission.
 
         This method overrides the `_execute` method from the base class `_StepRecord` in Maestro.
-        It ensures that `self.to_be_scheduled` is always true, allowing for the invocation of 
+        It ensures that `self.to_be_scheduled` is always true, allowing for the invocation of
         `self.mark_running()` to update the status of the step.
 
         Args:
@@ -188,12 +187,12 @@ class MerlinStepRecord(_StepRecord):
 
     def mark_end(self, state: ReturnCode, max_retries: bool = False):
         """
-        Marks the end time of the record with the associated termination state 
+        Marks the end time of the record with the associated termination state
         and updates the status file.
 
-        This method logs the action of marking the end of the step, maps the provided 
-        termination state to a corresponding Maestro state and result, and updates 
-        the status file accordingly. If the maximum number of retries has been reached 
+        This method logs the action of marking the end of the step, maps the provided
+        termination state to a corresponding Maestro state and result, and updates
+        the status file accordingly. If the maximum number of retries has been reached
         for a soft failure, it appends a message to the result.
 
         Args:
@@ -272,12 +271,12 @@ class MerlinStepRecord(_StepRecord):
         task_server: str = "celery",
     ):
         """
-        Constructs a dictionary containing status information and creates a signature 
+        Constructs a dictionary containing status information and creates a signature
         for the update_status Celery task. This signature is executed within the method.
 
-        This method checks if a status file already exists; if it does, it updates the 
-        existing file with the current status information. If not, it initializes a new 
-        status dictionary. The method also includes optional parameters for the result 
+        This method checks if a status file already exists; if it does, it updates the
+        existing file with the current status information. If not, it initializes a new
+        status dictionary. The method also includes optional parameters for the result
         of the task and the task server being used.
 
         Args:
@@ -385,7 +384,7 @@ class Step:
         get_cmd: Retrieves the run command text body.
         get_restart_cmd: Retrieves the restart command text body, or None if not available.
         get_task_queue: Retrieves the task queue for the step.
-        get_task_queue_from_dict: Static method to get the task queue from a step dictionary.        
+        get_task_queue_from_dict: Static method to get the task queue from a step dictionary.
         get_workspace: Retrieves the workspace where this step is to be executed.
         name: Retrieves the name of the step.
         name_no_params: Gets the original name of the step without parameters or sample labels.
@@ -432,22 +431,22 @@ class Step:
         new_workspace: str = None,
     ) -> "Step":
         """
-        Produces a deep copy of the current step, with optional modifications to 
+        Produces a deep copy of the current step, with optional modifications to
         the command and workspace, performing variable substitutions as we go.
 
-        This method creates a new instance of the Step class by cloning the 
-        current step and allowing for modifications to the command text and 
-        workspace. It performs variable substitutions in the command based on 
+        This method creates a new instance of the Step class by cloning the
+        current step and allowing for modifications to the command text and
+        workspace. It performs variable substitutions in the command based on
         the provided replacement pairs.
 
         Args:
             new_cmd: If provided, replaces the existing command with this new command.
-            cmd_replacement_pairs: A list of pairs where each pair contains a string to 
+            cmd_replacement_pairs: A list of pairs where each pair contains a string to
                 be replaced and its replacement. The method will perform replacements in
                 both the run command and the restart command.
             new_workspace: If provided, sets this as the workspace for the new step. If
                 not specified, the current workspace will be used.
-        
+
         Returns:
             A new Step instance with the modified command and workspace.
         """
@@ -490,9 +489,9 @@ class Step:
         """
         Get the task queue from a given Maestro step dictionary.
 
-        This static method extracts the task queue information from the 
-        provided step dictionary. It considers the configuration settings 
-        to determine the appropriate queue name, including handling cases 
+        This static method extracts the task queue information from the
+        provided step dictionary. It considers the configuration settings
+        to determine the appropriate queue name, including handling cases
         where the task queue may be omitted.
 
         Args:
@@ -500,8 +499,8 @@ class Step:
                 to contain a "run" key with a "task_queue" entry.
 
         Returns:
-            The name of the task queue. If the task queue is not specified 
-                or is set to "none", it returns the default queue name based 
+            The name of the task queue. If the task queue is not specified
+                or is set to "none", it returns the default queue name based
                 on the configuration.
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
@@ -565,12 +564,12 @@ class Step:
         self.__restart = val
 
     def establish_params(self):
-        """        
+        """
         Establish parameters for the step from the parameter map.
 
-        This method checks if the current step uses parameters by accessing 
-        the `step_param_map` from `parameter_info`. If parameters are found 
-        for the current step, it updates the `params` dictionary with the 
+        This method checks if the current step uses parameters by accessing
+        the `step_param_map` from `parameter_info`. If parameters are found
+        for the current step, it updates the `params` dictionary with the
         corresponding values.
         """
         try:
@@ -584,8 +583,8 @@ class Step:
         """
         Check if expansion is needed based on commands and labels.
 
-        This method determines whether the command associated with the 
-        current step requires expansion. It checks for the presence of 
+        This method determines whether the command associated with the
+        current step requires expansion. It checks for the presence of
         default keywords or specified sample column labels.
 
         Args:
@@ -618,10 +617,10 @@ class Step:
         """
         Get the original name of the step without parameters or sample labels.
 
-        This method retrieves the name of the step and removes any 
-        parameter labels or sample identifiers that may be included 
-        in the name. It ensures that the returned name is clean and 
-        free from extraneous characters, such as trailing periods or 
+        This method retrieves the name of the step and removes any
+        parameter labels or sample identifiers that may be included
+        in the name. It ensures that the returned name is clean and
+        free from extraneous characters, such as trailing periods or
         underscores.
 
         Returns:
@@ -649,19 +648,19 @@ class Step:
         """
         Execute the step with the provided adapter configuration.
 
-        This method performs the execution of the step by configuring 
-        the necessary parameters and invoking the appropriate adapter. 
-        It updates the adapter configuration based on the step's 
-        requirements, sets up the workspace, and generates the script 
-        for execution. If a dry run is specified, it prepares the 
+        This method performs the execution of the step by configuring
+        the necessary parameters and invoking the appropriate adapter.
+        It updates the adapter configuration based on the step's
+        requirements, sets up the workspace, and generates the script
+        for execution. If a dry run is specified, it prepares the
         workspace without executing any tasks.
 
         Args:
-            adapter_config (dict): A dictionary containing configuration 
+            adapter_config (dict): A dictionary containing configuration
                 for the maestro script adapter, including:\n
                 - `shell`: The shell to use for execution.
                 - `batch_type`: The type of batch processing to use.
-                - `dry_run`: A boolean indicating whether to perform a 
+                - `dry_run`: A boolean indicating whether to perform a
                 dry run (setup only, no execution).
 
         Returns:

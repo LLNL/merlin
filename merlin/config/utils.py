@@ -28,9 +28,9 @@
 # SOFTWARE.
 ###############################################################################
 """
-This module provides utility functions and classes for handling broker priorities 
-and determining configurations for supported brokers such as RabbitMQ and Redis. 
-It includes functionality for mapping priority levels to integer values based on 
+This module provides utility functions and classes for handling broker priorities
+and determining configurations for supported brokers such as RabbitMQ and Redis.
+It includes functionality for mapping priority levels to integer values based on
 the broker type and validating broker configurations.
 """
 

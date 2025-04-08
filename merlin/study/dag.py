@@ -255,9 +255,9 @@ class DAG:
         acyclic graph (DAG). The backwards adjacency table allows for reverse traversal
         of the graph, enabling the identification of dependencies for each task.
 
-        The method iterates through each parent task in the `maestro_adjacency_table` 
-        and updates the `backwards_adjacency` dictionary. For each task that is a child 
-        of a parent, it adds the parent to the list of that task's parents in the 
+        The method iterates through each parent task in the `maestro_adjacency_table`
+        and updates the `backwards_adjacency` dictionary. For each task that is a child
+        of a parent, it adds the parent to the list of that task's parents in the
         `backwards_adjacency` table.
 
         This is essential for operations that require knowledge of a task's dependencies,

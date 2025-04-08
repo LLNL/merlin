@@ -81,7 +81,7 @@ def valid_port(port: int) -> bool:
     """
     Validates whether a given integer is a valid network port number.
 
-    A valid network port number is an integer in the range 1 to 65535 (inclusive). 
+    A valid network port number is an integer in the range 1 to 65535 (inclusive).
     This function checks if the provided port falls within this range.
 
     Args:
@@ -101,8 +101,8 @@ class ContainerConfig:  # pylint: disable=R0902
     A class for parsing and interacting with container configuration values.
 
     The `ContainerConfig` class provides an interface for handling container-related
-    configuration values specified in the `merlin_server.yaml` file. It initializes 
-    with a dictionary of configuration values, allowing for default values to be 
+    configuration values specified in the `merlin_server.yaml` file. It initializes
+    with a dictionary of configuration values, allowing for default values to be
     populated for a Singularity container if any values are missing.
 
     The configuration contains values for setting up containers and storing alues specific
@@ -204,8 +204,8 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Checks equality between two `ContainerConfig` instances.
 
-        This magic method overrides the equality operator (`==`) to compare two 
-        `ContainerConfig` objects. It checks if all relevant attributes 
+        This magic method overrides the equality operator (`==`) to compare two
+        `ContainerConfig` objects. It checks if all relevant attributes
         of the two objects are equal.
 
         Args:
@@ -213,7 +213,7 @@ class ContainerConfig:  # pylint: disable=R0902
 
         Returns:
             True if all attributes are equal between the two objects. False otherwise.
-        
+
         Example:
             ```python
             >>> config1_data = {
@@ -247,7 +247,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the container format.
 
-        This method returns the format of the container, which specifies the type 
+        This method returns the format of the container, which specifies the type
         of container being used (e.g., "singularity", "docker").
 
         Returns:
@@ -277,8 +277,8 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the image type.
 
-        This method returns the type of the container image, which typically 
-        describes the application or service associated with the image 
+        This method returns the type of the container image, which typically
+        describes the application or service associated with the image
         (e.g., "redis", "mysql").
 
         Returns:
@@ -308,7 +308,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the image name.
 
-        This method returns the name of the container image, which may include 
+        This method returns the name of the container image, which may include
         the version or tag (e.g., "redis_latest.sif", "mysql:8.0").
 
         Returns:
@@ -338,7 +338,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the URL of the image.
 
-        This method returns the URL where the container image is hosted or can 
+        This method returns the URL where the container image is hosted or can
         be downloaded from (e.g., a public or private registry URL).
 
         Returns:
@@ -368,7 +368,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the full path to the image file.
 
-        This method constructs and returns the absolute path to the container 
+        This method constructs and returns the absolute path to the container
         image by combining the configuration directory and the image name.
 
         Returns:
@@ -398,7 +398,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the name of the configuration file.
 
-        This method returns the name of the configuration file associated with 
+        This method returns the name of the configuration file associated with
         the container or application (e.g., "redis.conf", "my.cnf").
 
         Returns:
@@ -428,7 +428,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the full path to the configuration file.
 
-        This method constructs and returns the absolute path to the configuration 
+        This method constructs and returns the absolute path to the configuration
         file by combining the configuration directory and the configuration file name.
 
         Returns:
@@ -458,7 +458,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the path to the configuration directory.
 
-        This method returns the directory where configuration files are stored, 
+        This method returns the directory where configuration files are stored,
         which can be used as a base path for accessing specific configuration files.
 
         Returns:
@@ -488,8 +488,8 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the name of the process file.
 
-        This method returns the name of the process file, which may represent 
-        a file used to store process-related information (e.g., PID files or 
+        This method returns the name of the process file, which may represent
+        a file used to store process-related information (e.g., PID files or
         other runtime data files).
 
         Returns:
@@ -519,7 +519,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the full path to the process file.
 
-        This method constructs and returns the absolute path to the process file 
+        This method constructs and returns the absolute path to the process file
         by combining the configuration directory and the process file name.
 
         Returns:
@@ -549,7 +549,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the name of the password file.
 
-        This method returns the name of the password file, which is typically used 
+        This method returns the name of the password file, which is typically used
         to store sensitive information such as user credentials or authentication keys.
 
         Returns:
@@ -579,7 +579,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the full path to the password file.
 
-        This method constructs and returns the absolute path to the password file 
+        This method constructs and returns the absolute path to the password file
         by combining the configuration directory and the password file name.
 
         Returns:
@@ -609,7 +609,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the name of the user file.
 
-        This method returns the name of the user file, which may be used to store 
+        This method returns the name of the user file, which may be used to store
         information related to users, such as user configurations or metadata.
 
         Returns:
@@ -639,7 +639,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the full path to the user file.
 
-        This method constructs and returns the absolute path to the user file 
+        This method constructs and returns the absolute path to the user file
         by combining the configuration directory and the user file name.
 
         Returns:
@@ -669,7 +669,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         Retrieves the password for the container.
 
-        This method reads the container password from the password file, which is 
+        This method reads the container password from the password file, which is
         located at the path returned by
         [`get_pass_file_path`][server.server_util.ContainerConfig.get_pass_file_path].
         The password is read as plain text from the file.
@@ -745,7 +745,7 @@ class ContainerFormatConfig:
         """
         Initializes a `ContainerFormatConfig` object with container-specific configuration data.
 
-        This constructor takes a dictionary of configuration data and initializes the container 
+        This constructor takes a dictionary of configuration data and initializes the container
         command attributes. If any of the keys are missing in the provided data, default values
         are used instead.
 
@@ -789,7 +789,7 @@ class ContainerFormatConfig:
         """
         Retrieves the container command.
 
-        This method returns the value of the `command` attribute, 
+        This method returns the value of the `command` attribute,
         which specifies the container command (e.g., "singularity", "docker").
 
         Returns:
@@ -813,7 +813,7 @@ class ContainerFormatConfig:
         """
         Retrieves the run command.
 
-        This method returns the value of the `run_command` attribute, 
+        This method returns the value of the `run_command` attribute,
         which specifies the template or command used to run the container.
 
         Returns:
@@ -837,7 +837,7 @@ class ContainerFormatConfig:
         """
         Retrieves the stop command.
 
-        This method returns the value of the `stop_command` attribute, 
+        This method returns the value of the `stop_command` attribute,
         which specifies the command used to stop the container.
 
         Returns:
@@ -861,7 +861,7 @@ class ContainerFormatConfig:
         """
         Retrieves the pull command.
 
-        This method returns the value of the `pull_command` attribute, 
+        This method returns the value of the `pull_command` attribute,
         which specifies the template or command used to pull the container image.
 
         Returns:
@@ -884,20 +884,20 @@ class ContainerFormatConfig:
 
 class ProcessConfig:
     """
-    `ProcessConfig` provides an interface for parsing and interacting with process configuration 
-    specified in the `merlin_server.yaml` configuration file. This configuration defines commands 
-    for interacting with the host machine while containers are running, such as checking the status 
+    `ProcessConfig` provides an interface for parsing and interacting with process configuration
+    specified in the `merlin_server.yaml` configuration file. This configuration defines commands
+    for interacting with the host machine while containers are running, such as checking the status
     of processes or terminating them.
 
     Attributes:
-        STATUS_COMMAND (str): Default template for the status command, which checks if a process 
+        STATUS_COMMAND (str): Default template for the status command, which checks if a process
             is running using its parent process ID (PID). Default is "pgrep -P {pid}".
-        KILL_COMMAND (str): Default template for the kill command, which terminates a process 
+        KILL_COMMAND (str): Default template for the kill command, which terminates a process
             using its PID. Default is "kill {pid}".
 
-        status (str): The status command template to check the status of a process. This is 
+        status (str): The status command template to check the status of a process. This is
             initialized from the provided configuration or defaults to `STATUS_COMMAND`.
-        kill (str): The kill command template to terminate a process. This is initialized from 
+        kill (str): The kill command template to terminate a process. This is initialized from
             the provided configuration or defaults to `KILL_COMMAND`.
 
     Methods:
@@ -917,9 +917,9 @@ class ProcessConfig:
         """
         Initializes the ProcessConfig object with custom or default process commands.
 
-        This constructor takes a dictionary containing configuration data and initializes 
-        the `status` and `kill` attributes. If the keys `status` or `kill` are not present 
-        in the provided dictionary, their values default to `STATUS_COMMAND` and `KILL_COMMAND`, 
+        This constructor takes a dictionary containing configuration data and initializes
+        the `status` and `kill` attributes. If the keys `status` or `kill` are not present
+        in the provided dictionary, their values default to `STATUS_COMMAND` and `KILL_COMMAND`,
         respectively.
 
         Args:
@@ -941,7 +941,7 @@ class ProcessConfig:
             other: Another instance of the `ProcessConfig` class to compare with.
 
         Returns:
-            `True` if the `status` and `kill` attributes of both instances are equal, 
+            `True` if the `status` and `kill` attributes of both instances are equal,
                 otherwise `False`.
 
         Example:
@@ -962,7 +962,7 @@ class ProcessConfig:
         """
         Retrieves the status command for the process.
 
-        This method returns the command used to check the status of the process 
+        This method returns the command used to check the status of the process
         managed by the `ProcessConfig` instance.
 
         Returns:
@@ -981,7 +981,7 @@ class ProcessConfig:
         """
         Retrieves the kill command for the process.
 
-        This method returns the command used to terminate the process 
+        This method returns the command used to terminate the process
         managed by the `ProcessConfig` instance.
 
         Returns:
@@ -1003,7 +1003,7 @@ class ServerConfig:  # pylint: disable=R0903
     """
     `ServerConfig` is an interface for storing all the necessary configuration for the Merlin server.
 
-    This class encapsulates configurations related to containers, processes, and container formats, 
+    This class encapsulates configurations related to containers, processes, and container formats,
     making it easier to manage and access these settings in a structured way.
 
     Attributes:
@@ -1030,7 +1030,9 @@ class ServerConfig:  # pylint: disable=R0903
         self.container: ContainerConfig = ContainerConfig(data["container"]) if "container" in data else None
         self.process: ProcessConfig = ProcessConfig(data["process"]) if "process" in data else None
         container_format_data: str = data.get(self.container.get_format() if self.container else None)
-        self.container_format: ContainerFormatConfig = ContainerFormatConfig(container_format_data) if container_format_data else None
+        self.container_format: ContainerFormatConfig = (
+            ContainerFormatConfig(container_format_data) if container_format_data else None
+        )
 
 
 class RedisConfig:
@@ -1167,8 +1169,8 @@ class RedisConfig:
         """
         Writes the current configuration and comments back to the Redis configuration file.
 
-        This method writes the configuration entries, their associated comments, and any 
-        trailing comments to the file specified by `self.filename`. The order of entries is 
+        This method writes the configuration entries, their associated comments, and any
+        trailing comments to the file specified by `self.filename`. The order of entries is
         preserved as per the `self.entry_order` list.
 
         Example:
@@ -1225,7 +1227,7 @@ class RedisConfig:
         Updates the value of a specific configuration key.
 
         This method changes the value of an existing configuration key in the `entries` dictionary.
-        If the key does not exist, the method returns `False`. If the key is updated successfully, 
+        If the key does not exist, the method returns `False`. If the key is updated successfully,
         the `changed` attribute is set to `True`.
 
         Args:
@@ -1255,7 +1257,7 @@ class RedisConfig:
         """
         Retrieves the value of a specific configuration key.
 
-        This method looks up the value of the specified key in the `entries` dictionary 
+        This method looks up the value of the specified key in the `entries` dictionary
         and returns it. If the key does not exist, the method returns `None`.
 
         Args:
@@ -1283,7 +1285,7 @@ class RedisConfig:
         """
         Checks if any changes have been made to the configuration.
 
-        This method returns the value of the `self.changed` attribute, which indicates 
+        This method returns the value of the `self.changed` attribute, which indicates
         whether any configuration values have been modified since the last parse or write.
 
         Returns:
@@ -1327,8 +1329,8 @@ class RedisConfig:
         """
         Validates and sets the given IP address in the Redis configuration.
 
-        This method checks if the provided IP address is a valid IPv4 address. 
-        If valid, it updates the `bind` key in the Redis configuration with the new IP address. 
+        This method checks if the provided IP address is a valid IPv4 address.
+        If valid, it updates the `bind` key in the Redis configuration with the new IP address.
         If the IP address is invalid or the update fails, the method logs an error and returns `False`.
 
         Args:
@@ -1366,7 +1368,7 @@ class RedisConfig:
         """
         Retrieves the port number from the Redis configuration.
 
-        This method fetches the value of the `port` key from the configuration 
+        This method fetches the value of the `port` key from the configuration
         using the [`get_config_value`][server.server_util.RedisConfig.get_config_value]
         method. If the `port` key is not present, the method returns `None`.
 
@@ -1387,8 +1389,8 @@ class RedisConfig:
         """
         Validates and sets the given port number in the Redis configuration.
 
-        This method checks if the provided port number is valid. If valid, it updates 
-        the `port` key in the Redis configuration with the new port number. If the port 
+        This method checks if the provided port number is valid. If valid, it updates
+        the `port` key in the Redis configuration with the new port number. If the port
         is invalid or the update fails, the method logs an error and returns `False`.
 
         Args:
@@ -1427,7 +1429,7 @@ class RedisConfig:
         """
         Sets a new password in the Redis configuration.
 
-        This method updates the `requirepass` key in the Redis configuration with the provided password. 
+        This method updates the `requirepass` key in the Redis configuration with the provided password.
         If the password is `None`, the method returns `False` without making any changes.
 
         Args:
@@ -1454,7 +1456,7 @@ class RedisConfig:
         """
         Retrieves the password from the Redis configuration.
 
-        This method fetches the value of the `requirepass` key from the configuration 
+        This method fetches the value of the `requirepass` key from the configuration
         using the [`get_config_value`][server.server_util.RedisConfig.get_config_value]
         method. If the `requirepass` key is not present, the method returns `None`.
 
@@ -1475,8 +1477,8 @@ class RedisConfig:
         """
         Sets the save directory in the Redis configuration file.
 
-        This method updates the `dir` key in the Redis configuration with the provided directory path. 
-        If the directory does not exist, it is created. If the directory is `None` or the update fails, 
+        This method updates the `dir` key in the Redis configuration with the provided directory path.
+        If the directory does not exist, it is created. If the directory is `None` or the update fails,
         the method logs an error and returns `False`.
 
         Args:
@@ -1510,10 +1512,10 @@ class RedisConfig:
         """
         Updates the snapshot configuration in the Redis settings.
 
-        This method allows you to set the snapshot parameters, which determine 
-        when Redis creates a snapshot of the dataset. The snapshot is triggered 
-        based on a combination of time (`seconds`) and the number of changes 
-        (`changes`) made to the dataset. If either parameter is `None`, it will 
+        This method allows you to set the snapshot parameters, which determine
+        when Redis creates a snapshot of the dataset. The snapshot is triggered
+        based on a combination of time (`seconds`) and the number of changes
+        (`changes`) made to the dataset. If either parameter is `None`, it will
         remain unchanged.
 
         Args:
@@ -1573,8 +1575,8 @@ class RedisConfig:
         """
         Sets the name of the snapshot file in the Redis configuration.
 
-        This method updates the `dbfilename` parameter in the Redis configuration 
-        with the provided file name. The snapshot file is where Redis saves the 
+        This method updates the `dbfilename` parameter in the Redis configuration
+        with the provided file name. The snapshot file is where Redis saves the
         dataset during a snapshot operation.
 
         Args:
@@ -1605,7 +1607,7 @@ class RedisConfig:
         """
         Sets the append mode in the Redis configuration.
 
-        The append mode determines how Redis handles data persistence to the append-only file (AOF). 
+        The append mode determines how Redis handles data persistence to the append-only file (AOF).
         Valid modes are:
 
         - "always": Redis appends data to the AOF after every write operation.
@@ -1647,8 +1649,8 @@ class RedisConfig:
         """
         Sets the name of the append-only file (AOF) in the Redis configuration.
 
-        The append-only file is used by Redis for data persistence in append-only mode. 
-        This method updates the `appendfilename` parameter in the Redis configuration 
+        The append-only file is used by Redis for data persistence in append-only mode.
+        This method updates the `appendfilename` parameter in the Redis configuration
         with the provided file name.
 
         Args:
@@ -1700,7 +1702,7 @@ class RedisUsers:
     """
 
     class User:
-        """        
+        """
         An embedded class that represents an individual Redis user with attributes and methods for managing
         user-specific data.
 
@@ -1728,7 +1730,8 @@ class RedisUsers:
         def __init__(  # pylint: disable=R0913
             self,
             status: str = "on",
-            keys: str = "*", channels: str = "*",
+            keys: str = "*",
+            channels: str = "*",
             commands: str = "@all",
             password: str = None,
         ):
@@ -2031,8 +2034,8 @@ class RedisUsers:
         """
          Applies the user configuration changes to a Redis instance.
 
-        This method synchronizes the current user configuration stored in `self.users` 
-        with the Redis instance specified by the provided connection details. It performs 
+        This method synchronizes the current user configuration stored in `self.users`
+        with the Redis instance specified by the provided connection details. It performs
         the following actions:
 
         - Adds or updates users in Redis based on the `self.users` dictionary.

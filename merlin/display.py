@@ -320,7 +320,7 @@ def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = 
         - Run time
         - Number of restarts
 
-    If the number of tasks exceeds a certain limit and the pager is disabled, the user 
+    If the number of tasks exceeds a certain limit and the pager is disabled, the user
     will be prompted to apply additional filters to avoid overwhelming the terminal output,
     unless the prompts are disabled through the no-prompts flag.
 
@@ -386,8 +386,8 @@ def _display_summary(state_info: Dict[str, str], cb_help: bool):
     """
     Prints a summary of task states based on the provided state information.
 
-    This function takes a dictionary of state information for a step and 
-    prints a formatted summary, including optional colorblind assistance using 
+    This function takes a dictionary of state information for a step and
+    prints a formatted summary, including optional colorblind assistance using
     symbols if specified.
 
     Args:
@@ -435,22 +435,22 @@ def display_status_summary(  # pylint: disable=R0912
 ) -> Dict:
     """
     Displays a high-level overview of the status of a study, including progress bars for each step
-    and a summary of the number of initialized, running, finished, cancelled, dry ran, failed, and 
+    and a summary of the number of initialized, running, finished, cancelled, dry ran, failed, and
     unknown tasks.
 
-    The function prints a summary for each step and collects state information. In test mode, 
+    The function prints a summary for each step and collects state information. In test mode,
     it suppresses output and returns a dictionary of state information instead.
 
     Args:
         status_obj (study.status.Status): An instance of [`Status`][study.status.Status] containing
             information about task states and associated data for the study.
-        non_workspace_keys: A set of keys in requested_statuses that are not workspace keys. 
+        non_workspace_keys: A set of keys in requested_statuses that are not workspace keys.
             Typically includes keys like "parameters", "task_queue", and "workers".
-        test_mode: If True, runs in test mode; suppresses printing and returns a dictionary 
+        test_mode: If True, runs in test mode; suppresses printing and returns a dictionary
             of state information for each step. Defaults to False.
 
     Returns:
-        An empty dictionary in regular mode. In test mode, returns a dictionary containing 
+        An empty dictionary in regular mode. In test mode, returns a dictionary containing
             the state information for each step.
     """
     all_state_info = {}

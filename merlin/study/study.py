@@ -126,9 +126,9 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
             filepath: Path to the specification file for the study.
             override_vars: Dictionary of variables to override in the specification.
             restart_dir: Path to the directory for restarting the study.
-            samples_file: Path to a file containing sample data. If specified, the samples 
+            samples_file: Path to a file containing sample data. If specified, the samples
                 will be loaded from this file.
-            dry_run: Flag indicating whether to perform a dry run of the workflow 
+            dry_run: Flag indicating whether to perform a dry run of the workflow
                 without executing tasks.
             no_errors: Flag to suppress certain errors for testing purposes.
             pgen_file: Path to a parameter generator file.
@@ -176,12 +176,12 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         self.load_dag()
 
     def _set_special_file_vars(self):
-        """        
+        """
         Sets the original, partial, and expanded file paths for a study.
 
-        This method constructs file paths for three special variables 
-        related to the study's specifications. It generates paths for 
-        the original template, the executed run, and the archived copy 
+        This method constructs file paths for three special variables
+        related to the study's specifications. It generates paths for
+        the original template, the executed run, and the archived copy
         of the specification files based on the study's base file name.
         """
         shortened_filepath = self.filepath.replace(".out", "").replace(".partial", "").replace(".expanded", "")
@@ -203,26 +203,26 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Copies the original specification file to the designated directory.
 
-        This method copies the original specification file from its 
-        current location to the `merlin_info/` directory, renaming it 
-        to '<base_file_name>.orig.yaml'. The base file name is derived 
+        This method copies the original specification file from its
+        current location to the `merlin_info/` directory, renaming it
+        to '<base_file_name>.orig.yaml'. The base file name is derived
         from the original specification's path.
         """
         shutil.copyfile(self.original_spec.path, self.special_vars["MERLIN_SPEC_ORIGINAL_TEMPLATE"])
 
     def label_clash_error(self):
         """
-        Detects illegal clashes between Merlin's sample column labels and 
+        Detects illegal clashes between Merlin's sample column labels and
         [Maestro's global parameters](https://maestrowf.readthedocs.io/en/latest/Maestro/specification.html#parameters-globalparameters).
 
-        This method checks for any conflicts between the column labels 
-        defined in the `merlin` section of the original specification and 
-        the global parameters defined in the same specification. If a 
-        column label is found to also exist in the global parameters, 
+        This method checks for any conflicts between the column labels
+        defined in the `merlin` section of the original specification and
+        the global parameters defined in the same specification. If a
+        column label is found to also exist in the global parameters,
         a ValueError is raised to indicate the clash.
 
         Raises:
-            ValueError: If any column label in `merlin.samples.column_labels` 
+            ValueError: If any column label in `merlin.samples.column_labels`
                 is also found in `merlin.globals`, indicating an illegal clash.
         """
         if self.original_spec.merlin["samples"]:
@@ -238,9 +238,9 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Retrieves and expands user-defined variables from the specification environment.
 
-        This static method examines the provided specification's environment 
-        to collect user-defined variables and labels. It constructs a list 
-        of these variables and passes them to the `determine_user_variables` 
+        This static method examines the provided specification's environment
+        to collect user-defined variables and labels. It constructs a list
+        of these variables and passes them to the `determine_user_variables`
         function to obtain a dictionary of expanded variables.
 
         Args:
@@ -267,26 +267,26 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Retrieves the user-defined variables for the study.
 
-        This property accesses the original specification of the study and 
-        retrieves the user-defined variables using the `get_user_vars` 
+        This property accesses the original specification of the study and
+        retrieves the user-defined variables using the `get_user_vars`
         method from this class.
 
         Returns:
-            A dictionary containing the user-defined variables 
+            A dictionary containing the user-defined variables
                 associated with the study.
         """
         return MerlinStudy.get_user_vars(self.original_spec)
 
     def get_expanded_spec(self) -> MerlinSpec:
         """
-        Generates a new YAML specification file with applied defaults, 
+        Generates a new YAML specification file with applied defaults,
         command-line interface (CLI) overrides, and variable expansions.
 
-        This method creates a modified version of the original specification 
-        by incorporating default values and user-defined overrides from the 
-        command line. It also expands user-defined variables and reserved 
-        words to produce a fully resolved specification. This is particularly 
-        useful for tracking provenance and ensuring that the specification 
+        This method creates a modified version of the original specification
+        by incorporating default values and user-defined overrides from the
+        command line. It also expands user-defined variables and reserved
+        words to produce a fully resolved specification. This is particularly
+        useful for tracking provenance and ensuring that the specification
         accurately reflects all applied configurations.
 
         Returns:
@@ -312,12 +312,12 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Retrieves the samples associated with this study.
 
-        This property checks if there are any samples defined in the 
-        expanded specification of the study. If samples are present, 
+        This property checks if there are any samples defined in the
+        expanded specification of the study. If samples are present,
         it loads and returns them; otherwise, it returns an empty list.
 
         Returns:
-            A numpy array of samples corresponding to the study. 
+            A numpy array of samples corresponding to the study.
                 If no samples are defined, an empty list is returned.
         """
 
@@ -351,16 +351,16 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Retrieves the labels of the samples associated with this study.
 
-        This property extracts the sample labels from the study's 
-        expanded specification. It returns a list of labels that 
+        This property extracts the sample labels from the study's
+        expanded specification. It returns a list of labels that
         correspond to the samples defined in the specification.
 
         Returns:
             A list of sample labels. If no labels are defined, an empty list is returned.
-        
+
         Example:
             Given the following contents in a specification file:
-            
+
             ```yaml
             merlin:
                 samples:
@@ -373,14 +373,14 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
 
     def load_samples(self) -> np.ndarray:
         """
-        Loads the study's samples from disk, generating them if the file 
+        Loads the study's samples from disk, generating them if the file
         does not exist and is defined in the YAML specification.
 
-        This method checks if a sample file is specified in the expanded 
-        specification. If the file does not exist, it will invoke the 
-        generation command defined in the 'generate' section of the 
-        specification to create the sample file. Once the file is available, 
-        it loads the samples into a NumPy array and assigns them to the 
+        This method checks if a sample file is specified in the expanded
+        specification. If the file does not exist, it will invoke the
+        generation command defined in the 'generate' section of the
+        specification to create the sample file. Once the file is available,
+        it loads the samples into a NumPy array and assigns them to the
         variables specified in 'column_labels'.
 
         Returns:
@@ -430,14 +430,14 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Retrieves the maximum number of directory levels for sample organization.
 
-        This property checks the expanded specification for the maximum 
-        number of directory levels defined under the 'merlin' section. 
-        If the value is not found, it falls back to a default value 
+        This property checks the expanded specification for the maximum
+        number of directory levels defined under the 'merlin' section.
+        If the value is not found, it falls back to a default value
         specified in the `defaults.SAMPLES` dictionary.
 
         Returns:
-            The maximum number of directory levels. If the value is 
-                not specified in the expanded specification, the default 
+            The maximum number of directory levels. If the value is
+                not specified in the expanded specification, the default
                 value from `defaults.SAMPLES["level_max_dirs"]` is returned.
         """
         with suppress(TypeError, KeyError):
@@ -568,17 +568,17 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Determines, writes to YAML, and loads into memory an expanded specification.
 
-        This property handles the expansion of the study's specification based on 
-        the original specification and any provided environment variables. If the 
-        study is being restarted, it retrieves the previously expanded specification 
-        without re-expanding it. Otherwise, it processes the original specification, 
+        This property handles the expansion of the study's specification based on
+        the original specification and any provided environment variables. If the
+        study is being restarted, it retrieves the previously expanded specification
+        without re-expanding it. Otherwise, it processes the original specification,
         expands any tokens or shell references, and updates paths accordingly.
 
         Returns:
             (spec.specification.MerlinSpec): The expanded specification object.
 
         Raises:
-            ValueError: If the expanded name for the workspace contains invalid 
+            ValueError: If the expanded name for the workspace contains invalid
                 characters for a filename.
         """
         # If we are restarting, we don't need to re-expand, just need to read
@@ -652,9 +652,9 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Returns the full path to the flux command based on the specified workflow configuration.
 
-        This property constructs the command to execute the flux binary. If a 
-        `flux_path` is provided in the expanded specification's batch configuration, 
-        it will use that path to create the full command. Otherwise, it defaults 
+        This property constructs the command to execute the flux binary. If a
+        `flux_path` is provided in the expanded specification's batch configuration,
+        it will use that path to create the full command. Otherwise, it defaults
         to the standard 'flux' command.
 
         Returns:
@@ -667,13 +667,13 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
 
     def generate_samples(self):
         """
-        Generates sample data by executing the command defined in the 
-        'generate' section of the specification if the sample file does 
+        Generates sample data by executing the command defined in the
+        'generate' section of the specification if the sample file does
         not already exist.
 
-        This method checks if the specified sample file exists. If it 
-        does not, it retrieves the command from the YAML specification 
-        and executes it using a subprocess. The output and error logs 
+        This method checks if the specified sample file exists. If it
+        does not, it retrieves the command from the YAML specification
+        and executes it using a subprocess. The output and error logs
         from the command execution are saved to files for later review.
 
         Example:
@@ -711,13 +711,13 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
 
     def load_pgen(self, filepath: str, pargs: List[str], env: StudyEnvironment) -> Dict[str, Dict[str, str]]:
         """
-        Loads a parameter generator script and creates a dictionary of 
+        Loads a parameter generator script and creates a dictionary of
         variable names and their corresponding values.
 
-        This method reads a parameter generator script from the specified 
-        file path and extracts variable names and values defined within 
-        the script. It constructs a dictionary where each key is a 
-        variable name, and the value is another dictionary containing 
+        This method reads a parameter generator script from the specified
+        file path and extracts variable names and values defined within
+        the script. It constructs a dictionary where each key is a
+        variable name, and the value is another dictionary containing
         the variable's label and its associated values.
 
         Args:
@@ -731,9 +731,9 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         Returns:
             A dictionary where each key is a variable name and each value
                 is a dictionary containing:\n
-                - `values`: The values associated with the variable, 
+                - `values`: The values associated with the variable,
                     or None if not defined.
-                - `label`: The label of the variable as defined in the 
+                - `label`: The label of the variable as defined in the
                     parameter generator script.
         """
         if filepath:
@@ -751,19 +751,19 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
 
     def load_dag(self):
         """
-        Generates a directed acyclic graph (DAG) for the execution of 
+        Generates a directed acyclic graph (DAG) for the execution of
         the study and assigns it to the `self.dag` attribute.
 
-        This method constructs a DAG based on the specifications defined 
-        in the expanded study specification. It retrieves the study 
+        This method constructs a DAG based on the specifications defined
+        in the expanded study specification. It retrieves the study
         environment, steps, and parameters, and initializes a Maestro
-        [`Study`](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/datastructures/core/study.html) 
-        object. The method then sets up the workspace and environment 
-        for the study, configures it, and generates the DAG using the 
+        [`Study`](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/datastructures/core/study.html)
+        object. The method then sets up the workspace and environment
+        for the study, configures it, and generates the DAG using the
         Maestro framework.
 
-        The generated DAG contains the execution flow of the study, 
-        ensuring that all steps are executed in the correct order 
+        The generated DAG contains the execution flow of the study,
+        ensuring that all steps are executed in the correct order
         without cycles.
         """
         environment = self.expanded_spec.get_study_environment()
@@ -810,11 +810,11 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Builds and returns the adapter configuration dictionary.
 
-        This method constructs a configuration dictionary for the adapter 
-        based on the specifications defined in `self.expanded_spec.batch`. 
-        It ensures that the configuration includes a type, which can be 
-        overridden if specified. The method also checks for a dry run 
-        flag and adds relevant commands if the batch type is set to 
+        This method constructs a configuration dictionary for the adapter
+        based on the specifications defined in `self.expanded_spec.batch`.
+        It ensures that the configuration includes a type, which can be
+        overridden if specified. The method also checks for a dry run
+        flag and adds relevant commands if the batch type is set to
         "flux".
 
         Args:
@@ -851,8 +851,8 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         """
         Retrieves the parameter labels associated with this study.
 
-        This property extracts parameter labels from the expanded specification 
-        of the study. It accesses the parameters and their associated metadata, 
+        This property extracts parameter labels from the expanded specification
+        of the study. It accesses the parameters and their associated metadata,
         collecting all labels defined for each parameter.
 
         Returns:

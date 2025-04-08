@@ -32,7 +32,7 @@ This module defines all the possible keys for each block in a Merlin specificati
 
 Merlin specification files are used to configure and manage studies, workflows, and tasks
 in Merlin. Each block in the spec file corresponds to a specific aspect of the workflow,
-such as batch settings, environment variables, study steps, parameters, and resources. 
+such as batch settings, environment variables, study steps, parameters, and resources.
 This module provides sets of valid keys for each block to ensure consistency and validation.
 
 This module serves as a reference for the structure and valid keys of Merlin specification files.

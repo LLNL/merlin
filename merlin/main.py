@@ -95,19 +95,19 @@ def parse_override_vars(
     """
     Parse a list of command-line variables into a dictionary of key-value pairs.
 
-    This function takes an optional list of strings following the syntax 
-    "KEY=val" and converts them into a dictionary. It validates the format 
+    This function takes an optional list of strings following the syntax
+    "KEY=val" and converts them into a dictionary. It validates the format
     of the variables and ensures that keys are valid according to specified rules.
 
     Args:
-        variables_list: An optional list of strings, where each string should be in the 
+        variables_list: An optional list of strings, where each string should be in the
             format "KEY=val", e.g., ["KEY1=value1", "KEY2=42"].
 
-    Returns: 
-        A dictionary where the keys are variable names (str) and the 
-            values are either strings or integers. If `variables_list` is 
+    Returns:
+        A dictionary where the keys are variable names (str) and the
+            values are either strings or integers. If `variables_list` is
             None or empty, returns None.
-    
+
     Raises:
         ValueError: If the input format is incorrect, including:\n
             - Missing '=' operator.
@@ -151,8 +151,8 @@ def get_merlin_spec_with_override(args: Namespace) -> Tuple[MerlinSpec, str]:
     Shared command to retrieve a [`MerlinSpec`][spec.specification.MerlinSpec] object
     and an expanded filepath.
 
-    This function processes parsed command-line interface (CLI) arguments to validate 
-    and expand the specified filepath and any associated variables. It then constructs 
+    This function processes parsed command-line interface (CLI) arguments to validate
+    and expand the specified filepath and any associated variables. It then constructs
     and returns a [`MerlinSpec`][spec.specification.MerlinSpec] object based on the
     provided specification.
 
@@ -178,7 +178,7 @@ def process_run(args: Namespace):
     CLI command for running a study.
 
     This function initializes and runs a study using the specified parameters.
-    It handles file verification, variable parsing, and checks for required 
+    It handles file verification, variable parsing, and checks for required
     arguments related to the study configuration and execution.
 
     Args:
@@ -192,7 +192,7 @@ def process_run(args: Namespace):
             - `pargs`: Additional arguments for parallel processing.
 
     Raises:
-        ValueError: 
+        ValueError:
             If the `pargs` parameter is used without specifying a `pgen_file`.
     """
     print(banner_small)
@@ -224,8 +224,8 @@ def process_restart(args: Namespace):
     """
     CLI command for restarting a study.
 
-    This function handles the restart process by verifying the specified restart 
-    directory, locating a valid provenance specification file, and initiating 
+    This function handles the restart process by verifying the specified restart
+    directory, locating a valid provenance specification file, and initiating
     the study from that point.
 
     Args:
@@ -234,7 +234,7 @@ def process_restart(args: Namespace):
             - `run_mode`: The mode for running the study (e.g., normal, dry-run).
 
     Raises:
-        ValueError: If the `restart_dir` does not contain a valid provenance spec file or 
+        ValueError: If the `restart_dir` does not contain a valid provenance spec file or
             if multiple files match the specified pattern.
     """
     print(banner_small)
@@ -308,7 +308,7 @@ def query_status(args: Namespace):
     """
     CLI command for querying the status of studies.
 
-    This function processes the given command-line arguments to determine the 
+    This function processes the given command-line arguments to determine the
     status of a study. It constructs either a [`Status`][study.status.Status] object
     or a [`DetailedStatus`][study.status.DetailedStatus] object based on the specified
     command and the arguments provided. The function handles validations for the task
@@ -323,7 +323,7 @@ def query_status(args: Namespace):
         args: Parsed CLI arguments containing user inputs for the status query.
 
     Raises:
-        ValueError: 
+        ValueError:
             - If the task server specified is not supported (only "celery" is valid).
             - If the --dump filename provided does not end with ".csv" or ".json".
     """
@@ -373,17 +373,17 @@ def query_queues(args: Namespace):
     """
     CLI command for finding all workers and their associated queues.
 
-    This function processes the command-line arguments to retrieve and display 
-    information about the available workers and their queues within the task server. 
-    It validates the necessary parameters, handles potential file dumping, and 
+    This function processes the command-line arguments to retrieve and display
+    information about the available workers and their queues within the task server.
+    It validates the necessary parameters, handles potential file dumping, and
     formats the output for easy readability.
 
     Args:
         args: Parsed CLI arguments containing user inputs related to the query.
 
     Raises:
-        ValueError: 
-            - If a specification is not provided when steps are specified and the 
+        ValueError:
+            - If a specification is not provided when steps are specified and the
             steps do not include "all".
             - If variables are included without a corresponding specification.
             - If the specified dump filename does not end with '.json' or '.csv'.
@@ -430,7 +430,7 @@ def query_workers(args: Namespace):
     """
     CLI command for finding all workers.
 
-    This function retrieves and queries the names of any active workers. 
+    This function retrieves and queries the names of any active workers.
     If the `--spec` argument is included, only query the workers defined in the spec file.
 
     Args:
@@ -511,10 +511,10 @@ def config_merlin(args: Namespace):
 
     Args:
         args: Parsed command-line arguments, which may include:\n
-            - `output_dir`: Path to the output directory for 
-              configuration files. If not provided, defaults to 
+            - `output_dir`: Path to the output directory for
+              configuration files. If not provided, defaults to
               `~/.merlin`.
-            - `task_server`: Address of the task server for the 
+            - `task_server`: Address of the task server for the
               configuration.
             - `broker`: Address of the broker service to use.
             - `test`: Flag indicating whether to run in test mode.
@@ -531,16 +531,16 @@ def process_example(args: Namespace) -> None:
     """
     CLI command to set up or list Merlin example workflows.
 
-    This function either lists all available example workflows or sets 
-    up a specified example workflow to be run in the root directory. The 
+    This function either lists all available example workflows or sets
+    up a specified example workflow to be run in the root directory. The
     behavior is determined by the `workflow` argument.
 
     Args:
         args: Parsed command-line arguments, which may include:\n
-            - `workflow`: The action to perform; should be "list" 
-              to display all examples or the name of a specific example 
+            - `workflow`: The action to perform; should be "list"
+              to display all examples or the name of a specific example
               workflow to set up.
-            - `path`: The directory where the example workflow 
+            - `path`: The directory where the example workflow
               should be set up. Only applicable when `workflow` is not "list".
     """
     if args.workflow == "list":
@@ -552,17 +552,17 @@ def process_example(args: Namespace) -> None:
 
 def process_monitor(args: Namespace):
     """
-    CLI command to monitor Merlin workers and queues to maintain 
+    CLI command to monitor Merlin workers and queues to maintain
     allocation status.
 
-    This function periodically checks the status of Merlin workers and 
-    the associated queues to ensure that the allocation remains active. 
+    This function periodically checks the status of Merlin workers and
+    the associated queues to ensure that the allocation remains active.
     It includes a sleep interval to wait before each check, including
     the initial one.
 
     Args:
         args: Parsed command-line arguments, which may include:\n
-            - `sleep`: The duration (in seconds) to wait before 
+            - `sleep`: The duration (in seconds) to wait before
               checking the queue status again.
     """
     LOG.info("Monitor: checking queues ...")
@@ -580,17 +580,17 @@ def process_monitor(args: Namespace):
 
 def process_server(args: Namespace):
     """
-    Route to the appropriate server function based on the command 
+    Route to the appropriate server function based on the command
     specified via the CLI.
 
-    This function processes commands related to server management, 
-    directing the flow to the corresponding function for actions such 
-    as initializing, starting, stopping, checking status, restarting, 
+    This function processes commands related to server management,
+    directing the flow to the corresponding function for actions such
+    as initializing, starting, stopping, checking status, restarting,
     or configuring the server.
 
     Args:
         args: Parsed command-line arguments, which includes:\n
-            - `commands`: The server management command to execute. 
+            - `commands`: The server management command to execute.
               Possible values are:
                 - `init`: Initialize the server.
                 - `start`: Start the server.
@@ -981,9 +981,9 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
     """
     Generate command-line argument parsers for managing worker operations.
 
-    This function sets up subparsers for CLI commands that directly control or invoke 
+    This function sets up subparsers for CLI commands that directly control or invoke
     workers in the context of the Merlin framework. It provides options for running,
-    querying, stopping, and monitoring workers associated with a Merlin YAML study 
+    querying, stopping, and monitoring workers associated with a Merlin YAML study
     specification.
 
     Args:
@@ -1138,12 +1138,12 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser):
     Generate command-line argument parsers for diagnostic operations in the Merlin framework.
 
     This function sets up subparsers for CLI commands that handle diagnostics related
-    to Merlin jobs. It provides options to check the status of studies, gather queue 
-    statistics, and retrieve configuration information, making it easier for users to 
+    to Merlin jobs. It provides options to check the status of studies, gather queue
+    statistics, and retrieve configuration information, making it easier for users to
     diagnose issues with their workflows.
 
     Args:
-        subparsers: An instance of ArgumentParser that will be used to add command-line 
+        subparsers: An instance of ArgumentParser that will be used to add command-line
             subcommands for various diagnostic activities.
     """
     # merlin status
@@ -1336,10 +1336,10 @@ def main():
     """
     Entry point for the Merlin command-line interface (CLI) operations.
 
-    This function sets up the argument parser, handles command-line arguments, 
-    initializes logging, and executes the appropriate function based on the 
-    provided command. It ensures that the user receives help information if 
-    no arguments are provided and performs error handling for any exceptions 
+    This function sets up the argument parser, handles command-line arguments,
+    initializes logging, and executes the appropriate function based on the
+    provided command. It ensures that the user receives help information if
+    no arguments are provided and performs error handling for any exceptions
     that may occur during command execution.
     """
     parser = setup_argparse()

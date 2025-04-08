@@ -37,7 +37,7 @@ are implemented.
 import logging
 import os
 import subprocess
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import convert_timestring, get_flux_alloc, get_flux_version, get_yaml_var
@@ -50,23 +50,23 @@ def batch_check_parallel(spec: MerlinSpec) -> bool:
     """
     Check for a parallel batch section in the provided MerlinSpec object.
 
-    This function examines the 'batch' section of the given specification to determine 
-    whether it is configured for parallel execution. It checks the 'type' attribute 
-    within the batch section, defaulting to 'local' if not specified. If the type 
-    is anything other than 'local', the function will return True, indicating that 
+    This function examines the 'batch' section of the given specification to determine
+    whether it is configured for parallel execution. It checks the 'type' attribute
+    within the batch section, defaulting to 'local' if not specified. If the type
+    is anything other than 'local', the function will return True, indicating that
     parallel processing is enabled.
 
     Args:
         spec (spec.specification.MerlinSpec): An instance of the
-            [`MerlinSpec`][spec.specification.MerlinSpec] class that contains the 
+            [`MerlinSpec`][spec.specification.MerlinSpec] class that contains the
             configuration details, including the batch section.
 
     Returns:
-        Returns True if the batch type is set to a value other than 'local', 
+        Returns True if the batch type is set to a value other than 'local',
             indicating that parallel processing is enabled; otherwise, returns False.
 
     Raises:
-        AttributeError: If the 'batch' section is not present in the specification, 
+        AttributeError: If the 'batch' section is not present in the specification,
             an error is logged and an AttributeError is raised.
     """
     parallel = False
@@ -88,8 +88,8 @@ def check_for_scheduler(scheduler: str, scheduler_legend: Dict[str, str]) -> boo
     """
     Check which scheduler (Flux, Slurm, LSF, or PBS) is the main scheduler for the cluster.
 
-    This function verifies if the specified scheduler is the main scheduler by executing 
-    a command associated with it from the provided scheduler legend. It returns a boolean 
+    This function verifies if the specified scheduler is the main scheduler by executing
+    a command associated with it from the provided scheduler legend. It returns a boolean
     indicating whether the specified scheduler is active.
 
     Args:
@@ -101,7 +101,7 @@ def check_for_scheduler(scheduler: str, scheduler_legend: Dict[str, str]) -> boo
             for more information on all the settings this dict contains.
 
     Returns:
-        Returns True if the specified scheduler is the main scheduler for the 
+        Returns True if the specified scheduler is the main scheduler for the
             cluster, otherwise returns False.
 
     Raises:
@@ -134,21 +134,21 @@ def get_batch_type(scheduler_legend: Dict[str, str], default: str = None) -> str
     """
     Determine which batch scheduler to use.
 
-    This function checks a predefined list of batch schedulers in a specific order 
-    to determine which one is available for use. If none of the schedulers are found, 
-    it checks the system type environment variable to suggest a default scheduler. 
+    This function checks a predefined list of batch schedulers in a specific order
+    to determine which one is available for use. If none of the schedulers are found,
+    it checks the system type environment variable to suggest a default scheduler.
     If no suitable scheduler is determined, it returns the specified default value.
 
     Args:
-        scheduler_legend: A dictionary storing information related to each 
-            scheduler, including commands and expected outputs for checking their 
+        scheduler_legend: A dictionary storing information related to each
+            scheduler, including commands and expected outputs for checking their
             availability. See [`construct_scheduler_legend`][study.batch.construct_scheduler_legend]
             for more information on all the settings this dict contains.
         default: The default batch scheduler to use if a scheduler cannot be determined.
 
     Returns:
-        The name of the available batch scheduler. Possible options include 
-            'slurm', 'flux', 'lsf', or 'pbs'. If no scheduler is found, returns 
+        The name of the available batch scheduler. Possible options include
+            'slurm', 'flux', 'lsf', or 'pbs'. If no scheduler is found, returns
             the specified default value.
     """
     # These schedulers are listed in order of which should be checked for first
@@ -176,10 +176,10 @@ def get_node_count(parsed_batch: Dict, default: int = 1) -> int:
     """
     Determine a default node count based on the environment.
 
-    This function checks the environment and the Flux version to determine the 
-    appropriate number of nodes to use for batch processing. It first verifies 
-    the Flux version, then attempts to retrieve the node count from the Flux 
-    allocation or environment variables specific to Slurm or LSF. If no valid 
+    This function checks the environment and the Flux version to determine the
+    appropriate number of nodes to use for batch processing. It first verifies
+    the Flux version, then attempts to retrieve the node count from the Flux
+    allocation or environment variables specific to Slurm or LSF. If no valid
     node count can be determined, it returns a specified default value.
 
     Args:
@@ -190,7 +190,7 @@ def get_node_count(parsed_batch: Dict, default: int = 1) -> int:
             environment cannot be determined.
 
     Returns:
-        The number of nodes to use for the batch job. This value is determined 
+        The number of nodes to use for the batch job. This value is determined
             based on the environment and scheduler specifics.
 
     Raises:
@@ -230,17 +230,17 @@ def parse_batch_block(batch: Dict) -> Dict:
     """
     Parse the batch block of a YAML configuration file.
 
-    This function extracts relevant information from the provided batch block 
-    dictionary, including paths, execution options, and defaults. It retrieves 
-    the Flux executable path and allocation details, and populates a dictionary 
+    This function extracts relevant information from the provided batch block
+    dictionary, including paths, execution options, and defaults. It retrieves
+    the Flux executable path and allocation details, and populates a dictionary
     with the parsed values.
 
     Args:
-        batch: A dictionary representing the batch block from the YAML 
+        batch: A dictionary representing the batch block from the YAML
             configuration file.
 
     Returns:
-        A dictionary containing parsed information from the batch block, 
+        A dictionary containing parsed information from the batch block,
             including:\n
             - `btype`: The type of batch job (default is 'local').
             - `nodes`: The number of nodes to use (default is None).
@@ -297,9 +297,9 @@ def get_flux_launch(parsed_batch: Dict) -> str:
     """
     Build the Flux launch command based on the batch section of the YAML configuration.
 
-    This function constructs the command to launch a Flux job using the parameters 
-    specified in the parsed batch configuration. It determines the appropriate 
-    execution command for Flux workers and integrates it with the launch command 
+    This function constructs the command to launch a Flux job using the parameters
+    specified in the parsed batch configuration. It determines the appropriate
+    execution command for Flux workers and integrates it with the launch command
     provided in the batch configuration.
 
     Args:
@@ -336,20 +336,20 @@ def batch_worker_launch(
     Create the worker launch command based on the batch configuration in the
     workflow specification.
 
-    This function constructs a command to launch a worker process using the 
-    specified batch configuration. It handles different batch types and 
-    integrates any necessary pre-launch commands, launch arguments, and 
+    This function constructs a command to launch a worker process using the
+    specified batch configuration. It handles different batch types and
+    integrates any necessary pre-launch commands, launch arguments, and
     node specifications.
 
     Args:
         spec (spec.specification.MerlinSpec): An instance of the
-            [`MerlinSpec`][spec.specification.MerlinSpec] class that contains the 
+            [`MerlinSpec`][spec.specification.MerlinSpec] class that contains the
             configuration details, including the batch section.
         com: The command to launch with the batch configuration.
         nodes: The number of nodes to use in the batch launch. If not specified,
             it will default to the value in the batch configuration.
         batch: An optional batch override from the worker configuration. If not
-            provided, the function will attempt to retrieve the batch section from 
+            provided, the function will attempt to retrieve the batch section from
             the specification.
 
     Returns:
@@ -410,9 +410,9 @@ def construct_scheduler_legend(parsed_batch: Dict, nodes: int) -> Dict:
     """
     Constructs a legend of relevant information needed for each scheduler.
 
-    This function generates a dictionary containing configuration details for various 
-    job schedulers based on the provided batch configuration. The returned dictionary 
-    includes flags for bank, queue, and walltime, as well as commands to check the 
+    This function generates a dictionary containing configuration details for various
+    job schedulers based on the provided batch configuration. The returned dictionary
+    includes flags for bank, queue, and walltime, as well as commands to check the
     scheduler and the initial launch command.
 
     Args:
@@ -476,9 +476,9 @@ def construct_worker_launch_command(parsed_batch: Dict, nodes: int) -> str:
     """
     Constructs the worker launch command based on the provided batch configuration.
 
-    This function generates a launch command for a worker process when no 
-    'worker_launch' command is specified in the batch configuration. It 
-    utilizes the scheduler legend to incorporate necessary flags such as 
+    This function generates a launch command for a worker process when no
+    'worker_launch' command is specified in the batch configuration. It
+    utilizes the scheduler legend to incorporate necessary flags such as
     bank, queue, and walltime, depending on the workload manager.
 
     Args:

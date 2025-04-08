@@ -29,7 +29,7 @@
 ###############################################################################
 
 """
-The `security` package contains functionality for managing encryption within Merlin, 
+The `security` package contains functionality for managing encryption within Merlin,
 ensuring secure communication and data protection.
 
 Modules:

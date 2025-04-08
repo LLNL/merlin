@@ -31,8 +31,9 @@
 """
 This module houses [`SampleIndex`][common.sample_index.SampleIndex] factory methods.
 """
-from parse import parse
 from typing import List
+
+from parse import parse
 
 from merlin.common.sample_index import MAX_SAMPLE, SampleIndex
 from merlin.utils import cd
@@ -183,7 +184,7 @@ def read_hierarchy(path: str) -> SampleIndex:
     Reads a hierarchy from a specified path and constructs a
     [`SampleIndex`][common.sample_index.SampleIndex].
 
-    This function reads a file named "sample_index.txt" in the given path, 
+    This function reads a file named "sample_index.txt" in the given path,
     parsing its contents to create a hierarchical structure of
     [`SampleIndex`][common.sample_index.SampleIndex] objects based on the
     information found in the file.

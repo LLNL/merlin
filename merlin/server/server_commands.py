@@ -56,7 +56,7 @@ LOG = logging.getLogger("merlin")
 
 def init_server():
     """
-    Initializes the Merlin server by setting up the main configuration directory 
+    Initializes the Merlin server by setting up the main configuration directory
     and local server configuration.
     """
 
@@ -74,15 +74,15 @@ def apply_config_changes(server_config: ServerConfig, args: Namespace):
     """
     Applies configuration changes to the Merlin server based on user-provided arguments.
 
-    This function modifies the Redis configuration and user settings as specified by 
-    the user through the provided arguments. It updates various Redis settings, such as 
-    IP address, port, password, directory, snapshot settings, append mode, and file paths. 
+    This function modifies the Redis configuration and user settings as specified by
+    the user through the provided arguments. It updates various Redis settings, such as
+    IP address, port, password, directory, snapshot settings, append mode, and file paths.
     If any changes are made, the updated configuration is written to the appropriate files.
 
     Args:
         server_config (server.server_util.ServerConfig): An instance of `ServerConfig` containing
             all the necessary configuration values for the server.
-        args (Namespace): An argparse `Namespace` object containing user-provided arguments 
+        args (Namespace): An argparse `Namespace` object containing user-provided arguments
             from the argument parser.
     """
     redis_config = RedisConfig(server_config.container.get_config_path())
@@ -123,11 +123,11 @@ def apply_config_changes(server_config: ServerConfig, args: Namespace):
 # it looks clean to me so we'll ignore it
 def config_server(args: Namespace):  # pylint: disable=R0912
     """
-    Processes the Merlin server configuration flags to make changes and edits 
+    Processes the Merlin server configuration flags to make changes and edits
     to appropriate configurations based on user input.
 
     Args:
-        args (Namespace): An argparse `Namespace` object containing user-provided arguments 
+        args (Namespace): An argparse `Namespace` object containing user-provided arguments
             from the argument parser.
     """
     server_config_before_changes = pull_server_config()
@@ -177,7 +177,7 @@ def status_server():
     """
     Retrieves and displays the current status of the Merlin server.
 
-    This function checks the status of any running containers for the Merlin server 
+    This function checks the status of any running containers for the Merlin server
     and logs appropriate messages based on the server's state.
     """
     current_status = get_server_status()
@@ -197,7 +197,7 @@ def check_for_not_running_server() -> bool:
     """
     Checks if the Merlin server status is `NOT_RUNNING` before starting a new server.
 
-    If the server status is anything other than `NOT_RUNNING`, logs an appropriate 
+    If the server status is anything other than `NOT_RUNNING`, logs an appropriate
     error message to inform the user.
 
     Returns:
@@ -223,13 +223,13 @@ def start_container(server_config: ServerConfig) -> subprocess.Popen:
     """
     Starts a container based on the provided server configuration.
 
-    This function uses the server configuration to locate the necessary image and 
-    configuration files, validates their existence, and starts the container using 
+    This function uses the server configuration to locate the necessary image and
+    configuration files, validates their existence, and starts the container using
     a subprocess.
 
     Args:
         server_config (server.server_util.ServerConfig): An instance of `ServerConfig`
-            containing information about the server to start, including paths to the image 
+            containing information about the server to start, including paths to the image
             and configuration files.
 
     Returns:
@@ -274,12 +274,12 @@ def server_started(process: subprocess.Popen, server_config: ServerConfig) -> bo
     Verifies that the server started by [`start_container`][server.server_commands.start_container]
     is running properly.
 
-    This function checks the Redis output to ensure the server started successfully, 
-    creates a process file for the container, and validates that the server status 
+    This function checks the Redis output to ensure the server started successfully,
+    creates a process file for the container, and validates that the server status
     is `RUNNING`.
 
     Args:
-        process (subprocess.Popen): The subprocess object representing the container 
+        process (subprocess.Popen): The subprocess object representing the container
             process started by `start_container`.
         server_config (server.server_util.ServerConfig): An instance of `ServerConfig`
             containing information about the Redis server configuration.
@@ -315,10 +315,10 @@ def start_server() -> bool:  # pylint: disable=R0911
     """
     Starts a Merlin server container.
 
-    This function performs several steps to start the server, including checking 
-    for an existing non-running server, pulling the server configuration, starting 
-    the container, verifying the server startup, and applying Redis user and 
-    configuration settings. It also generates a new `app.yaml` file for the server 
+    This function performs several steps to start the server, including checking
+    for an existing non-running server, pulling the server configuration, starting
+    the container, verifying the server startup, and applying Redis user and
+    configuration settings. It also generates a new `app.yaml` file for the server
     configuration.
 
     Returns:
@@ -358,9 +358,9 @@ def stop_server() -> bool:
     """
     Stops a running Merlin server container.
 
-    This function checks the current server status, retrieves the server configuration, 
-    and attempts to terminate the running server process. If successful, the server 
-    process is stopped, and the function returns True. Otherwise, it logs errors 
+    This function checks the current server status, retrieves the server configuration,
+    and attempts to terminate the running server process. If successful, the server
+    process is stopped, and the function returns True. Otherwise, it logs errors
     and returns False.
 
     Returns:
@@ -411,7 +411,7 @@ def restart_server() -> bool:
     """
     Restarts a running Merlin server instance.
 
-    This function stops the currently running Merlin server and then starts it again. 
+    This function stops the currently running Merlin server and then starts it again.
     If the server is not running, it logs a message and returns False.
 
     Returns:

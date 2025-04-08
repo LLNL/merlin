@@ -29,12 +29,12 @@
 ###############################################################################
 
 """
-This module provides utility functions and constants to manage broker configurations and connection strings 
-for various messaging systems, including RabbitMQ and Redis. It supports multiple connection protocols 
+This module provides utility functions and constants to manage broker configurations and connection strings
+for various messaging systems, including RabbitMQ and Redis. It supports multiple connection protocols
 and configurations, such as SSL, Unix sockets, and password inclusion.
 
-The module defines constants for supported brokers and connection string templates, along with functions 
-to construct and retrieve connection strings and SSL configurations based on settings defined in the 
+The module defines constants for supported brokers and connection string templates, along with functions
+to construct and retrieve connection strings and SSL configurations based on settings defined in the
 `app.yaml` configuration file.
 """
 from __future__ import print_function
@@ -72,7 +72,7 @@ def read_file(filepath: str) -> str:
         filepath (str): The path to the file to be read.
 
     Returns:
-        The first line of the file, stripped of leading and trailing whitespace, 
+        The first line of the file, stripped of leading and trailing whitespace,
             with special characters URL-encoded.
     """
     with open(filepath, "r") as f:  # pylint: disable=C0103
@@ -153,7 +153,7 @@ def get_redissock_connection() -> str:
     """
     Constructs and returns a Redis connection string using a Unix socket.
 
-    This function retrieves broker configurations, such as the database number (`db_num`) and 
+    This function retrieves broker configurations, such as the database number (`db_num`) and
     the Unix socket file path (`path`), and formats them into a Redis connection string.
 
     If the database number is not specified in the configuration, it defaults to `0`.
@@ -233,12 +233,12 @@ def get_connection_string(include_password: bool = True) -> str:
     """
     Constructs and returns a connection string based on the broker configuration.
 
-    This function retrieves the connection string from the `CONFIG.broker.url` if available. 
-    Otherwise, it determines the connection string based on the broker name specified in the 
+    This function retrieves the connection string from the `CONFIG.broker.url` if available.
+    Otherwise, it determines the connection string based on the broker name specified in the
     configuration file (`app.yaml`). If the broker name is not supported, a `ValueError` is raised.
 
     Args:
-        include_password (bool): Whether to include the password in the connection string. 
+        include_password (bool): Whether to include the password in the connection string.
 
     Returns:
         A formatted connection string based on the broker configuration.
@@ -266,12 +266,12 @@ def _sort_valid_broker(broker: str, include_password: bool) -> str:
     """
     Determines and returns the appropriate connection string for a given broker.
 
-    This function selects the connection string generation method based on the broker type 
-    provided as input. Supported brokers include RabbitMQ (`amqp` or `amqps`), Redis (`redis`), 
+    This function selects the connection string generation method based on the broker type
+    provided as input. Supported brokers include RabbitMQ (`amqp` or `amqps`), Redis (`redis`),
     Redis over SSL (`rediss`), and Redis over a socket (`redis+socket`).
 
     Args:
-        broker (str): The name of the broker. Must be one of the supported broker types: 
+        broker (str): The name of the broker. Must be one of the supported broker types:
             `rabbitmq`, `amqps`, `amqp`, `redis+socket`, `redis`, or `rediss`.
         include_password (bool): Whether to include the password in the connection string.
 
@@ -298,14 +298,14 @@ def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:
     """
     Retrieves the SSL configuration for the broker based on the settings in the `app.yaml` configuration file.
 
-    This function determines whether SSL should be used for the broker connection and, if applicable, 
-    returns the SSL configuration details. If the broker does not require SSL or is unsupported, 
+    This function determines whether SSL should be used for the broker connection and, if applicable,
+    returns the SSL configuration details. If the broker does not require SSL or is unsupported,
     the function returns `False`.
 
     Returns:
         This returns either:\n
             - `False` if SSL is not required or the broker is unsupported.
-            - A dictionary containing SSL configuration details if SSL is required. 
+            - A dictionary containing SSL configuration details if SSL is required.
               The dictionary may include keys such as certificate paths and verification modes.
     """
     broker: Union[bool, str] = ""

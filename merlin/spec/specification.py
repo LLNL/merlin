@@ -44,8 +44,8 @@ from io import StringIO
 from typing import Any, Dict, List, Set, TextIO, Union
 
 import yaml
-from maestrowf.specification import YAMLSpecification
 from maestrowf.datastructures.core.parameters import ParameterGenerator
+from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
 from merlin.utils import find_vlaunch_var, load_array_file, needs_merlin_expansion, repr_timedelta
@@ -59,8 +59,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
     """
     A class to represent and manage the specifications for a Merlin workflow.
 
-    This class provides methods to verify, load, and process various sections of a 
-    workflow specification file, including the merlin block, batch block, and user block. 
+    This class provides methods to verify, load, and process various sections of a
+    workflow specification file, including the merlin block, batch block, and user block.
     It also handles default values and parameter mapping.
 
     Attributes:
@@ -168,8 +168,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Load a specification file and create a `MerlinSpec` object based on its contents.
 
-        This method reads a YAML specification file from the provided path, 
-        processes its contents, and returns a `MerlinSpec` object. It can also 
+        This method reads a YAML specification file from the provided path,
+        processes its contents, and returns a `MerlinSpec` object. It can also
         suppress warnings about unrecognized keys in the specification.
 
         Args:
@@ -202,16 +202,13 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     @classmethod
     def load_spec_from_string(
-        cls,
-        string: Union[str, TextIO],
-        needs_IO: bool = True,
-        needs_verification: bool = False
+        cls, string: Union[str, TextIO], needs_IO: bool = True, needs_verification: bool = False
     ) -> "MerlinSpec":  # pylint: disable=C0103
         """
         Read a specification from a string (or stream) and create a `MerlinSpec` object from it.
 
-        This method processes a string or stream containing the specification 
-        and returns a `MerlinSpec` object. It can also verify the specification 
+        This method processes a string or stream containing the specification
+        and returns a `MerlinSpec` object. It can also verify the specification
         if required.
 
         Args:
@@ -255,9 +252,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Helper method to load a study specification and populate its fields.
 
-        This method reads a YAML specification from a raw text stream and 
-        populates the fields of a `MerlinSpec` object. It is a modified version 
-        of the `load_specification` method from Maestro's YAMLSpecification class, 
+        This method reads a YAML specification from a raw text stream and
+        populates the fields of a `MerlinSpec` object. It is a modified version
+        of the `load_specification` method from Maestro's YAMLSpecification class,
         excluding the verification step due to compatibility issues with Maestro's schema.
 
         Note:
@@ -309,19 +306,19 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Verify the specification against a valid schema.
 
-        This method checks the current `MerlinSpec` object against a predefined 
-        schema to ensure that it adheres to the expected structure and 
-        constraints. It is similar to the verify method from Maestro's 
-        YAMLSpecification class but is tailored specifically for Merlin YAML 
+        This method checks the current `MerlinSpec` object against a predefined
+        schema to ensure that it adheres to the expected structure and
+        constraints. It is similar to the verify method from Maestro's
+        YAMLSpecification class but is tailored specifically for Merlin YAML
         specifications.
 
         Note:
-            Maestro v2.0 may introduce the ability to customize the schema files 
+            Maestro v2.0 may introduce the ability to customize the schema files
             used for verification. If that feature becomes available, then we can
             convert this file back to using Maestro's verification.
 
         Raises:
-            Exception: If the specification does not conform to the schema, 
+            Exception: If the specification does not conform to the schema,
                 appropriate exceptions will be raised during the verification process.
         """
         # Load the MerlinSpec schema file
@@ -344,11 +341,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Retrieve the names of steps in the study.
 
-        This method iterates through the study steps and collects their names 
+        This method iterates through the study steps and collects their names
         into a list. The returned list is unsorted.
 
         Returns:
-            An unsorted list of strings representing the names of the 
+            An unsorted list of strings representing the names of the
                 study steps.
         """
         names = []
@@ -360,13 +357,13 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Verify the workers section in the Merlin block of the specification.
 
-        This helper method checks that the steps referenced in the workers 
-        section of the Merlin block exist in the study steps. It raises a 
-        ValueError if any step specified for a worker does not match the 
+        This helper method checks that the steps referenced in the workers
+        section of the Merlin block exist in the study steps. It raises a
+        ValueError if any step specified for a worker does not match the
         defined study steps.
 
         Raises:
-            ValueError: If a step specified in the workers section does not 
+            ValueError: If a step specified in the workers section does not
                 exist in the list of study step names.
         """
         # Retrieve the names of the steps in our study
@@ -392,8 +389,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         Verify the Merlin section of the specification file against a schema.
 
-        This method validates the Merlin block of the specification file 
-        against a predefined JSON schema and verifies the workers section 
+        This method validates the Merlin block of the specification file
+        against a predefined JSON schema and verifies the workers section
         to ensure that all specified steps are defined in the study.
 
         Args:
@@ -409,8 +406,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Verify the batch section of the specification file against a schema.
 
-        This method validates the batch block of the specification file 
-        against a predefined JSON schema and performs additional checks 
+        This method validates the batch block of the specification file
+        against a predefined JSON schema and performs additional checks
         related to the walltime parameter for the LSF batch type.
 
         Args:
@@ -429,9 +426,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Load the Merlin block from a specification file stream.
 
-        This static method reads a YAML stream and attempts to extract 
-        the 'merlin' section. If the 'merlin' section is missing, it 
-        logs a warning and returns an empty dictionary, indicating that 
+        This static method reads a YAML stream and attempts to extract
+        the 'merlin' section. If the 'merlin' section is missing, it
+        logs a warning and returns an empty dictionary, indicating that
         the default configuration will be used without sampling.
 
         Args:
@@ -459,8 +456,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Load the user block from a specification file stream.
 
-        This static method reads a YAML stream and attempts to extract 
-        the 'user' section. If the 'user' section is not present, it 
+        This static method reads a YAML stream and attempts to extract
+        the 'user' section. If the 'user' section is not present, it
         returns an empty dictionary.
 
         Args:
@@ -481,18 +478,18 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Fill in default values for specification sections if they are missing.
 
-        This method iterates through the sections of the specification and 
-        populates any that are `None` with empty dictionaries. It then fills 
-        in default values for various sections, including batch, environment, 
-        global parameters, and step sections within the study. 
+        This method iterates through the sections of the specification and
+        populates any that are `None` with empty dictionaries. It then fills
+        in default values for various sections, including batch, environment,
+        global parameters, and step sections within the study.
 
-        The method also handles specific cases for the VLAUNCHER variables 
-        in the command of each step, ensuring that default values are set 
-        if they are not defined by the user. Additionally, it ensures that 
-        workers are assigned to steps appropriately, filling in defaults 
+        The method also handles specific cases for the VLAUNCHER variables
+        in the command of each step, ensuring that default values are set
+        if they are not defined by the user. Additionally, it ensures that
+        workers are assigned to steps appropriately, filling in defaults
         where necessary.
 
-        The method modifies the instance's attributes directly, ensuring that 
+        The method modifies the instance's attributes directly, ensuring that
         the specification is complete and ready for further processing.
         """
         for name, section in self.sections.items():
@@ -562,9 +559,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         Merge default values into an object, filling in missing attributes.
 
         This static method takes an object and a dictionary of default values,
-        and merges the defaults into the object. It only adds missing attributes 
-        to the object and does not overwrite any existing attributes. If an 
-        attribute is present in the object but its value is `None`, it will be 
+        and merges the defaults into the object. It only adds missing attributes
+        to the object and does not overwrite any existing attributes. If an
+        attribute is present in the object but its value is `None`, it will be
         updated with the corresponding value from the defaults.
 
         The method works recursively, allowing for nested dictionaries.
@@ -592,9 +589,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             Recursively merge default values into the result object.
 
             This helper function checks if the current level of the `recurse_defaults`
-            dictionary is a dictionary itself. If it is, it iterates through each key-value 
-            pair. If a key is not present in the `result` or its value is `None`, it 
-            assigns the value from `recurse_defaults`. If the key exists and has a value, 
+            dictionary is a dictionary itself. If it is, it iterates through each key-value
+            pair. If a key is not present in the `result` or its value is `None`, it
+            assigns the value from `recurse_defaults`. If the key exists and has a value,
             it recursively calls itself to handle nested dictionaries.
 
             The function modifies the `result` in place.
@@ -622,11 +619,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Check for unrecognized keys in the specification file.
 
-        This method verifies that all keys present in the specification file 
-        conform to the expected structure defined by the `MerlinSpec` class. 
-        It checks various sections of the specification, including "description", 
-        "batch", "env", "global parameters", "steps", and "merlin". For each 
-        section, it calls the `check_section` method to ensure that the keys 
+        This method verifies that all keys present in the specification file
+        conform to the expected structure defined by the `MerlinSpec` class.
+        It checks various sections of the specification, including "description",
+        "batch", "env", "global parameters", "steps", and "merlin". For each
+        section, it calls the `check_section` method to ensure that the keys
         are recognized and valid according to predefined criteria.
         """
         # check description
@@ -662,15 +659,15 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Check a section of the specification file for unrecognized keys.
 
-        This static method compares the keys present in a specified section 
-        of the specification file against a set of known keys. If any keys 
-        are found that are not recognized, a warning is logged indicating 
+        This static method compares the keys present in a specified section
+        of the specification file against a set of known keys. If any keys
+        are found that are not recognized, a warning is logged indicating
         the unrecognized key and the section in which it was found.
 
         Args:
             section_name: The name of the section being checked.
             section: The section of the specification file to validate.
-            known_keys: A set of keys that are recognized as valid for 
+            known_keys: A set of keys that are recognized as valid for
                 the specified section.
         """
         diff = set(section.keys()).difference(known_keys)
@@ -684,15 +681,15 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Dump the `MerlinSpec` instance to a formatted YAML string.
 
-        This method converts the current state of the `MerlinSpec` instance 
-        into a YAML formatted string. It utilizes the `_dict_to_yaml` 
-        method to handle the conversion and prettification of the data. 
-        Additionally, it ensures that the resulting YAML string is valid 
-        by attempting to parse it with `yaml.safe_load`. If parsing fails, 
+        This method converts the current state of the `MerlinSpec` instance
+        into a YAML formatted string. It utilizes the `_dict_to_yaml`
+        method to handle the conversion and prettification of the data.
+        Additionally, it ensures that the resulting YAML string is valid
+        by attempting to parse it with `yaml.safe_load`. If parsing fails,
         a ValueError is raised with details about the error.
 
         Returns:
-            A pretty formatted YAML string representation of the 
+            A pretty formatted YAML string representation of the
                 `MerlinSpec` instance.
 
         Raises:
@@ -712,11 +709,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Convert a Python object to a formatted YAML string.
 
-        This private method handles the conversion of various Python data 
-        types (strings, booleans, lists, and dictionaries) into a 
-        formatted YAML string. It uses an if-else structure to determine 
-        the type of the input object and calls the appropriate processing 
-        methods for each type. The method also manages indentation based 
+        This private method handles the conversion of various Python data
+        types (strings, booleans, lists, and dictionaries) into a
+        formatted YAML string. It uses an if-else structure to determine
+        the type of the input object and calls the appropriate processing
+        methods for each type. The method also manages indentation based
         on the current level of nesting.
 
         Args:
@@ -748,11 +745,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Process a string for YAML formatting in the dump method.
 
-        This private method takes a string and formats it for inclusion 
-        in a YAML output. If the string contains multiple lines, it 
-        transforms the string into a block scalar format using the pipe 
-        (`|`) character, which is suitable for YAML representation. 
-        The indentation is adjusted based on the current level of 
+        This private method takes a string and formats it for inclusion
+        in a YAML output. If the string contains multiple lines, it
+        transforms the string into a block scalar format using the pipe
+        (`|`) character, which is suitable for YAML representation.
+        The indentation is adjusted based on the current level of
         nesting.
 
         Args:
@@ -769,26 +766,26 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         return obj
 
     def _process_list(
-            self,
-            obj: List[Any],
-            string: str,
-            key_stack: List[str],
-            lvl: int,
-            tab: int,
-        ) -> str:
+        self,
+        obj: List[Any],
+        string: str,
+        key_stack: List[str],
+        lvl: int,
+        tab: int,
+    ) -> str:
         """
         Process a list for YAML formatting in the dump method.
 
-        This private method handles the conversion of a list into a 
-        YAML formatted string. It determines whether to use hyphens 
-        for list items based on the context provided by the key stack. 
-        The method recursively processes each element in the list and 
+        This private method handles the conversion of a list into a
+        YAML formatted string. It determines whether to use hyphens
+        for list items based on the context provided by the key stack.
+        The method recursively processes each element in the list and
         manages indentation based on the current level of nesting.
 
         Args:
             obj: The list to be processed.
             string: The current string representation being built.
-            key_stack: A stack of keys representing the current 
+            key_stack: A stack of keys representing the current
                 level of nesting in the YAML structure.
             lvl: The current level of indentation for the YAML output.
             tab: The number of spaces to use for indentation.
@@ -817,26 +814,26 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         return string
 
     def _process_dict(
-            self,
-            obj: Dict,
-            string: str,
-            key_stack: List[str],
-            lvl: int,
-            tab: int,
-        ) -> str:  # pylint: disable=R0913
+        self,
+        obj: Dict,
+        string: str,
+        key_stack: List[str],
+        lvl: int,
+        tab: int,
+    ) -> str:  # pylint: disable=R0913
         """
         Process a dictionary for YAML formatting in the dump method.
 
-        This private method converts a dictionary into a YAML formatted 
-        string. It iterates over the dictionary's key-value pairs, 
-        formatting each pair according to YAML syntax. The method 
-        handles indentation and manages the key stack to maintain the 
+        This private method converts a dictionary into a YAML formatted
+        string. It iterates over the dictionary's key-value pairs,
+        formatting each pair according to YAML syntax. The method
+        handles indentation and manages the key stack to maintain the
         correct nesting level in the output.
 
         Args:
             obj: The dictionary to be processed.
             string: The current string representation being built.
-            key_stack: A stack of keys representing the current 
+            key_stack: A stack of keys representing the current
                 level of nesting in the YAML structure.
             lvl: The current level of indentation for the YAML output.
             tab: The number of spaces to use for indentation.
@@ -867,8 +864,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Create a mapping of step names to associated workers.
 
-        This method constructs a dictionary where each key is a step name 
-        and the corresponding value is a list of workers assigned to that 
+        This method constructs a dictionary where each key is a step name
+        and the corresponding value is a list of workers assigned to that
         step. Workers can either be associated with all steps or with
         specific steps. This method serves as the inverse of the
         [`get_worker_step_map`][spec.specification.MerlinSpec.get_worker_step_map]
@@ -895,8 +892,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Create a mapping of worker names to associated steps.
 
-        This method constructs a dictionary where each key is a worker name 
-        and the corresponding value is a list of steps that the worker is 
+        This method constructs a dictionary where each key is a worker name
+        and the corresponding value is a list of steps that the worker is
         assigned to monitor. Workers can either be assigned to all steps or
         to specific steps. It serves as the inverse of the
         [`get_step_worker_map`][spec.specification.MerlinSpec.get_step_worker_map]
@@ -923,7 +920,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Create a mapping of steps to their corresponding task queues.
 
-        This method constructs a dictionary where each key is a step name 
+        This method constructs a dictionary where each key is a step name
         and the corresponding value is the associated task queue. The
         `omit_tag` parameter allows for the optional exclusion of the Celery
         queue tag from the queue names. It serves as the inverse of the
@@ -931,7 +928,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         method.
 
         Args:
-            omit_tag: If True, the Celery queue tag will be omitted 
+            omit_tag: If True, the Celery queue tag will be omitted
                 from the task queue names. Default is False.
 
         Returns:
@@ -952,9 +949,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Build a mapping of task queues to their associated steps.
 
-        This method constructs a dictionary where each key is a task queue 
-        name and the corresponding value is a list of steps that are 
-        associated with that queue. It serves as the inverse of the 
+        This method constructs a dictionary where each key is a task queue
+        name and the corresponding value is a list of steps that are
+        associated with that queue. It serves as the inverse of the
         [`get_task_queues`][spec.specification.MerlinSpec.get_task_queues]
         method.
 
@@ -986,9 +983,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Return a sorted set of queues corresponding to specified steps.
 
-        This method retrieves a list of task queues associated with the 
-        given steps. If the `steps` parameter is set to ['all'], it will 
-        return all available queues. The `omit_tag` parameter allows for 
+        This method retrieves a list of task queues associated with the
+        given steps. If the `steps` parameter is set to ['all'], it will
+        return all available queues. The `omit_tag` parameter allows for
         the optional exclusion of the Celery queue tag from the queue names.
 
         Args:
@@ -1002,7 +999,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 steps.
 
         Raises:
-            KeyError: If any of the specified steps do not exist in the 
+            KeyError: If any of the specified steps do not exist in the
                 task queues.
         """
         queues = self.get_task_queues(omit_tag=omit_tag)
@@ -1024,12 +1021,12 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Return a unique queue string for the specified steps.
 
-        This method constructs a comma-separated string of unique task 
-        queues associated with the provided steps. The resulting string 
+        This method constructs a comma-separated string of unique task
+        queues associated with the provided steps. The resulting string
         is suitable for use in command-line contexts.
 
         Args:
-            steps: A list of step names for which to generate the 
+            steps: A list of step names for which to generate the
                 queue string.
 
         Returns:
@@ -1042,7 +1039,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Build a list of worker names.
 
-        This method retrieves the names of all workers defined in the 
+        This method retrieves the names of all workers defined in the
         Merlin resources and returns them as a list.
 
         Returns:
@@ -1057,10 +1054,10 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Get the number of tasks needed to complete each step.
 
-        This method calculates the number of tasks required for each 
-        step in the study based on the number of samples and parameters. 
-        It returns a dictionary where the keys are the step names and 
-        the values are the corresponding number of tasks required for 
+        This method calculates the number of tasks required for each
+        step in the study based on the number of samples and parameters.
+        It returns a dictionary where the keys are the step names and
+        the values are the corresponding number of tasks required for
         that step.
 
         Returns:
@@ -1104,9 +1101,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         This private method processes a parameter generator to create two mappings:
 
-        1. `expanded_labels`: Maps tokens to their expanded labels based on the 
+        1. `expanded_labels`: Maps tokens to their expanded labels based on the
             provided parameter values.
-        2. `label_param_map`: Maps expanded labels to their corresponding parameter 
+        2. `label_param_map`: Maps expanded labels to their corresponding parameter
             values.
 
         The expected structure for the parameter block is:
@@ -1139,8 +1136,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Create a mapping of parameters used for each step in the study.
 
-        This method generates a mapping of parameters for each step, where each 
-        step may have a command (`cmd`) and a restart command (`restart_cmd`). 
+        This method generates a mapping of parameters for each step, where each
+        step may have a command (`cmd`) and a restart command (`restart_cmd`).
         The resulting mapping has a structure similar to the following:
 
         ```python
@@ -1157,7 +1154,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         ```
 
         Returns:
-            A dictionary mapping step names (with parameters) to their 
+            A dictionary mapping step names (with parameters) to their
                 respective command and restart command parameter mappings.
         """
         # Get the steps and the parameters in the study

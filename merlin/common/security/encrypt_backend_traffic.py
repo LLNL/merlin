@@ -49,10 +49,10 @@ old_decode = celery.backends.base.Backend.decode
 
 def _encrypt_encode(*args, **kwargs) -> bytes:
     """
-    Intercepts calls to the encode method of the Celery backend and encrypts 
+    Intercepts calls to the encode method of the Celery backend and encrypts
     the encoded data.
 
-    This function wraps the original encode method, encrypting the result 
+    This function wraps the original encode method, encrypting the result
     after encoding.
 
     Args:
@@ -67,10 +67,10 @@ def _encrypt_encode(*args, **kwargs) -> bytes:
 
 def _decrypt_decode(self: Backend, payload: bytes) -> Any:
     """
-    Intercepts calls to the decode method of the Celery backend and decrypts 
+    Intercepts calls to the decode method of the Celery backend and decrypts
     the payload before decoding.
 
-    This function wraps the original decode method, decrypting the payload 
+    This function wraps the original decode method, decrypting the payload
     prior to decoding.
 
     Args:
@@ -85,12 +85,12 @@ def _decrypt_decode(self: Backend, payload: bytes) -> Any:
 
 def set_backend_funcs():
     """
-    Sets the encode and decode methods of the Celery backend to custom 
+    Sets the encode and decode methods of the Celery backend to custom
     implementations that handle encryption and decryption.
 
-    This function replaces the default encode and decode methods with 
-    `_encrypt_encode` and `_decrypt_decode`, respectively, ensuring that 
-    all data processed by the Celery backend is encrypted and decrypted 
+    This function replaces the default encode and decode methods with
+    `_encrypt_encode` and `_decrypt_decode`, respectively, ensuring that
+    all data processed by the Celery backend is encrypted and decrypted
     appropriately.
     """
     celery.backends.base.Backend.encode = _encrypt_encode

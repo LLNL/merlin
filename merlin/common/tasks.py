@@ -43,14 +43,14 @@ from typing import Any, Callable, Dict, List, Optional
 
 # Need to disable an overwrite warning here since celery has an exception that we need that directly
 # overwrites a python built-in exception
-from celery import chain, chord, group, shared_task, signature, Signature, Task
+from celery import Signature, Task, chain, chord, group, shared_task, signature
 from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
 from celery.result import AsyncResult
 from filelock import FileLock, Timeout
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.common.enums import ReturnCode
-from merlin.common.sample_index import uniform_directories, SampleIndex
+from merlin.common.sample_index import SampleIndex, uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
 from merlin.config.utils import Priority, get_priority
 from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
@@ -97,8 +97,8 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C
     """
     Executes a Merlin step.
 
-    This task executes a step in the Merlin workflow, handling various 
-    outcomes such as success, retries, and failures. It can also manage 
+    This task executes a step in the Merlin workflow, handling various
+    outcomes such as success, retries, and failures. It can also manage
     chaining to the next step in the workflow.
 
     Notes:
@@ -109,7 +109,7 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C
         *args: Positional arguments, one of which should be an instance
             of [`Step`][study.step.Step].
         **kwargs: Optional keyword arguments that include:\n
-            - adapter_config (`Dict`): Configuration for the adapter, 
+            - adapter_config (`Dict`): Configuration for the adapter,
               defaulting to `{'type': 'local'}`.
             - next_in_chain ([`Step`][study.step.Step]): The next step in
                 the workflow chain, if applicable.\n
@@ -239,10 +239,10 @@ def is_chain_expandable(chain_: List[Step], labels: List[str]) -> bool:
     """
     Determine if the steps in the given chain are expandable.
 
-    A chain is considered expandable if all steps within the chain require 
-    expansion. Conversely, if none of the steps require expansion, the chain 
-    is not expandable. If there is a mix of steps that require expansion and 
-    those that do not, an `InvalidChainException` is raised, indicating that 
+    A chain is considered expandable if all steps within the chain require
+    expansion. Conversely, if none of the steps require expansion, the chain
+    is not expandable. If there is a mix of steps that require expansion and
+    those that do not, an `InvalidChainException` is raised, indicating that
     the chain is incompatible.
 
     Args:
@@ -256,7 +256,7 @@ def is_chain_expandable(chain_: List[Step], labels: List[str]) -> bool:
             expandable.
 
     Raises:
-        InvalidChainException: If there is a mix of steps that require 
+        InvalidChainException: If there is a mix of steps that require
             expansion and those that do not, indicating an incompatible chain.
     """
 
@@ -285,7 +285,7 @@ def prepare_chain_workspace(sample_index: SampleIndex, chain_: List[Step]):
     Prepares a user's workspace for each step in the given chain of dependent steps.
 
     This function iterates through a list of [`Step`][study.step.Step] objects and
-    prepares the necessary workspace for each step by creating directories and writing 
+    prepares the necessary workspace for each step by creating directories and writing
     sample index files.
 
     Args:
@@ -326,10 +326,10 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
     """
     Expand tasks in a chain and add the expanded tasks to the current chord.
 
-    This Celery task recursively expands a chain of tasks based on provided 
-    sample values and their corresponding labels. The expanded tasks are 
-    configured with specific parameters and added to the current chord for 
-    execution. The function handles both the expansion of tasks and the 
+    This Celery task recursively expands a chain of tasks based on provided
+    sample values and their corresponding labels. The expanded tasks are
+    configured with specific parameters and added to the current chord for
+    execution. The function handles both the expansion of tasks and the
     management of task dependencies.
 
     Args:
@@ -436,9 +436,9 @@ def add_simple_chain_to_chord(self: Task, task_type: Signature, chain_: List[Ste
     """
     Add a chain of tasks to the current chord for execution.
 
-    This function takes a list of tasks, modifies their signatures based on 
-    provided parameters, and adds them to the current chord. Each task in the 
-    chain is transformed into a new task signature with specific configurations 
+    This function takes a list of tasks, modifies their signatures based on
+    provided parameters, and adds them to the current chord. Each task in the
+    chain is transformed into a new task signature with specific configurations
     such as queue and task ID.
 
     This function takes a list of steps and creates signatures based on the
@@ -476,9 +476,9 @@ def launch_chain(self: Task, chain_1d: List[Signature], condense_sig: Signature 
     """
     Launch a 1D chain of task signatures appropriately based on the execution context.
 
-    This function handles the launching of a list of task signatures in a 
-    one-dimensional chain. The behavior varies depending on whether the 
-    execution is local or remote, and whether the tasks involve sample 
+    This function handles the launching of a list of task signatures in a
+    one-dimensional chain. The behavior varies depending on whether the
+    execution is local or remote, and whether the tasks involve sample
     processing that requires condensing status files.
 
     Args:
@@ -510,15 +510,15 @@ def get_1d_chain(all_chains: List[List[Signature]]) -> List[Signature]:
     """
     Convert a 2D list of task chains into a 1D list of task signatures.
 
-    This function takes a two-dimensional list of task signatures, where each 
-    inner list represents a parallel group of tasks. It transforms this structure 
-    into a one-dimensional list suitable for creating a linear chain of tasks. 
-    If there is only one chain, it returns that chain directly. If there are 
-    multiple chains, it sets up dependencies between tasks to ensure proper 
+    This function takes a two-dimensional list of task signatures, where each
+    inner list represents a parallel group of tasks. It transforms this structure
+    into a one-dimensional list suitable for creating a linear chain of tasks.
+    If there is only one chain, it returns that chain directly. If there are
+    multiple chains, it sets up dependencies between tasks to ensure proper
     execution order.
 
     Notes:
-        - The function processes the chains in reverse order to correctly 
+        - The function processes the chains in reverse order to correctly
           set up the dependencies before adding them to the final list.
 
     Args:
@@ -562,17 +562,15 @@ def get_1d_chain(all_chains: List[List[Signature]]) -> List[Signature]:
     return chain_steps
 
 
-def gather_statuses(
-    sample_index: SampleIndex, workspace: str, condensed_workspace: str, files_to_remove: List[str]
-) -> Dict:
+def gather_statuses(sample_index: SampleIndex, workspace: str, condensed_workspace: str, files_to_remove: List[str]) -> Dict:
     """
     Traverse the sample index and gather all statuses into a single dictionary.
 
     This function iterates through the provided
-    [`SampleIndex`][common.sample_index.SampleIndex] object, 
-    reading status files from each sample's workspace. It condenses 
-    the statuses into a single dictionary while tracking which files 
-    need to be removed after condensing. The function ensures that 
+    [`SampleIndex`][common.sample_index.SampleIndex] object,
+    reading status files from each sample's workspace. It condenses
+    the statuses into a single dictionary while tracking which files
+    need to be removed after condensing. The function ensures that
     only completed statuses are included in the condensed output.
 
     Args:
@@ -581,19 +579,19 @@ def gather_statuses(
             representing the specific sample hierarchy to traverse.
         workspace: The full path to the workspace for the step being
             condensed.
-        condensed_workspace: A shortened version of the workspace 
+        condensed_workspace: A shortened version of the workspace
             path that will be used in the status files.
         files_to_remove: A list that will be populated with file paths
             of status files that need to be removed after condensing.
 
     Returns:
-        A dictionary containing the condensed statuses gathered 
+        A dictionary containing the condensed statuses gathered
             from the status files.
 
     Raises:
-        TimeoutError: If a timeout occurs while reading a status file, 
+        TimeoutError: If a timeout occurs while reading a status file,
             triggering a restart of the task.
-        FileNotFoundError: If a status file is not found during the 
+        FileNotFoundError: If a status file is not found during the
             condensing process.
     """
     LOG.info(f"Gathering statuses to condense for '{condensed_workspace}'")
@@ -650,7 +648,7 @@ def condense_status_files(self: Task, *args: Any, **kwargs: Any) -> ReturnCode: 
     the new statuses with the existing ones.
 
     Notes:
-        - The task will remove the original status files after condensing them 
+        - The task will remove the original status files after condensing them
           into the JSON file.
 
     Args:
@@ -661,7 +659,7 @@ def condense_status_files(self: Task, *args: Any, **kwargs: Any) -> ReturnCode: 
                 The [`SampleIndex`][common.sample_index.SampleIndex] object used
                 for gathering statuses.
             - `workspace` (str): The workspace path for the step.
-            - `condensed_workspace` (str): The workspace path for the 
+            - `condensed_workspace` (str): The workspace path for the
               condensed status.
 
     Returns:
@@ -669,7 +667,7 @@ def condense_status_files(self: Task, *args: Any, **kwargs: Any) -> ReturnCode: 
             message if the operation was successful. None, otherwise.
 
     Raises:
-        TimeoutError: If the file lock cannot be acquired within the 
+        TimeoutError: If the file lock cannot be acquired within the
             specified timeout period, which triggers a task restart.
     """
     # Get the sample index object that we'll use for condensing
@@ -744,15 +742,15 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
     level_max_dirs: int,
 ):
     """
-    Generates a group of Celery chains of tasks from a list of task names, 
+    Generates a group of Celery chains of tasks from a list of task names,
     utilizing Merlin samples and labels for variable substitution.
 
-    This task expands a given chain of task names into a more complex 
-    structure of tasks based on provided samples and labels. It creates 
-    a hierarchy of sample paths and substitutes these paths into the 
+    This task expands a given chain of task names into a more complex
+    structure of tasks based on provided samples and labels. It creates
+    a hierarchy of sample paths and substitutes these paths into the
     command parameters of the tasks in the chain.
 
-    This task checks if the chain of tasks needs expansion based on 
+    This task checks if the chain of tasks needs expansion based on
     the provided labels and the structure of the [`DAG`][study.dag.DAG].
     If expansion is required, it generates and queues new tasks for each
     range of samples, otherwise, it queues a simple chain task.
@@ -761,7 +759,7 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
         self: The current task instance.
         dag (study.dag.DAG): A Merlin Directed Acyclic Graph
             ([`DAG`][study.dag.DAG]) representing the workflow.
-        chain_: A list of task names to be expanded into a 
+        chain_: A list of task names to be expanded into a
             Celery group of chains.
         samples: A list of lists containing Merlin sample values for
             variable substitution.
@@ -769,7 +767,7 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
             with each column in the samples.
         task_type: The Celery task type to create, currently expected
             to be [`merlin_step`][common.tasks.merlin_step].
-        adapter_config: A configuration dictionary for Maestro 
+        adapter_config: A configuration dictionary for Maestro
             script adapters.
         level_max_dirs: The maximum number of directories allowed per
             level in the sample hierarchy.
@@ -869,7 +867,7 @@ def shutdown_workers(self: Task, shutdown_queues: List[str]):  # pylint: disable
     Initiates the shutdown of Celery workers.
 
     This task wraps the [`stop_celery_workers`][study.celeryadapter.stop_celery_workers]
-    function, allowing for the graceful shutdown of specified Celery worker queues. It is 
+    function, allowing for the graceful shutdown of specified Celery worker queues. It is
     acknowledged immediately upon execution, ensuring that it will not be requeued, even
     if executed by a worker.
 
@@ -897,14 +895,14 @@ def chordfinisher(*args: List, **kwargs: Dict) -> str:  # pylint: disable=W0613
     """
     Synchronization callback for Celery chords.
 
-    This function serves as a synchronization point between groups of tasks 
-    in a Celery workflow. In Celery, using `chain(group, group)` does not 
-    guarantee that the second group will execute only after the first group 
+    This function serves as a synchronization point between groups of tasks
+    in a Celery workflow. In Celery, using `chain(group, group)` does not
+    guarantee that the second group will execute only after the first group
     has completed. Instead, both groups are executed independently.
 
-    To enforce a synchronization point between these groups, this function 
-    is used as a callback in a chord. It allows for the declaration of chains 
-    of groups dynamically, ensuring that subsequent tasks wait for the 
+    To enforce a synchronization point between these groups, this function
+    is used as a callback in a chord. It allows for the declaration of chains
+    of groups dynamically, ensuring that subsequent tasks wait for the
     completion of all tasks in the preceding groups.
 
     Args:
@@ -912,7 +910,7 @@ def chordfinisher(*args: List, **kwargs: Dict) -> str:  # pylint: disable=W0613
         **kwargs: Arbitrary keyword arguments. Needed by Celery.
 
     Returns:
-        A constant string "SYNC" indicating the synchronization point 
+        A constant string "SYNC" indicating the synchronization point
             has been reached.
     """
     return "SYNC"
@@ -928,7 +926,7 @@ def queue_merlin_study(study: MerlinStudy, adapter: Dict) -> AsyncResult:
     """
     Launch a chain of tasks based on a MerlinStudy.
 
-    This Celery task initiates a series of tasks derived from a 
+    This Celery task initiates a series of tasks derived from a
     [`MerlinStudy`][study.study.MerlinStudy] object. It processes
     the study's directed acyclic graph ([`DAG`][study.dag.DAG])
     to group tasks and convert them into a chain of Celery tasks

@@ -49,7 +49,7 @@ def _get_key_path() -> str:
     """
     Loads the path to the Redis encryption key from the configuration.
 
-    If the path is not specified in the configuration, it defaults to 
+    If the path is not specified in the configuration, it defaults to
     "~/.merlin/encrypt_data_key".
 
     Returns:
@@ -88,8 +88,8 @@ def _get_key() -> bytes:
     """
     Retrieves a valid encryption key.
 
-    This function attempts to load the key from the path specified in the 
-    configuration. If the key does not exist, it generates a new key and 
+    This function attempts to load the key from the path specified in the
+    configuration. If the key does not exist, it generates a new key and
     saves it to the specified path.
 
     Returns:

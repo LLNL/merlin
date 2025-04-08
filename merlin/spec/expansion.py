@@ -28,11 +28,11 @@
 # SOFTWARE.
 ###############################################################################
 """
-This module handles the expansion of variables in a Merlin spec file. 
+This module handles the expansion of variables in a Merlin spec file.
 
-It provides functionality to expand user-defined variables, environment variables, and reserved variables 
-within a spec file. The module also supports variable substitution for specific use cases, such as parameter 
-substitutions for samples and commands, and allows for the processing of override variables provided via 
+It provides functionality to expand user-defined variables, environment variables, and reserved variables
+within a spec file. The module also supports variable substitution for specific use cases, such as parameter
+substitutions for samples and commands, and allows for the processing of override variables provided via
 the command-line interface.
 """
 
@@ -78,16 +78,16 @@ def var_ref(string: str) -> str:
     """
     Format a string as a variable reference.
 
-    This function takes a string, converts it to uppercase, and returns it 
-    wrapped in the format `$(<string>)`. If the string already contains 
-    a token (e.g., it is already formatted as a variable reference), a warning 
+    This function takes a string, converts it to uppercase, and returns it
+    wrapped in the format `$(<string>)`. If the string already contains
+    a token (e.g., it is already formatted as a variable reference), a warning
     is logged and the original string is returned unchanged.
 
     Args:
         string: The input string to format as a variable reference.
 
     Returns:
-        The formatted variable reference, or the original string if it 
+        The formatted variable reference, or the original string if it
             already contains a token.
 
     Example:
@@ -107,13 +107,13 @@ def expand_line(line: str, var_dict: Dict[str, str], env_vars: bool = False) -> 
     """
     Expand a single line of text by substituting variables.
 
-    This function replaces variable references in a given line of text with 
-    their corresponding values from a provided dictionary. Optionally, it can 
+    This function replaces variable references in a given line of text with
+    their corresponding values from a provided dictionary. Optionally, it can
     also expand environment variables and user home directory shortcuts (e.g., `~`).
 
     Args:
         line: The input line of text to expand.
-        var_dict: A dictionary of variable names and their corresponding values 
+        var_dict: A dictionary of variable names and their corresponding values
             to substitute in the line.
         env_vars: If True, environment variables and home directory shortcuts
             will also be expanded.
@@ -149,8 +149,8 @@ def expand_by_line(text: str, var_dict: Dict[str, str]) -> str:
     """
     Expand variables in a text line by line.
 
-    This function processes a multi-line text (e.g., a YAML specification) and 
-    replaces variable references in each line using a provided dictionary of 
+    This function processes a multi-line text (e.g., a YAML specification) and
+    replaces variable references in each line using a provided dictionary of
     variable names and their corresponding values.
 
     Args:
@@ -182,10 +182,10 @@ def expand_env_vars(spec: MerlinSpec) -> MerlinSpec:
     """
     Expand environment variables in all sections of a spec.
 
-    This function processes all sections of a given spec object and expands 
-    environment variables (e.g., `$HOME` or `~`) in string values. It skips 
-    expansion for values associated with the keys 'cmd' or 'restart', as these 
-    are typically shell scripts where environment variable expansion would 
+    This function processes all sections of a given spec object and expands
+    environment variables (e.g., `$HOME` or `~`) in string values. It skips
+    expansion for values associated with the keys 'cmd' or 'restart', as these
+    are typically shell scripts where environment variable expansion would
     already occur during execution.
 
     Args:
@@ -221,18 +221,18 @@ def determine_user_variables(*user_var_dicts: List[Dict]) -> Dict:
     """
     Determine user-defined variables from multiple dictionaries.
 
-    This function takes an arbitrary number of dictionaries containing user-defined 
-    variables and resolves them in order, handling variable references and expansions 
-    (e.g., environment variables, user home directory shortcuts). Variable names are 
+    This function takes an arbitrary number of dictionaries containing user-defined
+    variables and resolves them in order, handling variable references and expansions
+    (e.g., environment variables, user home directory shortcuts). Variable names are
     converted to uppercase, and reserved words cannot be reassigned.
 
     Args:
-        user_var_dicts: One or more dictionaries of user variables. Each dictionary 
-            contains key-value pairs where the key is the variable name, and the value 
+        user_var_dicts: One or more dictionaries of user variables. Each dictionary
+            contains key-value pairs where the key is the variable name, and the value
             is the variable's definition.
 
     Returns:
-        A dictionary of resolved user variables, with variable names in uppercase 
+        A dictionary of resolved user variables, with variable names in uppercase
             and all references expanded.
 
     Raises:
@@ -243,7 +243,7 @@ def determine_user_variables(*user_var_dicts: List[Dict]) -> Dict:
         >>> user_vars_1 = {'OUTPUT_PATH': './studies', 'N_SAMPLES': 10}
         >>> user_vars_2 = {'TARGET': 'target_dir', 'PATH': '$(SPECROOT)/$(TARGET)'}
         >>> determine_user_variables(user_vars_1, user_vars_2)
-        {'OUTPUT_PATH': './studies', 'N_SAMPLES': '10', 
+        {'OUTPUT_PATH': './studies', 'N_SAMPLES': '10',
          'TARGET': 'target_dir', 'PATH': '$(SPECROOT)/target_dir'}
         ```
     """
@@ -264,17 +264,14 @@ def determine_user_variables(*user_var_dicts: List[Dict]) -> Dict:
 
 
 def parameter_substitutions_for_sample(
-        sample: List[str],
-        labels: List[str],
-        sample_id: int,
-        relative_path_to_sample: str
-    ) -> List[Tuple[str, str]]:
+    sample: List[str], labels: List[str], sample_id: int, relative_path_to_sample: str
+) -> List[Tuple[str, str]]:
     """
     Generate parameter substitutions for a specific sample.
 
-    This function creates a list of substitution pairs for a given sample, 
-    mapping variable references (e.g., `$(LABEL)`) to their corresponding 
-    values in the sample. It also includes metadata substitutions such as 
+    This function creates a list of substitution pairs for a given sample,
+    mapping variable references (e.g., `$(LABEL)`) to their corresponding
+    values in the sample. It also includes metadata substitutions such as
     the sample ID and the relative path to the sample.
 
     Args:
@@ -284,7 +281,7 @@ def parameter_substitutions_for_sample(
         relative_path_to_sample: The relative path to the sample.
 
     Returns:
-        A list of tuples, where each tuple contains a variable reference 
+        A list of tuples, where each tuple contains a variable reference
             (e.g., `$(LABEL)`) and its corresponding value.
 
     Example:
@@ -319,7 +316,7 @@ def parameter_substitutions_for_cmd(glob_path: str, sample_paths: str) -> List[T
     """
     Generate parameter substitutions for a Merlin command.
 
-    This function creates a list of substitution pairs for a Merlin command, 
+    This function creates a list of substitution pairs for a Merlin command,
     mapping variable references to their corresponding values. It also includes
     predefined return codes for various Merlin states.
 

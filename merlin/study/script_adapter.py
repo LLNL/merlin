@@ -59,7 +59,7 @@ def setup_vlaunch(step_run: str, batch_type: str, gpu_config: bool):
 
     This function examines the provided step run command string for the presence of the
     VLAUNCHER keyword. If found, it replaces the keyword with the LAUNCHER keyword and
-    extracts relevant MERLIN variables such as nodes, processes, and cores per task. 
+    extracts relevant MERLIN variables such as nodes, processes, and cores per task.
     It also configures GPU settings based on the provided boolean flag.
 
     Args:
@@ -149,7 +149,7 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
     def get_priority(self, priority: StepPriority):
         """
         This is implemented to override the abstract method and fix a pylint error.
-        
+
         Args:
             priority: Float or
                 [`StepPriority`](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/abstracts/enums/index.html#maestrowf.abstracts.enums.StepPriority)
@@ -300,7 +300,7 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
     def get_priority(self, priority: StepPriority):
         """
         This is implemented to override the abstract method and fix a pylint error.
-        
+
         Args:
             priority: Float or
                 [`StepPriority`](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/abstracts/enums/index.html#maestrowf.abstracts.enums.StepPriority)
@@ -341,14 +341,14 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         Generate the SLURM parallelization segment of the command line.
 
         This method constructs the command line segment required for parallel execution
-        in SLURM, including the number of processors and nodes to allocate. It also 
+        in SLURM, including the number of processors and nodes to allocate. It also
         incorporates any additional supported command flags provided in `kwargs`.
 
         Args:
             procs: The number of processors to allocate for the parallel call.
             nodes: The number of nodes to allocate for the parallel call (default is 1).
-            **kwargs: Additional command flags to customize the SLURM command. 
-                Supported flags include 'walltime' and others defined in the 
+            **kwargs: Additional command flags to customize the SLURM command.
+                Supported flags include 'walltime' and others defined in the
                 `_cmd_flags` attribute, excluding those in the `_unsupported` set.
 
         Returns:
@@ -480,7 +480,7 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
     def get_priority(self, priority: StepPriority):
         """
         This is implemented to override the abstract method and fix a pylint error.
-        
+
         Args:
             priority: Float or
                 [`StepPriority`](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/abstracts/enums/index.html#maestrowf.abstracts.enums.StepPriority)
@@ -594,7 +594,9 @@ class MerlinScriptAdapter(LocalScriptAdapter):
         return True, script, restart_script
 
     # Pylint complains that there's too many arguments but it's fine in this case
-    def submit(self, step: StudyStep, path: str, cwd: str, job_map: Dict = None, env: Dict = None) -> SubmissionRecord:  # pylint: disable=R0913
+    def submit(
+        self, step: StudyStep, path: str, cwd: str, job_map: Dict = None, env: Dict = None
+    ) -> SubmissionRecord:  # pylint: disable=R0913
         """
         Execute a workflow step locally.
 
@@ -653,12 +655,7 @@ class MerlinScriptAdapter(LocalScriptAdapter):
     # TODO is there currently ever a scenario where join output is True? We should look into this
     # Pylint is complaining there's too many local variables and args but it makes this function cleaner so ignore
     def _execute_subprocess(
-        self,
-        output_name: str,
-        script_path: str,
-        cwd: str,
-        env: Dict = None,
-        join_output: bool = False
+        self, output_name: str, script_path: str, cwd: str, env: Dict = None, join_output: bool = False
     ) -> SubmissionRecord:  # pylint: disable=R0913,R0914
         """
         Execute a subprocess script locally and manage output.
