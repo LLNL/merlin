@@ -30,6 +30,19 @@
 
 """
 Used to store the application configuration.
+
+The `config` package provides functionality for managing and configuring various aspects 
+of the Merlin application, including broker settings, results backends, Celery configurations, 
+and application-level settings. It serves as the central hub for loading, processing, and 
+utilizing configuration data defined in the `app.yaml` file and other related resources.
+
+Modules:
+    broker.py: Manages broker configurations and connection strings for messaging systems.
+    celeryconfig.py: Contains default Celery configuration settings for Merlin.
+    configfile.py: Handles the loading and processing of application configuration files 
+        and SSL-related settings.
+    results_backend.py: Configures connection strings and SSL settings for results backends.
+    utils.py: Provides utilities for broker priority handling and validation.
 """
 from copy import copy
 from types import SimpleNamespace

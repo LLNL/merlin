@@ -29,8 +29,12 @@
 ###############################################################################
 
 """
-This module handles the logic for the Merlin config files for setting up all
-configurations.
+This module provides functionality for managing and loading application configuration files, 
+default settings, and SSL-related configurations. It includes utilities for locating, 
+reading, and processing configuration files, as well as handling SSL certificates and protocols 
+for various server types.
+
+It houses the `CONFIG` object that's used throughout Merlin's codebase.
 """
 import getpass
 import logging
@@ -51,12 +55,15 @@ USER_HOME: str = os.path.expanduser("~")
 MERLIN_HOME: str = os.path.join(USER_HOME, ".merlin")
 
 
-def load_config(filepath):
+def load_config(filepath: str) -> Dict:
     """
-    Given the path to the merlin YAML config file, read the file and return
-    a dictionary of the contents.
+    Reads a Merlin YAML configuration file and returns its contents as a dictionary.
 
-    :param filepath : Read a yaml file given by filepath
+    Args:
+        filepath (str): The path to the YAML configuration file.
+
+    Returns:
+        A dictionary containing the contents of the YAML file.
     """
     if not os.path.isfile(filepath):
         LOG.info(f"No app config file at {filepath}")
@@ -65,12 +72,19 @@ def load_config(filepath):
     return load_yaml(filepath)
 
 
-def find_config_file(path=None):
+def find_config_file(path: str = None) -> str:
     """
-    Given a dir path, find and return the path to the merlin application
-    config file.
+    Finds and returns the path to the Merlin application configuration file (`app.yaml`).
 
-    :param path : The path to search for the app.yaml file
+    If no `path` is provided, the function searches in the current working directory 
+    and the `MERLIN_HOME` directory for the configuration file. If `path` is provided, 
+    it checks for the configuration file in the specified directory.
+
+    Args:
+        path (str, optional): The directory path to search for the `app.yaml` file. 
+
+    Returns:
+        The full path to the `app.yaml` file if found.
     """
     if path is None:
         local_app = os.path.join(os.getcwd(), APP_FILENAME)
@@ -89,14 +103,18 @@ def find_config_file(path=None):
     return None
 
 
-def load_default_user_names(config):
+def load_default_user_names(config: Dict):
     """
-    Load broker.username and broker.vhost defaults if they are not present in
-    the current configuration. Doing this here prevents other areas that rely
-    on config from needing to know that those fields could not be defined by
-    the user.
+    Ensures that `broker.username` and `broker.vhost` default values are set in the 
+    configuration if they are not already defined.
 
-    :param config : The namespace config object
+    This function checks the `config` object for the presence of `broker.username` 
+    and `broker.vhost`. If either is missing, it sets their default values using 
+    the current system username. This prevents other parts of the code from having 
+    to handle missing values for these fields.
+
+    Args:
+        config (Dict): The configuration object containing the `broker` namespace.
     """
     try:
         config["broker"]["username"]
@@ -112,12 +130,22 @@ def load_default_user_names(config):
 
 def get_config(path: Optional[str]) -> Dict:
     """
-    Load a merlin configuration file and return a dictionary of the
-    configurations.
+    Loads a Merlin configuration file and returns a dictionary containing the configuration data.
 
-    :param [Optional[str]] path : The path to search for the config file.
-    :return: the config file to coordinate brokers/results backend/task manager."
-    :rtype: A Dict with all the config data.
+    This function locates the configuration file using the provided `path` or default search locations, 
+    loads the configuration data, and applies default values where necessary. If the configuration file 
+    cannot be found, it raises a `ValueError`.
+
+    Args:
+        path (str, optional): The directory path to search for the configuration file. 
+            If `None`, default search paths are used.
+
+    Returns:
+        A dictionary containing all the configuration data, including broker, 
+            results backend, and task manager settings.
+
+    Raises:
+        ValueError: If the configuration file cannot be found.
     """
     filepath: Optional[str] = find_config_file(path)
 
@@ -131,8 +159,17 @@ def get_config(path: Optional[str]) -> Dict:
     return config
 
 
-def load_default_celery(config):
-    """Creates the celery default configuration"""
+def load_default_celery(config: Dict):
+    """
+    Initializes the default Celery configuration within the provided configuration object.
+
+    This function ensures that the `celery` section of the configuration exists and sets 
+    default values for specific Celery-related settings if they are not already defined. 
+    These defaults include `omit_queue_tag`, `queue_tag`, and `override`.
+
+    Args:
+        config (Dict): The configuration object where the Celery settings will be initialized.
+    """
     try:
         config["celery"]
     except KeyError:
@@ -151,23 +188,52 @@ def load_default_celery(config):
         config["celery"]["override"] = None
 
 
-def load_defaults(config):
-    """Loads default configuration values"""
+def load_defaults(config: Dict):
+    """
+    Loads default configuration values into the provided configuration dictionary.
+
+    This function initializes default values for various configuration sections, 
+    including user-related settings and Celery-specific settings, by calling 
+    `load_default_user_names` and `load_default_celery`.
+
+    Args:
+        config (Dict): The configuration dictionary to be updated with default values.
+    """
     load_default_user_names(config)
     load_default_celery(config)
 
 
-def is_debug():
+def is_debug() -> bool:
     """
-    Check for MERLIN_DEBUG in environment to set a debugging flag
+    Determines whether the application is running in debug mode.
+
+    This function checks the environment variable `MERLIN_DEBUG`. If the variable 
+    exists and its value is set to `1`, debug mode is enabled.
+
+    Returns:
+        True if `MERLIN_DEBUG` is set to `1` in the environment, otherwise False.
     """
     if "MERLIN_DEBUG" in os.environ and int(os.environ["MERLIN_DEBUG"]) == 1:
         return True
     return False
 
 
-def default_config_info():
-    """Return information about Merlin's default configurations."""
+def default_config_info() -> Dict:
+    """
+    Returns information about Merlin's default configurations.
+
+    This function gathers and returns key details about the current configuration 
+    of the Merlin application, including the location of the configuration file, 
+    debug mode status, the Merlin home directory, and whether the Merlin home 
+    directory exists.
+
+    Returns:
+        A dictionary containing the following keys:\n
+            - `config_file` (str): Path to the Merlin configuration file.
+            - `is_debug` (bool): Whether debug mode is enabled.
+            - `merlin_home` (str): Path to the Merlin home directory.
+            - `merlin_home_exists` (bool): True if the Merlin home directory exists, otherwise False.
+    """
     return {
         "config_file": find_config_file(),
         "is_debug": is_debug(),
@@ -176,14 +242,22 @@ def default_config_info():
     }
 
 
-def get_cert_file(server_type, config, cert_name, cert_path):
+def get_cert_file(server_type: str, config: Config, cert_name: str, cert_path: str) -> str:
     """
-    Check if a ssl certificate file is present in the config
+    Determines the SSL certificate file for a given server configuration.
 
-    :param server_type : The server type for output (Broker, Results Backend)
-    :param config : The server config
-    :param cert_name : The argument in cert argument name
-    :param cert_path : The optional cert path
+    This function checks if an SSL certificate file is specified in the server configuration. 
+    If the file does not exist, it attempts to locate the certificate in an optional 
+    certificate path. If the certificate file cannot be found, an error is logged.
+
+    Args:
+        server_type (str): The type of server (e.g., Broker, Results Backend) for logging purposes.
+        config (config.Config): The server configuration object containing certificate details.
+        cert_name (str): The name of the certificate attribute in the configuration.
+        cert_path (str): An optional directory path to search for the certificate file.
+
+    Returns:
+        The absolute path to the certificate file if found, otherwise `None`.
     """
     cert_file = None
     try:
@@ -208,14 +282,25 @@ def get_ssl_entries(
     server_type: str, server_name: str, server_config: Config, cert_path: str
 ) -> Dict[str, Union[str, ssl.VerifyMode]]:
     """
-    Check if a ssl certificate file is present in the config
+    Retrieves SSL configuration entries for a given server.
 
-    :param [str] server_type : The server type
-    :param [str] server_name : The server name for output
-    :param [Config] server_config : The server config
-    :param [str] cert_path : The optional cert path
-    :return : The data needed to manage an ssl certification.
-    :rtype : A Dict.
+    This function checks for SSL certificate files and other SSL-related settings 
+    in the server configuration. It builds and returns a dictionary containing 
+    the necessary data to manage SSL certificates and protocols for the server.
+
+    Args:
+        server_type (str): The type of server (e.g., Broker, Results Backend) for logging purposes.
+        server_name (str): The name of the server, used for output and mapping SSL configurations.
+        server_config (config.Config): The server configuration object containing SSL settings.
+        cert_path (str): An optional directory path to search for certificate files.
+
+    Returns:
+        A dictionary containing SSL configuration entries, including:\n
+            - `keyfile` (str): Path to the SSL key file, if present.
+            - `certfile` (str): Path to the SSL certificate file, if present.
+            - `ca_certs` (str): Path to the CA certificates file, if present.
+            - `cert_reqs` (ssl.VerifyMode): SSL certificate requirements (e.g., `CERT_REQUIRED`, `CERT_OPTIONAL`, `CERT_NONE`).
+            - `ssl_protocol` (str): SSL protocol used, if specified.
     """
     server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
 
@@ -259,11 +344,22 @@ def get_ssl_entries(
     return server_ssl
 
 
-def process_ssl_map(server_name: str) -> Optional[Dict[str, str]]:
+def process_ssl_map(server_name: str) -> Dict[str, str]:
     """
-    Process a special map for rediss and mysql.
+    Processes and returns a mapping of SSL-related configuration keys 
+    specific to certain server types (e.g., Redis and MySQL).
 
-    :param server_name : The server name for output
+    This function generates a dictionary mapping standard SSL configuration keys 
+    (e.g., `keyfile`, `certfile`, `ca_certs`, `cert_reqs`) to server-specific key names 
+    required by Redis (`rediss`) or MySQL server configurations.
+
+    Args:
+        server_name (str): The name of the server (e.g., "rediss", "mysql") used to determine 
+            the appropriate SSL key mappings.
+
+    Returns:
+        A dictionary containing the SSL key mappings for the given server type. Returns an empty
+            dictionary if the server type is not `rediss` or `mysql`.
     """
     ssl_map: Dict[str, str] = {}
     # The redis server requires key names with ssl_
@@ -284,11 +380,20 @@ def process_ssl_map(server_name: str) -> Optional[Dict[str, str]]:
 
 def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dict[str, str]) -> Dict:
     """
-    The different servers have different key var expectations, this updates the keys of the ssl_server dict with keys from
-    the ssl_map if using rediss or mysql.
+    Updates the keys of the `server_ssl` dictionary based on the `ssl_map` for specific server types.
 
-    : param server_ssl : the dict constructed in get_ssl_entries, here updated with keys from ssl_map
-    : param ssl_map : the dict holding special key:value pairs for rediss and mysql
+    This function modifies the `server_ssl` dictionary by replacing its keys with the corresponding 
+    keys from the `ssl_map` when the server type requires specialized key names (e.g., `rediss` or `mysql`). 
+    If a key in `server_ssl` is not found in `ssl_map`, it remains unchanged.
+
+    Args:
+        server_ssl (Dict[str, Union[str, ssl.VerifyMode]]): The dictionary constructed in `get_ssl_entries`, 
+            containing SSL configuration entries such as `keyfile`, `certfile`, `ca_certs`, and `cert_reqs`.
+        ssl_map (Dict[str, str]): A dictionary mapping standard SSL keys to server-specific keys.
+
+    Returns:
+        A new dictionary with updated keys based on the `ssl_map`. Keys not present in `ssl_map`
+            remain unchanged.
     """
     new_server_ssl: Dict[str, Union[str, ssl.VerifyMode]] = {}
 

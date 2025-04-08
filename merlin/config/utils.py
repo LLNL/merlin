@@ -27,7 +27,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-"""This module contains priority handling for brokers."""
+"""
+This module provides utility functions and classes for handling broker priorities 
+and determining configurations for supported brokers such as RabbitMQ and Redis. 
+It includes functionality for mapping priority levels to integer values based on 
+the broker type and validating broker configurations.
+"""
 
 import enum
 from typing import Dict
