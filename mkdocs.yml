@@ -48,6 +48,9 @@ nav:
     - API Reference: "api_reference/"
   - Contact Us: "contact.md"
 
+exclude_docs: |
+  /README.md
+
 theme:
   name: material
   language: en
