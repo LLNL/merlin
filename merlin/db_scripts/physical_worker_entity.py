@@ -122,9 +122,6 @@ class PhysicalWorkerEntity(DatabaseEntity):
         load:
             (classmethod) Load a `DatabaseWorker` instance from the database by its ID.
 
-        load_by_name:
-            (classmethod) Load a `DatabaseWorker` instance from the database by its name.
-
         delete:
             (classmethod) Delete a worker from the database by its ID.
     """
@@ -365,7 +362,7 @@ class PhysicalWorkerEntity(DatabaseEntity):
         self.backend.save(self.entity_info)
 
     @classmethod
-    def load(cls, entity_id: str, backend: ResultsBackend) -> "PhysicalWorkerEntity":
+    def load(cls, entity_id_or_name: str, backend: ResultsBackend) -> "PhysicalWorkerEntity":
         """
         Load a worker from the database by ID.
 
@@ -380,43 +377,21 @@ class PhysicalWorkerEntity(DatabaseEntity):
             (exceptions.WorkerNotFoundError): If an entry for worker with id `entity_id` was
                 not found in the database.
         """
-        entity_info = backend.retrieve_worker(entity_id)
+        entity_info = backend.retrieve(entity_id_or_name, "physical_worker")
         if not entity_info:
-            raise WorkerNotFoundError(f"Worker with ID {entity_id} not found in the database.")
+            raise WorkerNotFoundError(f"Worker with ID or name {entity_id_or_name} not found in the database.")
 
         return cls(entity_info, backend)
 
     @classmethod
-    def load_by_name(cls, worker_name: str, backend: ResultsBackend) -> "PhysicalWorkerEntity":
-        """
-        Load a worker from the database by its name.
-
-        Args:
-            worker_name: The name of the worker to load.
-            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
-
-        Returns:
-            A `PhysicalWorkerEntity` instance.
-
-        Raises:
-            (exceptions.WorkerNotFoundError): If no worker with the given name is found in
-                the database.
-        """
-        entity_info = backend.retrieve_worker_by_name(worker_name)
-        if not entity_info:
-            raise WorkerNotFoundError(f"Worker with name '{worker_name}' not found in the database.")
-
-        return cls(entity_info, backend)
-
-    @classmethod
-    def delete(cls, entity_id: str, backend: ResultsBackend):
+    def delete(cls, entity_id_or_name: str, backend: ResultsBackend):
         """
         Delete a worker from the database.
 
         Args:
-            entity_id: The ID of the worker to delete.
+            entity_id_or_name: The ID or name of the worker to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting worker with id '{entity_id}' from the database...")
-        backend.delete_worker(entity_id)
-        LOG.info(f"Worker with id '{entity_id}' has been successfully deleted.")
+        LOG.info(f"Deleting worker with id or name '{entity_id_or_name}' from the database...")
+        backend.delete(entity_id_or_name, "physical_worker")
+        LOG.info(f"Worker '{entity_id_or_name}' has been successfully deleted.")
