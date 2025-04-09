@@ -154,7 +154,7 @@ class MerlinStepRecord(_StepRecord):
         LOG.debug(f"Condense workspace '{condensed_workspace}'")
         return condensed_workspace
 
-    def execute(self, adapter: ScriptAdapter, script: str) -> Tuple[SubmissionRecord, int]:
+    def _execute(self, adapter: ScriptAdapter, script: str) -> Tuple[SubmissionRecord, int]:
         """
         Executes the script using the provided adapter, overriding the default behavior to ensure
         that the step is marked as running and to facilitate job submission.
