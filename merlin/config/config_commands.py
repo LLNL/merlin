@@ -1,6 +1,7 @@
 """
 Functions to handle `merlin config` functionality.
 """
+
 import logging
 import os
 from argparse import Namespace
@@ -10,6 +11,7 @@ from typing import Dict, List, Union
 import yaml
 
 from merlin.study.celeryadapter import create_celery_config
+
 
 # TODO when we create the task server interface, update these functions to use a setup
 # that's closer to what we have for the database functionality rather than using the
@@ -27,6 +29,7 @@ from merlin.study.celeryadapter import create_celery_config
 #     study monitoring and status
 
 LOG = logging.getLogger(__name__)
+
 
 def create_template_config(task_server: str, config_dir: str, broker: str):
     """

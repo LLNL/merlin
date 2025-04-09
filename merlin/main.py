@@ -636,9 +636,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     mconfig_subparsers = mconfig.add_subparsers(dest="commands", help="Subcommands for 'config'")
 
     # Subcommand: merlin config broker
-    config_broker_parser = mconfig_subparsers.add_parser(
-        "broker", help="Update broker settings in app.yaml"
-    )
+    config_broker_parser = mconfig_subparsers.add_parser("broker", help="Update broker settings in app.yaml")
     # config_broker_parser.set_defaults(func=update_broker)
     config_broker_parser.add_argument(
         "-t",
@@ -656,9 +654,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     config_broker_parser.add_argument("-d", "--db-num", type=int, help="Redis database number (only for redis).")
 
     # Subcommand: merlin config backend
-    config_backend_parser = mconfig_subparsers.add_parser(
-        "backend", help="Update results backend settings in app.yaml"
-    )
+    config_backend_parser = mconfig_subparsers.add_parser("backend", help="Update results backend settings in app.yaml")
     # config_backend_parser.set_defaults(func=update_backend)
     config_backend_parser.add_argument(
         "-t",
