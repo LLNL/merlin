@@ -1,4 +1,5 @@
 PYTHON?=python3
+PY_TARGET_VER?=py311
 PYV=$(shell $(PYTHON) -c "import sys;t='{v[0]}_{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 PYVD=$(shell $(PYTHON) -c "import sys;t='{v[0]}.{v[1]}'.format(v=list(sys.version_info[:2]));sys.stdout.write(t)")
 VENV?=venv_merlin_py_$(PYV)
