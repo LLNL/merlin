@@ -5,15 +5,15 @@ This module provides functionality to save, retrieve, and delete studies stored 
 It uses the [`StudyModel`][db_scripts.data_models.StudyModel] object to represent study data and
 provides helper functions for serialization and deserialization of study objects.
 """
+
 import logging
 from typing import List
 
 from redis import Redis
 
-from merlin.backends.redis.redis_utils import (
-    create_data_class_entry, deserialize_data_class, update_data_class_entry
-)
+from merlin.backends.redis.redis_utils import create_data_class_entry, deserialize_data_class, update_data_class_entry
 from merlin.db_scripts.data_models import StudyModel
+
 
 LOG = logging.getLogger("merlin")
 

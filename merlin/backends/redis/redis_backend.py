@@ -3,21 +3,19 @@ This module contains the functionality required to interact with a
 Redis backend.
 """
 
-import json
 import logging
 import uuid
-from datetime import datetime
 from typing import Dict, List
 
 from redis import Redis
 
-from merlin.backends.results_backend import ResultsBackend
 from merlin.backends.redis.redis_logical_worker_store import RedisLogicalWorkerStore
 from merlin.backends.redis.redis_physical_worker_store import RedisPhysicalWorkerStore
 from merlin.backends.redis.redis_run_store import RedisRunStore
 from merlin.backends.redis.redis_study_store import RedisStudyStore
-from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, RunModel, StudyModel, PhysicalWorkerModel
-from merlin.exceptions import UnsupportedDataModelError, WorkerNotFoundError
+from merlin.backends.results_backend import ResultsBackend
+from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
+from merlin.exceptions import UnsupportedDataModelError
 
 
 LOG = logging.getLogger("merlin")
@@ -92,7 +90,7 @@ class RedisBackend(ResultsBackend):
         """
         client_info = self.client.info()
         return client_info.get("redis_version", "N/A")
-    
+
     def get_connection_string(self):
         """
         Get the connection string to Redis.
@@ -101,8 +99,9 @@ class RedisBackend(ResultsBackend):
             A string representing the connection to Redis.
         """
         from merlin.config.results_backend import get_connection_string  # pylint: disable=import-outside-toplevel
+
         return get_connection_string(include_password=False)
-    
+
     def flush_database(self):
         """
         Remove everything stored in Redis.

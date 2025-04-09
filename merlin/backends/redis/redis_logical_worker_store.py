@@ -5,15 +5,15 @@ This module provides functionality to save, retrieve, and delete logical workers
 It uses the [`LogicalWorkerModel`][db_scripts.data_models.LogicalWorkerModel] module to represent
 logical worker data.
 """
+
 import logging
 from typing import List
 
 from redis import Redis
 
-from merlin.backends.redis.redis_utils import (
-    create_data_class_entry, deserialize_data_class, update_data_class_entry
-)
+from merlin.backends.redis.redis_utils import create_data_class_entry, deserialize_data_class, update_data_class_entry
 from merlin.db_scripts.data_models import LogicalWorkerModel
+
 
 LOG = logging.getLogger("merlin")
 

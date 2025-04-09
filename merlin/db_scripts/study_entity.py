@@ -135,7 +135,7 @@ class StudyEntity(DatabaseEntity):
         """
         self.reload_data()
         return self.entity_info.runs
-    
+
     def add_run(self, run_id: str):
         """
         Add a new run id to the list of runs.
@@ -145,7 +145,7 @@ class StudyEntity(DatabaseEntity):
         """
         self.entity_info.runs.append(run_id)
         self.save()
-    
+
     def remove_run(self, run_id: str):
         """
         Remove a run id from the list of runs.
@@ -191,14 +191,14 @@ class StudyEntity(DatabaseEntity):
     @classmethod
     def delete(cls, entity_id_or_name: str, backend: ResultsBackend):
         """
-        Delete a study from the database by id.
+        Delete a study from the database by id or name.
 
         By default, this will remove all of the runs associated with the study from the database.
 
         Args:
-            entity_id_or_name: The name of the study to delete.
+            entity_id_or_name: The id or name of the study to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting study with id '{entity_id_or_name}' from the database...")
+        LOG.info(f"Deleting study with id or name '{entity_id_or_name}' from the database...")
         backend.delete(entity_id_or_name, "study")
         LOG.info(f"Study '{entity_id_or_name}' has been successfully deleted.")

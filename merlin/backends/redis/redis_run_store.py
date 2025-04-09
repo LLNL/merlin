@@ -4,16 +4,15 @@ Module for managing runs in a Redis database using the `RedisRunStore` class.
 This module provides functionality to save, retrieve, and delete runs stored in a Redis database.
 It uses the [`RunModel`][db_scripts.data_models.RunModel] module to represent run data.
 """
+
 import logging
 from typing import List
 
 from redis import Redis
 
-from merlin.backends.redis.redis_study_store import RedisStudyStore
-from merlin.backends.redis.redis_utils import (
-    create_data_class_entry, deserialize_data_class, update_data_class_entry
-)
-from merlin.db_scripts.data_models import RunModel, StudyModel
+from merlin.backends.redis.redis_utils import create_data_class_entry, deserialize_data_class, update_data_class_entry
+from merlin.db_scripts.data_models import RunModel
+
 
 LOG = logging.getLogger("merlin")
 

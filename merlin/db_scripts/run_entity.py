@@ -239,7 +239,7 @@ class RunEntity(DatabaseEntity):
             A list of strings representing the queues that were used for this run.
         """
         return self.entity_info.queues
-    
+
     def get_workers(self) -> List[str]:
         """
         Get the logical workers that this run is using.
@@ -248,7 +248,7 @@ class RunEntity(DatabaseEntity):
             A list of logical worker ids.
         """
         return self.entity_info.workers
-    
+
     def add_worker(self, worker_id: str):
         """
         Add a new worker id to the list of workers.

@@ -302,17 +302,17 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
             A list of fields that are allowed to be updated in this class.
         """
         return ["parent", "child", "run_complete", "additional_data", "workers"]
-    
+
 
 @dataclass
 class LogicalWorkerModel(BaseDataModel):
     """
     Represents a high-level definition of a Celery worker, as defined by the user.
 
-    Logical workers are abstract representations of workers that define their behavior 
-    and configuration, such as the queues they listen to and their name. They are unique 
-    based on their name and queues, and do not correspond directly to any running process. 
-    Instead, they serve as templates or logical definitions from which physical workers 
+    Logical workers are abstract representations of workers that define their behavior
+    and configuration, such as the queues they listen to and their name. They are unique
+    based on their name and queues, and do not correspond directly to any running process.
+    Instead, they serve as templates or logical definitions from which physical workers
     are created.
 
     Note:
@@ -333,6 +333,7 @@ class LogicalWorkerModel(BaseDataModel):
         runs (List[str]): A list of unique IDs of the runs using this worker.
             Corresponds with [`RunModel`][db_scripts.data_models.RunModel] entries.
     """
+
     name: str = None
     queues: List[str] = field(default_factory=list)
     id: str = None  # pylint: disable=invalid-name
@@ -349,7 +350,7 @@ class LogicalWorkerModel(BaseDataModel):
         """
         if self.name is None or not self.queues:
             raise TypeError("The `name` and `queues` arguments of LogicalWorkerModel are required.")
-        
+
         generated_id = self.generate_id(self.name, self.queues)
         if self.id != generated_id:
             if self.id is not None:
@@ -372,7 +373,6 @@ class LogicalWorkerModel(BaseDataModel):
         hex_string = hashlib.md5(unique_string.encode("UTF-8")).hexdigest()
         return str(uuid.UUID(hex=hex_string))
 
-
     @property
     def fields_allowed_to_be_updated(self) -> List[str]:
         """
@@ -389,9 +389,9 @@ class PhysicalWorkerModel(BaseDataModel):
     """
     Represents a running instance of a Celery worker, created from a logical worker definition.
 
-    Physical workers are the actual implementations of logical workers, running as processes on a host machine. 
-    They are responsible for executing tasks defined in the queues specified by their corresponding logical worker. 
-    Each physical worker is uniquely identified and includes runtime-specific details such as its PID, status, and 
+    Physical workers are the actual implementations of logical workers, running as processes on a host machine.
+    They are responsible for executing tasks defined in the queues specified by their corresponding logical worker.
+    Each physical worker is uniquely identified and includes runtime-specific details such as its PID, status, and
     heartbeat timestamp.
 
     Attributes:
@@ -410,6 +410,7 @@ class PhysicalWorkerModel(BaseDataModel):
         restart_count (int): The number of times this worker has been restarted.
         status (WorkerStatus): The current status of the worker (e.g., running, stopped).
     """
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
     logical_worker_id: str = None
     name: str = None  # Will be of the form celery@worker_name.hostname

@@ -4,16 +4,16 @@ Module for managing physical workers in a Redis database using the `RedisPhysica
 This module provides functionality to save, retrieve, and delete physical workers stored in a Redis database.
 It uses the [`PhysicalWorkerModel`][db_scripts.data_models.PhysicalWorkerModel] module to represent worker data.
 """
+
 import logging
 from typing import List
 
 from redis import Redis
 
-from merlin.backends.redis.redis_utils import (
-    create_data_class_entry, deserialize_data_class, update_data_class_entry
-)
+from merlin.backends.redis.redis_utils import create_data_class_entry, deserialize_data_class, update_data_class_entry
 from merlin.db_scripts.data_models import PhysicalWorkerModel
 from merlin.exceptions import WorkerNotFoundError
+
 
 LOG = logging.getLogger("merlin")
 
@@ -152,4 +152,3 @@ class RedisPhysicalWorkerStore:
         self.client.delete(f"{self.key}:{worker.id}")
 
         LOG.info(f"Successfully deleted worker with {id_type} '{identifier}'.")
-

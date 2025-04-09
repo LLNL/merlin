@@ -14,7 +14,7 @@ from merlin.db_scripts.logical_worker_entity import LogicalWorkerEntity
 from merlin.db_scripts.physical_worker_entity import PhysicalWorkerEntity
 from merlin.db_scripts.run_entity import RunEntity
 from merlin.db_scripts.study_entity import StudyEntity
-from merlin.exceptions import StudyNotFoundError, RunNotFoundError, WorkerNotFoundError
+from merlin.exceptions import RunNotFoundError, StudyNotFoundError, WorkerNotFoundError
 
 
 LOG = logging.getLogger("merlin")
@@ -114,7 +114,7 @@ class MerlinDatabase:
             The version number of the backend.
         """
         return self.backend.get_version()
-    
+
     def get_connection_string(self):
         """
         Get the connection string to the backend.
@@ -123,7 +123,7 @@ class MerlinDatabase:
             The connection string to the backend.
         """
         return self.backend.get_connection_string()
-    
+
     def _create_entity_if_not_exists(
         self,
         entity_class: DatabaseEntity,
@@ -157,7 +157,7 @@ class MerlinDatabase:
             entity = entity_class(model, self.backend)
             entity.save()
         return entity
-    
+
     def _get_entity(self, entity_class: DatabaseEntity, identifier: str):
         """
         Helper method to retrieve an entity from the database.
@@ -171,7 +171,7 @@ class MerlinDatabase:
             An instance of the entity class.
         """
         return entity_class.load(identifier, self.backend)
-    
+
     def _get_all_entities(self, entity_class: DatabaseEntity, entity_type: str) -> List[DatabaseEntity]:
         """
         Helper method to retrieve all entities of a specific type from the database.
@@ -187,7 +187,7 @@ class MerlinDatabase:
         if not all_entities:
             return []
         return [entity_class(entity_data, self.backend) for entity_data in all_entities]
-    
+
     def _delete_entity(self, entity_class, identifier: str, cleanup_fn: Callable = None):
         """
         Helper method to delete an entity from the database.
@@ -271,6 +271,7 @@ class MerlinDatabase:
             study_id_or_name: The id or name of the study to remove.
             remove_associated_runs: If True, remove all runs associated with the study.
         """
+
         def cleanup_study(study):
             if remove_associated_runs:
                 for run_id in study.get_runs():
@@ -290,7 +291,7 @@ class MerlinDatabase:
             get_all_fn=self.get_all_studies,
             delete_fn=self.delete_study,
             entity_name="studies",
-            remove_associated_runs=remove_associated_runs
+            remove_associated_runs=remove_associated_runs,
         )
 
     def create_run(self, study_name: str, workspace: str, queues: List[str], *args, **kwargs) -> RunEntity:
@@ -359,6 +360,7 @@ class MerlinDatabase:
         Args:
             run_id_or_workspace: The id or workspace of the run to remove.
         """
+
         def cleanup_run(run):
             # Remove the run's id from the study's run list
             try:
@@ -375,18 +377,13 @@ class MerlinDatabase:
                 except WorkerNotFoundError:  # If the logical worker isn't found then move on
                     LOG.warning(f"Couldn't find logical worker with id {worker_id}. Continuing with run delete.")
 
-
         self._delete_entity(RunEntity, run_id_or_workspace, cleanup_fn=cleanup_run)
 
     def delete_all_runs(self):
         """
         Remove every run in the database.
         """
-        self._delete_all_by_type(
-            get_all_fn=self.get_all_runs,
-            delete_fn=self.delete_run,
-            entity_name="runs"
-        )
+        self._delete_all_by_type(get_all_fn=self.get_all_runs, delete_fn=self.delete_run, entity_name="runs")
 
     def _resolve_worker_id(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None) -> str:
         """
@@ -429,8 +426,10 @@ class MerlinDatabase:
                 instance representing the newly created worker.
         """
         logical_worker_id = self._resolve_worker_id(worker_name=name, queues=queues)
-        log_message_create = (f"Logical worker with name '{name}' and queues '{queues}' does not yet have "
-                              "an entry in the database. Creating one...")
+        log_message_create = (
+            f"Logical worker with name '{name}' and queues '{queues}' does not yet have "
+            "an entry in the database. Creating one..."
+        )
         return self._create_entity_if_not_exists(
             entity_class=LogicalWorkerEntity,
             model_class=LogicalWorkerModel,
@@ -441,7 +440,9 @@ class MerlinDatabase:
             queues=queues,
         )
 
-    def get_logical_worker(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None) -> LogicalWorkerEntity:
+    def get_logical_worker(
+        self, worker_id: str = None, worker_name: str = None, queues: List[str] = None
+    ) -> LogicalWorkerEntity:
         """
         Retrieve a logical worker by either its ID or by its name and queues.
 
@@ -465,7 +466,7 @@ class MerlinDatabase:
         """
         worker_id = self._resolve_worker_id(worker_id=worker_id, worker_name=worker_name, queues=queues)
         return self._get_entity(LogicalWorkerEntity, worker_id)
-    
+
     def get_all_logical_workers(self) -> List[LogicalWorkerEntity]:
         """
         Get every logical worker that's currently in the database.
@@ -476,7 +477,7 @@ class MerlinDatabase:
                 instances.
         """
         return self._get_all_entities(LogicalWorkerEntity, "logical_worker")
-    
+
     def delete_logical_worker(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None):
         """
         Delete a logical worker from the database by either its ID or by its name and queues.
@@ -514,9 +515,7 @@ class MerlinDatabase:
         Remove every logical worker in the database.
         """
         self._delete_all_by_type(
-            get_all_fn=self.get_all_logical_workers,
-            delete_fn=self.delete_logical_worker,
-            entity_name="logical workers"
+            get_all_fn=self.get_all_logical_workers, delete_fn=self.delete_logical_worker, entity_name="logical workers"
         )
 
     def create_physical_worker(self, name: str, **kwargs) -> PhysicalWorkerEntity:
@@ -532,8 +531,9 @@ class MerlinDatabase:
             A [`PhysicalWorkerEntity`][merlin.db_scripts.physical_worker_entity.PhysicalWorkerEntity]
                 instance representing the newly created worker.
         """
-        log_message_create = (f"Physical worker with name '{name}' does not yet have an "
-                              "entry in the database. Creating one...",)
+        log_message_create = (
+            f"Physical worker with name '{name}' does not yet have an " "entry in the database. Creating one...",
+        )
         return self._create_entity_if_not_exists(
             entity_class=PhysicalWorkerEntity,
             model_class=PhysicalWorkerModel,
@@ -556,7 +556,7 @@ class MerlinDatabase:
                 instance representing the physical worker that was queried.
         """
         return self._get_entity(PhysicalWorkerEntity, worker_id_or_name)
-    
+
     def get_all_physical_workers(self) -> List[PhysicalWorkerEntity]:
         """
         Get every physical worker that's currently in the database.
@@ -567,7 +567,7 @@ class MerlinDatabase:
                 instances.
         """
         return self._get_all_entities(PhysicalWorkerEntity, "physical_worker")
-    
+
     def delete_physical_worker(self, worker_id_or_name: str):
         """
         Given a phsyical worker id or name, remove the associated worker from the database.
@@ -575,13 +575,16 @@ class MerlinDatabase:
         Args:
             worker_id_or_name: The id or name of the physical worker to remove.
         """
+
         def cleanup_physical_worker(worker):
             logical_worker_id = worker.get_logical_worker_id()
             try:
                 logical_worker = self.get_logical_worker(worker_id=logical_worker_id)
                 logical_worker.remove_physical_worker(worker.get_id())
             except WorkerNotFoundError:  # If logical worker isn't found move on
-                LOG.warning(f"Couldn't find logical worker with id {logical_worker_id}. Continuing with physical worker delete.")
+                LOG.warning(
+                    f"Couldn't find logical worker with id {logical_worker_id}. Continuing with physical worker delete."
+                )
 
         self._delete_entity(PhysicalWorkerEntity, worker_id_or_name, cleanup_fn=cleanup_physical_worker)
 
@@ -590,9 +593,7 @@ class MerlinDatabase:
         Remove every physical worker in the database.
         """
         self._delete_all_by_type(
-            get_all_fn=self.get_all_physical_workers,
-            delete_fn=self.delete_physical_worker,
-            entity_name="physical workers"
+            get_all_fn=self.get_all_physical_workers, delete_fn=self.delete_physical_worker, entity_name="physical workers"
         )
 
     def delete_everything(self, force: bool = False):
@@ -615,7 +616,7 @@ class MerlinDatabase:
 
             if user_input == "y":
                 flush_database = True
-        
+
         if flush_database:
             LOG.info("Flushing the database...")
             self.backend.flush_database()

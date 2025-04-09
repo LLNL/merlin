@@ -1,6 +1,7 @@
 """
 Utility functions for the Redis backend.
 """
+
 import json
 import logging
 from datetime import datetime
@@ -9,6 +10,7 @@ from typing import Dict
 from redis import Redis
 
 from merlin.db_scripts.data_models import BaseDataModel
+
 
 LOG = logging.getLogger("merlin")
 
@@ -103,6 +105,7 @@ def create_data_class_entry(data_class: BaseDataModel, key: str, client: Redis):
     """
     serialized_data = serialize_data_class(data_class)
     client.hset(key, mapping=serialized_data)
+
 
 def update_data_class_entry(updated_data_class: BaseDataModel, key: str, client: Redis):
     """

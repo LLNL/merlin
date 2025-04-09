@@ -14,7 +14,7 @@ class ResultsBackend(ABC):
     Abstract base class for a results backend, which provides methods to save and retrieve
     information from a backend database.
 
-    This class defines the interface that must be implemented by any concrete backend, and serves 
+    This class defines the interface that must be implemented by any concrete backend, and serves
     as the foundation for interacting with various backend types such as Redis, PostgreSQL, etc.
 
     Attributes:

@@ -5,6 +5,7 @@ This module defines the `LogicalWorkerEntity` class, which extends the abstract 
 [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity], to encapsulate logical-worker-specific
 operations and behaviors.
 """
+
 import logging
 from typing import List
 
@@ -12,6 +13,7 @@ from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.db_entity import DatabaseEntity
 from merlin.db_scripts.physical_worker_entity import PhysicalWorkerEntity
 from merlin.exceptions import WorkerNotFoundError
+
 
 LOG = logging.getLogger("merlin")
 
@@ -151,7 +153,7 @@ class LogicalWorkerEntity(DatabaseEntity):
         """
         self.reload_data()
         return self.entity_info.runs
-    
+
     def add_run(self, run_id: str):
         """
         Add a new run id to the list of runs.
@@ -161,7 +163,7 @@ class LogicalWorkerEntity(DatabaseEntity):
         """
         self.entity_info.runs.append(run_id)
         self.save()
-    
+
     def remove_run(self, run_id: str):
         """
         Remove a run id from the list of runs using this logical worker.
@@ -184,7 +186,7 @@ class LogicalWorkerEntity(DatabaseEntity):
             A list of strings representing the queues that were assigned to this worker.
         """
         return self.entity_info.queues
-    
+
     def get_physical_workers(self) -> List[PhysicalWorkerEntity]:
         """
         Get the physical instances of this logical worker.
@@ -195,7 +197,7 @@ class LogicalWorkerEntity(DatabaseEntity):
         """
         self.reload_data()
         return self.entity_info.physical_workers
-    
+
     def add_physical_worker(self, physical_worker_id: str):
         """
         Add a new physical worker id to the list of phsyical workers.
@@ -205,7 +207,7 @@ class LogicalWorkerEntity(DatabaseEntity):
         """
         self.entity_info.physical_workers.append(physical_worker_id)
         self.save()
-    
+
     def remove_physical_worker(self, physical_worker_id: str):
         """
         Remove a physical worker id from the list of physical workers.
@@ -219,13 +221,13 @@ class LogicalWorkerEntity(DatabaseEntity):
         self.reload_data()
         self.entity_info.runs.remove(physical_worker_id)
         self.save()
-    
+
     def save(self):
         """
         Save the current state of this worker to the database.
         """
         self.backend.save(self.entity_info)
-    
+
     @classmethod
     def load(cls, entity_id: str, backend: ResultsBackend) -> "LogicalWorkerEntity":
         """
@@ -247,7 +249,7 @@ class LogicalWorkerEntity(DatabaseEntity):
             raise WorkerNotFoundError(f"Worker with ID {entity_id} not found in the database.")
 
         return cls(entity_info, backend)
-    
+
     @classmethod
     def delete(cls, entity_id: str, backend: ResultsBackend):
         """

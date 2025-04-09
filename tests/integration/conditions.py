@@ -104,7 +104,7 @@ class HasRegex(Condition):
         if self.negate:
             return f"{__class__.__name__} expected no '{self.regex}' regex match, but match was found."
         return f"{__class__.__name__} expected '{self.regex}' regex match, but match was not found."
-    
+
     def __repr__(self):
         return f"HasRegex(regex={self.regex}, negate={self.negate})"
 

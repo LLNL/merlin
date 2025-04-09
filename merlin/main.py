@@ -228,12 +228,12 @@ def launch_workers(args):
     for worker, steps in spec.get_worker_step_map().items():
         worker_queues = [step_queue_map[step] for step in steps]
         merlin_db.create_logical_worker(worker, worker_queues)
-    
+
     # Launch the workers
     launch_worker_status = router.launch_workers(
         spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only
     )
-    
+
     if args.worker_echo_only:
         print(launch_worker_status)
     else:
