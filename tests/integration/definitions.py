@@ -139,6 +139,18 @@ def define_tests():  # pylint: disable=R0914,R0915
             "run type": "local",
             "cleanup": f"rm -rf {config_dir}",
         },
+        "merlin config broker": {
+            "cmds": f"merlin config -o {config_dir} broker -t rabbitmq -u $MERLIN_RABBITMQ_USER -pf $MERLIN_RABBITMQ_PASSWORD_FILE -s $MERLIN_RABBITMQ_SERVER -p $MERLIN_RABBITMQ_PORT -v $MERLIN_RABBITMQ_VHOST",
+            "conditions": HasReturnCode(),
+            "run type": "local",
+            "cleanup": f"rm -rf {config_dir}",
+        },
+        "merlin config backend": {
+            "cmds": f"merlin config -o {config_dir} backend -t redis -pf $MERLIN_REDIS_PASSWORD_FILE -s $MERLIN_REDIS_SERVER -p $MERLIN_REDIS_PORT",
+            "conditions": HasReturnCode(),
+            "run type": "local",
+            "cleanup": f"rm -rf {config_dir}",
+        },
     }
     server_basic_tests = {
         "merlin server init": {
