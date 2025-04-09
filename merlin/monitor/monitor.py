@@ -82,7 +82,7 @@ class Monitor:
         index = 0
         while True:
             # Always refresh the list at the start of the loop; there could be new runs (think iterative studies)
-            all_runs = study_entity.get_all_runs()
+            all_runs = [merlin_db.get_run(run_id) for run_id in study_entity.get_runs()]
             if index >= len(all_runs):  # Break if there are no more runs to process
                 break
 
@@ -128,7 +128,7 @@ class Monitor:
         while not run_complete:
             try:
                 # Run worker health check (checks for dead workers and restarts them if necessary)
-                # self.task_server_monitor.run_worker_health_check(run.get_workers())
+                self.task_server_monitor.run_worker_health_check(run.get_workers())
 
                 # Check if any tasks are currently in the queues
                 active_tasks = self.task_server_monitor.check_tasks(run)
