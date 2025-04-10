@@ -39,8 +39,9 @@ flux.out
 slurm*.out
 docs/build/
 
-# Tox files
+# Test files
 .tox/*
+.coverage
 
 # Jupyter
 jupyter/.ipynb_checkpoints

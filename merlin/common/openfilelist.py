@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -31,29 +31,29 @@
 ###############################################################################
 
 """
-  OpenFileList
+OpenFileList
 
-  A synthetic file class that opens a list of files and reads them as if they
-  were a single file
+A synthetic file class that opens a list of files and reads them as if they
+were a single file
 
-  SYNOPSIS:
+SYNOPSIS:
 
-    with OpenFileList(["file1.txt","file2.txt",...]) as f :
-      print f.read();
+  with OpenFileList(["file1.txt","file2.txt",...]) as f :
+    print f.read();
 
-  reads the concatenation of file1.txt, file2.txt, etc.
+reads the concatenation of file1.txt, file2.txt, etc.
 
-  file methods supported :
+file methods supported :
 
-    f.read([bytes])
-    f.readlines([bytes])
-    f.readline([bytes])
-    f.tell()
-    f.close()
-    f.__iter__()
+  f.read([bytes])
+  f.readlines([bytes])
+  f.readline([bytes])
+  f.tell()
+  f.close()
+  f.__iter__()
 
-  TODO:
-    implement a seek method
+TODO:
+  implement a seek method
 
 """
 

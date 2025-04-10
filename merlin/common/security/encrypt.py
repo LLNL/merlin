@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -52,11 +52,10 @@ def _get_key_path():
     except AttributeError:
         key_filepath = "~/.merlin/encrypt_data_key"
 
-    try:
-        key_filepath = os.path.abspath(os.path.expanduser(key_filepath))
-    except KeyError as e:
-        raise ValueError("Error! No password provided for RabbitMQ") from e
-    return key_filepath
+    if key_filepath is None:
+        raise ValueError("Error! No password provided for RabbitMQ")
+
+    return os.path.abspath(os.path.expanduser(key_filepath))
 
 
 def _gen_key(key_path):
