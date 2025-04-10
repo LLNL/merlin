@@ -36,12 +36,14 @@ Since running Merlin in a distributed manner requires the [configuration](./conf
 
 Create a default [config (app.yaml) file](./configuration/index.md#the-appyaml-file) in the `${HOME}/.merlin` directory using the `config` command. This file can then be edited for your system configuration.
 
-See more information on how to set this file up at the [Configuration](./configuration/index.md) page.
+The `merlin config` command comes equipped with two subcommands, [`backend`](#config-backend-merlin-config-backend) and [`broker`](#config-broker-merlin-config-broker), to help edit the `app.yaml` file that's created.
+
+See more information on how to set up the `app.yaml` file at the [Configuration](./configuration/index.md) page.
 
 **Usage:**
 
 ```bash
-merlin config [OPTIONS]
+merlin config [OPTIONS] [COMMAND] [ARGS] ...
 ```
 
 **Options:**
@@ -71,6 +73,137 @@ merlin config [OPTIONS]
 
     ```bash
     merlin config --broker redis
+    ```
+
+**Commands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [backend](#config-backend-merlin-config-backend) | Update broker settings in app.yaml |
+| [broker](#config-broker-merlin-config-broker) | Update backend settings in app.yaml |
+
+#### Config Backend (`merlin config backend`)
+
+The `merlin config backend` command allows you to modify the [`results_backend`](./configuration/index.md#what-is-a-results-backend) section of your app.yaml file directly from the command line. See the options table below to see exactly what settings can be set.
+
+**Usage:**
+
+```bash
+merlin config backend -t {redis} [OPTIONS] ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-t`, `--type`   | choice(`redis`) | Type of results backend to configure. | None |
+| `-u`, `--username` | string | The backend username. | None |
+| `-pf`, `--password-file` | string | Path to a password file that contains the password to the backend. | None |
+| `-s`, `--server` | string | The URL of the backend server. | None |
+| `-p`, `--port` | int | The port number that this backend server is using. | None |
+| `-d`, `--db-num` | int | The backend database number. | None |
+| `-c`, `--cert-reqs` | string | Backend cert requirements. | None |
+| `-e`, `--encryption-key` | string | Path to the encryption key file. | None |
+
+**Examples:**
+
+!!! example "Update Every Setting Required for Redis"
+
+    ```bash
+    merlin config backend -t redis -pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
+    ```
+
+    This will create the following `results_backend` section in your `app.yaml` file:
+
+    ```yaml
+    results_backend:
+        cert_reqs: none
+        db_num: 0
+        encryption_key: ~/.merlin/encrypt_data_key
+        name: rediss
+        password: ~/.merlin/redis.pass
+        port: 6379
+        server: my-redis-server.llnl.gov
+        username: ''
+    ```
+
+!!! example "Update Just the Port"
+
+    ```bash
+    merlin config backend -t redis -p 6379
+    ```
+
+#### Config Broker (`merlin config broker`)
+
+The `merlin config broker` command allows you to modify the [`broker`](./configuration/index.md#what-is-a-broker) section of your app.yaml file directly from the command line. See the options table below to see exactly what settings can be set.
+
+**Usage:**
+
+```bash
+merlin config broker -t {rabbitmq,redis} [OPTIONS] ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-t`, `--type`   | choice(`rabbitmq` \| `redis`) | Type of broker to configure. | None |
+| `-u`, `--username` | string | The broker username (only for `rabbitmq` broker). | None |
+| `-pf`, `--password-file` | string | Path to a password file that contains the password to the broker. | None |
+| `-s`, `--server` | string | The URL of the broker server. | None |
+| `-p`, `--port` | int | The port number that this broker server is using. | None |
+| `-v`, `--vhost` | string | The vhost for the broker (only for `rabbitmq` broker). | None |
+| `-d`, `--db-num` | int | The backend database number (only for `redis` broker). | None |
+| `-c`, `--cert-reqs` | string | Backend cert requirements. | None |
+
+**Examples:**
+
+!!! example "Update Every Setting Required for a Redis Broker"
+
+    Before running this command, you'll likely want to run `merlin config --broker redis`.
+
+    ```bash
+    merlin config broker -t redis -pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
+    ```
+
+    This will create the following `broker` section in your `app.yaml` file:
+
+    ```yaml
+    broker:
+        cert_reqs: none
+        db_num: 0
+        name: rediss
+        password: ~/.merlin/redis.pass
+        port: 6379
+        server: my-redis-server.llnl.gov
+        username: ''
+    ```
+
+!!! example "Update Every Setting Required for a RabbitMQ Broker"
+
+    ```bash
+    merlin config broker -t rabbitmq -u my_rabbit_username -pf ~/.merlin/rabbit.pass -s my-rabbitmq-server.llnl.gov -p 5672 -v host4rabbit -c none
+    ```
+
+    This will create the following `broker` section in your `app.yaml` file:
+
+    ```yaml
+    broker:
+        cert_reqs: none
+        name: rabbitmq
+        password: ~/.merlin/rabbit.pass
+        port: 5672
+        server: my-rabbitmq-server.llnl.gov
+        username: my_rabbit_username
+        vhost: host4rabbit
+    ```
+
+!!! example "Update Just the Username"
+
+    ```bash
+    merlin config broker -t rabbitmq -u my_new_username
     ```
 
 ### Info (`merlin info`)
