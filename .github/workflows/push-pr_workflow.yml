@@ -144,19 +144,44 @@ jobs:
 
     - name: Create password files for merlin config
       run: |
-        echo ${{ secrets.MERLIN_RABBITMQ_PASSWORD }} > /tmp/rabbit.pass
-        echo ${{ secrets.MERLIN_REDIS_PASSWORD }} > /tmp/redis.pass
+        echo ${{ secrets.MERLIN_RABBITMQ_PASSWORD }} > $MERLIN_RABBITMQ_PASSWORD_FILE
+        echo ${{ secrets.MERLIN_REDIS_PASSWORD }} > $MERLIN_REDIS_PASSWORD_FILE
+
+    - name: Debug server env vars
+      run: |
+        # List of environment variables to check
+        env_vars=(
+          "MERLIN_RABBITMQ_USER"
+          "MERLIN_RABBITMQ_PASSWORD_FILE"
+          "MERLIN_RABBITMQ_SERVER"
+          "MERLIN_RABBITMQ_PORT"
+          "MERLIN_RABBITMQ_VHOST"
+          "MERLIN_REDIS_PASSWORD_FILE"
+          "MERLIN_REDIS_SERVER"
+          "MERLIN_REDIS_PORT"
+        )
+
+        # Check each variable
+        for var in "${env_vars[@]}"; do
+          if [ -z "${!var}" ]; then
+            echo "Environment variable $var is not set or is empty."
+          else
+            echo "Environment variable $var is set."
+          fi
+        done
 
     - name: Install merlin to run unit tests
       run: |
         pip3 install -e .
         merlin config
+
         merlin config broker -t rabbitmq \
                              -u "$MERLIN_RABBITMQ_USER" \
                              -pf "$MERLIN_RABBITMQ_PASSWORD_FILE" \
                              -s "$MERLIN_RABBITMQ_SERVER" \
                              -p "$MERLIN_RABBITMQ_PORT" \
                              -v "$MERLIN_RABBITMQ_VHOST"
+
         merlin config backend -t redis \
                               -pf "$MERLIN_REDIS_PASSWORD_FILE" \
                               -s "$MERLIN_REDIS_SERVER" \
