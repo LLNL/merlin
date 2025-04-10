@@ -147,29 +147,6 @@ jobs:
         echo ${{ secrets.MERLIN_RABBITMQ_PASSWORD }} > $MERLIN_RABBITMQ_PASSWORD_FILE
         echo ${{ secrets.MERLIN_REDIS_PASSWORD }} > $MERLIN_REDIS_PASSWORD_FILE
 
-    - name: Debug server env vars
-      run: |
-        # List of environment variables to check
-        env_vars=(
-          "MERLIN_RABBITMQ_USER"
-          "MERLIN_RABBITMQ_PASSWORD_FILE"
-          "MERLIN_RABBITMQ_SERVER"
-          "MERLIN_RABBITMQ_PORT"
-          "MERLIN_RABBITMQ_VHOST"
-          "MERLIN_REDIS_PASSWORD_FILE"
-          "MERLIN_REDIS_SERVER"
-          "MERLIN_REDIS_PORT"
-        )
-
-        # Check each variable
-        for var in "${env_vars[@]}"; do
-          if [ -z "${!var}" ]; then
-            echo "Environment variable $var is not set or is empty."
-          else
-            echo "Environment variable $var is set."
-          fi
-        done
-
     - name: Install merlin to run unit tests
       run: |
         pip3 install -e .
