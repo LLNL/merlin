@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added new options to the `merlin config` command
+  - `merlin config broker` allows users to update the broker settings from the command line
+  - `merlin config backend` allows users to update the backend settings from the command line
 - Added support for Python 3.12 and 3.13
 - Added additional tests for the `merlin run` and `merlin purge` commands
 - Aliased types to represent different types of pytest fixtures
@@ -13,13 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added "Unit-tests" GitHub action to run the unit test suite
 - Added `CeleryTaskManager` context manager to the test suite to ensure tasks are safely purged from queues if tests fail
 - Added `command-tests`, `workflow-tests`, and `integration-tests` to the Makefile
+- Added tests and docs for the new `merlin config` options
 
 ### Changed
+- The `merlin config` command now defaults to the LaunchIT setup
 - Dropped support for Python 3.7
 - Ported all distributed tests of the integration test suite to pytest
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
   - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
 - Removed `e2e-distributed*` definitions from the Makefile
+- Modified GitHub CI to use shared testing servers hosted by LaunchIT rather than the jackalope server
+- Removed `merlin config --test` option
 
 ## [1.12.2]
 ### Added

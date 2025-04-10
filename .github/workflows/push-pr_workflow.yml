@@ -89,6 +89,14 @@ jobs:
       SINGULARITY_VERSION: 3.9.9
       OS: linux
       ARCH: amd64
+      MERLIN_RABBITMQ_USER: ${{ secrets.MERLIN_RABBITMQ_USER }}
+      MERLIN_RABBITMQ_PASSWORD_FILE: "/tmp/rabbit.pass"
+      MERLIN_RABBITMQ_SERVER: ${{ secrets.MERLIN_RABBITMQ_SERVER }}
+      MERLIN_RABBITMQ_PORT: ${{ secrets.MERLIN_RABBITMQ_PORT }}
+      MERLIN_RABBITMQ_VHOST: ${{ secrets.MERLIN_RABBITMQ_VHOST }}
+      MERLIN_REDIS_PASSWORD_FILE: "/tmp/redis.pass"
+      MERLIN_REDIS_SERVER: ${{ secrets.MERLIN_REDIS_SERVER }}
+      MERLIN_REDIS_PORT: ${{ secrets.MERLIN_REDIS_PORT }}
 
     strategy:
       matrix:
@@ -134,10 +142,50 @@ jobs:
           make -C ./builddir && \
           sudo make -C ./builddir install
 
+    - name: Create password files for merlin config
+      run: |
+        echo ${{ secrets.MERLIN_RABBITMQ_PASSWORD }} > $MERLIN_RABBITMQ_PASSWORD_FILE
+        echo ${{ secrets.MERLIN_REDIS_PASSWORD }} > $MERLIN_REDIS_PASSWORD_FILE
+
+    - name: Debug server env vars
+      run: |
+        # List of environment variables to check
+        env_vars=(
+          "MERLIN_RABBITMQ_USER"
+          "MERLIN_RABBITMQ_PASSWORD_FILE"
+          "MERLIN_RABBITMQ_SERVER"
+          "MERLIN_RABBITMQ_PORT"
+          "MERLIN_RABBITMQ_VHOST"
+          "MERLIN_REDIS_PASSWORD_FILE"
+          "MERLIN_REDIS_SERVER"
+          "MERLIN_REDIS_PORT"
+        )
+
+        # Check each variable
+        for var in "${env_vars[@]}"; do
+          if [ -z "${!var}" ]; then
+            echo "Environment variable $var is not set or is empty."
+          else
+            echo "Environment variable $var is set."
+          fi
+        done
+
     - name: Install merlin to run unit tests
       run: |
         pip3 install -e .
         merlin config
+
+        merlin config broker -t rabbitmq \
+                             -u "$MERLIN_RABBITMQ_USER" \
+                             -pf "$MERLIN_RABBITMQ_PASSWORD_FILE" \
+                             -s "$MERLIN_RABBITMQ_SERVER" \
+                             -p "$MERLIN_RABBITMQ_PORT" \
+                             -v "$MERLIN_RABBITMQ_VHOST"
+
+        merlin config backend -t redis \
+                              -pf "$MERLIN_REDIS_PASSWORD_FILE" \
+                              -s "$MERLIN_REDIS_SERVER" \
+                              -p "$MERLIN_REDIS_PORT"
 
     - name: Install CLI task dependencies generated from the 'feature demo' workflow
       run: |

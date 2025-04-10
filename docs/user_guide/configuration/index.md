@@ -264,3 +264,5 @@ For all other users, we recommend configuring with either:
 
 - [Dedicated External Servers](./external_server.md)
 - [Containerized Servers](./containerized_server.md)
+
+With any server setup that you use, it's possible to configure everything in your server from the command line. See [`merlin config broker`](../command_line.md#config-broker-merlin-config-broker) and [`merlin config backend`](../command_line.md#config-backend-merlin-config-backend) for more details on how this can be done.
