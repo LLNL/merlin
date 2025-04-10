@@ -33,3 +33,7 @@ results_backend:
     port: <server port>
     db_num: 0
     cert_reqs: none
+
+celery:
+    overrides:
+        

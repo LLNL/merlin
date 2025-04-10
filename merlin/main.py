@@ -637,7 +637,6 @@ def setup_argparse() -> None:  # pylint: disable=R0915
 
     # Subcommand: merlin config broker
     config_broker_parser = mconfig_subparsers.add_parser("broker", help="Update broker settings in app.yaml")
-    # config_broker_parser.set_defaults(func=update_broker)
     config_broker_parser.add_argument(
         "-t",
         "--type",
@@ -655,7 +654,6 @@ def setup_argparse() -> None:  # pylint: disable=R0915
 
     # Subcommand: merlin config backend
     config_backend_parser = mconfig_subparsers.add_parser("backend", help="Update results backend settings in app.yaml")
-    # config_backend_parser.set_defaults(func=update_backend)
     config_backend_parser.add_argument(
         "-t",
         "--type",
