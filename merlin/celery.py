@@ -40,7 +40,7 @@ import celery
 import psutil
 from celery import Celery, states
 from celery.backends.redis import RedisBackend  # noqa: F401 ; Needed for celery patch
-from celery.signals import celeryd_init, worker_process_init
+from celery.signals import celeryd_init, worker_process_init, worker_shutdown
 
 import merlin.common.security.encrypt_backend_traffic
 from merlin.common.abstracts.enums import WorkerStatus
@@ -172,7 +172,7 @@ app.autodiscover_tasks(["merlin.common"])
 
 
 @celeryd_init.connect
-def store_worker_info(sender=None, **kwargs):
+def handle_worker_startup(sender=None, **kwargs):
     """
     Store information about each physical worker instance in the database.
 
@@ -186,6 +186,7 @@ def store_worker_info(sender=None, **kwargs):
         sender: The hostname of the worker that was just started
     """
     if sender is not None:
+        LOG.info(f"Worker {sender} has started.")
         options = kwargs.get("options", None)
         if options is not None:
             try:
@@ -194,7 +195,7 @@ def store_worker_info(sender=None, **kwargs):
                 merlin_db = MerlinDatabase()
                 logical_worker = merlin_db.get_logical_worker(worker_name=worker_name, queues=options.get("queues"))
                 physical_worker = merlin_db.create_physical_worker(
-                    name=sender,
+                    name=str(sender),
                     host=host,
                     status=WorkerStatus.RUNNING,
                     logical_worker_id=logical_worker.get_id(),
@@ -202,11 +203,51 @@ def store_worker_info(sender=None, **kwargs):
                 logical_worker.add_physical_worker(physical_worker.get_id())
             # Without this exception catcher, celery does not output any errors that happen here
             except Exception as exc:
-                LOG.error(f"An error occurred when processing store_worker_info: {exc}")
+                LOG.error(f"An error occurred when processing handle_worker_startup: {exc}")
         else:
             LOG.warning("On worker connect could not retrieve worker options from Celery.")
     else:
         LOG.warning("On worker connect no sender was provided from Celery.")
+
+
+@worker_shutdown.connect
+def handle_worker_shutdown(sender=None, **kwargs):
+    """
+    Update the database for a worker entry when a worker shuts down.
+
+    Args:
+        sender: The hostname of the worker that was just started
+    """
+    if sender is not None:
+        LOG.info(f"Worker {sender} is shutting down.")
+        merlin_db = MerlinDatabase()
+        physical_worker = merlin_db.get_physical_worker(str(sender))
+        if physical_worker:
+            # Attempt to stop the process if a PID is stored
+            worker_pid = physical_worker.get_pid()
+            if worker_pid:
+                if psutil.pid_exists(worker_pid):
+                    try:
+                        LOG.info(f"Attempting to terminate worker process with PID {worker_pid}...")
+                        # Check to see if the pid is associated with celery
+                        worker_process = psutil.Process(worker_pid)
+                        if "celery" in worker_process.name():
+                            # Kill the pid if both conditions are right
+                            worker_process.kill()
+                        LOG.info(f"Worker process with PID {worker_pid} terminated successfully.")
+                    except ProcessLookupError:
+                        LOG.warning(f"Worker process with PID {worker_pid} not found. It may already be stopped.")
+                    except PermissionError:
+                        LOG.error(f"Permission denied when attempting to terminate worker process with PID {worker_pid}.")
+                    except Exception as e:
+                        LOG.error(f"Unexpected error while terminating worker process with PID {worker_pid}: {e}")
+
+            physical_worker.set_status(WorkerStatus.STOPPED)
+            physical_worker.set_pid(None)  # Clear the pid
+        else:
+            LOG.warning(f"Worker {sender} not found in the database.")
+    else:
+        LOG.warning("On worker shutdown no sender was provided from Celery.")
 
 
 # Pylint believes the args are unused, I believe they're used after decoration

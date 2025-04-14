@@ -44,10 +44,8 @@ from amqp.exceptions import ChannelError
 from celery import Celery
 from tabulate import tabulate
 
-from merlin.common.abstracts.enums import WorkerStatus
 from merlin.common.dumper import dump_handler
 from merlin.config import Config
-from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
 
@@ -891,16 +889,6 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
         # Send the shutdown signal
         app.control.broadcast("shutdown", destination=workers_to_stop)
-
-        # Update the database to set the worker status to STOPPED
-        merlin_db = MerlinDatabase()
-        for worker_name in workers_to_stop:
-            db_worker = merlin_db.get_physical_worker(worker_name)
-            if db_worker is not None:
-                db_worker.set_status(WorkerStatus.STOPPED)
-                LOG.info(f"Updated status for worker '{worker_name}' to STOPPED in the database.")
-            else:
-                LOG.warning(f"Worker '{worker_name}' not found in the database.")
     else:
         LOG.warning("No workers found to stop")
 
