@@ -304,12 +304,12 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
         self.entity_info.dump_to_json_file(self.get_metadata_file())
 
     @classmethod
-    def load(cls, entity_id_or_workspace: str, backend: ResultsBackend) -> "RunEntity":
+    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "RunEntity":
         """
         Load a run from the database by id or workspace.
 
         Args:
-            entity_id_or_workspace: The ID or workspace of the run to load.
+            entity_identifier: The ID or workspace of the run to load.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
@@ -319,27 +319,27 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
             (exceptions.RunNotFoundError): If an entry for run with id `entity_id` was not found
                 in the database.
         """
-        if os.path.isdir(entity_id_or_workspace):  # Load from workspace
-            metadata_file = cls.get_metadata_filepath(entity_id_or_workspace)
+        if os.path.isdir(entity_identifier):  # Load from workspace
+            metadata_file = cls.get_metadata_filepath(entity_identifier)
             entity_info = RunModel.load_from_json_file(metadata_file)
         else:  # Load from ID
-            entity_info = backend.retrieve(entity_id_or_workspace, "run")
+            entity_info = backend.retrieve(entity_identifier, "run")
 
         if not entity_info:
-            raise RunNotFoundError(f"Run with ID {entity_id_or_workspace} not found in the database.")
+            raise RunNotFoundError(f"Run with ID or workspace {entity_identifier} not found in the database.")
 
         return cls(entity_info, backend)
 
     @classmethod
-    def delete(cls, entity_id_or_workspace: str, backend: ResultsBackend):
+    def delete(cls, entity_identifier: str, backend: ResultsBackend):
         """
         Delete a run from the database by id or workpsace.
 
         Args:
-            entity_id_or_workspace: The ID or workspace of the run to delete.
+            entity_identifier: The ID or workspace of the run to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting run with id or workspace '{entity_id_or_workspace}' from the database...")
-        self = cls.load(entity_id_or_workspace, backend)
+        LOG.info(f"Deleting run with id or workspace '{entity_identifier}' from the database...")
+        self = cls.load(entity_identifier, backend)
         backend.delete(self.get_id(), "run")
-        LOG.info(f"Run with id or workspace '{entity_id_or_workspace}' has been successfully deleted.")
+        LOG.info(f"Run with id or workspace '{entity_identifier}' has been successfully deleted.")

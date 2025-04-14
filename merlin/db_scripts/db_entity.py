@@ -113,12 +113,12 @@ class DatabaseEntity(ABC):
 
     @classmethod
     @abstractmethod
-    def load(cls, entity_id: str, backend: ResultsBackend) -> "DatabaseEntity":
+    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "DatabaseEntity":
         """
         Load an entity from the database by its ID.
 
         Args:
-            entity_id: The ID of the entity to load.
+            entity_identifier: The ID of the entity to load.
             backend (backends.results_backend.ResultsBackend): The backend instance used
                 to interact with the database.
 
@@ -128,12 +128,12 @@ class DatabaseEntity(ABC):
 
     @classmethod
     @abstractmethod
-    def delete(cls, entity_id: str, backend: ResultsBackend):
+    def delete(cls, entity_identifier: str, backend: ResultsBackend):
         """
         Delete an entity from the database by its ID.
 
         Args:
-            entity_id: The ID of the entity to delete.
+            entity_identifier: The ID of the entity to delete.
             backend (backends.results_backend.ResultsBackend): The backend instance used
                 to interact with the database.
         """

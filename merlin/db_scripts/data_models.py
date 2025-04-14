@@ -284,8 +284,6 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
     workspace: str = None
     steps: List[str] = field(default_factory=list)  # TODO NOT YET IMPLEMENTED
     queues: List[str] = field(default_factory=list)
-    # TODO The below entry is currently a list of worker names
-    # - for the manager, we might want to make a new dataclass for workers and link by id here instead
     workers: List[str] = field(default_factory=list)
     parent: str = None  # TODO NOT YET IMPLEMENTED; do we even have a good way that this and `child` can be set?
     child: str = None  # TODO NOT YET IMPLEMENTED

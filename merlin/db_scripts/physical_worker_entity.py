@@ -20,13 +20,6 @@ from merlin.exceptions import WorkerNotFoundError
 
 LOG = logging.getLogger("merlin")
 
-# TODO
-# - implement this class
-#   - I think it should act as an overarching class that interacts with both Logical and Physical workers
-#   - will need to update the redis_backend.py file to accommodate these changes
-# - remove the db_worker.py file once this is done
-#   - change all references to worker_entity instead
-
 
 class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
     """
@@ -43,57 +36,57 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
             class used to interact with the database.
 
     Methods:
-        __repr__: 
+        __repr__:
             Provide a string representation of the `PhysicalWorkerEntity` instance.
-        __str__: 
+        __str__:
             Provide a human-readable string representation of the `PhysicalWorkerEntity` instance.
-        reload_data: 
+        reload_data:
             Reload the latest data for this worker from the database.
-        get_id: 
-            Retrieve the ID of the worker. 
-            _Implementation found in [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
-        get_additional_data: 
-            Retrieve any additional data saved to this worker. 
-            _Implementation found in [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
-        get_name: 
+        get_id:
+            Retrieve the ID of the worker. _Implementation found in
+                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+        get_additional_data:
+            Retrieve any additional data saved to this worker. _Implementation found in
+                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
+        get_name:
             Retrieve the name of this worker.
-        get_logical_worker_id: 
+        get_logical_worker_id:
             Retrieve the ID of the logical worker that this physical worker was created from.
-        get_launch_cmd: 
+        get_launch_cmd:
             Retrieve the command used to launch this worker.
-        set_launch_cmd: 
+        set_launch_cmd:
             Update the launch command used to start this worker.
-        get_args: 
+        get_args:
             Retrieve the arguments for this worker.
-        set_args: 
+        set_args:
             Update the arguments used by this worker.
-        get_pid: 
+        get_pid:
             Retrieve the process ID for this worker.
-        set_pid: 
+        set_pid:
             Update the process ID for this worker.
-        get_status: 
+        get_status:
             Retrieve the status of this worker.
-        set_status: 
+        set_status:
             Update the status of this worker.
-        get_heartbeat_timestamp: 
+        get_heartbeat_timestamp:
             Retrieve the last heartbeat timestamp of this worker.
-        set_heartbeat_timestamp: 
+        set_heartbeat_timestamp:
             Update the latest heartbeat timestamp of this worker.
-        get_latest_start_time: 
+        get_latest_start_time:
             Retrieve the time this worker was last started.
-        set_latest_start_time: 
+        set_latest_start_time:
             Update the latest start time of this worker.
-        get_host: 
+        get_host:
             Retrieve the hostname where this worker is running.
-        get_restart_count: 
+        get_restart_count:
             Retrieve the number of times this worker has been restarted.
-        increment_restart_count: 
+        increment_restart_count:
             Increment the restart count for this worker.
-        save: 
+        save:
             Save the current state of this worker to the database.
-        load: 
+        load:
             (classmethod) Load a `PhysicalWorkerEntity` instance from the database by its ID or name.
-        delete: 
+        delete:
             (classmethod) Delete a worker from the database by its ID or name.
     """
 
@@ -324,7 +317,7 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
         self.backend.save(self.entity_info)
 
     @classmethod
-    def load(cls, entity_id_or_name: str, backend: ResultsBackend) -> "PhysicalWorkerEntity":
+    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "PhysicalWorkerEntity":
         """
         Load a worker from the database by ID.
 
@@ -339,21 +332,21 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
             (exceptions.WorkerNotFoundError): If an entry for worker with id `entity_id` was
                 not found in the database.
         """
-        entity_info = backend.retrieve(entity_id_or_name, "physical_worker")
+        entity_info = backend.retrieve(entity_identifier, "physical_worker")
         if not entity_info:
-            raise WorkerNotFoundError(f"Worker with ID or name {entity_id_or_name} not found in the database.")
+            raise WorkerNotFoundError(f"Worker with ID or name {entity_identifier} not found in the database.")
 
         return cls(entity_info, backend)
 
     @classmethod
-    def delete(cls, entity_id_or_name: str, backend: ResultsBackend):
+    def delete(cls, entity_identifier: str, backend: ResultsBackend):
         """
         Delete a worker from the database.
 
         Args:
-            entity_id_or_name: The ID or name of the worker to delete.
+            entity_identifier: The ID or name of the worker to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting worker with id or name '{entity_id_or_name}' from the database...")
-        backend.delete(entity_id_or_name, "physical_worker")
-        LOG.info(f"Worker '{entity_id_or_name}' has been successfully deleted.")
+        LOG.info(f"Deleting worker with id or name '{entity_identifier}' from the database...")
+        backend.delete(entity_identifier, "physical_worker")
+        LOG.info(f"Worker '{entity_identifier}' has been successfully deleted.")

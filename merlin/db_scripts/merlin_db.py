@@ -126,7 +126,7 @@ class MerlinDatabase:
         """
         return self.backend.get_connection_string()
 
-    def _create_entity_if_not_exists(    # pylint: disable=too-many-arguments
+    def _create_entity_if_not_exists(  # pylint: disable=too-many-arguments
         self,
         entity_class: DatabaseEntity,
         model_class: BaseDataModel,
@@ -603,8 +603,8 @@ class MerlinDatabase:
         """
         Retrieve all entities from the database.
 
-        This method aggregates and returns a list containing all logical workers, physical workers, 
-        runs, and studies stored in the database. Each entity is represented by its corresponding 
+        This method aggregates and returns a list containing all logical workers, physical workers,
+        runs, and studies stored in the database. Each entity is represented by its corresponding
         class type.
 
         Returns:

@@ -180,12 +180,12 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
         self.backend.save(self.entity_info)
 
     @classmethod
-    def load(cls, entity_id: str, backend: ResultsBackend) -> "LogicalWorkerEntity":
+    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "LogicalWorkerEntity":
         """
         Load a logical worker from the database
 
         Args:
-            entity_id: The ID of the worker to load.
+            entity_identifier: The ID of the worker to load.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
@@ -195,21 +195,21 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             (exceptions.WorkerNotFoundError): If an entry for worker with id `entity_id` was
                 not found in the database.
         """
-        entity_info = backend.retrieve(entity_id, "logical_worker")
+        entity_info = backend.retrieve(entity_identifier, "logical_worker")
         if not entity_info:
-            raise WorkerNotFoundError(f"Worker with ID {entity_id} not found in the database.")
+            raise WorkerNotFoundError(f"Worker with ID {entity_identifier} not found in the database.")
 
         return cls(entity_info, backend)
 
     @classmethod
-    def delete(cls, entity_id: str, backend: ResultsBackend):
+    def delete(cls, entity_identifier: str, backend: ResultsBackend):
         """
         Delete a logical worker from the database.
 
         Args:
-            entity_id: The ID of the worker to delete.
+            entity_identifier: The ID of the worker to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting worker with id '{entity_id}' from the database...")
-        backend.delete(entity_id, "logical_worker")
-        LOG.info(f"Worker with id '{entity_id}' has been successfully deleted.")
+        LOG.info(f"Deleting worker with id '{entity_identifier}' from the database...")
+        backend.delete(entity_identifier, "logical_worker")
+        LOG.info(f"Worker with id '{entity_identifier}' has been successfully deleted.")

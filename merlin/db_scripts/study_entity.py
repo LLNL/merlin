@@ -126,12 +126,12 @@ class StudyEntity(DatabaseEntity, RunManagementMixin, NameMixin):
         self.backend.save(self.entity_info)
 
     @classmethod
-    def load(cls, entity_id_or_name: str, backend: ResultsBackend) -> "StudyEntity":
+    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "StudyEntity":
         """
         Load a study from the database by id.
 
         Args:
-            entity_id_or_name: The id or name of the study to load.
+            entity_identifier: The id or name of the study to load.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
@@ -141,23 +141,23 @@ class StudyEntity(DatabaseEntity, RunManagementMixin, NameMixin):
             (exceptions.StudyNotFoundError): If an entry for study with id `entity_id` was not
                 found in the database.
         """
-        entity_info = backend.retrieve(entity_id_or_name, "study")
+        entity_info = backend.retrieve(entity_identifier, "study")
         if entity_info is None:
-            raise StudyNotFoundError(f"Study with id or name '{entity_id_or_name}' not found in the database.")
+            raise StudyNotFoundError(f"Study with id or name '{entity_identifier}' not found in the database.")
 
         return cls(entity_info, backend)
 
     @classmethod
-    def delete(cls, entity_id_or_name: str, backend: ResultsBackend):
+    def delete(cls, entity_identifier: str, backend: ResultsBackend):
         """
         Delete a study from the database by id or name.
 
         By default, this will remove all of the runs associated with the study from the database.
 
         Args:
-            entity_id_or_name: The id or name of the study to delete.
+            entity_identifier: The id or name of the study to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting study with id or name '{entity_id_or_name}' from the database...")
-        backend.delete(entity_id_or_name, "study")
-        LOG.info(f"Study '{entity_id_or_name}' has been successfully deleted.")
+        LOG.info(f"Deleting study with id or name '{entity_identifier}' from the database...")
+        backend.delete(entity_identifier, "study")
+        LOG.info(f"Study '{entity_identifier}' has been successfully deleted.")

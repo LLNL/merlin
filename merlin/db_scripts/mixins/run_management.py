@@ -1,19 +1,20 @@
 """
 Module for managing entities and their associated runs in the database.
 
-This module provides a mixin class, `RunManagementMixin`, designed to simplify the management 
-of runs associated with an entity. The mixin can be used by any class that has the necessary 
-attributes and methods to support run management, such as `reload_data`, `save`, and an 
+This module provides a mixin class, `RunManagementMixin`, designed to simplify the management
+of runs associated with an entity. The mixin can be used by any class that has the necessary
+attributes and methods to support run management, such as `reload_data`, `save`, and an
 `entity_info` object containing a `runs` list.
 """
+
 
 class RunManagementMixin:
     """
     Mixin for managing runs associated with an entity.
 
-    This mixin provides utility methods for handling run IDs associated with an entity. 
-    It assumes that the class using this mixin has the necessary attributes and methods 
-    to support run management, including `reload_data`, `save`, and an `entity_info` object 
+    This mixin provides utility methods for handling run IDs associated with an entity.
+    It assumes that the class using this mixin has the necessary attributes and methods
+    to support run management, including `reload_data`, `save`, and an `entity_info` object
     containing a `runs` list.
 
     Methods:
