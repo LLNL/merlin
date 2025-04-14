@@ -14,13 +14,14 @@ from typing import List
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.db_entity import DatabaseEntity
+from merlin.db_scripts.mixins.queue_management import QueueManagementMixin
 from merlin.exceptions import RunNotFoundError
 
 
 LOG = logging.getLogger("merlin")
 
 
-class RunEntity(DatabaseEntity):
+class RunEntity(DatabaseEntity, QueueManagementMixin):
     """
     A class representing a run in the database.
 
@@ -230,15 +231,6 @@ class RunEntity(DatabaseEntity):
             A string representing the output workspace for this run.
         """
         return self.entity_info.workspace
-
-    def get_queues(self) -> List[str]:
-        """
-        Get the task queues that were used for this run.
-
-        Returns:
-            A list of strings representing the queues that were used for this run.
-        """
-        return self.entity_info.queues
 
     def get_workers(self) -> List[str]:
         """

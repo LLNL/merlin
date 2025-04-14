@@ -14,6 +14,7 @@ from typing import Dict
 from merlin.backends.results_backend import ResultsBackend
 from merlin.common.abstracts.enums import WorkerStatus
 from merlin.db_scripts.db_entity import DatabaseEntity
+from merlin.db_scripts.mixins.name import NameMixin
 from merlin.exceptions import WorkerNotFoundError
 
 
@@ -27,7 +28,7 @@ LOG = logging.getLogger("merlin")
 #   - change all references to worker_entity instead
 
 
-class PhysicalWorkerEntity(DatabaseEntity):
+class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
     """
     A class representing a physical worker in the database.
 
@@ -42,88 +43,58 @@ class PhysicalWorkerEntity(DatabaseEntity):
             class used to interact with the database.
 
     Methods:
-        __repr__:
-            Provide a string representation of the `DatabaseWorker` instance.
-
-        __str__:
-            Provide a human-readable string representation of the `DatabaseWorker` instance.
-
-        reload_data:
+        __repr__: 
+            Provide a string representation of the `PhysicalWorkerEntity` instance.
+        __str__: 
+            Provide a human-readable string representation of the `PhysicalWorkerEntity` instance.
+        reload_data: 
             Reload the latest data for this worker from the database.
-
-        get_id:
-            Retrieve the ID of the worker. _Implementation found in
-                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
-
-        get_additional_data:
-            Retrieve any additional data saved to this worker. _Implementation found in
-                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
-
-        get_name:
+        get_id: 
+            Retrieve the ID of the worker. 
+            _Implementation found in [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+        get_additional_data: 
+            Retrieve any additional data saved to this worker. 
+            _Implementation found in [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
+        get_name: 
             Retrieve the name of this worker.
-
-        get_launch_cmd:
+        get_logical_worker_id: 
+            Retrieve the ID of the logical worker that this physical worker was created from.
+        get_launch_cmd: 
             Retrieve the command used to launch this worker.
-
-        set_launch_cmd:
+        set_launch_cmd: 
             Update the launch command used to start this worker.
-
-        get_queues:
-            Retrieve the task queues assigned to this worker.
-
-        set_queues:
-            Update the queues this worker is watching.
-
-        get_args:
+        get_args: 
             Retrieve the arguments for this worker.
-
-        set_args:
+        set_args: 
             Update the arguments used by this worker.
-
-        get_pid:
+        get_pid: 
             Retrieve the process ID for this worker.
-
-        set_pid:
+        set_pid: 
             Update the process ID for this worker.
-
-        get_status:
+        get_status: 
             Retrieve the status of this worker.
-
-        set_status:
+        set_status: 
             Update the status of this worker.
-
-        get_heartbeat_timestamp:
+        get_heartbeat_timestamp: 
             Retrieve the last heartbeat timestamp of this worker.
-
-        set_heartbeat_timestamp:
+        set_heartbeat_timestamp: 
             Update the latest heartbeat timestamp of this worker.
-
-        get_latest_start_time:
+        get_latest_start_time: 
             Retrieve the time this worker was last started.
-
-        set_latest_start_time:
+        set_latest_start_time: 
             Update the latest start time of this worker.
-
-        get_host:
+        get_host: 
             Retrieve the hostname where this worker is running.
-
-        set_host:
-            Update the hostname for this worker.
-
-        get_restart_count:
+        get_restart_count: 
             Retrieve the number of times this worker has been restarted.
-
-        increment_restart_count:
+        increment_restart_count: 
             Increment the restart count for this worker.
-
-        save:
+        save: 
             Save the current state of this worker to the database.
-
-        load:
-            (classmethod) Load a `DatabaseWorker` instance from the database by its ID.
-
-        delete:
-            (classmethod) Delete a worker from the database by its ID.
+        load: 
+            (classmethod) Load a `PhysicalWorkerEntity` instance from the database by its ID or name.
+        delete: 
+            (classmethod) Delete a worker from the database by its ID or name.
     """
 
     def __repr__(self) -> str:
@@ -152,14 +123,14 @@ class PhysicalWorkerEntity(DatabaseEntity):
 
     def __str__(self) -> str:
         """
-        Provide a string representation of the `DatabaseWorker` instance.
+        Provide a string representation of the `PhysicalWorkerEntity` instance.
 
         Returns:
-            A human-readable string representation of the `DatabaseWorker` instance.
+            A human-readable string representation of the `PhysicalWorkerEntity` instance.
         """
         worker_id = self.get_id()
         return (
-            f"Worker with ID {worker_id}\n"
+            f"Physical Worker with ID {worker_id}\n"
             f"------------{'-' * len(worker_id)}\n"
             f"Name: {self.get_name()}\n"
             f"Logical Worker ID: {self.get_logical_worker_id()}\n"
@@ -198,15 +169,6 @@ class PhysicalWorkerEntity(DatabaseEntity):
             The ID of the logical worker that this physical worker was created from.
         """
         return self.entity_info.logical_worker_id
-
-    def get_name(self) -> str:
-        """
-        Get the name of this worker.
-
-        Returns:
-            The name for this worker.
-        """
-        return self.entity_info.name
 
     def get_launch_cmd(self) -> str:
         """

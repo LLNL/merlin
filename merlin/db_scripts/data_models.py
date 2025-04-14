@@ -385,7 +385,7 @@ class LogicalWorkerModel(BaseDataModel):
 
 
 @dataclass
-class PhysicalWorkerModel(BaseDataModel):
+class PhysicalWorkerModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
     """
     Represents a running instance of a Celery worker, created from a logical worker definition.
 

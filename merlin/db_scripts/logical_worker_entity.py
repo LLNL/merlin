@@ -11,6 +11,9 @@ from typing import List
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.db_entity import DatabaseEntity
+from merlin.db_scripts.mixins.name import NameMixin
+from merlin.db_scripts.mixins.queue_management import QueueManagementMixin
+from merlin.db_scripts.mixins.run_management import RunManagementMixin
 from merlin.db_scripts.physical_worker_entity import PhysicalWorkerEntity
 from merlin.exceptions import WorkerNotFoundError
 
@@ -18,7 +21,7 @@ from merlin.exceptions import WorkerNotFoundError
 LOG = logging.getLogger("merlin")
 
 
-class LogicalWorkerEntity(DatabaseEntity):
+class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMixin, NameMixin):
     """
     A class representing a logical worker in the database.
 
@@ -68,11 +71,11 @@ class LogicalWorkerEntity(DatabaseEntity):
         add_physical_worker:
             Add a physical worker ID to the list of physical workers.
 
-        get_queues:
-            Retrieve the list of queues that this worker is assigned to.
-
         remove_physical_worker:
             Remove a physical worker ID from the list of physical workers.
+
+        get_queues:
+            Retrieve the list of queues that this worker is assigned to.
 
         save:
             Save the current state of the logical worker to the database.
@@ -134,58 +137,6 @@ class LogicalWorkerEntity(DatabaseEntity):
         if not updated_entity_info:
             raise WorkerNotFoundError(f"Logical worker with ID '{worker_id}' not found in the database.")
         self.entity_info = updated_entity_info
-
-    def get_name(self):
-        """
-        Get the name associated with this logical worker.
-
-        Returns:
-            The name for this logical worker.
-        """
-        return self.entity_info.name
-
-    def get_runs(self) -> List[str]:
-        """
-        Get every run that's using this logical worker.
-
-        Returns:
-            A list of run ids.
-        """
-        self.reload_data()
-        return self.entity_info.runs
-
-    def add_run(self, run_id: str):
-        """
-        Add a new run id to the list of runs.
-
-        Args:
-            run_id: The id of the run to add.
-        """
-        self.entity_info.runs.append(run_id)
-        self.save()
-
-    def remove_run(self, run_id: str):
-        """
-        Remove a run id from the list of runs using this logical worker.
-
-        Does *not* delete a [`RunEntity`][db_scripts.run_entity.RunEntity] from the
-        database. This will only remove the run's id from the list in this worker.
-
-        Args:
-            run_id: The ID of the run to remove.
-        """
-        self.reload_data()
-        self.entity_info.runs.remove(run_id)
-        self.save()
-
-    def get_queues(self) -> List[str]:
-        """
-        Get the task queues that were assigned to this worker.
-
-        Returns:
-            A list of strings representing the queues that were assigned to this worker.
-        """
-        return self.entity_info.queues
 
     def get_physical_workers(self) -> List[PhysicalWorkerEntity]:
         """

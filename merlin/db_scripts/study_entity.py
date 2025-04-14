@@ -10,13 +10,15 @@ import logging
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.db_entity import DatabaseEntity
+from merlin.db_scripts.mixins.name import NameMixin
+from merlin.db_scripts.mixins.run_management import RunManagementMixin
 from merlin.exceptions import StudyNotFoundError
 
 
 LOG = logging.getLogger("merlin")
 
 
-class StudyEntity(DatabaseEntity):
+class StudyEntity(DatabaseEntity, RunManagementMixin, NameMixin):
     """
     A class representing a study in the database.
 
@@ -116,49 +118,6 @@ class StudyEntity(DatabaseEntity):
         if not updated_entity_info:
             raise StudyNotFoundError(f"Study with id {study_id} not found in the database.")
         self.entity_info = updated_entity_info
-
-    def get_name(self) -> str:
-        """
-        Get the name associated with this study.
-
-        Returns:
-            The name for this study.
-        """
-        return self.entity_info.name
-
-    def get_runs(self):
-        """
-        Get every run of this study.
-
-        Returns:
-            A list of run ids.
-        """
-        self.reload_data()
-        return self.entity_info.runs
-
-    def add_run(self, run_id: str):
-        """
-        Add a new run id to the list of runs.
-
-        Args:
-            run_id: The id of the run to add.
-        """
-        self.entity_info.runs.append(run_id)
-        self.save()
-
-    def remove_run(self, run_id: str):
-        """
-        Remove a run id from the list of runs.
-
-        Does *not* delete a [`RunEntity`][db_scripts.run_entity.RunEntity] from the
-        database. This will only remove the run's id from the list in this study entity.
-
-        Args:
-            run_id: The ID of the run to remove.
-        """
-        self.reload_data()
-        self.entity_info.runs.remove(run_id)
-        self.save()
 
     def save(self):
         """
