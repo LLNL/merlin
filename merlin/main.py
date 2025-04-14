@@ -1084,6 +1084,13 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
+    # Subcommand: get everything
+    get_subcommands.add_parser(
+        "everything",
+        help="Get everything from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
     return parser
 
 

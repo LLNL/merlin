@@ -40,6 +40,8 @@ class MerlinDatabase:
                 version of the backend.
             - [`get_connection_string`][db_scripts.merlin_db.MerlinDatabase.get_connection_string]:
                 Retrieve the backend connection string.
+            - [`get_everything`][db_scripts.merlin_db.MerlinDatabase.get_everything]: Retrieve every
+                entity in the database.
             - [`delete_everything`][db_scritps.merlin_db.MerlinDatabase.delete_everything]: Removes
                 every entry from the database.
 
@@ -124,7 +126,7 @@ class MerlinDatabase:
         """
         return self.backend.get_connection_string()
 
-    def _create_entity_if_not_exists(
+    def _create_entity_if_not_exists(    # pylint: disable=too-many-arguments
         self,
         entity_class: DatabaseEntity,
         model_class: BaseDataModel,
@@ -151,7 +153,7 @@ class MerlinDatabase:
         try:
             entity = entity_class.load(identifier, self.backend)
             LOG.info(log_message_exists)
-        except Exception:
+        except (WorkerNotFoundError, StudyNotFoundError, RunNotFoundError):
             LOG.info(log_message_create)
             model = model_class(**model_kwargs)
             entity = entity_class(model, self.backend)
@@ -294,7 +296,7 @@ class MerlinDatabase:
             remove_associated_runs=remove_associated_runs,
         )
 
-    def create_run(self, study_name: str, workspace: str, queues: List[str], *args, **kwargs) -> RunEntity:
+    def create_run(self, study_name: str, workspace: str, queues: List[str], **kwargs) -> RunEntity:
         """
         Given a study name, create a run for this study. If the study does not yet exist in
         the database, an entry will be created for it prior to the run being created.
@@ -406,7 +408,7 @@ class MerlinDatabase:
             if worker_name is not None or queues is not None:
                 raise ValueError("Provide either `worker_id` or (`worker_name` and `queues`), but not both.")
             return worker_id
-        elif worker_name is None or queues is None:
+        if worker_name is None or queues is None:
             raise ValueError("You must provide either `worker_id` or both `worker_name` and `queues`.")
 
         # Generate the worker_id if worker_name and queues are provided
@@ -430,11 +432,12 @@ class MerlinDatabase:
             f"Logical worker with name '{name}' and queues '{queues}' does not yet have "
             "an entry in the database. Creating one..."
         )
+        log_message_exists = f"Logical worker with name '{name}' and queues '{queues}' already has an entry in the database."
         return self._create_entity_if_not_exists(
             entity_class=LogicalWorkerEntity,
             model_class=LogicalWorkerModel,
             identifier=logical_worker_id,
-            log_message_exists=f"Logical worker with name '{name}' and queues '{queues}' already has an entry in the database.",
+            log_message_exists=log_message_exists,
             log_message_create=log_message_create,
             name=name,
             queues=queues,
@@ -594,6 +597,27 @@ class MerlinDatabase:
         """
         self._delete_all_by_type(
             get_all_fn=self.get_all_physical_workers, delete_fn=self.delete_physical_worker, entity_name="physical workers"
+        )
+
+    def get_everything(self) -> List[DatabaseEntity]:
+        """
+        Retrieve all entities from the database.
+
+        This method aggregates and returns a list containing all logical workers, physical workers, 
+        runs, and studies stored in the database. Each entity is represented by its corresponding 
+        class type.
+
+        Returns:
+            A list of entities retrieved from the database, including:\n
+            - [`LogicalWorkerEntity`][merlin.db_scripts.logical_worker_entity.LogicalWorkerEntity]:
+                Represents logical workers.
+            - [`PhysicalWorkerEntity`][merlin.db_scripts.physical_worker_entity.PhysicalWorkerEntity]:
+                Represents physical workers.
+            - [`RunEntity`][merlin.db_scripts.run_entity.RunEntity]: Represents runs.
+            - [`StudyEntity`][merlin.db_scripts.study_entity.StudyEntity]: Represents studies.
+        """
+        return list(
+            self.get_all_logical_workers() + self.get_all_physical_workers() + self.get_all_runs() + self.get_all_studies()
         )
 
     def delete_everything(self, force: bool = False):

@@ -129,6 +129,7 @@ def database_get(args: Namespace):
         "all-physical-workers": lambda: print_items(
             merlin_db.get_all_physical_workers(), "No physical workers found in the database."
         ),
+        "everything": lambda: print_items(merlin_db.get_everything(), "Nothing found in the database."),
     }
 
     # Execute the appropriate operation or log an error
