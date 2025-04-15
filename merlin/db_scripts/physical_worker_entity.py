@@ -201,7 +201,7 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
         self.entity_info.args = args
         self.save()
 
-    def get_pid(self) -> str:
+    def get_pid(self) -> int:
         """
         Get the process ID for this worker.
 
@@ -209,7 +209,7 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
             The process ID for this worker.
         """
         self.reload_data()
-        return self.entity_info.pid
+        return int(self.entity_info.pid) if self.entity_info.pid else None
 
     def set_pid(self, pid: str):
         """

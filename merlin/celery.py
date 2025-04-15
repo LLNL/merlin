@@ -186,7 +186,7 @@ def handle_worker_startup(sender=None, **kwargs):
         sender: The hostname of the worker that was just started
     """
     if sender is not None:
-        LOG.info(f"Worker {sender} has started.")
+        LOG.debug(f"Worker {sender} has started.")
         options = kwargs.get("options", None)
         if options is not None:
             try:
@@ -199,6 +199,7 @@ def handle_worker_startup(sender=None, **kwargs):
                     host=host,
                     status=WorkerStatus.RUNNING,
                     logical_worker_id=logical_worker.get_id(),
+                    pid=os.getpid(),
                 )
                 logical_worker.add_physical_worker(physical_worker.get_id())
             # Without this exception catcher, celery does not output any errors that happen here
@@ -219,29 +220,10 @@ def handle_worker_shutdown(sender=None, **kwargs):
         sender: The hostname of the worker that was just started
     """
     if sender is not None:
-        LOG.info(f"Worker {sender} is shutting down.")
+        LOG.debug(f"Worker {sender} is shutting down.")
         merlin_db = MerlinDatabase()
         physical_worker = merlin_db.get_physical_worker(str(sender))
         if physical_worker:
-            # Attempt to stop the process if a PID is stored
-            worker_pid = physical_worker.get_pid()
-            if worker_pid:
-                if psutil.pid_exists(worker_pid):
-                    try:
-                        LOG.info(f"Attempting to terminate worker process with PID {worker_pid}...")
-                        # Check to see if the pid is associated with celery
-                        worker_process = psutil.Process(worker_pid)
-                        if "celery" in worker_process.name():
-                            # Kill the pid if both conditions are right
-                            worker_process.kill()
-                        LOG.info(f"Worker process with PID {worker_pid} terminated successfully.")
-                    except ProcessLookupError:
-                        LOG.warning(f"Worker process with PID {worker_pid} not found. It may already be stopped.")
-                    except PermissionError:
-                        LOG.error(f"Permission denied when attempting to terminate worker process with PID {worker_pid}.")
-                    except Exception as e:
-                        LOG.error(f"Unexpected error while terminating worker process with PID {worker_pid}: {e}")
-
             physical_worker.set_status(WorkerStatus.STOPPED)
             physical_worker.set_pid(None)  # Clear the pid
         else:

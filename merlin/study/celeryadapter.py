@@ -695,7 +695,6 @@ def start_celery_workers(spec, steps, celery_args, disable_logs, just_return_com
             continue
 
         # Start the worker
-        # launch_celery_worker(worker_cmd, worker_list, worker_name, worker_args, queues, kwargs)
         launch_celery_worker(worker_cmd, worker_list, worker_args, queues, kwargs)
         # launch_celery_worker(worker_cmd, worker_list, kwargs)
 
