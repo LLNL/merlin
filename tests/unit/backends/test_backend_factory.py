@@ -11,6 +11,19 @@ from merlin.exceptions import BackendNotSupportedError
 
 
 class TestBackendFactory:
+    """
+    Test suite for the `backend_factory` module.
+
+    This class contains unit tests to validate the functionality of the `backend_factory`, which is responsible 
+    for managing backend instances and providing an interface for retrieving supported backends and resolving 
+    backend aliases.
+
+    Fixtures and mocking are used to isolate the tests from the actual backend implementations, ensuring that 
+    the tests focus on the behavior of the `backend_factory` module.
+
+    These tests ensure the robustness and correctness of the `backend_factory` module, which is critical for 
+    backend management in the Merlin framework.
+    """
 
     def test_get_supported_backends(self):
         """
@@ -24,7 +37,7 @@ class TestBackendFactory:
         Test that `get_backend` returns the correct backend instance for a valid backend.
 
         Args:
-            mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object
+            mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
         """
         backend_name = "redis"
 
@@ -43,7 +56,7 @@ class TestBackendFactory:
         Test that `get_backend` correctly resolves aliases to canonical backend names.
 
         Args:
-            mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object
+            mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
         """
         alias_name = "rediss"
 
