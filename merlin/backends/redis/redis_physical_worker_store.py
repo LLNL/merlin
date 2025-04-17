@@ -119,14 +119,15 @@ class RedisPhysicalWorkerStore:
 
         # Loop through each worker id and retrieve its WorkerModel
         for worker_id in worker_ids:
+            physical_worker_id = worker_id.split(":")[1]  # Extract the ID for logging
             try:
                 worker_info = self.retrieve(worker_id)
                 if worker_info:
                     all_workers.append(worker_info)
                 else:
-                    LOG.warning(f"Worker with ID '{worker_id}' could not be retrieved or does not exist.")
+                    LOG.warning(f"Worker with ID '{physical_worker_id}' could not be retrieved or does not exist.")
             except Exception as exc:  # pylint: disable=broad-except
-                LOG.error(f"Error retrieving worker with ID '{worker_id}': {exc}")
+                LOG.error(f"Error retrieving worker with ID '{physical_worker_id}': {exc}")
 
         # Return the list of WorkerModel objects
         LOG.info(f"Successfully retrieved {len(all_workers)} workers from Redis.")

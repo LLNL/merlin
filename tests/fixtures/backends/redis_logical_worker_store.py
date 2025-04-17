@@ -1,10 +1,10 @@
 """
+Fixtures for the `redis_logical_worker_store.py` module.
 """
 from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
-from redis import Redis
 
 from merlin.backends.redis.redis_logical_worker_store import RedisLogicalWorkerStore
 from merlin.db_scripts.data_models import LogicalWorkerModel
@@ -71,28 +71,14 @@ def redis_logical_worker_store_mock_worker(
 
 
 @pytest.fixture
-def redis_logical_worker_store_mock_redis_client(mocker: MockerFixture) -> MagicMock:
-    """
-    Mocks the Redis client.
-
-    Args:
-        mocker (MockerFixture): Used to create a mock Redis client.
-
-    Returns:
-        A mocked Redis client.
-    """
-    return mocker.MagicMock(spec=Redis)
-
-
-@pytest.fixture
-def redis_logical_worker_store_instance(redis_logical_worker_store_mock_redis_client) -> RedisLogicalWorkerStore:
+def redis_logical_worker_store_instance(redis_backend_mock_redis_client: MagicMock) -> RedisLogicalWorkerStore:
     """
     Creates an instance of `RedisLogicalWorkerStore` with a mocked Redis client.
 
     Args:
-        redis_logical_worker_store_mock_redis_client (MagicMock): The mocked Redis client.
+        redis_backend_mock_redis_client (MagicMock): The mocked Redis client.
 
     Returns:
         An instance of `RedisLogicalWorkerStore`.
     """
-    return RedisLogicalWorkerStore(client=redis_logical_worker_store_mock_redis_client)
+    return RedisLogicalWorkerStore(client=redis_backend_mock_redis_client)

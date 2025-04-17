@@ -13,6 +13,7 @@ from redis import Redis
 
 from merlin.backends.redis.redis_utils import create_data_class_entry, deserialize_data_class, update_data_class_entry
 from merlin.db_scripts.data_models import LogicalWorkerModel
+from merlin.exceptions import WorkerNotFoundError
 
 
 LOG = logging.getLogger("merlin")
@@ -101,9 +102,9 @@ class RedisLogicalWorkerStore:
 
         # Loop through all runs
         for key in self.client.scan_iter(match=pattern):
-            logical_worker_id = key.split(":")[1]  # Extract the ID
+            logical_worker_id = key.split(":")[1]  # Extract the ID for logging
             try:
-                worker_info = self.retrieve(logical_worker_id)
+                worker_info = self.retrieve(key)
                 if worker_info:
                     all_logical_workers.append(worker_info)
                 else:
@@ -125,7 +126,7 @@ class RedisLogicalWorkerStore:
         LOG.info(f"Attempting to delete run with id '{worker_id}' from Redis...")
         worker = self.retrieve(worker_id)
         if worker is None:
-            raise ValueError(f"Worker with id '{worker_id}' does not exist in the database.")
+            raise WorkerNotFoundError(f"Worker with id '{worker_id}' does not exist in the database.")
 
         # Delete the worker's hash entry
         worker_key = f"{self.key}:{worker.id}"
