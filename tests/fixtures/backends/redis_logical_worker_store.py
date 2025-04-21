@@ -34,8 +34,7 @@ def redis_logical_worker_store_queues() -> FixtureList[str]:
 
 
 @pytest.fixture
-def redis_logical_worker_store_id(
-) -> FixtureStr:
+def redis_logical_worker_store_id() -> FixtureStr:
     """
     Fixture to provide the ID of a logical worker.
 

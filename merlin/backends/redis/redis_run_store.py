@@ -12,6 +12,7 @@ from redis import Redis
 
 from merlin.backends.redis.redis_utils import create_data_class_entry, deserialize_data_class, update_data_class_entry
 from merlin.db_scripts.data_models import RunModel
+from merlin.exceptions import RunNotFoundError
 
 
 LOG = logging.getLogger("merlin")
@@ -93,9 +94,9 @@ class RedisRunStore:
 
         # Loop through all runs
         for run_key in self.client.scan_iter(match=run_pattern):
-            run_id = run_key.split(":")[1]  # Extract the ID
+            run_id = run_key.split(":")[1]  # Extract the ID for logging purposes
             try:
-                run_info = self.retrieve(run_id)
+                run_info = self.retrieve(run_key)
                 if run_info:
                     all_runs.append(run_info)
                 else:
@@ -118,7 +119,7 @@ class RedisRunStore:
         LOG.info(f"Attempting to delete run with id '{run_id}' from Redis...")
         run = self.retrieve(run_id)
         if run is None:
-            raise ValueError(f"Run with id '{run_id}' does not exist in the database.")
+            raise RunNotFoundError(f"Run with id '{run_id}' does not exist in the database.")
 
         # Delete the run's hash entry
         run_key = f"{self.key}:{run.id}"

@@ -4,7 +4,6 @@ Fixtures for the `redis_logical_worker_store.py` module.
 from unittest.mock import MagicMock
 
 import pytest
-from pytest_mock import MockerFixture
 
 from merlin.backends.redis.redis_physical_worker_store import RedisPhysicalWorkerStore
 from merlin.db_scripts.data_models import PhysicalWorkerModel
@@ -23,8 +22,7 @@ def redis_physical_worker_store_name() -> FixtureStr:
 
 
 @pytest.fixture
-def redis_physical_worker_store_id(
-) -> FixtureStr:
+def redis_physical_worker_store_id() -> FixtureStr:
     """
     Fixture to provide the ID of a physical worker.
 
@@ -43,12 +41,11 @@ def redis_physical_worker_store_mock_worker(
     Mocks a `PhysicalWorkerModel` instance.
 
     Args:
-        mocker (MockerFixture): Used to patch dependencies.
-        redis_physical_worker_store_id (FixtureStr): The unique ID of the logical worker.
-        redis_physical_worker_store_name (FixtureStr): The name of the logical worker.
+        redis_physical_worker_store_id (FixtureStr): The unique ID of the physical worker.
+        redis_physical_worker_store_name (FixtureStr): The name of the physical worker.
 
     Returns:
-        A mocked `LogicalWorkerModel` instance.
+        A mocked `PhysicalWorkerModel` instance.
     """
     return PhysicalWorkerModel(id=redis_physical_worker_store_id, name=redis_physical_worker_store_name)
 

@@ -1,5 +1,5 @@
 """
-Tests for the `merlin/backends/redis/redis_logical_worker_store.py` module.
+Tests for the `merlin/backends/redis/redis_physical_worker_store.py` module.
 """
 from unittest.mock import MagicMock
 
