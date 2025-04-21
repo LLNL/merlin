@@ -12,7 +12,7 @@ functionality, such as waiting for workers and checking task queues.
 from abc import ABC, abstractmethod
 from typing import List
 
-from merlin.db_scripts.run_entity import RunEntity
+from merlin.db_scripts.entities.run_entity import RunEntity
 
 
 class TaskServerMonitor(ABC):

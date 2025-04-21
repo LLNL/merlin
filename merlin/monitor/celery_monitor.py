@@ -17,7 +17,7 @@ import logging
 import time
 from typing import List, Set
 
-from merlin.db_scripts.run_entity import RunEntity
+from merlin.db_scripts.entities.run_entity import RunEntity
 from merlin.exceptions import NoWorkersException
 from merlin.monitor.task_server_monitor import TaskServerMonitor
 from merlin.study.celeryadapter import get_workers_from_app, query_celery_queues

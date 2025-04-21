@@ -7,7 +7,7 @@ import logging
 from argparse import Namespace
 from typing import Callable, List
 
-from merlin.db_scripts.db_entity import DatabaseEntity
+from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.db_scripts.merlin_db import MerlinDatabase
 
 

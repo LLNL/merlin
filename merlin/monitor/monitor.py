@@ -20,7 +20,7 @@ from kombu.exceptions import OperationalError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.db_scripts.merlin_db import MerlinDatabase
-from merlin.db_scripts.run_entity import RunEntity
+from merlin.db_scripts.entities.run_entity import RunEntity
 from merlin.exceptions import RestartException
 from merlin.monitor.monitor_factory import monitor_factory
 from merlin.monitor.task_server_monitor import TaskServerMonitor
