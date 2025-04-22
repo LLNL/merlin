@@ -51,7 +51,7 @@ class TestMonitor:
         # Need to copy app.yaml to cwd so we can connect to redis server
         copy_app_yaml_to_cwd(merlin_server_dir)
 
-        run_workers_proc = restart_workers_proc = monitor_stdout = monitor_stderr = None
+        run_workers_proc = monitor_stdout = monitor_stderr = None
         with CeleryTaskManager(celery_app, redis_broker_and_backend_class.client):
             # Send the tasks to the server
             try:
@@ -88,7 +88,9 @@ class TestMonitor:
                 )
 
                 # Purge the tasks that are in the queues
-                purge_proc = subprocess.run(f"merlin purge -f {monitor_setup.auto_restart_yaml}".split(), capture_output=True, text=True)
+                purge_proc = subprocess.run(
+                    f"merlin purge -f {monitor_setup.auto_restart_yaml}".split(), capture_output=True, text=True
+                )
 
                 monitor_stdout, monitor_stderr = monitor_proc.communicate()
 
