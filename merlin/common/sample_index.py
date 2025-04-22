@@ -260,7 +260,7 @@ class SampleIndex:
         conditional: Callable = lambda c: True,
         bottom_up: bool = True,
         top_level: bool = True,
-    ) -> Generator[Tuple[str, "SampleIndex"]]:
+    ) -> Generator[Tuple[str, "SampleIndex"], None, None]:
         """
         Traverse the tree structure and yield the full path and associated node
         for each node that meets the specified conditional criteria.
@@ -312,7 +312,7 @@ class SampleIndex:
         if not top_level:
             yield "SKIP ME"
 
-    def traverse_all(self, bottom_up: bool = True) -> Generator[Tuple[str, "SampleIndex"]]:
+    def traverse_all(self, bottom_up: bool = True) -> Generator[Tuple[str, "SampleIndex"], None, None]:
         """
         Traverse all nodes in the [`SampleIndex`][common.sample_index.SampleIndex].
 
@@ -336,7 +336,7 @@ class SampleIndex:
         """
         return self.traverse(path=self.name, conditional=lambda c: True, bottom_up=bottom_up)
 
-    def traverse_bundles(self) -> Generator[Tuple[str, "SampleIndex"]]:
+    def traverse_bundles(self) -> Generator[Tuple[str, "SampleIndex"], None, None]:
         """
         Traverse all Bundles (leaf nodes) in the [`SampleIndex`][common.sample_index.SampleIndex].
 
@@ -355,7 +355,7 @@ class SampleIndex:
         """
         return self.traverse(path=self.name, conditional=lambda c: c.is_leaf)
 
-    def traverse_directories(self, bottom_up: bool = False) -> Generator[Tuple[str, "SampleIndex"]]:
+    def traverse_directories(self, bottom_up: bool = False) -> Generator[Tuple[str, "SampleIndex"], None, None]:
         """
         Traverse all Directories in the [`SampleIndex`][common.sample_index.SampleIndex].
 
