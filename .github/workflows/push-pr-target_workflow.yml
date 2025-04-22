@@ -1,0 +1,119 @@
+name: Python CI
+
+on: [push, pull_request_target]
+
+# See https://michaelheap.com/access-secrets-from-forks/ for info on permission checks in this setup
+jobs:
+  Local-test-suite:
+    runs-on: ubuntu-latest
+    env: 
+      GO_VERSION: 1.18.1
+      SINGULARITY_VERSION: 3.9.9
+      OS: linux
+      ARCH: amd64
+      MERLIN_RABBITMQ_USER: ${{ secrets.MERLIN_RABBITMQ_USER }}
+      MERLIN_RABBITMQ_PASSWORD_FILE: "/tmp/rabbit.pass"
+      MERLIN_RABBITMQ_SERVER: ${{ secrets.MERLIN_RABBITMQ_SERVER }}
+      MERLIN_RABBITMQ_PORT: ${{ secrets.MERLIN_RABBITMQ_PORT }}
+      MERLIN_RABBITMQ_VHOST: ${{ secrets.MERLIN_RABBITMQ_VHOST }}
+      MERLIN_REDIS_PASSWORD_FILE: "/tmp/redis.pass"
+      MERLIN_REDIS_SERVER: ${{ secrets.MERLIN_REDIS_SERVER }}
+      MERLIN_REDIS_PORT: ${{ secrets.MERLIN_REDIS_PORT }}
+
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+
+    # This job uses secrets so we need to check permissions of the user before we allow this test to run
+    # If we don't do this then forked repos can't run this test no matter who triggered it
+    steps:
+    - name: Get User Permission
+      id: checkAccess
+      uses: actions-cool/check-user-permission@v2
+      with:
+        require: write
+        username: ${{ github.triggering_actor }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Check User Permission
+      if: steps.checkAccess.outputs.require-result == 'false'
+      run: |
+        echo "${{ github.triggering_actor }} does not have permissions on this repo."
+        echo "Current permission level is ${{ steps.checkAccess.outputs.user-permission }}"
+        echo "Job originally triggered by ${{ github.actor }}"
+        exit 1
+
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{  github.event.pull_request.head.sha }} # This is dangerous without the first access check
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Check cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip3 install -r requirements/dev.txt
+
+    - name: Install singularity
+      run: |
+        sudo apt-get update && sudo apt-get install -y \
+          build-essential \
+          libssl-dev \
+          uuid-dev \
+          libgpgme11-dev \
+          squashfs-tools \
+          libseccomp-dev \
+          pkg-config
+        wget https://go.dev/dl/go$GO_VERSION.$OS-$ARCH.tar.gz
+        sudo tar -C /usr/local -xzf go$GO_VERSION.$OS-$ARCH.tar.gz
+        rm go$GO_VERSION.$OS-$ARCH.tar.gz
+        export PATH=$PATH:/usr/local/go/bin
+        wget https://github.com/sylabs/singularity/releases/download/v$SINGULARITY_VERSION/singularity-ce-$SINGULARITY_VERSION.tar.gz
+        tar -xzf singularity-ce-$SINGULARITY_VERSION.tar.gz
+        cd singularity-ce-$SINGULARITY_VERSION
+        ./mconfig && \
+          make -C ./builddir && \
+          sudo make -C ./builddir install
+
+    - name: Create password files for merlin config
+      run: |
+        echo ${{ secrets.MERLIN_RABBITMQ_PASSWORD }} > $MERLIN_RABBITMQ_PASSWORD_FILE
+        echo ${{ secrets.MERLIN_REDIS_PASSWORD }} > $MERLIN_REDIS_PASSWORD_FILE
+
+    - name: Install merlin to run unit tests
+      run: |
+        pip3 install -e .
+        merlin config
+
+        merlin config broker -t rabbitmq \
+                             -u "$MERLIN_RABBITMQ_USER" \
+                             -pf "$MERLIN_RABBITMQ_PASSWORD_FILE" \
+                             -s "$MERLIN_RABBITMQ_SERVER" \
+                             -p "$MERLIN_RABBITMQ_PORT" \
+                             -v "$MERLIN_RABBITMQ_VHOST"
+
+        merlin config backend -t redis \
+                              -pf "$MERLIN_REDIS_PASSWORD_FILE" \
+                              -s "$MERLIN_REDIS_SERVER" \
+                              -p "$MERLIN_REDIS_PORT"
+
+    - name: Install CLI task dependencies generated from the 'feature demo' workflow
+      run: |
+        merlin example feature_demo
+        pip3 install -r feature_demo/requirements.txt
+
+    - name: Run integration test suite for local tests
+      run: |
+        python3 tests/integration/run_tests.py --verbose --local
