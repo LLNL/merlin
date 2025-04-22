@@ -68,7 +68,7 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
 
     This class manages the execution of a study based on a provided specification file,
     handling sample data, output paths, workspace management, and the generation of a
-    directed acyclic graph (DAG) for execution.
+    Directed Acyclic Graph (DAG) for execution.
 
     Attributes:
         dag (study.dag.DAG): Directed acyclic graph representing the execution flow of the study.
@@ -102,7 +102,7 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
         get_sample_labels: Retrieves the column labels for the samples.
         get_user_vars: Returns a dictionary of expanded user-defined variables from the specification.
         label_clash_error: Checks for clashes between sample and parameter names.
-        load_dag: Generates a directed acyclic graph (DAG) for the study's execution.
+        load_dag: Generates a Directed Acyclic Graph (DAG) for the study's execution.
         load_pgen: Executes a parameter generator script.
         load_samples: Loads samples from disk or generates them if the file does not exist.
         write_original_spec: Copies the original specification to the 'merlin_info' directory.
@@ -751,7 +751,7 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
 
     def load_dag(self):
         """
-        Generates a directed acyclic graph (DAG) for the execution of
+        Generates a Directed Acyclic Graph (DAG) for the execution of
         the study and assigns it to the `self.dag` attribute.
 
         This method constructs a DAG based on the specifications defined

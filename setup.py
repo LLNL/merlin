@@ -112,7 +112,6 @@ setup(
     entry_points={
         "console_scripts": [
             "merlin=merlin.main:main",
-            "merlin-templates=merlin.merlin_templates:main",
         ]
     },
     include_package_data=True,

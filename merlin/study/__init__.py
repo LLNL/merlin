@@ -38,7 +38,7 @@ Modules:
         launches for schedulers like Slurm, LSF, and Flux.
     celeryadapter.py: Provides an adapter for integrating with the Celery Distributed
         Task Queue, enabling distributed task execution.
-    dag.py: Defines the `Merlin DAG` class, which represents the Directed Acyclic Graph
+    dag.py: Defines the Merlin `DAG` class, which represents the Directed Acyclic Graph
         structure of a study's workflow.
     script_adapter.py: Contains functionality for adapting bash scripts to work with
         supported schedulers, including Flux, LSF, and Slurm.

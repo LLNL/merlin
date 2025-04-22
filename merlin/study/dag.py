@@ -29,7 +29,7 @@
 ###############################################################################
 
 """
-Holds the Merlin DAG class.
+Holds the Merlin Directed Acyclic Graph (DAG) class.
 """
 from collections import OrderedDict
 from typing import Dict, List
@@ -64,8 +64,8 @@ class DAG:
         find_chain: Find the chain containing the task.
         find_independent_chains: Finds independent chains and adjusts with the groups of chains
             to maximize parallelism.
-        group_by_depth: Group DAG tasks by depth.
-        group_tasks: Group independent tasks in a directed acyclic graph (DAG).
+        group_by_depth: Group Directed Acyclic Graph (DAG) tasks by depth.
+        group_tasks: Group independent tasks in a DAG.
         num_children: Find the number of children for the given task in the DAG.
         num_parents: Find the number of parents for the given task in the DAG.
         parents: Return the parents of the task.
@@ -81,9 +81,9 @@ class DAG:
         parameter_info: Dict,
     ):  # pylint: disable=R0913
         """
-        Initializes a DAG object, which represents a task graph used by Merlin for staging tasks
-        in Celery. The DAG is initialized from a Maestro `ExecutionGraph` by unpacking its adjacency
-        table and node values.
+        Initializes a Directed Acyclic Graph (DAG) object, which represents a task graph used by Merlin
+        for staging tasks in Celery. The DAG is initialized from a Maestro `ExecutionGraph` by unpacking
+        its adjacency table and node values.
 
         Args:
             maestro_adjacency_table: An ordered dictionary representing the adjacency
@@ -142,7 +142,7 @@ class DAG:
     @staticmethod
     def group_by_depth(depths: Dict) -> List[List[List]]:
         """
-        Group DAG tasks by depth.
+        Group Directed Acyclic Graph (DAG) tasks by depth.
 
         This method only groups by depth, and has one task in every chain.
         [`find_independent_chains`][study.dag.DAG.find_independent_chains] is used
@@ -195,7 +195,7 @@ class DAG:
 
     def num_children(self, task_name: str) -> int:
         """
-        Find the number of children for the given task in the DAG.
+        Find the number of children for the given task in the Directed Acyclic Graph (DAG).
 
         Args:
             task_name: The name of the task to count the children of.
@@ -219,7 +219,7 @@ class DAG:
 
     def num_parents(self, task_name: str) -> int:
         """
-        Find the number of parents for the given task in the DAG.
+        Find the number of parents for the given task in the Directed Acyclic Graph (DAG).
 
         Args:
             task_name: The name of the task to count the parents of.
@@ -251,8 +251,8 @@ class DAG:
         """
         Initializes the backwards adjacency table.
 
-        This method constructs a mapping of each task to its parent tasks in the directed
-        acyclic graph (DAG). The backwards adjacency table allows for reverse traversal
+        This method constructs a mapping of each task to its parent tasks in the Directed
+        Acyclic Graph (DAG). The backwards adjacency table allows for reverse traversal
         of the graph, enabling the identification of dependencies for each task.
 
         The method iterates through each parent task in the `maestro_adjacency_table`
@@ -355,7 +355,7 @@ class DAG:
 
     def group_tasks(self, source_node: str) -> List[List[List]]:
         """
-        Group independent tasks in a directed acyclic graph (DAG).
+        Group independent tasks in a Directed Acyclic Graph (DAG).
 
         Starts from a source node and works down, grouping tasks by depth,
         then identifies independent parallel chains in those groups.

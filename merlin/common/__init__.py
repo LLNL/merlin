@@ -44,7 +44,7 @@ Modules:
         [`SampleIndex`][common.sample_index.SampleIndex] objects.
     sample_index.py: Implements the logic for managing the sample hierarchy, including
         the [`SampleIndex`][common.sample_index.SampleIndex] class.
-    tasks.py: Defines Celery tasks, breaking down the [`DAG`][study.dag.DAG] into smaller
-        tasks that Celery can manage.
+    tasks.py: Defines Celery tasks, breaking down the Directed Acyclic Graph ([`DAG`][study.dag.DAG])
+        into smaller tasks that Celery can manage.
     util_sampling.py: Contains utility functions for data sampling.
 """

@@ -31,8 +31,9 @@
 """
 This module contains Celery task definitions.
 
-The purpose of this module is to convert the [`DAG`][study.dag.DAG]
-provided by Maestro into smaller tasks that Celery can manage.
+The purpose of this module is to convert the Directed Acyclic Graph
+([`DAG`][study.dag.DAG]) provided by Maestro into smaller tasks that
+Celery can manage.
 """
 from __future__ import absolute_import, unicode_literals
 
@@ -742,18 +743,13 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
     level_max_dirs: int,
 ):
     """
-    Generates a group of Celery chains of tasks from a list of task names,
-    utilizing Merlin samples and labels for variable substitution.
+    Expands a chain of task names into a group of Celery chains, using samples 
+    and labels for variable substitution.
 
-    This task expands a given chain of task names into a more complex
-    structure of tasks based on provided samples and labels. It creates
-    a hierarchy of sample paths and substitutes these paths into the
-    command parameters of the tasks in the chain.
-
-    This task checks if the chain of tasks needs expansion based on
-    the provided labels and the structure of the [`DAG`][study.dag.DAG].
-    If expansion is required, it generates and queues new tasks for each
-    range of samples, otherwise, it queues a simple chain task.
+    This task determines whether the provided chain of tasks requires 
+    expansion based on the structure of the Directed Acyclic Graph ([`DAG`][study.dag.DAG]),
+    samples, and labels. If expansion is needed, it generates and queues new tasks 
+    for each range of samples. Otherwise, it queues a simple chain task.
 
     Args:
         self: The current task instance.
@@ -928,14 +924,14 @@ def queue_merlin_study(study: MerlinStudy, adapter: Dict) -> AsyncResult:
 
     This Celery task initiates a series of tasks derived from a
     [`MerlinStudy`][study.study.MerlinStudy] object. It processes
-    the study's directed acyclic graph ([`DAG`][study.dag.DAG])
+    the study's Directed Acyclic Graph ([`DAG`][study.dag.DAG])
     to group tasks and convert them into a chain of Celery tasks
     for execution.
 
     Args:
         study: The study object containing samples, sample labels,
-            and the [`DAG`][study.dag.DAG] structure that defines
-            the task dependencies.
+            and the Directed Acyclic Graph ([`DAG`][study.dag.DAG])
+            structure that defines the task dependencies.
         adapter: An adapter object used to facilitate interactions with
             the study's data or processing logic.
 
