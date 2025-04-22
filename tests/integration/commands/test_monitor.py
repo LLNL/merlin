@@ -32,9 +32,8 @@ class TestMonitor:
         1. Sending tasks to the queues
         2. Starting workers so that they begin processing the workflow
         3. Starting the monitor so that it begins monitoring the workflow
-        4. Stopping the workers so that the tasks disappear
-        5. Restarting the workers who should now have nothing to work on, plus the workflow is
-           not yet complete.
+        4. Purging the tasks so that there's nothing left in the queues and the workflow cannot finish
+           without a restart that the monitor must provide
 
         The result of this process will produce the necessary conditions for the monitor to
         restart the workflow.
@@ -88,37 +87,26 @@ class TestMonitor:
                     start_new_session=True,
                 )
 
-                # Give the monitor 10 seconds to get going, then stop the workers
-                sleep(10)
-                celery_worker_manager.stop_all_workers()
-
-                # Restart workers; these should have no tasks to process until monitor restarts workflow
-                restart_workers_proc = subprocess.Popen(  # pylint: disable=consider-using-with
-                    f"merlin run-workers {monitor_setup.auto_restart_yaml}".split(),
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    start_new_session=True,
-                )
-                celery_worker_manager.add_run_workers_process(restart_workers_proc.pid)
+                # Purge the tasks that are in the queues
+                purge_proc = subprocess.run(f"merlin purge -f {monitor_setup.auto_restart_yaml}".split(), capture_output=True, text=True)
 
                 monitor_stdout, monitor_stderr = monitor_proc.communicate()
 
         # Define our test conditions
         study_name = "monitor_auto_restart_test"
         conditions = [
+            HasRegex("Purged 1 message from 2 known task queues."),
             HasRegex("Monitor: Restarting workflow for run with workspace"),
             HasRegex("Monitor: Workflow restarted successfully:"),
             HasRegex("Monitor: Failed to restart workflow:", negate=True),
-            StepFileExists("step_1", "MERLIN_FINISHED", study_name, monitor_setup.testing_dir),
+            StepFileExists("process_samples", "MERLIN_FINISHED", study_name, monitor_setup.testing_dir, samples=True),
+            StepFileExists("funnel_step", "MERLIN_FINISHED", study_name, monitor_setup.testing_dir),
         ]
 
         # Check our test conditions
-        workers_stdout = run_workers_proc.stdout.read() + restart_workers_proc.stdout.read()
-        workers_stderr = run_workers_proc.stderr.read() + restart_workers_proc.stderr.read()
         info = {
             "return_code": monitor_proc.returncode,
-            "stdout": monitor_stdout + workers_stdout,
-            "stderr": monitor_stderr + workers_stderr,
+            "stdout": monitor_stdout + purge_proc.stdout + run_workers_proc.stdout.read(),
+            "stderr": monitor_stderr + purge_proc.stderr + run_workers_proc.stderr.read(),
         }
         check_test_conditions(conditions, info)
