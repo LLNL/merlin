@@ -48,10 +48,10 @@ class Priority(enum.Enum):
     for message handling with brokers.
 
     Attributes:
-        HIGH (int): Represents the highest priority level.
-        MID (int): Represents the medium priority level.
-        LOW (int): Represents the lowest priority level.
-        RETRY (int): Represents the priority level for retrying messages.
+        HIGH (int): Represents the highest priority level. Numeric value: 1.
+        MID (int): Represents the medium priority level. Numeric value: 2.
+        LOW (int): Represents the lowest priority level. Numeric value: 3.
+        RETRY (int): Represents the priority level for retrying messages. Numeric value: 4.
     """
 
     HIGH = 1
@@ -60,7 +60,7 @@ class Priority(enum.Enum):
     RETRY = 4
 
 
-def is_rabbit_broker(broker: str) -> bool:
+def is_rabbit_broker(broker_name: str) -> bool:
     """
     Check if the given broker is a RabbitMQ server.
 
@@ -68,15 +68,15 @@ def is_rabbit_broker(broker: str) -> bool:
     RabbitMQ-related broker types.
 
     Args:
-        broker: The name of the broker to check.
+        broker_name: The name of the broker to check.
 
     Returns:
         True if the broker is a RabbitMQ server, False otherwise.
     """
-    return broker in ["rabbitmq", "amqps", "amqp"]
+    return broker_name in ["rabbitmq", "amqps", "amqp"]
 
 
-def is_redis_broker(broker: str) -> bool:
+def is_redis_broker(broker_name: str) -> bool:
     """
     Check if the given broker is a Redis server.
 
@@ -84,12 +84,12 @@ def is_redis_broker(broker: str) -> bool:
     Redis-related broker types.
 
     Args:
-        broker: The name of the broker to check.
+        broker_name: The name of the broker to check.
 
     Returns:
         True if the broker is a Redis server, False otherwise.
     """
-    return broker in ["redis", "rediss", "redis+socket"]
+    return broker_name in ["redis", "rediss", "redis+socket"]
 
 
 def determine_priority_map(broker_name: str) -> Dict[Priority, int]:

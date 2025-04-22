@@ -43,7 +43,7 @@ LOG = logging.getLogger(__name__)
 class Dumper:  # pylint: disable=R0903
     """
     The dumper class is intended to help write information to files.
-    Currently, the supported file types to dump to are csv and json.
+    Currently, the supported dump file types are: csv or json.
 
     Attributes:
         file_name (str): The name of the file to write data to.

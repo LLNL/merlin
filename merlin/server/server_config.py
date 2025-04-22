@@ -76,11 +76,11 @@ class ServerStatus(enum.Enum):
     Represents different states that a server can be in.
 
     Attributes:
-        RUNNING (int): Indicates the server is running and operational.
-        NOT_INITIALIZED (int): Indicates the server has not been initialized yet.
-        MISSING_CONTAINER (int): Indicates the server is missing a required container.
-        NOT_RUNNING (int): Indicates the server is not currently running.
-        ERROR (int): Indicates the server encountered an error.
+        RUNNING (int): Indicates the server is running and operational. Numeric value: 0.
+        NOT_INITIALIZED (int): Indicates the server has not been initialized yet. Numeric value: 1.
+        MISSING_CONTAINER (int): Indicates the server is missing a required container. Numeric value: 2.
+        NOT_RUNNING (int): Indicates the server is not currently running. Numeric value: 3.
+        ERROR (int): Indicates the server encountered an error. Numeric value: 4.
     """
 
     RUNNING = 0

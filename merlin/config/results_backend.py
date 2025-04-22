@@ -81,6 +81,7 @@ def get_backend_password(password_file: str, certs_path: str = None) -> str:
     Retrieves the backend password from a specified file or returns the provided password value.
 
     This function attempts to locate the password file in several locations:
+
     1. The default Merlin directory (`~/.merlin`).
     2. The path specified by `password_file`.
     3. A directory specified by `certs_path` (if provided).

@@ -105,13 +105,21 @@ def route_for_task(
         kwargs: The keyword arguments passed to the task.
         options: Additional options for the task.
         task: The task instance (default is None).
-        **kw: Additional keyword arguments.
+        **kw: Additional keyword arguments for THIS function (not the task).
 
     Returns:
         A dictionary specifying the queue to route the task to.
             If the task name contains a colon, it returns a dictionary with
             the key "queue" set to the queue name. Otherwise, it returns
             an empty dictionary.
+
+    Example:
+        Using a colon in the name will return the string before the colon as the queue:
+
+        ```python
+        >>> route_for_task("my_queue:my_task")
+        {"queue": "my_queue"}
+        ```
     """
     if ":" in name:
         queue, _ = name.split(":")
