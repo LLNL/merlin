@@ -743,12 +743,12 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
     level_max_dirs: int,
 ):
     """
-    Expands a chain of task names into a group of Celery chains, using samples 
+    Expands a chain of task names into a group of Celery chains, using samples
     and labels for variable substitution.
 
-    This task determines whether the provided chain of tasks requires 
+    This task determines whether the provided chain of tasks requires
     expansion based on the structure of the Directed Acyclic Graph ([`DAG`][study.dag.DAG]),
-    samples, and labels. If expansion is needed, it generates and queues new tasks 
+    samples, and labels. If expansion is needed, it generates and queues new tasks
     for each range of samples. Otherwise, it queues a simple chain task.
 
     Args:
