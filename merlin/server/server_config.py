@@ -35,6 +35,7 @@ import os
 import random
 import string
 import subprocess
+from importlib import resources
 from io import BufferedReader
 from typing import Tuple
 
@@ -50,12 +51,6 @@ from merlin.server.server_util import (
     RedisUsers,
     ServerConfig,
 )
-
-
-try:
-    from importlib import resources
-except ImportError:
-    import importlib_resources as resources
 
 
 LOG = logging.getLogger("merlin")
