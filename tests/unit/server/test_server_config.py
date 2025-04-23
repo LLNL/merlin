@@ -6,6 +6,7 @@ import io
 import logging
 import os
 import string
+from importlib import resources
 from typing import Dict, Tuple, Union
 
 import pytest
@@ -28,12 +29,6 @@ from merlin.server.server_config import (
     pull_server_image,
 )
 from merlin.server.server_util import CONTAINER_TYPES, MERLIN_SERVER_SUBDIR, ServerConfig
-
-
-try:
-    from importlib import resources
-except ImportError:
-    import importlib_resources as resources
 
 
 def test_generate_password_no_pass_command():
