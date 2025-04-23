@@ -103,7 +103,7 @@ def find_config_file(path: str = None) -> str:
     return None
 
 
-def load_default_user_names(config: Dict):
+def set_username_and_vhost(config: Dict):
     """
     Ensures that `broker.username` and `broker.vhost` default values are set in the
     configuration if they are not already defined.
@@ -194,12 +194,12 @@ def load_defaults(config: Dict):
 
     This function initializes default values for various configuration sections,
     including user-related settings and Celery-specific settings, by calling
-    `load_default_user_names` and `load_default_celery`.
+    `set_username_and_vhost` and `load_default_celery`.
 
     Args:
         config (Dict): The configuration dictionary to be updated with default values.
     """
-    load_default_user_names(config)
+    set_username_and_vhost(config)
     load_default_celery(config)
 
 
