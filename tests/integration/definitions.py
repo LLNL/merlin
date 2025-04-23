@@ -151,6 +151,11 @@ def define_tests():  # pylint: disable=R0914,R0915
             "run type": "local",
             "cleanup": f"rm -rf {config_dir}",
         },
+        "merlin info": {
+            "cmds": "merlin info",
+            "conditions": HasReturnCode(),
+            "run type": "local",
+        },
     }
     server_basic_tests = {
         "merlin server init": {

@@ -2,6 +2,7 @@ name: Python CI
 
 on: [push, pull_request_target]
 
+# See https://michaelheap.com/access-secrets-from-forks/ for info on permission checks in this setup
 jobs:
   Local-test-suite:
     runs-on: ubuntu-latest
