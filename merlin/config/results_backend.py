@@ -35,14 +35,9 @@ from __future__ import print_function
 
 import logging
 import os
+from urllib.parse import quote
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
-
-
-try:
-    from urllib import quote
-except ImportError:
-    from urllib.parse import quote
 
 
 LOG = logging.getLogger(__name__)
