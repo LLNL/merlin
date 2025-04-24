@@ -45,14 +45,9 @@ import os
 import ssl
 from os.path import expanduser
 from typing import Dict, List, Optional, Union
+from urllib.parse import quote
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
-
-
-try:
-    from urllib import quote
-except ImportError:
-    from urllib.parse import quote
 
 
 LOG: logging.Logger = logging.getLogger(__name__)

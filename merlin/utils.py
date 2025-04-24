@@ -34,6 +34,7 @@ Module for project-wide utility functions.
 import getpass
 import logging
 import os
+import pickle
 import re
 import socket
 import subprocess
@@ -49,12 +50,6 @@ import pkg_resources
 import psutil
 import yaml
 from tabulate import tabulate
-
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 
 LOG = logging.getLogger(__name__)
