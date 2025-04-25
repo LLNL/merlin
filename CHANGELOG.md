@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
 - Removed `e2e-distributed*` definitions from the Makefile
 
+### Fixed
+- Removed dead lgtm link
+
 ## [1.12.2]
 ### Added
 - Conflict handler option to the `dict_deep_merge` function in `utils.py`
@@ -68,7 +71,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Issue with escape sequences in ascii art (caught by python 3.12)
 - Bug where Flux wasn't identifying total number of nodes on an allocation
   - Not supporting Flux versions below 0.17.0
-- Removed dead lgtm link
 
 
 ## [1.12.1]
