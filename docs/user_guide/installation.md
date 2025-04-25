@@ -1,6 +1,6 @@
 # Installation
 
-The Merlin library can be installed by using [virtual environments and pip](#installing-with-pip) or [spack](#installing-with-spack).
+The Merlin library can be installed by using [virtual environments and pip](#installing-with-virtual-environments-pip) or [spack](#installing-with-spack).
 
 Contributors to Merlin should follow the [Developer Setup](#developer-setup) below.
 
