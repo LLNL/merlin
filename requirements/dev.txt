@@ -5,11 +5,13 @@ dep-license
 flake8
 isort
 pytest
+pytest-cov
 pylint
 twine
 sphinx>=2.0.0
 alabaster
 johnnydep
 deepdiff
+orderly-set==5.3.0; python_version == '3.8'
 pytest-order
 pytest-mock

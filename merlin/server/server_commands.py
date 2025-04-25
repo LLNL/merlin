@@ -8,7 +8,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -48,15 +48,15 @@ from merlin.server.server_config import (
     pull_server_config,
     pull_server_image,
 )
-from merlin.server.server_util import AppYaml, RedisConfig, RedisUsers
+from merlin.server.server_util import AppYaml, RedisConfig, RedisUsers, ServerConfig
 
 
 LOG = logging.getLogger("merlin")
 
 
-def init_server() -> None:
+def init_server():
     """
-    Initialize merlin server by checking and initializing main configuration directory
+    Initializes the Merlin server by setting up the main configuration directory
     and local server configuration.
     """
 
@@ -70,17 +70,21 @@ def init_server() -> None:
     LOG.info("Merlin server initialization successful.")
 
 
-# Pylint complains that there's too many branches in this function but
-# it looks clean to me so we'll ignore it
-def config_server(args: Namespace) -> None:  # pylint: disable=R0912
+def apply_config_changes(server_config: ServerConfig, args: Namespace):
     """
-    Process the merlin server config flags to make changes and edits to appropriate configurations
-    based on the input passed in by the user.
+    Applies configuration changes to the Merlin server based on user-provided arguments.
+
+    This function modifies the Redis configuration and user settings as specified by
+    the user through the provided arguments. It updates various Redis settings, such as
+    IP address, port, password, directory, snapshot settings, append mode, and file paths.
+    If any changes are made, the updated configuration is written to the appropriate files.
+
+    Args:
+        server_config (server.server_util.ServerConfig): An instance of `ServerConfig` containing
+            all the necessary configuration values for the server.
+        args (Namespace): An argparse `Namespace` object containing user-provided arguments
+            from the argument parser.
     """
-    server_config = pull_server_config()
-    if not server_config:
-        LOG.error('Try to run "merlin server init" again to reinitialize values.')
-        return False
     redis_config = RedisConfig(server_config.container.get_config_path())
 
     redis_config.set_ip_address(args.ipaddress)
@@ -98,9 +102,7 @@ def config_server(args: Namespace) -> None:  # pylint: disable=R0912
 
     redis_config.set_directory(args.directory)
 
-    redis_config.set_snapshot_seconds(args.snapshot_seconds)
-
-    redis_config.set_snapshot_changes(args.snapshot_changes)
+    redis_config.set_snapshot(seconds=args.snapshot_seconds, changes=args.snapshot_changes)
 
     redis_config.set_snapshot_file(args.snapshot_file)
 
@@ -116,14 +118,33 @@ def config_server(args: Namespace) -> None:  # pylint: disable=R0912
     else:
         LOG.info("Add changes to config file and exisiting containers.")
 
-    server_config = pull_server_config()
-    if not server_config:
+
+# Pylint complains that there's too many branches in this function but
+# it looks clean to me so we'll ignore it
+def config_server(args: Namespace):  # pylint: disable=R0912
+    """
+    Processes the Merlin server configuration flags to make changes and edits
+    to appropriate configurations based on user input.
+
+    Args:
+        args (Namespace): An argparse `Namespace` object containing user-provided arguments
+            from the argument parser.
+    """
+    server_config_before_changes = pull_server_config()
+    if not server_config_before_changes:
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
+        return False
+
+    apply_config_changes(server_config_before_changes, args)
+
+    server_config_after_changes = pull_server_config()
+    if not server_config_after_changes:
         LOG.error('Try to run "merlin server init" again to reinitialize values.')
         return False
 
     # Read the user from the list of avaliable users
-    redis_users = RedisUsers(server_config.container.get_user_file_path())
-    redis_config = RedisConfig(server_config.container.get_config_path())
+    redis_users = RedisUsers(server_config_after_changes.container.get_user_file_path())
+    redis_config = RedisConfig(server_config_after_changes.container.get_config_path())
 
     if args.add_user is not None:
         # Log the user in a file
@@ -152,12 +173,15 @@ def config_server(args: Namespace) -> None:  # pylint: disable=R0912
     return None
 
 
-def status_server() -> None:
+def status_server():
     """
-    Get the server status of the any current running containers for merlin server
+    Retrieves and displays the current status of the Merlin server.
+
+    This function checks the status of any running containers for the Merlin server
+    and logs appropriate messages based on the server's state.
     """
     current_status = get_server_status()
-    if current_status == ServerStatus.NOT_INITALIZED:
+    if current_status == ServerStatus.NOT_INITIALIZED:
         LOG.info("Merlin server has not been initialized.")
         LOG.info("Please initalize server by running 'merlin server init'")
     elif current_status == ServerStatus.MISSING_CONTAINER:
@@ -169,15 +193,20 @@ def status_server() -> None:
         LOG.info("Merlin server is running.")
 
 
-def start_server() -> bool:  # pylint: disable=R0911
+def check_for_not_running_server() -> bool:
     """
-    Start a merlin server container using singularity.
-    :return:: True if server was successful started and False if failed.
+    Checks if the Merlin server status is `NOT_RUNNING` before starting a new server.
+
+    If the server status is anything other than `NOT_RUNNING`, logs an appropriate
+    error message to inform the user.
+
+    Returns:
+        True if the server status is `NOT_RUNNING`, False otherwise.
     """
     current_status = get_server_status()
     uninitialized_err = "Merlin server has not been intitialized. Please run 'merlin server init' first."
     status_errors = {
-        ServerStatus.NOT_INITALIZED: uninitialized_err,
+        ServerStatus.NOT_INITIALIZED: uninitialized_err,
         ServerStatus.MISSING_CONTAINER: uninitialized_err,
         ServerStatus.RUNNING: """Merlin server already running.
                               Stop current server with 'merlin server stop' before attempting to start a new server.""",
@@ -187,11 +216,26 @@ def start_server() -> bool:  # pylint: disable=R0911
         LOG.info(status_errors[current_status])
         return False
 
-    server_config = pull_server_config()
-    if not server_config:
-        LOG.error('Try to run "merlin server init" again to reinitialize values.')
-        return False
+    return True
 
+
+def start_container(server_config: ServerConfig) -> subprocess.Popen:
+    """
+    Starts a container based on the provided server configuration.
+
+    This function uses the server configuration to locate the necessary image and
+    configuration files, validates their existence, and starts the container using
+    a subprocess.
+
+    Args:
+        server_config (server.server_util.ServerConfig): An instance of `ServerConfig`
+            containing information about the server to start, including paths to the image
+            and configuration files.
+
+    Returns:
+        A subprocess object representing the running container process, or `None` if
+            required files are missing.
+    """
     image_path = server_config.container.get_image_path()
     config_path = server_config.container.get_config_path()
     path_errors = {
@@ -202,7 +246,7 @@ def start_server() -> bool:  # pylint: disable=R0911
     for path in (image_path, config_path):
         if not os.path.exists(path):
             LOG.error(f"Unable to find {path_errors[path]} at {path}")
-            return False
+            return None
 
     # Pylint wants us to use with here but we don't need that
     process = subprocess.Popen(  # pylint: disable=R1732
@@ -222,6 +266,27 @@ def start_server() -> bool:  # pylint: disable=R0911
 
     time.sleep(1)
 
+    return process
+
+
+def server_started(process: subprocess.Popen, server_config: ServerConfig) -> bool:
+    """
+    Verifies that the server started by [`start_container`][server.server_commands.start_container]
+    is running properly.
+
+    This function checks the Redis output to ensure the server started successfully,
+    creates a process file for the container, and validates that the server status
+    is `RUNNING`.
+
+    Args:
+        process (subprocess.Popen): The subprocess object representing the container
+            process started by `start_container`.
+        server_config (server.server_util.ServerConfig): An instance of `ServerConfig`
+            containing information about the Redis server configuration.
+
+    Returns:
+        True if the server started successfully, False otherwise.
+    """
     redis_start, redis_out = parse_redis_output(process.stdout)
 
     if not redis_start:
@@ -243,6 +308,36 @@ def start_server() -> bool:  # pylint: disable=R0911
 
     LOG.info(f"Server started with PID {str(process.pid)}.")
     LOG.info(f'Merlin server operating on "{redis_out["hostname"]}" and port "{redis_out["port"]}".')
+    return True
+
+
+def start_server() -> bool:  # pylint: disable=R0911
+    """
+    Starts a Merlin server container.
+
+    This function performs several steps to start the server, including checking
+    for an existing non-running server, pulling the server configuration, starting
+    the container, verifying the server startup, and applying Redis user and
+    configuration settings. It also generates a new `app.yaml` file for the server
+    configuration.
+
+    Returns:
+        True if the server was successfully started, False otherwise.
+    """
+    if not check_for_not_running_server():
+        return False
+
+    server_config = pull_server_config()
+    if not server_config:
+        LOG.error('Try to run "merlin server init" again to reinitialize values.')
+        return False
+
+    process = start_container(server_config)
+    if process is None:
+        return False
+
+    if not server_started(process, server_config):
+        return False
 
     redis_users = RedisUsers(server_config.container.get_user_file_path())
     redis_config = RedisConfig(server_config.container.get_config_path())
@@ -259,10 +354,17 @@ def start_server() -> bool:  # pylint: disable=R0911
     return True
 
 
-def stop_server():
+def stop_server() -> bool:
     """
-    Stop running merlin server containers.
-    :return:: True if server was stopped successfully and False if failed.
+    Stops a running Merlin server container.
+
+    This function checks the current server status, retrieves the server configuration,
+    and attempts to terminate the running server process. If successful, the server
+    process is stopped, and the function returns True. Otherwise, it logs errors
+    and returns False.
+
+    Returns:
+        True if the server was successfully stopped, False otherwise.
     """
     if get_server_status() != ServerStatus.RUNNING:
         LOG.info("There is no instance of merlin server running.")
@@ -307,8 +409,13 @@ def stop_server():
 
 def restart_server() -> bool:
     """
-    Restart a running merlin server instance.
-    :return:: True if server was restarted successfully and False if failed.
+    Restarts a running Merlin server instance.
+
+    This function stops the currently running Merlin server and then starts it again.
+    If the server is not running, it logs a message and returns False.
+
+    Returns:
+        True if the server was successfully restarted, False otherwise.
     """
     if get_server_status() != ServerStatus.RUNNING:
         LOG.info("Merlin server is not currently running.")

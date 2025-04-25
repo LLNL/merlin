@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -29,34 +29,43 @@
 ###############################################################################
 
 """
-Merlin script adapter module
+This module stores the functionality for adapting bash scripts to use schedulers.
+
+Supported schedulers are currently: Flux, LSF, and Slurm.
 """
 
 import logging
 import os
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple, Union
 
+from maestrowf.abstracts.enums import StepPriority
+from maestrowf.abstracts.interfaces.scriptadapter import ScriptAdapter
+from maestrowf.datastructures.core.study import StudyStep
 from maestrowf.interfaces.script import SubmissionRecord
 from maestrowf.interfaces.script.localscriptadapter import LocalScriptAdapter
 from maestrowf.interfaces.script.slurmscriptadapter import SlurmScriptAdapter
 from maestrowf.utils import start_process
 
-from merlin.common.abstracts.enums import ReturnCode
+from merlin.common.enums import ReturnCode
 from merlin.utils import convert_timestring, find_vlaunch_var
 
 
 LOG = logging.getLogger(__name__)
 
 
-def setup_vlaunch(step_run: str, batch_type: str, gpu_config: bool) -> None:
+def setup_vlaunch(step_run: str, batch_type: str, gpu_config: bool):
     """
-    Check for the VLAUNCHER keyword int the step run string, find
-    the MERLIN variables and configure VLAUNCHER.
+    Check for the VLAUNCHER keyword in the step run string and configure VLAUNCHER settings.
 
-    :param `step_run`: the step.run command string
-    :param `batch_type`: the batch type string
-    :param `gpu_config`: bool to determin if gpus should be configured
-    :returns: None
+    This function examines the provided step run command string for the presence of the
+    VLAUNCHER keyword. If found, it replaces the keyword with the LAUNCHER keyword and
+    extracts relevant MERLIN variables such as nodes, processes, and cores per task.
+    It also configures GPU settings based on the provided boolean flag.
+
+    Args:
+        step_run: The step.run command string that may contain the VLAUNCHER keyword.
+        batch_type: A string representing the type of batch processing being used.
+        gpu_config: A boolean indicating whether GPUs should be configured.
     """
     if "$(VLAUNCHER)" in step_run["cmd"]:
         step_run["cmd"] = step_run["cmd"].replace("$(VLAUNCHER)", "$(LAUNCHER)")
@@ -74,20 +83,34 @@ def setup_vlaunch(step_run: str, batch_type: str, gpu_config: bool) -> None:
 
 class MerlinLSFScriptAdapter(SlurmScriptAdapter):
     """
-    A SchedulerScriptAdapter class for slurm blocking parallel launches,
-    the LSFScriptAdapter uses non-blocking submits.
+    A `SchedulerScriptAdapter` class for SLURM blocking parallel launches.
+    The `MerlinLSFScriptAdapter` uses non-blocking submits for executing LSF parallel jobs
+    in a Celery worker.
+
+    Attributes:
+        key (str): A unique key identifier for the adapter.
+        _cmd_flags (Dict[str, str]): A dictionary containing command flags for LSF execution.
+        _unsupported (Set[str]): A set of parameters that are unsupported by this adapter.
+
+    Methods:
+        get_header: Generates the header for LSF execution scripts.
+        get_parallelize_command: Generates the LSF parallelization segment of the command line.
+        get_priority: Overrides the abstract method to fix a pylint error.
+        write_script: Overwrites the write_script method from the base ScriptAdapter class.
     """
 
-    key = "merlin-lsf"
+    key: str = "merlin-lsf"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Dict):
         """
-        Initialize an instance of the MerinLSFScriptAdapter.
-        The MerlinLSFScriptAdapter is the adapter that is used for workflows that
+        Initialize an instance of the `MerinLSFScriptAdapter`.
+
+        The `MerlinLSFScriptAdapter` is the adapter that is used for workflows that
         will execute LSF parallel jobs in a celery worker. The only configurable aspect to
         this adapter is the shell that scripts are executed in.
 
-        :param **kwargs: A dictionary with default settings for the adapter.
+        Args:
+            **kwargs: A dictionary with default settings for the adapter.
         """
         super().__init__(**kwargs)
 
@@ -123,27 +146,43 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
             "walltime",
         }
 
-    def get_priority(self, priority):
-        """This is implemented to override the abstract method and fix a pylint error"""
+    def get_priority(self, priority: StepPriority):
+        """
+        This is implemented to override the abstract method and fix a pylint error.
 
-    def get_header(self, step):
+        Args:
+            priority: Float or
+                [`StepPriority`](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/abstracts/enums/index.html#maestrowf.abstracts.enums.StepPriority)
+                enum representing priorty.
+        """
+
+    def get_header(self, step: StudyStep) -> str:
         """
         Generate the header present at the top of LSF execution scripts.
 
-        :param step: A StudyStep instance.
-        :returns: A string of the header based on internal batch parameters and
-            the parameter step.
+        Args:
+            step: A Maestro StudyStep instance that contains parameters relevant to the execution.
+
+        Returns:
+            A string of the header based on internal batch parameters and the parameter step.
         """
         return f"#!{self._exec}"
 
-    def get_parallelize_command(self, procs, nodes=None, **kwargs):
+    def get_parallelize_command(self, procs: int, nodes: int = None, **kwargs: Dict) -> str:
         """
-        Generate the LSF parallelization segement of the command line.
-        :param procs: Number of processors to allocate to the parallel call.
-        :param nodes: Number of nodes to allocate to the parallel call
-            (default = 1).
-        :returns: A string of the parallelize command configured using nodes
-            and procs.
+        Generate the LSF parallelization segment of the command line.
+
+        This method constructs a command line segment for parallel execution in LSF.
+        It allows specifying the number of processors and nodes to be allocated for the parallel call,
+        along with additional command flags through keyword arguments.
+
+        Args:
+            procs: Number of processors to allocate to the parallel call.
+            nodes: Number of nodes to allocate to the parallel call. Defaults to 1.
+            **kwargs: Additional command flags that may be supported by the LSF command.
+
+        Returns:
+            A string representing the parallelization command configured using nodes and procs.
         """
         if not nodes:
             nodes = 1
@@ -180,18 +219,21 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
 
         return " ".join(args)
 
-    def write_script(self, ws_path, step):
+    def write_script(self, ws_path: str, step: StudyStep) -> Tuple[bool, str, str]:
         """
-        This will overwrite the write_script in method from Maestro's base ScriptAdapter
+        This will overwrite the `write_script` method from Maestro's base ScriptAdapter
         class but will eventually call it. This is necessary for the VLAUNCHER to work.
 
-        :param `ws_path`: the path to the workspace where we'll write the scripts
-        :param `step`: the Maestro StudyStep object containing info for our step
-        :returns: a tuple containing:
-                  - a boolean representing whether this step is to be scheduled or not
-                    - Merlin can ignore this
-                  - a path to the script for the cmd
-                  - a path to the script for the restart cmd
+        Args:
+            ws_path: The path to the workspace where the scripts will be written.
+            step: The Maestro StudyStep object containing information for the step.
+
+        Returns:
+            A tuple containing:\n
+                - bool: A boolean indicating whether this step is to be scheduled or not.
+                        (Merlin can ignore this value.)
+                - str: The path to the script for the command.
+                - str: The path to the script for the restart command.
         """
         setup_vlaunch(step.run, "lsf", False)
 
@@ -200,22 +242,41 @@ class MerlinLSFScriptAdapter(SlurmScriptAdapter):
 
 class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
     """
-    A SchedulerScriptAdapter class for slurm blocking parallel launches,
-    the SlurmScriptAdapter uses non-blocking submits.
+    A `SchedulerScriptAdapter` class for SLURM blocking parallel launches.
+
+    This class extends the `SlurmScriptAdapter` to provide support for blocking parallel
+    launches in SLURM. Unlike the base class, which uses non-blocking submits, this adapter
+    is designed for workflows that execute SLURM parallel jobs in a Celery worker.
+
+    Attributes:
+        key (str): A unique identifier for the adapter, set to "merlin-slurm".
+        _cmd_flags (Dict[str, str]): A dictionary containing command flags for SLURM.
+        _unsupported (Set[str]): A set of command flags that are not supported by this adapter.
+
+    Methods:
+        get_header: Generates the header for SLURM execution scripts.
+        get_parallelize_command: Generates the SLURM parallelization segment of the command line.
+        get_priority: Overrides the abstract method to fix a pylint error.
+        time_format: Converts a timestring to HH:MM:SS format.
+        write_script: Overwrites the write_script method from the base class to ensure VLAUNCHER compatibility.
     """
 
     key: str = "merlin-slurm"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Dict):
         """
-        Initialize an instance of the MerinSlurmScriptAdapter.
-        The MerlinSlurmScriptAdapter is the adapter that is used for workflows that
+        Initialize an instance of the `MerinSlurmScriptAdapter`.
+
+        The `MerlinSlurmScriptAdapter` is the adapter that is used for workflows that
         will execute SLURM parallel jobs in a celery worker. The only configurable aspect to
         this adapter is the shell that scripts are executed in.
 
-        :param **kwargs: A dictionary with default settings for the adapter.
+        Args:
+            **kwargs: A dictionary with default settings for the adapter.
         """
         super().__init__(**kwargs)
+
+        self._cmd_flags: Dict[str, str]
 
         self._cmd_flags["slurm"] = ""
         self._cmd_flags["walltime"] = "-t"
@@ -236,33 +297,63 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
         ]
         self._unsupported: Set[str] = set(list(self._unsupported) + new_unsupported)
 
-    def get_priority(self, priority):
-        """This is implemented to override the abstract method and fix a pylint error"""
+    def get_priority(self, priority: StepPriority):
+        """
+        This is implemented to override the abstract method and fix a pylint error.
 
-    def get_header(self, step):
+        Args:
+            priority: Float or
+                [`StepPriority`](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/abstracts/enums/index.html#maestrowf.abstracts.enums.StepPriority)
+                enum representing priorty.
+        """
+
+    def get_header(self, step: StudyStep) -> str:
         """
         Generate the header present at the top of Slurm execution scripts.
 
-        :param step: A StudyStep instance.
-        :returns: A string of the header based on internal batch parameters and
-            the parameter step.
+        Args:
+            step: A Maestro StudyStep instance that contains parameters relevant to the execution.
+
+        Returns:
+            A string of the header based on internal batch parameters and the parameter step.
         """
         return f"#!{self._exec}"
 
-    def time_format(self, val):
+    def time_format(self, val: Union[str, int]) -> str:
         """
-        Convert the timestring to HH:MM:SS
+        Convert the input timestring or integer to HH:MM:SS format.
+
+        This method utilizes the [`convert_timestring`][utils.convert_timestring]
+        function to convert a given timestring or integer (representing seconds)
+        into a formatted string in the 'hours:minutes:seconds' (HH:MM:SS) format.
+
+        Args:
+            val: A timestring in the format '[days]:[hours]:[minutes]:seconds' or
+                an integer representing time in seconds.
+
+        Returns:
+            A string representation of the input time formatted as 'HH:MM:SS'.
         """
         return convert_timestring(val, format_method="HMS")
 
-    def get_parallelize_command(self, procs, nodes=None, **kwargs):
+    def get_parallelize_command(self, procs: int, nodes: int = None, **kwargs: Dict) -> str:
         """
-        Generate the SLURM parallelization segement of the command line.
-        :param procs: Number of processors to allocate to the parallel call.
-        :param nodes: Number of nodes to allocate to the parallel call
-            (default = 1).
-        :returns: A string of the parallelize command configured using nodes
-            and procs.
+        Generate the SLURM parallelization segment of the command line.
+
+        This method constructs the command line segment required for parallel execution
+        in SLURM, including the number of processors and nodes to allocate. It also
+        incorporates any additional supported command flags provided in `kwargs`.
+
+        Args:
+            procs: The number of processors to allocate for the parallel call.
+            nodes: The number of nodes to allocate for the parallel call (default is 1).
+            **kwargs: Additional command flags to customize the SLURM command.
+                Supported flags include 'walltime' and others defined in the
+                `_cmd_flags` attribute, excluding those in the `_unsupported` set.
+
+        Returns:
+            A string representing the SLURM parallelization command, formatted with the
+                specified number of processors, nodes, and any additional flags.
         """
         args = [
             # SLURM srun command
@@ -297,18 +388,21 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
 
         return " ".join(args)
 
-    def write_script(self, ws_path, step):
+    def write_script(self, ws_path: str, step: StudyStep) -> Tuple[bool, str, str]:
         """
-        This will overwrite the write_script in method from Maestro's base ScriptAdapter
+        This will overwrite the `write_script` method from Maestro's base ScriptAdapter
         class but will eventually call it. This is necessary for the VLAUNCHER to work.
 
-        :param `ws_path`: the path to the workspace where we'll write the scripts
-        :param `step`: the Maestro StudyStep object containing info for our step
-        :returns: a tuple containing:
-                  - a boolean representing whether this step is to be scheduled or not
-                    - Merlin can ignore this
-                  - a path to the script for the cmd
-                  - a path to the script for the restart cmd
+        Args:
+            ws_path: The path to the workspace where the scripts will be written.
+            step: The Maestro `StudyStep` object containing information for the step.
+
+        Returns:
+            A tuple containing:\n
+                - bool: A boolean indicating whether this step is to be scheduled or not.
+                        (Merlin can ignore this value.)
+                - str: The path to the script for the command.
+                - str: The path to the script for the restart command.
         """
         setup_vlaunch(step.run, "slurm", False)
 
@@ -317,26 +411,41 @@ class MerlinSlurmScriptAdapter(SlurmScriptAdapter):
 
 class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
     """
-    A SchedulerScriptAdapter class for flux blocking parallel launches,
-    the FluxScriptAdapter uses non-blocking submits.
+    A `SchedulerScriptAdapter` class for flux blocking parallel launches.
+
+    The `MerlinFluxScriptAdapter` is designed for workflows that execute flux parallel jobs
+    in a Celery worker. It utilizes non-blocking submits and allows for configuration of the
+    shell in which scripts are executed.
+
+    Attributes:
+        key (str): A unique identifier for the adapter, set to "merlin-flux".
+        _cmd_flags (Dict[str, str]): A dictionary containing command-line flags for the flux command.
+        _unsupported (Set[str]): A set of command flags that are not supported by this adapter.
+
+    Methods:
+        get_priority: Retrieves the priority of the step.
+        time_format: Converts a time format to flux standard designation.
+        write_script: Writes the script for the specified step and returns relevant paths.
     """
 
-    key = "merlin-flux"
+    key: str = "merlin-flux"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Dict):
         """
-        Initialize an instance of the MerinFluxScriptAdapter.
-        The MerlinFluxScriptAdapter is the adapter that is used for workflows that
+        Initialize an instance of the `MerinFluxScriptAdapter`.
+
+        The `MerlinFluxScriptAdapter` is the adapter that is used for workflows that
         will execute flux parallel jobs in a celery worker. The only configurable aspect to
         this adapter is the shell that scripts are executed in.
 
-        :param **kwargs: A dictionary with default settings for the adapter.
+        Args:
+            **kwargs: A dictionary with default settings for the adapter.
         """
         # The flux_command should always be overriden by the study object's flux_command property
         flux_command = kwargs.pop("flux_command", "flux run")
         super().__init__(**kwargs)
 
-        self._cmd_flags = {
+        self._cmd_flags: Dict[str, str] = {
             "cmd": flux_command,
             "ntasks": "-n",
             "nodes": "-N",
@@ -366,29 +475,51 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
             "lsf",
             "slurm",
         ]
-        self._unsupported = set(new_unsupported)  # noqa
+        self._unsupported: Set[str] = set(new_unsupported)  # noqa
 
-    def get_priority(self, priority):
-        """This is implemented to override the abstract method and fix a pylint error"""
-
-    def time_format(self, val):
+    def get_priority(self, priority: StepPriority):
         """
-        Convert a time format to flux standard designation.
+        This is implemented to override the abstract method and fix a pylint error.
+
+        Args:
+            priority: Float or
+                [`StepPriority`](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/abstracts/enums/index.html#maestrowf.abstracts.enums.StepPriority)
+                enum representing priorty.
+        """
+
+    def time_format(self, val: Union[str, int]) -> str:
+        """
+        Convert a time format to Flux Standard Duration (FSD).
+
+        This method takes a time value and converts it into a format that is compatible
+        with Flux's standard time representation. The conversion is performed using the
+        [`convert_timestring`][utils.convert_timestring] function with the specified format
+        method.
+
+        Args:
+            val: The time value to be converted. This can be a string representing a time
+                duration or an integer representing a time value.
+
+        Returns:
+            The time formatted according to Flux Standard Duration (FSD).
         """
         return convert_timestring(val, format_method="FSD")
 
-    def write_script(self, ws_path, step):
+    def write_script(self, ws_path: str, step: StudyStep) -> Tuple[bool, str, str]:
         """
-        This will overwrite the write_script in method from Maestro's base ScriptAdapter
+        This will overwrite the `write_script` method from Maestro's base ScriptAdapter
         class but will eventually call it. This is necessary for the VLAUNCHER to work.
 
-        :param `ws_path`: the path to the workspace where we'll write the scripts
-        :param `step`: the Maestro StudyStep object containing info for our step
-        :returns: a tuple containing:
-                  - a boolean representing whether this step is to be scheduled or not
-                    - Merlin can ignore this
-                  - a path to the script for the cmd
-                  - a path to the script for the restart cmd
+        Args:
+            ws_path: The path to the workspace where the scripts will be written.
+            step: The Maestro `StudyStep` object containing information for the step.
+
+        Returns:
+            A tuple containing:\n
+                - bool: A boolean indicating whether this step is to be scheduled or not.
+                        (Merlin can ignore this value.)
+                - str: The path to the script for the command.
+                - str: The path to the script for the restart command.
         """
         setup_vlaunch(step.run, "flux", True)
 
@@ -397,23 +528,40 @@ class MerlinFluxScriptAdapter(MerlinSlurmScriptAdapter):
 
 class MerlinScriptAdapter(LocalScriptAdapter):
     """
-    A ScriptAdapter class for interfacing for execution in Merlin
+    A `ScriptAdapter` class for interfacing with execution in Merlin.
+
+    This class serves as an adapter for executing scripts in a Celery worker
+    environment. It allows for configuration of the execution environment and
+    manages the execution of scripts with appropriate logging and error handling.
+
+    Attributes:
+        batch_adapter (ScriptAdapter): An instance of a batch adapter used for executing scripts
+            based on the specified batch type.
+        batch_type (str): The type of batch processing to be used, derived from
+            the provided keyword arguments.
+        key (str): A unique identifier for the adapter, set to "merlin-local".
+
+    Methods:
+        submit: Executes a workflow step locally.
+        write_script: Writes a script using the batch adapter.
     """
 
-    key = "merlin-local"
+    key: str = "merlin-local"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Dict):
         """
-        Initialize an instance of the MerinScriptAdapter.
-        The MerlinScriptAdapter is the adapter that is used for workflows that
+        Initialize an instance of the `MerinScriptAdapter`.
+
+        The `MerlinScriptAdapter` is the adapter that is used for workflows that
         will execute in a celery worker. The only configurable aspect to
         this adapter is the shell that scripts are executed in.
 
-        :param **kwargs: A dictionary with default settings for the adapter.
+        Args:
+            **kwargs: A dictionary with default settings for the adapter.
         """
         super().__init__(**kwargs)
 
-        self.batch_type = "merlin-" + kwargs.get("batch_type", "local")
+        self.batch_type: str = "merlin-" + kwargs.get("batch_type", "local")
 
         if "host" not in kwargs:
             kwargs["host"] = "None"
@@ -423,33 +571,51 @@ class MerlinScriptAdapter(LocalScriptAdapter):
             kwargs["queue"] = "None"
 
         # Using super prevents recursion.
-        self.batch_adapter = super()
+        self.batch_adapter: ScriptAdapter = super()
         if self.batch_type != "merlin-local":
             self.batch_adapter = MerlinScriptAdapterFactory.get_adapter(self.batch_type)(**kwargs)
 
-    def write_script(self, *args, **kwargs):
+    def write_script(self, *args, **kwargs) -> Tuple[bool, str, str]:
         """
-        TODO
+        Generate a script for execution using the batch adapter.
+
+        This method delegates the script writing process to the associated
+        batch adapter and returns the generated script along with a restart
+        script if applicable.
+
+        Returns:
+            A tuple containing:\n
+                - bool: A boolean indicating whether this step is to be scheduled or not.
+                        (Merlin can ignore this value.)
+                - str: The path to the script for the command.
+                - str: The path to the script for the restart command.
         """
         _, script, restart_script = self.batch_adapter.write_script(*args, **kwargs)
         return True, script, restart_script
 
     # Pylint complains that there's too many arguments but it's fine in this case
-    def submit(self, step, path, cwd, job_map=None, env=None):  # pylint: disable=R0913
+    def submit(
+        self, step: StudyStep, path: str, cwd: str, job_map: Dict = None, env: Dict = None
+    ) -> SubmissionRecord:  # pylint: disable=R0913
         """
-        Execute the step locally.
-        If cwd is specified, the submit method will operate outside of the path
-        specified by the 'cwd' parameter.
-        If env is specified, the submit method will set the environment
-        variables for submission to the specified values. The 'env' parameter
-        should be a dictionary of environment variables.
+        Execute a workflow step locally.
 
-        :param step: An instance of a StudyStep.
-        :param path: Path to the script to be executed.
-        :param cwd: Path to the current working directory.
-        :param job_map: A map of workflow step names to their job identifiers.
-        :param env: A dict containing a modified environment for execution.
-        :returns: The return code of the command and processID of the command.
+        This method runs a specified script in the local environment, allowing for
+        customization of the working directory and environment variables. It handles
+        the execution of the script and logs the results, including any errors or
+        specific return codes.
+
+        Args:
+            step: An instance of the StudyStep that contains information about the
+                workflow step being executed.
+            path: The file path to the script that is to be executed.
+            cwd: The current working directory from which the script will be executed.
+            job_map: A mapping of workflow step names to their job identifiers.
+            env: A dictionary containing environment variables to be set for the execution.
+
+        Returns:
+            An object containing the return code of the command, the process ID of the
+                command, and any additional information about the execution.
         """
         LOG.debug("cwd = %s", cwd)
         LOG.debug("Script to execute: %s", path)
@@ -488,21 +654,28 @@ class MerlinScriptAdapter(LocalScriptAdapter):
 
     # TODO is there currently ever a scenario where join output is True? We should look into this
     # Pylint is complaining there's too many local variables and args but it makes this function cleaner so ignore
-    def _execute_subprocess(self, output_name, script_path, cwd, env=None, join_output=False):  # pylint: disable=R0913,R0914
+    def _execute_subprocess(
+        self, output_name: str, script_path: str, cwd: str, env: Dict = None, join_output: bool = False
+    ) -> SubmissionRecord:  # pylint: disable=R0913,R0914
         """
-        Execute the subprocess script locally.
-        If cwd is specified, the submit method will operate outside of the path
-        specified by the 'cwd' parameter.
-        If env is specified, the submit method will set the environment
-        variables for submission to the specified values. The 'env' parameter
-        should be a dictionary of environment variables.
+        Execute a subprocess script locally and manage output.
 
-        :param output_name: Output name for stdout and stderr (output_name.out). If None, don't write.
-        :param script_path: Path to the script to be executed.
-        :param cwd: Path to the current working directory.
-        :param env: A dict containing a modified environment for execution.
-        :param join_output: If True, append stderr to stdout
-        :returns: The return code of the submission command and job identifier (SubmissionRecord).
+        This method runs a specified script in a subprocess, capturing its output
+        and error streams. It allows for customization of the working directory,
+        environment variables, and output handling. The output can be saved to
+        files, and error messages can be appended to the standard output if desired.
+
+        Args:
+            output_name: The base name for the output files (stdout and stderr).
+                If None, no output files will be created.
+            script_path: The file path to the script that is to be executed.
+            cwd: The current working directory from which the script will be executed.
+            env: A dictionary containing environment variables to be set for the execution.
+            join_output: If True, appends stderr to stdout in the output file.
+
+        Returns:
+            An object containing the return code of the command the process ID of the
+                command, and any additional information about the execution.
         """
         script_bn = os.path.basename(script_path)
         new_output_name = os.path.splitext(script_bn)[0]
@@ -537,9 +710,23 @@ class MerlinScriptAdapter(LocalScriptAdapter):
 
 
 class MerlinScriptAdapterFactory:
-    """This class routes to the correct ScriptAdapter"""
+    """
+    This class routes to the correct `ScriptAdapter`.
 
-    factories = {
+    The `MerlinScriptAdapterFactory` is responsible for providing the appropriate
+    `ScriptAdapter` based on the specified adapter ID. It maintains a mapping of
+    available adapters and offers methods to retrieve them.
+
+    Attributes:
+        factories: A dictionary mapping adapter IDs (str) to their corresponding
+            `ScriptAdapter` classes.
+
+    Methods:
+        get_adapter: Returns the appropriate `ScriptAdapter` class for the given adapter ID.
+        get_valid_adapters: Returns a list of valid adapter IDs that can be used with this factory.
+    """
+
+    factories: Dict[str, ScriptAdapter] = {
         "merlin-flux": MerlinFluxScriptAdapter,
         "merlin-lsf": MerlinLSFScriptAdapter,
         "merlin-lsf-srun": MerlinSlurmScriptAdapter,
@@ -548,8 +735,23 @@ class MerlinScriptAdapterFactory:
     }
 
     @classmethod
-    def get_adapter(cls, adapter_id):
-        """Returns the appropriate ScriptAdapter to use"""
+    def get_adapter(cls, adapter_id: str) -> ScriptAdapter:
+        """
+        Returns the appropriate `ScriptAdapter` to use.
+
+        This method retrieves the `ScriptAdapter` class associated with the given
+        adapter ID. If the adapter ID is not found in the factory's mapping,
+        a ValueError is raised.
+
+        Args:
+            adapter_id: The ID of the desired `ScriptAdapter`.
+
+        Returns:
+            The corresponding `ScriptAdapter` class.
+
+        Raises:
+            ValueError: If the specified adapter_id is not found in the factories.
+        """
         if adapter_id.lower() not in cls.factories:
             msg = f"""Adapter '{str(adapter_id)}' not found. Specify an adapter that exists
                 or implement a new one mapping to the '{str(adapter_id)}'"""
@@ -559,6 +761,15 @@ class MerlinScriptAdapterFactory:
         return cls.factories[adapter_id]
 
     @classmethod
-    def get_valid_adapters(cls):
-        """Returns the valid ScriptAdapters"""
+    def get_valid_adapters(cls) -> List[str]:
+        """
+        Returns the valid ScriptAdapters.
+
+        This method provides a list of all valid adapter IDs that can be used
+        with this factory. The IDs are derived from the keys of the factories
+        dictionary.
+
+        Returns:
+            A list of valid adapter IDs.
+        """
         return cls.factories.keys()

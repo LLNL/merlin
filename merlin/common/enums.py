@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -28,48 +28,39 @@
 # SOFTWARE.
 ###############################################################################
 
-"""
-This module handles the CLI for the deprecated `merlin-templates` command.
-"""
-import argparse
-import logging
-import sys
-
-from merlin.ascii_art import banner_small
-from merlin.log_formatter import setup_logging
+"""This module provides enumerations for interfaces."""
+from enum import IntEnum
 
 
-LOG = logging.getLogger("merlin-templates")
-DEFAULT_LOG_LEVEL = "ERROR"
-
-# We disable all pylint errors in this file since this is deprecated anyways
+__all__ = ("ReturnCode",)
 
 
-def process_templates(args):  # pylint: disable=W0613,C0116
-    LOG.error("The command `merlin-templates` has been deprecated in favor of `merlin example`.")
+class ReturnCode(IntEnum):
+    """
+    Enum for Merlin return codes.
 
+    This class defines various return codes used in the Merlin system to indicate
+    the status of operations. Each return code corresponds to a specific outcome
+    of a process.
 
-def setup_argparse():  # pylint: disable=C0116
-    parser = argparse.ArgumentParser(
-        prog="Merlin Examples",
-        description=banner_small,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.set_defaults(func=process_templates)
-    return parser
+    Attributes:
+        OK (int): Indicates a successful operation. Numeric value: 0.
+        ERROR (int): Indicates a general error occurred. Numeric value: 1.
+        RESTART (int): Indicates that the process should be restarted. Numeric value: 100.
+        SOFT_FAIL (int): Indicates a non-critical failure that allows for recovery. Numeric value: 101.
+        HARD_FAIL (int): Indicates a critical failure that cannot be recovered from. Numeric value: 102.
+        DRY_OK (int): Indicates a successful operation in a dry run (no changes made). Numeric value: 103.
+        RETRY (int): Indicates that the operation should be retried. Numeric value: 104.
+        STOP_WORKERS (int): Indicates that worker processes should be stopped. Numeric value: 105.
+        RAISE_ERROR (int): Indicates that an error should be raised. Numeric value: 106.
+    """
 
-
-def main():  # pylint: disable=C0116
-    try:
-        parser = setup_argparse()
-        args = parser.parse_args()
-        setup_logging(logger=LOG, log_level=DEFAULT_LOG_LEVEL, colors=True)
-        args.func(args)
-        sys.exit()
-    except Exception as ex:  # pylint: disable=W0718
-        print(ex)
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+    OK: int = 0
+    ERROR: int = 1
+    RESTART: int = 100
+    SOFT_FAIL: int = 101
+    HARD_FAIL: int = 102
+    DRY_OK: int = 103
+    RETRY: int = 104
+    STOP_WORKERS: int = 105
+    RAISE_ERROR: int = 106

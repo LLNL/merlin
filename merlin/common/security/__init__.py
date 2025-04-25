@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -27,3 +27,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+
+"""
+The `security` package contains functionality for managing encryption within Merlin,
+ensuring secure communication and data protection.
+
+Modules:
+    encrypt.py: Handles general encryption logic.
+    encrypt_backend_traffic.py: Provides functions for encrypting backend traffic.
+"""

@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -78,7 +78,7 @@ class HardFailException(Exception):
 
 class InvalidChainException(Exception):
     """
-    Exception for invalid Merlin step DAGs.
+    Exception for invalid Merlin step Directed Acyclic Graphs (DAGs).
     """
 
     def __init__(self):

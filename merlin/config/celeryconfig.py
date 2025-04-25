@@ -1,7 +1,3 @@
-"""
-Default celery configuration for merlin
-"""
-
 ###############################################################################
 # Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
@@ -10,7 +6,7 @@ Default celery configuration for merlin
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1.
+# This file is part of Merlin, Version: 1.12.2.
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -31,6 +27,8 @@ Default celery configuration for merlin
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+
+"""This module houses the default Celery configuration settings for Merlin."""
 
 from merlin.log_formatter import FORMATS
 

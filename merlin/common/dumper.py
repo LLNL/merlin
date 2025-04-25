@@ -6,7 +6,7 @@
 #
 # LLNL-CODE-797170
 # All rights reserved.
-# This file is part of Merlin, Version: 1.12.2b1
+# This file is part of Merlin, Version: 1.12.2
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -43,34 +43,53 @@ LOG = logging.getLogger(__name__)
 class Dumper:  # pylint: disable=R0903
     """
     The dumper class is intended to help write information to files.
-    Currently, the supported file types to dump to are csv and json.
+    Currently, the supported dump file types are: csv or json.
 
-    Example csv usage:
-    dumper = Dumper("populations.csv")
-    # Eugene, OR has a population of 175096
-    # Livermore, CA has a population of 86803
-    population_data = {
-        "City": ["Eugene", "Livermore"],
-        "State": ["OR", "CA"],
-        "Population": [175096, 86803]
-    }
-    dumper.write(population_data, "w")
-        |---> Output will be written to populations.csv
+    Attributes:
+        file_name (str): The name of the file to write data to.
+        file_type (str): The type of the file (either "csv" or "json") determined
+            from the file name.
 
-    Example json usage:
-    dumper = Dumper("populations.json")
-    population_data = {
-        "OR": {"Eugene": 175096, "Portland": 641162},
-        "CA": {"Livermore": 86803, "San Francisco": 815201}
-    }
-    dumper.write(population_data, "w")
-        |---> Output will be written to populations.json
+    Methods:
+        write: Writes information to the specified output file based on the file type.
+        _csv_write: Writes information to a CSV file.
+        _json_write: Writes information to a JSON file.
+
+    Example:
+        CSV usage:
+        ```python
+        dumper = Dumper("populations.csv")
+        # Eugene, OR has a population of 175096
+        # Livermore, CA has a population of 86803
+        population_data = {
+            "City": ["Eugene", "Livermore"],
+            "State": ["OR", "CA"],
+            "Population": [175096, 86803]
+        }
+        dumper.write(population_data, "w")  # Output will be written to populations.csv
+        ```
+
+    Example:
+        JSON usage:
+        ```python
+        dumper = Dumper("populations.json")
+        population_data = {
+            "OR": {"Eugene": 175096, "Portland": 641162},
+            "CA": {"Livermore": 86803, "San Francisco": 815201}
+        }
+        dumper.write(population_data, "w")  # Output will be written to populations.json
+        ```
     """
 
-    def __init__(self, file_name):
+    def __init__(self, file_name: str):
         """
-        Initialize the class and ensure the file is of a supported type.
-        :param `file_name`: The name of the file to dump to eventually
+        Initializes the Dumper class and validates the file type.
+
+        Args:
+            file_name: The name of the file to write data to.
+
+        Raises:
+            ValueError: If the file type is not supported. Supported types are CSV and JSON.
         """
         supported_types = ["csv", "json"]
 
@@ -87,9 +106,14 @@ class Dumper:  # pylint: disable=R0903
 
     def write(self, info_to_write: Dict, fmode: str):
         """
-        Write information to an outfile.
-        :param `info_to_write`: The information you want to write to the output file
-        :param `fmode`: The file write mode ("w", "a", etc.)
+        Writes information to the specified output file.
+
+        This method determines the file type and calls the appropriate
+        method to write the data.
+
+        Args:
+            info_to_write: The information to write to the output file.
+            fmode: The file write mode ("w" for write, "a" for append, etc.).
         """
         if self.file_type == "csv":
             self._csv_write(info_to_write, fmode)
@@ -98,10 +122,12 @@ class Dumper:  # pylint: disable=R0903
 
     def _csv_write(self, csv_to_dump: Dict[str, List], fmode: str):
         """
-        Write information to a csv file.
-        :param `csv_to_dump`: The information to write to the csv file.
-                              Dict keys will be the column headers and values will be the column values.
-        :param `fmode`: The file write mode ("w", "a", etc.)
+        Writes information to a CSV file.
+
+        Args:
+            csv_to_dump: The data to write to the CSV file. Keys are column
+                headers and values are column values.
+            fmode: The file write mode ("w" for write, "a" for append, etc.).
         """
         # If we have statuses to write, create a csv writer object and write to the csv file
         with open(self.file_name, fmode) as outfile:
@@ -112,9 +138,11 @@ class Dumper:  # pylint: disable=R0903
 
     def _json_write(self, json_to_dump: Dict[str, Dict], fmode: str):
         """
-        Write information to a json file.
-        :param `json_to_dump`: The information to write to the json file.
-        :param `fmode`: The file write mode ("w", "a", etc.)
+        Writes information to a JSON file.
+
+        Args:
+            json_to_dump: The data to write to the JSON file.
+            fmode: The file write mode ("w" for write, "a" for append, etc.).
         """
         # Appending to json requires file mode to be r+ for json.load
         if fmode == "a":
@@ -132,11 +160,18 @@ class Dumper:  # pylint: disable=R0903
 
 def dump_handler(dump_file: str, dump_info: Dict):
     """
-    Help handle the process of creating a Dumper object and writing
+    Handles the process of creating a Dumper object and writing data
     to an output file.
 
-    :param `dump_file`: A filepath to the file we're dumping to
-    :param `dump_info`: A dict of information that we'll be dumping to `dump_file`
+    This function checks if the specified dump file exists to determine
+    the appropriate file write mode (append or write). It then creates
+    a Dumper object and writes the provided information to the file,
+    logging the process.
+
+    Args:
+        dump_file: The filepath to the file where data will be dumped.
+        dump_info: A dictionary containing the information to be written
+            to the `dump_file`.
     """
     # Create a dumper object to help us write to dump_file
     dumper = Dumper(dump_file)
