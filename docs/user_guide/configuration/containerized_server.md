@@ -616,6 +616,6 @@ You can check that everything ran properly with:
 merlin status hello_samples.yaml
 ```
 
-Or, if you're using a version of Merlin prior to v1.12.0, you can ensure that the `hello_samples_<timestamp>/` output workspace was created. More info on the expected output can be found in [the Hello World Examples page](../../examples/hello.md#expected-output-1).
+Or, if you're using a version of Merlin prior to v1.12.0, you can ensure that the `hello_samples_<timestamp>/` output workspace was created. More info on the expected output can be found in [the Hello World Examples page](../../examples/hello.md#expected-output_1).
 
 Congratulations, you just ran a cross-node workflow with a containerized server!

@@ -43,7 +43,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Dict, Generator, List, Tuple, Union
 
 import numpy as np
 import pkg_resources
@@ -57,13 +57,25 @@ ARRAY_FILE_FORMATS = ".npy, .csv, .tab"
 DEFAULT_FLUX_VERSION = "0.48.0"
 
 
-def get_user_process_info(user=None, attrs=None):
+def get_user_process_info(user: str = None, attrs: List[str] = None) -> List[Dict]:
     """
-    Return a list of process info for all of the user's running processes.
+    Return a list of process information for all of the user's running processes.
 
-    :param `user`: user name (default from getpass). Option: 'all_users': get
-        all processes
-    :param `atts`: the attributes to include
+    This function retrieves and returns details about the currently running processes
+    for a specified user. If no user is specified, it defaults to the current user.
+    It can also return information for all users if specified.
+
+    Args:
+        user: The username for which to retrieve process information. If set to
+            'all_users', retrieves processes for all users. Defaults to the current
+            user's username if not provided.
+        attrs: A list of attributes to include in the process information. Defaults
+            to ["pid", "name", "username", "cmdline"] if None. If "username" is not
+            included in the list, it will be added.
+
+    Returns:
+        A list of dictionaries containing the specified attributes for each process
+            belonging to the specified user or all users if 'all_users' is specified.
     """
     if attrs is None:
         attrs = ["pid", "name", "username", "cmdline"]
@@ -79,13 +91,23 @@ def get_user_process_info(user=None, attrs=None):
     return [p.info for p in psutil.process_iter(attrs=attrs) if user in p.info["username"]]
 
 
-def check_pid(pid, user=None):
+def check_pid(pid: int, user: str = None) -> bool:
     """
-    Check if pid is in process list.
+    Check if a given process ID (PID) is in the process list for a specified user.
 
-    :param `pid`: process id
-    :param `user`: user name (default from getpass). Option: 'all_users': get
-        all processes
+    This function determines whether a specific PID is currently running
+    for the specified user. If no user is specified, it defaults to the
+    current user. It can also check for all users if specified.
+
+    Args:
+        pid: The process ID to check for in the process list.
+        user: The username for which to check the process. If set to 'all_users',
+            checks processes for all users. Defaults to the current user's username
+            if not provided.
+
+    Returns:
+        True if the specified PID is found in the process list for the given user,
+            False otherwise.
     """
     user_processes = get_user_process_info(user=user)
     for process in user_processes:
@@ -94,13 +116,23 @@ def check_pid(pid, user=None):
     return False
 
 
-def get_pid(name, user=None):
+def get_pid(name: str, user: str = None) -> List[int]:
     """
-    Return pid of process with name.
+    Return the process ID(s) (PID) of processes with the specified name.
 
-    :param `name`: process name
-    :param `user`: user name (default from getpass). Option: 'all_users': get
-        all processes
+    This function retrieves the PID(s) of all running processes that match
+    the given name for a specified user. If no user is specified, it defaults
+    to the current user. It can also retrieve PIDs for all users if specified.
+
+    Args:
+        name: The name of the process to search for.
+        user: The username for which to retrieve the process IDs. If set to
+            'all_users', retrieves processes for all users. Defaults to the
+            current user's username if not provided.
+
+    Returns:
+        A list of PIDs for processes matching the specified name. Returns None
+            if no matching processes are found.
     """
     user_processes = get_user_process_info(user=user)
     name_list = [p["pid"] for p in user_processes if name in p["name"]]
@@ -109,37 +141,68 @@ def get_pid(name, user=None):
     return None
 
 
-def get_procs(name, user=None):
+def get_procs(name: str, user: str = None) -> List[Tuple[int, str]]:
     """
-    Return a list of (pid, cmdline) tuples of process with name.
+    Return a list of tuples containing the process ID (PID) and command line
+    of processes with the specified name.
 
-    :param `name`: process name
-    :param `user`: user name (default from getpass). Option: 'all_users': get
-        all processes
+    This function retrieves all running processes that match the given name
+    for a specified user. If no user is specified, it defaults to the current
+    user. It can also retrieve processes for all users if specified.
+
+    Args:
+        name: The name of the process to search for.
+        user: The username for which to retrieve the process information.
+            If set to 'all_users', retrieves processes for all users.
+            Defaults to the current user's username if not provided.
+
+    Returns:
+        A list of tuples, each containing the PID and command line of processes
+            matching the specified name. Returns an empty list if no matching
+            processes are found.
     """
     user_processes = get_user_process_info(user=user)
     procs = [(p["pid"], p["cmdline"]) for p in user_processes if name in p["name"]]
     return procs
 
 
-def is_running_psutil(cmd, user=None):
+def is_running_psutil(cmd: str, user: str = None) -> bool:
     """
-    Determine if process with given command is running.
-    Uses psutil command instead of call to 'ps'
+    Determine if a process with the given command is currently running.
 
-    :param `cmd`: process cmd
-    :param `user`: user name (default from getpass). Option: 'all_users': get
-        all processes
+    This function checks for the existence of any running processes that
+    match the specified command. It uses the `psutil` library to gather
+    process information instead of making a call to the 'ps' command.
+
+    Args:
+        cmd: The command or command line snippet to search for in running
+            processes.
+        user: The username for which to check running processes. If set to
+            'all_users', checks processes for all users. Defaults to the
+            current user's username if not provided.
+
+    Returns:
+        True if at least one matching process is found; otherwise, False.
     """
     user_processes = get_user_process_info(user=user)
     return any(cmd in " ".join(p["cmdline"]) for p in user_processes)
 
 
-def is_running(name, all_users=False):
+def is_running(name: str, all_users: bool = False) -> bool:
     """
-    Determine if process with name is running.
+    Determine if a process with the specified name is currently running.
 
-    :param `name`: process name
+    This function checks for the existence of a running process with the
+    provided name by executing the 'ps' command. It can be configured to
+    check processes for all users or just the current user.
+
+    Args:
+        name: The name of the process to search for.
+        all_users: If True, checks for processes across all users. Defaults
+            to False, which checks only the current user's processes.
+
+    Returns:
+        True if a process with the specified name is found; otherwise, False.
     """
     cmd = ["ps", "ux"]
 
@@ -159,23 +222,42 @@ def is_running(name, all_users=False):
     return False
 
 
-def expandvars2(path):
+def expandvars2(path: str) -> str:
     """
-    Replace shell strings from the current environment variables
+    Replace shell variables in the given path with their corresponding
+    environment variable values.
 
-    :param `path`: a path
+    This function expands shell-style variable references (e.g., $VAR)
+    in the input path using the current environment variables. It also
+    ensures that any escaped dollar signs (e.g., \\$) are not expanded.
+
+    Args:
+        path: The input path containing shell variable references to be expanded.
+
+    Returns:
+        The path with shell variables replaced by their corresponding values
+            from the environment, with unescaped variables expanded.
     """
     return re.sub(r"(?<!\\)\$[A-Za-z_][A-Za-z0-9_]*", "", os.path.expandvars(path))
 
 
-def regex_list_filter(regex, list_to_filter, match=True):
+def regex_list_filter(regex: str, list_to_filter: List[str], match: bool = True) -> List[str]:
     """
-    Apply a regex filter to a list
+    Apply a regex filter to a list.
 
-    :param `regex`          : the regular expression
-    :param `list_to_filter` : the list to filter
+    This function filters a given list based on a specified regular expression.
+    Depending on the `match` parameter, it can either match the entire string
+    or search for the regex pattern within the strings of the list.
 
-    :return `new_list`
+    Args:
+        regex: The regular expression to use for filtering the list.
+        list_to_filter: The list of strings to be filtered based on the regex.
+        match: If True, uses re.match to filter items that match the regex from
+            the start. If False, uses re.search to filter items that contain the
+            regex pattern.
+
+    Returns:
+        A new list containing the filtered items that match the regex.
     """
     r = re.compile(regex)  # pylint: disable=C0103
     if match:
@@ -183,16 +265,27 @@ def regex_list_filter(regex, list_to_filter, match=True):
     return list(filter(r.search, list_to_filter))
 
 
-def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False, display_warning: bool = True):
+def apply_list_of_regex(
+    regex_list: List[str], list_to_filter: List[str], result_list: List[str], match: bool = False, display_warning: bool = True
+):
     """
-    Take a list of regex's, apply each regex to a list we're searching through,
-    and append each result to a result list.
+    Apply a list of regex patterns to a list and accumulate the results.
 
-    :param `regex_list`: A list of regular expressions to apply to the list_to_filter
-    :param `list_to_filter`: A list that we'll apply regexs to
-    :param `result_list`: A list that we'll append results of the regex filters to
-    :param `match`: A bool where when true we use re.match for applying the regex,
-                    when false we use re.search for applying the regex.
+    This function takes each regex from the provided list of regex patterns
+    and applies it to the specified list. The results of each successful
+    match or search are appended to a result list. Optionally, it can display
+    a warning if a regex does not match any item in the list.
+
+    Args:
+        regex_list: A list of regular expressions to apply to the `list_to_filter`.
+        list_to_filter: The list of strings that the regex patterns will be applied to.
+        result_list: The list where results of the regex filters will be appended.
+        match: If True, uses re.match for applying the regex. If False, uses re.search.
+        display_warning: If True, displays a warning message when no matches are
+            found for a regex.
+
+    Side Effect:
+        This function modifies the `result_list` in place.
     """
     for regex in regex_list:
         filter_results = set(regex_list_filter(regex, list_to_filter, match))
@@ -204,28 +297,37 @@ def apply_list_of_regex(regex_list, list_to_filter, result_list, match=False, di
             result_list += filter_results
 
 
-def load_yaml(filepath):
+def load_yaml(filepath: str) -> Dict:
     """
-    Safely read a yaml file.
+    Safely read a YAML file and return its contents.
 
-    :param `filepath`: a filepath to a yaml file
-    :type filepath: str
+    Args:
+        filepath: The file path to the YAML file to be read.
 
-    :returns: Python objects holding the contents of the yaml file
+    Returns:
+        A dict representing the contents of the YAML file.
     """
     with open(filepath, "r") as _file:
         return yaml.safe_load(_file)
 
 
-def get_yaml_var(entry, var, default):
+def get_yaml_var(entry: Dict[str, Any], var: str, default: Any) -> Any:
     """
-    Return entry[var], else return default
+    Retrieve the value associated with a specified key from a YAML dictionary.
 
-    :param `entry`: a yaml dict
-    :param `var`: a yaml key
-    :param `default`: default value in the absence of data
+    This function attempts to return the value of `var` from the provided `entry`
+    dictionary. If the key does not exist, it will try to access it as an attribute
+    of the entry object. If neither is found, the function returns the specified
+    `default` value.
+
+    Args:
+        entry: A dictionary representing the contents of a YAML file.
+        var: The key or attribute name to retrieve from the entry.
+        default: The default value to return if the key or attribute is not found.
+
+    Returns:
+        The value associated with `var` in the entry, or `default` if not found.
     """
-
     try:
         return entry[var]
     except (TypeError, KeyError):
@@ -235,19 +337,31 @@ def get_yaml_var(entry, var, default):
             return default
 
 
-def load_array_file(filename, ndmin=2):
+def load_array_file(filename: str, ndmin: int = 2) -> np.ndarray:
     """
-    Loads up an array stored in filename, based on extension.
+    Load an array from a file based on its extension.
 
-    Valid filename extensions:
-        '.npy'  :  numpy binary file
-        '.csv'  :  comma separated text file
-        '.tab'  :  whitespace (or tab) separated text file
+    This function reads an array stored in the specified `filename`.
+    It supports three file types based on their extensions:
 
-    :param `filename` : The file to load
-    :param `ndmin`    : The minimum number of dimensions to load
+    - `.npy` for NumPy binary files
+    - `.csv` for comma-separated values
+    - `.tab` for whitespace (or tab) separated values
+
+    The function ensures that the loaded array has at least `ndmin` dimensions.
+    If the array is in binary format, it checks the dimensions without altering the data.
+
+    Args:
+        filename: The path to the file to load.
+        ndmin: The minimum number of dimensions the array should have.
+
+    Returns:
+        The loaded array.
+
+    Raises:
+        TypeError: If the file extension is not one of the supported types
+            (`.npy`, `.csv`, `.tab`).
     """
-
     protocol = determine_protocol(filename)
 
     # Don't change binary-stored numpy arrays; just check dimensions
@@ -272,9 +386,18 @@ def load_array_file(filename, ndmin=2):
     return array
 
 
-def determine_protocol(fname):
+def determine_protocol(fname: str) -> str:
     """
-    Determines a file protocol based on file name extension.
+    Determine the file protocol based on the file name extension.
+
+    Args:
+        fname: The name of the file whose protocol is to be determined.
+
+    Returns:
+        The protocol corresponding to the file extension (e.g., 'hdf5').
+
+    Raises:
+        ValueError: If the provided file name does not have a valid extension.
     """
     _, ext = os.path.splitext(fname)
     if ext.startswith("."):
@@ -289,13 +412,21 @@ def determine_protocol(fname):
 
 def verify_filepath(filepath: str) -> str:
     """
-    Verify that the filepath argument is a valid
-    file.
+    Verify that the given file path is valid and return its absolute form.
 
-    :param [str] `filepath`: the path of a file
+    This function checks if the specified `filepath` points to an existing file.
+    It expands any user directory shortcuts (e.g., `~`) and environment variables
+    in the provided path before verifying its existence. If the file does not exist,
+    a ValueError is raised.
 
-    :return: the verified absolute filepath with expanded environment variables.
-    :rtype: str
+    Args:
+        filepath: The path of the file to verify.
+
+    Returns:
+        The verified absolute file path with expanded environment variables.
+
+    Raises:
+        ValueError: If the provided file path does not point to a valid file.
     """
     filepath = os.path.abspath(os.path.expandvars(os.path.expanduser(filepath)))
     if not os.path.isfile(filepath):
@@ -305,13 +436,21 @@ def verify_filepath(filepath: str) -> str:
 
 def verify_dirpath(dirpath: str) -> str:
     """
-    Verify that the dirpath argument is a valid
-    directory.
+    Verify that the given directory path is valid and return its absolute form.
 
-    :param [str] `dirpath`: the path of a directory
+    This function checks if the specified `dirpath` points to an existing directory.
+    It expands any user directory shortcuts (e.g., `~`) and environment variables
+    in the provided path before verifying its existence. If the directory does not exist,
+    a ValueError is raised.
 
-    :return: returns the absolute path with expanded environment vars for a given dirpath.
-    :rtype: str
+    Args:
+        dirpath: The path of the directory to verify.
+
+    Returns:
+        The verified absolute directory path with expanded environment variables.
+
+    Raises:
+        ValueError: If the provided directory path does not point to a valid directory.
     """
     dirpath: str = os.path.abspath(os.path.expandvars(os.path.expanduser(dirpath)))
     if not os.path.isdir(dirpath):
@@ -320,9 +459,19 @@ def verify_dirpath(dirpath: str) -> str:
 
 
 @contextmanager
-def cd(path):  # pylint: disable=C0103
+def cd(path: str) -> Generator[None, None, None]:  # pylint: disable=C0103
     """
-    TODO
+    Context manager for changing the current working directory.
+
+    This context manager changes the current working directory to the specified `path`
+    while executing the block of code within the context. Once the block is exited,
+    it restores the original working directory.
+
+    Args:
+        path: The path to the directory to change to.
+
+    Yields:
+        Control is yielded back to the block of code within the context.
     """
     old_dir = os.getcwd()
     os.chdir(path)
@@ -332,15 +481,37 @@ def cd(path):  # pylint: disable=C0103
         os.chdir(old_dir)
 
 
-def pickle_data(filepath, content):
-    """Dump content to a pickle file"""
+def pickle_data(filepath: str, content: Any):
+    """
+    Dump content to a pickle file.
+
+    This function serializes the given `content` and writes it to a specified file
+    in pickle format. The file is opened in write mode, which will overwrite any
+    existing content in the file.
+
+    Args:
+        filepath: The path to the file where the content will be saved.
+        content: The data to be serialized and saved to the pickle file.
+    """
     with open(filepath, "w") as f:  # pylint: disable=C0103
         pickle.dump(content, f)
 
 
-def get_source_root(filepath):
-    """Used to find the absolute project path given a sample file path from
-    within the project.
+def get_source_root(filepath: str) -> str:
+    """
+    Find the absolute project path given a file path from within the project.
+
+    This function determines the root directory of a project by analyzing the given
+    file path. It works by traversing the directory structure upwards until it
+    encounters a directory name that is not an integer, which is assumed to be the
+    project root.
+
+    Args:
+        filepath: The file path from within the project for which to find the root.
+
+    Returns:
+        The absolute path to the root directory of the project. Returns None if
+            the path corresponds to the root directory itself.
     """
     filepath = os.path.abspath(filepath)
     sep = os.path.sep
@@ -362,9 +533,19 @@ def get_source_root(filepath):
     return root
 
 
-def ensure_directory_exists(**kwargs):
+def ensure_directory_exists(**kwargs: Dict[Any, Any]) -> bool:
     """
-    TODO
+    Ensure that the directory for the specified aggregate file exists.
+
+    This function checks if the directory for the given `aggregate_file` exists.
+    If it does not exist, the function creates the necessary directories.
+
+    Args:
+        **kwargs: Keyword arguments that must include:\n
+            - `aggregate_file` (str): The file path for which the directory needs to be ensured.
+
+    Returns:
+        True if the directory already existed. False otherwise.
     """
     aggregate_bundle = kwargs["aggregate_file"]
     dirname = os.path.dirname(aggregate_bundle)
@@ -376,9 +557,23 @@ def ensure_directory_exists(**kwargs):
     return True
 
 
-def nested_dict_to_namespaces(dic):
-    """Code for recursively converting dictionaries of dictionaries
-    into SimpleNamespaces instead.
+def nested_dict_to_namespaces(dic: Dict) -> SimpleNamespace:
+    """
+    Convert a nested dictionary into a nested SimpleNamespace structure.
+
+    This function recursively transforms a dictionary (which may contain other
+    dictionaries) into a structure of SimpleNamespace objects. Each key in the
+    dictionary becomes an attribute of a SimpleNamespace, allowing for attribute-style
+    access to the data.
+
+    Args:
+        dic: The nested dictionary to be converted.
+
+    Returns:
+        A SimpleNamespace object representing the nested structure of the input dictionary.
+
+    Raises:
+        TypeError: If the input is not a dictionary.
     """
 
     def recurse(dic):
@@ -395,9 +590,23 @@ def nested_dict_to_namespaces(dic):
     return recurse(new_dic)
 
 
-def nested_namespace_to_dicts(namespaces):
-    """Code for recursively converting namespaces of namespaces
-    into dictionaries instead.
+def nested_namespace_to_dicts(namespaces: SimpleNamespace) -> Dict:
+    """
+    Convert a nested SimpleNamespace structure into a nested dictionary.
+
+    This function recursively transforms a SimpleNamespace (which may contain
+    other SimpleNamespaces) into a dictionary structure. Each attribute of the
+    SimpleNamespace becomes a key in the resulting dictionary.
+
+    Args:
+        namespaces: The nested SimpleNamespace to be converted.
+
+    Returns:
+        A dictionary representing the nested structure of the input
+            SimpleNamespace.
+
+    Raises:
+        TypeError: If the input is not a SimpleNamespace.
     """
 
     def recurse(namespaces):
@@ -414,12 +623,28 @@ def nested_namespace_to_dicts(namespaces):
     return recurse(new_ns)
 
 
-def get_flux_version(flux_path, no_errors=False):
+def get_flux_version(flux_path: str, no_errors: bool = False) -> str:
     """
-    Return the flux version as a string
+    Retrieve the version of Flux as a string.
 
-    :param `flux_path`: the full path to the flux bin
-    :param `no_errors`: a flag to determine if this a test run to ignore errors
+    This function executes the Flux binary located at `flux_path` with the
+    "version" command and parses the output to return the version number.
+    If the command fails or the Flux binary cannot be found, it can either
+    raise an error or return a default version based on the `no_errors` flag.
+
+    Args:
+        flux_path: The full path to the Flux binary.
+        no_errors: A flag to suppress error messages and exceptions. If set to
+            True, errors will be logged but not raised.
+
+    Returns:
+        The version of Flux as a string.
+
+    Raises:
+        FileNotFoundError: If the Flux binary cannot be found and `no_errors`
+            is set to False.
+        ValueError: If the version cannot be determined from the output and
+            `no_errors` is set to False.
     """
     cmd = [flux_path, "version"]
 
@@ -446,12 +671,23 @@ def get_flux_version(flux_path, no_errors=False):
     return flux_ver
 
 
-def get_flux_cmd(flux_path, no_errors=False):
+def get_flux_cmd(flux_path: str, no_errors: bool = False) -> str:
     """
-    Return the flux run command as string
+    Generate the Flux run command based on the installed version.
 
-    :param `flux_path`: the full path to the flux bin
-    :param `no_errors`: a flag to determine if this a test run to ignore errors
+    This function determines the appropriate Flux command to use for
+    running jobs, depending on the version of Flux installed at the
+    specified `flux_path`. It defaults to "flux run" for versions
+    greater than or equal to 0.48.x. For older versions, it adjusts
+    the command accordingly.
+
+    Args:
+        flux_path: The full path to the Flux binary.
+        no_errors: A flag to suppress error messages and exceptions
+            if set to True.
+
+    Returns:
+        The appropriate Flux run command as a string.
     """
     # The default is for flux version >= 0.48.x
     # this may change in the future.
@@ -469,12 +705,23 @@ def get_flux_cmd(flux_path, no_errors=False):
     return flux_cmd
 
 
-def get_flux_alloc(flux_path, no_errors=False):
+def get_flux_alloc(flux_path: str, no_errors: bool = False) -> str:
     """
-    Return the flux alloc command as string
+    Generate the `flux alloc` command based on the installed version.
 
-    :param `flux_path`: the full path to the flux bin
-    :param `no_errors`: a flag to determine if this a test run to ignore errors
+    This function constructs the appropriate command for allocating
+    resources with Flux, depending on the version of Flux installed
+    at the specified `flux_path`. It defaults to "{flux_path} alloc"
+    for versions greater than or equal to 0.48.x. For older versions,
+    it adjusts the command accordingly.
+
+    Args:
+        flux_path: The full path to the Flux binary.
+        no_errors: A flag to suppress error messages and exceptions
+            if set to True.
+
+    Returns:
+        The appropriate Flux allocation command as a string.
     """
     # The default is for flux version >= 0.48.x
     # this may change in the future.
@@ -490,12 +737,21 @@ def get_flux_alloc(flux_path, no_errors=False):
     return flux_alloc
 
 
-def check_machines(machines):
+def check_machines(machines: Union[str, List[str], Tuple[str]]) -> bool:
     """
-    Return a True if the current machine is in the list of machines.
+    Check if the current machine is in the list of specified machines.
 
-    :param `machines`: A single machine or list of machines to compare
-                       with the current machine.
+    This function determines whether the hostname of the current
+    machine matches any entry in a provided list of machine names.
+    It returns True if a match is found, otherwise it returns False.
+
+    Args:
+        machines: A single machine name or a list/tuple of machine
+            names to compare with the current machine's hostname.
+
+    Returns:
+        True if the current machine's hostname matches any of the
+            specified machines; False otherwise.
     """
     local_hostname = socket.gethostname()
 
@@ -509,36 +765,67 @@ def check_machines(machines):
     return False
 
 
-def contains_token(string):
+def contains_token(string: str) -> bool:
     """
-    Return True if given string contains a token of the form $(STR).
+    Check if the given string contains a token of the form $(STR).
+
+    This function uses a regular expression to search for tokens
+    that match the pattern $(<word\\>), where <word\\> consists of
+    alphanumeric characters and underscores. It returns True if
+    such a token is found; otherwise, it returns False.
+
+    Args:
+        string: The input string to be checked for tokens.
+
+    Returns:
+        True if the input string contains a token of the form
+            $(STR); False otherwise.
     """
     if re.search(r"\$\(\w+\)", string):
         return True
     return False
 
 
-def contains_shell_ref(string):
+def contains_shell_ref(string: str) -> bool:
     """
-    Return True if given string contains a shell variable reference
-    of the form $STR or ${STR}.
+    Check if the given string contains a shell variable reference.
+
+    This function searches for shell variable references in the
+    format of $<variable\\> or ${<variable\\>}, where <variable\\>
+    consists of alphanumeric characters and underscores. It returns
+    True if a match is found; otherwise, it returns False.
+
+    Args:
+        string: The input string to be checked for shell
+            variable references.
+
+    Returns:
+        True if the input string contains a shell variable
+            reference of the form $STR or ${STR}; False otherwise.
     """
     if re.search(r"\$\w+", string) or re.search(r"\$\{\w+\}", string):
         return True
     return False
 
 
-def needs_merlin_expansion(
-    cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords: Optional[bool] = True
-) -> bool:
+def needs_merlin_expansion(cmd: str, restart_cmd: str, labels: List[str], include_sample_keywords: bool = True) -> bool:
     """
-    Check if the cmd or restart cmd provided have variables that need expansion.
+    Check if the provided command or restart command contains variables that require expansion.
 
-    :param `cmd`: The command inside a study step to check for expansion
-    :param `restart_cmd`: The restart command inside a study step to check for expansion
-    :param `labels`: A list of labels to check for inside `cmd` and `restart_cmd`
-    :return : True if the cmd has any of the default keywords or spec
-        specified sample column labels. False otherwise.
+    This function checks both the command (`cmd`) and the restart command (`restart_cmd`)
+    for the presence of specified labels or sample keywords that indicate a need for variable
+    expansion.
+
+    Args:
+        cmd: The command inside a study step to check for variable expansion.
+        restart_cmd: The restart command inside a study step to check for variable expansion.
+        labels: A list of labels to check for inside `cmd` and `restart_cmd`.
+        include_sample_keywords: Flag to indicate whether to include default sample keywords
+            in the label check.
+
+    Returns:
+        True if either `cmd` or `restart_cmd` contains any of the specified labels
+            or default sample keywords, indicating a need for expansion. False otherwise.
     """
     sample_keywords = ["MERLIN_SAMPLE_ID", "MERLIN_SAMPLE_PATH", "merlin_sample_id", "merlin_sample_path"]
     if include_sample_keywords:
@@ -555,20 +842,28 @@ def needs_merlin_expansion(
     return False
 
 
-def dict_deep_merge(dict_a: dict, dict_b: dict, path: str = None, conflict_handler: Callable = None):
+def dict_deep_merge(dict_a: Dict, dict_b: Dict, path: str = None, conflict_handler: Callable = None):
     """
-    This function recursively merges dict_b into dict_a. The built-in
-    merge of dictionaries in python (dict(dict_a) | dict(dict_b)) does not do a
-    deep merge so this function is necessary. This will only merge in new keys,
-    it will NOT update existing ones, unless you specify a conflict handler function.
-    Credit to this stack overflow post: https://stackoverflow.com/a/7205107.
+    Recursively merges `dict_b` into `dict_a`, performing a deep merge.
 
-    :param `dict_a`: A dict that we'll merge dict_b into
-    :param `dict_b`: A dict that we want to merge into dict_a
-    :param `path`: The path down the dictionary tree that we're currently at
-    :param `conflict_handler`: An optional function to handle conflicts between values at the same key.
-                               The function should return the value to be used in the merged dictionary.
-                               The default behavior without this argument is to log a warning.
+    This function combines two dictionaries by recursively merging
+    the contents of `dict_b` into `dict_a`. Unlike Python's built-in
+    dictionary merge, this function performs a deep merge, meaning
+    it will merge nested dictionaries instead of just updating top-level keys.
+    Existing keys in `dict_a` will not be updated unless a conflict handler
+    is provided to resolve key conflicts.
+
+    Credit to [this stack overflow post](https://stackoverflow.com/a/7205107).
+
+    Args:
+        dict_a: The dictionary that will be merged into.
+        dict_b: The dictionary to merge into `dict_a`.
+        path: The current path in the dictionary tree. This is used for logging
+            purposes during recursion.
+        conflict_handler: A function to handle conflicts when both dictionaries
+            have the same key with different values. The function should return
+            the value to be used in the merged dictionary. If not provided, a
+            warning will be logged for conflicts.
     """
 
     # Check to make sure we have valid dict_a and dict_b input
@@ -604,15 +899,28 @@ def dict_deep_merge(dict_a: dict, dict_b: dict, path: str = None, conflict_handl
             dict_a[key] = dict_b[key]
 
 
-def find_vlaunch_var(vlaunch_var: str, step_cmd: str, accept_no_matches=False) -> str:
+def find_vlaunch_var(vlaunch_var: str, step_cmd: str, accept_no_matches: bool = False) -> str:
     """
-    Given a variable used for VLAUNCHER and the step cmd value, find
-    the variable.
+    Find and return the specified VLAUNCHER variable from the step command.
 
-    :param `vlaunch_var`: The name of the VLAUNCHER variable (without MERLIN_)
-    :param `step_cmd`: The string for the cmd of a step
-    :param `accept_no_matches`: If True, return None if we couldn't find the variable. Otherwise, raise an error.
-    :returns: the `vlaunch_var` variable or None
+    This function searches for a variable defined in the VLAUNCHER context
+    within the provided step command string. It looks for the variable in
+    the format `MERLIN_<vlaunch_var>=<value>`. If the variable is found,
+    it returns the variable in a format suitable for use in a command string.
+    If the variable is not found, the behavior depends on the `accept_no_matches` flag.
+
+    Args:
+        vlaunch_var: The name of the VLAUNCHER variable (without the prefix 'MERLIN_').
+        step_cmd: The command string of a step where the variable may be defined.
+        accept_no_matches: If True, returns None if the variable is not found.
+            If False, raises a ValueError. Defaults to False.
+
+    Returns:
+        The variable in the format '${MERLIN_<vlaunch_var\\>}' if found, otherwise None
+            (if `accept_no_matches` is True) or raises a ValueError (if False).
+
+    Raises:
+        ValueError: If the variable is not found and `accept_no_matches` is False.
     """
     matches = list(re.findall(rf"^(?!#).*MERLIN_{vlaunch_var}=\d+", step_cmd, re.MULTILINE))
 
@@ -626,10 +934,25 @@ def find_vlaunch_var(vlaunch_var: str, step_cmd: str, accept_no_matches=False) -
 
 # Time utilities
 def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
-    """Convert a timestring to a timedelta object.
-    Timestring is given in in the format '[days]:[hours]:[minutes]:seconds'
-    with days, hours, minutes all optional add ons.
-    If passed as an int, will convert to a string first and interpreted as seconds.
+    """
+    Convert a time string or integer to a timedelta object.
+
+    The function takes a time string formatted as
+    '[days]:[hours]:[minutes]:seconds', where days, hours, and minutes
+    are optional. If an integer is provided, it is interpreted as the
+    total number of seconds.
+
+    Args:
+        timestr: The time string in the specified format or an integer
+            representing seconds.
+
+    Returns:
+        A timedelta object representing the duration specified by the input
+            string or integer.
+
+    Raises:
+        ValueError: If the input string does not conform to the expected
+            format or contains more than four time fields.
     """
     # make sure it's a string in case we get an int
     timestr = str(timestr)
@@ -647,7 +970,20 @@ def convert_to_timedelta(timestr: Union[str, int]) -> timedelta:
 
 
 def _repr_timedelta_HMS(time_delta: timedelta) -> str:  # pylint: disable=C0103
-    """Represent a timedelta object as a string in hours:minutes:seconds"""
+    """
+    Represent a timedelta object as a string in 'HH:MM:SS' format.
+
+    This function converts a given timedelta object into a string that
+    represents the duration in hours, minutes, and seconds. The output
+    is formatted as 'HH:MM:SS', with leading zeros for single-digit
+    hours, minutes, or seconds.
+
+    Args:
+        time_delta: The timedelta object to be converted.
+
+    Returns:
+        A string representation of the timedelta in the format 'HH:MM:SS'.
+    """
     hours, remainder = divmod(time_delta.total_seconds(), 3600)
     minutes, seconds = divmod(remainder, 60)
     hours, minutes, seconds = int(hours), int(minutes), int(seconds)
@@ -655,20 +991,46 @@ def _repr_timedelta_HMS(time_delta: timedelta) -> str:  # pylint: disable=C0103
 
 
 def _repr_timedelta_FSD(time_delta: timedelta) -> str:  # pylint: disable=C0103
-    """Represent a timedelta as a flux standard duration string, using seconds.
+    """
+    Represent a timedelta as a Flux Standard Duration (FSD) string in seconds.
 
-    flux standard duration (FSD) is a floating point number with a single character suffix: s,m,h or d.
-    This uses seconds for simplicity.
+    The FSD format represents a duration as a floating-point number followed
+    by a suffix indicating the time unit. This function simplifies the
+    representation by using seconds and appending an 's' suffix.
+
+    Args:
+        time_delta: The timedelta object to be converted.
+
+    Returns:
+        A string representation of the timedelta in FSD format, expressed
+            in seconds (e.g., '123.45s').
     """
     fsd = f"{time_delta.total_seconds()}s"
     return fsd
 
 
 def repr_timedelta(time_delta: timedelta, method: str = "HMS") -> str:
-    """Represent a timedelta object as a string using a particular method.
+    """
+    Represent a timedelta object as a string using a specified format method.
 
-    method - HMS: 'hours:minutes:seconds'
-    method - FSD: flux standard duration: 'seconds.s'"""
+    This function formats a given timedelta object according to the chosen
+    method. The available methods are:
+
+    - HMS: Represents the duration in 'hours:minutes:seconds' format.
+    - FSD: Represents the duration in Flux Standard Duration (FSD),
+      expressed as a floating-point number of seconds with an 's' suffix.
+
+    Args:
+        time_delta: The timedelta object to be formatted.
+        method: The method to use for formatting. Must be either 'HMS' or 'FSD'.
+
+    Returns:
+        A string representation of the timedelta formatted according
+            to the specified method.
+
+    Raises:
+        ValueError: If an invalid method is provided.
+    """
     if method == "HMS":
         return _repr_timedelta_HMS(time_delta)
     if method == "FSD":
@@ -677,16 +1039,27 @@ def repr_timedelta(time_delta: timedelta, method: str = "HMS") -> str:
 
 
 def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") -> str:
-    """Converts a timestring to a different format.
+    """
+    Converts a timestring to a specified format.
 
-    timestring: -either-
-                a timestring in in the format '[days]:[hours]:[minutes]:seconds'
-                    days, hours, minutes are all optional add ons
-                -or-
-                an integer representing seconds
-    format_method: HMS - 'hours:minutes:seconds'
-                   FSD - 'seconds.s' (flux standard duration)
+    This function accepts a timestring in a specific format or an integer
+    representing seconds, and converts it to a formatted string based on
+    the chosen format method. The available format methods are:
 
+    - HMS: Represents the duration in 'hours:minutes:seconds' format.
+    - FSD: Represents the duration in Flux Standard Duration (FSD),
+      expressed as a floating-point number of seconds with an 's' suffix.
+
+    Args:
+        timestring: A string representing time in the format
+            '[days]:[hours]:[minutes]:seconds' (where days, hours, and
+            minutes are optional), or an integer representing time in seconds.
+        format_method: The method to use for formatting. Must be either
+            'HMS' or 'FSD'.
+
+    Returns:
+        A string representation of the converted timestring formatted
+            according to the specified method.
     """
     LOG.debug(f"Timestring is: {timestring}")
     tdelta = convert_to_timedelta(timestring)
@@ -696,16 +1069,37 @@ def convert_timestring(timestring: Union[str, int], format_method: str = "HMS") 
 
 def pretty_format_hms(timestring: str) -> str:
     """
-    Given an HMS timestring, format it so it removes blank entries and adds
-    labels.
+    Format an HMS timestring to remove blank entries and add appropriate labels.
 
-    :param `timestring`: the HMS timestring we'll format
-    :returns: a formatted timestring
+    This function takes a timestring in the 'HH:MM:SS' format and formats
+    it by removing any components that are zero and appending the relevant
+    labels (days, hours, minutes, seconds). The output is a cleaner string
+    representation of the time.
+
+    Args:
+        timestring: A timestring formatted as 'DD:HH:MM:SS'. Each component
+            represents days, hours, minutes, and seconds, respectively.
+            Only the last four components are relevant and may include
+            leading zeros.
+
+    Returns:
+        A formatted timestring with non-zero components labeled appropriately.
+
+    Raises:
+        ValueError: If the input timestring contains more than four components
+            or is not in the expected format.
 
     Examples:
-        - "00:00:34:00" -> "34m"
-        - "01:00:00:25" -> "01d:25s"
-        - "00:19:44:28" -> "19h:44m:28s"
+        ```python
+        >>> pretty_format_hms("00:00:34:00")
+        '34m'
+        >>> pretty_format_hms("01:00:00:25")
+        '01d:25s'
+        >>> pretty_format_hms("00:19:44:28")
+        '19h:44m:28s'
+        >>> pretty_format_hms("00:00:00:00")
+        '00s'
+        ```
     """
     # Create labels and split the timestring
     labels = ["d", "h", "m", "s"]
@@ -730,10 +1124,23 @@ def pretty_format_hms(timestring: str) -> str:
 
 def ws_time_to_dt(ws_time: str) -> datetime:
     """
-    Converts a workspace timestring to a datetime object.
+    Convert a workspace timestring to a datetime object.
 
-    :param `ws_time`: A workspace timestring in the format YYYYMMDD-HHMMSS
-    :returns: A datetime object created from the workspace timestring
+    This function takes a workspace timestring formatted as 'YYYYMMDD-HHMMSS'
+    and converts it into a corresponding datetime object. The input string
+    must adhere to the specified format to ensure accurate conversion.
+
+    Args:
+        ws_time: A workspace timestring in the format 'YYYYMMDD-HHMMSS', where:\n
+            - YYYY is the four-digit year,
+            - MM is the two-digit month (01 to 12),
+            - DD is the two-digit day (01 to 31),
+            - HH is the two-digit hour (00 to 23),
+            - MM is the two-digit minute (00 to 59),
+            - SS is the two-digit second (00 to 59).
+
+    Returns:
+        A datetime object constructed from the provided workspace timestring.
     """
     year = int(ws_time[:4])
     month = int(ws_time[4:6])
@@ -746,11 +1153,19 @@ def ws_time_to_dt(ws_time: str) -> datetime:
 
 def get_package_versions(package_list: List[str]) -> str:
     """
-    Return a table of the versions and locations of installed packages, including python.
-    If the package is not installed says "Not installed"
+    Generate a formatted table of installed package versions and their locations.
 
-    :param `package_list`: A list of packages.
-    :returns: A string that's a formatted table.
+    This function takes a list of package names and checks for their installed
+    versions and locations. If a package is not installed, it indicates that
+    the package is "Not installed". The output includes the Python version
+    and its executable location at the top of the table.
+
+    Args:
+        package_list: A list of package names to check for installed versions.
+
+    Returns:
+        A formatted string representing a table of package names, their versions,
+            and installation locations.
     """
     table = []
     for package in package_list:

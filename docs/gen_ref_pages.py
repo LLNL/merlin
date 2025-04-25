@@ -6,10 +6,27 @@ import mkdocs_gen_files
 
 nav = mkdocs_gen_files.Nav()
 
-# print(sorted(Path("merlin").rglob("*.py")))
+IGNORE_PATTERNS = [
+    Path("merlin/examples/workflows"),
+    Path("merlin/examples/dev_workflows"),
+    Path("merlin/data"),
+    "*/ascii_art.py",
+]
+
+
+def should_ignore(path):
+    """Check if the given path matches any ignore patterns."""
+    for pattern in IGNORE_PATTERNS:
+        # if Path(pattern).is_relative_to(path):
+        if path.is_relative_to(Path(pattern)):
+            return True
+        if path.match(pattern):
+            return True
+    return False
+
 
 for path in sorted(Path("merlin").rglob("*.py")):
-    if "merlin/examples" in str(path):
+    if should_ignore(path):
         continue
     module_path = path.relative_to("merlin").with_suffix("")
     doc_path = path.relative_to("merlin").with_suffix(".md")

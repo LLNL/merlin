@@ -27,7 +27,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-"""This module defines the default values of every block in the merlin spec"""
+"""
+This module defines the default values for every block in a Merlin specification file.
+
+Merlin specification files are used to configure workflows, tasks, and resources in
+Merlin. This module provides the default values for each block in the spec file, ensuring
+that workflows can execute even if certain fields are omitted by the user. These defaults
+serve as a fallback mechanism to maintain consistency and simplify the configuration process.
+
+This module serves as a reference for the default configuration of Merlin specification files.
+"""
 
 DESCRIPTION = {"description": {}}
 

@@ -27,7 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
-"""This module handles all the functionality of getting the statuses of studies"""
+"""This module handles all the functionality of getting the statuses of studies."""
 import json
 import logging
 import os
@@ -37,7 +37,7 @@ from copy import deepcopy
 from datetime import datetime
 from glob import glob
 from traceback import print_exception
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Set, Tuple, Union
 
 import numpy as np
 from filelock import FileLock, Timeout
@@ -47,6 +47,7 @@ from tabulate import tabulate
 from merlin.common.dumper import dump_handler
 from merlin.display import ANSI_COLORS, display_status_summary, display_status_task_by_task
 from merlin.spec.expansion import get_spec_with_expansion
+from merlin.spec.specification import MerlinSpec
 from merlin.study.status_constants import (
     ALL_VALID_FILTERS,
     CELERY_KEYS,
@@ -72,15 +73,58 @@ LOG = logging.getLogger(__name__)
 
 class Status:
     """
-    This class handles everything to do with status besides displaying it.
-    Display functionality is handled in display.py.
+    Handles the management and retrieval of status information for studies.
+
+    This class is responsible for loading specifications, tracking the status of steps,
+    calculating runtime statistics, and formatting status information for output in
+    various formats (JSON, CSV). It interacts with the file system to read status files
+    and provides methods to display and dump status information.
+
+    Attributes:
+        args (Namespace): Command-line arguments provided by the user.
+        full_step_name_map (Dict[str, Set[str]]): A mapping of overall step names to full step names.
+        num_requested_statuses (int): Counts the number of task statuses in the `requested_statuses`
+            dictionary.
+        requested_statuses (Dict): A dictionary storing the statuses that the user wants to view.
+        run_time_info (Dict[str, Dict]): A dictionary storing runtime statistics for each step.
+        spec (spec.specification.MerlinSpec): A [`MerlinSpec`][spec.specification.MerlinSpec]
+            object loaded from the workspace or spec file.
+        step_tracker (Dict[str, List[str]]): A dictionary tracking started and unstarted steps.
+        tasks_per_step (Dict[str, int]): A mapping of tasks per step for accurate totals.
+        workspace (str): The path to the workspace containing study data.
+
+    Methods:
+        display: Displays a high-level summary of the status.
+        dump: Dumps the status information to a specified file.
+        format_csv_dump: Prepares the dictionary of statuses for CSV output.
+        format_json_dump: Prepares the dictionary of statuses for JSON output.
+        format_status_for_csv: Reformats statuses into a dictionary suitable for CSV output.
+        get_runtime_avg_std_dev: Calculates and stores the average and standard deviation of
+            runtimes for a step.
+        get_step_statuses: Reads and returns the statuses for a given step.
+        get_steps_to_display: Generates a list of steps to display the status for.
+        load_requested_statuses: Populates the `requested_statuses` dictionary with statuses
+            from the study.
     """
 
     def __init__(self, args: Namespace, spec_display: bool, file_or_ws: str):
+        """
+        Initializes the `Status` object, which manages and retrieves status information for studies.
+
+        Args:
+            args: Command-line arguments provided by the user, including filters and options
+                for displaying or dumping status information.
+            spec_display: A flag indicating whether the status should be loaded from a specification
+                file (`True`) or from a workspace (`False`).
+            file_or_ws: The path to the specification file or workspace, depending on the value of
+                `spec_display`.
+        """
         # Save the args to this class instance and check if the steps filter was given
-        self.args = args
+        self.args: Namespace = args
 
         # Load in the workspace path and spec object
+        self.workspace: str
+        self.spec: MerlinSpec
         if spec_display:
             self.workspace, self.spec = self._load_from_spec(file_or_ws)
         else:
@@ -91,26 +135,31 @@ class Status:
         self._verify_filter_args()
 
         # Create a step tracker that will tell us which steps have started/not started
-        self.step_tracker = self.get_steps_to_display()
+        self.step_tracker: Dict[str, List[str]] = self.get_steps_to_display()
 
         # Create a tasks per step mapping in order to give accurate totals for each step
-        self.tasks_per_step = self.spec.get_tasks_per_step()
+        self.tasks_per_step: Dict[str, int] = self.spec.get_tasks_per_step()
 
         # This attribute will store a map between the overall step name and the full step names
         # that are created with parameters (e.g. step name is hello and uses a "GREET: hello" parameter
         # so the real step name is hello_GREET.hello)
-        self.full_step_name_map = {}
+        self.full_step_name_map: Dict[str, Set[str]] = {}
 
         # Variable to store run time information for each step
-        self.run_time_info = {}
+        self.run_time_info: Dict[str, Dict] = {}
 
         # Variable to store the statuses that the user wants
-        self.requested_statuses = {}
+        self.requested_statuses: Dict = {}
         self.load_requested_statuses()
 
     def _print_requested_statuses(self):
         """
-        Helper method to print out the requested statuses dict.
+        Print the requested statuses stored in the `requested_statuses` dictionary.
+
+        This helper method iterates through the `requested_statuses` attribute, which contains
+        information about the statuses of various steps. It prints the step names along with
+        their corresponding status information. Non-workspace keys are printed directly, while
+        workspace-related keys are further detailed by their status keys and values.
         """
         print("self.requested_statuses:")
         for step_name, overall_step_info in self.requested_statuses.items():
@@ -125,16 +174,38 @@ class Status:
 
     def _verify_filter_args(self):
         """
-        This is an abstract method since we'll need to verify filter args for DetailedStatus
-        but not for Status.
+        Verify the filter arguments for the status retrieval.
+
+        This is an abstract method intended to be implemented in subclasses, such as
+        [`DetailedStatus`][study.status.DetailedStatus]. The method will ensure that
+        the filter arguments provided for retrieving statuses are valid and meet the
+        necessary criteria. The implementation details will depend on the specific
+        requirements of the subclass.
         """
 
     def _get_latest_study(self, studies: List[str]) -> str:
         """
-        Given a list of studies, get the latest one.
+        Retrieve the latest study from a list of studies.
 
-        :param `studies`: A list of studies to sort through
-        :returns: The latest study in the list provided
+        This method examines a list of study identifiers and determines which one is the latest
+        based on the timestamp embedded in the study names. It assumes that the newest study is
+        represented by the last entry in the list but verifies this assumption by comparing the
+        timestamps of all studies.
+
+        The method extracts the timestamp from the last 15 characters of each study identifier,
+        converts it to a datetime object, and compares it to find the most recent study.
+
+        Args:
+            studies: A list of study identifiers to evaluate.
+
+        Returns:
+            The identifier of the latest study.
+
+        Example:
+            ```python
+            >>> self._get_latest_study(["study_20231101-174102", "study_20231101-182044", "study_20231101-163327"])
+            'study_20231101-182044'
+            ```
         """
         # We can assume the newest study is the last one to be added to the list of potential studies
         newest_study = studies[-1]
@@ -155,12 +226,22 @@ class Status:
         """
         Grab the study that the user wants to view the status of based on a list of potential studies provided.
 
-        :param `study_output_dir`: A string representing the output path of a study; equivalent to $(OUTPUT_PATH)
-        :param `num_studies`: The number of potential studies we found
-        :param `potential_studies`: The list of potential studies we found;
-                                    Each entry is of the form (index, potential_study_name)
-        :returns: A directory path to the study that the user wants
-                  to view the status of ("study_output_dir/selected_potential_study")
+        This method checks the number of potential studies found and either selects the latest study
+        automatically or prompts the user to choose from the available options. It constructs the
+        directory path to the selected study.
+
+        Args:
+            study_output_dir: A string representing the output path of a study; equivalent to $(OUTPUT_PATH).
+            num_studies: The number of potential studies found.
+            potential_studies: A list of potential studies found, where each entry is of the form (index,
+                potential_study_name).
+
+        Returns:
+            A directory path to the study that the user wants to view the status of, formatted as
+                "study_output_dir/selected_potential_study".
+
+        Raises:
+            ValueError: If no potential studies are found or if the user input is invalid.
         """
         study_to_check = f"{study_output_dir}/"
         if num_studies == 0:
@@ -197,14 +278,25 @@ class Status:
 
         return study_to_check
 
-    def _load_from_spec(self, filepath: str) -> Tuple[str, "MerlinSpec"]:  # noqa: F821 pylint: disable=R0914
+    def _load_from_spec(self, filepath: str) -> Tuple[str, MerlinSpec]:  # pylint: disable=R0914
         """
-        Get the desired workspace from the user and load up it's yaml spec
-        for further processing.
+        Get the desired workspace from the user and load its YAML spec for further processing.
 
-        :param `filepath`: The filepath to a spec given by the user
-        :returns: The workspace of the study we'll check the status for and a MerlinSpec
-                object loaded in from the workspace's merlin_info subdirectory.
+        This method verifies the output path based on user input or the spec file and builds a list
+        of potential study output directories. It then calls another method to obtain the study to
+        check the status for and loads the corresponding spec.
+
+        Args:
+            filepath: The filepath to a spec provided by the user.
+
+        Returns:
+            A tuple containing the workspace of the study to check the status for and a
+                [`MerlinSpec`][spec.specification.MerlinSpec] object loaded from the workspace's
+                merlin_info subdirectory.
+
+        Raises:
+            ValueError: If the specified output directory does not contain a merlin_info subdirectory,
+                or if multiple or no expanded spec options are found in the directory.
         """
         # If the user provided a new output path to look in, use that
         if self.args.output_path is not None:
@@ -263,11 +355,17 @@ class Status:
 
         return study_to_check, actual_spec
 
-    def _load_from_workspace(self) -> "MerlinSpec":  # noqa: F821
+    def _load_from_workspace(self) -> MerlinSpec:
         """
-        Create a MerlinSpec object based on the spec file in the workspace.
+        Create a [`MerlinSpec`][spec.specification.MerlinSpec] object based on the expanded spec file
+        in the workspace.
 
-        :returns: A MerlinSpec object loaded from the workspace provided by the user
+        Returns:
+            spec.specification.MerlinSpec: A [`MerlinSpec`][spec.specification.MerlinSpec] object loaded
+                from the workspace provided by the user.
+
+        Raises:
+            ValueError: If multiple or no expanded spec options are found in the workspace's merlin_info directory.
         """
         # Grab the spec file from the directory provided
         expanded_spec_options = glob(f"{self.workspace}/merlin_info/*.expanded.yaml")
@@ -285,11 +383,19 @@ class Status:
 
     def _create_step_tracker(self, steps_to_check: List[str]) -> Dict[str, List[str]]:
         """
-        Creates a dictionary of started and unstarted steps that we
-        will display the status for.
+        Creates a dictionary of started and unstarted steps to display their status.
 
-        :param `steps_to_check`: A list of steps to view the status of
-        :returns: A dictionary mapping of started and unstarted steps. Values are lists of step names.
+        This method checks the workspace for steps that have been started and compares them
+        against a provided list of steps to determine which steps are started and which are
+        unstarted. It returns a dictionary categorizing the steps accordingly.
+
+        Args:
+            steps_to_check: A list of step names to check the status of.
+
+        Returns:
+            A dictionary with two keys:\n
+                - "started_steps": A list of steps that have been started.
+                - "unstarted_steps": A list of steps that have not been started.
         """
         step_tracker = {"started_steps": [], "unstarted_steps": []}
         started_steps = next(os.walk(self.workspace))[1]
@@ -310,10 +416,22 @@ class Status:
 
     def get_steps_to_display(self) -> Dict[str, List[str]]:
         """
-        Generates a list of steps to display the status for based on information
-        provided to the merlin status command by the user.
+        Generates a dictionary of steps to display their status based on user input
+        provided to the merlin status command.
 
-        :returns: A dictionary of started and unstarted steps for us to display the status of
+        This method retrieves the names of existing steps from the study specification
+        and creates a step tracker to categorize them into started and unstarted steps.
+
+        Returns:
+            A dictionary with two keys:\n
+                - `started_steps`: A list of steps that have been started.
+                - `unstarted_steps`: A list of steps that have not been started.
+
+        Example:
+            ```python
+            >>> self.get_steps_to_display()
+            {"started_steps": ["step1"], "unstarted_steps": ["step2", "step3"]}
+            ```
         """
         existing_steps = self.spec.get_study_step_names()
 
@@ -328,10 +446,13 @@ class Status:
         return step_tracker
 
     @property
-    def num_requested_statuses(self):
+    def num_requested_statuses(self) -> int:
         """
-        Count the number of task statuses in a the requested_statuses dict.
-        We need to ignore non workspace keys when we count.
+        Counts the number of task statuses in the requested_statuses dictionary,
+        excluding non-workspace keys.
+
+        Returns:
+            The count of requested task statuses that are not non-workspace keys.
         """
         num_statuses = 0
         for overall_step_info in self.requested_statuses.values():
@@ -341,12 +462,20 @@ class Status:
 
     def get_step_statuses(self, step_workspace: str, started_step_name: str) -> Dict[str, List[str]]:
         """
-        Given a step workspace and the name of the step, read in all the statuses
-        for the step and return them in a dict.
+        Reads the statuses for a specified step from the given step workspace.
 
-        :param step_workspace: The path to the step we're going to read statuses from
-        :param started_step_name: The name of the step that we're gathering statuses for
-        :returns: A dict of statuses for the given step
+        This method traverses the specified step workspace directory to locate
+        `MERLIN_STATUS.json` files, reads their contents, and aggregates the statuses
+        into a dictionary. It also tracks the full names of the steps and counts
+        the number of statuses read.
+
+        Args:
+            step_workspace: The path to the step directory from which to read statuses.
+            started_step_name: The name of the step for which statuses are being gathered.
+
+        Returns:
+            A dictionary containing the statuses for the specified step, where each key is a full
+                step name and the value is a list of status information.
         """
         step_statuses = {}
         num_statuses_read = 0
@@ -390,7 +519,13 @@ class Status:
 
     def load_requested_statuses(self):
         """
-        Populate the requested_statuses dict with the statuses from the study.
+        Populates the `requested_statuses` dictionary with statuses from the study.
+
+        This method iterates through the started steps in the step tracker,
+        retrieves their statuses using the
+        [`get_step_statuses`][study.status.Status.get_step_statuses] method, and merges
+        these statuses into the `requested_statuses` dictionary. It also calculates
+        the average and standard deviation of the run times for each step.
         """
         LOG.info(f"Reading task statuses from {self.workspace}")
 
@@ -406,14 +541,20 @@ class Status:
         # Count how many statuses in total that we just read in
         LOG.info(f"Read in {self.num_requested_statuses} statuses total.")
 
-    def get_runtime_avg_std_dev(self, step_statuses: Dict, step_name: str) -> Dict:
+    def get_runtime_avg_std_dev(self, step_statuses: Dict, step_name: str):
         """
-        Calculate the mean and standard deviation for the runtime of each step.
-        Add this to the state information once calculated.
+        Calculates the average and standard deviation of the runtime for a specified step.
 
-        :param `step_statuses`: A dict of step status information that we'll parse for run times
-        :param `step_name`: The name of the step
-        :returns: An updated dict of step status info with run time avg and std dev
+        This method parses the provided step status information to extract runtime values,
+        computes the mean and standard deviation of these runtimes, and updates the state
+        information with the calculated values. The runtimes are expected to be in a specific
+        format (e.g., "1h30m15s") and are converted to seconds for the calculations.
+
+        Args:
+            step_statuses: A dictionary containing step status information, where each
+                entry includes runtime data to be parsed.
+            step_name: The name of the step for which the average and standard deviation
+                of the runtime are being calculated.
         """
         # Initialize a list to track all existing runtimes
         run_times_in_seconds = []
@@ -454,32 +595,53 @@ class Status:
             self.run_time_info[step_name]["run_time_std_dev"] = f"±{pretty_format_hms(convert_timestring(run_time_std_dev))}"
             LOG.debug(f"Run time avg and std dev for step '{step_name}' calculated.")
 
-    def display(self, test_mode: Optional[bool] = False) -> Dict:
+    def display(self, test_mode: bool = False) -> Dict:
         """
-        Displays the high level summary of the status.
+        Displays a high-level summary of the status.
 
-        :param `test_mode`: If true, run this in testing mode and don't print any output
-        :returns: A dict that will be empty if test_mode is False. Otherwise, the dict will
-                  contain the status info that would be displayed.
+        This method provides an overview of the current status of the workflow. If
+        `test_mode` is enabled, it will not print any output but will return the
+        status information in a dictionary.
+
+        Args:
+            test_mode: If true, run this in testing mode and don't print any output.
+
+        Returns:
+            An empty dictionary if `test_mode` is False; otherwise, a dictionary containing
+                the status information that would be displayed.
         """
         return display_status_summary(self, NON_WORKSPACE_KEYS, test_mode=test_mode)
 
     def format_json_dump(self, date: datetime) -> Dict:
         """
-        Build the dict of statuses to dump to the json file.
+        Builds a dictionary of statuses to dump to a JSON file.
 
-        :param `date`: A timestamp for us to mark when this status occurred
-        :returns: A dictionary that's ready to dump to a json outfile
+        This method prepares the status information for serialization by adding a timestamp
+        to the existing status data.
+
+        Args:
+            date: A timestamp marking when this status occurred.
+
+        Returns:
+            A dictionary ready to be dumped to a JSON file, containing the timestamp
+                and the requested statuses.
         """
         # Statuses are already in json format so we'll just add a timestamp for the dump here
         return {date: self.requested_statuses}
 
     def format_csv_dump(self, date: datetime) -> Dict:
         """
-        Add the timestamp to the statuses to write.
+        Adds a timestamp to the statuses for CSV output.
 
-        :param `date`: A timestamp for us to mark when this status occurred
-        :returns: A dict equivalent of formatted statuses with a timestamp entry at the start of the dict.
+        This method reformats the status information into a structure suitable for CSV
+        output, including a timestamp entry as the first column.
+
+        Args:
+            date: A timestamp marking when this status occurred.
+
+        Returns:
+            A dictionary equivalent of formatted statuses with a timestamp entry
+                at the start of the dictionary.
         """
         # Reformat the statuses to a new dict where the keys are the column labels and rows are the values
         LOG.debug("Formatting statuses for csv dump...")
@@ -494,7 +656,11 @@ class Status:
 
     def dump(self):
         """
-        Dump the status information to a file.
+        Dumps the status information to a file.
+
+        This method handles the creation of a timestamp and determines the appropriate
+        file format (CSV or JSON) for dumping the status information. It then calls
+        the appropriate formatting method and writes the data to the specified file.
         """
         # Get a timestamp for this dump
         date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -512,10 +678,16 @@ class Status:
 
     def format_status_for_csv(self) -> Dict:
         """
-        Reformat our statuses to csv format so they can use Maestro's status renderer layouts.
+        Reformats statuses for CSV output to comply with
+        [Maestro's status renderer layouts](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/index.html).
 
-        :returns: A formatted dictionary where each key is a column and the values are the rows
-                  of information to display for that column.
+        This method transforms the status information into a dictionary format where each
+        key represents a column label and the corresponding values are the rows of information
+        to display for that column.
+
+        Returns:
+            A formatted dictionary where each key is a column and the values are the
+                rows of information to display for that column.
         """
         reformatted_statuses = {
             "step_name": [],
@@ -591,10 +763,42 @@ class Status:
 class DetailedStatus(Status):
     """
     This class handles obtaining and filtering requested statuses from the user.
-    This class shares similar methodology to the Status class it inherits from.
+    It inherits from the [`Status`][study.status.Status] class and provides
+    additional functionality for filtering and displaying task statuses based on
+    user-defined criteria.
+
+    Attributes:
+        args (Namespace): A namespace containing user-defined arguments for filtering.
+        num_requested_statuses (int): The number of task statuses in the `requested_statuses` dictionary.
+        requested_statuses (Dict): A dictionary holding the statuses requested by the user.
+        spec (spec.specification.MerlinSpec): A [`MerlinSpec`][spec.specification.MerlinSpec]
+            object loaded from the workspace or spec file.
+        steps_filter_provided (bool): Indicates if a specific steps filter was provided.
+
+    Methods:
+        apply_filters: Applies user-defined filters to the requested statuses.
+        apply_max_tasks_limit: Limits the number of tasks displayed based on the user-defined maximum.
+        display: Displays a task-by-task view of the status based on user filters.
+        filter_via_prompts: Interacts with the user to manage task display filters.
+        get_steps_to_display: Generates a list of steps to display the status for.
+        get_user_filters: Prompts the user for filters to apply to the statuses.
+        get_user_max_tasks: Prompts the user for a maximum task limit to display.
+        load_requested_statuses: Populates the requested statuses dictionary based on user-defined filters.
     """
 
     def __init__(self, args: Namespace, spec_display: bool, file_or_ws: str):
+        """
+        Initializes the `DetailedStatus` object, extending the functionality of the `Status` class
+        to include filtering and detailed task-by-task status handling.
+
+        Args:
+            args: Command-line arguments provided by the user, including options
+                for filtering, displaying, or dumping detailed task statuses.
+            spec_display: A flag indicating whether the status should be loaded from a
+                specification file (`True`) or from a workspace (`False`).
+            file_or_ws: The path to the specification file or workspace, depending on the
+                value of `spec_display`.
+        """
         args_copy = Namespace(**vars(args))
         super().__init__(args, spec_display, file_or_ws)
 
@@ -603,23 +807,30 @@ class DetailedStatus(Status):
             os.environ["MANPAGER"] = "less -r"
 
         # Check if the steps filter was given
-        self.steps_filter_provided = "all" not in args_copy.steps
+        self.steps_filter_provided: bool = "all" not in args_copy.steps
 
     def _verify_filters(
         self,
         filters_to_check: List[str],
         valid_options: Union[List, Tuple],
         suppress_warnings: bool,
-        warning_msg: Optional[str] = "",
+        warning_msg: str = "",
     ):
         """
-        Check each filter in a list of filters provided by the user against a list of valid options.
-        If the filter is invalid, remove it from the list of filters.
+        Verify and validate a list of user-provided filters against a set of valid options.
 
-        :param `filters_to_check`: A list of filters provided by the user
-        :param `valid_options`: A list of valid options for this particular filter
-        :param `suppress_warnings`: If True, don't log warnings. Otherwise, log them
-        :param `warning_msg`: An optional warning message to attach to output
+        This method checks each filter in the `filters_to_check` list to determine if it is present
+        in the `valid_options`. If a filter is found to be invalid (i.e., not in `valid_options`),
+        it is removed from the `filters_to_check` list. Depending on the value of `suppress_warnings`,
+        a warning message may be logged for each invalid filter.
+
+        Args:
+            filters_to_check: A list of filters provided by the user that need to be validated.
+            valid_options: A list or tuple of valid options against which the filters will be checked.
+            suppress_warnings: A boolean flag indicating whether to suppress warning messages.
+                If True, no warnings will be logged for invalid filters.
+            warning_msg: An optional string that provides additional context for the warning message
+                logged when an invalid filter is detected. Default is an empty string.
         """
         for filter_arg in filters_to_check[:]:
             if filter_arg not in valid_options:
@@ -627,11 +838,17 @@ class DetailedStatus(Status):
                     LOG.warning(f"The filter '{filter_arg}' is invalid. {warning_msg}")
                 filters_to_check.remove(filter_arg)
 
-    def _verify_filter_args(self, suppress_warnings: Optional[bool] = False):
+    def _verify_filter_args(self, suppress_warnings: bool = False):
         """
-        Verify that our filters are all valid and able to be used.
+        Verify the validity of filter arguments used in the current context.
 
-        :param `suppress_warnings`: If True, don't log warnings. Otherwise, log them.
+        This method checks various filter arguments, including steps, max_tasks, task_status,
+        return_code, task_queues, and workers, to ensure they are valid and can be used.
+        Invalid filters are removed from their respective lists, and warnings may be logged
+        based on the `suppress_warnings` flag.
+
+        Args:
+            suppress_warnings: If True, suppress logging of warnings for invalid filters.
         """
         # Ensure the steps are valid
         if "all" not in self.args.steps:
@@ -717,8 +934,11 @@ class DetailedStatus(Status):
 
     def _process_task_queue(self):
         """
-        Modifies the list of steps to display status for based on
-        the list of task queues provided by the user.
+        Modify the list of steps to display status for based on the provided task queues.
+
+        This method processes the task queues specified by the user, removing any duplicates
+        and checking for their validity. It updates the list of steps to include those associated
+        with the valid task queues. If a provided task queue does not exist, a warning is logged.
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
@@ -744,11 +964,16 @@ class DetailedStatus(Status):
 
     def get_steps_to_display(self) -> Dict[str, List[str]]:
         """
-        Generates a list of steps to display the status for based on information
-        provided to the merlin detailed-status command by the user. This function
-        will handle the --steps and --task-queues filter options.
+        Generate a dictionary of steps to display the status for based on user-provided filters.
 
-        :returns: A dictionary of started and unstarted steps for us to display the status of
+        This method processes the `--steps` and `--task-queues` options from the `merlin
+        detailed-status` command. It determines which steps should be included in the status
+        display based on the existing steps in the study and the specified filters.
+
+        Returns:
+            A dictionary containing two lists:\n
+                - `started`: A list of steps that have been started.
+                - `unstarted`: A list of steps that have not yet been started.
         """
         existing_steps = self.spec.get_study_step_names()
 
@@ -781,9 +1006,16 @@ class DetailedStatus(Status):
 
     def _remove_steps_without_statuses(self):
         """
-        After applying filters, there's a chance that certain steps will still exist
-        in self.requested_statuses but won't have any tasks to view the status of so
-        we'll remove those here.
+        Remove steps from the requested statuses that do not have any associated tasks.
+
+        This method iterates through the `requested_statuses` dictionary and checks each step
+        for associated sub-steps. If a step does not have any valid sub-step workspaces (i.e.,
+        it has no tasks to view the status of), it is removed from the `requested_statuses`.
+
+        Note:
+            After applying filters, there's a chance that certain steps will still exist
+            in self.requested_statuses but won't have any tasks to view the status of. That's
+            why this method is necessary.
         """
         result = deepcopy(self.requested_statuses)
 
@@ -797,11 +1029,16 @@ class DetailedStatus(Status):
 
     def _search_for_filter(self, filter_to_apply: List[str], entry_to_search: Union[List[str], str]) -> bool:
         """
-        Search an entry to see if our filter(s) apply to this entry. If they do, return True. Otherwise, False.
+        Search an entry to see if the specified filters apply to it.
 
-        :param filter_to_apply: A list of filters to search for
-        :param entry_to_search: A list or string of entries to search for our filters in
-        :returns: True if a filter was found in the entry. False otherwise.
+        This method checks if any of the provided filters match the given entry or entries.
+
+        Args:
+            filter_to_apply: A list of filters to search for.
+            entry_to_search: A list or string of entries to search for the filters in.
+
+        Returns:
+            True if a filter was found in the entry; False otherwise.
         """
         if not isinstance(entry_to_search, list):
             entry_to_search = [entry_to_search]
@@ -814,10 +1051,12 @@ class DetailedStatus(Status):
 
     def apply_filters(self):
         """
-        Apply any filters given by the --workers, --return-code, and/or --task-status arguments.
-        This function will also apply the --max-tasks limit if it was set by a user. We apply this
-        limit here so it can be done in-place; if we called apply_max_tasks_limit instead, this
-        would become a two-pass algorithm and can be really slow with lots of statuses.
+        Apply filters based on the provided command-line arguments for workers, return code,
+        and task status, as well as enforce a maximum task limit if specified.
+
+        This method processes the `requested_statuses` to filter out entries that do not match
+        the specified criteria. It ensures that the filtering is done in-place to optimize performance
+        and avoid a two-pass algorithm, which can be inefficient with a large number of statuses.
         """
         if self.args.max_tasks is not None:
             # Make sure the max_tasks variable is set to a reasonable number and store that value
@@ -897,8 +1136,13 @@ class DetailedStatus(Status):
 
     def apply_max_tasks_limit(self):
         """
-        Given a number representing the maximum amount of tasks to display, filter the dict of statuses
-        so that there are at most a max_tasks amount of tasks.
+        Filter the dictionary of statuses to ensure that the number of displayed tasks does not exceed
+        the specified maximum limit.
+
+        This method checks the current value of `max_tasks` and adjusts it if it exceeds the number
+        of available statuses. It then iterates through the `requested_statuses`, removing excess
+        entries to comply with the `max_tasks` limit. The method also merges the allowed task statuses
+        into a new dictionary and updates the `requested_statuses` accordingly.
         """
         # Make sure the max_tasks variable is set to a reasonable number and store that value
         if self.args.max_tasks > self.num_requested_statuses:
@@ -959,15 +1203,24 @@ class DetailedStatus(Status):
 
     def get_user_filters(self) -> bool:
         """
-        Get a filter on the statuses to display from the user. Possible options
-        for filtering:
-            - A str MAX_TASKS -> will ask the user for another input that's equivalent to the --max-tasks flag
-            - A list of statuses -> equivalent to the --task-status flag
-            - A list of return codes -> equivalent to the --return-code flag
-            - A list of workers -> equivalent to the --workers flag
-            - An exit keyword to leave the filter prompt without filtering
+        Prompt the user to specify filters for the statuses to display. The user can choose from
+        several filtering options, including setting a maximum number of tasks, filtering by status,
+        return code, or worker, or exiting the filter prompt without applying any filters.
 
-        :returns: True if we need to exit without filtering. False otherwise.
+        The method displays available filter options and their descriptions, then collects and
+        validates the user's input. If the user provides valid filters, they are stored in the
+        corresponding attributes. If the user opts to exit, the method returns True; otherwise,
+        it returns False.
+
+        Possible filtering options include:\n
+        - A string "MAX_TASKS" to request a limit on the number of tasks.
+        - A list of statuses to filter by, corresponding to the `--task-status` flag.
+        - A list of return codes to filter by, corresponding to the `--return-code` flag.
+        - A list of workers to filter by, corresponding to the `--workers` flag.
+        - An exit keyword to leave the filter prompt without applying any filters.
+
+        Returns:
+            True if the user chooses to exit without filtering; False otherwise.
         """
         valid_workers = tuple(self.spec.get_worker_names())
 
@@ -1050,7 +1303,17 @@ class DetailedStatus(Status):
 
     def get_user_max_tasks(self):
         """
-        Get a limit for the amount of tasks to display from the user.
+        Prompt the user to specify a maximum limit for the number of tasks to display.
+
+        The method repeatedly requests input from the user until a valid integer greater than 0
+        is provided. Once a valid input is received, it sets the `max_tasks` attribute in the
+        `args` object to the specified limit.
+
+        This method ensures that the user input is validated and handles any exceptions
+        related to invalid input types or values.
+
+        Raises:
+            ValueError: If the input is not a valid integer greater than 0.
         """
         invalid_input = True
 
@@ -1069,8 +1332,16 @@ class DetailedStatus(Status):
 
     def filter_via_prompts(self):
         """
-        Interact with the user to manage how many/which tasks are displayed. This helps to
-        prevent us from overloading the terminal by displaying a bazillion tasks at once.
+        Interact with the user to determine how many and which tasks should be displayed,
+        preventing terminal overload by limiting the output to a manageable number of tasks.
+
+        This method prompts the user for filtering options, including task statuses, return codes,
+        and worker specifications. It also handles the case where the user opts to exit without
+        applying any filters. If filters are provided, it applies them accordingly.
+
+        Warning:
+            The method includes specific handling for the "RESTART" and "RETRY" return codes,
+            which are currently not implemented, and issues warnings if these filters are selected.
         """
         # Get the filters from the user
         exit_without_filtering = self.get_user_filters()
@@ -1095,11 +1366,18 @@ class DetailedStatus(Status):
             elif self.args.max_tasks is not None:
                 self.apply_max_task_limit()
 
-    def display(self, test_mode: Optional[bool] = False):
+    def display(self, test_mode: bool = False):
         """
-        Displays a task-by-task view of the status based on user filter(s).
+        Displays a task-by-task view of the statuses based on the user-defined filters.
 
-        :param `test_mode`: If true, run this in testing mode and don't print any output
+        This method checks for any requested statuses and, if found, invokes the
+        `display_status_task_by_task` function to present the tasks accordingly.
+        If no statuses are available to display, it logs a warning message.
+
+        Args:
+            test_mode: If set to True, the method runs in testing mode, suppressing
+                any output to the terminal. This is useful for unit testing or debugging
+                without cluttering the output.
         """
         # Check that there's statuses found and display them
         if self.requested_statuses:
@@ -1111,26 +1389,31 @@ class DetailedStatus(Status):
 # Pylint complains that args is unused but we can ignore that
 def status_conflict_handler(*args, **kwargs) -> Any:  # pylint: disable=W0613
     """
-    The conflict handler function to apply to any status entries that have conflicting
-    values while merging two status files together.
+    Handles conflicts that arise when merging two status files by applying specific merge rules
+    to conflicting values.
 
-    kwargs should include:
-    - dict_a_val: The conflicting value from the dictionary that we're merging into
-    - dict_b_val: The conflicting value from the dictionary that we're pulling from
-    - key: The key into each dictionary that has a conflict
-    - path: The path down the dictionary tree that `dict_deep_merge` is currently at
+    This function is designed to be used during the merging process of status entries, where
+    conflicting values may exist. It defines how to resolve these conflicts based on predefined
+    rules, ensuring that the merged dictionary maintains integrity and clarity.
 
-    When we're reading in status files, we're merging all of the statuses into one dictionary.
-    This function defines the merge rules in case there is a merge conflict. We ignore the list
-    and dictionary entries since `dict_deep_merge` from `utils.py` handles these scenarios already.
+    The merge rules currently implemented are:\n
+    - **string-concatenate**: Concatenates the two conflicting string values.
+    - **use-dict_b-and-log-debug**: Uses the value from dict_b and logs a debug message indicating
+      the conflict.
+    - **use-longest-time**: Chooses the longest time value between the two conflicting entries,
+      converting them to a timedelta for comparison.
+    - **use-max**: Selects the maximum integer value from the two conflicting entries.
 
-    There are currently 4 rules:
-    - string-concatenate: take the two conflicting values and concatenate them in a string
-    - use-dict_b-and-log-debug: use the value from dict_b and log a debug message
-    - use-longest-time: use the longest time between the two conflicting values
-    - use-max: use the larger integer between the two conflicting values
+    If a key does not have a defined merge rule, a warning is logged, and the function returns None.
 
-    :returns: The value to merge into dict_a at `key`
+    The function expects the following keyword arguments:\n
+    - `dict_a_val`: The conflicting value from the dictionary that we are merging into (dict_a).
+    - `dict_b_val`: The conflicting value from the dictionary that we are merging from (dict_b).
+    - `key`: The key in each dictionary that has a conflict.
+    - `path`: The current path in the dictionary tree during the merge process.
+
+    Returns:
+        The resolved value to merge into dict_a at the specified key.
     """
     # Grab the arguments passed into this function
     dict_a_val = kwargs.get("dict_a_val", None)
@@ -1203,12 +1486,25 @@ def read_status(
     """
     Locks the status file for reading and returns its contents.
 
-    :param status_filepath: The path to the status file that we'll read from.
-    :param lock_file: The path to the lock file that we'll use to create a FileLock.
-    :param display_fnf_message: If True, display the file not found warning. Otherwise don't.
-    :param raise_errors: A boolean indicating whether to ignore errors or raise them.
-    :param timeout: An integer representing how long to hold a lock for before timing out.
-    :returns: A dict of the contents in the status file
+    This function attempts to read the contents of a status file while ensuring that the file is
+    locked to prevent race conditions. It handles various exceptions that may occur during the
+    reading process, including file not found errors and JSON decoding errors.
+
+    Args:
+        status_filepath: The path to the status file that will be read.
+        lock_file: The path to the lock file used to create a FileLock.
+        display_fnf_message: If True, displays a warning message if the file is not found.
+        raise_errors: If True, raises exceptions when errors occur.
+        timeout: The maximum time (in seconds) to hold the lock before timing out.
+
+    Returns:
+        A dictionary containing the contents of the status file.
+
+    Raises:
+        Timeout: If the lock acquisition times out.
+        FileNotFoundError: If the status file does not exist and `raise_errors` is True.
+        json.decoder.JSONDecodeError: If the status file is empty or contains invalid JSON and `raise_errors` is True.
+        Exception: Any other exceptions that occur during the reading process if `raise_errors` is True.
     """
     statuses_read = {}
 
@@ -1249,13 +1545,20 @@ def read_status(
 
 def write_status(status_to_write: Dict, status_filepath: str, lock_file: str, timeout: int = 10):
     """
-    Locks the status file for writing. We're not catching any errors here since we likely want to
-    know if something went wrong in this process.
+    Locks the status file for writing and writes the provided status to the file.
 
-    :param status_to_write: The status to write to the status file
-    :param status_filepath: The path to the status file that we'll write the status to
-    :param lock_file: The path to the lock file we'll use for this status write
-    :param timeout: A timeout value for the lock so it's always released eventually
+    This function ensures that the status file is locked during the write operation to prevent
+    race conditions. It does not catch errors during the writing process, as it is important to
+    be aware of any issues that may arise.
+
+    Args:
+        status_to_write: The status data to write to the status file.
+        status_filepath: The path to the status file where the status will be written.
+        lock_file: The path to the lock file used to create a FileLock for the write operation.
+        timeout: The maximum time (in seconds) to hold the lock before timing out.
+
+    Raises:
+        Exception: Any exceptions that occur during the writing process will be logged, but not caught.
     """
     # Pylint complains that we're instantiating an abstract class but this is correct usage
     try:

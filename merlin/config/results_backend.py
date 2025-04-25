@@ -29,12 +29,16 @@
 ###############################################################################
 
 """
-This module contains the logic for configuring the Celery results backend.
+This module provides functionality for managing and configuring connection strings
+and SSL settings for various results backends, including MySQL, Redis, Rediss, and SQLite.
+The module relies on the application's configuration file (`app.yaml`) to determine backend
+settings and certificate paths.
 """
 from __future__ import print_function
 
 import logging
 import os
+from typing import Dict
 from urllib.parse import quote
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
@@ -67,16 +71,27 @@ MYSQL_CONNECTION_STRING = (
 SQLITE_CONNECTION_STRING = "db+sqlite:///results.db"
 
 
-def get_backend_password(password_file, certs_path=None):
+def get_backend_password(password_file: str, certs_path: str = None) -> str:
     """
-    Check for password in file.
-    If the password is  not found in the given password_file,
-    then the certs_path will be searched for the file,
-    if this file cannot be found, the password value will
-    be returned.
+    Retrieves the backend password from a specified file or returns the provided password value.
 
-    :param password_file : The file path for the password
-    :param certs_path : The path for ssl certificates and passwords
+    This function attempts to locate the password file in several locations:
+
+    1. The default Merlin directory (`~/.merlin`).
+    2. The path specified by `password_file`.
+    3. A directory specified by `certs_path` (if provided).
+
+    If the password file is found, the password is read from the file. If the file cannot be
+    found, the value of `password_file` is treated as the password itself and returned.
+
+    Args:
+        password_file (str): The file path or value for the password. If this is not a valid
+            file path, it is treated as the password itself.
+        certs_path (str, optional): An optional directory path where SSL certificates and
+            password files may be located.
+
+    Returns:
+        The backend password, either retrieved from the file or the provided value.
     """
     password = None
 
@@ -108,13 +123,19 @@ def get_backend_password(password_file, certs_path=None):
 # flake8 complains about cyclomatic complexity because of all the try-excepts,
 # this isn't so complicated it can't be followed and tucking things in functions
 # would make it less readable, so complexity evaluation is off
-def get_redis(certs_path=None, include_password=True, ssl=False):  # noqa C901
+def get_redis(certs_path: str = None, include_password: bool = True, ssl: bool = False) -> str:  # noqa C901
     """
-    Return the redis or rediss specific connection
+    Constructs and returns a Redis or Rediss connection URL based on the provided parameters and configuration.
 
-    :param certs_path : The path for ssl certificates and passwords
-    :param include_password : Format the connection for ouput by setting this True
-    :param ssl : Flag to use rediss output
+    Args:
+        certs_path (str, optional): The path to SSL certificates and password files.
+        include_password (bool, optional): Whether to include the password in the connection URL.
+            If True, the password will be included; otherwise, it will be masked.
+        ssl (bool, optional): Flag indicating whether to use SSL for the connection (Rediss).
+            If True, the connection URL will use the "rediss" protocol; otherwise, it will use "redis".
+
+    Returns:
+        A Redis or Rediss connection URL formatted based on the provided parameters and configuration.
     """
     server = CONFIG.results_backend.server
     password_file = ""
@@ -160,13 +181,18 @@ def get_redis(certs_path=None, include_password=True, ssl=False):  # noqa C901
     return f"{urlbase}://{spass}{server}:{port}/{db_num}"
 
 
-def get_mysql_config(certs_path, mysql_certs):
+def get_mysql_config(certs_path: str, mysql_certs: Dict) -> Dict:
     """
-    Determine if all the information for connecting MySQL as the Celery
-    results backend exists.
+    Determines whether all required information for connecting to MySQL as the Celery
+    results backend is available, and returns the MySQL SSL configuration or certificate paths.
 
-    :param certs_path : The path for ssl certificates and passwords
-    :param mysql_certs : The dict of mysql certificates
+    Args:
+        certs_path (str): The path to the directory containing SSL certificates and password files.
+        mysql_certs (Dict): A dictionary mapping certificate keys (e.g., 'cert', 'key', 'ca')
+            to their expected filenames.
+
+    Returns:
+        A dictionary containing the paths to the required MySQL certificates if they exist.
     """
     mysql_ssl = get_ssl_config(celery_check=False)
     if mysql_ssl:
@@ -187,13 +213,25 @@ def get_mysql_config(certs_path, mysql_certs):
     return certs
 
 
-def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
+def get_mysql(certs_path: str = None, mysql_certs: Dict = None, include_password: bool = True) -> str:
     """
-    Returns the formatted MySQL connection string.
+    Constructs and returns a formatted MySQL connection string based on the provided parameters
+    and application configuration.
 
-    :param certs_path : The path for ssl certificates and passwords
-    :param mysql_certs : The dict of mysql certificates
-    :param include_password : Format the connection for ouput by setting this True
+    Args:
+        certs_path (str, optional): The path to the directory containing SSL certificates and password files.
+        mysql_certs (dict, optional): A dictionary mapping MySQL certificate keys (e.g., 'ssl_key', 'ssl_cert', 'ssl_ca')
+            to their expected filenames. If this is None, it uses the default `MYSQL_CONFIG_FILENAMES`.
+        include_password (bool, optional): Whether to include the password in the connection string.
+            If True, the password will be included; otherwise, it will be masked.
+
+    Returns:
+        A formatted MySQL connection string.
+
+    Raises:
+        TypeError: \n
+            - If the `server` configuration is missing or invalid.
+            - If the MySQL connection information cannot be set due to missing certificates or configuration.
     """
     dbname = CONFIG.results_backend.dbname
     password_file = CONFIG.results_backend.password
@@ -240,15 +278,23 @@ def get_mysql(certs_path=None, mysql_certs=None, include_password=True):
     return MYSQL_CONNECTION_STRING.format(**mysql_config)
 
 
-def get_connection_string(include_password=True):
+def get_connection_string(include_password: bool = True) -> str:
     """
-    Given the package configuration determine what results backend to use and
-    return the connection string.
+    Determines the appropriate results backend to use based on the package configuration
+    and returns the corresponding connection string.
 
-    If the url variable is present, return that as the connection string.
+    If a URL is explicitly defined in the configuration (`CONFIG.results_backend.url`),
+    it is returned as the connection string.
 
-    :param config_path : The path for ssl certificates and passwords
-    :param include_password : Format the connection for ouput by setting this True
+    Args:
+        include_password (bool, optional): Whether to include the password in the connection string.
+            If True, the password will be included; otherwise, it will be masked.
+
+    Returns:
+        The connection string for the configured results backend.
+
+    Raises:
+        ValueError: If the specified results backend in the configuration is not supported.
     """
     try:
         return CONFIG.results_backend.url
@@ -273,7 +319,23 @@ def get_connection_string(include_password=True):
     return _resolve_backend_string(backend, certs_path, include_password)
 
 
-def _resolve_backend_string(backend, certs_path, include_password):
+def _resolve_backend_string(backend: str, certs_path: str, include_password: bool) -> str:
+    """
+    Resolves and returns the connection string for the specified results backend.
+
+    Based on the backend type provided, this function delegates the connection string
+    generation to the appropriate helper function or returns a predefined connection string.
+
+    Args:
+        backend (str): The name of the results backend (e.g., "mysql", "sqlite", "redis", "rediss").
+        certs_path (str): The path to SSL certificates and password files, used for certain backends
+            (e.g., MySQL and Redis).
+        include_password (bool): Whether to include the password in the connection string.
+            If True, the password will be included; otherwise, it will be masked.
+
+    Returns:
+        The connection string for the specified backend, or `None` if the backend is unsupported.
+    """
     if "mysql" in backend:
         return get_mysql(certs_path=certs_path, include_password=include_password)
 
@@ -289,12 +351,22 @@ def _resolve_backend_string(backend, certs_path, include_password):
     return None
 
 
-def get_ssl_config(celery_check=False):
+def get_ssl_config(celery_check: bool = False) -> bool:
     """
-    Return the ssl config based on the configuration specified in the
-    `app.yaml` config file.
+    Retrieves the SSL configuration for the results backend based on the settings
+    specified in the `app.yaml` configuration file.
 
-    :param celery_check : Return the proper results ssl setting when configuring celery
+    This function determines whether SSL should be enabled for the results backend
+    and returns the appropriate configuration. It supports various backend types
+    such as MySQL, Redis, and Rediss.
+
+    Args:
+        celery_check (bool, optional): If True, the function returns the SSL settings
+            specifically for configuring Celery.
+
+    Returns:
+        The SSL configuration for the results backend. Returns `True` if SSL is enabled,
+            `False` otherwise.
     """
     results_backend = ""
     try:
