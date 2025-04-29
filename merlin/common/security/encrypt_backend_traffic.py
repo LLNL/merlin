@@ -55,10 +55,6 @@ def _encrypt_encode(*args, **kwargs) -> bytes:
     This function wraps the original encode method, encrypting the result
     after encoding.
 
-    Args:
-        *args: Positional arguments passed to the original encode method.
-        **kwargs: Keyword arguments passed to the original encode method.
-
     Returns:
         The encrypted encoded data in bytes format.
     """

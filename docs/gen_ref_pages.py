@@ -17,7 +17,7 @@ IGNORE_PATTERNS = [
 def should_ignore(path):
     """Check if the given path matches any ignore patterns."""
     for pattern in IGNORE_PATTERNS:
-        # if Path(pattern).is_relative_to(path):
+        pattern = str(pattern)
         if path.is_relative_to(Path(pattern)):
             return True
         if path.match(pattern):
