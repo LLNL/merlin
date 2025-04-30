@@ -239,8 +239,14 @@ jobs:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
+    - name: Reinstall pip to avoid vendored package corruption
+      run: |
+        curl -sS https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        python get-pip.py --force-reinstall
+  
     - name: Install dependencies
       run: |
+        pip --version
         python3 -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip3 install -r requirements/dev.txt
