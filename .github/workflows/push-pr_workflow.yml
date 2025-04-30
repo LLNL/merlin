@@ -52,6 +52,23 @@ jobs:
         path: ~/.cache/pip
         key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
+    - name: Reinstall pip to avoid vendored package corruption
+      run: |
+        PY_VER=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+        PY_MAJOR=$(echo $PY_VER | cut -d. -f1)
+        PY_MINOR=$(echo $PY_VER | cut -d. -f2)
+
+        if [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -le 8 ]; then
+          URL="https://bootstrap.pypa.io/pip/${PY_VER}/get-pip.py"
+        else
+          URL="https://bootstrap.pypa.io/get-pip.py"
+        fi
+
+        curl -sS "$URL" -o get-pip.py
+        python get-pip.py --force-reinstall
+
+        pip --version
+
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
@@ -106,6 +123,23 @@ jobs:
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+    - name: Reinstall pip to avoid vendored package corruption
+      run: |
+        PY_VER=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+        PY_MAJOR=$(echo $PY_VER | cut -d. -f1)
+        PY_MINOR=$(echo $PY_VER | cut -d. -f2)
+
+        if [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -le 8 ]; then
+          URL="https://bootstrap.pypa.io/pip/${PY_VER}/get-pip.py"
+        else
+          URL="https://bootstrap.pypa.io/get-pip.py"
+        fi
+
+        curl -sS "$URL" -o get-pip.py
+        python get-pip.py --force-reinstall
+
+        pip --version
 
     - name: Install dependencies
       run: |
@@ -172,6 +206,23 @@ jobs:
       with:
         path: ${{ env.pythonLocation }}
         key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+    - name: Reinstall pip to avoid vendored package corruption
+      run: |
+        PY_VER=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+        PY_MAJOR=$(echo $PY_VER | cut -d. -f1)
+        PY_MINOR=$(echo $PY_VER | cut -d. -f2)
+
+        if [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -le 8 ]; then
+          URL="https://bootstrap.pypa.io/pip/${PY_VER}/get-pip.py"
+        else
+          URL="https://bootstrap.pypa.io/get-pip.py"
+        fi
+
+        curl -sS "$URL" -o get-pip.py
+        python get-pip.py --force-reinstall
+
+        pip --version
 
     - name: Install dependencies
       run: |
