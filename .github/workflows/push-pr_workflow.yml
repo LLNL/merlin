@@ -64,8 +64,8 @@ jobs:
           URL="https://bootstrap.pypa.io/get-pip.py"
         fi
 
-        curl -sS "$URL" -o get-pip.py
-        python get-pip.py --force-reinstall
+        curl -sS "$URL" -o /tmp/get-pip.py
+        python /tmp/get-pip.py --force-reinstall
 
         pip --version
 
@@ -136,8 +136,8 @@ jobs:
           URL="https://bootstrap.pypa.io/get-pip.py"
         fi
 
-        curl -sS "$URL" -o get-pip.py
-        python get-pip.py --force-reinstall
+        curl -sS "$URL" -o /tmp/get-pip.py
+        python /tmp/get-pip.py --force-reinstall
 
         pip --version
 
@@ -219,8 +219,8 @@ jobs:
           URL="https://bootstrap.pypa.io/get-pip.py"
         fi
 
-        curl -sS "$URL" -o get-pip.py
-        python get-pip.py --force-reinstall
+        curl -sS "$URL" -o /tmp/get-pip.py
+        python /tmp/get-pip.py --force-reinstall
 
         pip --version
 
@@ -302,8 +302,8 @@ jobs:
           URL="https://bootstrap.pypa.io/get-pip.py"
         fi
 
-        curl -sS "$URL" -o get-pip.py
-        python get-pip.py --force-reinstall
+        curl -sS "$URL" -o /tmp/get-pip.py
+        python /tmp/get-pip.py --force-reinstall
 
         pip --version
   
