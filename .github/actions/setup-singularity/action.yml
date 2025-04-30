@@ -12,6 +12,7 @@ inputs:
 
 runs:
   using: "composite"
+  shell: bash
   steps:
     - name: Install system dependencies
       shell: bash
