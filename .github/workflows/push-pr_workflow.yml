@@ -51,8 +51,6 @@ jobs:
           path: ~/.cache/pip
           key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
-      - uses: ./.github/actions/install-deps
-
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -96,8 +94,6 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
-
-      - uses: ./.github/actions/install-deps
 
       - uses: ./.github/actions/setup-singularity
         with:
@@ -145,8 +141,6 @@ jobs:
           path: ${{ env.pythonLocation }}
           key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
-      - uses: ./.github/actions/install-deps
-
       - uses: ./.github/actions/setup-singularity
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -192,8 +186,6 @@ jobs:
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
-
-      - uses: ./.github/actions/install-deps
 
       - uses: ./.github/actions/setup-singularity
         with:
