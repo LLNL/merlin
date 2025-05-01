@@ -421,7 +421,7 @@ def dump_celery_queue_info(query_return: List[Tuple[str, int, int]], dump_file: 
     dump_handler(dump_file, dump_info)
 
 
-def _get_specific_queues(queues: Set[str], specific_queues: List[str], spec: MerlinSpec, verbose=True) -> Set[str]:
+def _get_specific_queues(queues: Set[str], specific_queues: List[str], spec: MerlinSpec, verbose: bool = True) -> Set[str]:
     """
     Retrieve a set of specific queues requested by the user, filtering out those that do not exist.
 
