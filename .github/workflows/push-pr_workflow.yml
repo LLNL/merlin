@@ -41,15 +41,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./.github/actions/setup-python
-        with:
-          python-version: '3.x'
-
-      - name: Cache Python dependencies
+      - name: Cache pip dependencies
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.x'
 
       - name: Lint with flake8
         run: |
@@ -85,15 +85,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Cache Python dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
       - uses: ./.github/actions/setup-singularity
         with:
@@ -131,15 +131,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Cache Python dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
       - uses: ./.github/actions/setup-singularity
         with:
@@ -177,15 +177,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Cache Python dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
       - uses: ./.github/actions/setup-singularity
         with:
@@ -196,6 +196,8 @@ jobs:
 
       - name: Install merlin
         run: |
+          pip --version
+          pip3 --version
           pip3 install -e .
           merlin config
 

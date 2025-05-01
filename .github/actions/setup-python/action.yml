@@ -28,6 +28,9 @@ runs:
         curl -sS "$URL" -o /tmp/get-pip.py
         python /tmp/get-pip.py --force-reinstall
 
+        pip --version
+        pip3 --version
+
     - name: Install dependencies
       shell: bash
       run: |
