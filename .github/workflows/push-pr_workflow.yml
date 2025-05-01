@@ -41,12 +41,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
-
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.x'
@@ -84,12 +78,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
       - uses: ./.github/actions/setup-python
         with:
@@ -131,12 +119,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
-
       - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
@@ -176,12 +158,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
 
       - uses: ./.github/actions/setup-python
         with:

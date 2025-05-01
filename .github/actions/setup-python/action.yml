@@ -7,6 +7,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
