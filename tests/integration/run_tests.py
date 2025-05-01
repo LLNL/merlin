@@ -39,9 +39,8 @@ import time
 from contextlib import suppress
 from subprocess import TimeoutExpired, run
 
-from tabulate import tabulate
-
 from definitions import OUTPUT_DIR, define_tests  # pylint: disable=E0401
+from tabulate import tabulate
 
 
 def get_definition_issues(test):
