@@ -1,0 +1,45 @@
+name: Setup Python Environment
+description: Setup Python, reinstall pip, and install dependencies
+inputs:
+  python-version:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ hashFiles('requirements/release.txt') }}-${{ hashFiles('requirements/dev.txt') }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Reinstall pip
+      shell: bash
+      run: |
+        PY_VER=$(python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+        PY_MAJOR=$(echo $PY_VER | cut -d. -f1)
+        PY_MINOR=$(echo $PY_VER | cut -d. -f2)
+
+        if [ "$PY_MAJOR" -eq 3 ] && [ "$PY_MINOR" -le 8 ]; then
+          URL="https://bootstrap.pypa.io/pip/${PY_VER}/get-pip.py"
+        else
+          URL="https://bootstrap.pypa.io/get-pip.py"
+        fi
+
+        curl -sS "$URL" -o /tmp/get-pip.py
+        python /tmp/get-pip.py --force-reinstall
+
+        pip --version
+        pip3 --version
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python3 -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip3 install -r requirements/dev.txt
