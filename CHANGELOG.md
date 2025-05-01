@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `CeleryTaskManager` context manager to the test suite to ensure tasks are safely purged from queues if tests fail
 - Added `command-tests`, `workflow-tests`, and `integration-tests` to the Makefile
 - Python 3.8 now requires `orderly-set==5.3.0` to avoid a bug with the deepdiff library
+- New step 'Reinstall pip to avoid vendored package corruption' to CI workflow jobs that use pip
 - New GitHub actions to reduce common code in CI
 
 ### Changed
