@@ -78,7 +78,7 @@ class HardFailException(Exception):
 
 class InvalidChainException(Exception):
     """
-    Exception for invalid Merlin step DAGs.
+    Exception for invalid Merlin step Directed Acyclic Graphs (DAGs).
     """
 
     def __init__(self):

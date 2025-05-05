@@ -152,7 +152,7 @@ merlin stop-workers --spec my_specification.yaml
 
 !!! note
 
-    If you wish to execute a workflow after dry-running it, simply use [`merlin restart`](#restart-merlin-restart) (to understand why this works, see the section below on [Restarting Workflows](#restarting-workflows)).
+    If you wish to execute a workflow after dry-running it, simply use [`merlin restart`](./command_line.md#restart-merlin-restart) (to understand why this works, see the section below on [Restarting Workflows](#restarting-workflows)).
 
 'Dry run' means telling workers to create a study's workspace and all of its necessary subdirectories and scripts (with variables expanded) without actually executing the scripts.
 

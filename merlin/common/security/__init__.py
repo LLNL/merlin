@@ -27,3 +27,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+
+"""
+The `security` package contains functionality for managing encryption within Merlin,
+ensuring secure communication and data protection.
+
+Modules:
+    encrypt.py: Handles general encryption logic.
+    encrypt_backend_traffic.py: Provides functions for encrypting backend traffic.
+"""

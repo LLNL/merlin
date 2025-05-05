@@ -1,7 +1,3 @@
-"""
-Default celery configuration for merlin
-"""
-
 ###############################################################################
 # Copyright (c) 2023, Lawrence Livermore National Security, LLC.
 # Produced at the Lawrence Livermore National Laboratory
@@ -31,6 +27,8 @@ Default celery configuration for merlin
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+
+"""This module houses the default Celery configuration settings for Merlin."""
 
 from merlin.log_formatter import FORMATS
 

@@ -21,10 +21,10 @@ from merlin.config.configfile import (
     is_debug,
     load_config,
     load_default_celery,
-    load_default_user_names,
     load_defaults,
     merge_sslmap,
     process_ssl_map,
+    set_username_and_vhost,
 )
 from tests.constants import CERT_FILES
 from tests.utils import create_dir
@@ -187,9 +187,9 @@ def test_find_config_file_no_path(temp_output_dir: str):
         os.rename(f"{merlin_home_dir}/{COPIED_APP_FILENAME}", f"{merlin_home_dir}/app.yaml")
 
 
-def test_load_default_user_names_nothing_to_load():
+def test_set_username_and_vhost_nothing_to_load():
     """
-    Test the `load_default_user_names` function with nothing to load. In other words, in this
+    Test the `set_username_and_vhost` function with nothing to load. In other words, in this
     test the config dict will have a username and vhost already set for the broker. We'll
     create the dict then make a copy of it to test against after calling the function.
     """
@@ -197,35 +197,35 @@ def test_load_default_user_names_nothing_to_load():
     expected_config = deepcopy(actual_config)
     assert actual_config is not expected_config
 
-    load_default_user_names(actual_config)
+    set_username_and_vhost(actual_config)
 
-    # Ensure that nothing was modified after our call to load_default_user_names
+    # Ensure that nothing was modified after our call to set_username_and_vhost
     assert actual_config == expected_config
 
 
-def test_load_default_user_names_no_username():
+def test_set_username_and_vhost_no_username():
     """
-    Test the `load_default_user_names` function with no username. In other words, in this
+    Test the `set_username_and_vhost` function with no username. In other words, in this
     test the config dict will have vhost already set for the broker but not a username.
     """
     expected_config = {"broker": {"username": getpass.getuser(), "vhost": "host4testing"}}
     actual_config = {"broker": {"vhost": "host4testing"}}
-    load_default_user_names(actual_config)
+    set_username_and_vhost(actual_config)
 
-    # Ensure that the username was set in the call to load_default_user_names
+    # Ensure that the username was set in the call to set_username_and_vhost
     assert actual_config == expected_config
 
 
-def test_load_default_user_names_no_vhost():
+def test_set_username_and_vhost_no_vhost():
     """
-    Test the `load_default_user_names` function with no vhost. In other words, in this
+    Test the `set_username_and_vhost` function with no vhost. In other words, in this
     test the config dict will have username already set for the broker but not a vhost.
     """
     expected_config = {"broker": {"username": "default", "vhost": getpass.getuser()}}
     actual_config = {"broker": {"username": "default"}}
-    load_default_user_names(actual_config)
+    set_username_and_vhost(actual_config)
 
-    # Ensure that the vhost was set in the call to load_default_user_names
+    # Ensure that the vhost was set in the call to set_username_and_vhost
     assert actual_config == expected_config
 
 
