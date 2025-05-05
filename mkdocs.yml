@@ -49,6 +49,9 @@ nav:
     - API Reference: "api_reference/"
   - Contact Us: "contact.md"
 
+exclude_docs: |
+  /README.md
+
 theme:
   name: material
   language: en
@@ -105,17 +108,17 @@ plugins:
   - search
   - codeinclude:
       title_mode: pymdownx.tabbed
-  # - gen-files:
-  #     scripts:
-  #     - docs/gen_ref_pages.py
-  # - mkdocstrings:
-  #     handlers:
-  #       python:
-  #         paths: [merlin]
-  #         options:
-  #           docstring_style: sphinx
-  # - literate-nav:
-  #     nav_file: SUMMARY.md
+  - gen-files:
+      scripts:
+      - docs/gen_ref_pages.py
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [merlin]
+          options:
+            docstring_style: google
+  - literate-nav:
+      nav_file: SUMMARY.md
 
 extra:
   social:

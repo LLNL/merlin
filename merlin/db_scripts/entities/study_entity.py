@@ -9,7 +9,7 @@ operations and behaviors.
 import logging
 
 from merlin.backends.results_backend import ResultsBackend
-from merlin.db_scripts.db_entity import DatabaseEntity
+from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.db_scripts.mixins.name import NameMixin
 from merlin.db_scripts.mixins.run_management import RunManagementMixin
 from merlin.exceptions import StudyNotFoundError

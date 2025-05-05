@@ -46,7 +46,7 @@ from argparse import (
     RawTextHelpFormatter,
 )
 from contextlib import suppress
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from tabulate import tabulate
 
@@ -72,10 +72,21 @@ DEFAULT_LOG_LEVEL = "INFO"
 
 
 class HelpParser(ArgumentParser):
-    """This class overrides the error message of the argument parser to
-    print the help message when an error happens."""
+    """
+    This class overrides the error message of the argument parser to
+    print the help message when an error happens.
 
-    def error(self, message):
+    Methods:
+        error: Override the error message of the `ArgumentParser` class.
+    """
+
+    def error(self, message: str):
+        """
+        Override the error message of the `ArgumentParser` class.
+
+        Args:
+            message: The error message to log.
+        """
         sys.stderr.write(f"error: {message}\n")
         self.print_help()
         sys.exit(2)
@@ -85,13 +96,27 @@ def parse_override_vars(
     variables_list: Optional[List[str]],
 ) -> Optional[Dict[str, Union[str, int]]]:
     """
-    Parse a list of variables from command line syntax
-    into a valid dictionary of variable keys and values.
+    Parse a list of command-line variables into a dictionary of key-value pairs.
 
-    :param [List[str]] `variables_list`: an optional list of strings, e.g. ["KEY=val",...]
+    This function takes an optional list of strings following the syntax
+    "KEY=val" and converts them into a dictionary. It validates the format
+    of the variables and ensures that keys are valid according to specified rules.
 
-    :return: returns either None or a Dict keyed with strs, linked to strs and ints.
-    :rtype: Dict
+    Args:
+        variables_list: An optional list of strings, where each string should be in the
+            format "KEY=val", e.g., ["KEY1=value1", "KEY2=42"].
+
+    Returns:
+        A dictionary where the keys are variable names (str) and the
+            values are either strings or integers. If `variables_list` is
+            None or empty, returns None.
+
+    Raises:
+        ValueError: If the input format is incorrect, including:\n
+            - Missing '=' operator.
+            - Excess '=' operators in a variable assignment.
+            - Invalid variable names (must be alphanumeric and underscores).
+            - Attempting to override reserved variable names.
     """
     if variables_list is None:
         return None
@@ -124,11 +149,26 @@ def parse_override_vars(
     return result
 
 
-def get_merlin_spec_with_override(args):
+def get_merlin_spec_with_override(args: Namespace) -> Tuple[MerlinSpec, str]:
     """
-    Shared command to return the spec object.
+    Shared command to retrieve a [`MerlinSpec`][spec.specification.MerlinSpec] object
+    and an expanded filepath.
 
-    :param 'args': parsed CLI arguments
+    This function processes parsed command-line interface (CLI) arguments to validate
+    and expand the specified filepath and any associated variables. It then constructs
+    and returns a [`MerlinSpec`][spec.specification.MerlinSpec] object based on the
+    provided specification.
+
+    Args:
+        args: Parsed CLI arguments containing:\n
+            - `specification`: the path to the specification file
+            - `variables`: optional variable overrides to customize the spec.
+
+    Returns:
+        spec (spec.specification.MerlinSpec): An instance of the
+            [`MerlinSpec`][spec.specification.MerlinSpec] class with the expanded
+            configuration based on the provided filepath and variables.
+        filepath: The expanded filepath derived from the specification.
     """
     filepath = verify_filepath(args.specification)
     variables_dict = parse_override_vars(args.variables)
@@ -136,11 +176,27 @@ def get_merlin_spec_with_override(args):
     return spec, filepath
 
 
-def process_run(args: Namespace) -> None:
+def process_run(args: Namespace):
     """
     CLI command for running a study.
 
-    :param [Namespace] `args`: parsed CLI arguments
+    This function initializes and runs a study using the specified parameters.
+    It handles file verification, variable parsing, and checks for required
+    arguments related to the study configuration and execution.
+
+    Args:
+        args: Parsed CLI arguments containing:\n
+            - `specification`: Path to the specification file for the study.
+            - `variables`: Optional variable overrides for the study.
+            - `samples_file`: Optional path to a samples file.
+            - `dry`: If True, runs the study in dry-run mode (without actual execution).
+            - `no_errors`: If True, suppresses error reporting.
+            - `pgen_file`: Optional path to the pgen file, required if `pargs` is specified.
+            - `pargs`: Additional arguments for parallel processing.
+
+    Raises:
+        ValueError:
+            If the `pargs` parameter is used without specifying a `pgen_file`.
     """
     print(banner_small)
     filepath: str = verify_filepath(args.specification)
@@ -188,11 +244,22 @@ def process_run(args: Namespace) -> None:
     router.run_task_server(study, args.run_mode)
 
 
-def process_restart(args: Namespace) -> None:
+def process_restart(args: Namespace):
     """
     CLI command for restarting a study.
 
-    :param [Namespace] `args`: parsed CLI arguments
+    This function handles the restart process by verifying the specified restart
+    directory, locating a valid provenance specification file, and initiating
+    the study from that point.
+
+    Args:
+        args: Parsed CLI arguments containing:\n
+            - `restart_dir`: Path to the directory where the restart specifications are located.
+            - `run_mode`: The mode for running the study (e.g., normal, dry-run).
+
+    Raises:
+        ValueError: If the `restart_dir` does not contain a valid provenance spec file or
+            if multiple files match the specified pattern.
     """
     print(banner_small)
     restart_dir: str = verify_dirpath(args.restart_dir)
@@ -208,11 +275,20 @@ def process_restart(args: Namespace) -> None:
     router.run_task_server(study, args.run_mode)
 
 
-def launch_workers(args):
+def launch_workers(args: Namespace):
     """
     CLI command for launching workers.
 
-    :param `args`: parsed CLI arguments
+    This function initializes worker processes for executing tasks as defined
+    in the Merlin specification.
+
+    Args:
+        args: Parsed CLI arguments containing:\n
+            - `worker_echo_only`: If True, don't start the workers and just echo the launch command
+            - Additional worker-related parameters such as:
+                - `worker_steps`: Only start workers for these steps.
+                - `worker_args`: Arguments to pass to the worker processes.
+                - `disable_logs`: If True, disables logging for the worker processes.
     """
     if not args.worker_echo_only:
         print(banner_small)
@@ -240,11 +316,17 @@ def launch_workers(args):
         LOG.debug(f"celery command: {launch_worker_status}")
 
 
-def purge_tasks(args):
+def purge_tasks(args: Namespace):
     """
-    CLI command for purging tasks.
+    CLI command for purging tasks from the task server.
 
-    :param `args`: parsed CLI arguments
+    This function removes specified tasks from the task server based on the provided
+    Merlin specification. It allows for targeted purging or forced removal of tasks.
+
+    Args:
+        args: Parsed CLI arguments containing:\n
+            - `purge_force`: If True, forces the purge operation without confirmation.
+            - `purge_steps`: Steps or criteria based on which tasks will be purged.
     """
     print(banner_small)
     spec, _ = get_merlin_spec_with_override(args)
@@ -258,15 +340,28 @@ def purge_tasks(args):
     LOG.info(f"Purge return = {ret} .")
 
 
-def query_status(args):
+def query_status(args: Namespace):
     """
-    CLI command for querying status of studies.
-    Based on the parsed CLI args, construct either a Status object or a DetailedStatus object
-    and display the appropriate output.
-    Object mapping is as follows:
-    merlin status -> Status object ; merlin detailed-status -> DetailedStatus object
+    CLI command for querying the status of studies.
 
-    :param `args`: parsed CLI arguments
+    This function processes the given command-line arguments to determine the
+    status of a study. It constructs either a [`Status`][study.status.Status] object
+    or a [`DetailedStatus`][study.status.DetailedStatus] object based on the specified
+    command and the arguments provided. The function handles validations for the task
+    server input and the output format specified for status dumping.
+
+    Object mapping:
+        - `merlin status` -> [`Status`][study.status.Status] object
+        - `merlin detailed-status` -> [`DetailedStatus`][study.status.DetailedStatus]
+        object
+
+    Args:
+        args: Parsed CLI arguments containing user inputs for the status query.
+
+    Raises:
+        ValueError:
+            - If the task server specified is not supported (only "celery" is valid).
+            - If the --dump filename provided does not end with ".csv" or ".json".
     """
     print(banner_small)
 
@@ -310,11 +405,24 @@ def query_status(args):
     return None
 
 
-def query_queues(args):
+def query_queues(args: Namespace):
     """
-    CLI command for finding all workers.
+    CLI command for finding all workers and their associated queues.
 
-    :param args: parsed CLI arguments
+    This function processes the command-line arguments to retrieve and display
+    information about the available workers and their queues within the task server.
+    It validates the necessary parameters, handles potential file dumping, and
+    formats the output for easy readability.
+
+    Args:
+        args: Parsed CLI arguments containing user inputs related to the query.
+
+    Raises:
+        ValueError:
+            - If a specification is not provided when steps are specified and the
+            steps do not include "all".
+            - If variables are included without a corresponding specification.
+            - If the specified dump filename does not end with '.json' or '.csv'.
     """
     print(banner_small)
 
@@ -354,11 +462,19 @@ def query_queues(args):
             router.dump_queue_info(args.task_server, queue_information, args.dump)
 
 
-def query_workers(args):
+def query_workers(args: Namespace):
     """
     CLI command for finding all workers.
 
-    :param `args`: parsed CLI arguments
+    This function retrieves and queries the names of any active workers.
+    If the `--spec` argument is included, only query the workers defined in the spec file.
+
+    Args:
+        args: Parsed command-line arguments, which may include:\n
+            - `spec`: Path to the specification file.
+            - `task_server`: Address of the task server to query.
+            - `queues`: List of queue names to filter workers.
+            - `workers`: List of specific worker names to query.
     """
     print(banner_small)
 
@@ -376,11 +492,20 @@ def query_workers(args):
     router.query_workers(args.task_server, worker_names, args.queues, args.workers)
 
 
-def stop_workers(args):
+def stop_workers(args: Namespace):
     """
     CLI command for stopping all workers.
 
-    :param `args`: parsed CLI arguments
+    This function stops any active workers connected to a user's task server.
+    If the `--spec` argument is provided, this function retrieves the names of
+    workers from a the spec file and then issues a command to stop them.
+
+    Args:
+        args: Parsed command-line arguments, which may include:\n
+            - `spec`: Path to the specification file to load worker names.
+            - `task_server`: Address of the task server to send the stop command to.
+            - `queues`: List of queue names to filter the workers.
+            - `workers`: List of specific worker names to stop.
     """
     print(banner_small)
     worker_names = []
@@ -398,11 +523,12 @@ def stop_workers(args):
     router.stop_workers(args.task_server, worker_names, args.queues, args.workers)
 
 
-def print_info(args):
+def print_info(args: Namespace):
     """
-    CLI command to print merlin config info.
+    CLI command to print merlin configuration info.
 
-    :param `args`: parsed CLI arguments
+    Args:
+        args: Parsed CLI arguments.
     """
     # if this is moved to the toplevel per standard style, merlin is unable to generate the (needed) default config file
     from merlin import display  # pylint: disable=import-outside-toplevel
@@ -410,11 +536,24 @@ def print_info(args):
     display.print_info(args)
 
 
-def config_merlin(args: Namespace) -> None:
+def config_merlin(args: Namespace):
     """
-    CLI command to setup default merlin config.
+    CLI command to set up the default Merlin configuration.
 
-    :param [Namespace] `args`: parsed CLI arguments
+    This function initializes the configuration app.yaml file that's
+    necessary to connect Merlin to a central server. If the output
+    directory is not specified via the command-line arguments, it
+    defaults to the user's home directory under `.merlin`.
+
+    Args:
+        args: Parsed command-line arguments, which may include:\n
+            - `output_dir`: Path to the output directory for
+              configuration files. If not provided, defaults to
+              `~/.merlin`.
+            - `task_server`: Address of the task server for the
+              configuration.
+            - `broker`: Address of the broker service to use.
+            - `test`: Flag indicating whether to run in test mode.
     """
     output_dir: Optional[str] = args.output_dir
     if output_dir is None:
@@ -425,9 +564,20 @@ def config_merlin(args: Namespace) -> None:
 
 
 def process_example(args: Namespace) -> None:
-    """Either lists all example workflows, or sets up an example as a workflow to be run at root dir.
+    """
+    CLI command to set up or list Merlin example workflows.
 
-    :param [Namespace] `args`: parsed CLI arguments
+    This function either lists all available example workflows or sets
+    up a specified example workflow to be run in the root directory. The
+    behavior is determined by the `workflow` argument.
+
+    Args:
+        args: Parsed command-line arguments, which may include:\n
+            - `workflow`: The action to perform; should be "list"
+              to display all examples or the name of a specific example
+              workflow to set up.
+            - `path`: The directory where the example workflow
+              should be set up. Only applicable when `workflow` is not "list".
     """
     if args.workflow == "list":
         print(list_examples())
@@ -436,12 +586,20 @@ def process_example(args: Namespace) -> None:
         setup_example(args.workflow, args.path)
 
 
-def process_monitor(args):
+def process_monitor(args: Namespace):
     """
-    CLI command to monitor merlin workers and queues to keep
-    the allocation alive
+    CLI command to monitor Merlin workers and queues to maintain
+    allocation status.
 
-    :param `args`: parsed CLI arguments
+    This function periodically checks the status of Merlin workers and
+    the associated queues to ensure that the allocation remains active.
+    It includes a sleep interval to wait before each check, including
+    the initial one.
+
+    Args:
+        args: Parsed command-line arguments, which may include:\n
+            - `sleep`: The duration (in seconds) to wait before
+              checking the queue status again.
     """
     spec, _ = get_merlin_spec_with_override(args)
 
@@ -466,8 +624,24 @@ def process_monitor(args):
 
 def process_server(args: Namespace):
     """
-    Route to the correct function based on the command
-    given via the CLI
+    Route to the appropriate server function based on the command
+    specified via the CLI.
+
+    This function processes commands related to server management,
+    directing the flow to the corresponding function for actions such
+    as initializing, starting, stopping, checking status, restarting,
+    or configuring the server.
+
+    Args:
+        args: Parsed command-line arguments, which includes:\n
+            - `commands`: The server management command to execute.
+              Possible values are:
+                - `init`: Initialize the server.
+                - `start`: Start the server.
+                - `stop`: Stop the server.
+                - `status`: Check the server status.
+                - `restart`: Restart the server.
+                - `config`: Configure the server.
     """
     try:
         lc_all_val = os.environ["LC_ALL"]
@@ -510,7 +684,12 @@ def process_database(args: Namespace):
 # to split the function up but that wouldn't make much sense so we ignore it
 def setup_argparse() -> None:  # pylint: disable=R0915
     """
-    Setup argparse and any CLI options we want available via the package.
+    Set up the command-line argument parser for the Merlin package.
+
+    This function configures the ArgumentParser for the Merlin CLI, allowing users
+    to interact with various commands related to workflow management and task handling.
+    It includes options for running a workflow, restarting tasks, purging task queues,
+    generating configuration files, and managing/configuring the server.
     """
     parser: HelpParser = HelpParser(
         prog="merlin",
@@ -1095,10 +1274,17 @@ def setup_argparse() -> None:  # pylint: disable=R0915
 
 
 def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
-    """All CLI arg parsers directly controlling or invoking workers are generated here.
+    """
+    Generate command-line argument parsers for managing worker operations.
 
-    :param [ArgumentParser] `subparsers`: the subparsers needed for every CLI command that directly controls or invokes
-        workers.
+    This function sets up subparsers for CLI commands that directly control or invoke
+    workers in the context of the Merlin framework. It provides options for running,
+    querying, stopping, and monitoring workers associated with a Merlin YAML study
+    specification.
+
+    Args:
+        subparsers: An instance of ArgumentParser for adding command-line subcommands
+            related to worker management.
     """
     # merlin run-workers
     run_workers: ArgumentParser = subparsers.add_parser(
@@ -1243,11 +1429,18 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
     monitor.set_defaults(func=process_monitor)
 
 
-def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
-    """All CLI arg parsers generally used diagnostically are generated here.
+def generate_diagnostic_parsers(subparsers: ArgumentParser):
+    """
+    Generate command-line argument parsers for diagnostic operations in the Merlin framework.
 
-    :param [ArgumentParser] `subparsers`: the subparsers needed for every CLI command that handles diagnostics for a
-        Merlin job.
+    This function sets up subparsers for CLI commands that handle diagnostics related
+    to Merlin jobs. It provides options to check the status of studies, gather queue
+    statistics, and retrieve configuration information, making it easier for users to
+    diagnose issues with their workflows.
+
+    Args:
+        subparsers: An instance of ArgumentParser that will be used to add command-line
+            subcommands for various diagnostic activities.
     """
     # merlin status
     status_cmd: ArgumentParser = subparsers.add_parser(
@@ -1437,7 +1630,13 @@ def generate_diagnostic_parsers(subparsers: ArgumentParser) -> None:
 
 def main():
     """
-    High-level CLI operations.
+    Entry point for the Merlin command-line interface (CLI) operations.
+
+    This function sets up the argument parser, handles command-line arguments,
+    initializes logging, and executes the appropriate function based on the
+    provided command. It ensures that the user receives help information if
+    no arguments are provided and performs error handling for any exceptions
+    that may occur during command execution.
     """
     parser = setup_argparse()
     if len(sys.argv) == 1:

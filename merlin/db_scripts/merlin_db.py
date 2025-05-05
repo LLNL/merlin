@@ -9,11 +9,11 @@ from typing import Callable, List
 from merlin.backends.backend_factory import backend_factory
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
-from merlin.db_scripts.db_entity import DatabaseEntity
-from merlin.db_scripts.logical_worker_entity import LogicalWorkerEntity
-from merlin.db_scripts.physical_worker_entity import PhysicalWorkerEntity
-from merlin.db_scripts.run_entity import RunEntity
-from merlin.db_scripts.study_entity import StudyEntity
+from merlin.db_scripts.entities.db_entity import DatabaseEntity
+from merlin.db_scripts.entities.logical_worker_entity import LogicalWorkerEntity
+from merlin.db_scripts.entities.physical_worker_entity import PhysicalWorkerEntity
+from merlin.db_scripts.entities.run_entity import RunEntity
+from merlin.db_scripts.entities.study_entity import StudyEntity
 from merlin.exceptions import RunNotFoundError, StudyNotFoundError, WorkerNotFoundError
 
 

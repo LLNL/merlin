@@ -37,11 +37,13 @@ import pprint
 import shutil
 import time
 import traceback
+from argparse import Namespace
 from datetime import datetime
 from multiprocessing import Pipe, Process
-from typing import Dict
+from multiprocessing.connection import Connection
+from typing import Any, Dict, List, Union
 
-from kombu import Connection
+from kombu import Connection as KombuConnection
 from tabulate import tabulate
 
 from merlin.ascii_art import banner_small
@@ -72,16 +74,39 @@ COLOR_TRANSLATOR = {v: k for k, v in ANSI_COLORS.items()}
 
 class ConnProcess(Process):
     """
-    An extension of Multiprocessing's Process class in order
-    to overwrite the run and exception defintions.
+    An extension of the multiprocessing's Process class that allows for
+    custom handling of exceptions and inter-process communication.
+
+    This class overrides the `run` method to capture exceptions that occur
+    during the execution of the process and sends them back to the parent
+    process via a pipe. It also provides a property to retrieve any
+    exceptions that were raised during execution.
+
+    Attributes:
+        _pconn: The parent connection for inter-process communication.
+        _cconn: The child connection for inter-process communication.
+        exception: Stores the exception raised during the process run.
+
+    Methods:
+        run: Executes the process's main logic.
     """
 
     def __init__(self, *args, **kwargs):
         Process.__init__(self, *args, **kwargs)
+        self._pconn: Connection
+        self._cconn: Connection
         self._pconn, self._cconn = Pipe()
         self._exception = None
 
     def run(self):
+        """
+        Executes the process's main logic.
+
+        This method overrides the default run method of the Process class.
+        It attempts to run the process and captures any exceptions that occur.
+        If an exception is raised, it sends the exception and its traceback
+        back to the parent process via the child connection.
+        """
         try:
             Process.run(self)
             self._cconn.send(None)
@@ -91,17 +116,35 @@ class ConnProcess(Process):
             # raise e  # You can still rise this exception if you need to
 
     @property
-    def exception(self):
-        """Create custom exception"""
+    def exception(self) -> Union[Exception, None]:
+        """
+        Retrieves the exception raised during the process execution.
+
+        This property checks if there is an exception available from the
+        parent connection. If an exception was raised, it is received and
+        stored for later access.
+
+        Returns:
+            The exception raised during the process run, or None if no exception occurred.
+        """
         if self._pconn.poll():
             self._exception = self._pconn.recv()
         return self._exception
 
 
-def check_server_access(sconf):
+def check_server_access(sconf: Dict[str, Any]):
     """
     Check if there are any issues connecting to the servers.
     If there are, output the errors.
+
+    This function iterates through a predefined list of servers and checks
+    their connectivity based on the provided server configuration. If any
+    connection issues are detected, the exceptions are collected and printed.
+
+    Args:
+        sconf: A dictionary containing server configurations, where keys
+            represent server names and values contain connection details.
+            The function expects keys corresponding to the servers being checked.
     """
     servers = ["broker server", "results server"]
 
@@ -120,7 +163,24 @@ def check_server_access(sconf):
             print(f"{key}: {val}")
 
 
-def _examine_connection(server, sconf, excpts):
+def _examine_connection(server: str, sconf: Dict[str, Any], excpts: Dict[str, Exception]):
+    """
+    Examine the connection to a specified server and handle any exceptions.
+
+    This function attempts to establish a connection to the given server using
+    the configuration provided in `sconf`. It utilizes a separate process to
+    manage the connection attempt and checks for timeouts. If the connection
+    fails or times out, the error is recorded in the `excpts` dictionary.
+
+    Args:
+        server: A string representing the name of the server to connect to.
+            This should correspond to a key in the `sconf` dictionary.
+        sconf: A dictionary containing server configurations, where keys
+            represent server names and values contain connection details.
+        excpts: A dictionary to store exceptions encountered during the
+            connection attempt, with server names as keys and exceptions
+            as values.
+    """
     from merlin.config import broker, results_backend  # pylint: disable=C0415
 
     connect_timeout = 60
@@ -130,7 +190,7 @@ def _examine_connection(server, sconf, excpts):
             ssl_conf = broker.get_ssl_config()
         if "results" in server:
             ssl_conf = results_backend.get_ssl_config()
-        conn = Connection(sconf[server], ssl=ssl_conf)
+        conn = KombuConnection(sconf[server], ssl=ssl_conf)
         conn_check = ConnProcess(target=conn.connect)
         conn_check.start()
         counter = 0
@@ -153,7 +213,11 @@ def _examine_connection(server, sconf, excpts):
 
 def display_config_info():
     """
-    Prints useful configuration information to the console.
+    Prints useful configuration information for the Merlin application to the console.
+
+    This function retrieves and displays the connection strings and SSL configurations
+    for the broker and results servers. It handles any exceptions that may occur during
+    the retrieval process, providing error messages for any issues encountered.
     """
     from merlin.config import broker, results_backend  # pylint: disable=C0415
     from merlin.config.configfile import default_config_info  # pylint: disable=C0415
@@ -191,12 +255,13 @@ def display_config_info():
     check_server_access(sconf)
 
 
-def display_multiple_configs(files, configs):
+def display_multiple_configs(files: List[str], configs: List[Dict]):
     """
     Logic for displaying multiple Merlin config files.
 
-    :param `files`: List of merlin config files
-    :param `configs`: List of merlin configurations
+    Args:
+        files: List of merlin config files
+        configs: List of merlin configurations
     """
     print("=" * 50)
     print(" MERLIN CONFIG ")
@@ -211,13 +276,19 @@ def display_multiple_configs(files, configs):
 
 
 # Might use args here in the future so we'll disable the pylint warning for now
-def print_info(args):  # pylint: disable=W0613
+def print_info(args: Namespace):  # pylint: disable=W0613
     """
     Provide version and location information about python and packages to
     facilitate user troubleshooting. Also provides info about server connections
     and configurations.
 
-    :param `args`: parsed CLI arguments
+    Note:
+        The `args` parameter is currently unused but is included for
+        compatibility with the command-line interface (CLI) in case we decide to use
+        args here in the future.
+
+    Args:
+        args: parsed CLI arguments (currently unused).
     """
     print(banner_small)
     display_config_info()
@@ -235,16 +306,30 @@ def print_info(args):  # pylint: disable=W0613
 
 def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = False):  # noqa: F821
     """
-    Displays a low level overview of the status of a study. This is a task-by-task
-    status display where each task will show:
-    step name, worker name, task queue, cmd & restart parameters,
-    step workspace, step status, return code, elapsed time, run time, and num restarts.
-    If too many tasks are found and the pager is disabled, prompts will appear for the user to decide
-    what to do that way we don't overload the terminal (unless the no-prompts flag is provided).
+    Displays a low-level overview of the status of a study in a task-by-task format.
 
-    :param `status_obj`: A DetailedStatus object
-    :param `test_mode`: If true, run this in testing mode and don't print any output. This will also
-                        decrease the limit on the number of tasks allowed before a prompt is displayed.
+    Each task will display the following details:
+        - Step name
+        - Worker name
+        - Task queue
+        - Command and restart parameters
+        - Step workspace
+        - Step status
+        - Return code
+        - Elapsed time
+        - Run time
+        - Number of restarts
+
+    If the number of tasks exceeds a certain limit and the pager is disabled, the user
+    will be prompted to apply additional filters to avoid overwhelming the terminal output,
+    unless the prompts are disabled through the no-prompts flag.
+
+    Args:
+        status_obj (study.status.DetailedStatus): An instance of
+            [`DetailedStatus`][study.status.DetailedStatus] containing information about
+            the current state of tasks.
+        test_mode: If True, runs the function in testing mode, suppressing output and
+            reducing the task limit for prompts. Defaults to False.
     """
     args = status_obj.args
     try:
@@ -299,10 +384,18 @@ def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = 
 
 def _display_summary(state_info: Dict[str, str], cb_help: bool):
     """
-    Given a dict of state info for a step, print a summary of the task states.
+    Prints a summary of task states based on the provided state information.
 
-    :param `state_info`: A dictionary of information related to task states for a step
-    :param `cb_help`: True if colorblind assistance (using symbols) is needed. False otherwise.
+    This function takes a dictionary of state information for a step and
+    prints a formatted summary, including optional colorblind assistance using
+    symbols if specified.
+
+    Args:
+        state_info: A dictionary containing information related to task states
+            for a step. Each entry should correspond to a specific task state
+            with its associated properties (e.g., count, total, name).
+        cb_help: If True, provides colorblind assistance by using symbols in the
+            display. Defaults to False for standard output.
     """
     # Build a summary list of task info
     print("\nSUMMARY:")
@@ -338,18 +431,27 @@ def _display_summary(state_info: Dict[str, str], cb_help: bool):
 
 
 def display_status_summary(  # pylint: disable=R0912
-    status_obj: "Status", non_workspace_keys: set, test_mode=False  # noqa: F821
+    status_obj: "Status", non_workspace_keys: set, test_mode: bool = False  # noqa: F821
 ) -> Dict:
     """
-    Displays a high level overview of the status of a study. This includes
-    progress bars for each step and a summary of the number of initialized,
-    running, finished, cancelled, dry ran, failed, and unknown tasks.
+    Displays a high-level overview of the status of a study, including progress bars for each step
+    and a summary of the number of initialized, running, finished, cancelled, dry ran, failed, and
+    unknown tasks.
 
-    :param `status_obj`: A Status object
-    :param `non_workspace_keys`: A set of keys in requested_statuses that are not workspace keys.
-                                 This will be set("parameters", "task_queue", "workers")
-    :param `test_mode`: If True, don't print anything and just return a dict of all the state info for each step
-    :returns: A dict that's empty usually. If ran in test_mode it will be a dict of state_info for every step.
+    The function prints a summary for each step and collects state information. In test mode,
+    it suppresses output and returns a dictionary of state information instead.
+
+    Args:
+        status_obj (study.status.Status): An instance of [`Status`][study.status.Status] containing
+            information about task states and associated data for the study.
+        non_workspace_keys: A set of keys in requested_statuses that are not workspace keys.
+            Typically includes keys like "parameters", "task_queue", and "workers".
+        test_mode: If True, runs in test mode; suppresses printing and returns a dictionary
+            of state information for each step. Defaults to False.
+
+    Returns:
+        An empty dictionary in regular mode. In test mode, returns a dictionary containing
+            the state information for each step.
     """
     all_state_info = {}
     if not test_mode:
@@ -429,32 +531,40 @@ def display_status_summary(  # pylint: disable=R0912
 
 # Credit to this stack overflow post: https://stackoverflow.com/a/34325723
 def display_progress_bar(  # pylint: disable=R0913,R0914
-    current,
-    total,
-    state_info=None,
-    prefix="",
-    suffix="",
-    decimals=1,
-    length=80,
-    fill="█",
-    print_end="\n",
-    color=None,
-    cb_help=False,
+    current: int,
+    total: int,
+    state_info: Dict[str, Any] = None,
+    prefix: str = "",
+    suffix: str = "",
+    decimals: int = 1,
+    length: int = 80,
+    fill: str = "█",
+    print_end: str = "\n",
+    color: str = None,
+    cb_help: bool = False,
 ):
     """
-    Prints a progress bar based on current and total.
+    Prints a customizable progress bar that visually represents the completion percentage
+    relative to a given total.
 
-    :param `current`:     current number (Int)
-    :param `total`:       total number (Int)
-    :param `state_info`:  information about the state of tasks (Dict) (overrides color)
-    :param `prefix`:      prefix string (Str)
-    :param `suffix`:      suffix string (Str)
-    :param `decimals`:    positive number of decimals in percent complete (Int)
-    :param `length`:      character length of bar (Int)
-    :param `fill`:        bar fill character (Str)
-    :param `print_end`:    end character (e.g. "\r", "\r\n") (Str)
-    :param `color`:       color of the progress bar (ANSI Str) (overridden by state_info)
-    :param `cb_help`:     true if color blind help is needed; false otherwise (Bool)
+    The function can display additional state information for detailed tracking, including
+    support for color customization and adaptation for color-blind users. It updates the
+    display based on current progress and optionally accepts state information to adjust the
+    appearance of the progress bar.
+
+    Args:
+        current: Current progress value.
+        total: Total value representing 100% completion.
+        state_info: Dictionary containing state information about tasks. This can override
+            color settings and modifies how the progress bar is displayed.
+        prefix: Optional prefix string to display before the progress bar.
+        suffix: Optional suffix string to display after the progress bar.
+        decimals: Number of decimal places to display in the percentage (default is 1).
+        length: Character length of the progress bar (default is 80).
+        fill: Character used to fill the progress bar (default is "█").
+        print_end: Character(s) to print at the end of the line (e.g., '\\r', '\\n').
+        color: ANSI color string for the progress bar. Overrides state_info colors.
+        cb_help: If True, provides color-blind assistance by adapting the fill characters.
     """
     # Set the color of the bar
     if color and color in ANSI_COLORS:

@@ -33,12 +33,13 @@ This module contains a list of examples that can be used when learning to use
 Merlin, or for setting up new workflows.
 
 Examples are packaged in directories, with the directory name denoting
-the example name.  This must match the name of the merlin specification inside.
+the example name. This must match the name of the Merlin specification inside.
 """
 import glob
 import logging
 import os
 import shutil
+from typing import Dict, List, Union
 
 import tabulate
 import yaml
@@ -57,25 +58,37 @@ EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "workflo
 # - all openfoam examples should just be under one openfoam label
 
 
-def gather_example_dirs():
-    """Get all the example directories"""
+def gather_example_dirs() -> Dict[str, str]:
+    """
+    Get all the example directories.
+
+    Returns:
+        A dictionary where the keys and values are the names of example directories.
+    """
     result = {}
     for directory in sorted(os.listdir(EXAMPLES_DIR)):
         result[directory] = directory
     return result
 
 
-def gather_all_examples():
-    """Get all the example yaml files"""
+def gather_all_examples() -> List[str]:
+    """
+    Get all the example YAML files.
+
+    Returns:
+        A list of file paths to all YAML files in the example directories.
+    """
     path = os.path.join(os.path.join(EXAMPLES_DIR, ""), os.path.join("*", "*.yaml"))
     return glob.glob(path)
 
 
-def write_example(src_path, dst_path):
+def write_example(src_path: str, dst_path: str):
     """
-    Write out the example workflow to a file.
-    :param src_path: The path to copy from.
-    :param content: The formatted content to write the file to.
+    Write out the example workflow to a file or directory.
+
+    Args:
+        src_path: The path to copy the example from.
+        dst_path: The destination path to copy the example to.
     """
     if os.path.isdir(src_path):
         shutil.copytree(src_path, dst_path)
@@ -83,8 +96,13 @@ def write_example(src_path, dst_path):
         shutil.copy(src_path, dst_path)
 
 
-def list_examples():
-    """List all available examples."""
+def list_examples() -> str:
+    """
+    List all available examples with their descriptions.
+
+    Returns:
+        A formatted string table of example names and their descriptions.
+    """
     headers = ["name", "description"]
     rows = []
     for example_dir in gather_example_dirs():
@@ -111,8 +129,17 @@ def list_examples():
     return "\n" + tabulate.tabulate(rows, headers) + "\n"
 
 
-def setup_example(name, outdir):
-    """Setup the given example."""
+def setup_example(name: str, outdir: str) -> Union[str, None]:
+    """
+    Set up the given example by copying it to the specified output directory.
+
+    Args:
+        name: The name of the example to set up.
+        outdir: The output directory where the example will be copied.
+
+    Returns:
+        The name of the example if successful, or None if the example was not found or an error occurred.
+    """
     example = None
     spec_paths = gather_all_examples()
     spec_path = None

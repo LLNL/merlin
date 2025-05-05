@@ -7,7 +7,6 @@
 # LLNL-CODE-797170
 # All rights reserved.
 # This file is part of Merlin, Version: 1.12.2.
-
 #
 # For details, see https://github.com/LLNL/merlin.
 #
@@ -28,3 +27,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 ###############################################################################
+
+"""
+The `server` package defines the functionality for managing a containerized server
+through Merlin.
+
+Modules:
+    server_commands.py: Main functions to interact with the server.
+    server_config.py: Server configuration functions.
+    server_util.py: Defines the structure of our server configurations.
+"""

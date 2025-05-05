@@ -33,7 +33,7 @@ from __future__ import absolute_import, print_function
 
 import logging
 import os
-from typing import Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import billiard
 import celery
@@ -43,7 +43,7 @@ from celery.backends.redis import RedisBackend  # noqa: F401 ; Needed for celery
 from celery.signals import celeryd_init, worker_process_init, worker_shutdown
 
 import merlin.common.security.encrypt_backend_traffic
-from merlin.common.abstracts.enums import WorkerStatus
+from merlin.common.enums import WorkerStatus
 from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
 from merlin.config.utils import Priority, get_priority
@@ -60,7 +60,8 @@ def patch_celery():
     Celery has error callbacks but they do not work properly on chords that
     are nested within chains.
 
-    Credit to this function goes to: https://danidee10.github.io/2019/07/09/celery-chords.html
+    Credit to this function goes to
+    [the following post](https://danidee10.github.io/2019/07/09/celery-chords.html).
     """
 
     def _unpack_chord_result(
@@ -86,9 +87,41 @@ def patch_celery():
 
 
 # This function has to have specific args/return values for celery so ignore pylint
-def route_for_task(name, args, kwargs, options, task=None, **kw):  # pylint: disable=W0613,R1710
+def route_for_task(
+    name: str,
+    args: List[Any],
+    kwargs: Dict[Any, Any],
+    options: Dict[Any, Any],
+    task: celery.Task = None,
+    **kw: Dict[Any, Any],
+) -> Dict[Any, Any]:  # pylint: disable=W0613,R1710
     """
-    Custom task router for queues
+    Custom task router for Celery queues.
+
+    This function routes tasks to specific queues based on the task name.
+    If the task name contains a colon, it splits the name to determine the queue.
+
+    Args:
+        name: The name of the task being routed.
+        args: The positional arguments passed to the task.
+        kwargs: The keyword arguments passed to the task.
+        options: Additional options for the task.
+        task: The task instance (default is None).
+        **kw: Additional keyword arguments for THIS function (not the task).
+
+    Returns:
+        A dictionary specifying the queue to route the task to.
+            If the task name contains a colon, it returns a dictionary with
+            the key "queue" set to the queue name. Otherwise, it returns
+            an empty dictionary.
+
+    Example:
+        Using a colon in the name will return the string before the colon as the queue:
+
+        ```python
+        >>> route_for_task("my_queue:my_task")
+        {"queue": "my_queue"}
+        ```
     """
     if ":" in name:
         queue, _ = name.split(":")
@@ -233,12 +266,13 @@ def handle_worker_shutdown(sender=None, **kwargs):
 
 
 # Pylint believes the args are unused, I believe they're used after decoration
-@worker_process_init.connect
-def setup(sender=None, conf=None, **kwargs):  # pylint: disable=W0613
+@worker_process_init.connect()
+def setup(**kwargs: Dict[Any, Any]):  # pylint: disable=W0613
     """
-    Set affinity for the worker on startup (works on toss3 nodes)
+    Set affinity for the worker on startup (works on toss3 nodes).
 
-    :param `**kwargs`: keyword arguments
+    Args:
+        **kwargs: Keyword arguments.
     """
     if "CELERY_AFFINITY" in os.environ and int(os.environ["CELERY_AFFINITY"]) > 1:
         # Number of cpus between workers.

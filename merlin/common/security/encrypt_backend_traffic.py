@@ -31,7 +31,10 @@
 """
 Functions for encrypting backend traffic.
 """
+from typing import Any
+
 import celery.backends.base
+from celery.backends.base import Backend
 
 from merlin.common.security import encrypt
 
@@ -44,25 +47,47 @@ old_encode = celery.backends.base.Backend.encode
 old_decode = celery.backends.base.Backend.decode
 
 
-def _encrypt_encode(*args, **kwargs):
+def _encrypt_encode(*args, **kwargs) -> bytes:
     """
-    Intercept all celery.backends.Backend.encode calls and encrypt them after
-    encoding
+    Intercepts calls to the encode method of the Celery backend and encrypts
+    the encoded data.
+
+    This function wraps the original encode method, encrypting the result
+    after encoding.
+
+    Returns:
+        The encrypted encoded data in bytes format.
     """
     return encrypt.encrypt(old_encode(*args, **kwargs))
 
 
-def _decrypt_decode(self, payload):
+def _decrypt_decode(self: Backend, payload: bytes) -> Any:
     """
-    Intercept all celery.backends.Backend.decode calls and decrypt them before
-    decoding.
+    Intercepts calls to the decode method of the Celery backend and decrypts
+    the payload before decoding.
+
+    This function wraps the original decode method, decrypting the payload
+    prior to decoding.
+
+    Args:
+        self: The instance of the backend from which the decode method is called.
+        payload: The encrypted data to be decrypted.
+
+    Returns:
+        The decoded data after decryption. Can be any format.
     """
     return old_decode(self, encrypt.decrypt(payload))
 
 
 def set_backend_funcs():
     """
-    Set the encode / decode to our own encrypt_encode / encrypt_decode.
+    Sets the encode and decode methods of the Celery backend to custom
+    implementations that handle encryption and decryption.
+
+    This function replaces the default encode and decode methods with
+    `_encrypt_encode` and `_decrypt_decode`, respectively, ensuring that
+    all data processed by the Celery backend is encrypted and decrypted
+    appropriately.
     """
     celery.backends.base.Backend.encode = _encrypt_encode
     celery.backends.base.Backend.decode = _decrypt_decode
