@@ -40,6 +40,7 @@ Each test looks like:
 }
 """
 
+import os
 import shutil
 
 # Pylint complains that we didn't install this module but it's defined locally so ignore
@@ -129,6 +130,8 @@ def define_tests():  # pylint: disable=R0914,R0915
     config_dir = "./CLI_TEST_MERLIN_CONFIG"
     release_dependencies = "./requirements/release.txt"
 
+    app_yaml_path = os.path.join(config_dir, "app.yaml")
+
     basic_checks = {
         "merlin": {"cmds": "merlin", "conditions": HasReturnCode(1), "run type": "local"},
         "merlin help": {"cmds": "merlin --help", "conditions": HasReturnCode(), "run type": "local"},
@@ -140,14 +143,28 @@ def define_tests():  # pylint: disable=R0914,R0915
             "cleanup": f"rm -rf {config_dir}",
         },
         "merlin config broker": {
-            "cmds": f"merlin config -o {config_dir} broker -t rabbitmq -u $MERLIN_RABBITMQ_USER -pf $MERLIN_RABBITMQ_PASSWORD_FILE -s $MERLIN_RABBITMQ_SERVER -p $MERLIN_RABBITMQ_PORT -v $MERLIN_RABBITMQ_VHOST",
-            "conditions": HasReturnCode(),
+            "cmds": f"merlin config -o {config_dir} broker -t rabbitmq -u rabbitmq_user -pf rabbitmq_password_file -s rabbitmq_server -p 5672 -v rabbitmq_vhost",
+            "conditions": [
+                HasReturnCode(),
+                FileHasRegex(app_yaml_path, "name: rabbitmq"),
+                FileHasRegex(app_yaml_path, "username: rabbitmq_user"),
+                FileHasRegex(app_yaml_path, "password: rabbitmq_password_file"),
+                FileHasRegex(app_yaml_path, "server: rabbitmq_server"),
+                FileHasRegex(app_yaml_path, "port: 5672"),
+                FileHasRegex(app_yaml_path, "vhost: rabbitmq_vhost"),
+            ],
             "run type": "local",
             "cleanup": f"rm -rf {config_dir}",
         },
         "merlin config backend": {
-            "cmds": f"merlin config -o {config_dir} backend -t redis -pf $MERLIN_REDIS_PASSWORD_FILE -s $MERLIN_REDIS_SERVER -p $MERLIN_REDIS_PORT",
-            "conditions": HasReturnCode(),
+            "cmds": f"merlin config -o {config_dir} backend -t redis -pf redis_password_file -s redis_server -p 6379",
+            "conditions": [
+                HasReturnCode(),
+                FileHasRegex(app_yaml_path, "name: rediss"),
+                FileHasRegex(app_yaml_path, "password: redis_password_file"),
+                FileHasRegex(app_yaml_path, "server: redis_server"),
+                FileHasRegex(app_yaml_path, "port: 6379"),
+            ],
             "run type": "local",
             "cleanup": f"rm -rf {config_dir}",
         },
