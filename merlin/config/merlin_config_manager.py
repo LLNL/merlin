@@ -148,7 +148,7 @@ class MerlinConfigManager:
         Args:
             config: The configuration dictionary to update.
         """
-        LOG.warning(f"Redis does not use the 'username' or 'vhost' arguments. Ignoring these if provided.")
+        LOG.warning("Redis does not use the 'username' or 'vhost' arguments. Ignoring these if provided.")
         config["name"] = "rediss"
         config["username"] = ""  # Redis doesn't use a username
 

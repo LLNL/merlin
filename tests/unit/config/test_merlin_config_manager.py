@@ -1,6 +1,7 @@
 """
 Tests for the `merlin_config_manager.py` module.
 """
+
 import os
 from argparse import Namespace
 
@@ -113,9 +114,7 @@ def test_save_config_path(mocker: MockerFixture, args: Namespace, config_testing
     assert path == config_manager.config_file
 
 
-def test_create_template_config_creates_file(
-    mocker: MockerFixture, args: Namespace, config_testing_dir: FixtureStr
-):
+def test_create_template_config_creates_file(mocker: MockerFixture, args: Namespace, config_testing_dir: FixtureStr):
     """
     Test that `create_template_config` creates the expected configuration file.
 
