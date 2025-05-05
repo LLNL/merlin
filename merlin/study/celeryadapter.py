@@ -868,34 +868,3 @@ def stop_celery_workers(queues=None, spec_worker_names=None, worker_regex=None):
         app.control.broadcast("shutdown", destination=workers_to_stop)
     else:
         LOG.warning("No workers found to stop")
-
-
-def create_celery_config(config_dir, data_file_name, data_file_path):
-    """
-    Command to setup default celery merlin config.
-
-    :param `config_dir`: The directory to create the config file.
-    :param `data_file_name`: The name of the config file.
-    :param `data_file_path`: The full data file path.
-    """
-    # This will need to come from the server interface
-    MERLIN_CONFIG = os.path.join(config_dir, data_file_name)  # pylint: disable=C0103
-
-    if os.path.isfile(MERLIN_CONFIG):
-        from merlin.common.security import encrypt  # pylint: disable=C0415
-
-        encrypt.init_key()
-        LOG.info(f"The config file already exists, {MERLIN_CONFIG}")
-        return
-
-    with open(MERLIN_CONFIG, "w") as outfile, open(data_file_path, "r") as infile:
-        outfile.write(infile.read())
-
-    if not os.path.isfile(MERLIN_CONFIG):
-        LOG.error(f"Cannot create config file {MERLIN_CONFIG}")
-
-    LOG.info(f"The file {MERLIN_CONFIG} is ready to be edited for your system.")
-
-    from merlin.common.security import encrypt  # pylint: disable=C0415
-
-    encrypt.init_key()

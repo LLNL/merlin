@@ -52,7 +52,7 @@ from tabulate import tabulate
 
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
-from merlin.config.config_commands import create_template_config, update_backend, update_broker
+from merlin.config.merlin_config_manager import MerlinConfigManager
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
@@ -377,24 +377,40 @@ def print_info(args):
 
 def config_merlin(args: Namespace) -> None:
     """
-    CLI command to setup default merlin config.
+    CLI command to set up the default Merlin configuration.
 
-    :param [Namespace] `args`: parsed CLI arguments
+    This function initializes the configuration app.yaml file that's
+    necessary to connect Merlin to a central server. If the output
+    directory is not specified via the command-line arguments, it
+    defaults to the user's home directory under `.merlin`.
+
+    Args:
+        args: Parsed command-line arguments, which may include:\n
+            - `output_dir`: Path to the output directory for
+              configuration files. If not provided, defaults to
+              `~/.merlin`.
+            - `task_server`: Address of the task server for the
+              configuration.
+            - `broker`: Address of the broker service to use.
+            - `test`: Flag indicating whether to run in test mode.
     """
-    output_dir: Optional[str] = args.output_dir
-    if output_dir is None:
-        user_home: str = os.path.expanduser("~")
-        output_dir: str = os.path.join(user_home, ".merlin")
-    config_file = os.path.join(output_dir, "app.yaml")
+    config_manager = MerlinConfigManager(args)
+
+    # Ensure the directory exists and save the configuration path
+    config_manager.ensure_directory_exists()
+    config_manager.save_config_path()
 
     # Default `merlin config` functionality
-    if not os.path.exists(config_file) or not args.commands:
-        create_template_config(args.task_server, output_dir, args.broker)
+    if not os.path.exists(config_manager.config_file) or not args.commands:
+        config_manager.create_template_config()
 
+    # TODO do we want manager to try loading in config path by default?
+
+    # Update broker or backend based on commands
     if args.commands == "broker":
-        update_broker(args, config_file)
+        config_manager.update_broker()
     elif args.commands == "backend":
-        update_backend(args, config_file)
+        config_manager.update_backend()
 
 
 def process_example(args: Namespace) -> None:

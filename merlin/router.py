@@ -45,7 +45,6 @@ from merlin.exceptions import NoWorkersException
 from merlin.study.celeryadapter import (
     build_set_of_queues,
     check_celery_workers_processing,
-    create_celery_config,
     dump_celery_queue_info,
     get_active_celery_queues,
     get_workers_from_app,
@@ -201,36 +200,6 @@ def stop_workers(task_server, spec_worker_names, queues, workers_regex):
         stop_celery_workers(queues, spec_worker_names, workers_regex)
     else:
         LOG.error("Celery is not specified as the task server!")
-
-
-def create_config(task_server: str, config_dir: str, broker: str, test: str) -> None:
-    """
-    Create a config for the given task server.
-
-    :param [str] `task_server`: The task server from which to stop workers.
-    :param [str] `config_dir`: Optional directory to install the config.
-    :param [str] `broker`: string indicated the broker, used to check for redis.
-    :param [str] `test`: string indicating if the app.yaml is used for testing.
-    """
-    if test:
-        LOG.info("Creating test config ...")
-    else:
-        LOG.info("Creating config ...")
-
-    if not os.path.isdir(config_dir):
-        os.makedirs(config_dir)
-
-    if task_server == "celery":
-        config_file = "app.yaml"
-        data_config_file = "app.yaml"
-        if broker == "redis":
-            data_config_file = "app_redis.yaml"
-        elif test:
-            data_config_file = "app_test.yaml"
-        with resources.path("merlin.data.celery", data_config_file) as data_file:
-            create_celery_config(config_dir, config_file, data_file)
-    else:
-        LOG.error("Only celery can be configured currently.")
 
 
 def get_active_queues(task_server: str) -> Dict[str, List[str]]:

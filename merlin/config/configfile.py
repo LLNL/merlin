@@ -39,16 +39,13 @@ import ssl
 from typing import Dict, Optional, Union
 
 from merlin.config import Config
+from merlin.config.config_filepaths import APP_FILENAME, CONFIG_PATH_FILE, MERLIN_HOME
 from merlin.utils import load_yaml
 
 
 LOG: logging.Logger = logging.getLogger(__name__)
 
-APP_FILENAME: str = "app.yaml"
 CONFIG: Optional[Config] = None
-
-USER_HOME: str = os.path.expanduser("~")
-MERLIN_HOME: str = os.path.join(USER_HOME, ".merlin")
 
 
 def load_config(filepath):
@@ -72,6 +69,14 @@ def find_config_file(path=None):
 
     :param path : The path to search for the app.yaml file
     """
+    # Check the config_path.txt file for the active config path
+    if os.path.isfile(CONFIG_PATH_FILE):
+        with open(CONFIG_PATH_FILE, "r") as f:
+            config_path = f.read().strip()
+        if os.path.isfile(config_path):
+            return config_path
+
+    # Fallback to default logic
     if path is None:
         local_app = os.path.join(os.getcwd(), APP_FILENAME)
         path_app = os.path.join(MERLIN_HOME, APP_FILENAME)
