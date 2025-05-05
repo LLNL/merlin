@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new options to the `merlin config` command
   - `merlin config broker` allows users to update the broker settings from the command line
   - `merlin config backend` allows users to update the backend settings from the command line
+- API documentation for Merlin's core codebase
 - Added support for Python 3.12 and 3.13
 - Added additional tests for the `merlin run` and `merlin purge` commands
 - Aliased types to represent different types of pytest fixtures
@@ -18,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `command-tests`, `workflow-tests`, and `integration-tests` to the Makefile
 - Added tests and docs for the new `merlin config` options
 - Python 3.8 now requires `orderly-set==5.3.0` to avoid a bug with the deepdiff library
+- New step 'Reinstall pip to avoid vendored package corruption' to CI workflow jobs that use pip
+- New GitHub actions to reduce common code in CI
 
 ### Changed
 - The `merlin config` command now defaults to the LaunchIT setup
@@ -28,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `e2e-distributed*` definitions from the Makefile
 - Modified GitHub CI to use shared testing servers hosted by LaunchIT rather than the jackalope server
 - Removed `merlin config --test` option
+- CI to use new actions
+
+### Fixed
+- Removed dead lgtm link
 
 ## [1.12.2]
 ### Added

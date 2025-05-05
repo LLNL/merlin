@@ -31,40 +31,53 @@
 """
 Utility functions for sampling.
 """
+from typing import List, Tuple, Union
 
 import numpy as np
 
 
 # TODO should we move this to merlin-spellbook?
-def scale_samples(samples_norm, limits, limits_norm=(0, 1), do_log=False):
-    """Scale samples to new limits, either log10 or linearly.
+def scale_samples(
+    samples_norm: np.ndarray,
+    limits: List[Tuple[int, int]],
+    limits_norm: Tuple[int, int] = (0, 1),
+    do_log: Union[bool, List[bool]] = False,
+) -> np.ndarray:
+    """
+    Scale samples to new limits, either logarithmically or linearly.
+
+    This function transforms normalized samples to specified limits,
+    allowing for both linear and logarithmic scaling based on the
+    provided parameters.
 
     Args:
-        samples_norm (ndarray): The normalized samples to scale,
-            with dimensions (nsamples,ndims).
-        limits (list of tuples): A list of (min, max) for the various
-            dimensions. Length of list is ndims.
-        limits_norm (tuple of floats, optional): The (min, max) from which
-            samples_norm were drawn. Defaults to (0,1).
-        do_log (boolean or list of booleans, optional): Whether
-            to log10 scale each dimension. Either a single boolean or
-            a list of length ndims, for each dimension.
-            Defaults to ndims*[False].
+        samples_norm: The normalized samples to scale, with dimensions
+            (nsamples, ndims).
+        limits: A list of (min, max) tuples for the various dimensions.
+            The length of the list must match the number of dimensions (ndims).
+        limits_norm: The (min, max) values from which `samples_norm` were
+            derived. Defaults to (0, 1).
+        do_log: Indicates whether to apply log10 scaling to each dimension.
+            This can be a single boolean or a list of length ndims. Defaults
+            to a list of `ndims` containing `False`.
 
     Returns:
-        ndarray: The scaled samples.
+        The scaled samples, with the same shape as `samples_norm`.
 
-    Note:
-        We follow the sklearn convention of requiring samples to be
-        given as an (nsamples, ndims) array.
+    Raises:
+        ValueError: If `samples_norm` does not have two dimensions.
 
-        To transform 1-D arrays:
-
-        >>> samples = samples.reshape((-1,1)) # ndims = 1
-        >>> samples = samples.reshape((1,-1)) # nsamples = 1
+    Notes:
+        - The function follows the sklearn convention, requiring
+          samples to be provided as an (nsamples, ndims) array.
+        - To transform 1-D arrays, reshape them accordingly:
+            ```python
+            >>> samples = samples.reshape((-1, 1))  # ndims = 1
+            >>> samples = samples.reshape((1, -1))  # nsamples = 1
+            ```
 
     Example:
-
+        ```python
         >>> # Turn 0:1 samples into -1:1
         >>> import numpy as np
         >>> norm_values = np.linspace(0,1,5).reshape((-1,1))
@@ -83,6 +96,7 @@ def scale_samples(samples_norm, limits, limits_norm=(0, 1), do_log=False):
          [  1.00000000e+02]
          [  1.00000000e+03]
          [  1.00000000e+04]]
+        ```
     """
     norms = np.asarray(samples_norm)
     if len(norms.shape) != 2:

@@ -228,7 +228,7 @@ Create a local containerized server for Merlin to connect to. Merlin server crea
 
 Merlin server has a list of commands for interacting with the broker and results server. These commands allow the user to manage and monitor the exisiting server and create instances of servers if needed.
 
-More information on configuring with Merlin server can be found at the [Merlin Server Configuration](./configuration/merlin_server.md) page.
+More information on configuring with Merlin server can be found at the [Containerized Server Configuration](./configuration/containerized_server.md) page.
 
 **Usage:**
 
