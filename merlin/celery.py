@@ -43,7 +43,7 @@ from celery.backends.redis import RedisBackend  # noqa: F401 ; Needed for celery
 from celery.signals import celeryd_init, worker_process_init, worker_shutdown
 
 import merlin.common.security.encrypt_backend_traffic
-from merlin.common.abstracts.enums import WorkerStatus
+from merlin.common.enums import WorkerStatus
 from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
 from merlin.config.utils import Priority, get_priority
