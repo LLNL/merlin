@@ -10,6 +10,7 @@ from copy import copy, deepcopy
 
 import pytest
 import yaml
+from pytest_mock import MockerFixture
 
 from merlin.config.configfile import (
     CONFIG,
@@ -27,12 +28,74 @@ from merlin.config.configfile import (
     set_username_and_vhost,
 )
 from tests.constants import CERT_FILES
+from tests.fixture_types import FixtureCallable, FixtureStr
 from tests.utils import create_dir
 
 
 CONFIGFILE_DIR = "{temp_output_dir}/test_configfile"
 COPIED_APP_FILENAME = "app_copy.yaml"
 DUMMY_APP_FILEPATH = f"{os.path.dirname(__file__)}/dummy_app.yaml"
+
+
+@pytest.fixture
+def mock_constants():
+    """Fixture to provide mock constants."""
+    return {
+        "CONFIG_PATH_FILE": os.path.join("~", ".merlin", "config_path.txt"),
+        "APP_FILENAME": "app.yaml",
+        "MERLIN_HOME": os.path.join("~", ".merlin"),
+    }
+
+
+@pytest.fixture(scope="session")
+def configfile_testing_dir(create_testing_dir: FixtureCallable, config_testing_dir: FixtureStr) -> FixtureStr:
+    """
+    Fixture to create a temporary output directory for tests related to testing the
+    `config` directory.
+
+    Args:
+        create_testing_dir: A fixture which returns a function that creates the testing directory.
+        config_testing_dir: The path to the temporary ouptut directory for config tests.
+
+    Returns:
+        The path to the temporary testing directory for tests of the `configfile.py` module
+    """
+    return create_testing_dir(config_testing_dir, "configfile_tests")
+
+
+@pytest.fixture(scope="session")
+def demo_app_yaml(configfile_testing_dir: FixtureStr) -> FixtureStr:
+    """
+    Fixture that creates an empty `app.yaml` file in the specified testing directory.
+
+    Args:
+        configfile_testing_dir (FixtureStr): The directory used for testing configurations.
+
+    Returns:
+        The path to the newly created `app.yaml` file.
+    """
+    app_yaml_path = os.path.join(configfile_testing_dir, "app.yaml")
+    with open(app_yaml_path, "w"):
+        pass
+    return app_yaml_path
+
+
+@pytest.fixture(scope="session")
+def config_path(configfile_testing_dir: FixtureStr, demo_app_yaml: FixtureStr) -> FixtureStr:
+    """
+    Fixture that creates a `config_path.txt` file containing the path to `app.yaml`.
+
+    Args:
+        configfile_testing_dir (FixtureStr): The directory used for testing configurations.
+        demo_app_yaml (FixtureStr): The path to the `app.yaml` file created by the `demo_app_yaml` fixture.
+
+    Returns:
+        The path to the newly created `config_path.txt` file.
+    """
+    config_path_file = os.path.join(configfile_testing_dir, "config_path.txt")
+    with open(config_path_file, "w") as cpf:
+        cpf.write(demo_app_yaml)
+    return config_path_file
 
 
 def create_app_yaml(app_yaml_filepath: str):
@@ -70,66 +133,110 @@ def test_load_config_invalid_file():
     assert load_config("invalid/filepath") is None
 
 
-def test_find_config_file_valid_path(temp_output_dir: str):
+def test_find_config_file_config_path_file_exists_and_is_valid(mocker: MockerFixture, demo_app_yaml: FixtureStr, config_path: FixtureStr):
     """
-    Test the `find_config_file` function with passing a valid path in.
+    Test that `find_config_file` correctly returns the path to the configuration file
+    when `CONFIG_PATH_FILE` exists and points to a valid `app.yaml` file.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    Args:
+        mocker (MockerFixture): Pytest mocker fixture for mocking functionality.
+        demo_app_yaml (FixtureStr): Path to the valid `app.yaml` file.
+        config_path (FixtureStr): Path to the `CONFIG_PATH_FILE` containing the valid configuration path.
     """
-    configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
-    create_dir(configfile_dir)
-    create_app_yaml(configfile_dir)
-
-    assert find_config_file(configfile_dir) == f"{configfile_dir}/app.yaml"
+    mocker.patch("merlin.config.configfile.CONFIG_PATH_FILE", config_path)
+    result = find_config_file()
+    assert result == demo_app_yaml
 
 
-def test_find_config_file_invalid_path():
+def test_find_config_file_config_path_file_exists_but_invalid(mocker: MockerFixture, configfile_testing_dir: FixtureStr):
     """
-    Test the `find_config_file` function with passing an invalid path in.
+    Test that `find_config_file` returns `None` when `CONFIG_PATH_FILE` exists but points to an invalid path.
+
+    Args:
+        mocker (MockerFixture): Pytest mocker fixture for mocking functionality.
+        configfile_testing_dir (FixtureStr): Directory used for testing invalid configuration paths.
     """
-    assert find_config_file("invalid/path") is None
+    config_file_path = os.path.join(configfile_testing_dir, "config_path_app_yaml_doesnt_exist.txt")
+    with open(config_file_path, "w") as cfp:
+        cfp.write("invalid_app.yaml")
+    mocker.patch("merlin.config.configfile.CONFIG_PATH_FILE", config_file_path)
+    mocker.patch("merlin.config.configfile.MERLIN_HOME", os.path.join(configfile_testing_dir, ".merlin"))
+    result = find_config_file()
+    assert result is None
 
 
-def test_find_config_file_local_path(temp_output_dir: str):
+def test_find_config_file_local_app_yaml_exists(mocker: MockerFixture, configfile_testing_dir: FixtureStr):
     """
-    Test the `find_config_file` function by having it find a local (in our cwd) app.yaml file.
-    We'll use the `temp_output_dir` fixture so that our current working directory is in a temp
-    location.
+    Test that `find_config_file` correctly returns the path to `app.yaml` when it exists in the current working directory.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    Args:
+        mocker (MockerFixture): Pytest mocker fixture for mocking functionality.
+        configfile_testing_dir (FixtureStr): Directory used for testing.
     """
+    mocker.patch("merlin.config.configfile.CONFIG_PATH_FILE", os.path.join(configfile_testing_dir, "invalid_config_path.txt"))
+    mocker.patch("os.getcwd", return_value=configfile_testing_dir)
+    local_app_yaml = os.path.join(configfile_testing_dir, "app.yaml")
+    mocker.patch("os.path.isfile", side_effect=lambda x: x == local_app_yaml)
 
-    # Create the configfile directory and put an app.yaml file there
-    configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
-    create_dir(configfile_dir)
-    create_app_yaml(configfile_dir)
-
-    # Move into the configfile directory and run the test
-    os.chdir(configfile_dir)
-    try:
-        assert find_config_file() == f"{os.getcwd()}/app.yaml"
-    except AssertionError as exc:
-        # Move back to the temp output directory even if the test fails
-        os.chdir(temp_output_dir)
-        raise AssertionError from exc
-
-    # Move back to the temp output directory
-    os.chdir(temp_output_dir)
+    result = find_config_file()
+    assert result == local_app_yaml
 
 
-def test_find_config_file_merlin_home_path(temp_output_dir: str):
+def test_find_config_file_merlin_home_app_yaml_exists(mocker: MockerFixture, configfile_testing_dir: FixtureStr):
     """
-    Test the `find_config_file` function by having it find an app.yaml file in our merlin directory.
-    We'll use the `temp_output_dir` fixture so that our current working directory is in a temp
-    location.
+    Test that `find_config_file` correctly returns the path to `app.yaml` when it exists in the `MERLIN_HOME` directory.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    Args:
+        mocker (MockerFixture): Pytest mocker fixture for mocking functionality.
+        configfile_testing_dir (FixtureStr): Directory used for testing.
     """
-    merlin_home = os.path.expanduser("~/.merlin")
-    if not os.path.exists(merlin_home):
-        os.mkdir(merlin_home)
-    create_app_yaml(merlin_home)
-    assert find_config_file() == f"{merlin_home}/app.yaml"
+    mocker.patch("merlin.config.configfile.CONFIG_PATH_FILE", os.path.join(configfile_testing_dir, "invalid_config_path.txt"))
+    mocker.patch("merlin.config.configfile.MERLIN_HOME", configfile_testing_dir)
+    merlin_home_app_yaml = os.path.join(configfile_testing_dir, "app.yaml")
+    mocker.patch("os.path.isfile", side_effect=lambda x: x == merlin_home_app_yaml)
+
+    result = find_config_file()
+    assert result == merlin_home_app_yaml
+
+
+def test_find_config_file_no_app_yaml_found(mocker: MockerFixture):
+    """
+    Test that `find_config_file` returns `None` when no `app.yaml` file is found in any location.
+
+    Args:
+        mocker (MockerFixture): Pytest mocker fixture for mocking functionality.
+    """
+    mocker.patch("os.path.isfile", return_value=False)
+    result = find_config_file()
+    assert result is None
+
+
+def test_find_config_file_path_provided_app_yaml_exists(mocker: MockerFixture, configfile_testing_dir: FixtureStr):
+    """
+    Test that `find_config_file` correctly returns the path to `app.yaml` when a valid directory path is provided.
+
+    Args:
+        mocker (MockerFixture): Pytest mocker fixture for mocking functionality.
+        configfile_testing_dir (FixtureStr): Directory used for testing.
+    """
+    mocker.patch("merlin.config.configfile.CONFIG_PATH_FILE", os.path.join(configfile_testing_dir, "invalid_config_path.txt"))
+    mocker.patch("os.path.isfile", side_effect=lambda x: x == "/mock/provided/path/app.yaml")
+    mocker.patch("os.path.exists", return_value=True)
+    result = find_config_file("/mock/provided/path")
+    assert result == "/mock/provided/path/app.yaml"
+
+
+def test_find_config_file_path_provided_app_yaml_does_not_exist(mocker: MockerFixture):
+    """
+    Test that `find_config_file` returns `None` when a directory path is provided but `app.yaml` does not exist in that directory.
+
+    Args:
+        mocker (MockerFixture): Pytest mocker fixture for mocking functionality.
+    """
+    mocker.patch("os.path.isfile", return_value=False)
+    mocker.patch("os.path.exists", return_value=False)
+    result = find_config_file("/mock/provided/path")
+    assert result is None
 
 
 def check_for_and_move_app_yaml(dir_to_check: str) -> bool:
@@ -146,45 +253,6 @@ def check_for_and_move_app_yaml(dir_to_check: str) -> bool:
             os.rename(full_path, f"{dir_to_check}/{COPIED_APP_FILENAME}")
             return True
     return False
-
-
-def test_find_config_file_no_path(temp_output_dir: str):
-    """
-    Test the `find_config_file` function by making it unable to find any app.yaml path.
-    We'll use the `temp_output_dir` fixture so that our current working directory is in a temp
-    location.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-
-    # Rename any app.yaml in the cwd
-    cwd_path = os.getcwd()
-    cwd_had_app_yaml = check_for_and_move_app_yaml(cwd_path)
-
-    # Rename any app.yaml in the merlin home directory
-    merlin_home_dir = os.path.expanduser("~/.merlin")
-    merlin_home_had_app_yaml = check_for_and_move_app_yaml(merlin_home_dir)
-
-    try:
-        assert find_config_file() is None
-    except AssertionError as exc:
-        # Reset the cwd app.yaml even if the test fails
-        if cwd_had_app_yaml:
-            os.rename(f"{cwd_path}/{COPIED_APP_FILENAME}", f"{cwd_path}/app.yaml")
-
-        # Reset the merlin home app.yaml even if the test fails
-        if merlin_home_had_app_yaml:
-            os.rename(f"{merlin_home_dir}/{COPIED_APP_FILENAME}", f"{merlin_home_dir}/app.yaml")
-
-        raise AssertionError from exc
-
-    # Reset the cwd app.yaml
-    if cwd_had_app_yaml:
-        os.rename(f"{cwd_path}/{COPIED_APP_FILENAME}", f"{cwd_path}/app.yaml")
-
-    # Reset the merlin home app.yaml
-    if merlin_home_had_app_yaml:
-        os.rename(f"{merlin_home_dir}/{COPIED_APP_FILENAME}", f"{merlin_home_dir}/app.yaml")
 
 
 def test_set_username_and_vhost_nothing_to_load():

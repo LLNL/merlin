@@ -15,19 +15,19 @@ from tests.fixture_types import FixtureCallable, FixtureStr
 
 
 @pytest.fixture(scope="session")
-def config_testing_dir(create_testing_dir: FixtureCallable, temp_output_dir: FixtureStr) -> FixtureStr:
+def merlin_config_manager_testing_dir(create_testing_dir: FixtureCallable, config_testing_dir: FixtureStr) -> FixtureStr:
     """
     Fixture to create a temporary output directory for tests related to testing the
     `config` directory.
 
     Args:
         create_testing_dir: A fixture which returns a function that creates the testing directory.
-        temp_output_dir: The path to the temporary ouptut directory we'll be using for this test run.
+        config_testing_dir: The path to the temporary ouptut directory for config tests
 
     Returns:
-        The path to the temporary testing directory for tests of files in the `config` directory.
+        The path to the temporary testing directory for tests of the `merlin_config_manager.py` module
     """
-    return create_testing_dir(temp_output_dir, "config_testing")
+    return create_testing_dir(config_testing_dir, "merlin_config_manager_tests")
 
 
 @pytest.fixture
@@ -65,45 +65,45 @@ def test_get_output_directory_default(args: Namespace):
     assert config_manager.output_dir == MERLIN_HOME
 
 
-def test_get_output_directory_custom(args: Namespace, config_testing_dir: FixtureStr):
+def test_get_output_directory_custom(args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
     """
     Test that a custom output directory is correctly set.
 
     Args:
         args (Namespace): The mock configuration arguments fixture.
-        config_testing_dir (str): The directory used for testing configurations.
+        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
     """
-    output_path = os.path.join(config_testing_dir, "test_get_output_directory_custom")
+    output_path = os.path.join(merlin_config_manager_testing_dir, "test_get_output_directory_custom")
     args.output_dir = output_path
     config_manager = MerlinConfigManager(args)
     assert config_manager.output_dir == output_path
 
 
-def test_ensure_directory_exists_creates_dir(args: Namespace, config_testing_dir: FixtureStr):
+def test_ensure_directory_exists_creates_dir(args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
     """
     Test that `ensure_directory_exists` creates the specified directory.
 
     Args:
         args (Namespace): The mock configuration arguments fixture.
-        config_testing_dir (str): The directory used for testing configurations.
+        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
     """
-    args.output_dir = os.path.join(config_testing_dir, "test_ensure_directory_exists_creates_dir")
+    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_ensure_directory_exists_creates_dir")
     config_manager = MerlinConfigManager(args)
     assert not os.path.exists(config_manager.output_dir)
     config_manager.ensure_directory_exists()
     assert os.path.isdir(config_manager.output_dir)
 
 
-def test_save_config_path(mocker: MockerFixture, args: Namespace, config_testing_dir: FixtureStr):
+def test_save_config_path(mocker: MockerFixture, args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
     """
     Test that `save_config_path` writes the correct config file path.
 
     Args:
         mocker (pytest_mock.MockerFixture): The mocker fixture for mocking dependencies.
         args (Namespace): The mock configuration arguments fixture.
-        config_testing_dir (str): The directory used for testing configurations.
+        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
     """
-    args.output_dir = os.path.join(config_testing_dir, "test_save_config_path")
+    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_save_config_path")
     mocked_config_path_file = os.path.join(args.output_dir, "config_path.txt")
     mocker.patch("merlin.config.merlin_config_manager.CONFIG_PATH_FILE", mocked_config_path_file)
     config_manager = MerlinConfigManager(args)
@@ -114,16 +114,16 @@ def test_save_config_path(mocker: MockerFixture, args: Namespace, config_testing
     assert path == config_manager.config_file
 
 
-def test_create_template_config_creates_file(mocker: MockerFixture, args: Namespace, config_testing_dir: FixtureStr):
+def test_create_template_config_creates_file(mocker: MockerFixture, args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
     """
     Test that `create_template_config` creates the expected configuration file.
 
     Args:
         mocker (MockerFixture): The mocker fixture for mocking dependencies.
         args (Namespace): The mock configuration arguments fixture.
-        config_testing_dir (str): The directory used for testing configurations.
+        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
     """
-    args.output_dir = os.path.join(config_testing_dir, "test_create_template_config_creates_file")
+    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_create_template_config_creates_file")
     mock_encrypt = mocker.patch("merlin.common.security.encrypt.init_key")
 
     config_manager = MerlinConfigManager(args)
@@ -134,15 +134,15 @@ def test_create_template_config_creates_file(mocker: MockerFixture, args: Namesp
     assert os.path.exists(os.path.join(args.output_dir, "app.yaml"))
 
 
-def test_update_redis_broker_config(args: Namespace, config_testing_dir: FixtureStr):
+def test_update_redis_broker_config(args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
     """
     Test that `update_backend` correctly updates the Redis broker configuration.
 
     Args:
         args (Namespace): The mock configuration arguments fixture.
-        config_testing_dir (str): The directory used for testing configurations.
+        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
     """
-    args.output_dir = os.path.join(config_testing_dir, "test_update_redis_broker_config")
+    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_update_redis_broker_config")
     args.port = 1234
     args.db_num = 1
     config_manager = MerlinConfigManager(args)
@@ -163,15 +163,15 @@ def test_update_redis_broker_config(args: Namespace, config_testing_dir: Fixture
     assert updated_config["broker"]["db_num"] == 1
 
 
-def test_update_redis_backend_config(args: Namespace, config_testing_dir: FixtureStr):
+def test_update_redis_backend_config(args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
     """
     Test that `update_backend` correctly updates the Redis backend configuration.
 
     Args:
         args (Namespace): The mock configuration arguments fixture.
-        config_testing_dir (str): The directory used for testing configurations.
+        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
     """
-    args.output_dir = os.path.join(config_testing_dir, "test_update_redis_broker_config")
+    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_update_redis_broker_config")
     args.port = 1234
     args.db_num = 1
     config_manager = MerlinConfigManager(args)
