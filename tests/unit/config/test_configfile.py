@@ -379,6 +379,8 @@ def test_get_config(configfile_testing_dir: FixtureStr):
     expected["celery"]["queue_tag"] = "[merlin]_"
 
     actual = get_config(configfile_dir)
+    print(f"actual: {actual}")
+    print(f"expected: {expected}")
 
     assert actual == expected
 

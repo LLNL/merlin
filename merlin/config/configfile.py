@@ -83,22 +83,25 @@ def find_config_file(path: str = None) -> str:
     Returns:
         The full path to the `app.yaml` file if found.
     """
-    # Check the config_path.txt file for the active config path
-    if os.path.isfile(CONFIG_PATH_FILE):
-        with open(CONFIG_PATH_FILE, "r") as f:
-            config_path = f.read().strip()
-        if os.path.isfile(config_path):
-            return config_path
-
     # Fallback to default logic
     if path is None:
+        # Check current working directory for an active config path
         local_app = os.path.join(os.getcwd(), APP_FILENAME)
-        path_app = os.path.join(MERLIN_HOME, APP_FILENAME)
-
         if os.path.isfile(local_app):
             return local_app
+
+        # Check the config_path.txt file for the active config path
+        if os.path.isfile(CONFIG_PATH_FILE):
+            with open(CONFIG_PATH_FILE, "r") as f:
+                config_path = f.read().strip()
+            if os.path.isfile(config_path):
+                return config_path
+        
+        # Check the Merlin home directory for an active config path
+        path_app = os.path.join(MERLIN_HOME, APP_FILENAME)
         if os.path.isfile(path_app):
             return path_app
+
         return None
 
     app_path = os.path.join(path, APP_FILENAME)
