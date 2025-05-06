@@ -1,4 +1,8 @@
-""" """
+"""
+This module provides the `MerlinConfigManager` class, which is responsible for managing
+Merlin configuration files. It allows users to initialize, create, and update configuration
+files for the Merlin application, including broker and results backend settings.
+"""
 
 import logging
 import os
@@ -16,7 +20,44 @@ LOG = logging.getLogger(__name__)
 
 
 class MerlinConfigManager:
-    """ """
+    """
+    A class to manage the configuration of the Merlin application.
+
+    This class provides functionality to initialize, create, and update configuration files
+    for the Merlin application. It supports updating broker and results backend settings
+    for Redis and RabbitMQ, and allows users to switch between multiple configurations
+    using a `config_path.txt` file.
+
+    Attributes:
+        args (Namespace): Parsed command-line arguments.
+        output_dir (str): The directory where configuration files are stored.
+        config_file (str): The path to the current configuration file.
+
+    Methods:
+        ensure_directory_exists:
+            Ensures the output directory exists, creating it if necessary.
+
+        save_config_path:
+            Saves the path to the configuration file in `config_path.txt`.
+
+        create_template_config:
+            Creates a template configuration file based on user input.
+
+        update_broker:
+            Updates the broker section of the configuration file.
+
+        update_backend:
+            Updates the results backend section of the configuration file.
+
+        update_redis_config:
+            Updates Redis-specific configuration fields for broker or backend.
+
+        update_rabbitmq_config:
+            Updates RabbitMQ-specific configuration fields for broker.
+
+        update_config:
+            Generic method to update configuration fields based on user input.
+    """
 
     def __init__(self, args: Namespace):
         """
@@ -38,8 +79,7 @@ class MerlinConfigManager:
         """
         if self.args.output_dir is None:
             return MERLIN_HOME
-        else:
-            return os.path.abspath(self.args.output_dir)
+        return os.path.abspath(self.args.output_dir)
 
     def ensure_directory_exists(self):
         """

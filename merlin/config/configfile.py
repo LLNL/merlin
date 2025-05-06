@@ -96,7 +96,7 @@ def find_config_file(path: str = None) -> str:
                 config_path = f.read().strip()
             if os.path.isfile(config_path):
                 return config_path
-        
+
         # Check the Merlin home directory for an active config path
         path_app = os.path.join(MERLIN_HOME, APP_FILENAME)
         if os.path.isfile(path_app):
@@ -159,7 +159,8 @@ def get_config(path: Optional[str]) -> Dict:
 
     if filepath is None:
         raise ValueError(
-            f"Cannot find a merlin config file! Run 'merlin config' and edit the file '{os.path.join(MERLIN_HOME, APP_FILENAME)}'"
+            "Cannot find a merlin config file! Run 'merlin config' and edit the file "
+            f"'{os.path.join(MERLIN_HOME, APP_FILENAME)}'"
         )
 
     config: Dict = load_config(filepath)
