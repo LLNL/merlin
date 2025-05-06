@@ -114,7 +114,9 @@ def test_save_config_path(mocker: MockerFixture, args: Namespace, merlin_config_
     assert path == config_manager.config_file
 
 
-def test_create_template_config_creates_file(mocker: MockerFixture, args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
+def test_create_template_config_creates_file(
+    mocker: MockerFixture, args: Namespace, merlin_config_manager_testing_dir: FixtureStr
+):
     """
     Test that `create_template_config` creates the expected configuration file.
 

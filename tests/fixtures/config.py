@@ -1,9 +1,11 @@
 """
 Fixtures for the modules in the `config` folder.
 """
+
 import pytest
 
 from tests.fixture_types import FixtureCallable, FixtureStr
+
 
 @pytest.fixture(scope="session")
 def config_testing_dir(create_testing_dir: FixtureCallable, temp_output_dir: FixtureStr) -> FixtureStr:

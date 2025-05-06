@@ -123,7 +123,9 @@ def test_load_config_invalid_file():
     assert load_config("invalid/filepath") is None
 
 
-def test_find_config_file_config_path_file_exists_and_is_valid(mocker: MockerFixture, demo_app_yaml: FixtureStr, config_path: FixtureStr):
+def test_find_config_file_config_path_file_exists_and_is_valid(
+    mocker: MockerFixture, demo_app_yaml: FixtureStr, config_path: FixtureStr
+):
     """
     Test that `find_config_file` correctly returns the path to the configuration file
     when `CONFIG_PATH_FILE` exists and points to a valid `app.yaml` file.
