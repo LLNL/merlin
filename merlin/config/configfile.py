@@ -156,7 +156,7 @@ def get_config(path: Optional[str]) -> Dict:
 
     if filepath is None:
         raise ValueError(
-            f"Cannot find a merlin config file! Run 'merlin config' and edit the file '{MERLIN_HOME}/{APP_FILENAME}'"
+            f"Cannot find a merlin config file! Run 'merlin config' and edit the file '{os.path.join(MERLIN_HOME, APP_FILENAME)}'"
         )
 
     config: Dict = load_config(filepath)

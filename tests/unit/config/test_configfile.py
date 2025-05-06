@@ -32,19 +32,8 @@ from tests.fixture_types import FixtureCallable, FixtureStr
 from tests.utils import create_dir
 
 
-CONFIGFILE_DIR = "{temp_output_dir}/test_configfile"
 COPIED_APP_FILENAME = "app_copy.yaml"
-DUMMY_APP_FILEPATH = f"{os.path.dirname(__file__)}/dummy_app.yaml"
-
-
-@pytest.fixture
-def mock_constants():
-    """Fixture to provide mock constants."""
-    return {
-        "CONFIG_PATH_FILE": os.path.join("~", ".merlin", "config_path.txt"),
-        "APP_FILENAME": "app.yaml",
-        "MERLIN_HOME": os.path.join("~", ".merlin"),
-    }
+DUMMY_APP_FILEPATH = os.path.join(os.path.dirname(__file__), "dummy_app.yaml")
 
 
 @pytest.fixture(scope="session")
@@ -109,20 +98,21 @@ def create_app_yaml(app_yaml_filepath: str):
         shutil.copy(DUMMY_APP_FILEPATH, full_app_yaml_filepath)
 
 
-def test_load_config(temp_output_dir: str):
+def test_load_config(configfile_testing_dir: FixtureStr):
     """
     Test the `load_config` function.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    Args:
+        configfile_testing_dir (FixtureStr): The directory used for testing configurations.
     """
-    configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
+    configfile_dir = os.path.join(configfile_testing_dir, "test_load_config")
     create_dir(configfile_dir)
     create_app_yaml(configfile_dir)
 
     with open(DUMMY_APP_FILEPATH, "r") as dummy_app_file:
         expected = yaml.load(dummy_app_file, yaml.Loader)
 
-    actual = load_config(f"{configfile_dir}/app.yaml")
+    actual = load_config(os.path.join(configfile_dir, "app.yaml"))
     assert actual == expected
 
 
@@ -237,22 +227,6 @@ def test_find_config_file_path_provided_app_yaml_does_not_exist(mocker: MockerFi
     mocker.patch("os.path.exists", return_value=False)
     result = find_config_file("/mock/provided/path")
     assert result is None
-
-
-def check_for_and_move_app_yaml(dir_to_check: str) -> bool:
-    """
-    Check for any app.yaml files in `dir_to_check`. If one is found, rename it.
-    Return True if an app.yaml was found, false otherwise.
-
-    :param dir_to_check: The directory to search for an app.yaml in
-    :returns: True if an app.yaml was found. False otherwise.
-    """
-    for filename in os.listdir(dir_to_check):
-        full_path = os.path.join(dir_to_check, filename)
-        if os.path.isfile(full_path) and filename == "app.yaml":
-            os.rename(full_path, f"{dir_to_check}/{COPIED_APP_FILENAME}")
-            return True
-    return False
 
 
 def test_set_username_and_vhost_nothing_to_load():
@@ -381,15 +355,16 @@ def test_load_defaults():
     assert actual_config == expected_config
 
 
-def test_get_config(temp_output_dir: str):
+def test_get_config(configfile_testing_dir: FixtureStr):
     """
     Test the `get_config` function.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    Args:
+        configfile_testing_dir (FixtureStr): The directory used for testing configurations.
     """
 
     # Create the configfile directory and put an app.yaml file there
-    configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
+    configfile_dir = os.path.join(configfile_testing_dir, "test_get_config")
     create_dir(configfile_dir)
     create_app_yaml(configfile_dir)
 
@@ -473,60 +448,32 @@ def test_is_debug_with_merlin_debug():
         os.environ["MERLIN_DEBUG"] = debug_val
 
 
-def test_default_config_info(temp_output_dir: str):
+def test_default_config_info(mocker: MockerFixture):
     """
     Test the `default_config_info` function.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
+    Args:
+        mocker (MockerFixture): Pytest mocker fixture for mocking functionality.
     """
+    # Mock the necessary functions/variables
+    config_file_path = "/mock/config/app.yaml"
+    debug_mode = False
+    merlin_home = "/mock/merlin_home/"
+    find_config_file_mock = mocker.patch("merlin.config.configfile.find_config_file", return_value=config_file_path)
+    is_debug_mock = mocker.patch("merlin.config.configfile.is_debug", return_value=debug_mode)
+    mocker.patch("merlin.config.configfile.MERLIN_HOME", merlin_home)
 
-    # Create the configfile directory and put an app.yaml file there
-    configfile_dir = CONFIGFILE_DIR.format(temp_output_dir=temp_output_dir)
-    create_dir(configfile_dir)
-    create_app_yaml(configfile_dir)
-    cwd = os.getcwd()
-    os.chdir(configfile_dir)
-
-    # Delete the current val of MERLIN_DEBUG and store it (if there is one)
-    reset_merlin_debug = False
-    debug_val = None
-    if "MERLIN_DEBUG" in os.environ:
-        debug_val = copy(os.environ["MERLIN_DEBUG"])
-        del os.environ["MERLIN_DEBUG"]
-        reset_merlin_debug = True
-
-    # Create the merlin home directory if it doesn't already exist
-    merlin_home = f"{os.path.expanduser('~')}/.merlin"
-    remove_merlin_home = False
-    if not os.path.exists(merlin_home):
-        os.mkdir(merlin_home)
-        remove_merlin_home = True
-
-    # Run the test
-    try:
-        expected = {
-            "config_file": f"{configfile_dir}/app.yaml",
-            "is_debug": False,
-            "merlin_home": merlin_home,
-            "merlin_home_exists": True,
-        }
-        actual = default_config_info()
-        assert actual == expected
-    except AssertionError as exc:
-        # Make sure to reset values even if the test fails
-        if reset_merlin_debug:
-            os.environ["MERLIN_DEBUG"] = debug_val
-        if remove_merlin_home:
-            os.rmdir(merlin_home)
-        raise AssertionError from exc
-
-    # Reset values if necessary
-    if reset_merlin_debug:
-        os.environ["MERLIN_DEBUG"] = debug_val
-    if remove_merlin_home:
-        os.rmdir(merlin_home)
-
-    os.chdir(cwd)
+    # Run the test and verify the output
+    expected = {
+        "config_file": config_file_path,
+        "is_debug": debug_mode,
+        "merlin_home": merlin_home,
+        "merlin_home_exists": False,
+    }
+    actual = default_config_info()
+    find_config_file_mock.assert_called_once()
+    is_debug_mock.assert_called_once()
+    assert actual == expected
 
 
 def test_get_cert_file_all_valid_args(mysql_results_backend_config: "fixture", merlin_server_dir: str):  # noqa: F821
