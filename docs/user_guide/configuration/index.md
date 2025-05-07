@@ -30,15 +30,21 @@ The results backend enables the asynchronous nature of Celery. Instead of blocki
 
 See the [Configuring the Broker and Results Backend](#configuring-the-broker-and-results-backend) section below for more information on configuring your results backend.
 
-## The app.yaml File
+## The Configuration File
 
-In order to read in configuration options for your Celery settings, broker, and results backend, Merlin utilizes an app.yaml file.
+!!! note
 
-There's a built-in command with Merlin to set up a skeleton app.yaml for you:
+    Prior to Merlin v1.13.0, this configuration file had to be named `app.yaml`. If you hear any references to `app.yaml`, this is why.
+
+In order to read in configuration options for your Celery settings, broker, and results backend, Merlin utilizes a configuration file.
+
+There's a built-in command with Merlin to set up a skeleton configuration file for you:
 
 ```bash
-merlin config
+merlin config create
 ```
+
+_*Note:* If you want this file to be at a different path or if you want it to have a different name, use the `-o` option._
 
 This command will create an app.yaml file in the `~/.merlin/` directory that looks like so:
 
@@ -265,4 +271,14 @@ For all other users, we recommend configuring with either:
 - [Dedicated External Servers](./external_server.md)
 - [Containerized Servers](./containerized_server.md)
 
-With any server setup that you use, it's possible to configure everything in your server from the command line. See [`merlin config broker`](../command_line.md#config-broker-merlin-config-broker) and [`merlin config backend`](../command_line.md#config-backend-merlin-config-backend) for more details on how this can be done.
+With any server setup that you use, it's possible to configure everything in your server from the command line. See [`merlin config update-broker`](../command_line.md#config-update-broker-merlin-config-update-broker) and [`merlin config update-backend`](../command_line.md#config-update-backend-merlin-config-update-backend) for more details on how this can be done.
+
+## Switching Between Configurations
+
+It's not uncommon to have two different configuration files with settings to connect to different servers. To switch between servers you can utilize the [`merlin config use`](../command_line.md#config-use-merlin-config-use) command.
+
+For example, you may have one configuration file that uses a RabbitMQ broker located at `/path/to/rabbitmq_config.yaml` and another that uses Redis as a broker located at `/path/to/redis_config.yaml`. If you want to switch to your Redis configuration, use:
+
+```bash
+merlin config use /path/to/redis_config.yaml
+```
