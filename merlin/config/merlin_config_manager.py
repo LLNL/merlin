@@ -13,7 +13,7 @@ from typing import Dict, List, Union
 
 import yaml
 
-from merlin.config.config_filepaths import CONFIG_PATH_FILE, MERLIN_HOME
+from merlin.config.config_filepaths import CONFIG_PATH_FILE
 from merlin.exceptions import MerlinInvalidTaskServerError
 
 
@@ -68,8 +68,8 @@ class MerlinConfigManager:
         self.config_file = getattr(args, "config_file", None)
         if not self.config_file:  # This should never be reached because of argparse defaults
             raise ValueError("No config file given to MerlinConfigManager.")
-        else:
-            self.config_file = os.path.abspath(self.config_file)
+
+        self.config_file = os.path.abspath(self.config_file)
 
     def save_config_path(self):
         """
@@ -77,7 +77,7 @@ class MerlinConfigManager:
         """
         if not os.path.isfile(self.config_file):
             raise FileNotFoundError(f"Cannot set config path. File does not exist: '{self.config_file}'")
-        
+
         test_config_path = os.path.abspath(os.path.join(os.path.dirname(self.config_file), "config_path.txt"))
         config_path_file = test_config_path if self.args.test else CONFIG_PATH_FILE
         with open(config_path_file, "w") as f:

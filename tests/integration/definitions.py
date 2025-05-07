@@ -142,7 +142,7 @@ def define_tests():  # pylint: disable=R0914,R0915
                 HasReturnCode(),
                 PathExists(app_yaml_path),
                 PathExists(os.path.join(config_dir, "config_path.txt")),
-                FileHasRegex(os.path.join(config_dir, "config_path.txt"), app_yaml_path)
+                FileHasRegex(os.path.join(config_dir, "config_path.txt"), app_yaml_path),
             ],
             "run type": "local",
             "cleanup": f"rm -rf {config_dir}",

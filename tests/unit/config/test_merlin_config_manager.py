@@ -9,7 +9,6 @@ import pytest
 import yaml
 from pytest_mock import MockerFixture
 
-from merlin.config.config_filepaths import MERLIN_HOME
 from merlin.config.merlin_config_manager import MerlinConfigManager
 from tests.fixture_types import FixtureCallable, FixtureStr
 
@@ -53,10 +52,6 @@ def args() -> Namespace:
         vhost="/",
         test=True,
     )
-
-# TODO update docs for the new config changes
-# TODO make sure tests pass on GitHub
-# TODO see if local test suite will run without connecting to a server
 
 
 def test_create_template_config_creates_file(

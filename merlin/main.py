@@ -39,13 +39,13 @@ import sys
 import time
 import traceback
 from argparse import (
+    SUPPRESS,
     ArgumentDefaultsHelpFormatter,
     ArgumentParser,
     ArgumentTypeError,
     Namespace,
     RawDescriptionHelpFormatter,
     RawTextHelpFormatter,
-    SUPPRESS
 )
 from contextlib import suppress
 from typing import Dict, List, Optional, Tuple, Union
@@ -507,8 +507,8 @@ def config_merlin(args: Namespace):
     """
     CLI command to manage Merlin configuration files.
 
-    This function handles various configuration-related operations based on 
-    the provided subcommand. It ensures that the specified configuration 
+    This function handles various configuration-related operations based on
+    the provided subcommand. It ensures that the specified configuration
     file has a valid YAML extension (i.e., `.yaml` or `.yml`).
 
     If no output file is explicitly provided, a default path is used.
@@ -795,7 +795,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         help=SUPPRESS,  # Hides from `--help`
     )
     mconfig_subparsers = mconfig.add_subparsers(dest="commands", help="Subcommands for 'config'")
-    default_config_file = os.path.join(os.path.expanduser('~'), '.merlin', 'app.yaml')
+    default_config_file = os.path.join(os.path.expanduser("~"), ".merlin", "app.yaml")
 
     # Subcommand: melrin config create
     config_create_parser = mconfig_subparsers.add_parser("create", help="Create a new configuration file.")
@@ -833,7 +833,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         "-cf",
         "--config-file",
         default=default_config_file,
-        help=f"The path to the config file that will be updated. Default: {default_config_file}"
+        help=f"The path to the config file that will be updated. Default: {default_config_file}",
     )
     config_broker_parser.add_argument("-u", "--username", help="Broker username (only for rabbitmq)")
     config_broker_parser.add_argument("-pf", "--password-file", help="Path to password file")
@@ -856,7 +856,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         "-cf",
         "--config-file",
         default=default_config_file,
-        help=f"The path to the config file that will be updated. Default: {default_config_file}"
+        help=f"The path to the config file that will be updated. Default: {default_config_file}",
     )
     config_backend_parser.add_argument("-u", "--username", help="Backend username")
     config_backend_parser.add_argument("-pf", "--password-file", help="Path to password file")
@@ -868,11 +868,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
 
     # Subcommand: merlin config use
     config_use_parser = mconfig_subparsers.add_parser("use", help="Use a different configuration file.")
-    config_use_parser.add_argument(
-        "config_file",
-        type=str,
-        help="The path to the new configuration file to use."
-    )
+    config_use_parser.add_argument("config_file", type=str, help="The path to the new configuration file to use.")
 
     # merlin example
     example: ArgumentParser = subparsers.add_parser(
