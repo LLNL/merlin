@@ -93,7 +93,9 @@ To install Merlin and its dependencies, run:
     
 Create your application config file:
 
-    $ merlin config
+    $ merlin config create
+
+Open the newly created config file at `~/.merlin/app.yaml` and point it to a RabbitMQ/Redis server. More instructions on this can be found on the [Configuration page](https://merlin.readthedocs.io/en/stable/user_guide/configuration/) of Merlin's docs.
 
 That's it.
 
