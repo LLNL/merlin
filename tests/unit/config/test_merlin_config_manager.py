@@ -39,7 +39,7 @@ def args() -> Namespace:
         A mock object containing default configuration arguments for testing.
     """
     return Namespace(
-        output_dir=None,
+        config_file=None,
         task_server="celery",
         broker="redis",
         type="redis",
@@ -51,67 +51,12 @@ def args() -> Namespace:
         username="",
         password="",
         vhost="/",
+        test=True,
     )
 
-
-def test_get_output_directory_default(args: Namespace):
-    """
-    Test that the default output directory is set to `MERLIN_HOME`.
-
-    Args:
-        args (Namespace): The mock configuration arguments fixture.
-    """
-    config_manager = MerlinConfigManager(args)
-    assert config_manager.output_dir == MERLIN_HOME
-
-
-def test_get_output_directory_custom(args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
-    """
-    Test that a custom output directory is correctly set.
-
-    Args:
-        args (Namespace): The mock configuration arguments fixture.
-        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
-    """
-    output_path = os.path.join(merlin_config_manager_testing_dir, "test_get_output_directory_custom")
-    args.output_dir = output_path
-    config_manager = MerlinConfigManager(args)
-    assert config_manager.output_dir == output_path
-
-
-def test_ensure_directory_exists_creates_dir(args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
-    """
-    Test that `ensure_directory_exists` creates the specified directory.
-
-    Args:
-        args (Namespace): The mock configuration arguments fixture.
-        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
-    """
-    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_ensure_directory_exists_creates_dir")
-    config_manager = MerlinConfigManager(args)
-    assert not os.path.exists(config_manager.output_dir)
-    config_manager.ensure_directory_exists()
-    assert os.path.isdir(config_manager.output_dir)
-
-
-def test_save_config_path(mocker: MockerFixture, args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
-    """
-    Test that `save_config_path` writes the correct config file path.
-
-    Args:
-        mocker (pytest_mock.MockerFixture): The mocker fixture for mocking dependencies.
-        args (Namespace): The mock configuration arguments fixture.
-        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
-    """
-    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_save_config_path")
-    mocked_config_path_file = os.path.join(args.output_dir, "config_path.txt")
-    mocker.patch("merlin.config.merlin_config_manager.CONFIG_PATH_FILE", mocked_config_path_file)
-    config_manager = MerlinConfigManager(args)
-    config_manager.ensure_directory_exists()
-    config_manager.save_config_path()
-    with open(mocked_config_path_file) as f:
-        path = f.read().strip()
-    assert path == config_manager.config_file
+# TODO update docs for the new config changes
+# TODO make sure tests pass on GitHub
+# TODO see if local test suite will run without connecting to a server
 
 
 def test_create_template_config_creates_file(
@@ -125,15 +70,42 @@ def test_create_template_config_creates_file(
         args (Namespace): The mock configuration arguments fixture.
         merlin_config_manager_testing_dir (str): The directory used for testing configurations.
     """
-    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_create_template_config_creates_file")
+    output_dir = os.path.join(merlin_config_manager_testing_dir, "test_create_template_config_creates_file")
     mock_encrypt = mocker.patch("merlin.common.security.encrypt.init_key")
+    args.config_file = os.path.join(output_dir, "app.yaml")
 
     config_manager = MerlinConfigManager(args)
-    config_manager.ensure_directory_exists()
     config_manager.create_template_config()
 
     mock_encrypt.assert_called_once()
-    assert os.path.exists(os.path.join(args.output_dir, "app.yaml"))
+    assert os.path.exists(args.config_file)
+
+
+def test_save_config_path(mocker: MockerFixture, args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
+    """
+    Test that `save_config_path` writes the correct config file path.
+
+    Args:
+        mocker (pytest_mock.MockerFixture): The mocker fixture for mocking dependencies.
+        args (Namespace): The mock configuration arguments fixture.
+        merlin_config_manager_testing_dir (str): The directory used for testing configurations.
+    """
+    # Mock CONFIG_PATH_FILE and set a config file path
+    output_dir = os.path.join(merlin_config_manager_testing_dir, "test_save_config_path")
+    mocked_config_path_file = os.path.join(output_dir, "config_path.txt")
+    mocker.patch("merlin.config.merlin_config_manager.CONFIG_PATH_FILE", mocked_config_path_file)
+    args.config_file = os.path.join(output_dir, "app.yaml")
+
+    # Run the test
+    config_manager = MerlinConfigManager(args)
+    config_manager.create_template_config()
+    config_manager.save_config_path()
+
+    # Check that the output is correct
+    assert os.path.exists(mocked_config_path_file)
+    with open(mocked_config_path_file) as f:
+        path = f.read().strip()
+    assert path == args.config_file
 
 
 def test_update_redis_broker_config(args: Namespace, merlin_config_manager_testing_dir: FixtureStr):
@@ -144,19 +116,20 @@ def test_update_redis_broker_config(args: Namespace, merlin_config_manager_testi
         args (Namespace): The mock configuration arguments fixture.
         merlin_config_manager_testing_dir (str): The directory used for testing configurations.
     """
-    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_update_redis_broker_config")
+    output_dir = os.path.join(merlin_config_manager_testing_dir, "test_update_redis_broker_config")
+    args.config_file = os.path.join(output_dir, "app.yaml")
     args.port = 1234
     args.db_num = 1
     config_manager = MerlinConfigManager(args)
-    config_manager.ensure_directory_exists()
+    config_manager.create_template_config()
 
     config = {"broker": {}}
-    with open(config_manager.config_file, "w") as f:
+    with open(args.config_file, "w") as f:
         yaml.dump(config, f)
 
     config_manager.update_broker()
 
-    with open(config_manager.config_file) as f:
+    with open(args.config_file) as f:
         updated_config = yaml.safe_load(f)
 
     assert updated_config["broker"]["name"] == "rediss"  # from `args` fixture
@@ -173,19 +146,20 @@ def test_update_redis_backend_config(args: Namespace, merlin_config_manager_test
         args (Namespace): The mock configuration arguments fixture.
         merlin_config_manager_testing_dir (str): The directory used for testing configurations.
     """
-    args.output_dir = os.path.join(merlin_config_manager_testing_dir, "test_update_redis_broker_config")
+    output_dir = os.path.join(merlin_config_manager_testing_dir, "test_update_redis_broker_config")
+    args.config_file = os.path.join(output_dir, "app.yaml")
     args.port = 1234
     args.db_num = 1
     config_manager = MerlinConfigManager(args)
-    config_manager.ensure_directory_exists()
+    config_manager.create_template_config()
 
     config = {"results_backend": {}}
-    with open(config_manager.config_file, "w") as f:
+    with open(args.config_file, "w") as f:
         yaml.dump(config, f)
 
     config_manager.update_backend()
 
-    with open(config_manager.config_file) as f:
+    with open(args.config_file) as f:
         updated_config = yaml.safe_load(f)
 
     assert updated_config["results_backend"]["name"] == "rediss"  # from `args` fixture
@@ -208,6 +182,7 @@ def test_update_rabbitmq_config(args: Namespace):
     args.server = "server"
     args.port = 5672
     args.cert_reqs = "CERT_REQUIRED"
+    args.config_file = "dummy.yaml"
 
     config_manager = MerlinConfigManager(args)
     config = {}
@@ -225,6 +200,7 @@ def test_update_config_generic(args: Namespace):
         args (Namespace): The mock configuration arguments fixture.
     """
     args.test_field = "test_value"
+    args.config_file = "dummy.yaml"
     config_manager = MerlinConfigManager(args)
     config = {}
     config_manager.update_config(config, ["test_field"])

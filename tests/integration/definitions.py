@@ -136,14 +136,21 @@ def define_tests():  # pylint: disable=R0914,R0915
         "merlin": {"cmds": "merlin", "conditions": HasReturnCode(1), "run type": "local"},
         "merlin help": {"cmds": "merlin --help", "conditions": HasReturnCode(), "run type": "local"},
         "merlin version": {"cmds": "merlin --version", "conditions": HasReturnCode(), "run type": "local"},
-        "merlin config": {
-            "cmds": f"merlin config -o {config_dir}",
-            "conditions": HasReturnCode(),
+        "merlin config create": {
+            "cmds": f"merlin config --test create -o {app_yaml_path}",
+            "conditions": [
+                HasReturnCode(),
+                PathExists(app_yaml_path),
+                PathExists(os.path.join(config_dir, "config_path.txt")),
+                FileHasRegex(os.path.join(config_dir, "config_path.txt"), app_yaml_path)
+            ],
             "run type": "local",
             "cleanup": f"rm -rf {config_dir}",
         },
         "merlin config broker": {
-            "cmds": f"merlin config -o {config_dir} broker -t rabbitmq -u rabbitmq_user -pf rabbitmq_password_file -s rabbitmq_server -p 5672 -v rabbitmq_vhost",
+            "cmds": f"merlin config --test create -o {app_yaml_path}; merlin config update-broker \
+                    -t rabbitmq -cf {app_yaml_path} -u rabbitmq_user -pf rabbitmq_password_file \
+                    -s rabbitmq_server -p 5672 -v rabbitmq_vhost",
             "conditions": [
                 HasReturnCode(),
                 FileHasRegex(app_yaml_path, "name: rabbitmq"),
@@ -157,13 +164,28 @@ def define_tests():  # pylint: disable=R0914,R0915
             "cleanup": f"rm -rf {config_dir}",
         },
         "merlin config backend": {
-            "cmds": f"merlin config -o {config_dir} backend -t redis -pf redis_password_file -s redis_server -p 6379",
+            "cmds": f"merlin config --test create -o {app_yaml_path}; merlin config update-backend \
+                    -t redis -cf {app_yaml_path} -pf redis_password_file -s redis_server -p 6379",
             "conditions": [
                 HasReturnCode(),
                 FileHasRegex(app_yaml_path, "name: rediss"),
                 FileHasRegex(app_yaml_path, "password: redis_password_file"),
                 FileHasRegex(app_yaml_path, "server: redis_server"),
                 FileHasRegex(app_yaml_path, "port: 6379"),
+            ],
+            "run type": "local",
+            "cleanup": f"rm -rf {config_dir}",
+        },
+        "merlin config use": {  # create two app.yaml files then choose to use the first one
+            "cmds": f"merlin config --test create -o {app_yaml_path}; \
+                    merlin config --test create -o {os.path.join(config_dir, "second_app.yaml")}; \
+                    merlin config --test use {app_yaml_path}",
+            "conditions": [
+                HasReturnCode(),
+                PathExists(app_yaml_path),
+                PathExists(os.path.join(config_dir, "second_app.yaml")),
+                PathExists(os.path.join(config_dir, "config_path.txt")),
+                FileHasRegex(os.path.join(config_dir, "config_path.txt"), app_yaml_path),
             ],
             "run type": "local",
             "cleanup": f"rm -rf {config_dir}",
