@@ -6,9 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added new options to the `merlin config` command
-  - `merlin config broker` allows users to update the broker settings from the command line
-  - `merlin config backend` allows users to update the backend settings from the command line
 - API documentation for Merlin's core codebase
 - Added support for Python 3.12 and 3.13
 - Added additional tests for the `merlin run` and `merlin purge` commands
@@ -23,14 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New GitHub actions to reduce common code in CI
 
 ### Changed
-- The `merlin config` command now defaults to the LaunchIT setup
+- The `merlin config` command:
+  - Now defaults to the LaunchIT setup
+  - No longer required to have configuration named `app.yaml`
+  - New subcommands:
+    - `create`: Creates a new configuration file
+    - `update-broker`: Updates the `broker` section of the configuration file
+    - `update-backend`: Updates the `results_backend` section of the configuration file
+    - `use`: Point your active configuration to a new configuration file
 - Dropped support for Python 3.7
 - Ported all distributed tests of the integration test suite to pytest
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
   - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
 - Removed `e2e-distributed*` definitions from the Makefile
 - Modified GitHub CI to use shared testing servers hosted by LaunchIT rather than the jackalope server
-- Removed `merlin config --test` option
 - CI to use new actions
 
 ### Fixed
