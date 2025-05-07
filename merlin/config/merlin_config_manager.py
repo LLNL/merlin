@@ -14,6 +14,7 @@ from typing import Dict, List, Union
 import yaml
 
 from merlin.config.config_filepaths import CONFIG_PATH_FILE, MERLIN_HOME
+from merlin.exceptions import MerlinInvalidTaskServerError
 
 
 LOG = logging.getLogger(__name__)
@@ -34,9 +35,6 @@ class MerlinConfigManager:
         config_file (str): The path to the current configuration file.
 
     Methods:
-        ensure_directory_exists:
-            Ensures the output directory exists, creating it if necessary.
-
         save_config_path:
             Saves the path to the configuration file in `config_path.txt`.
 
@@ -67,34 +65,24 @@ class MerlinConfigManager:
             args: Parsed command-line arguments.
         """
         self.args = args
-        self.output_dir = self._get_output_directory()
-        self.config_file = os.path.join(self.output_dir, "app.yaml")
-
-    def _get_output_directory(self) -> str:
-        """
-        Determine the output directory for configuration files.
-
-        Returns:
-            The absolute path to the output directory.
-        """
-        if self.args.output_dir is None:
-            return MERLIN_HOME
-        return os.path.abspath(self.args.output_dir)
-
-    def ensure_directory_exists(self):
-        """
-        Ensure the output directory exists, creating it if necessary.
-        """
-        if not os.path.isdir(self.output_dir):
-            os.makedirs(self.output_dir)
+        self.config_file = getattr(args, "config_file", None)
+        if not self.config_file:  # This should never be reached because of argparse defaults
+            raise ValueError("No config file given to MerlinConfigManager.")
+        else:
+            self.config_file = os.path.abspath(self.config_file)
 
     def save_config_path(self):
         """
         Save the path to the configuration file in `config_path.txt`.
         """
-        with open(CONFIG_PATH_FILE, "w") as f:
+        if not os.path.isfile(self.config_file):
+            raise FileNotFoundError(f"Cannot set config path. File does not exist: '{self.config_file}'")
+        
+        test_config_path = os.path.abspath(os.path.join(os.path.dirname(self.config_file), "config_path.txt"))
+        config_path_file = test_config_path if self.args.test else CONFIG_PATH_FILE
+        with open(config_path_file, "w") as f:
             f.write(self.config_file)
-        LOG.info(f"Configuration path saved to '{CONFIG_PATH_FILE}'.")
+        LOG.info(f"Configuration path saved to '{config_path_file}'.")
 
     def create_template_config(self):
         """
@@ -102,12 +90,10 @@ class MerlinConfigManager:
         """
         LOG.info("Creating config ...")
 
-        if self.args.task_server == "celery":
-            template_config = "app.yaml"
-            if self.args.broker == "redis":
-                template_config = "app_redis.yaml"
-        else:
-            LOG.error("Only celery can be configured currently.")
+        if self.args.task_server != "celery":
+            raise MerlinInvalidTaskServerError("Only celery can be configured currently.")
+
+        template_config = "app_redis.yaml" if self.args.broker == "redis" else "app.yaml"
 
         with resources.path("merlin.data.celery", template_config) as template_config_file:
             self._create_config(template_config_file)
@@ -115,9 +101,13 @@ class MerlinConfigManager:
     def _create_config(self, template_config_file: str):
         """
         Internal method to create the Celery configuration.
+
+        Args:
+            template_config_file (str): Path to the template configuration file.
         """
         # Create the configuration file if it doesn't already exist
         if not os.path.isfile(self.config_file):
+            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
             shutil.copy(template_config_file, self.config_file)
 
             # Check to make sure the copy worked
