@@ -148,9 +148,9 @@ def define_tests():  # pylint: disable=R0914,R0915
             "cleanup": f"rm -rf {config_dir}",
         },
         "merlin config broker": {
-            "cmds": f"merlin config --test create -o {app_yaml_path}; merlin config update-broker \
+            "cmds": f"""merlin config --test create -o {app_yaml_path}; merlin config update-broker \
                     -t rabbitmq -cf {app_yaml_path} -u rabbitmq_user -pf rabbitmq_password_file \
-                    -s rabbitmq_server -p 5672 -v rabbitmq_vhost",
+                    -s rabbitmq_server -p 5672 -v rabbitmq_vhost""",
             "conditions": [
                 HasReturnCode(),
                 FileHasRegex(app_yaml_path, "name: rabbitmq"),
@@ -164,8 +164,8 @@ def define_tests():  # pylint: disable=R0914,R0915
             "cleanup": f"rm -rf {config_dir}",
         },
         "merlin config backend": {
-            "cmds": f"merlin config --test create -o {app_yaml_path}; merlin config update-backend \
-                    -t redis -cf {app_yaml_path} -pf redis_password_file -s redis_server -p 6379",
+            "cmds": f"""merlin config --test create -o {app_yaml_path}; merlin config update-backend \
+                    -t redis -cf {app_yaml_path} -pf redis_password_file -s redis_server -p 6379""",
             "conditions": [
                 HasReturnCode(),
                 FileHasRegex(app_yaml_path, "name: rediss"),
@@ -177,9 +177,9 @@ def define_tests():  # pylint: disable=R0914,R0915
             "cleanup": f"rm -rf {config_dir}",
         },
         "merlin config use": {  # create two app.yaml files then choose to use the first one
-            "cmds": f"merlin config --test create -o {app_yaml_path}; \
-                    merlin config --test create -o {os.path.join(config_dir, "second_app.yaml")}; \
-                    merlin config --test use {app_yaml_path}",
+            "cmds": f"""merlin config --test create -o {app_yaml_path};
+                    merlin config --test create -o {os.path.join(config_dir, "second_app.yaml")};
+                    merlin config --test use {app_yaml_path}""",
             "conditions": [
                 HasReturnCode(),
                 PathExists(app_yaml_path),
