@@ -9,10 +9,12 @@ from typing import Dict, List
 
 from redis import Redis
 
-from merlin.backends.redis.redis_logical_worker_store import RedisLogicalWorkerStore
-from merlin.backends.redis.redis_physical_worker_store import RedisPhysicalWorkerStore
-from merlin.backends.redis.redis_run_store import RedisRunStore
-from merlin.backends.redis.redis_study_store import RedisStudyStore
+from merlin.backends.redis.redis_stores import (
+    RedisLogicalWorkerStore,
+    RedisPhysicalWorkerStore,
+    RedisRunStore,
+    RedisStudyStore,
+)
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
 from merlin.exceptions import UnsupportedDataModelError
