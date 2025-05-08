@@ -12,7 +12,7 @@ from abc import ABC, abstractmethod
 from dataclasses import Field, asdict, dataclass, field
 from dataclasses import fields as dataclass_fields
 from datetime import datetime
-from typing import Dict, List, Tuple, Type, TypeVar
+from typing import Dict, List, Set, Tuple, Type, TypeVar
 
 from filelock import FileLock
 
@@ -333,7 +333,7 @@ class LogicalWorkerModel(BaseDataModel):
     """
 
     name: str = None
-    queues: List[str] = field(default_factory=list)
+    queues: Set[str] = field(default_factory=set)
     id: str = None  # pylint: disable=invalid-name
     runs: List[str] = field(default_factory=list)
     physical_workers: List[str] = field(default_factory=list)

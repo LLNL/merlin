@@ -31,7 +31,10 @@ def serialize_data_class(data_class: BaseDataModel) -> Dict[str, str]:
 
     for field in data_class.get_instance_fields():
         field_value = getattr(data_class, field.name)
-        if isinstance(field_value, (list, dict)):
+        if isinstance(field_value, set):
+            # Explicitly mark this as a set so we can properly deserialize it later
+            serialized_data[field.name] = json.dumps({"__set__": list(field_value)})
+        elif isinstance(field_value, (list, dict)):
             serialized_data[field.name] = json.dumps(field_value)
         elif isinstance(field_value, datetime):
             serialized_data[field.name] = field_value.isoformat()
@@ -60,7 +63,18 @@ def deserialize_data_class(retrieval_data: Dict[str, str], data_class: BaseDataM
 
     for key, val in retrieval_data.items():
         if val.startswith("[") or val.startswith("{"):
-            deserialized_data[key] = json.loads(val)
+            try:
+                loaded_val = json.loads(val)
+                # Check if this is a set that we specially encoded
+                if isinstance(loaded_val, dict) and "__set__" in loaded_val:
+                    deserialized_data[key] = set(loaded_val["__set__"])
+                else:
+                    deserialized_data[key] = loaded_val
+            except json.JSONDecodeError as e:
+                LOG.error(f"Failed to deserialize JSON for key {key}: {val}")
+                LOG.error(f"Error: {str(e)}")
+                # Use the original string value as fallback
+                deserialized_data[key] = val
         elif val == "null":
             deserialized_data[key] = None
         elif val in ("True", "False"):

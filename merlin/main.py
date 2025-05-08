@@ -234,7 +234,7 @@ def process_run(args: Namespace):
     # Create logical worker entries
     step_queue_map = study.expanded_spec.get_task_queues()
     for worker, steps in study.expanded_spec.get_worker_step_map().items():
-        worker_queues = [step_queue_map[step] for step in steps]
+        worker_queues = set([step_queue_map[step] for step in steps])
         logical_worker_entity = merlin_db.create_logical_worker(worker, worker_queues)
 
         # Add the run id to the worker entry and the worker id to the run entry
