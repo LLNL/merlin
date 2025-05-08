@@ -1,6 +1,7 @@
 """
 Fixtures for the `redis_backend.py` module.
 """
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -49,14 +50,14 @@ def redis_backend_instance(
 ) -> RedisBackend:
     """
     Fixture to create a `RedisBackend` instance with mocked dependencies.
-    
+
     This fixture sets up a `RedisBackend` instance with its Redis client and store mappings mocked,
-    allowing tests to run without requiring an actual Redis server. It uses the `mocker` library 
-    to patch external dependencies such as the Redis client, connection string retrieval, and 
+    allowing tests to run without requiring an actual Redis server. It uses the `mocker` library
+    to patch external dependencies such as the Redis client, connection string retrieval, and
     configuration settings.
 
     Args:
-        mocker (MockerFixture): The pytest-mock fixture used for mocking objects and patching 
+        mocker (MockerFixture): The pytest-mock fixture used for mocking objects and patching
             external dependencies.
         redis_results_backend_config_class (FixtureModification): A fixture that sets the `CONFIG`
             object to point to a Redis backend.

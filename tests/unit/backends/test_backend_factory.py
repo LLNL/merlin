@@ -14,14 +14,14 @@ class TestBackendFactory:
     """
     Test suite for the `backend_factory` module.
 
-    This class contains unit tests to validate the functionality of the `backend_factory`, which is responsible 
-    for managing backend instances and providing an interface for retrieving supported backends and resolving 
+    This class contains unit tests to validate the functionality of the `backend_factory`, which is responsible
+    for managing backend instances and providing an interface for retrieving supported backends and resolving
     backend aliases.
 
-    Fixtures and mocking are used to isolate the tests from the actual backend implementations, ensuring that 
+    Fixtures and mocking are used to isolate the tests from the actual backend implementations, ensuring that
     the tests focus on the behavior of the `backend_factory` module.
 
-    These tests ensure the robustness and correctness of the `backend_factory` module, which is critical for 
+    These tests ensure the robustness and correctness of the `backend_factory` module, which is critical for
     backend management in the Merlin framework.
     """
 

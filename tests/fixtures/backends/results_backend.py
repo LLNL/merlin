@@ -1,6 +1,7 @@
 """
 Fixtures for the `results_backend.py` module.
 """
+
 import pytest
 
 from merlin.backends.results_backend import ResultsBackend

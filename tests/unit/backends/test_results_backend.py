@@ -13,7 +13,7 @@ class TestResultsBackend:
     """
     Test suite for the `ResultsBackend` class.
 
-    This class contains unit tests to validate the behavior of the `ResultsBackend` class, which serves as an 
+    This class contains unit tests to validate the behavior of the `ResultsBackend` class, which serves as an
     abstract base class for implementing backends that manage entity storage and retrieval in the Merlin framework.
 
     The tests are divided into two categories:
@@ -21,13 +21,13 @@ class TestResultsBackend:
     - Validates the behavior of implemented methods, such as `get_name`, ensuring they return the expected values.
 
     2. **Abstract Method Tests**:
-    - Ensures that abstract methods (`get_version`, `get_connection_string`, `flush_database`, `save`, `retrieve`, 
+    - Ensures that abstract methods (`get_version`, `get_connection_string`, `flush_database`, `save`, `retrieve`,
         `retrieve_all`, and `delete`) raise `NotImplementedError` when invoked without being implemented in a subclass.
 
-    Fixtures are used to provide test instances of the `ResultsBackend` class and mock objects where necessary. 
+    Fixtures are used to provide test instances of the `ResultsBackend` class and mock objects where necessary.
     This ensures the tests focus on the correctness of the abstract base class and its contract for subclasses.
 
-    These tests ensure the integrity of the `ResultsBackend` class as a foundational component for entity storage 
+    These tests ensure the integrity of the `ResultsBackend` class as a foundational component for entity storage
     and retrieval in the framework.
     """
 

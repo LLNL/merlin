@@ -1,6 +1,7 @@
 """
 Tests for the `redis_backend.py` module.
 """
+
 import uuid
 
 import pytest
@@ -11,24 +12,25 @@ from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, Phy
 from merlin.exceptions import UnsupportedDataModelError
 from tests.fixture_types import FixtureStr
 
+
 class TestRedisBackend:
     """
     Test suite for the `RedisBackend` class.
 
-    This class contains unit tests to validate the functionality of the `RedisBackend` implementation, 
+    This class contains unit tests to validate the functionality of the `RedisBackend` implementation,
     which provides an interface for interacting with Redis as a backend for storing and retrieving entities.
 
-    Fixtures and mocking are used to isolate the tests from the actual Redis implementation, ensuring that the tests focus 
+    Fixtures and mocking are used to isolate the tests from the actual Redis implementation, ensuring that the tests focus
     on the behavior of the `RedisBackend` class.
 
-    Parametrization is employed to reduce redundancy and ensure comprehensive coverage across different entity types 
+    Parametrization is employed to reduce redundancy and ensure comprehensive coverage across different entity types
     and operations.
     """
 
     def test_get_version(self, redis_backend_instance: RedisBackend):
         """
         Test that RedisBackend correctly retrieves the Redis version.
-        
+
         Args:
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
@@ -45,7 +47,7 @@ class TestRedisBackend:
     ):
         """
         Test that RedisBackend correctly retrieves the connection string.
-        
+
         Args:
             mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
@@ -59,7 +61,7 @@ class TestRedisBackend:
     def test_flush_database(self, redis_backend_instance: RedisBackend):
         """
         Test that RedisBackend flushes the database.
-        
+
         Args:
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
@@ -73,7 +75,7 @@ class TestRedisBackend:
             (StudyModel, "study"),
             (RunModel, "run"),
             (LogicalWorkerModel, "logical_worker"),
-            (PhysicalWorkerModel, "physical_worker")
+            (PhysicalWorkerModel, "physical_worker"),
         ],
     )
     def test_save_valid_entity(
@@ -92,24 +94,23 @@ class TestRedisBackend:
         - runs
         - logical workers
         - physical workers
-        
+
         Args:
             mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
             db_model (BaseDataModel): The database model class representing the entity type being tested.
-            model_type (str): A string identifier for the type of entity being tested. This corresponds to 
+            model_type (str): A string identifier for the type of entity being tested. This corresponds to
                 the key used in the `RedisBackend.stores` dictionary.
         """
         entity = mocker.MagicMock(spec=db_model)
         redis_backend_instance.save(entity)
         redis_backend_instance.stores[model_type].save.assert_called_once_with(entity)
 
-
     def test_save_invalid_entity(self, mocker: MockerFixture, redis_backend_instance: RedisBackend):
         """
         Test saving an invalid entity raises UnsupportedDataModelError.
-        
+
         Args:
             mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
@@ -125,7 +126,7 @@ class TestRedisBackend:
             (StudyModel, "study"),
             (RunModel, "run"),
             (LogicalWorkerModel, "logical_worker"),
-            (PhysicalWorkerModel, "physical_worker")
+            (PhysicalWorkerModel, "physical_worker"),
         ],
     )
     def test_retrieve_valid_entity_by_id(
@@ -137,13 +138,13 @@ class TestRedisBackend:
     ):
         """
         Test retrieving a valid entity from the Redis store by ID.
-        
+
         Args:
             mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
             db_model (BaseDataModel): The database model class representing the entity type being tested.
-            model_type (str): A string identifier for the type of entity being tested. This corresponds to 
+            model_type (str): A string identifier for the type of entity being tested. This corresponds to
                 the key used in the `RedisBackend.stores` dictionary.
         """
         test_id = str(uuid.uuid4())
@@ -154,10 +155,7 @@ class TestRedisBackend:
 
     @pytest.mark.parametrize(
         "db_model, model_type",
-        [
-            (StudyModel, "study"),
-            (PhysicalWorkerModel, "physical_worker")
-        ],
+        [(StudyModel, "study"), (PhysicalWorkerModel, "physical_worker")],
     )
     def test_retrieve_valid_entity_by_name(
         self,
@@ -169,13 +167,13 @@ class TestRedisBackend:
         """
         Test retrieving a valid entity from the Redis store by name. This test only applies to study and
         physical worker entities.
-        
+
         Args:
             mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
             db_model (BaseDataModel): The database model class representing the entity type being tested.
-            model_type (str): A string identifier for the type of entity being tested. This corresponds to 
+            model_type (str): A string identifier for the type of entity being tested. This corresponds to
                 the key used in the `RedisBackend.stores` dictionary.
         """
         test_name = "entity_name"
@@ -187,12 +185,12 @@ class TestRedisBackend:
     def test_retrieve_invalid_store_type(self, redis_backend_instance: RedisBackend):
         """
         Test retrieving from an invalid store type raises ValueError.
-        
+
         Args:
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
         """
-        invalid_store_type = 'invalid_store'
+        invalid_store_type = "invalid_store"
         with pytest.raises(ValueError, match=f"Invalid store type '{invalid_store_type}'."):
             redis_backend_instance.retrieve(str(uuid.uuid4()), invalid_store_type)
 
@@ -202,7 +200,7 @@ class TestRedisBackend:
             (StudyModel, "study"),
             (RunModel, "run"),
             (LogicalWorkerModel, "logical_worker"),
-            (PhysicalWorkerModel, "physical_worker")
+            (PhysicalWorkerModel, "physical_worker"),
         ],
     )
     def test_retrieve_all(
@@ -214,13 +212,13 @@ class TestRedisBackend:
     ):
         """
         Test retrieving all entities from a valid store.
-        
+
         Args:
             mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
             db_model (BaseDataModel): The database model class representing the entity type being tested.
-            model_type (str): A string identifier for the type of entity being tested. This corresponds to 
+            model_type (str): A string identifier for the type of entity being tested. This corresponds to
                 the key used in the `RedisBackend.stores` dictionary.
         """
         redis_backend_instance.stores[model_type].retrieve_all.return_value = [mocker.MagicMock(spec=db_model)]
@@ -233,11 +231,11 @@ class TestRedisBackend:
     def test_delete_valid_entity_by_id(self, redis_backend_instance: RedisBackend, model_type: str):
         """
         Test deleting a valid entity from the Redis store by ID.
-        
+
         Args:
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
-            model_type (str): A string identifier for the type of entity being tested. This corresponds to 
+            model_type (str): A string identifier for the type of entity being tested. This corresponds to
                 the key used in the `RedisBackend.stores` dictionary.
         """
         test_id = str(uuid.uuid4())
@@ -248,11 +246,11 @@ class TestRedisBackend:
     def test_delete_valid_entity_by_name(self, redis_backend_instance: RedisBackend, model_type: str):
         """
         Test deleting a valid entity from the Redis store by name.
-        
+
         Args:
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
-            model_type (str): A string identifier for the type of entity being tested. This corresponds to 
+            model_type (str): A string identifier for the type of entity being tested. This corresponds to
                 the key used in the `RedisBackend.stores` dictionary.
         """
         test_name = "entity_name"
@@ -262,7 +260,7 @@ class TestRedisBackend:
     def test_delete_invalid_store_type(self, redis_backend_instance: RedisBackend):
         """
         Test deleting from an invalid store type raises ValueError.
-        
+
         Args:
             redis_backend_instance (RedisBackend): A fixture representing a `RedisBackend` instance with
                 mocked Redis client and stores.
