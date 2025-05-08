@@ -113,13 +113,17 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             A human-readable string representation of the `LogicalWorkerEntity` instance.
         """
         worker_id = self.get_id()
+        physical_workers = [PhysicalWorkerEntity.load(physical_worker_id, self.backend) for physical_worker_id in self.get_physical_workers()]
+        physical_worker_str = ""
+        for physical_worker in physical_workers:
+            physical_worker_str += f"  - ID: {physical_worker.get_id()}\n    Name: {physical_worker.get_name()}\n"
         return (
             f"Logical Worker with ID {worker_id}\n"
             f"------------{'-' * len(worker_id)}\n"
             f"Name: {self.get_name()}\n"
-            f"Runs: {self.get_runs()}\n"
+            f"Runs:\n{self.construct_run_string()}"
             f"Queues: {self.get_queues()}\n"
-            f"Physical Workers: {self.get_physical_workers()}\n"
+            f"Physical Workers:\n{physical_worker_str}"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 

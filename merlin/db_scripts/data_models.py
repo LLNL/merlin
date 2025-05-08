@@ -16,7 +16,7 @@ from typing import Dict, List, Tuple, Type, TypeVar
 
 from filelock import FileLock
 
-from merlin.common.abstracts.enums import WorkerStatus
+from merlin.common.enums import WorkerStatus
 
 
 LOG = logging.getLogger("merlin")

@@ -14,6 +14,7 @@ from typing import List
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
+from merlin.db_scripts.entities.study_entity import StudyEntity
 from merlin.db_scripts.mixins.queue_management import QueueManagementMixin
 from merlin.exceptions import RunNotFoundError
 
@@ -139,11 +140,13 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
             A human-readable string representation of the `RunEntity` instance.
         """
         run_id = self.get_id()
+        study = StudyEntity.load(self.get_study_id(), self.backend)
+        study_str = f"  - ID: {study.get_id()}\n    Name: {study.get_name()}"
         return (
             f"Run with ID {run_id}\n"
             f"------------{'-' * len(run_id)}\n"
             f"Workspace: {self.get_workspace()}\n"
-            f"Study ID: {self.get_study_id()}\n"
+            f"Study:\n{study_str}\n"
             f"Queues: {self.get_queues()}\n"
             f"Workers: {self.get_workers()}\n"
             f"Parent: {self.get_parent()}\n"

@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict
 
 from merlin.backends.results_backend import ResultsBackend
-from merlin.common.abstracts.enums import WorkerStatus
+from merlin.common.enums import WorkerStatus
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.db_scripts.mixins.name import NameMixin
 from merlin.exceptions import WorkerNotFoundError

@@ -100,7 +100,7 @@ class StudyEntity(DatabaseEntity, RunManagementMixin, NameMixin):
             f"Study with ID {study_id}\n"
             f"------------{'-' * len(study_id)}\n"
             f"Name: {self.get_name()}\n"
-            f"Runs: {self.get_runs()}\n"
+            f"Runs:\n{self.construct_run_string()}"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 

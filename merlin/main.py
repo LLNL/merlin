@@ -1115,7 +1115,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Subcommand: delete physical-worker
     delete_physical_worker = delete_subcommands.add_parser(
         "physical-worker",
-        help="Delete one or more physical workers by ID.",
+        help="Delete one or more physical workers by ID or name.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     delete_physical_worker.add_argument(
