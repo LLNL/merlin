@@ -9,6 +9,7 @@ from typing import Dict, List
 
 from redis import Redis
 
+from merlin.backends.redis.redis_base_store import RedisStoreBase
 from merlin.backends.redis.redis_stores import (
     RedisLogicalWorkerStore,
     RedisPhysicalWorkerStore,
@@ -63,7 +64,7 @@ class RedisBackend(ResultsBackend):
         Initialize the `RedisBackend` instance, setting up the Redis client connection and store mappings.
 
         Args:
-            backend_name: The name of the backend (e.g., "redis").
+            backend_name (str): The name of the backend (e.g., "redis").
         """
         super().__init__(backend_name)
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
@@ -93,7 +94,7 @@ class RedisBackend(ResultsBackend):
         client_info = self.client.info()
         return client_info.get("redis_version", "N/A")
 
-    def get_connection_string(self):
+    def get_connection_string(self) -> str:
         """
         Get the connection string to Redis.
 
@@ -110,7 +111,7 @@ class RedisBackend(ResultsBackend):
         """
         self.client.flushdb()
 
-    def _get_store_by_type(self, store_type: str):
+    def _get_store_by_type(self, store_type: str) -> RedisStoreBase:
         """
         Get the appropriate store based on the store type.
 
@@ -118,7 +119,7 @@ class RedisBackend(ResultsBackend):
             store_type (str): The type of store.
 
         Returns:
-            RedisStore: The corresponding store.
+            The corresponding store.
 
         Raises:
             ValueError: If the `store_type` is invalid.
@@ -142,16 +143,15 @@ class RedisBackend(ResultsBackend):
         """
         if isinstance(entity, StudyModel):
             return self.stores["study"]
-        elif isinstance(entity, RunModel):
+        if isinstance(entity, RunModel):
             return self.stores["run"]
-        elif isinstance(entity, LogicalWorkerModel):
+        if isinstance(entity, LogicalWorkerModel):
             return self.stores["logical_worker"]
-        elif isinstance(entity, PhysicalWorkerModel):
+        if isinstance(entity, PhysicalWorkerModel):
             return self.stores["physical_worker"]
-        else:
-            raise UnsupportedDataModelError(f"Unsupported data model of type {type(entity)}.")
+        raise UnsupportedDataModelError(f"Unsupported data model of type {type(entity)}.")
 
-    def save(self, entity: BaseDataModel) -> None:
+    def save(self, entity: BaseDataModel):
         """
         Save a `BaseDataModel` object to the Redis database.
 
@@ -177,7 +177,7 @@ class RedisBackend(ResultsBackend):
                 - `physical_worker`
 
         Returns:
-            BaseDataModel: The object retrieved from the specified store.
+            The object retrieved from the specified store.
 
         Raises:
             ValueError: If the `store_type` is invalid.
@@ -205,7 +205,7 @@ class RedisBackend(ResultsBackend):
                 - `physical_worker`
 
         Returns:
-            List[BaseDataModel]: A list of objects retrieved from the specified store.
+            A list of objects retrieved from the specified store.
 
         Raises:
             ValueError: If the `store_type` is invalid.
@@ -232,8 +232,8 @@ class RedisBackend(ResultsBackend):
         if store_type in ["study", "physical_worker"]:
             try:
                 uuid.UUID(entity_identifier)
-                return store.delete(entity_identifier)
+                store.delete(entity_identifier)
             except ValueError:
-                return store.delete(entity_identifier, by_name=True)
+                store.delete(entity_identifier, by_name=True)
         else:
             store.delete(entity_identifier)

@@ -208,9 +208,8 @@ class NameMappingMixin:
             if obj_id is None:
                 return None
             return super().retrieve(obj_id)
-        else:
-            # Use the parent class's retrieve method for ID-based retrieval
-            return super().retrieve(identifier)
+        # Use the parent class's retrieve method for ID-based retrieval
+        return super().retrieve(identifier)
 
     def delete(self, identifier: str, by_name: bool = False):
         """
