@@ -7,6 +7,8 @@ attributes and methods to support run management, such as `reload_data`, `save`,
 `entity_info` object containing a `runs` list.
 """
 
+from typing import List
+
 
 class RunManagementMixin:
     """
@@ -28,7 +30,7 @@ class RunManagementMixin:
             Remove a run ID from the list of runs.
     """
 
-    def get_runs(self):
+    def get_runs(self) -> List[str]:
         """
         Get every run listed in this entity.
 
@@ -74,3 +76,22 @@ class RunManagementMixin:
         self.reload_data()
         self.entity_info.runs.remove(run_id)
         self.save()
+
+    def construct_run_string(self) -> str:
+        """
+        Constructs and returns a formatted string representation of all runs associated
+        with the current instance.
+
+        Returns:
+            A formatted string containing details of all runs.
+        """
+        from merlin.db_scripts.entities.run_entity import RunEntity  # pylint: disable=import-outside-toplevel
+
+        runs = [RunEntity.load(run_id, self.backend) for run_id in self.get_runs()]
+        run_str = ""
+        if runs:
+            for run in runs:
+                run_str += f"  - ID: {run.get_id()}\n    Workspace: {run.get_workspace()}\n"
+        else:
+            run_str = "  No runs found.\n"
+        return run_str

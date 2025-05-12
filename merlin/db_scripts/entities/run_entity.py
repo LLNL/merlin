@@ -3,7 +3,7 @@ Module for managing database entities related to runs.
 
 This module provides functionality for interacting with runs stored in a database,
 including creating, retrieving, updating, and deleting runs. It defines the `RunEntity`
-class, which extends the abstract base class [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity],
+class, which extends the abstract base class [`DatabaseEntity`][db_scripts.entities.db_entity.DatabaseEntity],
 to encapsulate run-specific operations and behaviors.
 """
 
@@ -14,6 +14,7 @@ from typing import List
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
+from merlin.db_scripts.entities.study_entity import StudyEntity
 from merlin.db_scripts.mixins.queue_management import QueueManagementMixin
 from merlin.exceptions import RunNotFoundError
 
@@ -48,11 +49,11 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
 
         get_id:
             Retrieve the ID of the run. _Implementation found in
-                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+                [`DatabaseEntity.get_id`][db_scripts.entities.db_entity.DatabaseEntity.get_id]._
 
         get_additional_data:
             Retrieve any additional data saved to this run. _Implementation found in
-                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
+                [`DatabaseEntity.get_additional_data`][db_scripts.entities.db_entity.DatabaseEntity.get_additional_data]._
 
         get_metadata_file:
             Retrieve the path to the metadata file for this run.
@@ -139,11 +140,13 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
             A human-readable string representation of the `RunEntity` instance.
         """
         run_id = self.get_id()
+        study = StudyEntity.load(self.get_study_id(), self.backend)
+        study_str = f"  - ID: {study.get_id()}\n    Name: {study.get_name()}"
         return (
             f"Run with ID {run_id}\n"
             f"------------{'-' * len(run_id)}\n"
             f"Workspace: {self.get_workspace()}\n"
-            f"Study ID: {self.get_study_id()}\n"
+            f"Study:\n{study_str}\n"
             f"Queues: {self.get_queues()}\n"
             f"Workers: {self.get_workers()}\n"
             f"Parent: {self.get_parent()}\n"
@@ -203,8 +206,9 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
     def get_metadata_filepath(cls, workspace: str) -> str:
         """
         Get the path to the metadata file for a given workspace.
-        This is needed for the [`load_from_metadata_file`][db_scripts.run_entity.RunEntity.load_from_metadata_file]
-        method as it can't use the non-classmethod version of this method.
+        This is needed for the [`load`][db_scripts.entities.run_entity.RunEntity.load]
+        method when loading from workspace as it can't use the non-classmethod version
+        of this method.
 
         Args:
             workspace: The workspace directory for the run.
@@ -255,7 +259,7 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
         """
         Remove a worker id from the list of workers associated with this run.
 
-        Does *not* delete a [`LogicalWorkerEntity`][db_scripts.logical_worker_entity.LogicalWorkerEntity]
+        Does *not* delete a [`LogicalWorkerEntity`][db_scripts.entities.logical_worker_entity.LogicalWorkerEntity]
         from the database. This will only remove the worker's id from the list in this run.
 
         Args:
@@ -339,7 +343,7 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
             entity_identifier: The ID or workspace of the run to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting run with id or workspace '{entity_identifier}' from the database...")
+        LOG.debug(f"Deleting run with id or workspace '{entity_identifier}' from the database...")
         self = cls.load(entity_identifier, backend)
         backend.delete(self.get_id(), "run")
         LOG.info(f"Run with id or workspace '{entity_identifier}' has been successfully deleted.")

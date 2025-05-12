@@ -2,7 +2,7 @@
 Module for managing database entities related to logical workers.
 
 This module defines the `LogicalWorkerEntity` class, which extends the abstract base class
-[`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity], to encapsulate logical-worker-specific
+[`DatabaseEntity`][db_scripts.entities.db_entity.DatabaseEntity], to encapsulate logical-worker-specific
 operations and behaviors.
 """
 
@@ -47,11 +47,11 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
 
         get_id:
             Retrieve the unique ID of the logical worker. _Implementation found in
-                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+                [`DatabaseEntity.get_id`][db_scripts.entities.db_entity.DatabaseEntity.get_id]._
 
         get_additional_data:
             Retrieve any additional metadata associated with the logical worker. _Implementation found in
-                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
+                [`DatabaseEntity.get_additional_data`][db_scripts.entities.db_entity.DatabaseEntity.get_additional_data]._
 
         get_name:
             Retrieve the name of the logical worker.
@@ -87,7 +87,7 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             (classmethod) Delete a logical worker from the database by its ID.
     """
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Provide a string representation of the `LogicalWorkerEntity` instance.
 
@@ -105,7 +105,7 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             f"backend={self.backend.get_name()})"
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Provide a string representation of the `LogicalWorkerEntity` instance.
 
@@ -113,20 +113,29 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             A human-readable string representation of the `LogicalWorkerEntity` instance.
         """
         worker_id = self.get_id()
+        physical_workers = [
+            PhysicalWorkerEntity.load(physical_worker_id, self.backend) for physical_worker_id in self.get_physical_workers()
+        ]
+        physical_worker_str = ""
+        if physical_workers:
+            for physical_worker in physical_workers:
+                physical_worker_str += f"  - ID: {physical_worker.get_id()}\n    Name: {physical_worker.get_name()}\n"
+        else:
+            physical_worker_str = "  No physical workers found.\n"
         return (
             f"Logical Worker with ID {worker_id}\n"
             f"------------{'-' * len(worker_id)}\n"
             f"Name: {self.get_name()}\n"
-            f"Runs: {self.get_runs()}\n"
+            f"Runs:\n{self.construct_run_string()}"
             f"Queues: {self.get_queues()}\n"
-            f"Physical Workers: {self.get_physical_workers()}\n"
+            f"Physical Workers:\n{physical_worker_str}"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 
     def reload_data(self):
         """
         Reload the latest data for this logical worker from the database and update the
-        [`LogicalWorkerModel`][db_scripts.db_formats.LogicalWorkerModel] object.
+        [`LogicalWorkerModel`][db_scripts.data_models.LogicalWorkerModel] object.
 
         Raises:
             (exceptions.WorkerNotFoundError): If an entry for this worker was
@@ -143,7 +152,7 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
         Get the physical instances of this logical worker.
 
         Returns:
-            A list of [`PhysicalWorkerEntity`][db_scripts.physical_worker_entity.PhysicalWorkerEntity]
+            A list of [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
                 instances.
         """
         self.reload_data()
@@ -163,7 +172,7 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
         """
         Remove a physical worker id from the list of physical workers.
 
-        Does *not* delete a [`PhysicalWorkerEntity`][db_scripts.physical_worker_entity.PhysicalWorkerEntity]
+        Does *not* delete a [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
         from the database. This will only remove the physical worker's id from the list in this worker.
 
         Args:
@@ -210,6 +219,6 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             entity_identifier: The ID of the worker to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting worker with id '{entity_identifier}' from the database...")
+        LOG.debug(f"Deleting worker with id '{entity_identifier}' from the database...")
         backend.delete(entity_identifier, "logical_worker")
         LOG.info(f"Worker with id '{entity_identifier}' has been successfully deleted.")

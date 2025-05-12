@@ -3,7 +3,7 @@ This module provides a factory class to manage and retrieve task server monitors
 for supported task servers in Merlin.
 """
 
-from typing import Dict
+from typing import Dict, List
 
 from merlin.exceptions import InvalidTaskServerError
 from merlin.monitor.celery_monitor import CeleryMonitor
@@ -32,7 +32,7 @@ class MonitorFactory:
             "celery": CeleryMonitor,
         }
 
-    def get_supported_task_servers(self):
+    def get_supported_task_servers(self) -> List[str]:
         """
         Get a list of the supported task servers in Merlin.
 
@@ -49,7 +49,7 @@ class MonitorFactory:
             task_server: The name of the task server to use when loading a task server monitor.
 
         Returns:
-            An instantiated [`TaskServerMonitor`][merlin.monitor.task_server_monitor.TaskServerMonitor]
+            An instantiated [`TaskServerMonitor`][monitor.task_server_monitor.TaskServerMonitor]
                 object for the specified task server.
 
         Raises:

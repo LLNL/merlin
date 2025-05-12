@@ -111,7 +111,7 @@ class Monitor:
         and workflows are restarted if necessary.
 
         Args:
-            run: A [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instance representing
+            run: A [`RunEntity`][db_scripts.entities.run_entity.RunEntity] instance representing
                 the run that's going to be monitored.
         """
         run_workspace = run.get_workspace()
@@ -169,7 +169,7 @@ class Monitor:
         Restart a run of a workflow.
 
         Args:
-            run: A [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instance representing
+            run: A [`RunEntity`][db_scripts.entities.run_entity.RunEntity] instance representing
                 the run that's going to be restarted.
 
         Raises:

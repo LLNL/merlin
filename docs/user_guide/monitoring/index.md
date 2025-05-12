@@ -32,4 +32,4 @@ There are several commands used specifically for monitoring studies (see [Monito
 
 - [Monitoring Studies for Persistent Allocations](./monitor_for_allocation.md): Here we'll discuss how allocations can be kept alive using the [`merlin monitor`](../command_line.md#monitor-merlin-monitor) command.
 
-- [The Database Command](./database.md): This module will cover the [`merlin database`](../command_line.md#database-merlin-database) command.
+- [Merlin's Database](./database/index.md): This module will cover the [`merlin database`](../command_line.md#database-merlin-database) command and the structure of the database.

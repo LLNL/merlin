@@ -3,7 +3,7 @@ Module for managing database entities related to physical workers.
 
 This module provides functionality for interacting with physical workers stored in a database,
 including creating, retrieving, updating, and deleting them. It defines the `WorkerEntity`
-class, which extends the abstract base class [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity],
+class, which extends the abstract base class [`DatabaseEntity`][db_scripts.entities.db_entity.DatabaseEntity],
 to encapsulate worker-specific operations and behaviors.
 """
 
@@ -44,10 +44,10 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
             Reload the latest data for this worker from the database.
         get_id:
             Retrieve the ID of the worker. _Implementation found in
-                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+                [`DatabaseEntity.get_id`][db_scripts.entities.db_entity.DatabaseEntity.get_id]._
         get_additional_data:
             Retrieve any additional data saved to this worker. _Implementation found in
-                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
+                [`DatabaseEntity.get_additional_data`][db_scripts.entities.db_entity.DatabaseEntity.get_additional_data]._
         get_name:
             Retrieve the name of this worker.
         get_logical_worker_id:
@@ -141,7 +141,7 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
     def reload_data(self):
         """
         Reload the latest data for this worker from the database and update the
-        [`PhysicalWorkerModel`][db_scripts.db_formats.PhysicalWorkerModel] object
+        [`PhysicalWorkerModel`][db_scripts.data_models.PhysicalWorkerModel] object
         stored in `self.entity_info`.
 
         Raises:
@@ -226,7 +226,7 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
         Get the status of this worker.
 
         Returns:
-            A [`WorkerStatus`][common.abstracts.enums.WorkerStatus] enum representing
+            A [`WorkerStatus`][common.enums.WorkerStatus] enum representing
                 the status of this worker.
         """
         self.reload_data()
@@ -237,7 +237,7 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
         Set the status of this worker.
 
         Args:
-            status: A [`WorkerStatus`][common.abstracts.enums.WorkerStatus] enum representing
+            status: A [`WorkerStatus`][common.enums.WorkerStatus] enum representing
                 the new status of the worker.
         """
         self.entity_info.status = status
@@ -322,7 +322,7 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
         Load a worker from the database by ID.
 
         Args:
-            entity_id: The ID of the worker to load.
+            entity_identifier: The ID of the worker to load.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
 
         Returns:
@@ -347,6 +347,6 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
             entity_identifier: The ID or name of the worker to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting worker with id or name '{entity_identifier}' from the database...")
+        LOG.debug(f"Deleting worker with id or name '{entity_identifier}' from the database...")
         backend.delete(entity_identifier, "physical_worker")
         LOG.info(f"Worker '{entity_identifier}' has been successfully deleted.")

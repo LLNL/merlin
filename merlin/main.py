@@ -234,7 +234,7 @@ def process_run(args: Namespace):
     # Create logical worker entries
     step_queue_map = study.expanded_spec.get_task_queues()
     for worker, steps in study.expanded_spec.get_worker_step_map().items():
-        worker_queues = [step_queue_map[step] for step in steps]
+        worker_queues = set([step_queue_map[step] for step in steps])
         logical_worker_entity = merlin_db.create_logical_worker(worker, worker_queues)
 
         # Add the run id to the worker entry and the worker id to the run entry
@@ -302,7 +302,7 @@ def launch_workers(args: Namespace):
     # Create logical worker entries
     step_queue_map = spec.get_task_queues()
     for worker, steps in spec.get_worker_step_map().items():
-        worker_queues = [step_queue_map[step] for step in steps]
+        worker_queues = set([step_queue_map[step] for step in steps])
         merlin_db.create_logical_worker(worker, worker_queues)
 
     # Launch the workers
@@ -1115,7 +1115,7 @@ def setup_argparse() -> None:  # pylint: disable=R0915
     # Subcommand: delete physical-worker
     delete_physical_worker = delete_subcommands.add_parser(
         "physical-worker",
-        help="Delete one or more physical workers by ID.",
+        help="Delete one or more physical workers by ID or name.",
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     delete_physical_worker.add_argument(
