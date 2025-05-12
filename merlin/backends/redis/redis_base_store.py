@@ -152,7 +152,7 @@ class RedisStoreBase(Generic[T]):
 
         LOG.info(f"Successfully deleted {self.key} '{obj_id}' from Redis.")
 
-    def _get_not_found_error_class(self):
+    def _get_not_found_error_class(self) -> Exception:
         """
         Get the appropriate not found error class based on the model type.
 

@@ -9,6 +9,7 @@ from typing import Dict, List
 
 from redis import Redis
 
+from merlin.backends.redis.redis_base_store import RedisStoreBase
 from merlin.backends.redis.redis_stores import (
     RedisLogicalWorkerStore,
     RedisPhysicalWorkerStore,
@@ -93,7 +94,7 @@ class RedisBackend(ResultsBackend):
         client_info = self.client.info()
         return client_info.get("redis_version", "N/A")
 
-    def get_connection_string(self):
+    def get_connection_string(self) -> str:
         """
         Get the connection string to Redis.
 
@@ -110,7 +111,7 @@ class RedisBackend(ResultsBackend):
         """
         self.client.flushdb()
 
-    def _get_store_by_type(self, store_type: str):
+    def _get_store_by_type(self, store_type: str) -> RedisStoreBase:
         """
         Get the appropriate store based on the store type.
 
@@ -127,7 +128,7 @@ class RedisBackend(ResultsBackend):
             raise ValueError(f"Invalid store type '{store_type}'.")
         return self.stores[store_type]
 
-    def _get_store_by_entity(self, entity: BaseDataModel):
+    def _get_store_by_entity(self, entity: BaseDataModel) -> RedisStoreBase:
         """
         Get the appropriate store based on the entity type.
 
