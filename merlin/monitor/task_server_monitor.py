@@ -72,7 +72,7 @@ class TaskServerMonitor(ABC):
         Check the status of tasks in the given workflow run.
 
         Args:
-            run: A [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instance representing
+            run: A [`RunEntity`][db_scripts.entities.run_entity.RunEntity] instance representing
                 the workflow run whose tasks are being monitored.
 
         Returns:

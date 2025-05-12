@@ -2,7 +2,7 @@
 Module for managing database entities related to studies.
 
 This module defines the `StudyEntity` class, which extends the abstract base class
-[`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity], to encapsulate study-specific
+[`DatabaseEntity`][db_scripts.entities.db_entity.DatabaseEntity], to encapsulate study-specific
 operations and behaviors.
 """
 
@@ -44,11 +44,11 @@ class StudyEntity(DatabaseEntity, RunManagementMixin, NameMixin):
 
         get_id:
             Retrieve the unique ID of the study. _Implementation found in
-                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+                [`DatabaseEntity.get_id`][db_scripts.entities.db_entity.DatabaseEntity.get_id]._
 
         get_additional_data:
             Retrieve any additional metadata associated with the study. _Implementation found in
-                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
+                [`DatabaseEntity.get_additional_data`][db_scripts.entities.db_entity.DatabaseEntity.get_additional_data]._
 
         get_name:
             Retrieve the name of the study.
@@ -107,7 +107,7 @@ class StudyEntity(DatabaseEntity, RunManagementMixin, NameMixin):
     def reload_data(self):
         """
         Reload the latest data for this study from the database and update the
-        [`StudyModel`][db_scripts.db_formats.StudyModel] object.
+        [`StudyModel`][db_scripts.data_models.StudyModel] object.
 
         Raises:
             (exceptions.StudyNotFoundError): If an entry for this study was not

@@ -3,7 +3,7 @@ This module contains a backend factory class that acts as an abstraction
 layer for loading a results backend.
 """
 
-from typing import Dict
+from typing import Dict, List
 
 from merlin.backends.redis.redis_backend import RedisBackend
 from merlin.backends.results_backend import ResultsBackend
@@ -31,7 +31,7 @@ class MerlinBackendFactory:
         # Map aliases to canonical backend names
         self._backend_aliases: Dict[str, str] = {"rediss": "redis"}
 
-    def get_supported_backends(self):
+    def get_supported_backends(self) -> List[str]:
         """
         Get a list of the supported backends in Merlin.
 

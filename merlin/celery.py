@@ -205,7 +205,7 @@ app.autodiscover_tasks(["merlin.common"])
 
 
 @celeryd_init.connect
-def handle_worker_startup(sender=None, **kwargs):
+def handle_worker_startup(sender: str = None, **kwargs):
     """
     Store information about each physical worker instance in the database.
 
@@ -216,7 +216,7 @@ def handle_worker_startup(sender=None, **kwargs):
     [`MerlinDatabase`][db_scripts.merlin_db.MerlinDatabase] class.
 
     Args:
-        sender: The hostname of the worker that was just started
+        sender (str): The hostname of the worker that was just started
     """
     if sender is not None:
         LOG.debug(f"Worker {sender} has started.")
@@ -245,12 +245,12 @@ def handle_worker_startup(sender=None, **kwargs):
 
 
 @worker_shutdown.connect
-def handle_worker_shutdown(sender=None, **kwargs):
+def handle_worker_shutdown(sender: str = None, **kwargs):
     """
     Update the database for a worker entry when a worker shuts down.
 
     Args:
-        sender: The hostname of the worker that was just started
+        sender (str): The hostname of the worker that was just started
     """
     if sender is not None:
         LOG.debug(f"Worker {sender} is shutting down.")

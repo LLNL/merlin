@@ -554,7 +554,7 @@ More information on all of these commands can be found below and in the [Monitor
 
 This command allows you to interact with Merlin's backend database by viewing database info, retrieving and printing entries, and deleting entries.
 
-More information on this command can be found below or at [The Database Command](./monitoring/database.md) page.
+More information on this command can be found below or at [The Database Command](./monitoring/database/database_cmd.md) page. See [Merlin's Database](./monitoring/database/index.md) for more general information on the database itself.
 
 <!-- TODO add this to the above paragraph when the reference guide is finished -->
 <!-- If you really want to understand the architecture of this database, see [General Database Architecture](../reference_guide/database/index.md) in Merlin's [Reference Guide](../reference_guide/index.md). -->

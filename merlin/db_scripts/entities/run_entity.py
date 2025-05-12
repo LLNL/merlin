@@ -3,7 +3,7 @@ Module for managing database entities related to runs.
 
 This module provides functionality for interacting with runs stored in a database,
 including creating, retrieving, updating, and deleting runs. It defines the `RunEntity`
-class, which extends the abstract base class [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity],
+class, which extends the abstract base class [`DatabaseEntity`][db_scripts.entities.db_entity.DatabaseEntity],
 to encapsulate run-specific operations and behaviors.
 """
 
@@ -49,11 +49,11 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
 
         get_id:
             Retrieve the ID of the run. _Implementation found in
-                [`DatabaseEntity.get_id`][db_scripts.db_entity.DatabaseEntity.get_id]._
+                [`DatabaseEntity.get_id`][db_scripts.entities.db_entity.DatabaseEntity.get_id]._
 
         get_additional_data:
             Retrieve any additional data saved to this run. _Implementation found in
-                [`DatabaseEntity.get_additional_data`][db_scripts.db_entity.DatabaseEntity.get_additional_data]._
+                [`DatabaseEntity.get_additional_data`][db_scripts.entities.db_entity.DatabaseEntity.get_additional_data]._
 
         get_metadata_file:
             Retrieve the path to the metadata file for this run.
@@ -206,8 +206,9 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
     def get_metadata_filepath(cls, workspace: str) -> str:
         """
         Get the path to the metadata file for a given workspace.
-        This is needed for the [`load_from_metadata_file`][db_scripts.run_entity.RunEntity.load_from_metadata_file]
-        method as it can't use the non-classmethod version of this method.
+        This is needed for the [`load`][db_scripts.entities.run_entity.RunEntity.load]
+        method when loading from workspace as it can't use the non-classmethod version
+        of this method.
 
         Args:
             workspace: The workspace directory for the run.
@@ -258,7 +259,7 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
         """
         Remove a worker id from the list of workers associated with this run.
 
-        Does *not* delete a [`LogicalWorkerEntity`][db_scripts.logical_worker_entity.LogicalWorkerEntity]
+        Does *not* delete a [`LogicalWorkerEntity`][db_scripts.entities.logical_worker_entity.LogicalWorkerEntity]
         from the database. This will only remove the worker's id from the list in this run.
 
         Args:

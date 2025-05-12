@@ -7,6 +7,8 @@ attributes and methods to support run management, such as `reload_data`, `save`,
 `entity_info` object containing a `runs` list.
 """
 
+from typing import List
+
 
 class RunManagementMixin:
     """
@@ -28,7 +30,7 @@ class RunManagementMixin:
             Remove a run ID from the list of runs.
     """
 
-    def get_runs(self):
+    def get_runs(self) -> List[str]:
         """
         Get every run listed in this entity.
 

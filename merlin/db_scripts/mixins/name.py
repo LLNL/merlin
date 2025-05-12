@@ -21,7 +21,7 @@ class NameMixin:
             Retrieve the name associated with the entity.
     """
 
-    def get_name(self):
+    def get_name(self) -> str:
         """
         Get the name associated with this logical worker.
 

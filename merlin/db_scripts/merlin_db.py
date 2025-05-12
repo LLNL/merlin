@@ -4,7 +4,7 @@ stored in Merlin's database.
 """
 
 import logging
-from typing import Callable, List
+from typing import Callable, Dict, List
 
 from merlin.backends.backend_factory import backend_factory
 from merlin.backends.results_backend import ResultsBackend
@@ -42,7 +42,7 @@ class MerlinDatabase:
                 Retrieve the backend connection string.
             - [`get_everything`][db_scripts.merlin_db.MerlinDatabase.get_everything]: Retrieve every
                 entity in the database.
-            - [`delete_everything`][db_scritps.merlin_db.MerlinDatabase.delete_everything]: Removes
+            - [`delete_everything`][db_scripts.merlin_db.MerlinDatabase.delete_everything]: Removes
                 every entry from the database.
 
         Study Management:\n
@@ -117,7 +117,7 @@ class MerlinDatabase:
         """
         return self.backend.get_version()
 
-    def get_connection_string(self):
+    def get_connection_string(self) -> str:
         """
         Get the connection string to the backend.
 
@@ -133,7 +133,7 @@ class MerlinDatabase:
         identifier: str,
         log_message_exists: str,
         log_message_create: str,
-        **model_kwargs,
+        **model_kwargs: Dict,
     ) -> DatabaseEntity:
         """
         Helper method to create an entity if it does not already exist in the database.
@@ -142,7 +142,6 @@ class MerlinDatabase:
             entity_class: The class of the entity to create (e.g., `StudyEntity`, `RunEntity`).
             model_class: The class of the model used to initialize the entity (e.g., `StudyModel`, `RunModel`).
             identifier: The identifier used to check if the entity exists.
-            backend: The database backend.
             log_message_exists: Log message when the entity already exists.
             log_message_create: Log message when the entity is being created.
             model_kwargs: Additional keyword arguments for the model.
@@ -160,14 +159,13 @@ class MerlinDatabase:
             entity.save()
         return entity
 
-    def _get_entity(self, entity_class: DatabaseEntity, identifier: str):
+    def _get_entity(self, entity_class: DatabaseEntity, identifier: str) -> DatabaseEntity:
         """
         Helper method to retrieve an entity from the database.
 
         Args:
             entity_class: The class of the entity to retrieve (e.g., `StudyEntity`, `RunEntity`).
             identifier: The identifier used to locate the entity (e.g., ID or name).
-            backend: The database backend.
 
         Returns:
             An instance of the entity class.
@@ -190,7 +188,7 @@ class MerlinDatabase:
             return []
         return [entity_class(entity_data, self.backend) for entity_data in all_entities]
 
-    def _delete_entity(self, entity_class, identifier: str, cleanup_fn: Callable = None):
+    def _delete_entity(self, entity_class: DatabaseEntity, identifier: str, cleanup_fn: Callable = None):
         """
         Helper method to delete an entity from the database.
 
@@ -204,7 +202,7 @@ class MerlinDatabase:
             cleanup_fn(entity)
         entity_class.delete(identifier, self.backend)
 
-    def _delete_all_by_type(self, get_all_fn: Callable, delete_fn: Callable, entity_name: str, **delete_kwargs):
+    def _delete_all_by_type(self, get_all_fn: Callable, delete_fn: Callable, entity_name: str, **delete_kwargs: Dict):
         """
         Helper method to delete all entities of a specific type from the database.
 
@@ -223,14 +221,14 @@ class MerlinDatabase:
 
     def create_study(self, study_name: str) -> StudyEntity:
         """
-        Create [`StudyEntity`][merlin.db_scripts.study_entity.StudyEntity] instance and save
+        Create [`StudyEntity`][db_scripts.entities.study_entity.StudyEntity] instance and save
         it to the database, if one does not already exist.
 
         Args:
             study_name: The name of the study to create.
 
         Returns:
-            A [`StudyEntity`][merlin.db_scripts.study_entity.StudyEntity] instance.
+            A [`StudyEntity`][db_scripts.entities.study_entity.StudyEntity] instance.
         """
         return self._create_entity_if_not_exists(
             entity_class=StudyEntity,
@@ -249,7 +247,7 @@ class MerlinDatabase:
             study_id_or_name: The id or name of the study to retrieve.
 
         Returns:
-            A [`StudyEntity`][merlin.db_scripts.study_entity.StudyEntity] instance representing
+            A [`StudyEntity`][db_scripts.entities.study_entity.StudyEntity] instance representing
                 the study that was queried.
         """
         return self._get_entity(StudyEntity, study_id_or_name)
@@ -259,7 +257,7 @@ class MerlinDatabase:
         Get every study that's currently in the database.
 
         Returns:
-            A list of [`StudyEntity`][merlin.db_scripts.study_entity.StudyEntity] instances.
+            A list of [`StudyEntity`][db_scripts.entities.study_entity.StudyEntity] instances.
         """
         return self._get_all_entities(StudyEntity, "study")
 
@@ -307,7 +305,7 @@ class MerlinDatabase:
             queues: The task queues for the run.
 
         Returns:
-            A [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instance.
+            A [`RunEntity`][db_scripts.entities.run_entity.RunEntity] instance.
         """
         # This will only create a new study if one does not already exist
         study_entity = self.create_study(study_name)
@@ -341,7 +339,7 @@ class MerlinDatabase:
             run_id_or_workspace: The id or workspace of the run to retrieve.
 
         Returns:
-            A [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instance representing
+            A [`RunEntity`][db_scripts.entities.run_entity.RunEntity] instance representing
                 the run that was queried.
         """
         return self._get_entity(RunEntity, run_id_or_workspace)
@@ -351,7 +349,7 @@ class MerlinDatabase:
         Get every run that's currently in the database.
 
         Returns:
-            A list of [`RunEntity`][merlin.db_scripts.run_entity.RunEntity] instances.
+            A list of [`RunEntity`][db_scripts.entities.run_entity.RunEntity] instances.
         """
         return self._get_all_entities(RunEntity, "run")
 
@@ -417,14 +415,14 @@ class MerlinDatabase:
     def create_logical_worker(self, name: str, queues: List[str]) -> LogicalWorkerEntity:
         """
         Create a new logical worker in the database (if one doesn't exist) and return a
-        [`LogicalWorkerEntity`][merlin.db_scripts.logical_worker_entity.LogicalWorkerEntity]
+        [`LogicalWorkerEntity`][db_scripts.entities.logical_worker_entity.LogicalWorkerEntity]
         instance.
 
         Args:
             name: The name of the worker.
 
         Returns:
-            A [`LogicalWorkerEntity`][merlin.db_scripts.logical_worker_entity.LogicalWorkerEntity]
+            A [`LogicalWorkerEntity`][db_scripts.entities.logical_worker_entity.LogicalWorkerEntity]
                 instance representing the newly created worker.
         """
         logical_worker_id = self._resolve_worker_id(worker_name=name, queues=queues)
@@ -461,7 +459,7 @@ class MerlinDatabase:
             queues: The list of queues assigned to the logical worker.
 
         Returns:
-            A [`LogicalWorkerEntity`][merlin.db_scripts.logical_worker_entity.LogicalWorkerEntity] instance.
+            A [`LogicalWorkerEntity`][db_scripts.entities.logical_worker_entity.LogicalWorkerEntity] instance.
 
         Raises:
             ValueError: If neither `worker_id` is provided nor both `worker_name` and `queues` are provided,
@@ -476,7 +474,7 @@ class MerlinDatabase:
 
         Returns:
             A list of
-                [`LogicalWorkerEntity`][merlin.db_scripts.logical_worker_entity.LogicalWorkerEntity]
+                [`LogicalWorkerEntity`][db_scripts.entities.logical_worker_entity.LogicalWorkerEntity]
                 instances.
         """
         return self._get_all_entities(LogicalWorkerEntity, "logical_worker")
@@ -524,14 +522,14 @@ class MerlinDatabase:
     def create_physical_worker(self, name: str, **kwargs) -> PhysicalWorkerEntity:
         """
         Create a new physical worker in the database (if one doesn't exist) and return a
-        [`PhysicalWorkerEntity`][merlin.db_scripts.physical_worker_entity.PhysicalWorkerEntity]
+        [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
         instance.
 
         Args:
             name: The name of the worker.
 
         Returns:
-            A [`PhysicalWorkerEntity`][merlin.db_scripts.physical_worker_entity.PhysicalWorkerEntity]
+            A [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
                 instance representing the newly created worker.
         """
         log_message_create = (
@@ -555,7 +553,7 @@ class MerlinDatabase:
             worker_id_or_name: The id or name of the physical worker to retrieve.
 
         Returns:
-            A [`PhysicalWorkerEntity`][merlin.db_scripts.physical_worker_entitiy.PhysicalWorkerEntity]
+            A [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
                 instance representing the physical worker that was queried.
         """
         return self._get_entity(PhysicalWorkerEntity, worker_id_or_name)
@@ -566,7 +564,7 @@ class MerlinDatabase:
 
         Returns:
             A list of
-                [`PhysicalWorkerEntity`][merlin.db_scripts.physical_worker_entity.PhysicalWorkerEntity]
+                [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
                 instances.
         """
         return self._get_all_entities(PhysicalWorkerEntity, "physical_worker")
@@ -609,12 +607,12 @@ class MerlinDatabase:
 
         Returns:
             A list of entities retrieved from the database, including:\n
-            - [`LogicalWorkerEntity`][merlin.db_scripts.logical_worker_entity.LogicalWorkerEntity]:
+            - [`LogicalWorkerEntity`][db_scripts.entities.logical_worker_entity.LogicalWorkerEntity]:
                 Represents logical workers.
-            - [`PhysicalWorkerEntity`][merlin.db_scripts.physical_worker_entity.PhysicalWorkerEntity]:
+            - [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]:
                 Represents physical workers.
-            - [`RunEntity`][merlin.db_scripts.run_entity.RunEntity]: Represents runs.
-            - [`StudyEntity`][merlin.db_scripts.study_entity.StudyEntity]: Represents studies.
+            - [`RunEntity`][db_scripts.entities.run_entity.RunEntity]: Represents runs.
+            - [`StudyEntity`][db_scripts.entities.study_entity.StudyEntity]: Represents studies.
         """
         return list(
             self.get_all_logical_workers() + self.get_all_physical_workers() + self.get_all_runs() + self.get_all_studies()
