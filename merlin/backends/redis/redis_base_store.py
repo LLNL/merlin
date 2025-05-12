@@ -72,13 +72,13 @@ class RedisStoreBase(Generic[T]):
         """
         obj_key = f"{self.key}:{obj.id}"
         if self.client.exists(obj_key):
-            LOG.info(f"Attempting to update {self.key} with id '{obj.id}'...")
+            LOG.debug(f"Attempting to update {self.key} with id '{obj.id}'...")
             update_data_class_entry(obj, obj_key, self.client)
-            LOG.info(f"Successfully updated {self.key} with id '{obj.id}'.")
+            LOG.debug(f"Successfully updated {self.key} with id '{obj.id}'.")
         else:
-            LOG.info(f"Creating a {self.key} entry in Redis...")
+            LOG.debug(f"Creating a {self.key} entry in Redis...")
             create_data_class_entry(obj, obj_key, self.client)
-            LOG.info(f"Successfully created a {self.key} with id '{obj.id}' in Redis.")
+            LOG.debug(f"Successfully created a {self.key} with id '{obj.id}' in Redis.")
 
     def retrieve(self, obj_id: str) -> Optional[T]:
         """
@@ -221,7 +221,7 @@ class NameMappingMixin:
             by_name: If True, interpret the identifier as a name. If False, interpret it as an ID.
         """
         id_type = "name" if by_name else "id"
-        LOG.info(f"Attempting to delete {self.key} with {id_type} '{identifier}' from Redis...")
+        LOG.debug(f"Attempting to delete {self.key} with {id_type} '{identifier}' from Redis...")
 
         # Retrieve the object to ensure it exists and get its ID and name
         obj = self.retrieve(identifier, by_name=by_name)
