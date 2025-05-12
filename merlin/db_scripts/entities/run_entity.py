@@ -342,7 +342,7 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
             entity_identifier: The ID or workspace of the run to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting run with id or workspace '{entity_identifier}' from the database...")
+        LOG.debug(f"Deleting run with id or workspace '{entity_identifier}' from the database...")
         self = cls.load(entity_identifier, backend)
         backend.delete(self.get_id(), "run")
         LOG.info(f"Run with id or workspace '{entity_identifier}' has been successfully deleted.")

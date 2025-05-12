@@ -347,6 +347,6 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
             entity_identifier: The ID or name of the worker to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting worker with id or name '{entity_identifier}' from the database...")
+        LOG.debug(f"Deleting worker with id or name '{entity_identifier}' from the database...")
         backend.delete(entity_identifier, "physical_worker")
         LOG.info(f"Worker '{entity_identifier}' has been successfully deleted.")

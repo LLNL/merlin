@@ -115,8 +115,11 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
         worker_id = self.get_id()
         physical_workers = [PhysicalWorkerEntity.load(physical_worker_id, self.backend) for physical_worker_id in self.get_physical_workers()]
         physical_worker_str = ""
-        for physical_worker in physical_workers:
-            physical_worker_str += f"  - ID: {physical_worker.get_id()}\n    Name: {physical_worker.get_name()}\n"
+        if physical_workers:
+            for physical_worker in physical_workers:
+                physical_worker_str += f"  - ID: {physical_worker.get_id()}\n    Name: {physical_worker.get_name()}\n"
+        else:
+            physical_worker_str = "  No physical workers found.\n"
         return (
             f"Logical Worker with ID {worker_id}\n"
             f"------------{'-' * len(worker_id)}\n"
@@ -214,6 +217,6 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             entity_identifier: The ID of the worker to delete.
             backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
         """
-        LOG.info(f"Deleting worker with id '{entity_identifier}' from the database...")
+        LOG.debug(f"Deleting worker with id '{entity_identifier}' from the database...")
         backend.delete(entity_identifier, "logical_worker")
         LOG.info(f"Worker with id '{entity_identifier}' has been successfully deleted.")

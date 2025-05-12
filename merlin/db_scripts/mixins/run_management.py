@@ -91,5 +91,5 @@ class RunManagementMixin:
             for run in runs:
                 run_str += f"  - ID: {run.get_id()}\n    Workspace: {run.get_workspace()}\n"
         else:
-            run_str = "  No runs found\n"
+            run_str = "  No runs found.\n"
         return run_str

@@ -302,7 +302,7 @@ def launch_workers(args: Namespace):
     # Create logical worker entries
     step_queue_map = spec.get_task_queues()
     for worker, steps in spec.get_worker_step_map().items():
-        worker_queues = [step_queue_map[step] for step in steps]
+        worker_queues = set([step_queue_map[step] for step in steps])
         merlin_db.create_logical_worker(worker, worker_queues)
 
     # Launch the workers

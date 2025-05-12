@@ -142,7 +142,7 @@ class BaseDataModel(ABC):
             # Replace the temporary file with the target file
             os.replace(temp_filepath, filepath)
 
-        LOG.info(f"Data successfully dumped to {filepath}.")
+        LOG.debug(f"Data successfully dumped to {filepath}.")
 
     @classmethod
     def load_from_json_file(cls: Type[T], filepath: str) -> T:
