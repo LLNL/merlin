@@ -77,7 +77,7 @@ class RunManagementMixin:
 
     def construct_run_string(self) -> str:
         """
-        Constructs and returns a formatted string representation of all runs associated 
+        Constructs and returns a formatted string representation of all runs associated
         with the current instance.
 
         Returns:
