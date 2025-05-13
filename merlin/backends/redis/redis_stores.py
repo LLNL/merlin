@@ -53,7 +53,7 @@ class RedisPhysicalWorkerStore(NameMappingMixin, RedisStoreBase[PhysicalWorkerMo
         super().__init__(client, "physical_worker", PhysicalWorkerModel)
 
 
-class RedisRunStore(RedisStoreBase[RunModel]):
+class RedisRunStore(NameMappingMixin, RedisStoreBase[RunModel]):
     """
     A Redis-based store for managing [`RunModel`][db_scripts.data_models.RunModel]
     objects.

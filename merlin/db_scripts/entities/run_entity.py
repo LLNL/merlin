@@ -310,10 +310,12 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
         Raises:
             (exceptions.RunNotFoundError): If an entry for run was not found in the database.
         """
-        if os.path.isdir(entity_identifier):  # Load from workspace
+        if os.path.isdir(entity_identifier) and os.path.exists(entity_identifier):  # Load from workspace
+            LOG.debug("Retrieving run from workspace.")
             metadata_file = cls.get_metadata_filepath(entity_identifier)
             entity_info = RunModel.load_from_json_file(metadata_file)
         else:  # Load from ID
+            LOG.debug("Retrieving run from backend.")
             entity_info = backend.retrieve(entity_identifier, "run")
 
         if not entity_info:
