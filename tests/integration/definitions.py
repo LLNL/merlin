@@ -147,9 +147,9 @@ def define_tests():  # pylint: disable=R0914,R0915
             "run type": "local",
             "cleanup": f"rm -rf {config_dir}",
         },
-        "merlin config broker": {
+        "merlin config update-broker": {
             "cmds": f"""merlin config --test create -o {app_yaml_path}; merlin config update-broker \
-                    -t rabbitmq -cf {app_yaml_path} -u rabbitmq_user -pf rabbitmq_password_file \
+                    -t rabbitmq --cf {app_yaml_path} -u rabbitmq_user --pf rabbitmq_password_file \
                     -s rabbitmq_server -p 5672 -v rabbitmq_vhost""",
             "conditions": [
                 HasReturnCode(),
@@ -163,9 +163,9 @@ def define_tests():  # pylint: disable=R0914,R0915
             "run type": "local",
             "cleanup": f"rm -rf {config_dir}",
         },
-        "merlin config backend": {
+        "merlin config update-backend": {
             "cmds": f"""merlin config --test create -o {app_yaml_path}; merlin config update-backend \
-                    -t redis -cf {app_yaml_path} -pf redis_password_file -s redis_server -p 6379""",
+                    -t redis --cf {app_yaml_path} --pf redis_password_file -s redis_server -p 6379""",
             "conditions": [
                 HasReturnCode(),
                 FileHasRegex(app_yaml_path, "name: rediss"),

@@ -212,5 +212,10 @@ class MerlinConfigManager:
             if value is not None:
                 if field == "password_file":
                     field = "password"
-                LOG.info(f"Updating {field} value from '{config[field]}' to '{value}'")
+                    LOG.info("Updating password field.")
+                else:
+                    try:
+                        LOG.info(f"Updating {field} value from '{config[field]}' to '{value}'.")
+                    except KeyError:  # This should only be hit in the test suite
+                        LOG.info(f"Adding new field '{field}' with value '{value}' to config.")
                 config[field] = value if field != "port" else int(value)
