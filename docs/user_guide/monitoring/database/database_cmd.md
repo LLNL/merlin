@@ -448,7 +448,12 @@ The `merlin database delete` subcommand allows users to delete entries from the 
 - [`all-studies`](#removing-all-studies): Remove all studies in the database.
 - [`study`](#removing-specific-studies): Remove specific studies in the database.
 - [`all-runs`](#removing-all-runs): Remove all runs in the database.
-- [`run`](#removing-specific-runs): Remove information about specific runs in the database.
+- [`run`](#removing-specific-runs): Remove specific runs in the database.
+- [`all-logical-workers`](#removing-all-logical-workers): Remove all logical workers in the database.
+- [`logical-worker`](#removing-specific-logical-workers): Remove specific logical workers in the database.
+- [`all-physical-workers`](#removing-all-physical-workers): Remove all physical workers in the database.
+- [`physical-worker`](#removing-specific-physical-workers): Remove specific physical workers in the database.
+- [`everything`](#removing-everything): Removes every entry in the database, wiping the whole thing clean.
 
 The following sections explain how to use each option.
 
@@ -469,21 +474,15 @@ merlin database delete all-studies -k
 This will provide output similar to the following:
 
 ```bash
-[2025-02-20 18:27:16: INFO] Reading app config from file /path/to/.merlin/app.yaml
-[2025-02-20 18:27:16: INFO] Fetching all studies from Redis...
-[2025-02-20 18:27:16: INFO] Successfully retrieved 2 studies from Redis.
-[2025-02-20 18:27:16: INFO] Deleting study 'hello' from the database...
-[2025-02-20 18:27:16: INFO] Attempting to delete study 'hello' from Redis...
-[2025-02-20 18:27:16: INFO] Deleting study hash with key 'study:849515a9-767c-4104-9ae9-6820ff000b65'...
-[2025-02-20 18:27:16: INFO] Removing study name-to-ID mapping for 'hello'...
-[2025-02-20 18:27:16: INFO] Successfully deleted study 'hello' and all associated data from Redis.
-[2025-02-20 18:27:16: INFO] Study 'hello' has been successfully deleted.
-[2025-02-20 18:27:16: INFO] Deleting study 'hello_samples' from the database...
-[2025-02-20 18:27:16: INFO] Attempting to delete study 'hello_samples' from Redis...
-[2025-02-20 18:27:16: INFO] Deleting study hash with key 'study:794836d9-1797-4b41-b962-d3688b93db52'...
-[2025-02-20 18:27:16: INFO] Removing study name-to-ID mapping for 'hello_samples'...
-[2025-02-20 18:27:16: INFO] Successfully deleted study 'hello_samples' and all associated data from Redis.
-[2025-02-20 18:27:16: INFO] Study 'hello_samples' has been successfully deleted.
+[2025-05-12 16:48:59: INFO] Reading app config from file /path/to/.merlin/app.yaml
+[2025-05-12 16:48:59: INFO] Fetching all studys from Redis...
+[2025-05-12 16:48:59: INFO] Successfully retrieved 2 studys from Redis.
+[2025-05-12 16:48:59: INFO] Deleting study with id or name '8d3935ce-5eff-4f80-b55d-66e9dacd88b2' from the database...
+[2025-05-12 16:48:59: INFO] Successfully deleted study with id '8d3935ce-5eff-4f80-b55d-66e9dacd88b2'.
+[2025-05-12 16:48:59: INFO] Study '8d3935ce-5eff-4f80-b55d-66e9dacd88b2' has been successfully deleted.
+[2025-05-12 16:48:59: INFO] Deleting study with id or name '77eddf31-bce5-4422-8782-e96cf372af43' from the database...
+[2025-05-12 16:48:59: INFO] Successfully deleted study with id '77eddf31-bce5-4422-8782-e96cf372af43'.
+[2025-05-12 16:48:59: INFO] Study '77eddf31-bce5-4422-8782-e96cf372af43' has been successfully deleted.
 ```
 
 We can verify that this removed the studies from the database using the [`merlin database get all-studies`](#retrieving-all-studies) command:
@@ -553,18 +552,13 @@ merlin database delete study hello_samples
 This will remove the study and all runs associated with this study from the database. The output will look similar to this:
 
 ```bash
-[2025-02-20 18:19:05: INFO] Reading app config from file /path/to/.merlin/app.yaml
-[2025-02-20 18:19:05: INFO] Deleting study 'hello_samples' from the database...
-[2025-02-20 18:19:05: INFO] Attempting to delete study 'hello_samples' from Redis...
-[2025-02-20 18:19:05: INFO] Attempting to delete run with id 'e593ec70-c270-448e-bcf1-4a9ad9d0c864' from Redis...
-[2025-02-20 18:19:05: INFO] Attempting to update study with id '3ad38a9f-1c77-4548-a60a-2c9553408555'...
-[2025-02-20 18:19:05: INFO] Successfully updated study with id '3ad38a9f-1c77-4548-a60a-2c9553408555'.
-[2025-02-20 18:19:05: INFO] Study with name 'hello_samples' saved to Redis under id '3ad38a9f-1c77-4548-a60a-2c9553408555'.
-[2025-02-20 18:19:05: INFO] Successfully deleted run 'e593ec70-c270-448e-bcf1-4a9ad9d0c864' and all associated data from Redis.
-[2025-02-20 18:19:05: INFO] Deleting study hash with key 'study:3ad38a9f-1c77-4548-a60a-2c9553408555'...
-[2025-02-20 18:19:05: INFO] Removing study name-to-ID mapping for 'hello_samples'...
-[2025-02-20 18:19:05: INFO] Successfully deleted study 'hello_samples' and all associated data from Redis.
-[2025-02-20 18:19:05: INFO] Study 'hello_samples' has been successfully deleted.
+[2025-05-12 16:50:31: INFO] Reading app config from file /path/to/.merlin/app.yaml
+[2025-05-12 16:50:31: INFO] Attempting to delete run with id '42955780-087b-4b82-b0e3-99f82c1448be' from Redis...
+[2025-05-12 16:50:31: INFO] Successfully deleted run '42955780-087b-4b82-b0e3-99f82c1448be' from Redis.
+[2025-05-12 16:50:31: INFO] Run with id or workspace '42955780-087b-4b82-b0e3-99f82c1448be' has been successfully deleted.
+[2025-05-12 16:50:31: INFO] Deleting study with id or name 'hello_samples' from the database...
+[2025-05-12 16:50:31: INFO] Successfully deleted study with name 'hello_samples'.
+[2025-05-12 16:50:31: INFO] Study 'hello_samples' has been successfully deleted.
 ```
 
 We can verify that this removed the study from the database using the [`merlin database get all-studies`](#retrieving-all-studies) command:
@@ -623,23 +617,15 @@ merlin database delete all-runs
 This will provide output similar to the following:
 
 ```bash
-[2025-02-20 18:32:09: INFO] Reading app config from file /path/to/.merlin/app.yaml
-[2025-02-20 18:32:09: INFO] Fetching all runs from Redis...
-[2025-02-20 18:32:09: INFO] Successfully retrieved 2 runs from Redis.
-[2025-02-20 18:32:09: INFO] Deleting run with id '2e20a7f9-84c1-444f-bc17-ba6bc8816c79' from the database...
-[2025-02-20 18:32:09: INFO] Attempting to delete run with id '2e20a7f9-84c1-444f-bc17-ba6bc8816c79' from Redis...
-[2025-02-20 18:32:09: INFO] Attempting to update study with id 'e94efa15-af1f-41d1-b3fd-947a79f18387'...
-[2025-02-20 18:32:09: INFO] Successfully updated study with id 'e94efa15-af1f-41d1-b3fd-947a79f18387'.
-[2025-02-20 18:32:09: INFO] Study with name 'hello' saved to Redis under id 'e94efa15-af1f-41d1-b3fd-947a79f18387'.
-[2025-02-20 18:32:09: INFO] Successfully deleted run '2e20a7f9-84c1-444f-bc17-ba6bc8816c79' and all associated data from Redis.
-[2025-02-20 18:32:09: INFO] Run with id '2e20a7f9-84c1-444f-bc17-ba6bc8816c79' has been successfully deleted.
-[2025-02-20 18:32:09: INFO] Deleting run with id 'bd00b3a8-20a9-4cc1-8854-b9e2e1a4dbf0' from the database...
-[2025-02-20 18:32:09: INFO] Attempting to delete run with id 'bd00b3a8-20a9-4cc1-8854-b9e2e1a4dbf0' from Redis...
-[2025-02-20 18:32:09: INFO] Attempting to update study with id 'c2a8082e-b651-42cc-9d21-c3bafeb7d8ed'...
-[2025-02-20 18:32:09: INFO] Successfully updated study with id 'c2a8082e-b651-42cc-9d21-c3bafeb7d8ed'.
-[2025-02-20 18:32:09: INFO] Study with name 'hello_samples' saved to Redis under id 'c2a8082e-b651-42cc-9d21-c3bafeb7d8ed'.
-[2025-02-20 18:32:09: INFO] Successfully deleted run 'bd00b3a8-20a9-4cc1-8854-b9e2e1a4dbf0' and all associated data from Redis.
-[2025-02-20 18:32:09: INFO] Run with id 'bd00b3a8-20a9-4cc1-8854-b9e2e1a4dbf0' has been successfully deleted.
+[2025-05-12 16:52:16: INFO] Reading app config from file /path/to/.merlin/app.yaml
+[2025-05-12 16:52:16: INFO] Fetching all runs from Redis...
+[2025-05-12 16:52:16: INFO] Successfully retrieved 2 runs from Redis.
+[2025-05-12 16:52:16: INFO] Attempting to delete run with id '5fb17970-8af6-40b4-a600-305170bca580' from Redis...
+[2025-05-12 16:52:16: INFO] Successfully deleted run '5fb17970-8af6-40b4-a600-305170bca580' from Redis.
+[2025-05-12 16:52:16: INFO] Run with id or workspace '5fb17970-8af6-40b4-a600-305170bca580' has been successfully deleted.
+[2025-05-12 16:52:16: INFO] Attempting to delete run with id '60b60d60-cc3c-440e-ac51-cdf9c8cbd2e6' from Redis...
+[2025-05-12 16:52:16: INFO] Successfully deleted run '60b60d60-cc3c-440e-ac51-cdf9c8cbd2e6' from Redis.
+[2025-05-12 16:52:16: INFO] Run with id or workspace '60b60d60-cc3c-440e-ac51-cdf9c8cbd2e6' has been successfully deleted.
 ```
 
 We can verify that this removed the runs from the database using the [`merlin database get all-runs`](#retrieving-all-runs) command:
@@ -687,20 +673,16 @@ To remove specific runs from the database, users can pass the ID or workspace of
 Assuming we still have our runs for the "hello" and "hello_samples" studies available to us, we can remove the run for the "hello_samples" study using the following command:
 
 ```bash
-merlin database delete run f6580a9d-6ae5-4ad5-a5f9-9360dffce1a1
+merlin database delete run 62fe3a0f-fc27-4e84-a8ea-cbd19aebc53f
 ```
 
 This will remove the run from the database. The output will look similar to this:
 
 ```bash
-[2025-02-20 18:36:21: INFO] Reading app config from file /path/to/.merlin/app.yaml
-[2025-02-20 18:36:21: INFO] Deleting run with id 'f6580a9d-6ae5-4ad5-a5f9-9360dffce1a1' from the database...
-[2025-02-20 18:36:21: INFO] Attempting to delete run with id 'f6580a9d-6ae5-4ad5-a5f9-9360dffce1a1' from Redis...
-[2025-02-20 18:36:21: INFO] Attempting to update study with id 'c2a8082e-b651-42cc-9d21-c3bafeb7d8ed'...
-[2025-02-20 18:36:21: INFO] Successfully updated study with id 'c2a8082e-b651-42cc-9d21-c3bafeb7d8ed'.
-[2025-02-20 18:36:21: INFO] Study with name 'hello_samples' saved to Redis under id 'c2a8082e-b651-42cc-9d21-c3bafeb7d8ed'.
-[2025-02-20 18:36:21: INFO] Successfully deleted run 'f6580a9d-6ae5-4ad5-a5f9-9360dffce1a1' and all associated data from Redis.
-[2025-02-20 18:36:21: INFO] Run with id 'f6580a9d-6ae5-4ad5-a5f9-9360dffce1a1' has been successfully deleted.
+[2025-05-12 16:56:53: INFO] Reading app config from file /path/to/.merlin/app.yaml
+[2025-05-12 16:56:53: INFO] Attempting to delete run with id '62fe3a0f-fc27-4e84-a8ea-cbd19aebc53f' from Redis...
+[2025-05-12 16:56:53: INFO] Successfully deleted run '62fe3a0f-fc27-4e84-a8ea-cbd19aebc53f' from Redis.
+[2025-05-12 16:56:53: INFO] Run with id or workspace '62fe3a0f-fc27-4e84-a8ea-cbd19aebc53f' has been successfully deleted.
 ```
 
 We can verify that this removed the run from the database using the [`merlin database get all-runs`](#retrieving-all-runs) command:
@@ -763,22 +745,18 @@ merlin database delete all-logical-workers
 This will provide output similar to the following:
 
 ```bash
-[2025-05-08 17:08:06: INFO] Reading app config from file /path/to/.merlin/app.yaml
-[2025-05-08 17:08:06: INFO] Fetching all logical workers from Redis...
-[2025-05-08 17:08:06: INFO] Successfully retrieved 2 logical workers from Redis.
-[2025-05-08 17:08:06: INFO] Attempting to update run with id 'c735ade0-9b28-4b9e-bb46-d9429d7cf61a'...
-[2025-05-08 17:08:06: INFO] Successfully updated run with id 'c735ade0-9b28-4b9e-bb46-d9429d7cf61a'.
-[2025-05-08 17:08:06: INFO] Attempting to delete run with id '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' from Redis...
-[2025-05-08 17:08:06: INFO] Successfully deleted logical worker '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' and all associated data from Redis.
-[2025-05-08 17:08:06: INFO] Worker with id '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' has been successfully deleted.
-[2025-05-08 17:08:06: INFO] Attempting to update run with id '0bdbae0b-c321-4178-a5a2-ab1ea6067be7'...
-[2025-05-08 17:08:06: INFO] Successfully updated run with id '0bdbae0b-c321-4178-a5a2-ab1ea6067be7'.
-[2025-05-08 17:08:06: INFO] Attempting to delete run with id '2f740737-a727-ea7d-6de4-17dc643183bb' from Redis...
-[2025-05-08 17:08:06: INFO] Successfully deleted logical worker '2f740737-a727-ea7d-6de4-17dc643183bb' and all associated data from Redis.
-[2025-05-08 17:08:06: INFO] Worker with id '2f740737-a727-ea7d-6de4-17dc643183bb' has been successfully deleted.
+[2025-05-12 16:57:38: INFO] Reading app config from file /path/to/.merlin/app.yaml
+[2025-05-12 16:57:38: INFO] Fetching all logical_workers from Redis...
+[2025-05-12 16:57:38: INFO] Successfully retrieved 2 logical_workers from Redis.
+[2025-05-12 16:57:38: INFO] Attempting to delete logical_worker with id '2f740737-a727-ea7d-6de4-17dc643183bb' from Redis...
+[2025-05-12 16:57:38: INFO] Successfully deleted logical_worker '2f740737-a727-ea7d-6de4-17dc643183bb' from Redis.
+[2025-05-12 16:57:38: INFO] Worker with id '2f740737-a727-ea7d-6de4-17dc643183bb' has been successfully deleted.
+[2025-05-12 16:57:38: INFO] Attempting to delete logical_worker with id '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' from Redis...
+[2025-05-12 16:57:38: INFO] Successfully deleted logical_worker '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' from Redis.
+[2025-05-12 16:57:38: INFO] Worker with id '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' has been successfully deleted.
 ```
 
-We can verify that this removed the runs from the database using the [`merlin database get all-logical-workers`](#retrieving-all-logical-workers) command:
+We can verify that this removed the logical workers from the database using the [`merlin database get all-logical-workers`](#retrieving-all-logical-workers) command:
 
 ```bash
 merlin database get all-logical-workers
@@ -842,15 +820,13 @@ merlin database delete logical-worker 4b0cd8f6-35a3-b484-4603-fa55eb0e7134
 This will remove the logical worker from the database. The output will look similar to this:
 
 ```bash
-[2025-05-08 17:23:15: INFO] Reading app config from file /path/to/.merlin/app.yaml
-[2025-05-08 17:23:15: INFO] Attempting to update run with id 'd5f8b7ca-439c-4fd9-8190-6a95fa43e809'...
-[2025-05-08 17:23:15: INFO] Successfully updated run with id 'd5f8b7ca-439c-4fd9-8190-6a95fa43e809'.
-[2025-05-08 17:23:15: INFO] Attempting to delete run with id '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' from Redis...
-[2025-05-08 17:23:15: INFO] Successfully deleted logical worker '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' and all associated data from Redis.
-[2025-05-08 17:23:15: INFO] Worker with id '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' has been successfully deleted.
+[2025-05-12 16:59:16: INFO] Reading app config from file /path/to/.merlin/app.yaml
+[2025-05-12 16:59:16: INFO] Attempting to delete logical_worker with id '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' from Redis...
+[2025-05-12 16:59:16: INFO] Successfully deleted logical_worker '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' from Redis.
+[2025-05-12 16:59:16: INFO] Worker with id '4b0cd8f6-35a3-b484-4603-fa55eb0e7134' has been successfully deleted.
 ```
 
-We can verify that this removed the run from the database using the [`merlin database get all-logical-workers`](#retrieving-all-logical-workers) command:
+We can verify that this removed the logical worker from the database using the [`merlin database get all-logical-workers`](#retrieving-all-logical-workers) command:
 
 ```bash
 merlin database get all-logical-workers
@@ -911,6 +887,217 @@ Additional Data: {}
 
 ### Removing All Physical Workers
 
+Using the `all-physical-workers` option will delete every physical worker in our database.
+
+Assuming we still have our physical workers for the "hello" and "hello_samples" studies available to us, we can remove both physical workers using the following command:
+
+```bash
+merlin database delete all-physical-workers
+```
+
+This will provide output similar to the following:
+
+```bash
+[2025-05-12 17:04:20: INFO] Reading app config from file /path/to/.merlin/app.yaml
+[2025-05-12 17:04:20: INFO] Fetching all physical_workers from Redis...
+[2025-05-12 17:04:20: INFO] Successfully retrieved 2 physical_workers from Redis.
+[2025-05-12 17:04:20: INFO] Successfully deleted physical_worker with id '04536fdd-d096-4b58-bc26-9b44c489b4c6'.
+[2025-05-12 17:04:20: INFO] Worker '04536fdd-d096-4b58-bc26-9b44c489b4c6' has been successfully deleted.
+[2025-05-12 17:04:20: INFO] Successfully deleted physical_worker with id '6387b7b9-4bbd-4067-ae0a-e6003b8c1186'.
+[2025-05-12 17:04:20: INFO] Worker '6387b7b9-4bbd-4067-ae0a-e6003b8c1186' has been successfully deleted.
+```
+
+We can verify that this removed the physical workers from the database using the [`merlin database get all-physical-workers`](#retrieving-all-physical-workers) command:
+
+```bash
+merlin database get all-physical-workers
+```
+
+This should provide us with output denoting no physical workers were found:
+
+```bash
+[2025-05-12 17:06:22: INFO] Fetching all physical_workers from Redis...
+[2025-05-12 17:06:23: INFO] Successfully retrieved 0 physical_workers from Redis.
+[2025-05-12 17:06:23: INFO] No physical workers found in the database.
+```
+
+Similarly, utilizing the [`merlin database get all-logical-workers`](#retrieving-all-logical-workers) command:
+
+```bash
+merlin database get all-logical-workers
+```
+
+We should see that both logical workers do not have any physical workers:
+
+```bash
+Logical Worker with ID 2f740737-a727-ea7d-6de4-17dc643183bb
+------------------------------------------------
+Name: hello_worker
+Runs:
+  No runs found.
+Queues: {'[merlin]_merlin'}
+Physical Workers:
+  No physical workers found.
+Additional Data: {}
+
+
+Logical Worker with ID 4b0cd8f6-35a3-b484-4603-fa55eb0e7134
+------------------------------------------------
+Name: hello_samples_worker
+Runs:
+  No runs found.
+Queues: {'[merlin]_step_1_queue', '[merlin]_step_2_queue'}
+Physical Workers:
+  No physical workers found.
+Additional Data: {}
+```
+
 ### Removing Specific Physical Workers
 
+To remove specific physical workers from the database, users can pass the ID of a physical worker to the `merlin database delete physical-worker` command.
+
+Assuming we still have our physical workers for the "hello" and "hello_samples" studies available to us, we can remove the physical worker for the "hello_samples" study using the following command (yours will likely be slightly different depending on the worker name):
+
+```bash
+merlin database delete physical-worker celery@hello_samples_worker.%rzadams1017
+```
+
+This will remove the physical worker from the database. The output will look similar to this:
+
+```bash
+[2025-05-12 17:10:12: INFO] Reading app config from file /path/to/.merlin/app.yaml
+[2025-05-12 17:10:12: INFO] Successfully deleted physical_worker with name 'celery@hello_samples_worker.%rzadams1017'.
+[2025-05-12 17:10:12: INFO] Worker 'celery@hello_samples_worker.%rzadams1017' has been successfully deleted.
+```
+
+We can verify that this removed the physical worker from the database using the [`merlin database get all-physical-workers`](#retrieving-all-physical-workers) command:
+
+```bash
+merlin database get all-physical-workers
+```
+
+Which provides output showing only one physical worker:
+
+```bash
+Physical Worker with ID cc6934ab-f6c2-41e8-ab61-03cc7d3e3f5e
+------------------------------------------------
+Name: celery@hello_worker.%rzadams1017
+Logical Worker ID: 2f740737-a727-ea7d-6de4-17dc643183bb
+Launch Command: None
+Args: {}
+Process ID: None
+Status: WorkerStatus.STOPPED
+Last Heartbeat: 2025-05-12 17:09:14.699762
+Last Spinup: 2025-05-12 17:09:14.699767
+Host: rzadams1017
+Restart Count: 0.0
+Additional Data: {}
+```
+
+Similarly, utilizing the [`merlin database get all-logical-workers`](#retrieving-all-logical-workers) command:
+
+```bash
+merlin database get all-logical-workers
+```
+
+We should see that only the "hello" logical worker has a physical worker implementation:
+
+```bash
+Logical Worker with ID 2f740737-a727-ea7d-6de4-17dc643183bb
+------------------------------------------------
+Name: hello_worker
+Runs:
+  No runs found.
+Queues: {'[merlin]_merlin'}
+Physical Workers:
+  - ID: cc6934ab-f6c2-41e8-ab61-03cc7d3e3f5e
+    Name: celery@hello_worker.%rzadams1017
+Additional Data: {}
+
+
+Logical Worker with ID 4b0cd8f6-35a3-b484-4603-fa55eb0e7134
+------------------------------------------------
+Name: hello_samples_worker
+Runs:
+  No runs found.
+Queues: {'[merlin]_step_2_queue', '[merlin]_step_1_queue'}
+Physical Workers:
+  No physical workers found.
+Additional Data: {}
+```
+
 ### Removing Everything
+
+Using the `everything` option will delete every entry in our database.
+
+Assuming we still have all of our entries for the "hello" and "hello_samples" studies available to us, we can remove everything with the following command:
+
+```bash
+merlin database delete everything
+```
+
+This will bring up a prompt asking if you really want to flush the database:
+
+```bash
+[2025-05-12 17:16:44: INFO] Reading app config from file /path/to/.merlin/app.yaml
+Are you sure you want to flush the entire database? (y/n): 
+```
+
+If you answer `n` to this prompt, the command will stop executing and nothing will be deleted. However, if you answer `y` to this prompt, you will see output similar to the following:
+
+```bash
+[2025-05-12 17:16:44: INFO] Reading app config from file /path/to/.merlin/app.yaml
+Are you sure you want to flush the entire database? (y/n): y
+[2025-05-12 17:17:48: INFO] Flushing the database...
+[2025-05-12 17:17:48: INFO] Database successfully flushed.
+```
+
+We can verify that this removed the every entry from the database using the [`merlin database get everything`](#retrieving-everything) command:
+
+```bash
+merlin database get everything
+```
+
+This should provide us with output denoting nothing was found:
+
+```bash
+[2025-05-12 17:21:24: INFO] Reading app config from file /path/to/.merlin/app.yaml
+[2025-05-12 17:21:24: INFO] Fetching all logical_workers from Redis...
+[2025-05-12 17:21:24: INFO] Successfully retrieved 0 logical_workers from Redis.
+[2025-05-12 17:21:24: INFO] Fetching all physical_workers from Redis...
+[2025-05-12 17:21:24: INFO] Successfully retrieved 0 physical_workers from Redis.
+[2025-05-12 17:21:24: INFO] Fetching all runs from Redis...
+[2025-05-12 17:21:24: INFO] Successfully retrieved 0 runs from Redis.
+[2025-05-12 17:21:24: INFO] Fetching all studies from Redis...
+[2025-05-12 17:21:24: INFO] Successfully retrieved 0 studies from Redis.
+[2025-05-12 17:21:24: INFO] Nothing found in the database.
+```
+
+Similarly, utilizing the [`merlin database info`](#getting-general-database-information) command:
+
+```bash
+merlin database info
+```
+
+We should see every entry should have a total of 0:
+
+```bash
+Merlin Database Information
+---------------------------
+General Information:
+- Database Type: redis
+- Database Version: 7.0.12
+- Connection String: rediss://:******@server.gov:12345/0
+
+Studies:
+- Total: 0
+
+Runs:
+- Total: 0
+
+Logical Workers:
+- Total: 0
+
+Physical Workers:
+- Total: 0
+```
