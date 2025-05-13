@@ -72,6 +72,7 @@ class ResultsBackend(ABC):
         Returns:
             A string representing the current version of the backend.
         """
+        raise NotImplementedError("Subclasses of `ResultsBackend` must implement a `get_version` method.")
 
     @abstractmethod
     def get_connection_string(self) -> str:
@@ -81,12 +82,14 @@ class ResultsBackend(ABC):
         Returns:
             A string representing the connection to the backend.
         """
+        raise NotImplementedError("Subclasses of `ResultsBackend` must implement a `get_connection_string` method.")
 
     @abstractmethod
     def flush_database(self):
         """
         Remove everything stored in the database.
         """
+        raise NotImplementedError("Subclasses of `ResultsBackend` must implement a `flush_database` method.")
 
     @abstractmethod
     def save(self, entity: BaseDataModel):
@@ -99,6 +102,7 @@ class ResultsBackend(ABC):
         Raises:
             UnsupportedDataModelError: If the entity type is unsupported.
         """
+        raise NotImplementedError("Subclasses of `ResultsBackend` must implement a `save` method.")
 
     @abstractmethod
     def retrieve(self, entity_identifier: str, store_type: str) -> BaseDataModel:
@@ -119,6 +123,7 @@ class ResultsBackend(ABC):
         Raises:
             ValueError: If the `store_type` is invalid.
         """
+        raise NotImplementedError("Subclasses of `ResultsBackend` must implement a `retrieve` method.")
 
     @abstractmethod
     def retrieve_all(self, store_type: str) -> List[BaseDataModel]:
@@ -138,6 +143,7 @@ class ResultsBackend(ABC):
         Raises:
             ValueError: If the `store_type` is invalid.
         """
+        raise NotImplementedError("Subclasses of `ResultsBackend` must implement a `retrieve_all` method.")
 
     @abstractmethod
     def delete(self, entity_identifier: str, store_type: str):
@@ -155,3 +161,4 @@ class ResultsBackend(ABC):
         Raises:
             ValueError: If the `store_type` is invalid.
         """
+        raise NotImplementedError("Subclasses of `ResultsBackend` must implement a `delete` method.")

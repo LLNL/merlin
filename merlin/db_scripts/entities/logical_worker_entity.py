@@ -179,7 +179,7 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             physical_worker_id: The ID of the physical worker to remove.
         """
         self.reload_data()
-        self.entity_info.runs.remove(physical_worker_id)
+        self.entity_info.physical_workers.remove(physical_worker_id)
         self.save()
 
     def save(self):
