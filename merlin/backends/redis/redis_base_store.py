@@ -90,6 +90,7 @@ class RedisStoreBase(Generic[T]):
         Returns:
             The object if found, None otherwise.
         """
+        LOG.debug(f"Retrieving identifier {obj_id} in RedisStoreBase.")
         obj_key = self._get_full_key(obj_id)
         if not self.client.exists(obj_key):
             return None
@@ -183,6 +184,7 @@ class NameMappingMixin:
         Args:
             obj: The object to save.
         """
+        LOG.debug(f"Saving obj {obj.name} with id {obj.id} in NameMappingMixin.")
         existing_obj_id = self.client.hget(f"{self.key}:name", obj.name)
 
         # Call the parent class's save method
@@ -190,6 +192,7 @@ class NameMappingMixin:
 
         # Update name-to-ID mapping if it's a new object
         if not existing_obj_id:
+            LOG.debug(f"Creating a new name-to-ID mapping for {obj.name} with id {obj.id}")
             self.client.hset(f"{self.key}:name", obj.name, obj.id)
 
     def retrieve(self, identifier: str, by_name: bool = False) -> Optional[object]:
@@ -203,10 +206,12 @@ class NameMappingMixin:
         Returns:
             The object if found, None otherwise.
         """
+        LOG.debug(f"Retrieving identifier {identifier} in NameMappingMixin.")
         if by_name:
             # Retrieve the object ID using the name-to-ID mapping
             obj_id = self.client.hget(f"{self.key}:name", identifier)
             if obj_id is None:
+                LOG.warning("Could not retrieve object id by name-to-ID mapping.")
                 return None
             return super().retrieve(obj_id)
         # Use the parent class's retrieve method for ID-based retrieval
