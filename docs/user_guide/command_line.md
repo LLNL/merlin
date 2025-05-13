@@ -114,9 +114,9 @@ merlin config update-backend -t {redis} [OPTIONS] ...
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
 | `-t`, `--type`   | choice(`redis`) | Type of results backend to configure. | None |
-| `-cf`, `--config-file` | string | Path to the config file that will be updated. | `$(HOME)/.merlin/app.yaml` |
+| `--cf`, `--config-file` | string | Path to the config file that will be updated. | `$(HOME)/.merlin/app.yaml` |
 | `-u`, `--username` | string | The backend username. | None |
-| `-pf`, `--password-file` | string | Path to a password file that contains the password to the backend. | None |
+| `--pf`, `--password-file` | string | Path to a password file that contains the password to the backend. | None |
 | `-s`, `--server` | string | The URL of the backend server. | None |
 | `-p`, `--port` | int | The port number that this backend server is using. | None |
 | `-d`, `--db-num` | int | The backend database number. | None |
@@ -128,7 +128,7 @@ merlin config update-backend -t {redis} [OPTIONS] ...
 !!! example "Update Every Setting Required for Redis"
 
     ```bash
-    merlin config update-backend -t redis -pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
+    merlin config update-backend -t redis --pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
     ```
 
     This will create the following `results_backend` section in your `app.yaml` file:
@@ -154,7 +154,7 @@ merlin config update-backend -t {redis} [OPTIONS] ...
 !!! example "Update a Custom Configuration File Path"
 
     ```bash
-    merlin config update-backend -t redis -cf /path/to/custom_config.yaml -s new-server.gov
+    merlin config update-backend -t redis --cf /path/to/custom_config.yaml -s new-server.gov
     ```
 
 #### Config Update-Broker (`merlin config update-broker`)
@@ -173,9 +173,9 @@ merlin config update-broker -t {rabbitmq,redis} [OPTIONS] ...
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
 | `-t`, `--type`   | choice(`rabbitmq` \| `redis`) | Type of broker to configure. | None |
-| `-cf`, `--config-file` | string | Path to the config file that will be updated. | `$(HOME)/.merlin/app.yaml` |
+| `--cf`, `--config-file` | string | Path to the config file that will be updated. | `$(HOME)/.merlin/app.yaml` |
 | `-u`, `--username` | string | The broker username (only for `rabbitmq` broker). | None |
-| `-pf`, `--password-file` | string | Path to a password file that contains the password to the broker. | None |
+| `--pf`, `--password-file` | string | Path to a password file that contains the password to the broker. | None |
 | `-s`, `--server` | string | The URL of the broker server. | None |
 | `-p`, `--port` | int | The port number that this broker server is using. | None |
 | `-v`, `--vhost` | string | The vhost for the broker (only for `rabbitmq` broker). | None |
@@ -187,7 +187,7 @@ merlin config update-broker -t {rabbitmq,redis} [OPTIONS] ...
 !!! example "Update Every Setting Required for a Redis Broker"
 
     ```bash
-    merlin config update-broker -t redis -pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
+    merlin config update-broker -t redis --pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
     ```
 
     This will create the following `broker` section in your `app.yaml` file:
@@ -206,7 +206,7 @@ merlin config update-broker -t {rabbitmq,redis} [OPTIONS] ...
 !!! example "Update Every Setting Required for a RabbitMQ Broker"
 
     ```bash
-    merlin config update-broker -t rabbitmq -u my_rabbit_username -pf ~/.merlin/rabbit.pass -s my-rabbitmq-server.llnl.gov -p 5672 -v host4rabbit -c none
+    merlin config update-broker -t rabbitmq -u my_rabbit_username --pf ~/.merlin/rabbit.pass -s my-rabbitmq-server.llnl.gov -p 5672 -v host4rabbit -c none
     ```
 
     This will create the following `broker` section in your `app.yaml` file:
@@ -231,7 +231,7 @@ merlin config update-broker -t {rabbitmq,redis} [OPTIONS] ...
 !!! example "Update a Custom Configuration File Path"
 
     ```bash
-    merlin config update-broker -t redis -cf /path/to/custom_config.yaml -s new-server.gov
+    merlin config update-broker -t redis --cf /path/to/custom_config.yaml -s new-server.gov
     ```
 
 #### Config Use (`merlin config use`)

@@ -830,13 +830,14 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         help="Type of broker to configure (redis or rabbitmq).",
     )
     config_broker_parser.add_argument(
-        "-cf",
+        "--cf",
         "--config-file",
+        dest="config_file",
         default=default_config_file,
         help=f"The path to the config file that will be updated. Default: {default_config_file}",
     )
     config_broker_parser.add_argument("-u", "--username", help="Broker username (only for rabbitmq)")
-    config_broker_parser.add_argument("-pf", "--password-file", help="Path to password file")
+    config_broker_parser.add_argument("--pf", "--password-file", dest="password_file", help="Path to password file")
     config_broker_parser.add_argument("-s", "--server", help="The URL of the server")
     config_broker_parser.add_argument("-p", "--port", type=int, help="Broker port")
     config_broker_parser.add_argument("-v", "--vhost", help="Broker vhost (only for rabbitmq)")
@@ -853,13 +854,14 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         help="Type of results backend to configure.",
     )
     config_backend_parser.add_argument(
-        "-cf",
+        "--cf",
         "--config-file",
+        dest="config_file",
         default=default_config_file,
         help=f"The path to the config file that will be updated. Default: {default_config_file}",
     )
     config_backend_parser.add_argument("-u", "--username", help="Backend username")
-    config_backend_parser.add_argument("-pf", "--password-file", help="Path to password file")
+    config_backend_parser.add_argument("--pf", "--password-file", dest="password_file", help="Path to password file")
     config_backend_parser.add_argument("-s", "--server", help="The URL of the server")
     config_backend_parser.add_argument("-p", "--port", help="Backend port")
     config_backend_parser.add_argument("-d", "--db-num", help="Backend database number")

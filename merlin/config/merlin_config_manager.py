@@ -70,6 +70,7 @@ class MerlinConfigManager:
             raise ValueError("No config file given to MerlinConfigManager.")
 
         self.config_file = os.path.abspath(self.config_file)
+        LOG.debug(f"MerlinConfigManager successfully initialized with config file: {self.config_file}")
 
     def save_config_path(self):
         """
@@ -211,4 +212,5 @@ class MerlinConfigManager:
             if value is not None:
                 if field == "password_file":
                     field = "password"
+                LOG.info(f"Updating {field} value from '{config[field]}' to '{value}'")
                 config[field] = value if field != "port" else int(value)

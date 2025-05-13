@@ -271,7 +271,7 @@ For all other users, we recommend configuring with either:
 - [Dedicated External Servers](./external_server.md)
 - [Containerized Servers](./containerized_server.md)
 
-With any server setup that you use, it's possible to configure everything in your server from the command line. See [`merlin config update-broker`](../command_line.md#config-update-broker-merlin-config-update-broker) and [`merlin config update-backend`](../command_line.md#config-update-backend-merlin-config-update-backend) for more details on how this can be done.
+With any server setup that you use, it is possible to configure everything in your server from the command line. See [`merlin config update-broker`](../command_line.md#config-update-broker-merlin-config-update-broker) and [`merlin config update-backend`](../command_line.md#config-update-backend-merlin-config-update-backend) for more details on how this can be done.
 
 ## Switching Between Configurations
 
