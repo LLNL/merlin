@@ -9,19 +9,18 @@ to encapsulate worker-specific operations and behaviors.
 
 import logging
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
-from merlin.backends.results_backend import ResultsBackend
 from merlin.common.enums import WorkerStatus
+from merlin.db_scripts.data_models import PhysicalWorkerModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.db_scripts.mixins.name import NameMixin
-from merlin.exceptions import WorkerNotFoundError
 
 
 LOG = logging.getLogger("merlin")
 
 
-class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
+class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
     """
     A class representing a physical worker in the database.
 
@@ -90,6 +89,10 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
             (classmethod) Delete a worker from the database by its ID or name.
     """
 
+    @classmethod
+    def _get_entity_type(cls) -> str:
+        return "physical_worker"
+
     def __repr__(self) -> str:
         """
         Provide a string representation of the `PhysicalWorkerEntity` instance.
@@ -138,22 +141,6 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 
-    def reload_data(self):
-        """
-        Reload the latest data for this worker from the database and update the
-        [`PhysicalWorkerModel`][db_scripts.data_models.PhysicalWorkerModel] object
-        stored in `self.entity_info`.
-
-        Raises:
-            (exceptions.WorkerNotFoundError): If an entry for this worker was
-                not found in the database.
-        """
-        worker_id = self.get_id()
-        updated_entity_info = self.backend.retrieve(worker_id, "physical_worker")
-        if not updated_entity_info:
-            raise WorkerNotFoundError(f"Worker with ID {worker_id} not found in the database.")
-        self.entity_info = updated_entity_info
-
     def get_logical_worker_id(self) -> str:
         """
         Get the ID of the logical worker that this physical worker was created from.
@@ -201,12 +188,12 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
         self.entity_info.args = args
         self.save()
 
-    def get_pid(self) -> int:
+    def get_pid(self) -> Optional[int]:
         """
         Get the process ID for this worker.
 
         Returns:
-            The process ID for this worker.
+            The process ID for this worker or None if not set.
         """
         self.reload_data()
         return int(self.entity_info.pid) if self.entity_info.pid else None
@@ -309,44 +296,3 @@ class PhysicalWorkerEntity(DatabaseEntity, NameMixin):
         """
         self.entity_info.restart_count = self.get_restart_count() + 1
         self.save()
-
-    def save(self):
-        """
-        Save the current state of this worker to the database.
-        """
-        self.backend.save(self.entity_info)
-
-    @classmethod
-    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "PhysicalWorkerEntity":
-        """
-        Load a worker from the database by ID.
-
-        Args:
-            entity_identifier: The ID of the worker to load.
-            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
-
-        Returns:
-            A `PhysicalWorkerEntity` instance.
-
-        Raises:
-            (exceptions.WorkerNotFoundError): If an entry for worker with id `entity_id` was
-                not found in the database.
-        """
-        entity_info = backend.retrieve(entity_identifier, "physical_worker")
-        if not entity_info:
-            raise WorkerNotFoundError(f"Worker with ID or name {entity_identifier} not found in the database.")
-
-        return cls(entity_info, backend)
-
-    @classmethod
-    def delete(cls, entity_identifier: str, backend: ResultsBackend):
-        """
-        Delete a worker from the database.
-
-        Args:
-            entity_identifier: The ID or name of the worker to delete.
-            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
-        """
-        LOG.debug(f"Deleting worker with id or name '{entity_identifier}' from the database...")
-        backend.delete(entity_identifier, "physical_worker")
-        LOG.info(f"Worker '{entity_identifier}' has been successfully deleted.")

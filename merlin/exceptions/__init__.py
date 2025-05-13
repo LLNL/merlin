@@ -122,35 +122,37 @@ class BackendNotSupportedError(Exception):
     def __init__(self, message):
         super().__init__(message)
 
+    
+###############################
+# Database-Related Exceptions #
+###############################
 
-class StudyNotFoundError(Exception):
+
+class EntityNotFoundError(Exception):
+    """
+    Fallback error for entities that can't be found.
+    """
+
+
+class StudyNotFoundError(EntityNotFoundError):
     """
     Exception to signal that the study you were looking for cannot be found in
     Merlin's database.
     """
 
-    def __init__(self, message):
-        super().__init__(message)
 
-
-class RunNotFoundError(Exception):
+class RunNotFoundError(EntityNotFoundError):
     """
     Exception to signal that the run you were looking for cannot be found in
     Merlin's database.
     """
 
-    def __init__(self, message):
-        super().__init__(message)
 
-
-class WorkerNotFoundError(Exception):
+class WorkerNotFoundError(EntityNotFoundError):
     """
     Exception to signal that the worker you were looking for cannot be found in
     Merlin's database.
     """
-
-    def __init__(self, message):
-        super().__init__(message)
 
 
 class UnsupportedDataModelError(Exception):
@@ -158,5 +160,3 @@ class UnsupportedDataModelError(Exception):
     Exception to signal that the data model you're trying to use is not supported.
     """
 
-    def __init__(self, message):
-        super().__init__(message)

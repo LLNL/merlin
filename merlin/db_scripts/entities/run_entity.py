@@ -22,7 +22,7 @@ from merlin.exceptions import RunNotFoundError
 LOG = logging.getLogger("merlin")
 
 
-class RunEntity(DatabaseEntity, QueueManagementMixin):
+class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
     """
     A class representing a run in the database.
 
@@ -111,6 +111,10 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
         super().__init__(run_info, backend)
         self._metadata_file = self.get_metadata_filepath(self.get_workspace())
 
+    @classmethod
+    def _get_entity_type(cls) -> str:
+        return "run"
+
     def __repr__(self) -> str:
         """
         Provide a string representation of the `RunEntity` instance.
@@ -154,21 +158,6 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
             f"Run Complete: {self.run_complete}\n"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
-
-    def reload_data(self):
-        """
-        Reload the latest data for this run from the database and update the
-        [`RunModel`][db_scripts.data_models.RunModel] object.
-
-        Raises:
-            (exceptions.RunNotFoundError): If an entry for this run was not found
-                in the database.
-        """
-        run_id = self.get_id()
-        updated_entity_info = self.backend.retrieve(run_id, "run")
-        if not updated_entity_info:
-            raise RunNotFoundError(f"Run with ID {run_id} not found in the database.")
-        self.entity_info = updated_entity_info
 
     @property
     def run_complete(self) -> bool:
@@ -293,12 +282,11 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
         self.reload_data()
         return self.entity_info.child
 
-    def save(self):
+    def _post_save_hook(self):
         """
-        Save the current state of this run to the database. This will also re-dump
-        the metadata of this run to the output workspace in case something was updated.
+        Hook called after saving the run entity.
+        For runs, we also need to dump metadata to a file.
         """
-        self.backend.save(self.entity_info)
         self.dump_metadata()
 
     def dump_metadata(self):
@@ -308,7 +296,7 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
         self.entity_info.dump_to_json_file(self.get_metadata_file())
 
     @classmethod
-    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "RunEntity":
+    def load(cls, entity_identifier: str, backend: ResultsBackend) -> 'RunEntity':
         """
         Load a run from the database by id or workspace.
 
@@ -320,8 +308,7 @@ class RunEntity(DatabaseEntity, QueueManagementMixin):
             A `RunEntity` instance.
 
         Raises:
-            (exceptions.RunNotFoundError): If an entry for run with id `entity_id` was not found
-                in the database.
+            (exceptions.RunNotFoundError): If an entry for run was not found in the database.
         """
         if os.path.isdir(entity_identifier):  # Load from workspace
             metadata_file = cls.get_metadata_filepath(entity_identifier)

@@ -25,12 +25,12 @@ class QueueManagementMixin:
 
     def get_queues(self) -> List[str]:
         """
-        Get the task queues that were assigned to this worker.
+        Get the queues that this entity is assigned to.
 
         Assumptions:
             - The class using this must have an `entity_info` object containing a `queues` list
 
         Returns:
-            A list of strings representing the queues that were assigned to this worker.
+            A list of queue names.
         """
         return self.entity_info.queues

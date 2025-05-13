@@ -211,7 +211,7 @@ class NameMappingMixin:
             # Retrieve the object ID using the name-to-ID mapping
             obj_id = self.client.hget(f"{self.key}:name", identifier)
             if obj_id is None:
-                LOG.warning("Could not retrieve object id by name-to-ID mapping.")
+                LOG.debug("Could not retrieve object id by name-to-ID mapping.")
                 return None
             return super().retrieve(obj_id)
         # Use the parent class's retrieve method for ID-based retrieval
