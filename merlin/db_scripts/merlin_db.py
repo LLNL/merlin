@@ -235,7 +235,7 @@ class MerlinDatabase:
             model_class=StudyModel,
             identifier=study_name,
             log_message_exists=f"Study with name '{study_name}' already has an entry in the database.",
-            log_message_create=f"Study with name '{study_name}' does not yet have an entry in the database. Creating one...",
+            log_message_create=f"Study with name '{study_name}' does not yet have an entry in the database. Creating one.",
             name=study_name,
         )
 
@@ -428,7 +428,7 @@ class MerlinDatabase:
         logical_worker_id = self._resolve_worker_id(worker_name=name, queues=queues)
         log_message_create = (
             f"Logical worker with name '{name}' and queues '{queues}' does not yet have "
-            "an entry in the database. Creating one..."
+            "an entry in the database. Creating one."
         )
         log_message_exists = f"Logical worker with name '{name}' and queues '{queues}' already has an entry in the database."
         return self._create_entity_if_not_exists(
@@ -533,7 +533,7 @@ class MerlinDatabase:
                 instance representing the newly created worker.
         """
         log_message_create = (
-            f"Physical worker with name '{name}' does not yet have an " "entry in the database. Creating one...",
+            f"Physical worker with name '{name}' does not yet have an " "entry in the database. Creating one.",
         )
         return self._create_entity_if_not_exists(
             entity_class=PhysicalWorkerEntity,

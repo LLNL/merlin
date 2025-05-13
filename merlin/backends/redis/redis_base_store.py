@@ -104,7 +104,8 @@ class RedisStoreBase(Generic[T]):
         Returns:
             A list of objects.
         """
-        LOG.info(f"Fetching all {self.key}s from Redis...")
+        entity_type = f"{self.key}s" if self.key != "study" else "studies"
+        LOG.info(f"Fetching all {entity_type} from Redis...")
 
         pattern = f"{self.key}:*"
         all_objects = []
@@ -127,7 +128,7 @@ class RedisStoreBase(Generic[T]):
             except Exception as exc:  # pylint: disable=broad-except
                 LOG.error(f"Error retrieving {self.key} with id '{obj_id}': {exc}")
 
-        LOG.info(f"Successfully retrieved {len(all_objects)} {self.key}s from Redis.")
+        LOG.info(f"Successfully retrieved {len(all_objects)} {entity_type} from Redis.")
         return all_objects
 
     def delete(self, obj_id: str):
