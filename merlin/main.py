@@ -50,6 +50,7 @@ from argparse import (
 from contextlib import suppress
 from typing import Dict, List, Optional, Tuple, Union
 
+import yaml
 from tabulate import tabulate
 
 from merlin import VERSION, router
@@ -516,8 +517,14 @@ def config_merlin(args: Namespace):
     Args:
         args: Parsed command-line arguments.
     """
-    if not args.config_file.endswith((".yaml", ".yml")):
-        raise ArgumentTypeError("The output file must be a .yaml or .yml file.")
+    if args.commands != "create":  # Check that this is a valid yaml file
+        try:
+            with open(args.config_file, "r") as conf_file:
+                yaml.safe_load(conf_file)
+        except FileNotFoundError:
+            raise ArgumentTypeError(f"The file '{args.config_file}' does not exist.")
+        except yaml.YAMLError as e:
+            raise ArgumentTypeError(f"The file '{args.config_file}' is not a valid YAML file: {e}")
 
     config_manager = MerlinConfigManager(args)
 
