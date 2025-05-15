@@ -14,7 +14,7 @@ from typing import Dict, Optional
 from merlin.common.enums import WorkerStatus
 from merlin.db_scripts.data_models import PhysicalWorkerModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
-from merlin.db_scripts.mixins.name import NameMixin
+from merlin.db_scripts.entities.mixins.name import NameMixin
 
 
 LOG = logging.getLogger("merlin")

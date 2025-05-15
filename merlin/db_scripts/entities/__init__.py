@@ -37,6 +37,9 @@ At the heart of this package is the abstract base class `DatabaseEntity`, which 
 standard methods that all database-backed entities must implement, including save, delete, and
 reload operations.
 
+Subpackages:
+    - `mixins/`: Contains mixin classes for entities that help reduce shared code.
+
 Modules:
     db_entity.py: Defines the abstract base class [`DatabaseEntity`][db_scripts.entities.db_entity.DatabaseEntity],
         which provides a common interface for all database entity classes.

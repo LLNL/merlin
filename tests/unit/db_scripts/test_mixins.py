@@ -3,12 +3,12 @@ Tests for database-related mixin classes.
 """
 import pytest
 from unittest.mock import MagicMock, patch
-from typing import List, NamedTuple
+from typing import List
 from dataclasses import dataclass
 
-from merlin.db_scripts.mixins.name import NameMixin
-from merlin.db_scripts.mixins.queue_management import QueueManagementMixin
-from merlin.db_scripts.mixins.run_management import RunManagementMixin
+from merlin.db_scripts.entities.mixins.name import NameMixin
+from merlin.db_scripts.entities.mixins.queue_management import QueueManagementMixin
+from merlin.db_scripts.entities.mixins.run_management import RunManagementMixin
 
 
 # Test fixtures and helper classes

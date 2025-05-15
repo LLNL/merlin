@@ -14,8 +14,8 @@ from typing import List
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
+from merlin.db_scripts.entities.mixins.queue_management import QueueManagementMixin
 from merlin.db_scripts.entities.study_entity import StudyEntity
-from merlin.db_scripts.mixins.queue_management import QueueManagementMixin
 from merlin.exceptions import RunNotFoundError
 
 

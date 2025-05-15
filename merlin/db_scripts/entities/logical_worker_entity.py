@@ -11,10 +11,10 @@ from typing import List
 
 from merlin.db_scripts.data_models import LogicalWorkerModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
+from merlin.db_scripts.entities.mixins.name import NameMixin
+from merlin.db_scripts.entities.mixins.queue_management import QueueManagementMixin
+from merlin.db_scripts.entities.mixins.run_management import RunManagementMixin
 from merlin.db_scripts.entities.physical_worker_entity import PhysicalWorkerEntity
-from merlin.db_scripts.mixins.name import NameMixin
-from merlin.db_scripts.mixins.queue_management import QueueManagementMixin
-from merlin.db_scripts.mixins.run_management import RunManagementMixin
 
 
 LOG = logging.getLogger("merlin")
