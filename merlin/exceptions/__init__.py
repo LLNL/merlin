@@ -103,3 +103,9 @@ class NoWorkersException(Exception):
 
     def __init__(self, message):
         super().__init__(message)
+
+
+class MerlinInvalidTaskServerError(Exception):
+    """
+    Exception to signal that an invalid task server was provided.
+    """

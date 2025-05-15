@@ -93,7 +93,7 @@ jobs:
       - name: Install merlin and setup
         run: |
           pip3 install -e .
-          merlin config
+          merlin config create
 
       - name: Install CLI task dependencies from 'feature_demo' workflow
         run: |
@@ -133,7 +133,7 @@ jobs:
       - name: Install merlin and setup
         run: |
           pip3 install -e .
-          merlin config
+          merlin config create
 
       - name: Install CLI task dependencies from 'feature_demo' workflow
         run: |
@@ -175,7 +175,7 @@ jobs:
           pip --version
           pip3 --version
           pip3 install -e .
-          merlin config
+          merlin config create
 
       - name: Install CLI task dependencies from 'feature_demo' workflow
         run: |

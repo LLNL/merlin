@@ -43,16 +43,13 @@ import ssl
 from typing import Dict, Optional, Union
 
 from merlin.config import Config
+from merlin.config.config_filepaths import APP_FILENAME, CONFIG_PATH_FILE, MERLIN_HOME
 from merlin.utils import load_yaml
 
 
 LOG: logging.Logger = logging.getLogger(__name__)
 
-APP_FILENAME: str = "app.yaml"
 CONFIG: Optional[Config] = None
-
-USER_HOME: str = os.path.expanduser("~")
-MERLIN_HOME: str = os.path.join(USER_HOME, ".merlin")
 
 
 def load_config(filepath: str) -> Dict:
@@ -74,26 +71,42 @@ def load_config(filepath: str) -> Dict:
 
 def find_config_file(path: str = None) -> str:
     """
-    Finds and returns the path to the Merlin application configuration file (`app.yaml`).
+    Locate the Merlin application configuration file (`app.yaml`).
 
-    If no `path` is provided, the function searches in the current working directory
-    and the `MERLIN_HOME` directory for the configuration file. If `path` is provided,
-    it checks for the configuration file in the specified directory.
+    This function searches for the configuration file based on a given directory or,
+    if no directory is provided, uses a fallback sequence:
+      1. Check for `app.yaml` in the current working directory.
+      2. Check if `CONFIG_PATH_FILE` exists and points to a valid config file.
+      3. Check for `app.yaml` in the `MERLIN_HOME` directory.
+
+    If a `path` is explicitly provided, the function checks only that directory
+    for `app.yaml`.
 
     Args:
-        path (str, optional): The directory path to search for the `app.yaml` file.
+        path (str, optional): A specific directory to look for `app.yaml`.
 
     Returns:
-        The full path to the `app.yaml` file if found.
+        The full path to the `app.yaml` file if found, otherwise `None`.
     """
+    # Fallback to default logic
     if path is None:
+        # Check current working directory for an active config path
         local_app = os.path.join(os.getcwd(), APP_FILENAME)
-        path_app = os.path.join(MERLIN_HOME, APP_FILENAME)
-
         if os.path.isfile(local_app):
             return local_app
+
+        # Check the config_path.txt file for the active config path
+        if os.path.isfile(CONFIG_PATH_FILE):
+            with open(CONFIG_PATH_FILE, "r") as f:
+                config_path = f.read().strip()
+            if os.path.isfile(config_path):
+                return config_path
+
+        # Check the Merlin home directory for an active config path
+        path_app = os.path.join(MERLIN_HOME, APP_FILENAME)
         if os.path.isfile(path_app):
             return path_app
+
         return None
 
     app_path = os.path.join(path, APP_FILENAME)
@@ -151,7 +164,8 @@ def get_config(path: Optional[str]) -> Dict:
 
     if filepath is None:
         raise ValueError(
-            f"Cannot find a merlin config file! Run 'merlin config' and edit the file '{MERLIN_HOME}/{APP_FILENAME}'"
+            "Cannot find a merlin config file! Run 'merlin config' and edit the file "
+            f"'{os.path.join(MERLIN_HOME, APP_FILENAME)}'"
         )
 
     config: Dict = load_config(filepath)
