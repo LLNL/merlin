@@ -24,10 +24,12 @@ class TestDatabaseInfo:
         mock_db.get_db_type.return_value = "SQLite"
         mock_db.get_db_version.return_value = "1.0.0"
         mock_db.get_connection_string.return_value = "sqlite:///merlin.db"
-        mock_db.get_all_studies.return_value = ["study1", "study2"]
-        mock_db.get_all_runs.return_value = ["run1", "run2", "run3"]
-        mock_db.get_all_logical_workers.return_value = ["worker1"]
-        mock_db.get_all_physical_workers.return_value = ["worker1", "worker2"]
+        mock_db.get_all.side_effect = [
+            ["study1", "study2"],  # studies
+            ["run1", "run2", "run3"],  # runs
+            ["worker1"],  # logical workers
+            ["worker1", "worker2"]  # physical workers
+        ]
 
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -51,6 +53,14 @@ class TestDatabaseInfo:
         assert "Total: 1" in captured.out
         assert "Physical Workers:" in captured.out
         assert "Total: 2" in captured.out
+        
+        # Verify get_all was called with the correct entity types
+        mock_db.get_all.assert_has_calls([
+            call("study"),
+            call("run"),
+            call("logical_worker"),
+            call("physical_worker")
+        ])
 
 
 class TestDatabaseGet:
@@ -64,13 +74,13 @@ class TestDatabaseGet:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
             capsys: A built-in fixture from the pytest library to capture stdout and stderr.
         """
-        # Mock MerlinDatabase and its get_study method
+        # Mock MerlinDatabase and its get method
         mock_db = mocker.MagicMock()
         mock_study1 = mocker.MagicMock()
         mock_study1.__str__.return_value = "Study 1"
         mock_study2 = mocker.MagicMock()
         mock_study2.__str__.return_value = "Study 2"
-        mock_db.get_study.side_effect = [mock_study1, mock_study2]
+        mock_db.get.side_effect = [mock_study1, mock_study2]
         
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -88,8 +98,8 @@ class TestDatabaseGet:
         assert "Study 1" in captured.out
         assert "Study 2" in captured.out
         
-        # Verify the get_study method was called with the correct arguments
-        mock_db.get_study.assert_has_calls([call("study1"), call("study2")])
+        # Verify the get method was called with the correct arguments
+        mock_db.get.assert_has_calls([call("study", "study1"), call("study", "study2")])
     
     def test_get_run(self, mocker: MockerFixture, capsys: CaptureFixture):
         """
@@ -99,11 +109,11 @@ class TestDatabaseGet:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
             capsys: A built-in fixture from the pytest library to capture stdout and stderr.
         """
-        # Mock MerlinDatabase and its get_run method
+        # Mock MerlinDatabase and its get method
         mock_db = mocker.MagicMock()
         mock_run = mocker.MagicMock()
         mock_run.__str__.return_value = "Run 1"
-        mock_db.get_run.return_value = mock_run
+        mock_db.get.return_value = mock_run
         
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -120,8 +130,8 @@ class TestDatabaseGet:
         # Verify the output contains the expected information
         assert "Run 1" in captured.out
         
-        # Verify the get_run method was called with the correct arguments
-        mock_db.get_run.assert_called_once_with("run1")
+        # Verify the get method was called with the correct arguments
+        mock_db.get.assert_called_once_with("run", "run1")
     
     def test_get_logical_worker(self, mocker: MockerFixture, capsys: CaptureFixture):
         """
@@ -131,11 +141,11 @@ class TestDatabaseGet:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
             capsys: A built-in fixture from the pytest library to capture stdout and stderr.
         """
-        # Mock MerlinDatabase and its get_logical_worker method
+        # Mock MerlinDatabase and its get method
         mock_db = mocker.MagicMock()
         mock_worker = mocker.MagicMock()
         mock_worker.__str__.return_value = "Logical Worker 1"
-        mock_db.get_logical_worker.return_value = mock_worker
+        mock_db.get.return_value = mock_worker
         
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -152,8 +162,8 @@ class TestDatabaseGet:
         # Verify the output contains the expected information
         assert "Logical Worker 1" in captured.out
         
-        # Verify the get_logical_worker method was called with the correct arguments
-        mock_db.get_logical_worker.assert_called_once_with("worker1")
+        # Verify the get method was called with the correct arguments
+        mock_db.get.assert_called_once_with("logical_worker", "worker1")
     
     def test_get_physical_worker(self, mocker: MockerFixture, capsys: CaptureFixture):
         """
@@ -163,11 +173,11 @@ class TestDatabaseGet:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
             capsys: A built-in fixture from the pytest library to capture stdout and stderr.
         """
-        # Mock MerlinDatabase and its get_physical_worker method
+        # Mock MerlinDatabase and its get method
         mock_db = mocker.MagicMock()
         mock_worker = mocker.MagicMock()
         mock_worker.__str__.return_value = "Physical Worker 1"
-        mock_db.get_physical_worker.return_value = mock_worker
+        mock_db.get.return_value = mock_worker
         
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -184,8 +194,8 @@ class TestDatabaseGet:
         # Verify the output contains the expected information
         assert "Physical Worker 1" in captured.out
         
-        # Verify the get_physical_worker method was called with the correct arguments
-        mock_db.get_physical_worker.assert_called_once_with("worker1")
+        # Verify the get method was called with the correct arguments
+        mock_db.get.assert_called_once_with("physical_worker", "worker1")
     
     def test_get_all_studies(self, mocker: MockerFixture, capsys: CaptureFixture):
         """
@@ -195,13 +205,13 @@ class TestDatabaseGet:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
             capsys: A built-in fixture from the pytest library to capture stdout and stderr.
         """
-        # Mock MerlinDatabase and its get_all_studies method
+        # Mock MerlinDatabase and its get_all method
         mock_db = mocker.MagicMock()
         mock_study1 = mocker.MagicMock()
         mock_study1.__str__.return_value = "Study 1"
         mock_study2 = mocker.MagicMock()
         mock_study2.__str__.return_value = "Study 2"
-        mock_db.get_all_studies.return_value = [mock_study1, mock_study2]
+        mock_db.get_all.return_value = [mock_study1, mock_study2]
         
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -219,8 +229,8 @@ class TestDatabaseGet:
         assert "Study 1" in captured.out
         assert "Study 2" in captured.out
         
-        # Verify the get_all_studies method was called
-        mock_db.get_all_studies.assert_called_once()
+        # Verify the get_all method was called with the correct entity type
+        mock_db.get_all.assert_called_once_with("study")
     
     def test_get_all_runs(self, mocker: MockerFixture, capsys: CaptureFixture):
         """
@@ -230,13 +240,13 @@ class TestDatabaseGet:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
             capsys: A built-in fixture from the pytest library to capture stdout and stderr.
         """
-        # Mock MerlinDatabase and its get_all_runs method
+        # Mock MerlinDatabase and its get_all method
         mock_db = mocker.MagicMock()
         mock_run1 = mocker.MagicMock()
         mock_run1.__str__.return_value = "Run 1"
         mock_run2 = mocker.MagicMock()
         mock_run2.__str__.return_value = "Run 2"
-        mock_db.get_all_runs.return_value = [mock_run1, mock_run2]
+        mock_db.get_all.return_value = [mock_run1, mock_run2]
         
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -254,8 +264,8 @@ class TestDatabaseGet:
         assert "Run 1" in captured.out
         assert "Run 2" in captured.out
         
-        # Verify the get_all_runs method was called
-        mock_db.get_all_runs.assert_called_once()
+        # Verify the get_all method was called with the correct entity type
+        mock_db.get_all.assert_called_once_with("run")
     
     def test_get_all_logical_workers(self, mocker: MockerFixture, capsys: CaptureFixture):
         """
@@ -265,11 +275,11 @@ class TestDatabaseGet:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
             capsys: A built-in fixture from the pytest library to capture stdout and stderr.
         """
-        # Mock MerlinDatabase and its get_all_logical_workers method
+        # Mock MerlinDatabase and its get_all method
         mock_db = mocker.MagicMock()
         mock_worker = mocker.MagicMock()
         mock_worker.__str__.return_value = "Logical Worker 1"
-        mock_db.get_all_logical_workers.return_value = [mock_worker]
+        mock_db.get_all.return_value = [mock_worker]
         
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -286,8 +296,8 @@ class TestDatabaseGet:
         # Verify the output contains the expected information
         assert "Logical Worker 1" in captured.out
         
-        # Verify the get_all_logical_workers method was called
-        mock_db.get_all_logical_workers.assert_called_once()
+        # Verify the get_all method was called with the correct entity type
+        mock_db.get_all.assert_called_once_with("logical_worker")
     
     def test_get_all_physical_workers(self, mocker: MockerFixture, capsys: CaptureFixture):
         """
@@ -297,11 +307,11 @@ class TestDatabaseGet:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
             capsys: A built-in fixture from the pytest library to capture stdout and stderr.
         """
-        # Mock MerlinDatabase and its get_all_physical_workers method
+        # Mock MerlinDatabase and its get_all method
         mock_db = mocker.MagicMock()
         mock_worker = mocker.MagicMock()
         mock_worker.__str__.return_value = "Physical Worker 1"
-        mock_db.get_all_physical_workers.return_value = [mock_worker]
+        mock_db.get_all.return_value = [mock_worker]
         
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -318,8 +328,8 @@ class TestDatabaseGet:
         # Verify the output contains the expected information
         assert "Physical Worker 1" in captured.out
         
-        # Verify the get_all_physical_workers method was called
-        mock_db.get_all_physical_workers.assert_called_once()
+        # Verify the get_all method was called with the correct entity type
+        mock_db.get_all.assert_called_once_with("physical_worker")
     
     def test_get_everything(self, mocker: MockerFixture, capsys: CaptureFixture):
         """
@@ -363,10 +373,9 @@ class TestDatabaseGet:
         """
         caplog.set_level(logging.INFO)
 
-        # Mock MerlinDatabase and its get_study method
+        # Mock MerlinDatabase and its get_all method
         mock_db = mocker.MagicMock()
-        mock_db.get_study.return_value = None
-        mock_db.get_all_studies.return_value = []
+        mock_db.get_all.return_value = []
         
         # Patch the MerlinDatabase class
         mocker.patch("merlin.db_scripts.db_commands.MerlinDatabase", return_value=mock_db)
@@ -414,7 +423,7 @@ class TestDatabaseDelete:
         Args:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
         """
-        # Mock MerlinDatabase and its delete_study method
+        # Mock MerlinDatabase and its delete method
         mock_db = mocker.MagicMock()
         
         # Patch the MerlinDatabase class
@@ -426,10 +435,10 @@ class TestDatabaseDelete:
         # Call the function
         database_delete(args)
         
-        # Verify the delete_study method was called with the correct arguments
-        mock_db.delete_study.assert_has_calls([
-            call("study1", remove_associated_runs=True),
-            call("study2", remove_associated_runs=True)
+        # Verify the delete method was called with the correct arguments
+        mock_db.delete.assert_has_calls([
+            call("study", "study1", remove_associated_runs=True),
+            call("study", "study2", remove_associated_runs=True)
         ])
     
     def test_delete_study_keep_runs(self, mocker: MockerFixture):
@@ -439,7 +448,7 @@ class TestDatabaseDelete:
         Args:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
         """
-        # Mock MerlinDatabase and its delete_study method
+        # Mock MerlinDatabase and its delete method
         mock_db = mocker.MagicMock()
         
         # Patch the MerlinDatabase class
@@ -451,8 +460,8 @@ class TestDatabaseDelete:
         # Call the function
         database_delete(args)
         
-        # Verify the delete_study method was called with the correct arguments
-        mock_db.delete_study.assert_called_once_with("study1", remove_associated_runs=False)
+        # Verify the delete method was called with the correct arguments
+        mock_db.delete.assert_called_once_with("study", "study1", remove_associated_runs=False)
     
     def test_delete_run(self, mocker: MockerFixture):
         """
@@ -461,7 +470,7 @@ class TestDatabaseDelete:
         Args:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
         """
-        # Mock MerlinDatabase and its delete_run method
+        # Mock MerlinDatabase and its delete method
         mock_db = mocker.MagicMock()
         
         # Patch the MerlinDatabase class
@@ -473,8 +482,8 @@ class TestDatabaseDelete:
         # Call the function
         database_delete(args)
         
-        # Verify the delete_run method was called with the correct arguments
-        mock_db.delete_run.assert_has_calls([call("run1"), call("run2")])
+        # Verify the delete method was called with the correct arguments
+        mock_db.delete.assert_has_calls([call("run", "run1"), call("run", "run2")])
     
     def test_delete_logical_worker(self, mocker: MockerFixture):
         """
@@ -483,7 +492,7 @@ class TestDatabaseDelete:
         Args:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
         """
-        # Mock MerlinDatabase and its delete_logical_worker method
+        # Mock MerlinDatabase and its delete method
         mock_db = mocker.MagicMock()
         
         # Patch the MerlinDatabase class
@@ -495,8 +504,8 @@ class TestDatabaseDelete:
         # Call the function
         database_delete(args)
         
-        # Verify the delete_logical_worker method was called with the correct arguments
-        mock_db.delete_logical_worker.assert_called_once_with("worker1")
+        # Verify the delete method was called with the correct arguments
+        mock_db.delete.assert_called_once_with("logical_worker", "worker1")
     
     def test_delete_physical_worker(self, mocker: MockerFixture):
         """
@@ -505,7 +514,7 @@ class TestDatabaseDelete:
         Args:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
         """
-        # Mock MerlinDatabase and its delete_physical_worker method
+        # Mock MerlinDatabase and its delete method
         mock_db = mocker.MagicMock()
         
         # Patch the MerlinDatabase class
@@ -517,8 +526,8 @@ class TestDatabaseDelete:
         # Call the function
         database_delete(args)
         
-        # Verify the delete_physical_worker method was called with the correct arguments
-        mock_db.delete_physical_worker.assert_called_once_with("worker1")
+        # Verify the delete method was called with the correct arguments
+        mock_db.delete.assert_called_once_with("physical_worker", "worker1")
     
     def test_delete_all_studies(self, mocker: MockerFixture):
         """
@@ -527,7 +536,7 @@ class TestDatabaseDelete:
         Args:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
         """
-        # Mock MerlinDatabase and its delete_all_studies method
+        # Mock MerlinDatabase and its delete_all method
         mock_db = mocker.MagicMock()
         
         # Patch the MerlinDatabase class
@@ -539,8 +548,8 @@ class TestDatabaseDelete:
         # Call the function
         database_delete(args)
         
-        # Verify the delete_all_studies method was called with the correct arguments
-        mock_db.delete_all_studies.assert_called_once_with(remove_associated_runs=True)
+        # Verify the delete_all method was called with the correct arguments
+        mock_db.delete_all.assert_called_once_with("study", remove_associated_runs=True)
     
     def test_delete_all_runs(self, mocker: MockerFixture):
         """
@@ -549,7 +558,7 @@ class TestDatabaseDelete:
         Args:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
         """
-        # Mock MerlinDatabase and its delete_all_runs method
+        # Mock MerlinDatabase and its delete_all method
         mock_db = mocker.MagicMock()
         
         # Patch the MerlinDatabase class
@@ -561,8 +570,8 @@ class TestDatabaseDelete:
         # Call the function
         database_delete(args)
         
-        # Verify the delete_all_runs method was called
-        mock_db.delete_all_runs.assert_called_once()
+        # Verify the delete_all method was called with the correct entity type
+        mock_db.delete_all.assert_called_once_with("run")
     
     def test_delete_all_logical_workers(self, mocker: MockerFixture):
         """
@@ -571,7 +580,7 @@ class TestDatabaseDelete:
         Args:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
         """
-        # Mock MerlinDatabase and its delete_all_logical_workers method
+        # Mock MerlinDatabase and its delete_all method
         mock_db = mocker.MagicMock()
         
         # Patch the MerlinDatabase class
@@ -583,8 +592,8 @@ class TestDatabaseDelete:
         # Call the function
         database_delete(args)
         
-        # Verify the delete_all_logical_workers method was called
-        mock_db.delete_all_logical_workers.assert_called_once()
+        # Verify the delete_all method was called with the correct entity type
+        mock_db.delete_all.assert_called_once_with("logical_worker")
     
     def test_delete_all_physical_workers(self, mocker: MockerFixture):
         """
@@ -593,7 +602,7 @@ class TestDatabaseDelete:
         Args:
             mocker: A built-in fixture from the pytest-mock library to create a Mock object.
         """
-        # Mock MerlinDatabase and its delete_all_physical_workers method
+        # Mock MerlinDatabase and its delete_all method
         mock_db = mocker.MagicMock()
         
         # Patch the MerlinDatabase class
@@ -605,8 +614,8 @@ class TestDatabaseDelete:
         # Call the function
         database_delete(args)
         
-        # Verify the delete_all_physical_workers method was called
-        mock_db.delete_all_physical_workers.assert_called_once()
+        # Verify the delete_all method was called with the correct entity type
+        mock_db.delete_all.assert_called_once_with("physical_worker")
     
     def test_delete_everything(self, mocker: MockerFixture):
         """

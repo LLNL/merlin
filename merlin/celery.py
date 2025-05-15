@@ -226,8 +226,8 @@ def handle_worker_startup(sender: str = None, **kwargs):
                 # Sender name is of the form celery@worker_name.%hostname
                 worker_name, host = sender.split("@")[1].split(".%")
                 merlin_db = MerlinDatabase()
-                logical_worker = merlin_db.get_logical_worker(worker_name=worker_name, queues=options.get("queues"))
-                physical_worker = merlin_db.create_physical_worker(
+                logical_worker = merlin_db.create("logical_worker", name=worker_name, queues=options.get("queues"))
+                physical_worker = merlin_db.create("physical_worker",
                     name=str(sender),
                     host=host,
                     status=WorkerStatus.RUNNING,
@@ -255,7 +255,7 @@ def handle_worker_shutdown(sender: str = None, **kwargs):
     if sender is not None:
         LOG.debug(f"Worker {sender} is shutting down.")
         merlin_db = MerlinDatabase()
-        physical_worker = merlin_db.get_physical_worker(str(sender))
+        physical_worker = merlin_db.get("physical_worker", str(sender))
         if physical_worker:
             physical_worker.set_status(WorkerStatus.STOPPED)
             physical_worker.set_pid(None)  # Clear the pid

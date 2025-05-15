@@ -160,3 +160,9 @@ class UnsupportedDataModelError(Exception):
     Exception to signal that the data model you're trying to use is not supported.
     """
 
+
+class EntityManagerNotSupportedError(Exception):
+    """
+    Exception to signal that the provided entity manager is not supported by Merlin.
+    """
+

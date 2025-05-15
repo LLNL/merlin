@@ -5,9 +5,8 @@ database.
 
 import logging
 from argparse import Namespace
-from typing import Callable, List
+from typing import Any, List
 
-from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.db_scripts.merlin_db import MerlinDatabase
 
 
@@ -19,10 +18,10 @@ def database_info():
     Print information about the database to the console.
     """
     merlin_db = MerlinDatabase()
-    db_studies = merlin_db.get_all_studies()
-    db_runs = merlin_db.get_all_runs()
-    db_logical_workers = merlin_db.get_all_logical_workers()
-    db_physical_workers = merlin_db.get_all_physical_workers()
+    db_studies = merlin_db.get_all("study")
+    db_runs = merlin_db.get_all("run")
+    db_logical_workers = merlin_db.get_all("logical_worker")
+    db_physical_workers = merlin_db.get_all("physical_worker")
 
     print("Merlin Database Information")
     print("---------------------------")
@@ -71,25 +70,7 @@ def database_get(args: Namespace):
     """
     merlin_db = MerlinDatabase()
 
-    def build_list_of_entities(get_entity: Callable, identifiers: List[str]) -> List[DatabaseEntity]:
-        """
-        Builds a list of entities by retrieving them using the provided function.
-
-        Args:
-            get_entity: A callable function that takes an identifier as input and retrieves the
-                corresponding entity.
-            identifiers: A list of identifiers used to retrieve the entities.
-
-        Returns:
-            A list of [`DatabaseEntity`][db_scripts.db_entity.DatabaseEntity] objects retrieved using the
-                `get_entity` function.
-        """
-        results = []
-        for identifier in identifiers:
-            results.append(get_entity(identifier))
-        return results
-
-    def print_items(items: List[DatabaseEntity], empty_message: str):
+    def print_items(items: List[Any], empty_message: str):
         """
         Prints a list of items or logs a message if the list is empty.
 
@@ -103,36 +84,40 @@ def database_get(args: Namespace):
         else:
             LOG.info(empty_message)
 
-    # Dispatch table for get operations
+    def get_and_print(entity_type: str, identifiers: List[str]):
+        """
+        Get entities by type and identifiers, then print them.
+
+        Args:
+            entity_type: The entity type (study, run, logical_worker, etc.).
+            identifiers: List of identifiers for fetching.
+        """
+        items = [merlin_db.get(entity_type, identifier) for identifier in identifiers]
+        print_items(items, f"No {entity_type.replace('_', ' ')}s found for the given identifiers.")
+
+    def get_all_and_print(entity_type: str):
+        """
+        Get all entities of a given type and print them.
+
+        Args:
+            entity_type: The entity type.
+        """
+        items = merlin_db.get_all(entity_type)
+        entity_type_str = "studies" if entity_type == "study" else f"{entity_type.replace('_', ' ')}s"
+        print_items(items, f"No {entity_type_str} found in the database.")
+
     operations = {
-        "study": lambda: print_items(
-            build_list_of_entities(merlin_db.get_study, args.study),
-            "No studies found for the given identifiers.",
-        ),
-        "run": lambda: print_items(
-            build_list_of_entities(merlin_db.get_run, args.run),
-            "No runs found for the given identifiers.",
-        ),
-        "logical-worker": lambda: print_items(
-            build_list_of_entities(merlin_db.get_logical_worker, args.worker),
-            "No logical workers found for the given identifiers.",
-        ),
-        "physical-worker": lambda: print_items(
-            build_list_of_entities(merlin_db.get_physical_worker, args.worker),
-            "No physical workers found for the given identifiers.",
-        ),
-        "all-studies": lambda: print_items(merlin_db.get_all_studies(), "No studies found in the database."),
-        "all-runs": lambda: print_items(merlin_db.get_all_runs(), "No runs found in the database."),
-        "all-logical-workers": lambda: print_items(
-            merlin_db.get_all_logical_workers(), "No logical workers found in the database."
-        ),
-        "all-physical-workers": lambda: print_items(
-            merlin_db.get_all_physical_workers(), "No physical workers found in the database."
-        ),
+        "study": lambda: get_and_print("study", args.study),
+        "run": lambda: get_and_print("run", args.run),
+        "logical-worker": lambda: get_and_print("logical_worker", args.worker),
+        "physical-worker": lambda: get_and_print("physical_worker", args.worker),
+        "all-studies": lambda: get_all_and_print("study"),
+        "all-runs": lambda: get_all_and_print("run"),
+        "all-logical-workers": lambda: get_all_and_print("logical_worker"),
+        "all-physical-workers": lambda: get_all_and_print("physical_worker"),
         "everything": lambda: print_items(merlin_db.get_everything(), "Nothing found in the database."),
     }
 
-    # Execute the appropriate operation or log an error
     operation = operations.get(args.get_type)
     if operation:
         operation()
@@ -149,34 +134,32 @@ def database_delete(args: Namespace):
     """
     merlin_db = MerlinDatabase()
 
-    def delete_list_of_entities(delete_entity: Callable, identifiers: List[str], **kwargs):
+    def delete_entities(entity_type: str, identifiers: List[str], **kwargs):
         """
-        Deletes a list of entities using the provided delete function.
+        Delete a list of entities by type and identifier.
 
         Args:
-            delete_entity: The function responsible for deleting an entity.
-            identifiers: A list of entity identifiers to delete.
-            kwargs: Additional arguments to pass to the delete function.
+            entity_type: The entity type (study, run, etc.).
+            identifiers: The identifiers of the entities to delete.
+            kwargs: Additional keyword args for the delete call.
         """
         for identifier in identifiers:
-            delete_entity(identifier, **kwargs)
+            merlin_db.delete(entity_type, identifier, **kwargs)
 
-    # Dispatch table for delete operations
     operations = {
-        "study": lambda: delete_list_of_entities(
-            merlin_db.delete_study, args.study, remove_associated_runs=not args.keep_associated_runs
+        "study": lambda: delete_entities(
+            "study", args.study, remove_associated_runs=not args.keep_associated_runs
         ),
-        "run": lambda: delete_list_of_entities(merlin_db.delete_run, args.run),
-        "logical-worker": lambda: delete_list_of_entities(merlin_db.delete_logical_worker, args.worker),
-        "physical-worker": lambda: delete_list_of_entities(merlin_db.delete_physical_worker, args.worker),
-        "all-studies": lambda: merlin_db.delete_all_studies(remove_associated_runs=not args.keep_associated_runs),
-        "all-runs": merlin_db.delete_all_runs,
-        "all-logical-workers": merlin_db.delete_all_logical_workers,
-        "all-physical-workers": merlin_db.delete_all_physical_workers,
+        "run": lambda: delete_entities("run", args.run),
+        "logical-worker": lambda: delete_entities("logical_worker", args.worker),
+        "physical-worker": lambda: delete_entities("physical_worker", args.worker),
+        "all-studies": lambda: merlin_db.delete_all("study", remove_associated_runs=not args.keep_associated_runs),
+        "all-runs": lambda: merlin_db.delete_all("run"),
+        "all-logical-workers": lambda: merlin_db.delete_all("logical_worker"),
+        "all-physical-workers": lambda: merlin_db.delete_all("physical_worker"),
         "everything": lambda: merlin_db.delete_everything(force=args.force),
     }
 
-    # Execute the appropriate operation or log an error
     operation = operations.get(args.delete_type)
     if operation:
         operation()
