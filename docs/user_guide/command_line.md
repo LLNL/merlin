@@ -28,20 +28,22 @@ See the [Configuration Commands](#configuration-commands), [Workflow Management 
 
 Since running Merlin in a distributed manner requires the [configuration](./configuration/index.md) of a centralized server, Merlin comes equipped with three commands to help users get this set up:
 
-- *[config](#config-merlin-config)*: Create the skeleton `app.yaml` file needed for configuration
+- *[config](#config-merlin-config)*: Create, update, or select a configuration file
 - *[info](#info-merlin-info)*: Ensure stable connections to the server(s)
 - *[server](#server-merlin-server)*: Spin up containerized servers
 
 ### Config (`merlin config`)
 
-Create a default [config (app.yaml) file](./configuration/index.md#the-appyaml-file) in the `${HOME}/.merlin` directory using the `config` command. This file can then be edited for your system configuration.
+Create, update, or select a [configuration file](./configuration/index.md#the-configuration-file) that Merlin will use to connect to your server(s).
 
-See more information on how to set this file up at the [Configuration](./configuration/index.md) page.
+Merlin config has a list of commands for interacting with configuration files. These commands allow the user to create and update configuration files, and select which one should be the active configuration.
+
+See more information on how to set up the configuration file at the [Configuration](./configuration/index.md) page.
 
 **Usage:**
 
 ```bash
-merlin config [OPTIONS]
+merlin config [OPTIONS] COMMAND [ARGS] ...
 ```
 
 **Options:**
@@ -49,8 +51,31 @@ merlin config [OPTIONS]
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Commands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [create](#config-create-merlin-config-create) | Create a template configuration file |
+| [update-backend](#config-update-backend-merlin-config-update-backend) | Update broker settings in the configuration file |
+| [update-broker](#config-update-broker-merlin-config-update-broker) | Update backend settings in the configuration file |
+| [use](#config-use-merlin-config-use) | Use a different configuration setup |
+
+#### Config Create (`merlin config create`)
+
+The `merlin config create` command creates a template [configuration file](./configuration/index.md#the-configuration-file) that you can customize to connect to your central server. Detailed instructions for completing this template are available in the [Configuring the Broker and Results Backend](./configuration/index.md#configuring-the-broker-and-results-backend) guide.
+
+By default, the generated configuration file is saved at `$(HOME)/.merlin/app.yaml`. If you prefer to rename the file or save it to a different location, you can use the `-o` option to specify the desired path. Note that the file must have the `.yaml` extension.
+
+The default configuration sets the broker to use a RabbitMQ server and the results backend to Redis. While the Redis results backend is mandatory, the broker can be configured to use either RabbitMQ or Redis. To switch to a Redis broker, use the `--broker` option.
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
 | `--task_server`  | string | Select the appropriate configuration for the given task server. Currently only "celery" is implemented. | "celery" |
-| `-o`, `--output_dir` | path | Output the configuration in the given directory. This file can then be edited and copied into `${HOME}/.merlin`. | None |
+| `-o`, `--output-file` | path | Optional yaml file name for your configuration. Default: $(HOME)/.merlin/app.yaml. | None |
 | `--broker` | string | Write the initial `app.yaml` config file for either a `rabbitmq` or `redis` broker. The default is `rabbitmq`. The backend will be `redis` in both cases. The redis backend in the `rabbitmq` config shows the use on encryption for the backend. | "rabbitmq" |
 
 **Examples:**
@@ -58,19 +83,179 @@ merlin config [OPTIONS]
 !!! example "Create an `app.yaml` File at `~/.merlin`"
 
     ```bash
-    merlin config
+    merlin config create
     ```
 
-!!! example "Create an `app.yaml` File at a Custom Path"
+!!! example "Create a Configuration File at a Custom Path"
 
     ```bash
-    merlin config -o /Documents/configuration/
+    merlin config create -o /Documents/configuration/merlin_config.yaml
     ```
 
-!!! example "Create an `app.yaml` File With a Redis Broker"
+!!! example "Create a Configuration File With a Redis Broker"
 
     ```bash
-    merlin config --broker redis
+    merlin config create --broker redis
+    ```
+
+#### Config Update-Backend (`merlin config update-backend`)
+
+The `merlin config update-backend` command allows you to modify the [`results_backend`](./configuration/index.md#what-is-a-results-backend) section of your configuration file directly from the command line. See the options table below to see exactly what settings can be set.
+
+**Usage:**
+
+```bash
+merlin config update-backend -t {redis} [OPTIONS] ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-t`, `--type`   | choice(`redis`) | Type of results backend to configure. | None |
+| `--cf`, `--config-file` | string | Path to the config file that will be updated. | `$(HOME)/.merlin/app.yaml` |
+| `-u`, `--username` | string | The backend username. | None |
+| `--pf`, `--password-file` | string | Path to a password file that contains the password to the backend. | None |
+| `-s`, `--server` | string | The URL of the backend server. | None |
+| `-p`, `--port` | int | The port number that this backend server is using. | None |
+| `-d`, `--db-num` | int | The backend database number. | None |
+| `-c`, `--cert-reqs` | string | Backend cert requirements. | None |
+| `-e`, `--encryption-key` | string | Path to the encryption key file. | None |
+
+**Examples:**
+
+!!! example "Update Every Setting Required for Redis"
+
+    ```bash
+    merlin config update-backend -t redis --pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
+    ```
+
+    This will create the following `results_backend` section in your `app.yaml` file:
+
+    ```yaml
+    results_backend:
+        cert_reqs: none
+        db_num: 0
+        encryption_key: ~/.merlin/encrypt_data_key
+        name: rediss
+        password: ~/.merlin/redis.pass
+        port: 6379
+        server: my-redis-server.llnl.gov
+        username: ''
+    ```
+
+!!! example "Update Just the Port"
+
+    ```bash
+    merlin config update-backend -t redis -p 6379
+    ```
+
+!!! example "Update a Custom Configuration File Path"
+
+    ```bash
+    merlin config update-backend -t redis --cf /path/to/custom_config.yaml -s new-server.gov
+    ```
+
+#### Config Update-Broker (`merlin config update-broker`)
+
+The `merlin config update-broker` command allows you to modify the [`broker`](./configuration/index.md#what-is-a-broker) section of your configuration file directly from the command line. See the options table below to see exactly what settings can be set.
+
+**Usage:**
+
+```bash
+merlin config update-broker -t {rabbitmq,redis} [OPTIONS] ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-t`, `--type`   | choice(`rabbitmq` \| `redis`) | Type of broker to configure. | None |
+| `--cf`, `--config-file` | string | Path to the config file that will be updated. | `$(HOME)/.merlin/app.yaml` |
+| `-u`, `--username` | string | The broker username (only for `rabbitmq` broker). | None |
+| `--pf`, `--password-file` | string | Path to a password file that contains the password to the broker. | None |
+| `-s`, `--server` | string | The URL of the broker server. | None |
+| `-p`, `--port` | int | The port number that this broker server is using. | None |
+| `-v`, `--vhost` | string | The vhost for the broker (only for `rabbitmq` broker). | None |
+| `-d`, `--db-num` | int | The backend database number (only for `redis` broker). | None |
+| `-c`, `--cert-reqs` | string | Backend cert requirements. | None |
+
+**Examples:**
+
+!!! example "Update Every Setting Required for a Redis Broker"
+
+    ```bash
+    merlin config update-broker -t redis --pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
+    ```
+
+    This will create the following `broker` section in your `app.yaml` file:
+
+    ```yaml
+    broker:
+        cert_reqs: none
+        db_num: 0
+        name: rediss
+        password: ~/.merlin/redis.pass
+        port: 6379
+        server: my-redis-server.llnl.gov
+        username: ''
+    ```
+
+!!! example "Update Every Setting Required for a RabbitMQ Broker"
+
+    ```bash
+    merlin config update-broker -t rabbitmq -u my_rabbit_username --pf ~/.merlin/rabbit.pass -s my-rabbitmq-server.llnl.gov -p 5672 -v host4rabbit -c none
+    ```
+
+    This will create the following `broker` section in your `app.yaml` file:
+
+    ```yaml
+    broker:
+        cert_reqs: none
+        name: rabbitmq
+        password: ~/.merlin/rabbit.pass
+        port: 5672
+        server: my-rabbitmq-server.llnl.gov
+        username: my_rabbit_username
+        vhost: host4rabbit
+    ```
+
+!!! example "Update Just the Username"
+
+    ```bash
+    merlin config update-broker -t rabbitmq -u my_new_username
+    ```
+
+!!! example "Update a Custom Configuration File Path"
+
+    ```bash
+    merlin config update-broker -t redis --cf /path/to/custom_config.yaml -s new-server.gov
+    ```
+
+#### Config Use (`merlin config use`)
+
+The `merlin config use` command allows you to switch which configuration file to use as your active configuration.
+
+**Usage:**
+
+```bash
+merlin config use [OPTIONS] CONFIG_FILE
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Examples:**
+
+!!! example "Use a Custom Configuration"
+
+    ```bash
+    merlin config use /path/to/custom_config.yaml
     ```
 
 ### Info (`merlin info`)

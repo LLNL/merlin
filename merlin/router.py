@@ -36,10 +36,8 @@ This module is intended to help keep the task management layer (i.e., Celery)
 decoupled from the logic the tasks are running.
 """
 import logging
-import os
 import time
 from argparse import Namespace
-from importlib import resources
 from typing import Dict, List, Tuple
 
 from merlin.exceptions import NoWorkersException
@@ -47,7 +45,6 @@ from merlin.spec.specification import MerlinSpec
 from merlin.study.celeryadapter import (
     build_set_of_queues,
     check_celery_workers_processing,
-    create_celery_config,
     dump_celery_queue_info,
     get_active_celery_queues,
     get_workers_from_app,
@@ -283,45 +280,6 @@ def stop_workers(task_server: str, spec_worker_names: List[str], queues: List[st
         stop_celery_workers(queues, spec_worker_names, workers_regex)
     else:
         LOG.error("Celery is not specified as the task server!")
-
-
-def create_config(task_server: str, config_dir: str, broker: str, test: str):
-    """
-    Create a configuration app.yaml that Merlin will use to connect to the
-    specified task server.
-
-    This function generates a configuration file for the given task server.
-    It creates the necessary directories if they do not exist and determines
-    the appropriate configuration file based on the provided broker and testing
-    parameters.
-
-    Args:
-        task_server: The task server for which to create the configuration.
-        config_dir: The directory where the configuration files will be installed.
-            If the directory does not exist, it will be created.
-        broker: A string indicating the broker type.
-        test: A string that indicates whether the application should use a test
-            configuration file. If set, a test configuration is created.
-    """
-    if test:
-        LOG.info("Creating test config ...")
-    else:
-        LOG.info("Creating config ...")
-
-    if not os.path.isdir(config_dir):
-        os.makedirs(config_dir)
-
-    if task_server == "celery":
-        config_file = "app.yaml"
-        data_config_file = "app.yaml"
-        if broker == "redis":
-            data_config_file = "app_redis.yaml"
-        elif test:
-            data_config_file = "app_test.yaml"
-        with resources.path("merlin.data.celery", data_config_file) as data_file:
-            create_celery_config(config_dir, config_file, data_file)
-    else:
-        LOG.error("Only celery can be configured currently.")
 
 
 def get_active_queues(task_server: str) -> Dict[str, List[str]]:
