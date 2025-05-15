@@ -1,10 +1,9 @@
 import json
 import os
 import pytest
-import uuid
 from dataclasses import dataclass
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
@@ -17,12 +16,6 @@ from merlin.db_scripts.data_models import (
     PhysicalWorkerModel
 )
 from tests.fixture_types import FixtureCallable, FixtureStr
-
-# TODO make sure docstrings are filled out for test_db_commands and test_data_models
-# TODO see if claude will actually refactor MerlinDatabase
-# TODO write unit tests for MerlinDatabase after refactor
-# TODO write unit tests for entities folder
-# TODO start a new branch for work on the local test suite fixes (adding SQLite support)
 
 
 # Create a concrete subclass of BaseDataModel for testing
