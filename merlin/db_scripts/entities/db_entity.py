@@ -11,16 +11,17 @@ code duplication and promotes maintainability by centralizing shared functionali
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, Type, TypeVar, Generic
+from typing import Dict, Generic, Type, TypeVar
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import BaseDataModel
 from merlin.exceptions import EntityNotFoundError, RunNotFoundError, StudyNotFoundError, WorkerNotFoundError
 
+
 # Type variable for entity models
-T = TypeVar('T', bound=BaseDataModel)
+T = TypeVar("T", bound=BaseDataModel)
 # Type variable for entity classes
-E = TypeVar('E', bound='DatabaseEntity')
+E = TypeVar("E", bound="DatabaseEntity")
 
 LOG = logging.getLogger(__name__)
 
@@ -111,23 +112,23 @@ class DatabaseEntity(Generic[T], ABC):
     def entity_type(self) -> str:
         """
         Get the type of this entity for database operations.
-        
+
         Returns:
             The type name as a string.
         """
         return self._get_entity_type()
-    
+
     @classmethod
     def _get_entity_type(cls) -> str:
         """
         Get the entity type for database operations.
-        
+
         Returns:
             The type name as a string.
         """
         # Default implementation based on class name
         # Can be overridden by subclasses if needed
-        return cls.__name__.lower().replace('entity', '')
+        return cls.__name__.lower().replace("entity", "")
 
     def reload_data(self):
         """
@@ -168,13 +169,12 @@ class DatabaseEntity(Generic[T], ABC):
         """
         self.backend.save(self.entity_info)
         self._post_save_hook()
-    
+
     def _post_save_hook(self):
         """
         Hook called after saving the entity to the database.
         Subclasses can override to add additional behavior.
         """
-        pass
 
     @classmethod
     def load(cls: Type[E], entity_identifier: str, backend: ResultsBackend) -> E:

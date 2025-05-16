@@ -38,7 +38,8 @@ underlying data models and higher-level business logic, encapsulating shared beh
 coordinating entity relationships, lifecycle events, and cross-references.
 
 Modules:
-    entity_manager.py: Defines the abstract base class [`EntityManager`][db_scripts.entity_managers.entity_manager.EntityManager],
+    entity_manager.py: Defines the abstract base class
+        [`EntityManager`][db_scripts.entity_managers.entity_manager.EntityManager],
         which provides shared infrastructure and helper methods for all entity managers.
     logical_worker_manager.py: Manages logical workers, including queue-based identity
         resolution and cleanup of run associations on deletion.

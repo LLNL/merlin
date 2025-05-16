@@ -9,16 +9,17 @@ creating entities if they do not exist, retrieving entities by ID, and deleting 
 """
 
 import logging
-from typing import Any, List, Callable, Type, TypeVar, Generic, Optional
 from abc import ABC, abstractmethod
+from typing import Any, Callable, Generic, List, Optional, Type, TypeVar
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import BaseDataModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.exceptions import RunNotFoundError, StudyNotFoundError, WorkerNotFoundError
 
-T = TypeVar('T', bound=DatabaseEntity)
-M = TypeVar('M', bound=BaseDataModel)
+
+T = TypeVar("T", bound=DatabaseEntity)
+M = TypeVar("M", bound=BaseDataModel)
 
 LOG = logging.getLogger("merlin")
 
@@ -50,7 +51,7 @@ class EntityManager(Generic[T, M], ABC):
         _delete_entity: Deletes an individual entity, optionally calling a cleanup function before deletion.
         _delete_all_by_type: Deletes all entities of a certain type using the provided getter and deleter functions.
     """
-    
+
     def __init__(self, backend: ResultsBackend):
         """
         Initialize the EntityManager with a backend.
@@ -59,7 +60,8 @@ class EntityManager(Generic[T, M], ABC):
             backend: The backend interface used to persist and retrieve entities.
         """
         self.backend = backend
-    
+        self.db = None  # Subclasses can set this by creating a set_db_reference method
+
     @abstractmethod
     def create(self, *args: Any, **kwargs: Any) -> T:
         """
@@ -78,7 +80,7 @@ class EntityManager(Generic[T, M], ABC):
             NotImplementedError: If a subclass has not implemented this method.
         """
         raise NotImplementedError("Subclasses of `EntityManager` must implement a `create` method.")
-    
+
     @abstractmethod
     def get(self, identifier: str) -> T:
         """
@@ -94,7 +96,7 @@ class EntityManager(Generic[T, M], ABC):
             NotImplementedError: If a subclass has not implemented this method.
         """
         raise NotImplementedError("Subclasses of `EntityManager` must implement a `get` method.")
-    
+
     @abstractmethod
     def get_all(self) -> List[T]:
         """
@@ -107,7 +109,7 @@ class EntityManager(Generic[T, M], ABC):
             NotImplementedError: If a subclass has not implemented this method.
         """
         raise NotImplementedError("Subclasses of `EntityManager` must implement a `get_all` method.")
-    
+
     @abstractmethod
     def delete(self, identifier: str, **kwargs: Any):
         """
@@ -121,7 +123,7 @@ class EntityManager(Generic[T, M], ABC):
             NotImplementedError: If a subclass has not implemented this method.
         """
         raise NotImplementedError("Subclasses of `EntityManager` must implement a `delete` method.")
-    
+
     @abstractmethod
     def delete_all(self, **kwargs: Any):
         """
@@ -134,8 +136,8 @@ class EntityManager(Generic[T, M], ABC):
             NotImplementedError: If a subclass has not implemented this method.
         """
         raise NotImplementedError("Subclasses of `EntityManager` must implement a `delete_all` method.")
-    
-    def _create_entity_if_not_exists(
+
+    def _create_entity_if_not_exists(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         entity_class: Type[T],
         model_class: Type[M],
@@ -167,7 +169,7 @@ class EntityManager(Generic[T, M], ABC):
             entity = entity_class(model, self.backend)
             entity.save()
         return entity
-    
+
     def _get_entity(self, entity_class: Type[T], identifier: str) -> T:
         """
         Retrieve a single entity instance using its identifier.
@@ -180,7 +182,7 @@ class EntityManager(Generic[T, M], ABC):
             The loaded entity instance.
         """
         return entity_class.load(identifier, self.backend)
-    
+
     def _get_all_entities(self, entity_class: Type[T], entity_type: str) -> List[T]:
         """
         Retrieve all entities of a specific type from the backend.
@@ -196,7 +198,7 @@ class EntityManager(Generic[T, M], ABC):
         if not all_entities:
             return []
         return [entity_class(entity_data, self.backend) for entity_data in all_entities]
-    
+
     def _delete_entity(self, entity_class: Type[T], identifier: str, cleanup_fn: Optional[Callable] = None):
         """
         Delete a single entity, optionally performing cleanup beforehand.
@@ -210,7 +212,7 @@ class EntityManager(Generic[T, M], ABC):
         if cleanup_fn:
             cleanup_fn(entity)
         entity_class.delete(identifier, self.backend)
-    
+
     def _delete_all_by_type(self, get_all_fn: Callable, delete_fn: Callable, entity_name: str, **delete_kwargs: Any):
         """
         Delete all entities of a specific type using provided getter and deleter functions.

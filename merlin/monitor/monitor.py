@@ -120,7 +120,9 @@ class Monitor:
         LOG.info(f"Monitor: Monitoring run with workspace '{run_workspace}'...")
 
         # Wait for workers to spin up before checking on tasks
-        worker_names = [self.merlin_db.get("logical_worker", worker_id=worker_id).get_name() for worker_id in run.get_workers()]
+        worker_names = [
+            self.merlin_db.get("logical_worker", worker_id=worker_id).get_name() for worker_id in run.get_workers()
+        ]
         LOG.info(f"Monitor: Waiting for the following workers to start: {worker_names}...")
         self.task_server_monitor.wait_for_workers(worker_names, self.sleep)
         LOG.info("Monitor: Workers have started.")

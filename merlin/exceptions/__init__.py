@@ -122,7 +122,7 @@ class BackendNotSupportedError(Exception):
     def __init__(self, message):
         super().__init__(message)
 
-    
+
 ###############################
 # Database-Related Exceptions #
 ###############################
@@ -165,4 +165,3 @@ class EntityManagerNotSupportedError(Exception):
     """
     Exception to signal that the provided entity manager is not supported by Merlin.
     """
-

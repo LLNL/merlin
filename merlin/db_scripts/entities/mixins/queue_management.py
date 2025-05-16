@@ -10,6 +10,9 @@ class that has the necessary attributes to support queue retrieval, specifically
 from typing import List
 
 
+# pylint: disable=too-few-public-methods
+
+
 class QueueManagementMixin:
     """
     Mixin for managing queues associated with an entity.

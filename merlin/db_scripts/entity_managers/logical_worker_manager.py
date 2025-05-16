@@ -10,6 +10,7 @@ and queues.
 The manager also integrates cleanup routines to maintain consistency across related entities,
 e.g., by removing logical workers from associated runs before deletion.
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,7 +21,11 @@ from merlin.db_scripts.entities.logical_worker_entity import LogicalWorkerEntity
 from merlin.db_scripts.entity_managers.entity_manager import EntityManager
 from merlin.exceptions import RunNotFoundError
 
+
 LOG = logging.getLogger("merlin")
+
+# Purposefully ignoring this pylint message as each entity will have different parameter requirements
+# pylint: disable=arguments-differ,arguments-renamed
 
 
 class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel]):
@@ -44,7 +49,7 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
         delete_all: Delete all logical workers currently stored in the backend.
         set_db_reference: Set a reference to the main database object for accessing related entities.
     """
-    
+
     def _resolve_worker_id(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None) -> str:
         """
         Resolve the logical worker ID based on provided parameters.
@@ -69,9 +74,9 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
             return worker_id
         if worker_name is None or queues is None:
             raise ValueError("You must provide either `worker_id` or both `worker_name` and `queues`.")
-        
+
         return LogicalWorkerModel.generate_id(worker_name, queues)
-    
+
     def create(self, name: str, queues: List[str]) -> LogicalWorkerEntity:
         """
         Create a new logical worker entity, or return it if it already exists.
@@ -98,7 +103,7 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
             name=name,
             queues=queues,
         )
-    
+
     def get(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None) -> LogicalWorkerEntity:
         """
         Retrieve a logical worker entity by ID, or by name and queues.
@@ -117,7 +122,7 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
         """
         worker_id = self._resolve_worker_id(worker_id=worker_id, worker_name=worker_name, queues=queues)
         return self._get_entity(LogicalWorkerEntity, worker_id)
-    
+
     def get_all(self) -> List[LogicalWorkerEntity]:
         """
         Retrieve all logical worker entities from the backend.
@@ -126,7 +131,7 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
             A list of all logical worker entities.
         """
         return self._get_all_entities(LogicalWorkerEntity, "logical_worker")
-    
+
     def delete(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None):
         """
         Delete a logical worker entity and clean up any references from associated runs.
@@ -143,7 +148,7 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
             ValueError: If input arguments are invalid or insufficient.
         """
         logical_worker = self.get(worker_id=worker_id, worker_name=worker_name, queues=queues)
-        
+
         def cleanup_logical_worker(worker):
             runs_using_worker = worker.get_runs()
             for run_id in runs_using_worker:
@@ -152,22 +157,18 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
                     run.remove_worker(worker.get_id())
                 except RunNotFoundError:
                     LOG.warning(f"Couldn't find run with id {run_id}. Continuing with logical worker delete.")
-        
+
         self._delete_entity(LogicalWorkerEntity, logical_worker.get_id(), cleanup_fn=cleanup_logical_worker)
-    
+
     def delete_all(self):
         """
         Delete all logical worker entities currently stored in the backend.
 
         Runs cleanup on each logical worker before deletion to remove dependencies.
         """
-        self._delete_all_by_type(
-            get_all_fn=self.get_all,
-            delete_fn=self.delete,
-            entity_name="logical workers"
-        )
-    
-    def set_db_reference(self, db: MerlinDatabase):
+        self._delete_all_by_type(get_all_fn=self.get_all, delete_fn=self.delete, entity_name="logical workers")
+
+    def set_db_reference(self, db: MerlinDatabase):  # noqa: F821  pylint: disable=undefined-variable
         """
         Set a reference to the main Merlin database object for cross-entity operations.
 

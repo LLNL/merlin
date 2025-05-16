@@ -39,9 +39,11 @@ extensions to class behavior.
 Modules:
     name.py: Defines the [`NameMixin`][db_scripts.entities.mixins.name.NameMixin], which provides name-based
         access and utility methods for entities with a `name` attribute.
-    queue_management.py: Defines the [`QueueManagementMixin`][db_scripts.entities.mixins.queue_management.QueueManagementMixin],
+    queue_management.py: Defines the
+        [`QueueManagementMixin`][db_scripts.entities.mixins.queue_management.QueueManagementMixin],
         which supports retrieval and filtering of task queues for entities with a `queues` field.
-    run_management.py: Defines the [`RunManagementMixin`][db_scripts.entities.mixins.run_management.RunManagementMixin],
+    run_management.py: Defines the
+        [`RunManagementMixin`][db_scripts.entities.mixins.run_management.RunManagementMixin],
         which provides functionality for managing run associations on entities that support saving,
         reloading, and tracking linked run IDs.
 """

@@ -94,7 +94,7 @@ class RunManagementMixin:
                 try:
                     run = RunEntity.load(run_id, self.backend)
                     run_str += f"  - ID: {run.get_id()}\n    Workspace: {run.get_workspace()}\n"
-                except Exception:
+                except Exception:  # pylint: disable=broad-exception-caught
                     run_str += f"  - ID: {run_id} (Error loading run)\n"
         else:
             run_str = "  No runs found.\n"

@@ -43,9 +43,11 @@ Subpackages:
 Modules:
     db_entity.py: Defines the abstract base class [`DatabaseEntity`][db_scripts.entities.db_entity.DatabaseEntity],
         which provides a common interface for all database entity classes.
-    logical_worker_entity.py: Implements the [`LogicalWorkerEntity`][db_scripts.entities.logical_worker_entity.LogicalWorkerEntity]
+    logical_worker_entity.py: Implements the
+        [`LogicalWorkerEntity`][db_scripts.entities.logical_worker_entity.LogicalWorkerEntity]
         class, representing logical workers and their associated operations.
-    physical_worker_entity.py: Defines the [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
+    physical_worker_entity.py: Defines the
+        [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
         class for managing physical workers stored in the database.
     run_entity.py: Implements the [`RunEntity`][db_scripts.entities.run_entity.RunEntity] class,
         which encapsulates database operations related to run records.

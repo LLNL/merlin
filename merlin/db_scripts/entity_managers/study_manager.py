@@ -5,6 +5,7 @@ This module defines a manager class responsible for the creation, retrieval,
 and deletion of studies. It also ensures appropriate cleanup of associated
 run entities when a study is deleted.
 """
+
 from __future__ import annotations
 
 from typing import List
@@ -12,6 +13,10 @@ from typing import List
 from merlin.db_scripts.data_models import StudyModel
 from merlin.db_scripts.entities.study_entity import StudyEntity
 from merlin.db_scripts.entity_managers.entity_manager import EntityManager
+
+
+# Purposefully ignoring this pylint message as each entity will have different parameter requirements
+# pylint: disable=arguments-differ,arguments-renamed
 
 
 class StudyManager(EntityManager[StudyEntity, StudyModel]):
@@ -36,7 +41,7 @@ class StudyManager(EntityManager[StudyEntity, StudyModel]):
         delete_all: Delete all studies and optionally their runs.
         set_db_reference: Set reference to the MerlinDatabase for cross-entity access.
     """
-    
+
     def create(self, study_name: str) -> StudyEntity:
         """
         Create a study if it does not already exist.
@@ -58,7 +63,7 @@ class StudyManager(EntityManager[StudyEntity, StudyModel]):
             log_message_create=f"Study with name '{study_name}' does not yet have an entry in the database. Creating one.",
             name=study_name,
         )
-    
+
     def get(self, study_id_or_name: str) -> StudyEntity:
         """
         Retrieve a study by its ID or name.
@@ -73,7 +78,7 @@ class StudyManager(EntityManager[StudyEntity, StudyModel]):
             StudyNotFoundError: If no study matches the given ID or name.
         """
         return self._get_entity(StudyEntity, study_id_or_name)
-    
+
     def get_all(self) -> List[StudyEntity]:
         """
         Retrieve all study entities stored in the database.
@@ -82,7 +87,7 @@ class StudyManager(EntityManager[StudyEntity, StudyModel]):
             A list of all available study entities.
         """
         return self._get_all_entities(StudyEntity, "study")
-    
+
     def delete(self, study_id_or_name: str, remove_associated_runs: bool = True):
         """
         Delete a study and optionally its associated runs.
@@ -95,13 +100,14 @@ class StudyManager(EntityManager[StudyEntity, StudyModel]):
             remove_associated_runs (bool, optional): Whether to delete runs
                 associated with the study. Defaults to True.
         """
+
         def cleanup_study(study):
             if remove_associated_runs:
                 for run_id in study.get_runs():
                     self.db.runs.delete(run_id)
-        
+
         self._delete_entity(StudyEntity, study_id_or_name, cleanup_fn=cleanup_study)
-    
+
     def delete_all(self, remove_associated_runs: bool = True):
         """
         Delete all studies in the database, and optionally their associated runs.
@@ -116,8 +122,8 @@ class StudyManager(EntityManager[StudyEntity, StudyModel]):
             entity_name="studies",
             remove_associated_runs=remove_associated_runs,
         )
-    
-    def set_db_reference(self, db: MerlinDatabase):
+
+    def set_db_reference(self, db: MerlinDatabase):  # noqa: F821  pylint: disable=undefined-variable
         """
         Set a reference to the main Merlin database object for cross-entity operations.
 

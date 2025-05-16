@@ -3,13 +3,15 @@ Module for managing database entities related to physical workers.
 
 This module defines the `PhysicalWorkerManager` class, which provides high-level operations for
 creating, retrieving, and deleting physical worker entities stored in the database. It acts as a
-controller that encapsulates logic around [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
+controller that encapsulates logic around
+[`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
 objects and their corresponding [`PhysicalWorkerModel`][db_scripts.data_models.PhysicalWorkerModel]
 representations.
 
 The manager interacts with the results backend and optionally references the main database
 object to support operations that involve other entities, such as cleanup of related logical workers.
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,7 +22,11 @@ from merlin.db_scripts.entities.physical_worker_entity import PhysicalWorkerEnti
 from merlin.db_scripts.entity_managers.entity_manager import EntityManager
 from merlin.exceptions import WorkerNotFoundError
 
+
 LOG = logging.getLogger("merlin")
+
+# Purposefully ignoring this pylint message as each entity will have different parameter requirements
+# pylint: disable=arguments-differ,arguments-renamed
 
 
 class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerModel]):
@@ -44,7 +50,7 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
         delete_all: Delete all physical worker entities from the database.
         set_db_reference: Set a reference to the main database object for cross-entity operations.
     """
-    
+
     def create(self, name: str, **kwargs: Any) -> PhysicalWorkerEntity:
         """
         Create a physical worker entity if it does not already exist.
@@ -60,10 +66,7 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
         Returns:
             The created or pre-existing physical worker entity.
         """
-        log_message_create = (
-            f"Physical worker with name '{name}' does not yet have an "
-            "entry in the database. Creating one."
-        )
+        log_message_create = f"Physical worker with name '{name}' does not yet have an " "entry in the database. Creating one."
         return self._create_entity_if_not_exists(
             entity_class=PhysicalWorkerEntity,
             model_class=PhysicalWorkerModel,
@@ -73,7 +76,7 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
             name=name,
             **kwargs,
         )
-    
+
     def get(self, worker_id_or_name: str) -> PhysicalWorkerEntity:
         """
         Retrieve a physical worker entity by its ID or name.
@@ -88,7 +91,7 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
             WorkerNotFoundError: If the specified worker does not exist.
         """
         return self._get_entity(PhysicalWorkerEntity, worker_id_or_name)
-    
+
     def get_all(self) -> List[PhysicalWorkerEntity]:
         """
         Retrieve all physical worker entities from the database.
@@ -97,7 +100,7 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
             A list of all physical workers stored in the database.
         """
         return self._get_all_entities(PhysicalWorkerEntity, "physical_worker")
-    
+
     def delete(self, worker_id_or_name: str):
         """
         Delete a physical worker entity by its ID or name.
@@ -109,6 +112,7 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
         Args:
             worker_id_or_name (str): The ID or name of the physical worker to delete.
         """
+
         def cleanup_physical_worker(worker):
             logical_worker_id = worker.get_logical_worker_id()
             try:
@@ -118,22 +122,18 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
                 LOG.warning(
                     f"Couldn't find logical worker with id {logical_worker_id}. Continuing with physical worker delete."
                 )
-        
+
         self._delete_entity(PhysicalWorkerEntity, worker_id_or_name, cleanup_fn=cleanup_physical_worker)
-    
+
     def delete_all(self):
         """
         Delete all physical worker entities from the database.
 
         This operation also performs cleanup on associated logical workers as needed.
         """
-        self._delete_all_by_type(
-            get_all_fn=self.get_all,
-            delete_fn=self.delete,
-            entity_name="physical workers"
-        )
-    
-    def set_db_reference(self, db: MerlinDatabase):
+        self._delete_all_by_type(get_all_fn=self.get_all, delete_fn=self.delete, entity_name="physical workers")
+
+    def set_db_reference(self, db: MerlinDatabase):  # noqa: F821  pylint: disable=undefined-variable
         """
         Set a reference to the main Merlin database object for cross-entity operations.
 

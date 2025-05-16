@@ -7,6 +7,7 @@ class to provide CRUD operations for runs associated with studies, workspaces,
 and queues. The manager coordinates with the study and logical worker managers
 for consistent data handling during create and delete operations.
 """
+
 from __future__ import annotations
 
 import logging
@@ -17,7 +18,11 @@ from merlin.db_scripts.entities.run_entity import RunEntity
 from merlin.db_scripts.entity_managers.entity_manager import EntityManager
 from merlin.exceptions import StudyNotFoundError, WorkerNotFoundError
 
+
 LOG = logging.getLogger("merlin")
+
+# Purposefully ignoring this pylint message as each entity will have different parameter requirements
+# pylint: disable=arguments-differ,arguments-renamed
 
 
 class RunManager(EntityManager[RunEntity, RunModel]):
@@ -41,7 +46,7 @@ class RunManager(EntityManager[RunEntity, RunModel]):
         delete_all: Delete all runs in the database.
         set_db_reference: Set the reference to the main Merlin database for cross-entity operations.
     """
-    
+
     def create(self, study_name: str, workspace: str, queues: List[str], **kwargs: Any) -> RunEntity:
         """
         Create a new run associated with a study, workspace, and queues.
@@ -62,12 +67,12 @@ class RunManager(EntityManager[RunEntity, RunModel]):
         """
         # Create the study if it doesn't exist
         study_entity = self.db.studies.create(study_name)
-        
+
         # Filter valid fields for the RunModel
         valid_fields = {f.name for f in RunModel.get_class_fields()}
         valid_kwargs = {key: val for key, val in kwargs.items() if key in valid_fields}
         additional_data = {key: val for key, val in kwargs.items() if key not in valid_fields}
-        
+
         # Create the RunModel and save it
         new_run = RunModel(
             study_id=study_entity.get_id(),
@@ -78,12 +83,12 @@ class RunManager(EntityManager[RunEntity, RunModel]):
         )
         run_entity = RunEntity(new_run, self.backend)
         run_entity.save()
-        
+
         # Add the run ID to the study
         study_entity.add_run(run_entity.get_id())
-        
+
         return run_entity
-    
+
     def get(self, run_id_or_workspace: str) -> RunEntity:
         """
         Retrieve a run entity by its unique ID or workspace identifier.
@@ -98,7 +103,7 @@ class RunManager(EntityManager[RunEntity, RunModel]):
             RunNotFoundError: If no run is found matching the identifier.
         """
         return self._get_entity(RunEntity, run_id_or_workspace)
-    
+
     def get_all(self) -> List[RunEntity]:
         """
         Retrieve all run entities stored in the database.
@@ -107,7 +112,7 @@ class RunManager(EntityManager[RunEntity, RunModel]):
             A list of all run entities.
         """
         return self._get_all_entities(RunEntity, "run")
-    
+
     def delete(self, run_id_or_workspace: str):
         """
         Delete a run entity by its ID or workspace identifier.
@@ -122,6 +127,7 @@ class RunManager(EntityManager[RunEntity, RunModel]):
         Raises:
             RunNotFoundError: If no run is found matching the identifier.
         """
+
         def cleanup_run(run):
             # Remove from study
             try:
@@ -129,7 +135,7 @@ class RunManager(EntityManager[RunEntity, RunModel]):
                 study.remove_run(run.get_id())
             except StudyNotFoundError:
                 LOG.warning(f"Couldn't find study with id {run.get_study_id()}. Continuing with run delete.")
-            
+
             # Remove from logical workers
             for worker_id in run.get_workers():
                 try:
@@ -137,22 +143,18 @@ class RunManager(EntityManager[RunEntity, RunModel]):
                     logical_worker.remove_run(run.get_id())
                 except WorkerNotFoundError:
                     LOG.warning(f"Couldn't find logical worker with id {worker_id}. Continuing with run delete.")
-        
+
         self._delete_entity(RunEntity, run_id_or_workspace, cleanup_fn=cleanup_run)
-    
+
     def delete_all(self):
         """
         Delete all run entities from the database.
 
         This method calls `delete` on each run entity to ensure proper cleanup.
         """
-        self._delete_all_by_type(
-            get_all_fn=self.get_all,
-            delete_fn=self.delete,
-            entity_name="runs"
-        )
-    
-    def set_db_reference(self, db: MerlinDatabase):
+        self._delete_all_by_type(get_all_fn=self.get_all, delete_fn=self.delete, entity_name="runs")
+
+    def set_db_reference(self, db: MerlinDatabase):  # noqa: F821  pylint: disable=undefined-variable
         """
         Set a reference to the main Merlin database object for cross-entity operations.
 

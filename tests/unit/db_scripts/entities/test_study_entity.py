@@ -2,12 +2,13 @@
 Tests for the `study_entity.py` module.
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import StudyModel
 from merlin.db_scripts.entities.study_entity import StudyEntity
-from merlin.backends.results_backend import ResultsBackend
 
 
 class TestStudyEntity:
@@ -135,7 +136,7 @@ class TestStudyEntity:
         """
         assert study_entity.get_name() == mock_model.name
 
-    @patch.object(StudyEntity, 'load')
+    @patch.object(StudyEntity, "load")
     def test_load(self, mock_load: MagicMock, mock_backend: MagicMock):
         """
         Test the `load` class method.
@@ -150,7 +151,7 @@ class TestStudyEntity:
         mock_load.assert_called_once_with(entity_id, mock_backend)
         assert result == "loaded_entity"
 
-    @patch.object(StudyEntity, 'delete')
+    @patch.object(StudyEntity, "delete")
     def test_delete(self, mock_delete: MagicMock, mock_backend: MagicMock):
         """
         Test the `delete` class method.

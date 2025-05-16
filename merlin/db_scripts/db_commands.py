@@ -147,9 +147,7 @@ def database_delete(args: Namespace):
             merlin_db.delete(entity_type, identifier, **kwargs)
 
     operations = {
-        "study": lambda: delete_entities(
-            "study", args.study, remove_associated_runs=not args.keep_associated_runs
-        ),
+        "study": lambda: delete_entities("study", args.study, remove_associated_runs=not args.keep_associated_runs),
         "run": lambda: delete_entities("run", args.run),
         "logical-worker": lambda: delete_entities("logical_worker", args.worker),
         "physical-worker": lambda: delete_entities("physical_worker", args.worker),

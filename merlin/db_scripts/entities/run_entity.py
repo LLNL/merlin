@@ -15,7 +15,6 @@ from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.db_scripts.entities.mixins.queue_management import QueueManagementMixin
-from merlin.db_scripts.entities.study_entity import StudyEntity
 from merlin.exceptions import RunNotFoundError
 
 
@@ -143,6 +142,8 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
         Returns:
             A human-readable string representation of the `RunEntity` instance.
         """
+        from merlin.db_scripts.entities.study_entity import StudyEntity  # pylint: disable=import-outside-toplevel
+
         run_id = self.get_id()
         study = StudyEntity.load(self.get_study_id(), self.backend)
         study_str = f"  - ID: {study.get_id()}\n    Name: {study.get_name()}"
@@ -296,7 +297,7 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
         self.entity_info.dump_to_json_file(self.get_metadata_file())
 
     @classmethod
-    def load(cls, entity_identifier: str, backend: ResultsBackend) -> 'RunEntity':
+    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "RunEntity":
         """
         Load a run from the database by id or workspace.
 

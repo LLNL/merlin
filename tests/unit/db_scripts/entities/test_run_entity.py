@@ -2,13 +2,14 @@
 Tests for the `run_entity.py` module.
 """
 
-import pytest
 from unittest.mock import MagicMock, patch
 
-from merlin.db_scripts.data_models import RunModel
-from merlin.db_scripts.entities.study_entity import StudyEntity
-from merlin.db_scripts.entities.run_entity import RunEntity
+import pytest
+
 from merlin.backends.results_backend import ResultsBackend
+from merlin.db_scripts.data_models import RunModel
+from merlin.db_scripts.entities.run_entity import RunEntity
+from merlin.db_scripts.entities.study_entity import StudyEntity
 
 
 class TestRunEntity:
@@ -33,7 +34,7 @@ class TestRunEntity:
         model.run_complete = False
         model.additional_data = {"key": "value"}
         return model
-    
+
     @pytest.fixture
     def mock_backend(self, mock_model: MagicMock) -> MagicMock:
         """
@@ -62,7 +63,7 @@ class TestRunEntity:
         Returns:
             A `RunEntity` instance.
         """
-        with patch('os.path.join', return_value="/test/workspace/merlin_info/run_metadata.json"):
+        with patch("os.path.join", return_value="/test/workspace/merlin_info/run_metadata.json"):
             return RunEntity(mock_model, mock_backend)
 
     @pytest.fixture
@@ -92,7 +93,7 @@ class TestRunEntity:
             mock_model: A mocked `RunModel` instance.
             mock_backend: A mocked `ResultsBackend` instance.
         """
-        with patch('os.path.join', return_value="/test/workspace/merlin_info/run_metadata.json"):
+        with patch("os.path.join", return_value="/test/workspace/merlin_info/run_metadata.json"):
             run_entity = RunEntity(mock_model, mock_backend)
             assert run_entity._metadata_file == "/test/workspace/merlin_info/run_metadata.json"
 
@@ -116,7 +117,7 @@ class TestRunEntity:
             run_entity: A fixture that returns a `RunEntity` instance.
             mock_study: A fixture that returns a mocked `StudyEntity` instance.
         """
-        with patch.object(StudyEntity, 'load', return_value=mock_study):
+        with patch.object(StudyEntity, "load", return_value=mock_study):
             str_output = str(run_entity)
             assert f"Run with ID {run_entity.get_id()}" in str_output
             assert f"Workspace: {run_entity.get_workspace()}" in str_output
@@ -147,10 +148,10 @@ class TestRunEntity:
         """
         Test `get_metadata_filepath` class method returns the correct path.
         """
-        with patch('os.path.join', return_value="/test/workspace/merlin_info/run_metadata.json"):
+        with patch("os.path.join", return_value="/test/workspace/merlin_info/run_metadata.json"):
             result = RunEntity.get_metadata_filepath("/test/workspace")
             assert result == "/test/workspace/merlin_info/run_metadata.json"
-    
+
     def test_get_study_id(self, run_entity: RunEntity, mock_model: MagicMock):
         """
         Test `get_study_id` returns the correct value.
@@ -160,7 +161,7 @@ class TestRunEntity:
             mock_model: A fixture that returns a mocked `RunModel` instance.
         """
         assert run_entity.get_study_id() == mock_model.study_id
-    
+
     def test_get_workspace(self, run_entity: RunEntity, mock_model: MagicMock):
         """
         Test `get_workspace` returns the correct value.
@@ -170,7 +171,7 @@ class TestRunEntity:
             mock_model: A fixture that returns a mocked `RunModel` instance.
         """
         assert run_entity.get_workspace() == mock_model.workspace
-    
+
     def test_get_workers(self, run_entity: RunEntity, mock_model: MagicMock):
         """
         Test `get_workers` returns the correct value.
@@ -180,7 +181,7 @@ class TestRunEntity:
             mock_model: A fixture that returns a mocked `RunModel` instance.
         """
         assert run_entity.get_workers() == mock_model.workers
-    
+
     def test_add_worker(self, run_entity: RunEntity, mock_backend: MagicMock):
         """
         Test `add_worker` adds the worker and saves the model.
@@ -193,7 +194,7 @@ class TestRunEntity:
         run_entity.add_worker(new_worker_id)
         assert new_worker_id in run_entity.entity_info.workers
         mock_backend.save.assert_called_once()
-    
+
     def test_remove_worker(self, run_entity: RunEntity, mock_backend: MagicMock):
         """
         Test `remove_worker` removes the worker and saves the model.
@@ -206,7 +207,7 @@ class TestRunEntity:
         run_entity.remove_worker(worker_id)
         assert worker_id not in run_entity.entity_info.workers
         mock_backend.save.assert_called_once()
-    
+
     def test_get_parent(self, run_entity: RunEntity, mock_model: MagicMock):
         """
         Test `get_parent` returns the correct value.
@@ -216,7 +217,7 @@ class TestRunEntity:
             mock_model: A fixture that returns a mocked `RunModel` instance.
         """
         assert run_entity.get_parent() == mock_model.parent
-    
+
     def test_get_child(self, run_entity: RunEntity, mock_model: MagicMock):
         """
         Test `get_child` returns the correct value.
@@ -226,7 +227,7 @@ class TestRunEntity:
             mock_model: A fixture that returns a mocked `RunModel` instance.
         """
         assert run_entity.get_child() == mock_model.child
-    
+
     def test_get_queues(self, run_entity: RunEntity, mock_model: MagicMock):
         """
         Test `get_queues` returns the correct value.
@@ -236,7 +237,7 @@ class TestRunEntity:
             mock_model: A fixture that returns a mocked `RunModel` instance.
         """
         assert run_entity.get_queues() == mock_model.queues
-    
+
     def test_post_save_hook(self, run_entity: RunEntity):
         """
         Test `_post_save_hook` calls dump_metadata.
@@ -244,10 +245,10 @@ class TestRunEntity:
         Args:
             run_entity: A fixture that returns a `RunEntity` instance.
         """
-        with patch.object(run_entity, 'dump_metadata') as mock_dump:
+        with patch.object(run_entity, "dump_metadata") as mock_dump:
             run_entity._post_save_hook()
             mock_dump.assert_called_once()
-    
+
     def test_dump_metadata(self, run_entity: RunEntity):
         """
         Test `dump_metadata` calls dump_to_json_file on the model.
@@ -257,10 +258,10 @@ class TestRunEntity:
         """
         run_entity.dump_metadata()
         run_entity.entity_info.dump_to_json_file.assert_called_once_with(run_entity.get_metadata_file())
-    
-    @patch('os.path.isdir', return_value=True)
-    @patch('os.path.exists', return_value=True)
-    @patch('merlin.db_scripts.data_models.RunModel.load_from_json_file')
+
+    @patch("os.path.isdir", return_value=True)
+    @patch("os.path.exists", return_value=True)
+    @patch("merlin.db_scripts.data_models.RunModel.load_from_json_file")
     def test_load_from_workspace(
         self,
         mock_load_json: MagicMock,
@@ -281,17 +282,20 @@ class TestRunEntity:
         """
         workspace = "/test/workspace"
         mock_load_json.return_value = mock_model
-        
-        with patch('merlin.db_scripts.entities.run_entity.RunEntity.get_metadata_filepath', return_value="/test/workspace/merlin_info/run_metadata.json"):
+
+        with patch(
+            "merlin.db_scripts.entities.run_entity.RunEntity.get_metadata_filepath",
+            return_value="/test/workspace/merlin_info/run_metadata.json",
+        ):
             run = RunEntity.load(workspace, mock_backend)
             mock_load_json.assert_called_once_with("/test/workspace/merlin_info/run_metadata.json")
             assert run.entity_info == mock_model
-    
-    @patch('os.path.isdir', return_value=False)
+
+    @patch("os.path.isdir", return_value=False)
     def test_load_from_id(self, mock_isdir: MagicMock, mock_model: MagicMock, mock_backend: MagicMock):
         """
         Test `load` method when loading from ID.
-        
+
         Args:
             mock_isdir: A mocked version of the `os.path.isdir` function.
             mock_model: A fixture that returns a mocked `RunModel` instance.
@@ -299,16 +303,16 @@ class TestRunEntity:
         """
         run_id = "run_123"
         mock_backend.retrieve.return_value = mock_model
-        
+
         run = RunEntity.load(run_id, mock_backend)
         mock_backend.retrieve.assert_called_once_with(run_id, "run")
         assert run.entity_info == mock_model
-    
-    @patch('merlin.db_scripts.entities.run_entity.RunEntity.load')
+
+    @patch("merlin.db_scripts.entities.run_entity.RunEntity.load")
     def test_delete(self, mock_load: MagicMock, mock_backend: MagicMock):
         """
         Test `delete` method.
-        
+
         Args:
             mock_load: A mocked version of the `load` method of `StudyEntity`.
             mock_backend: A fixture that returns a mocked `ResultsBackend` instance.
@@ -317,7 +321,7 @@ class TestRunEntity:
         mock_run = MagicMock()
         mock_run.get_id.return_value = run_id
         mock_load.return_value = mock_run
-        
+
         RunEntity.delete(run_id, mock_backend)
         mock_load.assert_called_once_with(run_id, mock_backend)
         mock_backend.delete.assert_called_once_with(run_id, "run")

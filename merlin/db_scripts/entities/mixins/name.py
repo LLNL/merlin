@@ -7,6 +7,8 @@ necessary attributes to support name retrieval, specifically an `entity_info` ob
 containing a `name` attribute.
 """
 
+# pylint: disable=too-few-public-methods
+
 
 class NameMixin:
     """

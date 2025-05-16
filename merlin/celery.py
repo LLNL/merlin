@@ -227,7 +227,8 @@ def handle_worker_startup(sender: str = None, **kwargs):
                 worker_name, host = sender.split("@")[1].split(".%")
                 merlin_db = MerlinDatabase()
                 logical_worker = merlin_db.create("logical_worker", name=worker_name, queues=options.get("queues"))
-                physical_worker = merlin_db.create("physical_worker",
+                physical_worker = merlin_db.create(
+                    "physical_worker",
                     name=str(sender),
                     host=host,
                     status=WorkerStatus.RUNNING,
