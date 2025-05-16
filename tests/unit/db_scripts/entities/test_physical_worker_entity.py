@@ -13,13 +13,6 @@ from merlin.db_scripts.data_models import PhysicalWorkerModel
 from merlin.db_scripts.entities.physical_worker_entity import PhysicalWorkerEntity
 
 
-# TODO finish these tests for the entities folder
-# TODO update docstrings for these tests (PhysicalWorker already done)
-# TODO see if claude will actually refactor MerlinDatabase
-# TODO write unit tests for MerlinDatabase after refactor
-# TODO start a new branch for work on the local test suite fixes (adding SQLite support)
-
-
 class TestPhysicalWorkerEntity:
     """Tests for the `PhysicalWorkerEntity` class."""
 
