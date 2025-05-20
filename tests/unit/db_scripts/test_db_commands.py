@@ -1,3 +1,7 @@
+"""
+Tests for the `db_commands.py` module.
+"""
+
 import logging
 from argparse import Namespace
 from unittest.mock import call
