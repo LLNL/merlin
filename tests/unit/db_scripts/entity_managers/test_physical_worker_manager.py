@@ -2,8 +2,9 @@
 Tests for the `physical_worker_manager.py` module.
 """
 
+from unittest.mock import MagicMock, call, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, call
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import PhysicalWorkerModel
@@ -57,20 +58,20 @@ class TestPhysicalWorkerManager:
     def test_create_worker(self, worker_manager: PhysicalWorkerManager, mock_backend: MagicMock):
         """
         Test creating a new physical worker.
-        
+
         Args:
             worker_manager: A `PhysicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
         """
         # Setup
         worker_name = "test_worker"
-        
+
         # Mock the backend get call to simulate worker doesn't exist
         mock_backend.retrieve.return_value = None
-        
+
         # Execute
         worker = worker_manager.create(worker_name)
-        
+
         # Assert
         assert isinstance(worker, PhysicalWorkerEntity)
         mock_backend.retrieve.assert_called_once_with(worker_name, "physical_worker")
@@ -81,7 +82,7 @@ class TestPhysicalWorkerManager:
     def test_create_worker_with_additional_attrs(self, worker_manager: PhysicalWorkerManager, mock_backend: MagicMock):
         """
         Test creating a worker with additional attributes.
-        
+
         Args:
             worker_manager: A `PhysicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
@@ -89,13 +90,13 @@ class TestPhysicalWorkerManager:
         # Setup
         worker_name = "test_worker"
         attrs = {"host": "localhost", "pid": 1234}
-        
+
         # Mock the backend get call to simulate worker doesn't exist
         mock_backend.retrieve.return_value = None
-        
+
         # Execute
         worker_manager.create(worker_name, **attrs)
-        
+
         # Assert
         saved_model = mock_backend.save.call_args[0][0]
         assert saved_model.name == worker_name
@@ -105,20 +106,20 @@ class TestPhysicalWorkerManager:
     def test_create_existing_worker(self, worker_manager: PhysicalWorkerManager, mock_backend: MagicMock):
         """
         Test creating a worker that already exists returns the existing worker.
-        
+
         Args:
             worker_manager: A `PhysicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
         """
         # Setup
         worker_name = "existing_worker"
-        
+
         existing_model = PhysicalWorkerModel(name=worker_name)
         mock_backend.retrieve.return_value = existing_model
-        
+
         # Execute
         worker = worker_manager.create(worker_name)
-        
+
         # Assert
         assert isinstance(worker, PhysicalWorkerEntity)
         mock_backend.retrieve.assert_called_once_with(worker_name, "physical_worker")
@@ -127,7 +128,7 @@ class TestPhysicalWorkerManager:
     def test_get_worker(self, worker_manager: PhysicalWorkerManager, mock_backend: MagicMock):
         """
         Test retrieving a worker by ID or name.
-        
+
         Args:
             worker_manager: A `PhysicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
@@ -136,10 +137,10 @@ class TestPhysicalWorkerManager:
         worker_id = "worker_name"  # In this case, ID is the same as name
         mock_model = PhysicalWorkerModel(name=worker_id)
         mock_backend.retrieve.return_value = mock_model
-        
+
         # Execute
         worker = worker_manager.get(worker_id)
-        
+
         # Assert
         assert isinstance(worker, PhysicalWorkerEntity)
         mock_backend.retrieve.assert_called_once_with(worker_id, "physical_worker")
@@ -147,21 +148,18 @@ class TestPhysicalWorkerManager:
     def test_get_all_workers(self, worker_manager: PhysicalWorkerManager, mock_backend: MagicMock):
         """
         Test retrieving all workers.
-        
+
         Args:
             worker_manager: A `PhysicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
         """
         # Setup
-        mock_models = [
-            PhysicalWorkerModel(name="worker1"),
-            PhysicalWorkerModel(name="worker2")
-        ]
+        mock_models = [PhysicalWorkerModel(name="worker1"), PhysicalWorkerModel(name="worker2")]
         mock_backend.retrieve_all.return_value = mock_models
-        
+
         # Execute
         workers = worker_manager.get_all()
-        
+
         # Assert
         assert len(workers) == 2
         assert all(isinstance(w, PhysicalWorkerEntity) for w in workers)
@@ -170,7 +168,7 @@ class TestPhysicalWorkerManager:
     def test_delete_worker(self, worker_manager: PhysicalWorkerManager, mock_backend: MagicMock, mock_db: MagicMock):
         """
         Test deleting a worker and cleanup of associated logical worker.
-        
+
         Args:
             worker_manager: A `PhysicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
@@ -178,22 +176,22 @@ class TestPhysicalWorkerManager:
         """
         # Setup
         worker_id = "worker_name"
-        
+
         mock_worker = MagicMock(spec=PhysicalWorkerEntity)
         mock_worker.get_id.return_value = worker_id
         mock_worker.get_logical_worker_id.return_value = "logical_worker_id"
-        
+
         # Mock the get method to return our mock worker
         worker_manager._get_entity = MagicMock(return_value=mock_worker)
-        
+
         # Setup mock logical worker
         mock_logical_worker = MagicMock()
         mock_db.logical_workers.get.return_value = mock_logical_worker
 
-        with patch.object(PhysicalWorkerEntity, 'delete') as mock_delete:
+        with patch.object(PhysicalWorkerEntity, "delete") as mock_delete:
             # Execute
             worker_manager.delete(worker_id)
-            
+
             # Assert
             worker_manager._get_entity.assert_called_once_with(PhysicalWorkerEntity, worker_id)
             mock_db.logical_workers.get.assert_called_once_with(worker_id="logical_worker_id")
@@ -205,7 +203,7 @@ class TestPhysicalWorkerManager:
     ):
         """
         Test deleting a worker when the associated logical worker isn't found.
-        
+
         Args:
             worker_manager: A `PhysicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
@@ -213,21 +211,21 @@ class TestPhysicalWorkerManager:
         """
         # Setup
         worker_id = "worker_name"
-        
+
         mock_worker = MagicMock(spec=PhysicalWorkerEntity)
         mock_worker.get_id.return_value = worker_id
         mock_worker.get_logical_worker_id.return_value = "missing_logical_worker"
-        
+
         # Mock the get method to return our mock worker
         worker_manager._get_entity = MagicMock(return_value=mock_worker)
-        
+
         # Setup logical worker not found
         mock_db.logical_workers.get.side_effect = WorkerNotFoundError
-        
-        with patch.object(PhysicalWorkerEntity, 'delete') as mock_delete:
+
+        with patch.object(PhysicalWorkerEntity, "delete") as mock_delete:
             # Execute
             worker_manager.delete(worker_id)
-            
+
             # Assert
             mock_db.logical_workers.get.assert_called_once_with(worker_id="missing_logical_worker")
             mock_delete.assert_called_once_with(worker_id, mock_backend)
@@ -235,27 +233,21 @@ class TestPhysicalWorkerManager:
     def test_delete_all_workers(self, worker_manager: PhysicalWorkerManager):
         """
         Test deleting all workers.
-        
+
         Args:
             worker_manager: A `PhysicalWorkerManager` instance.
         """
         # Setup
-        mock_workers = [
-            MagicMock(spec=PhysicalWorkerEntity),
-            MagicMock(spec=PhysicalWorkerEntity)
-        ]
+        mock_workers = [MagicMock(spec=PhysicalWorkerEntity), MagicMock(spec=PhysicalWorkerEntity)]
         mock_workers[0].get_id.return_value = "worker1"
         mock_workers[1].get_id.return_value = "worker2"
-        
+
         worker_manager.get_all = MagicMock(return_value=mock_workers)
         worker_manager.delete = MagicMock()
-        
+
         # Execute
         worker_manager.delete_all()
-        
+
         # Assert
         worker_manager.get_all.assert_called_once()
-        worker_manager.delete.assert_has_calls([
-            call("worker1"), 
-            call("worker2")
-        ])
+        worker_manager.delete.assert_has_calls([call("worker1"), call("worker2")])

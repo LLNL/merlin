@@ -2,8 +2,9 @@
 Tests for the `logical_worker_manager.py` module.
 """
 
+from unittest.mock import MagicMock, call, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, call
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import LogicalWorkerModel
@@ -15,7 +16,7 @@ from merlin.exceptions import RunNotFoundError
 
 class TestLogicalWorkerManager:
     """Tests for the `LogicalWorkerManager` class."""
-    
+
     @pytest.fixture
     def mock_backend(self) -> MagicMock:
         """
@@ -57,7 +58,7 @@ class TestLogicalWorkerManager:
     def test_create_worker(self, worker_manager: LogicalWorkerManager, mock_backend: MagicMock):
         """
         Test creating a new logical worker.
-        
+
         Args:
             worker_manager: A `LogicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
@@ -66,13 +67,13 @@ class TestLogicalWorkerManager:
         worker_name = "test_worker"
         queues = ["queue1", "queue2"]
         worker_id = LogicalWorkerModel.generate_id(worker_name, queues)
-        
+
         # Mock the backend get call to simulate worker doesn't exist
         mock_backend.retrieve.return_value = None
-        
+
         # Execute
         worker = worker_manager.create(worker_name, queues)
-        
+
         # Assert
         assert isinstance(worker, LogicalWorkerEntity)
         mock_backend.retrieve.assert_called_once_with(worker_id, "logical_worker")
@@ -85,7 +86,7 @@ class TestLogicalWorkerManager:
     def test_create_existing_worker(self, worker_manager: LogicalWorkerManager, mock_backend: MagicMock):
         """
         Test creating a worker that already exists returns the existing worker.
-        
+
         Args:
             worker_manager: A `LogicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
@@ -94,13 +95,13 @@ class TestLogicalWorkerManager:
         worker_name = "existing_worker"
         queues = ["queue1"]
         worker_id = LogicalWorkerModel.generate_id(worker_name, queues)
-        
+
         existing_model = LogicalWorkerModel(name=worker_name, queues=queues)
         mock_backend.retrieve.return_value = existing_model
-        
+
         # Execute
         worker = worker_manager.create(worker_name, queues)
-        
+
         # Assert
         assert isinstance(worker, LogicalWorkerEntity)
         mock_backend.retrieve.assert_called_once_with(worker_id, "logical_worker")
@@ -109,7 +110,7 @@ class TestLogicalWorkerManager:
     def test_get_worker_by_id(self, worker_manager: LogicalWorkerManager, mock_backend: MagicMock):
         """
         Test retrieving a worker by ID.
-        
+
         Args:
             worker_manager: A `LogicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
@@ -118,10 +119,10 @@ class TestLogicalWorkerManager:
         worker_id = "worker_id_123"
         mock_model = LogicalWorkerModel(id=worker_id, name="test", queues=["q1"])
         mock_backend.retrieve.return_value = mock_model
-        
+
         # Execute
         worker = worker_manager.get(worker_id=worker_id)
-        
+
         # Assert
         assert isinstance(worker, LogicalWorkerEntity)
         mock_backend.retrieve.assert_called_once_with(worker_id, "logical_worker")
@@ -129,7 +130,7 @@ class TestLogicalWorkerManager:
     def test_get_worker_by_name_queues(self, worker_manager: LogicalWorkerManager, mock_backend: MagicMock):
         """
         Test retrieving a worker by name and queues.
-        
+
         Args:
             worker_manager: A `LogicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
@@ -138,13 +139,13 @@ class TestLogicalWorkerManager:
         worker_name = "test_worker"
         queues = ["queue1", "queue2"]
         worker_id = LogicalWorkerModel.generate_id(worker_name, queues)
-        
+
         mock_model = LogicalWorkerModel(id=worker_id, name=worker_name, queues=queues)
         mock_backend.retrieve.return_value = mock_model
-        
+
         # Execute
         worker = worker_manager.get(worker_name=worker_name, queues=queues)
-        
+
         # Assert
         assert isinstance(worker, LogicalWorkerEntity)
         mock_backend.retrieve.assert_called_once_with(worker_id, "logical_worker")
@@ -152,22 +153,22 @@ class TestLogicalWorkerManager:
     def test_get_worker_invalid_args(self, worker_manager: LogicalWorkerManager):
         """
         Test that `get` raises ValueError with invalid arguments.
-        
+
         Args:
             worker_manager: A `LogicalWorkerManager` instance.
         """
         # Missing both worker_id and (worker_name, queues)
         with pytest.raises(ValueError):
             worker_manager.get()
-        
+
         # Missing queues when worker_name is provided
         with pytest.raises(ValueError):
             worker_manager.get(worker_name="test")
-        
+
         # Missing worker_name when queues is provided
         with pytest.raises(ValueError):
             worker_manager.get(queues=["q1"])
-        
+
         # Providing both worker_id and (worker_name, queues)
         with pytest.raises(ValueError):
             worker_manager.get(worker_id="id", worker_name="test", queues=["q1"])
@@ -175,21 +176,18 @@ class TestLogicalWorkerManager:
     def test_get_all_workers(self, worker_manager: LogicalWorkerManager, mock_backend: MagicMock):
         """
         Test retrieving all workers.
-        
+
         Args:
             worker_manager: A `LogicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
         """
         # Setup
-        mock_models = [
-            LogicalWorkerModel(name="worker1", queues=["q1"]),
-            LogicalWorkerModel(name="worker2", queues=["q2"])
-        ]
+        mock_models = [LogicalWorkerModel(name="worker1", queues=["q1"]), LogicalWorkerModel(name="worker2", queues=["q2"])]
         mock_backend.retrieve_all.return_value = mock_models
-        
+
         # Execute
         workers = worker_manager.get_all()
-        
+
         # Assert
         assert len(workers) == 2
         assert all(isinstance(w, LogicalWorkerEntity) for w in workers)
@@ -198,7 +196,7 @@ class TestLogicalWorkerManager:
     def test_delete_worker(self, worker_manager: LogicalWorkerManager, mock_backend: MagicMock, mock_db: MagicMock):
         """
         Test deleting a worker and cleanup of associated runs.
-        
+
         Args:
             worker_manager: A `LogicalWorkerManager` instance.
             mock_backend: A mocked `ResultsBackend` instance.
@@ -209,23 +207,21 @@ class TestLogicalWorkerManager:
         mock_worker = MagicMock(spec=LogicalWorkerEntity)
         mock_worker.get_id.return_value = worker_id
         mock_worker.get_runs.return_value = ["run1", "run2"]
-        
+
         # Mock the get methods to return our mock worker
         worker_manager.get = MagicMock(return_value=mock_worker)
         worker_manager._get_entity = MagicMock(return_value=mock_worker)
-        
+
         # Setup mock runs
         mock_run1 = MagicMock()
         mock_db.runs.get.side_effect = [mock_run1, RunNotFoundError]
 
-        with patch.object(LogicalWorkerEntity, 'delete') as mock_delete:
+        with patch.object(LogicalWorkerEntity, "delete") as mock_delete:
             # Execute
             worker_manager.delete(worker_id=worker_id)
-            
+
             # Assert
-            worker_manager.get.assert_called_once_with(
-                worker_id=worker_id, worker_name=None, queues=None
-            )
+            worker_manager.get.assert_called_once_with(worker_id=worker_id, worker_name=None, queues=None)
             worker_manager._get_entity.assert_called_once_with(LogicalWorkerEntity, worker_id)
             mock_db.runs.get.assert_has_calls([call("run1"), call("run2")])
             mock_run1.remove_worker.assert_called_once_with(worker_id)
@@ -234,27 +230,21 @@ class TestLogicalWorkerManager:
     def test_delete_all_workers(self, worker_manager: LogicalWorkerManager):
         """
         Test deleting all workers.
-        
+
         Args:
             worker_manager: A `LogicalWorkerManager` instance.
         """
         # Setup
-        mock_workers = [
-            MagicMock(spec=LogicalWorkerEntity),
-            MagicMock(spec=LogicalWorkerEntity)
-        ]
+        mock_workers = [MagicMock(spec=LogicalWorkerEntity), MagicMock(spec=LogicalWorkerEntity)]
         mock_workers[0].get_id.return_value = "worker1"
         mock_workers[1].get_id.return_value = "worker2"
-        
+
         worker_manager.get_all = MagicMock(return_value=mock_workers)
         worker_manager.delete = MagicMock()
-        
+
         # Execute
         worker_manager.delete_all()
-        
+
         # Assert
         worker_manager.get_all.assert_called_once()
-        worker_manager.delete.assert_has_calls([
-            call("worker1"), 
-            call("worker2")
-        ])
+        worker_manager.delete.assert_has_calls([call("worker1"), call("worker2")])

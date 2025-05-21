@@ -4,10 +4,10 @@ Tests for the `entity_manager.py` module.
 
 from dataclasses import dataclass
 from typing import Any, List
+from unittest.mock import MagicMock, call
 
 import pytest
 from _pytest.capture import CaptureFixture
-from unittest.mock import MagicMock, call
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import BaseDataModel
@@ -19,6 +19,7 @@ from merlin.exceptions import RunNotFoundError, StudyNotFoundError, WorkerNotFou
 @dataclass
 class TestDataModel(BaseDataModel):
     """A concrete subclass of `BaseDataModel` for testing."""
+
     id: str = "test_id"
     name: str = "default"
     attr1: str = "val"
@@ -30,16 +31,15 @@ class TestDataModel(BaseDataModel):
 
 class TestEntity(DatabaseEntity):
     """A concrete test implementation of a database entity."""
+
     def __init__(self, entity_info: TestDataModel, backend: ResultsBackend):
         self.entity_info = entity_info
         self.backend = backend
 
     def __repr__(self):
+        """Return the official string representation of the entity."""
         return f"TestEntity(id={self.get_id()})"
-    
-    def __str__(self):
-        return f"Test Entity {self.get_id()}"
-    
+
     def __str__(self) -> str:
         """Return a user-friendly string representation of the entity."""
         return f"Test Entity {self.get_id()}"
@@ -59,6 +59,7 @@ class TestEntity(DatabaseEntity):
 
 class TestEntityManager(EntityManager[TestEntity, TestDataModel]):
     """A concrete test implementation of an entity manager."""
+
     def create(self, name: str, **kwargs: Any) -> TestEntity:
         return self._create_entity_if_not_exists(
             TestEntity,
@@ -67,7 +68,7 @@ class TestEntityManager(EntityManager[TestEntity, TestDataModel]):
             f"Test entity {name} already exists, loading it.",
             f"Creating new test entity {name}",
             name=name,
-            **kwargs
+            **kwargs,
         )
 
     def get(self, identifier: str) -> TestEntity:
@@ -81,19 +82,14 @@ class TestEntityManager(EntityManager[TestEntity, TestDataModel]):
         self._delete_entity(TestEntity, identifier, cleanup_fn=cleanup_fn)
 
     def delete_all(self, **kwargs: Any):
-        self._delete_all_by_type(
-            self.get_all,
-            self.delete,
-            "test entities",
-            **kwargs
-        )
+        self._delete_all_by_type(self.get_all, self.delete, "test entities", **kwargs)
 
 
 @pytest.fixture
 def mock_backend() -> MagicMock:
     """
     Create a mock backend instance.
-    
+
     Returns:
         A mocked `ResultsBackend` instance.
     """
@@ -138,15 +134,15 @@ class TestEntityManagerBase:
         """
         # Setup backend to raise an error, simulating entity not found
         mock_backend.retrieve.side_effect = KeyError()
-        
+
         # Create a new entity
         entity = entity_manager.create("test1", attr1="value1")
-        
+
         # Verify the entity was created with correct attributes
         assert isinstance(entity, TestEntity)
         assert entity.entity_info.name == "test1"
         assert entity.entity_info.attr1 == "value1"
-        
+
         # Verify backend interactions
         mock_backend.retrieve.assert_called_once_with("test1", "test_entity")
         mock_backend.save.assert_called_once()
@@ -162,16 +158,16 @@ class TestEntityManagerBase:
         # Setup backend to return an existing entity
         existing_model = TestDataModel(name="test1", attr1="value1")
         mock_backend.retrieve.return_value = existing_model
-        
+
         # Create/get the entity
         entity = entity_manager.create("test1", attr2="value2")
-        
+
         # Verify the existing entity was returned
         assert isinstance(entity, TestEntity)
         assert entity.entity_info.name == "test1"
         assert entity.entity_info.attr1 == "value1"
         assert not hasattr(entity.entity_info, "attr2")  # Should not have the new attribute
-        
+
         # Verify backend interactions
         mock_backend.retrieve.assert_called_once_with("test1", "test_entity")
         mock_backend.save.assert_not_called()
@@ -187,15 +183,15 @@ class TestEntityManagerBase:
         # Setup backend to return an entity
         existing_model = TestDataModel(name="test1", attr1="value1")
         mock_backend.retrieve.return_value = existing_model
-        
+
         # Get the entity
         entity = entity_manager.get("test1")
-        
+
         # Verify the entity was returned correctly
         assert isinstance(entity, TestEntity)
         assert entity.entity_info.name == "test1"
         assert entity.entity_info.attr1 == "value1"
-        
+
         # Verify backend interactions
         mock_backend.retrieve.assert_called_once_with("test1", "test_entity")
 
@@ -209,11 +205,11 @@ class TestEntityManagerBase:
         """
         # Setup backend to raise an error
         mock_backend.retrieve.side_effect = KeyError()
-        
+
         # Attempt to get a non-existent entity
         with pytest.raises(WorkerNotFoundError):
             entity_manager.get("nonexistent")
-        
+
         # Verify backend interactions
         mock_backend.retrieve.assert_called_once_with("nonexistent", "test_entity")
 
@@ -227,13 +223,13 @@ class TestEntityManagerBase:
         """
         # Setup backend to return no entities
         mock_backend.retrieve_all.return_value = []
-        
+
         # Get all entities
         entities = entity_manager.get_all()
-        
+
         # Verify result is empty
         assert entities == []
-        
+
         # Verify backend interactions
         mock_backend.retrieve_all.assert_called_once_with("test_entity")
 
@@ -249,16 +245,16 @@ class TestEntityManagerBase:
         model1 = TestDataModel(name="test1", attr1="value1")
         model2 = TestDataModel(name="test2", attr1="value2")
         mock_backend.retrieve_all.return_value = [model1, model2]
-        
+
         # Get all entities
         entities = entity_manager.get_all()
-        
+
         # Verify correct entities were returned
         assert len(entities) == 2
         assert all(isinstance(entity, TestEntity) for entity in entities)
         assert entities[0].entity_info.name == "test1"
         assert entities[1].entity_info.name == "test2"
-        
+
         # Verify backend interactions
         mock_backend.retrieve_all.assert_called_once_with("test_entity")
 
@@ -273,10 +269,10 @@ class TestEntityManagerBase:
         # Setup backend to return an entity for load
         existing_model = TestDataModel(name="test1", attr1="value1")
         mock_backend.retrieve.return_value = existing_model
-        
+
         # Delete the entity
         entity_manager.delete("test1")
-        
+
         # Verify backend interactions
         mock_backend.retrieve.assert_called_once_with("test1", "test_entity")
         mock_backend.delete.assert_called_once_with("test1", "test_entity")
@@ -292,19 +288,19 @@ class TestEntityManagerBase:
         # Setup backend to return an entity for load
         existing_model = TestDataModel(name="test1", attr1="value1")
         mock_backend.retrieve.return_value = existing_model
-        
+
         # Create a cleanup function
         cleanup_fn = MagicMock()
-        
+
         # Delete the entity with cleanup
         entity_manager.delete("test1", cleanup_fn=cleanup_fn)
-        
+
         # Verify cleanup function was called with entity
         cleanup_fn.assert_called_once()
         called_entity = cleanup_fn.call_args[0][0]
         assert isinstance(called_entity, TestEntity)
         assert called_entity.entity_info.name == "test1"
-        
+
         # Verify backend interactions
         mock_backend.retrieve.assert_called_once_with("test1", "test_entity")
         mock_backend.delete.assert_called_once_with("test1", "test_entity")
@@ -320,13 +316,13 @@ class TestEntityManagerBase:
         """
         # Setup backend to return no entities
         mock_backend.retrieve_all.return_value = []
-        
+
         # Delete all entities
         entity_manager.delete_all()
-        
+
         # Verify log warning was issued
         assert "No test entities found in the database." in caplog.text
-        
+
         # Verify backend interactions
         mock_backend.retrieve_all.assert_called_once_with("test_entity")
         mock_backend.delete.assert_not_called()
@@ -343,17 +339,14 @@ class TestEntityManagerBase:
         model1 = TestDataModel(name="test1", attr1="value1")
         model2 = TestDataModel(name="test2", attr1="value2")
         mock_backend.retrieve_all.return_value = [model1, model2]
-        
+
         # Delete all entities
         entity_manager.delete_all()
-        
+
         # Verify backend interactions
         mock_backend.retrieve_all.assert_called_once_with("test_entity")
         assert mock_backend.delete.call_count == 2
-        mock_backend.delete.assert_has_calls([
-            call("test_id", "test_entity"),
-            call("test_id", "test_entity")
-        ], any_order=True)
+        mock_backend.delete.assert_has_calls([call("test_id", "test_entity"), call("test_id", "test_entity")], any_order=True)
 
     def test_delete_all_with_cleanup(self, entity_manager: TestEntityManager, mock_backend: MagicMock):
         """
@@ -367,29 +360,22 @@ class TestEntityManagerBase:
         model1 = TestDataModel(name="test1", attr1="value1")
         model2 = TestDataModel(name="test2", attr1="value2")
         mock_backend.retrieve_all.return_value = [model1, model2]
-        
+
         # Create a cleanup function
         cleanup_fn = MagicMock()
-        
+
         # Delete all entities with cleanup
         entity_manager.delete_all(cleanup_fn=cleanup_fn)
-        
+
         # Verify backend interactions
         mock_backend.retrieve_all.assert_called_once_with("test_entity")
         assert mock_backend.delete.call_count == 2
-        mock_backend.delete.assert_has_calls([
-            call("test_id", "test_entity"),
-            call("test_id", "test_entity")
-        ], any_order=True)
-        
+        mock_backend.delete.assert_has_calls([call("test_id", "test_entity"), call("test_id", "test_entity")], any_order=True)
+
         # Verify cleanup function was called for each entity
         assert cleanup_fn.call_count == 2
 
-    @pytest.mark.parametrize("exception_type", [
-        WorkerNotFoundError, 
-        StudyNotFoundError, 
-        RunNotFoundError
-    ])
+    @pytest.mark.parametrize("exception_type", [WorkerNotFoundError, StudyNotFoundError, RunNotFoundError])
     def test_create_entity_handles_various_not_found_errors(
         self, entity_manager: TestEntityManager, mock_backend: MagicMock, exception_type: Exception
     ):
@@ -403,15 +389,15 @@ class TestEntityManagerBase:
         """
         # Setup backend to raise different types of not found errors
         mock_backend.retrieve.side_effect = exception_type("Entity not found")
-        
+
         # Create a new entity
         entity = entity_manager.create("test1", attr1="value1")
-        
+
         # Verify the entity was created
         assert isinstance(entity, TestEntity)
         assert entity.entity_info.name == "test1"
         assert entity.entity_info.attr1 == "value1"
-        
+
         # Verify backend interactions
         mock_backend.retrieve.assert_called_once()
         mock_backend.save.assert_called_once()
