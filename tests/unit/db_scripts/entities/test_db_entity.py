@@ -1,3 +1,6 @@
+"""
+Tests for the `db_entity.py` module.
+"""
 from typing import Dict, List
 from unittest.mock import Mock
 

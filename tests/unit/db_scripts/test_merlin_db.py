@@ -90,7 +90,7 @@ class TestMerlinDatabase:
     
     def test_init(self, mock_backend: MagicMock):
         """
-        Test initialization of MerlinDatabase.
+        Test initialization of `MerlinDatabase`.
         
         Args:
             mock_backend: A mocked `ResultsBackend` instance.

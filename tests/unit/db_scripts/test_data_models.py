@@ -1,3 +1,6 @@
+"""
+Tests for the `data_models.py` module.
+"""
 import json
 import os
 from dataclasses import dataclass
