@@ -3,6 +3,7 @@ Tests for the `merlin_db.py` module.
 """
 
 import logging
+from contextlib import ExitStack
 from typing import Generator
 from unittest.mock import MagicMock, patch
 
@@ -71,13 +72,24 @@ def mock_merlin_db(
     Returns:
         A `MerlinDatabase` instance with moocked attributes.
     """
-    with (
-        patch("merlin.db_scripts.merlin_db.backend_factory") as mock_factory,
-        patch("merlin.db_scripts.merlin_db.StudyManager", return_value=mock_entity_managers["study"]),
-        patch("merlin.db_scripts.merlin_db.RunManager", return_value=mock_entity_managers["run"]),
-        patch("merlin.db_scripts.merlin_db.LogicalWorkerManager", return_value=mock_entity_managers["logical_worker"]),
-        patch("merlin.db_scripts.merlin_db.PhysicalWorkerManager", return_value=mock_entity_managers["physical_worker"]),
-    ):
+    # TODO when we drop support for python 3.8, replace the ExitStack call with the comment below
+    # with (
+    #     patch("merlin.db_scripts.merlin_db.backend_factory") as mock_factory,
+    #     patch("merlin.db_scripts.merlin_db.StudyManager", return_value=mock_entity_managers["study"]),
+    #     patch("merlin.db_scripts.merlin_db.RunManager", return_value=mock_entity_managers["run"]),
+    #     patch("merlin.db_scripts.merlin_db.LogicalWorkerManager", return_value=mock_entity_managers["logical_worker"]),
+    #     patch("merlin.db_scripts.merlin_db.PhysicalWorkerManager", return_value=mock_entity_managers["physical_worker"]),
+    # ):
+    with ExitStack() as stack:
+        mock_factory = stack.enter_context(patch("merlin.db_scripts.merlin_db.backend_factory"))
+        stack.enter_context(patch("merlin.db_scripts.merlin_db.StudyManager", return_value=mock_entity_managers["study"]))
+        stack.enter_context(patch("merlin.db_scripts.merlin_db.RunManager", return_value=mock_entity_managers["run"]))
+        stack.enter_context(
+            patch("merlin.db_scripts.merlin_db.LogicalWorkerManager", return_value=mock_entity_managers["logical_worker"])
+        )
+        stack.enter_context(
+            patch("merlin.db_scripts.merlin_db.PhysicalWorkerManager", return_value=mock_entity_managers["physical_worker"])
+        )
 
         mock_factory.get_backend.return_value = mock_backend
         db = MerlinDatabase()
@@ -99,14 +111,22 @@ class TestMerlinDatabase:
         Args:
             mock_backend: A mocked `ResultsBackend` instance.
         """
-        with (
-            patch("merlin.db_scripts.merlin_db.backend_factory") as mock_factory,
-            patch("merlin.db_scripts.merlin_db.StudyManager") as mock_study_manager,
-            patch("merlin.db_scripts.merlin_db.RunManager") as mock_run_manager,
-            patch("merlin.db_scripts.merlin_db.LogicalWorkerManager") as mock_logical_worker_manager,
-            patch("merlin.db_scripts.merlin_db.PhysicalWorkerManager") as mock_physical_worker_manager,
-            patch("merlin.config.configfile.CONFIG") as mock_config,
-        ):
+        # TODO when we drop support for python 3.8, replace the ExitStack call with the comment below
+        # with (
+        #     patch("merlin.db_scripts.merlin_db.backend_factory") as mock_factory,
+        #     patch("merlin.db_scripts.merlin_db.StudyManager") as mock_study_manager,
+        #     patch("merlin.db_scripts.merlin_db.RunManager") as mock_run_manager,
+        #     patch("merlin.db_scripts.merlin_db.LogicalWorkerManager") as mock_logical_worker_manager,
+        #     patch("merlin.db_scripts.merlin_db.PhysicalWorkerManager") as mock_physical_worker_manager,
+        #     patch("merlin.config.configfile.CONFIG") as mock_config,
+        # ):
+        with ExitStack() as stack:
+            mock_factory = stack.enter_context(patch("merlin.db_scripts.merlin_db.backend_factory"))
+            mock_study_manager = stack.enter_context(patch("merlin.db_scripts.merlin_db.StudyManager"))
+            mock_run_manager = stack.enter_context(patch("merlin.db_scripts.merlin_db.RunManager"))
+            mock_logical_worker_manager = stack.enter_context(patch("merlin.db_scripts.merlin_db.LogicalWorkerManager"))
+            mock_physical_worker_manager = stack.enter_context(patch("merlin.db_scripts.merlin_db.PhysicalWorkerManager"))
+            mock_config = stack.enter_context(patch("merlin.config.configfile.CONFIG"))
 
             # Configure mocks
             mock_factory.get_backend.return_value = mock_backend
