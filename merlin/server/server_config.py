@@ -41,9 +41,9 @@ from typing import Dict, Tuple
 
 import yaml
 
+from merlin.config.config_filepaths import MERLIN_HOME
 from merlin.server.server_util import (
     CONTAINER_TYPES,
-    MERLIN_CONFIG_DIR,
     MERLIN_SERVER_CONFIG,
     MERLIN_SERVER_SUBDIR,
     AppYaml,
@@ -56,7 +56,6 @@ from merlin.server.server_util import (
 LOG = logging.getLogger("merlin")
 
 # Default values for configuration
-CONFIG_DIR = os.path.abspath("./merlin_server/")
 IMAGE_NAME = "redis_latest.sif"
 PROCESS_FILE = "merlin_server.pf"
 CONFIG_FILE = "redis.conf"
@@ -194,11 +193,13 @@ def create_server_config() -> bool:
     Returns:
         True if the configuration is successfully created and applied. False otherwise.
     """
-    if not os.path.exists(MERLIN_CONFIG_DIR):
-        LOG.error(f"Unable to find main merlin configuration directory at {MERLIN_CONFIG_DIR}")
+    # Check for ~/.merlin/ directory
+    if not os.path.exists(MERLIN_HOME):
+        LOG.error(f"Unable to find main merlin configuration directory at {MERLIN_HOME}")
         return False
 
-    config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
+    # Create ~/.merlin/server/ directory if it doesn't already exist
+    config_dir = os.path.join(MERLIN_HOME, MERLIN_SERVER_SUBDIR)
     if not os.path.exists(config_dir):
         LOG.info("Unable to find exisiting server configuration.")
         LOG.info(f"Creating default configuration in {config_dir}")
@@ -208,27 +209,28 @@ def create_server_config() -> bool:
             LOG.error(err)
             return False
 
+    # Copy container-specific yaml files to ~/.merlin/server/
     if not copy_container_command_files(config_dir):
         return False
 
-    # Load Merlin Server Configuration and apply it to app.yaml
+    # Load Merlin Server Configuration and apply it to merlin_server/app.yaml
     with resources.path("merlin.server", MERLIN_SERVER_CONFIG) as merlin_server_config:
         with open(merlin_server_config) as f:  # pylint: disable=C0103
             main_server_config = yaml.load(f, yaml.Loader)
-            filename = LOCAL_APP_YAML if os.path.exists(LOCAL_APP_YAML) else AppYaml.default_filename
-            merlin_app_yaml = AppYaml(filename)
-            merlin_app_yaml.update_data(main_server_config)
-            merlin_app_yaml.write(filename)
-    LOG.info("Applying merlin server configuration to app.yaml")
 
-    server_config = pull_server_config()
-    if not server_config:
-        LOG.error('Try to run "merlin server init" again to reinitialize values.')
-        return False
+            server_config = load_server_config(main_server_config)
+            if not server_config:
+                LOG.error('Try to run "merlin server init" again to reinitialize values.')
+                return False
 
-    if not os.path.exists(server_config.container.get_config_dir()):
-        LOG.info("Creating merlin server directory.")
-        os.mkdir(server_config.container.get_config_dir())
+            if not os.path.exists(server_config.container.get_config_dir()):
+                LOG.info("Creating merlin server directory.")
+                os.mkdir(server_config.container.get_config_dir())
+
+            LOG.info("Applying merlin server configuration to ./merlin_server/app.yaml")
+            server_app_yaml = AppYaml()  # By default this will point to ./merlin_server/app.yaml
+            server_app_yaml.update_data(main_server_config)
+            server_app_yaml.write()
 
     return True
 
@@ -275,26 +277,24 @@ def config_merlin_server():
     return None
 
 
-def pull_server_config() -> ServerConfig:
+def load_server_config(server_config: Dict) -> ServerConfig:
     """
-    Retrieves the main configuration file and its corresponding format configuration file for the Merlin server.
+    Given a dictionary containing server configuration values, load them into a
+    [`ServerConfig`][server.server_utils.ServerConfig] instance.
 
-    This function reads the `app.yaml` configuration file and additional format-specific configuration files
-    to construct a complete configuration dictionary. It validates the presence of required keys in the format
-    and process configurations. If any required configuration is missing, an error is logged and `None` is returned.
+    Args:
+        server_config: A dictionary containing server configuration values. Should have
+            a 'container' entry and a 'process' entry.
 
     Returns:
-        An instance of [`ServerConfig`][server.server_util.ServerConfig] containing all necessary configuration values.
+        A `ServerConfig` object containing the loaded server configuration.
     """
     return_data = {}
+    return_data.update(server_config)
     format_needed_keys = ["command", "run_command", "stop_command", "pull_command"]
     process_needed_keys = ["status", "kill"]
 
-    merlin_app_yaml = AppYaml(LOCAL_APP_YAML)
-    server_config = merlin_app_yaml.get_data()
-    return_data.update(server_config)
-
-    config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
+    config_dir = os.path.join(MERLIN_HOME, MERLIN_SERVER_SUBDIR)
 
     if "container" in server_config:
         if "format" in server_config["container"]:
@@ -307,23 +307,41 @@ def pull_server_config() -> ServerConfig:
                         return None
                 return_data.update(format_data)
         else:
-            LOG.error(f'Unable to find "format" in {merlin_app_yaml.default_filename}')
+            LOG.error('Unable to find "format" in server_config object.')
             return None
     else:
-        LOG.error(f'Unable to find "container" object in {merlin_app_yaml.default_filename}')
+        LOG.error('Unable to find "container" in server_config object.')
         return None
 
     # Checking for process values that are needed for main functions and defaults
     if "process" not in server_config:
-        LOG.error(f"Process config not found in {merlin_app_yaml.default_filename}")
+        LOG.error('Unable to find "process" in server_config object.')
         return None
 
     for key in process_needed_keys:
         if key not in server_config["process"]:
-            LOG.error(f'Process necessary "{key}" command configuration not found in {merlin_app_yaml.default_filename}')
+            LOG.error(f'Process necessary "{key}" command configuration not found in server_config object.')
             return None
 
     return ServerConfig(return_data)
+
+
+def pull_server_config(app_yaml_path: str = None) -> ServerConfig:
+    """
+    Retrieves the main configuration file and its corresponding format configuration file for the Merlin server.
+
+    This function reads the `app.yaml` configuration file and additional format-specific configuration files
+    to construct a complete configuration dictionary. It validates the presence of required keys in the format
+    and process configurations. If any required configuration is missing, an error is logged and `None` is returned.
+
+    Returns:
+        An instance of [`ServerConfig`][server.server_util.ServerConfig] containing all necessary configuration values.
+    """
+    app_yaml_file = app_yaml_path if app_yaml_path is not None else LOCAL_APP_YAML
+    merlin_app_yaml = AppYaml(app_yaml_file)
+    server_config = merlin_app_yaml.get_data()
+    LOG.info(f"Loading server configuration from '{app_yaml_file}'.")
+    return load_server_config(server_config)
 
 
 def pull_server_image() -> bool:

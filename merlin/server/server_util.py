@@ -39,11 +39,11 @@ import yaml
 
 import merlin.utils
 
-
 LOG = logging.getLogger("merlin")
 
 # Constants for main merlin server configuration values.
 CONTAINER_TYPES = ["singularity", "docker", "podman"]
+CONFIG_DIR = os.path.abspath("./merlin_server/")
 MERLIN_CONFIG_DIR = os.path.join(os.path.expanduser("~"), ".merlin")
 MERLIN_SERVER_SUBDIR = "server/"
 MERLIN_SERVER_CONFIG = "merlin_server.yaml"
@@ -155,7 +155,6 @@ class ContainerConfig:  # pylint: disable=R0902
     IMAGE_NAME: str = "redis_latest.sif"
     REDIS_URL: str = "docker://redis"
     CONFIG_FILE: str = "redis.conf"
-    CONFIG_DIR: str = os.path.abspath("./merlin_server/")
     PROCESS_FILE: str = "merlin_server.pf"
     PASSWORD_FILE: str = "redis.pass"
     USERS_FILE: str = "redis.users"
@@ -195,7 +194,7 @@ class ContainerConfig:  # pylint: disable=R0902
         self.image: str = data["image"] if "image" in data else self.IMAGE_NAME
         self.url: str = data["url"] if "url" in data else self.REDIS_URL
         self.config: str = data["config"] if "config" in data else self.CONFIG_FILE
-        self.config_dir: str = os.path.abspath(data["config_dir"]) if "config_dir" in data else self.CONFIG_DIR
+        self.config_dir: str = os.path.abspath(data["config_dir"]) if "config_dir" in data else CONFIG_DIR
         self.pfile: str = data["pfile"] if "pfile" in data else self.PROCESS_FILE
         self.pass_file: str = data["pass_file"] if "pass_file" in data else self.PASSWORD_FILE
         self.user_file: str = data["user_file"] if "user_file" in data else self.USERS_FILE
@@ -2094,7 +2093,7 @@ class AppYaml:
         write: Writes the current `data` dictionary to the specified YAML file.
     """
 
-    default_filename: str = os.path.join(MERLIN_CONFIG_DIR, "app.yaml")
+    default_filename: str = os.path.join(CONFIG_DIR, "app.yaml")
     data: Dict = {}
     broker_name: str = "broker"
     results_name: str = "results_backend"
@@ -2186,7 +2185,10 @@ class AppYaml:
             >>> app_yaml.read("custom_app.yaml")
             ```
         """
-        self.data = merlin.utils.load_yaml(filename)
+        try:
+            self.data = merlin.utils.load_yaml(filename)
+        except FileNotFoundError:
+            self.data = {}
 
     def write(self, filename: str = default_filename):
         """
@@ -2202,5 +2204,9 @@ class AppYaml:
             >>> app_yaml.write("output_app.yaml")
             ```
         """
-        with open(filename, "w+") as f:  # pylint: disable=C0103
-            yaml.dump(self.data, f, yaml.Dumper)
+        try:
+            with open(filename, "w+") as f:  # pylint: disable=C0103
+                yaml.dump(self.data, f, yaml.Dumper)
+        except FileNotFoundError:
+            with open(filename, "w") as f:  # pylint: disable=C0103
+                yaml.dump(self.data, f, yaml.Dumper)
