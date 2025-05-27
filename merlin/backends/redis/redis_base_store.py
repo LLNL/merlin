@@ -184,16 +184,17 @@ class NameMappingMixin:
         Args:
             obj: The object to save.
         """
-        LOG.debug(f"Saving obj {obj.name} with id {obj.id} in NameMappingMixin.")
-        existing_obj_id = self.client.hget(f"{self.key}:name", obj.name)
+        name_or_ws = obj.name if hasattr(obj, "name") else obj.workspace
+        LOG.debug(f"Saving obj {name_or_ws} with id {obj.id} in NameMappingMixin.")
+        existing_obj_id = self.client.hget(f"{self.key}:name", name_or_ws)
 
         # Call the parent class's save method
         super().save(obj)
 
         # Update name-to-ID mapping if it's a new object
         if not existing_obj_id:
-            LOG.debug(f"Creating a new name-to-ID mapping for {obj.name} with id {obj.id}")
-            self.client.hset(f"{self.key}:name", obj.name, obj.id)
+            LOG.debug(f"Creating a new name-to-ID mapping for {name_or_ws} with id {obj.id}")
+            self.client.hset(f"{self.key}:name", name_or_ws, obj.id)
 
     def retrieve(self, identifier: str, by_name: bool = False) -> Optional[object]:
         """
@@ -211,7 +212,7 @@ class NameMappingMixin:
             # Retrieve the object ID using the name-to-ID mapping
             obj_id = self.client.hget(f"{self.key}:name", identifier)
             if obj_id is None:
-                LOG.warning("Could not retrieve object id by name-to-ID mapping.")
+                LOG.debug("Could not retrieve object id by name-to-ID mapping.")
                 return None
             return super().retrieve(obj_id)
         # Use the parent class's retrieve method for ID-based retrieval
@@ -235,7 +236,8 @@ class NameMappingMixin:
             raise error_class(f"{self.key.capitalize()} with {id_type} '{identifier}' not found in the database.")
 
         # Delete the object from the name index and Redis
-        self.client.hdel(f"{self.key}:name", obj.name)
+        name_or_ws = obj.name if hasattr(obj, "name") else obj.workspace
+        self.client.hdel(f"{self.key}:name", name_or_ws)
         self.client.delete(f"{self.key}:{obj.id}")
 
         LOG.info(f"Successfully deleted {self.key} with {id_type} '{identifier}'.")

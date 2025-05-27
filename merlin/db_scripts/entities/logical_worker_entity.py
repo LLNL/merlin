@@ -9,19 +9,18 @@ operations and behaviors.
 import logging
 from typing import List
 
-from merlin.backends.results_backend import ResultsBackend
+from merlin.db_scripts.data_models import LogicalWorkerModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
+from merlin.db_scripts.entities.mixins.name import NameMixin
+from merlin.db_scripts.entities.mixins.queue_management import QueueManagementMixin
+from merlin.db_scripts.entities.mixins.run_management import RunManagementMixin
 from merlin.db_scripts.entities.physical_worker_entity import PhysicalWorkerEntity
-from merlin.db_scripts.mixins.name import NameMixin
-from merlin.db_scripts.mixins.queue_management import QueueManagementMixin
-from merlin.db_scripts.mixins.run_management import RunManagementMixin
-from merlin.exceptions import WorkerNotFoundError
 
 
 LOG = logging.getLogger("merlin")
 
 
-class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMixin, NameMixin):
+class LogicalWorkerEntity(DatabaseEntity[LogicalWorkerModel], RunManagementMixin, QueueManagementMixin, NameMixin):
     """
     A class representing a logical worker in the database.
 
@@ -87,6 +86,10 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             (classmethod) Delete a logical worker from the database by its ID.
     """
 
+    @classmethod
+    def _get_entity_type(cls) -> str:
+        return "logical_worker"
+
     def __repr__(self) -> str:
         """
         Provide a string representation of the `LogicalWorkerEntity` instance.
@@ -132,35 +135,19 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 
-    def reload_data(self):
-        """
-        Reload the latest data for this logical worker from the database and update the
-        [`LogicalWorkerModel`][db_scripts.data_models.LogicalWorkerModel] object.
-
-        Raises:
-            (exceptions.WorkerNotFoundError): If an entry for this worker was
-                not found in the database.
-        """
-        worker_id = self.get_id()
-        updated_entity_info = self.backend.retrieve(worker_id, "logical_worker")
-        if not updated_entity_info:
-            raise WorkerNotFoundError(f"Logical worker with ID '{worker_id}' not found in the database.")
-        self.entity_info = updated_entity_info
-
-    def get_physical_workers(self) -> List[PhysicalWorkerEntity]:
+    def get_physical_workers(self) -> List[str]:
         """
         Get the physical instances of this logical worker.
 
         Returns:
-            A list of [`PhysicalWorkerEntity`][db_scripts.entities.physical_worker_entity.PhysicalWorkerEntity]
-                instances.
+            A list of physical worker IDs.
         """
         self.reload_data()
         return self.entity_info.physical_workers
 
     def add_physical_worker(self, physical_worker_id: str):
         """
-        Add a new physical worker id to the list of phsyical workers.
+        Add a new physical worker id to the list of physical workers.
 
         Args:
             physical_worker_id: The id of the physical worker to add.
@@ -181,44 +168,3 @@ class LogicalWorkerEntity(DatabaseEntity, RunManagementMixin, QueueManagementMix
         self.reload_data()
         self.entity_info.physical_workers.remove(physical_worker_id)
         self.save()
-
-    def save(self):
-        """
-        Save the current state of this worker to the database.
-        """
-        self.backend.save(self.entity_info)
-
-    @classmethod
-    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "LogicalWorkerEntity":
-        """
-        Load a logical worker from the database
-
-        Args:
-            entity_identifier: The ID of the worker to load.
-            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
-
-        Returns:
-            A `PhysicalWorkerEntity` instance.
-
-        Raises:
-            (exceptions.WorkerNotFoundError): If an entry for worker with id `entity_id` was
-                not found in the database.
-        """
-        entity_info = backend.retrieve(entity_identifier, "logical_worker")
-        if not entity_info:
-            raise WorkerNotFoundError(f"Worker with ID {entity_identifier} not found in the database.")
-
-        return cls(entity_info, backend)
-
-    @classmethod
-    def delete(cls, entity_identifier: str, backend: ResultsBackend):
-        """
-        Delete a logical worker from the database.
-
-        Args:
-            entity_identifier: The ID of the worker to delete.
-            backend: A [`ResultsBackend`][backends.results_backend.ResultsBackend] instance.
-        """
-        LOG.debug(f"Deleting worker with id '{entity_identifier}' from the database...")
-        backend.delete(entity_identifier, "logical_worker")
-        LOG.info(f"Worker with id '{entity_identifier}' has been successfully deleted.")

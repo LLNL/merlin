@@ -184,7 +184,7 @@ class RedisBackend(ResultsBackend):
         """
         LOG.debug(f"Retrieving '{entity_identifier}' from store '{store_type}'.")
         store = self._get_store_by_type(store_type)
-        if store_type in ["study", "physical_worker"]:
+        if store_type in ["study", "physical_worker", "run"]:
             try:
                 uuid.UUID(entity_identifier)
                 return store.retrieve(entity_identifier)

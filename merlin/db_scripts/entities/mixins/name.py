@@ -7,6 +7,8 @@ necessary attributes to support name retrieval, specifically an `entity_info` ob
 containing a `name` attribute.
 """
 
+# pylint: disable=too-few-public-methods
+
 
 class NameMixin:
     """
@@ -23,12 +25,12 @@ class NameMixin:
 
     def get_name(self) -> str:
         """
-        Get the name associated with this logical worker.
+        Get the name of this entity.
 
         Assumptions:
             - The class using this must have an `entity_info` object containing a `name` attribute
 
         Returns:
-            The name for this logical worker.
+            The name of this entity.
         """
         return self.entity_info.name

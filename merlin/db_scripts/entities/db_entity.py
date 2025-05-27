@@ -9,14 +9,24 @@ class, ensuring consistency across different types of database entities. This ab
 code duplication and promotes maintainability by centralizing shared functionality.
 """
 
+import logging
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, Generic, Type, TypeVar
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import BaseDataModel
+from merlin.exceptions import EntityNotFoundError, RunNotFoundError, StudyNotFoundError, WorkerNotFoundError
 
 
-class DatabaseEntity(ABC):
+# Type variable for entity models
+T = TypeVar("T", bound=BaseDataModel)
+# Type variable for entity classes
+E = TypeVar("E", bound="DatabaseEntity")
+
+LOG = logging.getLogger(__name__)
+
+
+class DatabaseEntity(Generic[T], ABC):
     """
     Abstract base class for database entities such as runs, studies, and workers.
 
@@ -24,8 +34,7 @@ class DatabaseEntity(ABC):
     database entities, including saving, deleting, and reloading data.
 
     Attributes:
-        entity_info (db_scripts.data_models.BaseDataModel): The data model containing
-            information about the entity.
+        entity_info (T): The data model containing information about the entity.
         backend (backends.results_backend.ResultsBackend): The backend instance used
             to interact with the database.
 
@@ -48,24 +57,41 @@ class DatabaseEntity(ABC):
         save:
             Save the current state of this entity to the database.
 
+        _post_save_hook:
+            Hook called after saving the entity to the database. Subclasses can override
+            this method to add additional behavior.
+
         load:
             Load an entity from the database by its ID.
 
         delete:
             Delete an entity from the database by its ID.
+
+        entity_type:
+            Get the type of this entity for database operations.
+
+        _get_entity_type:
+            Get the entity type for database operations (used internally).
     """
 
-    def __init__(self, entity_info: BaseDataModel, backend: ResultsBackend):
+    # Mapping of entity types to their error classes
+    _error_classes = {
+        "logical_worker": WorkerNotFoundError,
+        "physical_worker": WorkerNotFoundError,
+        "run": RunNotFoundError,
+        "study": StudyNotFoundError,
+    }
+
+    def __init__(self, entity_info: T, backend: ResultsBackend):
         """
         Initialize a `DatabaseEntity` instance.
 
         Args:
-            entity_info (db_scripts.data_models.BaseDataModel): The data model containing
-                information about the entity.
+            entity_info (T): The data model containing information about the entity.
             backend (backends.results_backend.ResultsBackend): The backend instance used to
                 interact with the database.
         """
-        self.entity_info: BaseDataModel = entity_info
+        self.entity_info: T = entity_info
         self.backend: ResultsBackend = backend
 
     @abstractmethod
@@ -73,18 +99,50 @@ class DatabaseEntity(ABC):
         """
         Provide a string representation of the entity.
         """
+        raise NotImplementedError("Subclasses of `DatabaseEntity` must implement a `__repr__` method.")
 
     @abstractmethod
     def __str__(self) -> str:
         """
         Provide a human-readable string representation of the entity.
         """
+        raise NotImplementedError("Subclasses of `DatabaseEntity` must implement a `__str__` method.")
 
-    @abstractmethod
+    @property
+    def entity_type(self) -> str:
+        """
+        Get the type of this entity for database operations.
+
+        Returns:
+            The type name as a string.
+        """
+        return self._get_entity_type()
+
+    @classmethod
+    def _get_entity_type(cls) -> str:
+        """
+        Get the entity type for database operations.
+
+        Returns:
+            The type name as a string.
+        """
+        # Default implementation based on class name
+        # Can be overridden by subclasses if needed
+        return cls.__name__.lower().replace("entity", "")
+
     def reload_data(self):
         """
         Reload the latest data for this entity from the database.
+
+        Raises:
+            (exceptions.EntityNotFoundError): If an entry for this entity was not found in the database.
         """
+        entity_id = self.get_id()
+        updated_entity_info = self.backend.retrieve(entity_id, self.entity_type)
+        if not updated_entity_info:
+            error_class = self._error_classes.get(self.entity_type, EntityNotFoundError)
+            raise error_class(f"{self.entity_type.capitalize()} with ID {entity_id} not found in the database.")
+        self.entity_info = updated_entity_info
 
     def get_id(self) -> str:
         """
@@ -105,35 +163,51 @@ class DatabaseEntity(ABC):
         self.reload_data()
         return self.entity_info.additional_data
 
-    @abstractmethod
     def save(self):
         """
         Save the current state of this entity to the database.
         """
+        self.backend.save(self.entity_info)
+        self._post_save_hook()
+
+    def _post_save_hook(self):
+        """
+        Hook called after saving the entity to the database.
+        Subclasses can override to add additional behavior.
+        """
 
     @classmethod
-    @abstractmethod
-    def load(cls, entity_identifier: str, backend: ResultsBackend) -> "DatabaseEntity":
+    def load(cls: Type[E], entity_identifier: str, backend: ResultsBackend) -> E:
         """
         Load an entity from the database by its ID.
 
         Args:
             entity_identifier: The ID of the entity to load.
-            backend (backends.results_backend.ResultsBackend): The backend instance used
-                to interact with the database.
+            backend (backends.results_backend.ResultsBackend): A `ResultsBackend` instance.
 
         Returns:
             An instance of the entity.
+
+        Raises:
+            (exceptions.EntityNotFoundError): If an entry for the entity was not found in the database.
         """
+        entity_info = backend.retrieve(entity_identifier, cls._get_entity_type())
+        if not entity_info:
+            error_class = cls._error_classes.get(cls._get_entity_type(), EntityNotFoundError)
+            raise error_class(f"{cls._get_entity_type().capitalize()} with ID {entity_identifier} not found in the database.")
+
+        return cls(entity_info, backend)
 
     @classmethod
-    @abstractmethod
     def delete(cls, entity_identifier: str, backend: ResultsBackend):
         """
         Delete an entity from the database by its ID.
 
         Args:
             entity_identifier: The ID of the entity to delete.
-            backend (backends.results_backend.ResultsBackend): The backend instance used
-                to interact with the database.
+            backend (backends.results_backend.ResultsBackend): A ResultsBackend instance.
         """
+        entity_type = cls._get_entity_type()
+        LOG.debug(f"Deleting {entity_type} with ID '{entity_identifier}' from the database...")
+        backend.delete(entity_identifier, entity_type)
+        LOG.info(f"{entity_type.capitalize()} with ID '{entity_identifier}' has been successfully deleted.")

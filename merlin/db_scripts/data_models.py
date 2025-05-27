@@ -211,12 +211,17 @@ class BaseDataModel(ABC):
         for field_name, new_value in updates.items():
             if field_name == "id":
                 continue
-            if field_name not in self.fields_allowed_to_be_updated and getattr(self, field_name) != updates[field_name]:
-                # Log a warning for unauthorized updates
-                LOG.warning(f"Field '{field_name}' is not allowed to be updated. Ignoring the change.")
-            elif hasattr(self, field_name):
-                # Update the allowed field
-                setattr(self, field_name, new_value)
+
+            if hasattr(self, field_name):
+                if getattr(self, field_name) == new_value:  # Not an update so skip
+                    continue
+
+                if field_name in self.fields_allowed_to_be_updated:
+                    # Update the allowed field
+                    setattr(self, field_name, new_value)
+                else:
+                    # Log a warning for unauthorized updates
+                    LOG.warning(f"Field '{field_name}' is not allowed to be updated. Ignoring the change.")
             else:
                 # Log a warning if the field doesn't exist explicitly
                 LOG.warning(

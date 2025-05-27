@@ -225,7 +225,8 @@ def process_run(args: Namespace):
     merlin_db = MerlinDatabase()
 
     # Create a run entry
-    run_entity = merlin_db.create_run(
+    run_entity = merlin_db.create(
+        "run",
         study_name=study.expanded_spec.name,
         workspace=study.workspace,
         queues=study.expanded_spec.get_queue_list(["all"]),
@@ -235,7 +236,7 @@ def process_run(args: Namespace):
     step_queue_map = study.expanded_spec.get_task_queues()
     for worker, steps in study.expanded_spec.get_worker_step_map().items():
         worker_queues = set([step_queue_map[step] for step in steps])
-        logical_worker_entity = merlin_db.create_logical_worker(worker, worker_queues)
+        logical_worker_entity = merlin_db.create("logical_worker", worker, worker_queues)
 
         # Add the run id to the worker entry and the worker id to the run entry
         logical_worker_entity.add_run(run_entity.get_id())
@@ -303,7 +304,7 @@ def launch_workers(args: Namespace):
     step_queue_map = spec.get_task_queues()
     for worker, steps in spec.get_worker_step_map().items():
         worker_queues = set([step_queue_map[step] for step in steps])
-        merlin_db.create_logical_worker(worker, worker_queues)
+        merlin_db.create("logical_worker", worker, worker_queues)
 
     # Launch the workers
     launch_worker_status = router.launch_workers(

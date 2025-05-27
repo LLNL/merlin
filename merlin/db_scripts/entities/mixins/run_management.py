@@ -87,11 +87,15 @@ class RunManagementMixin:
         """
         from merlin.db_scripts.entities.run_entity import RunEntity  # pylint: disable=import-outside-toplevel
 
-        runs = [RunEntity.load(run_id, self.backend) for run_id in self.get_runs()]
+        runs = self.get_runs()
         run_str = ""
         if runs:
-            for run in runs:
-                run_str += f"  - ID: {run.get_id()}\n    Workspace: {run.get_workspace()}\n"
+            for run_id in runs:
+                try:
+                    run = RunEntity.load(run_id, self.backend)
+                    run_str += f"  - ID: {run.get_id()}\n    Workspace: {run.get_workspace()}\n"
+                except Exception:  # pylint: disable=broad-exception-caught
+                    run_str += f"  - ID: {run_id} (Error loading run)\n"
         else:
             run_str = "  No runs found.\n"
         return run_str

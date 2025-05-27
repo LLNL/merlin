@@ -77,12 +77,12 @@ class Monitor:
         If a run is incomplete, it calls [`monitor_single_run`][monitor.monitor.Monitor.monitor_single_run]
         to monitor it until completion.
         """
-        study_entity = self.merlin_db.get_study(self.spec.name)
+        study_entity = self.merlin_db.get("study", self.spec.name)
 
         index = 0
         while True:
             # Always refresh the list at the start of the loop; there could be new runs (think iterative studies)
-            all_runs = [self.merlin_db.get_run(run_id) for run_id in study_entity.get_runs()]
+            all_runs = [self.merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
             if index >= len(all_runs):  # Break if there are no more runs to process
                 break
 
@@ -120,7 +120,9 @@ class Monitor:
         LOG.info(f"Monitor: Monitoring run with workspace '{run_workspace}'...")
 
         # Wait for workers to spin up before checking on tasks
-        worker_names = [self.merlin_db.get_logical_worker(worker_id=worker_id).get_name() for worker_id in run.get_workers()]
+        worker_names = [
+            self.merlin_db.get("logical_worker", worker_id=worker_id).get_name() for worker_id in run.get_workers()
+        ]
         LOG.info(f"Monitor: Waiting for the following workers to start: {worker_names}...")
         self.task_server_monitor.wait_for_workers(worker_names, self.sleep)
         LOG.info("Monitor: Workers have started.")
