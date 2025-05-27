@@ -25,6 +25,7 @@ from merlin.exceptions import RestartException
 from merlin.monitor.monitor_factory import monitor_factory
 from merlin.monitor.task_server_monitor import TaskServerMonitor
 from merlin.spec.specification import MerlinSpec
+from merlin.utils import verify_dirpath
 
 
 LOG = logging.getLogger(__name__)
@@ -177,9 +178,15 @@ class Monitor:
         Raises:
             RestartException: If the workflow restart process fails.
         """
-        LOG.info(f"Monitor: Restarting workflow for run with workspace '{run.get_workspace()}'...")
-        restart_proc = subprocess.run(f"merlin restart {run.get_workspace()}", shell=True, capture_output=True, text=True)
-        if restart_proc.returncode != 0:
-            LOG.error(f"Monitor: Failed to restart workflow: {restart_proc.stderr}")
-            raise RestartException(f"Restart process failed with error: {restart_proc.stderr}")
-        LOG.info(f"Monitor: Workflow restarted successfully: {restart_proc.stdout}")
+        try:
+            run_workspace = verify_dirpath(run.get_workspace())
+            LOG.info(f"Monitor: Restarting workflow for run with workspace '{run_workspace}'...")
+            restart_proc = subprocess.run(f"merlin restart {run_workspace}", shell=True, capture_output=True, text=True)
+            if restart_proc.returncode != 0:
+                LOG.error(f"Monitor: Failed to restart workflow: {restart_proc.stderr}")
+                raise RestartException(f"Restart process failed with error: {restart_proc.stderr}")
+            LOG.info(f"Monitor: Workflow restarted successfully: {restart_proc.stdout}")
+        except ValueError:
+            LOG.warning(
+                f"Monitor: Run with workspace '{run.get_workspace()}' was not found. Ignoring the restart of this workspace."
+            )
