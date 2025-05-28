@@ -39,6 +39,7 @@ import yaml
 
 import merlin.utils
 
+
 LOG = logging.getLogger("merlin")
 
 # Constants for main merlin server configuration values.
@@ -241,7 +242,7 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         variables = ("format", "image_type", "image", "url", "config", "config_dir", "pfile", "pass_file", "user_file")
         return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
-    
+
     def __str__(self) -> str:
         """
         Returns a human-readable string representation of the ContainerConfig.
@@ -276,15 +277,15 @@ class ContainerConfig:  # pylint: disable=R0902
             An unambiguous string representation that shows how to recreate the object.
         """
         config_dict = {
-            'format': self.format,
-            'image_type': self.image_type,
-            'image': self.image,
-            'url': self.url,
-            'config': self.config,
-            'config_dir': self.config_dir,
-            'pfile': self.pfile,
-            'pass_file': self.pass_file,
-            'user_file': self.user_file
+            "format": self.format,
+            "image_type": self.image_type,
+            "image": self.image,
+            "url": self.url,
+            "config": self.config,
+            "config_dir": self.config_dir,
+            "pfile": self.pfile,
+            "pass_file": self.pass_file,
+            "user_file": self.user_file,
         }
         return f"ContainerConfig({config_dict!r})"
 
@@ -829,7 +830,7 @@ class ContainerFormatConfig:
         """
         variables = ("command", "run_command", "stop_command", "pull_command")
         return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
-    
+
     def __str__(self) -> str:
         """
         Returns a human-readable string representation of the ContainerFormatConfig.
@@ -859,10 +860,10 @@ class ContainerFormatConfig:
             An unambiguous string representation that shows how to recreate the object.
         """
         config_dict = {
-            'command': self.command,
-            'run_command': self.run_command,
-            'stop_command': self.stop_command,
-            'pull_command': self.pull_command
+            "command": self.command,
+            "run_command": self.run_command,
+            "stop_command": self.stop_command,
+            "pull_command": self.pull_command,
         }
         return f"ContainerFormatConfig({config_dict!r})"
 
@@ -1038,7 +1039,7 @@ class ProcessConfig:
         """
         variables = ("status", "kill")
         return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
-    
+
     def __str__(self) -> str:
         """
         Returns a human-readable string representation of the ProcessConfig.
@@ -1049,11 +1050,7 @@ class ProcessConfig:
         Returns:
             A human-readable string representation of the configuration.
         """
-        return (
-            f"ProcessConfig:\n"
-            f"  Status Command: {self.status}\n"
-            f"  Kill Command: {self.kill}"
-        )
+        return f"ProcessConfig:\n" f"  Status Command: {self.status}\n" f"  Kill Command: {self.kill}"
 
     def __repr__(self) -> str:
         """
@@ -1065,10 +1062,7 @@ class ProcessConfig:
         Returns:
             An unambiguous string representation that shows how to recreate the object.
         """
-        config_dict = {
-            'status': self.status,
-            'kill': self.kill
-        }
+        config_dict = {"status": self.status, "kill": self.kill}
         return f"ProcessConfig({config_dict!r})"
 
     def get_status_command(self) -> str:
@@ -1158,35 +1152,35 @@ class ServerConfig:  # pylint: disable=R0903
             A human-readable string representation of the server configuration.
         """
         lines = ["ServerConfig:"]
-        
+
         if self.container:
             lines.append("  Container Configuration:")
             container_str = str(self.container)
             # Indent each line of the container config
-            for line in container_str.split('\n')[1:]:  # Skip the first line (class name)
+            for line in container_str.split("\n")[1:]:  # Skip the first line (class name)
                 lines.append("  " + line)
         else:
             lines.append("  Container Configuration: None")
-        
+
         if self.process:
             lines.append("  Process Configuration:")
             process_str = str(self.process)
             # Indent each line of the process config
-            for line in process_str.split('\n')[1:]:  # Skip the first line (class name)
+            for line in process_str.split("\n")[1:]:  # Skip the first line (class name)
                 lines.append("  " + line)
         else:
             lines.append("  Process Configuration: None")
-        
+
         if self.container_format:
             lines.append("  Container Format Configuration:")
             format_str = str(self.container_format)
             # Indent each line of the container format config
-            for line in format_str.split('\n')[1:]:  # Skip the first line (class name)
+            for line in format_str.split("\n")[1:]:  # Skip the first line (class name)
                 lines.append("  " + line)
         else:
             lines.append("  Container Format Configuration: None")
-        
-        return '\n'.join(lines)
+
+        return "\n".join(lines)
 
     def __repr__(self) -> str:
         """
@@ -1202,7 +1196,7 @@ class ServerConfig:  # pylint: disable=R0903
         container_repr = repr(self.container) if self.container else "None"
         process_repr = repr(self.process) if self.process else "None"
         container_format_repr = repr(self.container_format) if self.container_format else "None"
-        
+
         return (
             f"ServerConfig("
             f"container={container_repr}, "
