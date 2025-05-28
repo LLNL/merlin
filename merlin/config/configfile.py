@@ -178,8 +178,8 @@ def get_default_config() -> Dict:
     """
     default_config = {
         "broker": {
-            "username": getpass.getuser(),
-            "vhost": getpass.getuser(),
+            "username": "user",
+            "vhost": "vhost",
             "server": "localhost",
             "name": "rabbitmq",  # Default broker name
             "port": 5672,  # Default RabbitMQ port

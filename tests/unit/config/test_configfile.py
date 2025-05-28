@@ -139,23 +139,17 @@ def test_local_mode_toggle_and_logging(caplog: CaptureFixture):
     assert is_local_mode() is False
 
 
-@patch("getpass.getuser")
-def test_default_config_structure_and_values(mock_getuser: MagicMock):
+def test_default_config_structure_and_values():
     """
-    Test default config structure, values, and username handling.
-
-    Args:
-        mock_getuser: A mocked version of the getuser function from the getpass library.
+    Test default config structure and values.
     """
-    mock_getuser.return_value = "testuser"
-
     config = get_default_config()
 
     # Verify structure and key values
     expected_config = {
         "broker": {
-            "username": "testuser",
-            "vhost": "testuser",
+            "username": "user",
+            "vhost": "vhost",
             "server": "localhost",
             "name": "rabbitmq",
             "port": 5672,
@@ -167,12 +161,6 @@ def test_default_config_structure_and_values(mock_getuser: MagicMock):
 
     assert config == expected_config
     assert isinstance(config, dict)
-
-    # Test with different username
-    mock_getuser.return_value = "anotheruser"
-    config2 = get_default_config()
-    assert config2["broker"]["username"] == "anotheruser"
-    assert config2["broker"]["vhost"] == "anotheruser"
 
 
 def test_load_config(configfile_testing_dir: FixtureStr):
@@ -792,8 +780,14 @@ def test_merge_sslmap_some_keys_present():
 
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_default_parameters(mock_get_config, mock_config_class):
-    """Test initialize_config with default parameters."""
+def test_initialize_config_default_parameters(mock_get_config: MagicMock, mock_config_class: MagicMock):
+    """
+    Test initialize_config with default parameters.
+    
+    Args:
+        mock_get_config: A mocked `get_config` function.
+        mock_config_class: A mocked `Config` object.
+    """
     mock_app_config = {"test": "config"}
     mock_get_config.return_value = mock_app_config
     mock_config_instance = MagicMock()
@@ -809,8 +803,14 @@ def test_initialize_config_default_parameters(mock_get_config, mock_config_class
 
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_with_path(mock_get_config, mock_config_class):
-    """Test initialize_config with custom path."""
+def test_initialize_config_with_path(mock_get_config: MagicMock, mock_config_class: MagicMock):
+    """
+    Test initialize_config with custom path.
+    
+    Args:
+        mock_get_config: A mocked `get_config` function.
+        mock_config_class: A mocked `Config` object.
+    """
     mock_app_config = {"test": "config"}
     mock_get_config.return_value = mock_app_config
     mock_config_instance = MagicMock()
@@ -827,8 +827,14 @@ def test_initialize_config_with_path(mock_get_config, mock_config_class):
 
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_with_local_mode_true(mock_get_config, mock_config_class):
-    """Test initialize_config with local_mode=True."""
+def test_initialize_config_with_local_mode_true(mock_get_config: MagicMock, mock_config_class: MagicMock):
+    """
+    Test initialize_config with local_mode=True.
+    
+    Args:
+        mock_get_config: A mocked `get_config` function.
+        mock_config_class: A mocked `Config` object.
+    """
     mock_app_config = {"test": "config"}
     mock_get_config.return_value = mock_app_config
     mock_config_instance = MagicMock()
@@ -845,8 +851,14 @@ def test_initialize_config_with_local_mode_true(mock_get_config, mock_config_cla
 
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_with_path_and_local_mode(mock_get_config, mock_config_class):
-    """Test initialize_config with both path and local_mode."""
+def test_initialize_config_with_path_and_local_mode(mock_get_config: MagicMock, mock_config_class: MagicMock):
+    """
+    Test initialize_config with both path and local_mode.
+    
+    Args:
+        mock_get_config: A mocked `get_config` function.
+        mock_config_class: A mocked `Config` object.
+    """
     mock_app_config = {"test": "config"}
     mock_get_config.return_value = mock_app_config
     mock_config_instance = MagicMock()
@@ -864,8 +876,14 @@ def test_initialize_config_with_path_and_local_mode(mock_get_config, mock_config
 
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_with_local_mode_false(mock_get_config, mock_config_class):
-    """Test initialize_config with explicit local_mode=False."""
+def test_initialize_config_with_local_mode_false(mock_get_config: MagicMock, mock_config_class: MagicMock):
+    """
+    Test initialize_config with explicit local_mode=False.
+    
+    Args:
+        mock_get_config: A mocked `get_config` function.
+        mock_config_class: A mocked `Config` object.
+    """
     mock_app_config = {"test": "config"}
     mock_get_config.return_value = mock_app_config
     mock_config_instance = MagicMock()
