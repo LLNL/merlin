@@ -3,14 +3,17 @@ Tests for the configfile.py module.
 """
 
 import getpass
+import logging
 import os
 import shutil
 import ssl
 from copy import copy, deepcopy
+from unittest.mock import patch, MagicMock
 
 import pytest
 import yaml
 from pytest_mock import MockerFixture
+from _pytest.capture import CaptureFixture
 
 from merlin.config.configfile import (
     CONFIG,
@@ -18,13 +21,17 @@ from merlin.config.configfile import (
     find_config_file,
     get_cert_file,
     get_config,
+    get_default_config,
     get_ssl_entries,
+    initialize_config,
     is_debug,
+    is_local_mode,
     load_config,
     load_default_celery,
     load_defaults,
     merge_sslmap,
     process_ssl_map,
+    set_local_mode,
     set_username_and_vhost,
 )
 from tests.constants import CERT_FILES
@@ -87,6 +94,19 @@ def config_path(configfile_testing_dir: FixtureStr, demo_app_yaml: FixtureStr) -
     return config_path_file
 
 
+@pytest.fixture(autouse=True)
+def reset_local_mode():
+    """
+    Reset IS_LOCAL_MODE before each test.
+    
+    This is done automatically without having to manually use this fixture in each test
+    with the use of `autouse=True`.
+    """
+    set_local_mode(False)
+    yield
+    set_local_mode(False)
+
+
 def create_app_yaml(app_yaml_filepath: str):
     """
     Create a dummy app.yaml file at `app_yaml_filepath`.
@@ -96,6 +116,63 @@ def create_app_yaml(app_yaml_filepath: str):
     full_app_yaml_filepath = f"{app_yaml_filepath}/app.yaml"
     if not os.path.exists(full_app_yaml_filepath):
         shutil.copy(DUMMY_APP_FILEPATH, full_app_yaml_filepath)
+
+
+def test_local_mode_toggle_and_logging(caplog: CaptureFixture):
+    """
+    Test enabling/disabling local mode and logging behavior.
+    
+    Args:
+        caplog: A built-in fixture from the pytest library to capture logs.
+    """
+    caplog.set_level(logging.INFO)
+    # Test default state
+    assert is_local_mode() is False
+    
+    # Test enabling (default parameter and explicit True)
+    set_local_mode()  # Default True
+    assert is_local_mode() is True
+    assert "Running Merlin in local mode (no configuration file required)" in caplog.text
+    
+    # Test disabling
+    set_local_mode(False)
+    assert is_local_mode() is False
+
+
+@patch('getpass.getuser')
+def test_default_config_structure_and_values(mock_getuser: MagicMock):
+    """
+    Test default config structure, values, and username handling.
+    
+    Args:
+        mock_getuser: A mocked version of the getuser function from the getpass library.
+    """
+    mock_getuser.return_value = "testuser"
+    
+    config = get_default_config()
+    
+    # Verify structure and key values
+    expected_config = {
+        "broker": {
+            "username": "testuser", "vhost": "testuser", "server": "localhost",
+            "name": "rabbitmq", "port": 5672, "protocol": "amqp"
+        },
+        "celery": {
+            "omit_queue_tag": False, "queue_tag": "[merlin]_", "override": None
+        },
+        "results_backend": {
+            "server": "localhost", "name": "redis", "port": 6379, "protocol": "redis"
+        }
+    }
+    
+    assert config == expected_config
+    assert isinstance(config, dict)
+    
+    # Test with different username
+    mock_getuser.return_value = "anotheruser"
+    config2 = get_default_config()
+    assert config2["broker"]["username"] == "anotheruser"
+    assert config2["broker"]["vhost"] == "anotheruser"
 
 
 def test_load_config(configfile_testing_dir: FixtureStr):
@@ -711,3 +788,92 @@ def test_merge_sslmap_some_keys_present():
     }
     actual = merge_sslmap(test_server_ssl, test_ssl_map)
     assert actual == expected
+
+
+@patch('merlin.config.configfile.Config')
+@patch('merlin.config.configfile.get_config')
+def test_initialize_config_default_parameters(mock_get_config, mock_config_class):
+    """Test initialize_config with default parameters."""
+    mock_app_config = {"test": "config"}
+    mock_get_config.return_value = mock_app_config
+    mock_config_instance = MagicMock()
+    mock_config_class.return_value = mock_config_instance
+    
+    result = initialize_config()
+    
+    mock_get_config.assert_called_once_with(None)
+    mock_config_class.assert_called_once_with(mock_app_config)
+    assert result == mock_config_instance
+    assert is_local_mode() is False
+
+
+@patch('merlin.config.configfile.Config')
+@patch('merlin.config.configfile.get_config')
+def test_initialize_config_with_path(mock_get_config, mock_config_class):
+    """Test initialize_config with custom path."""
+    mock_app_config = {"test": "config"}
+    mock_get_config.return_value = mock_app_config
+    mock_config_instance = MagicMock()
+    mock_config_class.return_value = mock_config_instance
+    
+    test_path = "/path/to/config"
+    result = initialize_config(path=test_path)
+    
+    mock_get_config.assert_called_once_with(test_path)
+    mock_config_class.assert_called_once_with(mock_app_config)
+    assert result == mock_config_instance
+    assert is_local_mode() is False
+
+
+@patch('merlin.config.configfile.Config')
+@patch('merlin.config.configfile.get_config')
+def test_initialize_config_with_local_mode_true(mock_get_config, mock_config_class):
+    """Test initialize_config with local_mode=True."""
+    mock_app_config = {"test": "config"}
+    mock_get_config.return_value = mock_app_config
+    mock_config_instance = MagicMock()
+    mock_config_class.return_value = mock_config_instance
+    
+    with patch('merlin.config.configfile.LOG'):
+        result = initialize_config(local_mode=True)
+    
+    mock_get_config.assert_called_once_with(None)
+    mock_config_class.assert_called_once_with(mock_app_config)
+    assert result == mock_config_instance
+    assert is_local_mode() is True
+
+
+@patch('merlin.config.configfile.Config')
+@patch('merlin.config.configfile.get_config')
+def test_initialize_config_with_path_and_local_mode(mock_get_config, mock_config_class):
+    """Test initialize_config with both path and local_mode."""
+    mock_app_config = {"test": "config"}
+    mock_get_config.return_value = mock_app_config
+    mock_config_instance = MagicMock()
+    mock_config_class.return_value = mock_config_instance
+    
+    test_path = "/custom/path"
+    with patch('merlin.config.configfile.LOG'):
+        result = initialize_config(path=test_path, local_mode=True)
+    
+    mock_get_config.assert_called_once_with(test_path)
+    mock_config_class.assert_called_once_with(mock_app_config)
+    assert result == mock_config_instance
+    assert is_local_mode() is True
+
+
+@patch('merlin.config.configfile.Config')
+@patch('merlin.config.configfile.get_config')
+def test_initialize_config_with_local_mode_false(mock_get_config, mock_config_class):
+    """Test initialize_config with explicit local_mode=False."""
+    mock_app_config = {"test": "config"}
+    mock_get_config.return_value = mock_app_config
+    mock_config_instance = MagicMock()
+    mock_config_class.return_value = mock_config_instance
+    
+    result = initialize_config(local_mode=False)
+    
+    mock_get_config.assert_called_once_with(None)
+    mock_config_class.assert_called_once_with(mock_app_config)
+    assert result == mock_config_instance
+    assert is_local_mode() is False
