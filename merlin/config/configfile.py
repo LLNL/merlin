@@ -56,11 +56,11 @@ IS_LOCAL_MODE: bool = False
 def set_local_mode(enable: bool = True):
     """
     Sets Merlin to run in local mode, which doesn't require a configuration file.
-    
+
     Args:
         enable (bool): True to enable local mode, False to disable it.
     """
-    global IS_LOCAL_MODE
+    global IS_LOCAL_MODE  # pylint: disable=global-statement
     IS_LOCAL_MODE = enable
     if enable:
         LOG.info("Running Merlin in local mode (no configuration file required)")
@@ -69,7 +69,7 @@ def set_local_mode(enable: bool = True):
 def is_local_mode() -> bool:
     """
     Checks if Merlin is running in local mode.
-    
+
     Returns:
         True if running in local mode, False otherwise.
     """
@@ -156,7 +156,7 @@ def set_username_and_vhost(config: Dict):
     # Ensure broker key exists
     if "broker" not in config:
         config["broker"] = {}
-        
+
     try:
         config["broker"]["username"]
     except KeyError:
@@ -182,20 +182,16 @@ def get_default_config() -> Dict:
             "vhost": getpass.getuser(),
             "server": "localhost",
             "name": "rabbitmq",  # Default broker name
-            "port": 5672,        # Default RabbitMQ port
-            "protocol": "amqp"   # Default protocol
+            "port": 5672,  # Default RabbitMQ port
+            "protocol": "amqp",  # Default protocol
         },
-        "celery": {
-            "omit_queue_tag": False,
-            "queue_tag": "[merlin]_",
-            "override": None
-        },
+        "celery": {"omit_queue_tag": False, "queue_tag": "[merlin]_", "override": None},
         "results_backend": {
             "server": "localhost",
-            "name": "redis",     # Default results backend
-            "port": 6379,        # Default Redis port
-            "protocol": "redis"  # Default protocol
-        }
+            "name": "redis",  # Default results backend
+            "port": 6379,  # Default Redis port
+            "protocol": "redis",  # Default protocol
+        },
     }
     return default_config
 
@@ -485,21 +481,21 @@ def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dic
 def initialize_config(path: Optional[str] = None, local_mode: bool = False) -> Config:
     """
     Initializes and returns the Merlin configuration.
-    
+
     This function can be used to explicitly initialize the configuration when needed,
     rather than relying on the module-level CONFIG constant.
-    
+
     Args:
         path (Optional[str]): Path to look for configuration file
         local_mode (bool): Whether to use local mode (no config file required)
-        
+
     Returns:
         The initialized configuration object
     """
     if local_mode:
         set_local_mode(True)
-    
-    app_config = get_config(path)
+
+    app_config = get_config(path)  # pylint: disable=redefined-outer-name
     return Config(app_config)
 
 
