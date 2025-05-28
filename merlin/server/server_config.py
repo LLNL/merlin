@@ -340,7 +340,6 @@ def pull_server_config(app_yaml_path: str = None) -> ServerConfig:
     app_yaml_file = app_yaml_path if app_yaml_path is not None else LOCAL_APP_YAML
     merlin_app_yaml = AppYaml(app_yaml_file)
     server_config = merlin_app_yaml.get_data()
-    LOG.info(f"Loading server configuration from '{app_yaml_file}'.")
     return load_server_config(server_config)
 
 

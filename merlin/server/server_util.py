@@ -241,6 +241,52 @@ class ContainerConfig:  # pylint: disable=R0902
         """
         variables = ("format", "image_type", "image", "url", "config", "config_dir", "pfile", "pass_file", "user_file")
         return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
+    
+    def __str__(self) -> str:
+        """
+        Returns a human-readable string representation of the ContainerConfig.
+
+        This method provides a formatted, user-friendly view of the container
+        configuration, showing the key attributes in a readable format.
+
+        Returns:
+            A human-readable string representation of the configuration.
+        """
+        return (
+            f"ContainerConfig:\n"
+            f"  Format: {self.format}\n"
+            f"  Image Type: {self.image_type}\n"
+            f"  Image: {self.image}\n"
+            f"  URL: {self.url}\n"
+            f"  Config Dir: {self.config_dir}\n"
+            f"  Config File: {self.config}\n"
+            f"  Process File: {self.pfile}\n"
+            f"  Password File: {self.pass_file}\n"
+            f"  Users File: {self.user_file}"
+        )
+
+    def __repr__(self) -> str:
+        """
+        Returns an unambiguous string representation of the ContainerConfig.
+
+        This method provides a string that could be used to recreate the object,
+        showing the constructor call with the current configuration values.
+
+        Returns:
+            An unambiguous string representation that shows how to recreate the object.
+        """
+        config_dict = {
+            'format': self.format,
+            'image_type': self.image_type,
+            'image': self.image,
+            'url': self.url,
+            'config': self.config,
+            'config_dir': self.config_dir,
+            'pfile': self.pfile,
+            'pass_file': self.pass_file,
+            'user_file': self.user_file
+        }
+        return f"ContainerConfig({config_dict!r})"
 
     def get_format(self) -> str:
         """
@@ -783,6 +829,42 @@ class ContainerFormatConfig:
         """
         variables = ("command", "run_command", "stop_command", "pull_command")
         return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
+    
+    def __str__(self) -> str:
+        """
+        Returns a human-readable string representation of the ContainerFormatConfig.
+
+        This method provides a formatted, user-friendly view of the container format
+        configuration, showing the key command attributes in a readable format.
+
+        Returns:
+            A human-readable string representation of the configuration.
+        """
+        return (
+            f"ContainerFormatConfig:\n"
+            f"  Command: {self.command}\n"
+            f"  Run Command: {self.run_command}\n"
+            f"  Stop Command: {self.stop_command}\n"
+            f"  Pull Command: {self.pull_command}"
+        )
+
+    def __repr__(self) -> str:
+        """
+        Returns an unambiguous string representation of the ContainerFormatConfig.
+
+        This method provides a string that could be used to recreate the object,
+        showing the constructor call with the current configuration values.
+
+        Returns:
+            An unambiguous string representation that shows how to recreate the object.
+        """
+        config_dict = {
+            'command': self.command,
+            'run_command': self.run_command,
+            'stop_command': self.stop_command,
+            'pull_command': self.pull_command
+        }
+        return f"ContainerFormatConfig({config_dict!r})"
 
     def get_command(self) -> str:
         """
@@ -956,6 +1038,38 @@ class ProcessConfig:
         """
         variables = ("status", "kill")
         return all(getattr(self, attr) == getattr(other, attr) for attr in variables)
+    
+    def __str__(self) -> str:
+        """
+        Returns a human-readable string representation of the ProcessConfig.
+
+        This method provides a formatted, user-friendly view of the process
+        configuration, showing the status and kill command templates in a readable format.
+
+        Returns:
+            A human-readable string representation of the configuration.
+        """
+        return (
+            f"ProcessConfig:\n"
+            f"  Status Command: {self.status}\n"
+            f"  Kill Command: {self.kill}"
+        )
+
+    def __repr__(self) -> str:
+        """
+        Returns an unambiguous string representation of the ProcessConfig.
+
+        This method provides a string that could be used to recreate the object,
+        showing the constructor call with the current configuration values.
+
+        Returns:
+            An unambiguous string representation that shows how to recreate the object.
+        """
+        config_dict = {
+            'status': self.status,
+            'kill': self.kill
+        }
+        return f"ProcessConfig({config_dict!r})"
 
     def get_status_command(self) -> str:
         """
@@ -1031,6 +1145,69 @@ class ServerConfig:  # pylint: disable=R0903
         container_format_data: str = data.get(self.container.get_format() if self.container else None)
         self.container_format: ContainerFormatConfig = (
             ContainerFormatConfig(container_format_data) if container_format_data else None
+        )
+
+    def __str__(self) -> str:
+        """
+        Returns a human-readable string representation of the ServerConfig.
+
+        This method provides a formatted, user-friendly view of the complete server
+        configuration, showing all nested configuration objects in a readable hierarchical format.
+
+        Returns:
+            A human-readable string representation of the server configuration.
+        """
+        lines = ["ServerConfig:"]
+        
+        if self.container:
+            lines.append("  Container Configuration:")
+            container_str = str(self.container)
+            # Indent each line of the container config
+            for line in container_str.split('\n')[1:]:  # Skip the first line (class name)
+                lines.append("  " + line)
+        else:
+            lines.append("  Container Configuration: None")
+        
+        if self.process:
+            lines.append("  Process Configuration:")
+            process_str = str(self.process)
+            # Indent each line of the process config
+            for line in process_str.split('\n')[1:]:  # Skip the first line (class name)
+                lines.append("  " + line)
+        else:
+            lines.append("  Process Configuration: None")
+        
+        if self.container_format:
+            lines.append("  Container Format Configuration:")
+            format_str = str(self.container_format)
+            # Indent each line of the container format config
+            for line in format_str.split('\n')[1:]:  # Skip the first line (class name)
+                lines.append("  " + line)
+        else:
+            lines.append("  Container Format Configuration: None")
+        
+        return '\n'.join(lines)
+
+    def __repr__(self) -> str:
+        """
+        Returns an unambiguous string representation of the ServerConfig.
+
+        This method provides a string that shows the constructor call with the current
+        configuration values. Since ServerConfig contains complex nested objects, this
+        representation focuses on showing the structure rather than being directly evaluable.
+
+        Returns:
+            An unambiguous string representation that shows the server configuration structure.
+        """
+        container_repr = repr(self.container) if self.container else "None"
+        process_repr = repr(self.process) if self.process else "None"
+        container_format_repr = repr(self.container_format) if self.container_format else "None"
+        
+        return (
+            f"ServerConfig("
+            f"container={container_repr}, "
+            f"process={process_repr}, "
+            f"container_format={container_format_repr})"
         )
 
 
@@ -2108,6 +2285,7 @@ class AppYaml:
         """
         if not os.path.exists(filename):
             filename = self.default_filename
+        LOG.debug(f"Reading configuration from {filename}")
         self.read(filename)
 
     def apply_server_config(self, server_config: ServerConfig):
@@ -2127,11 +2305,17 @@ class AppYaml:
         """
         redis_config = RedisConfig(server_config.container.get_config_path())
 
+        if self.broker_name not in self.data:
+            self.data[self.broker_name] = {}
+
         self.data[self.broker_name]["name"] = server_config.container.get_image_type()
         self.data[self.broker_name]["username"] = "default"
         self.data[self.broker_name]["password"] = server_config.container.get_pass_file_path()
         self.data[self.broker_name]["server"] = redis_config.get_ip_address()
         self.data[self.broker_name]["port"] = redis_config.get_port()
+
+        if self.results_name not in self.data:
+            self.data[self.results_name] = {}
 
         self.data[self.results_name]["name"] = server_config.container.get_image_type()
         self.data[self.results_name]["username"] = "default"
