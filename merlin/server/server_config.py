@@ -280,7 +280,7 @@ def config_merlin_server():
 def load_server_config(server_config: Dict) -> ServerConfig:
     """
     Given a dictionary containing server configuration values, load them into a
-    [`ServerConfig`][server.server_utils.ServerConfig] instance.
+    [`ServerConfig`][server.server_util.ServerConfig] instance.
 
     Args:
         server_config: A dictionary containing server configuration values. Should have
