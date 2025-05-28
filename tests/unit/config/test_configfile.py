@@ -783,7 +783,7 @@ def test_merge_sslmap_some_keys_present():
 def test_initialize_config_default_parameters(mock_get_config: MagicMock, mock_config_class: MagicMock):
     """
     Test initialize_config with default parameters.
-    
+
     Args:
         mock_get_config: A mocked `get_config` function.
         mock_config_class: A mocked `Config` object.
@@ -806,7 +806,7 @@ def test_initialize_config_default_parameters(mock_get_config: MagicMock, mock_c
 def test_initialize_config_with_path(mock_get_config: MagicMock, mock_config_class: MagicMock):
     """
     Test initialize_config with custom path.
-    
+
     Args:
         mock_get_config: A mocked `get_config` function.
         mock_config_class: A mocked `Config` object.
@@ -830,7 +830,7 @@ def test_initialize_config_with_path(mock_get_config: MagicMock, mock_config_cla
 def test_initialize_config_with_local_mode_true(mock_get_config: MagicMock, mock_config_class: MagicMock):
     """
     Test initialize_config with local_mode=True.
-    
+
     Args:
         mock_get_config: A mocked `get_config` function.
         mock_config_class: A mocked `Config` object.
@@ -854,7 +854,7 @@ def test_initialize_config_with_local_mode_true(mock_get_config: MagicMock, mock
 def test_initialize_config_with_path_and_local_mode(mock_get_config: MagicMock, mock_config_class: MagicMock):
     """
     Test initialize_config with both path and local_mode.
-    
+
     Args:
         mock_get_config: A mocked `get_config` function.
         mock_config_class: A mocked `Config` object.
@@ -879,7 +879,7 @@ def test_initialize_config_with_path_and_local_mode(mock_get_config: MagicMock, 
 def test_initialize_config_with_local_mode_false(mock_get_config: MagicMock, mock_config_class: MagicMock):
     """
     Test initialize_config with explicit local_mode=False.
-    
+
     Args:
         mock_get_config: A mocked `get_config` function.
         mock_config_class: A mocked `Config` object.
