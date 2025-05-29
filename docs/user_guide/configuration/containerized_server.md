@@ -83,6 +83,10 @@ To have Merlin read this server configuration:
 
 === "Make This Server Configuration Your Main Configuration"
 
+    !!! Tip
+
+        The `merlin config use` command allows you to have multiple server configuration files that you can easily swap between.
+
     ```bash
     merlin config use merlin_server/app.yaml
     ```
@@ -103,7 +107,7 @@ If your servers are running and set up properly, this should output something si
 
 ???+ success
 
-    ```bash                                               
+    ```bash
            *      
        *~~~~~                                       
       *~~*~~~*      __  __           _ _       
