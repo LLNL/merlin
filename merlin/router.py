@@ -36,10 +36,8 @@ This module is intended to help keep the task management layer (i.e., Celery)
 decoupled from the logic the tasks are running.
 """
 import logging
-import os
 import time
 from argparse import Namespace
-from importlib import resources
 from typing import Dict, List, Tuple
 
 from merlin.exceptions import NoWorkersException
@@ -47,7 +45,6 @@ from merlin.spec.specification import MerlinSpec
 from merlin.study.celeryadapter import (
     build_set_of_queues,
     check_celery_workers_processing,
-    create_celery_config,
     dump_celery_queue_info,
     get_active_celery_queues,
     get_workers_from_app,

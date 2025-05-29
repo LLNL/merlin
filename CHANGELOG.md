@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added "Unit-tests" GitHub action to run the unit test suite
 - Added `CeleryTaskManager` context manager to the test suite to ensure tasks are safely purged from queues if tests fail
 - Added `command-tests`, `workflow-tests`, and `integration-tests` to the Makefile
+- Added tests and docs for the new `merlin config` options
 - Python 3.8 now requires `orderly-set==5.3.0` to avoid a bug with the deepdiff library
 - New step 'Reinstall pip to avoid vendored package corruption' to CI workflow jobs that use pip
 - New GitHub actions to reduce common code in CI
@@ -56,11 +57,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `redis_socket_connect_timeout: 300` -> 5 minute socket timeout for connections to Redis
     - `redis_socket_timeout: 300` -> 5 minute socket timeout for read/write operations to Redis
     - `redis_socket_keepalive: True` -> socket TCP keepalive to keep connections healthy to the Redis server
+- The `merlin config` command:
+  - Now defaults to the LaunchIT setup
+  - No longer required to have configuration named `app.yaml`
+  - New subcommands:
+    - `create`: Creates a new configuration file
+    - `update-broker`: Updates the `broker` section of the configuration file
+    - `update-backend`: Updates the `results_backend` section of the configuration file
+    - `use`: Point your active configuration to a new configuration file
 - Dropped support for Python 3.7
 - Ported all distributed tests of the integration test suite to pytest
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
   - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
 - Removed `e2e-distributed*` definitions from the Makefile
+- Modified GitHub CI to use shared testing servers hosted by LaunchIT rather than the jackalope server
 - CI to use new actions
 
 ### Fixed
