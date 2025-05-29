@@ -5,7 +5,7 @@ for supported task servers in Merlin.
 
 from typing import Dict, List
 
-from merlin.exceptions import InvalidTaskServerError
+from merlin.exceptions import MerlinInvalidTaskServerError
 from merlin.monitor.celery_monitor import CeleryMonitor
 from merlin.monitor.task_server_monitor import TaskServerMonitor
 
@@ -53,12 +53,12 @@ class MonitorFactory:
                 object for the specified task server.
 
         Raises:
-            InvalidTaskServerError: If the requested task server is not supported.
+            MerlinInvalidTaskServerError: If the requested task server is not supported.
         """
         monitor_object = self._monitors.get(task_server, None)
 
         if monitor_object is None:
-            raise InvalidTaskServerError(
+            raise MerlinInvalidTaskServerError(
                 f"Task server unsupported by Merlin: {task_server}. "
                 "Supported task servers are: {self.get_supported_task_servers()}"
             )
