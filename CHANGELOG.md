@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI to use new actions
 
 ### Fixed
+- Running Merlin locally no longer requires an `app.yaml` configuration file
 - Removed dead lgtm link
 
 ## [1.12.2]

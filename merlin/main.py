@@ -55,6 +55,7 @@ from tabulate import tabulate
 
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
+from merlin.config.configfile import initialize_config
 from merlin.config.merlin_config_manager import MerlinConfigManager
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
@@ -221,6 +222,10 @@ def process_run(args: Namespace):
         pgen_file=args.pgen_file,
         pargs=args.pargs,
     )
+
+    if args.run_mode == "local":
+        initialize_config(local_mode=True)
+
     router.run_task_server(study, args.run_mode)
 
 
@@ -252,6 +257,10 @@ def process_restart(args: Namespace):
     filepath: str = verify_filepath(possible_specs[0])
     LOG.info(f"Restarting workflow at '{restart_dir}'")
     study: MerlinStudy = MerlinStudy(filepath, restart_dir=restart_dir)
+
+    if args.run_mode == "local":
+        initialize_config(local_mode=True)
+
     router.run_task_server(study, args.run_mode)
 
 
