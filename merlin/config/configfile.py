@@ -50,6 +50,30 @@ from merlin.utils import load_yaml
 LOG: logging.Logger = logging.getLogger(__name__)
 
 CONFIG: Optional[Config] = None
+IS_LOCAL_MODE: bool = False
+
+
+def set_local_mode(enable: bool = True):
+    """
+    Sets Merlin to run in local mode, which doesn't require a configuration file.
+
+    Args:
+        enable (bool): True to enable local mode, False to disable it.
+    """
+    global IS_LOCAL_MODE  # pylint: disable=global-statement
+    IS_LOCAL_MODE = enable
+    if enable:
+        LOG.info("Running Merlin in local mode (no configuration file required)")
+
+
+def is_local_mode() -> bool:
+    """
+    Checks if Merlin is running in local mode.
+
+    Returns:
+        True if running in local mode, False otherwise.
+    """
+    return IS_LOCAL_MODE
 
 
 def load_config(filepath: str) -> Dict:
@@ -60,7 +84,7 @@ def load_config(filepath: str) -> Dict:
         filepath (str): The path to the YAML configuration file.
 
     Returns:
-        A dictionary containing the contents of the YAML file.
+        A dictionary containing the contents of the YAML file or None if file doesn't exist.
     """
     if not os.path.isfile(filepath):
         LOG.info(f"No app config file at {filepath}")
@@ -129,6 +153,10 @@ def set_username_and_vhost(config: Dict):
     Args:
         config (Dict): The configuration object containing the `broker` namespace.
     """
+    # Ensure broker key exists
+    if "broker" not in config:
+        config["broker"] = {}
+
     try:
         config["broker"]["username"]
     except KeyError:
@@ -141,13 +169,39 @@ def set_username_and_vhost(config: Dict):
         config["broker"]["vhost"] = vhost
 
 
-def get_config(path: Optional[str]) -> Dict:
+def get_default_config() -> Dict:
+    """
+    Creates a minimal default configuration for local mode.
+
+    Returns:
+        Dict: A configuration dictionary with essential default values.
+    """
+    default_config = {
+        "broker": {
+            "username": "user",
+            "vhost": "vhost",
+            "server": "localhost",
+            "name": "rabbitmq",  # Default broker name
+            "port": 5672,  # Default RabbitMQ port
+            "protocol": "amqp",  # Default protocol
+        },
+        "celery": {"omit_queue_tag": False, "queue_tag": "[merlin]_", "override": None},
+        "results_backend": {
+            "server": "localhost",
+            "name": "redis",  # Default results backend
+            "port": 6379,  # Default Redis port
+            "protocol": "redis",  # Default protocol
+        },
+    }
+    return default_config
+
+
+def get_config(path: Optional[str] = None) -> Dict:
     """
     Loads a Merlin configuration file and returns a dictionary containing the configuration data.
 
     This function locates the configuration file using the provided `path` or default search locations,
-    loads the configuration data, and applies default values where necessary. If the configuration file
-    cannot be found, it raises a `ValueError`.
+    loads the configuration data, and applies default values where necessary.
 
     Args:
         path (str, optional): The directory path to search for the configuration file.
@@ -158,16 +212,20 @@ def get_config(path: Optional[str]) -> Dict:
             results backend, and task manager settings.
 
     Raises:
-        ValueError: If the configuration file cannot be found.
+        ValueError: If the configuration file cannot be found and it's not a local run.
     """
-    filepath: Optional[str] = find_config_file(path)
+    if is_local_mode():
+        LOG.info("Using default configuration (local mode)")
+        config = get_default_config()
+        load_defaults(config)
+        return config
 
+    filepath: Optional[str] = find_config_file(path)
     if filepath is None:
         raise ValueError(
-            "Cannot find a merlin config file! Run 'merlin config' and edit the file "
+            "Cannot find a merlin config file! Run 'merlin config create' and edit the file "
             f"'{os.path.join(MERLIN_HOME, APP_FILENAME)}'"
         )
-
     config: Dict = load_config(filepath)
     load_defaults(config)
     return config
@@ -420,5 +478,34 @@ def merge_sslmap(server_ssl: Dict[str, Union[str, ssl.VerifyMode]], ssl_map: Dic
     return new_server_ssl
 
 
-app_config: Dict = get_config(None)
-CONFIG = Config(app_config)
+def initialize_config(path: Optional[str] = None, local_mode: bool = False) -> Config:
+    """
+    Initializes and returns the Merlin configuration.
+
+    This function can be used to explicitly initialize the configuration when needed,
+    rather than relying on the module-level CONFIG constant.
+
+    Args:
+        path (Optional[str]): Path to look for configuration file
+        local_mode (bool): Whether to use local mode (no config file required)
+
+    Returns:
+        The initialized configuration object
+    """
+    if local_mode:
+        set_local_mode(True)
+
+    app_config = get_config(path)  # pylint: disable=redefined-outer-name
+    return Config(app_config)
+
+
+# Initialize the global CONFIG object with default configuration
+# This can be overridden by calling initialize_config() later
+try:
+    # Try to load config file by default
+    app_config = get_config(None)
+    CONFIG = Config(app_config)
+except ValueError as e:
+    LOG.warning(f"Error loading configuration: {e}. Falling back to default configuration.")
+    # Fallback to default config
+    CONFIG = Config(get_default_config())

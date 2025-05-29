@@ -83,6 +83,10 @@ To have Merlin read this server configuration:
 
 === "Make This Server Configuration Your Main Configuration"
 
+    !!! Tip
+
+        The `merlin config use` command allows you to have multiple server configuration files that you can easily swap between.
+
     ```bash
     merlin config use merlin_server/app.yaml
     ```
@@ -103,7 +107,7 @@ If your servers are running and set up properly, this should output something si
 
 ???+ success
 
-    ```bash                                               
+    ```bash
            *      
        *~~~~~                                       
       *~~*~~~*      __  __           _ _       
@@ -316,7 +320,7 @@ def update_app_yaml(hostname, app_yaml):
         try:
             contents = yaml.load(yaml_file, yaml.FullLoader)
         except AttributeError:
-            LOG.warning(
+            print(
                 "PyYAML is using an unsafe version with a known "
                 "load vulnerability. Please upgrade your installation "
                 "to a more recent version!"
@@ -492,7 +496,7 @@ Below are the full scripts:
             try:
                 contents = yaml.load(yaml_file, yaml.FullLoader)
             except AttributeError:
-                LOG.warning(
+                print(
                     "PyYAML is using an unsafe version with a known "
                     "load vulnerability. Please upgrade your installation "
                     "to a more recent version!"
