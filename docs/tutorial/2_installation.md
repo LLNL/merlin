@@ -172,6 +172,7 @@ This will create a `merlin_server/` folder in the current run directory. The str
 
 ```bash
 merlin_server/
+|-- app.yaml
 |-- redis.conf
 |-- redis.pass
 |-- redis.users
@@ -180,10 +181,11 @@ merlin_server/
 
 The files in this folder are:
 
-1. `redis.conf`: The Redis configuration file that contains all of the settings to be used for our Redis server
-2. `redis.pass`: A password for the Redis server that we'll start up next
-3. `redis.users`: A file defining the users that are allowed to access the Redis server and their permissions
-4. `redis_latest.sif`: A singularity file that contains the latest Redis docker image that was pulled behind the scenes by Merlin
+1. `app.yaml`: The configuration file that Merlin will eventually read from 
+2. `redis.conf`: The Redis configuration file that contains all of the settings to be used for our Redis server
+3. `redis.pass`: A password for the Redis server that we'll start up next
+4. `redis.users`: A file defining the users that are allowed to access the Redis server and their permissions
+5. `redis_latest.sif`: A singularity file that contains the latest Redis docker image that was pulled behind the scenes by Merlin
 
 If you'd like to modify the configuration of your server, you can either modify the files directly or use:
 
@@ -207,10 +209,7 @@ Now that we have the necessary server files initialized, start the server:
 merlin server start
 ```
 
-With this command, the containerized server should now be started. Notice that two new files were added to the `merlin_server` folder:
-
-1. `merlin_server.pf`: A process file containing information regarding the Redis process
-2. `app.yaml`: A new `app.yaml` configuration file configured specifically for the containerized Redis server that we just started
+With this command, the containerized server should now be started. Notice that a new file was added to the `merlin_server` folder: `merlin_server.pf`. This is a process file containing information regarding the Redis process. Additionally, the `merlin_server/app.yaml` file is updated to add `broker` and `results_backend` sections that point to the server that was just started.
 
 ### Pointing Merlin to the Server
 
