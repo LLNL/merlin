@@ -282,45 +282,6 @@ def stop_workers(task_server: str, spec_worker_names: List[str], queues: List[st
         LOG.error("Celery is not specified as the task server!")
 
 
-def create_config(task_server: str, config_dir: str, broker: str, test: str):
-    """
-    Create a configuration app.yaml that Merlin will use to connect to the
-    specified task server.
-
-    This function generates a configuration file for the given task server.
-    It creates the necessary directories if they do not exist and determines
-    the appropriate configuration file based on the provided broker and testing
-    parameters.
-
-    Args:
-        task_server: The task server for which to create the configuration.
-        config_dir: The directory where the configuration files will be installed.
-            If the directory does not exist, it will be created.
-        broker: A string indicating the broker type.
-        test: A string that indicates whether the application should use a test
-            configuration file. If set, a test configuration is created.
-    """
-    if test:
-        LOG.info("Creating test config ...")
-    else:
-        LOG.info("Creating config ...")
-
-    if not os.path.isdir(config_dir):
-        os.makedirs(config_dir)
-
-    if task_server == "celery":
-        config_file = "app.yaml"
-        data_config_file = "app.yaml"
-        if broker == "redis":
-            data_config_file = "app_redis.yaml"
-        elif test:
-            data_config_file = "app_test.yaml"
-        with resources.path("merlin.data.celery", data_config_file) as data_file:
-            create_celery_config(config_dir, config_file, data_file)
-    else:
-        LOG.error("Only celery can be configured currently.")
-
-
 # TODO in Merlin 1.14 delete all of the below functions since we're deprecating the old version of the monitor
 # and a lot of this stuff is in the new monitor classes
 
