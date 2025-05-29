@@ -295,11 +295,14 @@ if __name__ == "__main__":
 
 Finally, we'll add a function `update_app_yaml` to do the actual updating of the `app.yaml` file. This function will load in the current contents of the `app.yaml` file, update the necessary `server` settings, and dump the updated settings back to the `app.yaml` file.
 
-```python title="update_app_hostname.py" hl_lines="2 6-29 39"
+```python title="update_app_hostname.py" hl_lines="2-3 7-32 42"
 import argparse
+import logging
 import yaml
 
 from merlin.utils import verify_filepath
+
+LOG = logging.getLogger(__name__)
 
 def update_app_yaml(hostname, app_yaml):
     """
@@ -313,7 +316,7 @@ def update_app_yaml(hostname, app_yaml):
         try:
             contents = yaml.load(yaml_file, yaml.FullLoader)
         except AttributeError:
-            print(
+            LOG.warning(
                 "PyYAML is using an unsafe version with a known "
                 "load vulnerability. Please upgrade your installation "
                 "to a more recent version!"
@@ -470,9 +473,12 @@ Below are the full scripts:
 
     ```python title="update_app_hostname.py"
     import argparse
+    import logging
     import yaml
 
     from merlin.utils import verify_filepath
+
+    LOG = logging.getLogger(__name__)
 
     def update_app_yaml(hostname, app_yaml):
         """
@@ -486,7 +492,7 @@ Below are the full scripts:
             try:
                 contents = yaml.load(yaml_file, yaml.FullLoader)
             except AttributeError:
-                print(
+                LOG.warning(
                     "PyYAML is using an unsafe version with a known "
                     "load vulnerability. Please upgrade your installation "
                     "to a more recent version!"
