@@ -10,14 +10,14 @@ See also:
     - merlin.db_scripts.data_models: Data model definitions
 """
 
+import json
 import logging
-from typing import Generic, List, Optional, Type, TypeVar
+from datetime import datetime
+from typing import Dict, Generic, List, Optional, Type, TypeVar
 
 from redis import Redis
 
-from merlin.backends.redis.redis_utils import create_data_class_entry, deserialize_data_class, update_data_class_entry
-from merlin.db_scripts.data_models import LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
-from merlin.exceptions import RunNotFoundError, StudyNotFoundError, WorkerNotFoundError
+from merlin.backends.utils import get_not_found_error_class
 
 
 LOG = logging.getLogger(__name__)
@@ -62,6 +62,95 @@ class RedisStoreBase(Generic[T]):
             The full Redis key.
         """
         return obj_id if obj_id.startswith(f"{self.key}:") else f"{self.key}:{obj_id}"
+    
+    def _is_iso_datetime(self, value: str) -> bool:
+        """
+        Check if a string is in ISO 8601 datetime format.
+
+        Args:
+            value: The string to check.
+
+        Returns:
+            True if the string is in ISO 8601 format, False otherwise.
+        """
+        try:
+            datetime.fromisoformat(value)
+            return True
+        except ValueError:
+            return False
+    
+    def _serialize_object(self, obj: T) -> Dict[str, str]:
+        """
+        Given a [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance,
+        convert it's data into a format that the Redis database can interpret.
+
+        Args:
+            obj: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
+
+        Returns:
+            A dictionary of information that Redis can interpret.
+        """
+        LOG.debug("Deserializing data from Redis...")
+        serialized_data = {}
+
+        for field in obj.get_instance_fields():
+            field_value = getattr(obj, field.name)
+            if isinstance(field_value, set):
+                # Explicitly mark this as a set so we can properly deserialize it later
+                serialized_data[field.name] = json.dumps({"__set__": list(field_value)})
+            elif isinstance(field_value, (list, dict)):
+                serialized_data[field.name] = json.dumps(field_value)
+            elif isinstance(field_value, datetime):
+                serialized_data[field.name] = field_value.isoformat()
+            elif field_value is None:
+                serialized_data[field.name] = "null"
+            else:
+                serialized_data[field.name] = str(field_value)
+
+        LOG.debug("Successfully deserialized data.")
+        return serialized_data
+
+    def _deserialize_object(self, data: Dict[str, str]) -> T:
+        """
+        Given data that was retrieved by Redis, convert it into a data_class instance.
+
+        Args:
+            data: The data retrieved by Redis that we need to deserialize.
+            data_class: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] object.
+
+        Returns:
+            A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
+        """
+        LOG.debug("Deserializing data from Redis...")
+        deserialized_data = {}
+
+        for key, val in data.items():
+            if val.startswith("[") or val.startswith("{"):
+                try:
+                    loaded_val = json.loads(val)
+                    # Check if this is a set that we specially encoded
+                    if isinstance(loaded_val, dict) and "__set__" in loaded_val:
+                        deserialized_data[key] = set(loaded_val["__set__"])
+                    else:
+                        deserialized_data[key] = loaded_val
+                except json.JSONDecodeError as e:
+                    LOG.error(f"Failed to deserialize JSON for key {key}: {val}")
+                    LOG.error(f"Error: {str(e)}")
+                    # Use the original string value as fallback
+                    deserialized_data[key] = val
+            elif val == "null":
+                deserialized_data[key] = None
+            elif val in ("True", "False"):
+                deserialized_data[key] = val == "True"
+            elif self._is_iso_datetime(val):
+                deserialized_data[key] = datetime.fromisoformat(val)
+            elif val.isdigit():
+                deserialized_data[key] = float(val)
+            else:
+                deserialized_data[key] = str(val)
+
+        LOG.debug("Successfully deserialized data.")
+        return self.model_class.from_dict(deserialized_data)
 
     def save(self, obj: T):
         """
@@ -71,13 +160,22 @@ class RedisStoreBase(Generic[T]):
             obj: The object to save.
         """
         obj_key = f"{self.key}:{obj.id}"
+
         if self.client.exists(obj_key):
             LOG.debug(f"Attempting to update {self.key} with id '{obj.id}'...")
-            update_data_class_entry(obj, obj_key, self.client)
+            # Get the existing data from Redis and convert it to an instance of BaseDataModel
+            existing_data = self.client.hgetall(obj_key)
+            existing_data_class = self._deserialize_object(existing_data)
+
+            # Update the fields and save it to Redis
+            existing_data_class.update_fields(obj.to_dict())
+            updated_data = self._serialize_object(existing_data_class)
+            self.client.hset(obj_key, mapping=updated_data)
             LOG.debug(f"Successfully updated {self.key} with id '{obj.id}'.")
         else:
             LOG.debug(f"Creating a {self.key} entry in Redis...")
-            create_data_class_entry(obj, obj_key, self.client)
+            serialized_data = self._serialize_object(obj)
+            self.client.hset(obj_key, mapping=serialized_data)
             LOG.debug(f"Successfully created a {self.key} with id '{obj.id}' in Redis.")
 
     def retrieve(self, obj_id: str) -> Optional[T]:
@@ -96,7 +194,7 @@ class RedisStoreBase(Generic[T]):
             return None
 
         data_from_redis = self.client.hgetall(obj_key)
-        return deserialize_data_class(data_from_redis, self.model_class)
+        return self._deserialize_object(data_from_redis)
 
     def retrieve_all(self) -> List[T]:
         """
@@ -143,7 +241,7 @@ class RedisStoreBase(Generic[T]):
 
         obj = self.retrieve(obj_id)
         if obj is None:
-            error_class = self._get_not_found_error_class()
+            error_class = get_not_found_error_class(self.model_class)
             raise error_class(f"{self.key.capitalize()} with id '{obj_id}' does not exist in the database.")
 
         # Delete the object's hash entry
@@ -153,21 +251,6 @@ class RedisStoreBase(Generic[T]):
         LOG.debug(f"Successfully removed {self.key} hash from Redis.")
 
         LOG.info(f"Successfully deleted {self.key} '{obj_id}' from Redis.")
-
-    def _get_not_found_error_class(self) -> Exception:
-        """
-        Get the appropriate not found error class based on the model type.
-
-        Returns:
-            The error class to use.
-        """
-        error_map = {
-            LogicalWorkerModel: WorkerNotFoundError,
-            PhysicalWorkerModel: WorkerNotFoundError,
-            RunModel: RunNotFoundError,
-            StudyModel: StudyNotFoundError,
-        }
-        return error_map.get(self.model_class, Exception)
 
 
 class NameMappingMixin:
@@ -232,7 +315,7 @@ class NameMappingMixin:
         # Retrieve the object to ensure it exists and get its ID and name
         obj = self.retrieve(identifier, by_name=by_name)
         if obj is None:
-            error_class = self._get_not_found_error_class()
+            error_class = get_not_found_error_class(self.model_class)
             raise error_class(f"{self.key.capitalize()} with {id_type} '{identifier}' not found in the database.")
 
         # Delete the object from the name index and Redis
