@@ -24,8 +24,7 @@ LOG = logging.getLogger("merlin")
 # - instead of calling get_connection_string that logic could be handled in the base class?
 class RedisBackend(ResultsBackend):
     """
-    A Redis-based implementation of the `ResultsBackend` interface for storing and retrieving
-    studies and runs in a Redis database.
+    A Redis-based implementation of the `ResultsBackend` interface for interacting with a Redis database.
 
     Attributes:
         backend_name (str): The name of the backend (e.g., "redis").

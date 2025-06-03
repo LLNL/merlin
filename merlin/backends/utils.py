@@ -50,15 +50,15 @@ def is_iso_datetime(value: str) -> bool:
 def serialize_entity(obj: T) -> Dict[str, str]:
     """
     Given a [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance,
-    convert it's data into a format that the Redis database can interpret.
+    convert it's data into a format that the database can interpret.
 
     Args:
         obj: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
 
     Returns:
-        A dictionary of information that Redis can interpret.
+        A dictionary of information that the database can interpret.
     """
-    LOG.debug("Deserializing data from Redis...")
+    LOG.debug("Deserializing data...")
     serialized_data = {}
 
     for field in obj.get_instance_fields():
@@ -81,16 +81,16 @@ def serialize_entity(obj: T) -> Dict[str, str]:
 
 def deserialize_entity(data: Dict[str, str], model_class: T) -> T:
     """
-    Given data that was retrieved by Redis, convert it into a data_class instance.
+    Given data that was retrieved, convert it into a data_class instance.
 
     Args:
-        data: The data retrieved by Redis that we need to deserialize.
+        data: The data retrieved that we need to deserialize.
         model_class: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] object.
 
     Returns:
         A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
     """
-    LOG.debug("Deserializing data from Redis...")
+    LOG.debug("Deserializing data...")
     deserialized_data = {}
 
     for key, val in data.items():

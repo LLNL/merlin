@@ -7,6 +7,7 @@ from typing import Dict, List
 
 from merlin.backends.redis.redis_backend import RedisBackend
 from merlin.backends.results_backend import ResultsBackend
+from merlin.backends.sqlite.sqlite_backend import SQLiteBackend
 from merlin.exceptions import BackendNotSupportedError
 
 
@@ -27,7 +28,10 @@ class MerlinBackendFactory:
 
     def __init__(self):
         # Map canonical backend names to their classes
-        self._backends: Dict[str, ResultsBackend] = {"redis": RedisBackend}
+        self._backends: Dict[str, ResultsBackend] = {
+            "redis": RedisBackend,
+            "sqlite": SQLiteBackend,
+        }
         # Map aliases to canonical backend names
         self._backend_aliases: Dict[str, str] = {"rediss": "redis"}
 
