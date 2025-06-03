@@ -33,13 +33,13 @@ class SQLiteBackend(ResultsBackend):
             Remove every entry in the SQLite database by dropping and recreating tables.
 
         save:
-            Save a `BaseDataModel` object to the SQLite database.
+            Save a `BaseDataModel` entity to the SQLite database.
 
         retrieve:
             Retrieve an entity from the appropriate store based on the given query identifier and store type.
 
         retrieve_all:
-            Retrieve all objects from the specified store.
+            Retrieve all entities from the specified store.
 
         delete:
             Delete an entity from the specified store.
