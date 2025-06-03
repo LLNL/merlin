@@ -4,12 +4,9 @@ Redis backend.
 """
 
 import logging
-import uuid
-from typing import Dict, List
 
 from redis import Redis
 
-from merlin.backends.redis.redis_base_store import RedisStoreBase
 from merlin.backends.redis.redis_stores import (
     RedisLogicalWorkerStore,
     RedisPhysicalWorkerStore,
@@ -17,8 +14,6 @@ from merlin.backends.redis.redis_stores import (
     RedisStudyStore,
 )
 from merlin.backends.results_backend import ResultsBackend
-from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
-from merlin.exceptions import UnsupportedDataModelError
 
 
 LOG = logging.getLogger("merlin")
@@ -66,7 +61,6 @@ class RedisBackend(ResultsBackend):
         Args:
             backend_name (str): The name of the backend (e.g., "redis").
         """
-        super().__init__(backend_name)
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
         from merlin.config.results_backend import get_connection_string  # pylint: disable=import-outside-toplevel
 
@@ -77,12 +71,14 @@ class RedisBackend(ResultsBackend):
         self.client: Redis = Redis.from_url(**redis_config)
 
         # Create instances of each store in our database
-        self.stores: Dict = {
+        stores = {
             "study": RedisStudyStore(self.client),
             "run": RedisRunStore(self.client),
             "logical_worker": RedisLogicalWorkerStore(self.client),
             "physical_worker": RedisPhysicalWorkerStore(self.client),
         }
+
+        super().__init__(backend_name, stores)
 
     def get_version(self) -> str:
         """
@@ -94,146 +90,8 @@ class RedisBackend(ResultsBackend):
         client_info = self.client.info()
         return client_info.get("redis_version", "N/A")
 
-    def get_connection_string(self) -> str:
-        """
-        Get the connection string to Redis.
-
-        Returns:
-            A string representing the connection to Redis.
-        """
-        from merlin.config.results_backend import get_connection_string  # pylint: disable=import-outside-toplevel
-
-        return get_connection_string(include_password=False)
-
     def flush_database(self):
         """
         Remove everything stored in Redis.
         """
         self.client.flushdb()
-
-    def _get_store_by_type(self, store_type: str) -> RedisStoreBase:
-        """
-        Get the appropriate store based on the store type.
-
-        Args:
-            store_type (str): The type of store.
-
-        Returns:
-            The corresponding store.
-
-        Raises:
-            ValueError: If the `store_type` is invalid.
-        """
-        if store_type not in self.stores:
-            raise ValueError(f"Invalid store type '{store_type}'.")
-        return self.stores[store_type]
-
-    def _get_store_by_entity(self, entity: BaseDataModel) -> RedisStoreBase:
-        """
-        Get the appropriate store based on the entity type.
-
-        Args:
-            entity (BaseDataModel): The entity to save.
-
-        Returns:
-            RedisStore: The corresponding store.
-
-        Raises:
-            UnsupportedDataModelError: If the entity type is unsupported.
-        """
-        if isinstance(entity, StudyModel):
-            return self.stores["study"]
-        if isinstance(entity, RunModel):
-            return self.stores["run"]
-        if isinstance(entity, LogicalWorkerModel):
-            return self.stores["logical_worker"]
-        if isinstance(entity, PhysicalWorkerModel):
-            return self.stores["physical_worker"]
-        raise UnsupportedDataModelError(f"Unsupported data model of type {type(entity)}.")
-
-    def save(self, entity: BaseDataModel):
-        """
-        Save a `BaseDataModel` object to the Redis database.
-
-        Args:
-            entity (BaseDataModel): An instance of one of `BaseDataModel`'s inherited classes.
-
-        Raises:
-            UnsupportedDataModelError: If the entity type is unsupported.
-        """
-        store = self._get_store_by_entity(entity)
-        store.save(entity)
-
-    def retrieve(self, entity_identifier: str, store_type: str) -> BaseDataModel:
-        """
-        Retrieve an object from the appropriate store based on the given query identifier and store type.
-
-        Args:
-            entity_identifier (str): The identifier used to query the store, either an ID (UUID) or a name.
-            store_type (str): The type of store to query. Valid options are:
-                - `study`
-                - `run`
-                - `logical_worker`
-                - `physical_worker`
-
-        Returns:
-            The object retrieved from the specified store.
-
-        Raises:
-            ValueError: If the `store_type` is invalid.
-        """
-        LOG.debug(f"Retrieving '{entity_identifier}' from store '{store_type}'.")
-        store = self._get_store_by_type(store_type)
-        if store_type in ["study", "physical_worker", "run"]:
-            try:
-                uuid.UUID(entity_identifier)
-                return store.retrieve(entity_identifier)
-            except ValueError:
-                return store.retrieve(entity_identifier, by_name=True)
-        else:
-            return store.retrieve(entity_identifier)
-
-    def retrieve_all(self, store_type: str) -> List[BaseDataModel]:
-        """
-        Retrieve all objects from the specified store.
-
-        Args:
-            store_type (str): The type of store to query. Valid options are:
-                - `study`
-                - `run`
-                - `logical_worker`
-                - `physical_worker`
-
-        Returns:
-            A list of objects retrieved from the specified store.
-
-        Raises:
-            ValueError: If the `store_type` is invalid.
-        """
-        store = self._get_store_by_type(store_type)
-        return store.retrieve_all()
-
-    def delete(self, entity_identifier: str, store_type: str):
-        """
-        Delete an entity from the specified store.
-
-        Args:
-            entity_identifier (str): The identifier of the entity to delete.
-            store_type (str): The type of store to query. Valid options are:
-                - `study`
-                - `run`
-                - `logical_worker`
-                - `physical_worker`
-
-        Raises:
-            ValueError: If the `store_type` is invalid.
-        """
-        store = self._get_store_by_type(store_type)
-        if store_type in ["study", "physical_worker"]:
-            try:
-                uuid.UUID(entity_identifier)
-                store.delete(entity_identifier)
-            except ValueError:
-                store.delete(entity_identifier, by_name=True)
-        else:
-            store.delete(entity_identifier)

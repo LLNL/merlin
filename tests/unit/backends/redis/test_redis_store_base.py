@@ -6,7 +6,7 @@ import pytest
 from pytest_mock import MockerFixture
 from unittest.mock import MagicMock
 
-from merlin.backends.redis.redis_base_store import NameMappingMixin, RedisStoreBase
+from merlin.backends.redis.redis_store_base import NameMappingMixin, RedisStoreBase
 from merlin.db_scripts.data_models import RunModel, StudyModel
 from merlin.exceptions import RunNotFoundError, StudyNotFoundError
 from tests.fixture_types import FixtureCallable, FixtureDict, FixtureRedis

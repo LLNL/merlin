@@ -47,7 +47,7 @@ def is_iso_datetime(value: str) -> bool:
         return False
 
 
-def serialize_object(obj: T) -> Dict[str, str]:
+def serialize_entity(obj: T) -> Dict[str, str]:
     """
     Given a [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance,
     convert it's data into a format that the Redis database can interpret.
@@ -79,7 +79,7 @@ def serialize_object(obj: T) -> Dict[str, str]:
     return serialized_data
 
 
-def deserialize_object(data: Dict[str, str], model_class: T) -> T:
+def deserialize_entity(data: Dict[str, str], model_class: T) -> T:
     """
     Given data that was retrieved by Redis, convert it into a data_class instance.
 
