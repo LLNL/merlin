@@ -8,6 +8,11 @@ creation based on model class field definitions.
 
 This module is intended to be subclassed by entity-specific store classes
 in the Merlin backend architecture.
+
+See also:
+    - merlin.backends.store_base: Base class
+    - merlin.backends.sqlite.sqlite_stores: Concrete store implementations
+    - merlin.db_scripts.data_models: Data model definitions
 """
 
 import logging

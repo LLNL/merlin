@@ -6,6 +6,7 @@ in the Merlin system. It defines reusable components that standardize how data m
 are stored, retrieved, and managed in Redis.
 
 See also:
+    - merlin.backends.store_base: Base class
     - merlin.backends.redis.redis_stores: Concrete store implementations
     - merlin.db_scripts.data_models: Data model definitions
 """
@@ -34,7 +35,7 @@ class RedisStoreBase(StoreBase[T], Generic[T]):
         model_class (Type[T]): The model class used for deserialization.
 
     Methods:
-        save: Save or update an object in the database.
+        save: Save or update an entity in the database.
         retrieve: Retrieve an entity from the database by ID.
         retrieve_all: Query the database for all entities of this type.
         delete: Delete an entity from the database by ID.
@@ -173,7 +174,7 @@ class NameMappingMixin:
     This mixin extends Redis stores to support retrieval and deletion by name.
 
     Methods:
-        save: Save or update an object in the database.
+        save: Save or update an entity in the database.
         retrieve: Retrieve an entity from the database by ID or name.
         delete: Delete an entity from the database by ID or name.
     """

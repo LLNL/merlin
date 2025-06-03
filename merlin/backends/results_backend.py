@@ -1,6 +1,18 @@
 """
-This module contains the base class for all supported
-backends in Merlin.
+Abstract base class for results backends in the Merlin application.
+
+This module defines `ResultsBackend`, an abstract base class that specifies
+the required interface for backend implementations responsible for persisting
+and retrieving data in Merlin.
+
+The `ResultsBackend` class encapsulates:
+- A unified interface for saving, retrieving, and deleting Merlin data models
+- Store type routing for specific model categories (study, run, logical worker, physical worker)
+- Support for backend-specific configuration such as version reporting and database flushing
+
+Usage:
+    This base class is not meant to be instantiated directly. Instead, it should be subclassed
+    by backend-specific implementations such as `RedisBackend` or `SQLiteBackend`.
 """
 import logging
 import uuid
@@ -23,7 +35,9 @@ class ResultsBackend(ABC):
     as the foundation for interacting with various backend types such as Redis, PostgreSQL, etc.
 
     Attributes:
-        backend_name: The name of the backend (e.g., "redis", "postgresql").
+        backend_name (str): The name of the backend (e.g., "redis", "postgresql").
+        stores (Dict[str, backends.store_base.StoreBase]): A dictionary of stores that each concrete
+            implementation of this class will need to define.
 
     Methods:
         get_name:

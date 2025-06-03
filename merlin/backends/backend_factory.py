@@ -1,6 +1,13 @@
 """
-This module contains a backend factory class that acts as an abstraction
-layer for loading a results backend.
+Backend factory for selecting and instantiating results backends in Merlin.
+
+This module defines the `MerlinBackendFactory` class, which serves as an abstraction
+layer for managing available backend implementations. It supports dynamic selection
+and instantiation of backend handlers such as Redis or SQLite, based on user input
+or system configuration.
+
+The factory maintains mappings of backend names and aliases, and raises a clear error
+if an unsupported backend is requested.
 """
 
 from typing import Dict, List
@@ -16,17 +23,22 @@ from merlin.exceptions import BackendNotSupportedError
 # - Perhaps it should be a class outside of this?
 class MerlinBackendFactory:
     """
-    This class keeps track of all available backends for Merlin.
+    Factory class for managing and instantiating supported Merlin backends.
+
+    This class maintains a registry of available results backends (e.g., Redis, SQLite)
+    and provides a unified interface for retrieving a backend implementation by name.
 
     Attributes:
-        _backends (Dict[str, backends.results_backend.ResultsBackend]): A dictionary
-            of supported backends and their associated classes.
+        _backends (Dict[str, backends.results_backend.ResultsBackend]): Mapping of backend names to their classes.
+        _backend_aliases (Dict[str, str]): Optional aliases for resolving canonical backend names.
 
     Methods:
-        get_backend: Obtain an instantiation of the backend that's requested.
+        get_supported_backends: Returns a list of supported backend names.
+        get_backend: Instantiates and returns the backend associated with the given name.
     """
 
     def __init__(self):
+        """Initialize the Merlin backend factory."""
         # Map canonical backend names to their classes
         self._backends: Dict[str, ResultsBackend] = {
             "redis": RedisBackend,

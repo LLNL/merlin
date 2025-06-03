@@ -1,5 +1,9 @@
 """
-Utility functions for the modules in the `backend/` package.
+Utility functions for backends in the Merlin application.
+
+These utilities are essential for converting in-memory data models into a persistable format,
+ensuring compatibility with backend storage systems, and for consistent error handling
+when entity lookups fail.
 """
 import json
 import logging
@@ -17,6 +21,9 @@ LOG = logging.getLogger(__name__)
 def get_not_found_error_class(model_class: Type[T]) -> Exception:
     """
     Get the appropriate not found error class based on the model type.
+
+    Args:
+        model_class: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] subclass.
 
     Returns:
         The error class to use.
@@ -47,13 +54,13 @@ def is_iso_datetime(value: str) -> bool:
         return False
 
 
-def serialize_entity(obj: T) -> Dict[str, str]:
+def serialize_entity(entity: T) -> Dict[str, str]:
     """
     Given a [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance,
     convert it's data into a format that the database can interpret.
 
     Args:
-        obj: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
+        entity: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.
 
     Returns:
         A dictionary of information that the database can interpret.
@@ -61,8 +68,8 @@ def serialize_entity(obj: T) -> Dict[str, str]:
     LOG.debug("Deserializing data...")
     serialized_data = {}
 
-    for field in obj.get_instance_fields():
-        field_value = getattr(obj, field.name)
+    for field in entity.get_instance_fields():
+        field_value = getattr(entity, field.name)
         if isinstance(field_value, set):
             # Explicitly mark this as a set so we can properly deserialize it later
             serialized_data[field.name] = json.dumps({"__set__": list(field_value)})
@@ -85,7 +92,7 @@ def deserialize_entity(data: Dict[str, str], model_class: T) -> T:
 
     Args:
         data: The data retrieved that we need to deserialize.
-        model_class: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] object.
+        model_class: A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] subclass.
 
     Returns:
         A [`BaseDataModel`][db_scripts.data_models.BaseDataModel] instance.

@@ -1,6 +1,10 @@
 """
-This module contains the functionality required to interact with a
-Redis backend.
+Redis backend implementation for the Merlin application.
+
+This module provides a concrete implementation of the `ResultsBackend` interface using Redis
+as the underlying database. It defines the `RedisBackend` class, which manages interactions
+with Redis-specific store classes for different data models, including CRUD operations and
+database flushing.
 """
 
 import logging
@@ -41,13 +45,13 @@ class RedisBackend(ResultsBackend):
             Remove every entry in the Redis database.
 
         save:
-            Save a `BaseDataModel` object to the Redis database.
+            Save a `BaseDataModel` entity to the Redis database.
 
         retrieve:
             Retrieve an entity from the appropriate store based on the given query identifier and store type.
 
         retrieve_all:
-            Retrieve all objects from the specified store.
+            Retrieve all entities from the specified store.
 
         delete:
             Delete an entity from the specified store.
