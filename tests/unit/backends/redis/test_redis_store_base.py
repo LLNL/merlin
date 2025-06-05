@@ -1,5 +1,5 @@
 """
-Tests for the `merlin/backends/redis/redis_base_store.py` module.
+Tests for the `merlin/backends/redis/redis_store_base.py` module.
 """
 
 import pytest
@@ -78,7 +78,7 @@ class TestRedisStoreBase:
         """
         run = redis_stores_test_models["run"]
         simple_store.client.exists.return_value = False
-        mock_serialize = mocker.patch.object(simple_store, "_serialize_object", return_value={"id": run.id, "foo": "bar"})
+        mock_serialize = mocker.patch("merlin.backends.redis.redis_store_base.serialize_entity", return_value={"id": run.id, "foo": "bar"})
 
         simple_store.save(run)
 
@@ -103,20 +103,20 @@ class TestRedisStoreBase:
         run = redis_stores_test_models["run"]
         simple_store.client.exists.return_value = True
         # Mock deserialization of existing data
-        mock_deserialize = mocker.patch.object(simple_store, "_deserialize_object")
+        mock_deserialize = mocker.patch("merlin.backends.redis.redis_store_base.deserialize_entity")
         mock_existing = MagicMock()
         mock_deserialize.return_value = mock_existing
         simple_store.client.hgetall.return_value = {"id": run.id, "foo": "old"}
         # Mock update_fields and to_dict
         mock_existing.update_fields = MagicMock()
         mock_existing.to_dict.return_value = {"id": run.id, "foo": "bar"}
-        mock_serialize = mocker.patch.object(simple_store, "_serialize_object", return_value={"id": run.id, "foo": "bar"})
+        mock_serialize = mocker.patch("merlin.backends.redis.redis_store_base.serialize_entity", return_value={"id": run.id, "foo": "bar"})
 
         simple_store.save(run)
 
         simple_store.client.exists.assert_called_once_with(f"{simple_store.key}:{run.id}")
         simple_store.client.hgetall.assert_called_once_with(f"{simple_store.key}:{run.id}")
-        mock_deserialize.assert_called_once_with({"id": run.id, "foo": "old"})
+        mock_deserialize.assert_called_once_with({"id": run.id, "foo": "old"}, RunModel)
         mock_existing.update_fields.assert_called_once_with(run.to_dict())
         mock_serialize.assert_called_once_with(mock_existing)
         simple_store.client.hset.assert_called_once_with(f"{simple_store.key}:{run.id}", mapping={"id": run.id, "foo": "bar"})
@@ -141,13 +141,13 @@ class TestRedisStoreBase:
         simple_store.client.exists.return_value = True
         redis_data = redis_stores_create_redis_hash_data(run)
         simple_store.client.hgetall.return_value = redis_data
-        mock_deserialize = mocker.patch.object(simple_store, "_deserialize_object", return_value=run)
+        mock_deserialize = mocker.patch("merlin.backends.redis.redis_store_base.deserialize_entity", return_value=run)
 
         result = simple_store.retrieve(run.id)
 
         simple_store.client.exists.assert_called_once_with(f"{simple_store.key}:{run.id}")
         simple_store.client.hgetall.assert_called_once_with(f"{simple_store.key}:{run.id}")
-        mock_deserialize.assert_called_once_with(redis_data)
+        mock_deserialize.assert_called_once_with(redis_data, RunModel)
         assert result == run
 
     def test_retrieve_nonexistent_object(self, simple_store: RedisStoreBase):
@@ -218,7 +218,7 @@ class TestRedisStoreBase:
         """
         run = redis_stores_test_models["run"]
         mocker.patch.object(simple_store, "retrieve", return_value=run)
-        mocker.patch("merlin.backends.redis.redis_base_store.get_not_found_error_class", return_value=RunNotFoundError)
+        mocker.patch("merlin.backends.redis.redis_store_base.get_not_found_error_class", return_value=RunNotFoundError)
 
         simple_store.delete(run.id)
 
@@ -238,7 +238,7 @@ class TestRedisStoreBase:
             simple_store: A fixture providing a RedisStoreBase instance.
         """
         mocker.patch.object(simple_store, "retrieve", return_value=None)
-        mocker.patch("merlin.backends.redis.redis_base_store.get_not_found_error_class", return_value=RunNotFoundError)
+        mocker.patch("merlin.backends.redis.redis_store_base.get_not_found_error_class", return_value=RunNotFoundError)
 
         with pytest.raises(RunNotFoundError):
             simple_store.delete("nonexistent_id")
@@ -417,7 +417,7 @@ class TestNameMappingMixin:
         study = redis_stores_test_models["study"]
 
         # Patch get_not_found_error_class at the correct location
-        mocker.patch("merlin.backends.redis.redis_base_store.get_not_found_error_class", return_value=StudyNotFoundError)
+        mocker.patch("merlin.backends.redis.redis_store_base.get_not_found_error_class", return_value=StudyNotFoundError)
 
         # Patch retrieve to call the parent method (simulate as if the object exists)
         mocker.patch.object(NameMappingMixin, "retrieve", return_value=study)
@@ -447,7 +447,7 @@ class TestNameMappingMixin:
         study = redis_stores_test_models["study"]
 
         # Patch get_not_found_error_class at the correct location
-        mocker.patch("merlin.backends.redis.redis_base_store.get_not_found_error_class", return_value=StudyNotFoundError)
+        mocker.patch("merlin.backends.redis.redis_store_base.get_not_found_error_class", return_value=StudyNotFoundError)
 
         # Patch retrieve to call the parent method (simulate as if the object exists)
         mocker.patch.object(NameMappingMixin, "retrieve", return_value=study)
@@ -469,7 +469,7 @@ class TestNameMappingMixin:
             name_mapping_store: A fixture providing a store with NameMappingMixin.
         """
         # Patch get_not_found_error_class at the correct location
-        mocker.patch("merlin.backends.redis.redis_base_store.get_not_found_error_class", return_value=StudyNotFoundError)
+        mocker.patch("merlin.backends.redis.redis_store_base.get_not_found_error_class", return_value=StudyNotFoundError)
 
         # Patch retrieve to return None
         mocker.patch.object(NameMappingMixin, "retrieve", return_value=None)
