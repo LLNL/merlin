@@ -16,12 +16,12 @@ class TestRedisStoreBase:
     """Tests for the RedisStoreBase class."""
 
     @pytest.fixture
-    def simple_store(self, redis_stores_mock_redis: FixtureRedis) -> RedisStoreBase:
+    def simple_store(self, mock_redis: FixtureRedis) -> RedisStoreBase:
         """
         Create a simple store instance for testing.
 
         Args:
-            redis_stores_mock_redis: A fixture providing a mocked Redis client.
+            mock_redis: A fixture providing a mocked Redis client.
 
         Returns:
             A simple RedisStoreBase implementation for testing.
@@ -31,19 +31,19 @@ class TestRedisStoreBase:
         class TestStore(RedisStoreBase):
             pass
 
-        store = TestStore(redis_stores_mock_redis, "test", RunModel)
+        store = TestStore(mock_redis, "test", RunModel)
         return store
 
-    def test_initialization(self, redis_stores_mock_redis: FixtureRedis):
+    def test_initialization(self, mock_redis: FixtureRedis):
         """
         Test that the store initializes correctly.
 
         Args:
-            redis_stores_mock_redis: A fixture providing a mocked Redis client.
+            mock_redis: A fixture providing a mocked Redis client.
         """
-        store = RedisStoreBase(redis_stores_mock_redis, "test_key", RunModel)
+        store = RedisStoreBase(mock_redis, "test_key", RunModel)
 
-        assert store.client == redis_stores_mock_redis
+        assert store.client == mock_redis
         assert store.key == "test_key"
         assert store.model_class == RunModel
 
@@ -65,7 +65,7 @@ class TestRedisStoreBase:
     def test_save_new_object(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureRedis,
+        test_models: FixtureRedis,
         simple_store: RedisStoreBase,
     ):
         """
@@ -73,10 +73,10 @@ class TestRedisStoreBase:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             simple_store: A fixture providing a RedisStoreBase instance.
         """
-        run = redis_stores_test_models["run"]
+        run = test_models["run"]
         simple_store.client.exists.return_value = False
         mock_serialize = mocker.patch("merlin.backends.redis.redis_store_base.serialize_entity", return_value={"id": run.id, "foo": "bar"})
 
@@ -89,7 +89,7 @@ class TestRedisStoreBase:
     def test_save_existing_object(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureRedis,
+        test_models: FixtureRedis,
         simple_store: RedisStoreBase,
     ):
         """
@@ -97,10 +97,10 @@ class TestRedisStoreBase:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             simple_store: A fixture providing a RedisStoreBase instance.
         """
-        run = redis_stores_test_models["run"]
+        run = test_models["run"]
         simple_store.client.exists.return_value = True
         # Mock deserialization of existing data
         mock_deserialize = mocker.patch("merlin.backends.redis.redis_store_base.deserialize_entity")
@@ -124,8 +124,8 @@ class TestRedisStoreBase:
     def test_retrieve_existing_object(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureRedis,
-        redis_stores_create_redis_hash_data: FixtureCallable,
+        test_models: FixtureRedis,
+        create_redis_hash_data: FixtureCallable,
         simple_store: RedisStoreBase,
     ):
         """
@@ -133,13 +133,13 @@ class TestRedisStoreBase:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
-            redis_stores_create_redis_hash_data: A fixture that creates Redis hash data.
+            test_models: A fixture providing test model instances.
+            create_redis_hash_data: A fixture that creates Redis hash data.
             simple_store: A fixture providing a RedisStoreBase instance.
         """
-        run = redis_stores_test_models["run"]
+        run = test_models["run"]
         simple_store.client.exists.return_value = True
-        redis_data = redis_stores_create_redis_hash_data(run)
+        redis_data = create_redis_hash_data(run)
         simple_store.client.hgetall.return_value = redis_data
         mock_deserialize = mocker.patch("merlin.backends.redis.redis_store_base.deserialize_entity", return_value=run)
 
@@ -171,7 +171,7 @@ class TestRedisStoreBase:
     def test_retrieve_all(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureRedis,
+        test_models: FixtureRedis,
         simple_store: RedisStoreBase,
     ):
         """
@@ -179,11 +179,11 @@ class TestRedisStoreBase:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             simple_store: A fixture providing a RedisStoreBase instance.
         """
         # Setup
-        run1 = redis_stores_test_models["run"]
+        run1 = test_models["run"]
         run2 = RunModel(id="run2", study_id="study1")
 
         keys = [f"{simple_store.key}:{run1.id}", f"{simple_store.key}:{run2.id}"]
@@ -205,7 +205,7 @@ class TestRedisStoreBase:
     def test_delete_existing_object(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureRedis,
+        test_models: FixtureRedis,
         simple_store: RedisStoreBase,
     ):
         """
@@ -213,10 +213,10 @@ class TestRedisStoreBase:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             simple_store: A fixture providing a RedisStoreBase instance.
         """
-        run = redis_stores_test_models["run"]
+        run = test_models["run"]
         mocker.patch.object(simple_store, "retrieve", return_value=run)
         mocker.patch("merlin.backends.redis.redis_store_base.get_not_found_error_class", return_value=RunNotFoundError)
 
@@ -251,12 +251,12 @@ class TestNameMappingMixin:
     """Tests for the NameMappingMixin class."""
 
     @pytest.fixture
-    def name_mapping_store(self, redis_stores_mock_redis: FixtureRedis) -> RedisStoreBase:
+    def name_mapping_store(self, mock_redis: FixtureRedis) -> RedisStoreBase:
         """
         Create a store with NameMappingMixin for testing.
 
         Args:
-            redis_stores_mock_redis: A fixture providing a mocked Redis client.
+            mock_redis: A fixture providing a mocked Redis client.
 
         Returns:
             A store instance that implements NameMappingMixin.
@@ -266,13 +266,13 @@ class TestNameMappingMixin:
         class TestStore(NameMappingMixin, RedisStoreBase):
             pass
 
-        store = TestStore(redis_stores_mock_redis, "test", StudyModel)
+        store = TestStore(mock_redis, "test", StudyModel)
         return store
 
     def test_save_new_object(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureDict,
+        test_models: FixtureDict,
         name_mapping_store: RedisStoreBase,
     ):
         """
@@ -280,11 +280,11 @@ class TestNameMappingMixin:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             name_mapping_store: A fixture providing a store with NameMappingMixin.
         """
         # Setup
-        study = redis_stores_test_models["study"]
+        study = test_models["study"]
         name_mapping_store.client.hget.return_value = None  # No existing object with this name
 
         # Mock the parent class's save method
@@ -301,7 +301,7 @@ class TestNameMappingMixin:
     def test_save_existing_object(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureDict,
+        test_models: FixtureDict,
         name_mapping_store: RedisStoreBase,
     ):
         """
@@ -309,11 +309,11 @@ class TestNameMappingMixin:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             name_mapping_store: A fixture providing a store with NameMappingMixin.
         """
         # Setup
-        study = redis_stores_test_models["study"]
+        study = test_models["study"]
         name_mapping_store.client.hget.return_value = study.id  # Existing object with this name
 
         # Mock the parent class's save method
@@ -330,7 +330,7 @@ class TestNameMappingMixin:
     def test_retrieve_by_id(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureDict,
+        test_models: FixtureDict,
         name_mapping_store: RedisStoreBase,
     ):
         """
@@ -338,11 +338,11 @@ class TestNameMappingMixin:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             name_mapping_store: A fixture providing a store with NameMappingMixin.
         """
         # Setup
-        study = redis_stores_test_models["study"]
+        study = test_models["study"]
 
         # Mock the parent class's retrieve method
         mocker.patch.object(RedisStoreBase, "retrieve", return_value=study)
@@ -357,7 +357,7 @@ class TestNameMappingMixin:
     def test_retrieve_by_name_existing(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureDict,
+        test_models: FixtureDict,
         name_mapping_store: RedisStoreBase,
     ):
         """
@@ -365,11 +365,11 @@ class TestNameMappingMixin:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             name_mapping_store: A fixture providing a store with NameMappingMixin.
         """
         # Setup
-        study = redis_stores_test_models["study"]
+        study = test_models["study"]
         name_mapping_store.client.hget.return_value = study.id
 
         # Mock the parent class's retrieve method
@@ -403,7 +403,7 @@ class TestNameMappingMixin:
     def test_delete_by_id(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureDict,
+        test_models: FixtureDict,
         name_mapping_store: RedisStoreBase,
     ):
         """
@@ -411,10 +411,10 @@ class TestNameMappingMixin:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             name_mapping_store: A fixture providing a store with NameMappingMixin.
         """
-        study = redis_stores_test_models["study"]
+        study = test_models["study"]
 
         # Patch get_not_found_error_class at the correct location
         mocker.patch("merlin.backends.redis.redis_store_base.get_not_found_error_class", return_value=StudyNotFoundError)
@@ -433,7 +433,7 @@ class TestNameMappingMixin:
     def test_delete_by_name(
         self,
         mocker: MockerFixture,
-        redis_stores_test_models: FixtureDict,
+        test_models: FixtureDict,
         name_mapping_store: RedisStoreBase,
     ):
         """
@@ -441,10 +441,10 @@ class TestNameMappingMixin:
 
         Args:
             mocker: PyTest mocker fixture.
-            redis_stores_test_models: A fixture providing test model instances.
+            test_models: A fixture providing test model instances.
             name_mapping_store: A fixture providing a store with NameMappingMixin.
         """
-        study = redis_stores_test_models["study"]
+        study = test_models["study"]
 
         # Patch get_not_found_error_class at the correct location
         mocker.patch("merlin.backends.redis.redis_store_base.get_not_found_error_class", return_value=StudyNotFoundError)

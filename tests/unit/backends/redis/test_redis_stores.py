@@ -15,16 +15,16 @@ from tests.fixture_types import FixtureRedis
 class TestRedisLogicalWorkerStore:
     """Tests for the RedisLogicalWorkerStore implementation."""
 
-    def test_initialization(self, redis_stores_mock_redis: FixtureRedis):
+    def test_initialization(self, mock_redis: FixtureRedis):
         """
         Test that the store initializes with the correct parameters.
 
         Args:
-            redis_stores_mock_redis: A fixture providing a mocked Redis client.
+            mock_redis: A fixture providing a mocked Redis client.
         """
-        store = RedisLogicalWorkerStore(redis_stores_mock_redis)
+        store = RedisLogicalWorkerStore(mock_redis)
 
-        assert store.client == redis_stores_mock_redis
+        assert store.client == mock_redis
         assert store.key == "logical_worker"
         assert store.model_class == LogicalWorkerModel
 
@@ -32,16 +32,16 @@ class TestRedisLogicalWorkerStore:
 class TestRedisPhysicalWorkerStore:
     """Tests for the RedisPhysicalWorkerStore implementation."""
 
-    def test_initialization(self, redis_stores_mock_redis: FixtureRedis):
+    def test_initialization(self, mock_redis: FixtureRedis):
         """
         Test that the store initializes with the correct parameters.
 
         Args:
-            redis_stores_mock_redis: A fixture providing a mocked Redis client.
+            mock_redis: A fixture providing a mocked Redis client.
         """
-        store = RedisPhysicalWorkerStore(redis_stores_mock_redis)
+        store = RedisPhysicalWorkerStore(mock_redis)
 
-        assert store.client == redis_stores_mock_redis
+        assert store.client == mock_redis
         assert store.key == "physical_worker"
         assert store.model_class == PhysicalWorkerModel
 
@@ -49,16 +49,16 @@ class TestRedisPhysicalWorkerStore:
 class TestRedisRunStore:
     """Tests for the RedisRunStore implementation."""
 
-    def test_initialization(self, redis_stores_mock_redis: FixtureRedis):
+    def test_initialization(self, mock_redis: FixtureRedis):
         """
         Test that the store initializes with the correct parameters.
 
         Args:
-            redis_stores_mock_redis: A fixture providing a mocked Redis client.
+            mock_redis: A fixture providing a mocked Redis client.
         """
-        store = RedisRunStore(redis_stores_mock_redis)
+        store = RedisRunStore(mock_redis)
 
-        assert store.client == redis_stores_mock_redis
+        assert store.client == mock_redis
         assert store.key == "run"
         assert store.model_class == RunModel
 
@@ -66,15 +66,15 @@ class TestRedisRunStore:
 class TestRedisStudyStore:
     """Tests for the RedisStudyStore implementation."""
 
-    def test_initialization(self, redis_stores_mock_redis: FixtureRedis):
+    def test_initialization(self, mock_redis: FixtureRedis):
         """
         Test that the store initializes with the correct parameters.
 
         Args:
-            redis_stores_mock_redis: A fixture providing a mocked Redis client.
+            mock_redis: A fixture providing a mocked Redis client.
         """
-        store = RedisStudyStore(redis_stores_mock_redis)
+        store = RedisStudyStore(mock_redis)
 
-        assert store.client == redis_stores_mock_redis
+        assert store.client == mock_redis
         assert store.key == "study"
         assert store.model_class == StudyModel
