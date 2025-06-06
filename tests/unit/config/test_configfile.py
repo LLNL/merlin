@@ -95,22 +95,13 @@ def config_path(configfile_testing_dir: FixtureStr, demo_app_yaml: FixtureStr) -
 
 
 @pytest.fixture(autouse=True)
-def reset_config():
+def reset_globals():
     """
     Reset IS_LOCAL_MODE and CONFIG before each test.
 
     This is done automatically without having to manually use this fixture in each test
     with the use of `autouse=True`.
     """
-    from merlin.config.configfile import CONFIG as global_config
-    global_config = None
-    yield
-    from merlin.config.configfile import CONFIG as global_config
-    global_config = None
-
-
-@pytest.fixture(autouse=True)
-def reset_globals():
     from merlin.config.configfile import CONFIG
     # Reset CONFIG and IS_LOCAL_MODE before each test
     CONFIG = None
