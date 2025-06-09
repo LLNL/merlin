@@ -448,6 +448,7 @@ merlin server config [OPTIONS]
 
 The Merlin library provides several commands for setting up and managing your Merlin workflow:
 
+- *[database](#database-merlin-database)*: Interact with Merlin's backend database
 - *[example](#example-merlin-example)*: Download pre-made workflow specifications that can be modified for your own workflow needs
 - *[purge](#purge-merlin-purge)*: Clear any tasks that are currently living in the central server
 - *[restart](#restart-merlin-restart)*: Restart a workflow
@@ -455,291 +456,11 @@ The Merlin library provides several commands for setting up and managing your Me
 - *[run workers](#run-workers-merlin-run-workers)*: Start up workers that will execute the tasks that exist on the central server
 - *[stop workers](#stop-workers-merlin-stop-workers)*: Stop existing workers
 
-### Example (`merlin example`)
-
-If you want to obtain an example workflow, use Merlin's `merlin example` command. First, view all of the example workflows that are available with:
-
-```bash
-merlin example list
-```
-
-This will list the available example workflows and a description for each one. To select one:
-
-```bash
-merlin example <example_name>
-```
-
-This will copy the example workflow to the current working directory. It is possible to specify another path to copy to.
-
-```bash
-merlin example <example_name> -p path/to/dir
-```
-
-If the specified directory does not exist Merlin will automatically create it.
-
-This will generate the example workflow at the specified location, ready to be run.
-
-For more information on these examples, visit the [Examples](../examples/index.md) page.
-
-**Usage:**
-
-```bash
-merlin example [OPTIONS] [list | <example_name>]
-```
-
-**Options:**
-
-| Name             |  Type   | Description | Default |
-| ------------     | ------- | ----------- | ------- |
-| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
-| `-p`, `--path` | path | A directory path to download the example to | Current Working Directory |
-
-### Purge (`merlin purge`)
-
-!!! warning
-
-    Any tasks reserved by workers will not be purged from the queues. All workers must be first stopped so the tasks can be returned to the task server and then they can be purged.
-    
-    In short, you probably want to use [`merlin stop-workers`](#stop-workers-merlin-stop-workers) before running `merlin purge`.
-
-If you've executed the [`merlin run`](#run-merlin-run) command and sent tasks to the server, this command can be used to remove those tasks from the server. If there are no tasks currently on the server then this command will not do anything.
-
-**Usage:**
-
-```
-merlin purge [OPTIONS] SPECIFICATION
-```
-
-**Options:**
-
-| Name             |  Type   | Description | Default |
-| ------------     | ------- | ----------- | ------- |
-| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
-| `-f` | boolean | Purge tasks without confirmation | `False` |
-| `--steps` | List[string] | A space-delimited list of steps from the specification file to purge | `['all']` |
-| `--vars` | List[string] | A space-delimited list of variables to override in the spec file. Ex: `--vars MY_QUEUE=hello` | None |
-
-**Examples:**
-
-!!! example "Purge All Queues From Spec File"
-
-    The following command will purge all queues that exist in `my_specification.yaml`:
-
-    ```bash
-    merlin purge my_specification.yaml
-    ```
-
-!!! example "Purge Specific Steps From Spec File"
-
-    The following command will purge any queues associated with `step_1` and `step_3` in `my_specification.yaml`:
-
-    ```bash
-    merlin purge my_specification.yaml --steps step_1 step_3
-    ```
-
-!!! example "Purge Queues Without Confirmation"
-
-    The following command will ignore the confirmation prompt that's provided and purge the queues:
-
-    ```bash
-    merlin purge -f my_specification.yaml
-    ```
-
-### Restart (`merlin restart`)
-
-To restart a previously started Merlin workflow, use the  `restart` command and the path to root of the Merlin workspace that was generated during the previously run workflow. This will define the tasks and queue them on the task server also called the broker.
-
-Merlin currently writes file called `MERLIN_FINISHED` to the directory of each step that was finished successfully. It uses this to determine which steps to skip during execution of a restarted workflow.
-
-**Usage:**
-
-```bash
-merlin restart [OPTIONS] WORKSPACE
-```
-
-**Options:**
-
-| Name             |  Type   | Description | Default |
-| ------------     | ------- | ----------- | ------- |
-| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
-| `--local` | string | Run tasks sequentially in your current shell | "distributed" |
-
-**Examples:**
-
-!!! example "Restart an Existing Workflow"
-
-    ```bash
-    merlin restart my_study_20240102-143903/
-    ```
-
-!!! example "Restart an Existing Workflow Locally"
-
-    ```bash
-    merlin restart my_study_20240102-143903/ --local
-    ```
-
-### Run (`merlin run`)
-
-To run a Merlin workflow use the `run` command and the path to the input yaml file `<input.yaml>`. This will define the tasks and queue them on the task server also called the broker.
-
-**Usage:**
-
-```bash
-merlin run [OPTIONS] SPECIFICATION
-```
-
-**Options:**
-
-| Name             |  Type   | Description | Default |
-| ------------     | ------- | ----------- | ------- |
-| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
-| `--local` | string | Run tasks sequentially in your current shell | "distributed" |
-| `--vars` | List[string] | A space-delimited list of variables to override in the spec file. This list should be given after the spec file is provided. Ex: `--vars LEARN=/path/to/new_learn.py EPOCHS=3` | None |
-| `--samplesfile` | choice(`<filename>.npy` \| `<filename>.csv` \| `<filename>.tab`) | Specify a file containing samples. This file should be given after the spec file is provided. | None |
-| `--dry` | boolean | Do a [Dry Run](./running_studies.md#dry-runs) of your workflow | `False` |
-| `--no-errors` | boolean | Silence the errors thrown when flux is not present | `False` |
-| `--pgen` | filename | Specify a parameter generator filename to override the `global.parameters` block of your spec file | None |
-| `--pargs` | string | A string that represents a single argument to pass a custom parameter generation function. Reuse `--parg` to pass multiple arguments. [Use with `--pgen`] | None |
-
-**Examples:**
-
-!!! example "Basic Run Example"
-
-    ```bash
-    merlin run my_specification.yaml
-    ```
-
-!!! example "Pass A Parameter Generator File to Run"
-
-    ```bash
-    merlin run my_specification.yaml --pgen /path/to/pgen.py
-    ```
-
-!!! example "Pass A Samples File to Run"
-
-    ```bash
-    merlin run my_specification.yaml --samplesfile /path/to/samplesfile.csv
-    ```
-
-!!! example "Do A Dry Run of Your Workflow Locally"
-
-    ```bash
-    merlin run my_specification.yaml --dry --local
-    ```
-
-### Run Workers (`merlin run-workers`)
-
-The tasks queued on the broker by the [`merlin run`](#run-merlin-run) command are run by a collection of workers. These workers can be run local in the current shell or in parallel on a batch allocation. The workers are launched using the `run-workers` command which reads the configuration for the worker launch from the `<input.yaml>` file.
-
-Within the `<input.yaml>` file, the `batch` and `merlin.resources.workers` sections are both used to configure the worker launch. The top level `batch` section can be overridden in the `merlin.resources.workers` section. Parallel workers should be scheduled using the system's batch scheduler (see the section describing [Distributed Runs](./running_studies.md#distributed-runs) for more info).
-
-Once the workers are running, tasks from the broker will be processed.
-
-**Usage:**
-
-```bash
-merlin run-workers [OPTIONS] SPECIFICATION
-```
-
-**Options:**
-
-| Name             |  Type   | Description | Default |
-| ------------     | ------- | ----------- | ------- |
-| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
-| `--echo` | boolean | Echo the Celery workers run command to stdout and don't start any workers | `False` |
-| `--worker-args` | string | Pass arguments (all wrapped in quotes) to the Celery workers. Should be given after the input spec. | None |
-| `--steps` | List[string] | The specific steps in the input spec that you want to run the corresponding workers for. Should be given after the input spec. | `['all']` |
-| `--vars` | List[string] | A space-delimited list of variables to override in the spec file. This list should be given after the spec file is provided. Ex: `--vars SIMWORKER=new_sim_worker` | None |
-| `--disable-logs` | boolean | Disable logs for Celery workers. **Note:** Having the `-l` flag in your workers' args section will overwrite this flag for that worker. | `False` |
-
-**Examples:**
-
-!!! example "Basic Worker Launch"
-
-    ```bash
-    merlin run-workers my_specification.yaml
-    ```
-
-!!! example "Worker Launch for Just Certain Steps"
-
-    ```bash
-    merlin run-workers my_specification.yaml --steps step_1 step_3
-    ```
-
-!!! example "Worker Launch with Worker Args Passed"
-
-    ```bash
-    merlin run-workers my_specification.yaml --worker-args "-l INFO --concurrency 4"
-    ```
-
-### Stop Workers (`merlin stop-workers`)
-
-!!! warning
-
-    If you've named workers identically across workflows (you shouldn't) only one might get the signal. In this case, you can send it again.
-
-Send out a stop signal to some or all connected workers. By default, a stop will be sent to all connected workers across all workflows, having them shutdown softly. This behavior can be modified with certain options.
-
-**Usage:**
-
-```bash
-merlin stop-workers [OPTIONS]
-```
-
-**Options:**
-
-| Name             |  Type   | Description | Default |
-| ------------     | ------- | ----------- | ------- |
-| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
-| `--spec` | filename | Target only the workers named in the `merlin` block of the spec file given here | None |
-| `--queues` | List[string] | Takes a space-delimited list of specific queues as input and will stop all workers watching these queues | None |
-| `--workers` | List[regex] | A space-delimited list of regular expressions representing workers to stop | None |
-| `--task_server`  | string | Task server type for which to stop the workers. Currently only "celery" is implemented. | "celery" |
-
-**Examples:**
-
-!!! example "Stop All Workers Across All Workflows"
-
-    ```bash
-    merlin stop-workers
-    ```
-
-!!! example "Stop Workers for a Certain Specification"
-
-    ```bash
-    merlin stop-workers --spec my_specification.yaml
-    ```
-
-!!! example "Stop Workers for Certain Queues"
-
-    ```bash
-    merlin stop-workers --queues queue_1 queue_2
-    ```
-
-!!! example "Stop Specific Workers Using Regex"
-
-    ```bash
-    merlin stop-workers --workers ".*@my_other_host*"
-    ```
-
-## Monitoring Commands
-
-The Merlin library comes equipped with several commands to help monitor your workflow:
-
-- *[database](#database-merlin-database)*: Interact with Merlin's backend database
-- *[detailed-status](#detailed-status-merlin-detailed-status)*: Display task-by-task status information for a study
-- *[monitor](#monitor-merlin-monitor)*: Keep your allocation alive while tasks are being processed
-- *[query-workers](#query-workers-merlin-query-workers)*: Communicate with Celery to view information on active workers
-- *[queue-info](#queue-info-merlin-queue-info)*: Communicate with Celery to view the status of queues in your workflow(s)
-- *[status](#status-merlin-status)*: Display a summary of the status of a study
-
-More information on all of these commands can be found below and in the [Monitoring documentation](./monitoring/index.md).
-
 ### Database (`merlin database`)
 
-This command allows you to interact with Merlin's backend database by viewing database info, retrieving and printing entries, and deleting entries.
+This command allows you to interact with Merlin's backend database by viewing database info, retrieving and printing entries, and deleting entries. If you ran your study locally, use the `--local` option here as well when running database commands.
 
-More information on this command can be found below or at [The Database Command](./monitoring/database/database_cmd.md) page. See [Merlin's Database](./monitoring/database/index.md) for more general information on the database itself.
+More information on this command can be found below or at [The Database Command](./database/database_cmd.md) page. See [Merlin's Database](./database/index.md) for more general information on the database itself.
 
 <!-- TODO add this to the above paragraph when the reference guide is finished -->
 <!-- If you really want to understand the architecture of this database, see [General Database Architecture](../reference_guide/database/index.md) in Merlin's [Reference Guide](../reference_guide/index.md). -->
@@ -755,6 +476,7 @@ merlin database [OPTIONS] COMMAND ...
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-l`, `--local`  | boolean | Use the local SQLite database for this command. | `False` |
 
 **Commands:**
 
@@ -1138,6 +860,285 @@ merlin database delete everything [OPTIONS]
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
 | `-f`, `--force`  | boolean | Delete everything in the database without confirmation | `False` |
+
+### Example (`merlin example`)
+
+If you want to obtain an example workflow, use Merlin's `merlin example` command. First, view all of the example workflows that are available with:
+
+```bash
+merlin example list
+```
+
+This will list the available example workflows and a description for each one. To select one:
+
+```bash
+merlin example <example_name>
+```
+
+This will copy the example workflow to the current working directory. It is possible to specify another path to copy to.
+
+```bash
+merlin example <example_name> -p path/to/dir
+```
+
+If the specified directory does not exist Merlin will automatically create it.
+
+This will generate the example workflow at the specified location, ready to be run.
+
+For more information on these examples, visit the [Examples](../examples/index.md) page.
+
+**Usage:**
+
+```bash
+merlin example [OPTIONS] [list | <example_name>]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-p`, `--path` | path | A directory path to download the example to | Current Working Directory |
+
+### Purge (`merlin purge`)
+
+!!! warning
+
+    Any tasks reserved by workers will not be purged from the queues. All workers must be first stopped so the tasks can be returned to the task server and then they can be purged.
+    
+    In short, you probably want to use [`merlin stop-workers`](#stop-workers-merlin-stop-workers) before running `merlin purge`.
+
+If you've executed the [`merlin run`](#run-merlin-run) command and sent tasks to the server, this command can be used to remove those tasks from the server. If there are no tasks currently on the server then this command will not do anything.
+
+**Usage:**
+
+```
+merlin purge [OPTIONS] SPECIFICATION
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-f` | boolean | Purge tasks without confirmation | `False` |
+| `--steps` | List[string] | A space-delimited list of steps from the specification file to purge | `['all']` |
+| `--vars` | List[string] | A space-delimited list of variables to override in the spec file. Ex: `--vars MY_QUEUE=hello` | None |
+
+**Examples:**
+
+!!! example "Purge All Queues From Spec File"
+
+    The following command will purge all queues that exist in `my_specification.yaml`:
+
+    ```bash
+    merlin purge my_specification.yaml
+    ```
+
+!!! example "Purge Specific Steps From Spec File"
+
+    The following command will purge any queues associated with `step_1` and `step_3` in `my_specification.yaml`:
+
+    ```bash
+    merlin purge my_specification.yaml --steps step_1 step_3
+    ```
+
+!!! example "Purge Queues Without Confirmation"
+
+    The following command will ignore the confirmation prompt that's provided and purge the queues:
+
+    ```bash
+    merlin purge -f my_specification.yaml
+    ```
+
+### Restart (`merlin restart`)
+
+To restart a previously started Merlin workflow, use the  `restart` command and the path to root of the Merlin workspace that was generated during the previously run workflow. This will define the tasks and queue them on the task server also called the broker.
+
+Merlin currently writes file called `MERLIN_FINISHED` to the directory of each step that was finished successfully. It uses this to determine which steps to skip during execution of a restarted workflow.
+
+**Usage:**
+
+```bash
+merlin restart [OPTIONS] WORKSPACE
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--local` | string | Run tasks sequentially in your current shell | "distributed" |
+
+**Examples:**
+
+!!! example "Restart an Existing Workflow"
+
+    ```bash
+    merlin restart my_study_20240102-143903/
+    ```
+
+!!! example "Restart an Existing Workflow Locally"
+
+    ```bash
+    merlin restart my_study_20240102-143903/ --local
+    ```
+
+### Run (`merlin run`)
+
+To run a Merlin workflow use the `run` command and the path to the input yaml file `<input.yaml>`. This will define the tasks and queue them on the task server also called the broker.
+
+**Usage:**
+
+```bash
+merlin run [OPTIONS] SPECIFICATION
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--local` | string | Run tasks sequentially in your current shell | "distributed" |
+| `--vars` | List[string] | A space-delimited list of variables to override in the spec file. This list should be given after the spec file is provided. Ex: `--vars LEARN=/path/to/new_learn.py EPOCHS=3` | None |
+| `--samplesfile` | choice(`<filename>.npy` \| `<filename>.csv` \| `<filename>.tab`) | Specify a file containing samples. This file should be given after the spec file is provided. | None |
+| `--dry` | boolean | Do a [Dry Run](./running_studies.md#dry-runs) of your workflow | `False` |
+| `--no-errors` | boolean | Silence the errors thrown when flux is not present | `False` |
+| `--pgen` | filename | Specify a parameter generator filename to override the `global.parameters` block of your spec file | None |
+| `--pargs` | string | A string that represents a single argument to pass a custom parameter generation function. Reuse `--parg` to pass multiple arguments. [Use with `--pgen`] | None |
+
+**Examples:**
+
+!!! example "Basic Run Example"
+
+    ```bash
+    merlin run my_specification.yaml
+    ```
+
+!!! example "Pass A Parameter Generator File to Run"
+
+    ```bash
+    merlin run my_specification.yaml --pgen /path/to/pgen.py
+    ```
+
+!!! example "Pass A Samples File to Run"
+
+    ```bash
+    merlin run my_specification.yaml --samplesfile /path/to/samplesfile.csv
+    ```
+
+!!! example "Do A Dry Run of Your Workflow Locally"
+
+    ```bash
+    merlin run my_specification.yaml --dry --local
+    ```
+
+### Run Workers (`merlin run-workers`)
+
+The tasks queued on the broker by the [`merlin run`](#run-merlin-run) command are run by a collection of workers. These workers can be run local in the current shell or in parallel on a batch allocation. The workers are launched using the `run-workers` command which reads the configuration for the worker launch from the `<input.yaml>` file.
+
+Within the `<input.yaml>` file, the `batch` and `merlin.resources.workers` sections are both used to configure the worker launch. The top level `batch` section can be overridden in the `merlin.resources.workers` section. Parallel workers should be scheduled using the system's batch scheduler (see the section describing [Distributed Runs](./running_studies.md#distributed-runs) for more info).
+
+Once the workers are running, tasks from the broker will be processed.
+
+**Usage:**
+
+```bash
+merlin run-workers [OPTIONS] SPECIFICATION
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--echo` | boolean | Echo the Celery workers run command to stdout and don't start any workers | `False` |
+| `--worker-args` | string | Pass arguments (all wrapped in quotes) to the Celery workers. Should be given after the input spec. | None |
+| `--steps` | List[string] | The specific steps in the input spec that you want to run the corresponding workers for. Should be given after the input spec. | `['all']` |
+| `--vars` | List[string] | A space-delimited list of variables to override in the spec file. This list should be given after the spec file is provided. Ex: `--vars SIMWORKER=new_sim_worker` | None |
+| `--disable-logs` | boolean | Disable logs for Celery workers. **Note:** Having the `-l` flag in your workers' args section will overwrite this flag for that worker. | `False` |
+
+**Examples:**
+
+!!! example "Basic Worker Launch"
+
+    ```bash
+    merlin run-workers my_specification.yaml
+    ```
+
+!!! example "Worker Launch for Just Certain Steps"
+
+    ```bash
+    merlin run-workers my_specification.yaml --steps step_1 step_3
+    ```
+
+!!! example "Worker Launch with Worker Args Passed"
+
+    ```bash
+    merlin run-workers my_specification.yaml --worker-args "-l INFO --concurrency 4"
+    ```
+
+### Stop Workers (`merlin stop-workers`)
+
+!!! warning
+
+    If you've named workers identically across workflows (you shouldn't) only one might get the signal. In this case, you can send it again.
+
+Send out a stop signal to some or all connected workers. By default, a stop will be sent to all connected workers across all workflows, having them shutdown softly. This behavior can be modified with certain options.
+
+**Usage:**
+
+```bash
+merlin stop-workers [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--spec` | filename | Target only the workers named in the `merlin` block of the spec file given here | None |
+| `--queues` | List[string] | Takes a space-delimited list of specific queues as input and will stop all workers watching these queues | None |
+| `--workers` | List[regex] | A space-delimited list of regular expressions representing workers to stop | None |
+| `--task_server`  | string | Task server type for which to stop the workers. Currently only "celery" is implemented. | "celery" |
+
+**Examples:**
+
+!!! example "Stop All Workers Across All Workflows"
+
+    ```bash
+    merlin stop-workers
+    ```
+
+!!! example "Stop Workers for a Certain Specification"
+
+    ```bash
+    merlin stop-workers --spec my_specification.yaml
+    ```
+
+!!! example "Stop Workers for Certain Queues"
+
+    ```bash
+    merlin stop-workers --queues queue_1 queue_2
+    ```
+
+!!! example "Stop Specific Workers Using Regex"
+
+    ```bash
+    merlin stop-workers --workers ".*@my_other_host*"
+    ```
+
+## Monitoring Commands
+
+The Merlin library comes equipped with several commands to help monitor your workflow:
+
+- *[detailed-status](#detailed-status-merlin-detailed-status)*: Display task-by-task status information for a study
+- *[monitor](#monitor-merlin-monitor)*: Keep your allocation alive while tasks are being processed
+- *[query-workers](#query-workers-merlin-query-workers)*: Communicate with Celery to view information on active workers
+- *[queue-info](#queue-info-merlin-queue-info)*: Communicate with Celery to view the status of queues in your workflow(s)
+- *[status](#status-merlin-status)*: Display a summary of the status of a study
+
+More information on all of these commands can be found below and in the [Monitoring documentation](./monitoring/index.md).
 
 ### Detailed Status (`merlin detailed-status`)
 

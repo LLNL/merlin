@@ -49,7 +49,6 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
         Initialize the SQLite store with a SQLite connection.
 
         Args:
-            connection: A SQLite connection instance used to interact with the SQLite database.
             table_name: The table name used for SQLite entries.
             model_class: The model class used for deserialization.
         """
