@@ -187,9 +187,8 @@ def get_default_config() -> Dict:
         },
         "celery": {"omit_queue_tag": False, "queue_tag": "[merlin]_", "override": None},
         "results_backend": {
-            # "server": "localhost",
             "name": "sqlite",  # Default results backend
-            # "port": 6379,  # Default Redis port
+            "port": 1234,
         },
     }
     return default_config
