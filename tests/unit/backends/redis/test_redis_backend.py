@@ -2,10 +2,11 @@
 Tests for the `redis_backend.py` module.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
 from pytest_mock import MockerFixture
 from redis import Redis
-from unittest.mock import MagicMock
 
 from merlin.backends.redis.redis_backend import RedisBackend
 from tests.fixture_types import FixtureModification, FixtureStr

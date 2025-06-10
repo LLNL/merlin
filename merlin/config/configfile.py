@@ -493,7 +493,7 @@ def initialize_config(path: Optional[str] = None, local_mode: bool = False) -> C
     if local_mode:
         set_local_mode(True)
 
-    global CONFIG
+    global CONFIG  # pylint: disable=global-statement
 
     try:
         app_config = get_config(path)

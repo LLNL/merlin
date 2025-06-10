@@ -55,10 +55,10 @@ from tabulate import tabulate
 
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
-from merlin.db_scripts.db_commands import database_delete, database_get, database_info
-from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.config.configfile import initialize_config
 from merlin.config.merlin_config_manager import MerlinConfigManager
+from merlin.db_scripts.db_commands import database_delete, database_get, database_info
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
 from merlin.monitor.monitor import Monitor

@@ -97,17 +97,13 @@ def config_path(configfile_testing_dir: FixtureStr, demo_app_yaml: FixtureStr) -
 @pytest.fixture(autouse=True)
 def reset_globals():
     """
-    Reset IS_LOCAL_MODE and CONFIG before each test.
+    Reset IS_LOCAL_MODE before each test.
 
     This is done automatically without having to manually use this fixture in each test
     with the use of `autouse=True`.
     """
-    from merlin.config.configfile import CONFIG
-    # Reset CONFIG and IS_LOCAL_MODE before each test
-    CONFIG = None
     set_local_mode(False)
     yield
-    CONFIG = None
     set_local_mode(False)
 
 
@@ -160,8 +156,7 @@ def test_default_config_structure_and_values():
             "protocol": "amqp",
         },
         "celery": {"omit_queue_tag": False, "queue_tag": "[merlin]_", "override": None},
-        # "results_backend": {"server": "localhost", "name": "redis", "port": 6379, "protocol": "redis"},
-        "results_backend": {"name": "sqlite"}
+        "results_backend": {"name": "sqlite", "port": 1234},
     }
 
     assert config == expected_config
@@ -787,7 +782,9 @@ def test_merge_sslmap_some_keys_present():
 @patch("merlin.config.configfile.get_default_config")
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_default_parameters(mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock):
+def test_initialize_config_default_parameters(
+    mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock
+):
     """
     Test initialize_config with default parameters.
 
@@ -813,7 +810,9 @@ def test_initialize_config_default_parameters(mock_get_config: MagicMock, mock_c
 @patch("merlin.config.configfile.get_default_config")
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_with_path(mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock):
+def test_initialize_config_with_path(
+    mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock
+):
     """
     Test initialize_config with custom path.
 
@@ -840,7 +839,9 @@ def test_initialize_config_with_path(mock_get_config: MagicMock, mock_config_cla
 @patch("merlin.config.configfile.get_default_config")
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_with_local_mode_true(mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock):
+def test_initialize_config_with_local_mode_true(
+    mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock
+):
     """
     Test initialize_config with local_mode=True.
 
@@ -867,7 +868,9 @@ def test_initialize_config_with_local_mode_true(mock_get_config: MagicMock, mock
 @patch("merlin.config.configfile.get_default_config")
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_with_path_and_local_mode(mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock):
+def test_initialize_config_with_path_and_local_mode(
+    mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock
+):
     """
     Test initialize_config with both path and local_mode.
 
@@ -895,7 +898,9 @@ def test_initialize_config_with_path_and_local_mode(mock_get_config: MagicMock, 
 @patch("merlin.config.configfile.get_default_config")
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_with_local_mode_false(mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock):
+def test_initialize_config_with_local_mode_false(
+    mock_get_config: MagicMock, mock_config_class: MagicMock, mock_get_default_config: MagicMock, mock_global_config: MagicMock
+):
     """
     Test initialize_config with explicit local_mode=False.
 
@@ -922,8 +927,13 @@ def test_initialize_config_with_local_mode_false(mock_get_config: MagicMock, moc
 @patch("merlin.config.configfile.get_default_config")
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_fallback_to_default(mock_get_config: MagicMock, mock_config_class: MagicMock, 
-                                              mock_get_default_config: MagicMock, mock_log: MagicMock, mock_global_config: MagicMock):
+def test_initialize_config_fallback_to_default(
+    mock_get_config: MagicMock,
+    mock_config_class: MagicMock,
+    mock_get_default_config: MagicMock,
+    mock_log: MagicMock,
+    mock_global_config: MagicMock,
+):
     """
     Test initialize_config falls back to default config when get_config raises ValueError.
 
@@ -947,7 +957,9 @@ def test_initialize_config_fallback_to_default(mock_get_config: MagicMock, mock_
     mock_get_config.assert_called_once_with(None)
     mock_get_default_config.assert_called_once()
     mock_config_class.assert_called_once_with(mock_default_config)
-    mock_log.warning.assert_called_once_with("Error loading configuration: Config file not found. Falling back to default configuration.")
+    mock_log.warning.assert_called_once_with(
+        "Error loading configuration: Config file not found. Falling back to default configuration."
+    )
     assert is_local_mode() is False
 
 
@@ -956,8 +968,13 @@ def test_initialize_config_fallback_to_default(mock_get_config: MagicMock, mock_
 @patch("merlin.config.configfile.get_default_config")
 @patch("merlin.config.configfile.Config")
 @patch("merlin.config.configfile.get_config")
-def test_initialize_config_fallback_with_local_mode(mock_get_config: MagicMock, mock_config_class: MagicMock, 
-                                                   mock_get_default_config: MagicMock, mock_log: MagicMock, mock_global_config: MagicMock):
+def test_initialize_config_fallback_with_local_mode(
+    mock_get_config: MagicMock,
+    mock_config_class: MagicMock,
+    mock_get_default_config: MagicMock,
+    mock_log: MagicMock,
+    mock_global_config: MagicMock,
+):
     """
     Test initialize_config falls back to default config when get_config raises ValueError with local_mode=True.
 
@@ -981,5 +998,7 @@ def test_initialize_config_fallback_with_local_mode(mock_get_config: MagicMock, 
     mock_get_config.assert_called_once_with(None)
     mock_get_default_config.assert_called_once()
     mock_config_class.assert_called_once_with(mock_default_config)
-    mock_log.warning.assert_called_once_with("Error loading configuration: Config file not found. Falling back to default configuration.")
+    mock_log.warning.assert_called_once_with(
+        "Error loading configuration: Config file not found. Falling back to default configuration."
+    )
     assert is_local_mode() is True

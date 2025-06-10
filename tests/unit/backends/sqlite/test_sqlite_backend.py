@@ -1,6 +1,7 @@
 """
 Tests for the `sqlite_backend.py` module.
 """
+
 import pytest
 from pytest_mock import MockerFixture
 
@@ -24,7 +25,7 @@ def sqlite_backend_instance(mocker: MockerFixture) -> SQLiteBackend:
     mocker.patch("merlin.backends.sqlite.sqlite_backend.SQLiteLogicalWorkerStore", return_value=mocker.MagicMock())
     mocker.patch("merlin.backends.sqlite.sqlite_backend.SQLitePhysicalWorkerStore", return_value=mocker.MagicMock())
 
-    # Patch the _create_table_if_not_exists method to avoid real DB operations
+    # Patch the initialization method to avoid real DB operations
     mocker.patch.object(SQLiteBackend, "_initialize_schema", return_value=None)
 
     backend = SQLiteBackend("sqlite")

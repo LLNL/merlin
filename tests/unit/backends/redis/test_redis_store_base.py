@@ -2,9 +2,10 @@
 Tests for the `merlin/backends/redis/redis_store_base.py` module.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
 from pytest_mock import MockerFixture
-from unittest.mock import MagicMock
 
 from merlin.backends.redis.redis_store_base import NameMappingMixin, RedisStoreBase
 from merlin.db_scripts.data_models import RunModel, StudyModel
@@ -78,7 +79,9 @@ class TestRedisStoreBase:
         """
         run = test_models["run"]
         simple_store.client.exists.return_value = False
-        mock_serialize = mocker.patch("merlin.backends.redis.redis_store_base.serialize_entity", return_value={"id": run.id, "foo": "bar"})
+        mock_serialize = mocker.patch(
+            "merlin.backends.redis.redis_store_base.serialize_entity", return_value={"id": run.id, "foo": "bar"}
+        )
 
         simple_store.save(run)
 
@@ -110,7 +113,9 @@ class TestRedisStoreBase:
         # Mock update_fields and to_dict
         mock_existing.update_fields = MagicMock()
         mock_existing.to_dict.return_value = {"id": run.id, "foo": "bar"}
-        mock_serialize = mocker.patch("merlin.backends.redis.redis_store_base.serialize_entity", return_value={"id": run.id, "foo": "bar"})
+        mock_serialize = mocker.patch(
+            "merlin.backends.redis.redis_store_base.serialize_entity", return_value={"id": run.id, "foo": "bar"}
+        )
 
         simple_store.save(run)
 

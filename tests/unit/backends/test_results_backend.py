@@ -3,6 +3,7 @@ Tests for the `results_backend.py` file.
 """
 
 import uuid
+
 import pytest
 from pytest_mock import MockerFixture
 

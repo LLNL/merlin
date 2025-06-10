@@ -2,10 +2,11 @@
 Tests for the `sqlite_store_base.py` module.
 """
 
-import pytest
 from datetime import datetime
-from pytest_mock import MockerFixture
 from unittest.mock import MagicMock
+
+import pytest
+from pytest_mock import MockerFixture
 
 from merlin.backends.sqlite.sqlite_store_base import SQLiteStoreBase
 from merlin.db_scripts.data_models import RunModel
@@ -27,9 +28,9 @@ class TestSQLiteStoreBase:
         Returns:
             A simple SQLiteStoreBase implementation for testing.
         """
-        # Mock the _create_table_if_not_exists method to avoid actual table creation
-        mocker.patch.object(SQLiteStoreBase, '_create_table_if_not_exists')
-        
+        # Mock the create_table_if_not_exists method to avoid actual table creation
+        mocker.patch.object(SQLiteStoreBase, "create_table_if_not_exists")
+
         # Create a simple subclass of SQLiteStoreBase for testing
         class TestStore(SQLiteStoreBase):
             pass
@@ -44,9 +45,9 @@ class TestSQLiteStoreBase:
         Args:
             mocker: PyTest mocker fixture.
         """
-        # Mock the _create_table_if_not_exists method
-        mock_create_table = mocker.patch.object(SQLiteStoreBase, '_create_table_if_not_exists')
-        
+        # Mock the create_table_if_not_exists method
+        mock_create_table = mocker.patch.object(SQLiteStoreBase, "create_table_if_not_exists")
+
         store = SQLiteStoreBase("test_table", RunModel)
 
         assert store.table_name == "test_table"
@@ -66,28 +67,30 @@ class TestSQLiteStoreBase:
         assert simple_store._get_sqlite_type(float) == "REAL"
         assert simple_store._get_sqlite_type(bool) == "INTEGER"
         assert simple_store._get_sqlite_type(datetime) == "TEXT"
-        
+
         # Test generic types (lists, dicts, sets)
-        from typing import List, Dict, Set
+        from typing import Dict, List, Set
+
         assert simple_store._get_sqlite_type(List[str]) == "TEXT"
         assert simple_store._get_sqlite_type(Dict[str, int]) == "TEXT"
         assert simple_store._get_sqlite_type(Set[str]) == "TEXT"
-        
+
         # Test unknown type (should default to TEXT)
         class CustomType:
             pass
+
         assert simple_store._get_sqlite_type(CustomType) == "TEXT"
 
-    def test_create_table_if_not_exists(self, mock_sqlite_connection: FixtureTuple[MagicMock]):
+    def testcreate_table_if_not_exists(self, mock_sqlite_connection: FixtureTuple[MagicMock]):
         """
-        Test the _create_table_if_not_exists method.
+        Test the create_table_if_not_exists method.
 
         Args:
             mock_sqlite_connection: Fixture providing mocked SQLite connection and cursor.
         """
         # Grab the mocked connection from the SQLiteConnection fixture
         mock_conn, _ = mock_sqlite_connection
-        
+
         # Mock model class fields
         mock_field1 = MagicMock()
         mock_field1.name = "id"
@@ -95,13 +98,13 @@ class TestSQLiteStoreBase:
         mock_field2 = MagicMock()
         mock_field2.name = "study_id"
         mock_field2.type = str
-        
+
         mock_model_class = MagicMock()
         mock_model_class.get_class_fields.return_value = [mock_field1, mock_field2]
-        
-        # Create store (this will call _create_table_if_not_exists)
+
+        # Create store (this will call create_table_if_not_exists)
         SQLiteStoreBase("test_table", mock_model_class)
-        
+
         # Verify the SQL execution
         expected_sql = "CREATE TABLE IF NOT EXISTS test_table (id TEXT, study_id TEXT);"
         mock_conn.execute.assert_called_once_with(expected_sql)
@@ -123,23 +126,24 @@ class TestSQLiteStoreBase:
             mock_sqlite_connection: Fixture providing mocked SQLite connection and cursor.
         """
         run = test_models["run"]
-        
+
         # Mock retrieve to return None (object doesn't exist)
         mocker.patch.object(simple_store, "retrieve", return_value=None)
-        
+
         # Grab the mocked connection from the SQLiteConnection fixture
         mock_conn, _ = mock_sqlite_connection
-        
+
         # Mock serialization
-        mock_serialize = mocker.patch("merlin.backends.sqlite.sqlite_store_base.serialize_entity", 
-                                    return_value={"id": run.id, "study_id": "study1"})
-        
+        mock_serialize = mocker.patch(
+            "merlin.backends.sqlite.sqlite_store_base.serialize_entity", return_value={"id": run.id, "study_id": "study1"}
+        )
+
         # Mock model class fields
         mock_field1 = MagicMock()
         mock_field1.name = "id"
         mock_field2 = MagicMock()
         mock_field2.name = "study_id"
-        mocker.patch.object(simple_store.model_class, 'get_class_fields', return_value=[mock_field1, mock_field2])
+        mocker.patch.object(simple_store.model_class, "get_class_fields", return_value=[mock_field1, mock_field2])
 
         simple_store.save(run)
 
@@ -169,25 +173,26 @@ class TestSQLiteStoreBase:
             mock_sqlite_connection: Fixture providing mocked SQLite connection and cursor.
         """
         run = test_models["run"]
-        
+
         # Mock existing object
         mock_existing = MagicMock()
         mock_existing.update_fields = MagicMock()
         mocker.patch.object(simple_store, "retrieve", return_value=mock_existing)
-        
+
         # Grab the mocked connection from the SQLiteConnection fixture
         mock_conn, _ = mock_sqlite_connection
-        
+
         # Mock serialization
-        mock_serialize = mocker.patch("merlin.backends.sqlite.sqlite_store_base.serialize_entity", 
-                                    return_value={"id": run.id, "study_id": "study1"})
-        
+        mock_serialize = mocker.patch(
+            "merlin.backends.sqlite.sqlite_store_base.serialize_entity", return_value={"id": run.id, "study_id": "study1"}
+        )
+
         # Mock model class fields
         mock_field1 = MagicMock()
         mock_field1.name = "id"
         mock_field2 = MagicMock()
         mock_field2.name = "study_id"
-        mocker.patch.object(simple_store.model_class, 'get_class_fields', return_value=[mock_field1, mock_field2])
+        mocker.patch.object(simple_store.model_class, "get_class_fields", return_value=[mock_field1, mock_field2])
 
         simple_store.save(run)
 
@@ -195,13 +200,12 @@ class TestSQLiteStoreBase:
         simple_store.retrieve.assert_called_once_with(run.id)
         mock_existing.update_fields.assert_called_once_with(run.to_dict())
         mock_serialize.assert_called_once_with(mock_existing)
-        
+
         # Verify UPDATE SQL was executed
         mock_conn.execute.assert_called_once()
         call_args = mock_conn.execute.call_args
         assert "UPDATE test_table" in call_args[0][0]
         assert "WHERE id = :id" in call_args[0][0]
-
 
     @pytest.mark.parametrize("by_name, identifier_key", [(False, "id"), (True, "name")])
     def test_retrieve_existing_object(
@@ -233,10 +237,7 @@ class TestSQLiteStoreBase:
         mock_cursor.fetchone.return_value = mock_row
 
         # Mock deserialization
-        mock_deserialize = mocker.patch(
-            "merlin.backends.sqlite.sqlite_store_base.deserialize_entity",
-            return_value=run
-        )
+        mock_deserialize = mocker.patch("merlin.backends.sqlite.sqlite_store_base.deserialize_entity", return_value=run)
 
         result = simple_store.retrieve(identifier, by_name=by_name)
 
@@ -246,7 +247,6 @@ class TestSQLiteStoreBase:
         mock_cursor.fetchone.assert_called_once()
         mock_deserialize.assert_called_once_with(mock_row, simple_store.model_class)
         assert result == run
-
 
     def test_retrieve_nonexistent_object(
         self,
@@ -268,8 +268,7 @@ class TestSQLiteStoreBase:
 
         # Verify method calls
         mock_conn.execute.assert_called_once_with(
-            "SELECT * FROM test_table WHERE id = :identifier", 
-            {"identifier": "nonexistent_id"}
+            "SELECT * FROM test_table WHERE id = :identifier", {"identifier": "nonexistent_id"}
         )
         mock_cursor.fetchone.assert_called_once()
         assert result is None
@@ -295,15 +294,13 @@ class TestSQLiteStoreBase:
 
         # Mock SQLiteConnection and cursor
         mock_conn, mock_cursor = mock_sqlite_connection
-        mock_rows = [
-            {"id": run1.id, "study_id": "study1"},
-            {"id": run2.id, "study_id": "study1"}
-        ]
+        mock_rows = [{"id": run1.id, "study_id": "study1"}, {"id": run2.id, "study_id": "study1"}]
         mock_cursor.fetchall.return_value = mock_rows
-        
+
         # Mock deserialization
-        mock_deserialize = mocker.patch("merlin.backends.sqlite.sqlite_store_base.deserialize_entity", 
-                                      side_effect=[run1, run2])
+        mock_deserialize = mocker.patch(
+            "merlin.backends.sqlite.sqlite_store_base.deserialize_entity", side_effect=[run1, run2]
+        )
 
         results = simple_store.retrieve_all()
 
@@ -331,16 +328,15 @@ class TestSQLiteStoreBase:
         """
         # Mock SQLiteConnection and cursor
         _, mock_cursor = mock_sqlite_connection
-        mock_rows = [
-            {"id": "run1", "study_id": "study1"},
-            {"id": "run2", "study_id": "study1"}  # This one will fail
-        ]
+        mock_rows = [{"id": "run1", "study_id": "study1"}, {"id": "run2", "study_id": "study1"}]  # This one will fail
         mock_cursor.fetchall.return_value = mock_rows
-        
+
         # Mock deserialization - first succeeds, second fails
         run1 = RunModel(id="run1", study_id="study1")
-        mocker.patch("merlin.backends.sqlite.sqlite_store_base.deserialize_entity", 
-                        side_effect=[run1, Exception("Deserialization error")])
+        mocker.patch(
+            "merlin.backends.sqlite.sqlite_store_base.deserialize_entity",
+            side_effect=[run1, Exception("Deserialization error")],
+        )
 
         results = simple_store.retrieve_all()
 
@@ -388,18 +384,14 @@ class TestSQLiteStoreBase:
         mock_cursor.rowcount = 1
 
         # Mock error class
-        mocker.patch(
-            "merlin.backends.sqlite.sqlite_store_base.get_not_found_error_class",
-            return_value=RunNotFoundError
-        )
+        mocker.patch("merlin.backends.sqlite.sqlite_store_base.get_not_found_error_class", return_value=RunNotFoundError)
 
         simple_store.delete(identifier, by_name=by_name)
 
         # Verify calls
         simple_store.retrieve.assert_called_once_with(identifier, by_name=by_name)
         mock_conn.execute.assert_called_once_with(
-            f"DELETE FROM test_table WHERE {identifier_key} = :identifier",
-            {"identifier": identifier}
+            f"DELETE FROM test_table WHERE {identifier_key} = :identifier", {"identifier": identifier}
         )
 
     def test_delete_nonexistent_object(
@@ -416,10 +408,9 @@ class TestSQLiteStoreBase:
         """
         # Mock retrieve to return None
         mocker.patch.object(simple_store, "retrieve", return_value=None)
-        
+
         # Mock error class
-        mocker.patch("merlin.backends.sqlite.sqlite_store_base.get_not_found_error_class", 
-                    return_value=RunNotFoundError)
+        mocker.patch("merlin.backends.sqlite.sqlite_store_base.get_not_found_error_class", return_value=RunNotFoundError)
 
         with pytest.raises(RunNotFoundError, match="Test_table with id 'nonexistent_id' does not exist in the database."):
             simple_store.delete("nonexistent_id")
@@ -444,7 +435,7 @@ class TestSQLiteStoreBase:
             mock_sqlite_connection: Fixture providing mocked SQLite connection and cursor.
         """
         run = test_models["run"]
-        
+
         # Mock retrieve to return the object
         mocker.patch.object(simple_store, "retrieve", return_value=run)
 
@@ -457,7 +448,4 @@ class TestSQLiteStoreBase:
 
         # Verify method calls
         simple_store.retrieve.assert_called_once_with(run.id, by_name=False)
-        mock_conn.execute.assert_called_once_with(
-            "DELETE FROM test_table WHERE id = :identifier", 
-            {"identifier": run.id}
-        )
+        mock_conn.execute.assert_called_once_with("DELETE FROM test_table WHERE id = :identifier", {"identifier": run.id})

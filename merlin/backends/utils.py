@@ -5,6 +5,7 @@ These utilities are essential for converting in-memory data models into a persis
 ensuring compatibility with backend storage systems, and for consistent error handling
 when entity lookups fail.
 """
+
 import json
 import logging
 from datetime import datetime
@@ -12,6 +13,7 @@ from typing import Dict, Type, TypeVar
 
 from merlin.db_scripts.data_models import LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
 from merlin.exceptions import RunNotFoundError, StudyNotFoundError, WorkerNotFoundError
+
 
 T = TypeVar("T")
 

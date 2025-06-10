@@ -17,13 +17,13 @@ from merlin.db_scripts.data_models import LogicalWorkerModel, PhysicalWorkerMode
 @pytest.fixture
 def mock_create_table(mocker: MockerFixture):
     """
-    A fixture to mock the `_create_table_if_not_exists` method so we don't actually
+    A fixture to mock the `create_table_if_not_exists` method so we don't actually
     try to create a connection to the database.
 
     Args:
         mocker: PyTest mocker fixture.
     """
-    mocker.patch("merlin.backends.sqlite.sqlite_store_base.SQLiteStoreBase._create_table_if_not_exists")
+    mocker.patch("merlin.backends.sqlite.sqlite_store_base.SQLiteStoreBase.create_table_if_not_exists")
 
 
 class TestSQLiteLogicalWorkerStore:
@@ -34,7 +34,7 @@ class TestSQLiteLogicalWorkerStore:
         Test that the store initializes with the correct attributes.
 
         Args:
-            mock_create_table: Fixture that patches the `_create_table_if_not_exists` method.
+            mock_create_table: Fixture that patches the `create_table_if_not_exists` method.
         """
         store = SQLiteLogicalWorkerStore()
 
@@ -50,7 +50,7 @@ class TestSQLitePhysicalWorkerStore:
         Test that the store initializes with the correct attributes.
 
         Args:
-            mock_create_table: Fixture that patches the `_create_table_if_not_exists` method.
+            mock_create_table: Fixture that patches the `create_table_if_not_exists` method.
         """
         store = SQLitePhysicalWorkerStore()
 
@@ -66,7 +66,7 @@ class TestSQLiteRunStore:
         Test that the store initializes with the correct attributes.
 
         Args:
-            mock_create_table: Fixture that patches the `_create_table_if_not_exists` method.
+            mock_create_table: Fixture that patches the `create_table_if_not_exists` method.
         """
         store = SQLiteRunStore()
 
@@ -82,7 +82,7 @@ class TestSQLiteStudyStore:
         Test that the store initializes with the correct attributes.
 
         Args:
-            mock_create_table: Fixture that patches the `_create_table_if_not_exists` method.
+            mock_create_table: Fixture that patches the `create_table_if_not_exists` method.
         """
         store = SQLiteStudyStore()
 

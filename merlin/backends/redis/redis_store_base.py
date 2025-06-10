@@ -16,8 +16,9 @@ from typing import Generic, List, Optional, Type
 
 from redis import Redis
 
-from merlin.backends.store_base import T, StoreBase
+from merlin.backends.store_base import StoreBase, T
 from merlin.backends.utils import deserialize_entity, get_not_found_error_class, serialize_entity
+
 
 LOG = logging.getLogger(__name__)
 
@@ -92,18 +93,18 @@ class RedisStoreBase(StoreBase[T], Generic[T]):
             self.client.hset(entity_key, mapping=serialized_data)
             LOG.debug(f"Successfully created a {self.key} with id '{entity.id}' in Redis.")
 
-    def retrieve(self, entity_id: str) -> Optional[T]:
+    def retrieve(self, identifier: str) -> Optional[T]:
         """
         Retrieve an entity from the Redis database by ID.
 
         Args:
-            entity_id: The ID of the entity to retrieve.
+            identifier: The ID of the entity to retrieve.
 
         Returns:
             The entity if found, None otherwise.
         """
-        LOG.debug(f"Retrieving identifier {entity_id} in RedisStoreBase.")
-        entity_key = self._get_full_key(entity_id)
+        LOG.debug(f"Retrieving identifier {identifier} in RedisStoreBase.")
+        entity_key = self._get_full_key(identifier)
         if not self.client.exists(entity_key):
             return None
 
@@ -144,19 +145,19 @@ class RedisStoreBase(StoreBase[T], Generic[T]):
         LOG.info(f"Successfully retrieved {len(all_entities)} {entity_type} from Redis.")
         return all_entities
 
-    def delete(self, entity_id: str):
+    def delete(self, identifier: str):
         """
         Delete an entity from the Redis database by ID.
 
         Args:
-            entity_id: The ID of the entity to delete.
+            identifier: The ID of the entity to delete.
         """
-        LOG.info(f"Attempting to delete {self.key} with id '{entity_id}' from Redis...")
+        LOG.info(f"Attempting to delete {self.key} with id '{identifier}' from Redis...")
 
-        entity = self.retrieve(entity_id)
+        entity = self.retrieve(identifier)
         if entity is None:
             error_class = get_not_found_error_class(self.model_class)
-            raise error_class(f"{self.key.capitalize()} with id '{entity_id}' does not exist in the database.")
+            raise error_class(f"{self.key.capitalize()} with id '{identifier}' does not exist in the database.")
 
         # Delete the entity's hash entry
         entity_key = f"{self.key}:{entity.id}"
@@ -164,7 +165,7 @@ class RedisStoreBase(StoreBase[T], Generic[T]):
         self.client.delete(entity_key)
         LOG.debug(f"Successfully removed {self.key} hash from Redis.")
 
-        LOG.info(f"Successfully deleted {self.key} '{entity_id}' from Redis.")
+        LOG.info(f"Successfully deleted {self.key} '{identifier}' from Redis.")
 
 
 class NameMappingMixin:

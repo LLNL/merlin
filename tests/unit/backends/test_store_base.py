@@ -1,15 +1,18 @@
 """
 Tests for the `store_base.py` module.
 """
-import pytest
+
 from typing import List
 
-from merlin.db_scripts.data_models import BaseDataModel
+import pytest
+
 from merlin.backends.store_base import StoreBase
+from merlin.db_scripts.data_models import BaseDataModel
 
 
 class DummyModel(BaseDataModel):
     """A minimal model stub for testing."""
+
     def __init__(self, id: str):
         self.id = id
 
@@ -26,6 +29,7 @@ def test_incomplete_subclass_raises_type_error():
     """
     Test that a subclass that does not implement all abstract methods raises TypeError.
     """
+
     class IncompleteStore(StoreBase[DummyModel]):
         def save(self, entity: DummyModel):
             pass  # only implements one of four required methods
@@ -38,6 +42,7 @@ def test_complete_subclass_can_be_instantiated():
     """
     Test that a subclass implementing all abstract methods can be instantiated.
     """
+
     class CompleteStore(StoreBase[DummyModel]):
         def save(self, entity: DummyModel):
             self._store = {entity.id: entity}

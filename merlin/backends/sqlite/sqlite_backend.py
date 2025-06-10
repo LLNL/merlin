@@ -6,11 +6,18 @@ as the underlying database. It defines the `SQLiteBackend` class, which manages 
 with SQLite-specific store classes for different data models, including schema initialization,
 CRUD operations, and database flushing.
 """
+
 import logging
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.backends.sqlite.sqlite_connection import SQLiteConnection
-from merlin.backends.sqlite.sqlite_stores import SQLiteLogicalWorkerStore, SQLitePhysicalWorkerStore, SQLiteRunStore, SQLiteStudyStore
+from merlin.backends.sqlite.sqlite_stores import (
+    SQLiteLogicalWorkerStore,
+    SQLitePhysicalWorkerStore,
+    SQLiteRunStore,
+    SQLiteStudyStore,
+)
+
 
 LOG = logging.getLogger(__name__)
 
@@ -60,14 +67,14 @@ class SQLiteBackend(ResultsBackend):
         }
 
         super().__init__(backend_name, stores)
-        
+
         # Initialize database schema
         self._initialize_schema()
 
     def _initialize_schema(self):
         """Initialize the database schema by creating all necessary tables."""
         for store in self.stores.values():
-            store._create_table_if_not_exists()
+            store.create_table_if_not_exists()
 
     def get_version(self) -> str:
         """
@@ -86,11 +93,9 @@ class SQLiteBackend(ResultsBackend):
         """
         with SQLiteConnection() as conn:
             # Get all table names
-            cursor = conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-            )
+            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
             tables = [row[0] for row in cursor.fetchall()]
-            
+
             # Drop all tables
             for table in tables:
                 conn.execute(f"DROP TABLE IF EXISTS {table}")

@@ -1,9 +1,10 @@
 """
 Tests for the `sqlite_connection.py` module.
 """
+
 import os
-import sys
 import sqlite3
+import sys
 from unittest.mock import MagicMock
 
 import pytest
@@ -26,10 +27,7 @@ def mock_sqlite_components(mocker: MockerFixture) -> FixtureDict[str, MagicMock]
     """
     # Patch get_connection_string to return a fake path
     mock_conn_str = os.path.join("tmp", "fake", "merlin.db")
-    mock_get_conn_str = mocker.patch(
-        "merlin.config.results_backend.get_connection_string",
-        return_value=mock_conn_str
-    )
+    mock_get_conn_str = mocker.patch("merlin.config.results_backend.get_connection_string", return_value=mock_conn_str)
 
     # Patch Path.mkdir so it doesn't touch the filesystem
     mock_mkdir = mocker.patch("pathlib.Path.mkdir")
@@ -56,7 +54,7 @@ def test_connection_enter_sets_up_connection(mock_sqlite_components: FixtureDict
     """
     conn_mock = mock_sqlite_components["mock_conn"]
     conn_mock.execute = MagicMock()
-    
+
     with SQLiteConnection() as conn:
         assert conn is conn_mock
 

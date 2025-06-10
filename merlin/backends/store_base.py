@@ -2,13 +2,15 @@
 This module defines the abstract base class for all data store implementations in Merlin.
 
 This module provides the `StoreBase` class, which outlines the required interface for saving,
-retrieving, listing, and deleting entities from a backing data store. All concrete store classes 
+retrieving, listing, and deleting entities from a backing data store. All concrete store classes
 (e.g., Redis-based stores) must inherit from this class and implement its abstract methods.
 """
+
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, List
+from typing import Generic, List, TypeVar
 
 from merlin.db_scripts.data_models import BaseDataModel
+
 
 T = TypeVar("T", bound=BaseDataModel)
 
@@ -25,7 +27,7 @@ class StoreBase(ABC, Generic[T]):
         retrieve_all: Query the database for all entities of this type.
         delete: Delete an entity from the database by ID.
     """
-    
+
     @abstractmethod
     def save(self, entity: BaseDataModel):
         """
@@ -35,20 +37,20 @@ class StoreBase(ABC, Generic[T]):
             entity: The object to save.
         """
         raise NotImplementedError("Subclasses of `StoreBase` must implement a `save` method.")
-    
+
     @abstractmethod
-    def retrieve(self, entity_id: str) -> BaseDataModel:
+    def retrieve(self, identifier: str) -> BaseDataModel:
         """
-        Retrieve an entity from the database by ID.
+        Retrieve an entity from the database by an identifier.
 
         Args:
-            entity_id: The ID of the entity to retrieve.
+            identifier: The identifier (typically ID or name) of the entity to retrieve.
 
         Returns:
             The entity if found, None otherwise.
         """
         raise NotImplementedError("Subclasses of `StoreBase` must implement a `retrieve` method.")
-    
+
     @abstractmethod
     def retrieve_all(self) -> List[BaseDataModel]:
         """
@@ -58,13 +60,13 @@ class StoreBase(ABC, Generic[T]):
             A list of entities.
         """
         raise NotImplementedError("Subclasses of `StoreBase` must implement a `retrieve_all` method.")
-    
+
     @abstractmethod
-    def delete(self, entity_id: str):
+    def delete(self, identifier: str):
         """
-        Delete an entity from the Redis database by ID.
+        Delete an entity from the database by an identifier.
 
         Args:
-            entity_id: The ID of the entity to delete.
+            identifier: The identifier (typically ID or name) of the entity to delete.
         """
         raise NotImplementedError("Subclasses of `StoreBase` must implement a `delete` method.")

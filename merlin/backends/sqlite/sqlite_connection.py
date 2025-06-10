@@ -6,12 +6,14 @@ establish and manage SQLite connections using a context manager. It ensures prop
 (e.g., enabling WAL mode and foreign key support), handles compatibility with Python versions,
 and guarantees cleanup by closing the connection on exit.
 """
+
 import logging
 import sqlite3
 import sys
 from pathlib import Path
 from types import TracebackType
 from typing import Type
+
 
 LOG = logging.getLogger(__name__)
 

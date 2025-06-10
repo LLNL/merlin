@@ -14,6 +14,7 @@ Usage:
     This base class is not meant to be instantiated directly. Instead, it should be subclassed
     by backend-specific implementations such as `RedisBackend` or `SQLiteBackend`.
 """
+
 import logging
 import uuid
 from abc import ABC, abstractmethod
@@ -22,6 +23,7 @@ from typing import Dict, List
 from merlin.backends.store_base import StoreBase
 from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
 from merlin.exceptions import UnsupportedDataModelError
+
 
 LOG = logging.getLogger(__name__)
 
@@ -111,7 +113,7 @@ class ResultsBackend(ABC):
         Remove everything stored in the database.
         """
         raise NotImplementedError("Subclasses of `ResultsBackend` must implement a `flush_database` method.")
-    
+
     def _get_store_by_type(self, store_type: str) -> StoreBase:
         """
         Get the appropriate store based on the store type.

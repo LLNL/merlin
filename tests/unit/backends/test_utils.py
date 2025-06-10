@@ -1,12 +1,11 @@
 """
 Tests for the `backends/utils.py` module.
 """
+
 import pytest
 
 from merlin.backends.utils import get_not_found_error_class
-from merlin.db_scripts.data_models import (
-    BaseDataModel, LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
-)
+from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
 from merlin.exceptions import RunNotFoundError, StudyNotFoundError, WorkerNotFoundError
 
 
@@ -35,6 +34,8 @@ def test_get_not_found_error_class_unknown_model():
     Test the `get_not_found_error_class` function returns the broad Exception for
     an unknown data model.
     """
+
     class UnknownModel:
         pass
+
     assert get_not_found_error_class(UnknownModel) is Exception

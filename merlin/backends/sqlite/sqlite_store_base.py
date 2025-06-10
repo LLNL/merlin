@@ -20,8 +20,9 @@ from datetime import datetime
 from typing import Any, Generic, List, Optional, Type
 
 from merlin.backends.sqlite.sqlite_connection import SQLiteConnection
-from merlin.backends.store_base import T, StoreBase
+from merlin.backends.store_base import StoreBase, T
 from merlin.backends.utils import deserialize_entity, get_not_found_error_class, serialize_entity
+
 
 LOG = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
         """
         self.table_name: str = table_name
         self.model_class: Type[T] = model_class
-        self._create_table_if_not_exists()
+        self.create_table_if_not_exists()
 
     def _get_sqlite_type(self, py_type: Any) -> str:
         """
@@ -66,25 +67,26 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
         Returns:
             A string representing the corresponding SQLite column type.
         """
-        origin_type = getattr(py_type, '__origin__', py_type)
+        origin_type = getattr(py_type, "__origin__", py_type)
+        result = "TEXT"  # Default fallback
 
         # Handle generics like List[str], Dict[str, Any], etc.
         if origin_type in (list, dict, set):
-            return "TEXT"  # store as JSON string
+            result = "TEXT"  # store as JSON string
         elif py_type == str:
-            return "TEXT"
+            result = "TEXT"
         elif py_type == int:
-            return "INTEGER"
+            result = "INTEGER"
         elif py_type == float:
-            return "REAL"
+            result = "REAL"
         elif py_type == bool:
-            return "INTEGER"  # SQLite uses 0 and 1 for booleans
+            result = "INTEGER"  # SQLite uses 0 and 1 for booleans
         elif py_type == datetime:
-            return "TEXT"  # ISO format string
-        else:
-            return "TEXT"  # Default fallback
+            result = "TEXT"  # ISO format string
 
-    def _create_table_if_not_exists(self):
+        return result
+
+    def create_table_if_not_exists(self):
         """
         Create the table if it doesn't exist.
         """
@@ -116,16 +118,17 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
             existing_data.update_fields(entity.to_dict())
             serialized_data = serialize_entity(existing_data)
             set_str = ", ".join(
-                f"{field.name} = :{field.name}"
-                for field in self.model_class.get_class_fields()
-                if field.name != "id"
+                f"{field.name} = :{field.name}" for field in self.model_class.get_class_fields() if field.name != "id"
             )
             with SQLiteConnection() as conn:
-                conn.execute(f"""
-                    UPDATE {self.table_name} 
+                conn.execute(
+                    f"""
+                    UPDATE {self.table_name}
                     SET {set_str}
                     WHERE id = :id
-                """, serialized_data)
+                """,
+                    serialized_data,
+                )
             LOG.debug(f"Successfully updated {self.table_name} with id '{entity.id}'.")
         # If the entity does not already exist, create it
         else:
@@ -135,10 +138,13 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
             columns_str = ", ".join(fields)
             placeholders_str = ", ".join(f":{name}" for name in fields)
             with SQLiteConnection() as conn:
-                conn.execute(f"""
-                    INSERT INTO {self.table_name} ({columns_str}) 
+                conn.execute(
+                    f"""
+                    INSERT INTO {self.table_name} ({columns_str})
                     VALUES ({placeholders_str})
-                """, serialized_data)
+                """,
+                    serialized_data,
+                )
             LOG.debug(f"Successfully created a {self.table_name} with id '{entity.id}' in SQLite.")
 
     def retrieve(self, identifier: str, by_name: bool = False) -> Optional[T]:
@@ -153,7 +159,7 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
             The entity if found, None otherwise.
         """
         LOG.debug(f"Retrieving identifier {identifier} in SQLiteStoreBase.")
-        
+
         id_type = "name" if by_name else "id"
 
         with SQLiteConnection() as conn:
@@ -162,7 +168,7 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
 
             if row is None:
                 return None
-            
+
             return deserialize_entity(dict(row), self.model_class)
 
     def retrieve_all(self) -> List[T]:
@@ -185,7 +191,9 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
                     if entity:
                         all_entities.append(entity)
                     else:
-                        LOG.warning(f"{self.table_name.capitalize()} with id '{row['id']}' could not be retrieved or does not exist.")
+                        LOG.warning(
+                            f"{self.table_name.capitalize()} with id '{row['id']}' could not be retrieved or does not exist."
+                        )
                 except Exception as exc:  # pylint: disable=broad-except
                     LOG.error(f"Error retrieving {self.table_name} with id '{row['id']}': {exc}")
 
