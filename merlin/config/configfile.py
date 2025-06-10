@@ -187,10 +187,8 @@ def get_default_config() -> Dict:
         },
         "celery": {"omit_queue_tag": False, "queue_tag": "[merlin]_", "override": None},
         "results_backend": {
-            "server": "localhost",
-            "name": "redis",  # Default results backend
-            "port": 6379,  # Default Redis port
-            "protocol": "redis",  # Default protocol
+            "name": "sqlite",  # Default results backend
+            "port": 1234,
         },
     }
     return default_config
@@ -495,17 +493,15 @@ def initialize_config(path: Optional[str] = None, local_mode: bool = False) -> C
     if local_mode:
         set_local_mode(True)
 
-    app_config = get_config(path)  # pylint: disable=redefined-outer-name
-    return Config(app_config)
+    global CONFIG  # pylint: disable=global-statement
+
+    try:
+        app_config = get_config(path)
+        CONFIG = Config(app_config)
+    except ValueError as e:
+        LOG.warning(f"Error loading configuration: {e}. Falling back to default configuration.")
+        # Fallback to default config
+        CONFIG = Config(get_default_config())
 
 
-# Initialize the global CONFIG object with default configuration
-# This can be overridden by calling initialize_config() later
-try:
-    # Try to load config file by default
-    app_config = get_config(None)
-    CONFIG = Config(app_config)
-except ValueError as e:
-    LOG.warning(f"Error loading configuration: {e}. Falling back to default configuration.")
-    # Fallback to default config
-    CONFIG = Config(get_default_config())
+initialize_config()

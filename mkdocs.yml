@@ -24,6 +24,10 @@ nav:
     - Variables: "user_guide/variables.md"
     - Running Studies: "user_guide/running_studies.md"
     - Interpreting Study Output: "user_guide/interpreting_output.md"
+    - Merlin Database:
+        - Database Overview: "user_guide/database/index.md"
+        - The Database Command: "user_guide/database/database_cmd.md"
+        - Database Entities: "user_guide/database/entities.md"
     - Monitoring Studies:
       - Monitoring Overview: "user_guide/monitoring/index.md"
       - The Status Commands: "user_guide/monitoring/status_cmds.md"
@@ -101,6 +105,8 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - markdown_grid_tables
+  - toc:
+      toc_depth: 4
 
 plugins:
   - glightbox

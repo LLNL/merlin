@@ -282,6 +282,10 @@ def stop_workers(task_server: str, spec_worker_names: List[str], queues: List[st
         LOG.error("Celery is not specified as the task server!")
 
 
+# TODO in Merlin 1.14 delete all of the below functions since we're deprecating the old version of the monitor
+# and a lot of this stuff is in the new monitor classes
+
+
 def get_active_queues(task_server: str) -> Dict[str, List[str]]:
     """
     Retrieve a dictionary of active queues and their associated workers for the specified task server.
@@ -371,7 +375,7 @@ def check_workers_processing(queues_in_spec: List[str], task_server: str) -> boo
     result = False
 
     if task_server == "celery":
-        from merlin.celery import app
+        from merlin.celery import app  # pylint: disable=import-outside-toplevel
 
         result = check_celery_workers_processing(queues_in_spec, app)
     else:
@@ -431,7 +435,7 @@ def check_merlin_status(args: Namespace, spec: MerlinSpec) -> bool:
 
     # If there are no workers, wait for the workers to start
     if total_consumers == 0:
-        wait_for_workers(args.sleep, args.task_server, spec)
+        wait_for_workers(args.sleep, args.task_server, spec=spec)
 
     # If we're here, workers have started and jobs should be queued
     if total_jobs > 0:

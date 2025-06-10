@@ -448,12 +448,418 @@ merlin server config [OPTIONS]
 
 The Merlin library provides several commands for setting up and managing your Merlin workflow:
 
+- *[database](#database-merlin-database)*: Interact with Merlin's backend database
 - *[example](#example-merlin-example)*: Download pre-made workflow specifications that can be modified for your own workflow needs
 - *[purge](#purge-merlin-purge)*: Clear any tasks that are currently living in the central server
 - *[restart](#restart-merlin-restart)*: Restart a workflow
 - *[run](#run-merlin-run)*: Send tasks to the central server
 - *[run workers](#run-workers-merlin-run-workers)*: Start up workers that will execute the tasks that exist on the central server
 - *[stop workers](#stop-workers-merlin-stop-workers)*: Stop existing workers
+
+### Database (`merlin database`)
+
+This command allows you to interact with Merlin's backend database by viewing database info, retrieving and printing entries, and deleting entries. If you ran your study locally, use the `--local` option here as well when running database commands.
+
+More information on this command can be found below or at [The Database Command](./database/database_cmd.md) page. See [Merlin's Database](./database/index.md) for more general information on the database itself.
+
+<!-- TODO add this to the above paragraph when the reference guide is finished -->
+<!-- If you really want to understand the architecture of this database, see [General Database Architecture](../reference_guide/database/index.md) in Merlin's [Reference Guide](../reference_guide/index.md). -->
+
+**Usage:**
+
+```
+merlin database [OPTIONS] COMMAND ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-l`, `--local`  | boolean | Use the local SQLite database for this command. | `False` |
+
+**Commands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [info](#database-info-merlin-database-info) | Print general information about the database |
+| [get](#database-get-merlin-database-get) | Retrieve and print entries from the database |
+| [delete](#database-delete-merlin-database-delete) | Delete entries from the database |
+
+#### Database Info (`merlin database info`)
+
+The `info` subcommand prints general information about the database, including the database type, version, and brief details about the existing entries.
+
+**Usage:**
+
+```bash
+merlin database info [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+#### Database Get (`merlin database get`)
+
+The `get` subcommand allows users to retrieve entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get [OPTIONS] SUBCOMMAND ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Subcommands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [study](#get-study-merlin-database-get-study) | Retrieve and print specific study(ies) from the database |
+| [run](#get-run-merlin-database-get-run) | Retrieve and print specific run(s) from the database |
+| [logical-worker](#get-logical-worker-merlin-database-get-logical-worker) | Retrieve and print specific logical worker(s) from the database |
+| [physical-worker](#get-physical-worker-merlin-database-get-physical-worker) | Retrieve and print specific physical worker(s) from the database |
+| [all-studies](#get-all-studies-merlin-database-get-all-studies) | Retrieve and print all studies from the database |
+| [all-runs](#get-all-runs-merlin-database-get-all-runs) | Retrieve and print all runs from the database |
+| [all-logical-workers](#get-all-logical-workers-merlin-database-get-all-logical-workers) | Retrieve and print all logical workers from the database |
+| [all-physical-workers](#get-all-physical-workers-merlin-database-get-all-physical-workers) | Retrieve and print all physical workers from the database |
+| [everything](#get-everything-merlin-database-get-everything) | Retrieve and print every entry from the database |
+
+##### Get Study (`merlin database get study`)
+
+The `get study` subcommand allows users to retrieve specific study entries from the database by study ID or name and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get study [OPTIONS] STUDY_ID_OR_NAME [STUDY_ID_OR_NAME ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get Run (`merlin database get run`)
+
+The `get run` subcommand allows users to retrieve specific run entries from the database by run ID or workspace and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get run [OPTIONS] RUN_ID_OR_WORKSPACE [RUN_ID_OR_WORKSPACE ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get Logical-Worker (`merlin database get logical-worker`)
+
+The `get logical-worker` subcommand allows users to retrieve specific logical-worker entries from the database by ID and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get logical-worker [OPTIONS] LOGICAL_WORKER_ID [LOGICAL_WORKER_ID ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get Physical-Worker (`merlin database get physical-worker`)
+
+The `get physical-worker` subcommand allows users to retrieve specific physical-worker entries from the database by ID or name and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get physical-worker [OPTIONS] PHYSICAL_WORKER_ID_OR_NAME [PHYSICAL_WORKER_ID_OR_NAME ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Studies (`merlin database get all-studies`)
+
+The `get all-studies` subcommand allows users to retrieve all study entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-studies [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Runs (`merlin database get all-runs`)
+
+The `get all-runs` subcommand allows users to retrieve all run entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-runs [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Logical-Workers (`merlin database get all-logical-workers`)
+
+The `get all-logical-workers` subcommand allows users to retrieve all logical-worker entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-logical-workers [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Physical-Workers (`merlin database get all-physical-workers`)
+
+The `get all-physical-workers` subcommand allows users to retrieve all physical-worker entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-physical-workers [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get Everything (`merlin database get everything`)
+
+The `get everything` subcommand allows users to retrieve every entry from the database and print them all to the console.
+
+**Usage:**
+
+```bash
+merlin database get everything [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+#### Database Delete (`merlin database delete`)
+
+The `delete` subcommand allows users to delete entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete [OPTIONS] SUBCOMMAND ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Subcommands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [study](#delete-study-merlin-database-delete-study) | Delete specific study(ies) from the database |
+| [run](#delete-run-merlin-database-delete-run) | Delete specific run(s) from the database |
+| [logical-worker](#delete-logical-worker-merlin-database-delete-logical-worker) | Delete specific logical worker(s) from the database |
+| [physical-worker](#delete-physical-worker-merlin-database-delete-physical-worker) | Delete specific physical worker(s) from the database |
+| [all-studies](#delete-all-studies-merlin-database-delete-all-studies) | Delete all studies from the database |
+| [all-runs](#delete-all-runs-merlin-database-delete-all-runs) | Delete all runs from the database |
+| [all-logical-workers](#delete-all-logical-workers-merlin-database-delete-all-logical-workers) | Delete all logical workers from the database |
+| [all-physical-workers](#delete-all-physical-workers-merlin-database-delete-all-physical-workers) | Delete all physical workers from the database |
+| [everything](#delete-everything-merlin-database-delete-everything) | Delete everything from the database |
+
+##### Delete Study (`merlin database delete study`)
+
+!!! warning
+
+    By default, this command will also delete all of the runs associated with a study. To disable this, use the `-k` option mentioned in the table below.
+
+The `delete study` subcommand allows users to delete specific study entries from the database by ID or name.
+
+**Usage:**
+
+```bash
+merlin database delete study [OPTIONS] STUDY_ID_OR_NAME [STUDY_ID_OR_NAME ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-k`, `--keep-associated-runs`   | boolean |  Keep runs associated with the study that's being deleted | `False` |
+
+##### Delete Run (`merlin database delete run`)
+
+The `delete run` subcommand allows users to delete specific run entries from the database by ID or workspace.
+
+**Usage:**
+
+```bash
+merlin database delete run [OPTIONS] RUN_ID_OR_WORKSPACE [RUN_ID_OR_WORKSPACE ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete Logical-Worker (`merlin database delete logical-worker`)
+
+The `delete logical-worker` subcommand allows users to delete specific logical worker entries from the database by ID.
+
+**Usage:**
+
+```bash
+merlin database delete logical-worker [OPTIONS] LOGICAL_WORKER_ID [LOGICAL_WORKER_ID ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete Physical-Worker (`merlin database delete physical-worker`)
+
+The `delete physical-worker` subcommand allows users to delete specific physical worker entries from the database by ID or name.
+
+**Usage:**
+
+```bash
+merlin database delete physical-worker [OPTIONS] PHYSICAL_WORKER_ID_OR_NAME [PHYSICAL_WORKER_ID_OR_NAME ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete All-Studies (`merlin database delete all-studies`)
+
+!!! warning
+
+    This command will also delete all of the runs in the database.
+
+The `delete all-studies` subcommand allows users to delete all study entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-studies [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-k`, `--keep-associated-runs`   | boolean |  Keep runs associated with the studies | `False` |
+
+##### Delete All-Runs (`merlin database delete all-runs`)
+
+The `delete all-runs` subcommand allows users to delete all run entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-runs [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete All-Logical-Workers (`merlin database delete all-logical-workers`)
+
+The `delete all-logical-workers` subcommand allows users to delete all logical worker entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-logical-workers [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete All-Physical-Workers (`merlin database delete all-physical-workers`)
+
+The `delete all-physical-workers` subcommand allows users to delete all physical worker entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-physical-workers [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete Everything (`merlin database delete everything`)
+
+The `delete everything` subcommand allows users to delete every entry from the database.
+
+**Usage:**
+
+```bash
+merlin database delete everything [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-f`, `--force`  | boolean | Delete everything in the database without confirmation | `False` |
 
 ### Example (`merlin example`)
 

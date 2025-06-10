@@ -45,15 +45,19 @@ from typing import Any, Callable, Dict, List, Optional
 # Need to disable an overwrite warning here since celery has an exception that we need that directly
 # overwrites a python built-in exception
 from celery import Signature, Task, chain, chord, group, shared_task, signature
-from celery.exceptions import MaxRetriesExceededError, OperationalError, TimeoutError  # pylint: disable=W0622
+from celery.exceptions import MaxRetriesExceededError
+from celery.exceptions import OperationalError as CeleryOperationalError
+from celery.exceptions import TimeoutError as CeleryTimeoutError
 from celery.result import AsyncResult
 from filelock import FileLock, Timeout
+from kombu.exceptions import OperationalError as KombuOperationalError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.common.enums import ReturnCode
 from merlin.common.sample_index import SampleIndex, uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
 from merlin.config.utils import Priority, get_priority
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
 from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
@@ -65,15 +69,22 @@ from merlin.utils import dict_deep_merge
 
 
 retry_exceptions = (
+    # Python Built-in Exceptions
     IOError,
     OSError,
     AttributeError,
     TimeoutError,
-    OperationalError,
+    FileNotFoundError,
+    # Celery Exceptions
+    CeleryOperationalError,
+    CeleryTimeoutError,
+    # Kombu Exceptions
+    KombuOperationalError,
+    # Redis Exceptions
+    RedisTimeoutError,
+    # Merlin Exceptions
     RetryException,
     RestartException,
-    FileNotFoundError,
-    RedisTimeoutError,
 )
 
 LOG = logging.getLogger(__name__)
@@ -915,6 +926,29 @@ def chordfinisher(*args: List, **kwargs: Dict) -> str:  # pylint: disable=W0613
 @shared_task(
     autoretry_for=retry_exceptions,
     retry_backoff=True,
+    name="merlin:mark_run_as_complete",
+    priority=get_priority(Priority.LOW),
+)
+def mark_run_as_complete(study_workspace: str) -> str:
+    """
+    Mark this run as complete and save that to the database.
+
+    Args:
+        study_workspace: The output workspace for this run.
+
+    Returns:
+        A string denoting that this run has completed.
+    """
+    merlin_db = MerlinDatabase()
+    run_entity = merlin_db.get("run", study_workspace)
+    run_entity.run_complete = True
+    run_entity.save()
+    return "Run Completed"
+
+
+@shared_task(
+    autoretry_for=retry_exceptions,
+    retry_backoff=True,
     name="merlin:queue_merlin_study",
     priority=get_priority(Priority.LOW),
 )
@@ -967,5 +1001,14 @@ def queue_merlin_study(study: MerlinStudy, adapter: Dict) -> AsyncResult:
         )
         for chain_group in groups_of_chains[1:]
     )
+
+    # Append the final task that marks the run as complete
+    final_task = mark_run_as_complete.si(study.workspace).set(
+        queue=egraph.step(
+            groups_of_chains[-1][-1][-1]  # Use the task queue from the final step to execute this task
+        ).get_task_queue()
+    )
+    celery_dag = celery_dag | final_task
+
     LOG.info("Launching tasks.")
     return celery_dag.delay(None)

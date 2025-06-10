@@ -41,6 +41,7 @@ import os
 from typing import Dict
 from urllib.parse import quote
 
+from merlin.config.config_filepaths import MERLIN_HOME
 from merlin.config.configfile import CONFIG, get_ssl_entries
 
 
@@ -67,8 +68,7 @@ MYSQL_CONNECTION_STRING = (
 )
 # fmt: on
 
-
-SQLITE_CONNECTION_STRING = "db+sqlite:///results.db"
+SQLITE_CONNECTION_STRING = os.path.join(MERLIN_HOME, "merlin.db")
 
 
 def get_backend_password(password_file: str, certs_path: str = None) -> str:

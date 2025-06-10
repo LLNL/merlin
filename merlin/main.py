@@ -57,8 +57,11 @@ from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.config.configfile import initialize_config
 from merlin.config.merlin_config_manager import MerlinConfigManager
+from merlin.db_scripts.db_commands import database_delete, database_get, database_info
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
+from merlin.monitor.monitor import Monitor
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
@@ -226,6 +229,27 @@ def process_run(args: Namespace):
     if args.run_mode == "local":
         initialize_config(local_mode=True)
 
+    # Initialize the database
+    merlin_db = MerlinDatabase()
+
+    # Create a run entry
+    run_entity = merlin_db.create(
+        "run",
+        study_name=study.expanded_spec.name,
+        workspace=study.workspace,
+        queues=study.expanded_spec.get_queue_list(["all"]),
+    )
+
+    # Create logical worker entries
+    step_queue_map = study.expanded_spec.get_task_queues()
+    for worker, steps in study.expanded_spec.get_worker_step_map().items():
+        worker_queues = set([step_queue_map[step] for step in steps])
+        logical_worker_entity = merlin_db.create("logical_worker", worker, worker_queues)
+
+        # Add the run id to the worker entry and the worker id to the run entry
+        logical_worker_entity.add_run(run_entity.get_id())
+        run_entity.add_worker(logical_worker_entity.get_id())
+
     router.run_task_server(study, args.run_mode)
 
 
@@ -281,12 +305,27 @@ def launch_workers(args: Namespace):
     """
     if not args.worker_echo_only:
         print(banner_small)
+    else:
+        initialize_config(local_mode=True)
+
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
+
+    # Initialize the database
+    merlin_db = MerlinDatabase()
+
+    # Create logical worker entries
+    step_queue_map = spec.get_task_queues()
+    for worker, steps in spec.get_worker_step_map().items():
+        worker_queues = set([step_queue_map[step] for step in steps])
+        merlin_db.create("logical_worker", worker, worker_queues)
+
+    # Launch the workers
     launch_worker_status = router.launch_workers(
         spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only
     )
+
     if args.worker_echo_only:
         print(launch_worker_status)
     else:
@@ -587,16 +626,24 @@ def process_monitor(args: Namespace):
             - `sleep`: The duration (in seconds) to wait before
               checking the queue status again.
     """
-    LOG.info("Monitor: checking queues ...")
     spec, _ = get_merlin_spec_with_override(args)
 
     # Give the user time to queue up jobs in case they haven't already
     time.sleep(args.sleep)
 
-    # Check if we still need our allocation
-    while router.check_merlin_status(args, spec):
-        LOG.info("Monitor: found tasks in queues and/or tasks being processed")
-        time.sleep(args.sleep)
+    if args.steps != ["all"]:
+        LOG.warning(
+            "The `--steps` argument of the `merlin monitor` command is set to be deprecated in Merlin v1.14 "
+            "For now, using this argument will tell merlin to use the version of the monitor command from Merlin v1.12."
+        )
+        # Check if we still need our allocation
+        while router.check_merlin_status(args, spec):
+            LOG.info("Monitor: found tasks in queues and/or tasks being processed")
+            time.sleep(args.sleep)
+    else:
+        monitor = Monitor(spec, args.sleep, args.task_server)
+        monitor.monitor_all_runs()
+
     LOG.info("Monitor: ... stop condition met")
 
 
@@ -641,6 +688,24 @@ def process_server(args: Namespace):
         restart_server()
     elif args.commands == "config":
         config_server(args)
+
+
+def process_database(args: Namespace):
+    """
+    Process database commands by routing to the correct function.
+
+    Args:
+        args: An argparse Namespace containing user arguments.
+    """
+    if args.local:
+        initialize_config(local_mode=True)
+
+    if args.commands == "info":
+        database_info()
+    elif args.commands == "get":
+        database_get(args)
+    elif args.commands == "delete":
+        database_delete(args)
 
 
 # Pylint complains that there's too many statements here and wants us
@@ -1049,6 +1114,250 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         type=str,
         # default="appendonly.aof",
         help="Set append only filename for merlin server container.",
+    )
+
+    # merlin database
+    database: ArgumentParser = subparsers.add_parser(
+        "database",
+        help="Interact with Merlin's database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    database.set_defaults(func=process_database)
+
+    database.add_argument(
+        "-l",
+        "--local",
+        action="store_true",
+        help="Use the local SQLite database for this command.",
+    )
+
+    database_commands: ArgumentParser = database.add_subparsers(dest="commands")
+
+    # Subcommand: database info
+    database_commands.add_parser(
+        "info",
+        help="Print information about the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: database delete
+    db_delete: ArgumentParser = database_commands.add_parser(
+        "delete",
+        help="Delete information stored in the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Add subcommands for delete
+    delete_subcommands = db_delete.add_subparsers(dest="delete_type", required=True)
+
+    # TODO enable support for deletion of study by passing in spec file
+    # Subcommand: delete study
+    delete_study = delete_subcommands.add_parser(
+        "study",
+        help="Delete one or more studies by ID or name.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_study.add_argument(
+        "study",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs or names of studies to delete.",
+    )
+    delete_study.add_argument(
+        "-k",
+        "--keep-associated-runs",
+        action="store_true",
+        help="Keep runs associated with the studies.",
+    )
+
+    # Subcommand: delete run
+    delete_run = delete_subcommands.add_parser(
+        "run",
+        help="Delete one or more runs by ID or workspace.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_run.add_argument(
+        "run",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs or workspaces of runs to delete.",
+    )
+    # TODO implement the below option; this removes the output workspace from file system
+    # delete_run.add_argument(
+    #     "--delete-workspace",
+    #     action="store_true",
+    #     help="Delete the output workspace for the run.",
+    # )
+
+    # Subcommand: delete logical-worker
+    delete_logical_worker = delete_subcommands.add_parser(
+        "logical-worker",
+        help="Delete one or more logical workers by ID.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_logical_worker.add_argument(
+        "worker",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs of logical workers to delete.",
+    )
+
+    # Subcommand: delete physical-worker
+    delete_physical_worker = delete_subcommands.add_parser(
+        "physical-worker",
+        help="Delete one or more physical workers by ID or name.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_physical_worker.add_argument(
+        "worker",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs of physical workers to delete.",
+    )
+
+    # Subcommand: delete all-studies
+    delete_all_studies = delete_subcommands.add_parser(
+        "all-studies",
+        help="Delete all studies from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_all_studies.add_argument(
+        "-k",
+        "--keep-associated-runs",
+        action="store_true",
+        help="Keep runs associated with the studies.",
+    )
+
+    # Subcommand: delete all-runs
+    delete_subcommands.add_parser(
+        "all-runs",
+        help="Delete all runs from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: delete all-logical-workers
+    delete_subcommands.add_parser(
+        "all-logical-workers",
+        help="Delete all logical workers from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: delete all-physical-workers
+    delete_subcommands.add_parser(
+        "all-physical-workers",
+        help="Delete all physical workers from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: delete everything
+    delete_everything = delete_subcommands.add_parser(
+        "everything",
+        help="Delete everything from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    delete_everything.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="Delete everything in the database without confirmation.",
+    )
+
+    # Subcommand: database get
+    db_get: ArgumentParser = database_commands.add_parser(
+        "get",
+        help="Get information stored in the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Add subcommands for get
+    get_subcommands = db_get.add_subparsers(dest="get_type", required=True)
+
+    # TODO enable support for retrieval of study by passing in spec file
+    # Subcommand: get study
+    get_study = get_subcommands.add_parser(
+        "study",
+        help="Get one or more studies by ID or name.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    get_study.add_argument(
+        "study",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs or names of the studies to get.",
+    )
+
+    # Subcommand: get run
+    get_run = get_subcommands.add_parser(
+        "run",
+        help="Get one or more runs by ID or workspace.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    get_run.add_argument(
+        "run",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs or workspaces of the runs to get.",
+    )
+
+    # Subcommand get logical-worker
+    get_logical_worker = get_subcommands.add_parser(
+        "logical-worker",
+        help="Get one or more logical workers by ID.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    get_logical_worker.add_argument(
+        "worker",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs of the logical workers to get.",
+    )
+
+    # Subcommand get physical-worker
+    get_physical_worker = get_subcommands.add_parser(
+        "physical-worker",
+        help="Get one or more physical workers by ID or name.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+    get_physical_worker.add_argument(
+        "worker",
+        type=str,
+        nargs="+",
+        help="A space-delimited list of IDs or names of the physical workers to get.",
+    )
+
+    # Subcommand: get all-studies
+    get_subcommands.add_parser(
+        "all-studies",
+        help="Get all studies from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: get all-runs
+    get_subcommands.add_parser(
+        "all-runs",
+        help="Get all runs from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: get all-logical-workers
+    get_subcommands.add_parser(
+        "all-logical-workers",
+        help="Get all logical workers from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: get all-physical-workers
+    get_subcommands.add_parser(
+        "all-physical-workers",
+        help="Get all physical workers from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
+    )
+
+    # Subcommand: get everything
+    get_subcommands.add_parser(
+        "everything",
+        help="Get everything from the database.",
+        formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
     return parser

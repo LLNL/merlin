@@ -987,7 +987,7 @@ def launch_celery_worker(worker_cmd: str, worker_list: List[str], kwargs: Dict):
         - Modifies the `worker_list` by appending the launched worker command.
     """
     try:
-        _ = subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
+        subprocess.Popen(worker_cmd, **kwargs)  # pylint: disable=R1732
         worker_list.append(worker_cmd)
     except Exception as e:  # pylint: disable=C0103
         LOG.error(f"Cannot start celery workers, {e}")
@@ -1125,6 +1125,7 @@ def stop_celery_workers(
 
     if workers_to_stop:
         LOG.info(f"Sending stop to these workers: {workers_to_stop}")
+        # Send the shutdown signal
         app.control.broadcast("shutdown", destination=workers_to_stop)
     else:
         LOG.warning("No workers found to stop")

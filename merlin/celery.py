@@ -40,12 +40,14 @@ import celery
 import psutil
 from celery import Celery, states
 from celery.backends.redis import RedisBackend  # noqa: F401 ; Needed for celery patch
-from celery.signals import worker_process_init
+from celery.signals import celeryd_init, worker_process_init, worker_shutdown
 
 import merlin.common.security.encrypt_backend_traffic
+from merlin.common.enums import WorkerStatus
 from merlin.config import broker, celeryconfig, results_backend
 from merlin.config.configfile import CONFIG
 from merlin.config.utils import Priority, get_priority
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.utils import nested_namespace_to_dicts
 
 
@@ -200,6 +202,68 @@ else:
 
 # auto-discover tasks
 app.autodiscover_tasks(["merlin.common"])
+
+
+@celeryd_init.connect
+def handle_worker_startup(sender: str = None, **kwargs):
+    """
+    Store information about each physical worker instance in the database.
+
+    When workers first start up, the `celeryd_init` signal is the first signal
+    that they receive. This specific function will create a
+    [`PhysicalWorkerModel`][db_scripts.data_models.PhysicalWorkerModel] and
+    store it in the database. It does this through the use of the
+    [`MerlinDatabase`][db_scripts.merlin_db.MerlinDatabase] class.
+
+    Args:
+        sender (str): The hostname of the worker that was just started
+    """
+    if sender is not None:
+        LOG.debug(f"Worker {sender} has started.")
+        options = kwargs.get("options", None)
+        if options is not None:
+            try:
+                # Sender name is of the form celery@worker_name.%hostname
+                worker_name, host = sender.split("@")[1].split(".%")
+                merlin_db = MerlinDatabase()
+                logical_worker = merlin_db.get("logical_worker", worker_name=worker_name, queues=options.get("queues"))
+                physical_worker = merlin_db.create(
+                    "physical_worker",
+                    name=str(sender),
+                    host=host,
+                    status=WorkerStatus.RUNNING,
+                    logical_worker_id=logical_worker.get_id(),
+                    pid=os.getpid(),
+                )
+                logical_worker.add_physical_worker(physical_worker.get_id())
+            # Without this exception catcher, celery does not output any errors that happen here
+            except Exception as exc:
+                LOG.error(f"An error occurred when processing handle_worker_startup: {exc}")
+        else:
+            LOG.warning("On worker connect could not retrieve worker options from Celery.")
+    else:
+        LOG.warning("On worker connect no sender was provided from Celery.")
+
+
+@worker_shutdown.connect
+def handle_worker_shutdown(sender: str = None, **kwargs):
+    """
+    Update the database for a worker entry when a worker shuts down.
+
+    Args:
+        sender (str): The hostname of the worker that was just started
+    """
+    if sender is not None:
+        LOG.debug(f"Worker {sender} is shutting down.")
+        merlin_db = MerlinDatabase()
+        physical_worker = merlin_db.get("physical_worker", str(sender))
+        if physical_worker:
+            physical_worker.set_status(WorkerStatus.STOPPED)
+            physical_worker.set_pid(None)  # Clear the pid
+        else:
+            LOG.warning(f"Worker {sender} not found in the database.")
+    else:
+        LOG.warning("On worker shutdown no sender was provided from Celery.")
 
 
 # Pylint believes the args are unused, I believe they're used after decoration

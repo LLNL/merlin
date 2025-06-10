@@ -91,8 +91,8 @@ class RestartException(Exception):
     the restart command if present , else retry.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class NoWorkersException(Exception):
@@ -108,4 +108,60 @@ class NoWorkersException(Exception):
 class MerlinInvalidTaskServerError(Exception):
     """
     Exception to signal that an invalid task server was provided.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class BackendNotSupportedError(Exception):
+    """
+    Exception to signal that the provided backend is not supported by Merlin.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
+###############################
+# Database-Related Exceptions #
+###############################
+
+
+class EntityNotFoundError(Exception):
+    """
+    Fallback error for entities that can't be found.
+    """
+
+
+class StudyNotFoundError(EntityNotFoundError):
+    """
+    Exception to signal that the study you were looking for cannot be found in
+    Merlin's database.
+    """
+
+
+class RunNotFoundError(EntityNotFoundError):
+    """
+    Exception to signal that the run you were looking for cannot be found in
+    Merlin's database.
+    """
+
+
+class WorkerNotFoundError(EntityNotFoundError):
+    """
+    Exception to signal that the worker you were looking for cannot be found in
+    Merlin's database.
+    """
+
+
+class UnsupportedDataModelError(Exception):
+    """
+    Exception to signal that the data model you're trying to use is not supported.
+    """
+
+
+class EntityManagerNotSupportedError(Exception):
+    """
+    Exception to signal that the provided entity manager is not supported by Merlin.
     """

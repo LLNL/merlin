@@ -78,3 +78,22 @@ class ChordErrorSetup:
     testing_dir: FixtureStr
     name: FixtureStr
     path: FixtureStr
+
+
+@dataclass
+class MonitorSetup:
+    """
+    Data class to encapsulate all monitor-related fixtures required
+    for testing the monitor command.
+
+    This class simplifies the management of monitor setup fixtures
+    by grouping them into a single object, reducing the number of individual
+    fixture imports needed in tests that require monitor setup.
+
+    Attributes:
+        testing_dir: The path to the temp output directory for monitor tests.
+        auto_restart_yaml: The path to the monitor auto restart YAML file.
+    """
+
+    testing_dir: FixtureStr
+    auto_restart_yaml: FixtureStr
