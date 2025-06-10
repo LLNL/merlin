@@ -164,29 +164,22 @@ fix-style:
 	$(PYTHON) -m black --target-version $(PY_TARGET_VER) -l $(MAX_LINE_LENGTH) *.py; \
 
 
-# Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
-# Use like this: make VER=?.?.? version
+# # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
+# Usage: make version VER=1.13.0 FROM=1.13.0-beta
+#        (defaults to FROM=Unreleased if not set)
 version:
-# do merlin/__init__.py
-	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
-# do CHANGELOG.md
-	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
-# do all file headers (works on linux)
-	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-	find tests/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-	find Makefile -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	@echo "Updating Merlin version from [$(FROM)] to [$(VER)]..."
+	sed -i 's/__version__ = "\(.*\)"/__version__ = "$(VER)"/' merlin/__init__.py
+	@if grep -q "## \[$(FROM)\]" CHANGELOG.md; then \
+		sed -i 's/## \[$(FROM)\]/## [$(VER)]/' CHANGELOG.md; \
+	else \
+		echo "⚠️  No matching '## [$(FROM)]' found in CHANGELOG.md"; \
+	fi
 
-# Increment copyright year
+# Increment copyright year - Usage: make year YEAR=2026
 year:
-# do LICENSE (no comma after year)
-	sed -i 's/$(YEAR) Lawrence Livermore/$(NEW_YEAR) Lawrence Livermore/g' LICENSE
-
-# do all file headers (works on linux)
-	find merlin/ -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
-	find *.py -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
-	find tests/ -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
-	find Makefile -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
+	@echo "Updating COPYRIGHT file to year $(YEAR)..."
+	sed -i -E 's/(Copyright \(c\) 2019–)[0-9]{4}( Lawrence Livermore National Laboratory)/\1$(YEAR)\2/' COPYRIGHT
 
 # Make a list of all dependencies/requirements
 reqlist:
