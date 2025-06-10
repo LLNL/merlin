@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 The `monitor` package provides classes and utilities for monitoring the health and progress
 of task servers and workflows in Merlin. It includes abstract interfaces, concrete implementations,
