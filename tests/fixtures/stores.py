@@ -1,22 +1,28 @@
 """
-Fixtures for the `redis_stores.py` module.
+Fixtures related to database stores.
+
+These can be used by any kind of store (e.g. Redis, SQLite).
 """
 
+from unittest.mock import MagicMock
+
 import pytest
+from pytest_mock import MockerFixture
 from redis import Redis
 
 from merlin.db_scripts.data_models import LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
+from tests.fixture_types import FixtureCallable, FixtureTuple
 
 
 @pytest.fixture
-def redis_stores_mock_redis(mocker):
+def mock_redis(mocker):
     """Create a mock Redis client."""
     redis_mock = mocker.MagicMock(spec=Redis)
     return redis_mock
 
 
 @pytest.fixture
-def redis_stores_test_models():
+def test_models():
     """Create test model instances for tests."""
 
     # Sample study model
@@ -53,8 +59,16 @@ def redis_stores_test_models():
 
 
 @pytest.fixture(scope="session")
-def redis_stores_create_redis_hash_data():
-    """ """
+def create_redis_hash_data() -> FixtureCallable:
+    """
+    Pytest fixture that provides a helper function to simulate Redis hash data
+    from a model object.
+
+    Returns:
+        A function that takes an object (typically a model instance) and converts
+        its attributes into a dictionary formatted as Redis hash data, with all values
+        serialized as strings.
+    """
 
     def _create_redis_hash_data(obj):
         """Create a dict that simulates Redis hash data for a model."""
@@ -70,3 +84,33 @@ def redis_stores_create_redis_hash_data():
         return result
 
     return _create_redis_hash_data
+
+
+@pytest.fixture
+def mock_sqlite_connection(mocker: MockerFixture) -> FixtureTuple[MagicMock]:
+    """
+    Create a mocked SQLiteConnection context manager.
+
+    Args:
+        mocker: PyTest mocker fixture.
+
+    Returns:
+        A tuple of (mock_connection, mock_cursor) for easy access in tests.
+    """
+    # Create mock cursor
+    mock_cursor = mocker.MagicMock()
+
+    # Create mock connection
+    mock_conn = mocker.MagicMock()
+    mock_conn.execute.return_value = mock_cursor
+
+    # Create mock context manager
+    mock_context_manager = mocker.MagicMock()
+    mock_context_manager.__enter__.return_value = mock_conn
+    mock_context_manager.__exit__.return_value = None
+
+    # Mock the SQLiteConnection class
+    mock_sqlite_conn = mocker.patch("merlin.backends.sqlite.sqlite_store_base.SQLiteConnection")
+    mock_sqlite_conn.return_value = mock_context_manager
+
+    return mock_conn, mock_cursor

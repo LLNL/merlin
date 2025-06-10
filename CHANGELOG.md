@@ -65,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `update-broker`: Updates the `broker` section of the configuration file
     - `update-backend`: Updates the `results_backend` section of the configuration file
     - `use`: Point your active configuration to a new configuration file
+- The `merlin server` command no longer modifies the `~/.merlin/app.yaml` file by default. Instead, it modifies the `./merlin_server/app.yaml` file.
 - Dropped support for Python 3.7
 - Ported all distributed tests of the integration test suite to pytest
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
@@ -74,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI to use new actions
 
 ### Fixed
+- Running Merlin locally no longer requires an `app.yaml` configuration file
 - Removed dead lgtm link
 
 ### Deprecated

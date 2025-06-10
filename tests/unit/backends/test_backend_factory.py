@@ -30,7 +30,7 @@ class TestBackendFactory:
         Test that `get_supported_backends` returns the correct list of supported backends.
         """
         supported_backends = backend_factory.get_supported_backends()
-        assert supported_backends == ["redis"], "Supported backends should only include 'redis'."
+        assert supported_backends == ["redis", "sqlite"]
 
     def test_get_backend_with_valid_backend(self, mocker: MockerFixture):
         """

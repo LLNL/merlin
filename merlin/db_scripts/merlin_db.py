@@ -50,10 +50,6 @@ class MerlinDatabase:
     def __init__(self):
         """
         Initialize a new MerlinDatabase instance.
-
-        Args:
-            backend: The results backend to use for database operations.
-                If None, a default backend will be created.
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
 
@@ -158,8 +154,6 @@ class MerlinDatabase:
 
         Args:
             entity_type: The type of entity to create (study, run, logical_worker, physical_worker).
-            *args: Positional arguments to pass to the entity manager's create method.
-            **kwargs: Keyword arguments to pass to the entity manager's create method.
 
         Returns:
             The created entity.
@@ -176,8 +170,6 @@ class MerlinDatabase:
 
         Args:
             entity_type: The type of entity to get (study, run, logical_worker, physical_worker).
-            *args: Positional arguments to pass to the entity manager's get method.
-            **kwargs: Keyword arguments to pass to the entity manager's get method.
 
         Returns:
             The requested entity.
@@ -210,8 +202,6 @@ class MerlinDatabase:
 
         Args:
             entity_type: The type of entity to delete (study, run, logical_worker, physical_worker).
-            *args: Positional arguments to pass to the entity manager's delete method.
-            **kwargs: Keyword arguments to pass to the entity manager's delete method.
 
         Raises:
             EntityManagerNotSupportedError: If the entity type is not supported.
@@ -225,7 +215,6 @@ class MerlinDatabase:
 
         Args:
             entity_type: The type of entities to delete (study, run, logical_worker, physical_worker).
-            **kwargs: Keyword arguments to pass to the entity manager's delete_all method.
 
         Raises:
             EntityManagerNotSupportedError: If the entity type is not supported.
