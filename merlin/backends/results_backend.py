@@ -181,9 +181,6 @@ class ResultsBackend(ABC):
 
         Returns:
             The object retrieved from the specified store.
-
-        Raises:
-            ValueError: If the `store_type` is invalid.
         """
         LOG.debug(f"Retrieving '{entity_identifier}' from store '{store_type}'.")
         store = self._get_store_by_type(store_type)
@@ -209,9 +206,6 @@ class ResultsBackend(ABC):
 
         Returns:
             A list of objects retrieved from the specified store.
-
-        Raises:
-            ValueError: If the `store_type` is invalid.
         """
         store = self._get_store_by_type(store_type)
         return store.retrieve_all()
@@ -227,9 +221,6 @@ class ResultsBackend(ABC):
                 - `run`
                 - `logical_worker`
                 - `physical_worker`
-
-        Raises:
-            ValueError: If the `store_type` is invalid.
         """
         store = self._get_store_by_type(store_type)
         if store_type in ["study", "physical_worker"]:
