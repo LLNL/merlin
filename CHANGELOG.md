@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New step 'Reinstall pip to avoid vendored package corruption' to CI workflow jobs that use pip
 - New GitHub actions to reduce common code in CI
 - COPYRIGHT file for ownership details
+- New check for copyright headers in the Makefile
 
 ### Changed
 - Updated the `merlin monitor` command
