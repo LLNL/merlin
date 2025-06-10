@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - API documentation for Merlin's core codebase
 - New `merlin database` command to interact with new database functionality
+  - When running locally, SQLite will be used as the database. Otherwise your current results backend will be used
   - `merlin database info`: prints some basic information about the database
   - `merlin database get`: allows you to retrieve and print entries in the database
   - `merlin database delete`: allows you to delete entries in the database
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `backends/` folder containing a new OOP way to interact with results backend databases
   - `results_backend`: houses an abstract class `ResultsBackend` that defines what every supported backend implement in Merlin
   - `redis/`: A folder containing the `RedisBackend` class that defines specific interactions with the Redis database
+  - `sqlite/`: A folder containing the `SQLiteBackend` class that defines specific interactions with the SQLite database
   - `backend_factory`: houses a factory class `MerlinBackendFactory` that initializes an appropriate `ResultsBackend` instance
 - Added `monitors/` folder containing a refactored, OOP approach to handling the `merlin monitor` command
   - `celery_monitor`: houses the `CeleryMonitor` class a concrete subclass of `TaskServerMonitor` for monitoring Celery task servers

@@ -10,7 +10,7 @@ Merlin's database has the following entities:
 
 ## Study Entity
 
-The `StudyEntity` represents a single “study” or experiment grouping in Merlin. Each entry is unique to study name (defined in the [`description` block](../../specification.md#the-description-block) of the specification file). Each study acts as a namespace under which runs are organized and tracked.
+The `StudyEntity` represents a single “study” or experiment grouping in Merlin. Each entry is unique to study name (defined in the [`description` block](../specification.md#the-description-block) of the specification file). Each study acts as a namespace under which runs are organized and tracked.
 
 | Key    | Type          | Description                                                      |
 | ------ | ------------- | ---------------------------------------------------------------- |

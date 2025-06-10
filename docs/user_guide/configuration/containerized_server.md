@@ -130,9 +130,9 @@ If your servers are running and set up properly, this should output something si
     is_debug           | False
     merlin_home        | ~/.merlin
     merlin_home_exists | True
-    broker server      | redis://default:******@127.0.0.1:4000/0
+    broker server      | redis://default:******@127.0.0.1:6379/0
     broker ssl         | False
-    results server     | redis://default:******@127.0.0.1:4000/0
+    results server     | redis://default:******@127.0.0.1:6379/0
     results ssl        | False
 
     Checking server connections:
@@ -320,7 +320,7 @@ def update_app_yaml(hostname, app_yaml):
         try:
             contents = yaml.load(yaml_file, yaml.FullLoader)
         except AttributeError:
-            print(
+            LOG.warning(
                 "PyYAML is using an unsafe version with a known "
                 "load vulnerability. Please upgrade your installation "
                 "to a more recent version!"
@@ -496,7 +496,7 @@ Below are the full scripts:
             try:
                 contents = yaml.load(yaml_file, yaml.FullLoader)
             except AttributeError:
-                print(
+                LOG.warning(
                     "PyYAML is using an unsafe version with a known "
                     "load vulnerability. Please upgrade your installation "
                     "to a more recent version!"

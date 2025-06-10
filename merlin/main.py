@@ -56,9 +56,9 @@ from tabulate import tabulate
 from merlin import VERSION, router
 from merlin.ascii_art import banner_small
 from merlin.config.configfile import initialize_config
+from merlin.config.merlin_config_manager import MerlinConfigManager
 from merlin.db_scripts.db_commands import database_delete, database_get, database_info
 from merlin.db_scripts.merlin_db import MerlinDatabase
-from merlin.config.merlin_config_manager import MerlinConfigManager
 from merlin.examples.generator import list_examples, setup_example
 from merlin.log_formatter import setup_logging
 from merlin.monitor.monitor import Monitor
@@ -226,6 +226,9 @@ def process_run(args: Namespace):
         pargs=args.pargs,
     )
 
+    if args.run_mode == "local":
+        initialize_config(local_mode=True)
+
     # Initialize the database
     merlin_db = MerlinDatabase()
 
@@ -246,9 +249,6 @@ def process_run(args: Namespace):
         # Add the run id to the worker entry and the worker id to the run entry
         logical_worker_entity.add_run(run_entity.get_id())
         run_entity.add_worker(logical_worker_entity.get_id())
-
-    if args.run_mode == "local":
-        initialize_config(local_mode=True)
 
     router.run_task_server(study, args.run_mode)
 
@@ -305,6 +305,9 @@ def launch_workers(args: Namespace):
     """
     if not args.worker_echo_only:
         print(banner_small)
+    else:
+        initialize_config(local_mode=True)
+
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
@@ -694,6 +697,9 @@ def process_database(args: Namespace):
     Args:
         args: An argparse Namespace containing user arguments.
     """
+    if args.local:
+        initialize_config(local_mode=True)
+
     if args.commands == "info":
         database_info()
     elif args.commands == "get":
@@ -1117,6 +1123,13 @@ def setup_argparse() -> None:  # pylint: disable=R0915
         formatter_class=ArgumentDefaultsHelpFormatter,
     )
     database.set_defaults(func=process_database)
+
+    database.add_argument(
+        "-l",
+        "--local",
+        action="store_true",
+        help="Use the local SQLite database for this command.",
+    )
 
     database_commands: ArgumentParser = database.add_subparsers(dest="commands")
 

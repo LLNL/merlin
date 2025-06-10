@@ -17,7 +17,7 @@ See also:
 
 from redis import Redis
 
-from merlin.backends.redis.redis_base_store import NameMappingMixin, RedisStoreBase
+from merlin.backends.redis.redis_store_base import NameMappingMixin, RedisStoreBase
 from merlin.db_scripts.data_models import LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
 
 

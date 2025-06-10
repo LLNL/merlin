@@ -1,6 +1,6 @@
 # The Database Command
 
-The [`merlin database`](../../command_line.md#database-merlin-database) command provides a straightforward way to interact with the data stored in Merlin's database. For more information on what type of data is stored in Merlin's database, see [Understanding Merlin's Database Entities](./entities.md).
+The [`merlin database`](../command_line.md#database-merlin-database) command provides a straightforward way to interact with the data stored in Merlin's database. For more information on what type of data is stored in Merlin's database, see [Understanding Merlin's Database Entities](./entities.md).
 
 **Usage:**
 
@@ -14,9 +14,9 @@ Currently, the `merlin database` command supports three subcommands:
 - [`get`](#retrieving-and-displaying-entries): Retrieves specific entries from the database and prints them to the console.
 - [`delete`](#deleting-entries): Removes entries from the database.
 
-For demonstration purposes, we'll start by running the `hello.yaml` and `hello_samples.yaml` files from the [Hello World Example](../../../examples/hello.md) one time each.
+For demonstration purposes, we'll start by running the `hello.yaml` and `hello_samples.yaml` files from the [Hello World Example](../../examples/hello.md) one time each.
 
-However, let's make a slight modification to these files to help distinguish the workers between them. Add the following [`merlin` block](../../specification.md#the-merlin-block) to the `hello.yaml` file:
+However, let's make a slight modification to these files to help distinguish the workers between them. Add the following [`merlin` block](../specification.md#the-merlin-block) to the `hello.yaml` file:
 
 ```yaml
 merlin:
@@ -68,7 +68,7 @@ Now let's run these studies:
 merlin run hello.yaml ; merlin run hello_samples.yaml
 ```
 
-And execute them by submitting worker launch scripts (examples of these scripts can be found in the [Distributed Runs](../../running_studies.md#distributed-runs) section).
+And execute them by submitting worker launch scripts (examples of these scripts can be found in the [Distributed Runs](../running_studies.md#distributed-runs) section).
 
 ## Getting General Database Information
 
@@ -119,7 +119,7 @@ The `merlin database get` subcommand allows users to query the database for spec
 
 A **study** represents a collection of related data, while a **run** refers to an individual execution of a study. A study is unique by study name where a run is created each time `merlin run` is executed.
 
-A **logical worker** represents the worker that's defined in a [specification file](../../specification.md), while a **physical worker** represents the actual instantiation of the logical worker. Each logical worker entry is unique based upon the worker's name and associated task queues. A physical worker entry will not be created until the `merlin run-workers` command is executed and a worker is started.
+A **logical worker** represents the worker that's defined in a [specification file](../specification.md), while a **physical worker** represents the actual instantiation of the logical worker. Each logical worker entry is unique based upon the worker's name and associated task queues. A physical worker entry will not be created until the `merlin run-workers` command is executed and a worker is started.
 
 The following sections demonstrate how to use each option listed above.
 
