@@ -135,8 +135,23 @@ check-pylint:
 	$(PYTHON) -m pylint tests --rcfile=setup.cfg; \
 
 
+check-copyright:
+	@echo "🔍 Checking for required copyright header..."
+	@missing_files=$$(find $(MRLN) $(TEST) \
+		\( -path 'merlin/examples/workflows' -o -name '__pycache__' \) -prune -o \
+		-name '*.py' -print | \
+		xargs grep -L "Copyright (c) Lawrence Livermore National Security, LLC and other Merlin" || true); \
+	if [ -n "$$missing_files" ]; then \
+		echo "❌ The following files are missing the required copyright header:"; \
+		echo "$$missing_files"; \
+		exit 1; \
+	else \
+		echo "✅ All files contain the required header."; \
+	fi
+
+
 # run code style checks
-check-style: check-flake8 check-black check-isort check-pylint
+check-style: check-copyright check-flake8 check-black check-isort check-pylint
 
 
 check-push: tests check-style
