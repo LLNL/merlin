@@ -9,7 +9,6 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 from redis import Redis
-from typing import Any, Dict
 
 from merlin.db_scripts.data_models import LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
 from tests.fixture_types import FixtureCallable, FixtureTuple
@@ -62,7 +61,7 @@ def test_models():
 @pytest.fixture(scope="session")
 def create_redis_hash_data() -> FixtureCallable:
     """
-    Pytest fixture that provides a helper function to simulate Redis hash data 
+    Pytest fixture that provides a helper function to simulate Redis hash data
     from a model object.
 
     Returns:

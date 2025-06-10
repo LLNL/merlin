@@ -305,6 +305,9 @@ def launch_workers(args: Namespace):
     """
     if not args.worker_echo_only:
         print(banner_small)
+    else:
+        initialize_config(local_mode=True)
+
     spec, filepath = get_merlin_spec_with_override(args)
     if not args.worker_echo_only:
         LOG.info(f"Launching workers from '{filepath}'")
