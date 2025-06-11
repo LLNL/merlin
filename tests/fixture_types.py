@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 It's hard to type hint pytest fixtures in a way that makes it clear
 that the variable being used is a fixture. This module will created
