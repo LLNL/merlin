@@ -2,6 +2,9 @@ name: Python CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   Changelog:
     name: CHANGELOG.md updated
