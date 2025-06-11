@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python 3.8 now requires `orderly-set==5.3.0` to avoid a bug with the deepdiff library
 - New step 'Reinstall pip to avoid vendored package corruption' to CI workflow jobs that use pip
 - New GitHub actions to reduce common code in CI
+- COPYRIGHT file for ownership details
+- New check for copyright headers in the Makefile
 
 ### Changed
 - Updated the `merlin monitor` command
@@ -75,6 +77,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `e2e-distributed*` definitions from the Makefile
 - Modified GitHub CI to use shared testing servers hosted by LaunchIT rather than the jackalope server
 - CI to use new actions
+- Copyright headers in all files
+  - These now point to the LICENSE and COPYRIGHT files
+  - LICENSE: Legal permissions (e.g., MIT terms)
+  - COPYRIGHT: Ownership, institutional metadata
+  - Make commands that change version/copyright year have been modified
 
 ### Fixed
 - Running Merlin locally no longer requires an `app.yaml` configuration file

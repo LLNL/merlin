@@ -1,32 +1,9 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 include config.mk
 
 .PHONY : virtualenv
@@ -158,8 +135,23 @@ check-pylint:
 	$(PYTHON) -m pylint tests --rcfile=setup.cfg; \
 
 
+check-copyright:
+	@echo "🔍 Checking for required copyright header..."
+	@missing_files=$$(find $(MRLN) $(TEST) \
+		\( -path 'merlin/examples/workflows' -o -name '__pycache__' \) -prune -o \
+		-name '*.py' -print | \
+		xargs grep -L "Copyright (c) Lawrence Livermore National Security, LLC and other Merlin" || true); \
+	if [ -n "$$missing_files" ]; then \
+		echo "❌ The following files are missing the required copyright header:"; \
+		echo "$$missing_files"; \
+		exit 1; \
+	else \
+		echo "✅ All files contain the required header."; \
+	fi
+
+
 # run code style checks
-check-style: check-flake8 check-black check-isort check-pylint
+check-style: check-copyright check-flake8 check-black check-isort check-pylint
 
 
 check-push: tests check-style
@@ -187,29 +179,22 @@ fix-style:
 	$(PYTHON) -m black --target-version $(PY_TARGET_VER) -l $(MAX_LINE_LENGTH) *.py; \
 
 
-# Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
-# Use like this: make VER=?.?.? version
+# # Increment the Merlin version. USE ONLY ON DEVELOP BEFORE MERGING TO MASTER.
+# Usage: make version VER=1.13.0 FROM=1.13.0-beta
+#        (defaults to FROM=Unreleased if not set)
 version:
-# do merlin/__init__.py
-	sed -i 's/__version__ = "$(VSTRING)"/__version__ = "$(VER)"/g' merlin/__init__.py
-# do CHANGELOG.md
-	sed -i 's/## \[Unreleased\]/## [$(VER)]/g' CHANGELOG.md
-# do all file headers (works on linux)
-	find merlin/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-	find *.py -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-	find tests/ -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
-	find Makefile -type f -print0 | xargs -0 sed -i 's/Version: $(VSTRING)/Version: $(VER)/g'
+	@echo "Updating Merlin version from [$(FROM)] to [$(VER)]..."
+	sed -i 's/__version__ = "\(.*\)"/__version__ = "$(VER)"/' merlin/__init__.py
+	@if grep -q "## \[$(FROM)\]" CHANGELOG.md; then \
+		sed -i 's/## \[$(FROM)\]/## [$(VER)]/' CHANGELOG.md; \
+	else \
+		echo "⚠️  No matching '## [$(FROM)]' found in CHANGELOG.md"; \
+	fi
 
-# Increment copyright year
+# Increment copyright year - Usage: make year YEAR=2026
 year:
-# do LICENSE (no comma after year)
-	sed -i 's/$(YEAR) Lawrence Livermore/$(NEW_YEAR) Lawrence Livermore/g' LICENSE
-
-# do all file headers (works on linux)
-	find merlin/ -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
-	find *.py -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
-	find tests/ -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
-	find Makefile -type f -print0 | xargs -0 sed -i 's/$(YEAR), Lawrence Livermore/$(NEW_YEAR), Lawrence Livermore/g'
+	@echo "Updating COPYRIGHT file to year $(YEAR)..."
+	sed -i -E 's/(Copyright \(c\) 2019–)[0-9]{4}( Lawrence Livermore National Laboratory)/\1$(YEAR)\2/' COPYRIGHT
 
 # Make a list of all dependencies/requirements
 reqlist:

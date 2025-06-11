@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 This file contains pgen functionality for testing purposes.
 It's specifically set up to work with the feature demo example.
