@@ -84,7 +84,7 @@ def get_rabbit_connection(include_password: bool, conn: str = "amqps") -> str:
 
     try:
         password_filepath = CONFIG.broker.password
-        LOG.debug(f"Broker: password filepath = {password_filepath}")
+        LOG.debug("Broker: password file path has been configured.")
         password_filepath = os.path.abspath(expanduser(password_filepath))
     except (AttributeError, KeyError) as exc:
         raise ValueError("Broker: No password provided for RabbitMQ") from exc
