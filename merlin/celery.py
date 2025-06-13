@@ -113,13 +113,15 @@ BROKER_URI: Optional[str] = ""
 RESULTS_BACKEND_URI: Optional[str] = ""
 try:
     BROKER_URI = broker.get_connection_string()
-    LOG.debug("broker: %s", broker.get_connection_string(include_password=False))
+    sanitized_broker_uri = broker.get_connection_string(include_password=False)
+    LOG.debug(f"Broker connection string: {sanitized_broker_uri}.")
     BROKER_SSL = broker.get_ssl_config()
-    LOG.debug("broker_ssl = %s", BROKER_SSL)
+    LOG.debug(f"Broker SSL {'enabled' if BROKER_SSL else 'disabled'}.")
     RESULTS_BACKEND_URI = results_backend.get_connection_string()
+    sanitized_results_backend_uri = results_backend.get_connection_string(include_password=False)
+    LOG.debug(f"Results backend connection string: {sanitized_results_backend_uri}.")
     RESULTS_SSL = results_backend.get_ssl_config(celery_check=True)
-    LOG.debug("results: %s", results_backend.get_connection_string(include_password=False))
-    LOG.debug("results: redis_backed_use_ssl = %s", RESULTS_SSL)
+    LOG.debug(f"Results backend SSL {'enabled' if RESULTS_SSL else 'disabled'}.")
 except ValueError:
     # These variables won't be set if running with '--local'.
     BROKER_URI = None

@@ -90,8 +90,12 @@ def get_backend_password(password_file: str, certs_path: str = None) -> str:
             line = f.readline().strip()
             password = quote(line, safe="")
 
-    LOG.debug(f"Results backend: aux password path (certs_path) = {certs_path}")
-    LOG.debug(f"Results backend: password_filepath = {password_filepath}")
+    LOG.debug(
+        "Results backend: certs_path was provided and used in password resolution."
+        if certs_path
+        else "Results backend: certs_path was not provided."
+    )
+    LOG.debug("Password resolution: using file." if password_filepath else "Password resolution: using direct value.")
 
     return password
 
@@ -122,13 +126,13 @@ def get_redis(certs_path: str = None, include_password: bool = True, ssl: bool =
         port = CONFIG.results_backend.port
     except (KeyError, AttributeError):
         port = 6379
-        LOG.debug(f"Results backend: redis using default port = {port}")
+        LOG.debug("Results backend: using default Redis port.")
 
     try:
         db_num = CONFIG.results_backend.db_num
     except (KeyError, AttributeError):
         db_num = 0
-        LOG.debug(f"Results backend: redis using default db_num = {db_num}")
+        LOG.debug("Results backend: using default Redis database number.")
 
     try:
         username = CONFIG.results_backend.username
@@ -148,11 +152,13 @@ def get_redis(certs_path: str = None, include_password: bool = True, ssl: bool =
             spass = f"{username}:******@"
     except (KeyError, AttributeError):
         spass = ""
-        LOG.debug(f"Results backend: redis using default password = {spass}")
+        LOG.debug("Results backend: no Redis password configured in backend config.")
 
-    LOG.debug(f"Results backend: password_file = {password_file}")
-    LOG.debug(f"Results backend: server = {server}")
-    LOG.debug(f"Results backend: certs_path = {certs_path}")
+    LOG.debug(
+        f"Results backend: {'password file specified in config' if password_file else 'no password file specified; using direct value'}."
+    )
+    LOG.debug(f"Results backend: certs_path was {'provided' if certs_path else 'not provided'}.")
+    LOG.debug(f"Results backend: Redis server address {'configured' if server else 'not found in config'}.")
 
     return f"{urlbase}://{spass}{server}:{port}/{db_num}"
 
@@ -217,10 +223,12 @@ def get_mysql(certs_path: str = None, mysql_certs: Dict = None, include_password
     # eventually be configured to use a logger. This logic should also
     # eventually be decoupled so we can print debug messages similar to our
     # Python debugging messages.
-    LOG.debug(f"Results backend: dbname = {dbname}")
-    LOG.debug(f"Results backend: password_file = {password_file}")
-    LOG.debug(f"Results backend: server = {server}")
-    LOG.debug(f"Results backend: certs_path = {certs_path}")
+    LOG.debug(f"Results backend: database name is {'configured' if dbname else 'missing'}.")
+    LOG.debug(
+        f"Results backend: password file {'specified in configuration' if password_file else 'not specified in configuration; using direct value'}."
+    )
+    LOG.debug(f"Results backend: server address is {'configured' if server else 'missing'}.")
+    LOG.debug(f"Results backend: certs_path was {'provided' if certs_path else 'not provided'}.")
 
     if not server:
         msg = f"Results backend: server {server} does not have a configuration"

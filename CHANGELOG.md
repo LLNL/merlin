@@ -86,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Running Merlin locally no longer requires an `app.yaml` configuration file
 - Removed dead lgtm link
+- Potential security vulnerabilities related to logging
 
 ### Deprecated
 - The `--steps` argument of the `merlin monitor` command is now deprecated and will be removed in Version 1.14.0.
