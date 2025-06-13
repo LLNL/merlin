@@ -677,7 +677,7 @@ A visual representation of the `merlin_info/` subdirectory with sample generatio
         f.write(result)
     ```
 
-    Since this script uses some third party libraries ([`names`](https://pypi.org/project/names/) and [`numpy`](https://numpy.org/)), you'll need to install them to your current environment in order to run this example. If you're using a [virtual environment](./installation.md#installing-with-virtual-environments--pip), these can be installed with:
+    Since this script uses some third party libraries ([`names`](https://pypi.org/project/names/) and [`numpy`](https://numpy.org/)), you'll need to install them to your current environment in order to run this example. If you're using a [virtual environment](./installation.md#installing-with-virtual-environments-pip), these can be installed with:
 
     ```bash
     pip install names numpy

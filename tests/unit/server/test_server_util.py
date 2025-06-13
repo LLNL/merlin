@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 Tests for the `server_util.py` module.
 """
@@ -10,6 +16,7 @@ from typing import Dict, Union
 import pytest
 
 from merlin.server.server_util import (
+    CONFIG_DIR,
     AppYaml,
     ContainerConfig,
     ContainerFormatConfig,
@@ -134,7 +141,7 @@ class TestContainerConfig:
         assert config.image == ContainerConfig.IMAGE_NAME
         assert config.url == ContainerConfig.REDIS_URL
         assert config.config == ContainerConfig.CONFIG_FILE
-        assert config.config_dir == ContainerConfig.CONFIG_DIR
+        assert config.config_dir == CONFIG_DIR
         assert config.pfile == ContainerConfig.PROCESS_FILE
         assert config.pass_file == ContainerConfig.PASSWORD_FILE
         assert config.user_file == ContainerConfig.USERS_FILE

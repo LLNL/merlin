@@ -1,32 +1,9 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """This module defines the different conditions to test against."""
 import os
 from abc import ABC, abstractmethod
@@ -34,7 +11,6 @@ from glob import glob
 from re import search
 
 
-# TODO when moving command line tests to pytest, change Condition boolean returns to assertions
 class Condition(ABC):
     """Abstract Condition class that other conditions will inherit from"""
 
@@ -106,6 +82,9 @@ class HasRegex(Condition):
             return f"{__class__.__name__} expected no '{self.regex}' regex match, but match was found."
         return f"{__class__.__name__} expected '{self.regex}' regex match, but match was not found."
 
+    def __repr__(self):
+        return f"HasRegex(regex={self.regex}, negate={self.negate})"
+
     def is_within(self, text):
         """
         :param `text`: text in which to search for a regex match
@@ -131,7 +110,7 @@ class StudyOutputAware(Condition):
         """
         self.study_name = study_name
         self.output_path = output_path
-        self.dirpath_glob = f"{self.output_path}/{self.study_name}" f"_[0-9]*-[0-9]*"
+        self.dirpath_glob = os.path.join(self.output_path, f"{self.study_name}_[0-9]*-[0-9]*")
 
     def glob(self, glob_string):
         """
@@ -154,7 +133,7 @@ class StepFileExists(StudyOutputAware):
     A StudyOutputAware that checks for a particular file's existence.
     """
 
-    def __init__(self, step, filename, study_name, output_path, params=False):  # pylint: disable=R0913
+    def __init__(self, step, filename, study_name, output_path, params=False, samples=False):  # pylint: disable=R0913
         """
         :param `step`: the name of a step
         :param `filename`: name of file to search for in step's workspace directory
@@ -165,6 +144,7 @@ class StepFileExists(StudyOutputAware):
         self.step = step
         self.filename = filename
         self.params = params
+        self.samples = samples
 
     def __str__(self):
         return f"{__class__.__name__} expected to find file '{self.glob_string}', but file did not exist"
@@ -174,10 +154,9 @@ class StepFileExists(StudyOutputAware):
         """
         Returns a regex string for the glob library to recursively find files with.
         """
-        param_glob = ""
-        if self.params:
-            param_glob = "*/"
-        return f"{self.dirpath_glob}/{self.step}/{param_glob}{self.filename}"
+        param_glob = "*" if self.params else ""
+        samples_glob = "**" if self.samples else ""
+        return os.path.join(self.dirpath_glob, self.step, param_glob, samples_glob, self.filename)
 
     def file_exists(self):
         """Check if the file path created by glob_string exists"""
@@ -229,7 +208,7 @@ class StepFileHasRegex(StudyOutputAware):
             with open(filename, "r") as textfile:
                 filetext = textfile.read()
             return self.is_within(filetext)
-        except Exception:  # pylint: disable=W0718
+        except Exception:  # pylint: disable=broad-except
             return False
 
     def is_within(self, text):
@@ -241,6 +220,108 @@ class StepFileHasRegex(StudyOutputAware):
     @property
     def passes(self):
         return self.contains()
+
+
+# TODO when writing API docs for tests make sure this looks correct and has functioning links
+# - Do we want to list expected_count, glob_string, and passes as methods since they're already attributes?
+class StepFinishedFilesCount(StudyOutputAware):
+    """
+    A [`StudyOutputAware`][integration.conditions.StudyOutputAware] that checks for the
+    exact number of `MERLIN_FINISHED` files in a specified step's output directory based
+    on the number of parameters and samples.
+
+    Attributes:
+        step: The name of the step to check.
+        study_name: The name of the study.
+        output_path: The output path of the study.
+        num_parameters: The number of parameters for the step.
+        num_samples: The number of samples for the step.
+        expected_count: The expected number of `MERLIN_FINISHED` files based on parameters and samples or explicitly set.
+        glob_string: The glob pattern to find `MERLIN_FINISHED` files in the specified step's output directory.
+        passes: Checks if the count of `MERLIN_FINISHED` files matches the expected count.
+
+    Methods:
+        expected_count: Calculates the expected number of `MERLIN_FINISHED` files.
+        glob_string: Constructs the glob pattern for searching `MERLIN_FINISHED` files.
+        count_finished_files: Counts the number of `MERLIN_FINISHED` files found.
+        passes: Checks if the count of `MERLIN_FINISHED` files matches the expected count.
+    """
+
+    # All of these parameters are necessary for this Condition so we'll ignore pylint
+    def __init__(
+        self,
+        step: str,
+        study_name: str,
+        output_path: str,
+        num_parameters: int = 0,
+        num_samples: int = 0,
+        expected_count: int = None,
+    ):  # pylint: disable=too-many-arguments
+        super().__init__(study_name, output_path)
+        self.step = step
+        self.num_parameters = num_parameters
+        self.num_samples = num_samples
+        self._expected_count = expected_count
+
+    @property
+    def expected_count(self) -> int:
+        """
+        Calculate the expected number of `MERLIN_FINISHED` files.
+
+        Returns:
+            The expected number of `MERLIN_FINISHED` files.
+        """
+        # Return the explicitly set expected count if given
+        if self._expected_count is not None:
+            return self._expected_count
+
+        # Otherwise calculate the correct number of MERLIN_FINISHED files to expect
+        if self.num_parameters > 0 and self.num_samples > 0:
+            return self.num_parameters * self.num_samples
+        if self.num_parameters > 0:
+            return self.num_parameters
+        if self.num_samples > 0:
+            return self.num_samples
+
+        return 1  # Default case when there are no parameters or samples
+
+    @property
+    def glob_string(self) -> str:
+        """
+        Glob pattern to find `MERLIN_FINISHED` files in the specified step's output directory.
+
+        Returns:
+            A glob pattern to find `MERLIN_FINISHED` files.
+        """
+        param_glob = "*" if self.num_parameters > 0 else ""
+        samples_glob = "**" if self.num_samples > 0 else ""
+        return os.path.join(self.dirpath_glob, self.step, param_glob, samples_glob, "MERLIN_FINISHED")
+
+    def count_finished_files(self) -> int:
+        """
+        Count the number of `MERLIN_FINISHED` files found.
+
+        Returns:
+            The actual number of `MERLIN_FINISHED` files that exist in the step's output directory.
+        """
+        finished_files = glob(self.glob_string)  # Adjust the glob pattern as needed
+        return len(finished_files)
+
+    @property
+    def passes(self) -> bool:
+        """
+        Check if the count of `MERLIN_FINISHED` files matches the expected count.
+
+        Returns:
+            True if the expected count matches the actual count. False otherwise.
+        """
+        return self.count_finished_files() == self.expected_count
+
+    def __str__(self) -> str:
+        return (
+            f"{__class__.__name__} expected {self.expected_count} `MERLIN_FINISHED` "
+            f"files, but found {self.count_finished_files()}"
+        )
 
 
 class ProvenanceYAMLFileHasRegex(HasRegex):
@@ -339,7 +420,7 @@ class FileHasRegex(Condition):
             with open(self.filename, "r") as f:  # pylint: disable=C0103
                 filetext = f.read()
             return self.is_within(filetext)
-        except Exception:  # pylint: disable=W0718
+        except Exception:  # pylint: disable=broad-except
             return False
 
     def is_within(self, text):

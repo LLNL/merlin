@@ -1,32 +1,8 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
 
 """
 Module of all Merlin-specific exception types.
@@ -78,7 +54,7 @@ class HardFailException(Exception):
 
 class InvalidChainException(Exception):
     """
-    Exception for invalid Merlin step DAGs.
+    Exception for invalid Merlin step Directed Acyclic Graphs (DAGs).
     """
 
     def __init__(self):
@@ -91,8 +67,8 @@ class RestartException(Exception):
     the restart command if present , else retry.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class NoWorkersException(Exception):
@@ -103,3 +79,65 @@ class NoWorkersException(Exception):
 
     def __init__(self, message):
         super().__init__(message)
+
+
+class MerlinInvalidTaskServerError(Exception):
+    """
+    Exception to signal that an invalid task server was provided.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class BackendNotSupportedError(Exception):
+    """
+    Exception to signal that the provided backend is not supported by Merlin.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
+###############################
+# Database-Related Exceptions #
+###############################
+
+
+class EntityNotFoundError(Exception):
+    """
+    Fallback error for entities that can't be found.
+    """
+
+
+class StudyNotFoundError(EntityNotFoundError):
+    """
+    Exception to signal that the study you were looking for cannot be found in
+    Merlin's database.
+    """
+
+
+class RunNotFoundError(EntityNotFoundError):
+    """
+    Exception to signal that the run you were looking for cannot be found in
+    Merlin's database.
+    """
+
+
+class WorkerNotFoundError(EntityNotFoundError):
+    """
+    Exception to signal that the worker you were looking for cannot be found in
+    Merlin's database.
+    """
+
+
+class UnsupportedDataModelError(Exception):
+    """
+    Exception to signal that the data model you're trying to use is not supported.
+    """
+
+
+class EntityManagerNotSupportedError(Exception):
+    """
+    Exception to signal that the provided entity manager is not supported by Merlin.
+    """

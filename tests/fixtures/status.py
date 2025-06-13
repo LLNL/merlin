@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 Fixtures specifically for help testing the functionality related to
 status/detailed-status.
@@ -11,6 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tests.fixture_types import FixtureCallable, FixtureNamespace, FixtureStr
 from tests.unit.study.status_test_files import status_test_variables
 
 
@@ -18,22 +25,22 @@ from tests.unit.study.status_test_files import status_test_variables
 
 
 @pytest.fixture(scope="session")
-def status_testing_dir(temp_output_dir: str) -> str:
+def status_testing_dir(create_testing_dir: FixtureCallable, temp_output_dir: FixtureStr) -> FixtureStr:
     """
     A pytest fixture to set up a temporary directory to write files to for testing status.
 
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    :returns: The path to the temporary testing directory for status testing
-    """
-    testing_dir = f"{temp_output_dir}/status_testing/"
-    if not os.path.exists(testing_dir):
-        os.mkdir(testing_dir)
+    Args:
+        create_testing_dir: A fixture which returns a function that creates the testing directory.
+        temp_output_dir: The path to the temporary ouptut directory we'll be using for this test run.
 
-    return testing_dir
+    Returns:
+        The path to the temporary testing directory for status tests.
+    """
+    return create_testing_dir(temp_output_dir, "status_testing")
 
 
 @pytest.fixture(scope="class")
-def status_empty_file(status_testing_dir: str) -> str:
+def status_empty_file(status_testing_dir: FixtureStr) -> FixtureStr:
     """
     A pytest fixture to create an empty status file.
 
@@ -49,7 +56,7 @@ def status_empty_file(status_testing_dir: str) -> str:
 
 
 @pytest.fixture(scope="session")
-def status_spec_path(status_testing_dir: str) -> str:  # pylint: disable=W0621
+def status_spec_path(status_testing_dir: FixtureStr) -> FixtureStr:  # pylint: disable=W0621
     """
     Copy the test spec to the temp directory and modify the OUTPUT_PATH in the spec
     to point to the temp location.
@@ -94,7 +101,7 @@ def set_sample_path(output_workspace: str):
 
 
 @pytest.fixture(scope="session")
-def status_output_workspace(status_testing_dir: str) -> str:  # pylint: disable=W0621
+def status_output_workspace(status_testing_dir: FixtureStr) -> FixtureStr:  # pylint: disable=W0621
     """
     A pytest fixture to copy the test output workspace for status to the temporary
     status testing directory.
@@ -110,7 +117,7 @@ def status_output_workspace(status_testing_dir: str) -> str:  # pylint: disable=
 
 
 @pytest.fixture(scope="function")
-def status_args():
+def status_args() -> FixtureNamespace:
     """
     A pytest fixture to set up a namespace with all the arguments necessary for
     the Status object.
@@ -130,7 +137,7 @@ def status_args():
 
 
 @pytest.fixture(scope="session")
-def status_nested_workspace(status_testing_dir: str) -> str:  # pylint: disable=W0621
+def status_nested_workspace(status_testing_dir: FixtureStr) -> FixtureStr:  # pylint: disable=W0621
     """
     Create an output workspace that contains another output workspace within one of its
     steps. In this case it will copy the status test workspace then within the 'just_samples'

@@ -28,20 +28,22 @@ See the [Configuration Commands](#configuration-commands), [Workflow Management 
 
 Since running Merlin in a distributed manner requires the [configuration](./configuration/index.md) of a centralized server, Merlin comes equipped with three commands to help users get this set up:
 
-- *[config](#config-merlin-config)*: Create the skeleton `app.yaml` file needed for configuration
+- *[config](#config-merlin-config)*: Create, update, or select a configuration file
 - *[info](#info-merlin-info)*: Ensure stable connections to the server(s)
 - *[server](#server-merlin-server)*: Spin up containerized servers
 
 ### Config (`merlin config`)
 
-Create a default [config (app.yaml) file](./configuration/index.md#the-appyaml-file) in the `${HOME}/.merlin` directory using the `config` command. This file can then be edited for your system configuration.
+Create, update, or select a [configuration file](./configuration/index.md#the-configuration-file) that Merlin will use to connect to your server(s).
 
-See more information on how to set this file up at the [Configuration](./configuration/index.md) page.
+Merlin config has a list of commands for interacting with configuration files. These commands allow the user to create and update configuration files, and select which one should be the active configuration.
+
+See more information on how to set up the configuration file at the [Configuration](./configuration/index.md) page.
 
 **Usage:**
 
 ```bash
-merlin config [OPTIONS]
+merlin config [OPTIONS] COMMAND [ARGS] ...
 ```
 
 **Options:**
@@ -49,8 +51,31 @@ merlin config [OPTIONS]
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Commands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [create](#config-create-merlin-config-create) | Create a template configuration file |
+| [update-backend](#config-update-backend-merlin-config-update-backend) | Update broker settings in the configuration file |
+| [update-broker](#config-update-broker-merlin-config-update-broker) | Update backend settings in the configuration file |
+| [use](#config-use-merlin-config-use) | Use a different configuration setup |
+
+#### Config Create (`merlin config create`)
+
+The `merlin config create` command creates a template [configuration file](./configuration/index.md#the-configuration-file) that you can customize to connect to your central server. Detailed instructions for completing this template are available in the [Configuring the Broker and Results Backend](./configuration/index.md#configuring-the-broker-and-results-backend) guide.
+
+By default, the generated configuration file is saved at `$(HOME)/.merlin/app.yaml`. If you prefer to rename the file or save it to a different location, you can use the `-o` option to specify the desired path. Note that the file must have the `.yaml` extension.
+
+The default configuration sets the broker to use a RabbitMQ server and the results backend to Redis. While the Redis results backend is mandatory, the broker can be configured to use either RabbitMQ or Redis. To switch to a Redis broker, use the `--broker` option.
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
 | `--task_server`  | string | Select the appropriate configuration for the given task server. Currently only "celery" is implemented. | "celery" |
-| `-o`, `--output_dir` | path | Output the configuration in the given directory. This file can then be edited and copied into `${HOME}/.merlin`. | None |
+| `-o`, `--output-file` | path | Optional yaml file name for your configuration. Default: $(HOME)/.merlin/app.yaml. | None |
 | `--broker` | string | Write the initial `app.yaml` config file for either a `rabbitmq` or `redis` broker. The default is `rabbitmq`. The backend will be `redis` in both cases. The redis backend in the `rabbitmq` config shows the use on encryption for the backend. | "rabbitmq" |
 
 **Examples:**
@@ -58,19 +83,179 @@ merlin config [OPTIONS]
 !!! example "Create an `app.yaml` File at `~/.merlin`"
 
     ```bash
-    merlin config
+    merlin config create
     ```
 
-!!! example "Create an `app.yaml` File at a Custom Path"
+!!! example "Create a Configuration File at a Custom Path"
 
     ```bash
-    merlin config -o /Documents/configuration/
+    merlin config create -o /Documents/configuration/merlin_config.yaml
     ```
 
-!!! example "Create an `app.yaml` File With a Redis Broker"
+!!! example "Create a Configuration File With a Redis Broker"
 
     ```bash
-    merlin config --broker redis
+    merlin config create --broker redis
+    ```
+
+#### Config Update-Backend (`merlin config update-backend`)
+
+The `merlin config update-backend` command allows you to modify the [`results_backend`](./configuration/index.md#what-is-a-results-backend) section of your configuration file directly from the command line. See the options table below to see exactly what settings can be set.
+
+**Usage:**
+
+```bash
+merlin config update-backend -t {redis} [OPTIONS] ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-t`, `--type`   | choice(`redis`) | Type of results backend to configure. | None |
+| `--cf`, `--config-file` | string | Path to the config file that will be updated. | `$(HOME)/.merlin/app.yaml` |
+| `-u`, `--username` | string | The backend username. | None |
+| `--pf`, `--password-file` | string | Path to a password file that contains the password to the backend. | None |
+| `-s`, `--server` | string | The URL of the backend server. | None |
+| `-p`, `--port` | int | The port number that this backend server is using. | None |
+| `-d`, `--db-num` | int | The backend database number. | None |
+| `-c`, `--cert-reqs` | string | Backend cert requirements. | None |
+| `-e`, `--encryption-key` | string | Path to the encryption key file. | None |
+
+**Examples:**
+
+!!! example "Update Every Setting Required for Redis"
+
+    ```bash
+    merlin config update-backend -t redis --pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
+    ```
+
+    This will create the following `results_backend` section in your `app.yaml` file:
+
+    ```yaml
+    results_backend:
+        cert_reqs: none
+        db_num: 0
+        encryption_key: ~/.merlin/encrypt_data_key
+        name: rediss
+        password: ~/.merlin/redis.pass
+        port: 6379
+        server: my-redis-server.llnl.gov
+        username: ''
+    ```
+
+!!! example "Update Just the Port"
+
+    ```bash
+    merlin config update-backend -t redis -p 6379
+    ```
+
+!!! example "Update a Custom Configuration File Path"
+
+    ```bash
+    merlin config update-backend -t redis --cf /path/to/custom_config.yaml -s new-server.gov
+    ```
+
+#### Config Update-Broker (`merlin config update-broker`)
+
+The `merlin config update-broker` command allows you to modify the [`broker`](./configuration/index.md#what-is-a-broker) section of your configuration file directly from the command line. See the options table below to see exactly what settings can be set.
+
+**Usage:**
+
+```bash
+merlin config update-broker -t {rabbitmq,redis} [OPTIONS] ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-t`, `--type`   | choice(`rabbitmq` \| `redis`) | Type of broker to configure. | None |
+| `--cf`, `--config-file` | string | Path to the config file that will be updated. | `$(HOME)/.merlin/app.yaml` |
+| `-u`, `--username` | string | The broker username (only for `rabbitmq` broker). | None |
+| `--pf`, `--password-file` | string | Path to a password file that contains the password to the broker. | None |
+| `-s`, `--server` | string | The URL of the broker server. | None |
+| `-p`, `--port` | int | The port number that this broker server is using. | None |
+| `-v`, `--vhost` | string | The vhost for the broker (only for `rabbitmq` broker). | None |
+| `-d`, `--db-num` | int | The backend database number (only for `redis` broker). | None |
+| `-c`, `--cert-reqs` | string | Backend cert requirements. | None |
+
+**Examples:**
+
+!!! example "Update Every Setting Required for a Redis Broker"
+
+    ```bash
+    merlin config update-broker -t redis --pf ~/.merlin/redis.pass -s my-redis-server.llnl.gov -p 6379 -d 0 -c none
+    ```
+
+    This will create the following `broker` section in your `app.yaml` file:
+
+    ```yaml
+    broker:
+        cert_reqs: none
+        db_num: 0
+        name: rediss
+        password: ~/.merlin/redis.pass
+        port: 6379
+        server: my-redis-server.llnl.gov
+        username: ''
+    ```
+
+!!! example "Update Every Setting Required for a RabbitMQ Broker"
+
+    ```bash
+    merlin config update-broker -t rabbitmq -u my_rabbit_username --pf ~/.merlin/rabbit.pass -s my-rabbitmq-server.llnl.gov -p 5672 -v host4rabbit -c none
+    ```
+
+    This will create the following `broker` section in your `app.yaml` file:
+
+    ```yaml
+    broker:
+        cert_reqs: none
+        name: rabbitmq
+        password: ~/.merlin/rabbit.pass
+        port: 5672
+        server: my-rabbitmq-server.llnl.gov
+        username: my_rabbit_username
+        vhost: host4rabbit
+    ```
+
+!!! example "Update Just the Username"
+
+    ```bash
+    merlin config update-broker -t rabbitmq -u my_new_username
+    ```
+
+!!! example "Update a Custom Configuration File Path"
+
+    ```bash
+    merlin config update-broker -t redis --cf /path/to/custom_config.yaml -s new-server.gov
+    ```
+
+#### Config Use (`merlin config use`)
+
+The `merlin config use` command allows you to switch which configuration file to use as your active configuration.
+
+**Usage:**
+
+```bash
+merlin config use [OPTIONS] CONFIG_FILE
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Examples:**
+
+!!! example "Use a Custom Configuration"
+
+    ```bash
+    merlin config use /path/to/custom_config.yaml
     ```
 
 ### Info (`merlin info`)
@@ -95,7 +280,7 @@ Create a local containerized server for Merlin to connect to. Merlin server crea
 
 Merlin server has a list of commands for interacting with the broker and results server. These commands allow the user to manage and monitor the exisiting server and create instances of servers if needed.
 
-More information on configuring with Merlin server can be found at the [Merlin Server Configuration](./configuration/merlin_server.md) page.
+More information on configuring with Merlin server can be found at the [Containerized Server Configuration](./configuration/containerized_server.md) page.
 
 **Usage:**
 
@@ -263,12 +448,418 @@ merlin server config [OPTIONS]
 
 The Merlin library provides several commands for setting up and managing your Merlin workflow:
 
+- *[database](#database-merlin-database)*: Interact with Merlin's backend database
 - *[example](#example-merlin-example)*: Download pre-made workflow specifications that can be modified for your own workflow needs
 - *[purge](#purge-merlin-purge)*: Clear any tasks that are currently living in the central server
 - *[restart](#restart-merlin-restart)*: Restart a workflow
 - *[run](#run-merlin-run)*: Send tasks to the central server
 - *[run workers](#run-workers-merlin-run-workers)*: Start up workers that will execute the tasks that exist on the central server
 - *[stop workers](#stop-workers-merlin-stop-workers)*: Stop existing workers
+
+### Database (`merlin database`)
+
+This command allows you to interact with Merlin's backend database by viewing database info, retrieving and printing entries, and deleting entries. If you ran your study locally, use the `--local` option here as well when running database commands.
+
+More information on this command can be found below or at [The Database Command](./database/database_cmd.md) page. See [Merlin's Database](./database/index.md) for more general information on the database itself.
+
+<!-- TODO add this to the above paragraph when the reference guide is finished -->
+<!-- If you really want to understand the architecture of this database, see [General Database Architecture](../reference_guide/database/index.md) in Merlin's [Reference Guide](../reference_guide/index.md). -->
+
+**Usage:**
+
+```
+merlin database [OPTIONS] COMMAND ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-l`, `--local`  | boolean | Use the local SQLite database for this command. | `False` |
+
+**Commands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [info](#database-info-merlin-database-info) | Print general information about the database |
+| [get](#database-get-merlin-database-get) | Retrieve and print entries from the database |
+| [delete](#database-delete-merlin-database-delete) | Delete entries from the database |
+
+#### Database Info (`merlin database info`)
+
+The `info` subcommand prints general information about the database, including the database type, version, and brief details about the existing entries.
+
+**Usage:**
+
+```bash
+merlin database info [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+#### Database Get (`merlin database get`)
+
+The `get` subcommand allows users to retrieve entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get [OPTIONS] SUBCOMMAND ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Subcommands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [study](#get-study-merlin-database-get-study) | Retrieve and print specific study(ies) from the database |
+| [run](#get-run-merlin-database-get-run) | Retrieve and print specific run(s) from the database |
+| [logical-worker](#get-logical-worker-merlin-database-get-logical-worker) | Retrieve and print specific logical worker(s) from the database |
+| [physical-worker](#get-physical-worker-merlin-database-get-physical-worker) | Retrieve and print specific physical worker(s) from the database |
+| [all-studies](#get-all-studies-merlin-database-get-all-studies) | Retrieve and print all studies from the database |
+| [all-runs](#get-all-runs-merlin-database-get-all-runs) | Retrieve and print all runs from the database |
+| [all-logical-workers](#get-all-logical-workers-merlin-database-get-all-logical-workers) | Retrieve and print all logical workers from the database |
+| [all-physical-workers](#get-all-physical-workers-merlin-database-get-all-physical-workers) | Retrieve and print all physical workers from the database |
+| [everything](#get-everything-merlin-database-get-everything) | Retrieve and print every entry from the database |
+
+##### Get Study (`merlin database get study`)
+
+The `get study` subcommand allows users to retrieve specific study entries from the database by study ID or name and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get study [OPTIONS] STUDY_ID_OR_NAME [STUDY_ID_OR_NAME ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get Run (`merlin database get run`)
+
+The `get run` subcommand allows users to retrieve specific run entries from the database by run ID or workspace and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get run [OPTIONS] RUN_ID_OR_WORKSPACE [RUN_ID_OR_WORKSPACE ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get Logical-Worker (`merlin database get logical-worker`)
+
+The `get logical-worker` subcommand allows users to retrieve specific logical-worker entries from the database by ID and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get logical-worker [OPTIONS] LOGICAL_WORKER_ID [LOGICAL_WORKER_ID ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get Physical-Worker (`merlin database get physical-worker`)
+
+The `get physical-worker` subcommand allows users to retrieve specific physical-worker entries from the database by ID or name and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get physical-worker [OPTIONS] PHYSICAL_WORKER_ID_OR_NAME [PHYSICAL_WORKER_ID_OR_NAME ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Studies (`merlin database get all-studies`)
+
+The `get all-studies` subcommand allows users to retrieve all study entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-studies [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Runs (`merlin database get all-runs`)
+
+The `get all-runs` subcommand allows users to retrieve all run entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-runs [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Logical-Workers (`merlin database get all-logical-workers`)
+
+The `get all-logical-workers` subcommand allows users to retrieve all logical-worker entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-logical-workers [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get All-Physical-Workers (`merlin database get all-physical-workers`)
+
+The `get all-physical-workers` subcommand allows users to retrieve all physical-worker entries from the database and print them to the console.
+
+**Usage:**
+
+```bash
+merlin database get all-physical-workers [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Get Everything (`merlin database get everything`)
+
+The `get everything` subcommand allows users to retrieve every entry from the database and print them all to the console.
+
+**Usage:**
+
+```bash
+merlin database get everything [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+#### Database Delete (`merlin database delete`)
+
+The `delete` subcommand allows users to delete entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete [OPTIONS] SUBCOMMAND ...
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+**Subcommands:**
+
+| Name             | Description |
+| ------------     | ----------- |
+| [study](#delete-study-merlin-database-delete-study) | Delete specific study(ies) from the database |
+| [run](#delete-run-merlin-database-delete-run) | Delete specific run(s) from the database |
+| [logical-worker](#delete-logical-worker-merlin-database-delete-logical-worker) | Delete specific logical worker(s) from the database |
+| [physical-worker](#delete-physical-worker-merlin-database-delete-physical-worker) | Delete specific physical worker(s) from the database |
+| [all-studies](#delete-all-studies-merlin-database-delete-all-studies) | Delete all studies from the database |
+| [all-runs](#delete-all-runs-merlin-database-delete-all-runs) | Delete all runs from the database |
+| [all-logical-workers](#delete-all-logical-workers-merlin-database-delete-all-logical-workers) | Delete all logical workers from the database |
+| [all-physical-workers](#delete-all-physical-workers-merlin-database-delete-all-physical-workers) | Delete all physical workers from the database |
+| [everything](#delete-everything-merlin-database-delete-everything) | Delete everything from the database |
+
+##### Delete Study (`merlin database delete study`)
+
+!!! warning
+
+    By default, this command will also delete all of the runs associated with a study. To disable this, use the `-k` option mentioned in the table below.
+
+The `delete study` subcommand allows users to delete specific study entries from the database by ID or name.
+
+**Usage:**
+
+```bash
+merlin database delete study [OPTIONS] STUDY_ID_OR_NAME [STUDY_ID_OR_NAME ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-k`, `--keep-associated-runs`   | boolean |  Keep runs associated with the study that's being deleted | `False` |
+
+##### Delete Run (`merlin database delete run`)
+
+The `delete run` subcommand allows users to delete specific run entries from the database by ID or workspace.
+
+**Usage:**
+
+```bash
+merlin database delete run [OPTIONS] RUN_ID_OR_WORKSPACE [RUN_ID_OR_WORKSPACE ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete Logical-Worker (`merlin database delete logical-worker`)
+
+The `delete logical-worker` subcommand allows users to delete specific logical worker entries from the database by ID.
+
+**Usage:**
+
+```bash
+merlin database delete logical-worker [OPTIONS] LOGICAL_WORKER_ID [LOGICAL_WORKER_ID ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete Physical-Worker (`merlin database delete physical-worker`)
+
+The `delete physical-worker` subcommand allows users to delete specific physical worker entries from the database by ID or name.
+
+**Usage:**
+
+```bash
+merlin database delete physical-worker [OPTIONS] PHYSICAL_WORKER_ID_OR_NAME [PHYSICAL_WORKER_ID_OR_NAME ...]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete All-Studies (`merlin database delete all-studies`)
+
+!!! warning
+
+    This command will also delete all of the runs in the database.
+
+The `delete all-studies` subcommand allows users to delete all study entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-studies [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-k`, `--keep-associated-runs`   | boolean |  Keep runs associated with the studies | `False` |
+
+##### Delete All-Runs (`merlin database delete all-runs`)
+
+The `delete all-runs` subcommand allows users to delete all run entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-runs [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete All-Logical-Workers (`merlin database delete all-logical-workers`)
+
+The `delete all-logical-workers` subcommand allows users to delete all logical worker entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-logical-workers [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete All-Physical-Workers (`merlin database delete all-physical-workers`)
+
+The `delete all-physical-workers` subcommand allows users to delete all physical worker entries from the database.
+
+**Usage:**
+
+```bash
+merlin database delete all-physical-workers [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+
+##### Delete Everything (`merlin database delete everything`)
+
+The `delete everything` subcommand allows users to delete every entry from the database.
+
+**Usage:**
+
+```bash
+merlin database delete everything [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `-f`, `--force`  | boolean | Delete everything in the database without confirmation | `False` |
 
 ### Example (`merlin example`)
 

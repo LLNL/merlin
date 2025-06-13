@@ -12,12 +12,17 @@ merlin monitor <spec file>
 
 ## How Does the Monitor Work?
 
-The `merlin monitor` command takes a spec file as input, using it to identify the task queues and workers it needs to observe. This monitoring process involves two key actions:
+The `merlin monitor` command uses a [spec file](../specification.md) to query Merlin's [backend database](../configuration/index.md#what-is-a-results-backend) for information about a study. It retrieves the study's entry from the database, including all individual runs associated with the study. The monitor then iterates through each run, ensuring they all complete successfully. Once all runs complete, the monitor will terminate, allowing your allocation to end.
+
+For each run of a study, the monitor ensures completion by performing the following steps:
 
 1. Verifying the presence of tasks in the designated queues.
 2. Confirming the ongoing processing of tasks by the assigned workers when the queues are empty.
+3. Restarting the study if there are no tasks in the queues and no workers processing tasks, but the workflow has not yet finished.
 
-The monitor comes with a [`--sleep` option](#sleep), which introduces a deliberate delay. Before the monitoring initiates, the monitor waits up to 10 times the specified sleep duration, providing users with a window to populate the task queues with the [`merlin run`](../command_line.md#run-merlin-run) command. Subsequently, it waits for the specified sleep duration between each check to determine if the queues have tasks (step 1 above). If no tasks are found, and no workers are processing tasks, the monitor concludes that the workflow has finished, allowing the allocation to end. This way, the monitor command acts as a blocking process, ensuring the continuous and effective management of tasks within the specified workflow.
+The monitor includes a [`--sleep` option](#sleep), which introduces a deliberate delay. Before starting, the monitor waits for the specified `--sleep` duration, giving users time to populate the task queues for their run using the [`merlin run`](../command_line.md#run-merlin-run) command. Additionally, the monitor pauses for the `--sleep` duration between each check of the run. Finally, it will wait up to 10 times the specified `--sleep` duration for workers to spin up for the run.
+
+A run is considered complete when the monitor reads the run's `run_complete` entry from the database and it returns `True`. This entry is always set as the final task of a run.
 
 The resulting flowchart of this process can be seen below.
 
@@ -126,16 +131,16 @@ Adding the `merlin monitor` command to your workflow process is as simple as put
 There are three useful options that come with the `merlin monitor` command:
 
 - [`--sleep`](#sleep): The delay between checks on the task queues
-- [`--steps`](#steps): Only monitor specific steps in your workflow
+- [`--steps`](#steps) (*Deprecated*): Only monitor specific steps in your workflow
 - [`--vars`](#vars): Modify environment variables in a spec from the command line
 
 ### Sleep
 
-The `--sleep` option in the `monitor` command allows users to specify a custom delay duration between consecutive inspections of the task queues. The default value for this option is 60 seconds.
+The `--sleep` option in the `monitor` command allows users to specify a custom delay duration between consecutive inspections of runs. The default value for this option is 60 seconds.
 
-As detailed in the ["How Does the Monitor Work?"](#how-does-the-monitor-work) section, the monitor periodically examines task queues to determine task presence. If the queues are currently occupied, the monitor will enter a sleep state for a designated duration before conducting the next inspection. Similarly, if the monitor discovers no tasks in the queues but identifies active workers processing tasks, it will initiate a sleep interval before re-evaluating both the queues and the workers. The `--sleep` option allows you to modify this sleep interval.
+As detailed in the ["How Does the Monitor Work?"](#how-does-the-monitor-work) section, the monitor periodically examines runs to determine the status of their queues, workers, and whether the run is complete or not. If the queues are occupied, workers are processing tasks, or the run is not yet finished, the monitor will enter a sleep state for a designated duration before conducting the next inspection. The `--sleep` option allows you to modify this sleep interval.
 
-The value that you provide for the `--sleep` option will be an integer representing the number of seconds to sleep before the next inspection of the task queues and workers is conducted.
+The value that you provide for the `--sleep` option will be an integer representing the number of seconds to sleep before the next inspection of the run is conducted.
 
 **Usage:**
 
@@ -213,7 +218,7 @@ merlin monitor <spec file> --sleep <number of seconds to sleep>
 
     From the time stamps in our worker logs we can see that the custom 30 second sleep duration was applied:
 
-    ```bash hl_lines="20-25 33-34"
+    ```bash hl_lines="20 24-30 43-44"
     [2024-02-05 09:13:52,891: INFO] Connected to amqps://rabbitmerlin:**@cz-gunny-rabbitmerlin.apps.czapps.llnl.gov:31118/host4gunny
     [2024-02-05 09:13:52,911: INFO] mingle: searching for neighbors
     [2024-02-05 09:13:53,956: INFO] mingle: all alone
@@ -232,25 +237,39 @@ merlin monitor <spec file> --sleep <number of seconds to sleep>
     [2024-02-05 09:13:54,276: INFO] Status for step_1 successfully written.
     [2024-02-05 09:13:54,276: INFO] Submitting script for step_1
     [2024-02-05 09:13:54,548: INFO] Task merlin.common.tasks.expand_tasks_with_samples[78530a48-95f0-4b0e-90ca-7011e81a7808] succeeded in 0.40144235407933593s: None
-    [2024-02-05 09:14:16: INFO] Reading app config from file /g/g20/gunny/.merlin/app.yaml
-    [2024-02-05 09:14:17: INFO] Monitor: found 0 jobs in queues and 1 workers alive
-    [2024-02-05 09:14:18: INFO] Monitor: found tasks in queues and/or tasks being processed
-    [2024-02-05 09:14:50: INFO] Monitor: found 0 jobs in queues and 1 workers alive
-    [2024-02-05 09:14:51: INFO] Monitor: found tasks in queues and/or tasks being processed
-    [2024-02-05 09:15:22: INFO] Monitor: found 0 jobs in queues and 1 workers alive
-    [2024-02-05 09:15:23: INFO] Monitor: found tasks in queues and/or tasks being processed
-    [2024-02-05 09:15:24,298: INFO] Execution returned status OK.
-    [2024-02-05 09:15:24,304: INFO] Writing status for step_1 to '/usr/WS1/gunny/hello/sleep_demo_20240205-091232/step_1/MERLIN_STATUS.json...
-    [2024-02-05 09:15:24,307: INFO] Status for step_1 successfully written.
-    [2024-02-05 09:15:24,307: INFO] Step 'step_1' in '/usr/WS1/gunny/hello/sleep_demo_20240205-091232/step_1' finished successfully.
-    [2024-02-05 09:15:24,498: INFO] Task merlin:chordfinisher[f442f13e-0436-4162-86ab-eaa28943f526] received
-    [2024-02-05 09:15:24,501: INFO] Task merlin.common.tasks.merlin_step[117b28c9-eacd-4e77-9771-01b4ebc29e01] succeeded in 90.27513551106676s: 0
-    [2024-02-05 09:15:24,507: INFO] Task merlin:chordfinisher[f442f13e-0436-4162-86ab-eaa28943f526] succeeded in 0.007889348082244396s: 'SYNC'
-    [2024-02-05 09:15:54: INFO] Monitor: found 0 jobs in queues and 1 workers alive
-    [2024-02-05 09:15:55: INFO] Monitor: ... stop condition met
+    [2025-02-20 14:41:27: INFO] Reading app config from file /g/g20/gunny/.merlin/app.yaml
+    [2025-02-20 14:41:27: INFO] Monitor: Monitoring run with workspace '/usr/WS1/gunny/debug/temp/sleep_demo_20250220-143820'...
+    [2025-02-20 14:41:27: INFO] Checking for the following workers: ['default_worker']
+    [2025-02-20 14:41:27: INFO] Overriding default celery config with 'celery.override' in 'app.yaml':
+            visibility_timeout:     86400
+    [2025-02-20 14:41:28: INFO] Monitor: checking for workers, running workers = ['celery@default_worker.%ruby1'] ...
+    [2025-02-20 14:41:31: INFO] Monitor: Found workers processing tasks, keeping allocation alive.
+    [2025-02-20 14:42:01: INFO] Checking for the following workers: ['default_worker']
+    [2025-02-20 14:42:02: INFO] Monitor: checking for workers, running workers = ['celery@default_worker.%ruby1'] ...
+    [2025-02-20 14:42:04: INFO] Monitor: Found workers processing tasks, keeping allocation alive.
+    [2025-02-20 14:42:34: INFO] Checking for the following workers: ['default_worker']
+    [2025-02-20 14:42:35: INFO] Monitor: checking for workers, running workers = ['celery@default_worker.%ruby1'] ...
+    [2025-02-20 14:42:35,928: INFO] Execution returned status OK.
+    [2025-02-20 14:42:35,940: INFO] Writing status for step_1 to '/usr/WS1/gunny/debug/temp/sleep_demo_20250220-143820/step_1/MERLIN_STATUS.json...
+    [2025-02-20 14:42:35,946: INFO] Status for step_1 successfully written.
+    [2025-02-20 14:42:35,946: INFO] Step 'step_1' in '/usr/WS1/gunny/debug/temp/sleep_demo_20250220-143820/step_1' finished successfully.
+    [2025-02-20 14:42:36,028: INFO] Task merlin:chordfinisher[75d2720a-de21-473f-bce0-6f8ac0186b14] received
+    [2025-02-20 14:42:36,030: INFO] Task merlin.common.tasks.merlin_step[/usr/WS1/gunny/debug/temp/sleep_demo_20250220-143820/step_1] succeeded in 91.18941793194972s: 0
+    [2025-02-20 14:42:36,061: INFO] Task merlin:mark_run_as_complete[0695381d-f9dd-4efb-b397-f47c752d5eb4] received
+    [2025-02-20 14:42:36,064: INFO] Task merlin:chordfinisher[75d2720a-de21-473f-bce0-6f8ac0186b14] succeeded in 0.03424098785035312s: 'SYNC'
+    [2025-02-20 14:42:36,093: INFO] Attempting to update run with id '8cd39508-ff77-409f-af7e-1642b95b753b'...
+    [2025-02-20 14:42:36,094: INFO] Successfully updated run with id '8cd39508-ff77-409f-af7e-1642b95b753b'.
+    [2025-02-20 14:42:36,107: INFO] Data successfully dumped to /usr/WS1/gunny/debug/temp/sleep_demo_20250220-143820/merlin_info/run_metadata.json.
+    [2025-02-20 14:42:36,110: INFO] Task merlin:mark_run_as_complete[0695381d-f9dd-4efb-b397-f47c752d5eb4] succeeded in 0.04832656914368272s: 'Run Completed'
+    [2025-02-20 14:42:37: INFO] Monitor: Run with workspace '/usr/WS1/gunny/debug/temp/sleep_demo_20250220-143820' has completed. Moving on to the next run.
+    [2025-02-20 14:42:37: INFO] Monitor: ... stop condition met
     ```
 
 ### Steps
+
+!!! danger "Deprecated"
+
+    The `--steps` option is deprecated and set for removal in Merlin v1.14+. If you use this option in Merlin v1.13 you will see the same monitor functionality that existed in Merlin v1.12 and older. In other words, you will not have the auto-restart capability with the monitor.
 
 !!! warning
 

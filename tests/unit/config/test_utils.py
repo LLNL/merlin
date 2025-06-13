@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 Tests for the merlin/config/utils.py module.
 """
@@ -47,12 +53,12 @@ def test_get_priority_rabbit_broker(rabbit_broker_config: "fixture"):  # noqa: F
     assert get_priority(Priority.RETRY) == 10
 
 
-def test_get_priority_redis_broker(redis_broker_config: "fixture"):  # noqa: F821
+def test_get_priority_redis_broker(redis_broker_config_function: "fixture"):  # noqa: F821
     """
     Test the `get_priority` function with redis as the broker.
     Low priority for redis is 10 and high is 2.
 
-    :param redis_broker_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+    :param redis_broker_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
     """
     assert get_priority(Priority.LOW) == 10
     assert get_priority(Priority.MID) == 5
@@ -60,12 +66,12 @@ def test_get_priority_redis_broker(redis_broker_config: "fixture"):  # noqa: F82
     assert get_priority(Priority.RETRY) == 1
 
 
-def test_get_priority_invalid_broker(redis_broker_config: "fixture"):  # noqa: F821
+def test_get_priority_invalid_broker(redis_broker_config_function: "fixture"):  # noqa: F821
     """
     Test the `get_priority` function with an invalid broker.
     This should raise a ValueError.
 
-    :param redis_broker_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+    :param redis_broker_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
     """
     CONFIG.broker.name = "invalid"
     with pytest.raises(ValueError) as excinfo:
@@ -73,12 +79,12 @@ def test_get_priority_invalid_broker(redis_broker_config: "fixture"):  # noqa: F
     assert "Unsupported broker name: invalid" in str(excinfo.value)
 
 
-def test_get_priority_invalid_priority(redis_broker_config: "fixture"):  # noqa: F821
+def test_get_priority_invalid_priority(redis_broker_config_function: "fixture"):  # noqa: F821
     """
     Test the `get_priority` function with an invalid priority.
     This should raise a TypeError.
 
-    :param redis_broker_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+    :param redis_broker_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
     """
     with pytest.raises(ValueError) as excinfo:
         get_priority("invalid_priority")
