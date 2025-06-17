@@ -1,5 +1,10 @@
 """
+CLI module for inspecting task server queue statistics in Merlin workflows.
 
+This module defines the `QueueInfoCommand` class, which implements the
+`queue-info` subcommand for the Merlin CLI. The command enables users to query
+detailed information about queues used in Merlin workflows, including the number
+of tasks in each queue and the number of connected workers.
 """
 
 import logging
@@ -17,7 +22,11 @@ LOG = logging.getLogger("merlin")
 
 class QueueInfoCommand(CommandEntryPoint):
     """
-    
+    Handles `queue-info` CLI command for querying info about the queues on the servers.
+
+    Methods:
+        add_parser: Adds the `queue-info` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):

@@ -29,8 +29,8 @@ class ConfigCommand(CommandEntryPoint):
         default_config_file (str): The default path to the Merlin config file (`~/.merlin/app.yaml`).
 
     Methods:
-        add_parser(subparsers): Adds the `config` command and its subcommands to the CLI parser.
-        process_command(args): Processes the CLI input and dispatches the appropriate action.
+        add_parser: Adds the `config` command and its subcommands to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     default_config_file = os.path.join(os.path.expanduser("~"), ".merlin", "app.yaml")

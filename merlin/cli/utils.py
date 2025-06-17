@@ -1,5 +1,10 @@
 """
-Utility functions for CLI handlers.
+Utility functions to support Merlin CLI command handlers.
+
+This module provides common helper functions used by various CLI commands
+in the Merlin application. These utilities focus on parsing and validating
+command-line arguments related to specification files and variable overrides,
+as well as loading and expanding Merlin YAML specifications.
 """
 
 import logging

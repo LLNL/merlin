@@ -1,5 +1,10 @@
 """
+CLI module for executing Merlin or Maestro workflows.
 
+This module defines the `RunCommand` class, which handles the `run` subcommand in the
+Merlin CLI. The command initializes and runs a workflow based on a specified YAML
+study specification file. It supports overriding variables, supplying samples files,
+dry-run execution, and parallel parameter generation options.
 """
 
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
@@ -17,7 +22,11 @@ from merlin.utils import ARRAY_FILE_FORMATS, verify_filepath
 
 class RunCommand(CommandEntryPoint):
     """
-    
+    Handles `run` CLI command for running a workflow (sending tasks to the queues on the broker).
+
+    Methods:
+        add_parser: Adds the `run` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):

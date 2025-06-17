@@ -1,5 +1,9 @@
 """
+Defines the abstract base class for Merlin CLI commands.
 
+This module provides the `CommandEntryPoint` abstract base class that all
+Merlin command implementations must inherit from. It standardizes the interface
+for adding command-specific argument parsers and processing CLI command logic.
 """
 
 from abc import ABC, abstractmethod

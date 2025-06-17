@@ -1,5 +1,13 @@
 """
+CLI module for restarting existing Merlin workflows.
 
+This module defines the `RestartCommand` class, which provides functionality
+to restart an existing Merlin workflow from a previously saved workspace.
+
+The command verifies the provided workspace directory, locates the appropriate
+provenance specification file (an expanded YAML spec), and re-initializes the
+workflow study from that point. It supports running the restarted workflow
+either locally or in a distributed mode.
 """
 
 import glob
@@ -20,7 +28,11 @@ LOG = logging.getLogger("merlin")
 
 class RestartCommand(CommandEntryPoint):
     """
-    
+    Handles `restart` CLI command for restarting existing workflows.
+
+    Methods:
+        add_parser: Adds the `restart` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):

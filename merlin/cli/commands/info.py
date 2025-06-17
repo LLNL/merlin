@@ -1,5 +1,10 @@
 """
+CLI module for displaying configuration and environment information.
 
+This module defines the `InfoCommand` class, which handles the `info` subcommand
+of the Merlin CLI. The `info` command is intended to display detailed information
+about the current Merlin configuration, Python environment, and other diagnostic
+data useful for debugging or verifying setup.
 """
 
 import logging
@@ -12,7 +17,11 @@ LOG = logging.getLogger("merlin")
 
 class InfoCommand(CommandEntryPoint):
     """
-    
+    Handles `info` CLI command for viewing information about server connections.
+
+    Methods:
+        add_parser: Adds the `info` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):

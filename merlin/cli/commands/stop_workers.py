@@ -1,5 +1,9 @@
 """
+CLI module for shutting down Merlin workers.
 
+This module defines the `StopWorkersCommand` class, which handles the `stop-workers`
+subcommand in the Merlin CLI. It provides functionality to stop running workers that
+are connected to a task server such as Celery.
 """
 
 import logging
@@ -16,7 +20,11 @@ LOG = logging.getLogger("merlin")
 
 class StopWorkersCommand(CommandEntryPoint):
     """
-    
+    Handles `stop-workers` CLI command for shutting down Merlin workers.
+
+    Methods:
+        add_parser: Adds the `stop-workers` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):

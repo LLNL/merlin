@@ -1,5 +1,10 @@
 """
+CLI module for launching Merlin worker processes.
 
+This module defines the `RunWorkersCommand` class, which implements the `run-workers`
+subcommand in the Merlin CLI. The command starts worker processes that execute tasks
+defined in a Merlin YAML workflow specification, associating workers with the
+correct task queues without queuing tasks themselves.
 """
 
 import logging
@@ -17,7 +22,11 @@ LOG = logging.getLogger("merlin")
 
 class RunWorkersCommand(CommandEntryPoint):
     """
-    
+    Handles `run-workers` CLI command for launching Merlin workers.
+
+    Methods:
+        add_parser: Adds the `run-workers` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):

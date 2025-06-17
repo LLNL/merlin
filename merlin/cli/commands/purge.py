@@ -1,5 +1,10 @@
 """
+CLI module for purging tasks from Merlin queues on the task server.
 
+This module defines the `PurgeCommand` class, which implements the `purge`
+subcommand in the Merlin CLI. The command is used to remove tasks from
+queues either entirely or selectively, based on the specified steps in
+a Merlin YAML workflow specification.
 """
 
 import logging
@@ -15,7 +20,11 @@ LOG = logging.getLogger("merlin")
 
 class PurgeCommand(CommandEntryPoint):
     """
-    
+    Handles `purge` CLI command for removing tasks from queues on the server.
+
+    Methods:
+        add_parser: Adds the `purge` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):

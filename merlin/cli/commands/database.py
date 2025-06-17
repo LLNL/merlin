@@ -23,8 +23,8 @@ class DatabaseCommand(CommandEntryPoint):
     Handles `database` CLI commands for interacting with Merlin's database.
 
     Methods:
-        add_parser(subparsers: ArgumentParser): Adds the `database` command and its subcommands to the CLI parser.
-        process_command(args: Namespace): Processes the CLI input and dispatches the appropriate action.
+        add_parser: Adds the `database` command and its subcommands to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def _add_delete_subcommand(self, database_commands: ArgumentParser):

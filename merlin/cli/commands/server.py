@@ -1,5 +1,10 @@
 """
+Merlin CLI server command module.
 
+This module defines the `ServerCommand` class, which provides subcommands
+for managing the Merlin server components such as initialization, starting,
+stopping, restarting, and configuring the server. These subcommands are integrated
+into the Merlin CLI via `argparse`.
 """
 
 import logging
@@ -14,12 +19,19 @@ LOG = logging.getLogger("merlin")
 
 class ServerCommand(CommandEntryPoint):
     """
-    
+    Handles `server` CLI commands for interacting with Merlin's containerized server.
+
+    Methods:
+        add_parser: Adds the `server` command and its subcommands to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def _add_config_subcommand(self, server_commands: ArgumentParser):
         """
-        
+         Add the `config` subcommand to the server command parser.
+
+        Parameters:
+            server_commands (ArgumentParser): The server subparser to which the config command will be added.
         """
         server_config: ArgumentParser = server_commands.add_parser(
             "config",

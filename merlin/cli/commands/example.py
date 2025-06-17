@@ -1,5 +1,8 @@
 """
+Merlin CLI `example` command module.
 
+This module defines the `ExampleCommand` class, which integrates into the Merlin
+command-line interface to support downloading and setting up example workflows.
 """
 
 import logging
@@ -14,7 +17,11 @@ LOG = logging.getLogger("merlin")
 
 class ExampleCommand(CommandEntryPoint):
     """
-    
+    Handles `example` CLI command for downloading built-in Merlin examples.
+
+    Methods:
+        add_parser: Adds the `example` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):

@@ -1,5 +1,8 @@
 """
+Main CLI parser setup for the Merlin command-line interface.
 
+This module defines the primary argument parser for the `merlin` CLI tool,
+including custom error handling and integration of all available subcommands.
 """
 
 import sys

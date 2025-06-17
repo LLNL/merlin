@@ -1,5 +1,16 @@
 """
+CLI module for querying and displaying the status of Merlin workflows.
 
+This module defines two primary CLI command handlers:
+
+- `StatusCommand`: Handles the `status` command, which shows a high-level summary
+  of the current state of a Merlin study or workflow. It supports querying status
+  based on a Merlin YAML specification file or an existing study workspace, with
+  options for output formatting and filtering.
+
+- `DetailedStatusCommand`: Extends `StatusCommand` to provide a more granular,
+  task-by-task view of the workflow status via the `detailed-status` command.
+  This includes extensive filtering and display customization options.
 """
 
 import logging
@@ -19,7 +30,11 @@ LOG = logging.getLogger("merlin")
 
 class StatusCommand(CommandEntryPoint):
     """
-    
+    Handles `status` CLI command for checking the high-level status of a workflow.
+
+    Methods:
+        add_parser: Adds the `status` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):
@@ -129,7 +144,11 @@ class StatusCommand(CommandEntryPoint):
 
 class DetailedStatusCommand(StatusCommand):
     """
-    
+    Handles `detailed-status` CLI command for checking the in-depth status of a workflow.
+
+    Methods:
+        add_parser: Adds the `detailed-status` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):

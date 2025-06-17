@@ -1,5 +1,10 @@
 """
+CLI module for querying active Merlin task server workers.
 
+This module defines the `QueryWorkersCommand` class, which implements the
+`query-workers` subcommand for the Merlin CLI. The command allows users to
+inspect the state of connected workers on a task server (e.g., Celery),
+optionally filtering by queues or worker names.
 """
 
 import logging
@@ -16,7 +21,11 @@ LOG = logging.getLogger("merlin")
 
 class QueryWorkersCommand(CommandEntryPoint):
     """
-    
+    Handles `query-workers` CLI command for querying information about Merlin workers.
+
+    Methods:
+        add_parser: Adds the `query-workers` command to the CLI parser.
+        process_command: Processes the CLI input and dispatches the appropriate action.
     """
 
     def add_parser(self, subparsers: ArgumentParser):
