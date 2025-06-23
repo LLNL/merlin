@@ -11,12 +11,15 @@ This module defines the `ExampleCommand` class, which integrates into the Merlin
 command-line interface to support downloading and setting up example workflows.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 from argparse import ArgumentParser, Namespace, RawTextHelpFormatter
 
 from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.examples.generator import list_examples, setup_example
+
 
 LOG = logging.getLogger("merlin")
 

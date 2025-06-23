@@ -13,6 +13,8 @@ defined in a Merlin YAML workflow specification, associating workers with the
 correct task queues without queuing tasks themselves.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 
@@ -22,6 +24,7 @@ from merlin.cli.utils import get_merlin_spec_with_override
 from merlin.config.configfile import initialize_config
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.router import launch_workers
+
 
 LOG = logging.getLogger("merlin")
 
@@ -120,7 +123,7 @@ class RunWorkersCommand(CommandEntryPoint):
         # Create logical worker entries
         step_queue_map = spec.get_task_queues()
         for worker, steps in spec.get_worker_step_map().items():
-            worker_queues = set([step_queue_map[step] for step in steps])
+            worker_queues = {step_queue_map[step] for step in steps}
             merlin_db.create("logical_worker", worker, worker_queues)
 
         # Launch the workers

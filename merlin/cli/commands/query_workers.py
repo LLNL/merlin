@@ -13,6 +13,8 @@ inspect the state of connected workers on a task server (e.g., Celery),
 optionally filtering by queues or worker names.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 from argparse import ArgumentParser, Namespace
 
@@ -21,6 +23,7 @@ from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.router import query_workers
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import verify_filepath
+
 
 LOG = logging.getLogger("merlin")
 

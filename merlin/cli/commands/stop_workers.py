@@ -12,6 +12,8 @@ subcommand in the Merlin CLI. It provides functionality to stop running workers 
 are connected to a task server such as Celery.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 from argparse import ArgumentParser, Namespace
 
@@ -20,6 +22,7 @@ from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.router import stop_workers
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import verify_filepath
+
 
 LOG = logging.getLogger("merlin")
 

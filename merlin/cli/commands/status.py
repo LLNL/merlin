@@ -19,6 +19,8 @@ This module defines two primary CLI command handlers:
   This includes extensive filtering and display customization options.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 from argparse import ArgumentParser, Namespace
 
@@ -55,7 +57,9 @@ class StatusCommand(CommandEntryPoint):
             help="Display a summary of the status of a study.",
         )
         status_cmd.set_defaults(func=self.process_command, detailed=False)
-        status_cmd.add_argument("spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study")
+        status_cmd.add_argument(
+            "spec_or_workspace", type=str, help="Path to a Merlin YAML spec file or a launched Merlin study"
+        )
         status_cmd.add_argument(
             "--cb-help", action="store_true", help="Colorblind help; uses different symbols to represent different statuses"
         )
@@ -254,4 +258,3 @@ class DetailedStatusCommand(StatusCommand):
             help="Ignore any prompts provided. This will default to the latest study \
                 if you provide a spec file rather than a study workspace.",
         )
-

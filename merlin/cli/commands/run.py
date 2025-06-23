@@ -13,6 +13,8 @@ study specification file. It supports overriding variables, supplying samples fi
 dry-run execution, and parallel parameter generation options.
 """
 
+# pylint: disable=duplicate-code
+
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from typing import Optional
 
@@ -170,7 +172,7 @@ class RunCommand(CommandEntryPoint):
         # Create logical worker entries
         step_queue_map = study.expanded_spec.get_task_queues()
         for worker, steps in study.expanded_spec.get_worker_step_map().items():
-            worker_queues = set([step_queue_map[step] for step in steps])
+            worker_queues = {step_queue_map[step] for step in steps}
             logical_worker_entity = merlin_db.create("logical_worker", worker, worker_queues)
 
             # Add the run id to the worker entry and the worker id to the run entry

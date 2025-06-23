@@ -58,8 +58,11 @@ def build_main_parser() -> ArgumentParser:
     )
     parser.add_argument("-v", "--version", action="version", version=VERSION)
     parser.add_argument(
-        "-lvl", "--level", type=str, default=DEFAULT_LOG_LEVEL,
-        help="Set log level: DEBUG, INFO, WARNING, ERROR [Default: %(default)s]"
+        "-lvl",
+        "--level",
+        type=str,
+        default=DEFAULT_LOG_LEVEL,
+        help="Set log level: DEBUG, INFO, WARNING, ERROR [Default: %(default)s]",
     )
     subparsers = parser.add_subparsers(dest="subparsers", required=True)
 

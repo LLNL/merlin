@@ -6,13 +6,15 @@
 
 """
 This module defines the `DatabaseCommand` class, which provides CLI subcommands
-for interacting with the Merlin application's underlying database. It supports 
-commands for retrieving, deleting, and inspecting database contents, including 
+for interacting with the Merlin application's underlying database. It supports
+commands for retrieving, deleting, and inspecting database contents, including
 entities like studies, runs, and workers.
 
-The commands are registered under the `database` top-level command and integrated 
+The commands are registered under the `database` top-level command and integrated
 into Merlin's argument parser system.
 """
+
+# pylint: disable=duplicate-code
 
 import logging
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
@@ -20,6 +22,7 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.config.configfile import initialize_config
 from merlin.db_scripts.db_commands import database_delete, database_get, database_info
+
 
 LOG = logging.getLogger("merlin")
 

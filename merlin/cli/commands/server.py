@@ -13,12 +13,15 @@ stopping, restarting, and configuring the server. These subcommands are integrat
 into the Merlin CLI via `argparse`.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 import os
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.server.server_commands import config_server, init_server, restart_server, start_server, status_server, stop_server
+
 
 LOG = logging.getLogger("merlin")
 
@@ -200,7 +203,9 @@ class ServerCommand(CommandEntryPoint):
         try:
             lc_all_val = os.environ["LC_ALL"]
             if lc_all_val != "C":
-                raise ValueError(f"The 'LC_ALL' environment variable is currently set to {lc_all_val} but it must be set to 'C'.")
+                raise ValueError(
+                    f"The 'LC_ALL' environment variable is currently set to {lc_all_val} but it must be set to 'C'."
+                )
         except KeyError:
             LOG.debug("The 'LC_ALL' environment variable was not set. Setting this to 'C'.")
             os.environ["LC_ALL"] = "C"  # Necessary for Redis to configure LOCALE

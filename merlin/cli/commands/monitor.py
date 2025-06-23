@@ -8,11 +8,13 @@
 CLI module for monitoring Merlin workflows and maintaining active allocations.
 
 This module provides the `MonitorCommand` class, which implements the `monitor`
-subcommand in the Merlin CLI. The purpose of the `monitor` command is to 
+subcommand in the Merlin CLI. The purpose of the `monitor` command is to
 periodically check the status of workflow tasks and worker activity to ensure
 the allocation (e.g., on a computing cluster) remains alive while jobs are
 in progress.
 """
+
+# pylint: disable=duplicate-code
 
 import logging
 import time
@@ -22,6 +24,7 @@ from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.cli.utils import get_merlin_spec_with_override
 from merlin.monitor.monitor import Monitor
 from merlin.router import check_merlin_status
+
 
 LOG = logging.getLogger("merlin")
 

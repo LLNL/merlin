@@ -13,13 +13,17 @@ These configurations control task server, broker, and backend settings used
 by the Merlin workflow system.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 import os
-import yaml
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, ArgumentTypeError, Namespace
+
+import yaml
 
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.config.merlin_config_manager import MerlinConfigManager
+
 
 LOG = logging.getLogger("merlin")
 
@@ -107,7 +111,9 @@ class ConfigCommand(CommandEntryPoint):
         Parameters:
             mconfig_subparsers (ArgumentParser): The subparsers object to add the subcommand to.
         """
-        config_backend_parser = mconfig_subparsers.add_parser("update-backend", help="Update results backend settings in app.yaml")
+        config_backend_parser = mconfig_subparsers.add_parser(
+            "update-backend", help="Update results backend settings in app.yaml"
+        )
         config_backend_parser.add_argument(
             "-t",
             "--type",
@@ -139,7 +145,6 @@ class ConfigCommand(CommandEntryPoint):
         """
         config_use_parser = mconfig_subparsers.add_parser("use", help="Use a different configuration file.")
         config_use_parser.add_argument("config_file", type=str, help="The path to the new configuration file to use.")
-
 
     def add_parser(self, subparsers: ArgumentParser):
         """
@@ -185,10 +190,10 @@ class ConfigCommand(CommandEntryPoint):
             try:
                 with open(args.config_file, "r") as conf_file:
                     yaml.safe_load(conf_file)
-            except FileNotFoundError:
-                raise ArgumentTypeError(f"The file '{args.config_file}' does not exist.")
-            except yaml.YAMLError as e:
-                raise ArgumentTypeError(f"The file '{args.config_file}' is not a valid YAML file: {e}")
+            except FileNotFoundError as fnf_exc:
+                raise ArgumentTypeError(f"The file '{args.config_file}' does not exist.") from fnf_exc
+            except yaml.YAMLError as yaml_exc:
+                raise ArgumentTypeError(f"The file '{args.config_file}' is not a valid YAML file.") from yaml_exc
 
         config_manager = MerlinConfigManager(args)
 

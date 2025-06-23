@@ -13,6 +13,8 @@ queues either entirely or selectively, based on the specified steps in
 a Merlin YAML workflow specification.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 
@@ -20,6 +22,7 @@ from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.cli.utils import get_merlin_spec_with_override
 from merlin.router import purge_tasks
+
 
 LOG = logging.getLogger("merlin")
 
@@ -66,7 +69,7 @@ class PurgeCommand(CommandEntryPoint):
             help="The specific steps in the YAML file from which you want to purge the queues. \
             The input is a space separated list.",
         )
-        purge.add_argument(
+        purge.add_argument(  # pylint: disable=duplicate-code
             "--vars",
             action="store",
             dest="variables",

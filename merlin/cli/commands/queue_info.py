@@ -13,6 +13,8 @@ detailed information about queues used in Merlin workflows, including the number
 of tasks in each queue and the number of connected workers.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 from argparse import ArgumentParser, Namespace
 
@@ -22,6 +24,7 @@ from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.cli.utils import get_merlin_spec_with_override
 from merlin.router import dump_queue_info, query_queues
+
 
 LOG = logging.getLogger("merlin")
 

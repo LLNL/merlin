@@ -13,10 +13,13 @@ about the current Merlin configuration, Python environment, and other diagnostic
 data useful for debugging or verifying setup.
 """
 
+# pylint: disable=duplicate-code
+
 import logging
 from argparse import ArgumentParser, Namespace
 
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
+
 
 LOG = logging.getLogger("merlin")
 

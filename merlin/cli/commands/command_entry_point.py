@@ -34,5 +34,3 @@ class CommandEntryPoint(ABC):
     def process_command(self, args: Namespace):
         """Execute the logic for this CLI command."""
         raise NotImplementedError("Subclasses of `CommandEntryPoint` must implement an `process_command` method.")
-
-    

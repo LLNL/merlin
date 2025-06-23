@@ -16,6 +16,8 @@ workflow study from that point. It supports running the restarted workflow
 either locally or in a distributed mode.
 """
 
+# pylint: disable=duplicate-code
+
 import glob
 import logging
 import os
@@ -28,6 +30,7 @@ from merlin.config.configfile import initialize_config
 from merlin.router import run_task_server
 from merlin.study.study import MerlinStudy
 from merlin.utils import verify_dirpath, verify_filepath
+
 
 LOG = logging.getLogger("merlin")
 
@@ -63,7 +66,6 @@ class RestartCommand(CommandEntryPoint):
             default="distributed",
             help="Run locally instead of distributed",
         )
-
 
     def process_command(self, args: Namespace):
         """
