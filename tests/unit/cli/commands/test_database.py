@@ -14,21 +14,21 @@ import pytest
 from pytest_mock import MockerFixture
 
 from merlin.cli.commands.database import DatabaseCommand
+from tests.fixture_types import FixtureCallable
 
 
 @pytest.fixture
-def parser() -> ArgumentParser:
+def parser(create_parser: FixtureCallable) -> ArgumentParser:
     """
     Returns an `ArgumentParser` configured with the `database` command and its subcommands.
+
+    Args:
+        create_parser: A fixture to help create a parser.
 
     Returns:
         Parser with the `database` command and its subcommands registered.
     """
-    parser = ArgumentParser()
-    subparsers = parser.add_subparsers(dest="main_command")
-    cmd = DatabaseCommand()
-    cmd.add_parser(subparsers)
-    return parser
+    return create_parser(DatabaseCommand())
 
 
 def test_process_command_info_calls_info(mocker: MockerFixture):

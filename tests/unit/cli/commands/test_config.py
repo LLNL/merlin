@@ -15,21 +15,22 @@ import pytest
 from pytest_mock import MockerFixture
 
 from merlin.cli.commands.config import ConfigCommand
+from tests.fixture_types import FixtureCallable
 
 
 @pytest.fixture
-def parser() -> ArgumentParser:
+def parser(create_parser: FixtureCallable) -> ArgumentParser:
     """
     Fixture that returns a configured `ArgumentParser` with the `config` command added.
+
+    Args:
+        create_parser: A fixture to help create a parser.
 
     Returns:
         Parser with the `config` command and its subcommands registered.
     """
-    parser = ArgumentParser()
-    subparsers = parser.add_subparsers(dest="command")
-    config_cmd = ConfigCommand()
-    config_cmd.add_parser(subparsers)
-    return parser
+    return create_parser(ConfigCommand())
+
 
 
 def test_add_parser_includes_all_subcommands(parser: ArgumentParser):
