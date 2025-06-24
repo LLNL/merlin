@@ -155,7 +155,9 @@ class Monitor:
                 run_complete = run.run_complete  # Re-query db for this value
                 if not active_tasks and not run_complete:
                     if self.no_restart:
-                        LOG.warning(f"Monitor: Determined restart was required for '{run_workspace}' but auto-restart is disabled.")
+                        LOG.warning(
+                            f"Monitor: Determined restart was required for '{run_workspace}' but auto-restart is disabled."
+                        )
                     else:
                         self.restart_workflow(run)
 
