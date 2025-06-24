@@ -57,7 +57,7 @@ class Monitor:
         restart_workflow: Restart a run of a workflow.
     """
 
-    def __init__(self, spec: MerlinSpec, sleep: int, task_server: str):
+    def __init__(self, spec: MerlinSpec, sleep: int, task_server: str, no_restart: bool):
         """
         Initializes the `Monitor` instance with the given Merlin specification, sleep interval,
         and task server type. The task server monitor is created using the
@@ -70,6 +70,7 @@ class Monitor:
         """
         self.spec: MerlinSpec = spec
         self.sleep: int = sleep
+        self.no_restart: bool = no_restart
         self.task_server_monitor: TaskServerMonitor = monitor_factory.get_monitor(task_server)
         self.merlin_db = MerlinDatabase()
 
@@ -153,7 +154,10 @@ class Monitor:
                 # workflow so restart it
                 run_complete = run.run_complete  # Re-query db for this value
                 if not active_tasks and not run_complete:
-                    self.restart_workflow(run)
+                    if self.no_restart:
+                        LOG.warning(f"Monitor: Determined restart was required for '{run_workspace}' but auto-restart is disabled.")
+                    else:
+                        self.restart_workflow(run)
 
                 if not run_complete:
                     time.sleep(self.sleep)
