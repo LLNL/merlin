@@ -48,8 +48,10 @@ class Monitor:
     Attributes:
         spec (MerlinSpec): The Merlin specification that defines the workflow.
         sleep (int): The interval (in seconds) between monitoring checks.
+        no_restart (bool): If True, the monitor will not try to restart the workflow.
         task_server_monitor (TaskServerMonitor): A monitor for interacting with whichever task server
             that the user is utilizing.
+        merlin_db (MerlinDatabase): Interface for accessing and querying the Merlin database.
 
     Methods:
         monitor_all_runs: Monitors all runs of the current study until they are complete.
@@ -67,6 +69,7 @@ class Monitor:
             spec (MerlinSpec): The Merlin specification that defines the workflow.
             sleep (int): The interval (in seconds) between monitoring checks.
             task_server (str): The type of task server being used (e.g., "celery").
+            no_restart (bool): If True, the monitor will not try to restart the workflow.
         """
         self.spec: MerlinSpec = spec
         self.sleep: int = sleep
