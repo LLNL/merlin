@@ -8,6 +8,7 @@
 Tests for the `config.py` file of the `cli/` folder.
 """
 
+import os
 from argparse import _SubParsersAction, ArgumentParser, Namespace, ArgumentTypeError
 from unittest.mock import patch, MagicMock
 
@@ -15,7 +16,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from merlin.cli.commands.config import ConfigCommand
-from tests.fixture_types import FixtureCallable
+from tests.fixture_types import FixtureCallable, FixtureStr
 
 
 @pytest.fixture
@@ -147,12 +148,16 @@ def test_process_command_raises_on_missing_file():
         cmd.process_command(args)
 
 
-def test_process_command_raises_on_invalid_yaml(tmp_path):
+def test_process_command_raises_on_invalid_yaml(cli_testing_dir: FixtureStr):
     """
     Verify that an `ArgumentTypeError` is raised if the config file contains invalid YAML.
+
+    Args:
+        cli_testing_dir: The path to the temporary ouptut directory for cli tests.
     """
-    invalid_yaml = tmp_path / "invalid.yaml"
-    invalid_yaml.write_text("foo: [bar")
+    invalid_yaml = os.path.join(cli_testing_dir, "invalid.yaml")
+    with open(invalid_yaml, "w") as invalid_yaml_file:
+        invalid_yaml_file.write("foo: [bar")
 
     args = Namespace(commands="update-broker", config_file=str(invalid_yaml), type="redis")
 

@@ -9,6 +9,7 @@ Tests for the `database.py` file of the `cli/` folder.
 """
 
 from argparse import ArgumentParser, Namespace
+from typing import List
 
 import pytest
 from pytest_mock import MockerFixture
@@ -99,9 +100,14 @@ def test_process_command_local_initializes_config(mocker: MockerFixture):
         ("delete", ["database", "delete", "study", "dummy_id"]),
     ],
 )
-def test_add_parser_creates_expected_commands(parser, command, args):
+def test_add_parser_creates_expected_commands(parser: ArgumentParser, command: str, args: List[str]):
     """
     Validate that the parser correctly sets `commands` for top-level database subcommands.
+
+    Args:
+        parser: Parser with the `database` command and its subcommands registered.
+        command: The command to test against.
+        args: The arguments to give to the `database` parser.
     """
     parsed = parser.parse_args(args)
     assert parsed.commands == command
@@ -109,9 +115,14 @@ def test_add_parser_creates_expected_commands(parser, command, args):
 
 @pytest.mark.parametrize("command", ["get", "delete"])
 @pytest.mark.parametrize("subcmd", ["study", "run", "logical-worker", "physical-worker"])
-def test_subcommands_with_id(parser, command, subcmd):
+def test_subcommands_with_id(parser: ArgumentParser, command: str, subcmd: str):
     """
     Test that subcommands requiring an ID are parsed correctly.
+
+    Args:
+        parser: Parser with the `database` command and its subcommands registered.
+        command: The command to test against.
+        subcmd: The subcommand to test against.
     """
     args = ["database", command, subcmd, "dummy-id"]
     parsed = parser.parse_args(args)
@@ -129,9 +140,14 @@ def test_subcommands_with_id(parser, command, subcmd):
     "all-studies", "all-runs", "all-logical-workers",
     "all-physical-workers", "everything"
 ])
-def test_subcommands_without_id(parser, command, subcmd):
+def test_subcommands_without_id(parser: ArgumentParser, command: str, subcmd: str):
     """
     Test that subcommands not requiring an ID are parsed correctly.
+
+    Args:
+        parser: Parser with the `database` command and its subcommands registered.
+        command: The command to test against.
+        subcmd: The subcommand to test against.
     """
     args = ["database", command, subcmd]
     parsed = parser.parse_args(args)
@@ -142,4 +158,3 @@ def test_subcommands_without_id(parser, command, subcmd):
         assert parsed.get_type == subcmd
     elif command == "delete":
         assert parsed.delete_type == subcmd
-
