@@ -1251,6 +1251,10 @@ There are multiple options to modify the way task statuses are displayed.
 
 ### Monitor (`merlin monitor`)
 
+!!! tip "Tip When Running Multiple Monitor Instances"
+
+    When having multiple instances of `merlin monitor` running for the same study, we recommend turning off the restart functionality with `--no-restart` for all except one of them, so as to avoid potential race conditions and trying to restart the workflow multiple times at once.
+
 Batch submission scripts may not keep the batch allocation alive if there is not a blocking process in the submission script. The `merlin monitor` command addresses this by providing a blocking process that checks for tasks in the queues every (sleep) seconds ("sleep" here can be defined with the `--sleep` option). When the queues are empty, the monitor will query Celery to see if any workers are still processing tasks from the queues. If no workers are processing any tasks from the queues and the queues are empty, the blocking process will exit and allow the allocation to end.
 
 If for some reason your workflow enters a stalled state where the queues are empty, no workers are processing tasks, but your workflow has not yet finished, then the monitor will attempt to automatically restart the workflow for you. This functionality can be disabled with the `--no-restart` option.

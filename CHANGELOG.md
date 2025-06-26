@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Ability to turn off the auto-restart functionality fo the monitor with `--no-restart`
+- Ability to turn off the auto-restart functionality of the monitor with `--no-restart`
 
 ## [1.13.0b1]
 ### Added
