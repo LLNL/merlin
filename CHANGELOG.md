@@ -4,6 +4,10 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Ability to turn off the auto-restart functionality of the monitor with `--no-restart`
+
 ## [1.13.0b1]
 ### Added
 - API documentation for Merlin's core codebase
@@ -86,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Running Merlin locally no longer requires an `app.yaml` configuration file
 - Removed dead lgtm link
+- Potential security vulnerabilities related to logging
 
 ### Deprecated
 - The `--steps` argument of the `merlin monitor` command is now deprecated and will be removed in Version 1.14.0.
