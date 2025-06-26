@@ -9,9 +9,8 @@ Tests for the `query_workers.py` file of the `cli/` folder.
 """
 
 import logging
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
-import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
@@ -19,31 +18,18 @@ from merlin.cli.commands.query_workers import QueryWorkersCommand
 from tests.fixture_types import FixtureCallable
 
 
-
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `query-workers` command.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `query-workers` command registered.
-    """
-    return create_parser(QueryWorkersCommand())
-
-
-def test_add_parser_sets_up_query_workers_command(parser: ArgumentParser):
+def test_add_parser_sets_up_query_workers_command(create_parser: FixtureCallable):
     """
     Ensure the `query-workers` command sets the correct default function.
 
     Args:
-        parser: Parser with the `query-workers` command registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = QueryWorkersCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["query-workers"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == QueryWorkersCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.task_server == "celery"
     assert args.spec is None
     assert args.queues is None

@@ -9,9 +9,8 @@ Tests for the `monitor.py` file of the `cli/` folder.
 """
 
 import logging
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
-import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
@@ -19,30 +18,18 @@ from merlin.cli.commands.monitor import MonitorCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `monitor` command and its subcommands.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `monitor` command and its subcommands registered.
-    """
-    return create_parser(MonitorCommand())
-
-
-def test_add_parser_sets_up_monitor_command(parser: ArgumentParser):
+def test_add_parser_sets_up_monitor_command(create_parser: FixtureCallable):
     """
     Ensure the `monitor` command sets the correct default function.
 
     Args:
-        parser: Parser with the `monitor` command and its subcommands registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = MonitorCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["monitor", "spec.yaml"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == MonitorCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.specification == "spec.yaml"
     assert args.steps == ["all"]
     assert args.variables is None

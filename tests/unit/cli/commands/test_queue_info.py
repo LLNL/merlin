@@ -8,7 +8,7 @@
 Tests for the `queue_info.py` file of the `cli/` folder.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
 import pytest
 from _pytest.capture import CaptureFixture
@@ -18,30 +18,18 @@ from merlin.cli.commands.queue_info import QueueInfoCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `queue-info` command.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `queue-info` command registered.
-    """
-    return create_parser(QueueInfoCommand())
-
-
-def test_add_parser_sets_up_queue_info_command(parser: ArgumentParser):
+def test_add_parser_sets_up_queue_info_command(create_parser: FixtureCallable):
     """
     Ensure the `queue-info` command sets the correct default function.
 
     Args:
-        parser: Parser with the `queue-info` command registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = QueueInfoCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["queue-info"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == QueueInfoCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.task_server == "celery"
     assert args.dump is None
     assert args.specific_queues is None

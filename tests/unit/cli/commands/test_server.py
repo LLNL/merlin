@@ -9,7 +9,7 @@ Tests for the `server.py` file of the `cli/` folder.
 """
 
 import os
-from argparse import Namespace, ArgumentParser
+from argparse import Namespace
 
 import pytest
 from pytest_mock import MockerFixture
@@ -18,30 +18,18 @@ from merlin.cli.commands.server import ServerCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `server` command.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `server` command registered.
-    """
-    return create_parser(ServerCommand())
-
-
-def test_add_parser_sets_up_server_command(parser: ArgumentParser):
+def test_add_parser_sets_up_server_command(create_parser: FixtureCallable):
     """
     Test that the `server` command parser sets up the expected defaults and subcommands.
 
     Args:
-        parser: Parser with the `server` command registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = ServerCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["server", "init"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == ServerCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.commands == "init"
 
 

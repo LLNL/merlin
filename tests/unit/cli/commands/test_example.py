@@ -8,9 +8,8 @@
 Tests for the `example.py` file of the `cli/` folder.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
-import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
@@ -18,30 +17,18 @@ from merlin.cli.commands.example import ExampleCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `example` command and its subcommands.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `example` command and its subcommands registered.
-    """
-    return create_parser(ExampleCommand())
-
-
-def test_example_parser_sets_func(parser: ArgumentParser):
+def test_example_parser_sets_func(create_parser: FixtureCallable):
     """
     Ensure the `example` command sets the correct default function.
 
     Args:
-        parser: Parser with the `example` command and its subcommands registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = ExampleCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["example", "list"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == ExampleCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.workflow == "list"
     assert args.path is None
 

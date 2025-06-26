@@ -8,39 +8,26 @@
 Tests for the `info.py` file of the `cli/` folder.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
-import pytest
 from pytest_mock import MockerFixture
 
 from merlin.cli.commands.info import InfoCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `info` command and its subcommands.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `info` command and its subcommands registered.
-    """
-    return create_parser(InfoCommand())
-
-
-def test_info_parser_sets_func(parser: ArgumentParser):
+def test_info_parser_sets_func(create_parser: FixtureCallable):
     """
     Ensure the `info` command sets the correct default function.
 
     Args:
         parser: Parser with the `info` command and its subcommands registered.
     """
+    command = InfoCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["info"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == InfoCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
 
 
 def test_info_process_command_calls_display(mocker: MockerFixture):

@@ -8,7 +8,7 @@
 Tests for the `restart.py` file of the `cli/` folder.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 from pathlib import Path
 
 import pytest
@@ -18,30 +18,18 @@ from merlin.cli.commands.restart import RestartCommand
 from tests.fixture_types import FixtureCallable, FixtureStr
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `restart` command.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `restart` command registered.
-    """
-    return create_parser(RestartCommand())
-
-
-def test_add_parser_sets_up_restart_command(parser: ArgumentParser):
+def test_add_parser_sets_up_restart_command(create_parser: FixtureCallable):
     """
     Ensure the `restart` command registers the correct arguments and sets the default function.
 
     Args:
-        parser: Parser with the `restart` command registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = RestartCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["restart", "some/dir"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == RestartCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.restart_dir == "some/dir"
     assert args.run_mode == "distributed"
 

@@ -8,9 +8,8 @@
 Tests for the `stop_workers.py` file of the `cli/` folder.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
-import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
@@ -18,30 +17,18 @@ from merlin.cli.commands.stop_workers import StopWorkersCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `stop-workers` command.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `stop-workers` command registered.
-    """
-    return create_parser(StopWorkersCommand())
-
-
-def test_add_parser_sets_up_stop_workers_command(parser: ArgumentParser):
+def test_add_parser_sets_up_stop_workers_command(create_parser: FixtureCallable):
     """
     Ensure the stop-workers command parser sets correct defaults and accepts args.
 
     Args:
-        parser: Parser with the `stop-workers` command registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = StopWorkersCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["stop-workers", "--task_server", "celery", "--queues", "queue1", "queue2"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == StopWorkersCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.task_server == "celery"
     assert args.queues == ["queue1", "queue2"]
     assert args.workers is None

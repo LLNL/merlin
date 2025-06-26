@@ -8,7 +8,7 @@
 Tests for the `run.py` file of the `cli/` folder.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
 import pytest
 from pytest_mock import MockerFixture
@@ -17,30 +17,18 @@ from merlin.cli.commands.run import RunCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `run` command.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `run` command registered.
-    """
-    return create_parser(RunCommand())
-
-
-def test_add_parser_sets_up_run_command(parser: ArgumentParser):
+def test_add_parser_sets_up_run_command(create_parser: FixtureCallable):
     """
     Ensure the `run` command sets the correct defaults and required arguments.
 
     Args:
-        parser: Parser with the `run` command registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = RunCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["run", "study.yaml"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == RunCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.specification == "study.yaml"
     assert args.variables is None
     assert args.samples_file is None

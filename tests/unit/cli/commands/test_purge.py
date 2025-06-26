@@ -9,9 +9,8 @@ Tests for the `purge.py` file of the `cli/` folder.
 """
 
 import logging
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
-import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
@@ -19,30 +18,18 @@ from merlin.cli.commands.purge import PurgeCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `purge` command and its subcommands.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `purge` command and its subcommands registered.
-    """
-    return create_parser(PurgeCommand())
-
-
-def test_add_parser_sets_up_purge_command(parser: ArgumentParser):
+def test_add_parser_sets_up_purge_command(create_parser: FixtureCallable):
     """
     Ensure the `purge` command sets the correct default function.
 
     Args:
-        parser: Parser with the `purge` command and its subcommands registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = PurgeCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["purge", "workflow.yaml"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == PurgeCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.specification == "workflow.yaml"
     assert args.purge_force is False
     assert args.purge_steps == ["all"]

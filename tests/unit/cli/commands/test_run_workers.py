@@ -8,9 +8,8 @@
 Tests for the `run_workers.py` file of the `cli/` folder.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
-import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
@@ -18,30 +17,18 @@ from merlin.cli.commands.run_workers import RunWorkersCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `run-workers` command.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `run-workers` command registered.
-    """
-    return create_parser(RunWorkersCommand())
-
-
-def test_add_parser_sets_up_run_workers_command(parser: ArgumentParser):
+def test_add_parser_sets_up_run_workers_command(create_parser: FixtureCallable):
     """
     Test that the `run-workers` command registers all expected arguments and sets the correct defaults.
 
     Args:
-        parser: Parser with the `run-workers` command registered.
+        create_parser: A fixture to help create a parser.
     """
+    command = RunWorkersCommand()
+    parser = create_parser(command)
     args = parser.parse_args(["run-workers", "workflow.yaml"])
     assert hasattr(args, "func")
-    assert args.func.__name__ == RunWorkersCommand().process_command.__name__
+    assert args.func.__name__ == command.process_command.__name__
     assert args.specification == "workflow.yaml"
     assert args.worker_args == ""
     assert args.worker_steps == ["all"]

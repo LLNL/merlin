@@ -8,7 +8,7 @@
 Tests for the `status.py` file of the `cli/` folder.
 """
 
-from argparse import Namespace, ArgumentParser
+from argparse import Namespace
 
 import pytest
 
@@ -16,49 +16,23 @@ from merlin.cli.commands.status import DetailedStatusCommand, StatusCommand
 from tests.fixture_types import FixtureCallable
 
 
-@pytest.fixture
-def status_parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `status` command.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `status` command registered.
-    """
-    return create_parser(StatusCommand())
-
-
-@pytest.fixture
-def detailed_status_parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Returns an `ArgumentParser` configured with the `detailed-status` command.
-
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `detailed-status` command registered.
-    """
-    return create_parser(DetailedStatusCommand())
-
-
 class TestStatusCommand:
     """
     Tests for the `StatusCommand` object.
     """
 
-    def test_add_parser_sets_up_status_command(self, status_parser: ArgumentParser):
+    def test_add_parser_sets_up_status_command(self, create_parser: FixtureCallable):
         """
         Test that the `status` command parser sets up the expected defaults and subcommands.
 
         Args:
-            status_parser: Parser with the `status` command registered.
+            create_parser: A fixture to help create a parser.
         """
-        args = status_parser.parse_args(["status", "study.yaml"])
+        command = StatusCommand()
+        parser = create_parser(command)
+        args = parser.parse_args(["status", "study.yaml"])
         assert hasattr(args, "func")
-        assert args.func.__name__ == StatusCommand().process_command.__name__
+        assert args.func.__name__ == command.process_command.__name__
         assert args.spec_or_workspace == "study.yaml"
         assert not args.cb_help
         assert args.dump is None
@@ -153,16 +127,18 @@ class TestDetailedStatusCommand:
     Tests for the `DetailedStatusCommand` object.
     """
     
-    def test_add_parser_sets_up_detailed_status_command(self, detailed_status_parser: ArgumentParser):
+    def test_add_parser_sets_up_detailed_status_command(self, create_parser: FixtureCallable):
         """
         Test that the `detailed-status` command parser sets up the expected defaults and subcommands.
 
         Args:
-            detailed_status_parser: Parser with the `detailed-status` command registered.
+            create_parser: A fixture to help create a parser.
         """
-        args = detailed_status_parser.parse_args(["detailed-status", "study.yaml"])
+        command = DetailedStatusCommand()
+        parser = create_parser(command)
+        args = parser.parse_args(["detailed-status", "study.yaml"])
         assert hasattr(args, "func")
-        assert args.func.__name__ == DetailedStatusCommand().process_command.__name__
+        assert args.func.__name__ == command.process_command.__name__
         assert args.spec_or_workspace == "study.yaml"
         assert args.dump is None
         assert args.task_server == "celery"

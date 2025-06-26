@@ -9,7 +9,7 @@ Tests for the `config.py` file of the `cli/` folder.
 """
 
 import os
-from argparse import _SubParsersAction, ArgumentParser, Namespace, ArgumentTypeError
+from argparse import _SubParsersAction, Namespace, ArgumentTypeError
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -19,30 +19,17 @@ from merlin.cli.commands.config import ConfigCommand
 from tests.fixture_types import FixtureCallable, FixtureStr
 
 
-@pytest.fixture
-def parser(create_parser: FixtureCallable) -> ArgumentParser:
-    """
-    Fixture that returns a configured `ArgumentParser` with the `config` command added.
 
-    Args:
-        create_parser: A fixture to help create a parser.
-
-    Returns:
-        Parser with the `config` command and its subcommands registered.
-    """
-    return create_parser(ConfigCommand())
-
-
-
-def test_add_parser_includes_all_subcommands(parser: ArgumentParser):
+def test_add_parser_includes_all_subcommands(create_parser: FixtureCallable):
     """
     Verify that the `config` command parser includes all expected subcommands:
     `create`, `update-broker`, `update-backend`, and `use`.
 
     Args:
-        parser: Parser with the `config` command and its subcommands registered.
+        create_parser: A fixture to help create a parser.
     """
     config_subparser = None
+    parser = create_parser(ConfigCommand())
     for action in parser._subparsers._actions:
         if isinstance(action, _SubParsersAction):
             config_parser = action.choices.get("config")
