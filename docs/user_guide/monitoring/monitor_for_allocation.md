@@ -18,7 +18,7 @@ For each run of a study, the monitor ensures completion by performing the follow
 
 1. Verifying the presence of tasks in the designated queues.
 2. Confirming the ongoing processing of tasks by the assigned workers when the queues are empty.
-3. Restarting the study if there are no tasks in the queues and no workers processing tasks, but the workflow has not yet finished.
+3. Restarting the study if there are no tasks in the queues and no workers processing tasks, but the workflow has not yet finished. *This can be disabled using the `--no-restart` option.*
 
 The monitor includes a [`--sleep` option](#sleep), which introduces a deliberate delay. Before starting, the monitor waits for the specified `--sleep` duration, giving users time to populate the task queues for their run using the [`merlin run`](../command_line.md#run-merlin-run) command. Additionally, the monitor pauses for the `--sleep` duration between each check of the run. Finally, it will wait up to 10 times the specified `--sleep` duration for workers to spin up for the run.
 
