@@ -35,6 +35,7 @@ def test_add_parser_sets_up_monitor_command(create_parser: FixtureCallable):
     assert args.variables is None
     assert args.task_server == "celery"
     assert args.sleep == 60
+    assert not args.no_restart
 
 
 def test_process_command_all_steps(mocker: MockerFixture):
@@ -58,10 +59,11 @@ def test_process_command_all_steps(mocker: MockerFixture):
         variables=None,
         task_server="celery",
         sleep=5,
+        no_restart=False,
     )
     command.process_command(args)
 
-    monitor_class.assert_called_once_with(mock_spec, 5, "celery")
+    monitor_class.assert_called_once_with(mock_spec, 5, "celery", False)
     mock_monitor.monitor_all_runs.assert_called_once()
 
 
@@ -89,6 +91,7 @@ def test_monitor_process_command_with_specific_steps(mocker: MockerFixture, capl
         variables=None,
         task_server="celery",
         sleep=5,
+        no_restart=False,
     )
     command.process_command(args)
 

@@ -84,6 +84,12 @@ class MonitorCommand(CommandEntryPoint):
             help="Sleep duration between checking for workers.\
                                         Default: %(default)s",
         )
+        monitor.add_argument(
+            "--no-restart",
+            "-n",
+            action="store_true",
+            help="Disable the automatic restart functionality for this monitor.",
+        )
 
     def process_command(self, args: Namespace):
         """
@@ -115,7 +121,7 @@ class MonitorCommand(CommandEntryPoint):
                 LOG.info("Monitor: found tasks in queues and/or tasks being processed")
                 time.sleep(args.sleep)
         else:
-            monitor = Monitor(spec, args.sleep, args.task_server)
+            monitor = Monitor(spec, args.sleep, args.task_server, args.no_restart)
             monitor.monitor_all_runs()
 
         LOG.info("Monitor: ... stop condition met")
