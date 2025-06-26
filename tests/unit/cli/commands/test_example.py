@@ -39,10 +39,11 @@ def test_example_parser_sets_func(parser: ArgumentParser):
     Args:
         parser: Parser with the `example` command and its subcommands registered.
     """
-    parsed = parser.parse_args(["example", "list"])
-    assert parsed.workflow == "list"
-    assert callable(parsed.func)
-    assert parsed.func.__name__ == "process_command"
+    args = parser.parse_args(["example", "list"])
+    assert hasattr(args, "func")
+    assert args.func.__name__ == ExampleCommand().process_command.__name__
+    assert args.workflow == "list"
+    assert args.path is None
 
 
 def test_process_command_list(capsys: CaptureFixture, mocker: MockerFixture):

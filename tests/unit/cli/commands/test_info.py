@@ -38,9 +38,9 @@ def test_info_parser_sets_func(parser: ArgumentParser):
     Args:
         parser: Parser with the `info` command and its subcommands registered.
     """
-    parsed = parser.parse_args(["info"])
-    assert callable(parsed.func)
-    assert parsed.func.__name__ == "process_command"
+    args = parser.parse_args(["info"])
+    assert hasattr(args, "func")
+    assert args.func.__name__ == InfoCommand().process_command.__name__
 
 
 def test_info_process_command_calls_display(mocker: MockerFixture):
