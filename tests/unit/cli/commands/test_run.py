@@ -98,7 +98,7 @@ def test_process_command_with_local_mode_initializes_config(mocker: MockerFixtur
     # Mocks
     mocker.patch("merlin.cli.commands.run.verify_filepath", return_value="study.yaml")
     mocker.patch("merlin.cli.commands.run.parse_override_vars", return_value={})
-    
+
     mock_study = mocker.Mock()
     mock_expanded_spec = mocker.Mock()
     mock_expanded_spec.name = "study"
@@ -126,7 +126,7 @@ def test_process_command_with_local_mode_initializes_config(mocker: MockerFixtur
         no_errors=False,
         pgen_file=None,
         pargs=[],
-        run_mode="local"
+        run_mode="local",
     )
 
     RunCommand().process_command(args)
@@ -152,9 +152,8 @@ def test_process_command_raises_on_pargs_without_pgen(mocker: MockerFixture):
         no_errors=False,
         pgen_file=None,
         pargs=["foo"],
-        run_mode="distributed"
+        run_mode="distributed",
     )
 
     with pytest.raises(ValueError, match="Cannot use the 'pargs' parameter without specifying a 'pgen'!"):
         RunCommand().process_command(args)
-

@@ -88,6 +88,7 @@ def test_process_command_with_spec(mocker: MockerFixture, caplog: CaptureFixture
     query_workers_mock.assert_called_once_with("celery", ["foo", "bar"], None, None)
     assert "Searching for the following workers to stop" in caplog.text
 
+
 def test_process_command_logs_warning_for_unexpanded_worker(mocker: MockerFixture, caplog: CaptureFixture):
     """
     Ensure a warning is logged if a worker name from the spec contains `$`.

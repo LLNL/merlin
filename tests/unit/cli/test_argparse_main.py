@@ -15,12 +15,7 @@ from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
 from merlin import VERSION
-from merlin.cli.argparse_main import (
-    HelpParser,
-    build_main_parser,
-    DEFAULT_LOG_LEVEL,
-)
-from merlin.cli.commands.command_entry_point import CommandEntryPoint
+from merlin.cli.argparse_main import DEFAULT_LOG_LEVEL, HelpParser, build_main_parser
 from tests.fixture_types import FixtureList
 
 
@@ -36,6 +31,7 @@ def mock_all_commands(mocker: MockerFixture) -> FixtureList:
     Returns:
         A list of `DummyCommand` objects to be used for tests.
     """
+
     class DummyCommand:
         def __init__(self, name):
             self.name = name
@@ -51,7 +47,7 @@ def mock_all_commands(mocker: MockerFixture) -> FixtureList:
 def test_help_parser_error(mocker: MockerFixture, capsys: CaptureFixture):
     """
     Test that HelpParser.error prints help and exits with code 2.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         capsys: PyTest capsys fixture.
@@ -71,7 +67,7 @@ def test_help_parser_error(mocker: MockerFixture, capsys: CaptureFixture):
 def test_build_main_parser_adds_all_commands(mock_all_commands: FixtureList):
     """
     Test that build_main_parser adds subcommands from ALL_COMMANDS.
-    
+
     Args:
         mock_all_commands: A list of `DummyCommand` objects to be used for tests.
     """
@@ -91,7 +87,7 @@ def test_build_main_parser_adds_all_commands(mock_all_commands: FixtureList):
 def test_version_flag_prints_version_and_exits(mocker: MockerFixture, capsys: CaptureFixture, mock_all_commands: FixtureList):
     """
     Test that --version prints the correct version and exits.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         capsys: PyTest capsys fixture.
@@ -105,5 +101,3 @@ def test_version_flag_prints_version_and_exits(mocker: MockerFixture, capsys: Ca
 
     output = capsys.readouterr()
     assert VERSION in output.out
-
-

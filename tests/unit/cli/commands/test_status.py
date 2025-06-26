@@ -41,7 +41,6 @@ class TestStatusCommand:
         assert args.output_path is None
         assert not args.detailed
 
-
     def test_process_command_invalid_task_server(self):
         args = Namespace(
             spec_or_workspace="path/to/spec.yaml",
@@ -53,7 +52,6 @@ class TestStatusCommand:
         with pytest.raises(ValueError, match="only supported task server is celery"):
             StatusCommand().process_command(args)
 
-
     def test_process_command_invalid_dump_extension(self):
         args = Namespace(
             spec_or_workspace="path/to/spec.yaml",
@@ -64,7 +62,6 @@ class TestStatusCommand:
 
         with pytest.raises(ValueError, match="must end with .csv or .json"):
             StatusCommand().process_command(args)
-
 
     def test_process_command_with_valid_spec_file_and_status(self, mocker):
         mock_verify_filepath = mocker.patch("merlin.cli.commands.status.verify_filepath", return_value="path/to/spec.yaml")
@@ -86,7 +83,6 @@ class TestStatusCommand:
         mock_status_cls.assert_called_once()
         mock_status_obj.display.assert_called_once()
 
-
     def test_process_command_dumps_status(self, mocker):
         mocker.patch("merlin.cli.commands.status.verify_filepath", return_value="spec.yaml")
         mocker.patch("merlin.cli.commands.status.get_spec_with_expansion")
@@ -103,7 +99,6 @@ class TestStatusCommand:
         StatusCommand().process_command(args)
 
         mock_status_obj.dump.assert_called_once()
-
 
     def test_process_command_invalid_path_logs_error(self, mocker):
         mocker.patch("merlin.cli.commands.status.verify_filepath", side_effect=ValueError)
@@ -126,7 +121,7 @@ class TestDetailedStatusCommand:
     """
     Tests for the `DetailedStatusCommand` object.
     """
-    
+
     def test_add_parser_sets_up_detailed_status_command(self, create_parser: FixtureCallable):
         """
         Test that the `detailed-status` command parser sets up the expected defaults and subcommands.

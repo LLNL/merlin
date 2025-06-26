@@ -136,10 +136,7 @@ def test_subcommands_with_id(parser: ArgumentParser, command: str, subcmd: str):
 
 
 @pytest.mark.parametrize("command", ["get", "delete"])
-@pytest.mark.parametrize("subcmd", [
-    "all-studies", "all-runs", "all-logical-workers",
-    "all-physical-workers", "everything"
-])
+@pytest.mark.parametrize("subcmd", ["all-studies", "all-runs", "all-logical-workers", "all-physical-workers", "everything"])
 def test_subcommands_without_id(parser: ArgumentParser, command: str, subcmd: str):
     """
     Test that subcommands not requiring an ID are parsed correctly.

@@ -34,6 +34,7 @@ def test_add_parser_sets_up_stop_workers_command(create_parser: FixtureCallable)
     assert args.workers is None
     assert args.spec is None
 
+
 def test_process_command_calls_stop_workers_no_spec(mocker: MockerFixture):
     """
     Ensure stop_workers is called when no spec is provided.
@@ -49,6 +50,7 @@ def test_process_command_calls_stop_workers_no_spec(mocker: MockerFixture):
 
     mock_stop.assert_called_once_with("celery", [], ["q1"], ["worker1"])
 
+
 def test_process_command_with_spec_and_worker_names(mocker: MockerFixture):
     """
     Test loading a spec file, getting worker names, and calling stop_workers with them.
@@ -61,9 +63,7 @@ def test_process_command_with_spec_and_worker_names(mocker: MockerFixture):
     mock_verify = mocker.patch("merlin.cli.commands.stop_workers.verify_filepath", return_value="study.yaml")
 
     mock_spec = mocker.patch("merlin.cli.commands.stop_workers.MerlinSpec")
-    mock_spec.load_specification.return_value.get_worker_names.return_value = [
-        "worker.alpha", "worker.beta"
-    ]
+    mock_spec.load_specification.return_value.get_worker_names.return_value = ["worker.alpha", "worker.beta"]
 
     args = Namespace(
         spec="study.yaml",
@@ -76,6 +76,7 @@ def test_process_command_with_spec_and_worker_names(mocker: MockerFixture):
     mock_verify.assert_called_once_with("study.yaml")
     mock_spec.load_specification.assert_called_once_with("study.yaml")
     mock_stop.assert_called_once_with("celery", ["worker.alpha", "worker.beta"], None, None)
+
 
 def test_process_command_logs_warning_on_unexpanded_worker(mocker: MockerFixture, caplog: CaptureFixture):
     """
@@ -92,13 +93,10 @@ def test_process_command_logs_warning_on_unexpanded_worker(mocker: MockerFixture
     mocker.patch("merlin.cli.commands.stop_workers.verify_filepath", return_value="spec.yaml")
 
     mock_spec = mocker.patch("merlin.cli.commands.stop_workers.MerlinSpec")
-    mock_spec.load_specification.return_value.get_worker_names.return_value = [
-        "worker.1", "worker.$step"
-    ]
+    mock_spec.load_specification.return_value.get_worker_names.return_value = ["worker.1", "worker.$step"]
 
     args = Namespace(spec="spec.yaml", task_server="celery", queues=None, workers=None)
     StopWorkersCommand().process_command(args)
 
     assert any("is unexpanded" in record.message for record in caplog.records)
     mock_stop.assert_called_once_with("celery", ["worker.1", "worker.$step"], None, None)
-

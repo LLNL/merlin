@@ -8,8 +8,10 @@
 Tests for the `command_entry_point.py` file.
 """
 
-import pytest
 from argparse import ArgumentParser, Namespace
+
+import pytest
+
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 
 
@@ -21,6 +23,7 @@ def test_cannot_instantiate_abstract_class():
 
 def test_concrete_subclass_must_implement_add_parser_and_process_command():
     """Ensure subclass missing methods raises TypeError."""
+
     # Only implements add_parser
     class IncompleteCommand(CommandEntryPoint):
         def add_parser(self, subparsers: ArgumentParser):

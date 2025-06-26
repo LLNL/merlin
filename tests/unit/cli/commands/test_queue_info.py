@@ -46,19 +46,15 @@ def test_process_command_no_spec_valid_args(mocker: MockerFixture, capsys: Captu
         mocker: PyTest mocker fixture.
         capsys: PyTest capsys fixture.
     """
-    query_mock = mocker.patch("merlin.cli.commands.queue_info.query_queues", return_value={
-        "queue1": {"jobs": 5, "consumers": 2},
-        "queue2": {"jobs": 3, "consumers": 1},
-    })
-
-    args = Namespace(
-        specification=None,
-        steps=["all"],
-        variables=None,
-        dump=None,
-        specific_queues=None,
-        task_server="celery"
+    query_mock = mocker.patch(
+        "merlin.cli.commands.queue_info.query_queues",
+        return_value={
+            "queue1": {"jobs": 5, "consumers": 2},
+            "queue2": {"jobs": 3, "consumers": 1},
+        },
     )
+
+    args = Namespace(specification=None, steps=["all"], variables=None, dump=None, specific_queues=None, task_server="celery")
 
     cmd = QueueInfoCommand()
     cmd.process_command(args)
@@ -77,16 +73,13 @@ def test_process_command_with_spec(mocker: MockerFixture):
         mocker: PyTest mocker fixture.
     """
     mock_spec = mocker.Mock()
-    mock_get_spec = mocker.patch("merlin.cli.commands.queue_info.get_merlin_spec_with_override", return_value=(mock_spec, None))
+    mock_get_spec = mocker.patch(
+        "merlin.cli.commands.queue_info.get_merlin_spec_with_override", return_value=(mock_spec, None)
+    )
     query_mock = mocker.patch("merlin.cli.commands.queue_info.query_queues", return_value={})
 
     args = Namespace(
-        specification="workflow.yaml",
-        steps=["all"],
-        variables=None,
-        dump=None,
-        specific_queues=None,
-        task_server="celery"
+        specification="workflow.yaml", steps=["all"], variables=None, dump=None, specific_queues=None, task_server="celery"
     )
 
     cmd = QueueInfoCommand()
@@ -110,12 +103,7 @@ def test_process_command_dumps_queue_info(mocker: MockerFixture):
     dump_mock = mocker.patch("merlin.cli.commands.queue_info.dump_queue_info")
 
     args = Namespace(
-        specification=None,
-        steps=["all"],
-        variables=None,
-        dump="output.json",
-        specific_queues=None,
-        task_server="celery"
+        specification=None, steps=["all"], variables=None, dump="output.json", specific_queues=None, task_server="celery"
     )
 
     cmd = QueueInfoCommand()
@@ -129,12 +117,7 @@ def test_process_command_raises_on_bad_dump_extension():
     Test that an unsupported file extension for `--dump` raises a ValueError.
     """
     args = Namespace(
-        specification=None,
-        steps=["all"],
-        variables=None,
-        dump="badfile.txt",
-        specific_queues=None,
-        task_server="celery"
+        specification=None, steps=["all"], variables=None, dump="badfile.txt", specific_queues=None, task_server="celery"
     )
 
     with pytest.raises(ValueError, match="Unsupported file type"):
@@ -146,12 +129,7 @@ def test_process_command_raises_on_steps_without_spec():
     Test that using `--steps` without `--spec` raises a ValueError.
     """
     args = Namespace(
-        specification=None,
-        steps=["step1", "step2"],
-        variables=None,
-        dump=None,
-        specific_queues=None,
-        task_server="celery"
+        specification=None, steps=["step1", "step2"], variables=None, dump=None, specific_queues=None, task_server="celery"
     )
 
     with pytest.raises(ValueError, match="--steps argument MUST be used with the --specification"):
@@ -163,14 +141,8 @@ def test_process_command_raises_on_vars_without_spec():
     Test that using `--vars` without `--spec` raises a ValueError.
     """
     args = Namespace(
-        specification=None,
-        steps=["all"],
-        variables=["VAR=1"],
-        dump=None,
-        specific_queues=None,
-        task_server="celery"
+        specification=None, steps=["all"], variables=["VAR=1"], dump=None, specific_queues=None, task_server="celery"
     )
 
     with pytest.raises(ValueError, match="--vars argument MUST be used with the --specification"):
         QueueInfoCommand().process_command(args)
-

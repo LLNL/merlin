@@ -15,6 +15,7 @@ import pytest
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from tests.fixture_types import FixtureCallable, FixtureStr
 
+
 @pytest.fixture(scope="session")
 def cli_testing_dir(create_testing_dir: FixtureCallable, temp_output_dir: FixtureStr) -> FixtureStr:
     """
@@ -51,5 +52,5 @@ def create_parser() -> FixtureCallable:
         subparsers = parser.add_subparsers(dest="main_command")
         cmd.add_parser(subparsers)
         return parser
-    
+
     return _create_parser

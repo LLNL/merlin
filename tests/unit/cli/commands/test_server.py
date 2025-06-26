@@ -36,7 +36,7 @@ def test_add_parser_sets_up_server_command(create_parser: FixtureCallable):
 def test_process_command_calls_init(mocker: MockerFixture):
     """
     Ensure `init` subcommand calls `init_server`.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """
@@ -48,7 +48,7 @@ def test_process_command_calls_init(mocker: MockerFixture):
 def test_process_command_calls_start(mocker: MockerFixture):
     """
     Ensure `start` subcommand calls `start_server`.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """
@@ -60,7 +60,7 @@ def test_process_command_calls_start(mocker: MockerFixture):
 def test_process_command_calls_stop(mocker: MockerFixture):
     """
     Ensure `stop` subcommand calls `stop_server`.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """
@@ -72,7 +72,7 @@ def test_process_command_calls_stop(mocker: MockerFixture):
 def test_process_command_calls_status(mocker: MockerFixture):
     """
     Ensure `status` subcommand calls `status_server`.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """
@@ -84,7 +84,7 @@ def test_process_command_calls_status(mocker: MockerFixture):
 def test_process_command_calls_restart(mocker: MockerFixture):
     """
     Ensure `restart` subcommand calls `restart_server`.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """
@@ -96,7 +96,7 @@ def test_process_command_calls_restart(mocker: MockerFixture):
 def test_process_command_calls_config(mocker: MockerFixture):
     """
     Ensure `config` subcommand calls `config_server` with the provided args.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """
@@ -109,7 +109,7 @@ def test_process_command_calls_config(mocker: MockerFixture):
 def test_process_command_sets_lc_all_if_missing(mocker: MockerFixture):
     """
     Ensure LC_ALL is set to 'C' if it's missing in the environment.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """
@@ -123,7 +123,7 @@ def test_process_command_sets_lc_all_if_missing(mocker: MockerFixture):
 def test_process_command_raises_if_lc_all_invalid(mocker: MockerFixture):
     """
     Ensure a ValueError is raised if LC_ALL is set to a value other than 'C'.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """

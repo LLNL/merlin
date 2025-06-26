@@ -97,7 +97,6 @@ def test_process_command_initializes_config_in_local_mode(mocker: MockerFixture,
     mock_run.assert_called_once()
 
 
-
 def test_process_command_raises_if_no_spec_found(mocker: MockerFixture):
     """
     Test `process_command` raises ValueError when no matching spec file is found.
@@ -126,4 +125,3 @@ def test_process_command_raises_if_multiple_specs_found(mocker: MockerFixture):
     args = Namespace(restart_dir="fake_dir", run_mode="distributed")
     with pytest.raises(ValueError, match="matches more than one provenance spec file"):
         RestartCommand().process_command(args)
-

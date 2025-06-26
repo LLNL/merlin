@@ -45,7 +45,7 @@ class TestParseOverrideVars:
     def test_raises_if_reserved_key(self, mocker: MockerFixture):
         """
         Should raise ValueError if the key is in the set of reserved variable names.
-        
+
         Args:
             mocker: PyTest mocker fixture.
         """
@@ -70,7 +70,7 @@ class TestGetMerlinSpecWithOverride:
     def test_returns_spec_and_filepath(self, mocker: MockerFixture):
         """
         Should return a parsed MerlinSpec and verified filepath, using all helper functions.
-        
+
         Args:
             mocker: PyTest mocker fixture.
         """

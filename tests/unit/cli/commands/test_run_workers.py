@@ -48,7 +48,9 @@ def test_process_command_launches_workers_and_creates_logical_workers(mocker: Mo
     mock_spec.get_task_queues.return_value = {"step1": "queue1", "step2": "queue2"}
     mock_spec.get_worker_step_map.return_value = {"workerA": ["step1", "step2"]}
 
-    mock_get_spec = mocker.patch("merlin.cli.commands.run_workers.get_merlin_spec_with_override", return_value=(mock_spec, "workflow.yaml"))
+    mock_get_spec = mocker.patch(
+        "merlin.cli.commands.run_workers.get_merlin_spec_with_override", return_value=(mock_spec, "workflow.yaml")
+    )
     mock_launch = mocker.patch("merlin.cli.commands.run_workers.launch_workers", return_value="launched")
     mock_db = mocker.patch("merlin.cli.commands.run_workers.MerlinDatabase")
     mock_log = mocker.patch("merlin.cli.commands.run_workers.LOG")
@@ -102,4 +104,3 @@ def test_process_command_echo_only_mode_prints_command(mocker: MockerFixture, ca
     captured = capsys.readouterr()
     assert "echo-cmd" in captured.out
     mock_launch.assert_called_once_with(mock_spec, ["all"], "--autoscale=2,10", False, True)
-

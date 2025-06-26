@@ -9,15 +9,14 @@ Tests for the `config.py` file of the `cli/` folder.
 """
 
 import os
-from argparse import _SubParsersAction, Namespace, ArgumentTypeError
-from unittest.mock import patch, MagicMock
+from argparse import ArgumentTypeError, Namespace, _SubParsersAction
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pytest_mock import MockerFixture
 
 from merlin.cli.commands.config import ConfigCommand
 from tests.fixture_types import FixtureCallable, FixtureStr
-
 
 
 def test_add_parser_includes_all_subcommands(create_parser: FixtureCallable):
