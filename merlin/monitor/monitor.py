@@ -116,6 +116,47 @@ class Monitor:
 
             index += 1
 
+    def _check_task_activity(self, run: RunEntity) -> bool:
+        """
+        Checks whether there is active task activity for the given run.
+
+        This method first checks if there are any tasks in the task server's queues. If not,
+        it then checks whether any workers are currently processing tasks. If either of these
+        conditions is true, the method considers the workflow to be active and returns True.
+
+        Args:
+            run (RunEntity): The run entity representing the workflow run to check for activity.
+
+        Returns:
+            True if tasks are in the queues or being processed by workers, False otherwise.
+        """
+        # Check if any tasks are currently in the queues
+        if self.task_server_monitor.check_tasks(run):
+            LOG.info("Monitor: Found tasks in queues, keeping allocation alive.")
+            return True
+
+        # If no tasks are in the queues, check if workers are processing tasks
+        if self.task_server_monitor.check_workers_processing(run.get_queues()):
+            LOG.info("Monitor: Found workers processing tasks, keeping allocation alive.")
+            return True
+
+        return False
+
+    def _handle_transient_exception(self, exc: Exception):
+        """
+        Handles transient exceptions that may occur during monitoring.
+
+        This method logs the exception type, message, and full traceback, then
+        sleeps for the configured interval before retrying. It is designed to
+        gracefully handle recoverable errors such as Redis timeouts or broker issues.
+
+        Args:
+            exc (Exception): The exception instance that was caught during execution.
+        """
+        LOG.warning(f"{exc.__class__.__name__} occurred:\n{exc}")
+        LOG.warning(f"Full traceback:\n{traceback.format_exc()}")
+        time.sleep(self.sleep)
+
     def monitor_single_run(self, run: RunEntity):
         """
         Monitors a single run of a study until it completes to ensure that the allocation stays alive
@@ -131,9 +172,7 @@ class Monitor:
         LOG.info(f"Monitor: Monitoring run with workspace '{run_workspace}'...")
 
         # Wait for workers to spin up before checking on tasks
-        worker_names = [
-            self.merlin_db.get("logical_worker", worker_id=worker_id).get_name() for worker_id in run.get_workers()
-        ]
+        worker_names = [self.merlin_db.get("logical_worker", worker_id=wid).get_name() for wid in run.get_workers()]
         LOG.info(f"Monitor: Waiting for the following workers to start: {worker_names}...")
         self.task_server_monitor.wait_for_workers(worker_names, self.sleep)
         LOG.info("Monitor: Workers have started.")
@@ -143,19 +182,13 @@ class Monitor:
                 # Run worker health check (checks for dead workers and restarts them if necessary)
                 self.task_server_monitor.run_worker_health_check(run.get_workers())
 
-                # Check if any tasks are currently in the queues
-                active_tasks = self.task_server_monitor.check_tasks(run)
-                if active_tasks:
-                    LOG.info("Monitor: Found tasks in queues, keeping allocation alive.")
-                else:
-                    # If no tasks are in the queues, check if workers are processing tasks
-                    active_tasks = self.task_server_monitor.check_workers_processing(run.get_queues())
-                    if active_tasks:
-                        LOG.info("Monitor: Found workers processing tasks, keeping allocation alive.")
+                # Check if any tasks are currently in the queues or if workers are processing tasks
+                active_tasks = self._check_task_activity(run)
+
+                run_complete = run.run_complete  # Re-query db for this value
 
                 # If no tasks are in the queues or being processed by workers and the run is not complete, we have a hanging
                 # workflow so restart it
-                run_complete = run.run_complete  # Re-query db for this value
                 if not active_tasks and not run_complete:
                     if self.no_restart:
                         LOG.warning(
@@ -167,18 +200,8 @@ class Monitor:
                 if not run_complete:
                     time.sleep(self.sleep)
             # The below exceptions do not modify the `run_complete` value so the loop should retry
-            except RedisTimeoutError as exc:
-                LOG.warning(f"Redis timed out:\n{exc}")
-                LOG.warning(f"Full traceback:\n{traceback.format_exc()}")
-                time.sleep(self.sleep)
-            except OperationalError as exc:
-                LOG.warning(f"Kombu raised an error:\n{exc}")
-                LOG.warning(f"Full traceback:\n{traceback.format_exc()}")
-                time.sleep(self.sleep)
-            except TimeoutError as exc:
-                LOG.warning(f"A standard TimeoutError has occurred:\n{exc}")
-                LOG.warning(f"Full traceback:\n{traceback.format_exc()}")
-                time.sleep(self.sleep)
+            except (RedisTimeoutError, OperationalError, TimeoutError) as exc:
+                self._handle_transient_exception(exc)
 
         LOG.info(f"Monitor: Run with workspace '{run_workspace}' has completed.")
 
