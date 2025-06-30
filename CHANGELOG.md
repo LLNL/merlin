@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Ability to turn off the auto-restart functionality of the monitor with `--no-restart`
+- Tests for the monitor files
 
 ### Changed
 - Refactored the `main.py` module so that it's broken into smaller, more-manageable pieces
