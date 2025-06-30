@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - LICENSE: Legal permissions (e.g., MIT terms)
   - COPYRIGHT: Ownership, institutional metadata
   - Make commands that change version/copyright year have been modified
+- Refactored the `main.py` module so that it's broken into smaller, more-manageable pieces
 
 ### Fixed
 - Running Merlin locally no longer requires an `app.yaml` configuration file

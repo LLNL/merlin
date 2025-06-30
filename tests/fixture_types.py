@@ -25,7 +25,7 @@ The types here will be defined as such:
 import sys
 from argparse import Namespace
 from collections.abc import Callable
-from typing import Any, Dict, Generic, Tuple, TypeVar
+from typing import Any, Dict, Generic, List, Tuple, TypeVar
 
 import pytest
 from celery import Celery
@@ -55,6 +55,7 @@ if sys.version_info >= (3, 9):
     FixtureSignature = Annotated[Signature, pytest.fixture]
     FixtureStr = Annotated[str, pytest.fixture]
     FixtureTuple = Annotated[Tuple[K, V], pytest.fixture]
+    FixtureList = Annotated[List[K], pytest.fixture]
 else:
     # Fallback for Python 3.8
     class FixtureDict(Generic[K, V], Dict[K, V]):
@@ -66,6 +67,12 @@ else:
     class FixtureTuple(Generic[K, V], Tuple[K, V]):
         """
         This class is necessary to allow FixtureTuple to be subscriptable
+        when using it to type hint.
+        """
+
+    class FixtureList(Generic[K, V], List[K]):
+        """
+        This class is necessary to allow FixtureList to be subscriptable
         when using it to type hint.
         """
 
