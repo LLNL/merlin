@@ -21,7 +21,6 @@ import logging
 import subprocess
 import time
 import traceback
-from typing import List
 
 from kombu.exceptions import OperationalError
 from redis.exceptions import TimeoutError as RedisTimeoutError
@@ -142,7 +141,7 @@ class Monitor:
             return True
 
         return False
-    
+
     def _handle_transient_exception(self, exc: Exception):
         """
         Handles transient exceptions that may occur during monitoring.

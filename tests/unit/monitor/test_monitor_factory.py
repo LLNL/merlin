@@ -1,15 +1,25 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
+"""
+Tests for the `monitor_factory.py` module.
+"""
+
 import pytest
 
-from merlin.monitor.monitor_factory import MonitorFactory
-from merlin.monitor.celery_monitor import CeleryMonitor
 from merlin.exceptions import MerlinInvalidTaskServerError
+from merlin.monitor.celery_monitor import CeleryMonitor
+from merlin.monitor.monitor_factory import MonitorFactory
 
 
 @pytest.fixture
 def factory() -> MonitorFactory:
     """
     Fixture to provide a `MonitorFactory` instance.
-    
+
     Returns:
         An instance of the `MonitorFactory` object.
     """
@@ -51,4 +61,3 @@ def test_get_monitor_invalid(factory: MonitorFactory):
         factory.get_monitor("invalid")
 
     assert "Task server unsupported by Merlin: invalid" in str(excinfo.value)
-

@@ -1,6 +1,17 @@
-import pytest
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
+"""
+Tests for the `task_server_monitor.py` module.
+"""
+
 from typing import List
 from unittest.mock import MagicMock
+
+import pytest
 
 from merlin.db_scripts.entities.run_entity import RunEntity
 from merlin.monitor.task_server_monitor import TaskServerMonitor  # Update with actual import path
@@ -109,7 +120,7 @@ def test_run_worker_health_check(monitor: DummyTaskServerMonitor):
 def test_check_tasks(monitor: DummyTaskServerMonitor):
     """
     Test that `check_tasks` returns False and stores the RunEntity instance.
-    
+
     Args:
         monitor: A dummy instantiation of a `TaskServerMonitor` subclass.
     """

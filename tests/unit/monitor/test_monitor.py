@@ -1,32 +1,50 @@
-from unittest.mock import MagicMock, call
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
+"""
+Tests for the `monitor.py` module.
+"""
+
+from unittest.mock import MagicMock
 
 import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-
 from merlin.exceptions import RestartException
 from merlin.monitor.monitor import Monitor
 
 
 @pytest.fixture
-def mock_spec():
-    """Mock MerlinSpec object."""
-    return MagicMock(name="MockSpec")
+def monitor(mocker: MockerFixture) -> Monitor:
+    """
+    Fixture for `Monitor` with patched `MerlinDatabase` and `task_server_monitor`.
 
+    Args:
+        mocker: PyTest mocker fixture.
 
-@pytest.fixture
-def monitor(mocker, mock_spec):
-    """Fixture for `Monitor` with patched `MerlinDatabase` and `task_server_monitor`."""
-    mock_monitor = Monitor(spec=mock_spec, sleep=1, task_server="celery")
+    Returns:
+        A `Monitor` object with mocked properties.
+    """
+    mock_spec = MagicMock(name="MockSpec")
+    mock_monitor = Monitor(spec=mock_spec, sleep=1, task_server="celery", no_restart=False)
     mock_monitor.merlin_db = mocker.MagicMock(name="MockMerlinDB")
     mock_monitor.task_server_monitor = mocker.MagicMock(name="MockTaskServerMonitor")
     return mock_monitor
 
 
-def test_monitor_all_runs_handles_completed_and_incomplete_runs(mocker, monitor):
-    """Test `monitor_all_runs` correctly handles a mix of completed and incomplete runs."""
+def test_monitor_all_runs_handles_completed_and_incomplete_runs(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test `monitor_all_runs` correctly handles a mix of completed and incomplete runs.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
 
     # Set up two mock run objects
     mock_run_1 = mocker.MagicMock()
@@ -60,14 +78,28 @@ def test_monitor_all_runs_handles_completed_and_incomplete_runs(mocker, monitor)
     monitor.monitor_single_run.assert_called_once_with(mock_run_2)
 
 
-def test_check_task_activity_tasks_in_queue(mocker, monitor):
+def test_check_task_activity_tasks_in_queue(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test that `_check_task_activity` returns True when there are tasks in the queues.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
     run = mocker.MagicMock()
     monitor.task_server_monitor.check_tasks.return_value = True
     result = monitor._check_task_activity(run)
     assert result is True
 
 
-def test_check_task_activity_workers_processing(mocker, monitor):
+def test_check_task_activity_workers_processing(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test that `_check_task_activity` returns True when workers are processing tasks.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
     run = mocker.MagicMock()
     monitor.task_server_monitor.check_tasks.return_value = False
     monitor.task_server_monitor.check_workers_processing.return_value = True
@@ -76,7 +108,14 @@ def test_check_task_activity_workers_processing(mocker, monitor):
     assert result is True
 
 
-def test_check_task_activity_inactive(mocker, monitor):
+def test_check_task_activity_inactive(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test that `_check_task_activity` returns False when no tasks are in the queue and no workers are active.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
     run = mocker.MagicMock()
     monitor.task_server_monitor.check_tasks.return_value = False
     monitor.task_server_monitor.check_workers_processing.return_value = False
@@ -84,14 +123,29 @@ def test_check_task_activity_inactive(mocker, monitor):
     assert result is False
 
 
-def test_handle_transient_exception_logs_and_sleeps(mocker, monitor):
+def test_handle_transient_exception_logs_and_sleeps(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test that `_handle_transient_exception` logs the exception and sleeps for the specified interval.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
     mock_sleep = mocker.patch("time.sleep")
     mock_exception = RedisTimeoutError("redis timed out")
     monitor._handle_transient_exception(mock_exception)
     mock_sleep.assert_called_once_with(monitor.sleep)
 
 
-def test_monitor_single_run_completes_successfully(mocker, monitor):
+def test_monitor_single_run_completes_successfully(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test `monitor_single_run` completes without restarting when the run finishes
+    after one monitoring loop and there are no active tasks.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
     run = mocker.MagicMock()
     run.get_workspace.return_value = "workspace1"
     run.get_workers.return_value = ["w1"]
@@ -118,7 +172,14 @@ def test_monitor_single_run_completes_successfully(mocker, monitor):
     monitor.restart_workflow.assert_not_called()
 
 
-def test_restart_workflow_success(mocker, monitor):
+def test_restart_workflow_success(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test that `restart_workflow` successfully restarts a workflow when the subprocess call returns a zero exit code.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
     run = mocker.MagicMock()
     run.get_workspace.return_value = "workspace"
 
@@ -129,7 +190,14 @@ def test_restart_workflow_success(mocker, monitor):
     mock_subproc.assert_called_once()
 
 
-def test_restart_workflow_failure(mocker, monitor):
+def test_restart_workflow_failure(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test that `restart_workflow` raises a `RestartException` when the subprocess call fails.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
     run = mocker.MagicMock()
     run.get_workspace.return_value = "workspace"
 
@@ -140,7 +208,15 @@ def test_restart_workflow_failure(mocker, monitor):
         monitor.restart_workflow(run)
 
 
-def test_restart_workflow_path_invalid(mocker, monitor, caplog):
+def test_restart_workflow_path_invalid(mocker: MockerFixture, monitor: Monitor, caplog: CaptureFixture):
+    """
+    Test that `restart_workflow` logs a warning when the run's workspace path is invalid.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+        caplog: PyTest caplog fixture.
+    """
     run = mocker.MagicMock()
     run.get_workspace.return_value = "workspace"
 
