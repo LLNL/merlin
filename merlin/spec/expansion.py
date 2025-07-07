@@ -224,19 +224,19 @@ def determine_user_variables(*user_var_dicts: List[Dict]) -> Dict:
          'TARGET': 'target_dir', 'PATH': '$(SPECROOT)/target_dir'}
         ```
     """
-    all_var_dicts = dict(ChainMap(*user_var_dicts))
     determined_results = {}
-    for key, val in all_var_dicts.items():
-        if key in RESERVED:
-            raise ValueError(f"Cannot reassign value of reserved word '{key}'! Reserved words are: {RESERVED}.")
-        new_val = str(val)
-        if contains_token(new_val):
-            for determined_key, determined_val in determined_results.items():
-                var_determined_key = var_ref(determined_key)
-                if var_determined_key in new_val:
-                    new_val = new_val.replace(var_determined_key, determined_val)
-        new_val = expandvars(expanduser(new_val))
-        determined_results[key.upper()] = new_val
+    for var_dict in user_var_dicts:
+        for key, val in var_dict.items():
+            if key in RESERVED:
+                raise ValueError(f"Cannot reassign value of reserved word '{key}'! Reserved words are: {RESERVED}.")
+            new_val = str(val)
+            if contains_token(new_val):
+                for determined_key, determined_val in determined_results.items():
+                    var_determined_key = var_ref(determined_key)
+                    if var_determined_key in new_val:
+                        new_val = new_val.replace(var_determined_key, determined_val)
+            new_val = expandvars(expanduser(new_val))
+            determined_results[key.upper()] = new_val
     return determined_results
 
 
