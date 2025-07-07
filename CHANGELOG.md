@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New GitHub actions to reduce common code in CI
 - COPYRIGHT file for ownership details
 - New check for copyright headers in the Makefile
+- Refactored the `main.py` module so that it's broken into smaller, more-manageable pieces
+- A page in the docs explaining the `feature_demo` example
 
 ### Changed
 - The `merlin config` command:
