@@ -434,8 +434,7 @@ def test_multiple_dicts_with_overlapping_keys():
     result = determine_user_variables(vars1, vars2)
     assert result == {"X": "1", "Y": "world", "Z": "3"}
 
-# TODO figure out why these tests are failing
-# TODO finish writing tests for this file and the rest of the spec folder
+
 def test_variable_reference_resolution():
     """
     Test that variable references like `$(VAR)` are correctly resolved from prior keys.
@@ -448,9 +447,12 @@ def test_variable_reference_resolution():
     assert result == {"TARGET": "subdir", "RESULT_PATH": "subdir/results"}
 
 
-def test_expand_env_and_user_paths(mocker):
+def test_expand_env_and_user_paths(mocker: MockerFixture):
     """
     Test that environment variables and user (~) paths are expanded.
+
+    Args:
+        mocker: PyTest mocker fixture.
     """
     mocker.patch.dict(os.environ, {"MYENV": "envval"})
     user_vars = {"PATH": "~/workspace/${MYENV}"}
@@ -622,9 +624,12 @@ def test_parameter_substitutions_for_cmd_correct_return_codes():
     assert result["$(MERLIN_RAISE_ERROR)"] == str(int(ReturnCode.RAISE_ERROR))
 
 
-def test_expand_spec_no_study_basic(mocker):
+def test_expand_spec_no_study_basic(mocker: MockerFixture):
     """
     Test that the function expands a spec using merged environment variables and override vars.
+
+    Args:
+        mocker: PyTest mocker fixture.
     """
     filepath = "fake/path/spec.yaml"
     override_vars = {"TARGET": "override_val"}
@@ -670,9 +675,12 @@ def test_expand_spec_no_study_basic(mocker):
     assert result == "final expanded output"
 
 
-def test_expand_spec_no_study_no_vars_section(mocker):
+def test_expand_spec_no_study_no_vars_section(mocker: MockerFixture):
     """
     Test when the spec has no 'variables' or 'labels' section.
+
+    Args:
+        mocker: PyTest mocker fixture.
     """
     filepath = "fake/path/spec.yaml"
     override_vars = {}
@@ -701,9 +709,12 @@ def test_expand_spec_no_study_no_vars_section(mocker):
     assert result == "unchanged output"
 
 
-def test_get_spec_with_expansion_basic(mocker):
+def test_get_spec_with_expansion_basic(mocker: MockerFixture):
     """
     Test that the function returns a MerlinSpec object with verified path and expanded text.
+
+    Args:
+        mocker: PyTest mocker fixture.
     """
     filepath = "specs/sample.yaml"
     verified_path = "/abs/specs/sample.yaml"
@@ -727,9 +738,12 @@ def test_get_spec_with_expansion_basic(mocker):
     assert result == mock_spec_instance
 
 
-def test_get_spec_with_expansion_no_overrides(mocker):
+def test_get_spec_with_expansion_no_overrides(mocker: MockerFixture):
     """
     Test the function behavior when no overrides are passed.
+
+    Args:
+        mocker: PyTest mocker fixture.
     """
     filepath = "specs/no_overrides.yaml"
     expanded_text = "no_overrides_expanded"
