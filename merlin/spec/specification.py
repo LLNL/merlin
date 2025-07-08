@@ -80,6 +80,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
     def __init__(self):  # pylint: disable=W0246
         """Initializes a MerlinSpec object."""
         super().__init__()
+        self.merlin = {}
+        self.user = {}
 
     @property
     def yaml_sections(self) -> Dict:
