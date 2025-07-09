@@ -19,6 +19,8 @@ __all__ = (
     "InvalidChainException",
     "RestartException",
     "NoWorkersException",
+    "MerlinInvalidTaskServerError",
+    "BackendNotSupportedError",
 )
 
 
