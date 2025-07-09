@@ -11,9 +11,8 @@ import os
 import re
 from contextlib import suppress
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
-from celery import current_task
 from maestrowf.abstracts.enums import State
 from maestrowf.abstracts.interfaces.scriptadapter import ScriptAdapter
 from maestrowf.datastructures.core.executiongraph import _StepRecord
@@ -29,39 +28,62 @@ from merlin.utils import needs_merlin_expansion
 LOG = logging.getLogger(__name__)
 
 
-def get_current_worker() -> str:
+def get_current_worker(task_server: str = "celery") -> Optional[str]:
     """
-    Get the worker on the current running task from Celery.
+    Get the worker on the current running task from the configured task server.
 
     This function retrieves the name of the worker that is currently
-    executing the task. It extracts the worker's name from the task's
-    request hostname.
+    executing the task. The implementation varies based on the task server type.
+
+    Args:
+        task_server: The task server type ("celery", etc.)
 
     Returns:
-        The name of the current worker.
+        The name of the current worker, or None if unable to determine.
     """
-    worker = re.search(r"@.+\.", current_task.request.hostname).group()
-    worker = worker[1 : len(worker) - 1]
-    return worker
+    if task_server == "celery":
+        try:
+            from celery import current_task  # pylint: disable=C0415
+            worker = re.search(r"@.+\.", current_task.request.hostname).group()
+            worker = worker[1 : len(worker) - 1]
+            return worker
+        except (ImportError, AttributeError, TypeError):
+            LOG.warning("Unable to determine current worker from Celery")
+            return None
+    else:
+        # For other task servers, we may not have worker information available
+        LOG.debug(f"Worker detection not implemented for task server: {task_server}")
+        return None
 
 
-def get_current_queue() -> str:
+def get_current_queue(task_server: str = "celery") -> Optional[str]:
     """
-    Get the queue on the current running task from Celery.
+    Get the queue on the current running task from the configured task server.
 
     This function retrieves the name of the queue that the current
-    task is associated with. It extracts the routing key from the
-    task's delivery information and removes the queue tag defined
-    in the configuration.
+    task is associated with. The implementation varies based on the task server type.
+
+    Args:
+        task_server: The task server type ("celery", etc.)
 
     Returns:
-        The name of the current queue.
+        The name of the current queue, or None if unable to determine.
     """
-    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+    if task_server == "celery":
+        try:
+            from celery import current_task  # pylint: disable=C0415
+            from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
-    queue = current_task.request.delivery_info["routing_key"]
-    queue = queue.replace(CONFIG.celery.queue_tag, "")
-    return queue
+            queue = current_task.request.delivery_info["routing_key"]
+            queue = queue.replace(CONFIG.celery.queue_tag, "")
+            return queue
+        except (ImportError, AttributeError, TypeError, KeyError):
+            LOG.warning("Unable to determine current queue from Celery")
+            return None
+    else:
+        # For other task servers, we may not have queue information available
+        LOG.debug(f"Queue detection not implemented for task server: {task_server}")
+        return None
 
 
 class MerlinStepRecord(_StepRecord):
@@ -312,26 +334,29 @@ class MerlinStepRecord(_StepRecord):
             "restarts": self.restarts,
         }
 
-        # Add celery specific info
+        # Add task server specific info
         if task_server == "celery":
             from merlin.celery import app  # pylint: disable=C0415
 
             # If the tasks are always eager, this is a local run and we won't have workers running
             if not app.conf.task_always_eager:
-                status_info[self.name]["task_queue"] = get_current_queue()
+                current_queue = get_current_queue(task_server)
+                if current_queue:
+                    status_info[self.name]["task_queue"] = current_queue
 
                 # Add the current worker to the workspace-specific status info
-                current_worker = get_current_worker()
-                if "workers" not in status_info[self.name][self.condensed_workspace]:
-                    status_info[self.name][self.condensed_workspace]["workers"] = [current_worker]
-                elif current_worker not in status_info[self.name][self.condensed_workspace]["workers"]:
-                    status_info[self.name][self.condensed_workspace]["workers"].append(current_worker)
+                current_worker = get_current_worker(task_server)
+                if current_worker:
+                    if "workers" not in status_info[self.name][self.condensed_workspace]:
+                        status_info[self.name][self.condensed_workspace]["workers"] = [current_worker]
+                    elif current_worker not in status_info[self.name][self.condensed_workspace]["workers"]:
+                        status_info[self.name][self.condensed_workspace]["workers"].append(current_worker)
 
-                # Add the current worker to the overall-step status info
-                if "workers" not in status_info[self.name]:
-                    status_info[self.name]["workers"] = [current_worker]
-                elif current_worker not in status_info[self.name]["workers"]:
-                    status_info[self.name]["workers"].append(current_worker)
+                    # Add the current worker to the overall-step status info
+                    if "workers" not in status_info[self.name]:
+                        status_info[self.name]["workers"] = [current_worker]
+                    elif current_worker not in status_info[self.name]["workers"]:
+                        status_info[self.name]["workers"].append(current_worker)
 
         LOG.info(f"Writing status for {self.name} to '{status_filepath}...")
         write_status(status_info, status_filepath, f"{self.workspace.value}/status.lock")
