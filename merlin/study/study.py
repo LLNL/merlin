@@ -844,3 +844,60 @@ class MerlinStudy:  # pylint: disable=R0902,R0904
                 param_labels.append(parameter_label)
 
         return param_labels
+
+    def get_task_server(self):
+        """
+        Get the configured task server instance for this study.
+        
+        This method creates and returns a task server instance based on the
+        study's specification configuration. It uses the TaskServerFactory
+        to create the appropriate task server implementation.
+        
+        Returns:
+            TaskServerInterface: An instance of the configured task server.
+        """
+        if not hasattr(self, '_task_server'):
+            from merlin.task_servers.task_server_factory import task_server_factory  # pylint: disable=C0415
+            
+            # Get task server configuration from spec
+            server_type = self.expanded_spec.get_task_server_type()
+            config = self.expanded_spec.get_task_server_config()
+            
+            # Create task server instance
+            self._task_server = task_server_factory.create(server_type, config)
+            LOG.info(f"Created {server_type} task server for study")
+        
+        return self._task_server
+
+    def execute_study(self):
+        """
+        Execute this study using the configured task server.
+        
+        This method orchestrates the execution of the study by creating the
+        necessary tasks in the database and submitting them to the task server
+        for execution. It replaces the traditional Celery-specific workflow
+        execution with a task server agnostic approach.
+        """
+        try:
+            LOG.info(f"Executing study '{self.expanded_spec.name}' with task server interface")
+            
+            # Get the task server instance
+            task_server = self.get_task_server()
+            
+            # For backward compatibility, use existing Celery workflow submission
+            # This will be replaced with database-first approach in future implementation
+            from merlin.common.tasks import queue_merlin_study  # pylint: disable=C0415
+            
+            # Get adapter configuration
+            adapter_config = self.get_adapter_config()
+            
+            # Submit the study using the existing workflow (temp)
+            # TODO: Replace this with database-first task creation and submission
+            LOG.info("Submitting study tasks...")
+            result = queue_merlin_study(self, adapter_config)
+            
+            LOG.info(f"Study execution initiated. Task ID: {result.id if hasattr(result, 'id') else 'N/A'}")
+            
+        except Exception as e:
+            LOG.error(f"Failed to execute study: {e}")
+            raise
