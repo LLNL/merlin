@@ -43,13 +43,6 @@ docs/build/
 .tox/*
 .coverage
 **/setup_env.sh
-app.yaml/
-merlin_server/
-.merlin/
-hello/
-*.out
-*.sbatch
-*.yaml
 
 # Jupyter
 jupyter/.ipynb_checkpoints
@@ -79,4 +72,3 @@ dist/
 build/
 .DS_Store
 .vscode/
-.misc/
