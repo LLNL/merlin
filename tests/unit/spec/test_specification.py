@@ -12,13 +12,13 @@ import json
 import logging
 import os
 import shlex
-import yaml
 from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, List
 
 import pytest
+import yaml
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
@@ -61,7 +61,7 @@ def test_yaml_sections_returns_expected_structure(mocker: MockerFixture, spec: M
     - Aggregates and renames internal attributes to the expected YAML-compatible format.
     - Maps `environment` to `env` and `globals` to `global.parameters`.
     - Returns a dictionary with all standard spec sections correctly named and populated.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -95,7 +95,7 @@ def test_sections_returns_expected_structure(mocker: MockerFixture, spec: Merlin
     - Reflects the internal Python attribute names (e.g., `environment`, `globals`).
     - Does not rename keys (unlike `yaml_sections`).
     - Includes all standard sections with their assigned values.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -222,7 +222,7 @@ def test_populate_spec_loads_expected_fields(mocker: MockerFixture):
       `global.parameters`, `merlin`, and `user`.
     - Mocks `load_merlin_block` and `load_user_block` to isolate the test from external I/O.
     - Asserts that each field is correctly parsed into the `MerlinSpec` object.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """
@@ -309,7 +309,7 @@ def test_verify_loads_schema_and_calls_all_verification_methods(mocker: MockerFi
     - Mocks file operations to simulate loading a schema from disk.
     - Verifies that the correct schema sections are passed to each corresponding
       `verify_*` method on the `MerlinSpec` instance.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -407,7 +407,7 @@ def test_verify_merlin_block_validates_and_verifies_workers(mocker: MockerFixtur
     This test verifies that:
     - The 'merlin' block is passed to the schema validator.
     - The `_verify_workers` method is invoked to check worker configuration.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -431,7 +431,7 @@ def test_verify_batch_block_with_lsf_walltime_logs_warning(mocker: MockerFixture
     This test confirms that:
     - The batch block is validated against the schema.
     - A warning is logged when 'walltime' is set but not supported by the 'lsf' batch type.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         caplog: PyTest caplog fixture.
@@ -450,7 +450,6 @@ def test_verify_batch_block_with_lsf_walltime_logs_warning(mocker: MockerFixture
     assert "The walltime argument is not available in lsf." in caplog.text
 
 
-
 def test_verify_batch_block_with_slurm_skips_walltime_check(mocker: MockerFixture, spec: MerlinSpec):
     """
     Test that no warning is logged when 'walltime' is used with SLURM in the batch block.
@@ -458,7 +457,7 @@ def test_verify_batch_block_with_slurm_skips_walltime_check(mocker: MockerFixtur
     This test ensures that:
     - The batch block is validated successfully for SLURM.
     - No warning is logged, since SLURM supports the 'walltime' parameter.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -492,13 +491,7 @@ def test_load_merlin_block_with_section_present():
     stream = StringIO(yaml_content)
     result = MerlinSpec.load_merlin_block(stream)
 
-    assert result == {
-        "resources": {
-            "workers": {
-                "worker1": {"steps": ["step1"]}
-            }
-        }
-    }
+    assert result == {"resources": {"workers": {"worker1": {"steps": ["step1"]}}}}
 
 
 def test_load_merlin_block_missing_section_logs_warning(caplog: CaptureFixture):
@@ -508,7 +501,7 @@ def test_load_merlin_block_missing_section_logs_warning(caplog: CaptureFixture):
     This test verifies that:
     - When no 'merlin' section is found in the YAML stream, the method logs a warning.
     - An empty dictionary is returned.
-    
+
     Args:
         caplog: PyTest caplog fixture.
     """
@@ -542,10 +535,7 @@ def test_load_user_block_with_section_present():
     stream = StringIO(yaml_content)
     result = MerlinSpec.load_user_block(stream)
 
-    assert result == {
-        "author": "me",
-        "contact": "me@example.com"
-    }
+    assert result == {"author": "me", "contact": "me@example.com"}
 
 
 def test_load_user_block_missing_section_returns_empty():
@@ -583,20 +573,8 @@ def test_process_spec_defaults_fills_missing_sections(spec: MerlinSpec):
     spec.batch = {}
     spec.environment = {}
     spec.globals = {}
-    spec.study = [{
-        "name": "step1",
-        "run": {
-            "cmd": "echo hello"
-        }
-    }]
-    spec.merlin = {
-        "resources": {
-            "task_server": "celery",
-            "overlap": False,
-            "workers": None
-        },
-        "samples": None
-    }
+    spec.study = [{"name": "step1", "run": {"cmd": "echo hello"}}]
+    spec.merlin = {"resources": {"task_server": "celery", "overlap": False, "workers": None}, "samples": None}
 
     spec.process_spec_defaults()
 
@@ -635,21 +613,8 @@ def test_process_spec_defaults_adds_vlauncher_vars(spec: MerlinSpec):
     spec.batch = {"shell": "/bin/bash"}
     spec.environment = {}
     spec.globals = {}
-    spec.study = [{
-        "name": "step1",
-        "run": {
-            "cmd": "$(VLAUNCHER)\necho run",
-            "nodes": 4
-        }
-    }]
-    spec.merlin = {
-        "resources": {
-            "task_server": "celery",
-            "overlap": False,
-            "workers": None
-        },
-        "samples": None
-    }
+    spec.study = [{"name": "step1", "run": {"cmd": "$(VLAUNCHER)\necho run", "nodes": 4}}]
+    spec.merlin = {"resources": {"task_server": "celery", "overlap": False, "workers": None}, "samples": None}
 
     spec.process_spec_defaults()
 
@@ -680,17 +645,11 @@ def test_process_spec_defaults_assigns_unassigned_steps_to_default_worker(spec: 
     spec.study = [
         {"name": "prep", "run": {"cmd": "echo prep"}},
         {"name": "run", "run": {"cmd": "echo run"}},
-        {"name": "analyze", "run": {"cmd": "echo analyze"}}
+        {"name": "analyze", "run": {"cmd": "echo analyze"}},
     ]
     spec.merlin = {
-        "resources": {
-            "task_server": "celery",
-            "overlap": False,
-            "workers": {
-                "worker1": {"steps": ["prep"]}
-            }
-        },
-        "samples": None
+        "resources": {"task_server": "celery", "overlap": False, "workers": {"worker1": {"steps": ["prep"]}}},
+        "samples": None,
     }
 
     spec.process_spec_defaults()
@@ -726,12 +685,9 @@ def test_process_spec_defaults_does_not_add_default_worker_if_all_steps_covered(
         "resources": {
             "task_server": "celery",
             "overlap": False,
-            "workers": {
-                "worker1": {"steps": ["prep"]},
-                "worker2": {"steps": ["run"]}
-            }
+            "workers": {"worker1": {"steps": ["prep"]}, "worker2": {"steps": ["run"]}},
         },
-        "samples": None
+        "samples": None,
     }
 
     spec.process_spec_defaults()
@@ -759,14 +715,7 @@ def test_process_spec_defaults_fills_missing_sample_fields(spec: MerlinSpec):
     spec.environment = {}
     spec.globals = {}
     spec.study = [{"name": "step1", "run": {"cmd": "echo"}}]
-    spec.merlin = {
-        "resources": {
-            "task_server": "celery",
-            "overlap": False,
-            "workers": None
-        },
-        "samples": {"generate": {}}
-    }
+    spec.merlin = {"resources": {"task_server": "celery", "overlap": False, "workers": None}, "samples": {"generate": {}}}
 
     spec.process_spec_defaults()
 
@@ -832,29 +781,12 @@ def test_fill_missing_defaults_handles_nested_dicts():
         - Existing non-None nested values are preserved.
         - Entirely missing keys inside nested dicts are added from the defaults.
     """
-    target = {
-        "outer": {
-            "inner1": None,
-            "inner2": "keep"
-        }
-    }
-    defaults = {
-        "outer": {
-            "inner1": "default1",
-            "inner2": "default2",
-            "inner3": "default3"
-        }
-    }
+    target = {"outer": {"inner1": None, "inner2": "keep"}}
+    defaults = {"outer": {"inner1": "default1", "inner2": "default2", "inner3": "default3"}}
 
     MerlinSpec.fill_missing_defaults(target, defaults)
 
-    assert target == {
-        "outer": {
-            "inner1": "default1",
-            "inner2": "keep",
-            "inner3": "default3"
-        }
-    }
+    assert target == {"outer": {"inner1": "default1", "inner2": "keep", "inner3": "default3"}}
 
 
 def test_fill_missing_defaults_skips_non_dicts():
@@ -883,7 +815,7 @@ def test_check_section_logs_warning_for_unrecognized_keys(caplog: CaptureFixture
 
     It verifies that:
         - A warning is logged for each unrecognized key using the expected message format.
-    
+
     Args:
         caplog: PyTest caplog fixture.
     """
@@ -911,7 +843,7 @@ def test_warn_unrecognized_keys_logs_expected_warnings(mocker: MockerFixture, sp
         - A warning is logged for every unrecognized key.
         - The log messages contain the correct section context and key name.
         - The total number of warnings matches the number of unexpected keys defined (9).
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -920,30 +852,18 @@ def test_warn_unrecognized_keys_logs_expected_warnings(mocker: MockerFixture, sp
     spec.description = {"name": "test", "unexpected": "extra"}  # 1 unrecognized
     spec.batch = {"type": "local", "unexpected_batch_key": True}  # 1 unrecognized
     spec.environment = {"variables": {}, "unexpected_env": 42}  # 1 unrecognized
-    spec.globals = {
-        "group1": {"values": [1], "unexpected_param": "oops"}  # 1 unrecognized
-    }
+    spec.globals = {"group1": {"values": [1], "unexpected_param": "oops"}}  # 1 unrecognized
     spec.study = [
         {
             "name": "step1",
-            "run": {
-                "cmd": "echo hi",
-                "unexpected_run_key": True  # 1 unrecognized
-            },
-            "unexpected_step_key": 123  # 1 unrecognized
+            "run": {"cmd": "echo hi", "unexpected_run_key": True},  # 1 unrecognized
+            "unexpected_step_key": 123,  # 1 unrecognized
         }
     ]
     spec.merlin = {
-        "resources": {
-            "workers": {
-                "workerA": {
-                    "nodes": 1,
-                    "unexpected_worker_key": "oops"  # 1 unrecognized
-                }
-            }
-        },
+        "resources": {"workers": {"workerA": {"nodes": 1, "unexpected_worker_key": "oops"}}},  # 1 unrecognized
         "samples": {"unexpected_sample_key": "bad"},  # 1 unrecognized
-        "unexpected_merlin_key": "??"  # 1 unrecognized
+        "unexpected_merlin_key": "??",  # 1 unrecognized
     }
 
     mock_log = mocker.patch("merlin.spec.specification.LOG")
@@ -995,7 +915,7 @@ def test_dump_returns_valid_yaml(mocker: MockerFixture, spec: MerlinSpec):
             - The return value is a string.
             - The string can be parsed as valid YAML.
             - Specific expected keys and values appear in the parsed result.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1007,10 +927,12 @@ def test_dump_returns_valid_yaml(mocker: MockerFixture, spec: MerlinSpec):
         "study": [],
         "global.parameters": {},
         "merlin": {},
-        "user": {}
+        "user": {},
     }
     mocker.patch.object(MerlinSpec, "yaml_sections", new_callable=mocker.PropertyMock).return_value = mock_yaml_sections
-    mock_dict_to_yaml = mocker.patch.object(spec, "_dict_to_yaml", return_value="description:\n  name: Test\nbatch:\n  type: local\n")
+    mock_dict_to_yaml = mocker.patch.object(
+        spec, "_dict_to_yaml", return_value="description:\n  name: Test\nbatch:\n  type: local\n"
+    )
 
     result = spec.dump()
 
@@ -1029,11 +951,13 @@ def test_dump_raises_value_error_for_invalid_yaml(mocker: MockerFixture, spec: M
         - Mocks the `yaml_sections` to include an unserializable object.
         - Mocks `_dict_to_yaml` to return an invalid YAML string.
         - Expects that `dump()` will raise a `ValueError` with a specific error message.
-    
+
     Args:
         mocker: PyTest mocker fixture.
     """
-    mocker.patch.object(MerlinSpec, "yaml_sections", new_callable=mocker.PropertyMock).return_value = {"bad": {"data": object()}}  # unserializable
+    mocker.patch.object(MerlinSpec, "yaml_sections", new_callable=mocker.PropertyMock).return_value = {
+        "bad": {"data": object()}
+    }  # unserializable
     mocker.patch.object(spec, "_dict_to_yaml", return_value="bad:\n  data: !!python/object:unserializable")
 
     with pytest.raises(ValueError, match="Error parsing provenance spec"):
@@ -1043,21 +967,13 @@ def test_dump_raises_value_error_for_invalid_yaml(mocker: MockerFixture, spec: M
 @pytest.mark.parametrize(
     "obj, key_stack, expected_output",
     [
-        ("simple string", ["root"], "simple string"),   # Test string
-        (True, ["root"], "true"),                       # Test bool
-        (False, ["root"], "false"),                     # Test bool
-        (None, ["root"], ""),                           # Test None
-        (                                               # Test dict
-            {"key1": "value1", "key2": "value2"},
-            ["root"],
-            "key1: value1\nkey2: value2"
-        ),
-        (                                               # Test list
-            ["x", "y", "z"],
-            ["sources"],
-            "- x\n- y\n- z"
-        ),
-    ]
+        ("simple string", ["root"], "simple string"),  # Test string
+        (True, ["root"], "true"),  # Test bool
+        (False, ["root"], "false"),  # Test bool
+        (None, ["root"], ""),  # Test None
+        ({"key1": "value1", "key2": "value2"}, ["root"], "key1: value1\nkey2: value2"),  # Test dict
+        (["x", "y", "z"], ["sources"], "- x\n- y\n- z"),  # Test list
+    ],
 )
 def test_dict_to_yaml_parametrized(obj: Any, key_stack: List[str], expected_output: str, spec: MerlinSpec):
     """
@@ -1092,7 +1008,7 @@ def test_process_string_single_line(spec: MerlinSpec):
 
     This test passes a basic one-line string with no newline characters and
     verifies that the string is returned unchanged, regardless of indentation settings.
-    
+
     Args:
         spec: A MerlinSpec instance for testing.
     """
@@ -1108,7 +1024,7 @@ def test_process_string_multiline(spec: MerlinSpec):
         - The output is YAML-compatible.
         - The string is prefixed with a `|` to indicate a block scalar.
         - Each line is properly indented according to the provided tab.
-    
+
     Args:
         spec: A MerlinSpec instance for testing.
     """
@@ -1129,7 +1045,7 @@ def test_process_list_with_hyphens(mocker: MockerFixture, spec: MerlinSpec):
         - Each element is rendered as a separate line prefixed with `-`.
         - Proper indentation is applied.
         - `_dict_to_yaml` is used to format each list element.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1156,7 +1072,7 @@ def test_process_list_inline_array(mocker: MockerFixture, spec: MerlinSpec):
     It verifies that:
         - The entire list is returned as a single line in square brackets.
         - Each element is processed via `_dict_to_yaml`.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1185,7 +1101,7 @@ def test_process_dict_nested(mocker: MockerFixture, spec: MerlinSpec):
     It verifies that:
         - The result includes indented lines for each key-value pair.
         - Each line is prefixed with the correct indentation and key.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1198,10 +1114,7 @@ def test_process_dict_nested(mocker: MockerFixture, spec: MerlinSpec):
     key_stack = ["not_elem"]
     result = spec._process_dict(obj, string, key_stack, lvl=0, tab="  ")
 
-    expected = (
-        "\n  key1: value_v1\n"
-        "  key2: value_v2\n"
-    )
+    expected = "\n  key1: value_v1\n" "  key2: value_v2\n"
     assert result == expected
 
 
@@ -1216,7 +1129,7 @@ def test_process_dict_inside_list_elem(mocker: MockerFixture, spec: MerlinSpec):
 
     It verifies that:
         - The result flattens key-value pairs without indentation or nesting syntax.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1243,7 +1156,7 @@ def test_get_step_worker_map_all_steps(mocker: MockerFixture, spec: MerlinSpec):
 
     It verifies that:
         - Both workers are assigned to all steps in the result map.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1281,7 +1194,7 @@ def test_get_step_worker_map_mixed_steps(mocker: MockerFixture, spec: MerlinSpec
         - Step-specific assignments are honored.
         - Workers with "all" access appear on every step.
         - The result map lists correct workers per step.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1318,7 +1231,7 @@ def test_get_worker_step_map_all_and_specific(mocker: MockerFixture, spec: Merli
     It verifies that:
         - `worker1` is correctly mapped to all study steps.
         - `worker2` is only mapped to the specified subset.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1351,7 +1264,7 @@ def test_get_worker_step_map_empty_workers(mocker: MockerFixture, spec: MerlinSp
 
     It verifies that:
         - The resulting worker-step map is an empty dictionary.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1370,7 +1283,7 @@ def make_step(name: str, task_queue: str = None):
 
     This helper builds a `SimpleNamespace` representing a study step,
     with an optional `task_queue` field inside the `run` section.
-    
+
     Args:
         name: The name of the step.
         spec: Optional name of the task queue assigned to the step.
@@ -1395,7 +1308,7 @@ def test_get_task_queues_with_and_without_tag(mocker: MockerFixture, spec: Merli
         - Prefix is added when `omit_tag=False` and config allows tagging.
         - Prefix is omitted when `omit_tag=True`.
         - Prefix is omitted when config disables tagging globally (`omit_queue_tag=True`).
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1480,7 +1393,7 @@ def test_get_queue_step_relationship_with_omit_tag(mocker: MockerFixture, spec: 
     It verifies that:
         - Steps are grouped correctly by queue.
         - No prefix is added to queue names due to config settings.
-    
+
     Args:
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
@@ -1520,11 +1433,15 @@ def test_get_queue_list_all_steps(mocker: MockerFixture, spec: MerlinSpec):
         spec: A MerlinSpec instance for testing.
     """
     # Simulate step-to-queue mapping
-    mocker.patch.object(spec, "get_task_queues", return_value={
-        "step1": "[merlin]_queue1",
-        "step2": "[merlin]_queue2",
-        "step3": "[merlin]_queue1",  # shared queue
-    })
+    mocker.patch.object(
+        spec,
+        "get_task_queues",
+        return_value={
+            "step1": "[merlin]_queue1",
+            "step2": "[merlin]_queue2",
+            "step3": "[merlin]_queue1",  # shared queue
+        },
+    )
 
     queues = spec.get_queue_list(["all"])
     assert queues == sorted(set(["[merlin]_queue1", "[merlin]_queue2"]))
@@ -1545,11 +1462,15 @@ def test_get_queue_list_specific_steps(mocker: MockerFixture, spec: MerlinSpec):
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
     """
-    mocker.patch.object(spec, "get_task_queues", return_value={
-        "step1": "q1",
-        "step2": "q2",
-        "step3": "q1",
-    })
+    mocker.patch.object(
+        spec,
+        "get_task_queues",
+        return_value={
+            "step1": "q1",
+            "step2": "q2",
+            "step3": "q1",
+        },
+    )
 
     queues = spec.get_queue_list(["step1", "step3"])
     assert queues == sorted(set(["q1"]))
@@ -1570,10 +1491,14 @@ def test_get_queue_list_single_step_string(mocker: MockerFixture, spec: MerlinSp
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
     """
-    mocker.patch.object(spec, "get_task_queues", return_value={
-        "step1": "q1",
-        "step2": "q2",
-    })
+    mocker.patch.object(
+        spec,
+        "get_task_queues",
+        return_value={
+            "step1": "q1",
+            "step2": "q2",
+        },
+    )
 
     queues = spec.get_queue_list("step2")
     assert queues == ["q2"]
@@ -1596,10 +1521,14 @@ def test_get_queue_list_invalid_step_raises_keyerror(mocker: MockerFixture, spec
         spec: A MerlinSpec instance for testing.
         caplog: PyTest caplog fixture.
     """
-    mocker.patch.object(spec, "get_task_queues", return_value={
-        "step1": "q1",
-        "step2": "q2",
-    })
+    mocker.patch.object(
+        spec,
+        "get_task_queues",
+        return_value={
+            "step1": "q1",
+            "step2": "q2",
+        },
+    )
 
     with pytest.raises(KeyError):
         spec.get_queue_list(["stepX"])
@@ -1645,7 +1574,7 @@ def test_get_worker_names_returns_all_worker_keys(spec: MerlinSpec):
     It verifies that:
         - All keys are extracted.
         - The result is sorted alphabetically.
-    
+
     Args:
         spec: A MerlinSpec instance for testing.
     """
@@ -1717,10 +1646,7 @@ def test_get_tasks_per_step_with_parameters_only(mocker: MockerFixture, spec: Me
         "samples": None,
     }
 
-    mocker.patch.object(spec, "get_parameters", return_value=SimpleNamespace(
-        labels={"param1": 1, "param2": 2},
-        length=2
-    ))
+    mocker.patch.object(spec, "get_parameters", return_value=SimpleNamespace(labels={"param1": 1, "param2": 2}, length=2))
 
     step = SimpleNamespace(name="step1", run={"cmd": "$(param1)", "restart": ""})
     mocker.patch.object(spec, "get_study_steps", return_value=[step])
@@ -1749,20 +1675,12 @@ def test_get_tasks_per_step_with_samples_and_parameters(mocker: MockerFixture, s
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
     """
-    spec.merlin = {
-        "samples": {
-            "file": "fake_samples.npy",
-            "column_labels": ["x", "y"]
-        }
-    }
+    spec.merlin = {"samples": {"file": "fake_samples.npy", "column_labels": ["x", "y"]}}
 
     # Mock sample file load to return 3 samples
     mocker.patch("merlin.spec.specification.load_array_file", return_value=[[1, 2], [3, 4], [5, 6]])
 
-    mocker.patch.object(spec, "get_parameters", return_value=SimpleNamespace(
-        labels={"param1": 1},
-        length=1
-    ))
+    mocker.patch.object(spec, "get_parameters", return_value=SimpleNamespace(labels={"param1": 1}, length=1))
 
     step = SimpleNamespace(name="step1", run={"cmd": "$(x) $(param1)", "restart": ""})
     mocker.patch.object(spec, "get_study_steps", return_value=[step])
@@ -1791,19 +1709,11 @@ def test_get_tasks_per_step_no_expansion_with_samples(mocker: MockerFixture, spe
         mocker: PyTest mocker fixture.
         spec: A MerlinSpec instance for testing.
     """
-    spec.merlin = {
-        "samples": {
-            "file": "fake_samples.npy",
-            "column_labels": ["x", "y"]
-        }
-    }
+    spec.merlin = {"samples": {"file": "fake_samples.npy", "column_labels": ["x", "y"]}}
 
     mocker.patch("merlin.spec.specification.load_array_file", return_value=[[1, 2]])
 
-    mocker.patch.object(spec, "get_parameters", return_value=SimpleNamespace(
-        labels={},
-        length=0
-    ))
+    mocker.patch.object(spec, "get_parameters", return_value=SimpleNamespace(labels={}, length=0))
 
     step = SimpleNamespace(name="step1", run={"cmd": "echo done", "restart": ""})
     mocker.patch.object(spec, "get_study_steps", return_value=[step])
@@ -1835,7 +1745,7 @@ def test_create_param_maps_basic(spec: MerlinSpec):
         parameters={"X": [1, 2], "Y": [10]},
         label_token="%%",
         token="PARAM",
-        get_used_parameters=lambda step: ["X", "Y"]
+        get_used_parameters=lambda step: ["X", "Y"],
     )
 
     expanded_labels = {}
@@ -1843,10 +1753,7 @@ def test_create_param_maps_basic(spec: MerlinSpec):
 
     spec._create_param_maps(mock_param_gen, expanded_labels, label_param_map)
 
-    assert expanded_labels == {
-        "X": ["x.1", "x.2"],
-        "Y": ["y.10"]
-    }
+    assert expanded_labels == {"X": ["x.1", "x.2"], "Y": ["y.10"]}
 
     assert label_param_map == {
         "x.1": {"X": 1},
@@ -1864,7 +1771,7 @@ def test_get_step_param_map_basic(mocker: MockerFixture):
         - A parameter generator with token `$PARAM` and parameters `P1`, `P2`.
         - A step containing `$PARAM(foo)` and `$PARAM(bar)` tokens in its commands.
         - Parameter mappings that expand `P1` and `P2` into multiple values.
-    
+
     It verifies that the method correctly expands step names and constructs
     the corresponding `cmd` and `restart_cmd` parameter maps.
 
@@ -1881,23 +1788,12 @@ def test_get_step_param_map_basic(mocker: MockerFixture):
     spec.get_parameters.return_value = param_gen
 
     # Simulate get_study_steps()
-    step = SimpleNamespace(
-        name="step1",
-        run={"cmd": "run $PARAM(foo) and $PARAM(bar)", "restart": "rerun $PARAM(bar) only"}
-    )
+    step = SimpleNamespace(name="step1", run={"cmd": "run $PARAM(foo) and $PARAM(bar)", "restart": "rerun $PARAM(bar) only"})
     spec.get_study_steps.return_value = [step]
 
     # Simulate _create_param_maps()
-    expanded_labels = {
-        "P1": ["foo1", "foo2"],
-        "P2": ["bar1", "bar2"]
-    }
-    label_param_map = {
-        "foo1": {"foo": 1},
-        "bar1": {"bar": 10},
-        "foo2": {"foo": 2},
-        "bar2": {"bar": 20}
-    }
+    expanded_labels = {"P1": ["foo1", "foo2"], "P2": ["bar1", "bar2"]}
+    label_param_map = {"foo1": {"foo": 1}, "bar1": {"bar": 10}, "foo2": {"foo": 2}, "bar2": {"bar": 20}}
 
     def create_param_maps(p, el, lpm):
         el.update(expanded_labels)
@@ -1910,14 +1806,8 @@ def test_get_step_param_map_basic(mocker: MockerFixture):
     result = spec.get_step_param_map()
 
     assert result == {
-        "step1_foo1.bar1": {
-            "cmd": {"foo": 1, "bar": 10},
-            "restart_cmd": {"bar": 10}
-        },
-        "step1_foo2.bar2": {
-            "cmd": {"foo": 2, "bar": 20},
-            "restart_cmd": {"bar": 20}
-        },
+        "step1_foo1.bar1": {"cmd": {"foo": 1, "bar": 10}, "restart_cmd": {"bar": 10}},
+        "step1_foo2.bar2": {"cmd": {"foo": 2, "bar": 20}, "restart_cmd": {"bar": 20}},
     }
 
 
@@ -1929,7 +1819,7 @@ def test_get_step_param_map_no_token_match(mocker: MockerFixture):
     This test mocks:
         - A parameter generator with one parameter `P` that expands to a single label.
         - A step that does not use any `$PARAM(...)` tokens in its commands.
-    
+
     It verifies that the resulting `cmd` and `restart_cmd` maps are empty,
     but still keyed under the expanded label for completeness.
 
@@ -1958,12 +1848,7 @@ def test_get_step_param_map_no_token_match(mocker: MockerFixture):
 
     result = spec.get_step_param_map()
 
-    assert result == {
-        "stepX_a": {
-            "cmd": {},
-            "restart_cmd": {}
-        }
-    }
+    assert result == {"stepX_a": {"cmd": {}, "restart_cmd": {}}}
 
 
 def test_get_step_param_map_multiple_steps(mocker: MockerFixture):
@@ -1974,7 +1859,7 @@ def test_get_step_param_map_multiple_steps(mocker: MockerFixture):
     This test mocks:
         - Two steps: one using a `$PARAM(x)` in `cmd`, and one in `restart`.
         - A parameter mapping that expands a single parameter `P` to one label.
-    
+
     It verifies that each step correctly maps its command fields to the corresponding
     parameter values, depending on where the token appears.
 

@@ -13,8 +13,8 @@ from copy import deepcopy
 import yaml
 from jsonschema import ValidationError
 
-from merlin.spec.specification import MerlinSpec
 from merlin.spec import defaults
+from merlin.spec.specification import MerlinSpec
 
 
 MERLIN_SPEC = """
@@ -123,15 +123,15 @@ class TestMerlinSpec(unittest.TestCase):
     def setUp(self):
         # Store original defaults to restore later
         self.original_defaults = {
-            'WORKER': deepcopy(defaults.WORKER),
-            'BATCH': deepcopy(defaults.BATCH),
-            'ENV': deepcopy(defaults.ENV),
-            'MERLIN': deepcopy(defaults.MERLIN),
-            'PARAMETER': deepcopy(defaults.PARAMETER),
-            'SAMPLES': deepcopy(defaults.SAMPLES),
-            'STUDY_STEP_RUN': deepcopy(defaults.STUDY_STEP_RUN),
+            "WORKER": deepcopy(defaults.WORKER),
+            "BATCH": deepcopy(defaults.BATCH),
+            "ENV": deepcopy(defaults.ENV),
+            "MERLIN": deepcopy(defaults.MERLIN),
+            "PARAMETER": deepcopy(defaults.PARAMETER),
+            "SAMPLES": deepcopy(defaults.SAMPLES),
+            "STUDY_STEP_RUN": deepcopy(defaults.STUDY_STEP_RUN),
         }
-        
+
         self.tmpdir = tempfile.mkdtemp()
         self.merlin_spec_filepath = os.path.join(self.tmpdir, "basic_ensemble.yaml")
 
@@ -144,7 +144,7 @@ class TestMerlinSpec(unittest.TestCase):
         # Restore original defaults to prevent test contamination
         for key, value in self.original_defaults.items():
             setattr(defaults, key, value)
-        
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_specroot(self):
@@ -205,15 +205,15 @@ class TestSpecNoMerlin(unittest.TestCase):
     def setUp(self):
         # Store original defaults to restore later
         self.original_defaults = {
-            'WORKER': deepcopy(defaults.WORKER),
-            'BATCH': deepcopy(defaults.BATCH),
-            'ENV': deepcopy(defaults.ENV),
-            'MERLIN': deepcopy(defaults.MERLIN),
-            'PARAMETER': deepcopy(defaults.PARAMETER),
-            'SAMPLES': deepcopy(defaults.SAMPLES),
-            'STUDY_STEP_RUN': deepcopy(defaults.STUDY_STEP_RUN),
+            "WORKER": deepcopy(defaults.WORKER),
+            "BATCH": deepcopy(defaults.BATCH),
+            "ENV": deepcopy(defaults.ENV),
+            "MERLIN": deepcopy(defaults.MERLIN),
+            "PARAMETER": deepcopy(defaults.PARAMETER),
+            "SAMPLES": deepcopy(defaults.SAMPLES),
+            "STUDY_STEP_RUN": deepcopy(defaults.STUDY_STEP_RUN),
         }
-        
+
         self.tmpdir = tempfile.mkdtemp()
         self.merlin_spec_filepath = os.path.join(self.tmpdir, "no_merlin.yaml")
 
@@ -226,7 +226,7 @@ class TestSpecNoMerlin(unittest.TestCase):
         # Restore original defaults to prevent test contamination
         for key, value in self.original_defaults.items():
             setattr(defaults, key, value)
-        
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def test_default_merlin_block(self):
@@ -258,15 +258,15 @@ class TestCustomVerification(unittest.TestCase):
     def setUp(self):
         # Store original defaults to restore later
         self.original_defaults = {
-            'WORKER': deepcopy(defaults.WORKER),
-            'BATCH': deepcopy(defaults.BATCH),
-            'ENV': deepcopy(defaults.ENV),
-            'MERLIN': deepcopy(defaults.MERLIN),
-            'PARAMETER': deepcopy(defaults.PARAMETER),
-            'SAMPLES': deepcopy(defaults.SAMPLES),
-            'STUDY_STEP_RUN': deepcopy(defaults.STUDY_STEP_RUN),
+            "WORKER": deepcopy(defaults.WORKER),
+            "BATCH": deepcopy(defaults.BATCH),
+            "ENV": deepcopy(defaults.ENV),
+            "MERLIN": deepcopy(defaults.MERLIN),
+            "PARAMETER": deepcopy(defaults.PARAMETER),
+            "SAMPLES": deepcopy(defaults.SAMPLES),
+            "STUDY_STEP_RUN": deepcopy(defaults.STUDY_STEP_RUN),
         }
-        
+
         self.tmpdir = tempfile.mkdtemp()
         self.merlin_spec_filepath = os.path.join(self.tmpdir, "merlin_verification.yaml")
         self.write_spec(INVALID_MERLIN)
@@ -275,7 +275,7 @@ class TestCustomVerification(unittest.TestCase):
         # Restore original defaults to prevent test contamination
         for key, value in self.original_defaults.items():
             setattr(defaults, key, value)
-        
+
         shutil.rmtree(self.tmpdir, ignore_errors=True)
 
     def reset_spec(self):

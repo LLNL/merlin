@@ -14,7 +14,6 @@ the command-line interface.
 """
 
 import logging
-from collections import ChainMap
 from copy import deepcopy
 from os.path import expanduser, expandvars
 from typing import Dict, List, Tuple

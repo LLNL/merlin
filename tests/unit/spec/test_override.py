@@ -70,14 +70,8 @@ def test_replace_override_vars_applies_overrides():
     """
     Overrides should be applied to matching keys in nested env dictionary.
     """
-    env = {
-        "variables": {"FOO": "original_val", "BAR": "something $(BAZ)"},
-        "labels": {"LABEL1": "use $(FOO) and $(BAZ)"}
-    }
-    override_vars = {
-        "FOO": "override_foo",
-        "BAZ": "override_baz"
-    }
+    env = {"variables": {"FOO": "original_val", "BAR": "something $(BAZ)"}, "labels": {"LABEL1": "use $(FOO) and $(BAZ)"}}
+    override_vars = {"FOO": "override_foo", "BAZ": "override_baz"}
 
     result = replace_override_vars(env, override_vars)
 

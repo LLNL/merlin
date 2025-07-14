@@ -97,7 +97,7 @@ def test_var_ref_returns_formatted_string(mock_contains_token: MagicMock):
     """
     mock_contains_token.return_value = False
     result = var_ref("example")
-    assert result == '$(EXAMPLE)'
+    assert result == "$(EXAMPLE)"
 
 
 def test_var_ref_returns_original_if_token_found(caplog: CaptureFixture, mock_contains_token: MagicMock):
@@ -112,7 +112,7 @@ def test_var_ref_returns_original_if_token_found(caplog: CaptureFixture, mock_co
     caplog.set_level(logging.WARNING)
     mock_contains_token.return_value = True
     result = var_ref("already_token")
-    assert result == 'ALREADY_TOKEN'
+    assert result == "ALREADY_TOKEN"
     assert "Bad var_ref usage on string 'ALREADY_TOKEN'." in caplog.text
 
 
@@ -126,7 +126,7 @@ def test_var_ref_uppercases_input(mock_contains_token: MagicMock):
     """
     mock_contains_token.return_value = False
     result = var_ref("lowerCase123")
-    assert result == '$(LOWERCASE123)'
+    assert result == "$(LOWERCASE123)"
 
 
 def test_var_ref_empty_string(mock_contains_token: MagicMock):
@@ -324,12 +324,7 @@ def test_expand_env_vars_expands_strings():
     Test that string values with environment variables or `~` are expanded.
     """
     home = os.path.expanduser("~")
-    spec_dict = {
-        "batch": {
-            "workdir": "~/workspace",
-            "logfile": "$HOME/logs/output.log"
-        }
-    }
+    spec_dict = {"batch": {"workdir": "~/workspace", "logfile": "$HOME/logs/output.log"}}
     spec = DummyMerlinSpec(deepcopy(spec_dict))
 
     expanded_spec = expand_env_vars(spec)
@@ -342,13 +337,7 @@ def test_expand_env_vars_skips_cmd_and_restart():
     """
     Test that `cmd` and `restart` values are not expanded.
     """
-    spec_dict = {
-        "tasks": {
-            "cmd": "echo $HOME",
-            "restart": "~/restart.sh",
-            "input": "$HOME/input.txt"
-        }
-    }
+    spec_dict = {"tasks": {"cmd": "echo $HOME", "restart": "~/restart.sh", "input": "$HOME/input.txt"}}
     spec = DummyMerlinSpec(deepcopy(spec_dict))
 
     expanded = expand_env_vars(spec)
@@ -362,14 +351,7 @@ def test_expand_env_vars_recursively_handles_lists_and_dicts():
     """
     Test that lists and nested structures are handled recursively.
     """
-    spec_dict = {
-        "env": {
-            "PATHS": ["~/bin", "$HOME/tools"],
-            "nested": {
-                "config": "$HOME/config.yml"
-            }
-        }
-    }
+    spec_dict = {"env": {"PATHS": ["~/bin", "$HOME/tools"], "nested": {"config": "$HOME/config.yml"}}}
     spec = DummyMerlinSpec(deepcopy(spec_dict))
 
     expanded = expand_env_vars(spec)
@@ -403,11 +385,7 @@ def test_expand_env_vars_sets_attributes_from_sections():
     """
     Test that expanded sections are assigned as attributes of the spec.
     """
-    spec_dict = {
-        "resources": {
-            "scratch": "~/scratch"
-        }
-    }
+    spec_dict = {"resources": {"scratch": "~/scratch"}}
     spec = DummyMerlinSpec(deepcopy(spec_dict))
 
     expanded = expand_env_vars(spec)
@@ -439,10 +417,7 @@ def test_variable_reference_resolution():
     """
     Test that variable references like `$(VAR)` are correctly resolved from prior keys.
     """
-    user_vars = [
-        {"TARGET": "subdir"},
-        {"RESULT_PATH": "$(TARGET)/results"}
-    ]
+    user_vars = [{"TARGET": "subdir"}, {"RESULT_PATH": "$(TARGET)/results"}]
     result = determine_user_variables(*user_vars)
     assert result == {"TARGET": "subdir", "RESULT_PATH": "subdir/results"}
 
@@ -457,7 +432,7 @@ def test_expand_env_and_user_paths(mocker: MockerFixture):
     mocker.patch.dict(os.environ, {"MYENV": "envval"})
     user_vars = {"PATH": "~/workspace/${MYENV}"}
     result = determine_user_variables(user_vars)
-    expected = os.path.expanduser(f"~/workspace/envval")
+    expected = os.path.expanduser("~/workspace/envval")
     assert result == {"PATH": expected}
 
 
@@ -465,17 +440,9 @@ def test_variable_reference_chain_resolution():
     """
     Test multiple chained variable references are resolved in order.
     """
-    user_vars = [
-        {"BASE": "/root"},
-        {"MID": "$(BASE)/data"},
-        {"END": "$(MID)/output"}
-    ]
+    user_vars = [{"BASE": "/root"}, {"MID": "$(BASE)/data"}, {"END": "$(MID)/output"}]
     result = determine_user_variables(*user_vars)
-    assert result == {
-        "BASE": "/root",
-        "MID": "/root/data",
-        "END": "/root/data/output"
-    }
+    assert result == {"BASE": "/root", "MID": "/root/data", "END": "/root/data/output"}
 
 
 def test_raises_on_reserved_word_reassignment():
@@ -503,12 +470,7 @@ def test_parameter_substitutions_basic():
     labels = ["X", "Y"]
     sample_id = 0
     path = "/0/3/4/8/9/"
-    expected = [
-        ("$(X)", "10"),
-        ("$(Y)", "20"),
-        ("$(MERLIN_SAMPLE_ID)", "0"),
-        ("$(MERLIN_SAMPLE_PATH)", path)
-    ]
+    expected = [("$(X)", "10"), ("$(Y)", "20"), ("$(MERLIN_SAMPLE_ID)", "0"), ("$(MERLIN_SAMPLE_PATH)", path)]
     result = parameter_substitutions_for_sample(sample, labels, sample_id, path)
     assert result == expected
 
@@ -521,10 +483,7 @@ def test_parameter_substitutions_empty_sample():
     labels = []
     sample_id = 5
     path = "/5/2/"
-    expected = [
-        ("$(MERLIN_SAMPLE_ID)", "5"),
-        ("$(MERLIN_SAMPLE_PATH)", path)
-    ]
+    expected = [("$(MERLIN_SAMPLE_ID)", "5"), ("$(MERLIN_SAMPLE_PATH)", path)]
     result = parameter_substitutions_for_sample(sample, labels, sample_id, path)
     assert result == expected
 
@@ -537,11 +496,7 @@ def test_parameter_substitutions_mismatched_labels():
     labels = ["A", "B", "C"]
     sample_id = 3
     path = "/3/3/3/"
-    expected = [
-        ("$(A)", "42"),
-        ("$(MERLIN_SAMPLE_ID)", "3"),
-        ("$(MERLIN_SAMPLE_PATH)", path)
-    ]
+    expected = [("$(A)", "42"), ("$(MERLIN_SAMPLE_ID)", "3"), ("$(MERLIN_SAMPLE_PATH)", path)]
     result = parameter_substitutions_for_sample(sample, labels, sample_id, path)
     assert result == expected
 
@@ -559,11 +514,10 @@ def test_parameter_substitutions_non_string_values():
         ("$(FLAG)", "True"),
         ("$(MISSING)", "None"),
         ("$(MERLIN_SAMPLE_ID)", "9"),
-        ("$(MERLIN_SAMPLE_PATH)", path)
+        ("$(MERLIN_SAMPLE_PATH)", path),
     ]
     result = parameter_substitutions_for_sample(sample, labels, sample_id, path)
     assert result == expected
-
 
 
 def test_parameter_substitutions_for_cmd_basic():
@@ -643,19 +597,13 @@ def test_expand_spec_no_study_basic(mocker: MockerFixture):
 
     # Mock spec instance
     mock_spec_instance = mocker.MagicMock()
-    original_env = {
-        "variables": {"TARGET": "default_val"},
-        "labels": {"RESULT_PATH": "$(TARGET)/results"}
-    }
+    original_env = {"variables": {"TARGET": "default_val"}, "labels": {"RESULT_PATH": "$(TARGET)/results"}}
     mock_spec_instance.environment = original_env.copy()
     mock_spec_instance.dump.return_value = "expanded yaml content"
     mock_merlin_spec.load_specification.return_value = mock_spec_instance
 
     mock_replace_override_vars.return_value = original_env
-    mock_determine_user_variables.return_value = {
-        "TARGET": "override_val",
-        "RESULT_PATH": "override_val/results"
-    }
+    mock_determine_user_variables.return_value = {"TARGET": "override_val", "RESULT_PATH": "override_val/results"}
     mock_expand_by_line.return_value = "final expanded output"
 
     # Run function
@@ -665,13 +613,11 @@ def test_expand_spec_no_study_basic(mocker: MockerFixture):
     mock_error_override_vars.assert_called_once_with(override_vars, filepath)
     mock_replace_override_vars.assert_called_once_with(original_env, override_vars)
     mock_determine_user_variables.assert_called_once_with(
-        mock_spec_instance.environment["variables"],
-        mock_spec_instance.environment["labels"]
+        mock_spec_instance.environment["variables"], mock_spec_instance.environment["labels"]
     )
-    mock_expand_by_line.assert_called_once_with("expanded yaml content", {
-        "TARGET": "override_val",
-        "RESULT_PATH": "override_val/results"
-    })
+    mock_expand_by_line.assert_called_once_with(
+        "expanded yaml content", {"TARGET": "override_val", "RESULT_PATH": "override_val/results"}
+    )
     assert result == "final expanded output"
 
 
