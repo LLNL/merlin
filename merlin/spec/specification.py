@@ -80,6 +80,8 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
     def __init__(self):  # pylint: disable=W0246
         """Initializes a MerlinSpec object."""
         super().__init__()
+        self.merlin = {}
+        self.user = {}
 
     @property
     def yaml_sections(self) -> Dict:
@@ -482,9 +484,10 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         MerlinSpec.fill_missing_defaults(self.globals, defaults.PARAMETER["global.parameters"])
 
         # fill in missing step section defaults within 'run'
-        defaults.STUDY_STEP_RUN["shell"] = self.batch["shell"]
+        step_defaults = deepcopy(defaults.STUDY_STEP_RUN)
+        step_defaults["shell"] = self.batch["shell"]
         for step in self.study:
-            MerlinSpec.fill_missing_defaults(step["run"], defaults.STUDY_STEP_RUN)
+            MerlinSpec.fill_missing_defaults(step["run"], step_defaults)
             # Insert VLAUNCHER specific variables if necessary
             if "$(VLAUNCHER)" in step["run"]["cmd"]:
                 SHSET = ""
@@ -500,7 +503,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         # fill in missing merlin section defaults
         MerlinSpec.fill_missing_defaults(self.merlin, defaults.MERLIN["merlin"])
         if self.merlin["resources"]["workers"] is None:
-            self.merlin["resources"]["workers"] = {"default_worker": defaults.WORKER}
+            self.merlin["resources"]["workers"] = {"default_worker": deepcopy(defaults.WORKER)}
         else:
             # Gather a list of step names defined in the study
             all_workflow_steps = self.get_study_step_names()
@@ -522,7 +525,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             # assign the remaining steps to the default worker. If all the steps still need workers
             # (i.e. no workers were assigned) then default workers' steps should be "all" so we skip this
             if steps_that_need_workers and (steps_that_need_workers != all_workflow_steps):
-                self.merlin["resources"]["workers"]["default_worker"] = defaults.WORKER
+                self.merlin["resources"]["workers"]["default_worker"] = deepcopy(defaults.WORKER)
                 self.merlin["resources"]["workers"]["default_worker"]["steps"] = steps_that_need_workers
         if self.merlin["samples"] is not None:
             MerlinSpec.fill_missing_defaults(self.merlin["samples"], defaults.SAMPLES)
@@ -717,7 +720,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             return self._process_dict(obj, string, key_stack, lvl, tab)
         return obj
 
-    def _process_string(self, obj: str, lvl: int, tab: int) -> str:
+    def _process_string(self, obj: str, lvl: int, tab: str) -> str:
         """
         Process a string for YAML formatting in the dump method.
 
@@ -731,7 +734,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         Args:
             obj: The string to be processed.
             lvl: The current level of indentation for the YAML output.
-            tab: The number of spaces to use for indentation.
+            tab: A string of spaces representing a tab.
 
         Returns:
             The formatted string ready for YAML output.
