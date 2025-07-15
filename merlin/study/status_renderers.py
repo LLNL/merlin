@@ -456,7 +456,7 @@ class MerlinStatusRendererFactory(MerlinBaseFactory):
             The entry point namespace for Merlin status renderer plugins.
         """
         return "merlin.study"  # TODO change this to merlin.status when we refactor status
-    
+
     def _get_component_error_class(self) -> type[Exception]:
         """
         Return the exception type to raise for unsupported components.
@@ -469,7 +469,6 @@ class MerlinStatusRendererFactory(MerlinBaseFactory):
             The exception class to raise.
         """
         return MerlinInvalidStatusRendererError
-
 
 
 status_renderer_factory = MerlinStatusRendererFactory()

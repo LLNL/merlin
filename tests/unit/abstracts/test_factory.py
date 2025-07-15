@@ -15,6 +15,7 @@ from pytest_mock import MockerFixture
 
 from merlin.abstracts import MerlinBaseFactory
 
+
 # --- Dummy Components ---
 class DummyComponent:
     """A testable dummy component."""
@@ -157,7 +158,7 @@ class TestMerlinBaseFactory:
         Args:
             factory: An instance of the dummy `TestableFactory` class for testing.
         """
-        with pytest.raises(RuntimeError, match="not supported"):  # raises RuntimeError because of `_get_component_error_class` 
+        with pytest.raises(RuntimeError, match="not supported"):  # raises RuntimeError because of `_get_component_error_class`
             factory.get_component_info("not_registered")
 
     def test_discover_plugins_calls_both_hooks(self, mocker: MockerFixture, factory: TestableFactory):

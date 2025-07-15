@@ -73,7 +73,7 @@ class MerlinBackendFactory(MerlinBaseFactory):
             The entry point namespace for Merlin backend plugins.
         """
         return "merlin.backends"
-    
+
     def _get_component_error_class(self) -> type[Exception]:
         """
         Return the exception type to raise for unsupported components.

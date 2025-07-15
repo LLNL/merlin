@@ -47,7 +47,9 @@ class TestMerlinBackendFactory:
         assert set(available) == {"redis", "sqlite"}
 
     @pytest.mark.parametrize("backend_type, expected_cls", [("redis", RedisBackend), ("sqlite", SQLiteBackend)])
-    def test_create_valid_backend(self, backend_factory: MerlinBackendFactory, backend_type: str, expected_cls: ResultsBackend):
+    def test_create_valid_backend(
+        self, backend_factory: MerlinBackendFactory, backend_type: str, expected_cls: ResultsBackend
+    ):
         """
         Test that `create` returns a valid backend instance for a registered name.
 
@@ -86,6 +88,7 @@ class TestMerlinBackendFactory:
         Args:
             backend_factory: An instance of the `MerlinBackendFactory` class for testing.
         """
+
         class NotAResultsBackend:
             pass
 

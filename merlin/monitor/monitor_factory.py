@@ -16,6 +16,7 @@ from merlin.exceptions import MerlinInvalidTaskServerError
 from merlin.monitor.celery_monitor import CeleryMonitor
 from merlin.monitor.task_server_monitor import TaskServerMonitor
 
+
 class MonitorFactory(MerlinBaseFactory):
     """
     Factory class for managing and instantiating Merlin task server monitors.
@@ -69,7 +70,7 @@ class MonitorFactory(MerlinBaseFactory):
             The entry point namespace for Merlin monitor plugins.
         """
         return "merlin.monitor"
-    
+
     def _get_component_error_class(self) -> type[Exception]:
         """
         Return the exception type to raise for unsupported components.

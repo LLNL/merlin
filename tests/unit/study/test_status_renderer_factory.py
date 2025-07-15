@@ -40,11 +40,16 @@ class TestMerlinStatusRendererFactory:
         available = renderer_factory.list_available()
         assert set(available) == {"default", "table"}
 
-    @pytest.mark.parametrize("renderer_type, expected_cls", [
-        ("default", MerlinDefaultRenderer),
-        ("table", MerlinFlatRenderer),
-    ])
-    def test_create_valid_renderer(self, renderer_factory: MerlinStatusRendererFactory, renderer_type: str, expected_cls: BaseStatusRenderer):
+    @pytest.mark.parametrize(
+        "renderer_type, expected_cls",
+        [
+            ("default", MerlinDefaultRenderer),
+            ("table", MerlinFlatRenderer),
+        ],
+    )
+    def test_create_valid_renderer(
+        self, renderer_factory: MerlinStatusRendererFactory, renderer_type: str, expected_cls: BaseStatusRenderer
+    ):
         """
         Test that `create` returns the correct renderer instance for each type.
         """
@@ -62,6 +67,7 @@ class TestMerlinStatusRendererFactory:
         """
         Test that trying to register a non-renderer raises a TypeError.
         """
+
         class NotARenderer:
             pass
 

@@ -17,9 +17,10 @@ and identify the appropriate entry point group for plugin discovery.
 """
 
 import logging
-import pkg_resources
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
+
+import pkg_resources
 
 
 LOG = logging.getLogger("merlin")
@@ -95,7 +96,7 @@ class MerlinBaseFactory(ABC):
             TypeError: If `component_class` is not valid.
         """
         raise NotImplementedError("Subclasses of `MerlinBaseFactory` must implement a `_validate_component` method.")
-    
+
     @abstractmethod
     def _entry_point_group(self) -> str:
         """
@@ -107,7 +108,7 @@ class MerlinBaseFactory(ABC):
             The entry point group used for plugin discovery.
         """
         raise NotImplementedError("Subclasses must define an entry point group.")
-    
+
     def _discover_plugins_via_entry_points(self):
         """
         Discover and register plugins via Python entry points.
@@ -118,7 +119,7 @@ class MerlinBaseFactory(ABC):
                     plugin_class = entry_point.load()
                     self.register(entry_point.name, plugin_class)
                     LOG.info(f"Loaded plugin via entry point: {entry_point.name}")
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     LOG.warning(f"Failed to load plugin '{entry_point.name}': {e}")
         except ImportError:
             LOG.debug("pkg_resources not available for plugin discovery")
@@ -131,7 +132,6 @@ class MerlinBaseFactory(ABC):
 
         Subclasses can override this method to implement package/module scanning.
         """
-        pass
 
     def _discover_plugins(self):
         """
@@ -212,19 +212,14 @@ class MerlinBaseFactory(ABC):
         if component_class is None:
             available = ", ".join(self.list_available())
             error_cls = self._get_component_error_class()
-            raise error_cls(
-                f"Component '{component_type}' is not supported. "
-                f"Available components: {available}"
-            )
+            raise error_cls(f"Component '{component_type}' is not supported. " f"Available components: {available}")
 
         try:
             instance = component_class() if config is None else component_class(**config)
             LOG.info(f"Created component '{canonical_name}'")
             return instance
         except Exception as e:
-            raise ValueError(
-                f"Failed to create component '{canonical_name}': {e}"
-            ) from e
+            raise ValueError(f"Failed to create component '{canonical_name}': {e}") from e
 
     def get_component_info(self, component_type: str) -> Dict:
         """
@@ -248,10 +243,7 @@ class MerlinBaseFactory(ABC):
         if component_class is None:
             available = ", ".join(self.list_available())
             error_cls = self._get_component_error_class()
-            raise error_cls(
-                f"Component '{component_type}' is not supported. "
-                f"Available components: {available}"
-            )
+            raise error_cls(f"Component '{component_type}' is not supported. " f"Available components: {available}")
 
         return {
             "name": canonical_name,

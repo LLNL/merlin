@@ -121,6 +121,7 @@ class TestMonitorFactory:
         Args:
             monitor_factory: Instance of `MonitorFactory` for testing.
         """
+
         class NotAMonitor:
             pass
 
