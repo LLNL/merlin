@@ -1221,7 +1221,8 @@ class DetailedStatus(Status):
         }
 
         # Display the filter options
-        filter_option_renderer = status_renderer_factory.get_renderer("table", disable_theme=True, disable_pager=True)
+        renderer_config = {"disable_theme": True, "disable_pager": True} 
+        filter_option_renderer = status_renderer_factory.create("table", config=renderer_config)
         filter_option_renderer.layout(status_data=filter_info)
         filter_option_renderer.render()
 

@@ -248,7 +248,7 @@ class DetailedStatusCommand(StatusCommand):
         status_display_group.add_argument(
             "--layout",
             type=str,
-            choices=status_renderer_factory.get_layouts(),
+            choices=status_renderer_factory.list_available(),
             default="default",
             help="Alternate status layouts [Default: %(default)s]",
         )
