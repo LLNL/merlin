@@ -16,75 +16,76 @@ The factory maintains mappings of backend names and aliases, and raises a clear 
 if an unsupported backend is requested.
 """
 
-from typing import Dict, List
+from typing import Any
 
+from merlin.abstracts import MerlinBaseFactory
 from merlin.backends.redis.redis_backend import RedisBackend
 from merlin.backends.results_backend import ResultsBackend
 from merlin.backends.sqlite.sqlite_backend import SQLiteBackend
 from merlin.exceptions import BackendNotSupportedError
 
 
-# TODO add register_backend call to this when we create task server interface?
 # TODO could this factory replace the functions in config/results_backend.py?
 # - Perhaps it should be a class outside of this?
-class MerlinBackendFactory:
+class MerlinBackendFactory(MerlinBaseFactory):
     """
     Factory class for managing and instantiating supported Merlin backends.
 
-    This class maintains a registry of available results backends (e.g., Redis, SQLite)
-    and provides a unified interface for retrieving a backend implementation by name.
+    This subclass of `MerlinBaseFactory` handles registration, validation,
+    and instantiation of results backends (e.g., Redis, SQLite).
 
     Attributes:
-        _backends (Dict[str, backends.results_backend.ResultsBackend]): Mapping of backend names to their classes.
-        _backend_aliases (Dict[str, str]): Optional aliases for resolving canonical backend names.
+        _registry (Dict[str, ResultsBackend]): Maps canonical backend names to backend classes.
+        _aliases (Dict[str, str]): Maps legacy or alternate names to canonical backend names.
 
     Methods:
-        get_supported_backends: Returns a list of supported backend names.
-        get_backend: Instantiates and returns the backend associated with the given name.
+        register: Register a new backend class and optional aliases.
+        list_available: Return a list of supported backend names.
+        create: Instantiate a backend class by name or alias.
+        get_component_info: Return metadata about a registered backend.
     """
 
-    def __init__(self):
-        """Initialize the Merlin backend factory."""
-        # Map canonical backend names to their classes
-        self._backends: Dict[str, ResultsBackend] = {
-            "redis": RedisBackend,
-            "sqlite": SQLiteBackend,
-        }
-        # Map aliases to canonical backend names
-        self._backend_aliases: Dict[str, str] = {"rediss": "redis"}
-
-    def get_supported_backends(self) -> List[str]:
+    def _register_builtins(self):
         """
-        Get a list of the supported backends in Merlin.
-
-        Returns:
-            A list of names representing the supported backends in Merlin.
+        Register built-in backend implementations.
         """
-        return list(self._backends.keys())
+        self.register("redis", RedisBackend, aliases=["rediss"])
+        self.register("sqlite", SQLiteBackend)
 
-    def get_backend(self, backend: str) -> ResultsBackend:
+    def _validate_component(self, component_class: Any):
         """
-        Get backend handler for whichever backend the user is using.
+        Ensure registered component is a subclass of ResultsBackend.
 
         Args:
-            backend: The name of the backend to load up.
-
-        Returns:
-            An instantiation of a [`ResultsBackend`][backends.results_backend.ResultsBackend] object.
+            component_class: The class to validate.
 
         Raises:
-            (exceptions.BackendNotSupportedError): If the requested backend is not supported.
+            TypeError: If the component does not subclass ResultsBackend.
         """
-        # Resolve the alias to the canonical backend name
-        backend = self._backend_aliases.get(backend, backend)
+        if not issubclass(component_class, ResultsBackend):
+            raise TypeError(f"{component_class} must inherit from ResultsBackend")
 
-        # Get the correct backend class
-        backend_object = self._backends.get(backend)
+    def _entry_point_group(self) -> str:
+        """
+        Entry point group used for discovering backend plugins.
 
-        if backend_object is None:
-            raise BackendNotSupportedError(f"Backend unsupported by Merlin: {backend}.")
+        Returns:
+            The entry point namespace for Merlin backend plugins.
+        """
+        return "merlin.backends"
+    
+    def _get_component_error_class(self) -> type[Exception]:
+        """
+        Return the exception type to raise for unsupported components.
 
-        return backend_object(backend)
+        This method is used by the base factory logic to determine which
+        exception to raise when a requested component is not found or fails
+        to initialize.
+
+        Returns:
+            The exception class to raise.
+        """
+        return BackendNotSupportedError
 
 
 backend_factory = MerlinBackendFactory()

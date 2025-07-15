@@ -73,7 +73,7 @@ class MerlinBaseFactory(ABC):
         self._register_builtins()
 
     @abstractmethod
-    def _register_builtins(self) -> None:
+    def _register_builtins(self):
         """
         Register built-in components.
 
@@ -82,11 +82,14 @@ class MerlinBaseFactory(ABC):
         raise NotImplementedError("Subclasses of `MerlinBaseFactory` must implement a `_register_builtins` method.")
 
     @abstractmethod
-    def _validate_component(self, component_class: Any) -> None:
+    def _validate_component(self, component_class: Any):
         """
         Validate the component class before registration.
 
         Subclasses must implement this to enforce type or interface constraints.
+
+        Args:
+            component_class: The class to validate.
 
         Raises:
             TypeError: If `component_class` is not valid.
@@ -99,8 +102,36 @@ class MerlinBaseFactory(ABC):
         Return the entry point group used for plugin discovery.
 
         Subclasses must override this.
+
+        Returns:
+            The entry point group used for plugin discovery.
         """
         raise NotImplementedError("Subclasses must define an entry point group.")
+    
+    def _discover_plugins_via_entry_points(self):
+        """
+        Discover and register plugins via Python entry points.
+        """
+        try:
+            for entry_point in pkg_resources.iter_entry_points(self._entry_point_group()):
+                try:
+                    plugin_class = entry_point.load()
+                    self.register(entry_point.name, plugin_class)
+                    LOG.info(f"Loaded plugin via entry point: {entry_point.name}")
+                except Exception as e:
+                    LOG.warning(f"Failed to load plugin '{entry_point.name}': {e}")
+        except ImportError:
+            LOG.debug("pkg_resources not available for plugin discovery")
+
+    def _discover_builtin_modules(self):
+        """
+        Optional hook to discover built-in components by scanning local modules.
+
+        Default implementation does nothing.
+
+        Subclasses can override this method to implement package/module scanning.
+        """
+        pass
 
     def _discover_plugins(self):
         """
@@ -108,16 +139,19 @@ class MerlinBaseFactory(ABC):
 
         Subclasses can override this to support more discovery mechanisms.
         """
-        try:
-            for entry_point in pkg_resources.iter_entry_points(self._entry_point_group()):
-                try:
-                    plugin_class = entry_point.load()
-                    self.register(entry_point.name, plugin_class)
-                    LOG.info(f"Loaded plugin: {entry_point.name}")
-                except Exception as e:
-                    LOG.warning(f"Failed to load plugin '{entry_point.name}': {e}")
-        except ImportError:
-            LOG.debug("pkg_resources not available for plugin discovery")
+        self._discover_plugins_via_entry_points()
+        self._discover_builtin_modules()
+
+    def _get_component_error_class(self) -> type[Exception]:
+        """
+        Return the exception type to raise when an invalid component is requested.
+
+        Subclasses should override this to raise more specific exceptions.
+
+        Returns:
+            A subclass of Exception (e.g., ValueError by default).
+        """
+        return ValueError
 
     def register(self, name: str, component_class: Any, aliases: List[str] = None) -> None:
         """
@@ -177,7 +211,8 @@ class MerlinBaseFactory(ABC):
         component_class = self._registry.get(canonical_name)
         if component_class is None:
             available = ", ".join(self.list_available())
-            raise ValueError(
+            error_cls = self._get_component_error_class()
+            raise error_cls(
                 f"Component '{component_type}' is not supported. "
                 f"Available components: {available}"
             )

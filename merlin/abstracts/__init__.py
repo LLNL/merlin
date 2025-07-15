@@ -11,3 +11,7 @@ Merlin's codebase.
 Modules:
     factory: Contains `MerlinBaseFactory`, used to manage pluggable components in Merlin.
 """
+
+from merlin.abstracts.factory import MerlinBaseFactory
+
+__all__ = ["MerlinBaseFactory"]
