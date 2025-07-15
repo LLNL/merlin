@@ -16,65 +16,30 @@ from merlin.exceptions import MerlinInvalidTaskServerError
 from merlin.monitor.celery_monitor import CeleryMonitor
 from merlin.monitor.task_server_monitor import TaskServerMonitor
 
-
-# class MonitorFactory:
-#     """
-#     A factory class for managing and retrieving task server monitors
-#     for supported task servers in Merlin.
-
-#     Attributes:
-#         _monitors (Dict[str, TaskServerMonitor]): A dictionary mapping task server names
-#             to their corresponding monitor classes.
-
-#     Methods:
-#         get_supported_task_servers: Get a list of the supported task servers in Merlin.
-#         get_monitor: Get the monitor instance for the specified task server.
-#     """
-
-#     def __init__(self):
-#         """
-#         Initialize the `MonitorFactory` with the supported task server monitors.
-#         """
-#         self._monitors: Dict[str, TaskServerMonitor] = {
-#             "celery": CeleryMonitor,
-#         }
-
-#     def get_supported_task_servers(self) -> List[str]:
-#         """
-#         Get a list of the supported task servers in Merlin.
-
-#         Returns:
-#             A list of names representing the supported task servers in Merlin.
-#         """
-#         return list(self._monitors.keys())
-
-#     def get_monitor(self, task_server: str) -> TaskServerMonitor:
-#         """
-#         Get the task server monitor for whichever task server the user is utilizing.
-
-#         Args:
-#             task_server: The name of the task server to use when loading a task server monitor.
-
-#         Returns:
-#             An instantiated [`TaskServerMonitor`][monitor.task_server_monitor.TaskServerMonitor]
-#                 object for the specified task server.
-
-#         Raises:
-#             MerlinInvalidTaskServerError: If the requested task server is not supported.
-#         """
-#         monitor_object = self._monitors.get(task_server, None)
-
-#         if monitor_object is None:
-#             raise MerlinInvalidTaskServerError(
-#                 f"Task server unsupported by Merlin: {task_server}. "
-#                 "Supported task servers are: {self.get_supported_task_servers()}"
-#             )
-
-#         return monitor_object()
-
 class MonitorFactory(MerlinBaseFactory):
     """
-    
+    Factory class for managing and instantiating Merlin task server monitors.
+
+    This subclass of `MerlinBaseFactory` is responsible for registering,
+    validating, and creating instances of supported `TaskServerMonitor`
+    implementations (e.g., `CeleryMonitor`). It also supports plugin-based
+    extension via Python entry points.
+
+    Responsibilities:
+        - Register built-in task server monitors.
+        - Validate that components conform to the `TaskServerMonitor` interface.
+        - Support creation and introspection of registered monitor types.
+        - Optionally discover external monitor plugins.
+
+    Attributes:
+        _registry (Dict[str, TaskServerMonitor]): Maps canonical task server names to monitor classes.
+        _aliases (Dict[str, str]): Maps aliases to canonical monitor names.
+
+    Methods:
+        register: Register a new monitor class and optional aliases.
+        list_available: Return a list of supported monitor names.
+        create: Instantiate a monitor class by name or alias.
+        get_component_info: Return metadata about a registered monitor.
     """
 
     def _register_builtins(self):
