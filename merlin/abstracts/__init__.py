@@ -14,5 +14,4 @@ Modules:
 
 from merlin.abstracts.factory import MerlinBaseFactory
 
-
 __all__ = ["MerlinBaseFactory"]
