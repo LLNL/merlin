@@ -247,7 +247,8 @@ class MerlinBaseFactory(ABC):
         component_class = self._registry.get(canonical_name)
         if component_class is None:
             available = ", ".join(self.list_available())
-            raise ValueError(
+            error_cls = self._get_component_error_class()
+            raise error_cls(
                 f"Component '{component_type}' is not supported. "
                 f"Available components: {available}"
             )

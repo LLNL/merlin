@@ -157,7 +157,7 @@ class TestMerlinBaseFactory:
         Args:
             factory: An instance of the dummy `TestableFactory` class for testing.
         """
-        with pytest.raises(ValueError, match="not supported"):
+        with pytest.raises(RuntimeError, match="not supported"):  # raises RuntimeError because of `_get_component_error_class` 
             factory.get_component_info("not_registered")
 
     def test_discover_plugins_calls_both_hooks(self, mocker: MockerFixture, factory: TestableFactory):
