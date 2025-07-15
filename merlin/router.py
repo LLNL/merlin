@@ -99,7 +99,9 @@ def launch_workers(
         return f"Workers started for {task_server_type} task server"
         
     except Exception as e:
+        import traceback
         LOG.error(f"Failed to start workers: {e}")
+        LOG.error(f"Full traceback: {traceback.format_exc()}")
         return "No workers started"
 
 

@@ -1061,14 +1061,21 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             A dictionary mapping step names to their corresponding task queues.
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+        from merlin.spec.expansion import expand_line  # pylint: disable=C0415
 
         steps = self.get_study_steps()
         queues = {}
+        var_dict = self.environment.get("variables", {})
+        
         for step in steps:
-            if "task_queue" in step.run and (omit_tag or CONFIG.celery.omit_queue_tag):
-                queues[step.name] = step.run["task_queue"]
-            elif "task_queue" in step.run:
-                queues[step.name] = CONFIG.celery.queue_tag + step.run["task_queue"]
+            if "task_queue" in step.run:
+                # Expand variables in the task queue name
+                task_queue = expand_line(step.run["task_queue"], var_dict)
+                
+                if omit_tag or CONFIG.celery.omit_queue_tag:
+                    queues[step.name] = task_queue
+                else:
+                    queues[step.name] = CONFIG.celery.queue_tag + task_queue
         return queues
 
     def get_queue_step_relationship(self) -> Dict[str, List[str]]:
@@ -1129,6 +1136,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 task queues.
         """
         queues = self.get_task_queues(omit_tag=omit_tag)
+        if not steps:
+            # If no steps provided, return empty list
+            return []
         if steps[0] == "all":
             task_queues = queues.values()
         else:
@@ -1156,10 +1166,10 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 queue string.
 
         Returns:
-            A quoted string of unique task queues, separated by commas.
+            A comma-separated string of unique task queues.
         """
         queues = ",".join(set(self.get_queue_list(steps)))
-        return shlex.quote(queues)
+        return queues
 
     def get_worker_names(self) -> List[str]:
         """

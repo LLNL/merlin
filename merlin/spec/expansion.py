@@ -28,7 +28,7 @@ from merlin.utils import contains_shell_ref, contains_token, verify_filepath
 MAESTRO_RESERVED = {"SPECROOT", "WORKSPACE", "LAUNCHER"}
 STEP_AWARE = {
     "MERLIN_GLOB_PATH",
-    "MERLIN_PATHS_ALL",
+    "MERLIN_PATHS_ALL", 
     "MERLIN_SAMPLE_ID",
     "MERLIN_SAMPLE_PATH",
 }
@@ -335,6 +335,11 @@ def parameter_substitutions_for_cmd(glob_path: str, sample_paths: str) -> List[T
         ```
     """
     substitutions = []
+    
+    import logging
+    LOG = logging.getLogger(__name__)
+    LOG.debug(f"MERLIN_GLOB_PATH expansion: raw glob_path='{glob_path}', sample_paths='{sample_paths}'")
+    
     substitutions.append(("$(MERLIN_GLOB_PATH)", glob_path))
     substitutions.append(("$(MERLIN_PATHS_ALL)", sample_paths))
     # Return codes

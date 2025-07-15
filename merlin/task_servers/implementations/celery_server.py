@@ -204,21 +204,43 @@ class CeleryTaskServer(TaskServerInterface):
             try:
                 from celery import group, chord
                 
-                # Extract signatures from TaskDependency objects
-                signatures = []
+                # Extract signatures from TaskDependency objects, separating header from callback
+                header_signatures = []
+                callback_signatures = []
+                
                 for task_dep in task_dependencies:
                     if hasattr(task_dep, 'task_signature') and task_dep.task_signature:
-                        signatures.append(task_dep.task_signature)
+                        if task_dep.dependency_type == "header":
+                            header_signatures.append(task_dep.task_signature)
+                        elif task_dep.dependency_type == "callback":
+                            callback_signatures.append(task_dep.task_signature)
                 
-                if not signatures:
+                if not header_signatures and not callback_signatures:
                     LOG.warning("No valid signatures found in task dependencies")
                     return ""
                 
-                # Create and submit the group directly
-                group_obj = group(signatures)
-                result = group_obj.apply_async()
+                # Create coordinated submission based on dependencies
+                if header_signatures and callback_signatures:
+                    # Use chord for proper dependency coordination
+                    header_group = group(header_signatures)
+                    # For simplicity, use the first callback task (typically there's only one)
+                    callback_task = callback_signatures[0]
+                    chord_obj = chord(header_group, callback_task)
+                    result = chord_obj.apply_async()
+                    LOG.debug(f"Submitted chord with {len(header_signatures)} header tasks and callback via TaskServerInterface")
+                elif header_signatures:
+                    # Only header tasks: submit as group
+                    group_obj = group(header_signatures)
+                    result = group_obj.apply_async()
+                    LOG.debug(f"Submitted group with {len(header_signatures)} header tasks via TaskServerInterface")
+                elif callback_signatures:
+                    # Only callback tasks: submit as group
+                    group_obj = group(callback_signatures)
+                    result = group_obj.apply_async()
+                    LOG.debug(f"Submitted group with {len(callback_signatures)} callback tasks via TaskServerInterface")
+                else:
+                    return ""
                 
-                LOG.debug(f"Submitted chord with {len(signatures)} tasks via TaskServerInterface")
                 return result.id
                 
             except Exception as e:
@@ -416,14 +438,14 @@ class CeleryTaskServer(TaskServerInterface):
             # Use existing Celery worker startup logic
             from merlin.study.celeryadapter import start_celery_workers
             
-            # Extract steps from the spec for worker configuration
-            steps = spec.get_study_step_names()
+            # Use 'all' to start workers for all steps
+            # This maintains the expected behavior for worker startup
+            # DEBUG: Check what steps are being started
+            LOG.debug(f"Starting Celery workers for steps=['all'] with spec: {spec.name}")
             
-            # Use existing worker startup with default parameters
-            # This maintains backward compatibility with current behavior
             start_celery_workers(
                 spec=spec,
-                steps=steps,
+                steps=["all"],
                 celery_args="",  # Use defaults from spec
                 disable_logs=False,
                 just_return_command=False

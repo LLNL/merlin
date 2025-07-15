@@ -786,7 +786,12 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
     # Figure out how many directories there are, make a glob string
     directory_sizes = uniform_directories(len(samples), bundle_size=1, level_max_dirs=level_max_dirs)
 
-    glob_path = "*/" * len(directory_sizes)
+    # Generate glob path without trailing slash to avoid double slashes
+    # when used as: $(workspace)/$(MERLIN_GLOB_PATH)/filename
+    if len(directory_sizes) > 0:
+        glob_path = "/".join(["*"] * len(directory_sizes))
+    else:
+        glob_path = "*"
 
     LOG.debug("creating sample_index")
     # Write a hierarchy to get the all paths string
@@ -912,6 +917,8 @@ def queue_merlin_study(study: MerlinStudy, adapter: Dict) -> AsyncResult:
         task_server = study.get_task_server()
         use_task_server_interface = True
         LOG.info("Using TaskServerInterface for task submission.")
+        # DEBUG: Check which task server is being used
+        LOG.debug(f"TaskServerInterface type: {type(task_server).__name__}")
     except Exception as e:
         LOG.warning(f"TaskServerInterface not available, falling back to Celery: {e}")
         use_task_server_interface = False
@@ -1070,14 +1077,16 @@ def _queue_study_with_task_server(study: MerlinStudy, adapter: Dict, samples, sa
                         result = task.delay()
                         submitted_task_ids.append(result.id if hasattr(result, 'id') else str(result))
                     
-                # Submit dependent tasks after
-                for task in dependent_expansion_tasks:
+                # Submit dependent tasks after - use chain to ensure dependency order
+                if dependent_expansion_tasks:
+                    from celery import chain
+                    dependent_chain = chain(*dependent_expansion_tasks)
                     try:
-                        result = task_server.submit_task(task)
-                        submitted_task_ids.append(result if result else str(task))
+                        result = task_server.submit_task(dependent_chain)
+                        submitted_task_ids.append(result if result else str(dependent_chain))
                     except Exception as task_e:
                         LOG.warning(f"TaskServerInterface task submission failed: {task_e}, using direct delay")
-                        result = task.delay()
+                        result = dependent_chain.delay()
                         submitted_task_ids.append(result.id if hasattr(result, 'id') else str(result))
                         
             except Exception as fallback_e:

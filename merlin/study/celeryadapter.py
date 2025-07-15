@@ -100,11 +100,30 @@ def get_running_queues(celery_app_name: str, test_mode: bool = False) -> List[st
     for _, lcmd in procs:
         lcmd = list(filter(None, lcmd))
         cmdline = " ".join(lcmd)
+        LOG.debug(f"Processing command: {cmdline} (lcmd length: {len(lcmd)})")
+        
         if "-Q" in cmdline:
-            if test_mode:
-                echo_cmd = lcmd.pop(2)
-                lcmd.extend(echo_cmd.split())
-            running_queues.extend(lcmd[lcmd.index("-Q") + 1].split(","))
+            try:
+                if test_mode:
+                    if len(lcmd) > 2:
+                        echo_cmd = lcmd.pop(2)
+                        lcmd.extend(echo_cmd.split())
+                    else:
+                        LOG.warning(f"Cannot pop index 2 from command with length {len(lcmd)}: {cmdline}")
+                        continue
+                
+                # Find the index of the -Q flag
+                q_index = lcmd.index("-Q")
+                # Check if there's a next element after -Q to avoid index out of range
+                if q_index + 1 < len(lcmd):
+                    queues_str = lcmd[q_index + 1]
+                    LOG.debug(f"Found queues after -Q flag: {queues_str}")
+                    running_queues.extend(queues_str.split(","))
+                else:
+                    LOG.warning(f"Found -Q flag without queue specification in command: {cmdline}")
+            except (IndexError, ValueError) as e:
+                LOG.error(f"Error processing command {cmdline}: {e}")
+                continue
 
     running_queues = list(set(running_queues))
 
@@ -802,6 +821,11 @@ def start_celery_workers(
         wsteps = get_yaml_var(worker_val, "steps", steps)
         steps_to_start = _get_steps_to_start(wsteps, steps, steps_provided)
         queues = spec.make_queue_string(steps_to_start)
+        
+        # Safety check: if queues is empty, don't start this worker
+        if not queues:
+            LOG.warning(f"Skipping worker {worker_name} because it has no queues assigned")
+            continue
 
         # Check for missing arguments
         worker_args = verify_args(spec, worker_args, worker_name, overlap, disable_logs=disable_logs)
