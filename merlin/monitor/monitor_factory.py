@@ -9,7 +9,7 @@ This module provides a factory class to manage and retrieve task server monitors
 for supported task servers in Merlin.
 """
 
-from typing import Any
+from typing import Any, Type
 
 from merlin.abstracts import MerlinBaseFactory
 from merlin.exceptions import MerlinInvalidTaskServerError
@@ -71,7 +71,7 @@ class MonitorFactory(MerlinBaseFactory):
         """
         return "merlin.monitor"
 
-    def _get_component_error_class(self) -> type[Exception]:
+    def _get_component_error_class(self) -> Type[Exception]:
         """
         Return the exception type to raise for unsupported components.
 

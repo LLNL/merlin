@@ -16,7 +16,7 @@ The factory maintains mappings of backend names and aliases, and raises a clear 
 if an unsupported backend is requested.
 """
 
-from typing import Any
+from typing import Any, Type
 
 from merlin.abstracts import MerlinBaseFactory
 from merlin.backends.redis.redis_backend import RedisBackend
@@ -74,7 +74,7 @@ class MerlinBackendFactory(MerlinBaseFactory):
         """
         return "merlin.backends"
 
-    def _get_component_error_class(self) -> type[Exception]:
+    def _get_component_error_class(self) -> Type[Exception]:
         """
         Return the exception type to raise for unsupported components.
 

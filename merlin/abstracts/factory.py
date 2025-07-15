@@ -18,7 +18,7 @@ and identify the appropriate entry point group for plugin discovery.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Type
 
 import pkg_resources
 
@@ -142,7 +142,7 @@ class MerlinBaseFactory(ABC):
         self._discover_plugins_via_entry_points()
         self._discover_builtin_modules()
 
-    def _get_component_error_class(self) -> type[Exception]:
+    def _get_component_error_class(self) -> Type[Exception]:
         """
         Return the exception type to raise when an invalid component is requested.
 

@@ -6,7 +6,7 @@
 
 """This module handles creating a formatted task-by-task status display"""
 import logging
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Type, Union
 
 from maestrowf import BaseStatusRenderer, FlatStatusRenderer
 from rich import box
@@ -457,7 +457,7 @@ class MerlinStatusRendererFactory(MerlinBaseFactory):
         """
         return "merlin.study"  # TODO change this to merlin.status when we refactor status
 
-    def _get_component_error_class(self) -> type[Exception]:
+    def _get_component_error_class(self) -> Type[Exception]:
         """
         Return the exception type to raise for unsupported components.
 

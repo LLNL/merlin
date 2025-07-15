@@ -8,7 +8,7 @@
 Tests for the `factory.py` module of the `abstracts/` directory.
 """
 
-from typing import Any
+from typing import Any, Type
 
 import pytest
 from pytest_mock import MockerFixture
@@ -39,7 +39,7 @@ class TestableFactory(MerlinBaseFactory):
     def _entry_point_group(self) -> str:
         return "merlin.test_plugins"
 
-    def _get_component_error_class(self) -> type[Exception]:
+    def _get_component_error_class(self) -> Type[Exception]:
         return RuntimeError  # Use a distinct error type for test verification
 
 
