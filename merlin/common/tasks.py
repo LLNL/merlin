@@ -220,14 +220,24 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C
                 if task_server_enabled:
                     LOG.debug(f"adding {next_in_chain} to chord via TaskServerInterface")
                     try:
-                        # Use existing chord mechanism but with TaskServerInterface context
-                        self.add_to_chord(next_in_chain, lazy=False)
+                        # Check if current task is part of a chord before trying to add to it
+                        if hasattr(self.request, 'chord') and self.request.chord:
+                            LOG.debug(f"Task is part of chord {self.request.chord}, adding {next_in_chain}")
+                            self.add_to_chord(next_in_chain, lazy=False)
+                        else:
+                            LOG.debug(f"Task not in chord context, using direct submission for {next_in_chain}")
+                            next_in_chain.delay()
                     except Exception as e:
-                        LOG.warning(f"TaskServerInterface chord chain failed: {e}, using standard chord")
-                        self.add_to_chord(next_in_chain, lazy=False)
+                        LOG.warning(f"TaskServerInterface chord chain failed: {e}, using direct submission")
+                        next_in_chain.delay()
                 else:
-                    LOG.debug(f"adding {next_in_chain} to chord")
-                    self.add_to_chord(next_in_chain, lazy=False)
+                    # Check if current task is part of a chord before trying to add to it  
+                    if hasattr(self.request, 'chord') and self.request.chord:
+                        LOG.debug(f"adding {next_in_chain} to chord")
+                        self.add_to_chord(next_in_chain, lazy=False)
+                    else:
+                        LOG.debug(f"Task not in chord context, using direct submission for {next_in_chain}")
+                        next_in_chain.delay()
         return result
 
     LOG.error("Failed to find step!")
@@ -421,7 +431,12 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
                 if self.request.is_eager:
                     next_step.delay()
                 else:
-                    self.add_to_chord(next_step, lazy=False)
+                    # Check if current task is part of a chord before trying to add to it
+                    if hasattr(self.request, 'chord') and self.request.chord:
+                        self.add_to_chord(next_step, lazy=False)
+                    else:
+                        LOG.debug(f"Task not in chord context, using direct submission for next_step")
+                        next_step.delay()
                 LOG.debug(f"queued for samples[{next_index.min}:{next_index.max}] in for {chain_} in {next_index.name}")
         except retry_exceptions as e:
             # Reset the index to what it was before so we don't accidentally create a bunch of extra samples upon restart
@@ -510,12 +525,22 @@ def launch_chain(self: Task, chain_1d: List[Signature], condense_sig: Signature 
             if condense_sig:
                 # This chord makes it so we'll process all tasks in chain_1d, then condense the status files when they're done
                 sample_chord = chord(chain_1d, condense_sig)
-                self.add_to_chord(sample_chord, lazy=False)
+                # Check if current task is part of a chord before trying to add to it
+                if hasattr(self.request, 'chord') and self.request.chord:
+                    self.add_to_chord(sample_chord, lazy=False)
+                else:
+                    LOG.debug(f"Task not in chord context, using direct submission for sample_chord")
+                    sample_chord.delay()
             # Case b: no condensing is needed so just add all the signatures to the chord
             else:
                 for sig in chain_1d:
                     try:
-                        self.add_to_chord(sig, lazy=False)
+                        # Check if current task is part of a chord before trying to add to it
+                        if hasattr(self.request, 'chord') and self.request.chord:
+                            self.add_to_chord(sig, lazy=False)
+                        else:
+                            LOG.debug(f"Task not in chord context, using direct submission for sig")
+                            sig.delay()
                     except ValueError as e:
                         LOG.warning(f"Chord operation failed in launch_chain: {e}, submitting directly")
                         sig.delay()
@@ -867,7 +892,12 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
                             # Standard Celery mode: use chord mechanism
                             LOG.info(f"queuing expansion task {next_index.min}:{next_index.max}")
                             try:
-                                self.add_to_chord(sig, lazy=False)
+                                # Check if current task is part of a chord before trying to add to it
+                                if hasattr(self.request, 'chord') and self.request.chord:
+                                    self.add_to_chord(sig, lazy=False)
+                                else:
+                                    LOG.debug(f"Task not in chord context, using direct submission for expansion task")
+                                    sig.delay()
                             except ValueError as e:
                                 LOG.warning(f"Chord operation failed: {e}, submitting directly")
                                 sig.delay()
