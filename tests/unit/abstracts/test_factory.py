@@ -15,7 +15,6 @@ from pytest_mock import MockerFixture
 
 from merlin.abstracts import MerlinBaseFactory
 
-
 # --- Dummy Components ---
 class DummyComponent:
     """A testable dummy component."""
