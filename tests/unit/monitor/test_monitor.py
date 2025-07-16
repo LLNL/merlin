@@ -31,8 +31,8 @@ def monitor(mocker: MockerFixture) -> Monitor:
         A `Monitor` object with mocked properties.
     """
     mock_spec = MagicMock(name="MockSpec")
+    mocker.patch("merlin.monitor.monitor.MerlinDatabase", autospec=True)
     mock_monitor = Monitor(spec=mock_spec, sleep=1, task_server="celery", no_restart=False)
-    mock_monitor.merlin_db = mocker.MagicMock(name="MockMerlinDB")
     mock_monitor.task_server_monitor = mocker.MagicMock(name="MockTaskServerMonitor")
     return mock_monitor
 

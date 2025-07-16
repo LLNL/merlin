@@ -58,12 +58,9 @@ class SQLiteBackend(ResultsBackend):
             Delete an entity from the specified store.
     """
 
-    def __init__(self, backend_name: str):
+    def __init__(self):
         """
         Initialize the `SQLiteBackend` instance, setting up the store mappings and tables.
-
-        Args:
-            backend_name (str): The name of the backend (e.g., "sqlite").
         """
         stores = {
             "study": SQLiteStudyStore(),
@@ -72,7 +69,7 @@ class SQLiteBackend(ResultsBackend):
             "physical_worker": SQLitePhysicalWorkerStore(),
         }
 
-        super().__init__(backend_name, stores)
+        super().__init__("sqlite", stores)
 
         # Initialize database schema
         self._initialize_schema()

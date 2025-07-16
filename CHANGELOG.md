@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Unit tests for the `spec/` folder
 - A page in the docs explaining the `feature_demo` example
+- New `MerlinBaseFactory` class to help enable future plugins for backends, monitors, status renderers, etc.
+
+### Changed
+- Maestro version requirement is now at minimum 1.1.10 for status renderer changes
+- The `BackendFactory`, `MonitorFactory`, and `StatusRendererFactory` classes all now inherit from `MerlinBaseFactory`
 
 ## [1.13.0b2]
 ### Added

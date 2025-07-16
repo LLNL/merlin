@@ -34,7 +34,7 @@ def sqlite_backend_instance(mocker: MockerFixture) -> SQLiteBackend:
     # Patch the initialization method to avoid real DB operations
     mocker.patch.object(SQLiteBackend, "_initialize_schema", return_value=None)
 
-    backend = SQLiteBackend("sqlite")
+    backend = SQLiteBackend()
     return backend
 
 

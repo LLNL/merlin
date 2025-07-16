@@ -81,7 +81,7 @@ def redis_backend_instance(
     mocker.patch("merlin.config.results_backend.get_connection_string", return_value=redis_backend_connection_string)
 
     # Initialize RedisBackend
-    backend = RedisBackend("redis")
+    backend = RedisBackend()
 
     # Override the client and stores with mocked objects
     backend.client = redis_backend_mock_redis_client
