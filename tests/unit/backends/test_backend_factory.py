@@ -9,12 +9,33 @@ Tests for the `backend_factory.py` module.
 """
 
 import pytest
+from pytest_mock import MockerFixture
 
 from merlin.backends.backend_factory import MerlinBackendFactory
-from merlin.backends.redis.redis_backend import RedisBackend
 from merlin.backends.results_backend import ResultsBackend
-from merlin.backends.sqlite.sqlite_backend import SQLiteBackend
 from merlin.exceptions import BackendNotSupportedError
+
+
+class DummyRedisBackend(ResultsBackend):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def get_version(self):
+        pass
+
+    def flush_database(self):
+        pass
+
+
+class DummySQLiteBackend(ResultsBackend):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def get_version(self):
+        pass
+
+    def flush_database(self):
+        pass
 
 
 class TestMerlinBackendFactory:
@@ -27,13 +48,19 @@ class TestMerlinBackendFactory:
     """
 
     @pytest.fixture
-    def backend_factory(self) -> MerlinBackendFactory:
+    def backend_factory(self, mocker: MockerFixture) -> MerlinBackendFactory:
         """
         An instance of the `MerlinBackendFactory` class. Resets on each test.
+
+        Args:
+            mocker: PyTest mocker fixture.
 
         Returns:
             An instance of the `MerlinBackendFactory` class for testing.
         """
+        mocker.patch("merlin.backends.backend_factory.RedisBackend", DummyRedisBackend)
+        mocker.patch("merlin.backends.backend_factory.SQLiteBackend", DummySQLiteBackend)
+
         return MerlinBackendFactory()
 
     def test_list_available_backends(self, backend_factory: MerlinBackendFactory):
@@ -46,7 +73,7 @@ class TestMerlinBackendFactory:
         available = backend_factory.list_available()
         assert set(available) == {"redis", "sqlite"}
 
-    @pytest.mark.parametrize("backend_type, expected_cls", [("redis", RedisBackend), ("sqlite", SQLiteBackend)])
+    @pytest.mark.parametrize("backend_type, expected_cls", [("redis", DummyRedisBackend), ("sqlite", DummySQLiteBackend)])
     def test_create_valid_backend(
         self, backend_factory: MerlinBackendFactory, backend_type: str, expected_cls: ResultsBackend
     ):
@@ -69,7 +96,7 @@ class TestMerlinBackendFactory:
             backend_factory: An instance of the `MerlinBackendFactory` class for testing.
         """
         instance = backend_factory.create("rediss")
-        assert isinstance(instance, RedisBackend)
+        assert isinstance(instance, DummyRedisBackend)
 
     def test_create_invalid_backend_raises(self, backend_factory: MerlinBackendFactory):
         """

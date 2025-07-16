@@ -70,11 +70,9 @@ class RedisBackend(ResultsBackend):
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
         from merlin.config.results_backend import get_connection_string  # pylint: disable=import-outside-toplevel
 
-        backend_name = CONFIG.results_backend.name
-
         # Get the Redis client connection
         redis_config = {"url": get_connection_string(), "decode_responses": True}
-        if backend_name == "rediss":
+        if CONFIG.results_backend.name == "rediss":
             redis_config.update({"ssl_cert_reqs": getattr(CONFIG.results_backend, "cert_reqs", "required")})
         self.client: Redis = Redis.from_url(**redis_config)
 
@@ -86,7 +84,7 @@ class RedisBackend(ResultsBackend):
             "physical_worker": RedisPhysicalWorkerStore(self.client),
         }
 
-        super().__init__(backend_name, stores)
+        super().__init__("redis", stores)
 
     def get_version(self) -> str:
         """
