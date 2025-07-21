@@ -108,6 +108,15 @@ class MerlinInvalidStatusRendererError(Exception):
         super().__init__(message)
 
 
+class MerlinWorkerLaunchError(Exception):
+    """
+    Exception to signal that an there was a problem when launching workers.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
 ###############################
 # Database-Related Exceptions #
 ###############################
