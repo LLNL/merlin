@@ -68,6 +68,7 @@ def run_celery(study: MerlinStudy, run_mode: str = None):
     queue_merlin_study(study, adapter_config)
 
 
+# TODO should probably create a celery_utils.py file or something and store this function there
 def get_running_queues(celery_app_name: str, test_mode: bool = False) -> List[str]:
     """
     Check for running Celery workers and retrieve their associated queues.

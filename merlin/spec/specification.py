@@ -24,7 +24,7 @@ from maestrowf.datastructures.core.parameters import ParameterGenerator
 from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
-from merlin.utils import find_vlaunch_var, load_array_file, needs_merlin_expansion, repr_timedelta
+from merlin.utils import find_vlaunch_var, get_yaml_var, load_array_file, needs_merlin_expansion, repr_timedelta
 
 
 LOG = logging.getLogger(__name__)
@@ -1172,3 +1172,30 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                             step_param_map[step_name_with_params]["restart_cmd"][token] = param_value
 
         return step_param_map
+
+    def get_full_environment(self):
+        """
+        Construct the full environment for the current context.
+
+        This method starts with a copy of the current OS environment and 
+        overlays any additional environment variables defined in the spec's 
+        `environment` section. These variables are added both to the returned 
+        dictionary and the live `os.environ` to support variable expansion.
+
+        Returns:
+            dict: A dictionary representing the full environment with any 
+                user-defined variables applied.
+        """
+        # Start with the global environment
+        full_env = os.environ.copy()
+
+        # If the environment from the spec has anything in it,
+        # read in the variables and save them to the shell environment
+        if self.environment:
+            yaml_vars = get_yaml_var(self.environment, "variables", {})
+            for var_name, var_val in yaml_vars.items():
+                full_env[str(var_name)] = str(var_val)
+                # For expandvars
+                os.environ[str(var_name)] = str(var_val)
+
+        return full_env

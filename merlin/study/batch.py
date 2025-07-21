@@ -22,7 +22,7 @@ from merlin.utils import convert_timestring, get_flux_alloc, get_flux_version, g
 LOG = logging.getLogger(__name__)
 
 
-def batch_check_parallel(spec: MerlinSpec) -> bool:
+def batch_check_parallel(batch: Dict) -> bool:
     """
     Check for a parallel batch section in the provided MerlinSpec object.
 
@@ -33,9 +33,8 @@ def batch_check_parallel(spec: MerlinSpec) -> bool:
     parallel processing is enabled.
 
     Args:
-        spec (spec.specification.MerlinSpec): An instance of the
-            [`MerlinSpec`][spec.specification.MerlinSpec] class that contains the
-            configuration details, including the batch section.
+        batch: The batch section from either the YAML `batch` block or the worker-specific
+            batch block.
 
     Returns:
         Returns True if the batch type is set to a value other than 'local',
@@ -46,12 +45,6 @@ def batch_check_parallel(spec: MerlinSpec) -> bool:
             an error is logged and an AttributeError is raised.
     """
     parallel = False
-
-    try:
-        batch = spec.batch
-    except AttributeError as exc:
-        LOG.error("The batch section is required in the specification file.")
-        raise exc
 
     btype = get_yaml_var(batch, "type", "local")
     if btype != "local":
@@ -303,10 +296,9 @@ def get_flux_launch(parsed_batch: Dict) -> str:
 
 
 def batch_worker_launch(
-    spec: MerlinSpec,
+    batch: Dict,
     com: str,
     nodes: Union[str, int] = None,
-    batch: Dict = None,
 ) -> str:
     """
     Create the worker launch command based on the batch configuration in the
@@ -318,15 +310,11 @@ def batch_worker_launch(
     node specifications.
 
     Args:
-        spec (spec.specification.MerlinSpec): An instance of the
-            [`MerlinSpec`][spec.specification.MerlinSpec] class that contains the
-            configuration details, including the batch section.
+        batch: The batch section from either the YAML `batch` block or the worker-specific
+            batch block.
         com: The command to launch with the batch configuration.
         nodes: The number of nodes to use in the batch launch. If not specified,
             it will default to the value in the batch configuration.
-        batch: An optional batch override from the worker configuration. If not
-            provided, the function will attempt to retrieve the batch section from
-            the specification.
 
     Returns:
         The constructed worker launch command, ready to be executed.
@@ -335,13 +323,6 @@ def batch_worker_launch(
         AttributeError: If the batch section is missing in the specification.
         TypeError: If the `nodes` parameter is of an invalid type.
     """
-    if batch is None:
-        try:
-            batch = spec.batch
-        except AttributeError:
-            LOG.error("The batch section is required in the specification file.")
-            raise
-
     parsed_batch = parse_batch_block(batch)
 
     # A jsrun submission cannot be run under a parent jsrun so
