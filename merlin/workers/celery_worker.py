@@ -20,14 +20,13 @@ import subprocess
 import time
 from typing import Dict
 
-
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import MerlinWorkerLaunchError
 from merlin.study.batch import batch_check_parallel, batch_worker_launch
-from merlin.study.celeryadapter import get_running_queues
 from merlin.utils import check_machines
 from merlin.workers.worker import MerlinWorker
 
-LOG = logging.getLogger(__name__)
+LOG = logging.getLogger("merlin")
 
 
 class CeleryWorker(MerlinWorker):
@@ -66,11 +65,13 @@ class CeleryWorker(MerlinWorker):
         """
         Constructor for Celery workers.
 
+        Sets up attributes used throughout this worker object and saves this worker to the database.
+
         Args:
             name: The name of the worker.
             config: A dictionary containing optional configuration settings for this worker including:\n
                 - `args`: A string of arguments to pass to the launch command
-                - `queues`: A list of task queues for this worker to watch
+                - `queues`: A set of task queues for this worker to watch
                 - `batch`: A dictionary of specific batch configuration settings to use for this worker
                 - `nodes`: The number of nodes to launch this worker on
                 - `machines`: A list of machines that this worker is allowed to run on
@@ -79,10 +80,14 @@ class CeleryWorker(MerlinWorker):
         """
         super().__init__(name, config, env)
         self.args = self.config.get("args", "")
-        self.queues = self.config.get("queues", ["[merlin]_merlin"])
+        self.queues = self.config.get("queues", {"[merlin]_merlin"})
         self.batch = self.config.get("batch", {})
         self.machines = self.config.get("machines", [])
         self.overlap = overlap
+
+        # Add this worker to the database
+        merlin_db = MerlinDatabase()
+        merlin_db.create("logical_worker", self.name, self.queues)
 
     def _verify_args(self, disable_logs: bool = False) -> str:
         """
@@ -128,7 +133,7 @@ class CeleryWorker(MerlinWorker):
         self._verify_args(disable_logs=disable_logs)
 
         # Construct the launch command
-        celery_cmd = f"celery -A merlin worker {self.args} -Q {self.queues}"
+        celery_cmd = f"celery -A merlin worker {self.args} -Q {','.join(self.queues)}"
         nodes = self.batch.get("nodes", None)
         launch_cmd = batch_worker_launch(self.batch, celery_cmd, nodes=nodes)
         return os.path.expandvars(launch_cmd)
@@ -158,6 +163,7 @@ class CeleryWorker(MerlinWorker):
                 return False
 
         if not self.overlap:
+            from merlin.study.celeryadapter import get_running_queues
             running_queues = get_running_queues("merlin")
             for queue in queues:
                 if queue in running_queues:
