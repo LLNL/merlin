@@ -26,6 +26,7 @@ from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.utils import check_machines
 from merlin.workers.worker import MerlinWorker
 
+
 LOG = logging.getLogger("merlin")
 
 
@@ -153,7 +154,8 @@ class CeleryWorker(MerlinWorker):
         if machines:
             if not check_machines(machines):
                 LOG.error(
-                    f"The following machines were provided for worker '{self.name}': {machines}. However, the current machine '{socket.gethostname()}' is not in this list."
+                    f"The following machines were provided for worker '{self.name}': {machines}. "
+                    f"However, the current machine '{socket.gethostname()}' is not in this list."
                 )
                 return False
 
@@ -163,7 +165,8 @@ class CeleryWorker(MerlinWorker):
                 return False
 
         if not self.overlap:
-            from merlin.study.celeryadapter import get_running_queues
+            from merlin.study.celeryadapter import get_running_queues  # pylint: disable=import-outside-toplevel
+
             running_queues = get_running_queues("merlin")
             for queue in queues:
                 if queue in running_queues:
@@ -171,7 +174,7 @@ class CeleryWorker(MerlinWorker):
                     return False
 
         return True
-    
+
     def launch_worker(self, override_args: str = "", disable_logs: bool = False):
         """
         Launch the worker as a subprocess using the constructed launch command.
@@ -190,7 +193,7 @@ class CeleryWorker(MerlinWorker):
                 LOG.debug(f"Launched worker '{self.name}' with command: {launch_cmd}.")
             except Exception as e:  # pylint: disable=C0103
                 LOG.error(f"Cannot start celery workers, {e}")
-                raise MerlinWorkerLaunchError
+                raise MerlinWorkerLaunchError from e
 
     def get_metadata(self) -> Dict:
         """

@@ -8,11 +8,7 @@
 This module provides an adapter to the Celery Distributed Task Queue.
 """
 import logging
-import os
-import socket
 import subprocess
-import time
-from contextlib import suppress
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Dict, List, Set, Tuple
@@ -24,9 +20,8 @@ from tabulate import tabulate
 from merlin.common.dumper import dump_handler
 from merlin.config import Config
 from merlin.spec.specification import MerlinSpec
-from merlin.study.batch import batch_check_parallel, batch_worker_launch
 from merlin.study.study import MerlinStudy
-from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yaml_var, is_running
+from merlin.utils import apply_list_of_regex, get_procs, is_running
 
 
 LOG = logging.getLogger(__name__)
