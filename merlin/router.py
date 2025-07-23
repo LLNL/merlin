@@ -28,7 +28,6 @@ from merlin.study.celeryadapter import (
     query_celery_queues,
     query_celery_workers,
     run_celery,
-    start_celery_workers,
     stop_celery_workers,
 )
 from merlin.study.study import MerlinStudy
@@ -60,46 +59,6 @@ def run_task_server(study: MerlinStudy, run_mode: str = None):
         run_celery(study, run_mode)
     else:
         LOG.error("Celery is not specified as the task server!")
-
-
-def launch_workers(
-    spec: MerlinSpec,
-    steps: List[str],
-    worker_args: str = "",
-    disable_logs: bool = False,
-    just_return_command: bool = False,
-) -> str:
-    """
-    Launches workers for the specified study based on the provided
-    specification and steps.
-
-    This function checks if Celery is configured as the task server
-    and initiates the specified workers accordingly. It provides options
-    for additional worker arguments, logging control, and command-only
-    execution without launching the workers.
-
-    Args:
-        spec (spec.specification.MerlinSpec): Specification details
-            necessary for launching the workers.
-        steps: The specific steps in the specification that the workers
-            will be associated with.
-        worker_args: Additional arguments to be passed to the workers.
-            Defaults to an empty string.
-        disable_logs: Flag to disable logging during worker execution.
-            Defaults to False.
-        just_return_command: If True, the function will not execute the
-            command but will return it instead. Defaults to False.
-
-    Returns:
-        A string of the worker launch command(s).
-    """
-    if spec.merlin["resources"]["task_server"] == "celery":  # pylint: disable=R1705
-        # Start workers
-        cproc = start_celery_workers(spec, steps, worker_args, disable_logs, just_return_command)
-        return cproc
-    else:
-        LOG.error("Celery is not specified as the task server!")
-        return "No workers started"
 
 
 def purge_tasks(task_server: str, spec: MerlinSpec, force: bool, steps: List[str]) -> int:
