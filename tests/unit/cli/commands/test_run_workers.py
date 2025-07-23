@@ -51,14 +51,10 @@ def test_process_command_launches_workers(mocker: MockerFixture):
     mock_spec.merlin = {"resources": {"task_server": "celery"}}
 
     mock_get_spec = mocker.patch(
-        "merlin.cli.commands.run_workers.get_merlin_spec_with_override",
-        return_value=(mock_spec, "workflow.yaml")
+        "merlin.cli.commands.run_workers.get_merlin_spec_with_override", return_value=(mock_spec, "workflow.yaml")
     )
     mock_handler = mocker.Mock()
-    mock_factory = mocker.patch(
-        "merlin.cli.commands.run_workers.worker_handler_factory.create",
-        return_value=mock_handler
-    )
+    mock_factory = mocker.patch("merlin.cli.commands.run_workers.worker_handler_factory.create", return_value=mock_handler)
     mock_log = mocker.patch("merlin.cli.commands.run_workers.LOG")
 
     args = Namespace(
@@ -77,10 +73,7 @@ def test_process_command_launches_workers(mocker: MockerFixture):
     mock_spec.build_worker_list.assert_called_once_with(["workerA"])
     mock_factory.assert_called_once_with("celery")
     mock_handler.launch_workers.assert_called_once_with(
-        ["worker-instance"],
-        echo_only=False,
-        override_args="--concurrency=4",
-        disable_logs=False
+        ["worker-instance"], echo_only=False, override_args="--concurrency=4", disable_logs=False
     )
     mock_log.info.assert_called_once_with("Launching workers from 'workflow.yaml'")
 
