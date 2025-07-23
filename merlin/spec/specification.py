@@ -25,6 +25,8 @@ from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
 from merlin.utils import find_vlaunch_var, get_yaml_var, load_array_file, needs_merlin_expansion, repr_timedelta
+from merlin.workers.worker_factory import worker_factory
+from merlin.workers.worker import MerlinWorker
 
 
 LOG = logging.getLogger(__name__)
@@ -1199,3 +1201,85 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 os.environ[str(var_name)] = str(var_val)
 
         return full_env
+    
+    # TODO when we move the queues setting to within the worker then we'll have to update this
+    def get_workers_to_start(self, steps: Union[List[str], None]) -> Set[str]:
+        """
+        Determine the set of workers to start based on the specified steps (if any).
+
+        This method retrieves a mapping of steps to their corresponding workers
+        from a [`MerlinSpec`][spec.specification.MerlinSpec] object and returns a unique
+        set of workers that should be started for the provided list of steps. If a step
+        is not found in the mapping, a warning is logged.
+
+        Args:
+            steps: A list of steps for which workers need to be started or None if the user
+                didn't provide specific steps.
+
+        Returns:
+            A set of unique workers to be started based on the specified steps.
+        """
+        steps_provided = False if "all" in steps else True
+
+        if steps_provided:
+            workers_to_start = []
+            step_worker_map = self.get_step_worker_map()
+            for step in steps:
+                try:
+                    workers_to_start.extend(step_worker_map[step])
+                except KeyError:
+                    LOG.warning(f"Cannot start workers for step: {step}. This step was not found.")
+
+            workers_to_start = set(workers_to_start)
+        else:
+            workers_to_start = set(self.merlin["resources"]["workers"])
+
+        LOG.debug(f"workers_to_start: {workers_to_start}")
+        return workers_to_start
+    
+    # TODO some of this logic should move to TaskServerInterface and be abstracted
+    def build_worker_list(self, workers_to_start: Set[str]) -> List[MerlinWorker]:
+        """
+        Construct and return a list of worker instances based on provided worker names.
+
+        This method reads configuration from the Merlin spec to instantiate worker
+        objects for each worker name in `workers_to_start`. It gathers the required
+        parameters such as command-line arguments, machines, queue list, and batch
+        settings (including any overrides like number of nodes). These configurations
+        are passed along with environment variables and overlap settings to the
+        appropriate worker factory for instantiation.
+
+        Args:
+            workers_to_start (Set[str]): A set of worker names to be initialized.
+
+        Returns:
+            List[MerlinWorker]: A list of instantiated worker objects ready to be launched.
+        """
+        workers = []
+        all_workers = self.merlin["resources"]["workers"]
+        overlap = self.merlin["resources"]["overlap"]
+        full_env = self.get_full_environment()
+
+        for worker_name in workers_to_start:
+            settings = all_workers[worker_name]
+            config = {
+                "args": settings.get("args", ""),
+                "machines": settings.get("machines", []),
+                "queues": set(self.get_queue_list(settings["steps"])),
+                "batch": settings["batch"] if settings["batch"] is not None else self.batch.copy()
+            }
+
+            if "nodes" in settings and settings["nodes"] is not None:
+                if config["batch"]:
+                    config["batch"]["nodes"] = settings["nodes"]
+                else:
+                    config["batch"] = {"nodes": settings["nodes"]}
+
+            LOG.debug(f"config for worker '{worker_name}': {config}")
+
+            worker_params = {"name": worker_name, "config": config, "env": full_env, "overlap": overlap}
+            worker_instance = worker_factory.create(self.merlin["resources"]["task_server"], worker_params)
+            workers.append(worker_instance)
+            LOG.debug(f"Created CeleryWorker object for worker '{worker_name}'.")
+
+        return workers
