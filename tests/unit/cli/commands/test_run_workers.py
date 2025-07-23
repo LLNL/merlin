@@ -14,6 +14,7 @@ from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
 from merlin.cli.commands.run_workers import RunWorkersCommand
+from merlin.workers.handlers import CeleryWorkerHandler
 from tests.fixture_types import FixtureCallable
 
 
@@ -37,7 +38,7 @@ def test_add_parser_sets_up_run_workers_command(create_parser: FixtureCallable):
     assert args.disable_logs is False
 
 
-def test_process_command_launches_workers_and_creates_logical_workers(mocker: MockerFixture):
+def test_process_command_launches_workers(mocker: MockerFixture):
     """
     Test `process_command` launches workers and creates logical worker entries in normal mode.
 
@@ -45,14 +46,19 @@ def test_process_command_launches_workers_and_creates_logical_workers(mocker: Mo
         mocker: PyTest mocker fixture.
     """
     mock_spec = mocker.Mock()
-    mock_spec.get_task_queues.return_value = {"step1": "queue1", "step2": "queue2"}
-    mock_spec.get_worker_step_map.return_value = {"workerA": ["step1", "step2"]}
+    mock_spec.get_workers_to_start.return_value = ["workerA"]
+    mock_spec.build_worker_list.return_value = ["worker-instance"]
+    mock_spec.merlin = {"resources": {"task_server": "celery"}}
 
     mock_get_spec = mocker.patch(
-        "merlin.cli.commands.run_workers.get_merlin_spec_with_override", return_value=(mock_spec, "workflow.yaml")
+        "merlin.cli.commands.run_workers.get_merlin_spec_with_override",
+        return_value=(mock_spec, "workflow.yaml")
     )
-    mock_launch = mocker.patch("merlin.cli.commands.run_workers.launch_workers", return_value="launched")
-    mock_db = mocker.patch("merlin.cli.commands.run_workers.MerlinDatabase")
+    mock_handler = mocker.Mock()
+    mock_factory = mocker.patch(
+        "merlin.cli.commands.run_workers.worker_handler_factory.create",
+        return_value=mock_handler
+    )
     mock_log = mocker.patch("merlin.cli.commands.run_workers.LOG")
 
     args = Namespace(
@@ -67,10 +73,16 @@ def test_process_command_launches_workers_and_creates_logical_workers(mocker: Mo
     RunWorkersCommand().process_command(args)
 
     mock_get_spec.assert_called_once_with(args)
-    mock_db.return_value.create.assert_called_once_with("logical_worker", "workerA", {"queue1", "queue2"})
-    mock_launch.assert_called_once_with(mock_spec, ["step1"], "--concurrency=4", False, False)
+    mock_spec.get_workers_to_start.assert_called_once_with(["step1"])
+    mock_spec.build_worker_list.assert_called_once_with(["workerA"])
+    mock_factory.assert_called_once_with("celery")
+    mock_handler.launch_workers.assert_called_once_with(
+        ["worker-instance"],
+        echo_only=False,
+        override_args="--concurrency=4",
+        disable_logs=False
+    )
     mock_log.info.assert_called_once_with("Launching workers from 'workflow.yaml'")
-    mock_log.debug.assert_called_once_with("celery command: launched")
 
 
 def test_process_command_echo_only_mode_prints_command(mocker: MockerFixture, capsys: CaptureFixture):
@@ -82,13 +94,17 @@ def test_process_command_echo_only_mode_prints_command(mocker: MockerFixture, ca
         capsys: PyTest capsys fixture.
     """
     mock_spec = mocker.Mock()
-    mock_spec.get_task_queues.return_value = {}
-    mock_spec.get_worker_step_map.return_value = {}
+    mock_spec.get_workers_to_start.return_value = ["workerB"]
+    mock_spec.merlin = {"resources": {"task_server": "celery"}}
+
+    mock_worker = mocker.Mock()
+    mock_worker.name = "workerB"
+    mock_worker.get_launch_command.return_value = "echo-launch-cmd"
+    mock_spec.build_worker_list.return_value = [mock_worker]
 
     mocker.patch("merlin.cli.commands.run_workers.get_merlin_spec_with_override", return_value=(mock_spec, "file.yaml"))
     mocker.patch("merlin.cli.commands.run_workers.initialize_config")
-    mocker.patch("merlin.cli.commands.run_workers.MerlinDatabase")
-    mock_launch = mocker.patch("merlin.cli.commands.run_workers.launch_workers", return_value="echo-cmd")
+    mocker.patch("merlin.cli.commands.run_workers.worker_handler_factory.create", wraps=lambda _: CeleryWorkerHandler())
 
     args = Namespace(
         specification="spec.yaml",
@@ -102,5 +118,4 @@ def test_process_command_echo_only_mode_prints_command(mocker: MockerFixture, ca
     RunWorkersCommand().process_command(args)
 
     captured = capsys.readouterr()
-    assert "echo-cmd" in captured.out
-    mock_launch.assert_called_once_with(mock_spec, ["all"], "--autoscale=2,10", False, True)
+    assert "echo-launch-cmd" in captured.out
