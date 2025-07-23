@@ -5,7 +5,15 @@
 ##############################################################################
 
 """
-Defines an abstract base class for a single Merlin worker.
+Defines an abstract base class for a single Merlin worker instance.
+
+This module provides the `MerlinWorker` interface, which standardizes how individual
+task server workers are defined, configured, and launched in the Merlin framework.
+Each concrete implementation (e.g., for Celery or other task servers) must provide
+logic for constructing the launch command, starting the process, and exposing worker metadata.
+
+This abstraction allows Merlin to support multiple task execution backends while maintaining
+a consistent interface for launching and managing worker processes.
 """
 
 import os
