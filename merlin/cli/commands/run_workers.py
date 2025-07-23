@@ -17,15 +17,12 @@ correct task queues without queuing tasks themselves.
 
 import logging
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
-from typing import List, Set, Union
 
 from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.cli.utils import get_merlin_spec_with_override
 from merlin.config.configfile import initialize_config
-from merlin.db_scripts.merlin_db import MerlinDatabase
-from merlin.spec.specification import MerlinSpec
-from merlin.workers.celery_worker import CeleryWorker
+from merlin.workers.handlers.handler_factory import worker_handler_factory
 
 
 LOG = logging.getLogger("merlin")
@@ -95,75 +92,6 @@ class RunWorkersCommand(CommandEntryPoint):
             "in your workers' args section will overwrite this flag for that worker.",
         )
 
-    # TODO when we move the queues setting to within the worker then this will no longer be necessary
-    def _get_workers_to_start(self, spec: MerlinSpec, steps: Union[List[str], None]) -> Set[str]:
-        """
-        Determine the set of workers to start based on the specified steps (if any)
-
-        This helper function retrieves a mapping of steps to their corresponding workers
-        from a [`MerlinSpec`][spec.specification.MerlinSpec] object and returns a unique
-        set of workers that should be started for the provided list of steps. If a step
-        is not found in the mapping, a warning is logged.
-
-        Args:
-            spec (spec.specification.MerlinSpec): An instance of the
-                [`MerlinSpec`][spec.specification.MerlinSpec] class that contains the
-                mapping of steps to workers.
-            steps: A list of steps for which workers need to be started or None if the user
-                didn't provide specific steps.
-
-        Returns:
-            A set of unique workers to be started based on the specified steps.
-        """
-        steps_provided = False if "all" in steps else True
-
-        if steps_provided:
-            workers_to_start = []
-            step_worker_map = spec.get_step_worker_map()
-            for step in steps:
-                try:
-                    workers_to_start.extend(step_worker_map[step])
-                except KeyError:
-                    LOG.warning(f"Cannot start workers for step: {step}. This step was not found.")
-
-            workers_to_start = set(workers_to_start)
-        else:
-            workers_to_start = set(spec.merlin["resources"]["workers"])
-
-        LOG.debug(f"workers_to_start: {workers_to_start}")
-        return workers_to_start
-
-    # TODO this should move to TaskServerInterface and be abstracted (build_worker_list ?)
-    def _get_worker_instances(self, workers_to_start: Set[str], spec: MerlinSpec) -> List[CeleryWorker]:
-        """
-        """
-        workers = []
-        all_workers = spec.merlin["resources"]["workers"]
-        overlap = spec.merlin["resources"]["overlap"]
-        full_env = spec.get_full_environment()
-
-        for worker_name in workers_to_start:
-            settings = all_workers[worker_name]
-            config = {
-                "args": settings.get("args", ""),
-                "machines": settings.get("machines", []),
-                "queues": spec.get_queue_list(settings["steps"]),
-                "batch": settings["batch"] if settings["batch"] is not None else spec.batch.copy()
-            }
-
-            if "nodes" in settings and settings["nodes"] is not None:
-                if config["batch"]:
-                    config["batch"]["nodes"] = settings["nodes"]
-                else:
-                    config["batch"] = {"nodes": settings["nodes"]}
-
-            LOG.debug(f"config for worker '{worker_name}': {config}")
-
-            workers.append(CeleryWorker(name=worker_name, config=config, env=full_env, overlap=overlap))
-            LOG.debug(f"Created CeleryWorker object for worker '{worker_name}'.")
-
-        return workers
-
     def process_command(self, args: Namespace):
         """
         CLI command for launching workers.
@@ -188,27 +116,17 @@ class RunWorkersCommand(CommandEntryPoint):
         if not args.worker_echo_only:
             LOG.info(f"Launching workers from '{filepath}'")
 
-        # Initialize the database
-        merlin_db = MerlinDatabase()
-
-        # Create logical worker entries
-        step_queue_map = spec.get_task_queues()
-        for worker, steps in spec.get_worker_step_map().items():
-            worker_queues = {step_queue_map[step] for step in steps}
-            merlin_db.create("logical_worker", worker, worker_queues)
-
         # Get the names of the workers that the user is requesting to start
-        workers_to_start = self._get_workers_to_start(spec, args.worker_steps)
+        workers_to_start = spec.get_workers_to_start(args.worker_steps)
 
         # Build a list of MerlinWorker instances
-        worker_instances = self._get_worker_instances(workers_to_start, spec)
+        worker_instances = spec.build_worker_list(workers_to_start)
 
         # Launch the workers or echo out the command that will be used to launch the workers
-        for worker in worker_instances:
-            if args.worker_echo_only:
-                LOG.debug(f"Not launching worker '{worker.name}', just echoing command.")
-                launch_cmd = worker.get_launch_command(override_args=args.worker_args, disable_logs=args.disable_logs)
-                print(launch_cmd)
-            else:
-                LOG.debug(f"Launching worker '{worker.name}'.")
-                worker.launch_worker(override_args=args.worker_args, disable_logs=args.disable_logs)
+        worker_handler = worker_handler_factory.create(spec.merlin["resources"]["task_server"])
+        worker_handler.launch_workers(
+            worker_instances,
+            echo_only=args.worker_echo_only,
+            override_args=args.worker_args,
+            disable_logs=args.disable_logs,
+        )

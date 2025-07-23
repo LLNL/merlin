@@ -15,7 +15,6 @@ import os
 import subprocess
 from typing import Dict, Union
 
-from merlin.spec.specification import MerlinSpec
 from merlin.utils import convert_timestring, get_flux_alloc, get_flux_version, get_yaml_var
 
 
