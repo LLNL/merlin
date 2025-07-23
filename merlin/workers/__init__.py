@@ -32,4 +32,5 @@ Modules:
 
 from merlin.workers.celery_worker import CeleryWorker
 
+
 __all__ = ["CeleryWorker"]

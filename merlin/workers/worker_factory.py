@@ -9,7 +9,7 @@ Factory for registering and instantiating individual Merlin worker implementatio
 
 This module defines the `WorkerFactory`, a subclass of
 [`MerlinBaseFactory`][abstracts.factory.MerlinBaseFactory], which manages
-the registration, validation, and creation of concrete worker classes such as 
+the registration, validation, and creation of concrete worker classes such as
 [`CeleryWorker`][workers.celery_worker.CeleryWorker]. It supports plugin-based discovery
 via Python entry points, enabling extensibility for other task server backends (e.g., Kafka).
 

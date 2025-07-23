@@ -25,4 +25,5 @@ Modules:
 
 from merlin.workers.handlers.celery_handler import CeleryWorkerHandler
 
+
 __all__ = ["CeleryWorkerHandler"]

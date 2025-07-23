@@ -72,4 +72,3 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         """
         Query the status of Celery workers.
         """
-        

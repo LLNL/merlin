@@ -25,8 +25,8 @@ from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
 from merlin.utils import find_vlaunch_var, get_yaml_var, load_array_file, needs_merlin_expansion, repr_timedelta
-from merlin.workers.worker_factory import worker_factory
 from merlin.workers.worker import MerlinWorker
+from merlin.workers.worker_factory import worker_factory
 
 
 LOG = logging.getLogger(__name__)
@@ -1179,13 +1179,13 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         """
         Construct the full environment for the current context.
 
-        This method starts with a copy of the current OS environment and 
-        overlays any additional environment variables defined in the spec's 
-        `environment` section. These variables are added both to the returned 
+        This method starts with a copy of the current OS environment and
+        overlays any additional environment variables defined in the spec's
+        `environment` section. These variables are added both to the returned
         dictionary and the live `os.environ` to support variable expansion.
 
         Returns:
-            dict: A dictionary representing the full environment with any 
+            dict: A dictionary representing the full environment with any
                 user-defined variables applied.
         """
         # Start with the global environment
@@ -1201,7 +1201,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 os.environ[str(var_name)] = str(var_val)
 
         return full_env
-    
+
     # TODO when we move the queues setting to within the worker then we'll have to update this
     def get_workers_to_start(self, steps: Union[List[str], None]) -> Set[str]:
         """
@@ -1236,7 +1236,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         LOG.debug(f"workers_to_start: {workers_to_start}")
         return workers_to_start
-    
+
     # TODO some of this logic should move to TaskServerInterface and be abstracted
     def build_worker_list(self, workers_to_start: Set[str]) -> List[MerlinWorker]:
         """
@@ -1266,7 +1266,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 "args": settings.get("args", ""),
                 "machines": settings.get("machines", []),
                 "queues": set(self.get_queue_list(settings["steps"])),
-                "batch": settings["batch"] if settings["batch"] is not None else self.batch.copy()
+                "batch": settings["batch"] if settings["batch"] is not None else self.batch.copy(),
             }
 
             if "nodes" in settings and settings["nodes"] is not None:
