@@ -219,36 +219,51 @@ class CeleryTaskServer(TaskServerInterface):
                     LOG.warning("No valid signatures found in task dependencies")
                     return ""
                 
-                # Create coordinated submission based on dependencies
                 if header_signatures and callback_signatures:
-                    # Use chord for proper dependency coordination
                     header_group = group(header_signatures)
-                    # For simplicity, use the first callback task (typically there's only one)
-                    callback_task = callback_signatures[0]
-                    chord_obj = chord(header_group, callback_task)
-                    result = chord_obj.apply_async()
-                    LOG.debug(f"Submitted chord with {len(header_signatures)} header tasks and callback via TaskServerInterface")
+                    
+                    if len(callback_signatures) == 1:
+                        # Single callback task: standard chord
+                        callback_task = callback_signatures[0]
+                        chord_obj = chord(header_group, callback_task)
+                        result = chord_obj.apply_async()
+                        LOG.info(f"DEPENDENCY COORDINATION: Submitted chord with {len(header_signatures)} header tasks -> 1 callback task")
+                    else:
+                        # Multiple callback tasks: chain them after the group
+                        from celery import chain
+                        callback_chain = chain(*callback_signatures)
+                        chord_obj = chord(header_group, callback_chain)
+                        result = chord_obj.apply_async()
+                        LOG.info(f"DEPENDENCY COORDINATION: Submitted chord with {len(header_signatures)} header tasks -> {len(callback_signatures)} chained callback tasks")
+                    
+                    LOG.debug(f"TaskServerInterface coordination successful: {result.id}")
+                    
                 elif header_signatures:
-                    # Only header tasks: submit as group
+                    # Only header tasks: submit as group (no dependencies to enforce)
                     group_obj = group(header_signatures)
                     result = group_obj.apply_async()
-                    LOG.debug(f"Submitted group with {len(header_signatures)} header tasks via TaskServerInterface")
+                    LOG.info(f"Submitted independent group with {len(header_signatures)} header tasks")
                 elif callback_signatures:
-                    # Only callback tasks: submit as group
+                    # Only callback tasks: submit as group (won't happen with proper dependencies)
                     group_obj = group(callback_signatures)
                     result = group_obj.apply_async()
-                    LOG.debug(f"Submitted group with {len(callback_signatures)} callback tasks via TaskServerInterface")
+                    LOG.warning(f"Submitted callback-only group with {len(callback_signatures)} tasks (no dependencies)")
                 else:
                     return ""
                 
                 return result.id
                 
             except Exception as e:
-                LOG.error(f"Failed to submit chord via TaskServerInterface: {e}")
+                LOG.error(f"DEPENDENCY COORDINATION FAILED: {e}")
+                LOG.error(f"Falling back to individual task submission (POTENTIAL RACE CONDITION)")
                 # Fallback to individual task submission
                 for task_dep in task_dependencies:
                     if hasattr(task_dep, 'task_signature') and task_dep.task_signature:
-                        task_dep.task_signature.delay()
+                        try:
+                            result = task_dep.task_signature.delay()
+                            LOG.warning(f"Fallback: Submitted individual task {result.id}")
+                        except Exception as fallback_e:
+                            LOG.error(f"Fallback task submission failed: {fallback_e}")
                 return ""
         
         # Handle legacy approach with coordination_id
@@ -688,3 +703,44 @@ class CeleryTaskServer(TaskServerInterface):
         except Exception as e:
             LOG.error(f"Failed to check workers processing: {e}")
             return False
+    
+    def submit_study(self, study, adapter: Dict, samples, sample_labels, egraph, groups_of_chains):
+        """
+        Submit an entire study using Celery's native chain/chord/group coordination.
+        """
+        from celery import chain, chord, group  # pylint: disable=C0415
+        from merlin.common.tasks import expand_tasks_with_samples, chordfinisher, mark_run_as_complete, merlin_step  # pylint: disable=C0415
+        
+        LOG.info("Converting graph to Celery tasks using native coordination patterns.")
+        
+        celery_dag = chain(
+            chord(
+                group(
+                    [
+                        expand_tasks_with_samples.si(
+                            egraph,
+                            gchain,
+                            samples,
+                            sample_labels,
+                            merlin_step,
+                            adapter,
+                            study.level_max_dirs,
+                        ).set(queue=egraph.step(chain_group[0][0]).get_task_queue())
+                        for gchain in chain_group
+                    ]
+                ),
+                chordfinisher.s().set(queue=egraph.step(chain_group[0][0]).get_task_queue()),
+            )
+            for chain_group in groups_of_chains[1:]  # Skip _source group
+        )
+
+        # Append the final task that marks the run as complete
+        final_task = mark_run_as_complete.si(study.workspace).set(
+            queue=egraph.step(
+                groups_of_chains[-1][-1][-1]  # Use the task queue from the final step
+            ).get_task_queue()
+        )
+        celery_dag = celery_dag | final_task
+
+        LOG.info("Launching Celery tasks.")
+        return celery_dag.delay(None)

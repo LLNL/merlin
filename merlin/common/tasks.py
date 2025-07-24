@@ -228,8 +228,9 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C
                             LOG.debug(f"Task not in chord context, using direct submission for {next_in_chain}")
                             next_in_chain.delay()
                     except Exception as e:
-                        LOG.warning(f"TaskServerInterface chord chain failed: {e}, using direct submission")
-                        next_in_chain.delay()
+                        LOG.error(f"TaskServerInterface chord chain failed: {e}. Task dependencies may be broken.")
+                        LOG.debug(f"Next in chain: {next_in_chain}")
+                        raise HardFailException(f"TaskServerInterface coordination failed for next_in_chain task, check execution order")
                 else:
                     # Check if current task is part of a chord before trying to add to it  
                     if hasattr(self.request, 'chord') and self.request.chord:
@@ -542,8 +543,9 @@ def launch_chain(self: Task, chain_1d: List[Signature], condense_sig: Signature 
                             LOG.debug(f"Task not in chord context, using direct submission for sig")
                             sig.delay()
                     except ValueError as e:
-                        LOG.warning(f"Chord operation failed in launch_chain: {e}, submitting directly")
-                        sig.delay()
+                        LOG.error(f"Chord operation failed in launch_chain: {e}. Task dependencies may be broken.")
+                        LOG.debug(f"Signature: {sig}")
+                        raise HardFailException(f"Chord coordination failed for task {sig}, check execution order")
 
 
 def get_1d_chain(all_chains: List[List[Signature]]) -> List[Signature]:
@@ -899,8 +901,9 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
                                     LOG.debug(f"Task not in chord context, using direct submission for expansion task")
                                     sig.delay()
                             except ValueError as e:
-                                LOG.warning(f"Chord operation failed: {e}, submitting directly")
-                                sig.delay()
+                                LOG.error(f"Chord operation failed: {e}. Task dependencies may be broken.")
+                                LOG.debug(f"Signature: {sig}")
+                                raise HardFailException(f"Chord coordination failed for expansion task {next_index.min}:{next_index.max}, check execution order")
                     LOG.info(f"merlin expansion task {next_index.min}:{next_index.max} queued")
                     found_tasks = True
     else:
@@ -963,291 +966,18 @@ def queue_merlin_study(study: MerlinStudy, adapter: Dict) -> AsyncResult:
 
 def _queue_study_with_task_server(study: MerlinStudy, adapter: Dict, samples, sample_labels, egraph, groups_of_chains, task_server) -> AsyncResult:
     """
-    Queue study tasks using TaskServerInterface with coordination support.
+    Queue study tasks using TaskServerInterface with proper delegation.
     
-    This function implements a task server agnostic approach to task submission
-    that properly handles workflow dependencies using TaskServerInterface coordination methods.
+    This function delegates to the task server's submit_study method for native coordination.
     """
-    from celery.result import AsyncResult  # pylint: disable=C0415
-    from merlin.task_servers.task_server_interface import TaskDependency
+    LOG.info("Using TaskServerInterface for study submission.")
     
-    LOG.info("Converting graph to task server agnostic tasks.")
-    
-    # Check if task server supports coordination
-    if not hasattr(task_server, 'submit_coordinated_tasks'):
-        LOG.warning("TaskServerInterface does not support coordination, falling back to Celery approach")
+    # Check if task server has submit_study method
+    if hasattr(task_server, 'submit_study'):
+        return task_server.submit_study(study, adapter, samples, sample_labels, egraph, groups_of_chains)
+    else:
+        LOG.warning("TaskServerInterface does not support submit_study method, falling back to Celery")
         return _queue_study_with_celery(study, adapter, samples, sample_labels, egraph, groups_of_chains)
-    
-    # Analyze the DAG for dependencies
-    step_dependencies = _analyze_dag_dependencies(egraph, groups_of_chains)
-    
-    # Pass task_server info in adapter_config for coordination-aware submission
-    # NOTE: Don't pass the actual task_server object to avoid pickle issues
-    adapter_with_task_server = adapter.copy()
-    adapter_with_task_server['task_server_enabled'] = True
-    
-    # Get task server type
-    task_server_type = 'celery'  # fallback default
-    if hasattr(task_server, 'server_type'):
-        task_server_type = task_server.server_type
-    elif hasattr(study, 'spec') and hasattr(study.spec, 'get_task_server_type'):
-        task_server_type = study.spec.get_task_server_type()
-    
-    # Validate task server type consistency
-    if hasattr(task_server, 'server_type') and hasattr(study, 'spec') and hasattr(study.spec, 'get_task_server_type'):
-        spec_server_type = study.spec.get_task_server_type()
-        if task_server.server_type != spec_server_type:
-            LOG.warning(f"Task server type mismatch: task_server reports '{task_server.server_type}' but spec reports '{spec_server_type}'")
-    
-    adapter_with_task_server['task_server_type'] = task_server_type
-    
-    # Collect all task IDs that will be submitted
-    submitted_task_ids = []
-    
-    # Separate groups into independent and dependent tasks
-    independent_groups = []
-    dependent_groups = []
-    
-    # First pass: categorize groups by dependency status
-    for chain_group in groups_of_chains[1:]:
-        group_has_dependencies = False
-        
-        # Check if this group has dependency relationships
-        for gchain in chain_group:
-            first_step_name = gchain[0] if gchain else None
-            if first_step_name and first_step_name in step_dependencies:
-                group_has_dependencies = True
-                break
-        
-        if group_has_dependencies:
-            dependent_groups.append(chain_group)
-        else:
-            independent_groups.append(chain_group)
-    
-    # Build all expansion tasks
-    independent_expansion_tasks = []
-    dependent_expansion_tasks = []
-    
-    # Create expansion tasks for independent groups
-    for chain_group in independent_groups:
-        for gchain in chain_group:
-            expansion_task = expand_tasks_with_samples.si(
-                egraph,
-                gchain,
-                samples,
-                sample_labels,
-                merlin_step,
-                adapter_with_task_server,
-                study.level_max_dirs,
-            )
-            expansion_task.set(queue=egraph.step(gchain[0]).get_task_queue())
-            independent_expansion_tasks.append(expansion_task)
-    
-    # Create expansion tasks for dependent groups  
-    for chain_group in dependent_groups:
-        for gchain in chain_group:
-            expansion_task = expand_tasks_with_samples.si(
-                egraph,
-                gchain,
-                samples,
-                sample_labels,
-                merlin_step,
-                adapter_with_task_server,
-                study.level_max_dirs,
-            )
-            expansion_task.set(queue=egraph.step(gchain[0]).get_task_queue())
-            dependent_expansion_tasks.append(expansion_task)
-    
-    # Submit using TaskServerInterface coordination
-    if independent_expansion_tasks and dependent_expansion_tasks:
-        # Case 1: We have both independent and dependent tasks - use coordinated submission
-        LOG.info(f"Submitting coordinated tasks: {len(independent_expansion_tasks)} independent -> {len(dependent_expansion_tasks)} dependent tasks")
-        
-        try:
-            # Use TaskServerInterface for coordination
-            # Pass the Signature objects directly - let the backend handle them
-            coordination_id = f"coord_{study.workspace.split('/')[-1]}"
-            
-            # Convert to TaskDependency objects for the interface
-            from merlin.task_servers.task_server_interface import TaskDependency
-            task_dependencies = []
-            
-            # Create TaskDependency objects with signatures attached
-            for task in independent_expansion_tasks:
-                task_dep = TaskDependency(task_pattern="independent", dependency_type="header")
-                task_dep.task_signature = task  # Attach the Celery signature
-                task_dependencies.append(task_dep)
-                
-            # Add dependent task
-            if dependent_expansion_tasks:
-                for task in dependent_expansion_tasks:
-                    task_dep = TaskDependency(task_pattern="dependent", dependency_type="callback")
-                    task_dep.task_signature = task  # Attach the Celery signature
-                    task_dependencies.append(task_dep)
-            
-            # Use the new signature-based approach
-            coord_result = task_server.submit_coordinated_tasks(task_dependencies)
-            submitted_task_ids.append(coord_result if coord_result else coordination_id)
-            
-            LOG.info(f"Submitted coordinated tasks with result ID: {coord_result}")
-            
-        except Exception as e:
-            LOG.error(f"TaskServerInterface coordination failed: {e}")
-            LOG.info("Falling back to individual task submission")
-            
-            # Fallback: submit tasks individually through TaskServerInterface
-            try:
-                # Submit independent tasks first
-                for task in independent_expansion_tasks:
-                    try:
-                        result = task_server.submit_task(task)
-                        submitted_task_ids.append(result if result else str(task))
-                    except Exception as task_e:
-                        LOG.warning(f"TaskServerInterface task submission failed: {task_e}, using direct delay")
-                        result = task.delay()
-                        submitted_task_ids.append(result.id if hasattr(result, 'id') else str(result))
-                    
-                # Submit dependent tasks after - use chain to ensure dependency order
-                if dependent_expansion_tasks:
-                    from celery import chain
-                    dependent_chain = chain(*dependent_expansion_tasks)
-                    try:
-                        result = task_server.submit_task(dependent_chain)
-                        submitted_task_ids.append(result if result else str(dependent_chain))
-                    except Exception as task_e:
-                        LOG.warning(f"TaskServerInterface task submission failed: {task_e}, using direct delay")
-                        result = dependent_chain.delay()
-                        submitted_task_ids.append(result.id if hasattr(result, 'id') else str(result))
-                        
-            except Exception as fallback_e:
-                LOG.error(f"TaskServerInterface fallback failed: {fallback_e}")
-                # Final fallback: direct Celery submission
-                all_tasks = independent_expansion_tasks + dependent_expansion_tasks
-                for task in all_tasks:
-                    result = task.delay()
-                    submitted_task_ids.append(result.id if hasattr(result, 'id') else str(result))
-                        
-    elif independent_expansion_tasks:
-        # Case 2: Only independent tasks
-        LOG.info(f"Submitting {len(independent_expansion_tasks)} independent tasks")
-        try:
-            # Use TaskServerInterface for group submission with Signatures
-            group_result = task_server.submit_tasks(independent_expansion_tasks)
-            submitted_task_ids.extend(group_result if isinstance(group_result, list) else [group_result])
-        except Exception as e:
-            LOG.warning(f"TaskServerInterface group submission failed: {e}, using individual submission")
-            for task in independent_expansion_tasks:
-                try:
-                    result = task_server.submit_task(task)
-                    submitted_task_ids.append(result if result else str(task))
-                except Exception as task_e:
-                    LOG.warning(f"TaskServerInterface task submission failed: {task_e}, using direct delay")
-                    result = task.delay()
-                    submitted_task_ids.append(result.id if hasattr(result, 'id') else str(result))
-                    
-    elif dependent_expansion_tasks:
-        # Case 3: Only dependent tasks (shouldn't happen with proper dependencies)
-        LOG.warning(f"Submitting {len(dependent_expansion_tasks)} dependent tasks without prerequisites")
-        try:
-            # Use TaskServerInterface for task submission with Signatures
-            group_result = task_server.submit_tasks(dependent_expansion_tasks)
-            submitted_task_ids.extend(group_result if isinstance(group_result, list) else [group_result])
-        except Exception as e:
-            LOG.warning(f"TaskServerInterface group submission failed: {e}, using individual submission")
-            for task in dependent_expansion_tasks:
-                try:
-                    result = task_server.submit_task(task)
-                    submitted_task_ids.append(result if result else str(task))
-                except Exception as task_e:
-                    LOG.warning(f"TaskServerInterface task submission failed: {task_e}, using direct delay")
-                    result = task.delay()
-                    submitted_task_ids.append(result.id if hasattr(result, 'id') else str(result))
-    
-    # Submit the final completion task using TaskServerInterface
-    final_task = mark_run_as_complete.si(study.workspace)
-    if groups_of_chains:
-        final_task.set(
-            queue=egraph.step(
-                groups_of_chains[-1][-1][-1]
-            ).get_task_queue()
-        )
-    
-    try:
-        # Use TaskServerInterface for final task submission
-        final_result = task_server.submit_task(final_task)
-        submitted_task_ids.append(final_result.id if hasattr(final_result, 'id') else str(final_result))
-        LOG.info(f"Submitted completion task via TaskServerInterface")
-    except Exception as e:
-        LOG.warning(f"TaskServerInterface final task submission failed: {e}")
-        LOG.info("Falling back to direct Celery submission for completion task")
-        # Fall back to direct Celery submission
-        final_result = final_task.delay()
-        submitted_task_ids.append(final_result.id if hasattr(final_result, 'id') else str(final_result))
-    
-    LOG.info(f"Submitted {len(submitted_task_ids)} tasks using TaskServerInterface (with fallbacks where needed).")
-    
-    # Return a result object for compatibility
-    # For now, return the final task result to maintain interface compatibility
-    return final_result
-
-
-def _analyze_dag_dependencies(egraph, groups_of_chains) -> Dict[str, List[str]]:
-    """
-    Analyze the DAG for dependency patterns that require task coordination.
-    
-    This function examines the DAG structure to identify steps that have
-    dependencies requiring coordinated execution (e.g., depends=[step_*]).
-    
-    Args:
-        egraph: The DAG representing the workflow
-        groups_of_chains: Groups of task chains from the DAG
-        
-    Returns:
-        Dictionary mapping step names to their dependency patterns
-    """
-    step_dependencies = {}
-    
-    try:
-        # Analyze each step in the DAG for dependencies
-        for step_name in egraph.maestro_adjacency_table.keys():
-            try:
-                # Skip special Merlin steps that don't follow normal structure
-                if step_name.startswith('_'):
-                    LOG.debug(f"Skipping special step {step_name}")
-                    continue
-                    
-                step = egraph.step(step_name)
-                if step is None:
-                    LOG.debug(f"Step {step_name} is None, skipping")
-                    continue
-                
-                # Check for required attributes before accessing
-                if not hasattr(step, 'mstep') or step.mstep is None:
-                    LOG.debug(f"Step {step_name} has no mstep attribute, skipping")
-                    continue
-                    
-                if not hasattr(step.mstep, 'step') or step.mstep.step is None:
-                    LOG.debug(f"Step {step_name} has no mstep.step attribute, skipping")
-                    continue
-                
-                # Check if step has a 'depends' clause (check run config)
-                step_run_config = step.mstep.step.__dict__.get("run", {})
-                
-                if isinstance(step_run_config, dict) and 'depends' in step_run_config:
-                    depends_list = step_run_config['depends']
-                    if isinstance(depends_list, list):
-                        # Look for wildcard patterns that indicate coordination dependencies
-                        coordination_patterns = [dep for dep in depends_list if '*' in dep]
-                        if coordination_patterns:
-                            step_dependencies[step_name] = coordination_patterns
-                            LOG.debug(f"Step {step_name} has coordination dependencies: {coordination_patterns}")
-            except Exception as step_error:
-                LOG.warning(f"Error analyzing step {step_name}: {step_error}")
-                continue
-    except Exception as e:
-        LOG.warning(f"Error analyzing DAG dependencies: {e}")
-    
-    return step_dependencies
 
 
 def _queue_study_with_celery(study: MerlinStudy, adapter: Dict, samples, sample_labels, egraph, groups_of_chains) -> AsyncResult:

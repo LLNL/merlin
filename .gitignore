@@ -46,7 +46,6 @@ docs/build/
 app.yaml/
 merlin_server/
 .merlin/
-hello/
 *.out
 *.sbatch
 *.yaml
@@ -70,6 +69,7 @@ jupyter/testDistributedSamples.py
 *.db
 *.npy
 *.log
+*.txt
 
 # IDEs
 *.idea
@@ -79,4 +79,3 @@ dist/
 build/
 .DS_Store
 .vscode/
-.misc/

@@ -299,6 +299,11 @@ class MerlinStepRecord(_StepRecord):
         if result:
             LOG.debug(f"Result for {self.name} is {result}")
 
+        # Error logging for failed tasks
+        if self.status == State.FAILED or (result and "SOFT_FAIL" in str(result)):
+            LOG.error(f"> MERLIN TASK FAILURE DETECTED: {self.name}")
+            self._log_error_files_for_failed_task()
+
         status_filepath = f"{self.workspace.value}/MERLIN_STATUS.json"
 
         LOG.debug(f"Status filepath for {self.name}: '{status_filepath}")
@@ -361,6 +366,46 @@ class MerlinStepRecord(_StepRecord):
         LOG.info(f"Writing status for {self.name} to '{status_filepath}...")
         write_status(status_info, status_filepath, f"{self.workspace.value}/status.lock")
         LOG.info(f"Status for {self.name} successfully written.")
+
+    def _log_error_files_for_failed_task(self):
+        """
+        Error logging for failed tasks: searches for and logs contents of .err files
+        in the task workspace to aid debugging.
+        
+        This method searches for error files (*.err) in the task's workspace directory and logs 
+        their contents when a task fails. This provides transparency into task failure reasons 
+        without requiring manual inspection of the workspace.
+        """
+        import glob
+        
+        workspace_path = self.workspace.value
+        LOG.error(f"TASK FAILURE DETECTED for step '{self.name}' in workspace: {workspace_path}")
+        
+        err_files = glob.glob(f"{workspace_path}/*.err")
+        
+        if not err_files:
+            LOG.warning(f"No .err files found in failed task workspace: {workspace_path}")
+        
+        # Log contents of found error files
+        for err_file in err_files:
+            LOG.error(f"ERROR FILE FOUND: {err_file}")
+            try:
+                with open(err_file, 'r') as f:
+                    error_content = f.read().strip()
+                    if error_content:
+                        LOG.error(f"ERROR FILE CONTENTS ({err_file}):\n{error_content}")
+                    else:
+                        LOG.warning(f"Error file {err_file} is empty")
+            except Exception as e:
+                LOG.error(f"Failed to read error file {err_file}: {e}")
+        
+        # Also log any existing script files that might provide context
+        script_files = glob.glob(f"{workspace_path}/*.sh")
+        for script_file in script_files:
+            LOG.debug(f"Script file found for failed task: {script_file}")
+            
+        if not err_files:
+            LOG.error(f"No error files found for failed task '{self.name}'. Check task workspace manually: {workspace_path}")
 
 
 class Step:

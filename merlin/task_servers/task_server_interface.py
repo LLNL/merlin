@@ -331,3 +331,26 @@ class TaskServerInterface(ABC):
             True if any workers are processing tasks, False otherwise.
         """
         raise NotImplementedError()
+    
+    @abstractmethod
+    def submit_study(self, study, adapter: Dict, samples, sample_labels, egraph, groups_of_chains):
+        """
+        Submit an entire study using backend-specific coordination patterns.
+        
+        This method allows each task server implementation to use its native
+        coordination mechanisms for optimal workflow execution. For example:
+        - Celery: Uses chain/chord/group patterns
+        - Kafka: Uses topic-based coordination with completion messages
+        
+        Args:
+            study: The MerlinStudy object containing study configuration
+            adapter: Configuration dictionary for study adapters
+            samples: List of sample data for the study
+            sample_labels: Labels corresponding to the samples
+            egraph: The DAG representing the workflow
+            groups_of_chains: Task groups organized by execution chains
+            
+        Returns:
+            AsyncResult object for tracking study execution
+        """
+        raise NotImplementedError()

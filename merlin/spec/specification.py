@@ -955,36 +955,6 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         
         return False
 
-    def get_task_server_config_with_chords(self) -> Dict[str, Any]:
-        """
-        Get task server configuration with chord support detection.
-        
-        This method extends the base task server configuration to include
-        information about whether chord support is needed for the workflow.
-        
-        Returns:
-            Dictionary containing task server configuration with chord support flag.
-        """
-        config = self.get_task_server_config()
-        
-        # Add chord support flag based on dependency analysis
-        config['enable_chords'] = self.uses_chord_dependencies()
-        
-        # Add dependency analysis metadata
-        if config['enable_chords']:
-            config['chord_metadata'] = {
-                'has_wildcard_dependencies': True,
-                'requires_coordination': True
-            }
-            LOG.info("Task server configuration includes chord support")
-        else:
-            config['chord_metadata'] = {
-                'has_wildcard_dependencies': False,
-                'requires_coordination': False
-            }
-            LOG.debug("Task server configuration does not require chord support")
-        
-        return config
 
     def get_step_worker_map(self) -> Dict[str, List[str]]:
         """
