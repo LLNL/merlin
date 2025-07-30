@@ -14,13 +14,14 @@ as well as loading and expanding Merlin YAML specifications.
 """
 
 import logging
-from argparse import Namespace
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from contextlib import suppress
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
+from merlin.cli.commands.database.entity_registry import ENTITY_REGISTRY
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
-from merlin.utils import verify_filepath
+from merlin.utils import pluralize, singularize, verify_filepath
 
 
 LOG = logging.getLogger("merlin")
@@ -108,3 +109,139 @@ def get_merlin_spec_with_override(args: Namespace) -> Tuple[MerlinSpec, str]:
     variables_dict = parse_override_vars(args.variables)
     spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
     return spec, filepath
+
+
+def transform_entity_suffix(entity_name: str, transform_fn, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
+    """
+    Applies a transformation function to the last word of a `delimiter`-separated entity name.
+
+    Args:
+        entity_name (str): The original entity name (e.g., "logical-worker").
+        transform_fn (Callable): A function like `pluralize` or `singularize`.
+        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
+        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
+
+    Returns:
+        The transformed entity name with the suffix modified.
+    """
+    entity_words = entity_name.split(split_delimiter)
+    entity_words[-1] = transform_fn(entity_words[-1])
+    return join_delimiter.join(entity_words)
+
+
+def get_plural_of_entity(entity_name: str, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
+    """
+    Converts the last word of a `delimiter`-separated entity name to its plural form.
+
+    Args:
+        entity_name (str): The original entity name (e.g., "logical-worker").
+        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
+        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
+
+    Returns:
+        The pluralized entity name.
+    """
+    return transform_entity_suffix(entity_name, pluralize, split_delimiter=split_delimiter, join_delimiter=join_delimiter)
+
+
+def get_singular_of_entity(entity_name: str, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
+    """
+    Converts the last word of a `delimiter`-separated entity name to its singular form.
+
+    Args:
+        entity_name (str): The plural entity name (e.g., "logical-workers").
+        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
+        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
+
+    Returns:
+        The singularized entity name.
+    """
+    return transform_entity_suffix(entity_name, singularize, split_delimiter=split_delimiter, join_delimiter=join_delimiter)
+
+
+def setup_db_entity_subcommands(subcommand_parser: ArgumentParser, subcommand_name: str) -> dict[str, ArgumentParser]:
+    """
+    Dynamically sets up subcommands for each entity type for a given subcommand.
+
+    This function adds both singular (`<entity>`) and plural (`all-<entities>`) variants
+    to support direct targeting and filter-based selection, respectively.
+
+    Args:
+        subcommand_parser (ArgumentParser): The parser to which entity subcommands should be added.
+        subcommand_name (str): The name of the subcommand being configured (e.g., "delete", "get").
+
+    Returns:
+        A mapping from subcommand name to the corresponding ArgumentParser instance.
+    """
+    parser_map = {}
+
+    for entity_key, config in ENTITY_REGISTRY.items():
+        identifiers = config["identifiers"]
+        ident_help = config["ident_help"].format(verb=subcommand_name)
+        plural_name = get_plural_of_entity(entity_key)
+        filters = config["filters"]
+
+        # <entity> command
+        singular = subcommand_parser.add_parser(
+            entity_key,
+            help=f"{subcommand_name.capitalize()} one or more {plural_name} by {identifiers}.",
+            formatter_class=ArgumentDefaultsHelpFormatter,
+        )
+        singular.add_argument(
+            "entity",
+            type=str,
+            nargs="+",
+            help=ident_help,
+        )
+        parser_map[entity_key] = singular
+
+        # all-<entities> command
+        all_name = f"all-{plural_name}"
+        all_parser = subcommand_parser.add_parser(
+            all_name,
+            help=f"{subcommand_name.capitalize()} all {plural_name} (supports filters).",
+            formatter_class=ArgumentDefaultsHelpFormatter,
+        )
+        for filt in filters:
+            arg_name = filt["name"]
+            arg_type = filt["type"]
+            nargs = filt.get("nargs")
+            all_parser.add_argument(
+                f"--{arg_name.replace('_', '-')}",
+                type=arg_type,
+                nargs=nargs,
+                help=f"Filter by {arg_name.replace('_', ' ')}.",
+            )
+        parser_map[all_name] = all_parser
+
+    return parser_map
+
+
+def get_filters_for_entity(args: Namespace, entity_type: str) -> Dict:
+    """
+    Extracts filter arguments from parsed CLI input for a specific entity type.
+
+    This is used to dynamically build the keyword arguments for querying or deleting
+    entities via the database manager.
+
+    Args:
+        args (Namespace): Parsed command-line arguments.
+        entity_type (str): The entity type whose filter definitions should be used.
+
+    Returns:
+        A dictionary of filter argument names to their provided values. Returns an
+            empry dictionary if the entity is invalid or has no filters.
+    """
+    entity_config = ENTITY_REGISTRY.get(entity_type, None)
+    if not entity_config:
+        LOG.error(f"Invalid entity: '{entity_type}'.")
+        return {}
+    
+    filter_options = entity_config.get("filters", {})
+    if not filter_options:
+        LOG.error(f"No filters supported for '{entity_type}'.")
+        return {}
+    
+    filter_keys = [filter["name"] for filter in filter_options]
+    filters = {key: getattr(args, key) for key in filter_keys if getattr(args, key) is not None}
+    return filters

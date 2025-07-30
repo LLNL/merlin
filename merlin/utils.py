@@ -33,6 +33,59 @@ ARRAY_FILE_FORMATS = ".npy, .csv, .tab"
 DEFAULT_FLUX_VERSION = "0.48.0"
 
 
+def pluralize(word: str) -> str:
+    """
+    Return the plural form of a given English noun.
+
+    This does not take into account irregular nouns like "goose",
+    "man", etc.
+
+    Args:
+        word (str): The singular noun to pluralize.
+
+    Returns:
+        str: The plural form of the noun.
+    """
+    if word.endswith(("s", "sh", "ch", "x", "z")):  # e.g., "bash" -> "bashes"
+        return word + "es"
+    elif word.endswith("y") and word[-2] not in "aeiou":  # e.g., "study" -> "studies"
+        return word[:-1] + "ies"
+    elif word.endswith("f"):  # e.g., "wolf" -> "wolves"
+        return word[:-1] + "ves"
+    elif word.endswith("fe"):  # e.g., "knife" -> "knives"
+        return word[:-2] + "ves"
+    else:  # e.g., "worker" -> "workers"
+        return word + "s"
+    
+
+def singularize(word: str) -> str:
+    """
+    Return the singular form of a given English noun.
+
+    This is the inverse of the `pluralize` function and assumes regular
+    pluralization rules only (no irregulars like "geese" → "goose").
+
+    Args:
+        word (str): The plural noun to singularize.
+
+    Returns:
+        str: The singular form of the noun.
+    """
+    if word.endswith("ies") and len(word) > 3 and word[-4] not in "aeiou":  # e.g., "studies" -> "study"
+        return word[:-3] + "y"
+    elif word.endswith("ves"):
+        if len(word) > 4 and word[-4] == "l":  # e.g., "wolves" -> "wolf"
+            return word[:-3] + "f"
+        else:  # default assumption: e.g., "knives" -> "knife"
+            return word[:-3] + "fe"
+    elif word.endswith("es") and any(word.endswith(suffix + "es") for suffix in ("s", "sh", "ch", "x", "z")):  # e.g., "bashes" -> "bash"
+        return word[:-2]
+    elif word.endswith("s") and not word.endswith("ss"):  # e.g., "workers" -> "worker"
+        return word[:-1]
+    else:
+        return word  # likely already singular or unrecognized plural
+
+
 def get_user_process_info(user: str = None, attrs: List[str] = None) -> List[Dict]:
     """
     Return a list of process information for all of the user's running processes.
