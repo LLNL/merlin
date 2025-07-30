@@ -18,6 +18,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar
 
+from merlin.backends.filter_support_mixin import FilterSupportMixin
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import BaseDataModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
@@ -139,10 +140,13 @@ class EntityManager(Generic[T, M], ABC):
             # Call the getter on the entity to get the actual value
             actual = accessor(entity)
 
+            LOG.debug(f"actual for filter '{key}': {actual}")
+            LOG.debug(f"expected for filter '{key}': {expected}")
+
             # Case where filter is a list
             if isinstance(expected, list):
                 # Match if any expected value is in the actual list (e.g., queues)
-                if not isinstance(actual, list) or not any(val in actual for val in expected):
+                if not isinstance(actual, (list, set)) or not any(val in actual for val in expected):
                     return False
             # Case where filter is str or bool
             else:
@@ -163,14 +167,24 @@ class EntityManager(Generic[T, M], ABC):
         Returns:
             A list of all entities of the specified type matching the filters.
         """
-        all_entities = self._get_all_entities(self._entity_class, self._entity_type)
+        if isinstance(self.backend, FilterSupportMixin) and filters:
+            LOG.debug(f"Using backend filtering with filters: {filters}")
+            raw_entities = self.backend.retrieve_all_filtered(self._entity_type, filters)
+        else:
+            mode = "with in-memory filtering" if filters else "without filters"
+            LOG.debug(f"Using full retrieval {mode}.")
+            raw_entities = self.backend.retrieve_all(self._entity_type)
 
-        if not filters:
-            return all_entities
+        if not raw_entities:
+            return []
 
-        entities_matching_filters = [entity for entity in all_entities if self._matches_filters(entity, filters)]
-        LOG.info(f"Found {len(entities_matching_filters)} entities matching the filters '{filters}'.")
-        return entities_matching_filters
+        entities = [self._entity_class(data, self.backend) for data in raw_entities]
+
+        if filters and not isinstance(self.backend, FilterSupportMixin):
+            entities = [entity for entity in entities if self._matches_filters(entity, filters)]
+            LOG.info(f"Filtered down to {len(entities)} entities using in-memory filters: {filters}")
+
+        return entities
 
     @abstractmethod
     def delete(self, identifier: str, **kwargs: Any):
@@ -244,22 +258,6 @@ class EntityManager(Generic[T, M], ABC):
             The loaded entity instance.
         """
         return entity_class.load(identifier, self.backend)
-
-    def _get_all_entities(self, entity_class: Type[T], entity_type: str) -> List[T]:
-        """
-        Retrieve all entities of a specific type from the backend.
-
-        Args:
-            entity_class (Type[T]): The class used to instantiate each entity.
-            entity_type (str): The type identifier used by the backend to filter entities.
-
-        Returns:
-            A list of all entities of the specified type.
-        """
-        all_entities = self.backend.retrieve_all(entity_type)
-        if not all_entities:
-            return []
-        return [entity_class(entity_data, self.backend) for entity_data in all_entities]
 
     def _delete_entity(self, entity_class: Type[T], identifier: str, cleanup_fn: Optional[Callable] = None):
         """
