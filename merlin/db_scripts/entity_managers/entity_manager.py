@@ -16,7 +16,7 @@ creating entities if they do not exist, retrieving entities by ID, and deleting 
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Generic, List, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar
 
 from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import BaseDataModel
@@ -44,6 +44,10 @@ class EntityManager(Generic[T, M], ABC):
 
     Attributes:
         backend: The backend interface used to persist and retrieve entity data.
+        _filter_accessor_map: A dictionary mapping supported filter keys to accessor functions
+            for the entity type. Used by filtering logic (e.g., in `get_all`) to dynamically
+            retrieve values from entity instances. Subclasses must override this to enable
+            filtering support.
 
     Methods:
         create: Abstract method to create a new entity.
@@ -57,6 +61,8 @@ class EntityManager(Generic[T, M], ABC):
         _delete_entity: Deletes an individual entity, optionally calling a cleanup function before deletion.
         _delete_all_by_type: Deletes all entities of a certain type using the provided getter and deleter functions.
     """
+
+    _filter_accessor_map: Dict[str, Callable[[T], Any]] = {}
 
     def __init__(self, backend: ResultsBackend):
         """
@@ -103,18 +109,68 @@ class EntityManager(Generic[T, M], ABC):
         """
         raise NotImplementedError("Subclasses of `EntityManager` must implement a `get` method.")
 
-    @abstractmethod
-    def get_all(self) -> List[T]:
+    def _matches_filters(self, entity: T, filters: Dict) -> bool:
         """
-        Retrieve all entities managed by this entity manager.
+        Determines whether a given entity matches all provided filter criteria.
+
+        This method uses a predefined mapping of filter keys to accessor functions
+        (`_filter_accessor_map` which subclasses will need to implement) to retrieve
+        values from the entity. It supports both scalar and list-based comparisons.
+        For list filters (e.g., "queues"), the filter matches if any expected value
+        is present in the entity's corresponding list.
+
+        Args:
+            entity: The entity instance to check against the filters.
+            filters: A dictionary of filter keys and values used to narrow down the query results.
+                    Filter keys must correspond to entries in the `_filter_accessor_map` defined
+                    by the subclass. Values are compared against the entity’s corresponding attributes
+                    or methods (e.g., {"name": "foo"}, {"queues": ["queue1", "queue2"]}).
 
         Returns:
-            A list of all entities of the specified type.
-
-        Raises:
-            NotImplementedError: If a subclass has not implemented this method.
+            True if the entity matches all filter conditions, False otherwise.
         """
-        raise NotImplementedError("Subclasses of `EntityManager` must implement a `get_all` method.")
+        for key, expected in filters.items():
+            # Obtain the correct getter method
+            accessor = self._filter_accessor_map.get(key, None)
+            if not accessor:
+                LOG.warning(f"Could not obtain accessor for filter '{key}'. Skipping this filter.")
+                continue
+
+            # Call the getter on the entity to get the actual value
+            actual = accessor(entity)
+
+            # Case where filter is a list
+            if isinstance(expected, list):
+                # Match if any expected value is in the actual list (e.g., queues)
+                if not isinstance(actual, list) or not any(val in actual for val in expected):
+                    return False
+            # Case where filter is str or bool
+            else:
+                if actual != expected:
+                    return False
+        return True
+
+    def get_all(self, filters: Dict = None) -> List[T]:
+        """
+        Retrieve all entities managed by this entity manager, optionally filtered by attributes.
+
+        Args:
+            filters: A dictionary of filter keys and values used to narrow down the query results.
+                 Filter keys must correspond to supported filters defined in the ENTITY_REGISTRY
+                 for the given entity type. Values are compared against entity attributes or
+                 accessor methods (e.g., {"name": "foo"}, {"queues": ["queue1", "queue2"]}).
+
+        Returns:
+            A list of all entities of the specified type matching the filters.
+        """
+        all_entities = self._get_all_entities(self._entity_class, self._entity_type)
+
+        if not filters:
+            return all_entities
+
+        entities_matching_filters = [entity for entity in all_entities if self._matches_filters(entity, filters)]
+        LOG.info(f"Found {len(entities_matching_filters)} entities matching the filters '{filters}'.")
+        return entities_matching_filters
 
     @abstractmethod
     def delete(self, identifier: str, **kwargs: Any):

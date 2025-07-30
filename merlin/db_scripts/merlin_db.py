@@ -187,13 +187,16 @@ class MerlinDatabase:
         self._validate_entity_type(entity_type)
         return self._entity_managers[entity_type].get(*args, **kwargs)
 
-    def get_all(self, entity_type: str, **filters) -> List[Any]:
+    def get_all(self, entity_type: str, filters: Dict = {}) -> List[Any]:
         """
         Get all entities of a specific type, optionally filtering results.
 
         Args:
             entity_type: The type of entities to get (study, run, logical_worker, physical_worker).
-            **filters: Arbitrary keyword filters to apply (e.g., status="running").
+            filters: A dictionary of filter keys and values used to narrow down the query results.
+                Filter keys must correspond to supported filters defined in the ENTITY_REGISTRY
+                for the given entity type. Values are compared against entity attributes or
+                accessor methods (e.g., {"name": "foo"}, {"queues": ["queue1", "queue2"]}).
 
         Returns:
             A list of all entities of the specified type matching the filters.
@@ -202,7 +205,7 @@ class MerlinDatabase:
             EntityManagerNotSupportedError: If the entity type is not supported.
         """
         self._validate_entity_type(entity_type)
-        return self._entity_managers[entity_type].get_all(**filters)
+        return self._entity_managers[entity_type].get_all(filters)
 
     def delete(self, entity_type: str, *args, **kwargs) -> None:
         """
