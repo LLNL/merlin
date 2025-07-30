@@ -84,6 +84,54 @@ def singularize(word: str) -> str:
         return word[:-1]
     else:
         return word  # likely already singular or unrecognized plural
+    
+
+def transform_entity_suffix(entity_name: str, transform_fn, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
+    """
+    Applies a transformation function to the last word of a `delimiter`-separated entity name.
+
+    Args:
+        entity_name (str): The original entity name (e.g., "logical-worker").
+        transform_fn (Callable): A function like `pluralize` or `singularize`.
+        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
+        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
+
+    Returns:
+        The transformed entity name with the suffix modified.
+    """
+    entity_words = entity_name.split(split_delimiter)
+    entity_words[-1] = transform_fn(entity_words[-1])
+    return join_delimiter.join(entity_words)
+
+
+def get_plural_of_entity(entity_name: str, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
+    """
+    Converts the last word of a `delimiter`-separated entity name to its plural form.
+
+    Args:
+        entity_name (str): The original entity name (e.g., "logical-worker").
+        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
+        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
+
+    Returns:
+        The pluralized entity name.
+    """
+    return transform_entity_suffix(entity_name, pluralize, split_delimiter=split_delimiter, join_delimiter=join_delimiter)
+
+
+def get_singular_of_entity(entity_name: str, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
+    """
+    Converts the last word of a `delimiter`-separated entity name to its singular form.
+
+    Args:
+        entity_name (str): The plural entity name (e.g., "logical-workers").
+        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
+        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
+
+    Returns:
+        The singularized entity name.
+    """
+    return transform_entity_suffix(entity_name, singularize, split_delimiter=split_delimiter, join_delimiter=join_delimiter)
 
 
 def get_user_process_info(user: str = None, attrs: List[str] = None) -> List[Dict]:

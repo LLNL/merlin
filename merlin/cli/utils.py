@@ -16,12 +16,12 @@ as well as loading and expanding Merlin YAML specifications.
 import logging
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from contextlib import suppress
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from merlin.cli.commands.database.entity_registry import ENTITY_REGISTRY
 from merlin.spec.expansion import RESERVED, get_spec_with_expansion
 from merlin.spec.specification import MerlinSpec
-from merlin.utils import pluralize, singularize, verify_filepath
+from merlin.utils import get_plural_of_entity, verify_filepath
 
 
 LOG = logging.getLogger("merlin")
@@ -109,54 +109,6 @@ def get_merlin_spec_with_override(args: Namespace) -> Tuple[MerlinSpec, str]:
     variables_dict = parse_override_vars(args.variables)
     spec = get_spec_with_expansion(filepath, override_vars=variables_dict)
     return spec, filepath
-
-
-def transform_entity_suffix(entity_name: str, transform_fn, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
-    """
-    Applies a transformation function to the last word of a `delimiter`-separated entity name.
-
-    Args:
-        entity_name (str): The original entity name (e.g., "logical-worker").
-        transform_fn (Callable): A function like `pluralize` or `singularize`.
-        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
-        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
-
-    Returns:
-        The transformed entity name with the suffix modified.
-    """
-    entity_words = entity_name.split(split_delimiter)
-    entity_words[-1] = transform_fn(entity_words[-1])
-    return join_delimiter.join(entity_words)
-
-
-def get_plural_of_entity(entity_name: str, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
-    """
-    Converts the last word of a `delimiter`-separated entity name to its plural form.
-
-    Args:
-        entity_name (str): The original entity name (e.g., "logical-worker").
-        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
-        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
-
-    Returns:
-        The pluralized entity name.
-    """
-    return transform_entity_suffix(entity_name, pluralize, split_delimiter=split_delimiter, join_delimiter=join_delimiter)
-
-
-def get_singular_of_entity(entity_name: str, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
-    """
-    Converts the last word of a `delimiter`-separated entity name to its singular form.
-
-    Args:
-        entity_name (str): The plural entity name (e.g., "logical-workers").
-        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
-        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
-
-    Returns:
-        The singularized entity name.
-    """
-    return transform_entity_suffix(entity_name, singularize, split_delimiter=split_delimiter, join_delimiter=join_delimiter)
 
 
 def setup_db_entity_subcommands(subcommand_parser: ArgumentParser, subcommand_name: str) -> dict[str, ArgumentParser]:

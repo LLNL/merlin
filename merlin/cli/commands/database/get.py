@@ -28,14 +28,10 @@ from typing import Any, List
 
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.cli.commands.database.entity_registry import ENTITY_REGISTRY
-from merlin.cli.utils import (
-    get_filters_for_entity,
-    get_plural_of_entity,
-    get_singular_of_entity,
-    setup_db_entity_subcommands,
-)
+from merlin.cli.utils import get_filters_for_entity, setup_db_entity_subcommands
 from merlin.config.configfile import initialize_config
 from merlin.db_scripts.merlin_db import MerlinDatabase
+from merlin.utils import get_plural_of_entity, get_singular_of_entity
 
 LOG = logging.getLogger("merlin")
 
