@@ -9,7 +9,7 @@ Tests for the `entity_manager.py` module.
 """
 
 from dataclasses import dataclass
-from typing import Any, List
+from typing import Any
 from unittest.mock import MagicMock, call
 
 import pytest

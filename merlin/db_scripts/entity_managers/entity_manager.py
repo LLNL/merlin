@@ -74,6 +74,8 @@ class EntityManager(Generic[T, M], ABC):
         """
         self.backend = backend
         self.db = None  # Subclasses can set this by creating a set_db_reference method
+        self._entity_type = None  # Subclasses need to set this
+        self._entity_class = None  # Subclasses need to set this
 
     @abstractmethod
     def create(self, *args: Any, **kwargs: Any) -> T:

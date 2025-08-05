@@ -31,4 +31,5 @@ or `delete` logic).
 
 from merlin.cli.commands.database.database import DatabaseCommand
 
+
 __all__ = ["DatabaseCommand"]

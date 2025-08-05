@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Unit tests for the `spec/` folder
 - A page in the docs explaining the `feature_demo` example
+- Ability to filter database queries for the `get all-*` and `delete all-*` commands
 
 ## [1.13.0b2]
 ### Added

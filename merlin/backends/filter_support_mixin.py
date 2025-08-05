@@ -33,7 +33,7 @@ class FilterSupportMixin:
     that supports filtering (e.g., SQLite-based backends).
     """
 
-    def retrieve_all_filtered(self,  store_type: str, filters: Dict) -> List[BaseDataModel]:
+    def retrieve_all_filtered(self, store_type: str, filters: Dict) -> List[BaseDataModel]:
         """
         Retrieve all objects from the specified store that match the given filters.
 

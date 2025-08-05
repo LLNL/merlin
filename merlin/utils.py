@@ -56,7 +56,7 @@ def pluralize(word: str) -> str:
         return word[:-2] + "ves"
     else:  # e.g., "worker" -> "workers"
         return word + "s"
-    
+
 
 def singularize(word: str) -> str:
     """
@@ -78,13 +78,15 @@ def singularize(word: str) -> str:
             return word[:-3] + "f"
         else:  # default assumption: e.g., "knives" -> "knife"
             return word[:-3] + "fe"
-    elif word.endswith("es") and any(word.endswith(suffix + "es") for suffix in ("s", "sh", "ch", "x", "z")):  # e.g., "bashes" -> "bash"
+    elif word.endswith("es") and any(
+        word.endswith(suffix + "es") for suffix in ("s", "sh", "ch", "x", "z")
+    ):  # e.g., "bashes" -> "bash"
         return word[:-2]
     elif word.endswith("s") and not word.endswith("ss"):  # e.g., "workers" -> "worker"
         return word[:-1]
     else:
         return word  # likely already singular or unrecognized plural
-    
+
 
 def transform_entity_suffix(entity_name: str, transform_fn, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
     """

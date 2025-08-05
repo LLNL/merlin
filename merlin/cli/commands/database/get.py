@@ -33,6 +33,7 @@ from merlin.config.configfile import initialize_config
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.utils import get_plural_of_entity, get_singular_of_entity
 
+
 LOG = logging.getLogger("merlin")
 
 
@@ -49,7 +50,7 @@ class DatabaseGetCommand(CommandEntryPoint):
         _get_all_and_print: Fetches and prints filtered entities of a type.
     """
 
-    def add_parser(self, database_commands: ArgumentParser):
+    def add_parser(self, database_commands: ArgumentParser):  # pylint: disable=arguments-renamed
         """
         Add the `database get` subcommand parser to the CLI argument parser.
 
@@ -60,7 +61,7 @@ class DatabaseGetCommand(CommandEntryPoint):
         # Subcommand: database get
         db_get_parser = database_commands.add_parser(
             "get",
-            help=f"Get information stored in the database.",
+            help="Get information stored in the database.",
             formatter_class=ArgumentDefaultsHelpFormatter,
         )
         db_get_parser.set_defaults(func=self.process_command)
@@ -127,7 +128,7 @@ class DatabaseGetCommand(CommandEntryPoint):
         """
         if args.local:
             initialize_config(local_mode=True)
-        
+
         merlin_db = MerlinDatabase()
         get_type = args.get_type
 

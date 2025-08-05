@@ -8,10 +8,11 @@
 Tests for the merlin/cli/commands/database/delete.py module.
 """
 
-import pytest
 from argparse import Namespace
-from pytest_mock import MockerFixture
 from unittest.mock import MagicMock
+
+import pytest
+from pytest_mock import MockerFixture
 
 from merlin.cli.commands.database.delete import DatabaseDeleteCommand
 from tests.fixture_types import FixtureDict

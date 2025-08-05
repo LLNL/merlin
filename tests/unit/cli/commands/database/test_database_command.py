@@ -9,10 +9,11 @@ Tests for the merlin/cli/commands/database/database.py module.
 """
 
 
-import pytest
 from argparse import ArgumentParser, Namespace
-from pytest_mock import MockerFixture
 from unittest.mock import MagicMock
+
+import pytest
+from pytest_mock import MockerFixture
 
 from merlin.cli.commands.database.database import DatabaseCommand
 
@@ -94,7 +95,7 @@ def test_add_parser_calls_subcommand_add_parser_methods(
     """
     parser = ArgumentParser()
     subparsers = parser.add_subparsers(dest="main", required=True)
-    
+
     database_command.add_parser(subparsers)
 
     # Ensure subcommand `add_parser` methods are called with subparsers

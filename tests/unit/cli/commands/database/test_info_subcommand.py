@@ -8,10 +8,10 @@
 Tests for the merlin/cli/commands/database/info.py module.
 """
 
-import pytest
 from argparse import ArgumentParser, Namespace
 from unittest.mock import MagicMock
 
+import pytest
 from pytest_mock import MockerFixture
 
 from merlin.cli.commands.database.info import DatabaseInfoCommand

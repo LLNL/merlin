@@ -187,7 +187,7 @@ class MerlinDatabase:
         self._validate_entity_type(entity_type)
         return self._entity_managers[entity_type].get(*args, **kwargs)
 
-    def get_all(self, entity_type: str, filters: Dict = {}) -> List[Any]:
+    def get_all(self, entity_type: str, filters: Dict = None) -> List[Any]:
         """
         Get all entities of a specific type, optionally filtering results.
 
@@ -272,9 +272,7 @@ class MerlinDatabase:
             LOG.info("Database flush cancelled.")
 
     def _fetch_info_data(self, max_preview: int):
-        """
-        
-        """
+        """ """
         display_config = {
             "study": {"ID": "get_id", "Name": "get_name"},
             "run": {"ID": "get_id", "Workspace": "get_workspace"},
@@ -308,10 +306,9 @@ class MerlinDatabase:
             }
 
         return entity_summaries
-    
+
     def _display_info_data(self, entity_summaries: Dict):
-        """
-        """
+        """ """
         # Display general information
         print("Merlin Database Information")
         print("---------------------------")
@@ -332,8 +329,7 @@ class MerlinDatabase:
                 print(f"- Recent {title}:")
                 for i, preview in enumerate(summary["preview"], start=1):
                     detail_str = ", ".join(
-                        f"{field.title()}: {preview.get(field, '<unknown>')}"
-                        for field in summary["fields"]
+                        f"{field.title()}: {preview.get(field, '<unknown>')}" for field in summary["fields"]
                     )
                     print(f"    {i}. {detail_str}")
                 remaining = summary["total"] - len(summary["preview"])
@@ -344,7 +340,7 @@ class MerlinDatabase:
     def info(self, max_preview: int = 3):
         """
         Print summarized information about the database contents.
-        
+
         Args:
             max_preview: Number of recent entries to preview per entity type.
         """

@@ -188,12 +188,12 @@ def get_filters_for_entity(args: Namespace, entity_type: str) -> Dict:
     if not entity_config:
         LOG.error(f"Invalid entity: '{entity_type}'.")
         return {}
-    
+
     filter_options = entity_config.get("filters", {})
     if not filter_options:
         LOG.error(f"No filters supported for '{entity_type}'.")
         return {}
-    
+
     filter_keys = [filter["name"] for filter in filter_options]
     filters = {key: getattr(args, key) for key in filter_keys if getattr(args, key) is not None}
     return filters

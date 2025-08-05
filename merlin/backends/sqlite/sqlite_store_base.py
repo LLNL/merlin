@@ -177,7 +177,7 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
                 return None
 
             return deserialize_entity(dict(row), self.model_class)
-        
+
     def _build_where_clause_and_params(self, filters: Dict[str, Any]) -> Tuple[str, List[Any]]:
         """
         Build the SQL WHERE clause and associated parameter list from a filters dictionary.
@@ -212,7 +212,7 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
         where_clause = "WHERE " + " AND ".join(conditions)
         return where_clause, params
 
-    def _retrieve_by_query(self, filters: Optional[Dict[str, Any]] = {}) -> List[T]:
+    def _retrieve_by_query(self, filters: Optional[Dict[str, Any]] = None) -> List[T]:
         """
         Internal method to query the SQLite database for entities with optional filters.
 

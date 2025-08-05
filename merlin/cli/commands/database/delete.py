@@ -34,6 +34,7 @@ from merlin.config.configfile import initialize_config
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.utils import get_singular_of_entity
 
+
 LOG = logging.getLogger("merlin")
 
 
@@ -49,7 +50,7 @@ class DatabaseDeleteCommand(CommandEntryPoint):
         _delete_all_entities: Deletes all entities of a type, applying filters if present.
     """
 
-    def add_parser(self, database_commands: ArgumentParser):
+    def add_parser(self, database_commands: ArgumentParser):  # pylint: disable=arguments-renamed
         """
         Add the `database delete` subcommand parser to the CLI argument parser.
 
@@ -60,7 +61,7 @@ class DatabaseDeleteCommand(CommandEntryPoint):
         # Subcommand: database delete
         db_delete_parser = database_commands.add_parser(
             "delete",
-            help=f"Delete information stored in the database.",
+            help="Delete information stored in the database.",
             formatter_class=ArgumentDefaultsHelpFormatter,
         )
         db_delete_parser.set_defaults(func=self.process_command)
@@ -123,7 +124,7 @@ class DatabaseDeleteCommand(CommandEntryPoint):
             entity_type (str): The type of entity to delete (e.g., "run", "study").
             identifiers (List[str]): A list of entity identifiers to delete.
             merlin_db (MerlinDatabase): Interface to the Merlin database.
-        """        
+        """
         for identifier in identifiers:
             merlin_db.delete(entity_type.replace("-", "_"), identifier, **kwargs)
 
@@ -157,7 +158,7 @@ class DatabaseDeleteCommand(CommandEntryPoint):
         """
         if args.local:
             initialize_config(local_mode=True)
-        
+
         merlin_db = MerlinDatabase()
         delete_type = args.delete_type
 

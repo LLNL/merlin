@@ -8,17 +8,19 @@
 Tests for the merlin/cli/commands/database/get.py module.
 """
 
-import pytest
 from argparse import Namespace
 from unittest.mock import MagicMock
 
+import pytest
 from pytest_mock import MockerFixture
 
 from merlin.cli.commands.database.get import DatabaseGetCommand
 
+
 # TODO write docstrings/type hints for this file and test_info_subcommand.py
 # TODO fix the remainder of the broken tests
 # TODO update the documentation for the database command
+
 
 @pytest.fixture
 def mock_merlin_db(mocker: MockerFixture) -> MagicMock:
@@ -26,7 +28,7 @@ def mock_merlin_db(mocker: MockerFixture) -> MagicMock:
     Fixture that mocks the MerlinDatabase class used in the `database.get` module.
 
     This prevents real database connections and allows inspection of database method calls.
-    
+
     Args:
         mocker: PyTest mocker fixture.
 
@@ -42,10 +44,10 @@ def mock_initialize_config(mocker: MockerFixture) -> MagicMock:
     Fixture that mocks the `initialize_config` function in the `database.get` module.
 
     This prevents configuration initialization from affecting test environments.
-    
+
     Args:
         mocker: PyTest mocker fixture.
-    
+
     Returns:
         The mocked initialize_config function.
     """
@@ -59,7 +61,7 @@ def mock_entity_registry(mocker: MockerFixture) -> MagicMock:
 
     This allows tests to simulate entity-specific behavior (e.g., "study", "run")
     without relying on the actual registry.
-    
+
     Args:
         mocker: PyTest mocker fixture.
 
@@ -115,7 +117,9 @@ def test_process_command_get_everything(command: DatabaseGetCommand, mock_merlin
     mock_print_items = mocker.patch.object(command, "_print_items")
     args = Namespace(get_type="everything", local=False)
     command.process_command(args)
-    mock_print_items.assert_called_once_with(mock_merlin_db.return_value.get_everything.return_value, "Nothing found in the database.")
+    mock_print_items.assert_called_once_with(
+        mock_merlin_db.return_value.get_everything.return_value, "Nothing found in the database."
+    )
 
 
 def test_process_command_get_specific_entities(

@@ -57,7 +57,7 @@ class RunManager(EntityManager[RunEntity, RunModel]):
         delete_all: Delete all runs in the database.
         set_db_reference: Set the reference to the main Merlin database for cross-entity operations.
     """
-    
+
     _filter_accessor_map: Dict[str, Callable[[T], Any]] = {
         "study_id": lambda e: e.get_study_id(),
         "run_complete": lambda e: e.run_complete,
