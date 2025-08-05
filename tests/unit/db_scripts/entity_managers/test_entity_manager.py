@@ -66,6 +66,16 @@ class TestEntity(DatabaseEntity):
 class TestEntityManager(EntityManager[TestEntity, TestDataModel]):
     """A concrete test implementation of an entity manager."""
 
+    _filter_accessor_map = {
+        "name": lambda e: e.entity_info.name,
+        "attr1": lambda e: e.entity_info.attr1,
+    }
+
+    def __init__(self, backend: ResultsBackend):
+        super().__init__(backend)
+        self._entity_type = "test_entity"
+        self._entity_class = TestEntity
+
     def create(self, name: str, **kwargs: Any) -> TestEntity:
         return self._create_entity_if_not_exists(
             TestEntity,
@@ -79,9 +89,6 @@ class TestEntityManager(EntityManager[TestEntity, TestDataModel]):
 
     def get(self, identifier: str) -> TestEntity:
         return self._get_entity(TestEntity, identifier)
-
-    def get_all(self) -> List[TestEntity]:
-        return self._get_all_entities(TestEntity, "test_entity")
 
     def delete(self, identifier: str, **kwargs: Any):
         cleanup_fn = kwargs.get("cleanup_fn")
