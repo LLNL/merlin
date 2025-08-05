@@ -111,7 +111,7 @@ def get_merlin_spec_with_override(args: Namespace) -> Tuple[MerlinSpec, str]:
     return spec, filepath
 
 
-def setup_db_entity_subcommands(subcommand_parser: ArgumentParser, subcommand_name: str) -> dict[str, ArgumentParser]:
+def setup_db_entity_subcommands(subcommand_parser: ArgumentParser, subcommand_name: str) -> Dict[str, ArgumentParser]:
     """
     Dynamically sets up subcommands for each entity type for a given subcommand.
 
