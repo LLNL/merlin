@@ -9,7 +9,6 @@ Tests for the merlin/backends/filter_support_mixin.py module.
 """
 
 import pytest
-
 from pytest_mock import MockerFixture
 
 from merlin.backends.filter_support_mixin import FilterSupportMixin

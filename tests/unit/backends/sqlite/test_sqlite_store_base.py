@@ -374,17 +374,13 @@ class TestSQLiteStoreBase:
         mock_cursor.fetchall.return_value = mock_rows
 
         # Mock deserialization
-        mocker.patch(
-            "merlin.backends.sqlite.sqlite_store_base.deserialize_entity", return_value=run1
-        )
+        mocker.patch("merlin.backends.sqlite.sqlite_store_base.deserialize_entity", return_value=run1)
 
         filters = {"study_id": "study1"}
         results = simple_store.retrieve_all_filtered(filters)
 
         # Verify SQL query and parameters
-        mock_conn.execute.assert_called_once_with(
-            "SELECT * FROM test_table WHERE study_id = ?", ["study1"]
-        )
+        mock_conn.execute.assert_called_once_with("SELECT * FROM test_table WHERE study_id = ?", ["study1"])
         assert len(results) == 1
         assert results[0] == run1
 
@@ -411,9 +407,7 @@ class TestSQLiteStoreBase:
         mock_rows = [{"id": run1.id, "study_id": "study1"}, {"id": run2.id, "study_id": "study1"}]
         mock_cursor.fetchall.return_value = mock_rows
 
-        mocker.patch(
-            "merlin.backends.sqlite.sqlite_store_base.deserialize_entity", side_effect=[run1, run2]
-        )
+        mocker.patch("merlin.backends.sqlite.sqlite_store_base.deserialize_entity", side_effect=[run1, run2])
 
         filters = {"id": ["run1", "run2"]}
         results = simple_store.retrieve_all_filtered(filters)

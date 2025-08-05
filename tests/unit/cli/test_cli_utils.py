@@ -14,7 +14,12 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from merlin.cli.utils import get_filters_for_entity, get_merlin_spec_with_override, parse_override_vars, setup_db_entity_subcommands
+from merlin.cli.utils import (
+    get_filters_for_entity,
+    get_merlin_spec_with_override,
+    parse_override_vars,
+    setup_db_entity_subcommands,
+)
 
 
 @pytest.fixture
