@@ -311,7 +311,7 @@ class TestSQLiteStoreBase:
         results = simple_store.retrieve_all()
 
         # Verify method calls
-        mock_conn.execute.assert_called_once_with("SELECT * FROM test_table")
+        mock_conn.execute.assert_called_once_with("SELECT * FROM test_table ", [])
         mock_cursor.fetchall.assert_called_once()
         assert mock_deserialize.call_count == 2
         assert len(results) == 2
