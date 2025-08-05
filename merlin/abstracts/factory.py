@@ -132,6 +132,9 @@ class MerlinBaseFactory(ABC):
 
         Subclasses can override this method to implement package/module scanning.
         """
+        LOG.warning(
+            f"Class {self.__class__.__name__} did not override _discover_builtin_modules(). Built-in module discovery will be skipped."
+        )
 
     def _discover_plugins(self):
         """
