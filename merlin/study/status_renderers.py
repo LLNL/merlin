@@ -6,9 +6,9 @@
 
 """This module handles creating a formatted task-by-task status display"""
 import logging
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Type, Union
 
-from maestrowf import BaseStatusRenderer, FlatStatusRenderer, StatusRendererFactory
+from maestrowf import BaseStatusRenderer, FlatStatusRenderer
 from rich import box
 from rich.columns import Columns
 from rich.console import Console
@@ -16,6 +16,8 @@ from rich.table import Table
 from rich.text import Text
 from rich.theme import Theme
 
+from merlin.abstracts import MerlinBaseFactory
+from merlin.exceptions import MerlinInvalidStatusRendererError
 from merlin.study.status_constants import NON_WORKSPACE_KEYS
 
 
@@ -71,9 +73,6 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
                 - disable_pager (bool, optional): If `True`, disables pager functionality for the display. Defaults to `False`.
         """
         super().__init__(*args, **kwargs)
-
-        self.disable_theme: bool = kwargs.pop("disable_theme", False)
-        self.disable_pager: bool = kwargs.pop("disable_pager", False)
 
         # Setup default theme
         # TODO modify this theme to add more colors
@@ -319,41 +318,6 @@ class MerlinDefaultRenderer(BaseStatusRenderer):
             # Add this step to the full status table
             self._status_table.add_row(step_table, end_section=True)
 
-    def render(self, theme: Dict[str, str] = None):
-        """
-        Do the actual printing of the status table.
-
-        This method is responsible for rendering the status table to the console, applying any specified
-        theme settings for visual customization. It handles the enabling or disabling of themes and
-        manages the output display, either using a pager for long outputs or printing directly to the console.
-
-        Args:
-            theme: A dictionary of theme settings that define the appearance of the output. The keys and
-                values should correspond to the layout defined in `self._theme_dict`.
-        """
-        # Apply any theme customization
-        if theme:
-            LOG.debug(f"Applying theme: {theme}")
-            for key, value in theme.items():
-                self._theme_dict[key] = value
-
-        # If we're disabling the theme, we need to set all themes in the theme dict to none
-        if self.disable_theme:
-            LOG.debug("Disabling theme.")
-            for key in self._theme_dict:
-                self._theme_dict[key] = "none"
-
-        # Get the rich Console
-        status_theme = Theme(self._theme_dict)
-        _printer = Console(theme=status_theme)
-
-        # Display the status table
-        if self.disable_pager:
-            _printer.print(self._status_table)
-        else:
-            with _printer.pager(styles=(not self.disable_theme)):
-                _printer.print(self._status_table)
-
 
 class MerlinFlatRenderer(FlatStatusRenderer):
     """
@@ -370,11 +334,6 @@ class MerlinFlatRenderer(FlatStatusRenderer):
         render: Renders the status table to the console, applying any specified theme settings and
             managing the output display.
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
-        self.disable_theme: bool = kwargs.pop("disable_theme", False)
-        self.disable_pager: bool = kwargs.pop("disable_pager", False)
 
     def layout(self, status_data: Dict[str, List[Union[str, int]]], study_title: str = None):  # pylint: disable=W0221
         """
@@ -443,65 +402,76 @@ class MerlinFlatRenderer(FlatStatusRenderer):
                 _printer.print(self._status_table)
 
 
-class MerlinStatusRendererFactory(StatusRendererFactory):
+class MerlinStatusRendererFactory(MerlinBaseFactory):
     """
-    This class keeps track of all available status layouts for Merlin.
+    Factory class for managing and instantiating Merlin status renderers.
 
-    The `MerlinStatusRendererFactory` is responsible for managing different
-    status layout renderers used in the Merlin application. It provides a
-    method to retrieve the appropriate renderer based on the specified layout
-    type and user preferences regarding theme and pager usage.
+    This subclass of `MerlinBaseFactory` is responsible for registering,
+    validating, and creating instances of supported `BaseStatusRenderer`
+    implementations (e.g., `MerlinFlatRenderer`, `MerlinDefaultRenderer`).
+    It also supports dynamic discovery of plugins via Python entry points.
+
+    Responsibilities:
+        - Register built-in status renderer implementations.
+        - Validate that all components subclass `BaseStatusRenderer`.
+        - Provide a unified interface for instantiating renderers by name or alias.
+        - Optionally support discovery of external plugins.
 
     Attributes:
-        _layouts (Dict[str, BaseStatusRenderer]): A dictionary mapping layout names to their corresponding renderer
-            classes. Currently includes "table" for
-            [`MerlinFlatRenderer`][study.status_renderers.MerlinFlatRenderer] and
-            "default" for [`MerlinDefaultRenderer`][study.status_renderers.MerlinDefaultRenderer].
+        _registry (Dict[str, BaseStatusRenderer]): Maps canonical names to renderer classes.
+        _aliases (Dict[str, str]): Maps alternate names to canonical names.
 
     Methods:
-        get_renderer: Retrieves an instance of the specified layout renderer, applying
-            user preferences for theme and pager settings.
+        register: Register a renderer class and optional aliases.
+        list_available: Return a list of supported renderers.
+        create: Instantiate a renderer by name or alias.
+        get_component_info: Return metadata about a registered renderer.
     """
 
-    # TODO: when maestro releases the pager changes:
-    # - remove init and render in MerlinFlatRenderer
-    # - remove the get_renderer method below
-    # - remove self.disable_theme and self.disable_pager from MerlinFlatRenderer and MerlinDefaultRenderer
-    #   - these variables will be in BaseStatusRenderer in Maestro
-    # - remove render method in MerlinDefaultRenderer
-    #   - this will also be in BaseStatusRenderer in Maestro
-    def __init__(self):  # pylint: disable=W0231
-        self._layouts: Dict[str, BaseStatusRenderer] = {
-            "table": MerlinFlatRenderer,
-            "default": MerlinDefaultRenderer,
-        }
-
-    def get_renderer(
-        self, layout: str, disable_theme: bool, disable_pager: bool
-    ) -> BaseStatusRenderer:  # pylint: disable=W0221
+    def _register_builtins(self):
         """
-        Get handle for specific layout renderer to instantiate.
+        Register built-in status renderer implementations.
+        """
+        self.register("table", MerlinFlatRenderer)
+        self.register("default", MerlinDefaultRenderer)
+
+    def _validate_component(self, component_class: Any):
+        """
+        Ensure registered component is a subclass of BaseStatusRenderer.
 
         Args:
-            layout: A string denoting the name of the layout renderer to use.
-            disable_theme: True if the user wants to disable themes when displaying
-                status; False otherwise.
-            disable_pager: True if the user wants to disable the pager when displaying
-                status; False otherwise.
-
-        Returns:
-            The status renderer class to use for displaying the output.
+            component_class: The class to validate.
 
         Raises:
-            ValueError: If the specified layout is not found in the available layouts.
+            TypeError: If the component does not subclass BaseStatusRenderer.
         """
-        renderer = self._layouts.get(layout)
+        if not issubclass(component_class, BaseStatusRenderer):
+            raise TypeError(f"{component_class} must inherit from BaseStatusRenderer")
 
-        # Note, need to wrap renderer in try/catch too, or return default val?
-        if not renderer:
-            raise ValueError(layout)
+    def _entry_point_group(self) -> str:
+        """
+        Entry point group used for discovering status renderer plugins.
 
-        return renderer(disable_theme=disable_theme, disable_pager=disable_pager)
+        Returns:
+            The entry point namespace for Merlin status renderer plugins.
+        """
+        return "merlin.study"  # TODO change this to merlin.status when we refactor status
+
+    def _raise_component_error_class(self, msg: str) -> Type[Exception]:
+        """
+        Raise an appropriate exception for unsupported components.
+
+        This method is used by the base factory logic to determine which
+        exception to raise when a requested component is not found or fails
+        to initialize.
+
+        Args:
+            msg: The message to add to the error being raised.
+
+        Returns:
+            The exception class to raise.
+        """
+        raise MerlinInvalidStatusRendererError(msg)
 
 
 status_renderer_factory = MerlinStatusRendererFactory()

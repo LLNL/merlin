@@ -74,7 +74,7 @@ class Monitor:
         self.spec: MerlinSpec = spec
         self.sleep: int = sleep
         self.no_restart: bool = no_restart
-        self.task_server_monitor: TaskServerMonitor = monitor_factory.get_monitor(task_server)
+        self.task_server_monitor: TaskServerMonitor = monitor_factory.create(task_server)
         self.merlin_db = MerlinDatabase()
 
     def monitor_all_runs(self):
