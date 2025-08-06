@@ -71,18 +71,21 @@ class MonitorFactory(MerlinBaseFactory):
         """
         return "merlin.monitor"
 
-    def _get_component_error_class(self) -> Type[Exception]:
+    def _raise_component_error_class(self, msg: str) -> Type[Exception]:
         """
-        Return the exception type to raise for unsupported components.
+        Raise an appropriate exception for unsupported components.
 
         This method is used by the base factory logic to determine which
         exception to raise when a requested component is not found or fails
         to initialize.
 
+        Args:
+            msg: The message to add to the error being raised.
+
         Returns:
             The exception class to raise.
         """
-        return MerlinInvalidTaskServerError
+        raise MerlinInvalidTaskServerError(msg)
 
 
 monitor_factory = MonitorFactory()

@@ -39,8 +39,8 @@ class TestableFactory(MerlinBaseFactory):
     def _entry_point_group(self) -> str:
         return "merlin.test_plugins"
 
-    def _get_component_error_class(self) -> Type[Exception]:
-        return RuntimeError  # Use a distinct error type for test verification
+    def _raise_component_error_class(self, msg: str) -> Type[Exception]:
+        raise RuntimeError(msg)  # Use a distinct error type for test verification
 
 
 class TestMerlinBaseFactory:
@@ -158,7 +158,9 @@ class TestMerlinBaseFactory:
         Args:
             factory: An instance of the dummy `TestableFactory` class for testing.
         """
-        with pytest.raises(RuntimeError, match="not supported"):  # raises RuntimeError because of `_get_component_error_class`
+        with pytest.raises(
+            RuntimeError, match="not supported"
+        ):  # raises RuntimeError because of `_raise_component_error_class`
             factory.get_component_info("not_registered")
 
     def test_discover_plugins_calls_both_hooks(self, mocker: MockerFixture, factory: TestableFactory):
