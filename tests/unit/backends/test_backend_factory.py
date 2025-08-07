@@ -11,8 +11,6 @@ Tests for the `backend_factory.py` module.
 import pytest
 from pytest_mock import MockerFixture
 
-from pytest_mock import MockerFixture
-
 from merlin.backends.backend_factory import MerlinBackendFactory
 from merlin.backends.results_backend import ResultsBackend
 from merlin.exceptions import BackendNotSupportedError
