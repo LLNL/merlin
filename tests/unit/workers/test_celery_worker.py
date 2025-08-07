@@ -9,6 +9,7 @@ Tests for the `merlin/workers/celery_worker.py` module.
 """
 
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
@@ -65,7 +66,7 @@ def dummy_env(workers_testing_dir: FixtureStr) -> FixtureDict[str, str]:
 
 
 @pytest.fixture
-def mock_db(mocker: MockerFixture) -> MerlinDatabase:
+def mock_db(mocker: MockerFixture) -> MagicMock:
     """
     Fixture that patches the MerlinDatabase constructor.
 
@@ -84,7 +85,7 @@ def mock_db(mocker: MockerFixture) -> MerlinDatabase:
 def test_constructor_sets_fields_and_calls_db_create(
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],
-    mock_db: MerlinDatabase,
+    mock_db: MagicMock,
 ):
     """
     Test that CeleryWorker constructor sets all fields correctly and triggers database creation.
@@ -114,7 +115,7 @@ def test_verify_args_adds_name_and_logging_flags(
     mocker: MockerFixture,
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],
-    mock_db: MerlinDatabase,
+    mock_db: MagicMock,
 ):
     """
     Test that `_verify_args()` appends required flags to the Celery args string.
@@ -149,7 +150,7 @@ def test_get_launch_command_returns_expanded_command(
     mocker: MockerFixture,
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],
-    mock_db: MerlinDatabase,
+    mock_db: MagicMock,
 ):
     """
     Test that `get_launch_command()` constructs a valid Celery command.
@@ -182,7 +183,7 @@ def test_should_launch_rejects_if_machine_check_fails(
     mocker: MockerFixture,
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],
-    mock_db: MerlinDatabase,
+    mock_db: MagicMock,
 ):
     """
     Test that `should_launch` returns False if the machine check fails.
@@ -214,7 +215,7 @@ def test_should_launch_rejects_if_output_path_missing(
     mocker: MockerFixture,
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],
-    mock_db: MerlinDatabase,
+    mock_db: MagicMock,
 ):
     """
     Test that `should_launch` returns False if the output path does not exist.
@@ -247,7 +248,7 @@ def test_should_launch_rejects_due_to_running_queues(
     mocker: MockerFixture,
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],
-    mock_db: MerlinDatabase,
+    mock_db: MagicMock,
 ):
     """
     Test that `should_launch` returns False when a conflicting queue is already running.
@@ -278,7 +279,7 @@ def test_launch_worker_runs_if_should_launch(
     mocker: MockerFixture,
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],
-    mock_db: MerlinDatabase,
+    mock_db: MagicMock,
 ):
     """
     Test that `launch_worker` executes the launch command if `should_launch` returns True.
@@ -314,7 +315,7 @@ def test_launch_worker_raises_if_popen_fails(
     mocker: MockerFixture,
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],
-    mock_db: MerlinDatabase,
+    mock_db: MagicMock,
 ):
     """
     Test that `launch_worker` raises `MerlinWorkerLaunchError` when `subprocess.Popen` fails.
@@ -346,7 +347,7 @@ def test_launch_worker_raises_if_popen_fails(
 def test_get_metadata_returns_expected_dict(
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],
-    mock_db: MerlinDatabase,
+    mock_db: MagicMock,
 ):
     """
     Test that `get_metadata` returns the expected dictionary with worker configuration.

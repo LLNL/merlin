@@ -9,8 +9,10 @@ Tests for the `merlin/workers/handlers/celery_handler.py` module.
 """
 
 from typing import Dict, List
+from unittest.mock import MagicMock
 
 import pytest
+from pytest_mock import MockerFixture
 
 from merlin.workers.celery_worker import CeleryWorker
 from merlin.workers.handlers import CeleryWorkerHandler
@@ -43,9 +45,13 @@ class TestCeleryWorkerHandler:
     @pytest.fixture
     def handler(self) -> CeleryWorkerHandler:
         return CeleryWorkerHandler()
+    
+    @pytest.fixture
+    def mock_db(self, mocker: MockerFixture) -> MagicMock:
+        return mocker.patch("merlin.workers.celery_worker.MerlinDatabase")
 
     @pytest.fixture
-    def workers(self) -> List[DummyCeleryWorker]:
+    def workers(self, mock_db: MagicMock) -> List[DummyCeleryWorker]:
         return [
             DummyCeleryWorker("worker1"),
             DummyCeleryWorker("worker2"),
