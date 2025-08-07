@@ -12,7 +12,7 @@ import pytest
 from typing import Dict, List
 
 from merlin.workers.celery_worker import CeleryWorker
-from merlin.workers.handlers.celery_handler import CeleryWorkerHandler
+from merlin.workers.handlers import CeleryWorkerHandler
 
 
 class DummyCeleryWorker(CeleryWorker):
