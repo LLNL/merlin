@@ -180,7 +180,9 @@ def test_process_command_delete_all_entities_no_filters(
     mock_merlin_db.return_value.delete_all.assert_called_once_with("run")
 
 
-def test_process_command_unrecognized_type_logs_error(command: DatabaseDeleteCommand, mocker: MockerFixture, mock_merlin_db: MagicMock):
+def test_process_command_unrecognized_type_logs_error(
+    command: DatabaseDeleteCommand, mocker: MockerFixture, mock_merlin_db: MagicMock
+):
     """
     Test that an error is logged when `delete_type` is unrecognized.
 
