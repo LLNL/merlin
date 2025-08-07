@@ -14,7 +14,6 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import MerlinWorkerLaunchError
 from merlin.workers import CeleryWorker
 from tests.fixture_types import FixtureCallable, FixtureDict, FixtureStr

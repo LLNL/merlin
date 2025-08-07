@@ -45,7 +45,7 @@ class TestCeleryWorkerHandler:
     @pytest.fixture
     def handler(self) -> CeleryWorkerHandler:
         return CeleryWorkerHandler()
-    
+
     @pytest.fixture
     def mock_db(self, mocker: MockerFixture) -> MagicMock:
         return mocker.patch("merlin.workers.celery_worker.MerlinDatabase")
