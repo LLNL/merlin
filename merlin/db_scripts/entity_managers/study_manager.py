@@ -14,11 +14,12 @@ run entities when a study is deleted.
 
 from __future__ import annotations
 
-from typing import List
+from typing import Any, Callable, Dict
 
+from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import StudyModel
 from merlin.db_scripts.entities.study_entity import StudyEntity
-from merlin.db_scripts.entity_managers.entity_manager import EntityManager
+from merlin.db_scripts.entity_managers.entity_manager import EntityManager, T
 
 
 # Purposefully ignoring this pylint message as each entity will have different parameter requirements
@@ -38,6 +39,10 @@ class StudyManager(EntityManager[StudyEntity, StudyModel]):
             and query study data.
         db (db_scripts.merlin_db.MerlinDatabase): Reference to the full `MerlinDatabase`,
             used for cross-entity operations (e.g., deleting associated runs).
+        _filter_accessor_map: A dictionary mapping supported filter keys to accessor functions
+            for the entity type. Used by filtering logic (e.g., in `get_all`) to dynamically
+            retrieve values from entity instances. Subclasses must override this to enable
+            filtering support.
 
     Methods:
         create: Create a new study if it doesn't already exist.
@@ -47,6 +52,25 @@ class StudyManager(EntityManager[StudyEntity, StudyModel]):
         delete_all: Delete all studies and optionally their runs.
         set_db_reference: Set reference to the MerlinDatabase for cross-entity access.
     """
+
+    _filter_accessor_map: Dict[str, Callable[[T], Any]] = {
+        "name": lambda e: e.get_name(),
+    }
+
+    def __init__(self, backend: ResultsBackend):
+        """
+        Initialize the PhysicalWorkerManager with the given backend.
+
+        This sets up the manager to handle physical worker entities by specifying
+        the associated entity class and entity type string. These are used by the
+        base EntityManager to perform generic operations like retrieving and filtering entities.
+
+        Args:
+            backend (ResultsBackend): The backend used to persist and retrieve physical worker data.
+        """
+        super().__init__(backend)
+        self._entity_class = StudyEntity
+        self._entity_type = "study"
 
     def create(self, study_name: str) -> StudyEntity:
         """
@@ -84,15 +108,6 @@ class StudyManager(EntityManager[StudyEntity, StudyModel]):
             StudyNotFoundError: If no study matches the given ID or name.
         """
         return self._get_entity(StudyEntity, study_id_or_name)
-
-    def get_all(self) -> List[StudyEntity]:
-        """
-        Retrieve all study entities stored in the database.
-
-        Returns:
-            A list of all available study entities.
-        """
-        return self._get_all_entities(StudyEntity, "study")
 
     def delete(self, study_id_or_name: str, remove_associated_runs: bool = True):
         """

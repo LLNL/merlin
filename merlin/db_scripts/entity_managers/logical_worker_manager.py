@@ -20,11 +20,12 @@ e.g., by removing logical workers from associated runs before deletion.
 from __future__ import annotations
 
 import logging
-from typing import List
+from typing import Any, Callable, Dict, List
 
+from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import LogicalWorkerModel
 from merlin.db_scripts.entities.logical_worker_entity import LogicalWorkerEntity
-from merlin.db_scripts.entity_managers.entity_manager import EntityManager
+from merlin.db_scripts.entity_managers.entity_manager import EntityManager, T
 from merlin.exceptions import RunNotFoundError
 
 
@@ -46,6 +47,10 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
         backend: The backend interface used for storing and retrieving logical workers.
         db: Reference to the main database interface, used for cross-entity operations
             such as detaching workers from runs.
+        _filter_accessor_map: A dictionary mapping supported filter keys to accessor functions
+            for the entity type. Used by filtering logic (e.g., in `get_all`) to dynamically
+            retrieve values from entity instances. Subclasses must override this to enable
+            filtering support.
 
     Methods:
         create: Create a logical worker with the given name and queue list.
@@ -55,6 +60,26 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
         delete_all: Delete all logical workers currently stored in the backend.
         set_db_reference: Set a reference to the main database object for accessing related entities.
     """
+
+    _filter_accessor_map: Dict[str, Callable[[T], Any]] = {
+        "name": lambda e: e.get_name(),
+        "queues": lambda e: e.get_queues(),
+    }
+
+    def __init__(self, backend: ResultsBackend):
+        """
+        Initialize the PhysicalWorkerManager with the given backend.
+
+        This sets up the manager to handle physical worker entities by specifying
+        the associated entity class and entity type string. These are used by the
+        base EntityManager to perform generic operations like retrieving and filtering entities.
+
+        Args:
+            backend (ResultsBackend): The backend used to persist and retrieve physical worker data.
+        """
+        super().__init__(backend)
+        self._entity_class = LogicalWorkerEntity
+        self._entity_type = "logical_worker"
 
     def _resolve_worker_id(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None) -> str:
         """
@@ -128,15 +153,6 @@ class LogicalWorkerManager(EntityManager[LogicalWorkerEntity, LogicalWorkerModel
         """
         worker_id = self._resolve_worker_id(worker_id=worker_id, worker_name=worker_name, queues=queues)
         return self._get_entity(LogicalWorkerEntity, worker_id)
-
-    def get_all(self) -> List[LogicalWorkerEntity]:
-        """
-        Retrieve all logical worker entities from the backend.
-
-        Returns:
-            A list of all logical worker entities.
-        """
-        return self._get_all_entities(LogicalWorkerEntity, "logical_worker")
 
     def delete(self, worker_id: str = None, worker_name: str = None, queues: List[str] = None):
         """

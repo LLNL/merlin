@@ -526,10 +526,10 @@ merlin database get [OPTIONS] SUBCOMMAND ...
 | [run](#get-run-merlin-database-get-run) | Retrieve and print specific run(s) from the database |
 | [logical-worker](#get-logical-worker-merlin-database-get-logical-worker) | Retrieve and print specific logical worker(s) from the database |
 | [physical-worker](#get-physical-worker-merlin-database-get-physical-worker) | Retrieve and print specific physical worker(s) from the database |
-| [all-studies](#get-all-studies-merlin-database-get-all-studies) | Retrieve and print all studies from the database |
-| [all-runs](#get-all-runs-merlin-database-get-all-runs) | Retrieve and print all runs from the database |
-| [all-logical-workers](#get-all-logical-workers-merlin-database-get-all-logical-workers) | Retrieve and print all logical workers from the database |
-| [all-physical-workers](#get-all-physical-workers-merlin-database-get-all-physical-workers) | Retrieve and print all physical workers from the database |
+| [all-studies](#get-all-studies-merlin-database-get-all-studies) | Retrieve and print all studies from the database (supports filters) |
+| [all-runs](#get-all-runs-merlin-database-get-all-runs) | Retrieve and print all runs from the database (supports filters) |
+| [all-logical-workers](#get-all-logical-workers-merlin-database-get-all-logical-workers) | Retrieve and print all logical workers from the database (supports filters) |
+| [all-physical-workers](#get-all-physical-workers-merlin-database-get-all-physical-workers) | Retrieve and print all physical workers from the database (supports filters) |
 | [everything](#get-everything-merlin-database-get-everything) | Retrieve and print every entry from the database |
 
 ##### Get Study (`merlin database get study`)
@@ -598,7 +598,7 @@ merlin database get physical-worker [OPTIONS] PHYSICAL_WORKER_ID_OR_NAME [PHYSIC
 
 ##### Get All-Studies (`merlin database get all-studies`)
 
-The `get all-studies` subcommand allows users to retrieve all study entries from the database and print them to the console.
+The `get all-studies` subcommand allows users to retrieve all study entries from the database and print them to the console. This command supports filtering.
 
 **Usage:**
 
@@ -611,10 +611,11 @@ merlin database get all-studies [OPTIONS]
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--name`         | string  | Filter by name | None |
 
 ##### Get All-Runs (`merlin database get all-runs`)
 
-The `get all-runs` subcommand allows users to retrieve all run entries from the database and print them to the console.
+The `get all-runs` subcommand allows users to retrieve all run entries from the database and print them to the console. This command supports filtering.
 
 **Usage:**
 
@@ -627,10 +628,14 @@ merlin database get all-runs [OPTIONS]
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--study-id`     | string  | Filter by study id | None |
+| `--run-complete` | choice(`true` \| `false`) | Filter by run complete | None |
+| `--queues`       | List[string] | Filter by queues | None |
+| `--workers`      | List[string] | Filter by workers | None |
 
 ##### Get All-Logical-Workers (`merlin database get all-logical-workers`)
 
-The `get all-logical-workers` subcommand allows users to retrieve all logical-worker entries from the database and print them to the console.
+The `get all-logical-workers` subcommand allows users to retrieve all logical-worker entries from the database and print them to the console. This command supports filtering.
 
 **Usage:**
 
@@ -643,10 +648,12 @@ merlin database get all-logical-workers [OPTIONS]
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--name`         | string  | Filter by name  | None |
+| `--queues`       | List[string] | Filter by queues | None |          
 
 ##### Get All-Physical-Workers (`merlin database get all-physical-workers`)
 
-The `get all-physical-workers` subcommand allows users to retrieve all physical-worker entries from the database and print them to the console.
+The `get all-physical-workers` subcommand allows users to retrieve all physical-worker entries from the database and print them to the console. This command supports filtering.
 
 **Usage:**
 
@@ -659,6 +666,10 @@ merlin database get all-physical-workers [OPTIONS]
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--logical-worker-id` | string | Filter by logical worker id | None |
+| `--name`              | string | Filter by name | None |
+| `--status`            | string | Filter by status | None |
+| `--host`              | string | Filter by host | None |
 
 ##### Get Everything (`merlin database get everything`)
 
@@ -700,10 +711,10 @@ merlin database delete [OPTIONS] SUBCOMMAND ...
 | [run](#delete-run-merlin-database-delete-run) | Delete specific run(s) from the database |
 | [logical-worker](#delete-logical-worker-merlin-database-delete-logical-worker) | Delete specific logical worker(s) from the database |
 | [physical-worker](#delete-physical-worker-merlin-database-delete-physical-worker) | Delete specific physical worker(s) from the database |
-| [all-studies](#delete-all-studies-merlin-database-delete-all-studies) | Delete all studies from the database |
-| [all-runs](#delete-all-runs-merlin-database-delete-all-runs) | Delete all runs from the database |
-| [all-logical-workers](#delete-all-logical-workers-merlin-database-delete-all-logical-workers) | Delete all logical workers from the database |
-| [all-physical-workers](#delete-all-physical-workers-merlin-database-delete-all-physical-workers) | Delete all physical workers from the database |
+| [all-studies](#delete-all-studies-merlin-database-delete-all-studies) | Delete all studies from the database (supports filters) |
+| [all-runs](#delete-all-runs-merlin-database-delete-all-runs) | Delete all runs from the database (supports filters) |
+| [all-logical-workers](#delete-all-logical-workers-merlin-database-delete-all-logical-workers) | Delete all logical workers from the database (supports filters) |
+| [all-physical-workers](#delete-all-physical-workers-merlin-database-delete-all-physical-workers) | Delete all physical workers from the database (supports filters) |
 | [everything](#delete-everything-merlin-database-delete-everything) | Delete everything from the database |
 
 ##### Delete Study (`merlin database delete study`)
@@ -795,6 +806,7 @@ merlin database delete all-studies [OPTIONS]
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
 | `-k`, `--keep-associated-runs`   | boolean |  Keep runs associated with the studies | `False` |
+| `--name`         | string  | Filter by name | None |
 
 ##### Delete All-Runs (`merlin database delete all-runs`)
 
@@ -811,6 +823,10 @@ merlin database delete all-runs [OPTIONS]
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--study-id`     | string  | Filter by study id | None |
+| `--run-complete` | choice(`true` \| `false`) | Filter by run complete | None |
+| `--queues`       | List[string] | Filter by queues | None |
+| `--workers`      | List[string] | Filter by workers | None |
 
 ##### Delete All-Logical-Workers (`merlin database delete all-logical-workers`)
 
@@ -827,6 +843,8 @@ merlin database delete all-logical-workers [OPTIONS]
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--name`         | string  | Filter by name | None |
+| `--queues`       | List[string] | Filter by queues | None |
 
 ##### Delete All-Physical-Workers (`merlin database delete all-physical-workers`)
 
@@ -843,6 +861,10 @@ merlin database delete all-physical-workers [OPTIONS]
 | Name             |  Type   | Description | Default |
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--logical-worker-id` | string | Filter by logical worker id | None |
+| `--name`              | string | Filter by name | None |
+| `--status`            | string | Filter by status | None |
+| `--host`              | string | Filter by host | None |
 
 ##### Delete Everything (`merlin database delete everything`)
 
