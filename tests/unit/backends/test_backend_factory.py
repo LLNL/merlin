@@ -11,76 +11,113 @@ Tests for the `backend_factory.py` module.
 import pytest
 from pytest_mock import MockerFixture
 
-from merlin.backends.backend_factory import backend_factory
-from merlin.backends.redis.redis_backend import RedisBackend
+from merlin.backends.backend_factory import MerlinBackendFactory
+from merlin.backends.results_backend import ResultsBackend
 from merlin.exceptions import BackendNotSupportedError
 
 
-class TestBackendFactory:
+class DummyRedisBackend(ResultsBackend):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def get_version(self):
+        pass
+
+    def flush_database(self):
+        pass
+
+
+class DummySQLiteBackend(ResultsBackend):
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def get_version(self):
+        pass
+
+    def flush_database(self):
+        pass
+
+
+class TestMerlinBackendFactory:
     """
-    Test suite for the `backend_factory` module.
+    Test suite for the `MerlinBackendFactory`.
 
-    This class contains unit tests to validate the functionality of the `backend_factory`, which is responsible
-    for managing backend instances and providing an interface for retrieving supported backends and resolving
-    backend aliases.
-
-    Fixtures and mocking are used to isolate the tests from the actual backend implementations, ensuring that
-    the tests focus on the behavior of the `backend_factory` module.
-
-    These tests ensure the robustness and correctness of the `backend_factory` module, which is critical for
-    backend management in the Merlin framework.
+    This class tests that the backend factory correctly registers, resolves, instantiates,
+    and reports supported Merlin backends. It uses mocking to isolate backend behavior
+    and focuses on the factory's interface and logic.
     """
 
-    def test_get_supported_backends(self):
+    @pytest.fixture
+    def backend_factory(self, mocker: MockerFixture) -> MerlinBackendFactory:
         """
-        Test that `get_supported_backends` returns the correct list of supported backends.
-        """
-        supported_backends = backend_factory.get_supported_backends()
-        assert supported_backends == ["redis", "sqlite"]
-
-    def test_get_backend_with_valid_backend(self, mocker: MockerFixture):
-        """
-        Test that `get_backend` returns the correct backend instance for a valid backend.
+        An instance of the `MerlinBackendFactory` class. Resets on each test.
 
         Args:
-            mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
+            mocker: PyTest mocker fixture.
+
+        Returns:
+            An instance of the `MerlinBackendFactory` class for testing.
         """
-        backend_name = "redis"
+        mocker.patch("merlin.backends.backend_factory.RedisBackend", DummyRedisBackend)
+        mocker.patch("merlin.backends.backend_factory.SQLiteBackend", DummySQLiteBackend)
 
-        # Mock the RedisBackend class to avoid instantiation issues
-        RedisBackendMock = mocker.MagicMock(spec=RedisBackend)
-        backend_factory._backends["redis"] = RedisBackendMock
+        return MerlinBackendFactory()
 
-        backend_instance = backend_factory.get_backend(backend_name)
-
-        # Verify the backend instance is created correctly
-        RedisBackendMock.assert_called_once_with(backend_name)
-        assert backend_instance == RedisBackendMock(backend_name), "Backend instance should match the mocked backend."
-
-    def test_get_backend_with_alias(self, mocker: MockerFixture):
+    def test_list_available_backends(self, backend_factory: MerlinBackendFactory):
         """
-        Test that `get_backend` correctly resolves aliases to canonical backend names.
+        Test that `list_available` returns the correct set of built-in backends.
 
         Args:
-            mocker (MockerFixture): A built-in fixture from the pytest-mock library to create a Mock object.
+            backend_factory: An instance of the `MerlinBackendFactory` class for testing.
         """
-        alias_name = "rediss"
+        available = backend_factory.list_available()
+        assert set(available) == {"redis", "sqlite"}
 
-        # Mock the RedisBackend class to avoid instantiation issues
-        RedisBackendMock = mocker.MagicMock(spec=RedisBackend)
-        backend_factory._backends["redis"] = RedisBackendMock
-
-        backend_instance = backend_factory.get_backend(alias_name)
-
-        # Verify the alias resolves and the backend instance is created correctly
-        RedisBackendMock.assert_called_once_with("redis")
-        assert backend_instance == RedisBackendMock("redis"), "Backend instance should match the mocked backend."
-
-    def test_get_backend_with_invalid_backend(self):
+    @pytest.mark.parametrize("backend_type, expected_cls", [("redis", DummyRedisBackend), ("sqlite", DummySQLiteBackend)])
+    def test_create_valid_backend(
+        self, backend_factory: MerlinBackendFactory, backend_type: str, expected_cls: ResultsBackend
+    ):
         """
-        Test that get_backend raises BackendNotSupportedError for an unsupported backend.
-        """
-        invalid_backend_name = "unsupported_backend"
+        Test that `create` returns a valid backend instance for a registered name.
 
-        with pytest.raises(BackendNotSupportedError, match=f"Backend unsupported by Merlin: {invalid_backend_name}."):
-            backend_factory.get_backend(invalid_backend_name)
+        Args:
+            backend_factory: An instance of the `MerlinBackendFactory` class for testing.
+            backend_type: The type of backend to create.
+            expected_cls: The class that we're expecting `backend_factory` to create.
+        """
+        instance = backend_factory.create(backend_type)
+        assert isinstance(instance, expected_cls)
+
+    def test_create_valid_backend_with_alias(self, backend_factory: MerlinBackendFactory):
+        """
+        Test that aliases (e.g. 'rediss') are resolved to canonical backend names.
+
+        Args:
+            backend_factory: An instance of the `MerlinBackendFactory` class for testing.
+        """
+        instance = backend_factory.create("rediss")
+        assert isinstance(instance, DummyRedisBackend)
+
+    def test_create_invalid_backend_raises(self, backend_factory: MerlinBackendFactory):
+        """
+        Test that `create` raises `BackendNotSupportedError` for unknown backends.
+
+        Args:
+            backend_factory: An instance of the `MerlinBackendFactory` class for testing.
+        """
+        with pytest.raises(BackendNotSupportedError, match="unsupported_backend"):
+            backend_factory.create("unsupported_backend")
+
+    def test_invalid_registration_type_error(self, backend_factory: MerlinBackendFactory):
+        """
+        Test that trying to register a non-ResultsBackend raises TypeError.
+
+        Args:
+            backend_factory: An instance of the `MerlinBackendFactory` class for testing.
+        """
+
+        class NotAResultsBackend:
+            pass
+
+        with pytest.raises(TypeError, match="must inherit from ResultsBackend"):
+            backend_factory.register("fake", NotAResultsBackend)

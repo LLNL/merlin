@@ -99,6 +99,15 @@ class BackendNotSupportedError(Exception):
         super().__init__(message)
 
 
+class MerlinInvalidStatusRendererError(Exception):
+    """
+    Exception to signal that an invalid status renderer was provided.
+    """
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
 ###############################
 # Database-Related Exceptions #
 ###############################

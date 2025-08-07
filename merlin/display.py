@@ -309,7 +309,8 @@ def display_status_task_by_task(status_obj: "DetailedStatus", test_mode: bool = 
     """
     args = status_obj.args
     try:
-        status_renderer = status_renderer_factory.get_renderer(args.layout, args.disable_theme, args.disable_pager)
+        renderer_config = {"disable_theme": args.disable_theme, "disable_pager": args.disable_pager}
+        status_renderer = status_renderer_factory.create(args.layout, config=renderer_config)
     except ValueError:
         LOG.error(f"Layout '{args.layout}' not implemented.")
         raise

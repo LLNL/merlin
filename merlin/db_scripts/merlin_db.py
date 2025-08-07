@@ -60,7 +60,7 @@ class MerlinDatabase:
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
 
-        self.backend: ResultsBackend = backend_factory.get_backend(CONFIG.results_backend.name.lower())
+        self.backend: ResultsBackend = backend_factory.create(CONFIG.results_backend.name.lower())
         self._entity_managers: Dict[str, EntityManager] = {
             "study": StudyManager(self.backend),
             "run": RunManager(self.backend),

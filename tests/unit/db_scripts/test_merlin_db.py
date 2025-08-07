@@ -97,7 +97,7 @@ def mock_merlin_db(
             patch("merlin.db_scripts.merlin_db.PhysicalWorkerManager", return_value=mock_entity_managers["physical_worker"])
         )
 
-        mock_factory.get_backend.return_value = mock_backend
+        mock_factory.create.return_value = mock_backend
         db = MerlinDatabase()
 
         # Replace backend and entity managers with mocks
@@ -135,14 +135,14 @@ class TestMerlinDatabase:
             mock_config = stack.enter_context(patch("merlin.config.configfile.CONFIG"))
 
             # Configure mocks
-            mock_factory.get_backend.return_value = mock_backend
+            mock_factory.create.return_value = mock_backend
             mock_config.results_backend.name = "redis"
 
             # Create instances
             db = MerlinDatabase()
 
             # Verify backend was created
-            mock_factory.get_backend.assert_called_once_with("redis")
+            mock_factory.create.assert_called_once_with("redis")
 
             # Verify entity managers were created with the backend
             mock_study_manager.assert_called_once_with(mock_backend)
