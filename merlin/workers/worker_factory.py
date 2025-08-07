@@ -83,7 +83,7 @@ class WorkerFactory(MerlinBaseFactory):
         Raises:
             A subclass of Exception (e.g., ValueError by default).
         """
-        return MerlinWorkerNotSupportedError(msg)
+        raise MerlinWorkerNotSupportedError(msg)
 
 
 worker_factory = WorkerFactory()
