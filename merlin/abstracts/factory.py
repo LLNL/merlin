@@ -132,6 +132,10 @@ class MerlinBaseFactory(ABC):
 
         Subclasses can override this method to implement package/module scanning.
         """
+        LOG.warning(
+            f"Class {self.__class__.__name__} did not override _discover_builtin_modules(). "
+            "Built-in module discovery will be skipped."
+        )
 
     def _discover_plugins(self):
         """
@@ -142,16 +146,19 @@ class MerlinBaseFactory(ABC):
         self._discover_plugins_via_entry_points()
         self._discover_builtin_modules()
 
-    def _get_component_error_class(self) -> Type[Exception]:
+    def _raise_component_error_class(self, msg: str) -> Type[Exception]:
         """
-        Return the exception type to raise when an invalid component is requested.
+        Raise an appropriate exception when an invalid component is requested.
 
         Subclasses should override this to raise more specific exceptions.
 
-        Returns:
+        Args:
+            msg: The message to add to the error being raised.
+
+        Raises:
             A subclass of Exception (e.g., ValueError by default).
         """
-        return ValueError
+        raise ValueError(msg)
 
     def register(self, name: str, component_class: Any, aliases: List[str] = None) -> None:
         """
@@ -187,6 +194,39 @@ class MerlinBaseFactory(ABC):
         self._discover_plugins()
         return list(self._registry.keys())
 
+    def _get_component_class(self, canonical_name: str, component_type: str) -> Any:
+        """
+        Retrieve a registered component class by its canonical name.
+
+        This method ensures that all plugin discovery mechanisms have been invoked
+        before attempting to look up the component. If the requested component is
+        not found in the registry, it raises a descriptive error with a list of
+        available components.
+
+        Args:
+            canonical_name: The canonical name of the component (resolved from alias).
+            component_type: The original name or alias provided by the user (used in error messages).
+
+        Returns:
+            The class object corresponding to the requested component.
+
+        Raises:
+            Exception: Raises the result of `_raise_component_error_class` if the component is not registered.
+        """
+        # Discover plugins if needed
+        if canonical_name not in self._registry:
+            self._discover_plugins()
+
+        # Grab the component class from the registry and ensure it's supported
+        component_class = self._registry.get(canonical_name)
+        if component_class is None:
+            available = ", ".join(self.list_available())
+            self._raise_component_error_class(
+                f"Component '{component_type}' is not supported. " f"Available components: {available}"
+            )
+
+        return component_class
+
     def create(self, component_type: str, config: Dict = None) -> Any:
         """
         Instantiate and return a component of the specified type.
@@ -199,21 +239,15 @@ class MerlinBaseFactory(ABC):
             An instance of the requested component.
 
         Raises:
-            ValueError: If the component is not registered or instantiation fails.
+            Exception: If the component is not registered or instantiation fails.
         """
         # Resolve alias
         canonical_name = self._aliases.get(component_type, component_type)
 
-        # Discover plugins if needed
-        if canonical_name not in self._registry:
-            self._discover_plugins()
+        # Get the class associated with the name
+        component_class = self._get_component_class(canonical_name, component_type)
 
-        component_class = self._registry.get(canonical_name)
-        if component_class is None:
-            available = ", ".join(self.list_available())
-            error_cls = self._get_component_error_class()
-            raise error_cls(f"Component '{component_type}' is not supported. " f"Available components: {available}")
-
+        # Create and return an instance of the component_class
         try:
             instance = component_class() if config is None else component_class(**config)
             LOG.info(f"Created component '{canonical_name}'")
@@ -232,18 +266,11 @@ class MerlinBaseFactory(ABC):
             Dictionary containing metadata such as name, class, module, and docstring.
 
         Raises:
-            ValueError: If the component is not registered.
+            Exception: If the component is not registered.
         """
         canonical_name = self._aliases.get(component_type, component_type)
 
-        if canonical_name not in self._registry:
-            self._discover_plugins()
-
-        component_class = self._registry.get(canonical_name)
-        if component_class is None:
-            available = ", ".join(self.list_available())
-            error_cls = self._get_component_error_class()
-            raise error_cls(f"Component '{component_type}' is not supported. " f"Available components: {available}")
+        component_class = self._get_component_class(canonical_name, component_type)
 
         return {
             "name": canonical_name,
