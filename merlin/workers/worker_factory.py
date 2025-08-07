@@ -71,18 +71,19 @@ class WorkerFactory(MerlinBaseFactory):
         """
         return "merlin.workers"
 
-    def _get_component_error_class(self) -> Type[Exception]:
+    def _raise_component_error_class(self, msg: str) -> Type[Exception]:
         """
-        Return the exception type to raise for unsupported components.
+        Raise an appropriate exception when an invalid component is requested.
 
-        This method is used by the base factory logic to determine which
-        exception to raise when a requested component is not found or fails
-        to initialize.
+        Subclasses should override this to raise more specific exceptions.
 
-        Returns:
-            The exception class to raise.
+        Args:
+            msg: The message to add to the error being raised.
+
+        Raises:
+            A subclass of Exception (e.g., ValueError by default).
         """
-        return MerlinWorkerNotSupportedError
+        return MerlinWorkerNotSupportedError(msg)
 
 
 worker_factory = WorkerFactory()
