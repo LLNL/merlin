@@ -8,7 +8,7 @@
 Tests for the `merlin/workers/handlers/worker_handler.py` module.
 """
 
-from typing import Any
+from typing import Any, Dict, List
 
 import pytest
 
@@ -23,7 +23,7 @@ class DummyWorker(MerlinWorker):
     def launch_worker(self) -> str:
         return "launched"
 
-    def get_metadata(self) -> dict:
+    def get_metadata(self) -> Dict:
         return {}
 
 
@@ -34,7 +34,7 @@ class DummyWorkerHandler(MerlinWorkerHandler):
         self.stopped = False
         self.queried = False
 
-    def launch_workers(self, workers: list[MerlinWorker], **kwargs):
+    def launch_workers(self, workers: List[MerlinWorker], **kwargs):
         self.started = True
         self.last_workers = workers
         return [worker.launch_worker() for worker in workers]
