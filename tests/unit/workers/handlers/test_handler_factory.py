@@ -9,7 +9,6 @@ Tests for the `merlin/workers/handlers/handler_factory.py` module.
 """
 
 import pytest
-
 from pytest_mock import MockerFixture
 
 from merlin.exceptions import MerlinWorkerHandlerNotSupportedError

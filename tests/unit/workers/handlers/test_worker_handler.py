@@ -8,8 +8,9 @@
 Tests for the `merlin/workers/handlers/worker_handler.py` module.
 """
 
-import pytest
 from typing import Any
+
+import pytest
 
 from merlin.workers.handlers.worker_handler import MerlinWorkerHandler
 from merlin.workers.worker import MerlinWorker
@@ -24,7 +25,7 @@ class DummyWorker(MerlinWorker):
 
     def get_metadata(self) -> dict:
         return {}
-    
+
 
 class DummyWorkerHandler(MerlinWorkerHandler):
     def __init__(self):

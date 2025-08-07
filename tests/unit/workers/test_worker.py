@@ -24,7 +24,7 @@ class DummyMerlinWorker(MerlinWorker):
 
     def get_metadata(self) -> dict:
         return {"name": self.name, "config": self.config}
-    
+
 
 def test_init_sets_attributes():
     """

@@ -9,12 +9,11 @@ Tests for the `merlin/workers/worker_factory.py` module.
 """
 
 import pytest
-
 from pytest_mock import MockerFixture
 
 from merlin.exceptions import MerlinWorkerNotSupportedError
-from merlin.workers.worker_factory import WorkerFactory
 from merlin.workers.worker import MerlinWorker
+from merlin.workers.worker_factory import WorkerFactory
 
 
 class DummyCeleryWorker(MerlinWorker):

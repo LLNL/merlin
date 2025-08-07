@@ -8,8 +8,9 @@
 Tests for the `merlin/workers/handlers/celery_handler.py` module.
 """
 
-import pytest
 from typing import Dict, List
+
+import pytest
 
 from merlin.workers.celery_worker import CeleryWorker
 from merlin.workers.handlers import CeleryWorkerHandler
@@ -50,7 +51,9 @@ class TestCeleryWorkerHandler:
             DummyCeleryWorker("worker2"),
         ]
 
-    def test_echo_only_prints_commands(self, handler: CeleryWorkerHandler, workers: List[DummyCeleryWorker], capsys: pytest.CaptureFixture):
+    def test_echo_only_prints_commands(
+        self, handler: CeleryWorkerHandler, workers: List[DummyCeleryWorker], capsys: pytest.CaptureFixture
+    ):
         """
         Test that `launch_workers` prints launch commands when `echo_only=True`.
 

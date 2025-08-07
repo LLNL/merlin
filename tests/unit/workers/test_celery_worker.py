@@ -8,10 +8,9 @@
 Tests for the `merlin/workers/celery_worker.py` module.
 """
 
-import os
-import pytest
 from typing import Any
 
+import pytest
 from pytest_mock import MockerFixture
 
 from merlin.db_scripts.merlin_db import MerlinDatabase
@@ -253,8 +252,8 @@ def test_should_launch_rejects_due_to_running_queues(
     """
     Test that `should_launch` returns False when a conflicting queue is already running.
 
-    This test simulates the scenario where one of the worker's queues is already active 
-    in the system. The `get_running_queues` function is patched to return a list of 
+    This test simulates the scenario where one of the worker's queues is already active
+    in the system. The `get_running_queues` function is patched to return a list of
     active queues containing "queue1", which matches the worker's queue configuration.
 
     NOTE: Although the mock_db fixture is not directly used in this test, it is required
@@ -284,9 +283,9 @@ def test_launch_worker_runs_if_should_launch(
     """
     Test that `launch_worker` executes the launch command if `should_launch` returns True.
 
-    This test verifies that when a worker passes the `should_launch` check, it constructs 
-    a launch command and executes it via `subprocess.Popen`. Both the launch condition 
-    and the command are mocked to avoid side effects. It also confirms that a debug 
+    This test verifies that when a worker passes the `should_launch` check, it constructs
+    a launch command and executes it via `subprocess.Popen`. Both the launch condition
+    and the command are mocked to avoid side effects. It also confirms that a debug
     log message is emitted during execution.
 
     NOTE: Although the mock_db fixture is not directly used in this test, it is required
