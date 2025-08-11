@@ -18,6 +18,18 @@ from typing import Dict, List, Tuple
 
 from merlin.exceptions import NoWorkersException
 from merlin.spec.specification import MerlinSpec
+from merlin.study.celeryadapter import (
+    build_set_of_queues,
+    check_celery_workers_processing,
+    dump_celery_queue_info,
+    get_active_celery_queues,
+    get_workers_from_app,
+    purge_celery_tasks,
+    query_celery_queues,
+    query_celery_workers,
+    run_celery,
+    stop_celery_workers,
+)
 from merlin.task_servers.task_server_factory import task_server_factory
 from merlin.study.study import MerlinStudy
 
@@ -68,8 +80,8 @@ def launch_workers(
     Launches workers for the specified study based on the provided
     specification and steps.
 
-    This function uses the TaskServerInterface to start workers
-    according to the task server type configured in the specification.
+    This function supports both our TaskServerInterface approach and the
+    boss's WorkerHandler pattern, providing unified worker management.
 
     Args:
         spec (spec.specification.MerlinSpec): Specification details
@@ -89,8 +101,25 @@ def launch_workers(
         A string containing all the worker launch commands.
     """
     try:
-        # Create task server instance from spec configuration or CLI override
-        task_server_type = backend_override or spec.get_task_server_type()
+        # Determine task server type from override or spec configuration
+        task_server_type = backend_override or spec.merlin["resources"]["task_server"]
+        
+        # Try to use the boss's worker handler system first
+        try:
+            from merlin.workers.handlers.handler_factory import WorkerHandlerFactory  # pylint: disable=C0415
+            
+            # Create worker handler
+            task_server_config = spec.merlin["resources"]
+            handler = WorkerHandlerFactory.create(task_server_config)
+            
+            if handler:
+                # Use boss's worker handler system
+                return handler.launch_workers(spec, steps, worker_args, disable_logs, just_return_command)
+        except ImportError:
+            # Fall back to our TaskServerInterface if handler system not available
+            LOG.debug("Worker handler system not available, falling back to TaskServerInterface")
+        
+        # Fall back to our TaskServerInterface approach
         config = spec.get_task_server_config() if hasattr(spec, 'get_task_server_config') else {}
         
         # For Kafka backend, add some default config if not provided
@@ -106,7 +135,6 @@ def launch_workers(
         task_server.start_workers(spec)
         
         # For backward compatibility, return a status message
-        # TODO: Enhance this to return actual command strings when just_return_command=True
         return f"Workers started for {task_server_type} task server"
         
     except Exception as e:

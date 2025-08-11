@@ -63,12 +63,9 @@ class RedisBackend(ResultsBackend):
             Delete an entity from the specified store.
     """
 
-    def __init__(self, backend_name: str):
+    def __init__(self):
         """
         Initialize the `RedisBackend` instance, setting up the Redis client connection and store mappings.
-
-        Args:
-            backend_name (str): The name of the backend (e.g., "redis").
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=import-outside-toplevel
         from merlin.config.results_backend import get_connection_string  # pylint: disable=import-outside-toplevel
@@ -87,7 +84,7 @@ class RedisBackend(ResultsBackend):
             "physical_worker": RedisPhysicalWorkerStore(self.client),
         }
 
-        super().__init__(backend_name, stores)
+        super().__init__("redis", stores)
 
     def get_version(self) -> str:
         """

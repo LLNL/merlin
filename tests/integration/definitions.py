@@ -314,7 +314,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         },
         "default_worker assigned": {
             "cmds": f"{workers} {test_specs}/default_worker_test.yaml --echo",
-            "conditions": [HasReturnCode(), HasRegex(r"default_worker.*-Q '\[merlin\]_step_4_queue'")],
+            "conditions": [HasReturnCode(), HasRegex(r"default_worker.*-Q \[merlin\]_step_4_queue")],
             "run type": "local",
         },
         "no default_worker assigned": {
