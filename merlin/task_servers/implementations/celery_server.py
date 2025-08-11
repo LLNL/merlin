@@ -704,6 +704,47 @@ class CeleryTaskServer(TaskServerInterface):
             LOG.error(f"Failed to check workers processing: {e}")
             return False
     
+    def submit_condense_task(self, 
+                           sample_index, 
+                           workspace: str, 
+                           condensed_workspace: str,
+                           queue: str = None):
+        """
+        Submit a status file condensing task via Celery.
+        
+        This method implements backend-agnostic status file condensing by creating
+        a Celery task signature and submitting it through the task distribution system.
+        
+        Args:
+            sample_index: SampleIndex object for status file locations
+            workspace: Full workspace path for condensing
+            condensed_workspace: Shortened workspace path for status entries
+            queue: Task queue for execution
+            
+        Returns:
+            AsyncResult object for tracking task execution
+        """
+        if not self.celery_app:
+            raise RuntimeError("Celery task server not initialized")
+        
+        from merlin.common.tasks import condense_status_files  # pylint: disable=C0415
+        
+        # Create Celery signature for the condense task
+        condense_sig = condense_status_files.s(
+            sample_index=sample_index,
+            workspace=workspace,
+            condensed_workspace=condensed_workspace
+        )
+        
+        # Set the queue if provided
+        if queue:
+            condense_sig = condense_sig.set(queue=queue)
+        
+        # Submit the task and return AsyncResult
+        result = condense_sig.delay()
+        LOG.debug(f"Submitted condense task to Celery via TaskServerInterface: {result.id}")
+        return result
+
     def submit_study(self, study, adapter: Dict, samples, sample_labels, egraph, groups_of_chains):
         """
         Submit an entire study using Celery's native chain/chord/group coordination.

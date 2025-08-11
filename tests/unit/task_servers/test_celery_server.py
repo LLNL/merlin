@@ -146,9 +146,11 @@ class TestCeleryTaskServer:
         
         self.server.start_workers(mock_spec)
         
+        # CeleryTaskServer uses "all" to start workers for all steps 
+        # which is the correct behavior for worker startup
         mock_start_workers.assert_called_once_with(
             spec=mock_spec,
-            steps=["step1", "step2"],
+            steps=["all"],
             celery_args="",
             disable_logs=False,
             just_return_command=False
@@ -384,10 +386,10 @@ class TestCeleryTaskServer:
         mock_result = MagicMock()
         mock_result.id = "chord_result_123"
         
-        # Create TaskDependency objects
+        # Create TaskDependency objects - need header and callback for chord
         task_deps = [
-            TaskDependency(task_pattern="task1", dependency_type="all_success"),
-            TaskDependency(task_pattern="task2", dependency_type="all_success")
+            TaskDependency(task_pattern="task1", dependency_type="header"),
+            TaskDependency(task_pattern="callback_task", dependency_type="callback")
         ]
         # Add task signatures to the objects
         task_deps[0].task_signature = mock_sig1
@@ -400,14 +402,17 @@ class TestCeleryTaskServer:
              patch('celery.chord') as mock_chord:
             
             mock_group_instance = MagicMock()
+            mock_chord_instance = MagicMock()
             mock_group.return_value = mock_group_instance
-            mock_group_instance.apply_async.return_value = mock_result
+            mock_chord.return_value = mock_chord_instance
+            mock_chord_instance.apply_async.return_value = mock_result
             
             result = self.server.submit_coordinated_tasks(task_deps)
             
             assert result == "chord_result_123"
-            mock_group.assert_called_once_with([mock_sig1, mock_sig2])
-            mock_group_instance.apply_async.assert_called_once()
+            mock_group.assert_called_once_with([mock_sig1])  # Only header signatures
+            mock_chord.assert_called_once_with(mock_group_instance, mock_sig2)
+            mock_chord_instance.apply_async.assert_called_once()
     
     @patch('merlin.celery.app')
     def test_submit_coordinated_tasks_legacy_parameters(self, mock_app):
@@ -489,8 +494,8 @@ class TestCeleryTaskServer:
         mock_sig2.delay.return_value.id = "fallback_task_2"
         
         task_deps = [
-            TaskDependency(task_pattern="task1", dependency_type="all_success"),
-            TaskDependency(task_pattern="task2", dependency_type="all_success")
+            TaskDependency(task_pattern="task1", dependency_type="header"),
+            TaskDependency(task_pattern="callback_task", dependency_type="callback")
         ]
         # Add task signatures to the objects
         task_deps[0].task_signature = mock_sig1
@@ -499,7 +504,8 @@ class TestCeleryTaskServer:
         self.server.celery_app = mock_app
         
         # Mock group to raise an exception to trigger fallback
-        with patch('celery.group') as mock_group:
+        with patch('celery.group') as mock_group, \
+             patch('celery.chord') as mock_chord:
             mock_group.side_effect = Exception("Chord creation failed")
             
             result = self.server.submit_coordinated_tasks(task_deps)
@@ -507,5 +513,357 @@ class TestCeleryTaskServer:
             # Should fall back to individual task submission
             # Result should be empty string for fallback case
             assert result == ""
+            # Verify fallback calls task.delay() for each signature
             mock_sig1.delay.assert_called_once()
-            mock_sig2.delay.assert_called_once() 
+            mock_sig2.delay.assert_called_once()
+    
+    @patch('merlin.celery.app')
+    def test_submit_study_basic_workflow(self, mock_app):
+        """Test submit_study method with basic workflow."""
+        from unittest.mock import MagicMock
+        
+        # Create mock study components
+        mock_study = MagicMock()
+        mock_study.workspace = "/test/workspace"
+        mock_study.level_max_dirs = 5
+        
+        mock_adapter = {"test": "adapter"}
+        mock_samples = [{"sample": "data1"}, {"sample": "data2"}]
+        mock_sample_labels = ["label1", "label2"]
+        
+        # Create mock egraph (DAG)
+        mock_egraph = MagicMock()
+        mock_step = MagicMock()
+        mock_step.get_task_queue.return_value = "test_queue"
+        mock_egraph.step.return_value = mock_step
+        
+        # Create mock groups of chains (typical study structure)
+        mock_groups_of_chains = [
+            ["_source"],  # Source group
+            [["step1", "step2"], ["step3"]],  # Task group 1
+            [["step4"], ["step5", "step6"]]   # Task group 2
+        ]
+        
+        self.server.celery_app = mock_app
+        
+        # Mock the Celery operations
+        with patch('celery.chain') as mock_chain, \
+             patch('celery.chord') as mock_chord, \
+             patch('celery.group') as mock_group, \
+             patch('merlin.common.tasks.expand_tasks_with_samples') as mock_expand, \
+             patch('merlin.common.tasks.chordfinisher') as mock_chordfinisher, \
+             patch('merlin.common.tasks.mark_run_as_complete') as mock_mark_complete:
+            
+            # Setup mock returns
+            mock_expand_sig = MagicMock()
+            mock_expand.si.return_value = mock_expand_sig
+            mock_expand_sig.set.return_value = mock_expand_sig
+            
+            mock_chordfinisher_sig = MagicMock()
+            mock_chordfinisher.s.return_value = mock_chordfinisher_sig
+            mock_chordfinisher_sig.set.return_value = mock_chordfinisher_sig
+            
+            mock_mark_complete_sig = MagicMock()
+            mock_mark_complete.si.return_value = mock_mark_complete_sig
+            mock_mark_complete_sig.set.return_value = mock_mark_complete_sig
+            
+            mock_group_instance = MagicMock()
+            mock_group.return_value = mock_group_instance
+            
+            mock_chord_instance = MagicMock()
+            mock_chord.return_value = mock_chord_instance
+            
+            # Setup chain mock to consume generators when called
+            def chain_side_effect(*args):
+                # Force evaluation of generator expressions to trigger si() calls
+                for arg in args:
+                    if hasattr(arg, '__iter__') and not isinstance(arg, (str, bytes)):
+                        try:
+                            list(arg)  # Convert generator to list
+                        except (TypeError, AttributeError):
+                            pass
+                return mock_chain_instance
+            
+            mock_chain.side_effect = chain_side_effect
+            mock_chain_instance = MagicMock()
+            
+            # Setup final chain result
+            mock_result = MagicMock()
+            mock_result.id = "study_result_123"
+            mock_chain_instance.__or__ = MagicMock(return_value=mock_chain_instance)
+            mock_chain_instance.delay.return_value = mock_result
+            
+            # Execute submit_study
+            result = self.server.submit_study(
+                mock_study, mock_adapter, mock_samples, mock_sample_labels,
+                mock_egraph, mock_groups_of_chains
+            )
+            
+            # Verify result
+            assert result.id == "study_result_123"
+            
+            # Verify Celery coordination was called correctly  
+            # expand_tasks_with_samples.si should be called for each gchain in each chain_group
+            # With groups_of_chains[1:] = [[["step1", "step2"], ["step3"]], [["step4"], ["step5", "step6"]]]
+            # That's 2 groups, first has 2 gchains, second has 2 gchains = 4 total calls
+            expected_calls = sum(len(chain_group) for chain_group in mock_groups_of_chains[1:])
+            assert mock_expand.si.call_count == expected_calls
+            mock_mark_complete.si.assert_called_once_with(mock_study.workspace)
+            mock_chain_instance.delay.assert_called_once_with(None)
+    
+    @patch('merlin.celery.app')
+    def test_submit_study_error_handling(self, mock_app):
+        """Test submit_study error handling."""
+        mock_study = MagicMock()
+        mock_study.workspace = "/test/workspace"
+        
+        self.server.celery_app = mock_app
+        
+        # Test with invalid groups_of_chains
+        with patch('celery.chain') as mock_chain:
+            mock_chain.side_effect = Exception("Chain creation failed")
+            
+            with pytest.raises(Exception) as exc_info:
+                self.server.submit_study(
+                    mock_study, {}, [], [], MagicMock(), []
+                )
+            
+            assert "Chain creation failed" in str(exc_info.value)
+    
+    @patch('merlin.celery.app')
+    def test_submit_study_with_complex_dependencies(self, mock_app):
+        """Test submit_study with complex dependency structures."""
+        # Create a more complex study structure
+        mock_study = MagicMock()
+        mock_study.workspace = "/complex/workspace"
+        mock_study.level_max_dirs = 10
+        
+        # Complex groups of chains with multiple steps
+        complex_groups = [
+            ["_source"],
+            [["generate_data", "process_data"], ["analyze_data"]],
+            [["ml_train"], ["ml_predict", "ml_evaluate"]],
+            [["visualize"], ["report_generation"]]
+        ]
+        
+        mock_egraph = MagicMock()
+        mock_step = MagicMock()
+        mock_step.get_task_queue.return_value = "complex_queue"
+        mock_egraph.step.return_value = mock_step
+        
+        self.server.celery_app = mock_app
+        
+        with patch('celery.chain') as mock_chain, \
+             patch('celery.chord') as mock_chord, \
+             patch('celery.group') as mock_group, \
+             patch('merlin.common.tasks.expand_tasks_with_samples') as mock_expand, \
+             patch('merlin.common.tasks.chordfinisher') as mock_chordfinisher, \
+             patch('merlin.common.tasks.mark_run_as_complete') as mock_mark_complete:
+            
+            # Setup mocks for complex workflow
+            mock_expand_sig = MagicMock()
+            mock_expand.si.return_value = mock_expand_sig
+            mock_expand_sig.set.return_value = mock_expand_sig
+            
+            # Setup chain mock to consume generators when called
+            def chain_side_effect(*args):
+                # Force evaluation of generator expressions to trigger si() calls
+                for arg in args:
+                    if hasattr(arg, '__iter__') and not isinstance(arg, (str, bytes)):
+                        try:
+                            list(arg)  # Convert generator to list
+                        except (TypeError, AttributeError):
+                            pass
+                return mock_chain_instance
+            
+            mock_chain.side_effect = chain_side_effect
+            mock_chain_instance = MagicMock()
+            mock_result = MagicMock()
+            mock_result.id = "complex_study_456"
+            mock_chain_instance.__or__ = MagicMock(return_value=mock_chain_instance)
+            mock_chain_instance.delay.return_value = mock_result
+            
+            result = self.server.submit_study(
+                mock_study, {"complex": True}, 
+                [{"sample": f"data_{i}"} for i in range(100)],  # Large sample set
+                [f"label_{i}" for i in range(100)],
+                mock_egraph, complex_groups
+            )
+            
+            # Verify complex workflow was properly coordinated
+            assert result.id == "complex_study_456"
+            # Should have expand_tasks calls for each gchain in each non-source group
+            # complex_groups[1:] has 3 groups, each with 2, 2, and 1 gchains = 5 total
+            expected_calls = sum(len(chain_group) for chain_group in complex_groups[1:])
+            assert mock_expand.si.call_count == expected_calls
+    
+    @patch('merlin.celery.app')
+    def test_submit_task_group_comprehensive(self, mock_app):
+        """Test submit_task_group with comprehensive scenarios."""
+        self.server.celery_app = mock_app
+        
+        with patch('celery.group') as mock_group, \
+             patch('celery.chord') as mock_chord:
+            
+            mock_group_instance = MagicMock()
+            mock_group.return_value = mock_group_instance
+            mock_result = MagicMock()
+            mock_result.id = "group_result_789"
+            mock_group_instance.apply_async.return_value = mock_result
+            
+            # Test group without callback
+            result = self.server.submit_task_group(
+                "test_group", ["task1", "task2", "task3"]
+            )
+            
+            assert result == "group_result_789"
+            mock_group.assert_called_once()
+            mock_group_instance.apply_async.assert_called_once()
+    
+    @patch('merlin.celery.app')
+    def test_submit_task_group_with_callback(self, mock_app):
+        """Test submit_task_group with callback task (chord)."""
+        self.server.celery_app = mock_app
+        
+        with patch('celery.group') as mock_group, \
+             patch('celery.chord') as mock_chord:
+            
+            mock_group_instance = MagicMock()
+            mock_group.return_value = mock_group_instance
+            mock_chord_instance = MagicMock()
+            mock_chord.return_value = mock_chord_instance
+            mock_result = MagicMock()
+            mock_result.id = "chord_result_abc" 
+            mock_chord_instance.apply_async.return_value = mock_result
+            
+            # Test group with callback (creates chord)
+            result = self.server.submit_task_group(
+                "test_chord_group", ["task1", "task2"], 
+                callback_task_id="callback_task"
+            )
+            
+            assert result == "chord_result_abc"
+            mock_group.assert_called_once()
+            mock_chord.assert_called_once()
+            mock_chord_instance.apply_async.assert_called_once()
+    
+    @patch('merlin.celery.app')
+    def test_submit_task_group_error_scenarios(self, mock_app):
+        """Test submit_task_group error handling."""
+        self.server.celery_app = mock_app
+        
+        # Test empty task list - will create empty group but still return an ID
+        result = self.server.submit_task_group("empty_group", [])
+        # Empty groups still get UUIDs, so result should be a string (UUID-like)
+        assert isinstance(result, str)
+        assert len(result) > 0  # Should have some ID
+        
+        # Test group creation failure
+        with patch('celery.group') as mock_group:
+            mock_group.side_effect = Exception("Group creation failed")
+            
+            # Should fallback to individual task submission
+            with patch.object(self.server, 'submit_tasks') as mock_submit_tasks:
+                mock_submit_tasks.return_value = ["fallback_1", "fallback_2"]
+                
+                result = self.server.submit_task_group(
+                    "failing_group", ["task1", "task2"]
+                )
+                
+                assert result == "fallback_1"  # Returns first result from fallback
+                mock_submit_tasks.assert_called_once_with(["task1", "task2"])
+    
+    @patch('merlin.celery.app')
+    def test_submit_dependent_tasks_comprehensive(self, mock_app):
+        """Test submit_dependent_tasks with various dependency patterns."""
+        from merlin.task_servers.task_server_interface import TaskDependency
+        
+        self.server.celery_app = mock_app
+        
+        # Create complex dependency structure
+        dependencies = [
+            TaskDependency(task_pattern="generate_*", dependency_type="all_success"),
+            TaskDependency(task_pattern="process_*", dependency_type="any_success"),
+            TaskDependency(task_pattern="analyze_*", dependency_type="all_complete")
+        ]
+        
+        task_ids = ["task1", "task2", "task3", "task4"]
+        
+        with patch.object(self.server, '_group_tasks_by_dependencies') as mock_group_deps, \
+             patch.object(self.server, 'submit_tasks') as mock_submit_tasks:
+            
+            # Mock dependency grouping
+            mock_group_deps.return_value = [
+                {"pattern": "generate_*", "tasks": ["task1", "task2"]},
+                {"pattern": "process_*", "tasks": ["task3"]},
+                {"pattern": "analyze_*", "tasks": ["task4"]}
+            ]
+            
+            mock_submit_tasks.return_value = ["result1", "result2", "result3"]
+            
+            result = self.server.submit_dependent_tasks(task_ids, dependencies)
+            
+            # Should return consolidated results
+            assert result == ["result1", "result2", "result3"]
+            mock_group_deps.assert_called_once_with(task_ids, dependencies)
+    
+    @patch('merlin.celery.app')
+    def test_get_group_status_comprehensive(self, mock_app):
+        """Test get_group_status with various group states."""
+        self.server.celery_app = mock_app
+        
+        # Test successful group status
+        with patch.object(mock_app, 'GroupResult') as mock_group_result:
+            mock_result_instance = MagicMock()
+            mock_result_instance.ready.return_value = True
+            mock_result_instance.successful.return_value = True
+            mock_result_instance.failed.return_value = False
+            mock_result_instance.completed_count.return_value = 5
+            mock_result_instance.results = ["r1", "r2", "r3", "r4", "r5"]
+            mock_group_result.restore.return_value = mock_result_instance
+            
+            status = self.server.get_group_status("test_group_123")
+            
+            expected = {
+                "group_id": "test_group_123",
+                "status": "completed",
+                "completed": 5,
+                "total": 5,
+                "successful": True,
+                "failed": False
+            }
+            
+            assert status["group_id"] == expected["group_id"]
+            assert status["status"] == expected["status"]
+            assert status["completed"] == expected["completed"]
+            assert status["total"] == expected["total"]
+            assert status["successful"] == expected["successful"]
+            assert status["failed"] == expected["failed"]
+    
+    @patch('merlin.celery.app')
+    def test_get_group_status_error_handling(self, mock_app):
+        """Test get_group_status error scenarios."""
+        self.server.celery_app = mock_app
+        
+        # Test with invalid group ID
+        with patch.object(mock_app, 'GroupResult') as mock_group_result:
+            mock_group_result.restore.side_effect = Exception("Group not found")
+            
+            status = self.server.get_group_status("invalid_group")
+            
+            assert status == {"group_id": "invalid_group", "status": "unknown"}
+    
+    def test_coordination_edge_cases(self):
+        """Test edge cases in coordination methods."""
+        # Test TaskDependency validation
+        from merlin.task_servers.task_server_interface import TaskDependency
+        
+        # Test with invalid dependency type
+        dep = TaskDependency("test_pattern", "invalid_type")
+        assert dep.task_pattern == "test_pattern"
+        assert dep.dependency_type == "invalid_type"
+        
+        # Test empty pattern
+        dep_empty = TaskDependency("", "all_success")
+        assert dep_empty.task_pattern == ""
+        assert dep_empty.dependency_type == "all_success" 

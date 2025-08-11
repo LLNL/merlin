@@ -85,6 +85,19 @@ class MockTaskServer(TaskServerInterface):
     
     def check_workers_processing(self, queues):
         return True
+    
+    def submit_condense_task(self, sample_index, workspace: str, condensed_workspace: str, queue: str = None):
+        """Mock implementation of submit_condense_task method."""
+        mock_result = MagicMock()
+        mock_result.id = f"mock_condense_{workspace.replace('/', '_')}"
+        return mock_result
+    
+    def submit_study(self, study, adapter, samples, sample_labels, egraph, groups_of_chains):
+        """Mock implementation of submit_study method."""
+        from celery.result import AsyncResult
+        mock_result = MagicMock(spec=AsyncResult)
+        mock_result.id = "mock_study_result_123"
+        return mock_result
 
 
 class InvalidTaskServer:
@@ -183,15 +196,19 @@ class TestTaskServerFactory:
         with pytest.raises(MerlinInvalidTaskServerError):
             self.factory.get_server_info("nonexistent")
     
-    @patch('pkg_resources.iter_entry_points')
-    def test_plugin_discovery_with_pkg_resources(self, mock_iter_entry_points):
-        """Test plugin discovery using pkg_resources."""
+    @patch('importlib.metadata.entry_points')
+    def test_plugin_discovery_with_entry_points(self, mock_entry_points):
+        """Test plugin discovery using importlib.metadata entry_points."""
         # Mock entry point
         mock_entry_point = MagicMock()
         mock_entry_point.name = "test_plugin"
         mock_entry_point.load.return_value = MockTaskServer
         
-        mock_iter_entry_points.return_value = [mock_entry_point]
+        # Mock entry_points object
+        mock_eps = MagicMock()
+        mock_eps.select.return_value = [mock_entry_point]
+        mock_eps.get.return_value = [mock_entry_point]
+        mock_entry_points.return_value = mock_eps
         
         # Trigger discovery
         self.factory._discover_plugins()
@@ -199,15 +216,19 @@ class TestTaskServerFactory:
         # Should have registered the plugin
         assert "test_plugin" in self.factory.list_available()
     
-    @patch('pkg_resources.iter_entry_points')
-    def test_plugin_discovery_with_errors(self, mock_iter_entry_points):
+    @patch('importlib.metadata.entry_points')
+    def test_plugin_discovery_with_errors(self, mock_entry_points):
         """Test plugin discovery handles errors gracefully."""
         # Mock entry point that fails to load
         mock_entry_point = MagicMock()
         mock_entry_point.name = "broken_plugin"
         mock_entry_point.load.side_effect = ImportError("Plugin broken")
         
-        mock_iter_entry_points.return_value = [mock_entry_point]
+        # Mock entry_points object
+        mock_eps = MagicMock()
+        mock_eps.select.return_value = [mock_entry_point]
+        mock_eps.get.return_value = [mock_entry_point]
+        mock_entry_points.return_value = mock_eps
         
         # Should not raise exception
         self.factory._discover_plugins()
@@ -292,6 +313,8 @@ class TestTaskServerFactory:
             def get_workers(self): pass
             def get_active_queues(self): pass
             def check_workers_processing(self, queues): pass
+            def submit_condense_task(self, sample_index, workspace: str, condensed_workspace: str, queue: str = None): pass
+            def submit_study(self, study, adapter, samples, sample_labels, egraph, groups_of_chains): pass
         
         self.factory.register("failing", FailingTaskServer)
         

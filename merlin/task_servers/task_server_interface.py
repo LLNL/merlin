@@ -333,6 +333,32 @@ class TaskServerInterface(ABC):
         raise NotImplementedError()
     
     @abstractmethod
+    def submit_condense_task(self, 
+                           sample_index, 
+                           workspace: str, 
+                           condensed_workspace: str,
+                           queue: str = None):
+        """
+        Submit a status file condensing task.
+        
+        This method provides backend-agnostic status file condensing, essential
+        for multi-backend support. Different implementations handle submission
+        using their native mechanisms:
+        - Celery: Creates a task signature and submits via delay()
+        - Kafka: Publishes message to condense topic
+        
+        Args:
+            sample_index: SampleIndex object for status file locations
+            workspace: Full workspace path for condensing
+            condensed_workspace: Shortened workspace path for status entries
+            queue: Task queue/topic for execution
+            
+        Returns:
+            AsyncResult object for tracking task execution
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
     def submit_study(self, study, adapter: Dict, samples, sample_labels, egraph, groups_of_chains):
         """
         Submit an entire study using backend-specific coordination patterns.

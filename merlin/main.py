@@ -298,8 +298,9 @@ def launch_workers(args: Namespace):
         merlin_db.create("logical_worker", worker, worker_queues)
 
     # Launch the workers
+    backend = getattr(args, 'backend', 'celery')  # Default to celery for backward compatibility
     launch_worker_status = router.launch_workers(
-        spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only
+        spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only, backend
     )
 
     if args.worker_echo_only:
@@ -1362,6 +1363,13 @@ def generate_worker_touching_parsers(subparsers: ArgumentParser) -> None:
     )
     run_workers.set_defaults(func=launch_workers)
     run_workers.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
+    run_workers.add_argument(
+        "--backend",
+        type=str,
+        choices=["celery", "kafka"],
+        default="celery",
+        help="Task server backend to use (default: celery)"
+    )
     run_workers.add_argument(
         "--worker-args",
         type=str,

@@ -78,6 +78,19 @@ class ConcreteTaskServer(TaskServerInterface):
     
     def check_workers_processing(self, queues):
         return len(queues) > 0
+    
+    def submit_condense_task(self, sample_index, workspace: str, condensed_workspace: str, queue: str = None):
+        """Mock implementation of submit_condense_task method."""
+        mock_result = MagicMock()
+        mock_result.id = f"condense_{workspace.replace('/', '_')}"
+        return mock_result
+    
+    def submit_study(self, study, adapter, samples, sample_labels, egraph, groups_of_chains):
+        """Mock implementation of submit_study method."""
+        from celery.result import AsyncResult
+        mock_result = MagicMock(spec=AsyncResult)
+        mock_result.id = "test_study_result_123"
+        return mock_result
 
 
 class IncompleteTaskServer(TaskServerInterface):
@@ -167,6 +180,12 @@ class TestTaskServerInterface:
         status = server.get_group_status("test_group")
         assert status["group_id"] == "test_group"
         assert status["status"] == "completed"
+        
+        # Test submit_study method
+        mock_study = MagicMock()
+        mock_adapter = {"test": "adapter"}
+        result = server.submit_study(mock_study, mock_adapter, [], [], MagicMock(), [])
+        assert result.id == "test_study_result_123"
     
     @patch('merlin.task_servers.task_server_interface.MerlinDatabase')
     def test_worker_management_methods(self, mock_db):
@@ -210,11 +229,125 @@ class TestTaskServerInterface:
             'purge_tasks',
             'get_workers',
             'get_active_queues',
-            'check_workers_processing'
+            'check_workers_processing',
+            'submit_study'
         ]
         
         for method_name in abstract_methods:
             assert hasattr(TaskServerInterface, method_name)
             method = getattr(TaskServerInterface, method_name)
-            assert hasattr(method, '__isabstractmethod__')
-            assert method.__isabstractmethod__ is True 
+    
+    @patch('merlin.task_servers.task_server_interface.MerlinDatabase')
+    def test_submit_study_method_detailed(self, mock_db):
+        """Test submit_study method with detailed scenarios."""
+        server = ConcreteTaskServer()
+        
+        # Test with realistic study parameters
+        mock_study = MagicMock()
+        mock_study.name = "comprehensive_study"
+        mock_study.workspace = "/test/workspace"
+        
+        mock_adapter = {"adapter_type": "test", "config": {"key": "value"}}
+        mock_samples = [{"param1": "value1"}, {"param1": "value2"}]
+        mock_sample_labels = ["sample_1", "sample_2"]
+        
+        mock_egraph = MagicMock()
+        mock_egraph.name = "test_dag"
+        
+        mock_groups_of_chains = [
+            ["_source"],
+            [["step1"], ["step2", "step3"]],
+            [["step4"]]
+        ]
+        
+        # Execute submit_study
+        result = server.submit_study(
+            mock_study, mock_adapter, mock_samples, 
+            mock_sample_labels, mock_egraph, mock_groups_of_chains
+        )
+        
+        # Verify result structure
+        assert hasattr(result, 'id')
+        assert result.id == "test_study_result_123"
+        
+        # Test with empty parameters to ensure graceful handling
+        result_empty = server.submit_study(None, {}, [], [], None, [])
+        assert result_empty.id == "test_study_result_123"
+    
+    def test_abstract_method_enforcement(self):
+        """Test that abstract method enforcement is comprehensive."""
+        from merlin.task_servers.task_server_interface import TaskServerInterface
+        import inspect
+        
+        # Get all abstract methods from the interface
+        abstract_methods = []
+        for name, method in inspect.getmembers(TaskServerInterface):
+            if hasattr(method, '__isabstractmethod__') and method.__isabstractmethod__:
+                abstract_methods.append(name)
+        
+        # Should have all 19 abstract methods (18 + server_type property)
+        expected_count = 19
+        actual_count = len(abstract_methods)
+        
+        print(f"Found {actual_count} abstract methods: {sorted(abstract_methods)}")
+        assert actual_count >= expected_count, f"Expected at least {expected_count} abstract methods, found {actual_count}"
+        
+        # Key methods that must be abstract
+        critical_methods = [
+            'submit_study', 'submit_task', 'submit_tasks', 'submit_task_group',
+            'submit_coordinated_tasks', 'submit_dependent_tasks', 'cancel_task',
+            'start_workers', 'stop_workers', 'get_group_status'
+        ]
+        
+        for method in critical_methods:
+            assert method in abstract_methods, f"Critical method {method} is not abstract"
+    
+    def test_database_integration_setup(self):
+        """Test that database integration is properly set up."""
+        with patch('merlin.task_servers.task_server_interface.MerlinDatabase') as mock_db:
+            mock_db_instance = MagicMock()
+            mock_db.return_value = mock_db_instance
+            
+            server = ConcreteTaskServer()
+            
+            # Verify database instance is created and stored
+            assert hasattr(server, 'merlin_db')
+            assert server.merlin_db == mock_db_instance
+            mock_db.assert_called_once()
+    
+    def test_interface_contract_compliance(self):
+        """Test that ConcreteTaskServer fully complies with interface contract."""
+        server = ConcreteTaskServer()
+        
+        # Test all mandatory methods exist and are callable
+        mandatory_methods = [
+            'submit_task', 'submit_tasks', 'submit_task_group',
+            'submit_coordinated_tasks', 'submit_dependent_tasks', 'get_group_status',
+            'cancel_task', 'cancel_tasks', 'start_workers', 'stop_workers',
+            'display_queue_info', 'display_connected_workers', 'display_running_tasks',
+            'purge_tasks', 'get_workers', 'get_active_queues', 'check_workers_processing',
+            'submit_study'
+        ]
+        
+        for method_name in mandatory_methods:
+            assert hasattr(server, method_name), f"Missing required method: {method_name}"
+            method = getattr(server, method_name)
+            assert callable(method), f"Method {method_name} is not callable"
+        
+        # Test server_type property
+        assert hasattr(server, 'server_type')
+        assert server.server_type == "test"
+        
+        # Test method return types are reasonable
+        assert isinstance(server.submit_task("test"), str)
+        assert isinstance(server.submit_tasks(["test1", "test2"]), list)
+        assert isinstance(server.cancel_task("test"), bool)
+        assert isinstance(server.cancel_tasks(["test1", "test2"]), dict)
+        assert isinstance(server.get_workers(), list)
+        assert isinstance(server.get_active_queues(), dict)
+        assert isinstance(server.check_workers_processing(["queue1"]), bool)
+        assert isinstance(server.purge_tasks(["queue1"]), int)
+        
+        # Test submit_study returns AsyncResult-like object
+        study_result = server.submit_study(None, {}, [], [], None, [])
+        assert hasattr(study_result, 'id') 

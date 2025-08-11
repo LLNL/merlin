@@ -124,7 +124,12 @@ class TaskServerFactory:
 
         # Create instance
         try:
-            instance = task_server_class()
+            # Pass config if the server supports it
+            if config and hasattr(task_server_class.__init__, '__code__') and \
+               'config' in task_server_class.__init__.__code__.co_varnames:
+                instance = task_server_class(config)
+            else:
+                instance = task_server_class()
             LOG.info(f"Created {server_type} task server")
             return instance
         except Exception as e:
@@ -189,6 +194,34 @@ class TaskServerFactory:
             "module": server_class.__module__,
             "description": server_class.__doc__ or "No description available",
         }
+    
+    def create_workflow_manager(self, server_type: str, config: Dict = None):
+        """
+        Create a WorkflowManager instance using the specified task server backend.
+        
+        This provides a convenient way to get a backend-agnostic WorkflowManager
+        without needing to manually create the task server and coordinator.
+        
+        Args:
+            server_type: The name of the task server to use as backend.
+            config: Optional configuration dictionary for task server initialization.
+            
+        Returns:
+            WorkflowManager instance configured with the specified backend.
+            
+        Raises:
+            MerlinInvalidTaskServerError: If the requested task server is not supported.
+        """
+        from merlin.coordination.workflow_manager import WorkflowManager
+        
+        # Create the task server instance
+        task_server = self.create(server_type, config)
+        
+        # Get the coordinator from the task server
+        coordinator = task_server.get_coordinator()
+        
+        # Create and return the WorkflowManager
+        return WorkflowManager(coordinator)
 
     def _discover_plugins(self) -> None:
         """
@@ -199,8 +232,21 @@ class TaskServerFactory:
         """
         # METHOD 1: Entry points (for pip-installable plugins)
         try:
-            import pkg_resources
-            for entry_point in pkg_resources.iter_entry_points('merlin.task_servers'):
+            try:
+                from importlib.metadata import entry_points
+            except ImportError:
+                # Python < 3.8 fallback
+                from importlib_metadata import entry_points
+            
+            eps = entry_points()
+            if hasattr(eps, 'select'):
+                # importlib.metadata style (Python 3.10+)
+                merlin_eps = eps.select(group='merlin.task_servers')
+            else:
+                # Older importlib_metadata style
+                merlin_eps = eps.get('merlin.task_servers', [])
+            
+            for entry_point in merlin_eps:
                 try:
                     plugin_class = entry_point.load()
                     self.register(entry_point.name, plugin_class)
@@ -208,7 +254,7 @@ class TaskServerFactory:
                 except Exception as e:
                     LOG.warning(f"Failed to load plugin {entry_point.name}: {e}")
         except ImportError:
-            LOG.debug("pkg_resources not available for plugin discovery")
+            LOG.debug("importlib.metadata not available for plugin discovery")
 
         # METHOD 2: Built-in implementations directory scanning
         try:

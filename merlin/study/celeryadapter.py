@@ -31,7 +31,9 @@ from merlin.utils import apply_list_of_regex, check_machines, get_procs, get_yam
 
 LOG = logging.getLogger(__name__)
 
-# TODO figure out a better way to handle the import of celery app and CONFIG
+# NOTE to Brian: Celery app imports are handled in two patterns:
+# 1. Local imports within functions to avoid circular import issues (merlin.common.tasks -> merlin.router -> merlin.study.celeryadapter)
+# 2. App parameter for functions that can accept an external app instance
 
 
 def run_celery(study: MerlinStudy, run_mode: str = None):

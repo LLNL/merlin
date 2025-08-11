@@ -62,6 +62,7 @@ def launch_workers(
     worker_args: str = "",
     disable_logs: bool = False,
     just_return_command: bool = False,
+    backend_override: str = None,
 ) -> str:
     """
     Launches workers for the specified study based on the provided
@@ -81,14 +82,24 @@ def launch_workers(
             Defaults to False.
         just_return_command: If True, the function will not execute the
             command but will return it instead. Defaults to False.
+        backend_override: Override the backend type from CLI (e.g., 'kafka', 'celery').
+            If provided, this takes precedence over spec configuration.
 
     Returns:
         A string containing all the worker launch commands.
     """
     try:
-        # Create task server instance from spec configuration
-        task_server_type = spec.get_task_server_type()
-        config = spec.get_task_server_config()
+        # Create task server instance from spec configuration or CLI override
+        task_server_type = backend_override or spec.get_task_server_type()
+        config = spec.get_task_server_config() if hasattr(spec, 'get_task_server_config') else {}
+        
+        # For Kafka backend, add some default config if not provided
+        if task_server_type == 'kafka' and not config:
+            config = {
+                'producer': {'bootstrap_servers': ['localhost:9092']},
+                'consumer': {'bootstrap_servers': ['localhost:9092'], 'group_id': 'merlin_workers'}
+            }
+        
         task_server = task_server_factory.create(task_server_type, config)
         
         # Start workers using the task server interface
