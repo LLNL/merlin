@@ -54,11 +54,18 @@ class RunWorkersCommand(CommandEntryPoint):
         run_workers.set_defaults(func=self.process_command)
         run_workers.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
         run_workers.add_argument(
+            "--backend",
+            type=str,
+            choices=["celery", "kafka"],
+            default=None,
+            help="Task server backend to use (overrides spec configuration)"
+        )
+        run_workers.add_argument(
             "--worker-args",
             type=str,
             dest="worker_args",
             default="",
-            help="celery worker arguments in quotes.",
+            help="worker arguments in quotes.",
         )
         run_workers.add_argument(
             "--steps",
@@ -123,10 +130,21 @@ class RunWorkersCommand(CommandEntryPoint):
         worker_instances = spec.build_worker_list(workers_to_start)
 
         # Launch the workers or echo out the command that will be used to launch the workers
-        worker_handler = worker_handler_factory.create(spec.merlin["resources"]["task_server"])
-        worker_handler.launch_workers(
-            worker_instances,
-            echo_only=args.worker_echo_only,
-            override_args=args.worker_args,
+        # Use backend override if provided, otherwise use spec configuration
+        backend_type = args.backend or spec.merlin["resources"]["task_server"]
+        
+        worker_handler = worker_handler_factory.create(backend_type)
+        
+        # For unified interface, call launch_workers with spec instead of pre-built instances
+        result = worker_handler.launch_workers(
+            spec=spec,
+            steps=args.worker_steps,
+            worker_args=args.worker_args,
             disable_logs=args.disable_logs,
+            just_return_command=args.worker_echo_only
         )
+        
+        if args.worker_echo_only:
+            print(result)
+        else:
+            LOG.info(result)

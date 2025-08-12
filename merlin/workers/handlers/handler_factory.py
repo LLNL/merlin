@@ -20,7 +20,7 @@ from typing import Any, Type
 
 from merlin.abstracts import MerlinBaseFactory
 from merlin.exceptions import MerlinWorkerHandlerNotSupportedError
-from merlin.workers.handlers import CeleryWorkerHandler
+from merlin.workers.handlers import CeleryWorkerHandler, KafkaWorkerHandler
 from merlin.workers.handlers.worker_handler import MerlinWorkerHandler
 
 
@@ -47,6 +47,7 @@ class WorkerHandlerFactory(MerlinBaseFactory):
         Register built-in worker handler implementations.
         """
         self.register("celery", CeleryWorkerHandler)
+        self.register("kafka", KafkaWorkerHandler)
 
     def _validate_component(self, component_class: Any):
         """

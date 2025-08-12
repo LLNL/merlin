@@ -106,15 +106,20 @@ def launch_workers(
         
         # Try to use the boss's worker handler system first
         try:
-            from merlin.workers.handlers.handler_factory import WorkerHandlerFactory  # pylint: disable=C0415
+            from merlin.workers.handlers.handler_factory import worker_handler_factory  # pylint: disable=C0415
             
             # Create worker handler
-            task_server_config = spec.merlin["resources"]
-            handler = WorkerHandlerFactory.create(task_server_config)
+            handler = worker_handler_factory.create(task_server_type)
             
             if handler:
                 # Use boss's worker handler system
-                return handler.launch_workers(spec, steps, worker_args, disable_logs, just_return_command)
+                return handler.launch_workers(
+                    spec=spec,
+                    steps=steps,
+                    worker_args=worker_args,
+                    disable_logs=disable_logs,
+                    just_return_command=just_return_command
+                )
         except ImportError:
             # Fall back to our TaskServerInterface if handler system not available
             LOG.debug("Worker handler system not available, falling back to TaskServerInterface")

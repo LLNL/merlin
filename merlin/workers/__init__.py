@@ -10,7 +10,7 @@ Worker framework for managing task execution in Merlin.
 The `workers` package defines the core abstractions and implementations for launching
 and managing task server workers in the Merlin workflow framework. It includes an
 extensible system for defining worker behavior, instantiating worker instances, and
-handling task server-specific logic (e.g., Celery).
+handling task server-specific logic (e.g., Celery, Kafka).
 
 This package supports a plugin-based architecture through factories, allowing new
 task server backends to be added seamlessly via Python entry points.
@@ -25,12 +25,15 @@ Modules:
         configuring worker instances.
     celery_worker.py: Implements `CeleryWorker`, a concrete subclass of `MerlinWorker` that uses
         Celery to process tasks from configured queues. Supports local and batch launch modes.
+    kafka_worker.py: Implements `KafkaWorker`, a concrete subclass of `MerlinWorker` that uses
+        Apache Kafka to process tasks from configured topics. Provides backend independence alternative.
     worker_factory.py: Defines the `WorkerFactory`, which manages the registration, validation,
-        and instantiation of individual worker implementations such as `CeleryWorker`.
+        and instantiation of individual worker implementations such as `CeleryWorker` and `KafkaWorker`.
         Supports plugin discovery via entry points.
 """
 
 from merlin.workers.celery_worker import CeleryWorker
+from merlin.workers.kafka_worker import KafkaWorker
 
 
-__all__ = ["CeleryWorker"]
+__all__ = ["CeleryWorker", "KafkaWorker"]

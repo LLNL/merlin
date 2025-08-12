@@ -100,7 +100,9 @@ class CeleryWorker(MerlinWorker):
         Args:
             disable_logs: If True, logging level will not be appended.
         """
-        if batch_check_parallel(self.batch):
+        # Check if batch configuration indicates parallel processing
+        # The batch_check_parallel function expects a spec, so we'll check batch config directly
+        if self.batch and self.batch.get("type") in ["flux", "slurm"]:
             if "--concurrency" not in self.args:
                 LOG.warning("Missing --concurrency in worker args for parallel tasks.")
             if "--prefetch-multiplier" not in self.args:
@@ -135,8 +137,15 @@ class CeleryWorker(MerlinWorker):
 
         # Construct the launch command
         celery_cmd = f"celery -A merlin worker {self.args} -Q {','.join(self.queues)}"
-        nodes = self.batch.get("nodes", None)
-        launch_cmd = batch_worker_launch(self.batch, celery_cmd, nodes=nodes)
+        
+        # Use batch launch if batch configuration is provided and not empty
+        if self.batch and len(self.batch) > 0:
+            nodes = self.batch.get("nodes", None)
+            launch_cmd = batch_worker_launch(self.batch, celery_cmd, nodes=nodes)
+        else:
+            # For simple local launch without batch configuration
+            launch_cmd = celery_cmd
+            
         return os.path.expandvars(launch_cmd)
 
     def should_launch(self) -> bool:
