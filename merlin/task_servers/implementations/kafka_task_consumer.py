@@ -18,18 +18,22 @@ this custom worker implementation to bridge Kafka messages to Merlin execution.
 import json
 import logging
 import signal
+import subprocess
 import time
+from pathlib import Path
 from typing import Dict, Any, List
+
+from merlin.optimization.message_optimizer import OptimizedTaskMessage
 
 LOG = logging.getLogger(__name__)
 
 
-class KafkaWorker:
+class KafkaTaskConsumer:
     """
-    Simple Kafka worker that consumes tasks and executes them using existing Merlin logic.
+    Kafka message consumer that executes tasks via generated scripts.
     
-    This worker bridges Kafka task distribution with Merlin's existing task execution,
-    providing backend independence without duplicating business logic.
+    This consumer bridges Kafka task distribution with script-based task execution,
+    providing backend independence and eliminating Celery context dependencies.
     """
     
     def __init__(self, config: Dict[str, Any]):
@@ -115,94 +119,115 @@ class KafkaWorker:
     
     def _handle_task_message(self, task_data: Dict[str, Any]):
         """
-        Handle task execution messages.
+        Handle task execution messages using script-based execution.
         
-        This method bridges Kafka messages to existing Merlin task execution logic.
+        This method replaces direct Celery function calls with script execution.
         """
-        task_id = task_data.get('task_id', 'unknown')
-        task_type = task_data.get('task_type')
-        parameters = task_data.get('parameters', {})
-        
-        LOG.info(f"Processing task {task_id} of type {task_type}")
-        
         try:
+            # Parse optimized task message
+            task_msg = OptimizedTaskMessage.from_dict(task_data)
+            
+            LOG.info(f"Processing task {task_msg.task_id} of type {task_msg.task_type}")
+            
             start_time = time.time()
-            result = self._execute_task(task_type, parameters)
+            
+            # Execute task via script (replaces direct function calls)
+            result = self._execute_task_script(task_msg)
+            
             execution_time = time.time() - start_time
             
-            LOG.info(f"Task {task_id} completed successfully in {execution_time:.2f}s")
+            if result.get('status') == 'completed':
+                LOG.info(f"Task {task_msg.task_id} completed successfully in {execution_time:.2f}s")
+            else:
+                LOG.error(f"Task {task_msg.task_id} failed: {result.get('error', 'Unknown error')}")
             
-            # Store result if we have a result store available
-            self._store_result(task_id, {
-                'status': 'SUCCESS',
+            # Store result
+            self._store_result(task_msg.task_id, {
+                'status': 'SUCCESS' if result.get('status') == 'completed' else 'FAILURE',
                 'result': result,
                 'execution_time': execution_time,
-                'completed_at': time.time()
+                'completed_at': time.time() if result.get('status') == 'completed' else None,
+                'failed_at': time.time() if result.get('status') != 'completed' else None
             })
             
         except Exception as e:
-            LOG.error(f"Task {task_id} failed: {e}")
+            LOG.error(f"Error processing task message: {e}", exc_info=True)
             
             # Store error result
+            task_id = task_data.get('task_id', 'unknown')
             self._store_result(task_id, {
                 'status': 'FAILURE', 
                 'error': str(e),
                 'failed_at': time.time()
             })
             
-    def _execute_task(self, task_type: str, parameters: Dict[str, Any]) -> Any:
+    def _execute_task_script(self, task_msg: OptimizedTaskMessage, shared_storage_path: str = "/shared/storage") -> Dict[str, Any]:
         """
-        Execute a task using existing Merlin business logic.
+        Execute task using generated script instead of direct function calls.
         
-        This method provides the bridge between Kafka task distribution and 
-        existing Merlin task implementations.
+        This method replaces direct Celery function calls with script execution,
+        eliminating Celery context dependencies and enabling backend independence.
         """
-        # Try task registry first (if available)
+        shared_storage = Path(shared_storage_path)
+        scripts_dir = shared_storage / "scripts"
+        workspace_dir = shared_storage / "workspace"
+        
+        # Construct script path
+        script_path = scripts_dir / task_msg.script_reference
+        
+        if not script_path.exists():
+            raise FileNotFoundError(f"Script not found: {script_path}")
+        
+        # Make sure script is executable
+        script_path.chmod(0o755)
+        
+        LOG.info(f"Executing script: {script_path}")
+        
         try:
-            from merlin.execution.task_registry import task_registry  # pylint: disable=C0415
+            # Execute script with timeout
+            result = subprocess.run(
+                [str(script_path)],
+                capture_output=True,
+                text=True,
+                timeout=3600,  # 1 hour timeout
+                cwd=str(workspace_dir / task_msg.task_id)
+            )
             
-            task_func = task_registry.get(task_type)
-            if task_func:
-                LOG.debug(f"Executing {task_type} using task registry")
-                return task_func(**parameters)
-        except ImportError:
-            LOG.debug("Task registry not available, using direct task imports")
-        
-        # Fall back to existing Celery task implementations
-        # This provides backward compatibility with existing task logic
-        if task_type == 'merlin_step':
-            from merlin.common.tasks import merlin_step  # pylint: disable=C0415
-            # Extract step and adapter_config from parameters
-            step = parameters.get('step')
-            adapter_config = parameters.get('adapter_config', {})
-            return merlin_step(step, adapter_config=adapter_config)
+            # Parse result
+            execution_result = {
+                'task_id': task_msg.task_id,
+                'exit_code': result.returncode,
+                'stdout': result.stdout,
+                'stderr': result.stderr,
+                'execution_time': time.time(),
+                'status': 'completed' if result.returncode == 0 else 'failed'
+            }
             
-        elif task_type == 'condense_status_files':
-            from merlin.common.tasks import condense_status_files  # pylint: disable=C0415
-            return condense_status_files(**parameters)
+            # Try to load result metadata if available
+            result_file = workspace_dir / task_msg.task_id / 'step_result.json'
+            if result_file.exists():
+                with open(result_file, 'r') as f:
+                    step_result = json.load(f)
+                    execution_result.update(step_result)
             
-        elif task_type == 'expand_tasks_with_samples':
-            from merlin.common.tasks import expand_tasks_with_samples  # pylint: disable=C0415
-            return expand_tasks_with_samples(**parameters)
+            return execution_result
             
-        elif task_type == 'queue_merlin_study':
-            from merlin.common.tasks import queue_merlin_study  # pylint: disable=C0415
-            return queue_merlin_study(**parameters)
-            
-        elif task_type == 'shutdown_workers':
-            from merlin.common.tasks import shutdown_workers  # pylint: disable=C0415
-            return shutdown_workers(**parameters)
-            
-        elif task_type == 'mark_run_as_complete':
-            from merlin.common.tasks import mark_run_as_complete  # pylint: disable=C0415
-            return mark_run_as_complete(**parameters)
-            
-        elif task_type == 'chordfinisher':
-            from merlin.common.tasks import chordfinisher  # pylint: disable=C0415
-            return chordfinisher(**parameters)
-            
-        else:
-            raise ValueError(f"Unknown task type: {task_type}")
+        except subprocess.TimeoutExpired:
+            LOG.error(f"Task {task_msg.task_id} timed out")
+            return {
+                'task_id': task_msg.task_id,
+                'exit_code': 124,
+                'status': 'timeout',
+                'error': 'Task execution timed out'
+            }
+        except Exception as e:
+            LOG.error(f"Script execution failed: {e}")
+            return {
+                'task_id': task_msg.task_id,
+                'exit_code': 1,
+                'status': 'error',
+                'error': str(e)
+            }
     
     def _store_result(self, task_id: str, result_data: Dict[str, Any]):
         """Store task result (simplified implementation)."""
