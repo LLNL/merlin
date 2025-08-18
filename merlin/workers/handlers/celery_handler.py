@@ -14,9 +14,13 @@ such as echoing launch commands, overriding default worker arguments, and disabl
 """
 
 import logging
-from typing import List
+from typing import Dict, List
 
+from rich.console import Console
+
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.workers import CeleryWorker
+from merlin.workers.formatters.formatter_factory import worker_formatter_factory
 from merlin.workers.handlers.worker_handler import MerlinWorkerHandler
 
 
@@ -37,6 +41,12 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         stop_workers: Attempt to stop active Celery workers.
         query_workers: Return a basic summary of Celery worker status.
     """
+
+    def __init__(self):
+        """
+        """
+        super().__init__()
+        self.merlin_db = MerlinDatabase()
 
     def launch_workers(self, workers: List[CeleryWorker], **kwargs):
         """
@@ -68,7 +78,39 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         Attempt to stop Celery workers.
         """
 
-    def query_workers(self):
+    def _build_filters(self, queues: List[str], workers: List[str]) -> Dict[str, List[str]]:
         """
-        Query the status of Celery workers.
+        Build filters dictionary for database queries.
+        
+        Args:
+            queues: List of queue names to filter by.
+            workers: List of worker names to filter by.
+            
+        Returns:
+            Dictionary containing filter criteria.
         """
+        filters = {}
+        if queues:
+            filters["queues"] = queues
+        if workers:
+            filters["workers"] = workers
+        return filters
+
+    def query_workers(self, formatter: str, queues: List[str] = None, workers: List[str] = None):
+        """
+        Query the status of Celery workers and display using the configured formatter.
+
+        Args:
+            queues: List of queue names to filter by (optional).
+            workers: List of worker names to filter by (optional).
+        """
+        # Build filters dictionary
+        filters = self._build_filters(queues, workers)
+
+        # Retrieve workers from database
+        logical_workers = self.merlin_db.get_all("logical_worker", filters=filters)
+
+        # Use formatter to display the results
+        console = Console()
+        formatter = worker_formatter_factory.create(formatter)
+        formatter.format_and_display(logical_workers, filters, self.merlin_db, console)

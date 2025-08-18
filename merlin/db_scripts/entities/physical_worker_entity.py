@@ -294,7 +294,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             The number of times that this worker has been restarted.
         """
         self.reload_data()
-        return self.entity_info.restart_count
+        return int(float(self.entity_info.restart_count))
 
     def increment_restart_count(self):
         """
