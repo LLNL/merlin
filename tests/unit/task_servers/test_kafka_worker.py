@@ -74,7 +74,7 @@ class TestKafkaWorker(unittest.TestCase):
         self.kafka_worker._initialize_consumer()
         
         # Verify consumer subscribed to correct topics
-        expected_topics = ['merlin_tasks_test_queue']
+        expected_topics = ['merlin_tasks_test_queue', 'merlin_control']
         self.mock_consumer.subscribe.assert_called_once_with(expected_topics)
         
     @patch('time.sleep')
@@ -220,6 +220,8 @@ class TestKafkaWorker(unittest.TestCase):
         
         mock_message = MagicMock()
         mock_message.value = json.dumps(control_message).encode()
+        # Remove topic attribute to use fallback logic
+        del mock_message.topic
         
         self.kafka_worker.running = True
         self.kafka_worker._process_message(mock_message)
@@ -248,7 +250,7 @@ class TestKafkaWorker(unittest.TestCase):
         worker = KafkaTaskConsumer(config)
         worker._initialize_consumer()
         
-        expected_topics = ['merlin_tasks_queue1', 'merlin_tasks_queue2']
+        expected_topics = ['merlin_tasks_queue1', 'merlin_tasks_queue2', 'merlin_control']
         self.mock_consumer.subscribe.assert_called_once_with(expected_topics)
         
     def test_error_handling_during_execution(self):
@@ -299,7 +301,8 @@ class TestKafkaWorker(unittest.TestCase):
         expected_topics = [
             'merlin_tasks_high_priority',
             'merlin_tasks_normal', 
-            'merlin_tasks_low_priority'
+            'merlin_tasks_low_priority',
+            'merlin_control'
         ]
         self.mock_consumer.subscribe.assert_called_once_with(expected_topics)
 

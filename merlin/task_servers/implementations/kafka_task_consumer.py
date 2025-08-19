@@ -73,11 +73,14 @@ class KafkaTaskConsumer:
         consumer_config.setdefault('enable_auto_commit', True)
         consumer_config.setdefault('group_id', 'merlin_workers')
         
-        # Subscribe to task topics based on configured queues
+        # Create consumer first
+        self.consumer = KafkaConsumer(**consumer_config)
+        
+        # Subscribe to task topics based on configured queues  
         topics = [f"merlin_tasks_{queue}" for queue in self.config.get('queues', ['default'])]
         topics.append('merlin_control')  # Always listen for control messages
         
-        self.consumer = KafkaConsumer(*topics, **consumer_config)
+        self.consumer.subscribe(topics)
         
         LOG.info(f"Kafka consumer initialized and subscribed to topics: {topics}")
         
