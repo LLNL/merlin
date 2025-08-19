@@ -243,11 +243,11 @@ class KafkaTaskServer(TaskServerInterface):
                 f"""
 import sys
 sys.path.insert(0, '{sys.path[0]}')
-from merlin.task_servers.implementations.kafka_worker import KafkaWorker
+from merlin.task_servers.implementations.kafka_task_consumer import KafkaTaskConsumer
 import json
 
 config = json.loads('''{json.dumps(worker_config)}''')
-worker = KafkaWorker(config)
+worker = KafkaTaskConsumer(config)
 worker.start()
 """
             ]

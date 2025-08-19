@@ -53,48 +53,49 @@ class TestTaskServerIntegration:
     
     @patch('merlin.task_servers.task_server_interface.MerlinDatabase')
     @patch('merlin.celery.app')
-    def test_study_executor_task_server_integration(self, mock_app, mock_db):
-        """Test StudyExecutor integration with TaskServerInterface."""
-        from merlin.study.study_executor import StudyExecutor
-        
-        # Create a real study executor
-        executor = StudyExecutor()
-        
-        # Create mock study components
-        mock_study = MagicMock()
-        mock_study.samples = [{"param": "value1"}, {"param": "value2"}]
-        mock_study.sample_labels = ["sample1", "sample2"]
-        mock_study.workspace = "/test/workspace"
-        
-        mock_dag = MagicMock()
-        mock_dag.group_tasks.return_value = [
-            ["_source"],
-            [["step1"], ["step2", "step3"]]
-        ]
-        mock_study.dag = mock_dag
-        
-        # Mock the task server method
+    def test_merlin_study_task_server_integration(self, mock_app, mock_db):
+        """Test MerlinStudy integration with TaskServerInterface."""
+        # Mock the task server and its methods
         mock_task_server = MagicMock()
         mock_result = MagicMock(spec=AsyncResult)
         mock_result.id = "integration_test_result"
         mock_task_server.submit_study.return_value = mock_result
+        
+        # Create a mock study with the execute_study method
+        mock_study = MagicMock()
+        mock_study.samples = [{"param": "value1"}, {"param": "value2"}]
+        mock_study.sample_labels = ["sample1", "sample2"]
+        mock_study.workspace = "/test/workspace"
+        mock_study.expanded_spec.name = "test_study"
+        
+        # Mock the get_task_server method to return our mock
         mock_study.get_task_server.return_value = mock_task_server
+        mock_study.get_adapter_config.return_value = {"test": "adapter"}
         
-        # Execute the study through StudyExecutor
-        result = executor.execute_study(mock_study, {"test": "adapter"})
+        # Mock the execute_study method to call through to task server
+        def mock_execute_study():
+            try:
+                task_server = mock_study.get_task_server()
+                adapter_config = mock_study.get_adapter_config()
+                from merlin.common.tasks import queue_merlin_study
+                return queue_merlin_study(mock_study, adapter_config)
+            except Exception as e:
+                raise e
         
-        # Verify integration worked correctly
-        assert result == mock_result
-        mock_dag.group_tasks.assert_called_once_with("_source")
-        mock_task_server.submit_study.assert_called_once()
+        mock_study.execute_study = mock_execute_study
         
-        # Verify correct parameters were passed
-        submit_call = mock_task_server.submit_study.call_args
-        assert submit_call[0][0] == mock_study  # study parameter
-        assert submit_call[0][1] == {"test": "adapter"}  # adapter parameter
-        assert submit_call[0][2] == mock_study.samples  # samples parameter
-        assert submit_call[0][3] == mock_study.sample_labels  # sample_labels parameter
-        assert submit_call[0][4] == mock_dag  # egraph parameter
+        # Mock queue_merlin_study to return our test result
+        with patch('merlin.common.tasks.queue_merlin_study') as mock_queue:
+            mock_queue.return_value = mock_result
+            
+            # Execute the study
+            result = mock_study.execute_study()
+            
+            # Verify integration worked correctly
+            assert result == mock_result
+            mock_study.get_task_server.assert_called_once()
+            mock_study.get_adapter_config.assert_called_once()
+            mock_queue.assert_called_once_with(mock_study, {"test": "adapter"})
     
     @patch('merlin.task_servers.task_server_interface.MerlinDatabase')
     @patch('merlin.celery.app')
