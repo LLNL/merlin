@@ -73,13 +73,26 @@ class CeleryTaskServer(TaskServerInterface):
 
         Args:
             task_id_or_signature: Either a task ID (str) to look up in database,
-                                 or a Celery signature to submit directly.
+                                 or a Celery signature to submit directly,
+                                 or a UniversalTaskDefinition for Universal Task System.
             
         Returns:
             The Celery task ID for tracking.
         """
         if not self.celery_app:
             raise RuntimeError("Celery task server not initialized")
+        
+        # Check if we received a UniversalTaskDefinition
+        if hasattr(task_id_or_signature, 'task_type') and hasattr(task_id_or_signature, 'coordination_pattern'):
+            # It's a UniversalTaskDefinition, submit via Universal Task System
+            from merlin.common.tasks import universal_task_handler
+            
+            task_def = task_id_or_signature
+            task_data = task_def.to_dict()
+            
+            result = universal_task_handler.delay(task_data)
+            LOG.info(f"Submitted universal task {task_def.task_id} to Celery: {result.id}")
+            return result.id
         
         # Check if we received a Celery signature directly
         if hasattr(task_id_or_signature, 'delay'):
@@ -128,6 +141,76 @@ class CeleryTaskServer(TaskServerInterface):
         
         LOG.info(f"Submitted {len(task_ids)} tasks to Celery")
         return submitted_ids
+    
+    def submit_study(self, study, adapter, samples, sample_labels, egraph, groups_of_chains):
+        """
+        Submit a complete study using the Universal Task System.
+        
+        This method creates and submits Universal Task Definitions for the entire study,
+        providing enhanced coordination patterns and backend independence.
+        
+        Args:
+            study: MerlinStudy object
+            adapter: Adapter configuration 
+            samples: Study samples
+            sample_labels: Sample labels
+            egraph: Execution graph/DAG
+            groups_of_chains: Task group chains
+            
+        Returns:
+            AsyncResult: Celery result for tracking
+        """
+        try:
+            LOG.info("Submitting study via Universal Task System")
+            
+            # Import Universal Task System components
+            from merlin.factories.universal_task_factory import UniversalTaskFactory
+            from merlin.factories.task_definition import CoordinationPattern, TaskType
+            from merlin.common.tasks import universal_workflow_coordinator
+            
+            # Initialize Universal Task Factory
+            factory = UniversalTaskFactory()
+            
+            # Create universal tasks for each step in the workflow
+            universal_tasks = []
+            
+            for chain_group in groups_of_chains:
+                for gchain in chain_group:
+                    for step_name in gchain:
+                        step = egraph.step(step_name)
+                        
+                        # Create Universal Task Definition for each step
+                        task_def = factory.create_merlin_step_task(
+                            step_config={
+                                'cmd': step.run['cmd'],
+                                'workspace': step.get_workspace(),
+                                'restart': getattr(step, 'restart', None),
+                                'max_retries': getattr(step, 'max_retries', 3)
+                            },
+                            queue_name=step.get_task_queue(),
+                            priority=5
+                        )
+                        
+                        universal_tasks.append(task_def)
+            
+            # Create workflow coordination data
+            workflow_data = {
+                'study_name': study.name,
+                'tasks': [task.to_dict() for task in universal_tasks],
+                'coordination_enabled': True
+            }
+            
+            # Submit via universal workflow coordinator
+            result = universal_workflow_coordinator.delay(workflow_data)
+            
+            LOG.info(f"Submitted study {study.name} with {len(universal_tasks)} universal tasks")
+            return result
+            
+        except Exception as e:
+            LOG.error(f"Failed to submit study via Universal Task System: {e}")
+            # Fallback to traditional approach
+            from merlin.common.tasks import _queue_study_with_celery
+            return _queue_study_with_celery(study, adapter, samples, sample_labels, egraph, groups_of_chains)
 
     def submit_task_group(self, 
                          group_id: str,

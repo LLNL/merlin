@@ -184,6 +184,89 @@ class CeleryWorker(MerlinWorker):
 
         return True
 
+    def _prepare_worker_environment(self) -> Dict[str, str]:
+        """
+        Prepare the environment variables for the worker subprocess.
+        
+        This includes the user's environment variables plus Celery broker configuration
+        derived from Merlin's configuration.
+        
+        Returns:
+            Dictionary of environment variables for the worker subprocess.
+        """
+        import ssl
+        
+        # Start with current environment
+        worker_env = os.environ.copy()
+        
+        # Add user-defined environment variables from spec
+        if self.env:
+            worker_env.update(self.env)
+        
+        # Add Celery broker configuration from Merlin config
+        try:
+            from merlin.config.configfile import CONFIG
+            
+            # Build broker URL
+            broker_config = CONFIG.broker
+            
+            # Read password from file
+            password_file = broker_config.password
+            if os.path.exists(password_file):
+                with open(password_file, 'r') as f:
+                    password = f.read().strip()
+            else:
+                LOG.error(f"Broker password file not found: {password_file}")
+                password = ""
+            
+            # Construct broker URL
+            protocol = "amqps" if broker_config.name == "rabbitmq" else "amqp"
+            broker_url = f"{protocol}://{broker_config.username}:{password}@{broker_config.server}:{broker_config.port}/{broker_config.vhost}"
+            
+            # Set Celery environment variables
+            worker_env['CELERY_BROKER_URL'] = broker_url
+            
+            # Set SSL configuration if using secure connection
+            if protocol == "amqps":
+                ssl_config = {
+                    'cert_reqs': ssl.CERT_NONE,  # Based on app.yaml cert_reqs: none
+                }
+                worker_env['CELERY_BROKER_USE_SSL'] = str(ssl_config)
+            
+            # Set results backend if configured
+            if hasattr(CONFIG, 'results_backend'):
+                results_config = CONFIG.results_backend
+                
+                # Read Redis password
+                redis_password_file = results_config.password  
+                if os.path.exists(redis_password_file):
+                    with open(redis_password_file, 'r') as f:
+                        redis_password = f.read().strip()
+                else:
+                    LOG.error(f"Redis password file not found: {redis_password_file}")
+                    redis_password = ""
+                
+                # Construct results backend URL
+                redis_protocol = "rediss" if results_config.name == "rediss" else "redis"
+                results_url = f"{redis_protocol}://:{redis_password}@{results_config.server}:{results_config.port}/{results_config.db_num}"
+                
+                worker_env['CELERY_RESULT_BACKEND'] = results_url
+                
+                # Set Redis SSL config if using secure connection
+                if redis_protocol == "rediss":
+                    redis_ssl_config = {
+                        'ssl_cert_reqs': ssl.CERT_NONE,  # Based on app.yaml cert_reqs: none
+                    }
+                    worker_env['CELERY_REDIS_BACKEND_USE_SSL'] = str(redis_ssl_config)
+            
+            LOG.debug(f"Prepared worker environment with broker: {broker_config.server}:{broker_config.port}")
+            
+        except Exception as e:
+            LOG.error(f"Failed to configure Celery broker environment: {e}")
+            # Continue with basic environment - better to try to launch than fail completely
+        
+        return worker_env
+
     def launch_worker(self, override_args: str = "", disable_logs: bool = False):
         """
         Launch the worker as a subprocess using the constructed launch command.
@@ -198,7 +281,9 @@ class CeleryWorker(MerlinWorker):
         if self.should_launch():
             launch_cmd = self.get_launch_command(override_args=override_args, disable_logs=disable_logs)
             try:
-                subprocess.Popen(launch_cmd, env=self.env, shell=True, universal_newlines=True)  # pylint: disable=R1732
+                # Create subprocess environment with Celery broker configuration
+                worker_env = self._prepare_worker_environment()
+                subprocess.Popen(launch_cmd, env=worker_env, shell=True, universal_newlines=True)  # pylint: disable=R1732
                 LOG.debug(f"Launched worker '{self.name}' with command: {launch_cmd}.")
             except Exception as e:  # pylint: disable=C0103
                 LOG.error(f"Cannot start celery workers, {e}")

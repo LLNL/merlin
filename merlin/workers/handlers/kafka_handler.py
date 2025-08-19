@@ -18,7 +18,7 @@ from typing import List, Dict, Any
 
 from merlin.spec.specification import MerlinSpec
 from merlin.workers.handlers.worker_handler import MerlinWorkerHandler
-from merlin.workers.kafka_worker import KafkaWorker
+from merlin.task_servers.implementations.kafka_task_consumer import KafkaTaskConsumer
 from merlin.workers.worker import MerlinWorker
 
 
@@ -90,8 +90,8 @@ class KafkaWorkerHandler(MerlinWorkerHandler):
         launched_count = 0
 
         for worker in workers:
-            if not isinstance(worker, KafkaWorker):
-                LOG.warning(f"Skipping non-Kafka worker: {worker.name}")
+            if not isinstance(worker, KafkaTaskConsumer):
+                LOG.warning(f"Skipping non-Kafka worker: {getattr(worker, 'name', 'unknown')}")
                 continue
 
             try:
@@ -221,7 +221,7 @@ class KafkaWorkerHandler(MerlinWorkerHandler):
 
         return status_info
 
-    def create_workers_from_spec(self, spec: MerlinSpec, steps: List[str]) -> List[KafkaWorker]:
+    def create_workers_from_spec(self, spec: MerlinSpec, steps: List[str]) -> List[KafkaTaskConsumer]:
         """
         Create KafkaWorker instances from a MerlinSpec.
 
@@ -300,14 +300,15 @@ class KafkaWorkerHandler(MerlinWorkerHandler):
                 for var_name, var_val in env_vars.items():
                     env[str(var_name)] = str(var_val)
 
-            # Create the Kafka worker
+            # Create the Kafka task consumer
             try:
-                kafka_worker = KafkaWorker(worker_name, config, env)
-                workers.append(kafka_worker)
-                LOG.debug(f"Created Kafka worker: {worker_name}")
+                kafka_consumer = KafkaTaskConsumer(config)
+                kafka_consumer.name = worker_name  # Add name attribute for compatibility
+                workers.append(kafka_consumer)
+                LOG.debug(f"Created Kafka task consumer: {worker_name}")
                 
             except Exception as e:
-                LOG.error(f"Failed to create Kafka worker {worker_name}: {e}")
+                LOG.error(f"Failed to create Kafka task consumer {worker_name}: {e}")
                 continue
 
         LOG.info(f"Created {len(workers)} Kafka workers from spec")

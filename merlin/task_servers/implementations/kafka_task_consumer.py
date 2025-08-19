@@ -295,7 +295,7 @@ def main():
         }
     
     # Start worker
-    worker = KafkaWorker(config)
+    worker = KafkaTaskConsumer(config)
     try:
         worker.start()
     except KeyboardInterrupt:

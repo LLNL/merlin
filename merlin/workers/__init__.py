@@ -33,7 +33,7 @@ Modules:
 """
 
 from merlin.workers.celery_worker import CeleryWorker
-from merlin.workers.kafka_worker import KafkaWorker
+# from merlin.workers.kafka_worker import KafkaWorker  # TODO: Implement in future phase
 
 
-__all__ = ["CeleryWorker", "KafkaWorker"]
+__all__ = ["CeleryWorker"]
