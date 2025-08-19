@@ -19,6 +19,8 @@ __all__ = (
     "InvalidChainException",
     "RestartException",
     "NoWorkersException",
+    "MerlinInvalidTaskServerError",
+    "BackendNotSupportedError",
 )
 
 
@@ -106,6 +108,24 @@ class MerlinInvalidStatusRendererError(Exception):
 
     def __init__(self, message):
         super().__init__(message)
+
+
+class MerlinWorkerHandlerNotSupportedError(Exception):
+    """
+    Exception to signal that the provided worker handler is not supported by Merlin.
+    """
+
+
+class MerlinWorkerNotSupportedError(Exception):
+    """
+    Exception to signal that the provided worker is not supported by Merlin.
+    """
+
+
+class MerlinWorkerLaunchError(Exception):
+    """
+    Exception to signal that an there was a problem when launching workers.
+    """
 
 
 ###############################

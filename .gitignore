@@ -43,6 +43,12 @@ docs/build/
 .tox/*
 .coverage
 **/setup_env.sh
+app.yaml/
+merlin_server/
+.merlin/
+*.out
+*.sbatch
+*.yaml
 
 # Jupyter
 jupyter/.ipynb_checkpoints
@@ -63,6 +69,7 @@ jupyter/testDistributedSamples.py
 *.db
 *.npy
 *.log
+*.txt
 
 # IDEs
 *.idea

@@ -26,9 +26,9 @@ fake_package_list = [
 @pytest.fixture
 def mock_get_distribution():
     """Mock call to get python distribution"""
-    with patch("pkg_resources.get_distribution") as mock_get_distribution:
-        mock_get_distribution.side_effect = [mock_distribution(*package) for package in fake_package_list[1:]]
-        yield mock_get_distribution
+    with patch("merlin.utils.distribution") as mock_distribution_func:
+        mock_distribution_func.side_effect = [mock_distribution(*package) for package in fake_package_list[1:]]
+        yield mock_distribution_func
 
 
 class mock_distribution:
@@ -37,7 +37,11 @@ class mock_distribution:
     def __init__(self, package, version, location):
         self.key = package
         self.version = version
-        self.location = location
+        self._location = location
+
+    def locate_file(self, path):
+        """Mock locate_file method"""
+        return self._location
 
 
 def test_get_package_versions(mock_get_distribution):

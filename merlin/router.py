@@ -28,9 +28,9 @@ from merlin.study.celeryadapter import (
     query_celery_queues,
     query_celery_workers,
     run_celery,
-    start_celery_workers,
     stop_celery_workers,
 )
+from merlin.task_servers.task_server_factory import task_server_factory
 from merlin.study.study import MerlinStudy
 
 
@@ -45,9 +45,9 @@ def run_task_server(study: MerlinStudy, run_mode: str = None):
     """
     Creates the task server interface for managing task communications.
 
-    This function determines which server to send tasks to. It checks if
-    Celery is set as the task server; if not, it logs an error message.
-    The run mode can be specified to determine how tasks should be executed.
+    This function uses the TaskServerInterface to send tasks to the appropriate
+    task server based on the study configuration. It supports various task server
+    types through the pluggable interface.
 
     Args:
         study (study.study.MerlinStudy): The study object representing the
@@ -56,10 +56,16 @@ def run_task_server(study: MerlinStudy, run_mode: str = None):
         run_mode: The type of run mode to use for task execution. This can
             include options such as 'local' or 'batch'.
     """
-    if study.expanded_spec.merlin["resources"]["task_server"] == "celery":
-        run_celery(study, run_mode)
-    else:
-        LOG.error("Celery is not specified as the task server!")
+    try:
+        # Get task server from study configuration
+        task_server = study.get_task_server()
+        
+        # Execute the study using the task server interface
+        study.execute_study()
+        
+    except Exception as e:
+        LOG.error(f"Failed to run task server: {e}")
+        raise
 
 
 def launch_workers(
@@ -68,15 +74,14 @@ def launch_workers(
     worker_args: str = "",
     disable_logs: bool = False,
     just_return_command: bool = False,
+    backend_override: str = None,
 ) -> str:
     """
     Launches workers for the specified study based on the provided
     specification and steps.
 
-    This function checks if Celery is configured as the task server
-    and initiates the specified workers accordingly. It provides options
-    for additional worker arguments, logging control, and command-only
-    execution without launching the workers.
+    This function supports both our TaskServerInterface approach and the
+    boss's WorkerHandler pattern, providing unified worker management.
 
     Args:
         spec (spec.specification.MerlinSpec): Specification details
@@ -89,16 +94,58 @@ def launch_workers(
             Defaults to False.
         just_return_command: If True, the function will not execute the
             command but will return it instead. Defaults to False.
+        backend_override: Override the backend type from CLI (e.g., 'kafka', 'celery').
+            If provided, this takes precedence over spec configuration.
 
     Returns:
-        A string of the worker launch command(s).
+        A string containing all the worker launch commands.
     """
-    if spec.merlin["resources"]["task_server"] == "celery":  # pylint: disable=R1705
-        # Start workers
-        cproc = start_celery_workers(spec, steps, worker_args, disable_logs, just_return_command)
-        return cproc
-    else:
-        LOG.error("Celery is not specified as the task server!")
+    try:
+        # Determine task server type from override or spec configuration
+        task_server_type = backend_override or spec.merlin["resources"]["task_server"]
+        
+        # Try to use the boss's worker handler system first
+        try:
+            from merlin.workers.handlers.handler_factory import worker_handler_factory  # pylint: disable=C0415
+            
+            # Create worker handler
+            handler = worker_handler_factory.create(task_server_type)
+            
+            if handler:
+                # Use boss's worker handler system
+                return handler.launch_workers(
+                    spec=spec,
+                    steps=steps,
+                    worker_args=worker_args,
+                    disable_logs=disable_logs,
+                    just_return_command=just_return_command
+                )
+        except ImportError:
+            # Fall back to our TaskServerInterface if handler system not available
+            LOG.debug("Worker handler system not available, falling back to TaskServerInterface")
+        
+        # Fall back to our TaskServerInterface approach
+        config = spec.get_task_server_config() if hasattr(spec, 'get_task_server_config') else {}
+        
+        # For Kafka backend, add some default config if not provided
+        if task_server_type == 'kafka' and not config:
+            config = {
+                'producer': {'bootstrap_servers': ['localhost:9092']},
+                'consumer': {'bootstrap_servers': ['localhost:9092'], 'group_id': 'merlin_workers'}
+            }
+        
+        task_server = task_server_factory.create(task_server_type, config)
+        
+        # Start workers using the task server interface
+        task_server.start_workers(spec)
+        
+        # For backward compatibility, return a status message
+        return f"Workers started for {task_server_type} task server"
+        
+    except Exception as e:
+        import traceback
+        LOG.error(f"Failed to start workers: {e}")
+        LOG.error(f"Full traceback: {traceback.format_exc()}")
         return "No workers started"
 
 
@@ -107,10 +154,7 @@ def purge_tasks(task_server: str, spec: MerlinSpec, force: bool, steps: List[str
     Purges all tasks from the specified task server.
 
     This function removes tasks from the designated queues associated
-    with the specified steps. It operates without confirmation if
-    the `force` parameter is set to True. The function logs the
-    steps being purged and checks if Celery is the configured task
-    server before proceeding.
+    with the specified steps using the TaskServerInterface.
 
     Args:
         task_server: The task server from which to purge tasks.
@@ -125,16 +169,23 @@ def purge_tasks(task_server: str, spec: MerlinSpec, force: bool, steps: List[str
 
     Returns:
         The result of the purge operation; -1 if the task server is not
-            supported (i.e., not Celery).
+            supported.
     """
     LOG.info(f"Purging queues for steps = {steps}")
 
-    if task_server == "celery":  # pylint: disable=R1705
-        queues = spec.make_queue_string(steps)
-        # Purge tasks
-        return purge_celery_tasks(queues, force)
-    else:
-        LOG.error("Celery is not specified as the task server!")
+    try:
+        # Create task server instance
+        config = spec.get_task_server_config() if spec else {}
+        task_server_instance = task_server_factory.create(task_server, config)
+        
+        # Get queues for the specified steps
+        queues = spec.get_queue_list(steps) if spec else []
+        
+        # Use task server interface to purge tasks
+        return task_server_instance.purge_tasks(list(queues), force)
+            
+    except Exception as e:
+        LOG.error(f"Failed to purge tasks from {task_server}: {e}")
         return -1
 
 
@@ -153,10 +204,17 @@ def dump_queue_info(task_server: str, query_return: List[Tuple[str, int, int]], 
             function, containing tuples of queue information.
         dump_file: The filepath where the queue information will be dumped.
     """
-    if task_server == "celery":
-        dump_celery_queue_info(query_return, dump_file)
-    else:
-        LOG.error("Celery is not specified as the task server!")
+    try:
+        # TODO: Move dump functionality to TaskServerInterface in future version
+        # For now, fall back to Celery-specific implementation
+        if task_server == "celery":
+            from merlin.study.celeryadapter import dump_celery_queue_info  # pylint: disable=C0415
+            dump_celery_queue_info(query_return, dump_file)
+        else:
+            LOG.warning(f"Queue info dump not yet implemented for {task_server} task server")
+            
+    except Exception as e:
+        LOG.error(f"Failed to dump queue info for {task_server}: {e}")
 
 
 def query_queues(
@@ -171,9 +229,7 @@ def query_queues(
 
     This function checks the status of queues tied to a given task server,
     building a list of queues based on the provided steps and specific queue
-    names. It supports querying Celery task servers and returns the results
-    in a structured format. Logging behavior can be controlled with the verbose
-    parameter.
+    names using the TaskServerInterface.
 
     Args:
         task_server: The task server from which to query queues.
@@ -191,12 +247,31 @@ def query_queues(
             containing the number of workers (consumers) and tasks (jobs) attached
             to each queue.
     """
-    if task_server == "celery":  # pylint: disable=R1705
-        # Build a set of queues to query and query them
-        queues = build_set_of_queues(spec, steps, specific_queues, verbose=verbose)
-        return query_celery_queues(queues)
-    else:
-        LOG.error("Celery is not specified as the task server!")
+    try:
+        # Create task server instance
+        config = spec.get_task_server_config() if spec else {}
+        task_server_instance = task_server_factory.create(task_server, config)
+        
+        # Build queues list
+        if specific_queues:
+            queues = specific_queues
+        elif spec and steps:
+            from merlin.study.celeryadapter import build_set_of_queues  # pylint: disable=C0415
+            queues = build_set_of_queues(spec, steps, specific_queues, verbose=verbose)
+        else:
+            queues = []
+        
+        # TODO: Add structured queue query method to TaskServerInterface in future version
+        # For now, fall back to Celery-specific implementation
+        if task_server == "celery":
+            from merlin.study.celeryadapter import query_celery_queues  # pylint: disable=C0415
+            return query_celery_queues(queues)
+        else:
+            LOG.warning(f"Queue query not yet implemented for {task_server} task server")
+            return {}
+            
+    except Exception as e:
+        LOG.error(f"Failed to query queues from {task_server}: {e}")
         return {}
 
 
@@ -212,10 +287,16 @@ def query_workers(task_server: str, spec_worker_names: List[str], queues: List[s
     """
     LOG.info("Searching for workers...")
 
-    if task_server == "celery":
-        query_celery_workers(spec_worker_names, queues, workers_regex)
-    else:
-        LOG.error("Celery is not specified as the task server!")
+    try:
+        # Create task server instance
+        config = {}
+        task_server_instance = task_server_factory.create(task_server, config)
+        
+        # Display connected workers using the interface
+        task_server_instance.display_connected_workers()
+        
+    except Exception as e:
+        LOG.error(f"Failed to query workers from {task_server}: {e}")
 
 
 def get_workers(task_server: str) -> List[str]:
@@ -230,10 +311,15 @@ def get_workers(task_server: str) -> List[str]:
         A list of all connected workers. If the task server is not supported,
             an empty list is returned.
     """
-    if task_server == "celery":  # pylint: disable=R1705
-        return get_workers_from_app()
-    else:
-        LOG.error("Celery is not specified as the task server!")
+    try:
+        # Create task server instance  
+        task_server_instance = task_server_factory.create(task_server, {})
+        
+        # Use TaskServerInterface method
+        return task_server_instance.get_workers()
+            
+    except Exception as e:
+        LOG.error(f"Failed to get workers from {task_server}: {e}")
         return []
 
 
@@ -251,11 +337,15 @@ def stop_workers(task_server: str, spec_worker_names: List[str], queues: List[st
     """
     LOG.info("Stopping workers...")
 
-    if task_server == "celery":  # pylint: disable=R1705
-        # Stop workers
-        stop_celery_workers(queues, spec_worker_names, workers_regex)
-    else:
-        LOG.error("Celery is not specified as the task server!")
+    try:
+        # Create task server instance
+        task_server_instance = task_server_factory.create(task_server, {})
+        
+        # Stop workers using the interface
+        task_server_instance.stop_workers(spec_worker_names)
+        
+    except Exception as e:
+        LOG.error(f"Failed to stop workers from {task_server}: {e}")
 
 
 # TODO in Merlin 1.14 delete all of the below functions since we're deprecating the old version of the monitor
@@ -267,9 +357,8 @@ def get_active_queues(task_server: str) -> Dict[str, List[str]]:
     Retrieve a dictionary of active queues and their associated workers for the specified task server.
 
     This function queries the given task server for its active queues and gathers
-    information about which workers are currently monitoring these queues. It supports
-    the 'celery' task server and returns a structured dictionary containing the queue
-    names as keys and lists of worker names as values.
+    information about which workers are currently monitoring these queues using the
+    TaskServerInterface.
 
     Args:
         task_server: The task server to query for active queues.
@@ -279,16 +368,16 @@ def get_active_queues(task_server: str) -> Dict[str, List[str]]:
             - The keys are the names of the active queues.
             - The values are lists of worker names that are currently attached to those queues.
     """
-    active_queues = {}
-
-    if task_server == "celery":
-        from merlin.celery import app  # pylint: disable=C0415
-
-        active_queues, _ = get_active_celery_queues(app)
-    else:
-        LOG.error("Only celery can be configured currently.")
-
-    return active_queues
+    try:
+        # Create task server instance
+        task_server_instance = task_server_factory.create(task_server, {})
+        
+        # Use TaskServerInterface method
+        return task_server_instance.get_active_queues()
+            
+    except Exception as e:
+        LOG.error(f"Failed to get active queues from {task_server}: {e}")
+        return {}
 
 
 def wait_for_workers(sleep: int, task_server: str, spec: MerlinSpec):  # noqa
@@ -348,16 +437,16 @@ def check_workers_processing(queues_in_spec: List[str], task_server: str) -> boo
     Returns:
         True if workers are still processing tasks, False otherwise.
     """
-    result = False
-
-    if task_server == "celery":
-        from merlin.celery import app  # pylint: disable=import-outside-toplevel
-
-        result = check_celery_workers_processing(queues_in_spec, app)
-    else:
-        LOG.error("Celery is not specified as the task server!")
-
-    return result
+    try:
+        # Create task server instance
+        task_server_instance = task_server_factory.create(task_server, {})
+        
+        # Use TaskServerInterface method
+        return task_server_instance.check_workers_processing(queues_in_spec)
+            
+    except Exception as e:
+        LOG.error(f"Failed to check workers processing for {task_server}: {e}")
+        return False
 
 
 def check_merlin_status(args: Namespace, spec: MerlinSpec) -> bool:
@@ -381,7 +470,7 @@ def check_merlin_status(args: Namespace, spec: MerlinSpec) -> bool:
     # Initialize the variable to track if there are still active tasks
     active_tasks = False
 
-    # Get info about jobs and workers in our spec from celery
+    # Get info about jobs and workers in our spec from task server
     queue_status = query_queues(args.task_server, spec, args.steps, None, verbose=False)
     LOG.debug(f"Monitor: queue_status: {queue_status}")
 

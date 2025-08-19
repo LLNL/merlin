@@ -22,8 +22,7 @@ from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.cli.utils import get_merlin_spec_with_override
 from merlin.config.configfile import initialize_config
-from merlin.db_scripts.merlin_db import MerlinDatabase
-from merlin.router import launch_workers
+from merlin.workers.handlers.handler_factory import worker_handler_factory
 
 
 LOG = logging.getLogger("merlin")
@@ -55,11 +54,18 @@ class RunWorkersCommand(CommandEntryPoint):
         run_workers.set_defaults(func=self.process_command)
         run_workers.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
         run_workers.add_argument(
+            "--backend",
+            type=str,
+            choices=["celery", "kafka"],
+            default=None,
+            help="Task server backend to use (overrides spec configuration)"
+        )
+        run_workers.add_argument(
             "--worker-args",
             type=str,
             dest="worker_args",
             default="",
-            help="celery worker arguments in quotes.",
+            help="worker arguments in quotes.",
         )
         run_workers.add_argument(
             "--steps",
@@ -117,21 +123,28 @@ class RunWorkersCommand(CommandEntryPoint):
         if not args.worker_echo_only:
             LOG.info(f"Launching workers from '{filepath}'")
 
-        # Initialize the database
-        merlin_db = MerlinDatabase()
+        # Get the names of the workers that the user is requesting to start
+        workers_to_start = spec.get_workers_to_start(args.worker_steps)
 
-        # Create logical worker entries
-        step_queue_map = spec.get_task_queues()
-        for worker, steps in spec.get_worker_step_map().items():
-            worker_queues = {step_queue_map[step] for step in steps}
-            merlin_db.create("logical_worker", worker, worker_queues)
+        # Build a list of MerlinWorker instances
+        worker_instances = spec.build_worker_list(workers_to_start)
 
-        # Launch the workers
-        launch_worker_status = launch_workers(
-            spec, args.worker_steps, args.worker_args, args.disable_logs, args.worker_echo_only
+        # Launch the workers or echo out the command that will be used to launch the workers
+        # Use backend override if provided, otherwise use spec configuration
+        backend_type = args.backend or spec.merlin["resources"]["task_server"]
+        
+        worker_handler = worker_handler_factory.create(backend_type)
+        
+        # For unified interface, call launch_workers with spec instead of pre-built instances
+        result = worker_handler.launch_workers(
+            spec=spec,
+            steps=args.worker_steps,
+            worker_args=args.worker_args,
+            disable_logs=args.disable_logs,
+            just_return_command=args.worker_echo_only
         )
-
+        
         if args.worker_echo_only:
-            print(launch_worker_status)
+            print(result)
         else:
-            LOG.debug(f"celery command: {launch_worker_status}")
+            LOG.info(result)
