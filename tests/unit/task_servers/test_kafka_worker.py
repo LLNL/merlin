@@ -25,7 +25,7 @@ class TestKafkaWorker(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         # Mock Kafka consumer to avoid requiring actual Kafka
-        self.mock_kafka_patcher = patch('merlin.task_servers.implementations.kafka_task_consumer.KafkaConsumer')
+        self.mock_kafka_patcher = patch('kafka.KafkaConsumer')
         self.mock_kafka_consumer_class = self.mock_kafka_patcher.start()
         self.mock_consumer = MagicMock()
         self.mock_kafka_consumer_class.return_value = self.mock_consumer
@@ -77,7 +77,7 @@ class TestKafkaWorker(unittest.TestCase):
         expected_topics = ['merlin_tasks_test_queue']
         self.mock_consumer.subscribe.assert_called_once_with(expected_topics)
         
-    @patch('merlin.task_servers.implementations.kafka_task_consumer.time.sleep')
+    @patch('time.sleep')
     def test_start_worker(self, mock_sleep):
         """Test starting the worker."""
         # Mock consumer messages
@@ -91,7 +91,7 @@ class TestKafkaWorker(unittest.TestCase):
         self.mock_consumer.__iter__.return_value = [mock_message]
         
         # Mock task registry
-        with patch('merlin.task_servers.implementations.kafka_task_consumer.task_registry') as mock_registry:
+        with patch('merlin.execution.task_registry.task_registry') as mock_registry:
             mock_task_func = MagicMock(return_value='success')
             mock_registry.get.return_value = mock_task_func
             
@@ -119,7 +119,7 @@ class TestKafkaWorker(unittest.TestCase):
         mock_message.value = json.dumps(message_data).encode()
         
         # Mock task registry and execution
-        with patch('merlin.task_servers.implementations.kafka_task_consumer.task_registry') as mock_registry:
+        with patch('merlin.execution.task_registry.task_registry') as mock_registry:
             mock_task_func = MagicMock(return_value='OK')
             mock_registry.get.return_value = mock_task_func
             
@@ -160,7 +160,7 @@ class TestKafkaWorker(unittest.TestCase):
             'parameters': {}
         }).encode()
         
-        with patch('merlin.task_servers.implementations.kafka_task_consumer.task_registry') as mock_registry:
+        with patch('merlin.execution.task_registry.task_registry') as mock_registry:
             mock_registry.get.return_value = None
             
             # Should handle unknown task gracefully
@@ -233,7 +233,7 @@ class TestKafkaWorker(unittest.TestCase):
         invalid_config = {'queues': ['test']}
         
         try:
-            worker = KafkaWorker(invalid_config)
+            worker = KafkaTaskConsumer(invalid_config)
             worker._initialize_consumer()
         except Exception:
             pass  # Expected to fail gracefully
@@ -245,7 +245,7 @@ class TestKafkaWorker(unittest.TestCase):
             'queues': ['queue1', 'queue2']
         }
         
-        worker = KafkaWorker(config)
+        worker = KafkaTaskConsumer(config)
         worker._initialize_consumer()
         
         expected_topics = ['merlin_tasks_queue1', 'merlin_tasks_queue2']
@@ -261,7 +261,7 @@ class TestKafkaWorker(unittest.TestCase):
         mock_message = MagicMock()
         mock_message.value = json.dumps(message_data).encode()
         
-        with patch('merlin.task_servers.implementations.kafka_task_consumer.task_registry') as mock_registry:
+        with patch('merlin.execution.task_registry.task_registry') as mock_registry:
             # Mock task function that raises exception
             mock_task_func = MagicMock(side_effect=Exception("Task failed"))
             mock_registry.get.return_value = mock_task_func
@@ -293,7 +293,7 @@ class TestKafkaWorker(unittest.TestCase):
             'queues': ['high_priority', 'normal', 'low_priority']
         }
         
-        worker = KafkaWorker(multi_queue_config)
+        worker = KafkaTaskConsumer(multi_queue_config)
         worker._initialize_consumer()
         
         expected_topics = [
