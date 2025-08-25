@@ -839,6 +839,126 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             i += 1
         return string
 
+    def get_task_server_type(self) -> str:
+        """
+        Get the task server type from the specification.
+        
+        This method retrieves the task server type from the merlin.resources
+        section of the specification. It provides backward compatibility by
+        defaulting to 'celery' if no task server is specified.
+        
+        Returns:
+            The task server type as specified in the configuration, or 'celery'
+            as the default for backward compatibility.
+        """
+        try:
+            # Check for new task_server configuration format
+            if 'task_server' in self.merlin:
+                return self.merlin['task_server'].get('type', 'celery')
+            
+            # Check for legacy format in resources section
+            if 'resources' in self.merlin and 'task_server' in self.merlin['resources']:
+                return self.merlin['resources']['task_server']
+            
+            # Default to celery for backward compatibility
+            return 'celery'
+            
+        except (TypeError, KeyError, AttributeError):
+            # If merlin section DNE or incorrect, default to celery
+            return 'celery'
+
+    def get_task_server_config(self) -> Dict[str, Any]:
+        """
+        Get the task server configuration from the specification.
+        
+        This method retrieves the task server configuration from the merlin
+        section of the specification. It supports both new and legacy formats
+        and provides sensible defaults for common configuration parameters.
+        
+        Returns:
+            A dictionary containing the task server configuration. For Celery,
+            this includes broker and backend URLs and other relevant settings.
+        """
+        try:
+            config = {}
+            
+            # Check for new task_server configuration format
+            if 'task_server' in self.merlin and 'config' in self.merlin['task_server']:
+                config.update(self.merlin['task_server']['config'])
+                return config
+            
+            # Check for legacy configuration in resources section
+            if 'resources' in self.merlin:
+                resources = self.merlin['resources']
+                
+                # Extract broker configuration (legacy compatibility)
+                if 'broker' in resources:
+                    broker_config = resources['broker']
+                    if isinstance(broker_config, dict):
+                        if 'url' in broker_config:
+                            config['broker'] = broker_config['url']
+                        config.update({k: v for k, v in broker_config.items() if k != 'url'})
+                    else:
+                        config['broker'] = str(broker_config)
+                
+                # Extract results backend configuration
+                if 'results_backend' in resources:
+                    config['results_backend'] = resources['results_backend']
+                elif 'broker' in config:
+                    # Default results backend to same as broker for simplicity
+                    config['results_backend'] = config['broker']
+                
+                # Extract any additional task server specific configuration
+                if 'task_server_config' in resources:
+                    config.update(resources['task_server_config'])
+            
+            # IFF nothing specified: add default configuration
+            if not config:
+                config = {
+                    'broker': 'redis://localhost:6379/0',
+                    'results_backend': 'redis://localhost:6379/0'
+                }
+            
+            return config
+            
+        except (TypeError, KeyError, AttributeError):
+            # IFF config is incorrrect, return safe defaults
+            return {
+                'broker': 'redis://localhost:6379/0',
+                'results_backend': 'redis://localhost:6379/0'
+            }
+
+    def uses_chord_dependencies(self) -> bool:
+        """
+        Check if workflow uses chord-requiring dependencies.
+        
+        This method analyzes the study steps to determine if any step has
+        dependency patterns that require Celery chord coordination, such as
+        wildcard dependencies like "generate_data_*".
+        
+        Returns:
+            True if any step uses wildcard dependencies that require chords,
+            False otherwise.
+        """
+        try:
+            for step in self.study:
+                # Check if step has a 'run' section with 'depends' clause
+                if isinstance(step, dict) and 'run' in step:
+                    run_config = step['run']
+                    if isinstance(run_config, dict) and 'depends' in run_config:
+                        depends_list = run_config['depends']
+                        if isinstance(depends_list, list):
+                            # Check for wildcard dependencies that require chords
+                            for dep in depends_list:
+                                if isinstance(dep, str) and '*' in dep:
+                                    LOG.debug(f"Found chord dependency pattern: {dep} in step {step.get('name', 'unknown')}")
+                                    return True
+        except Exception as e:
+            LOG.warning(f"Error checking chord dependencies: {e}")
+        
+        return False
+
+
     def get_step_worker_map(self) -> Dict[str, List[str]]:
         """
         Create a mapping of step names to associated workers.
@@ -914,14 +1034,21 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             A dictionary mapping step names to their corresponding task queues.
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+        from merlin.spec.expansion import expand_line  # pylint: disable=C0415
 
         steps = self.get_study_steps()
         queues = {}
+        var_dict = self.environment.get("variables", {})
+        
         for step in steps:
-            if "task_queue" in step.run and (omit_tag or CONFIG.celery.omit_queue_tag):
-                queues[step.name] = step.run["task_queue"]
-            elif "task_queue" in step.run:
-                queues[step.name] = CONFIG.celery.queue_tag + step.run["task_queue"]
+            if "task_queue" in step.run:
+                # Expand variables in the task queue name
+                task_queue = expand_line(step.run["task_queue"], var_dict)
+                
+                if omit_tag or CONFIG.celery.omit_queue_tag:
+                    queues[step.name] = task_queue
+                else:
+                    queues[step.name] = CONFIG.celery.queue_tag + task_queue
         return queues
 
     def get_queue_step_relationship(self) -> Dict[str, List[str]]:
@@ -982,6 +1109,9 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 task queues.
         """
         queues = self.get_task_queues(omit_tag=omit_tag)
+        if not steps:
+            # If no steps provided, return empty list
+            return []
         if steps[0] == "all":
             task_queues = queues.values()
         else:
@@ -1009,10 +1139,10 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 queue string.
 
         Returns:
-            A quoted string of unique task queues, separated by commas.
+            A comma-separated string of unique task queues.
         """
         queues = ",".join(set(self.get_queue_list(steps)))
-        return shlex.quote(queues)
+        return queues
 
     def get_worker_names(self) -> List[str]:
         """

@@ -11,9 +11,8 @@ import os
 import re
 from contextlib import suppress
 from copy import deepcopy
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
-from celery import current_task
 from maestrowf.abstracts.enums import State
 from maestrowf.abstracts.interfaces.scriptadapter import ScriptAdapter
 from maestrowf.datastructures.core.executiongraph import _StepRecord
@@ -29,39 +28,62 @@ from merlin.utils import needs_merlin_expansion
 LOG = logging.getLogger(__name__)
 
 
-def get_current_worker() -> str:
+def get_current_worker(task_server: str = "celery") -> Optional[str]:
     """
-    Get the worker on the current running task from Celery.
+    Get the worker on the current running task from the configured task server.
 
     This function retrieves the name of the worker that is currently
-    executing the task. It extracts the worker's name from the task's
-    request hostname.
+    executing the task. The implementation varies based on the task server type.
+
+    Args:
+        task_server: The task server type ("celery", etc.)
 
     Returns:
-        The name of the current worker.
+        The name of the current worker, or None if unable to determine.
     """
-    worker = re.search(r"@.+\.", current_task.request.hostname).group()
-    worker = worker[1 : len(worker) - 1]
-    return worker
+    if task_server == "celery":
+        try:
+            from celery import current_task  # pylint: disable=C0415
+            worker = re.search(r"@.+\.", current_task.request.hostname).group()
+            worker = worker[1 : len(worker) - 1]
+            return worker
+        except (ImportError, AttributeError, TypeError):
+            LOG.warning("Unable to determine current worker from Celery")
+            return None
+    else:
+        # For other task servers, we may not have worker information available
+        LOG.debug(f"Worker detection not implemented for task server: {task_server}")
+        return None
 
 
-def get_current_queue() -> str:
+def get_current_queue(task_server: str = "celery") -> Optional[str]:
     """
-    Get the queue on the current running task from Celery.
+    Get the queue on the current running task from the configured task server.
 
     This function retrieves the name of the queue that the current
-    task is associated with. It extracts the routing key from the
-    task's delivery information and removes the queue tag defined
-    in the configuration.
+    task is associated with. The implementation varies based on the task server type.
+
+    Args:
+        task_server: The task server type ("celery", etc.)
 
     Returns:
-        The name of the current queue.
+        The name of the current queue, or None if unable to determine.
     """
-    from merlin.config.configfile import CONFIG  # pylint: disable=C0415
+    if task_server == "celery":
+        try:
+            from celery import current_task  # pylint: disable=C0415
+            from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
-    queue = current_task.request.delivery_info["routing_key"]
-    queue = queue.replace(CONFIG.celery.queue_tag, "")
-    return queue
+            queue = current_task.request.delivery_info["routing_key"]
+            queue = queue.replace(CONFIG.celery.queue_tag, "")
+            return queue
+        except (ImportError, AttributeError, TypeError, KeyError):
+            LOG.warning("Unable to determine current queue from Celery")
+            return None
+    else:
+        # For other task servers, we may not have queue information available
+        LOG.debug(f"Queue detection not implemented for task server: {task_server}")
+        return None
 
 
 class MerlinStepRecord(_StepRecord):
@@ -277,6 +299,11 @@ class MerlinStepRecord(_StepRecord):
         if result:
             LOG.debug(f"Result for {self.name} is {result}")
 
+        # Error logging for failed tasks
+        if self.status == State.FAILED or (result and "SOFT_FAIL" in str(result)):
+            LOG.error(f"> MERLIN TASK FAILURE DETECTED: {self.name}")
+            self._log_error_files_for_failed_task()
+
         status_filepath = f"{self.workspace.value}/MERLIN_STATUS.json"
 
         LOG.debug(f"Status filepath for {self.name}: '{status_filepath}")
@@ -312,30 +339,73 @@ class MerlinStepRecord(_StepRecord):
             "restarts": self.restarts,
         }
 
-        # Add celery specific info
+        # Add task server specific info
         if task_server == "celery":
             from merlin.celery import app  # pylint: disable=C0415
 
             # If the tasks are always eager, this is a local run and we won't have workers running
             if not app.conf.task_always_eager:
-                status_info[self.name]["task_queue"] = get_current_queue()
+                current_queue = get_current_queue(task_server)
+                if current_queue:
+                    status_info[self.name]["task_queue"] = current_queue
 
                 # Add the current worker to the workspace-specific status info
-                current_worker = get_current_worker()
-                if "workers" not in status_info[self.name][self.condensed_workspace]:
-                    status_info[self.name][self.condensed_workspace]["workers"] = [current_worker]
-                elif current_worker not in status_info[self.name][self.condensed_workspace]["workers"]:
-                    status_info[self.name][self.condensed_workspace]["workers"].append(current_worker)
+                current_worker = get_current_worker(task_server)
+                if current_worker:
+                    if "workers" not in status_info[self.name][self.condensed_workspace]:
+                        status_info[self.name][self.condensed_workspace]["workers"] = [current_worker]
+                    elif current_worker not in status_info[self.name][self.condensed_workspace]["workers"]:
+                        status_info[self.name][self.condensed_workspace]["workers"].append(current_worker)
 
-                # Add the current worker to the overall-step status info
-                if "workers" not in status_info[self.name]:
-                    status_info[self.name]["workers"] = [current_worker]
-                elif current_worker not in status_info[self.name]["workers"]:
-                    status_info[self.name]["workers"].append(current_worker)
+                    # Add the current worker to the overall-step status info
+                    if "workers" not in status_info[self.name]:
+                        status_info[self.name]["workers"] = [current_worker]
+                    elif current_worker not in status_info[self.name]["workers"]:
+                        status_info[self.name]["workers"].append(current_worker)
 
         LOG.info(f"Writing status for {self.name} to '{status_filepath}...")
         write_status(status_info, status_filepath, f"{self.workspace.value}/status.lock")
         LOG.info(f"Status for {self.name} successfully written.")
+
+    def _log_error_files_for_failed_task(self):
+        """
+        Error logging for failed tasks: searches for and logs contents of .err files
+        in the task workspace to aid debugging.
+        
+        This method searches for error files (*.err) in the task's workspace directory and logs 
+        their contents when a task fails. This provides transparency into task failure reasons 
+        without requiring manual inspection of the workspace.
+        """
+        import glob
+        
+        workspace_path = self.workspace.value
+        LOG.error(f"TASK FAILURE DETECTED for step '{self.name}' in workspace: {workspace_path}")
+        
+        err_files = glob.glob(f"{workspace_path}/*.err")
+        
+        if not err_files:
+            LOG.warning(f"No .err files found in failed task workspace: {workspace_path}")
+        
+        # Log contents of found error files
+        for err_file in err_files:
+            LOG.error(f"ERROR FILE FOUND: {err_file}")
+            try:
+                with open(err_file, 'r') as f:
+                    error_content = f.read().strip()
+                    if error_content:
+                        LOG.error(f"ERROR FILE CONTENTS ({err_file}):\n{error_content}")
+                    else:
+                        LOG.warning(f"Error file {err_file} is empty")
+            except Exception as e:
+                LOG.error(f"Failed to read error file {err_file}: {e}")
+        
+        # Also log any existing script files that might provide context
+        script_files = glob.glob(f"{workspace_path}/*.sh")
+        for script_file in script_files:
+            LOG.debug(f"Script file found for failed task: {script_file}")
+            
+        if not err_files:
+            LOG.error(f"No error files found for failed task '{self.name}'. Check task workspace manually: {workspace_path}")
 
 
 class Step:
