@@ -15,7 +15,6 @@ for a distinct Merlin command, following a consistent structure built around the
 Modules:
     command_entry_point: Defines the abstract base class `CommandEntryPoint` for all CLI commands.
     config: Implements the `config` command for managing Merlin configuration files.
-    database: Implements the `database` command for interacting with the underlying database (view, delete, inspect).
     example: Implements the `example` command to download and set up example workflows.
     info: Implements the `info` command for displaying configuration and environment diagnostics.
     monitor: Implements the `monitor` command to keep workflow allocations alive.
@@ -28,6 +27,10 @@ Modules:
     server: Implements the `server` command to manage containerized Redis server components.
     status: Implements the `status` and `detailed-status` commands for workflow state inspection.
     stop_workers: Implements the `stop-workers` command for terminating active workers.
+
+Subpackages:
+    database: Implements the `database` command group and its subcommands (`get`, `delete`, `info`)
+        for interacting with the Merlin database.
 """
 
 from merlin.cli.commands.config import ConfigCommand

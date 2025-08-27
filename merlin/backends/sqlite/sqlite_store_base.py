@@ -23,11 +23,12 @@ See also:
 
 import logging
 from datetime import datetime
-from typing import Any, Generic, List, Optional, Type
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type
 
 from merlin.backends.sqlite.sqlite_connection import SQLiteConnection
 from merlin.backends.store_base import StoreBase, T
 from merlin.backends.utils import deserialize_entity, get_not_found_error_class, serialize_entity
+from merlin.utils import get_plural_of_entity
 
 
 LOG = logging.getLogger(__name__)
@@ -177,25 +178,68 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
 
             return deserialize_entity(dict(row), self.model_class)
 
-    def retrieve_all(self) -> List[T]:
+    def _build_where_clause_and_params(self, filters: Dict[str, Any]) -> Tuple[str, List[Any]]:
         """
-        Query the SQLite database for all entities of this type.
+        Build the SQL WHERE clause and associated parameter list from a filters dictionary.
+
+        Args:
+            filters: Dictionary where keys are column names and values are either
+                    single values (for equality) or lists (for IN clauses).
 
         Returns:
-            A list of entities.
+            A tuple of (where_clause: str, params: List[Any])
         """
-        entity_type = f"{self.table_name}s" if self.table_name != "study" else "studies"
-        LOG.info(f"Fetching all {entity_type} from SQLite...")
+        if not filters:
+            return "", []
+
+        conditions = []
+        params = []
+
+        for column, value in filters.items():
+            if isinstance(value, list):
+                if not value:
+                    # Avoid generating invalid SQL like `IN ()`
+                    conditions.append("1 = 0")
+                else:
+                    # We have to use LIKE for lists since they're stored as strings
+                    sub_conditions = [f"{column} LIKE ?" for _ in value]
+                    conditions.append("(" + " OR ".join(sub_conditions) + ")")
+                    params.extend([f"%{v}%" for v in value])
+            else:
+                conditions.append(f"{column} = ?")
+                params.append(value)
+
+        where_clause = "WHERE " + " AND ".join(conditions)
+        return where_clause, params
+
+    def _retrieve_by_query(self, filters: Optional[Dict[str, Any]] = None) -> List[T]:
+        """
+        Internal method to query the SQLite database for entities with optional filters.
+
+        Args:
+            filters: Optional dictionary of column filters.
+
+        Returns:
+            A list of matching entities.
+        """
+        entity_type = get_plural_of_entity(self.table_name, split_delimiter="_", join_delimiter=" ")
+        log_action = "filtered" if filters else "all"
+        LOG.info(f"Fetching {log_action} {entity_type} from SQLite{f' with filters: {filters}' if filters else ''}...")
+
+        where_clause, params = self._build_where_clause_and_params(filters)
+        query = f"SELECT * FROM {self.table_name} {where_clause}"
+        LOG.debug(f"SQLite query: {query}")
+        LOG.debug(f"SQLite params: {params}")
 
         with SQLiteConnection() as conn:
-            cursor = conn.execute(f"SELECT * FROM {self.table_name}")
-            all_entities = []
+            cursor = conn.execute(query, params)
+            entities = []
 
             for row in cursor.fetchall():
                 try:
                     entity = deserialize_entity(dict(row), self.model_class)
                     if entity:
-                        all_entities.append(entity)
+                        entities.append(entity)
                     else:
                         LOG.warning(
                             f"{self.table_name.capitalize()} with id '{row['id']}' could not be retrieved or does not exist."
@@ -203,8 +247,29 @@ class SQLiteStoreBase(StoreBase[T], Generic[T]):
                 except Exception as exc:  # pylint: disable=broad-except
                     LOG.error(f"Error retrieving {self.table_name} with id '{row['id']}': {exc}")
 
-        LOG.info(f"Successfully retrieved {len(all_entities)} {entity_type} from SQLite.")
-        return all_entities
+        LOG.info(f"Successfully retrieved {len(entities)} {entity_type} from SQLite ({log_action}).")
+        return entities
+
+    def retrieve_all(self) -> List[T]:
+        """
+        Query the SQLite database for all entities of this type.
+
+        Returns:
+            A list of entities.
+        """
+        return self._retrieve_by_query()
+
+    def retrieve_all_filtered(self, filters: Dict[str, Any]) -> List[T]:
+        """
+        Query the SQLite database for all entities of this type that match the given filters.
+
+        Args:
+            filters: A dictionary where keys are column names and values are the values to match.
+
+        Returns:
+            A list of filtered entities.
+        """
+        return self._retrieve_by_query(filters=filters)
 
     def delete(self, identifier: str, by_name: bool = False):
         """

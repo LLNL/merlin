@@ -17,11 +17,12 @@ for consistent data handling during create and delete operations.
 from __future__ import annotations
 
 import logging
-from typing import Any, List
+from typing import Any, Callable, Dict, List
 
+from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.entities.run_entity import RunEntity
-from merlin.db_scripts.entity_managers.entity_manager import EntityManager
+from merlin.db_scripts.entity_managers.entity_manager import EntityManager, T
 from merlin.exceptions import StudyNotFoundError, WorkerNotFoundError
 
 
@@ -43,6 +44,10 @@ class RunManager(EntityManager[RunEntity, RunModel]):
         backend: The database backend used for storing run entities.
         db: Reference to the main Merlin database, allowing access to other entity managers
             such as studies and logical workers.
+        _filter_accessor_map: A dictionary mapping supported filter keys to accessor functions
+            for the entity type. Used by filtering logic (e.g., in `get_all`) to dynamically
+            retrieve values from entity instances. Subclasses must override this to enable
+            filtering support.
 
     Methods:
         create: Create a new run associated with a study and workspace.
@@ -52,6 +57,28 @@ class RunManager(EntityManager[RunEntity, RunModel]):
         delete_all: Delete all runs in the database.
         set_db_reference: Set the reference to the main Merlin database for cross-entity operations.
     """
+
+    _filter_accessor_map: Dict[str, Callable[[T], Any]] = {
+        "study_id": lambda e: e.get_study_id(),
+        "run_complete": lambda e: e.run_complete,
+        "queues": lambda e: e.get_queues(),
+        "workers": lambda e: e.get_workers(),
+    }
+
+    def __init__(self, backend: ResultsBackend):
+        """
+        Initialize the PhysicalWorkerManager with the given backend.
+
+        This sets up the manager to handle physical worker entities by specifying
+        the associated entity class and entity type string. These are used by the
+        base EntityManager to perform generic operations like retrieving and filtering entities.
+
+        Args:
+            backend (ResultsBackend): The backend used to persist and retrieve physical worker data.
+        """
+        super().__init__(backend)
+        self._entity_class = RunEntity
+        self._entity_type = "run"
 
     def create(self, study_name: str, workspace: str, queues: List[str], **kwargs: Any) -> RunEntity:
         """
@@ -109,15 +136,6 @@ class RunManager(EntityManager[RunEntity, RunModel]):
             RunNotFoundError: If no run is found matching the identifier.
         """
         return self._get_entity(RunEntity, run_id_or_workspace)
-
-    def get_all(self) -> List[RunEntity]:
-        """
-        Retrieve all run entities stored in the database.
-
-        Returns:
-            A list of all run entities.
-        """
-        return self._get_all_entities(RunEntity, "run")
 
     def delete(self, run_id_or_workspace: str):
         """

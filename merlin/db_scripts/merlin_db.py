@@ -20,6 +20,7 @@ from merlin.db_scripts.entity_managers.physical_worker_manager import PhysicalWo
 from merlin.db_scripts.entity_managers.run_manager import RunManager
 from merlin.db_scripts.entity_managers.study_manager import StudyManager
 from merlin.exceptions import EntityManagerNotSupportedError
+from merlin.utils import pluralize
 
 
 LOG = logging.getLogger("merlin")
@@ -186,21 +187,25 @@ class MerlinDatabase:
         self._validate_entity_type(entity_type)
         return self._entity_managers[entity_type].get(*args, **kwargs)
 
-    def get_all(self, entity_type: str) -> List[Any]:
+    def get_all(self, entity_type: str, filters: Dict = None) -> List[Any]:
         """
-        Get all entities of a specific type.
+        Get all entities of a specific type, optionally filtering results.
 
         Args:
             entity_type: The type of entities to get (study, run, logical_worker, physical_worker).
+            filters: A dictionary of filter keys and values used to narrow down the query results.
+                Filter keys must correspond to supported filters defined in the ENTITY_REGISTRY
+                for the given entity type. Values are compared against entity attributes or
+                accessor methods (e.g., {"name": "foo"}, {"queues": ["queue1", "queue2"]}).
 
         Returns:
-            A list of all entities of the specified type.
+            A list of all entities of the specified type matching the filters.
 
         Raises:
             EntityManagerNotSupportedError: If the entity type is not supported.
         """
         self._validate_entity_type(entity_type)
-        return self._entity_managers[entity_type].get_all()
+        return self._entity_managers[entity_type].get_all(filters)
 
     def delete(self, entity_type: str, *args, **kwargs) -> None:
         """
@@ -265,3 +270,82 @@ class MerlinDatabase:
             LOG.info("Database successfully flushed.")
         else:
             LOG.info("Database flush cancelled.")
+
+    def _fetch_info_data(self, max_preview: int):
+        """ """
+        display_config = {
+            "study": {"ID": "get_id", "Name": "get_name"},
+            "run": {"ID": "get_id", "Workspace": "get_workspace"},
+            "logical_worker": {"ID": "get_id", "Name": "get_name", "Queues": "get_queues"},
+            "physical_worker": {"ID": "get_id", "Name": "get_name"},
+        }
+
+        entity_summaries = {}
+
+        for entity_type, manager in self._entity_managers.items():
+            all_entities = manager.get_all()
+            preview_config = display_config.get(entity_type, {})
+            preview_data = []
+
+            for entity in all_entities[:max_preview]:
+                preview = {}
+                for label, method_name in preview_config.items():
+                    value = "<unknown>"
+                    method = getattr(entity, method_name, None)
+                    if callable(method):
+                        value = method()
+                    else:
+                        LOG.warning(f"Method '{method}' is not callable.")
+                    preview[label] = value
+                preview_data.append(preview)
+
+            entity_summaries[entity_type] = {
+                "total": len(all_entities),
+                "preview": preview_data,
+                "fields": list(preview_config.keys()),
+            }
+
+        return entity_summaries
+
+    def _display_info_data(self, entity_summaries: Dict):
+        """ """
+        # Display general information
+        print("Merlin Database Information")
+        print("---------------------------")
+        print("General Information:")
+        print(f"- Database Type: {self.get_db_type()}")
+        print(f"- Database Version: {self.get_db_version()}")
+        print(f"- Connection String: {self.get_connection_string()}\n")
+
+        # Display entity-specific information
+        for entity_type, summary in entity_summaries.items():
+            title_words = entity_type.replace("_", " ").title().split()
+            title_words[-1] = pluralize(title_words[-1])
+            title = " ".join(title_words)
+            print(f"{title}:")
+            print(f"- Total: {summary['total']}")
+
+            if summary["total"] > 0 and summary["fields"]:
+                print(f"- Recent {title}:")
+                for i, preview in enumerate(summary["preview"], start=1):
+                    detail_str = ", ".join(
+                        f"{field.title()}: {preview.get(field, '<unknown>')}" for field in summary["fields"]
+                    )
+                    print(f"    {i}. {detail_str}")
+                remaining = summary["total"] - len(summary["preview"])
+                if remaining > 0:
+                    print(f"    (and {remaining} more {entity_type}s)")
+            print()
+
+    def info(self, max_preview: int = 3):
+        """
+        Print summarized information about the database contents.
+
+        Args:
+            max_preview: Number of recent entries to preview per entity type.
+        """
+        # Step 1: Fetch all data first to avoid log statements cluttering output
+        entity_summaries = self._fetch_info_data(max_preview)
+
+        # Step 2: Print everything after fetching
+        self._display_info_data(entity_summaries)

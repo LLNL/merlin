@@ -33,6 +33,109 @@ ARRAY_FILE_FORMATS = ".npy, .csv, .tab"
 DEFAULT_FLUX_VERSION = "0.48.0"
 
 
+def pluralize(word: str) -> str:
+    """
+    Return the plural form of a given English noun.
+
+    This does not take into account irregular nouns like "goose",
+    "man", etc.
+
+    Args:
+        word (str): The singular noun to pluralize.
+
+    Returns:
+        str: The plural form of the noun.
+    """
+    if word.endswith(("s", "sh", "ch", "x", "z")):  # e.g., "bash" -> "bashes"
+        return word + "es"
+    elif word.endswith("y") and word[-2] not in "aeiou":  # e.g., "study" -> "studies"
+        return word[:-1] + "ies"
+    elif word.endswith("f"):  # e.g., "wolf" -> "wolves"
+        return word[:-1] + "ves"
+    elif word.endswith("fe"):  # e.g., "knife" -> "knives"
+        return word[:-2] + "ves"
+    else:  # e.g., "worker" -> "workers"
+        return word + "s"
+
+
+def singularize(word: str) -> str:
+    """
+    Return the singular form of a given English noun.
+
+    This is the inverse of the `pluralize` function and assumes regular
+    pluralization rules only (no irregulars like "geese" → "goose").
+
+    Args:
+        word (str): The plural noun to singularize.
+
+    Returns:
+        str: The singular form of the noun.
+    """
+    if word.endswith("ies") and len(word) > 3 and word[-4] not in "aeiou":  # e.g., "studies" -> "study"
+        return word[:-3] + "y"
+    elif word.endswith("ves"):
+        if len(word) > 4 and word[-4] == "l":  # e.g., "wolves" -> "wolf"
+            return word[:-3] + "f"
+        else:  # default assumption: e.g., "knives" -> "knife"
+            return word[:-3] + "fe"
+    elif word.endswith("es") and any(
+        word.endswith(suffix + "es") for suffix in ("s", "sh", "ch", "x", "z")
+    ):  # e.g., "bashes" -> "bash"
+        return word[:-2]
+    elif word.endswith("s") and not word.endswith("ss"):  # e.g., "workers" -> "worker"
+        return word[:-1]
+    else:
+        return word  # likely already singular or unrecognized plural
+
+
+def transform_entity_suffix(entity_name: str, transform_fn, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
+    """
+    Applies a transformation function to the last word of a `delimiter`-separated entity name.
+
+    Args:
+        entity_name (str): The original entity name (e.g., "logical-worker").
+        transform_fn (Callable): A function like `pluralize` or `singularize`.
+        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
+        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
+
+    Returns:
+        The transformed entity name with the suffix modified.
+    """
+    entity_words = entity_name.split(split_delimiter)
+    entity_words[-1] = transform_fn(entity_words[-1])
+    return join_delimiter.join(entity_words)
+
+
+def get_plural_of_entity(entity_name: str, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
+    """
+    Converts the last word of a `delimiter`-separated entity name to its plural form.
+
+    Args:
+        entity_name (str): The original entity name (e.g., "logical-worker").
+        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
+        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
+
+    Returns:
+        The pluralized entity name.
+    """
+    return transform_entity_suffix(entity_name, pluralize, split_delimiter=split_delimiter, join_delimiter=join_delimiter)
+
+
+def get_singular_of_entity(entity_name: str, split_delimiter: str = "-", join_delimiter: str = "-") -> str:
+    """
+    Converts the last word of a `delimiter`-separated entity name to its singular form.
+
+    Args:
+        entity_name (str): The plural entity name (e.g., "logical-workers").
+        split_delimiter (str): The delimiter to use when splitting the entity name (default: "-").
+        join_delimiter (str): The delimiter to use when joining the entity name (default: "-").
+
+    Returns:
+        The singularized entity name.
+    """
+    return transform_entity_suffix(entity_name, singularize, split_delimiter=split_delimiter, join_delimiter=join_delimiter)
+
+
 def get_user_process_info(user: str = None, attrs: List[str] = None) -> List[Dict]:
     """
     Return a list of process information for all of the user's running processes.

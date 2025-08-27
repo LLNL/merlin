@@ -163,17 +163,15 @@ class TestMerlinBaseFactory:
         ):  # raises RuntimeError because of `_raise_component_error_class`
             factory.get_component_info("not_registered")
 
-    def test_discover_plugins_calls_both_hooks(self, mocker: MockerFixture, factory: TestableFactory):
+    def test_discover_plugins_calls_hooks(self, mocker: MockerFixture, factory: TestableFactory):
         """
-        Test that _discover_plugins calls both plugin and module hooks.
+        Test that _discover_plugins calls plugin hooks.
 
         Args:
             mocker: PyTest mocker fixture.
             factory: An instance of the dummy `TestableFactory` class for testing.
         """
         plugin_mock = mocker.patch.object(factory, "_discover_plugins_via_entry_points")
-        builtin_mock = mocker.patch.object(factory, "_discover_builtin_modules")
 
         factory._discover_plugins()
         plugin_mock.assert_called_once()
-        builtin_mock.assert_called_once()

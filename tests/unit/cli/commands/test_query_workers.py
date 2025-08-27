@@ -38,29 +38,37 @@ def test_add_parser_sets_up_query_workers_command(create_parser: FixtureCallable
 
 def test_process_command_without_spec(mocker: MockerFixture):
     """
-    Ensure `process_command` calls `query_workers` directly if no spec is provided.
+    Ensure `process_command` calls worker_handler.query_workers if no spec is provided.
 
     Args:
         mocker: PyTest mocker fixture.
     """
-    query_workers_mock = mocker.patch("merlin.cli.commands.query_workers.query_workers")
+    worker_handler_mock = mocker.Mock()
+    create_mock = mocker.patch(
+        "merlin.cli.commands.query_workers.worker_handler_factory.create",
+        return_value=worker_handler_mock,
+    )
 
     args = Namespace(
         task_server="celery",
         spec=None,
         queues=["q1", "q2"],
         workers=["worker1", "worker2"],
+        format="rich",
     )
 
     cmd = QueryWorkersCommand()
     cmd.process_command(args)
 
-    query_workers_mock.assert_called_once_with("celery", [], ["q1", "q2"], ["worker1", "worker2"])
+    create_mock.assert_called_once_with("celery")
+    worker_handler_mock.query_workers.assert_called_once_with(
+        "rich", queues=["q1", "q2"], workers=["worker1", "worker2"]
+    )
 
 
 def test_process_command_with_spec(mocker: MockerFixture, caplog: CaptureFixture):
     """
-    Ensure `process_command` loads worker names from spec and passes them to `query_workers`.
+    Ensure `process_command` loads worker names from spec and passes them to worker_handler.query_workers.
 
     Args:
         mocker: PyTest mocker fixture.
@@ -70,22 +78,32 @@ def test_process_command_with_spec(mocker: MockerFixture, caplog: CaptureFixture
 
     mock_spec = mocker.Mock()
     mock_spec.get_worker_names.return_value = ["foo", "bar"]
+    mock_spec.merlin = {"resources": {"task_server": "celery"}}
 
     mocker.patch("merlin.cli.commands.query_workers.verify_filepath", return_value="some/path/spec.yaml")
     mocker.patch("merlin.cli.commands.query_workers.MerlinSpec.load_specification", return_value=mock_spec)
-    query_workers_mock = mocker.patch("merlin.cli.commands.query_workers.query_workers")
+
+    worker_handler_mock = mocker.Mock()
+    create_mock = mocker.patch(
+        "merlin.cli.commands.query_workers.worker_handler_factory.create",
+        return_value=worker_handler_mock,
+    )
 
     args = Namespace(
-        task_server="celery",
+        task_server="ignored",
         spec="workflow.yaml",
         queues=None,
         workers=None,
+        format="rich",
     )
 
     cmd = QueryWorkersCommand()
     cmd.process_command(args)
 
-    query_workers_mock.assert_called_once_with("celery", ["foo", "bar"], None, None)
+    create_mock.assert_called_once_with("celery")
+    worker_handler_mock.query_workers.assert_called_once_with(
+        "rich", queues=None, workers=["foo", "bar"]
+    )
     assert "Searching for the following workers to stop" in caplog.text
 
 
@@ -101,20 +119,29 @@ def test_process_command_logs_warning_for_unexpanded_worker(mocker: MockerFixtur
 
     mock_spec = mocker.Mock()
     mock_spec.get_worker_names.return_value = ["$ENV_VAR", "actual_worker"]
+    mock_spec.merlin = {"resources": {"task_server": "celery"}}
 
     mocker.patch("merlin.cli.commands.query_workers.verify_filepath", return_value="workflow.yaml")
     mocker.patch("merlin.cli.commands.query_workers.MerlinSpec.load_specification", return_value=mock_spec)
-    query_workers_mock = mocker.patch("merlin.cli.commands.query_workers.query_workers")
+
+    worker_handler_mock = mocker.Mock()
+    mocker.patch(
+        "merlin.cli.commands.query_workers.worker_handler_factory.create",
+        return_value=worker_handler_mock,
+    )
 
     args = Namespace(
-        task_server="celery",
+        task_server="ignored",
         spec="workflow.yaml",
         queues=None,
         workers=None,
+        format="rich",
     )
 
     cmd = QueryWorkersCommand()
     cmd.process_command(args)
 
     assert "Worker '$ENV_VAR' is unexpanded. Target provenance spec instead?" in caplog.text
-    query_workers_mock.assert_called_once_with("celery", ["$ENV_VAR", "actual_worker"], None, None)
+    worker_handler_mock.query_workers.assert_called_once_with(
+        "rich", queues=None, workers=["$ENV_VAR", "actual_worker"]
+    )

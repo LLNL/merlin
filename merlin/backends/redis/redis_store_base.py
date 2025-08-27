@@ -24,6 +24,7 @@ from redis import Redis
 
 from merlin.backends.store_base import StoreBase, T
 from merlin.backends.utils import deserialize_entity, get_not_found_error_class, serialize_entity
+from merlin.utils import get_plural_of_entity
 
 
 LOG = logging.getLogger(__name__)
@@ -124,7 +125,7 @@ class RedisStoreBase(StoreBase[T], Generic[T]):
         Returns:
             A list of entities.
         """
-        entity_type = f"{self.key}s" if self.key != "study" else "studies"
+        entity_type = get_plural_of_entity(self.key, split_delimiter="_", join_delimiter=" ")
         LOG.info(f"Fetching all {entity_type} from Redis...")
 
         pattern = f"{self.key}:*"

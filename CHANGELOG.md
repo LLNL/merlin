@@ -8,11 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Unit tests for the `spec/` folder
 - A page in the docs explaining the `feature_demo` example
+- Ability to filter database queries for the `get all-*` and `delete all-*` commands
 - New `MerlinBaseFactory` class to help enable future plugins for backends, monitors, status renderers, etc.
+- New worker related classes:
+  - `MerlinWorker`: base class for defining task server workers
+  - `CeleryWorker`: implementation of `MerlinWorker` specifically for Celery workers
+  - `WorkerFactory`: to help determine which task server worker to use
+  - `MerlinWorkerHandler`: base class for managing launching, stopping, and querying multiple workers
+  - `CeleryWorkerHandler`: implementation of `MerlinWorkerHandler` specifically for manager Celery workers
+  - `WorkerHandlerFactory`: to help determine which task server handler to use
+- New classes for formatting `query-workers` output:
+  - 
 
 ### Changed
 - Maestro version requirement is now at minimum 1.1.10 for status renderer changes
+- Changes to the `query-workers` command:
+  - Output now displays a lot more information, including logical and physical worker specific info
+  - Output now formatted using rich tables or json
+  - Now handled through worker classes rather than functions in `celeryadapter.py` file
+  - Behind the scenes this is now querying the new Merlin Database
 - The `BackendFactory`, `MonitorFactory`, and `StatusRendererFactory` classes all now inherit from `MerlinBaseFactory`
+- Launching workers is now handled through worker classes rather than functions in the `celeryadapter.py` file
 
 ## [1.13.0b2]
 ### Added
