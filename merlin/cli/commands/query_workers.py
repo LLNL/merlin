@@ -68,7 +68,7 @@ class QueryWorkersCommand(CommandEntryPoint):
             action="store",
             nargs="+",
             default=None,
-            help="Regex match for specific workers to query.",
+            help="Specific logical worker names to query.",
         )
         format_default = "rich"
         query.add_argument(
@@ -95,13 +95,16 @@ class QueryWorkersCommand(CommandEntryPoint):
         """
         print(banner_small)
 
-        # Get the workers from the spec file if --spec provided
         worker_names = []
+        if args.workers:
+            worker_names.extend(args.workers)
+    
+        # Get the workers from the spec file if --spec provided
         spec = None
         if args.spec:
             spec_path = verify_filepath(args.spec)
             spec = MerlinSpec.load_specification(spec_path)
-            worker_names = spec.get_worker_names()
+            worker_names.extend(spec.get_worker_names())
             for worker_name in worker_names:
                 if "$" in worker_name:
                     LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")

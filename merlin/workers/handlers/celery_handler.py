@@ -93,7 +93,7 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         if queues:
             filters["queues"] = queues
         if workers:
-            filters["workers"] = workers
+            filters["name"] = workers
         return filters
 
     def query_workers(self, formatter: str, queues: List[str] = None, workers: List[str] = None):

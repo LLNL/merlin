@@ -126,7 +126,7 @@ class EntityManager(Generic[T, M], ABC):
             entity: The entity instance to check against the filters.
             filters: A dictionary of filter keys and values used to narrow down the query results.
                     Filter keys must correspond to entries in the `_filter_accessor_map` defined
-                    by the subclass. Values are compared against the entity’s corresponding attributes
+                    by the subclass. Values are compared against the entity's corresponding attributes
                     or methods (e.g., {"name": "foo"}, {"queues": ["queue1", "queue2"]}).
 
         Returns:
@@ -147,8 +147,11 @@ class EntityManager(Generic[T, M], ABC):
 
             # Case where filter is a list
             if isinstance(expected, list):
+                # Normalize actual to a list for comparison
+                actual_values = actual if isinstance(actual, (list, set)) else [actual]
+
                 # Match if any expected value is in the actual list (e.g., queues)
-                if not isinstance(actual, (list, set)) or not any(val in actual for val in expected):
+                if not any(val in actual_values for val in expected):
                     return False
             # Case where filter is str or bool
             else:
