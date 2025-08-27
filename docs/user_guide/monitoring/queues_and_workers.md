@@ -280,28 +280,30 @@ merlin queue-info --spec <spec file> --vars <VAR_TO_MODIFY>=<VAL_TO_SET>
 
 ## Query Workers
 
-Merlin provides users with the [`merlin query-workers`](../command_line.md#query-workers-merlin-query-workers) command to help users see which workers are running and what task queues they're watching.
+Merlin provides users with the [`merlin query-workers`](../command_line.md#query-workers-merlin-query-workers) command to help users see information about the [worker entities](../database/entities.md#worker-entities) that currently exist in their database.
 
-This command will output content to a table format with two columns: workers and queues. The workers column will contain one connected worker per row. The queues column will contain a comma-delimited list of queues that the connected worker is watching.
+This command will output a summary of both the [logical worker entities](../database/entities.md#logical-worker-entity) and the [physical worker entities](../database/entities.md#physical-worker-entity), detailed information on the physical workers that exist, and information on logical workers that don't have any physical instances yet.
 
-**Usage:**
+There are two different ways that output of the `query-workers` command can be formattted: `rich` or `json`. By default, this is set to `rich`.
+
+**Basic Usage:**
 
 ```bash
 merlin query-workers
 ```
 
-??? example "Example Query-Workers Output With No Connected Workers"
+??? example "Example Query-Workers Output With No Worker Entities in the Database"
 
     <figure markdown>
-      ![Output of Query-Workers When No Workers Are Connected](../../assets/images/monitoring/queues_and_workers/no-connected-workers.png)
-      <figcaption>Output of Query-Workers When No Workers Are Connected</figcaption>
+      ![Output of Query-Workers When Worker Entities Do Not Exist](../../assets/images/monitoring/queues_and_workers/query-workers-worker-entities-do-not-exist.png)
+      <figcaption>Output of Query-Workers When Worker Entities Do Not Exist</figcaption>
     </figure>
 
-??? example "Example Query-Workers Output With Connected Workers"
+??? example "Example Query-Workers Output With Worker Entities in the Database"
 
     <figure markdown>
-      ![Output of Query-Workers When There Are Workers Connected](../../assets/images/monitoring/queues_and_workers/connected-workers.png)
-      <figcaption>Output of Query-Workers When There Are Workers Connected</figcaption>
+      ![Output of Query-Workers When Worker Entities Exist](../../assets/images/monitoring/queues_and_workers/query-workers-worker-entities-exist.png)
+      <figcaption>Output of Query-Workers When Worker Entities Exist</figcaption>
     </figure>
 
 ### Query Workers by Spec File
@@ -456,7 +458,7 @@ merlin query-workers --queues <space-delimited list of task queues>
 
     Say we have the below spec file with four workers `creator`, `trainer`, `predictor`, and `verifier` that are each attached to their respective steps/task queues. In other words, `creator` will be connected to the `create_data` task queue, `trainer` will be connected to the `train` task queue, etc.:
 
-    ```yaml title="demo_workflow.yaml" hl_lines="33-44"
+    ```yaml title="demo_workflow_queues_option.yaml" hl_lines="33-44"
     description:
         name: demo_workflow
         description: a very simple merlin workflow
@@ -506,14 +508,14 @@ merlin query-workers --queues <space-delimited list of task queues>
     We can start these workers with:
 
     ```bash
-    merlin run-workers demo_workflow.yaml
+    merlin run-workers demo_workflow_queues_option.yaml
     ```
 
     Now if we query the workers *without* the `--queues` option, we'll see all four workers alive and connected to their respective queues:
 
     <figure markdown>
-      ![All Four Workers From 'demo_workflow.yaml' Being Queried](../../assets/images/monitoring/queues_and_workers/queues-example-all-workers.png)
-      <figcaption>All Four Workers From 'demo_workflow.yaml' Being Queried</figcaption>
+      ![All Four Workers From 'demo_workflow_queues_option.yaml' Being Queried](../../assets/images/monitoring/queues_and_workers/query-workers-queues-all-workers.png)
+      <figcaption>All Four Workers From 'demo_workflow_queues_option.yaml' Being Queried</figcaption>
     </figure>
 
     Let's refine this query to just view the workers connected to the `train` and `predict` queues:
@@ -525,25 +527,25 @@ merlin query-workers --queues <space-delimited list of task queues>
     As we can see in the output below, only the `trainer` and `predictor` workers are now displayed:
 
     <figure markdown>
-      ![Output of Query-Workers Using the Queues Option](../../assets/images/monitoring/queues_and_workers/queues-example-filtered-workers.png)
+      ![Output of Query-Workers Using the Queues Option](../../assets/images/monitoring/queues_and_workers/query-workers-queues-option.png)
       <figcaption>Output of Query-Workers Using the Queues Option</figcaption>
     </figure>
 
 ### Query Workers by Worker Regex
 
-There will be instances when you know precisely which workers you want to query. In such cases, the `--workers` option in the `query-workers` command proves useful. This option facilitates querying workers using [regular expressions](https://docs.python.org/3/library/re.html). As full strings are accepted as regular expressions, you can also query workers by worker name.
+There will be instances when you know precisely which workers you want to query. In such cases, the `--workers` option in the `query-workers` command proves useful. This option facilitates querying workers by their logical names.
 
 **Usage:**
 
 ```bash
-merlin query-workers --workers <space-delimited list of regular expressions>
+merlin query-workers --workers <space-delimited list of worker names>
 ```
 
 ??? example "Example of Using the `--workers` Option With Query-Workers"
 
     Say we have the following spec file with 3 workers `step_1_worker`, `step_2_worker`, and `other_worker`:
 
-    ```yaml title="demo_workflow.yaml" hl_lines="27-35"
+    ```yaml title="demo_workflow_workers_option.yaml" hl_lines="27-35"
     description:
         name: demo_workflow
         description: a very simple merlin workflow
@@ -590,19 +592,6 @@ merlin query-workers --workers <space-delimited list of regular expressions>
     In our output we see that both workers that we asked for were queried but `other_worker` was ignored:
 
     <figure markdown>
-      ![Output of Query-Workers Using the Workers Option With Worker Names](../../assets/images/monitoring/queues_and_workers/workers-option-with-worker-names.png)
+      ![Output of Query-Workers Using the Workers Option With Worker Names](../../assets/images/monitoring/queues_and_workers/query-workers-workers-option.png)
       <figcaption>Output of Query-Workers Using the Workers Option With Worker Names</figcaption>
-    </figure>
-
-    Alternatively, we can do the exact same query using a regular expression:
-
-    ```bash
-    merlin query-workers --workers ^step
-    ```
-
-    The `^` operator for regular expressions will match the beginning of a string. In this example when we say `^step` we're asking Merlin to match any worker starting with the word `step`, which in this case is `step_1_worker` and `step_2_worker`. We can see this in the output below:
-
-    <figure markdown>
-      ![Output of Query-Workers Using the Workers Option With RegEx](../../assets/images/monitoring/queues_and_workers/workers-option-with-regex.png)
-      <figcaption>Output of Query-Workers Using the Workers Option With RegEx</figcaption>
     </figure>
