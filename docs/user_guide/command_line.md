@@ -1156,7 +1156,7 @@ The Merlin library comes equipped with several commands to help monitor your wor
 
 - *[detailed-status](#detailed-status-merlin-detailed-status)*: Display task-by-task status information for a study
 - *[monitor](#monitor-merlin-monitor)*: Keep your allocation alive while tasks are being processed
-- *[query-workers](#query-workers-merlin-query-workers)*: Communicate with Celery to view information on active workers
+- *[query-workers](#query-workers-merlin-query-workers)*: View information on [worker entities](./database/entities.md#worker-entities)
 - *[queue-info](#queue-info-merlin-queue-info)*: Communicate with Celery to view the status of queues in your workflow(s)
 - *[status](#status-merlin-status)*: Display a summary of the status of a study
 
@@ -1322,9 +1322,9 @@ merlin monitor [OPTIONS] SPECIFICATION
 
 ### Query Workers (`merlin query-workers`)
 
-Check which workers are currently connected to the task server.
+View information on [worker entities](./database/entities.md#worker-entities) in your database.
 
-This will broadcast a command to all connected workers and print the names of any that respond and the queues they're attached to. This is useful for interacting with workers, such as via `merlin stop-workers --workers`.
+This will query the [Merlin Database](./database/index.md) for information on [logical worker entities](./database/entities.md#logical-worker-entity) and [physical worker entities](./database/entities.md#physical-worker-entity). This can be useful for seeing which workers are running and where.
 
 For more information, see the [Query Workers documentation](./monitoring/queues_and_workers.md#query-workers).
 
@@ -1342,7 +1342,8 @@ merlin query-workers [OPTIONS]
 | `--task_server`  | string | Task server type for which to query workers. Currently only "celery" is implemented. | "celery" |
 | `--spec` | filename | Query for the workers named in the `merlin` block of the spec file given here | None |
 | `--queues` | List[string] | Takes a space-delimited list of queues as input. This will query for workers associated with the names of the queues you provide here. | None |
-| `--workers` | List[regex] | A space-delimited list of regular expressions representing workers to query | None |
+| `--workers` | List[string] | A space-delimited list of logical worker names to query | None |
+| `-f`, `--format` | choice(`rich` \| `json`) | Output format | rich |
 
 **Examples:**
 
@@ -1370,14 +1371,6 @@ merlin query-workers [OPTIONS]
 
     ```
     merlin query-workers --workers step_1_worker
-    ```
-
-!!! example "Query Workers Using Regex"
-
-    This will query only workers whose names start with `step`:
-
-    ```bash
-    merlin query-workers --workers ^step
     ```
 
 ### Queue Info (`merlin queue-info`)
