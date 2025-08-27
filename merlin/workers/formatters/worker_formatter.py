@@ -72,7 +72,7 @@ class WorkerFormatter(ABC):
             merlin_db (MerlinDatabase): Database interface for retrieving
                 physical worker details.
         """
-        pass
+        raise NotImplementedError("Subclasses of `WorkerFormatter` must implement a `format_and_display` method.")
 
     def get_worker_statistics(self, logical_workers: List[LogicalWorkerEntity], merlin_db: MerlinDatabase) -> Dict[str, int]:
         """
