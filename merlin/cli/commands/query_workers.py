@@ -20,11 +20,10 @@ from argparse import ArgumentParser, Namespace
 
 from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
-from merlin.router import query_workers
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import verify_filepath
-from merlin.workers.handlers.handler_factory import worker_handler_factory
 from merlin.workers.formatters.formatter_factory import worker_formatter_factory
+from merlin.workers.handlers.handler_factory import worker_handler_factory
 
 
 LOG = logging.getLogger("merlin")
@@ -73,7 +72,7 @@ class QueryWorkersCommand(CommandEntryPoint):
         format_default = "rich"
         query.add_argument(
             "-f",
-            "--format", 
+            "--format",
             choices=worker_formatter_factory.list_available(),
             default=format_default,
             help=f"Output format. Default: {format_default}",
@@ -98,7 +97,7 @@ class QueryWorkersCommand(CommandEntryPoint):
         worker_names = []
         if args.workers:
             worker_names.extend(args.workers)
-    
+
         # Get the workers from the spec file if --spec provided
         spec = None
         if args.spec:

@@ -16,8 +16,6 @@ such as echoing launch commands, overriding default worker arguments, and disabl
 import logging
 from typing import Dict, List
 
-from rich.console import Console
-
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.workers import CeleryWorker
 from merlin.workers.formatters.formatter_factory import worker_formatter_factory
@@ -43,8 +41,7 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
     """
 
     def __init__(self):
-        """
-        """
+        """ """
         super().__init__()
         self.merlin_db = MerlinDatabase()
 
@@ -81,11 +78,11 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
     def _build_filters(self, queues: List[str], workers: List[str]) -> Dict[str, List[str]]:
         """
         Build filters dictionary for database queries.
-        
+
         Args:
             queues: List of queue names to filter by.
             workers: List of worker names to filter by.
-            
+
         Returns:
             Dictionary containing filter criteria.
         """
@@ -101,6 +98,7 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         Query the status of Celery workers and display using the configured formatter.
 
         Args:
+            formatter: The worker formatter to use (rich or json).
             queues: List of queue names to filter by (optional).
             workers: List of worker names to filter by (optional).
         """
@@ -111,6 +109,5 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         logical_workers = self.merlin_db.get_all("logical_worker", filters=filters)
 
         # Use formatter to display the results
-        console = Console()
         formatter = worker_formatter_factory.create(formatter)
-        formatter.format_and_display(logical_workers, filters, self.merlin_db, console)
+        formatter.format_and_display(logical_workers, filters, self.merlin_db)
