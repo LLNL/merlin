@@ -41,6 +41,10 @@ class JSONWorkerFormatter(WorkerFormatter):
     statistics. Designed for use cases where downstream tools or scripts
     need to parse worker information in a machine-readable format.
 
+    Attributes:
+        console (rich.console.Console): A Rich Console object used for displaying
+            output to the terminal.
+
     Methods:
         format_and_display: Format and print worker information as structured JSON,
             including details for logical and physical workers, filters, timestamp,
