@@ -5,23 +5,78 @@
 ##############################################################################
 
 """
+JSON-based worker information formatter for Merlin.
 
+This module provides a JSON formatter for displaying worker information 
+in a structured, machine-readable format. It is primarily intended for 
+programmatic consumption by downstream tools, scripts, or external systems 
+that need to parse and analyze worker data rather than display it in a 
+human-friendly format.
+
+The formatter includes:\n
+    - Detailed records of logical workers and their associated queues
+    - Physical worker details such as ID, host, PID, status, restart counts, 
+      and timestamps
+    - Relationships between logical and physical workers
+    - Applied filters and generation timestamp metadata
+    - Summary statistics for logical and physical workers
 """
 
 import json
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from rich.console import Console
 
+from merlin.db_scripts.entities.logical_worker_entity import LogicalWorkerEntity
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.workers.formatters.worker_formatter import WorkerFormatter
 
 
 class JSONWorkerFormatter(WorkerFormatter):
-    """JSON formatter for programmatic consumption."""
+    """
+    JSON formatter for programmatic worker information consumption.
+
+    This formatter generates structured JSON output representing logical
+    and physical worker entities. The output includes worker details, 
+    relationships between logical and physical workers, and comprehensive 
+    statistics. Designed for use cases where downstream tools or scripts 
+    need to parse worker information in a machine-readable format.
+
+    Methods:
+        format_and_display: Format and print worker information as structured JSON,
+            including details for logical and physical workers, filters, timestamp, 
+            and summary statistics.
+        get_worker_statistics: Compute worker statistics, including counts of logical
+            and physical workers by status, for inclusion in JSON output.
+    """
     
-    def format_and_display(self, logical_workers: List, filters: Dict, merlin_db, console: Console = None):
-        """Format and display worker information as JSON."""
+    def format_and_display(
+        self,
+        logical_workers: List[LogicalWorkerEntity],
+        filters: Dict,
+        merlin_db: MerlinDatabase,
+        console: Optional[Console] = None
+    ):
+        """
+        Format and display worker information as JSON.
+
+        This method produces JSON output containing:\n
+        - A record of applied filters
+        - A timestamp of when the report was generated
+        - Detailed logical worker entries (name, queues, associated physical workers)
+        - Detailed physical worker entries (ID, host, PID, status, restart count, timestamps)
+        - A summary of worker statistics
+
+        Args:
+            logical_workers (List[db_scripts.entities.logical_worker_entity.LogicalWorkerEntity]): 
+                A list of logical worker entities to format.
+            filters (Dict): A dictionary of filters applied to the query.
+            merlin_db (db_scripts.merlin_db.MerlinDatabase): Database interface for retrieving
+                physical worker details.
+            console (Optional[Console]): Rich console for printing output. Defaults to a new
+                console if None.
+        """
         if console is None:
             console = Console()
             
@@ -29,7 +84,7 @@ class JSONWorkerFormatter(WorkerFormatter):
             "filters": filters,
             "timestamp": datetime.now().isoformat(),
             "logical_workers": [],
-            "summary": self._get_worker_statistics(logical_workers, merlin_db)
+            "summary": self.get_worker_statistics(logical_workers, merlin_db)
         }
         
         for logical_worker in logical_workers:
@@ -61,42 +116,3 @@ class JSONWorkerFormatter(WorkerFormatter):
             data["logical_workers"].append(logical_data)
         
         console.print(json.dumps(data, indent=2))
-    
-    def _get_worker_statistics(self, logical_workers, merlin_db) -> Dict:
-        """Calculate comprehensive worker statistics for JSON output."""
-        stats = {
-            'total_logical': len(logical_workers),
-            'logical_with_instances': 0,
-            'logical_without_instances': 0,
-            'total_physical': 0,
-            'physical_running': 0,
-            'physical_stopped': 0,
-            'physical_stalled': 0,
-            'physical_rebooting': 0
-        }
-        
-        for logical_worker in logical_workers:
-            physical_worker_ids = logical_worker.get_physical_workers()
-            
-            if physical_worker_ids:
-                stats['logical_with_instances'] += 1
-                physical_workers = [
-                    merlin_db.get("physical_worker", pid) for pid in physical_worker_ids
-                ]
-                
-                for physical_worker in physical_workers:
-                    stats['total_physical'] += 1
-                    status = str(physical_worker.get_status()).replace("WorkerStatus.", "")
-                    
-                    if status == "RUNNING":
-                        stats['physical_running'] += 1
-                    elif status == "STOPPED":
-                        stats['physical_stopped'] += 1
-                    elif status == "STALLED":
-                        stats['physical_stalled'] += 1
-                    elif status == "REBOOTING":
-                        stats['physical_rebooting'] += 1
-            else:
-                stats['logical_without_instances'] += 1
-        
-        return stats

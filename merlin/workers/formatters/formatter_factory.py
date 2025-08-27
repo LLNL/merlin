@@ -5,14 +5,18 @@
 ##############################################################################
 
 """
+Worker formatter factory for Merlin.
 
+This module provides the `WorkerFormatterFactory`, a central registry and
+factory class for managing supported worker formatter implementations.
+It allows clients to create worker formatters by name or alias, ensuring
+consistent handling of different output formats (e.g., JSON, Rich).
 """
 
 from typing import Any, Type
 
 from merlin.abstracts import MerlinBaseFactory
 from merlin.exceptions import MerlinWorkerFormatterNotSupportedError
-from merlin.workers.formatters.compact_formatter import CompactWorkerFormatter
 from merlin.workers.formatters.json_formatter import JSONWorkerFormatter
 from merlin.workers.formatters.rich_formatter import RichWorkerFormatter
 from merlin.workers.formatters.worker_formatter import WorkerFormatter
@@ -40,7 +44,6 @@ class WorkerFormatterFactory(MerlinBaseFactory):
         """
         Register built-in worker formatter implementations.
         """
-        self.register("compact", CompactWorkerFormatter)
         self.register("json", JSONWorkerFormatter)
         self.register("rich", RichWorkerFormatter)
 
