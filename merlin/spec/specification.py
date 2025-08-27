@@ -1265,7 +1265,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             config = {
                 "args": settings.get("args", ""),
                 "machines": settings.get("machines", []),
-                "queues": set(self.get_queue_list(settings["steps"])),
+                "queues": set(self.get_queue_list(settings["steps"], omit_tag=True)),
                 "batch": settings["batch"] if settings["batch"] is not None else self.batch.copy(),
             }
 
