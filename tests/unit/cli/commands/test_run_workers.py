@@ -72,7 +72,7 @@ def test_process_command_launches_workers(mocker: MockerFixture):
     mock_spec.get_workers_to_start.assert_called_once_with(["step1"])
     mock_spec.build_worker_list.assert_called_once_with(["workerA"])
     mock_factory.assert_called_once_with("celery")
-    mock_handler.launch_workers.assert_called_once_with(
+    mock_handler.start_workers.assert_called_once_with(
         ["worker-instance"], echo_only=False, override_args="--concurrency=4", disable_logs=False
     )
     mock_log.info.assert_called_once_with("Launching workers from 'workflow.yaml'")

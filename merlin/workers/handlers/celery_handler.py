@@ -33,12 +33,12 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
     stopping workers, and querying their status.
 
     Methods:
-        launch_workers: Launch or echo Celery workers with optional arguments.
+        start_workers: Launch or echo Celery workers with optional arguments.
         stop_workers: Attempt to stop active Celery workers.
         query_workers: Return a basic summary of Celery worker status.
     """
 
-    def launch_workers(self, workers: List[CeleryWorker], **kwargs):
+    def start_workers(self, workers: List[CeleryWorker], **kwargs):
         """
         Launch or echo Celery workers with optional override behavior.
 
@@ -61,7 +61,7 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
                 print(launch_cmd)
             else:
                 LOG.debug(f"Launching worker '{worker.name}'.")
-                worker.launch_worker(override_args=override_args, disable_logs=disable_logs)
+                worker.start(override_args=override_args, disable_logs=disable_logs)
 
     def stop_workers(self):
         """

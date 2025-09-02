@@ -19,7 +19,7 @@ class DummyMerlinWorker(MerlinWorker):
     def get_launch_command(self, override_args: str = "") -> str:
         return f"run_worker --name {self.name} {override_args}"
 
-    def launch_worker(self):
+    def start(self):
         return f"Launching {self.name}"
 
     def get_metadata(self) -> dict:
@@ -71,10 +71,10 @@ def test_get_launch_command_returns_expected_string():
 
 def test_launch_worker_returns_expected_string():
     """
-    Test that launch_worker returns a string indicating launch.
+    Test that start returns a string indicating launch.
     """
     worker = DummyMerlinWorker("dummy", {}, {})
-    result = worker.launch_worker()
+    result = worker.start()
     assert result == "Launching dummy"
 
 

@@ -35,7 +35,7 @@ class MerlinWorker(ABC):
 
     Methods:
         get_launch_command: Build the shell command to launch the worker.
-        launch_worker: Launch the worker process.
+        start: Launch the worker process.
         get_metadata: Return identifying metadata about the worker.
     """
 
@@ -66,7 +66,7 @@ class MerlinWorker(ABC):
         """
 
     @abstractmethod
-    def launch_worker(self):
+    def start(self):
         """
         Launch this worker.
         """

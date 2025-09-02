@@ -281,7 +281,7 @@ def test_launch_worker_runs_if_should_launch(
     mock_db: MagicMock,
 ):
     """
-    Test that `launch_worker` executes the launch command if `should_launch` returns True.
+    Test that `start` executes the launch command if `should_launch` returns True.
 
     This test verifies that when a worker passes the `should_launch` check, it constructs
     a launch command and executes it via `subprocess.Popen`. Both the launch condition
@@ -304,7 +304,7 @@ def test_launch_worker_runs_if_should_launch(
     mock_logger = mocker.patch("merlin.workers.celery_worker.LOG")
 
     worker = CeleryWorker("w6", basic_config, dummy_env)
-    worker.launch_worker()
+    worker.start()
 
     mock_popen.assert_called_once()
     assert mock_logger.debug.called
@@ -317,7 +317,7 @@ def test_launch_worker_raises_if_popen_fails(
     mock_db: MagicMock,
 ):
     """
-    Test that `launch_worker` raises `MerlinWorkerLaunchError` when `subprocess.Popen` fails.
+    Test that `start` raises `MerlinWorkerLaunchError` when `subprocess.Popen` fails.
 
     This test simulates a failure in launching a worker by patching `Popen` to raise an `OSError`.
     It verifies that the appropriate exception is raised and that the failure is not silently ignored.
@@ -340,7 +340,7 @@ def test_launch_worker_raises_if_popen_fails(
     worker = CeleryWorker("w7", basic_config, dummy_env)
 
     with pytest.raises(MerlinWorkerLaunchError):
-        worker.launch_worker()
+        worker.start()
 
 
 def test_get_metadata_returns_expected_dict(

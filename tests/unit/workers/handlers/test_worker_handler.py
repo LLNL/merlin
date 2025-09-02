@@ -20,7 +20,7 @@ class DummyWorker(MerlinWorker):
     def get_launch_command(self, override_args: str = "") -> str:
         return "launch"
 
-    def launch_worker(self) -> str:
+    def start(self) -> str:
         return "launched"
 
     def get_metadata(self) -> Dict:
@@ -34,10 +34,10 @@ class DummyWorkerHandler(MerlinWorkerHandler):
         self.stopped = False
         self.queried = False
 
-    def launch_workers(self, workers: List[MerlinWorker], **kwargs):
+    def start_workers(self, workers: List[MerlinWorker], **kwargs):
         self.started = True
         self.last_workers = workers
-        return [worker.launch_worker() for worker in workers]
+        return [worker.start() for worker in workers]
 
     def stop_workers(self):
         self.stopped = True
@@ -71,12 +71,12 @@ def test_unimplemented_methods_raise_not_implemented():
 
 def test_launch_workers_calls_worker_launch():
     """
-    Test that `launch_workers` calls each worker's `launch_worker` method.
+    Test that `start_workers` calls each worker's `start` method.
     """
     handler = DummyWorkerHandler()
     workers = [DummyWorker("w1", {}, {}), DummyWorker("w2", {}, {})]
 
-    result = handler.launch_workers(workers)
+    result = handler.start_workers(workers)
 
     assert handler.started
     assert result == ["launched", "launched"]
@@ -99,7 +99,7 @@ def test_query_workers_returns_summary():
     """
     handler = DummyWorkerHandler()
     workers = [DummyWorker("a", {}, {}), DummyWorker("b", {}, {})]
-    handler.launch_workers(workers)
+    handler.start_workers(workers)
 
     summary = handler.query_workers()
 

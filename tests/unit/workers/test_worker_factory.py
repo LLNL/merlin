@@ -23,7 +23,7 @@ class DummyCeleryWorker(MerlinWorker):
     def get_launch_command(self):
         pass
 
-    def launch_worker(self):
+    def start(self):
         pass
 
     def get_metadata(self):
@@ -37,7 +37,7 @@ class DummyOtherWorker(MerlinWorker):
     def get_launch_command(self):
         pass
 
-    def launch_worker(self):
+    def start(self):
         pass
 
     def get_metadata(self):

@@ -32,7 +32,7 @@ class DummyCeleryWorker(CeleryWorker):
             parts.append("--no-logs")
         return " ".join(parts)
 
-    def launch_worker(self, override_args: str = "", disable_logs: bool = False):
+    def start(self, override_args: str = "", disable_logs: bool = False):
         self.launched_with = (override_args, disable_logs)
         return f"Launching {self.name} with {override_args} and logs {'off' if disable_logs else 'on'}"
 
@@ -61,14 +61,14 @@ class TestCeleryWorkerHandler:
         self, handler: CeleryWorkerHandler, workers: List[DummyCeleryWorker], capsys: pytest.CaptureFixture
     ):
         """
-        Test that `launch_workers` prints launch commands when `echo_only=True`.
+        Test that `start_workers` prints launch commands when `echo_only=True`.
 
         Args:
             handler: CeleryWorkerHandler instance.
             workers: DummyCeleryWorker instances.
             capsys: Pytest fixture to capture stdout.
         """
-        handler.launch_workers(workers, echo_only=True, override_args="--debug", disable_logs=True)
+        handler.start_workers(workers, echo_only=True, override_args="--debug", disable_logs=True)
         output = capsys.readouterr().out
 
         for worker in workers:
@@ -77,26 +77,26 @@ class TestCeleryWorkerHandler:
 
     def test_launch_workers_calls_worker_launch(self, handler: CeleryWorkerHandler, workers: List[DummyCeleryWorker]):
         """
-        Test that `launch_workers` invokes `launch_worker()` on each worker when `echo_only=False`.
+        Test that `start_workers` invokes `start()` on each worker when `echo_only=False`.
 
         Args:
             handler: CeleryWorkerHandler instance.
             workers: DummyCeleryWorker instances.
         """
-        handler.launch_workers(workers, echo_only=False, override_args="--custom", disable_logs=True)
+        handler.start_workers(workers, echo_only=False, override_args="--custom", disable_logs=True)
 
         for worker in workers:
             assert worker.launched_with == ("--custom", True)
 
     def test_default_kwargs_are_used(self, handler: CeleryWorkerHandler, workers: List[DummyCeleryWorker]):
         """
-        Test that `launch_workers` uses defaults when optional kwargs are omitted.
+        Test that `start_workers` uses defaults when optional kwargs are omitted.
 
         Args:
             handler: CeleryWorkerHandler instance.
             workers: DummyCeleryWorker instances.
         """
-        handler.launch_workers(workers)
+        handler.start_workers(workers)
 
         for worker in workers:
             assert worker.launched_with == ("", False)
