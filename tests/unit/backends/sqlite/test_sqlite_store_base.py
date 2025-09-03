@@ -311,7 +311,7 @@ class TestSQLiteStoreBase:
         results = simple_store.retrieve_all()
 
         # Verify method calls
-        mock_conn.execute.assert_called_once_with("SELECT * FROM test_table")
+        mock_conn.execute.assert_called_once_with("SELECT * FROM test_table ", [])
         mock_cursor.fetchall.assert_called_once()
         assert mock_deserialize.call_count == 2
         assert len(results) == 2
@@ -347,6 +347,128 @@ class TestSQLiteStoreBase:
         results = simple_store.retrieve_all()
 
         # Verify that only the successful object is returned
+        assert len(results) == 1
+        assert results[0] == run1
+
+    def test_retrieve_all_filtered_with_scalar_values(
+        self,
+        mocker: MockerFixture,
+        test_models: FixtureDict,
+        simple_store: SQLiteStoreBase,
+        mock_sqlite_connection: FixtureTuple[MagicMock],
+    ):
+        """
+        Test retrieving filtered entities using scalar column values.
+
+        Args:
+            mocker: PyTest mocker fixture.
+            test_models: A fixture providing test model instances.
+            simple_store: A fixture providing a SQLiteStoreBase instance.
+            mock_sqlite_connection: Fixture providing mocked SQLite connection and cursor.
+        """
+        run1 = test_models["run"]
+
+        # Mock database rows
+        mock_conn, mock_cursor = mock_sqlite_connection
+        mock_rows = [{"id": run1.id, "study_id": "study1"}]
+        mock_cursor.fetchall.return_value = mock_rows
+
+        # Mock deserialization
+        mocker.patch("merlin.backends.sqlite.sqlite_store_base.deserialize_entity", return_value=run1)
+
+        filters = {"study_id": "study1"}
+        results = simple_store.retrieve_all_filtered(filters)
+
+        # Verify SQL query and parameters
+        mock_conn.execute.assert_called_once_with("SELECT * FROM test_table WHERE study_id = ?", ["study1"])
+        assert len(results) == 1
+        assert results[0] == run1
+
+    def test_retrieve_all_filtered_with_list_values(
+        self,
+        mocker: MockerFixture,
+        test_models: FixtureDict,
+        simple_store: SQLiteStoreBase,
+        mock_sqlite_connection: FixtureTuple[MagicMock],
+    ):
+        """
+        Test retrieving filtered entities using a list of values (should generate LIKE/OR clause).
+
+        Args:
+            mocker: PyTest mocker fixture.
+            test_models: A fixture providing test model instances.
+            simple_store: A fixture providing a SQLiteStoreBase instance.
+            mock_sqlite_connection: Fixture providing mocked SQLite connection and cursor.
+        """
+        run1 = test_models["run"]
+        run2 = RunModel(id="run2", study_id="study1")
+
+        mock_conn, mock_cursor = mock_sqlite_connection
+        mock_rows = [{"id": run1.id, "study_id": "study1"}, {"id": run2.id, "study_id": "study1"}]
+        mock_cursor.fetchall.return_value = mock_rows
+
+        mocker.patch("merlin.backends.sqlite.sqlite_store_base.deserialize_entity", side_effect=[run1, run2])
+
+        filters = {"id": ["run1", "run2"]}
+        results = simple_store.retrieve_all_filtered(filters)
+
+        expected_query = "SELECT * FROM test_table WHERE (id LIKE ? OR id LIKE ?)"
+        expected_params = ["%run1%", "%run2%"]
+        mock_conn.execute.assert_called_once_with(expected_query, expected_params)
+
+        assert len(results) == 2
+        assert run1 in results
+        assert run2 in results
+
+    def test_retrieve_all_filtered_with_empty_list(
+        self,
+        simple_store: SQLiteStoreBase,
+        mock_sqlite_connection: FixtureTuple[MagicMock],
+    ):
+        """
+        Test filtering with an empty list value, which should yield no results (1 = 0 condition).
+
+        Args:
+            simple_store: A fixture providing a SQLiteStoreBase instance.
+            mock_sqlite_connection: Fixture providing mocked SQLite connection and cursor.
+        """
+        mock_conn, mock_cursor = mock_sqlite_connection
+        mock_cursor.fetchall.return_value = []
+
+        filters = {"id": []}
+        results = simple_store.retrieve_all_filtered(filters)
+
+        expected_query = "SELECT * FROM test_table WHERE 1 = 0"
+        mock_conn.execute.assert_called_once_with(expected_query, [])
+        assert results == []
+
+    def test_retrieve_all_filtered_with_partial_deserialization_failure(
+        self,
+        mocker: MockerFixture,
+        simple_store: SQLiteStoreBase,
+        mock_sqlite_connection: FixtureTuple[MagicMock],
+    ):
+        """
+        Test that retrieve_all_filtered continues even if some rows fail to deserialize.
+
+        Args:
+            mocker: PyTest mocker fixture.
+            simple_store: A fixture providing a SQLiteStoreBase instance.
+            mock_sqlite_connection: Fixture providing mocked SQLite connection and cursor.
+        """
+        _, mock_cursor = mock_sqlite_connection
+        mock_rows = [{"id": "run1", "study_id": "study1"}, {"id": "run2", "study_id": "study1"}]
+        mock_cursor.fetchall.return_value = mock_rows
+
+        run1 = RunModel(id="run1", study_id="study1")
+        mocker.patch(
+            "merlin.backends.sqlite.sqlite_store_base.deserialize_entity",
+            side_effect=[run1, Exception("Deserialization error")],
+        )
+
+        filters = {"study_id": "study1"}
+        results = simple_store.retrieve_all_filtered(filters)
+
         assert len(results) == 1
         assert results[0] == run1
 

@@ -21,11 +21,12 @@ object to support operations that involve other entities, such as cleanup of rel
 from __future__ import annotations
 
 import logging
-from typing import Any, List
+from typing import Any, Callable, Dict
 
+from merlin.backends.results_backend import ResultsBackend
 from merlin.db_scripts.data_models import PhysicalWorkerModel
 from merlin.db_scripts.entities.physical_worker_entity import PhysicalWorkerEntity
-from merlin.db_scripts.entity_managers.entity_manager import EntityManager
+from merlin.db_scripts.entity_managers.entity_manager import EntityManager, T
 from merlin.exceptions import WorkerNotFoundError
 
 
@@ -47,6 +48,10 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
     Attributes:
         backend (backends.results_backend.ResultsBackend): The backend used for database operations.
         db (db_scripts.merlin_db.MerlinDatabase): Optional reference to the main database for cross-entity logic.
+        _filter_accessor_map: A dictionary mapping supported filter keys to accessor functions
+            for the entity type. Used by filtering logic (e.g., in `get_all`) to dynamically
+            retrieve values from entity instances. Subclasses must override this to enable
+            filtering support.
 
     Methods:
         create: Create a new physical worker if it does not already exist.
@@ -56,6 +61,28 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
         delete_all: Delete all physical worker entities from the database.
         set_db_reference: Set a reference to the main database object for cross-entity operations.
     """
+
+    _filter_accessor_map: Dict[str, Callable[[T], Any]] = {
+        "logical_worker_id": lambda e: e.get_logical_worker_id(),
+        "name": lambda e: e.get_name(),
+        "status": lambda e: e.get_status(),
+        "host": lambda e: e.get_host(),
+    }
+
+    def __init__(self, backend: ResultsBackend):
+        """
+        Initialize the PhysicalWorkerManager with the given backend.
+
+        This sets up the manager to handle physical worker entities by specifying
+        the associated entity class and entity type string. These are used by the
+        base EntityManager to perform generic operations like retrieving and filtering entities.
+
+        Args:
+            backend (ResultsBackend): The backend used to persist and retrieve physical worker data.
+        """
+        super().__init__(backend)
+        self._entity_class = PhysicalWorkerEntity
+        self._entity_type = "physical_worker"
 
     def create(self, name: str, **kwargs: Any) -> PhysicalWorkerEntity:
         """
@@ -97,15 +124,6 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
             WorkerNotFoundError: If the specified worker does not exist.
         """
         return self._get_entity(PhysicalWorkerEntity, worker_id_or_name)
-
-    def get_all(self) -> List[PhysicalWorkerEntity]:
-        """
-        Retrieve all physical worker entities from the database.
-
-        Returns:
-            A list of all physical workers stored in the database.
-        """
-        return self._get_all_entities(PhysicalWorkerEntity, "physical_worker")
 
     def delete(self, worker_id_or_name: str):
         """

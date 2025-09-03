@@ -22,8 +22,6 @@ Modules:
     data_models.py: Defines the dataclasses used to represent raw records in the database,
         such as [`StudyModel`][db_scripts.data_models.StudyModel], [`RunModel`][db_scripts.data_models.RunModel],
         etc.
-    db_commands.py: Exposes database-related commands intended for external use (e.g., CLI or scripts),
-        allowing users to interact with Merlin's stored data.
     merlin_db.py: Contains the [`MerlinDatabase`][db_scripts.merlin_db.MerlinDatabase] class, which
         aggregates all entity managers and acts as the central access point for database operations
         across the system.
