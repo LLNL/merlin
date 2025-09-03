@@ -203,7 +203,7 @@ class DetailedStatusCommand(StatusCommand):
             "--return-code",
             action="store",
             nargs="+",
-            type=str,
+            type=str.upper,
             choices=VALID_RETURN_CODES,
             help="Filter which tasks to display based on their return code",
         )
@@ -225,7 +225,7 @@ class DetailedStatusCommand(StatusCommand):
             "--task-status",
             action="store",
             nargs="+",
-            type=str,
+            type=str.upper,
             choices=VALID_STATUS_FILTERS,
             help="Filter which tasks to display based on their status",
         )
