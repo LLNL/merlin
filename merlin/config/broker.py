@@ -21,9 +21,9 @@ import os
 import ssl
 from os.path import expanduser
 from typing import Dict, List, Optional, Union
-from urllib.parse import quote
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
+from merlin.config.utils import get_password_from_file
 
 
 LOG: logging.Logger = logging.getLogger(__name__)
@@ -33,22 +33,6 @@ BROKERS: List[str] = ["rabbitmq", "redis", "rediss", "redis+socket", "amqps", "a
 RABBITMQ_CONNECTION: str = "{conn}://{username}:{password}@{server}:{port}/{vhost}"
 REDISSOCK_CONNECTION: str = "redis+socket://{path}?virtual_host={db_num}"
 USER = getpass.getuser()
-
-
-def read_file(filepath: str) -> str:
-    """
-    Safely reads the first line from a file and returns it with special characters URL-encoded.
-
-    Args:
-        filepath (str): The path to the file to be read.
-
-    Returns:
-        The first line of the file, stripped of leading and trailing whitespace,
-            with special characters URL-encoded.
-    """
-    with open(filepath, "r") as f:  # pylint: disable=C0103
-        line = f.readline().strip()
-        return quote(line, safe="")
 
 
 def get_rabbit_connection(include_password: bool, conn: str = "amqps") -> str:
@@ -89,10 +73,7 @@ def get_rabbit_connection(include_password: bool, conn: str = "amqps") -> str:
     except (AttributeError, KeyError) as exc:
         raise ValueError("Broker: No password provided for RabbitMQ") from exc
 
-    try:
-        password = read_file(password_filepath)
-    except IOError as exc:
-        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist") from exc
+    password = get_password_from_file(password_filepath)
 
     try:
         port = CONFIG.broker.port
@@ -186,7 +167,7 @@ def get_redis_connection(include_password: bool, use_ssl: bool = False) -> str: 
     try:
         password_filepath = CONFIG.broker.password
         try:
-            password = read_file(password_filepath)
+            password = get_password_from_file(password_filepath)
         except IOError:
             password = CONFIG.broker.password
         if include_password:

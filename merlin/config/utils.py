@@ -12,9 +12,15 @@ the broker type and validating broker configurations.
 """
 
 import enum
+import logging
+import os
 from typing import Dict
+from urllib.parse import quote
 
 from merlin.config.configfile import CONFIG
+
+
+LOG = logging.getLogger("merlin")
 
 
 class Priority(enum.Enum):
@@ -126,3 +132,57 @@ def get_priority(priority: Priority) -> int:
 
     priority_map = determine_priority_map(CONFIG.broker.name.lower())
     return priority_map.get(priority, priority_map[Priority.MID])  # Default to MID priority for unknown priorities
+
+
+def get_password_from_file(password_file: str, certs_path: str = None) -> str:
+    """
+    Retrieves a server password from a specified file or returns the provided password value.
+
+    This function attempts to locate the password file in several locations:
+
+    1. The default Merlin directory (`~/.merlin`).
+    2. The path specified by `password_file`.
+    3. A directory specified by `certs_path` (if provided).
+
+    If the password file is found, the password is read from the file. If the file cannot be
+    found, the value of `password_file` is treated as the password itself and returned.
+
+    Args:
+        password_file (str): The file path or value for the password. If this is not a valid
+            file path, it is treated as the password itself.
+        certs_path (str, optional): An optional directory path where SSL certificates and
+            password files may be located.
+
+    Returns:
+        The backend password, either retrieved from the file or the provided value.
+    """
+    password = None
+
+    mer_pass = os.path.join(os.path.expanduser("~/.merlin"), password_file)
+    password_file = os.path.expanduser(password_file)
+
+    password_filepath = ""
+    if os.path.exists(mer_pass):
+        password_filepath = mer_pass
+    elif os.path.exists(password_file):
+        password_filepath = password_file
+    elif certs_path:
+        password_filepath = os.path.join(certs_path, password_file)
+
+    if not os.path.exists(password_filepath):
+        LOG.warning("Password file does not exist. Using the filepath provided as the password.")
+        # The password was given instead of the filepath.
+        password = password_file.strip()
+    else:
+        with open(password_filepath, "r") as f:  # pylint: disable=C0103
+            line = f.readline().strip()
+            password = quote(line, safe="")
+
+    LOG.debug(
+        "certs_path was provided and used in password resolution."
+        if certs_path
+        else "certs_path was not provided."
+    )
+    LOG.debug("Password resolution: using file." if password_filepath else "Password resolution: using direct value.")
+
+    return password
