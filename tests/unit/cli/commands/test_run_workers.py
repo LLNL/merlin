@@ -8,11 +8,6 @@
 Tests for the `run_workers.py` file of the `cli/` folder.
 """
 
-from argparse import Namespace
-
-from _pytest.capture import CaptureFixture
-from pytest_mock import MockerFixture
-
 from merlin.cli.commands.run_workers import RunWorkersCommand
 from tests.fixture_types import FixtureCallable
 
