@@ -8,7 +8,7 @@
 Tests for the `status.py` file of the `cli/` folder.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 
 import pytest
 
@@ -157,12 +157,18 @@ class TestDetailedStatusCommand:
         parser = create_parser(command)
 
         # Simulate user input with mixed/lowercase values
-        args = parser.parse_args([
-            "detailed-status",
-            "some_workspace",
-            "--return-code", "success", "Soft_Fail",
-            "--task-status", "running", "Failed",
-        ])
+        args = parser.parse_args(
+            [
+                "detailed-status",
+                "some_workspace",
+                "--return-code",
+                "success",
+                "Soft_Fail",
+                "--task-status",
+                "running",
+                "Failed",
+            ]
+        )
 
         # Both return_code and task_status should be uppercased
         assert args.return_code == ["SUCCESS", "SOFT_FAIL"]
