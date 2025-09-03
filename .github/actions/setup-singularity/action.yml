@@ -1,0 +1,45 @@
+name: Install Singularity
+description: Install Go and Singularity
+inputs:
+  go-version:
+    required: true
+  singularity-version:
+    required: true
+  os:
+    default: linux
+  arch:
+    default: amd64
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install -y \
+          build-essential \
+          libssl-dev \
+          uuid-dev \
+          libgpgme11-dev \
+          squashfs-tools \
+          libseccomp-dev \
+          pkg-config
+
+    - name: Download and install Go
+      shell: bash
+      run: |
+        wget https://go.dev/dl/go${{ inputs.go-version }}.${{ inputs.os }}-${{ inputs.arch }}.tar.gz
+        sudo tar -C /usr/local -xzf go${{ inputs.go-version }}.${{ inputs.os }}-${{ inputs.arch }}.tar.gz
+        rm go${{ inputs.go-version }}.${{ inputs.os }}-${{ inputs.arch }}.tar.gz
+        echo "/usr/local/go/bin" >> $GITHUB_PATH
+
+    - name: Download and install Singularity
+      shell: bash
+      run: |
+        wget https://github.com/sylabs/singularity/releases/download/v${{ inputs.singularity-version }}/singularity-ce-${{ inputs.singularity-version }}.tar.gz
+        tar -xzf singularity-ce-${{ inputs.singularity-version }}.tar.gz
+        cd singularity-ce-${{ inputs.singularity-version }}
+        ./mconfig
+        make -C ./builddir
+        sudo make -C ./builddir install
+

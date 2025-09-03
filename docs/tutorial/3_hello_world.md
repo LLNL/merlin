@@ -222,7 +222,7 @@ A lot of stuff, right? Here's what it means:
 
 !!! warning "Important Note"
 
-    Before trying this, make sure you've properly set up your Merlin config file `app.yaml`. If you can run `merlin info` and see no errors you should be good to go. Otherwise, see either the [Configuring Merlin](./2_installation.md#configuring-merlin) section of the installation step in the Tutorial or the [Configuration](../user_guide/configuration/index.md) page for more information.
+    Before trying this, make sure you've properly set up your Merlin config file. If you can run `merlin info` and see no errors you should be good to go. Otherwise, see either the [Configuring Merlin](./2_installation.md#configuring-and-connecting-to-a-redis-server) section of the installation step in the Tutorial or the [Configuration](../user_guide/configuration/index.md) page for more information.
 
 Now we will run the same workflow, but in parallel on our task server:
 
