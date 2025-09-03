@@ -474,6 +474,25 @@ def test_verify_batch_block_with_slurm_skips_walltime_check(mocker: MockerFixtur
     log_mock.warning.assert_not_called()
 
 
+def test_verify_batch_block_with_placeholder_values(spec: MerlinSpec):
+    """
+    Tests that the `verify_batch_block` method works when placeholder values are provided in
+    the batch block.
+
+    Args:
+        spec: A MerlinSpec instance for testing.
+    """
+    spec.batch = {"type": "slurm", "queue": None, "bank": ""}
+
+    # Load the MerlinSpec schema file
+    dir_path = os.path.dirname(os.path.abspath(__file__))
+    schema_path = os.path.join(dir_path, "..", "..", "..", "merlin", "spec", "merlinspec.json")
+    with open(schema_path, "r") as json_file:
+        schema = json.load(json_file)
+
+    spec.verify_batch_block(schema)
+
+
 def test_load_merlin_block_with_section_present():
     """
     Test that `load_merlin_block` correctly extracts the 'merlin' section from a YAML stream.

@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored the `main.py` module so that it's broken into smaller, more-manageable pieces
 - A page in the docs explaining the `feature_demo` example
 - Unit tests for the `spec/` folder
+- Batch block now supports placeholder entries
 
 ### Changed
 - The `merlin config` command:
