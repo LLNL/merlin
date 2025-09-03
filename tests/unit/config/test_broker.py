@@ -22,24 +22,9 @@ from merlin.config.broker import (
     get_redis_connection,
     get_redissock_connection,
     get_ssl_config,
-    read_file,
 )
 from merlin.config.configfile import CONFIG
 from tests.constants import SERVER_PASS
-from tests.utils import create_pass_file
-
-
-def test_read_file(merlin_server_dir: str):
-    """
-    Test the `read_file` function. We'll start up our containerized redis server
-    so that we have a password file to read here.
-
-    :param merlin_server_dir: The directory to the merlin test server configuration
-    """
-    pass_file = f"{merlin_server_dir}/redis.pass"
-    create_pass_file(pass_file)
-    actual = read_file(pass_file)
-    assert actual == SERVER_PASS
 
 
 def test_get_connection_string_invalid_broker(redis_broker_config_function: "fixture"):  # noqa: F821
@@ -199,18 +184,32 @@ class TestRabbitBroker:
             get_rabbit_connection(True)
         assert "Broker: No password provided for RabbitMQ" in str(excinfo.value)
 
-    def test_get_rabbit_connection_invalid_pass_filepath(self, rabbit_broker_config: "fixture"):  # noqa: F821
+    def test_get_rabbit_connection_invalid_pass_filepath(
+        self, rabbit_broker_config: "fixture", caplog: "fixture"
+    ) -> None:
         """
-        Test the `get_rabbit_connection` function with an invalid password filepath.
-        This should raise a ValueError.
+        Test the `get_rabbit_connection` function when the password filepath does not exist.
 
-        :param rabbit_broker_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        The resulting connection string should include the literal password value.
+        A warning should also be logged.
+
+        Args:
+            rabbit_broker_config: Fixture that sets the CONFIG object to a test broker configuration.
+            caplog: Pytest fixture to capture log output.
         """
         CONFIG.broker.password = "invalid_filepath"
-        expanded_filepath = os.path.abspath(os.path.expanduser(CONFIG.broker.password))
-        with pytest.raises(ValueError) as excinfo:
-            get_rabbit_connection(True)
-        assert f"Broker: RabbitMQ password file {expanded_filepath} does not exist" in str(excinfo.value)
+        caplog.set_level("WARNING")
+
+        conn_str = get_rabbit_connection(True)
+
+        # Verify that the warning was logged
+        assert "Password file does not exist. Using the filepath provided as the password." in caplog.text
+
+        # Verify that the password is used literally in the connection string
+        assert "invalid_filepath" in conn_str
+        # Sanity check for other expected parts of the connection string
+        assert CONFIG.broker.username in conn_str
+        assert CONFIG.broker.server in conn_str
 
     def run_get_connection_string(self, expected_vals: Dict[str, Any]):
         """

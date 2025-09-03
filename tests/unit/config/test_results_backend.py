@@ -19,7 +19,6 @@ from merlin.config.results_backend import (
     MYSQL_CONFIG_FILENAMES,
     MYSQL_CONNECTION_STRING,
     SQLITE_CONNECTION_STRING,
-    get_backend_password,
     get_connection_string,
     get_mysql,
     get_mysql_config,
@@ -27,85 +26,7 @@ from merlin.config.results_backend import (
     get_ssl_config,
 )
 from tests.constants import CERT_FILES, SERVER_PASS
-from tests.utils import create_cert_files, create_pass_file
-
-
-RESULTS_BACKEND_DIR = "{temp_output_dir}/test_results_backend"
-
-
-def test_get_backend_password_pass_file_in_merlin():
-    """
-    Test the `get_backend_password` function with the password file in the ~/.merlin/
-    directory. We'll create a dummy file in this directory and delete it once the test
-    is done.
-    """
-
-    # Check if the .merlin directory exists and create it if it doesn't
-    remove_merlin_dir_after_test = False
-    path_to_merlin_dir = os.path.expanduser("~/.merlin")
-    if not os.path.exists(path_to_merlin_dir):
-        remove_merlin_dir_after_test = True
-        os.mkdir(path_to_merlin_dir)
-
-    # Create the test password file
-    pass_filename = "test.pass"
-    full_pass_filepath = f"{path_to_merlin_dir}/{pass_filename}"
-    create_pass_file(full_pass_filepath)
-
-    try:
-        # Run the test
-        assert get_backend_password(pass_filename) == SERVER_PASS
-        # Cleanup
-        os.remove(full_pass_filepath)
-        if remove_merlin_dir_after_test:
-            os.rmdir(path_to_merlin_dir)
-    except AssertionError as exc:
-        # If the test fails, make sure we clean up the files/dirs created
-        os.remove(full_pass_filepath)
-        if remove_merlin_dir_after_test:
-            os.rmdir(path_to_merlin_dir)
-        raise AssertionError from exc
-
-
-def test_get_backend_password_pass_file_not_in_merlin(temp_output_dir: str):
-    """
-    Test the `get_backend_password` function with the password file not in the ~/.merlin/
-    directory. By using the `temp_output_dir` fixture, our cwd will be the temporary directory.
-    We'll create a password file in the this directory for this test and have `get_backend_password`
-    read from that.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    pass_file = "test.pass"
-    create_pass_file(pass_file)
-
-    assert get_backend_password(pass_file) == SERVER_PASS
-
-
-def test_get_backend_password_directly_pass_password():
-    """
-    Test the `get_backend_password` function by passing the password directly to this
-    function instead of a password file.
-    """
-    assert get_backend_password(SERVER_PASS) == SERVER_PASS
-
-
-def test_get_backend_password_using_certs_path(temp_output_dir: str):
-    """
-    Test the `get_backend_password` function with certs_path set to our temporary testing path.
-    We'll create a password file in the temporary directory for this test and have `get_backend_password`
-    read from that.
-
-    :param temp_output_dir: The path to the temporary output directory we'll be using for this test run
-    """
-    pass_filename = "test_certs.pass"
-    test_dir = RESULTS_BACKEND_DIR.format(temp_output_dir=temp_output_dir)
-    if not os.path.exists(test_dir):
-        os.mkdir(test_dir)
-    full_pass_filepath = f"{test_dir}/{pass_filename}"
-    create_pass_file(full_pass_filepath)
-
-    assert get_backend_password(pass_filename, certs_path=test_dir) == SERVER_PASS
+from tests.utils import create_cert_files
 
 
 def test_get_ssl_config_no_results_backend(config_function: "fixture"):  # noqa: F821
