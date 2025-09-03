@@ -9,10 +9,18 @@ Tests for the merlin/config/utils.py module.
 """
 
 import os
+
 import pytest
 
 from merlin.config.configfile import CONFIG
-from merlin.config.utils import Priority, determine_priority_map, get_priority, get_password_from_file, is_rabbit_broker, is_redis_broker
+from merlin.config.utils import (
+    Priority,
+    determine_priority_map,
+    get_password_from_file,
+    get_priority,
+    is_rabbit_broker,
+    is_redis_broker,
+)
 from tests.constants import SERVER_PASS
 from tests.fixture_types import FixtureCallable, FixtureStr
 from tests.utils import create_pass_file

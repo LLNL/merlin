@@ -178,11 +178,7 @@ def get_password_from_file(password_file: str, certs_path: str = None) -> str:
             line = f.readline().strip()
             password = quote(line, safe="")
 
-    LOG.debug(
-        "certs_path was provided and used in password resolution."
-        if certs_path
-        else "certs_path was not provided."
-    )
+    LOG.debug("certs_path was provided and used in password resolution." if certs_path else "certs_path was not provided.")
     LOG.debug("Password resolution: using file." if password_filepath else "Password resolution: using direct value.")
 
     return password
