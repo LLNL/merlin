@@ -16,10 +16,10 @@ from merlin.config.configfile import CONFIG
 from merlin.config.utils import (
     Priority,
     determine_priority_map,
-    resolve_password,
     get_priority,
     is_rabbit_broker,
     is_redis_broker,
+    resolve_password,
 )
 from tests.constants import SERVER_PASS
 from tests.fixture_types import FixtureCallable, FixtureStr

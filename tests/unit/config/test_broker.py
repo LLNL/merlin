@@ -185,7 +185,8 @@ class TestRabbitBroker:
         assert "Broker: No password provided for RabbitMQ" in str(excinfo.value)
 
     def test_get_rabbit_connection_invalid_pass_filepath(
-        self, rabbit_broker_config: "fixture",  # noqa: F821
+        self,
+        rabbit_broker_config: "fixture",  # noqa: F821
     ):
         """
         Test the `get_rabbit_connection` function when the password filepath does not exist.

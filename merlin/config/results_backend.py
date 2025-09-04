@@ -163,7 +163,7 @@ def get_mysql(certs_path: str = None, mysql_certs: Dict = None, include_password
     if not server:
         msg = f"Results backend: server {server} does not have a configuration"
         raise TypeError(msg)  # TypeError since server is None and not str
-        
+
     try:
         password = resolve_password(CONFIG.results_backend.password, "Results backend", certs_path=certs_path)
     except (AttributeError, KeyError) as exc:
