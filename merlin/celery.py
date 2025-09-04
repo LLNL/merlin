@@ -125,7 +125,7 @@ else:
         LOG.debug(f"Results backend connection string: {sanitized_results_backend_uri}.")
         RESULTS_SSL = results_backend.get_ssl_config(celery_check=True)
         LOG.debug(f"Results backend SSL {'enabled' if RESULTS_SSL else 'disabled'}.")
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         LOG.warning("An error occurred when trying to load broker and results backend connections. Defaulting to local mode.")
         BROKER_URI = None
         RESULTS_BACKEND_URI = None
