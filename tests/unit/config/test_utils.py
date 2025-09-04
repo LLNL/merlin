@@ -16,7 +16,7 @@ from merlin.config.configfile import CONFIG
 from merlin.config.utils import (
     Priority,
     determine_priority_map,
-    get_password_from_file,
+    resolve_password,
     get_priority,
     is_rabbit_broker,
     is_redis_broker,
@@ -154,9 +154,9 @@ def test_determine_priority_map_invalid():
     assert "Unsupported broker name: invalid_broker" in str(excinfo.value)
 
 
-def test_get_password_from_file_pass_file_in_merlin():
+def test_resolve_password_pass_file_in_merlin():
     """
-    Test the `get_password_from_file` function with the password file in the ~/.merlin/
+    Test the `resolve_password` function with the password file in the ~/.merlin/
     directory. We'll create a dummy file in this directory and delete it once the test
     is done.
     """
@@ -175,7 +175,7 @@ def test_get_password_from_file_pass_file_in_merlin():
 
     try:
         # Run the test
-        assert get_password_from_file(pass_filename) == SERVER_PASS
+        assert resolve_password(pass_filename, "test server type") == SERVER_PASS
         # Cleanup
         os.remove(full_pass_filepath)
         if remove_merlin_dir_after_test:
@@ -188,11 +188,11 @@ def test_get_password_from_file_pass_file_in_merlin():
         raise AssertionError from exc
 
 
-def test_get_password_from_file_pass_file_not_in_merlin(server_configuration_testing_dir: str):
+def test_resolve_password_pass_file_not_in_merlin(server_configuration_testing_dir: str):
     """
-    Test the `get_password_from_file` function with the password file not in the ~/.merlin/
+    Test the `resolve_password` function with the password file not in the ~/.merlin/
     directory. By using the `server_configuration_testing_dir` fixture, our cwd will be the temporary directory.
-    We'll create a password file in the this directory for this test and have `get_password_from_file`
+    We'll create a password file in the this directory for this test and have `resolve_password`
     read from that.
 
     Args:
@@ -201,21 +201,21 @@ def test_get_password_from_file_pass_file_not_in_merlin(server_configuration_tes
     pass_file = "test.pass"
     create_pass_file(pass_file)
 
-    assert get_password_from_file(pass_file) == SERVER_PASS
+    assert resolve_password(pass_file, "test server type") == SERVER_PASS
 
 
-def test_get_password_from_file_directly_pass_password():
+def test_resolve_password_directly_pass_password():
     """
-    Test the `get_password_from_file` function by passing the password directly to this
+    Test the `resolve_password` function by passing the password directly to this
     function instead of a password file.
     """
-    assert get_password_from_file(SERVER_PASS) == SERVER_PASS
+    assert resolve_password(SERVER_PASS, "test server type") == SERVER_PASS
 
 
-def test_get_password_from_file_using_certs_path(server_configuration_testing_dir: str):
+def test_resolve_password_using_certs_path(server_configuration_testing_dir: str):
     """
-    Test the `get_password_from_file` function with certs_path set to our temporary testing path.
-    We'll create a password file in the temporary directory for this test and have `get_password_from_file`
+    Test the `resolve_password` function with certs_path set to our temporary testing path.
+    We'll create a password file in the temporary directory for this test and have `resolve_password`
     read from that.
 
     Args:
@@ -225,4 +225,4 @@ def test_get_password_from_file_using_certs_path(server_configuration_testing_di
     full_pass_filepath = os.path.join(server_configuration_testing_dir, pass_filename)
     create_pass_file(full_pass_filepath)
 
-    assert get_password_from_file(pass_filename, certs_path=server_configuration_testing_dir) == SERVER_PASS
+    assert resolve_password(pass_filename, "test server type", certs_path=server_configuration_testing_dir) == SERVER_PASS

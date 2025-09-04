@@ -185,25 +185,20 @@ class TestRabbitBroker:
         assert "Broker: No password provided for RabbitMQ" in str(excinfo.value)
 
     def test_get_rabbit_connection_invalid_pass_filepath(
-        self, rabbit_broker_config: "fixture", caplog: "fixture"  # noqa: F821
+        self, rabbit_broker_config: "fixture",  # noqa: F821
     ):
         """
         Test the `get_rabbit_connection` function when the password filepath does not exist.
 
         The resulting connection string should include the literal password value.
-        A warning should also be logged.
 
         Args:
             rabbit_broker_config: Fixture that sets the CONFIG object to a test broker configuration.
             caplog: Pytest fixture to capture log output.
         """
         CONFIG.broker.password = "invalid_filepath"
-        caplog.set_level("WARNING")
 
         conn_str = get_rabbit_connection(True)
-
-        # Verify that the warning was logged
-        assert "Password file does not exist. Using the filepath provided as the password." in caplog.text
 
         # Verify that the password is used literally in the connection string
         assert "invalid_filepath" in conn_str
@@ -412,10 +407,11 @@ class TestRedisBroker:
     def test_get_redis_connection_invalid_pass_file(self, redis_broker_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis_connection` function with default functionality (including password and not using ssl).
-        We'll run this after changing the permissions of the password file so it can't be opened. This should still
-        run and give us password = CONFIG.broker.password.
+        We'll run this after changing the permissions of the password file so it can't be opened. This should raise
+        a ValueError.
 
-        :param redis_broker_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
+        Args:
+            redis_broker_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         # Capture the initial permissions of the password file so we can reset them
         orig_file_permissions = os.stat(CONFIG.broker.password).st_mode
@@ -424,21 +420,10 @@ class TestRedisBroker:
         os.chmod(CONFIG.broker.password, 0o222)
 
         try:
-            # Run the test
-            expected_vals = {
-                "urlbase": "redis",
-                "spass": f"default:{CONFIG.broker.password}@",
-                "server": "127.0.0.1",
-                "port": 6379,
-                "db_num": 0,
-            }
-            self.run_get_redis_connection(expected_vals=expected_vals, include_password=True, use_ssl=False)
-        except AssertionError as exc:
-            # If this test failed, make sure to reset the permissions in case other tests need to read this file
+            with pytest.raises(ValueError, match="could not be read"):
+                get_redis_connection(include_password=True, use_ssl=True)
+        finally:
             os.chmod(CONFIG.broker.password, orig_file_permissions)
-            raise AssertionError from exc
-
-        os.chmod(CONFIG.broker.password, orig_file_permissions)
 
     def test_get_redis_connection_dont_include_password(self, redis_broker_config_function: "fixture"):  # noqa: F821
         """

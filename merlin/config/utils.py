@@ -165,9 +165,14 @@ def resolve_password(password_value: str, server_type: str, certs_path: str = No
     for path in candidates:
         if os.path.exists(path):
             LOG.debug(f"{server_type}: Password file specified in config.")
-            with open(path, "r") as f:
-                password = quote(f.readline().strip(), safe="")
-            break
+            try:
+                with open(path, "r") as f:
+                    password = quote(f.readline().strip(), safe="")
+                break
+            except OSError as e:
+                msg = f"{server_type}: Password file '{path}' exists but could not be read ({e})."
+                LOG.error(msg)
+                raise ValueError(msg) from e
 
     if password is None:
         LOG.debug(f"{server_type}: Password file did not exist; using direct value.")

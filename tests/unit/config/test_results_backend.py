@@ -199,9 +199,10 @@ class TestRedisResultsBackend:
     def test_get_redis_invalid_pass_file(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis` function. We'll run this after changing the permissions of the password file so it
-        can't be opened. This should still run and give us password=CONFIG.results_backend.password.
+        can't be opened. This should raise a ValueError
 
-        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
+        Args:
+            redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
 
         # Capture the initial permissions of the password file so we can reset them
@@ -211,20 +212,10 @@ class TestRedisResultsBackend:
         os.chmod(CONFIG.results_backend.password, 0o222)
 
         try:
-            # Run the test
-            expected_vals = {
-                "urlbase": "redis",
-                "spass": f"default:{CONFIG.results_backend.password}@",
-                "server": "127.0.0.1",
-                "port": 6379,
-                "db_num": 0,
-            }
-            self.run_get_redis(expected_vals=expected_vals, certs_path=None, include_password=True, ssl=False)
+            with pytest.raises(ValueError, match="could not be read"):
+                get_redis(certs_path=None, include_password=True, ssl=False)
+        finally:
             os.chmod(CONFIG.results_backend.password, orig_file_permissions)
-        except AssertionError as exc:
-            # If this test failed, make sure to reset the permissions in case other tests need to read this file
-            os.chmod(CONFIG.results_backend.password, orig_file_permissions)
-            raise AssertionError from exc
 
     def test_get_ssl_config_redis(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
