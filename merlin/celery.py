@@ -20,7 +20,7 @@ from celery.signals import worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
 from merlin.config import broker, celeryconfig, results_backend
-from merlin.config.configfile import CONFIG
+from merlin.config.configfile import CONFIG, is_local_mode
 from merlin.config.utils import Priority, get_priority
 from merlin.utils import nested_namespace_to_dicts
 
@@ -109,21 +109,26 @@ BROKER_SSL: bool = True
 RESULTS_SSL: bool = False
 BROKER_URI: Optional[str] = ""
 RESULTS_BACKEND_URI: Optional[str] = ""
-try:
-    BROKER_URI = broker.get_connection_string()
-    sanitized_broker_uri = broker.get_connection_string(include_password=False)
-    LOG.debug(f"Broker connection string: {sanitized_broker_uri}.")
-    BROKER_SSL = broker.get_ssl_config()
-    LOG.debug(f"Broker SSL {'enabled' if BROKER_SSL else 'disabled'}.")
-    RESULTS_BACKEND_URI = results_backend.get_connection_string()
-    sanitized_results_backend_uri = results_backend.get_connection_string(include_password=False)
-    LOG.debug(f"Results backend connection string: {sanitized_results_backend_uri}.")
-    RESULTS_SSL = results_backend.get_ssl_config(celery_check=True)
-    LOG.debug(f"Results backend SSL {'enabled' if RESULTS_SSL else 'disabled'}.")
-except ValueError:
-    # These variables won't be set if running with '--local'.
+
+if is_local_mode():
     BROKER_URI = None
     RESULTS_BACKEND_URI = None
+else:
+    try:
+        BROKER_URI = broker.get_connection_string()
+        sanitized_broker_uri = broker.get_connection_string(include_password=False)
+        LOG.debug(f"Broker connection string: {sanitized_broker_uri}.")
+        BROKER_SSL = broker.get_ssl_config()
+        LOG.debug(f"Broker SSL {'enabled' if BROKER_SSL else 'disabled'}.")
+        RESULTS_BACKEND_URI = results_backend.get_connection_string()
+        sanitized_results_backend_uri = results_backend.get_connection_string(include_password=False)
+        LOG.debug(f"Results backend connection string: {sanitized_results_backend_uri}.")
+        RESULTS_SSL = results_backend.get_ssl_config(celery_check=True)
+        LOG.debug(f"Results backend SSL {'enabled' if RESULTS_SSL else 'disabled'}.")
+    except Exception:
+        LOG.warning("An error occurred when trying to load broker and results backend connections. Defaulting to local mode.")
+        BROKER_URI = None
+        RESULTS_BACKEND_URI = None
 
 app_name = "merlin_test_app" if os.getenv("CELERY_ENV") == "test" else "merlin"
 
