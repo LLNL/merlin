@@ -134,51 +134,44 @@ def get_priority(priority: Priority) -> int:
     return priority_map.get(priority, priority_map[Priority.MID])  # Default to MID priority for unknown priorities
 
 
-def get_password_from_file(password_file: str, certs_path: str = None) -> str:
+def resolve_password(password_value: str, server_type: str, certs_path: str = None) -> str:
     """
-    Retrieves a server password from a specified file or returns the provided password value.
-
-    This function attempts to locate the password file in several locations:
-
-    1. The default Merlin directory (`~/.merlin`).
-    2. The path specified by `password_file`.
-    3. A directory specified by `certs_path` (if provided).
-
-    If the password file is found, the password is read from the file. If the file cannot be
-    found, the value of `password_file` is treated as the password itself and returned.
+    Resolve a password configuration value into an actual password string.
 
     Args:
-        password_file (str): The file path or value for the password. If this is not a valid
-            file path, it is treated as the password itself.
-        certs_path (str, optional): An optional directory path where SSL certificates and
-            password files may be located.
+        password_value (str): Either a direct password string or the name/path of a file
+            containing the password.
+        server_type (str): The type of server (broker or results backend) for logging purposes.
+        certs_path (str, optional): Optional directory for certificate/password files.
 
     Returns:
-        The backend password, either retrieved from the file or the provided value.
+        The resolved password (URL-quoted if not direct password).
     """
-    password = None
+    if not password_value:
+        raise ValueError("No password configured.")
 
-    mer_pass = os.path.join(os.path.expanduser("~/.merlin"), password_file)
-    password_file = os.path.expanduser(password_file)
-
-    password_filepath = ""
-    if os.path.exists(mer_pass):
-        password_filepath = mer_pass
-    elif os.path.exists(password_file):
-        password_filepath = password_file
-    elif certs_path:
-        password_filepath = os.path.join(certs_path, password_file)
-
-    if not os.path.exists(password_filepath):
-        LOG.warning("Password file does not exist. Using the filepath provided as the password.")
-        # The password was given instead of the filepath.
-        password = password_file.strip()
+    # candidate paths
+    candidates = [
+        os.path.join(os.path.expanduser("~/.merlin"), password_value),
+        os.path.expanduser(password_value),
+    ]
+    if certs_path:
+        LOG.debug(f"{server_type}: Certs path was provided.")
+        candidates.append(os.path.join(certs_path, password_value))
     else:
-        with open(password_filepath, "r") as f:  # pylint: disable=C0103
-            line = f.readline().strip()
-            password = quote(line, safe="")
+        LOG.debug(f"{server_type}: Certs path was not provided.")
 
-    LOG.debug("certs_path was provided and used in password resolution." if certs_path else "certs_path was not provided.")
-    LOG.debug("Password resolution: using file." if password_filepath else "Password resolution: using direct value.")
+    password = None
+    for path in candidates:
+        if os.path.exists(path):
+            LOG.debug(f"{server_type}: Password file specified in config.")
+            with open(path, "r") as f:
+                password = quote(f.readline().strip(), safe="")
+            break
+
+    if password is None:
+        LOG.debug(f"{server_type}: Password file did not exist; using direct value.")
+        # treat value directly as password
+        password = password_value.strip()
 
     return password

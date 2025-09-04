@@ -17,13 +17,11 @@ from __future__ import print_function
 
 import getpass
 import logging
-import os
 import ssl
-from os.path import expanduser
 from typing import Dict, List, Optional, Union
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
-from merlin.config.utils import get_password_from_file
+from merlin.config.utils import resolve_password
 
 
 LOG: logging.Logger = logging.getLogger(__name__)
@@ -67,13 +65,9 @@ def get_rabbit_connection(include_password: bool, conn: str = "amqps") -> str:
     LOG.debug(f"Broker: server = {server}")
 
     try:
-        password_filepath = CONFIG.broker.password
-        LOG.debug("Broker: password file path has been configured.")
-        password_filepath = os.path.abspath(expanduser(password_filepath))
+        password = resolve_password(CONFIG.broker.password, "Broker")
     except (AttributeError, KeyError) as exc:
         raise ValueError("Broker: No password provided for RabbitMQ") from exc
-
-    password = get_password_from_file(password_filepath)
 
     try:
         port = CONFIG.broker.port
@@ -165,11 +159,7 @@ def get_redis_connection(include_password: bool, use_ssl: bool = False) -> str: 
         username = ""
 
     try:
-        password_filepath = CONFIG.broker.password
-        try:
-            password = get_password_from_file(password_filepath)
-        except IOError:
-            password = CONFIG.broker.password
+        password = resolve_password(CONFIG.broker.password, "Broker")
         if include_password:
             spass = f"{username}:{password}@"
         else:

@@ -17,7 +17,7 @@ import os
 from typing import Dict
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
-from merlin.config.utils import get_password_from_file
+from merlin.config.utils import resolve_password
 
 
 LOG = logging.getLogger(__name__)
@@ -64,11 +64,6 @@ def get_redis(certs_path: str = None, include_password: bool = True, ssl: bool =
     Returns:
         A Redis or Rediss connection URL formatted based on the provided parameters and configuration.
     """
-    server = CONFIG.results_backend.server
-    password_file = ""
-
-    urlbase = "rediss" if ssl else "redis"
-
     try:
         port = CONFIG.results_backend.port
     except (KeyError, AttributeError):
@@ -87,12 +82,7 @@ def get_redis(certs_path: str = None, include_password: bool = True, ssl: bool =
         username = ""
 
     try:
-        password_file = CONFIG.results_backend.password
-        try:
-            password = get_password_from_file(password_file, certs_path=certs_path)
-        except IOError:
-            password = CONFIG.results_backend.password
-
+        password = resolve_password(CONFIG.results_backend.password, "Results backend", certs_path=certs_path)
         if include_password:
             spass = f"{username}:{password}@"
         else:
@@ -101,10 +91,8 @@ def get_redis(certs_path: str = None, include_password: bool = True, ssl: bool =
         spass = ""
         LOG.debug("Results backend: no Redis password configured in backend config.")
 
-    LOG.debug(
-        f"Results backend: {'password file specified in config' if password_file else 'no password file specified; using direct value'}."
-    )
-    LOG.debug(f"Results backend: certs_path was {'provided' if certs_path else 'not provided'}.")
+    urlbase = "rediss" if ssl else "redis"
+    server = CONFIG.results_backend.server
     LOG.debug(f"Results backend: Redis server address {'configured' if server else 'not found in config'}.")
 
     return f"{urlbase}://{spass}{server}:{port}/{db_num}"
@@ -163,7 +151,6 @@ def get_mysql(certs_path: str = None, mysql_certs: Dict = None, include_password
             - If the MySQL connection information cannot be set due to missing certificates or configuration.
     """
     dbname = CONFIG.results_backend.dbname
-    password_file = CONFIG.results_backend.password
     server = CONFIG.results_backend.server
 
     # Adding an initial start for printing configurations. This should
@@ -171,17 +158,16 @@ def get_mysql(certs_path: str = None, mysql_certs: Dict = None, include_password
     # eventually be decoupled so we can print debug messages similar to our
     # Python debugging messages.
     LOG.debug(f"Results backend: database name is {'configured' if dbname else 'missing'}.")
-    LOG.debug(
-        f"Results backend: password file {'specified in configuration' if password_file else 'not specified in configuration; using direct value'}."
-    )
     LOG.debug(f"Results backend: server address is {'configured' if server else 'missing'}.")
-    LOG.debug(f"Results backend: certs_path was {'provided' if certs_path else 'not provided'}.")
 
     if not server:
         msg = f"Results backend: server {server} does not have a configuration"
         raise TypeError(msg)  # TypeError since server is None and not str
-
-    password = get_password_from_file(password_file, certs_path=certs_path)
+        
+    try:
+        password = resolve_password(CONFIG.results_backend.password, "Results backend", certs_path=certs_path)
+    except (AttributeError, KeyError) as exc:
+        raise ValueError("Results backend: No password provided for SQL") from exc
 
     if mysql_certs is None:
         mysql_certs = MYSQL_CONFIG_FILENAMES
