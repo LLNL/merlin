@@ -170,7 +170,7 @@ def resolve_password(password_value: str, server_type: str, certs_path: str = No
                     password = quote(f.readline().strip(), safe="")
                 break
             except OSError as e:
-                msg = f"{server_type}: Password file '{path}' exists but could not be read ({e})."
+                msg = f"{server_type}: A password file exists but could not be read ({e})."
                 LOG.error(msg)
                 raise ValueError(msg) from e
 
