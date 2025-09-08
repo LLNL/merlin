@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored the `main.py` module so that it's broken into smaller, more-manageable pieces
 - A page in the docs explaining the `feature_demo` example
 - Unit tests for the `spec/` folder
+- Batch block now supports placeholder entries
 
 ### Changed
 - The `merlin config` command:
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed dead lgtm link
 - Potential security vulnerabilities related to logging
 - Bug where the `--task-status` and `--return-code` filters of `merlin detailed-status` only accepted filters in all caps
+- Bug where absolute path was required in the broker password field
 
 ## [1.12.2]
 ### Added

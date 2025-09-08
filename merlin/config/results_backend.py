@@ -15,9 +15,9 @@ from __future__ import print_function
 import logging
 import os
 from typing import Dict
-from urllib.parse import quote
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
+from merlin.config.utils import resolve_password
 
 
 LOG = logging.getLogger(__name__)
@@ -47,59 +47,6 @@ MYSQL_CONNECTION_STRING = (
 SQLITE_CONNECTION_STRING = "db+sqlite:///results.db"
 
 
-def get_backend_password(password_file: str, certs_path: str = None) -> str:
-    """
-    Retrieves the backend password from a specified file or returns the provided password value.
-
-    This function attempts to locate the password file in several locations:
-
-    1. The default Merlin directory (`~/.merlin`).
-    2. The path specified by `password_file`.
-    3. A directory specified by `certs_path` (if provided).
-
-    If the password file is found, the password is read from the file. If the file cannot be
-    found, the value of `password_file` is treated as the password itself and returned.
-
-    Args:
-        password_file (str): The file path or value for the password. If this is not a valid
-            file path, it is treated as the password itself.
-        certs_path (str, optional): An optional directory path where SSL certificates and
-            password files may be located.
-
-    Returns:
-        The backend password, either retrieved from the file or the provided value.
-    """
-    password = None
-
-    mer_pass = os.path.join(os.path.expanduser("~/.merlin"), password_file)
-    password_file = os.path.expanduser(password_file)
-
-    password_filepath = ""
-    if os.path.exists(mer_pass):
-        password_filepath = mer_pass
-    elif os.path.exists(password_file):
-        password_filepath = password_file
-    elif certs_path:
-        password_filepath = os.path.join(certs_path, password_file)
-
-    if not os.path.exists(password_filepath):
-        # The password was given instead of the filepath.
-        password = password_file.strip()
-    else:
-        with open(password_filepath, "r") as f:  # pylint: disable=C0103
-            line = f.readline().strip()
-            password = quote(line, safe="")
-
-    LOG.debug(
-        "Results backend: certs_path was provided and used in password resolution."
-        if certs_path
-        else "Results backend: certs_path was not provided."
-    )
-    LOG.debug("Password resolution: using file." if password_filepath else "Password resolution: using direct value.")
-
-    return password
-
-
 # flake8 complains about cyclomatic complexity because of all the try-excepts,
 # this isn't so complicated it can't be followed and tucking things in functions
 # would make it less readable, so complexity evaluation is off
@@ -117,11 +64,6 @@ def get_redis(certs_path: str = None, include_password: bool = True, ssl: bool =
     Returns:
         A Redis or Rediss connection URL formatted based on the provided parameters and configuration.
     """
-    server = CONFIG.results_backend.server
-    password_file = ""
-
-    urlbase = "rediss" if ssl else "redis"
-
     try:
         port = CONFIG.results_backend.port
     except (KeyError, AttributeError):
@@ -140,12 +82,7 @@ def get_redis(certs_path: str = None, include_password: bool = True, ssl: bool =
         username = ""
 
     try:
-        password_file = CONFIG.results_backend.password
-        try:
-            password = get_backend_password(password_file, certs_path=certs_path)
-        except IOError:
-            password = CONFIG.results_backend.password
-
+        password = resolve_password(CONFIG.results_backend.password, "Results backend", certs_path=certs_path)
         if include_password:
             spass = f"{username}:{password}@"
         else:
@@ -154,10 +91,8 @@ def get_redis(certs_path: str = None, include_password: bool = True, ssl: bool =
         spass = ""
         LOG.debug("Results backend: no Redis password configured in backend config.")
 
-    LOG.debug(
-        f"Results backend: {'password file specified in config' if password_file else 'no password file specified; using direct value'}."
-    )
-    LOG.debug(f"Results backend: certs_path was {'provided' if certs_path else 'not provided'}.")
+    urlbase = "rediss" if ssl else "redis"
+    server = CONFIG.results_backend.server
     LOG.debug(f"Results backend: Redis server address {'configured' if server else 'not found in config'}.")
 
     return f"{urlbase}://{spass}{server}:{port}/{db_num}"
@@ -216,7 +151,6 @@ def get_mysql(certs_path: str = None, mysql_certs: Dict = None, include_password
             - If the MySQL connection information cannot be set due to missing certificates or configuration.
     """
     dbname = CONFIG.results_backend.dbname
-    password_file = CONFIG.results_backend.password
     server = CONFIG.results_backend.server
 
     # Adding an initial start for printing configurations. This should
@@ -224,17 +158,16 @@ def get_mysql(certs_path: str = None, mysql_certs: Dict = None, include_password
     # eventually be decoupled so we can print debug messages similar to our
     # Python debugging messages.
     LOG.debug(f"Results backend: database name is {'configured' if dbname else 'missing'}.")
-    LOG.debug(
-        f"Results backend: password file {'specified in configuration' if password_file else 'not specified in configuration; using direct value'}."
-    )
     LOG.debug(f"Results backend: server address is {'configured' if server else 'missing'}.")
-    LOG.debug(f"Results backend: certs_path was {'provided' if certs_path else 'not provided'}.")
 
     if not server:
         msg = f"Results backend: server {server} does not have a configuration"
         raise TypeError(msg)  # TypeError since server is None and not str
 
-    password = get_backend_password(password_file, certs_path=certs_path)
+    try:
+        password = resolve_password(CONFIG.results_backend.password, "Results backend", certs_path=certs_path)
+    except (AttributeError, KeyError) as exc:
+        raise ValueError("Results backend: No password provided for SQL") from exc
 
     if mysql_certs is None:
         mysql_certs = MYSQL_CONFIG_FILENAMES
