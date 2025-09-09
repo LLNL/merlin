@@ -1,10 +1,11 @@
 description:
-    name: chord_err
+    name: $(NAME)
     description: test the chord err problem
 
 env:
   variables:
     OUTPUT_PATH: ./studies
+    NAME: chord_err
 
 global.parameters:
   TEST_PARAM:

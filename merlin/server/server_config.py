@@ -1,32 +1,9 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """This module represents everything that goes into server configuration"""
 
 import enum
@@ -35,14 +12,15 @@ import os
 import random
 import string
 import subprocess
+from importlib import resources
 from io import BufferedReader
-from typing import Tuple
+from typing import Dict, Tuple
 
 import yaml
 
+from merlin.config.config_filepaths import MERLIN_HOME
 from merlin.server.server_util import (
     CONTAINER_TYPES,
-    MERLIN_CONFIG_DIR,
     MERLIN_SERVER_CONFIG,
     MERLIN_SERVER_SUBDIR,
     AppYaml,
@@ -52,16 +30,9 @@ from merlin.server.server_util import (
 )
 
 
-try:
-    from importlib import resources
-except ImportError:
-    import importlib_resources as resources
-
-
 LOG = logging.getLogger("merlin")
 
 # Default values for configuration
-CONFIG_DIR = os.path.abspath("./merlin_server/")
 IMAGE_NAME = "redis_latest.sif"
 PROCESS_FILE = "merlin_server.pf"
 CONFIG_FILE = "redis.conf"
@@ -73,7 +44,14 @@ PASSWORD_LENGTH = 256
 
 class ServerStatus(enum.Enum):
     """
-    Different states in which the server can be in.
+    Represents different states that a server can be in.
+
+    Attributes:
+        RUNNING (int): Indicates the server is running and operational. Numeric value: 0.
+        NOT_INITIALIZED (int): Indicates the server has not been initialized yet. Numeric value: 1.
+        MISSING_CONTAINER (int): Indicates the server is missing a required container. Numeric value: 2.
+        NOT_RUNNING (int): Indicates the server is not currently running. Numeric value: 3.
+        ERROR (int): Indicates the server encountered an error. Numeric value: 4.
     """
 
     RUNNING = 0
@@ -85,11 +63,19 @@ class ServerStatus(enum.Enum):
 
 def generate_password(length, pass_command: str = None) -> str:
     """
-    Function for generating passwords for redis container. If a specified command is given
-    then a password would be generated with the given command. If not a password will be
-    created by combining a string a characters based on the given length.
+    Generates a password for a Redis container.
 
-    :return:: string value with given length
+    If a specific command is provided, the password will be generated using the output
+    of the given command. Otherwise, a random password will be created by combining
+    characters (letters, digits, and special symbols) based on the specified length.
+
+    Args:
+        length (int): The desired length of the password.
+        pass_command (str, optional): A shell command to generate the password.
+            If provided, the command's output will be used as the password.
+
+    Returns:
+        The generated password.
     """
     if pass_command:
         process = subprocess.run(pass_command, shell=True, capture_output=True, text=True)
@@ -109,10 +95,19 @@ def generate_password(length, pass_command: str = None) -> str:
 
 def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
     """
-    Parse the redis output for a the redis container. It will get all the necessary information
-    from the output and returns a dictionary of those values.
+    Parses the Redis output from a Redis container.
 
-    :return:: two values is_successful, dictionary of values from redis output
+    This function processes the Redis container's output to extract necessary information,
+    such as configuration details and server state. It determines whether the server was
+    successfully initialized and ready to accept connections, or if an error occurred.
+
+    Args:
+        redis_stdout (BufferedReader): A buffered reader object containing the Redis container's output.
+
+    Returns:
+        A tuple containing:\n
+            - A boolean indicating whether the server was successfully initialized and ready.
+            - A dictionary containing parsed configuration values if successful, or an error message otherwise.
     """
     if redis_stdout is None:
         return False, "None passed as redis output"
@@ -138,11 +133,13 @@ def parse_redis_output(redis_stdout: BufferedReader) -> Tuple[bool, str]:
 
 def copy_container_command_files(config_dir: str) -> bool:
     """
-    Copy the yaml files that contain instructions on how to run certain commands
-    for each container type to the config directory.
+    Copies YAML files containing command instructions for container types to the specified configuration directory.
 
-    :param config_dir: The path to the configuration dir where we'll copy files.
-    :returns: True if successful. False otherwise.
+    Args:
+        config_dir (str): The path to the configuration directory where the YAML files will be copied.
+
+    Returns:
+        True if all files are successfully copied or already exist. False otherwise.
     """
     files = [i + ".yaml" for i in CONTAINER_TYPES]
     for file in files:
@@ -163,17 +160,23 @@ def copy_container_command_files(config_dir: str) -> bool:
 
 def create_server_config() -> bool:
     """
-    Create main configuration file for merlin server in the
-    merlin configuration directory. If a configuration already
-    exists it will not replace the current configuration and exit.
+    Creates the main configuration file for the Merlin server in the Merlin configuration directory.
 
-    :return:: True if success and False if fail
+    This function checks for the existence of the Merlin configuration directory and creates a default
+    server configuration if none exists. It also copies necessary container command files, applies the
+    server configuration to `app.yaml`, and initializes the server configuration directory. If the
+    configuration already exists, it will not overwrite it.
+
+    Returns:
+        True if the configuration is successfully created and applied. False otherwise.
     """
-    if not os.path.exists(MERLIN_CONFIG_DIR):
-        LOG.error(f"Unable to find main merlin configuration directory at {MERLIN_CONFIG_DIR}")
+    # Check for ~/.merlin/ directory
+    if not os.path.exists(MERLIN_HOME):
+        LOG.error(f"Unable to find main merlin configuration directory at {MERLIN_HOME}")
         return False
 
-    config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
+    # Create ~/.merlin/server/ directory if it doesn't already exist
+    config_dir = os.path.join(MERLIN_HOME, MERLIN_SERVER_SUBDIR)
     if not os.path.exists(config_dir):
         LOG.info("Unable to find exisiting server configuration.")
         LOG.info(f"Creating default configuration in {config_dir}")
@@ -183,34 +186,39 @@ def create_server_config() -> bool:
             LOG.error(err)
             return False
 
+    # Copy container-specific yaml files to ~/.merlin/server/
     if not copy_container_command_files(config_dir):
         return False
 
-    # Load Merlin Server Configuration and apply it to app.yaml
+    # Load Merlin Server Configuration and apply it to merlin_server/app.yaml
     with resources.path("merlin.server", MERLIN_SERVER_CONFIG) as merlin_server_config:
         with open(merlin_server_config) as f:  # pylint: disable=C0103
             main_server_config = yaml.load(f, yaml.Loader)
-            filename = LOCAL_APP_YAML if os.path.exists(LOCAL_APP_YAML) else AppYaml.default_filename
-            merlin_app_yaml = AppYaml(filename)
-            merlin_app_yaml.update_data(main_server_config)
-            merlin_app_yaml.write(filename)
-    LOG.info("Applying merlin server configuration to app.yaml")
 
-    server_config = pull_server_config()
-    if not server_config:
-        LOG.error('Try to run "merlin server init" again to reinitialize values.')
-        return False
+            server_config = load_server_config(main_server_config)
+            if not server_config:
+                LOG.error('Try to run "merlin server init" again to reinitialize values.')
+                return False
 
-    if not os.path.exists(server_config.container.get_config_dir()):
-        LOG.info("Creating merlin server directory.")
-        os.mkdir(server_config.container.get_config_dir())
+            if not os.path.exists(server_config.container.get_config_dir()):
+                LOG.info("Creating merlin server directory.")
+                os.mkdir(server_config.container.get_config_dir())
+
+            LOG.info("Applying merlin server configuration to ./merlin_server/app.yaml")
+            server_app_yaml = AppYaml()  # By default this will point to ./merlin_server/app.yaml
+            server_app_yaml.update_data(main_server_config)
+            server_app_yaml.write()
 
     return True
 
 
 def config_merlin_server():
     """
-    Configurate the merlin server with configurations such as username password and etc.
+    Configures the Merlin server with necessary settings, including username and password.
+
+    This function sets up the Merlin server by generating and storing a password file, creating a user file,
+    and configuring Redis settings. If the password or user files already exist, it skips the respective
+    setup steps. The function ensures that default and environment-specific users are added to the user file.
     """
 
     server_config = pull_server_config()
@@ -246,22 +254,24 @@ def config_merlin_server():
     return None
 
 
-def pull_server_config() -> ServerConfig:
+def load_server_config(server_config: Dict) -> ServerConfig:
     """
-    Pull the main configuration file and corresponding format configuration file
-    as well. Returns the values as a dictionary.
+    Given a dictionary containing server configuration values, load them into a
+    [`ServerConfig`][server.server_util.ServerConfig] instance.
 
-    :return: A instance of ServerConfig containing all the necessary configuration values.
+    Args:
+        server_config: A dictionary containing server configuration values. Should have
+            a 'container' entry and a 'process' entry.
+
+    Returns:
+        A `ServerConfig` object containing the loaded server configuration.
     """
     return_data = {}
+    return_data.update(server_config)
     format_needed_keys = ["command", "run_command", "stop_command", "pull_command"]
     process_needed_keys = ["status", "kill"]
 
-    merlin_app_yaml = AppYaml(LOCAL_APP_YAML)
-    server_config = merlin_app_yaml.get_data()
-    return_data.update(server_config)
-
-    config_dir = os.path.join(MERLIN_CONFIG_DIR, MERLIN_SERVER_SUBDIR)
+    config_dir = os.path.join(MERLIN_HOME, MERLIN_SERVER_SUBDIR)
 
     if "container" in server_config:
         if "format" in server_config["container"]:
@@ -274,30 +284,52 @@ def pull_server_config() -> ServerConfig:
                         return None
                 return_data.update(format_data)
         else:
-            LOG.error(f'Unable to find "format" in {merlin_app_yaml.default_filename}')
+            LOG.error('Unable to find "format" in server_config object.')
             return None
     else:
-        LOG.error(f'Unable to find "container" object in {merlin_app_yaml.default_filename}')
+        LOG.error('Unable to find "container" in server_config object.')
         return None
 
     # Checking for process values that are needed for main functions and defaults
     if "process" not in server_config:
-        LOG.error(f"Process config not found in {merlin_app_yaml.default_filename}")
+        LOG.error('Unable to find "process" in server_config object.')
         return None
 
     for key in process_needed_keys:
         if key not in server_config["process"]:
-            LOG.error(f'Process necessary "{key}" command configuration not found in {merlin_app_yaml.default_filename}')
+            LOG.error(f'Process necessary "{key}" command configuration not found in server_config object.')
             return None
 
     return ServerConfig(return_data)
 
 
+def pull_server_config(app_yaml_path: str = None) -> ServerConfig:
+    """
+    Retrieves the main configuration file and its corresponding format configuration file for the Merlin server.
+
+    This function reads the `app.yaml` configuration file and additional format-specific configuration files
+    to construct a complete configuration dictionary. It validates the presence of required keys in the format
+    and process configurations. If any required configuration is missing, an error is logged and `None` is returned.
+
+    Returns:
+        An instance of [`ServerConfig`][server.server_util.ServerConfig] containing all necessary configuration values.
+    """
+    app_yaml_file = app_yaml_path if app_yaml_path is not None else LOCAL_APP_YAML
+    merlin_app_yaml = AppYaml(app_yaml_file)
+    server_config = merlin_app_yaml.get_data()
+    return load_server_config(server_config)
+
+
 def pull_server_image() -> bool:
     """
-    Fetch the server image using singularity.
+    Fetches the server image and ensures the necessary configuration files are in place.
 
-    :return: True if success and False if fail
+    This function retrieves the server image from a specified URL and saves it locally if it does not already exist.
+    Additionally, it copies the default Redis configuration file to the appropriate location if it is missing.
+    The function relies on the server configuration to determine the image URL, image path, and configuration file details.
+
+    Returns:
+        True if the server image and configuration file are successfully set up, False if an error occurs.
     """
     server_config = pull_server_config()
     if not server_config:
@@ -337,15 +369,20 @@ def pull_server_image() -> bool:
     return True
 
 
-def get_server_status():
+def get_server_status() -> ServerStatus:
     """
-    Determine the status of the current server.
-    This function can be used to check if the servers
-    have been initalized, started, or stopped.
+    Determines the current status of the server.
 
-    :param `server_dir`: location of all server related files.
-    :param `image_name`: name of the image when fetched.
-    :return:: A enum value of ServerStatus describing its current state.
+    This function checks the server's state by verifying the existence of necessary files,
+    including configuration files, the container image, and the process file. It also checks
+    if the server process is actively running.
+
+    Returns:
+        An enum value representing the server's current state:\n
+            - `ServerStatus.NOT_INITIALIZED`: The server has not been initialized.
+            - `ServerStatus.MISSING_CONTAINER`: The server container image is missing.
+            - `ServerStatus.NOT_RUNNING`: The server process is not running.
+            - `ServerStatus.RUNNING`: The server is actively running.
     """
     server_config = pull_server_config()
     if not server_config:
@@ -375,10 +412,18 @@ def get_server_status():
     return ServerStatus.RUNNING
 
 
-def check_process_file_format(data: dict) -> bool:
+def check_process_file_format(data: Dict) -> bool:
     """
-    Check to see if the process file has the correct format and contains the expected key values.
-    :return:: True if success and False if fail
+    Validates the format of a process file.
+
+    This function checks if the given process file data (in dictionary format) contains all the
+    required keys: "parent_pid", "image_pid", "port", and "hostname".
+
+    Args:
+        data (Dict): The process file data to validate.
+
+    Returns:
+        True if the process file contains all required keys, False otherwise.
     """
     required_keys = ["parent_pid", "image_pid", "port", "hostname"]
     for key in required_keys:
@@ -387,11 +432,19 @@ def check_process_file_format(data: dict) -> bool:
     return True
 
 
-def pull_process_file(file_path: str) -> dict:
+def pull_process_file(file_path: str) -> Dict:
     """
-    Pull the data from the process file. If one is found returns the data in a dictionary
-    if not returns None
-    :return:: Data containing in process file.
+    Reads and parses data from a process file.
+
+    This function attempts to load the contents of a process file located at the specified
+    file path. If the file exists and its format is valid, the data is returned as a dictionary.
+    If the format is invalid or the file cannot be processed, `None` is returned.
+
+    Args:
+        file_path (str): The path to the process file.
+
+    Returns:
+        A dictionary containing the data from the process file if the format is valid.
     """
     with open(file_path, "r") as f:  # pylint: disable=C0103
         data = yaml.load(f, yaml.Loader)
@@ -400,10 +453,22 @@ def pull_process_file(file_path: str) -> dict:
     return None
 
 
-def dump_process_file(data: dict, file_path: str):
+def dump_process_file(data: Dict, file_path: str) -> bool:
     """
-    Dump the process data from the dictionary to the specified file path.
-    :return:: True if success and False if fail
+    Writes process data to a specified file.
+
+    This function takes a dictionary containing process data and writes it to the specified
+    file path in YAML format. Before writing, the function validates the format of the data.
+    If the data format is invalid, the function returns `False`. If the operation is successful,
+    it returns `True`.
+
+    Args:
+        data (Dict): The process data to be written to the file.
+        file_path (str): The path to the file where the data will be written.
+
+    Returns:
+        True if the data is successfully written to the file, False if the data
+            format is invalid or the operation fails.
     """
     if not check_process_file_format(data):
         return False

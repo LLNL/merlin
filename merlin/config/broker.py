@@ -1,50 +1,27 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
 
-"""Logic for configuring the celery broker."""
+"""
+This module provides utility functions and constants to manage broker configurations and connection strings
+for various messaging systems, including RabbitMQ and Redis. It supports multiple connection protocols
+and configurations, such as SSL, Unix sockets, and password inclusion.
+
+The module defines constants for supported brokers and connection string templates, along with functions
+to construct and retrieve connection strings and SSL configurations based on settings defined in the
+`app.yaml` configuration file.
+"""
 from __future__ import print_function
 
 import getpass
 import logging
-import os
 import ssl
-from os.path import expanduser
 from typing import Dict, List, Optional, Union
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
-
-
-try:
-    from urllib import quote
-except ImportError:
-    from urllib.parse import quote
+from merlin.config.utils import resolve_password
 
 
 LOG: logging.Logger = logging.getLogger(__name__)
@@ -56,19 +33,25 @@ REDISSOCK_CONNECTION: str = "redis+socket://{path}?virtual_host={db_num}"
 USER = getpass.getuser()
 
 
-def read_file(filepath):
-    "Safe file read from filepath"
-    with open(filepath, "r") as f:  # pylint: disable=C0103
-        line = f.readline().strip()
-        return quote(line, safe="")
-
-
-def get_rabbit_connection(include_password, conn="amqps"):
+def get_rabbit_connection(include_password: bool, conn: str = "amqps") -> str:
     """
-    Given the path to the directory where the broker configurations are stored
-    setup and return the RabbitMQ connection string.
+    Constructs and returns a RabbitMQ connection string based on broker configurations.
 
-    :param include_password : Format the connection for ouput by setting this True
+    This function reads broker configurations (such as server, port, username, password, and vhost)
+    and formats them into a RabbitMQ connection string. Optionally, the password can be included
+    in the connection string if `include_password` is set to `True`.
+
+    Args:
+        include_password (bool): Whether to include the password in the connection string.
+        conn (str, optional): The connection protocol to use. Defaults to "amqps".
+            Supported values are "amqp" and "amqps".
+
+    Returns:
+        A formatted RabbitMQ connection string.
+
+    Raises:
+        ValueError: If the password file path is not provided in the broker configuration, or if
+            the password file does not exist or cannot be read.
     """
     LOG.debug(f"Broker: connection = {conn}")
 
@@ -82,16 +65,9 @@ def get_rabbit_connection(include_password, conn="amqps"):
     LOG.debug(f"Broker: server = {server}")
 
     try:
-        password_filepath = CONFIG.broker.password
-        LOG.debug(f"Broker: password filepath = {password_filepath}")
-        password_filepath = os.path.abspath(expanduser(password_filepath))
+        password = resolve_password(CONFIG.broker.password, "Broker")
     except (AttributeError, KeyError) as exc:
         raise ValueError("Broker: No password provided for RabbitMQ") from exc
-
-    try:
-        password = read_file(password_filepath)
-    except IOError as exc:
-        raise ValueError(f"Broker: RabbitMQ password file {password_filepath} does not exist") from exc
 
     try:
         port = CONFIG.broker.port
@@ -119,10 +95,17 @@ def get_rabbit_connection(include_password, conn="amqps"):
     return RABBITMQ_CONNECTION.format(**rabbitmq_config)
 
 
-def get_redissock_connection():
+def get_redissock_connection() -> str:
     """
-    Given the path to the directory where the broker configurations are stored
-    setup and return the redis+socket connection string.
+    Constructs and returns a Redis connection string using a Unix socket.
+
+    This function retrieves broker configurations, such as the database number (`db_num`) and
+    the Unix socket file path (`path`), and formats them into a Redis connection string.
+
+    If the database number is not specified in the configuration, it defaults to `0`.
+
+    Returns:
+        A formatted Redis connection string using a Unix socket.
     """
     try:
         db_num = CONFIG.broker.db_num
@@ -137,12 +120,20 @@ def get_redissock_connection():
 
 # flake8 complains this function is too complex, we don't gain much nesting any of this as a separate function,
 # however, cyclomatic complexity examination is off to get around this
-def get_redis_connection(include_password, use_ssl=False):  # noqa C901
+def get_redis_connection(include_password: bool, use_ssl: bool = False) -> str:  # noqa C901
     """
-    Return the redis or rediss specific connection
+    Constructs and returns a Redis connection string, optionally using SSL and including a password.
 
-    :param include_password : Format the connection for ouput by setting this True
-    :param use_ssl : Flag to use rediss output
+    This function retrieves broker configurations (such as server, port, username, password, and database number)
+    and formats them into a Redis connection string. The connection can be configured to use SSL (`rediss` protocol)
+    and optionally include the password in the connection string.
+
+    Args:
+        include_password (bool): Whether to include the password in the connection string.
+        use_ssl (bool, optional): Whether to use the `rediss` protocol (SSL).
+
+    Returns:
+        A formatted Redis connection string.
     """
     server = CONFIG.broker.server
     LOG.debug(f"Broker: server = {server}")
@@ -168,11 +159,7 @@ def get_redis_connection(include_password, use_ssl=False):  # noqa C901
         username = ""
 
     try:
-        password_filepath = CONFIG.broker.password
-        try:
-            password = read_file(password_filepath)
-        except IOError:
-            password = CONFIG.broker.password
+        password = resolve_password(CONFIG.broker.password, "Broker")
         if include_password:
             spass = f"{username}:{password}@"
         else:
@@ -184,15 +171,22 @@ def get_redis_connection(include_password, use_ssl=False):  # noqa C901
     return f"{urlbase}://{spass}{server}:{port}/{db_num}"
 
 
-def get_connection_string(include_password=True):
+def get_connection_string(include_password: bool = True) -> str:
     """
-    Return the connection string based on the configuration specified in the
-    `app.yaml` config file.
+    Constructs and returns a connection string based on the broker configuration.
 
-    If the url variable is present, return that as the connection string.
+    This function retrieves the connection string from the `CONFIG.broker.url` if available.
+    Otherwise, it determines the connection string based on the broker name specified in the
+    configuration file (`app.yaml`). If the broker name is not supported, a `ValueError` is raised.
 
-    :param include_password : The connection can be formatted for output by
-                              setting this to True
+    Args:
+        include_password (bool): Whether to include the password in the connection string.
+
+    Returns:
+        A formatted connection string based on the broker configuration.
+
+    Raises:
+        ValueError: If the broker name is not supported.
     """
     try:
         return CONFIG.broker.url
@@ -210,7 +204,22 @@ def get_connection_string(include_password=True):
     return _sort_valid_broker(broker, include_password)
 
 
-def _sort_valid_broker(broker, include_password):
+def _sort_valid_broker(broker: str, include_password: bool) -> str:
+    """
+    Determines and returns the appropriate connection string for a given broker.
+
+    This function selects the connection string generation method based on the broker type
+    provided as input. Supported brokers include RabbitMQ (`amqp` or `amqps`), Redis (`redis`),
+    Redis over SSL (`rediss`), and Redis over a socket (`redis+socket`).
+
+    Args:
+        broker (str): The name of the broker. Must be one of the supported broker types:
+            `rabbitmq`, `amqps`, `amqp`, `redis+socket`, `redis`, or `rediss`.
+        include_password (bool): Whether to include the password in the connection string.
+
+    Returns:
+        A formatted connection string for the specified broker.
+    """
     if broker in ("rabbitmq", "amqps"):
         return get_rabbit_connection(include_password, conn="amqps")
 
@@ -229,11 +238,17 @@ def _sort_valid_broker(broker, include_password):
 
 def get_ssl_config() -> Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]:
     """
-    Return the ssl config based on the configuration specified in the
-    `app.yaml` config file.
+    Retrieves the SSL configuration for the broker based on the settings in the `app.yaml` configuration file.
 
-    :return: Returns either False if no ssl
-    :rtype: Union[bool, Dict[str, Union[str, ssl.VerifyMode]]]
+    This function determines whether SSL should be used for the broker connection and, if applicable,
+    returns the SSL configuration details. If the broker does not require SSL or is unsupported,
+    the function returns `False`.
+
+    Returns:
+        This returns either:\n
+            - `False` if SSL is not required or the broker is unsupported.
+            - A dictionary containing SSL configuration details if SSL is required.
+              The dictionary may include keys such as certificate paths and verification modes.
     """
     broker: Union[bool, str] = ""
     try:

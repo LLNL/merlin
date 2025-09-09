@@ -1,39 +1,15 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
 
 """Updated celery configuration."""
 from __future__ import absolute_import, print_function
 
 import logging
 import os
-from typing import Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import billiard
 import celery
@@ -44,7 +20,7 @@ from celery.signals import worker_process_init
 
 import merlin.common.security.encrypt_backend_traffic
 from merlin.config import broker, celeryconfig, results_backend
-from merlin.config.configfile import CONFIG
+from merlin.config.configfile import CONFIG, is_local_mode
 from merlin.config.utils import Priority, get_priority
 from merlin.utils import nested_namespace_to_dicts
 
@@ -58,7 +34,8 @@ def patch_celery():
     Celery has error callbacks but they do not work properly on chords that
     are nested within chains.
 
-    Credit to this function goes to: https://danidee10.github.io/2019/07/09/celery-chords.html
+    Credit to this function goes to
+    [the following post](https://danidee10.github.io/2019/07/09/celery-chords.html).
     """
 
     def _unpack_chord_result(
@@ -84,9 +61,41 @@ def patch_celery():
 
 
 # This function has to have specific args/return values for celery so ignore pylint
-def route_for_task(name, args, kwargs, options, task=None, **kw):  # pylint: disable=W0613,R1710
+def route_for_task(
+    name: str,
+    args: List[Any],
+    kwargs: Dict[Any, Any],
+    options: Dict[Any, Any],
+    task: celery.Task = None,
+    **kw: Dict[Any, Any],
+) -> Dict[Any, Any]:  # pylint: disable=W0613,R1710
     """
-    Custom task router for queues
+    Custom task router for Celery queues.
+
+    This function routes tasks to specific queues based on the task name.
+    If the task name contains a colon, it splits the name to determine the queue.
+
+    Args:
+        name: The name of the task being routed.
+        args: The positional arguments passed to the task.
+        kwargs: The keyword arguments passed to the task.
+        options: Additional options for the task.
+        task: The task instance (default is None).
+        **kw: Additional keyword arguments for THIS function (not the task).
+
+    Returns:
+        A dictionary specifying the queue to route the task to.
+            If the task name contains a colon, it returns a dictionary with
+            the key "queue" set to the queue name. Otherwise, it returns
+            an empty dictionary.
+
+    Example:
+        Using a colon in the name will return the string before the colon as the queue:
+
+        ```python
+        >>> route_for_task("my_queue:my_task")
+        {"queue": "my_queue"}
+        ```
     """
     if ":" in name:
         queue, _ = name.split(":")
@@ -100,23 +109,32 @@ BROKER_SSL: bool = True
 RESULTS_SSL: bool = False
 BROKER_URI: Optional[str] = ""
 RESULTS_BACKEND_URI: Optional[str] = ""
-try:
-    BROKER_URI = broker.get_connection_string()
-    LOG.debug("broker: %s", broker.get_connection_string(include_password=False))
-    BROKER_SSL = broker.get_ssl_config()
-    LOG.debug("broker_ssl = %s", BROKER_SSL)
-    RESULTS_BACKEND_URI = results_backend.get_connection_string()
-    RESULTS_SSL = results_backend.get_ssl_config(celery_check=True)
-    LOG.debug("results: %s", results_backend.get_connection_string(include_password=False))
-    LOG.debug("results: redis_backed_use_ssl = %s", RESULTS_SSL)
-except ValueError:
-    # These variables won't be set if running with '--local'.
+
+if is_local_mode():
     BROKER_URI = None
     RESULTS_BACKEND_URI = None
+else:
+    try:
+        BROKER_URI = broker.get_connection_string()
+        sanitized_broker_uri = broker.get_connection_string(include_password=False)
+        LOG.debug(f"Broker connection string: {sanitized_broker_uri}.")
+        BROKER_SSL = broker.get_ssl_config()
+        LOG.debug(f"Broker SSL {'enabled' if BROKER_SSL else 'disabled'}.")
+        RESULTS_BACKEND_URI = results_backend.get_connection_string()
+        sanitized_results_backend_uri = results_backend.get_connection_string(include_password=False)
+        LOG.debug(f"Results backend connection string: {sanitized_results_backend_uri}.")
+        RESULTS_SSL = results_backend.get_ssl_config(celery_check=True)
+        LOG.debug(f"Results backend SSL {'enabled' if RESULTS_SSL else 'disabled'}.")
+    except Exception:  # pylint: disable=broad-exception-caught
+        LOG.warning("An error occurred when trying to load broker and results backend connections. Defaulting to local mode.")
+        BROKER_URI = None
+        RESULTS_BACKEND_URI = None
+
+app_name = "merlin_test_app" if os.getenv("CELERY_ENV") == "test" else "merlin"
 
 # initialize app with essential properties
 app: Celery = patch_celery().Celery(
-    "merlin",
+    app_name,
     broker=BROKER_URI,
     backend=RESULTS_BACKEND_URI,
     broker_use_ssl=BROKER_SSL,
@@ -169,11 +187,12 @@ app.autodiscover_tasks(["merlin.common"])
 
 # Pylint believes the args are unused, I believe they're used after decoration
 @worker_process_init.connect()
-def setup(**kwargs):  # pylint: disable=W0613
+def setup(**kwargs: Dict[Any, Any]):  # pylint: disable=W0613
     """
-    Set affinity for the worker on startup (works on toss3 nodes)
+    Set affinity for the worker on startup (works on toss3 nodes).
 
-    :param `**kwargs`: keyword arguments
+    Args:
+        **kwargs: Keyword arguments.
     """
     if "CELERY_AFFINITY" in os.environ and int(os.environ["CELERY_AFFINITY"]) > 1:
         # Number of cpus between workers.

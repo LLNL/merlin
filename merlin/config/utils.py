@@ -1,42 +1,41 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
-"""This module contains priority handling"""
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
+"""
+This module provides utility functions and classes for handling broker priorities
+and determining configurations for supported brokers such as RabbitMQ and Redis.
+It includes functionality for mapping priority levels to integer values based on
+the broker type and validating broker configurations.
+"""
 
 import enum
+import logging
+import os
 from typing import Dict
+from urllib.parse import quote
 
 from merlin.config.configfile import CONFIG
 
 
+LOG = logging.getLogger("merlin")
+
+
 class Priority(enum.Enum):
-    """Enumerated Priorities"""
+    """
+    Enumerated Priorities.
+
+    This enumeration defines the different priority levels that can be used
+    for message handling with brokers.
+
+    Attributes:
+        HIGH (int): Represents the highest priority level. Numeric value: 1.
+        MID (int): Represents the medium priority level. Numeric value: 2.
+        LOW (int): Represents the lowest priority level. Numeric value: 3.
+        RETRY (int): Represents the priority level for retrying messages. Numeric value: 4.
+    """
 
     HIGH = 1
     MID = 2
@@ -44,22 +43,54 @@ class Priority(enum.Enum):
     RETRY = 4
 
 
-def is_rabbit_broker(broker: str) -> bool:
-    """Check if the broker is a rabbit server"""
-    return broker in ["rabbitmq", "amqps", "amqp"]
+def is_rabbit_broker(broker_name: str) -> bool:
+    """
+    Check if the given broker is a RabbitMQ server.
+
+    This function checks whether the provided broker name matches any of the
+    RabbitMQ-related broker types.
+
+    Args:
+        broker_name: The name of the broker to check.
+
+    Returns:
+        True if the broker is a RabbitMQ server, False otherwise.
+    """
+    return broker_name in ["rabbitmq", "amqps", "amqp"]
 
 
-def is_redis_broker(broker: str) -> bool:
-    """Check if the broker is a redis server"""
-    return broker in ["redis", "rediss", "redis+socket"]
+def is_redis_broker(broker_name: str) -> bool:
+    """
+    Check if the given broker is a Redis server.
+
+    This function checks whether the provided broker name matches any of the
+    Redis-related broker types.
+
+    Args:
+        broker_name: The name of the broker to check.
+
+    Returns:
+        True if the broker is a Redis server, False otherwise.
+    """
+    return broker_name in ["redis", "rediss", "redis+socket"]
 
 
 def determine_priority_map(broker_name: str) -> Dict[Priority, int]:
     """
-    Returns the priority mapping for the given broker name.
+    Determine the priority mapping for the given broker name.
 
-    :param broker_name: The name of the broker that we need the priority map for
-    :returns: The priority map associated with `broker_name`
+    This function returns a mapping of [`Priority`][config.utils.Priority]
+    enum values to integer priority levels based on the type of broker provided.
+
+    Args:
+        broker_name: The name of the broker for which to determine the priority map.
+
+    Returns:
+        (Dict[config.utils.Priority, int]): A dictionary mapping
+            [`Priority`][config.utils.Priority] enum values to integer levels.
+
+    Raises:
+        ValueError: If the broker name is not supported.
     """
     if is_rabbit_broker(broker_name):
         return {Priority.LOW: 1, Priority.MID: 5, Priority.HIGH: 9, Priority.RETRY: 10}
@@ -71,11 +102,24 @@ def determine_priority_map(broker_name: str) -> Dict[Priority, int]:
 
 def get_priority(priority: Priority) -> int:
     """
-    Gets the priority level as an integer based on the broker.
-    For a rabbit broker a low priority is 1 and high is 10. For redis it's the opposite.
+    Get the integer priority level for a given [`Priority`][config.utils.Priority]
+    enum value.
 
-    :param priority: The priority value that we want
-    :returns: The priority value as an integer
+    This function determines the priority level as an integer based on the
+    broker configuration. For RabbitMQ brokers, lower numbers represent lower
+    priorities, while for Redis brokers, higher numbers represent lower
+    priorities.
+
+    Args:
+        priority (config.utils.Priority): The [`Priority`][config.utils.Priority]
+            enum value for which to get the integer level.
+
+    Returns:
+        The integer priority level corresponding to the given [`Priority`][config.utils.Priority].
+
+    Raises:
+        ValueError: If the provided `priority` is invalid or not part of the
+            [`Priority`][config.utils.Priority] enum.
     """
     priority_err_msg = f"Invalid priority: {priority}"
     try:
@@ -88,3 +132,51 @@ def get_priority(priority: Priority) -> int:
 
     priority_map = determine_priority_map(CONFIG.broker.name.lower())
     return priority_map.get(priority, priority_map[Priority.MID])  # Default to MID priority for unknown priorities
+
+
+def resolve_password(password_value: str, server_type: str, certs_path: str = None) -> str:
+    """
+    Resolve a password configuration value into an actual password string.
+
+    Args:
+        password_value (str): Either a direct password string or the name/path of a file
+            containing the password.
+        server_type (str): The type of server (broker or results backend) for logging purposes.
+        certs_path (str, optional): Optional directory for certificate/password files.
+
+    Returns:
+        The resolved password (URL-quoted if not direct password).
+    """
+    if not password_value:
+        raise ValueError("No password configured.")
+
+    # candidate paths
+    candidates = [
+        os.path.join(os.path.expanduser("~/.merlin"), password_value),
+        os.path.expanduser(password_value),
+    ]
+    if certs_path:
+        LOG.debug(f"{server_type}: Certs path was provided.")
+        candidates.append(os.path.join(certs_path, password_value))
+    else:
+        LOG.debug(f"{server_type}: Certs path was not provided.")
+
+    password = None
+    for path in candidates:
+        if os.path.exists(path):
+            LOG.debug(f"{server_type}: Password file specified in config.")
+            try:
+                with open(path, "r") as f:
+                    password = quote(f.readline().strip(), safe="")
+                break
+            except OSError as e:
+                msg = f"{server_type}: A password file exists but could not be read ({e})."
+                LOG.error(msg)
+                raise ValueError(msg) from e
+
+    if password is None:
+        LOG.debug(f"{server_type}: Password file did not exist; using direct value.")
+        # treat value directly as password
+        password = password_value.strip()
+
+    return password

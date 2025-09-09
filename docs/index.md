@@ -71,7 +71,7 @@ First, let's create a folder to store our server files and our examples. We'll a
 mkdir merlin_examples ; cd merlin_examples/
 ```
 
-Now let's set up a [containerized server](./user_guide/configuration/merlin_server.md) that Merlin can connect to.
+Now let's set up a [containerized server](./user_guide/configuration/containerized_server.md) that Merlin can connect to.
 
 1. Initialize the server files:
 
