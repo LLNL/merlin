@@ -145,6 +145,35 @@ class TestDetailedStatusCommand:
         assert not args.no_prompts
         assert args.detailed
 
+    def test_add_parser_normalizes_task_status_and_return_code_filters(self, create_parser: FixtureCallable):
+        """
+        Test that the DetailedStatusCommand parser normalizes `--return-code` and `--task-status`
+        values to uppercase, regardless of input case.
+
+        Args:
+            create_parser: A fixture to help create a parser.
+        """
+        command = DetailedStatusCommand()
+        parser = create_parser(command)
+
+        # Simulate user input with mixed/lowercase values
+        args = parser.parse_args(
+            [
+                "detailed-status",
+                "some_workspace",
+                "--return-code",
+                "success",
+                "Soft_Fail",
+                "--task-status",
+                "running",
+                "Failed",
+            ]
+        )
+
+        # Both return_code and task_status should be uppercased
+        assert args.return_code == ["SUCCESS", "SOFT_FAIL"]
+        assert args.task_status == ["RUNNING", "FAILED"]
+
     def test_process_command_with_valid_workspace_and_detailed_status(self, mocker):
         mock_verify_filepath = mocker.patch("merlin.cli.commands.status.verify_filepath", side_effect=ValueError)
         mock_verify_dirpath = mocker.patch("merlin.cli.commands.status.verify_dirpath", return_value="path/to/workspace")
