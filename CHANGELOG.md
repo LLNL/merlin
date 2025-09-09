@@ -4,7 +4,7 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.13.0]
 ### Added
 - API documentation for Merlin's core codebase
 - Added support for Python 3.12 and 3.13
@@ -20,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New GitHub actions to reduce common code in CI
 - COPYRIGHT file for ownership details
 - New check for copyright headers in the Makefile
-- Refactored the `main.py` module so that it's broken into smaller, more-manageable pieces
 - A page in the docs explaining the `feature_demo` example
 - Unit tests for the `spec/` folder
 - Batch block now supports placeholder entries
@@ -40,7 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
   - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
 - Removed `e2e-distributed*` definitions from the Makefile
-- Modified GitHub CI to use shared testing servers hosted by LaunchIT rather than the jackalope server
 - CI to use new actions
 - Copyright headers in all files
   - These now point to the LICENSE and COPYRIGHT files
