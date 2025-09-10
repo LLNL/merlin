@@ -22,7 +22,7 @@ from typing import Dict
 
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import MerlinWorkerLaunchError
-from merlin.study.batch import batch_check_parallel, batch_worker_launch
+from merlin.study.batch import BatchManager
 from merlin.utils import check_machines
 from merlin.workers.worker import MerlinWorker
 
@@ -45,6 +45,7 @@ class CeleryWorker(MerlinWorker):
         args (str): Additional CLI arguments passed to Celery.
         queues (List[str]): Queues the worker listens to.
         batch (dict): Optional batch submission settings.
+        batch_manager (BatchManager): Manager for batch-related operations.
         machines (List[str]): List of hostnames the worker is allowed to run on.
         overlap (bool): Whether this worker can overlap queues with others.
 
@@ -85,6 +86,9 @@ class CeleryWorker(MerlinWorker):
         self.batch = self.config.get("batch", {})
         self.machines = self.config.get("machines", [])
         self.overlap = overlap
+        
+        # Initialize BatchManager for this worker
+        self.batch_manager = BatchManager(self.batch)
 
         # Add this worker to the database
         merlin_db = MerlinDatabase()
@@ -100,7 +104,8 @@ class CeleryWorker(MerlinWorker):
         Args:
             disable_logs: If True, logging level will not be appended.
         """
-        if batch_check_parallel(self.batch):
+        # Use BatchManager to check for parallel configuration
+        if self.batch_manager.is_parallel():
             if "--concurrency" not in self.args:
                 LOG.warning("Missing --concurrency in worker args for parallel tasks.")
             if "--prefetch-multiplier" not in self.args:
@@ -133,10 +138,12 @@ class CeleryWorker(MerlinWorker):
         # Validate args
         self._verify_args(disable_logs=disable_logs)
 
-        # Construct the launch command
+        # Construct the base celery command
         celery_cmd = f"celery -A merlin worker {self.args} -Q {','.join(self.queues)}"
-        nodes = self.batch.get("nodes", None)
-        launch_cmd = batch_worker_launch(self.batch, celery_cmd, nodes=nodes)
+        
+        # Use BatchManager to create the launch command
+        launch_cmd = self.batch_manager.create_worker_launch_command(celery_cmd)
+        
         return os.path.expandvars(launch_cmd)
 
     def should_launch(self) -> bool:
@@ -202,10 +209,25 @@ class CeleryWorker(MerlinWorker):
         Returns:
             A dictionary containing key details about this worker.
         """
-        return {
+        metadata = {
             "name": self.name,
             "queues": self.queues,
             "args": self.args,
             "machines": self.machines,
             "batch": self.batch,
         }
+        
+        # Add batch manager information
+        metadata["batch_info"] = self.batch_manager.get_batch_info()
+        
+        return metadata
+        
+    def update_batch_config(self, new_batch_config: Dict):
+        """
+        Update the batch configuration for this worker.
+        
+        Args:
+            new_batch_config: New batch configuration to apply.
+        """
+        self.batch.update(new_batch_config)
+        self.batch_manager.update_config(new_batch_config)
