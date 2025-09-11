@@ -11,6 +11,7 @@ This module provides strongly-typed configuration objects that replace
 dictionary-based configurations.
 """
 
+import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Union
 
@@ -181,16 +182,18 @@ class WorkerConfig:
                     self.nodes = int(self.nodes)
                 except ValueError:
                     raise ValueError(f"Invalid nodes value '{self.nodes}'. Must be an integer, 'all', or None.")
+                
+        if not self.env:
+            self.env = os.environ.copy()
     
     @classmethod
-    def from_dict(cls, name: str, config_dict: Dict, env: Dict[str, str] = None) -> 'WorkerConfig':
+    # def from_dict(cls, name: str, config_dict: Dict, env: Dict[str, str] = None) -> 'WorkerConfig':
+    def from_dict(cls, config_dict: Dict) -> 'WorkerConfig':
         """
         Create a WorkerConfig from a dictionary.
         
         Args:
-            name: Name of the worker.
             config_dict: Dictionary containing worker configuration.
-            env: Environment variables dictionary.
             
         Returns:
             WorkerConfig instance with values from the dictionary.
@@ -207,14 +210,14 @@ class WorkerConfig:
             queues = {queues} if isinstance(queues, str) else {"[merlin]_merlin"}
         
         return cls(
-            name=name,
+            name=config_dict["name"],  # Not using `get` since this should fail if 'name' is missing
             args=config_dict.get("args", ""),
             queues=queues,
             batch=batch_config,
             machines=config_dict.get("machines", []),
             nodes=config_dict.get("nodes"),
             overlap=config_dict.get("overlap", False),
-            env=env or {},
+            env=config_dict.get("env", {}),
         )
     
     def to_dict(self) -> Dict:
@@ -232,6 +235,7 @@ class WorkerConfig:
             "machines": self.machines,
             "nodes": self.nodes,
             "overlap": self.overlap,
+            "env": self.env,
         }
     
     def get_effective_nodes(self) -> Optional[Union[int, str]]:

@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 
 import pytest
 
+from merlin.study.configurations import WorkerConfig
 from merlin.workers.handlers.worker_handler import MerlinWorkerHandler
 from merlin.workers.worker import MerlinWorker
 
@@ -74,7 +75,7 @@ def test_launch_workers_calls_worker_launch():
     Test that `start_workers` calls each worker's `start` method.
     """
     handler = DummyWorkerHandler()
-    workers = [DummyWorker("w1", {}, {}), DummyWorker("w2", {}, {})]
+    workers = [DummyWorker(WorkerConfig(name="w1")), DummyWorker(WorkerConfig(name="w2"))]
 
     result = handler.start_workers(workers)
 
@@ -98,7 +99,7 @@ def test_query_workers_returns_summary():
     Test that `query_workers` returns a valid summary of current worker state.
     """
     handler = DummyWorkerHandler()
-    workers = [DummyWorker("a", {}, {}), DummyWorker("b", {}, {})]
+    workers = [DummyWorker(WorkerConfig(name="a")), DummyWorker(WorkerConfig(name="b"))]
     handler.start_workers(workers)
 
     summary = handler.query_workers()

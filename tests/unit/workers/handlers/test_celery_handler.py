@@ -14,15 +14,16 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
+from merlin.study.configurations import WorkerConfig
 from merlin.workers.celery_worker import CeleryWorker
 from merlin.workers.handlers import CeleryWorkerHandler
 
 
 class DummyCeleryWorker(CeleryWorker):
-    def __init__(self, name: str, config: Dict = None, env: Dict = None):
-        super().__init__(name, config or {}, env or {})
+    def __init__(self, worker_config: WorkerConfig):
+        super().__init__(worker_config)
         self.launched_with = None
-        self.launch_command = f"celery --worker-name={name}"
+        self.launch_command = f"celery --worker-name={self.worker_config.name}"
 
     def get_launch_command(self, override_args: str = "", disable_logs: bool = False) -> str:
         parts = [self.launch_command]
@@ -34,7 +35,7 @@ class DummyCeleryWorker(CeleryWorker):
 
     def start(self, override_args: str = "", disable_logs: bool = False):
         self.launched_with = (override_args, disable_logs)
-        return f"Launching {self.name} with {override_args} and logs {'off' if disable_logs else 'on'}"
+        return f"Launching {self.worker_config.name} with {override_args} and logs {'off' if disable_logs else 'on'}"
 
 
 class TestCeleryWorkerHandler:
@@ -52,9 +53,11 @@ class TestCeleryWorkerHandler:
 
     @pytest.fixture
     def workers(self, mock_db: MagicMock) -> List[DummyCeleryWorker]:
+        worker_1_config = WorkerConfig(name="worker1")
+        worker_2_config = WorkerConfig(name="worker2")
         return [
-            DummyCeleryWorker("worker1"),
-            DummyCeleryWorker("worker2"),
+            DummyCeleryWorker(worker_1_config),
+            DummyCeleryWorker(worker_2_config),
         ]
 
     def test_echo_only_prints_commands(

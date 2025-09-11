@@ -22,7 +22,6 @@ from typing import Dict
 
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import MerlinWorkerLaunchError
-from merlin.study.batch import BatchManager
 from merlin.study.configurations import WorkerConfig
 from merlin.utils import check_machines
 from merlin.workers.worker import MerlinWorker
