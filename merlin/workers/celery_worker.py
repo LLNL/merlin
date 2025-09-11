@@ -23,6 +23,7 @@ from typing import Dict
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import MerlinWorkerLaunchError
 from merlin.study.batch import BatchManager
+from merlin.study.configurations import WorkerConfig
 from merlin.utils import check_machines
 from merlin.workers.worker import MerlinWorker
 
@@ -39,15 +40,8 @@ class CeleryWorker(MerlinWorker):
     jobs from specific task queues.
 
     Attributes:
-        name (str): The name of the worker.
-        config (dict): Configuration settings for the worker.
-        env (dict): Environment variables used by the worker process.
-        args (str): Additional CLI arguments passed to Celery.
-        queues (List[str]): Queues the worker listens to.
-        batch (dict): Optional batch submission settings.
-        batch_manager (BatchManager): Manager for batch-related operations.
-        machines (List[str]): List of hostnames the worker is allowed to run on.
-        overlap (bool): Whether this worker can overlap queues with others.
+        worker_config (study.configurations.WorkerConfig): The worker configuration object.
+        batch_manager (study.batch.BatchManager): A manager object for batch settings.
 
     Methods:
         _verify_args: Validate and adjust CLI args based on worker setup.
@@ -57,42 +51,22 @@ class CeleryWorker(MerlinWorker):
         get_metadata: Return identifying metadata about the worker.
     """
 
-    def __init__(
-        self,
-        name: str,
-        config: Dict,
-        env: Dict[str, str] = None,
-        overlap: bool = False,
-    ):
+    def __init__(self, worker_config: WorkerConfig):
         """
         Constructor for Celery workers.
 
         Sets up attributes used throughout this worker object and saves this worker to the database.
 
         Args:
-            name: The name of the worker.
-            config: A dictionary containing optional configuration settings for this worker including:\n
-                - `args`: A string of arguments to pass to the launch command
-                - `queues`: A set of task queues for this worker to watch
-                - `batch`: A dictionary of specific batch configuration settings to use for this worker
-                - `nodes`: The number of nodes to launch this worker on
-                - `machines`: A list of machines that this worker is allowed to run on
-            env: A dictionary of environment variables set by the user.
-            overlap: If True multiple workers can pull tasks from overlapping queues.
+            worker_config (study.configurations.WorkerConfig): The worker configuration object.
         """
-        super().__init__(name, config, env)
-        self.args = self.config.get("args", "")
-        self.queues = self.config.get("queues", {"[merlin]_merlin"})
-        self.batch = self.config.get("batch", {})
-        self.machines = self.config.get("machines", [])
-        self.overlap = overlap
-        
-        # Initialize BatchManager for this worker
-        self.batch_manager = BatchManager(self.batch)
+        super().__init__(worker_config)
 
+        # TODO might want to move the below line to the base class? With other task servers
+        # we need to see what would be important to store and maybe refactor logical worker entries
         # Add this worker to the database
         merlin_db = MerlinDatabase()
-        merlin_db.create("logical_worker", self.name, self.queues)
+        merlin_db.create("logical_worker", self.worker_config.name, self.worker_config.queues)
 
     def _verify_args(self, disable_logs: bool = False) -> str:
         """
@@ -106,19 +80,19 @@ class CeleryWorker(MerlinWorker):
         """
         # Use BatchManager to check for parallel configuration
         if self.batch_manager.is_parallel():
-            if "--concurrency" not in self.args:
+            if "--concurrency" not in self.worker_config.args:
                 LOG.warning("Missing --concurrency in worker args for parallel tasks.")
-            if "--prefetch-multiplier" not in self.args:
+            if "--prefetch-multiplier" not in self.worker_config.args:
                 LOG.warning("Missing --prefetch-multiplier in worker args for parallel tasks.")
-            if "fair" not in self.args:
+            if "fair" not in self.worker_config.args:
                 LOG.warning("Missing -O fair in worker args for parallel tasks.")
 
-        if "-n" not in self.args:
-            nhash = time.strftime("%Y%m%d-%H%M%S") if self.overlap else ""
-            self.args += f" -n {self.name}{nhash}.%%h"
+        if "-n" not in self.worker_config.args:
+            nhash = time.strftime("%Y%m%d-%H%M%S") if self.worker_config.overlap else ""
+            self.worker_config.args += f" -n {self.worker_config.name}{nhash}.%%h"
 
-        if not disable_logs and "-l" not in self.args:
-            self.args += f" -l {logging.getLevelName(LOG.getEffectiveLevel())}"
+        if not disable_logs and "-l" not in self.worker_config.args:
+            self.worker_config.args += f" -l {logging.getLevelName(LOG.getEffectiveLevel())}"
 
     def get_launch_command(self, override_args: str = "", disable_logs: bool = False) -> str:
         """
@@ -133,13 +107,13 @@ class CeleryWorker(MerlinWorker):
         """
         # Override existing arguments if necessary
         if override_args != "":
-            self.args = override_args
+            self.worker_config.args = override_args
 
         # Validate args
         self._verify_args(disable_logs=disable_logs)
 
         # Construct the base celery command
-        celery_cmd = f"celery -A merlin worker {self.args} -Q {','.join(self.queues)}"
+        celery_cmd = f"celery -A merlin worker {self.worker_config.args} -Q {','.join(self.worker_config.queues)}"
         
         # Use BatchManager to create the launch command
         launch_cmd = self.batch_manager.create_worker_launch_command(celery_cmd)
@@ -155,27 +129,24 @@ class CeleryWorker(MerlinWorker):
         Returns:
             True if the worker should be launched, False otherwise.
         """
-        machines = self.config.get("machines", None)
-        queues = self.config.get("queues", ["[merlin]_merlin"])
-
-        if machines:
-            if not check_machines(machines):
+        if self.worker_config.machines:
+            if not check_machines(self.worker_config.machines):
                 LOG.error(
-                    f"The following machines were provided for worker '{self.name}': {machines}. "
+                    f"The following machines were provided for worker '{self.worker_config.name}': {self.worker_config.machines}. "
                     f"However, the current machine '{socket.gethostname()}' is not in this list."
                 )
                 return False
 
-            output_path = self.env.get("OUTPUT_PATH")
+            output_path = self.worker_config.env.get("OUTPUT_PATH")
             if output_path and not os.path.exists(output_path):
                 LOG.error(f"{output_path} not accessible on host {socket.gethostname()}")
                 return False
 
-        if not self.overlap:
+        if not self.worker_config.overlap:
             from merlin.study.celeryadapter import get_running_queues  # pylint: disable=import-outside-toplevel
 
             running_queues = get_running_queues("merlin")
-            for queue in queues:
+            for queue in self.worker_config.queues:
                 if queue in running_queues:
                     LOG.warning(f"Queue {queue} is already being processed by another worker.")
                     return False
@@ -196,31 +167,11 @@ class CeleryWorker(MerlinWorker):
         if self.should_launch():
             launch_cmd = self.get_launch_command(override_args=override_args, disable_logs=disable_logs)
             try:
-                subprocess.Popen(launch_cmd, env=self.env, shell=True, universal_newlines=True)  # pylint: disable=R1732
-                LOG.debug(f"Launched worker '{self.name}' with command: {launch_cmd}.")
+                subprocess.Popen(launch_cmd, env=self.worker_config.env, shell=True, universal_newlines=True)  # pylint: disable=R1732
+                LOG.debug(f"Launched worker '{self.worker_config.name}' with command: {launch_cmd}.")
             except Exception as e:  # pylint: disable=C0103
                 LOG.error(f"Cannot start celery workers, {e}")
                 raise MerlinWorkerLaunchError from e
-
-    def get_metadata(self) -> Dict:
-        """
-        Return metadata about this worker instance.
-
-        Returns:
-            A dictionary containing key details about this worker.
-        """
-        metadata = {
-            "name": self.name,
-            "queues": self.queues,
-            "args": self.args,
-            "machines": self.machines,
-            "batch": self.batch,
-        }
-        
-        # Add batch manager information
-        metadata["batch_info"] = self.batch_manager.get_batch_info()
-        
-        return metadata
         
     def update_batch_config(self, new_batch_config: Dict):
         """
@@ -229,5 +180,4 @@ class CeleryWorker(MerlinWorker):
         Args:
             new_batch_config: New batch configuration to apply.
         """
-        self.batch.update(new_batch_config)
         self.batch_manager.update_config(new_batch_config)

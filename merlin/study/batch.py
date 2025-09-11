@@ -12,7 +12,8 @@ import os
 import subprocess
 from typing import Dict, Union
 
-from merlin.utils import convert_timestring, get_flux_alloc, get_flux_version, get_yaml_var
+from merlin.study.configurations import BatchConfig
+from merlin.utils import convert_timestring, get_flux_alloc, get_flux_version
 
 
 LOG = logging.getLogger(__name__)
@@ -29,61 +30,41 @@ class BatchManager:
     batch systems including Slurm, LSF, Flux, and PBS.
     
     Attributes:
-        batch_config (Dict): The parsed batch configuration dictionary.
+        batch_config (BatchConfig): The batch configuration object.
         scheduler_legend (Dict): Dictionary containing scheduler-specific information.
         detected_scheduler (str): The automatically detected scheduler type.
     """
     
-    def __init__(self, batch_config: Dict = None):
+    def __init__(self, batch_config: BatchConfig = None):
         """
         Initialize the BatchManager with a batch configuration.
         
         Args:
-            batch_config: Dictionary containing batch configuration settings.
-                If None, an empty dictionary will be used.
+            batch_config: BatchConfig object containing batch configuration settings.
+                If None, a default BatchConfig will be created.
         """
-        self.batch_config = batch_config or {}
-        self.parsed_batch = self._parse_batch_block()
+        self.batch_config = batch_config or BatchConfig()
         self.scheduler_legend = {}
         self.detected_scheduler = None
         
-    def _parse_batch_block(self) -> Dict:
-        """
-        Parse the batch block configuration.
+        # Initialize Flux-specific attributes
+        self._flux_exe = None
+        self._flux_alloc = None
+        self._init_flux_config()
         
-        Returns:
-            Dictionary containing parsed batch configuration with defaults applied.
-        """
-        flux_path: str = get_yaml_var(self.batch_config, "flux_path", "")
-        if "/" in flux_path:
+    def _init_flux_config(self):
+        """Initialize Flux-specific configuration."""
+        flux_path = self.batch_config.flux_path
+        if flux_path and not flux_path.endswith("/"):
             flux_path += "/"
 
-        flux_exe: str = os.path.join(flux_path, "flux")
-        flux_alloc: str
+        self._flux_exe = os.path.join(flux_path, "flux")
+        
         try:
-            flux_alloc = get_flux_alloc(flux_exe)
+            self._flux_alloc = get_flux_alloc(self._flux_exe)
         except FileNotFoundError as e:
             LOG.debug(e)
-            flux_alloc = ""
-
-        parsed_batch = {
-            "btype": get_yaml_var(self.batch_config, "type", "local"),
-            "nodes": get_yaml_var(self.batch_config, "nodes", None),
-            "shell": get_yaml_var(self.batch_config, "shell", "bash"),
-            "bank": get_yaml_var(self.batch_config, "bank", ""),
-            "queue": get_yaml_var(self.batch_config, "queue", ""),
-            "walltime": get_yaml_var(self.batch_config, "walltime", ""),
-            "launch pre": get_yaml_var(self.batch_config, "launch_pre", ""),
-            "launch args": get_yaml_var(self.batch_config, "launch_args", ""),
-            "launch command": get_yaml_var(self.batch_config, "worker_launch", ""),
-            "flux path": flux_path,
-            "flux exe": flux_exe,
-            "flux exec": get_yaml_var(self.batch_config, "flux_exec", None),
-            "flux alloc": flux_alloc,
-            "flux opts": get_yaml_var(self.batch_config, "flux_start_opts", ""),
-            "flux exec workers": get_yaml_var(self.batch_config, "flux_exec_workers", True),
-        }
-        return parsed_batch
+            self._flux_alloc = ""
         
     def is_parallel(self) -> bool:
         """
@@ -92,7 +73,7 @@ class BatchManager:
         Returns:
             True if batch type is not 'local', indicating parallel processing.
         """
-        return self.parsed_batch["btype"] != "local"
+        return self.batch_config.is_parallel()
         
     def _check_scheduler(self, scheduler: str) -> bool:
         """
@@ -179,7 +160,7 @@ class BatchManager:
             ValueError: If Flux version is too old.
         """
         # Flux version check
-        flux_ver = get_flux_version(self.parsed_batch["flux exe"], no_errors=True)
+        flux_ver = get_flux_version(self._flux_exe, no_errors=True)
         if flux_ver:
             major, minor, _ = map(int, flux_ver.split("."))
             if major < 1 and minor < 17:
@@ -206,7 +187,7 @@ class BatchManager:
 
         return default
         
-    def _build_scheduler_legend(self, nodes: int = None) -> None:
+    def _build_scheduler_legend(self, nodes: int = None):
         """
         Build the scheduler legend with configuration for all supported schedulers.
         
@@ -219,12 +200,12 @@ class BatchManager:
             
         self.scheduler_legend = {
             "flux": {
-                "bank": f" --setattr=system.bank={self.parsed_batch['bank']}",
+                "bank": f" --setattr=system.bank={self.batch_config.bank}",
                 "check cmd": ["flux", "resource", "info"],
                 "expected check output": b"Nodes",
-                "launch": f"{self.parsed_batch['flux alloc']} -o pty -N {nodes} --exclusive --job-name=merlin",
-                "queue": f" --setattr=system.queue={self.parsed_batch['queue']}",
-                "walltime": f" -t {convert_timestring(self.parsed_batch['walltime'], format_method='FSD')}",
+                "launch": f"{self._flux_alloc} -o pty -N {nodes} --exclusive --job-name=merlin",
+                "queue": f" --setattr=system.queue={self.batch_config.queue}",
+                "walltime": f" -t {convert_timestring(self.batch_config.walltime, format_method='FSD')}",
             },
             "lsf": {
                 "check cmd": ["jsrun", "--help"],
@@ -232,20 +213,20 @@ class BatchManager:
                 "launch": f"jsrun -a 1 -c ALL_CPUS -g ALL_GPUS --bind=none -n {nodes}",
             },
             "pbs": {
-                "bank": f" -A {self.parsed_batch['bank']}",
+                "bank": f" -A {self.batch_config.bank}",
                 "check cmd": ["qsub", "--version"],
                 "expected check output": b"pbs_version",
                 "launch": f"qsub -l nodes={nodes}",
-                "queue": f" -q {self.parsed_batch['queue']}",
-                "walltime": f" -l walltime={convert_timestring(self.parsed_batch['walltime'])}",
+                "queue": f" -q {self.batch_config.queue}",
+                "walltime": f" -l walltime={convert_timestring(self.batch_config.walltime)}",
             },
             "slurm": {
-                "bank": f" -A {self.parsed_batch['bank']}",
+                "bank": f" -A {self.batch_config.bank}",
                 "check cmd": ["sbatch", "--help"],
                 "expected check output": b"sbatch",
                 "launch": f"srun -N {nodes} -n {nodes}",
-                "queue": f" -p {self.parsed_batch['queue']}",
-                "walltime": f" -t {convert_timestring(self.parsed_batch['walltime'])}",
+                "queue": f" -p {self.batch_config.queue}",
+                "walltime": f" -t {convert_timestring(self.batch_config.walltime)}",
             },
         }
         
@@ -256,19 +237,19 @@ class BatchManager:
         Returns:
             Flux launch command string.
         """
-        default_flux_exec = "flux exec" if self.parsed_batch["launch command"] else f"{self.parsed_batch['flux exe']} exec"
+        default_flux_exec = "flux exec" if self.batch_config.worker_launch else f"{self._flux_exe} exec"
         flux_exec = ""
         
-        if self.parsed_batch["flux exec workers"]:
-            flux_exec = self.parsed_batch["flux exec"] if self.parsed_batch["flux exec"] else default_flux_exec
+        if self.batch_config.flux_exec_workers:
+            flux_exec = self.batch_config.flux_exec if self.batch_config.flux_exec else default_flux_exec
 
-        if self.parsed_batch["launch command"] and "flux" not in self.parsed_batch["launch command"]:
+        if self.batch_config.worker_launch and "flux" not in self.batch_config.worker_launch:
             launch = (
-                f"{self.parsed_batch['launch command']} {self.parsed_batch['flux exe']}"
-                f" start {self.parsed_batch['flux opts']} {flux_exec} `which {self.parsed_batch['shell']}` -c"
+                f"{self.batch_config.worker_launch} {self._flux_exe}"
+                f" start {self.batch_config.flux_start_opts} {flux_exec} `which {self.batch_config.shell}` -c"
             )
         else:
-            launch = f"{self.parsed_batch['launch command']} {flux_exec} `which {self.parsed_batch['shell']}` -c"
+            launch = f"{self.batch_config.worker_launch} {flux_exec} `which {self.batch_config.shell}` -c"
 
         return launch
         
@@ -292,12 +273,12 @@ class BatchManager:
         # Detect the workload manager
         workload_manager = self.detect_scheduler()
         
-        LOG.debug(f"parsed_batch: {self.parsed_batch}")
+        LOG.debug(f"batch_config: {self.batch_config}")
 
-        if self.parsed_batch["btype"] == "pbs" and workload_manager == self.parsed_batch["btype"]:
+        if self.batch_config.type == "pbs" and workload_manager == self.batch_config.type:
             raise TypeError("The PBS scheduler is only enabled for 'batch: flux' type")
 
-        if self.parsed_batch["btype"] == "slurm" and workload_manager not in ("lsf", "flux", "pbs"):
+        if self.batch_config.type == "slurm" and workload_manager not in ("lsf", "flux", "pbs"):
             workload_manager = "slurm"
 
         LOG.debug(f"workload_manager: {workload_manager}")
@@ -312,7 +293,8 @@ class BatchManager:
         if workload_manager != "lsf" and launch_command:
             # Add bank, queue, and walltime as necessary
             for key in ("bank", "queue", "walltime"):
-                if self.parsed_batch[key]:
+                config_value = getattr(self.batch_config, key)
+                if config_value:
                     try:
                         launch_command += self.scheduler_legend[workload_manager][key]
                     except KeyError as e:
@@ -340,12 +322,12 @@ class BatchManager:
             TypeError: If nodes parameter is invalid or PBS scheduler is misconfigured.
         """
         # Handle local or LSF batch types
-        if self.parsed_batch["btype"] == "local" or "lsf" in self.parsed_batch["btype"]:
+        if self.batch_config.type == "local" or "lsf" in self.batch_config.type:
             return command
 
         # Determine node count
         if nodes is None:
-            nodes = self.parsed_batch["nodes"]
+            nodes = self.batch_config.nodes
 
         if nodes is None or nodes == "all":
             nodes = self._get_node_count(default=1)
@@ -356,25 +338,26 @@ class BatchManager:
                 raise TypeError("Nodes parameter must be an integer, 'all', or None.")
 
         # Build launch command if not provided
-        if not self.parsed_batch["launch command"]:
-            self.parsed_batch["launch command"] = self._construct_launch_command(nodes)
+        launch_command = self.batch_config.worker_launch
+        if not launch_command:
+            launch_command = self._construct_launch_command(nodes)
 
         # Add launch arguments
-        if self.parsed_batch["launch args"]:
-            self.parsed_batch["launch command"] += f" {self.parsed_batch['launch args']}"
+        if self.batch_config.launch_args:
+            launch_command += f" {self.batch_config.launch_args}"
 
         # Add pre-launch commands
-        if self.parsed_batch["launch pre"]:
-            self.parsed_batch["launch command"] = f"{self.parsed_batch['launch pre']} {self.parsed_batch['launch command']}"
+        if self.batch_config.launch_pre:
+            launch_command = f"{self.batch_config.launch_pre} {launch_command}"
 
-        LOG.debug(f"launch command: {self.parsed_batch['launch command']}")
+        LOG.debug(f"launch command: {launch_command}")
 
         # Construct final worker command
-        if self.parsed_batch["btype"] == "flux":
+        if self.batch_config.type == "flux":
             launch = self._get_flux_launch_command()
             worker_cmd = f'{launch} "{command}"'
         else:
-            worker_cmd = f"{self.parsed_batch['launch command']} {command}"
+            worker_cmd = f"{launch_command} {command}"
 
         return worker_cmd
         
@@ -385,26 +368,27 @@ class BatchManager:
         Returns:
             Dictionary containing batch configuration details.
         """
-        return {
-            "type": self.parsed_batch["btype"],
-            "nodes": self.parsed_batch["nodes"],
-            "shell": self.parsed_batch["shell"],
-            "bank": self.parsed_batch["bank"],
-            "queue": self.parsed_batch["queue"],
-            "walltime": self.parsed_batch["walltime"],
-            "is_parallel": self.is_parallel(),
-            "detected_scheduler": self.detect_scheduler(),
-        }
+        batch_info = self.batch_config.to_dict()
+        batch_info["is_parallel"] = self.is_parallel()
+        batch_info["detected_scheduler"] = self.detect_scheduler()
+        return batch_info
         
-    def update_config(self, new_config: Dict) -> None:
+    def update_config(self, new_config: Union[Dict, BatchConfig]):
         """
-        Update the batch configuration and re-parse.
+        Update the batch configuration and reset cached values.
         
         Args:
-            new_config: New batch configuration dictionary.
+            new_config: New batch configuration (Dict or BatchConfig).
         """
-        self.batch_config.update(new_config)
-        self.parsed_batch = self._parse_batch_block()
+        if isinstance(new_config, dict):
+            new_config = BatchConfig.from_dict(new_config)
+            self.batch_config = self.batch_config.merge(new_config)
+        elif isinstance(new_config, BatchConfig):
+            self.batch_config = new_config
+        else:
+            raise TypeError("new_config must be a Dict or BatchConfig instance")
+            
         # Reset cached values
         self.scheduler_legend = {}
         self.detected_scheduler = None
+        self._init_flux_config()
