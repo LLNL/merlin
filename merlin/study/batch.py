@@ -197,6 +197,10 @@ class BatchManager:
         """
         if nodes is None:
             nodes = self._get_node_count(default=1)
+
+        # print(f"type(walltime): {type(self.batch_config.walltime)}")
+        # print(f"walltime: {self.batch_config.walltime}")
+        # print(f"convert timestring: {convert_timestring(self.batch_config.walltime, format_method='FSD')}")
             
         self.scheduler_legend = {
             "flux": {
@@ -230,26 +234,29 @@ class BatchManager:
             },
         }
         
-    def _get_flux_launch_command(self) -> str:
+    def _get_flux_launch_command(self, existing_launch_cmd: str) -> str:
         """
         Build the Flux-specific launch command.
+
+        Args:
+            existing_launch_cmd: The existing launch command or an empty string.
         
         Returns:
             Flux launch command string.
         """
-        default_flux_exec = "flux exec" if self.batch_config.worker_launch else f"{self._flux_exe} exec"
+        default_flux_exec = "flux exec" if existing_launch_cmd else f"{self._flux_exe} exec"
         flux_exec = ""
         
         if self.batch_config.flux_exec_workers:
             flux_exec = self.batch_config.flux_exec if self.batch_config.flux_exec else default_flux_exec
 
-        if self.batch_config.worker_launch and "flux" not in self.batch_config.worker_launch:
+        if existing_launch_cmd and "flux" not in existing_launch_cmd:
             launch = (
-                f"{self.batch_config.worker_launch} {self._flux_exe}"
+                f"{existing_launch_cmd} {self._flux_exe}"
                 f" start {self.batch_config.flux_start_opts} {flux_exec} `which {self.batch_config.shell}` -c"
             )
         else:
-            launch = f"{self.batch_config.worker_launch} {flux_exec} `which {self.batch_config.shell}` -c"
+            launch = f"{existing_launch_cmd} {flux_exec} `which {self.batch_config.shell}` -c"
 
         return launch
         
@@ -289,13 +296,17 @@ class BatchManager:
             LOG.debug(e)
             launch_command = ""
 
+        print(f"launch_command before: {launch_command}")
         # If LSF is the workload manager we stop here
         if workload_manager != "lsf" and launch_command:
             # Add bank, queue, and walltime as necessary
             for key in ("bank", "queue", "walltime"):
                 config_value = getattr(self.batch_config, key)
+                print(f"workload_manager: {workload_manager}")
+                print(f"config_value for {key}: {config_value}")
                 if config_value:
                     try:
+                        print(f"scheduler_legend entry: {self.scheduler_legend[workload_manager][key]}")
                         launch_command += self.scheduler_legend[workload_manager][key]
                     except KeyError as e:
                         LOG.error(e)
@@ -304,6 +315,7 @@ class BatchManager:
             if workload_manager == "pbs":
                 launch_command += " --"
 
+        print(f"launch_command after: {launch_command}")
         return launch_command
         
     def create_worker_launch_command(self, command: str, nodes: Union[str, int] = None) -> str:
@@ -352,12 +364,12 @@ class BatchManager:
 
         LOG.debug(f"launch command: {launch_command}")
 
-        # Construct final worker command
+        # Add Flux-specific launch settings
         if self.batch_config.type == "flux":
-            launch = self._get_flux_launch_command()
-            worker_cmd = f'{launch} "{command}"'
-        else:
-            worker_cmd = f"{launch_command} {command}"
+            launch_command = self._get_flux_launch_command(launch_command)
+            
+        # Construct final worker command
+        worker_cmd = f"{launch_command} {command}"
 
         return worker_cmd
         
