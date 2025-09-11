@@ -17,11 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `MerlinWorkerHandler`: base class for managing launching, stopping, and querying multiple workers
   - `CeleryWorkerHandler`: implementation of `MerlinWorkerHandler` specifically for manager Celery workers
   - `WorkerHandlerFactory`: to help determine which task server handler to use
+- New configuration dataclasses:
+  - `BatchConfig`: To load in batch configuration settings
+  - `WorkerConfig`: To define worker settings
 
 ### Changed
 - Maestro version requirement is now at minimum 1.1.10 for status renderer changes
 - The `BackendFactory`, `MonitorFactory`, and `StatusRendererFactory` classes all now inherit from `MerlinBaseFactory`
 - Launching workers is now handled through worker classes rather than functions in the `celeryadapter.py` file
+- `batch.py` is now a class rather than standalone functions
 
 ## [1.13.0b2]
 ### Added
