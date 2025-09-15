@@ -261,6 +261,7 @@ def test_find_config_file_merlin_home_app_yaml_exists(mocker: MockerFixture, con
     result = find_config_file()
     assert result == merlin_home_app_yaml
 
+
 def test_find_config_file_no_app_yaml_found(mocker: MockerFixture):
     """
     Test that `find_config_file` returns `None` when no `app.yaml` file is found in any location.

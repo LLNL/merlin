@@ -51,20 +51,6 @@ def worker_config() -> WorkerConfig:
 
 
 @pytest.fixture
-def celery_worker(worker_config: WorkerConfig) -> CeleryWorker:
-    """
-    Fixture that provides a CeleryWorker instance.
-
-    Args:
-        worker_config: A WorkerConfig object to initialize the CeleryWorker.
-
-    Returns:
-        A CeleryWorker object for testing.
-    """
-    return CeleryWorker(worker_config)
-
-
-@pytest.fixture
 def mock_db(mocker: MockerFixture) -> MagicMock:
     """
     Fixture that patches the MerlinDatabase constructor.
@@ -78,7 +64,21 @@ def mock_db(mocker: MockerFixture) -> MagicMock:
     Returns:
         A mocked MerlinDatabase instance.
     """
-    return mocker.patch("merlin.workers.celery_worker.MerlinDatabase")
+    return mocker.patch("merlin.workers.celery_worker.MerlinDatabase", autospec=True)
+
+
+@pytest.fixture
+def celery_worker(worker_config: WorkerConfig, mock_db: MagicMock) -> CeleryWorker:
+    """
+    Fixture that provides a CeleryWorker instance.
+
+    Args:
+        worker_config: A WorkerConfig object to initialize the CeleryWorker.
+
+    Returns:
+        A CeleryWorker object for testing.
+    """
+    return CeleryWorker(worker_config)
 
 
 def test_constructor_sets_fields_and_calls_db_create(worker_config: WorkerConfig, mock_db: MagicMock):
@@ -100,7 +100,7 @@ def test_constructor_sets_fields_and_calls_db_create(worker_config: WorkerConfig
     mock_db.return_value.create.assert_called_once_with("logical_worker", "test_worker", {"queue1", "queue2"})
 
 
-def test_verify_args_adds_name_and_logging_flags(mocker: MockerFixture, celery_worker: CeleryWorker, mock_db: MagicMock):
+def test_verify_args_adds_name_and_logging_flags(mocker: MockerFixture, celery_worker: CeleryWorker):
     """
     Test that `_verify_args()` appends required flags to the Celery args string.
 
@@ -129,7 +129,7 @@ def test_verify_args_adds_name_and_logging_flags(mocker: MockerFixture, celery_w
     assert mock_logger.warning.called
 
 
-def test_get_launch_command_returns_expanded_command(mocker: MockerFixture, celery_worker: CeleryWorker, mock_db: MagicMock):
+def test_get_launch_command_returns_expanded_command(mocker: MockerFixture, celery_worker: CeleryWorker):
     """
     Test that `get_launch_command()` constructs a valid Celery command.
 
@@ -209,7 +209,7 @@ def test_should_launch_rejects_if_output_path_missing(mocker: MockerFixture, wor
     assert result is False
 
 
-def test_should_launch_rejects_due_to_running_queues(mocker: MockerFixture, celery_worker: CeleryWorker, mock_db: MagicMock):
+def test_should_launch_rejects_due_to_running_queues(mocker: MockerFixture, celery_worker: CeleryWorker):
     """
     Test that `should_launch` returns False when a conflicting queue is already running.
 
@@ -233,7 +233,7 @@ def test_should_launch_rejects_due_to_running_queues(mocker: MockerFixture, cele
     assert result is False
 
 
-def test_launch_worker_runs_if_should_launch(mocker: MockerFixture, celery_worker: CeleryWorker, mock_db: MagicMock):
+def test_launch_worker_runs_if_should_launch(mocker: MockerFixture, celery_worker: CeleryWorker):
     """
     Test that `start` executes the launch command if `should_launch` returns True.
 
@@ -262,7 +262,7 @@ def test_launch_worker_runs_if_should_launch(mocker: MockerFixture, celery_worke
     assert mock_logger.debug.called
 
 
-def test_launch_worker_raises_if_popen_fails(mocker: MockerFixture, celery_worker: CeleryWorker, mock_db: MagicMock):
+def test_launch_worker_raises_if_popen_fails(mocker: MockerFixture, celery_worker: CeleryWorker):
     """
     Test that `start` raises `MerlinWorkerLaunchError` when `subprocess.Popen` fails.
 
@@ -287,7 +287,7 @@ def test_launch_worker_raises_if_popen_fails(mocker: MockerFixture, celery_worke
         celery_worker.start()
 
 
-def test_get_metadata_returns_expected_dict(celery_worker: CeleryWorker, mock_db: MagicMock):
+def test_get_metadata_returns_expected_dict(celery_worker: CeleryWorker):
     """
     Test that `get_metadata` returns the expected dictionary with worker configuration.
 
