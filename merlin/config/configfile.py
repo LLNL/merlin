@@ -41,7 +41,6 @@ def set_local_mode(enable: bool = True):
     if enable:
         LOG.info("Running Merlin in local mode (no configuration file required)")
 
-
 def is_local_mode() -> bool:
     """
     Checks if Merlin is running in local mode.

@@ -81,7 +81,7 @@ def define_tests():  # pylint: disable=R0914,R0915
     celery_pbs_regex = rf"(qsub\s+.*)?{celery_regex}"
 
     # Shortcuts for Merlin commands
-    err_lvl = "-lvl error"
+    err_lvl = "-lvl debug"
     workers = f"merlin {err_lvl} run-workers"
     workers_flux = get_worker_by_cmd("flux", workers)
     workers_pbs = get_worker_by_cmd("qsub", workers)
@@ -321,7 +321,7 @@ def define_tests():  # pylint: disable=R0914,R0915
         },
         "no default_worker assigned": {
             "cmds": f"{workers} {test_specs}/no_default_worker_test.yaml --echo",
-            "conditions": [HasReturnCode(), HasRegex(r"default_worker", negate=True)],
+            "conditions": [HasReturnCode(), HasRegex(r"celery -A merlin .* default_worker", negate=True)],
             "run type": "local",
         },
         "run-workers echo variable for worker nodes": {
@@ -332,7 +332,7 @@ def define_tests():  # pylint: disable=R0914,R0915
     }
     wf_format_tests = {
         "local minimum_format": {
-            "cmds": f"mkdir {OUTPUT_DIR}; cd {OUTPUT_DIR}; merlin run ../{dev_examples}/minimum_format.yaml --local",
+            "cmds": f"mkdir {OUTPUT_DIR}; cd {OUTPUT_DIR}; {run} ../{dev_examples}/minimum_format.yaml --local",
             "conditions": StepFileExists(
                 "step1",
                 "MERLIN_FINISHED",

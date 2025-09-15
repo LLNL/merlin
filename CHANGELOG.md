@@ -5,39 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Added
-- Unit tests for the `spec/` folder
-- A page in the docs explaining the `feature_demo` example
-- Ability to filter database queries for the `get all-*` and `delete all-*` commands
-- New `MerlinBaseFactory` class to help enable future plugins for backends, monitors, status renderers, etc.
-- New worker related classes:
-  - `MerlinWorker`: base class for defining task server workers
-  - `CeleryWorker`: implementation of `MerlinWorker` specifically for Celery workers
-  - `WorkerFactory`: to help determine which task server worker to use
-  - `MerlinWorkerHandler`: base class for managing launching, stopping, and querying multiple workers
-  - `CeleryWorkerHandler`: implementation of `MerlinWorkerHandler` specifically for manager Celery workers
-  - `WorkerHandlerFactory`: to help determine which task server handler to use
-- New configuration dataclasses:
-  - `BatchConfig`: To load in batch configuration settings
-  - `WorkerConfig`: To define worker settings
-
-### Changed
-- Maestro version requirement is now at minimum 1.1.10 for status renderer changes
-- The `BackendFactory`, `MonitorFactory`, and `StatusRendererFactory` classes all now inherit from `MerlinBaseFactory`
-- Launching workers is now handled through worker classes rather than functions in the `celeryadapter.py` file
-- `batch.py` is now a class rather than standalone functions
-
-## [1.13.0b2]
-### Added
-- Ability to turn off the auto-restart functionality of the monitor with `--no-restart`
-- Tests for the monitor files
-
-### Changed
-- Refactored the `main.py` module so that it's broken into smaller, more-manageable pieces
-
-## [1.13.0b1]
-### Added
-- API documentation for Merlin's core codebase
 - New `merlin database` command to interact with new database functionality
   - When running locally, SQLite will be used as the database. Otherwise your current results backend will be used
   - `merlin database info`: prints some basic information about the database
@@ -59,7 +28,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `monitor_factory`: houses a factory class `MonitorFactory` that initializes an appropriate `TaskServerMonitor` instance
   - `monitor`: houses the `Monitor` class, used as the top-level point of interaction for the monitor command
   - `task_server_monitor`: houses the `TaskServerMonitor` ABC class, which serves as a common interface for monitoring task servers
+- New worker related classes:
+  - `MerlinWorker`: base class for defining task server workers
+  - `CeleryWorker`: implementation of `MerlinWorker` specifically for Celery workers
+  - `WorkerFactory`: to help determine which task server worker to use
+  - `MerlinWorkerHandler`: base class for managing launching, stopping, and querying multiple workers
+  - `CeleryWorkerHandler`: implementation of `MerlinWorkerHandler` specifically for manager Celery workers
+  - `WorkerHandlerFactory`: to help determine which task server handler to use
+- New configuration dataclasses:
+  - `BatchConfig`: To load in batch configuration settings
+  - `WorkerConfig`: To define worker settings
 - A new celery task called `mark_run_as_complete` that is automatically added to the task queue associated with the final step in a workflow
+- Ability to filter database queries for the `get all-*` and `delete all-*` commands
+- New `MerlinBaseFactory` class to help enable future plugins for backends, monitors, status renderers, etc.
+- Ability to turn off the auto-restart functionality of the monitor with `--no-restart`
+- Tests for the monitor files
+
+### Changed
+- Maestro version requirement is now at minimum 1.1.10 for status renderer changes
+- The `BackendFactory`, `MonitorFactory`, and `StatusRendererFactory` classes all now inherit from `MerlinBaseFactory`
+- Launching workers is now handled through worker classes rather than functions in the `celeryadapter.py` file
+- `batch.py` is now a class rather than standalone functions
+
+
+## [1.13.0]
+
+### Added
+- API documentation for Merlin's core codebase
 - Added support for Python 3.12 and 3.13
 - Added additional tests for the `merlin run` and `merlin purge` commands
 - Aliased types to represent different types of pytest fixtures
@@ -73,25 +68,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New GitHub actions to reduce common code in CI
 - COPYRIGHT file for ownership details
 - New check for copyright headers in the Makefile
+- A page in the docs explaining the `feature_demo` example
+- Unit tests for the `spec/` folder
+- Batch block now supports placeholder entries
 
 ### Changed
-- Updated the `merlin monitor` command
-  - it will now attempt to restart workflows automatically if a workflow is hanging
-  - it utilizes an object oriented approach in the backend now
-- Celery's default settings have been updated to add:
-  - `interval_max: 300` -> tasks will retry for up to 5 minutes instead of 1 minute like it previously was
-  - new `broker_transport_options`:
-    - `socket_timeout: 300` -> increases the socket timeout to 5 minutes instead of the default 2 minutes
-    - `retry_policy: {timeout: 600}` -> sets the maximum amount of time that Celery will keep trying to connect to the broker to 10 minutes
-  - `broker_connection_timeout: 60` -> establishing a connection to the broker will not timeout for an entire minute now instead of the previous 4 seconds
-  - new generic backend settings:
-    - `result_backend_always_retry: True` -> backend will now auto-retry on the event of recoverable exceptions
-    - `result_backend_max_retries: 20` -> maximum number of retries in the event of recoverable exceptions
-  - new Redis specific settings:
-    - `redis_retry_on_timeout: True` -> retries read/write operations on TimeoutError to the Redis server
-    - `redis_socket_connect_timeout: 300` -> 5 minute socket timeout for connections to Redis
-    - `redis_socket_timeout: 300` -> 5 minute socket timeout for read/write operations to Redis
-    - `redis_socket_keepalive: True` -> socket TCP keepalive to keep connections healthy to the Redis server
 - The `merlin config` command:
   - Now defaults to the LaunchIT setup
   - No longer required to have configuration named `app.yaml`
@@ -106,21 +87,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
   - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
 - Removed `e2e-distributed*` definitions from the Makefile
-- Modified GitHub CI to use shared testing servers hosted by LaunchIT rather than the jackalope server
 - CI to use new actions
 - Copyright headers in all files
   - These now point to the LICENSE and COPYRIGHT files
   - LICENSE: Legal permissions (e.g., MIT terms)
   - COPYRIGHT: Ownership, institutional metadata
   - Make commands that change version/copyright year have been modified
+- Refactored the `main.py` module so that it's broken into smaller, more-manageable pieces
 
 ### Fixed
 - Running Merlin locally no longer requires an `app.yaml` configuration file
 - Removed dead lgtm link
 - Potential security vulnerabilities related to logging
+- Bug where the `--task-status` and `--return-code` filters of `merlin detailed-status` only accepted filters in all caps
+- Bug where absolute path was required in the broker password field
 
-### Deprecated
-- The `--steps` argument of the `merlin monitor` command is now deprecated and will be removed in Version 1.14.0.
 
 ## [1.12.2]
 ### Added

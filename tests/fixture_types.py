@@ -54,7 +54,7 @@ if sys.version_info >= (3, 9):
     FixtureRedis = Annotated[Redis, pytest.fixture]
     FixtureSignature = Annotated[Signature, pytest.fixture]
     FixtureStr = Annotated[str, pytest.fixture]
-    FixtureTuple = Annotated[Tuple[K], pytest.fixture]
+    FixtureTuple = Annotated[Tuple[K, V], pytest.fixture]
     FixtureList = Annotated[List[K], pytest.fixture]
 else:
     # Fallback for Python 3.8
@@ -64,13 +64,13 @@ else:
         when using it to type hint.
         """
 
-    class FixtureTuple(Generic[K], Tuple[K]):
+    class FixtureTuple(Generic[K, V], Tuple[K, V]):
         """
         This class is necessary to allow FixtureTuple to be subscriptable
         when using it to type hint.
         """
 
-    class FixtureList(Generic[K], List[K]):
+    class FixtureList(Generic[K, V], List[K]):
         """
         This class is necessary to allow FixtureList to be subscriptable
         when using it to type hint.

@@ -12,9 +12,15 @@ the broker type and validating broker configurations.
 """
 
 import enum
+import logging
+import os
 from typing import Dict
+from urllib.parse import quote
 
 from merlin.config.configfile import CONFIG
+
+
+LOG = logging.getLogger("merlin")
 
 
 class Priority(enum.Enum):
@@ -126,3 +132,51 @@ def get_priority(priority: Priority) -> int:
 
     priority_map = determine_priority_map(CONFIG.broker.name.lower())
     return priority_map.get(priority, priority_map[Priority.MID])  # Default to MID priority for unknown priorities
+
+
+def resolve_password(password_value: str, server_type: str, certs_path: str = None) -> str:
+    """
+    Resolve a password configuration value into an actual password string.
+
+    Args:
+        password_value (str): Either a direct password string or the name/path of a file
+            containing the password.
+        server_type (str): The type of server (broker or results backend) for logging purposes.
+        certs_path (str, optional): Optional directory for certificate/password files.
+
+    Returns:
+        The resolved password (URL-quoted if not direct password).
+    """
+    if not password_value:
+        raise ValueError("No password configured.")
+
+    # candidate paths
+    candidates = [
+        os.path.join(os.path.expanduser("~/.merlin"), password_value),
+        os.path.expanduser(password_value),
+    ]
+    if certs_path:
+        LOG.debug(f"{server_type}: Certs path was provided.")
+        candidates.append(os.path.join(certs_path, password_value))
+    else:
+        LOG.debug(f"{server_type}: Certs path was not provided.")
+
+    password = None
+    for path in candidates:
+        if os.path.exists(path):
+            LOG.debug(f"{server_type}: Password file specified in config.")
+            try:
+                with open(path, "r") as f:
+                    password = quote(f.readline().strip(), safe="")
+                break
+            except OSError as e:
+                msg = f"{server_type}: A password file exists but could not be read ({e})."
+                LOG.error(msg)
+                raise ValueError(msg) from e
+
+    if password is None:
+        LOG.debug(f"{server_type}: Password file did not exist; using direct value.")
+        # treat value directly as password
+        password = password_value.strip()
+
+    return password
