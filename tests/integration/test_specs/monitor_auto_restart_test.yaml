@@ -1,0 +1,36 @@
+description:
+    name: monitor_auto_restart_test
+    description: a spec that helps test the monitor's auto restart functionality
+
+env:
+    variables:
+        N_SAMPLES: 3
+        OUTPUT_PATH: .
+
+study:
+    - name: process_samples
+      description: Run samples for a certain duration
+      run:
+          cmd: |
+            echo $(SAMPLE)
+            sleep 10
+          task_queue: sim_queue
+
+    - name: funnel_step
+      description: print a success message
+      run:
+          cmd: echo "all finished"
+          depends: [process_samples_*]
+          task_queue: seq_queue
+
+merlin:
+    resources:
+        workers:
+            worker2:
+                args: -l INFO --concurrency 2 --prefetch-multiplier 1 -Ofair
+                steps: [all]
+    samples:
+        generate:
+            cmd: spellbook make-samples -dims 1 -n $(N_SAMPLES) -outfile=$(MERLIN_INFO)/samples.npy
+        file: $(MERLIN_INFO)/samples.npy
+        column_labels: [SAMPLE]

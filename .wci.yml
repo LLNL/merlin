@@ -1,6 +1,6 @@
 name: Merlin
 
-icon: https://raw.githubusercontent.com/LLNL/merlin/main/docs/images/merlin_icon.png
+icon: https://raw.githubusercontent.com/LLNL/merlin/main/docs/assets/images/merlin_icon.png
 
 headline: Enabling Machine Learning HPC Workflows
 
@@ -8,5 +8,5 @@ description: The Merlin workflow framework targets large-scale scientific machin
 
 documentation:
   general: https://merlin.readthedocs.io/
-  installation: https://merlin.readthedocs.io/en/latest/modules/installation/installation.html
-  tutorial: https://merlin.readthedocs.io/en/latest/tutorial.html
+  installation: https://merlin.readthedocs.io/en/latest/user_guide/installation/
+  tutorial: https://merlin.readthedocs.io/en/latest/tutorial/

@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 Tests for the `results_backend.py` file.
 """
@@ -102,7 +108,7 @@ def test_get_backend_password_using_certs_path(temp_output_dir: str):
     assert get_backend_password(pass_filename, certs_path=test_dir) == SERVER_PASS
 
 
-def test_get_ssl_config_no_results_backend(config: "fixture"):  # noqa: F821
+def test_get_ssl_config_no_results_backend(config_function: "fixture"):  # noqa: F821
     """
     Test the `get_ssl_config` function with no results_backend set. This should return False.
     NOTE: we're using the config fixture here to make sure values are reset after this test finishes.
@@ -114,7 +120,7 @@ def test_get_ssl_config_no_results_backend(config: "fixture"):  # noqa: F821
     assert get_ssl_config() is False
 
 
-def test_get_connection_string_no_results_backend(config: "fixture"):  # noqa: F821
+def test_get_connection_string_no_results_backend(config_function: "fixture"):  # noqa: F821
     """
     Test the `get_connection_string` function with no results_backend set.
     This should raise a ValueError.
@@ -160,11 +166,11 @@ class TestRedisResultsBackend:
         actual = get_redis(certs_path=certs_path, include_password=include_password, ssl=ssl)
         assert actual == expected
 
-    def test_get_redis(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_redis(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis` function with default functionality.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         expected_vals = {
             "urlbase": "redis",
@@ -175,11 +181,11 @@ class TestRedisResultsBackend:
         }
         self.run_get_redis(expected_vals=expected_vals, certs_path=None, include_password=True, ssl=False)
 
-    def test_get_redis_dont_include_password(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_redis_dont_include_password(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis` function with the password hidden. This should * out the password.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         expected_vals = {
             "urlbase": "redis",
@@ -190,11 +196,11 @@ class TestRedisResultsBackend:
         }
         self.run_get_redis(expected_vals=expected_vals, certs_path=None, include_password=False, ssl=False)
 
-    def test_get_redis_using_ssl(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_redis_using_ssl(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis` function with ssl enabled.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         expected_vals = {
             "urlbase": "rediss",
@@ -205,11 +211,11 @@ class TestRedisResultsBackend:
         }
         self.run_get_redis(expected_vals=expected_vals, certs_path=None, include_password=True, ssl=True)
 
-    def test_get_redis_no_port(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_redis_no_port(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis` function with no port in our CONFIG object. This should default to port=6379.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         del CONFIG.results_backend.port
         expected_vals = {
@@ -221,11 +227,11 @@ class TestRedisResultsBackend:
         }
         self.run_get_redis(expected_vals=expected_vals, certs_path=None, include_password=True, ssl=False)
 
-    def test_get_redis_no_db_num(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_redis_no_db_num(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis` function with no db_num in our CONFIG object. This should default to db_num=0.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         del CONFIG.results_backend.db_num
         expected_vals = {
@@ -237,11 +243,11 @@ class TestRedisResultsBackend:
         }
         self.run_get_redis(expected_vals=expected_vals, certs_path=None, include_password=True, ssl=False)
 
-    def test_get_redis_no_username(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_redis_no_username(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis` function with no username in our CONFIG object. This should default to username=''.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         del CONFIG.results_backend.username
         expected_vals = {
@@ -253,11 +259,11 @@ class TestRedisResultsBackend:
         }
         self.run_get_redis(expected_vals=expected_vals, certs_path=None, include_password=True, ssl=False)
 
-    def test_get_redis_no_password_file(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_redis_no_password_file(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis` function with no password filepath in our CONFIG object. This should default to spass=''.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         del CONFIG.results_backend.password
         expected_vals = {
@@ -269,12 +275,12 @@ class TestRedisResultsBackend:
         }
         self.run_get_redis(expected_vals=expected_vals, certs_path=None, include_password=True, ssl=False)
 
-    def test_get_redis_invalid_pass_file(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_redis_invalid_pass_file(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_redis` function. We'll run this after changing the permissions of the password file so it
         can't be opened. This should still run and give us password=CONFIG.results_backend.password.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
 
         # Capture the initial permissions of the password file so we can reset them
@@ -299,41 +305,41 @@ class TestRedisResultsBackend:
             os.chmod(CONFIG.results_backend.password, orig_file_permissions)
             raise AssertionError from exc
 
-    def test_get_ssl_config_redis(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_ssl_config_redis(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_ssl_config` function with redis as the results_backend. This should return False since
         ssl requires using rediss (with two 's').
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         assert get_ssl_config() is False
 
-    def test_get_ssl_config_rediss(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_ssl_config_rediss(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_ssl_config` function with rediss as the results_backend.
         This should return a dict of cert reqs with ssl.CERT_NONE as the value.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         CONFIG.results_backend.name = "rediss"
         assert get_ssl_config() == {"ssl_cert_reqs": CERT_NONE}
 
-    def test_get_ssl_config_rediss_no_cert_reqs(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_ssl_config_rediss_no_cert_reqs(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_ssl_config` function with rediss as the results_backend and no cert_reqs set.
         This should return True.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         del CONFIG.results_backend.cert_reqs
         CONFIG.results_backend.name = "rediss"
         assert get_ssl_config() is True
 
-    def test_get_connection_string_redis(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_connection_string_redis(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_connection_string` function with redis as the results_backend.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         expected_vals = {
             "urlbase": "redis",
@@ -346,11 +352,11 @@ class TestRedisResultsBackend:
         actual = get_connection_string()
         assert actual == expected
 
-    def test_get_connection_string_rediss(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_connection_string_rediss(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `get_connection_string` function with rediss as the results_backend.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         CONFIG.results_backend.name = "rediss"
         expected_vals = {

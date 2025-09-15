@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 Tests for the `server_config.py` module.
 """
@@ -6,13 +12,13 @@ import io
 import logging
 import os
 import string
+from importlib import resources
 from typing import Dict, Tuple, Union
 
 import pytest
 import yaml
 
 from merlin.server.server_config import (
-    MERLIN_CONFIG_DIR,
     PASSWORD_LENGTH,
     ServerStatus,
     check_process_file_format,
@@ -28,12 +34,6 @@ from merlin.server.server_config import (
     pull_server_image,
 )
 from merlin.server.server_util import CONTAINER_TYPES, MERLIN_SERVER_SUBDIR, ServerConfig
-
-
-try:
-    from importlib import resources
-except ImportError:
-    import importlib_resources as resources
 
 
 def test_generate_password_no_pass_command():
@@ -201,7 +201,7 @@ def test_create_server_config_merlin_config_dir_nonexistent(
     server_testing_dir: str,
 ):
     """
-    Tests the `create_server_config` function with MERLIN_CONFIG_DIR not existing.
+    Tests the `create_server_config` function with MERLIN_HOME not existing.
     This should log an error and return False.
 
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
@@ -209,7 +209,7 @@ def test_create_server_config_merlin_config_dir_nonexistent(
     :param server_testing_dir: The path to the the temp output directory for server tests
     """
     nonexistent_dir = f"{server_testing_dir}/merlin_config_dir"
-    mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", nonexistent_dir)
+    mocker.patch("merlin.server.server_config.MERLIN_HOME", nonexistent_dir)
     assert not create_server_config()
     assert f"Unable to find main merlin configuration directory at {nonexistent_dir}" in caplog.text
 
@@ -220,7 +220,7 @@ def test_create_server_config_server_subdir_nonexistent_oserror(
     server_testing_dir: str,
 ):
     """
-    Tests the `create_server_config` function with MERLIN_CONFIG_DIR/MERLIN_SERVER_SUBDIR
+    Tests the `create_server_config` function with MERLIN_HOME/MERLIN_SERVER_SUBDIR
     not existing and an OSError being raised. This should log an error and return False.
 
     :param mocker: A built-in fixture from the pytest-mock library to create a Mock object
@@ -228,9 +228,9 @@ def test_create_server_config_server_subdir_nonexistent_oserror(
     :param server_testing_dir: The path to the the temp output directory for server tests
     """
 
-    # Mock MERLIN_CONFIG_DIR and MERLIN_SERVER_SUBDIR
+    # Mock MERLIN_HOME and MERLIN_SERVER_SUBDIR
     nonexistent_server_subdir = "test_create_server_config_server_subdir_nonexistent"
-    mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
+    mocker.patch("merlin.server.server_config.MERLIN_HOME", server_testing_dir)
     mocker.patch("merlin.server.server_config.MERLIN_SERVER_SUBDIR", nonexistent_server_subdir)
 
     # Mock os.mkdir so it raises an OSError
@@ -255,7 +255,7 @@ def test_create_server_config_no_server_config(
     """
 
     # Mock the necessary variables/functions to get us to the pull_server_config call
-    mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
+    mocker.patch("merlin.server.server_config.MERLIN_HOME", server_testing_dir)
     mocker.patch("merlin.server.server_config.copy_container_command_files", return_value=True)
     mock_open_func = mocker.mock_open(read_data="key: value")
     mocker.patch("builtins.open", mock_open_func)
@@ -285,14 +285,14 @@ def test_create_server_config_no_server_dir(
     caplog.set_level(logging.INFO)
 
     # Mock the necessary variables/functions to get us to the get_config_dir call
-    mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
+    mocker.patch("merlin.server.server_config.MERLIN_HOME", server_testing_dir)
     mocker.patch("merlin.server.server_config.copy_container_command_files", return_value=True)
     mock_open_func = mocker.mock_open(read_data="key: value")
     mocker.patch("builtins.open", mock_open_func)
-    mocker.patch("merlin.server.server_config.pull_server_config", return_value=ServerConfig(server_server_config))
+    mocker.patch("merlin.server.server_config.load_server_config", return_value=ServerConfig(server_server_config))
 
     # Mock the get_config_dir call to return a directory that doesn't exist yet
-    nonexistent_dir = f"{server_testing_dir}/merlin_server"
+    nonexistent_dir = os.path.join(server_testing_dir, "merlin_server")
     mocker.patch("merlin.server.server_util.ContainerConfig.get_config_dir", return_value=nonexistent_dir)
 
     assert create_server_config()
@@ -394,7 +394,7 @@ def setup_pull_server_config_mock(
     :param server_server_config: A pytest fixture of test data to pass to the ServerConfig class
     """
     mocker.patch("merlin.server.server_util.AppYaml.get_data", return_value=server_app_yaml_contents)
-    mocker.patch("merlin.server.server_config.MERLIN_CONFIG_DIR", server_testing_dir)
+    mocker.patch("merlin.server.server_config.MERLIN_HOME", server_testing_dir)
     mock_data = mocker.mock_open(read_data=str(server_server_config))
     mocker.patch("builtins.open", mock_data)
 
@@ -402,9 +402,9 @@ def setup_pull_server_config_mock(
 @pytest.mark.parametrize(
     "key_to_delete, expected_log_message",
     [
-        ("container", 'Unable to find "container" object in {default_app_yaml}'),
-        ("container.format", 'Unable to find "format" in {default_app_yaml}'),
-        ("process", "Process config not found in {default_app_yaml}"),
+        ("container", 'Unable to find "container"'),
+        ("container.format", 'Unable to find "format"'),
+        ("process", 'Unable to find "process"'),
     ],
 )
 def test_pull_server_config_missing_config_keys(
@@ -438,8 +438,7 @@ def test_pull_server_config_missing_config_keys(
     setup_pull_server_config_mock(mocker, server_testing_dir, server_app_yaml_contents, server_server_config)
 
     assert pull_server_config() is None
-    default_app_yaml = os.path.join(MERLIN_CONFIG_DIR, "app.yaml")
-    assert expected_log_message.format(default_app_yaml=default_app_yaml) in caplog.text
+    assert expected_log_message in caplog.text
 
 
 @pytest.mark.parametrize("key_to_delete", ["command", "run_command", "stop_command", "pull_command"])
@@ -500,8 +499,7 @@ def test_pull_server_config_missing_process_needed_key(
     setup_pull_server_config_mock(mocker, server_testing_dir, server_app_yaml_contents, server_server_config)
 
     assert pull_server_config() is None
-    default_app_yaml = os.path.join(MERLIN_CONFIG_DIR, "app.yaml")
-    assert f'Process necessary "{key_to_delete}" command configuration not found in {default_app_yaml}' in caplog.text
+    assert f'Process necessary "{key_to_delete}" command configuration not found in' in caplog.text
 
 
 def test_pull_server_config_no_issues(

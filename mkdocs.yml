@@ -24,6 +24,10 @@ nav:
     - Variables: "user_guide/variables.md"
     - Running Studies: "user_guide/running_studies.md"
     - Interpreting Study Output: "user_guide/interpreting_output.md"
+    - Merlin Database:
+        - Database Overview: "user_guide/database/index.md"
+        - The Database Command: "user_guide/database/database_cmd.md"
+        - Database Entities: "user_guide/database/entities.md"
     - Monitoring Studies:
       - Monitoring Overview: "user_guide/monitoring/index.md"
       - The Status Commands: "user_guide/monitoring/status_cmds.md"
@@ -47,6 +51,9 @@ nav:
     - Merlin Reference: "api_reference/index.md"
     - API Reference: "api_reference/"
   - Contact Us: "contact.md"
+
+exclude_docs: |
+  /README.md
 
 theme:
   name: material
@@ -98,23 +105,25 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - markdown_grid_tables
+  - toc:
+      toc_depth: 4
 
 plugins:
   - glightbox
   - search
   - codeinclude:
       title_mode: pymdownx.tabbed
-  # - gen-files:
-  #     scripts:
-  #     - docs/gen_ref_pages.py
-  # - mkdocstrings:
-  #     handlers:
-  #       python:
-  #         paths: [merlin]
-  #         options:
-  #           docstring_style: sphinx
-  # - literate-nav:
-  #     nav_file: SUMMARY.md
+  - gen-files:
+      scripts:
+      - docs/gen_ref_pages.py
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [merlin]
+          options:
+            docstring_style: google
+  - literate-nav:
+      nav_file: SUMMARY.md
 
 extra:
   social:

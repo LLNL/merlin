@@ -39,6 +39,7 @@ The main configuration in `~/.merlin/server/` deals with defaults and technical 
 
 In addition to the main server configuration, a local server configuration will be created in your current working directory in a folder called `merlin_server/`. This directory will contain:
 
+- `app.yaml`: The configuration file that Merlin will eventually read from
 - `redis.conf`: The Redis configuration file that contains all of the settings to be used for our Redis server
 - `redis.pass`: A password for the Redis server that we'll start up next
 - `redis.users`: A file defining the users that are allowed to access the Redis server and their permissions
@@ -76,31 +77,24 @@ You can check that the server was started properly with:
 merlin server status
 ```
 
-The `merlin server start` command will add new files to the local configuration `merlin_server/` folder:
-
-- `merlin_server.pf`: A process file containing information regarding the Redis process
-- `app.yaml`: A new app.yaml file configured specifically for the containerized Redis server that we just started
+The `merlin server start` command will add a new file to the local configuration `merlin_server/` folder: `merlin_server.pf`. This is a process file containing information regarding the Redis process. Additionally, the `merlin server start` command will update the `merlin_server/app.yaml` file that was created when we ran `merlin server init`, so that it has `broker` and `results_backend` sections that point to our started server.
 
 To have Merlin read this server configuration:
+
+=== "Make This Server Configuration Your Main Configuration"
+
+    !!! Tip
+
+        The `merlin config use` command allows you to have multiple server configuration files that you can easily swap between.
+
+    ```bash
+    merlin config use merlin_server/app.yaml
+    ```
 
 === "Copy Configuration to CWD"
 
     ```bash
     cp merlin_server/app.yaml .
-    ```
-
-=== "Make This Server Configuration Your Main Configuration"
-
-    If you're going to use the server configuration as your main configuration, it's a good idea to make a backup of your current server configuration (if you have one):
-
-    ```bash
-    mv ~/.merlin/app.yaml ~/.merlin/app.yaml.bak
-    ```
-
-    From here, simply copy the server configuration to your `~/.merlin/` folder:
-
-    ```bash
-    cp merlin_server/app.yaml ~/.merlin/app.yaml
     ```
 
 You can check that Merlin recognizes the containerized server connection with:
@@ -124,15 +118,17 @@ If your servers are running and set up properly, this should output something si
       ~~~~~~~~~~   |_|  |_|\___|_|  |_|_|_| |_|
      *~~~~~~~~~~~                                    
        ~~~*~~~*    Machine Learning for HPC Workflows                                 
+                
 
+    v. 1.13.0
 
-
+    [2025-05-28 11:57:14: INFO] Reading app config from file merlin_server/app.yaml
     Merlin Configuration
     -------------------------
 
-    config_file        | /path/to/app.yaml
+    config_file        | merlin_server/app.yaml
     is_debug           | False
-    merlin_home        | /path/to/.merlin
+    merlin_home        | ~/.merlin
     merlin_home_exists | True
     broker server      | redis://default:******@127.0.0.1:6379/0
     broker ssl         | False
@@ -147,19 +143,20 @@ If your servers are running and set up properly, this should output something si
     Python Configuration
     -------------------------
 
-    $ which python3
-    /path/to/python3
+    Python Packages
 
-    $ python3 --version
-    Python x.y.z
+    Package    Version    Location
+    ---------  ---------  ----------------------------------------------------------------------
+    python     3.13.2     /path/to/python3
+    pip        25.0.1     /path/to/python3.13/site-packages
+    merlin     1.12.2     /path/to/merlin
+    maestrowf  1.1.10     /path/to/python3.13/site-packages
+    celery     5.5.2      /path/to/python3.13/site-packages
+    kombu      5.5.3      /path/to/python3.13/site-packages
+    amqp       5.3.1      /path/to/python3.13/site-packages
+    redis      5.2.1      /path/to/python3.13/site-packages
 
-    $ which pip3
-    /path/to/pip3
-
-    $ pip3 --version
-    pip x.y.x from /path/to/pip (python x.y)
-
-    "echo $PYTHONPATH"
+    $PYTHONPATH:
     ```
 
 ## Stopping the Server
@@ -302,11 +299,14 @@ if __name__ == "__main__":
 
 Finally, we'll add a function `update_app_yaml` to do the actual updating of the `app.yaml` file. This function will load in the current contents of the `app.yaml` file, update the necessary `server` settings, and dump the updated settings back to the `app.yaml` file.
 
-```python title="update_app_hostname.py" hl_lines="2 6-29 39"
+```python title="update_app_hostname.py" hl_lines="2-3 7-32 42"
 import argparse
+import logging
 import yaml
 
 from merlin.utils import verify_filepath
+
+LOG = logging.getLogger(__name__)
 
 def update_app_yaml(hostname, app_yaml):
     """
@@ -368,7 +368,14 @@ To accomplish this, we'll use the `hostname` command to obtain the name of the h
 python update_app_hostname.py `hostname` ${APP_YAML_PATH}
 ```
 
-When Merlin reads in the `app.yaml` file, it will search for this file in two locations: your current working directory and `~/.merlin`. In order for Merlin to read in this `app.yaml` file that we just updated, we need to copy it to the directory where you'll launch your study from (AKA the current working directory):
+Now let's make sure Merlin is pointing to this `app.yaml` file:
+
+```bash title="server.sbatch" linenums="55"
+# Tell Merlin to use this app.yaml file
+merlin config use ${APP_YAML_PATH}
+```
+
+<!-- When Merlin reads in the `app.yaml` file, it will search for this file in two locations: your current working directory and `~/.merlin`. In order for Merlin to read in this `app.yaml` file that we just updated, we need to copy it to the directory where you'll launch your study from (AKA the current working directory):
 
 ```bash title="server.sbatch" linenums="55"
 # Move the app.yaml to the project directory
@@ -376,7 +383,7 @@ PROJECT_DIR=`pwd`
 cp ${MERLIN_SERVER_DIR}/app.yaml ${PROJECT_DIR}
 ```
 
-In these lines, we're assuming that this file is located in the same place as your spec file. If you place this file elsewhere you'll need to modify the `PROJECT_DIR` variable to point to where your spec file will be launched from.
+In these lines, we're assuming that this file is located in the same place as your spec file. If you place this file elsewhere you'll need to modify the `PROJECT_DIR` variable to point to where your spec file will be launched from. -->
 
 Finally, let's add in a statement to see if our server is connected properly (this will help with debugging) and a call to sleep forever so that this server stays up and running until our allocation terminates:
 
@@ -456,9 +463,8 @@ Below are the full scripts:
     # Update the app.yaml file generated by merlin server start to point to the hostname of this node
     python update_app_hostname.py `hostname` ${APP_YAML_PATH}
 
-    # Move the app.yaml to the project directory
-    PROJECT_DIR=`pwd`
-    cp ${MERLIN_SERVER_DIR}/app.yaml ${PROJECT_DIR}
+    # Tell Merlin to use this app.yaml file
+    merlin config use ${APP_YAML_PATH}
 
     # Check the server connection
     merlin info
@@ -471,9 +477,12 @@ Below are the full scripts:
 
     ```python title="update_app_hostname.py"
     import argparse
+    import logging
     import yaml
 
     from merlin.utils import verify_filepath
+
+    LOG = logging.getLogger(__name__)
 
     def update_app_yaml(hostname, app_yaml):
         """
@@ -519,12 +528,12 @@ Using the scripts is as easy as:
 2. Updating the `VENV` variable in `servers.sbatch` to point to your venv with Merlin installed
 3. Starting the server by submitting the script with `sbatch server.sbatch`
 
-Once your allocation is granted, the server should spin up. You can check that it's been started by executing `merlin info` from the directory where these scripts exist. This should output a message like is shown at the end of [Starting the Server and Linking it to Merlin](#starting-the-server-and-linking-it-to-merlin).
+Once your allocation is granted, the server should spin up. You can check that it's been started by executing `merlin info`. This should output a message like is shown at the end of [Starting the Server and Linking it to Merlin](#starting-the-server-and-linking-it-to-merlin). Specifically, you should see that it's pointing to the server we just spun up.
 
 From here, you should be able to start your workers by submitting a `workers.sbatch` script like is shown in [Distributed Runs](../running_studies.md#distributed-runs). To ensure that this script doesn't start prior to your server spinning up, you should submit this script with:
 
 ```bash
-sbatch -d after:<job id of server.sbatch>+1 workers.sbatch
+sbatch -d after:<job id of server.sbatch> workers.sbatch
 ```
 
 This will make it so that workers.sbatch cannot start until the server job has been running for 1 minute.
@@ -601,7 +610,7 @@ From here, all we need to do is:
 2. Start the workers with:
 
     ```bash
-    sbatch -d after:<job id of server.sbatch>+1 workers.sbatch
+    sbatch -d after:<job id of server.sbatch> workers.sbatch
     ```
 
 3. Wait for the server to start (step 1), then queue the tasks with:
@@ -616,6 +625,6 @@ You can check that everything ran properly with:
 merlin status hello_samples.yaml
 ```
 
-Or, if you're using a version of Merlin prior to v1.12.0, you can ensure that the `hello_samples_<timestamp>/` output workspace was created. More info on the expected output can be found in [the Hello World Examples page](../../examples/hello.md#expected-output-1).
+Or, if you're using a version of Merlin prior to v1.12.0, you can ensure that the `hello_samples_<timestamp>/` output workspace was created. More info on the expected output can be found in [the Hello World Examples page](../../examples/hello.md#expected-output_1).
 
 Congratulations, you just ran a cross-node workflow with a containerized server!

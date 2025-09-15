@@ -82,7 +82,7 @@ The `batch` block is an optional block that enables specification of HPC schedul
 | Property Name | Required? | Type | Description |
 | ------------- | --------- | ---- | ----------- |
 | `bank` | Yes | str | Account to charge computing time to |
-| `dry_run` | No | bool | Execute a [dry run](./command_line.md#dry-run) of the study |
+| `dry_run` | No | bool | Execute a [dry run](./running_studies.md#dry-runs) of the study |
 | `launch_args` | No | str | Extra arguments for the parallel launch command |
 | `launch_pre` | No | str | Any configuration needed before the scheduler launch command (`srun`, `jsrun`, etc.) |
 | `nodes` | No | int | The number of nodes to use for all workers. This can be overridden in [the `resources` property of the `merlin` block](#resources). If this is unset the number of nodes will be queried from the environment, failing that, the number of nodes will be set to 1. |

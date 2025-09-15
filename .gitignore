@@ -42,6 +42,7 @@ docs/build/
 # Test files
 .tox/*
 .coverage
+**/setup_env.sh
 
 # Jupyter
 jupyter/.ipynb_checkpoints

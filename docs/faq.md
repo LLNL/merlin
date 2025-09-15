@@ -245,7 +245,7 @@ See the docs on all [Merlin Commands](./user_guide/command_line.md) that are ava
 
 ### How do I set up a workspace without executing step scripts?
 
-Use [Merlin's Dry Run](./user_guide/command_line.md#dry-run) capability:
+Use [Merlin's Dry Run](./user_guide/running_studies.md#dry-runs) capability:
 
 === "Locally"
 
@@ -438,7 +438,7 @@ run:
     procs: 3
 ```
 
-See [The `LAUNCHER` and `VLAUNCHER` Variables](./user_guide/variables.md#the-launcher-and-vlauncher-variables) and the [Scheduler Specific Properties](./user_guide/specification.md#scheduler-specific-properties) sections for more information.
+See [The `LAUNCHER` and `VLAUNCHER` Variables](./user_guide/variables.md#the-launcher-and-vlauncher-variables) and [The Run Property](./user_guide/specification.md#the-run-property) sections for more information.
 
 ### What is `level_max_dirs`?
 
