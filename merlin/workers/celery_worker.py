@@ -113,10 +113,10 @@ class CeleryWorker(MerlinWorker):
 
         # Construct the base celery command
         celery_cmd = f"celery -A merlin worker {self.worker_config.args} -Q {','.join(self.worker_config.queues)}"
-        
+
         # Use BatchManager to create the launch command
         launch_cmd = self.batch_manager.create_worker_launch_command(celery_cmd)
-        
+
         return os.path.expandvars(launch_cmd)
 
     def should_launch(self) -> bool:
@@ -131,8 +131,9 @@ class CeleryWorker(MerlinWorker):
         if self.worker_config.machines:
             if not check_machines(self.worker_config.machines):
                 LOG.error(
-                    f"The following machines were provided for worker '{self.worker_config.name}': {self.worker_config.machines}. "
-                    f"However, the current machine '{socket.gethostname()}' is not in this list."
+                    f"The following machines were provided for worker '{self.worker_config.name}': "
+                    f"{self.worker_config.machines}. However, the current machine '{socket.gethostname()}' "
+                    "is not in this list."
                 )
                 return False
 
@@ -166,16 +167,20 @@ class CeleryWorker(MerlinWorker):
         if self.should_launch():
             launch_cmd = self.get_launch_command(override_args=override_args, disable_logs=disable_logs)
             try:
-                subprocess.Popen(launch_cmd, env=self.worker_config.env, shell=True, universal_newlines=True)  # pylint: disable=R1732
+                # We intentionally do not use "with" here because we want the worker
+                # to run as a detached background process and not block execution.
+                subprocess.Popen(  # pylint: disable=consider-using-with
+                    launch_cmd, env=self.worker_config.env, shell=True, universal_newlines=True
+                )
                 LOG.debug(f"Launched worker '{self.worker_config.name}' with command: {launch_cmd}.")
-            except Exception as e:  # pylint: disable=C0103
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 LOG.error(f"Cannot start celery workers, {e}")
                 raise MerlinWorkerLaunchError from e
-        
+
     def update_batch_config(self, new_batch_config: Dict):
         """
         Update the batch configuration for this worker.
-        
+
         Args:
             new_batch_config: New batch configuration to apply.
         """

@@ -60,7 +60,7 @@ def get_worker_by_cmd(cmd: str, default: str) -> str:
     if not shutil.which(cmd):
         workers_cmd = bogus_cmd
     # Use bogus flux if flux is present but slurm is the main scheduler
-    elif cmd == "flux" and not batch_manager._check_scheduler(cmd):
+    elif cmd == "flux" and not batch_manager.check_scheduler(cmd):
         workers_cmd = bogus_cmd
 
     return workers_cmd

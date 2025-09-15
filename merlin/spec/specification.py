@@ -1274,7 +1274,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 env=full_env,
                 overlap=overlap,
                 nodes=settings.get("nodes", None),
-                batch=BatchConfig.from_dict(batch_settings)
+                batch=BatchConfig.from_dict(batch_settings),
             )
 
             worker_instance = worker_factory.create(self.merlin["resources"]["task_server"], worker_config)

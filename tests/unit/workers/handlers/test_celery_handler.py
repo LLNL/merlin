@@ -8,7 +8,7 @@
 Tests for the `merlin/workers/handlers/celery_handler.py` module.
 """
 
-from typing import Dict, List
+from typing import List
 from unittest.mock import MagicMock
 
 import pytest

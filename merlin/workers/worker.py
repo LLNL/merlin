@@ -16,7 +16,6 @@ This abstraction allows Merlin to support multiple task execution backends while
 a consistent interface for launching and managing worker processes.
 """
 
-import os
 from abc import ABC, abstractmethod
 from typing import Dict
 

@@ -28,11 +28,7 @@ def test_init_sets_attributes():
     """
     Test that the constructor sets name, config, and env correctly.
     """
-    worker_config = WorkerConfig(
-        name="test_worker",
-        queues={"queue1", "queue2"},
-        env={"TEST_ENV": "123"}
-    )
+    worker_config = WorkerConfig(name="test_worker", queues={"queue1", "queue2"}, env={"TEST_ENV": "123"})
 
     worker = DummyMerlinWorker(worker_config)
 

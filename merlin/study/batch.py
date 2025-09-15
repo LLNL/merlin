@@ -24,21 +24,21 @@ LOG = logging.getLogger(__name__)
 class BatchManager:
     """
     Manages batch job scheduling and worker launching across different schedulers.
-    
+
     This class provides methods for detecting available schedulers, parsing batch
     configurations, and constructing appropriate launch commands for different
     batch systems including Slurm, LSF, Flux, and PBS.
-    
+
     Attributes:
         batch_config (BatchConfig): The batch configuration object.
         scheduler_legend (Dict): Dictionary containing scheduler-specific information.
         detected_scheduler (str): The automatically detected scheduler type.
     """
-    
+
     def __init__(self, batch_config: BatchConfig = None):
         """
         Initialize the BatchManager with a batch configuration.
-        
+
         Args:
             batch_config: BatchConfig object containing batch configuration settings.
                 If None, a default BatchConfig will be created.
@@ -46,12 +46,12 @@ class BatchManager:
         self.batch_config = batch_config or BatchConfig()
         self.scheduler_legend = {}
         self.detected_scheduler = None
-        
+
         # Initialize Flux-specific attributes
         self._flux_exe = None
         self._flux_alloc = None
         self._init_flux_config()
-        
+
     def _init_flux_config(self):
         """Initialize Flux-specific configuration."""
         flux_path = self.batch_config.flux_path
@@ -59,34 +59,34 @@ class BatchManager:
             flux_path += "/"
 
         self._flux_exe = os.path.join(flux_path, "flux")
-        
+
         try:
             self._flux_alloc = get_flux_alloc(self._flux_exe)
         except FileNotFoundError as e:
             LOG.debug(e)
             self._flux_alloc = ""
-        
+
     def is_parallel(self) -> bool:
         """
         Check if this batch configuration is set up for parallel execution.
-        
+
         Returns:
             True if batch type is not 'local', indicating parallel processing.
         """
         return self.batch_config.is_parallel()
-        
-    def _check_scheduler(self, scheduler: str) -> bool:
+
+    def check_scheduler(self, scheduler: str) -> bool:
         """
         Check if a specific scheduler is available on the system.
-        
+
         Args:
             scheduler: Name of the scheduler to check ('flux', 'slurm', 'lsf', 'pbs').
-            
+
         Returns:
             True if the scheduler is available, False otherwise.
         """
         if scheduler not in ("flux", "slurm", "lsf", "pbs"):
-            LOG.warning(f"Invalid scheduler {scheduler} given to _check_scheduler.")
+            LOG.warning(f"Invalid scheduler {scheduler} given to check_scheduler.")
             return False
 
         # Ensure scheduler legend is populated
@@ -94,42 +94,39 @@ class BatchManager:
             self._build_scheduler_legend()
 
         try:
-            process = subprocess.Popen(
-                self.scheduler_legend[scheduler]["check cmd"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
+            process = subprocess.run(self.scheduler_legend[scheduler]["check cmd"], capture_output=True)
 
-            result = process.stdout.readlines()
-            expected_output = self.scheduler_legend[scheduler]["expected check output"]
-            if result and len(result) > 0 and expected_output in result[0]:
-                return True
+            if process.stdout:
+                expected_output = self.scheduler_legend[scheduler]["expected check output"]
+                lines = process.stdout.splitlines()
+                if lines and expected_output in lines[0]:
+                    return True
             return False
         except (FileNotFoundError, PermissionError):
             return False
-            
+
     def detect_scheduler(self, default: str = None) -> str:
         """
         Automatically detect which batch scheduler is available.
-        
+
         Args:
             default: Default scheduler to return if none are detected.
-            
+
         Returns:
             Name of the detected scheduler or the default value.
         """
         if self.detected_scheduler is not None:
             return self.detected_scheduler
-            
+
         # Build scheduler legend if not already done
         if not self.scheduler_legend:
             self._build_scheduler_legend()
-            
+
         # Check schedulers in priority order
         schedulers_to_check = ["flux", "pbs", "lsf", "slurm"]
         for scheduler in schedulers_to_check:
-            LOG.debug(f"check for {scheduler} = {self._check_scheduler(scheduler)}")
-            if self._check_scheduler(scheduler):
+            LOG.debug(f"check for {scheduler} = {self.check_scheduler(scheduler)}")
+            if self.check_scheduler(scheduler):
                 self.detected_scheduler = scheduler
                 return scheduler
 
@@ -145,17 +142,17 @@ class BatchManager:
 
         self.detected_scheduler = default
         return default
-        
+
     def _get_node_count(self, default: int = 1) -> int:
         """
         Determine node count based on environment and scheduler.
-        
+
         Args:
             default: Default node count if none can be determined.
-            
+
         Returns:
             Number of nodes to use for the batch job.
-            
+
         Raises:
             ValueError: If Flux version is too old.
         """
@@ -170,7 +167,7 @@ class BatchManager:
         try:
             get_size_proc = subprocess.run("flux getattr size", shell=True, capture_output=True, text=True)
             return int(get_size_proc.stdout)
-        except Exception:
+        except (FileNotFoundError, PermissionError, ValueError):
             pass
 
         # Check Slurm environment
@@ -186,11 +183,11 @@ class BatchManager:
             return len(nodes) // 2 - 1
 
         return default
-        
+
     def _build_scheduler_legend(self, nodes: int = None):
         """
         Build the scheduler legend with configuration for all supported schedulers.
-        
+
         Args:
             nodes: Number of nodes for the launch command. If None, will attempt
                 to determine automatically.
@@ -198,10 +195,6 @@ class BatchManager:
         if nodes is None:
             nodes = self._get_node_count(default=1)
 
-        # print(f"type(walltime): {type(self.batch_config.walltime)}")
-        # print(f"walltime: {self.batch_config.walltime}")
-        # print(f"convert timestring: {convert_timestring(self.batch_config.walltime, format_method='FSD')}")
-            
         self.scheduler_legend = {
             "flux": {
                 "bank": f" --setattr=system.bank={self.batch_config.bank}",
@@ -233,20 +226,20 @@ class BatchManager:
                 "walltime": f" -t {convert_timestring(self.batch_config.walltime)}",
             },
         }
-        
+
     def _get_flux_launch_command(self, existing_launch_cmd: str) -> str:
         """
         Build the Flux-specific launch command.
 
         Args:
             existing_launch_cmd: The existing launch command or an empty string.
-        
+
         Returns:
             Flux launch command string.
         """
         default_flux_exec = "flux exec" if existing_launch_cmd else f"{self._flux_exe} exec"
         flux_exec = ""
-        
+
         if self.batch_config.flux_exec_workers:
             flux_exec = self.batch_config.flux_exec if self.batch_config.flux_exec else default_flux_exec
 
@@ -259,27 +252,27 @@ class BatchManager:
             launch = f"{existing_launch_cmd} {flux_exec} `which {self.batch_config.shell}` -c"
 
         return launch
-        
+
     def _construct_launch_command(self, nodes: int) -> str:
         """
         Construct the base launch command for the detected scheduler.
-        
+
         Args:
             nodes: Number of nodes to use.
-            
+
         Returns:
             The constructed launch command.
-            
+
         Raises:
             TypeError: If PBS scheduler is used with non-flux batch type.
             KeyError: If workload manager is not found in scheduler legend.
         """
         # Build scheduler legend with the specified nodes
         self._build_scheduler_legend(nodes)
-        
+
         # Detect the workload manager
         workload_manager = self.detect_scheduler()
-        
+
         LOG.debug(f"batch_config: {self.batch_config}")
 
         if self.batch_config.type == "pbs" and workload_manager == self.batch_config.type:
@@ -296,17 +289,13 @@ class BatchManager:
             LOG.debug(e)
             launch_command = ""
 
-        print(f"launch_command before: {launch_command}")
         # If LSF is the workload manager we stop here
         if workload_manager != "lsf" and launch_command:
             # Add bank, queue, and walltime as necessary
             for key in ("bank", "queue", "walltime"):
                 config_value = getattr(self.batch_config, key)
-                print(f"workload_manager: {workload_manager}")
-                print(f"config_value for {key}: {config_value}")
                 if config_value:
                     try:
-                        print(f"scheduler_legend entry: {self.scheduler_legend[workload_manager][key]}")
                         launch_command += self.scheduler_legend[workload_manager][key]
                     except KeyError as e:
                         LOG.error(e)
@@ -315,21 +304,20 @@ class BatchManager:
             if workload_manager == "pbs":
                 launch_command += " --"
 
-        print(f"launch_command after: {launch_command}")
         return launch_command
-        
+
     def create_worker_launch_command(self, command: str, nodes: Union[str, int] = None) -> str:
         """
         Create the complete worker launch command.
-        
+
         Args:
             command: The base command to be launched.
             nodes: Number of nodes to use. Can be an integer, "all", or None.
                 If None, will use the batch configuration value.
-                
+
         Returns:
             Complete launch command ready for execution.
-            
+
         Raises:
             TypeError: If nodes parameter is invalid or PBS scheduler is misconfigured.
         """
@@ -346,7 +334,7 @@ class BatchManager:
         elif not isinstance(nodes, int):
             if isinstance(nodes, str) and nodes != "all":
                 raise TypeError("Nodes was passed with an invalid string value (only 'all' is supported).")
-            elif not isinstance(nodes, str):
+            if not isinstance(nodes, str):
                 raise TypeError("Nodes parameter must be an integer, 'all', or None.")
 
         # Build launch command if not provided
@@ -367,16 +355,16 @@ class BatchManager:
         # Add Flux-specific launch settings
         if self.batch_config.type == "flux":
             launch_command = self._get_flux_launch_command(launch_command)
-            
+
         # Construct final worker command
         worker_cmd = f"{launch_command} {command}"
 
         return worker_cmd
-        
+
     def get_batch_info(self) -> Dict:
         """
         Get information about the current batch configuration.
-        
+
         Returns:
             Dictionary containing batch configuration details.
         """
@@ -384,11 +372,11 @@ class BatchManager:
         batch_info["is_parallel"] = self.is_parallel()
         batch_info["detected_scheduler"] = self.detect_scheduler()
         return batch_info
-        
+
     def update_config(self, new_config: Union[Dict, BatchConfig]):
         """
         Update the batch configuration and reset cached values.
-        
+
         Args:
             new_config: New batch configuration (Dict or BatchConfig).
         """
@@ -399,7 +387,7 @@ class BatchManager:
             self.batch_config = new_config
         else:
             raise TypeError("new_config must be a Dict or BatchConfig instance")
-            
+
         # Reset cached values
         self.scheduler_legend = {}
         self.detected_scheduler = None

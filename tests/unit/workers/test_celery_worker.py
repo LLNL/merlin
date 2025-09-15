@@ -8,7 +8,6 @@
 Tests for the `merlin/workers/celery_worker.py` module.
 """
 
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -17,7 +16,7 @@ from pytest_mock import MockerFixture
 from merlin.exceptions import MerlinWorkerLaunchError
 from merlin.study.configurations import WorkerConfig
 from merlin.workers import CeleryWorker
-from tests.fixture_types import FixtureCallable, FixtureDict, FixtureStr
+from tests.fixture_types import FixtureCallable, FixtureStr
 
 
 @pytest.fixture
