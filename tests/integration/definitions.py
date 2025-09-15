@@ -32,7 +32,6 @@ from conditions import (  # pylint: disable=E0401
     StepFileHasRegex,
 )
 
-# from merlin.study.batch import check_for_scheduler
 from merlin.study.batch import BatchManager
 from merlin.utils import get_flux_alloc, get_flux_cmd
 
@@ -53,7 +52,6 @@ def get_worker_by_cmd(cmd: str, default: str) -> str:
     workers_cmd = default
     fake_cmds_path = f"tests/integration/fake_commands/{cmd}_fake_command"
     bogus_cmd = f"""PATH="{fake_cmds_path}:$PATH";{default}"""
-    # scheduler_legend = {"flux": {"check cmd": ["flux", "resource", "list"], "expected check output": b"Nodes"}}
     batch_manager = BatchManager()
 
     # Use bogus flux/qsub to test if no flux/qsub is present
