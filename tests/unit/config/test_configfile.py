@@ -101,7 +101,7 @@ def config_path(configfile_testing_dir: FixtureStr, demo_app_yaml: FixtureStr) -
 
 
 @pytest.fixture(autouse=True)
-def reset_globals():
+def reset_local_mode():
     """
     Reset IS_LOCAL_MODE before each test.
 
@@ -260,7 +260,6 @@ def test_find_config_file_merlin_home_app_yaml_exists(mocker: MockerFixture, con
 
     result = find_config_file()
     assert result == merlin_home_app_yaml
-
 
 def test_find_config_file_no_app_yaml_found(mocker: MockerFixture):
     """
