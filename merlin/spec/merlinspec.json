@@ -269,17 +269,62 @@
   "BATCH": {
     "type": "object",
     "properties": {
-      "type": {"type": "string", "minLength": 1},
-      "bank": {"type": "string", "minLength": 1},
-      "queue": {"type": "string", "minLength": 1},
+      "type": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "string"}
+        ]
+      },
+      "bank": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "string"}
+        ]
+      },
+      "queue": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "string"}
+        ]
+      },
       "dry_run": {"type": "boolean"},
-      "shell": {"type": "string", "minLength": 1},
-      "flux_path": {"type": "string", "minLength": 1},
-      "flux_start_opts": {"type": "string", "minLength": 1},
+      "shell": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "string"}
+        ]
+      },
+      "flux_path": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "string"}
+        ]
+      },
+      "flux_start_opts": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "string"}
+        ]
+      },
       "flux_exec_workers": {"type": "boolean"},
-      "launch_pre": {"type": "string", "minLength": 1},
-      "launch_args": {"type": "string", "minLength": 1},
-      "worker_launch": {"type": "string", "minLength": 1},
+      "launch_pre": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "string"}
+        ]
+      },
+      "launch_args": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "string"}
+        ]
+      },
+      "worker_launch": {
+        "anyOf": [
+          {"type": "null"},
+          {"type": "string"}
+        ]
+      },
       "nodes": {
         "anyOf": [
           {"type": "integer", "minimum": 1},

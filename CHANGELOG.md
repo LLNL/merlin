@@ -4,6 +4,56 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0]
+### Added
+- API documentation for Merlin's core codebase
+- Added support for Python 3.12 and 3.13
+- Added additional tests for the `merlin run` and `merlin purge` commands
+- Aliased types to represent different types of pytest fixtures
+- New test condition `StepFinishedFilesCount` to help search for `MERLIN_FINISHED` files in output workspaces
+- Added "Unit-tests" GitHub action to run the unit test suite
+- Added `CeleryTaskManager` context manager to the test suite to ensure tasks are safely purged from queues if tests fail
+- Added `command-tests`, `workflow-tests`, and `integration-tests` to the Makefile
+- Added tests and docs for the new `merlin config` options
+- Python 3.8 now requires `orderly-set==5.3.0` to avoid a bug with the deepdiff library
+- New step 'Reinstall pip to avoid vendored package corruption' to CI workflow jobs that use pip
+- New GitHub actions to reduce common code in CI
+- COPYRIGHT file for ownership details
+- New check for copyright headers in the Makefile
+- A page in the docs explaining the `feature_demo` example
+- Unit tests for the `spec/` folder
+- Batch block now supports placeholder entries
+
+### Changed
+- The `merlin config` command:
+  - Now defaults to the LaunchIT setup
+  - No longer required to have configuration named `app.yaml`
+  - New subcommands:
+    - `create`: Creates a new configuration file
+    - `update-broker`: Updates the `broker` section of the configuration file
+    - `update-backend`: Updates the `results_backend` section of the configuration file
+    - `use`: Point your active configuration to a new configuration file
+- The `merlin server` command no longer modifies the `~/.merlin/app.yaml` file by default. Instead, it modifies the `./merlin_server/app.yaml` file.
+- Dropped support for Python 3.7
+- Ported all distributed tests of the integration test suite to pytest
+  - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
+  - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
+- Removed `e2e-distributed*` definitions from the Makefile
+- CI to use new actions
+- Copyright headers in all files
+  - These now point to the LICENSE and COPYRIGHT files
+  - LICENSE: Legal permissions (e.g., MIT terms)
+  - COPYRIGHT: Ownership, institutional metadata
+  - Make commands that change version/copyright year have been modified
+- Refactored the `main.py` module so that it's broken into smaller, more-manageable pieces
+
+### Fixed
+- Running Merlin locally no longer requires an `app.yaml` configuration file
+- Removed dead lgtm link
+- Potential security vulnerabilities related to logging
+- Bug where the `--task-status` and `--return-code` filters of `merlin detailed-status` only accepted filters in all caps
+- Bug where absolute path was required in the broker password field
+
 ## [1.12.2]
 ### Added
 - Conflict handler option to the `dict_deep_merge` function in `utils.py`

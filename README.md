@@ -3,7 +3,6 @@
 ![Activity](https://img.shields.io/github/commit-activity/m/LLNL/merlin)
 [![Issues](https://img.shields.io/github/issues/LLNL/merlin)](https://github.com/LLNL/merlin/issues)
 [![Pull requests](https://img.shields.io/github/issues-pr/LLNL/merlin)](https://github.com/LLNL/merlin/pulls)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/LLNL/merlin.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/LLNL/merlin/context:python)
 
 ![Merlin](https://raw.githubusercontent.com/LLNL/merlin/main/docs/assets/images/merlin_banner_white.png)
 
@@ -86,7 +85,7 @@ Need help? <merlin@llnl.gov>
 
 ## Quick Start
 
-Note: Merlin supports Python 3.6+.
+Note: Merlin supports Python 3.8+.
 
 To install Merlin and its dependencies, run:
 
@@ -94,7 +93,9 @@ To install Merlin and its dependencies, run:
     
 Create your application config file:
 
-    $ merlin config
+    $ merlin config create
+
+Open the newly created config file at `~/.merlin/app.yaml` and edit it to point to a RabbitMQ/Redis server. More instructions on this can be found on the [Configuration page](https://merlin.readthedocs.io/en/stable/user_guide/configuration/) of Merlin's docs.
 
 That's it.
 

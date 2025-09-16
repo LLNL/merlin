@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 Tests for the `encrypt.py` and `encrypt_backend_traffic.py` files.
 """
@@ -17,34 +23,34 @@ class TestEncryption:
     This class will house all tests necessary for our encryption modules.
     """
 
-    def test_encrypt(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_encrypt(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test that our encryption function is encrypting the bytes that we're
         passing to it.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         str_to_encrypt = b"super secret string shhh"
         encrypted_str = encrypt(str_to_encrypt)
         for word in str_to_encrypt.decode("utf-8").split(" "):
             assert word not in encrypted_str.decode("utf-8")
 
-    def test_decrypt(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_decrypt(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test that our decryption function is decrypting the bytes that we're passing to it.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         # This is the output of the bytes from the encrypt test
         str_to_decrypt = b"gAAAAABld6k-jEncgCW5AePgrwn-C30dhr7dzGVhqzcqskPqFyA2Hdg3VWmo0qQnLklccaUYzAGlB4PMxyp4T-1gAYlAOf_7sC_bJOEcYOIkhZFoH6cX4Uw="
         decrypted_str = decrypt(str_to_decrypt)
         assert decrypted_str == b"super secret string shhh"
 
-    def test_get_key_path(self, redis_results_backend_config: "fixture"):  # noqa: F821
+    def test_get_key_path(self, redis_results_backend_config_function: "fixture"):  # noqa: F821
         """
         Test the `_get_key_path` function.
 
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         # Test the default behavior (`_get_key_path` will pull from CONFIG.results_backend which
         # will be set to the temporary output path for our tests in the `use_fake_encrypt_data_key` fixture)
@@ -89,14 +95,17 @@ class TestEncryption:
         assert key_gen_contents != ""
 
     def test_get_key(
-        self, merlin_server_dir: str, test_encryption_key: bytes, redis_results_backend_config: "fixture"  # noqa: F821
+        self,
+        merlin_server_dir: str,
+        test_encryption_key: bytes,
+        redis_results_backend_config_function: "fixture",  # noqa: F821
     ):
         """
         Test the `_get_key` function.
 
         :param merlin_server_dir: The directory to the merlin test server configuration
         :param test_encryption_key: A fixture to establish a fixed encryption key for testing
-        :param redis_results_backend_config: A fixture to set the CONFIG object to a test configuration that we'll use here
+        :param redis_results_backend_config_function: A fixture to set the CONFIG object to a test configuration that we'll use here
         """
         # Test the default functionality
         actual_default = _get_key()
