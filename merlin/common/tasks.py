@@ -21,12 +21,8 @@ from typing import Any, Callable, Dict, List, Optional
 # Need to disable an overwrite warning here since celery has an exception that we need that directly
 # overwrites a python built-in exception
 from celery import Signature, Task, chain, chord, group, shared_task, signature
-from celery.exceptions import (
-    BackendStoreError,
-    MaxRetriesExceededError,
-    OperationalError,
-    TimeoutError,  # pylint: disable=redefined-builtin
-)
+from celery.exceptions import TimeoutError  # pylint: disable=redefined-builtin
+from celery.exceptions import BackendStoreError, MaxRetriesExceededError, OperationalError
 from celery.result import AsyncResult
 from filelock import FileLock, Timeout
 from redis.exceptions import TimeoutError as RedisTimeoutError
