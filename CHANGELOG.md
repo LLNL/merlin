@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A page in the docs explaining the `feature_demo` example
 - Unit tests for the `spec/` folder
 - Batch block now supports placeholder entries
+- Automatic task retry for Celery's `BackendStoreError`
 
 ### Changed
 - The `merlin config` command:
