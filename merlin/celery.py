@@ -134,8 +134,6 @@ else:
 
 app_name = "merlin_test_app" if os.getenv("CELERY_ENV") == "test" else "merlin"
 
-app_name = "merlin_test_app" if os.getenv("CELERY_ENV") == "test" else "merlin"
-
 # initialize app with essential properties
 app: Celery = patch_celery().Celery(
     app_name,
