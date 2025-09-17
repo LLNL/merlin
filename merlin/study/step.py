@@ -1,32 +1,9 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """This module represents all of the logic that goes into a step"""
 
 import logging
@@ -34,14 +11,16 @@ import os
 import re
 from contextlib import suppress
 from copy import deepcopy
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from celery import current_task
 from maestrowf.abstracts.enums import State
+from maestrowf.abstracts.interfaces.scriptadapter import ScriptAdapter
 from maestrowf.datastructures.core.executiongraph import _StepRecord
 from maestrowf.datastructures.core.study import StudyStep
+from maestrowf.interfaces.script import SubmissionRecord
 
-from merlin.common.abstracts.enums import ReturnCode
+from merlin.common.enums import ReturnCode
 from merlin.study.script_adapter import MerlinScriptAdapter
 from merlin.study.status import read_status, write_status
 from merlin.utils import needs_merlin_expansion
@@ -50,15 +29,34 @@ from merlin.utils import needs_merlin_expansion
 LOG = logging.getLogger(__name__)
 
 
-def get_current_worker():
-    """Get the worker on the current running task from celery"""
+def get_current_worker() -> str:
+    """
+    Get the worker on the current running task from Celery.
+
+    This function retrieves the name of the worker that is currently
+    executing the task. It extracts the worker's name from the task's
+    request hostname.
+
+    Returns:
+        The name of the current worker.
+    """
     worker = re.search(r"@.+\.", current_task.request.hostname).group()
     worker = worker[1 : len(worker) - 1]
     return worker
 
 
-def get_current_queue():
-    """Get the queue on the current running task from celery"""
+def get_current_queue() -> str:
+    """
+    Get the queue on the current running task from Celery.
+
+    This function retrieves the name of the queue that the current
+    task is associated with. It extracts the routing key from the
+    task's delivery information and removes the queue tag defined
+    in the configuration.
+
+    Returns:
+        The name of the current queue.
+    """
     from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
     queue = current_task.request.delivery_info["routing_key"]
@@ -68,24 +66,55 @@ def get_current_queue():
 
 class MerlinStepRecord(_StepRecord):
     """
-    This class is a wrapper for the Maestro _StepRecord to remove
+    This class is a wrapper for the Maestro `_StepRecord` to remove
     a re-submit message and handle status updates.
+
+    Attributes:
+        condensed_workspace (str): A condensed version of the workspace path.
+        elapsed_time (str): The total elapsed time for the step execution.
+        jobid (List[int]): A list of job identifiers assigned by the scheduler.
+        maestro_step (StudyStep): The StudyStep object associated with this step.
+        merlin_step (Step): The Step object associated with this step.
+        restart_limit (int): Upper limit on the number of restart attempts.
+        restart_script (str): Script to resume record execution (if applicable).
+        run_time (str): The run time for the step execution.
+        status (State): The current status of the step.
+        to_be_scheduled (bool): Indicates if the record needs scheduling.
+        workspace (Variable): The output workspace for this step, represented as a Variable.
+
+    Methods:
+        mark_end: Marks the end of the step with the given state.
+        mark_restart: Increments the restart count for the step.
+        mark_running: Marks the step as running and updates the status file.
+        setup_workspace: Initializes the workspace and status file for the step.
     """
 
     def __init__(self, workspace: str, maestro_step: StudyStep, merlin_step: "Step", **kwargs):
         """
-        :param `workspace`: The output workspace for this step
-        :param `maestro_step`: The StudyStep object associated with this step
-        :param `merlin_step`: The Step object associated with this step
+        Initializes the `MerlinStepRecord` class which helps track the status of a step.
+
+        Args:
+            workspace: The output workspace for this step.
+            maestro_step: The
+                [StudyStep](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/datastructures/core/index.html#maestrowf.datastructures.core.StudyStep)
+                object associated with this step.
+            merlin_step: The [Step][study.step.Step] object associated with this step.
         """
         _StepRecord.__init__(self, workspace, maestro_step, status=State.INITIALIZED, **kwargs)
-        self.merlin_step = merlin_step
+        self.merlin_step: Step = merlin_step
 
     @property
     def condensed_workspace(self) -> str:
         """
-        Put together a smaller version of the workspace path to display.
-        :returns: A condensed workspace name
+        Generate a condensed version of the workspace path for display purposes.
+
+        This property constructs a shorter representation of the workspace path by extracting relevant
+        components based on the study name and a timestamp pattern. If a match is found using a regular
+        expression, the workspace path is split to isolate the condensed portion. If no match is found,
+        a fallback method is used to manually create a condensed path based on the step name.
+
+        Returns:
+            A string representing the condensed workspace path, which is easier to read and display.
         """
         timestamp_regex = r"\d{8}-\d{6}/"
         match = re.search(rf"{self.merlin_step.study_name}_{timestamp_regex}", self.workspace.value)
@@ -102,15 +131,21 @@ class MerlinStepRecord(_StepRecord):
         LOG.debug(f"Condense workspace '{condensed_workspace}'")
         return condensed_workspace
 
-    def _execute(self, adapter: "ScriptAdapter", script: str) -> Tuple["SubmissionRecord", int]:  # noqa: F821
+    def _execute(self, adapter: ScriptAdapter, script: str) -> Tuple[SubmissionRecord, int]:
         """
-        Overwrites _StepRecord's _execute method from Maestro since self.to_be_scheduled is
-        always true here. Also, if we didn't overwrite this we wouldn't be able to call
-        self.mark_running() for status updates.
+        Executes the script using the provided adapter, overriding the default behavior to ensure
+        that the step is marked as running and to facilitate job submission.
 
-        :param `adapter`: The script adapter to submit jobs to
-        :param `script`: The script to send to the script adapter
-        :returns: A tuple of a return code and the jobid from the execution of `script`
+        This method overrides the `_execute` method from the base class `_StepRecord` in Maestro.
+        It ensures that `self.to_be_scheduled` is always true, allowing for the invocation of
+        `self.mark_running()` to update the status of the step.
+
+        Args:
+            adapter: The script adapter used to submit jobs.
+            script: The script to be submitted to the script adapter.
+
+        Returns:
+            A tuple containing the return code and the job identifier from the execution of the script.
         """
         self.mark_running()
 
@@ -129,11 +164,17 @@ class MerlinStepRecord(_StepRecord):
 
     def mark_end(self, state: ReturnCode, max_retries: bool = False):
         """
-        Mark the end time of the record with associated termination state
-        and update the status file.
+        Marks the end time of the record with the associated termination state
+        and updates the status file.
 
-        :param `state`: A merlin ReturnCode object representing the end state of a task
-        :param `max_retries`: A bool representing whether we hit the max number of retries or not
+        This method logs the action of marking the end of the step, maps the provided
+        termination state to a corresponding Maestro state and result, and updates
+        the status file accordingly. If the maximum number of retries has been reached
+        for a soft failure, it appends a message to the result.
+
+        Args:
+            state: A ReturnCode object representing the end state of the task.
+            max_retries: A flag indicating whether the maximum number of retries has been reached.
         """
         LOG.debug(f"Marking end for {self.name}")
 
@@ -189,7 +230,7 @@ class MerlinStepRecord(_StepRecord):
         self._update_status_file(result=step_result)
 
     def mark_restart(self):
-        """Increment the number of restarts we've had for this step and update the status file"""
+        """Increment the number of restarts we've had for this step and update the status file."""
         LOG.debug(f"Marking restart for {self.name}")
         if self.restart_limit == 0 or self._num_restarts < self.restart_limit:
             self._num_restarts += 1
@@ -203,16 +244,22 @@ class MerlinStepRecord(_StepRecord):
 
     def _update_status_file(
         self,
-        result: Optional[str] = None,
-        task_server: Optional[str] = "celery",
+        result: str = None,
+        task_server: str = "celery",
     ):
         """
-        Puts together a dictionary full of status info and creates a signature
-        for the update_status celery task. This signature is ran here as well.
+        Constructs a dictionary containing status information and creates a signature
+        for the update_status Celery task. This signature is executed within the method.
 
-        :param `result`:  Optional parameter only applied when we've finished running
-                          this step. String representation of a ReturnCode value.
-        :param `task_server`: Optional parameter to define the task server we're using.
+        This method checks if a status file already exists; if it does, it updates the
+        existing file with the current status information. If not, it initializes a new
+        status dictionary. The method also includes optional parameters for the result
+        of the task and the task server being used.
+
+        Args:
+            result: An optional string representation of a ReturnCode value, applied
+                when the step has finished running.
+            task_server: An optional parameter to specify the task server being used.
         """
 
         # This dict is used for converting an enum value to a string for readability
@@ -294,43 +341,91 @@ class MerlinStepRecord(_StepRecord):
 class Step:
     """
     This class provides an abstraction for an execution step, which can be
-    executed by calling execute.
+    executed by calling the [`execute`][study.step.Step.execute] method.
+
+    Attributes:
+        max_retries (int): Returns the maximum number of retries for this step.
+        mstep (_StepRecord): The Maestro StepRecord object associated with this step.
+        parameter_info (dict): A dictionary containing information about parameters in the study.
+        params (Dict): A dictionary containing command parameters for the step, including 'cmd' and 'restart_cmd'.
+        restart (bool): Property to get or set the restart status of the step.
+        retry_delay (int): Returns the retry delay for the step (default is 1).
+        study_name (str): The name of the study this step belongs to.
+
+    Methods:
+        check_if_expansion_needed: Checks if command expansion is needed based on specified labels.
+        clone_changing_workspace_and_cmd: Produces a deep copy of the current step, with optional command
+            and workspace modifications.
+        establish_params: Pulls parameters from the step parameter map if applicable.
+        execute: Executes the step using the provided adapter configuration.
+        get_cmd: Retrieves the run command text body.
+        get_restart_cmd: Retrieves the restart command text body, or None if not available.
+        get_task_queue: Retrieves the task queue for the step.
+        get_task_queue_from_dict: Static method to get the task queue from a step dictionary.
+        get_workspace: Retrieves the workspace where this step is to be executed.
+        name: Retrieves the name of the step.
+        name_no_params: Gets the original name of the step without parameters or sample labels.
     """
 
-    def __init__(self, maestro_step_record, study_name, parameter_info):
+    def __init__(self, maestro_step_record: _StepRecord, study_name: str, parameter_info: Dict):
         """
-        :param maestro_step_record: The StepRecord object.
-        :param `study_name`: The name of the study
-        :param `parameter_info`: A dict containing information about parameters in the study
+        Initializes the `Step` object which acts as a way to track everything about a step.
+
+        Args:
+            maestro_step_record: The `StepRecord` object.
+            study_name: The name of the study
+            parameter_info: A dict containing information about parameters in the study
         """
-        self.mstep = maestro_step_record
-        self.study_name = study_name
-        self.parameter_info = parameter_info
-        self.__restart = False
-        self.params = {"cmd": {}, "restart_cmd": {}}
+        self.mstep: _StepRecord = maestro_step_record
+        self.study_name: str = study_name
+        self.parameter_info: Dict = parameter_info
+        self.__restart: bool = False
+        self.params: Dict = {"cmd": {}, "restart_cmd": {}}
         self.establish_params()
 
-    def get_cmd(self):
+    def get_cmd(self) -> str:
         """
-        get the run command text body"
+        Retrieve the run command text body for the step.
+
+        Returns:
+            The run command text body for the step.
         """
         return self.mstep.step.__dict__["run"]["cmd"]
 
-    def get_restart_cmd(self):
+    def get_restart_cmd(self) -> str:
         """
-        get the restart command text body, else return None"
+        Retrieve the restart command text body for the step.
+
+        Returns:
+            The restart command text body for the step, or None if no restart command is available.
         """
         return self.mstep.step.__dict__["run"]["restart"]
 
-    def clone_changing_workspace_and_cmd(self, new_cmd=None, cmd_replacement_pairs=None, new_workspace=None):
+    def clone_changing_workspace_and_cmd(
+        self,
+        new_cmd: str = None,
+        cmd_replacement_pairs: List[Tuple[str]] = None,
+        new_workspace: str = None,
+    ) -> "Step":
         """
-        Produces a deep copy of the current step, performing variable
-        substitutions as we go
+        Produces a deep copy of the current step, with optional modifications to
+        the command and workspace, performing variable substitutions as we go.
 
-        :param new_cmd : (Optional) replace the existing cmd with the new_cmd.
-        :param cmd_replacement_pairs : (Optional) replaces strings in the cmd
-            according to the list of pairs in cmd_replacement_pairs
-        :param new_workspace : (Optional) the workspace for the new step.
+        This method creates a new instance of the Step class by cloning the
+        current step and allowing for modifications to the command text and
+        workspace. It performs variable substitutions in the command based on
+        the provided replacement pairs.
+
+        Args:
+            new_cmd: If provided, replaces the existing command with this new command.
+            cmd_replacement_pairs: A list of pairs where each pair contains a string to
+                be replaced and its replacement. The method will perform replacements in
+                both the run command and the restart command.
+            new_workspace: If provided, sets this as the workspace for the new step. If
+                not specified, the current workspace will be used.
+
+        Returns:
+            A new Step instance with the modified command and workspace.
         """
         LOG.debug(f"clone called with new_workspace {new_workspace}")
         step_dict = deepcopy(self.mstep.step.__dict__)
@@ -356,13 +451,35 @@ class Step:
         study_step.run = step_dict["run"]
         return Step(MerlinStepRecord(new_workspace, study_step, self), self.study_name, self.parameter_info)
 
-    def get_task_queue(self):
-        """Retrieve the task queue for the Step."""
+    def get_task_queue(self) -> str:
+        """
+        Retrieve the task queue for the current Step.
+
+        Returns:
+            The name of the task queue for the Step, which may be influenced
+                by the configuration settings.
+        """
         return self.get_task_queue_from_dict(self.mstep.step.__dict__)
 
     @staticmethod
-    def get_task_queue_from_dict(step_dict):
-        """given a maestro step dict, get the task queue"""
+    def get_task_queue_from_dict(step_dict: Dict) -> str:
+        """
+        Get the task queue from a given Maestro step dictionary.
+
+        This static method extracts the task queue information from the
+        provided step dictionary. It considers the configuration settings
+        to determine the appropriate queue name, including handling cases
+        where the task queue may be omitted.
+
+        Args:
+            step_dict: A dictionary representation of a Maestro step, expected
+                to contain a "run" key with a "task_queue" entry.
+
+        Returns:
+            The name of the task queue. If the task queue is not specified
+                or is set to "none", it returns the default queue name based
+                on the configuration.
+        """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
         queue_tag = CONFIG.celery.queue_tag
@@ -382,34 +499,56 @@ class Step:
         return queue
 
     @property
-    def retry_delay(self):
-        """Returns the retry delay (default 1)"""
+    def retry_delay(self) -> int:
+        """
+        Get the retry delay for the step.
+
+        Returns:
+            The retry delay in seconds. Defaults to 1 if not specified.
+        """
         default_retry_delay = 1
         return self.mstep.step.__dict__["run"].get("retry_delay", default_retry_delay)
 
     @property
-    def max_retries(self):
+    def max_retries(self) -> int:
         """
-        Returns the max number of retries for this step.
+        Get the maximum number of retries for this step.
+
+        Returns:
+            The maximum number of retries for the step.
         """
         return self.mstep.step.__dict__["run"]["max_retries"]
 
     @property
-    def restart(self):
+    def restart(self) -> bool:
         """
-        Get the restart property
+        Get the restart property.
+
+        Returns:
+            True if the step is set to restart, False otherwise.
         """
         return self.__restart
 
     @restart.setter
-    def restart(self, val):
+    def restart(self, val: bool):
         """
-        Set the restart property ensuring that restart is false
+        Set the restart property.
+
+        Args:
+            val: The new value for the restart property. It should be
+                a boolean value indicating whether the step should restart.
         """
         self.__restart = val
 
     def establish_params(self):
-        """If this step uses parameters, pull them from the step param map."""
+        """
+        Establish parameters for the step from the parameter map.
+
+        This method checks if the current step uses parameters by accessing
+        the `step_param_map` from `parameter_info`. If parameters are found
+        for the current step, it updates the `params` dictionary with the
+        corresponding values.
+        """
         try:
             step_params = self.parameter_info["step_param_map"][self.name()]
             for cmd_type in step_params:
@@ -417,29 +556,52 @@ class Step:
         except KeyError:
             pass
 
-    def check_if_expansion_needed(self, labels):
+    def check_if_expansion_needed(self, labels: List[str]) -> bool:
         """
-        :return : True if the cmd has any of the default keywords or spec
-            specified sample column labels.
+        Check if expansion is needed based on commands and labels.
+
+        This method determines whether the command associated with the
+        current step requires expansion. It checks for the presence of
+        default keywords or specified sample column labels.
+
+        Args:
+            labels: A list of labels to check against the commands.
+
+        Returns:
+            True if the command requires expansion, False otherwise.
         """
         return needs_merlin_expansion(self.get_cmd(), self.get_restart_cmd(), labels)
 
-    def get_workspace(self):
+    def get_workspace(self) -> str:
         """
-        :return : The workspace this step is to be executed in.
+        Get the workspace for the current step.
+
+        Returns:
+            The workspace associated with this step.
         """
         return self.mstep.workspace.value
 
-    def name(self):
+    def name(self) -> str:
         """
-        :return : The step name.
+        Get the name of the current step.
+
+        Returns:
+            The name of the step.
         """
         return self.mstep.step.__dict__["_name"]
 
-    def name_no_params(self):
+    def name_no_params(self) -> str:
         """
-        Get the original name of the step without any parameters/samples in the name.
-        :returns: A string representing the name of the step
+        Get the original name of the step without parameters or sample labels.
+
+        This method retrieves the name of the step and removes any
+        parameter labels or sample identifiers that may be included
+        in the name. It ensures that the returned name is clean and
+        free from extraneous characters, such as trailing periods or
+        underscores.
+
+        Returns:
+            The cleaned name of the step, free from parameters and sample labels.
         """
         # Get the name with everything still in it
         name = self.name()
@@ -459,13 +621,28 @@ class Step:
 
         return name
 
-    def execute(self, adapter_config):
+    def execute(self, adapter_config: Dict) -> ReturnCode:
         """
-        Execute the step.
+        Execute the step with the provided adapter configuration.
 
-        :param adapter_config : A dictionary containing configuration for
-            the maestro script adapter, as well as which sort of adapter
-            to use.
+        This method performs the execution of the step by configuring
+        the necessary parameters and invoking the appropriate adapter.
+        It updates the adapter configuration based on the step's
+        requirements, sets up the workspace, and generates the script
+        for execution. If a dry run is specified, it prepares the
+        workspace without executing any tasks.
+
+        Args:
+            adapter_config (dict): A dictionary containing configuration
+                for the maestro script adapter, including:\n
+                - `shell`: The shell to use for execution.
+                - `batch_type`: The type of batch processing to use.
+                - `dry_run`: A boolean indicating whether to perform a
+                dry run (setup only, no execution).
+
+        Returns:
+            (common.enums.ReturnCode): A [`ReturnCode`][common.enums.ReturnCode] object representing
+                the result of the execution.
         """
         # Update shell if the task overrides the default value from the batch section
         default_shell = adapter_config.get("shell")

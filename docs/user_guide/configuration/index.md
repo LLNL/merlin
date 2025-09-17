@@ -30,15 +30,21 @@ The results backend enables the asynchronous nature of Celery. Instead of blocki
 
 See the [Configuring the Broker and Results Backend](#configuring-the-broker-and-results-backend) section below for more information on configuring your results backend.
 
-## The app.yaml File
+## The Configuration File
 
-In order to read in configuration options for your Celery settings, broker, and results backend, Merlin utilizes an app.yaml file.
+!!! note
 
-There's a built-in command with Merlin to set up a skeleton app.yaml for you:
+    Prior to Merlin v1.13.0, this configuration file had to be named `app.yaml`. If you hear any references to `app.yaml`, this is why.
+
+In order to read in configuration options for your Celery settings, broker, and results backend, Merlin utilizes a configuration file.
+
+There's a built-in command with Merlin to set up a skeleton configuration file for you:
 
 ```bash
-merlin config
+merlin config create
 ```
+
+_*Note:* If you want this file to be at a different path or if you want it to have a different name, use the `-o` option._
 
 This command will create an app.yaml file in the `~/.merlin/` directory that looks like so:
 
@@ -73,8 +79,8 @@ Merlin's default Celery configurations are as follows:
     broker_read_url: None
     broker_write_url: None
     broker_transport: None
-    broker_transport_options: {'visibility_timeout': 86400, 'max_connections': 100}
-    broker_connection_timeout: 4
+    broker_transport_options: {'visibility_timeout': 86400, 'max_connections': 100, 'socket_timeout': 300, 'retry_policy': {'timeout': 600}}
+    broker_connection_timeout: 60
     broker_connection_retry: True
     broker_connection_retry_on_startup: None
     broker_connection_max_retries: 100
@@ -83,6 +89,7 @@ Merlin's default Celery configurations are as follows:
     broker_heartbeat: 120
     broker_heartbeat_checkrate: 3.0
     broker_login_method: None
+    broker_native_delayed_delivery_queue_type: quorum
     broker_pool_limit: 0
     broker_use_ssl: <set in the broker section of app.yaml>
     broker_host: <set in the broker section of app.yaml>
@@ -116,6 +123,10 @@ Merlin's default Celery configurations are as follows:
     azureblockblob_base_path: 
     azureblockblob_connection_timeout: 20
     azureblockblob_read_timeout: 120
+    gcs_bucket: None
+    gcs_project: None
+    gcs_base_path: 
+    gcs_ttl: 0
     control_queue_ttl: 300.0
     control_queue_expires: 10.0
     control_exchange: celery  # DO NOT MODIFY
@@ -139,10 +150,10 @@ Merlin's default Celery configurations are as follows:
     redis_username: <set in results_backend section of app.yaml>
     redis_password: <set in results_backend section of app.yaml>
     redis_port: <set in results_backend section of app.yaml>
-    redis_socket_timeout: 120.0
-    redis_socket_connect_timeout: None
-    redis_retry_on_timeout: False
-    redis_socket_keepalive: False
+    redis_socket_timeout: 300
+    redis_socket_connect_timeout: 300
+    redis_retry_on_timeout: True
+    redis_socket_keepalive: True
     result_backend: <set in results_backend section of app.yaml>
     result_cache_max: -1
     result_compression: None
@@ -156,9 +167,9 @@ Merlin's default Celery configurations are as follows:
     result_chord_retry_interval: 1.0
     result_chord_join_timeout: 3.0
     result_backend_max_sleep_between_retries_ms: 10000
-    result_backend_max_retries: inf
+    result_backend_max_retries: 20
     result_backend_base_sleep_between_retries_ms: 10
-    result_backend_always_retry: False
+    result_backend_always_retry: True
     elasticsearch_retry_on_timeout: None
     elasticsearch_max_retries: None
     elasticsearch_timeout: None
@@ -173,6 +184,7 @@ Merlin's default Celery configurations are as follows:
     database_short_lived_sessions: False
     database_table_schemas: None
     database_table_names: None
+    database_create_tables_at_setup: True
     task_acks_late: True  # DO NOT MODIFY
     task_acks_on_failure_or_timeout: True  # DO NOT MODIFY
     task_always_eager: False  # DO NOT MODIFY
@@ -192,7 +204,7 @@ Merlin's default Celery configurations are as follows:
     task_store_eager_result: False
     task_protocol: 2  # DO NOT MODIFY
     task_publish_retry: True
-    task_publish_retry_policy: {'interval_start': 10, 'interval_step': 10, 'interval_max': 60}
+    task_publish_retry_policy: {'interval_start': 10, 'interval_step': 10, 'interval_max': 300}
     task_queues: None  # DO NOT MODIFY
     task_queue_max_priority: 10  # DO NOT MODIFY
     task_reject_on_worker_lost: True  # DO NOT MODIFY
@@ -208,6 +220,8 @@ Merlin's default Celery configurations are as follows:
     worker_agent: None  # DO NOT MODIFY
     worker_autoscaler: celery.worker.autoscale:Autoscaler  # DO NOT MODIFY
     worker_cancel_long_running_tasks_on_connection_loss: True
+    worker_soft_shutdown_timeout: 0.0
+    worker_enable_soft_shutdown_on_idle: False
     worker_concurrency: None  # DO NOT MODIFY; this will be set on a worker-by-worker basis that you can customize in your spec file
     worker_consumer: celery.worker.consumer:Consumer  # DO NOT MODIFY
     worker_direct: False  # DO NOT MODIFY
@@ -232,6 +246,7 @@ Merlin's default Celery configurations are as follows:
     worker_task_log_format: [%(asctime)s: %(levelname)s] [%(task_name)s(%(task_id)s)] %(message)s
     worker_timer: None
     worker_timer_precision: 1.0
+    worker_detect_quorum_queues: True
     deprecated_settings: set()
     visibility_timeout: 86400
     ```
@@ -264,3 +279,15 @@ For all other users, we recommend configuring with either:
 
 - [Dedicated External Servers](./external_server.md)
 - [Containerized Servers](./containerized_server.md)
+
+With any server setup that you use, it is possible to configure everything in your server from the command line. See [`merlin config update-broker`](../command_line.md#config-update-broker-merlin-config-update-broker) and [`merlin config update-backend`](../command_line.md#config-update-backend-merlin-config-update-backend) for more details on how this can be done.
+
+## Switching Between Configurations
+
+It's not uncommon to have two different configuration files with settings to connect to different servers. To switch between servers you can utilize the [`merlin config use`](../command_line.md#config-use-merlin-config-use) command.
+
+For example, you may have one configuration file that uses a RabbitMQ broker located at `/path/to/rabbitmq_config.yaml` and another that uses Redis as a broker located at `/path/to/redis_config.yaml`. If you want to switch to your Redis configuration, use:
+
+```bash
+merlin config use /path/to/redis_config.yaml
+```

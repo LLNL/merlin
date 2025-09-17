@@ -1,3 +1,9 @@
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
+
 """
 Module to define functionality for managing the containerized
 server used for testing.
@@ -91,7 +97,7 @@ class RedisServerManager:
         if "Merlin server terminated." not in kill_process.stderr:
             # If it wasn't, try to kill the process by using the pid stored in a file created by `merlin server`
             try:
-                with open(f"{self.server_dir}/merlin_server.pf", "r") as process_file:
+                with open(os.path.join(self.server_dir, "merlin_server.pf"), "r") as process_file:
                     server_process_info = yaml.load(process_file, yaml.Loader)
                     os.kill(int(server_process_info["image_pid"]), signal.SIGKILL)
             # If the file can't be found then let's make sure there's even a redis-server process running

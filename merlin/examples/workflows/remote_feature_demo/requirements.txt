@@ -1,2 +1,3 @@
 scikit-learn
-merlin-spellbook
+merlin-spellbook; python_version < "3.12"
+merlin-spellbook>=0.9.0; python_version >= "3.12"

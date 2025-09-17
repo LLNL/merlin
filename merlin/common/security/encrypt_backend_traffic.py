@@ -1,37 +1,16 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
 
 """
 Functions for encrypting backend traffic.
 """
+from typing import Any
+
 import celery.backends.base
+from celery.backends.base import Backend
 
 from merlin.common.security import encrypt
 
@@ -44,25 +23,47 @@ old_encode = celery.backends.base.Backend.encode
 old_decode = celery.backends.base.Backend.decode
 
 
-def _encrypt_encode(*args, **kwargs):
+def _encrypt_encode(*args, **kwargs) -> bytes:
     """
-    Intercept all celery.backends.Backend.encode calls and encrypt them after
-    encoding
+    Intercepts calls to the encode method of the Celery backend and encrypts
+    the encoded data.
+
+    This function wraps the original encode method, encrypting the result
+    after encoding.
+
+    Returns:
+        The encrypted encoded data in bytes format.
     """
     return encrypt.encrypt(old_encode(*args, **kwargs))
 
 
-def _decrypt_decode(self, payload):
+def _decrypt_decode(self: Backend, payload: bytes) -> Any:
     """
-    Intercept all celery.backends.Backend.decode calls and decrypt them before
-    decoding.
+    Intercepts calls to the decode method of the Celery backend and decrypts
+    the payload before decoding.
+
+    This function wraps the original decode method, decrypting the payload
+    prior to decoding.
+
+    Args:
+        self: The instance of the backend from which the decode method is called.
+        payload: The encrypted data to be decrypted.
+
+    Returns:
+        The decoded data after decryption. Can be any format.
     """
     return old_decode(self, encrypt.decrypt(payload))
 
 
 def set_backend_funcs():
     """
-    Set the encode / decode to our own encrypt_encode / encrypt_decode.
+    Sets the encode and decode methods of the Celery backend to custom
+    implementations that handle encryption and decryption.
+
+    This function replaces the default encode and decode methods with
+    `_encrypt_encode` and `_decrypt_decode`, respectively, ensuring that
+    all data processed by the Celery backend is encrypted and decrypted
+    appropriately.
     """
     celery.backends.base.Backend.encode = _encrypt_encode
     celery.backends.base.Backend.decode = _decrypt_decode

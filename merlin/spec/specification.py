@@ -1,36 +1,13 @@
-###############################################################################
-# Copyright (c) 2023, Lawrence Livermore National Security, LLC.
-# Produced at the Lawrence Livermore National Laboratory
-# Written by the Merlin dev team, listed in the CONTRIBUTORS file.
-# <merlin@llnl.gov>
-#
-# LLNL-CODE-797170
-# All rights reserved.
-# This file is part of Merlin, Version: 1.12.2.
-#
-# For details, see https://github.com/LLNL/merlin.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-###############################################################################
+##############################################################################
+# Copyright (c) Lawrence Livermore National Security, LLC and other Merlin
+# Project developers. See top-level LICENSE and COPYRIGHT files for dates and
+# other details. No copyright assignment is required to contribute to Merlin.
+##############################################################################
 
 """
-This module contains a class, MerlinSpec, which holds the unchanged
+This module contains a class, `MerlinSpec`, which holds the unchanged
 data from the Merlin specification file.
+
 To see examples of yaml specifications, run `merlin example`.
 """
 import json
@@ -40,9 +17,10 @@ import shlex
 from copy import deepcopy
 from datetime import timedelta
 from io import StringIO
-from typing import Dict, List
+from typing import Any, Dict, List, Set, TextIO, Union
 
 import yaml
+from maestrowf.datastructures.core.parameters import ParameterGenerator
 from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
@@ -55,32 +33,64 @@ LOG = logging.getLogger(__name__)
 # Pylint complains we have too many instance attributes but it's fine
 class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
     """
-    This class represents the logic for parsing the Merlin yaml
-    specification.
+    A class to represent and manage the specifications for a Merlin workflow.
 
-    Example spec_file contents:
+    This class provides methods to verify, load, and process various sections of a
+    workflow specification file, including the merlin block, batch block, and user block.
+    It also handles default values and parameter mapping.
 
-    --spec_file.yaml--
-    ...
-    merlin:
-        resources:
-            task_server: celery
-        samples:
-            generate:
-                cmd: python make_samples.py -outfile=$(OUTPUT_PATH)/merlin_info/samples.npy
-            file: $(OUTPUT_PATH)/merlin_info/samples.npy
-            column_labels: [X0, X1]
+    Attributes:
+        batch (Dict): A dictionary representing the batch section of the spec file.
+        description (Dict): A dictionary representing the description section of the spec file.
+        environment (Dict): A dictionary representing the environment section of the spec file.
+        globals (Dict): A dictionary representing global parameters in the spec file.
+        merlin (Dict): A dictionary representing the merlin section of the spec file.
+        sections (Dict): A dictionary of all sections in the spec file.
+        study (Dict): A dictionary representing the study section of the spec file.
+        user (Dict): A dictionary representing the user section of the spec file.
+        yaml_sections (Dict): A dictionary for YAML representation of the sections.
+
+    Methods:
+        check_section: Checks sections of the spec file for unrecognized keys.
+        dump: Dumps the current spec to a pretty YAML string.
+        fill_missing_defaults: Merges default values into an object.
+        get_queue_list: Returns a sorted set of queues for specified steps.
+        get_queue_step_relationship: Maps task queues to their associated steps.
+        get_step_param_map: Creates a mapping of parameters used for each step.
+        get_step_worker_map: Maps step names to associated workers.
+        get_study_step_names: Returns a list of the names of the steps in the spec file.
+        get_task_queues: Maps steps to their corresponding task queues.
+        get_tasks_per_step: Returns the number of tasks needed for each step.
+        get_worker_names: Returns a list of worker names.
+        get_worker_step_map: Maps worker names to associated steps.
+        load_merlin_block: Loads the merlin block from a YAML stream.
+        load_spec_from_string: Creates a `MerlinSpec` object from a string (or stream) representing
+            a spec file.
+        load_specification: Creates a `MerlinSpec` object based on the contents of a spec file.
+        load_user_block: Loads the user block from a YAML stream.
+        make_queue_string: Returns a unique queue string for specified steps.
+        process_spec_defaults: Fills in default values for missing sections.
+        verify: Verify the spec against a valid schema.
+        verify_batch_block: Validates the batch block against a predefined schema.
+        verify_merlin_block: Validates the merlin block against a predefined schema.
+        warn_unrecognized_keys: Checks for unrecognized keys in the spec file.
     """
 
     # Pylint says this call to super is useless but we'll leave it in case we want to add to __init__ in the future
     def __init__(self):  # pylint: disable=W0246
+        """Initializes a MerlinSpec object."""
         super().__init__()
+        self.merlin = {}
+        self.user = {}
 
     @property
-    def yaml_sections(self):
+    def yaml_sections(self) -> Dict:
         """
-        Returns a nested dictionary of all sections of the specification
-        as used in a yaml spec.
+        Returns a nested dictionary of all sections of the specification as used in a YAML
+        specification. The structure is tailored for YAML representation.
+
+        Returns:
+            A dictionary containing the sections of the specification formatted for YAML.
         """
         return {
             "description": self.description,
@@ -93,10 +103,14 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         }
 
     @property
-    def sections(self):
+    def sections(self) -> Dict:
         """
-        Returns a nested dictionary of all sections of the specification
-        as referenced by Maestro's YAMLSpecification class.
+        Returns a nested dictionary of all sections of the specification as referenced by
+        [Maestro's `YAMLSpecification` class](https://maestrowf.readthedocs.io/en/latest/Maestro/reference_guide/api_reference/specification/yamlspecification.html).
+        The structure is aligned with the expectations of Maestro's `YAMLSpecification` class.
+
+        Returns:
+            A dictionary containing the sections of the specification formatted for Maestro.
         """
         return {
             "description": self.description,
@@ -109,7 +123,6 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         }
 
     def __str__(self):
-        """Magic method to print an instance of our MerlinSpec class."""
         env = ""
         globs = ""
         merlin = ""
@@ -129,14 +142,23 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         return result
 
     @classmethod
-    def load_specification(cls, path, suppress_warning=True):
+    def load_specification(cls, path: str, suppress_warning: bool = True) -> "MerlinSpec":
         """
-        Load in a spec file and create a MerlinSpec object based on its' contents.
+        Load a specification file and create a `MerlinSpec` object based on its contents.
 
-        :param `cls`: The class reference (like self)
-        :param `path`: A path to the spec file we're loading in
-        :param `suppress_warning`: A bool representing whether to warn the user about unrecognized keys
-        :returns: A MerlinSpec object
+        This method reads a YAML specification file from the provided path,
+        processes its contents, and returns a `MerlinSpec` object. It can also
+        suppress warnings about unrecognized keys in the specification.
+
+        Args:
+            path: The path to the specification file to be loaded.
+            suppress_warning: Whether to suppress warnings about unrecognized keys.
+
+        Returns:
+            A `MerlinSpec` object created from the contents of the specification file.
+
+        Raises:
+            Exception: If there is an error loading the specification file.
         """
         LOG.info("Loading specification from path: %s", path)
         try:
@@ -157,16 +179,23 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         return spec
 
     @classmethod
-    def load_spec_from_string(cls, string, needs_IO=True, needs_verification=False):  # pylint: disable=C0103
+    def load_spec_from_string(
+        cls, string: Union[str, TextIO], needs_IO: bool = True, needs_verification: bool = False
+    ) -> "MerlinSpec":  # pylint: disable=C0103
         """
-        Read in a spec file from a string (or stream) and create a MerlinSpec object from it.
+        Read a specification from a string (or stream) and create a `MerlinSpec` object from it.
 
-        :param `cls`: The class reference (like self)
-        :param `string`: A string or stream of the file we're reading in
-        :param `needs_IO`: A bool representing whether we need to turn the string into a file
-                           object or not
-        :param `needs_verification`: A bool representing whether we need to verify the spec
-        :returns: A MerlinSpec object
+        This method processes a string or stream containing the specification
+        and returns a `MerlinSpec` object. It can also verify the specification
+        if required.
+
+        Args:
+            string: A string or stream of the specification content.
+            needs_IO: Whether to treat the string as a file object.
+            needs_verification: Whether to verify the specification after loading.
+
+        Returns:
+            A `MerlinSpec` object created from the provided specification content.
         """
         LOG.debug("Creating Merlin spec object...")
         # Create and populate the MerlinSpec object
@@ -197,19 +226,28 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         return spec
 
     @classmethod
-    def _populate_spec(cls, data):
+    def _populate_spec(cls, data: TextIO) -> "MerlinSpec":
         """
-        Helper method to load a study spec and populate it's fields.
+        Helper method to load a study specification and populate its fields.
 
-        NOTE: This is basically a direct copy of YAMLSpecification's
-        load_specification method from Maestro just without the call to verify.
-        The verify method was breaking our code since we have no way of modifying
-        Maestro's schema that they use to verify yaml files. The work around
-        is to load the yaml file ourselves and create our own schema to verify
-        against.
+        This method reads a YAML specification from a raw text stream and
+        populates the fields of a `MerlinSpec` object. It is a modified version
+        of the `load_specification` method from Maestro's YAMLSpecification class,
+        excluding the verification step due to compatibility issues with Maestro's schema.
 
-        :param data: Raw text stream to study YAML spec data
-        :returns: A MerlinSpec object containing information from the path
+        Note:
+            This is basically a direct copy of YAMLSpecification's
+            load_specification method from Maestro just without the call to verify.
+            The verify method was breaking our code since we have no way of modifying
+            Maestro's schema that they use to verify yaml files. The work around
+            is to load the yaml file ourselves and create our own schema to verify
+            against.
+
+        Args:
+            data: A raw text stream containing the study YAML specification data.
+
+        Returns:
+            A `MerlinSpec` object populated with information extracted from the YAML specification.
         """
         # Read in the spec file
         try:
@@ -244,12 +282,22 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     def verify(self):
         """
-        Verify the spec against a valid schema. Similar to YAMLSpecification's verify
-        method from Maestro but specific for Merlin yaml specs.
+        Verify the specification against a valid schema.
 
-        NOTE: Maestro v2.0 may add the ability to customize the schema files it
-        compares against. If that's the case then we can convert this file back to
-        using Maestro's verification.
+        This method checks the current `MerlinSpec` object against a predefined
+        schema to ensure that it adheres to the expected structure and
+        constraints. It is similar to the verify method from Maestro's
+        YAMLSpecification class but is tailored specifically for Merlin YAML
+        specifications.
+
+        Note:
+            Maestro v2.0 may introduce the ability to customize the schema files
+            used for verification. If that feature becomes available, then we can
+            convert this file back to using Maestro's verification.
+
+        Raises:
+            Exception: If the specification does not conform to the schema,
+                appropriate exceptions will be raised during the verification process.
         """
         # Load the MerlinSpec schema file
         dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -267,11 +315,16 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         self.verify_merlin_block(schema["MERLIN"])
         self.verify_batch_block(schema["BATCH"])
 
-    def get_study_step_names(self):
+    def get_study_step_names(self) -> List[str]:
         """
-        Get a list of the names of steps in our study.
+        Retrieve the names of steps in the study.
 
-        :returns: an unsorted list of study step names
+        This method iterates through the study steps and collects their names
+        into a list. The returned list is unsorted.
+
+        Returns:
+            An unsorted list of strings representing the names of the
+                study steps.
         """
         names = []
         for step in self.study:
@@ -280,8 +333,16 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     def _verify_workers(self):
         """
-        Helper method to verify the workers section located within the Merlin block
-        of our spec file.
+        Verify the workers section in the Merlin block of the specification.
+
+        This helper method checks that the steps referenced in the workers
+        section of the Merlin block exist in the study steps. It raises a
+        ValueError if any step specified for a worker does not match the
+        defined study steps.
+
+        Raises:
+            ValueError: If a step specified in the workers section does not
+                exist in the list of study step names.
         """
         # Retrieve the names of the steps in our study
         actual_steps = self.get_study_step_names()
@@ -301,24 +362,35 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         except Exception:  # pylint: disable=W0706
             raise
 
-    def verify_merlin_block(self, schema):
+    def verify_merlin_block(self, schema: Dict):
         """
-        Method to verify the merlin section of our spec file.
 
-        :param schema: The section of the predefined schema (merlinspec.json) to check
-                       our spec file against.
+        Verify the Merlin section of the specification file against a schema.
+
+        This method validates the Merlin block of the specification file
+        against a predefined JSON schema and verifies the workers section
+        to ensure that all specified steps are defined in the study.
+
+        Args:
+            schema: The section of the predefined schema (merlinspec.json) to
+                check the Merlin block against.
         """
         # Validate merlin block against the json schema
         YAMLSpecification.validate_schema("merlin", self.merlin, schema)
         # Verify the workers section within merlin block
         self._verify_workers()
 
-    def verify_batch_block(self, schema):
+    def verify_batch_block(self, schema: Dict):
         """
-        Method to verify the batch section of our spec file.
+        Verify the batch section of the specification file against a schema.
 
-        :param schema: The section of the predefined schema (merlinspec.json) to check
-                       our spec file against.
+        This method validates the batch block of the specification file
+        against a predefined JSON schema and performs additional checks
+        related to the walltime parameter for the LSF batch type.
+
+        Args:
+            schema: The section of the predefined schema (merlinspec.json) to
+                check the batch block against.
         """
         # Validate batch block against the json schema
         YAMLSpecification.validate_schema("batch", self.batch, schema)
@@ -328,8 +400,23 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             LOG.warning("The walltime argument is not available in lsf.")
 
     @staticmethod
-    def load_merlin_block(stream):
-        """Loads in the merlin block of the spec file"""
+    def load_merlin_block(stream: TextIO) -> Dict:
+        """
+        Load the Merlin block from a specification file stream.
+
+        This static method reads a YAML stream and attempts to extract
+        the 'merlin' section. If the 'merlin' section is missing, it
+        logs a warning and returns an empty dictionary, indicating that
+        the default configuration will be used without sampling.
+
+        Args:
+            stream: A file-like object or string stream containing the
+                YAML specification.
+
+        Returns:
+            The Merlin block extracted from the YAML stream. If the 'merlin'
+                section is not found, an empty dictionary is returned.
+        """
         try:
             merlin_block = yaml.safe_load(stream)["merlin"]
         except KeyError:
@@ -343,8 +430,22 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         return merlin_block
 
     @staticmethod
-    def load_user_block(stream):
-        """Loads in the user block of the spec file"""
+    def load_user_block(stream: TextIO) -> Dict:
+        """
+        Load the user block from a specification file stream.
+
+        This static method reads a YAML stream and attempts to extract
+        the 'user' section. If the 'user' section is not present, it
+        returns an empty dictionary.
+
+        Args:
+            stream: A file-like object or string stream containing the
+                YAML specification.
+
+        Returns:
+            The user block extracted from the YAML stream. If the 'user'
+                section is not found, an empty dictionary is returned.
+        """
         try:
             user_block = yaml.safe_load(stream)["user"]
         except KeyError:
@@ -352,7 +453,23 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         return user_block
 
     def process_spec_defaults(self):
-        """Fills in the default values if they aren't there already"""
+        """
+        Fill in default values for specification sections if they are missing.
+
+        This method iterates through the sections of the specification and
+        populates any that are `None` with empty dictionaries. It then fills
+        in default values for various sections, including batch, environment,
+        global parameters, and step sections within the study.
+
+        The method also handles specific cases for the VLAUNCHER variables
+        in the command of each step, ensuring that default values are set
+        if they are not defined by the user. Additionally, it ensures that
+        workers are assigned to steps appropriately, filling in defaults
+        where necessary.
+
+        The method modifies the instance's attributes directly, ensuring that
+        the specification is complete and ready for further processing.
+        """
         for name, section in self.sections.items():
             if section is None:
                 setattr(self, name, {})
@@ -367,9 +484,10 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         MerlinSpec.fill_missing_defaults(self.globals, defaults.PARAMETER["global.parameters"])
 
         # fill in missing step section defaults within 'run'
-        defaults.STUDY_STEP_RUN["shell"] = self.batch["shell"]
+        step_defaults = deepcopy(defaults.STUDY_STEP_RUN)
+        step_defaults["shell"] = self.batch["shell"]
         for step in self.study:
-            MerlinSpec.fill_missing_defaults(step["run"], defaults.STUDY_STEP_RUN)
+            MerlinSpec.fill_missing_defaults(step["run"], step_defaults)
             # Insert VLAUNCHER specific variables if necessary
             if "$(VLAUNCHER)" in step["run"]["cmd"]:
                 SHSET = ""
@@ -385,7 +503,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         # fill in missing merlin section defaults
         MerlinSpec.fill_missing_defaults(self.merlin, defaults.MERLIN["merlin"])
         if self.merlin["resources"]["workers"] is None:
-            self.merlin["resources"]["workers"] = {"default_worker": defaults.WORKER}
+            self.merlin["resources"]["workers"] = {"default_worker": deepcopy(defaults.WORKER)}
         else:
             # Gather a list of step names defined in the study
             all_workflow_steps = self.get_study_step_names()
@@ -407,7 +525,7 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             # assign the remaining steps to the default worker. If all the steps still need workers
             # (i.e. no workers were assigned) then default workers' steps should be "all" so we skip this
             if steps_that_need_workers and (steps_that_need_workers != all_workflow_steps):
-                self.merlin["resources"]["workers"]["default_worker"] = defaults.WORKER
+                self.merlin["resources"]["workers"]["default_worker"] = deepcopy(defaults.WORKER)
                 self.merlin["resources"]["workers"]["default_worker"]["steps"] = steps_that_need_workers
         if self.merlin["samples"] is not None:
             MerlinSpec.fill_missing_defaults(self.merlin["samples"], defaults.SAMPLES)
@@ -415,15 +533,52 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         # no defaults for user block
 
     @staticmethod
-    def fill_missing_defaults(object_to_update, default_dict):
+    def fill_missing_defaults(object_to_update: Dict, default_dict: Dict):
         """
-        Merge keys and values from a dictionary of defaults
-        into a parallel object that may be missing attributes.
-        Only adds missing attributes to object; does not overwrite
-        existing ones.
+        Merge default values into an object, filling in missing attributes.
+
+        This static method takes an object and a dictionary of default values,
+        and merges the defaults into the object. It only adds missing attributes
+        to the object and does not overwrite any existing attributes. If an
+        attribute is present in the object but its value is `None`, it will be
+        updated with the corresponding value from the defaults.
+
+        The method works recursively, allowing for nested dictionaries.
+
+        The method modifies the `object_to_update` in place.
+
+        Args:
+            object_to_update: The object (as a dictionary) that needs to be
+                updated with default values.
+            default_dict: A dictionary containing default values to merge into
+                the object.
+
+        Example:
+            ```python
+            >>> obj = {'a': 1, 'b': None}
+            >>> defaults = {'a': 2, 'b': 3, 'c': 4}
+            >>> fill_missing_defaults(obj, defaults)
+            >>> print(obj)
+            {'a': 1, 'b': 3, 'c': 4}
+            ```
         """
 
-        def recurse(result, recurse_defaults):
+        def recurse(result: Dict, recurse_defaults: Dict):
+            """
+            Recursively merge default values into the result object.
+
+            This helper function checks if the current level of the `recurse_defaults`
+            dictionary is a dictionary itself. If it is, it iterates through each key-value
+            pair. If a key is not present in the `result` or its value is `None`, it
+            assigns the value from `recurse_defaults`. If the key exists and has a value,
+            it recursively calls itself to handle nested dictionaries.
+
+            The function modifies the `result` in place.
+
+            Args:
+                result: The current state of the object being updated.
+                recurse_defaults: The current level of defaults to merge.
+            """
             if not isinstance(recurse_defaults, dict):
                 return
             for key, val in recurse_defaults.items():
@@ -440,7 +595,16 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     # ***Unsure if this method is still needed after adding json schema verification***
     def warn_unrecognized_keys(self):
-        """Checks if there are any unrecognized keys in the spec file"""
+        """
+        Check for unrecognized keys in the specification file.
+
+        This method verifies that all keys present in the specification file
+        conform to the expected structure defined by the `MerlinSpec` class.
+        It checks various sections of the specification, including "description",
+        "batch", "env", "global parameters", "steps", and "merlin". For each
+        section, it calls the `check_section` method to ensure that the keys
+        are recognized and valid according to predefined criteria.
+        """
         # check description
         MerlinSpec.check_section("description", self.description, all_keys.DESCRIPTION)
 
@@ -470,8 +634,21 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         # user block is not checked
 
     @staticmethod
-    def check_section(section_name, section, known_keys):
-        """Checks a section of the spec file to see if there are any unrecognized keys"""
+    def check_section(section_name: str, section: Dict, known_keys: Set[str]):
+        """
+        Check a section of the specification file for unrecognized keys.
+
+        This static method compares the keys present in a specified section
+        of the specification file against a set of known keys. If any keys
+        are found that are not recognized, a warning is logged indicating
+        the unrecognized key and the section in which it was found.
+
+        Args:
+            section_name: The name of the section being checked.
+            section: The section of the specification file to validate.
+            known_keys: A set of keys that are recognized as valid for
+                the specified section.
+        """
         diff = set(section.keys()).difference(known_keys)
 
         # TODO: Maybe add a check here for required keys
@@ -479,9 +656,23 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
         for extra in diff:
             LOG.warning(f"Unrecognized key '{extra}' found in spec section '{section_name}'.")
 
-    def dump(self):
+    def dump(self) -> str:
         """
-        Dump this MerlinSpec to a pretty yaml string.
+        Dump the `MerlinSpec` instance to a formatted YAML string.
+
+        This method converts the current state of the `MerlinSpec` instance
+        into a YAML formatted string. It utilizes the `_dict_to_yaml`
+        method to handle the conversion and prettification of the data.
+        Additionally, it ensures that the resulting YAML string is valid
+        by attempting to parse it with `yaml.safe_load`. If parsing fails,
+        a ValueError is raised with details about the error.
+
+        Returns:
+            A pretty formatted YAML string representation of the
+                `MerlinSpec` instance.
+
+        Raises:
+            ValueError: If there is an error while parsing the YAML string.
         """
         tab = 3 * " "
         result = self._dict_to_yaml(self.yaml_sections, "", [], tab)
@@ -493,9 +684,26 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             raise ValueError(f"Error parsing provenance spec:\n{e}") from e
         return result
 
-    def _dict_to_yaml(self, obj, string, key_stack, tab):
+    def _dict_to_yaml(self, obj: Any, string: str, key_stack: List[str], tab: int) -> str:
         """
-        The if-else ladder for sorting the yaml string prettification of dump().
+        Convert a Python object to a formatted YAML string.
+
+        This private method handles the conversion of various Python data
+        types (strings, booleans, lists, and dictionaries) into a
+        formatted YAML string. It uses an if-else structure to determine
+        the type of the input object and calls the appropriate processing
+        methods for each type. The method also manages indentation based
+        on the current level of nesting.
+
+        Args:
+            obj: The object to convert to YAML format.
+            string: The current string representation being built.
+            key_stack: A stack of keys representing the current level of
+                nesting in the YAML structure.
+            tab: The number of spaces to use for indentation.
+
+        Returns:
+            A formatted YAML string representation of the input object.
         """
         if obj is None:
             return ""
@@ -512,18 +720,57 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             return self._process_dict(obj, string, key_stack, lvl, tab)
         return obj
 
-    def _process_string(self, obj, lvl, tab):
+    def _process_string(self, obj: str, lvl: int, tab: str) -> str:
         """
-        Processes strings for _dict_to_yaml() in the dump() method.
+        Process a string for YAML formatting in the dump method.
+
+        This private method takes a string and formats it for inclusion
+        in a YAML output. If the string contains multiple lines, it
+        transforms the string into a block scalar format using the pipe
+        (`|`) character, which is suitable for YAML representation.
+        The indentation is adjusted based on the current level of
+        nesting.
+
+        Args:
+            obj: The string to be processed.
+            lvl: The current level of indentation for the YAML output.
+            tab: A string of spaces representing a tab.
+
+        Returns:
+            The formatted string ready for YAML output.
         """
         split = obj.splitlines()
         if len(split) > 1:
             obj = "|\n" + tab * (lvl + 1) + ("\n" + tab * (lvl + 1)).join(split)
         return obj
 
-    def _process_list(self, obj, string, key_stack, lvl, tab):  # pylint: disable=R0913
+    def _process_list(
+        self,
+        obj: List[Any],
+        string: str,
+        key_stack: List[str],
+        lvl: int,
+        tab: int,
+    ) -> str:
         """
-        Processes lists for _dict_to_yaml() in the dump() method.
+        Process a list for YAML formatting in the dump method.
+
+        This private method handles the conversion of a list into a
+        YAML formatted string. It determines whether to use hyphens
+        for list items based on the context provided by the key stack.
+        The method recursively processes each element in the list and
+        manages indentation based on the current level of nesting.
+
+        Args:
+            obj: The list to be processed.
+            string: The current string representation being built.
+            key_stack: A stack of keys representing the current
+                level of nesting in the YAML structure.
+            lvl: The current level of indentation for the YAML output.
+            tab: The number of spaces to use for indentation.
+
+        Returns:
+            A formatted YAML string representation of the input list.
         """
         num_entries = len(obj)
         use_hyphens = key_stack[-1] in ["paths", "sources", "git", "study"] or key_stack[0] in ["user"]
@@ -545,9 +792,33 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
             string += "]"
         return string
 
-    def _process_dict(self, obj, string, key_stack, lvl, tab):  # pylint: disable=R0913
+    def _process_dict(
+        self,
+        obj: Dict,
+        string: str,
+        key_stack: List[str],
+        lvl: int,
+        tab: int,
+    ) -> str:  # pylint: disable=R0913
         """
-        Processes dicts for _dict_to_yaml() in the dump() method
+        Process a dictionary for YAML formatting in the dump method.
+
+        This private method converts a dictionary into a YAML formatted
+        string. It iterates over the dictionary's key-value pairs,
+        formatting each pair according to YAML syntax. The method
+        handles indentation and manages the key stack to maintain the
+        correct nesting level in the output.
+
+        Args:
+            obj: The dictionary to be processed.
+            string: The current string representation being built.
+            key_stack: A stack of keys representing the current
+                level of nesting in the YAML structure.
+            lvl: The current level of indentation for the YAML output.
+            tab: The number of spaces to use for indentation.
+
+        Returns:
+            A formatted YAML string representation of the input dictionary.
         """
         list_offset = 2 * " "
         if len(key_stack) > 0 and key_stack[-1] != "elem":
@@ -570,10 +841,18 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     def get_step_worker_map(self) -> Dict[str, List[str]]:
         """
-        Creates a dictionary with step names as keys and a list of workers
-        associated with each step as values. The inverse of get_worker_step_map().
+        Create a mapping of step names to associated workers.
 
-        :returns: A dict mapping step names to workers
+        This method constructs a dictionary where each key is a step name
+        and the corresponding value is a list of workers assigned to that
+        step. Workers can either be associated with all steps or with
+        specific steps. This method serves as the inverse of the
+        [`get_worker_step_map`][spec.specification.MerlinSpec.get_worker_step_map]
+        method.
+
+        Returns:
+            A dictionary mapping step names to lists of worker names
+                associated with each step.
         """
         steps = self.get_study_step_names()
         step_worker_map = {step_name: [] for step_name in steps}
@@ -590,10 +869,18 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     def get_worker_step_map(self) -> Dict[str, List[str]]:
         """
-        Creates a dictionary with worker names as keys and a list of steps
-        associated with each worker as values. The inverse of get_step_worker_map().
+        Create a mapping of worker names to associated steps.
 
-        :returns: A dict mapping workers to the steps they watch
+        This method constructs a dictionary where each key is a worker name
+        and the corresponding value is a list of steps that the worker is
+        assigned to monitor. Workers can either be assigned to all steps or
+        to specific steps. It serves as the inverse of the
+        [`get_step_worker_map`][spec.specification.MerlinSpec.get_step_worker_map]
+        method.
+
+        Returns:
+            A dictionary mapping worker names to lists of step names that each
+                worker monitors.
         """
         worker_step_map = {}
         steps = self.get_study_step_names()
@@ -608,13 +895,23 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                     worker_step_map[worker_name].append(step)
         return worker_step_map
 
-    def get_task_queues(self, omit_tag=False):
+    def get_task_queues(self, omit_tag: bool = False) -> Dict[str, str]:
         """
-        Creates a dictionary of steps and their corresponding task queues.
-        This is the inverse of get_queue_step_relationship()
+        Create a mapping of steps to their corresponding task queues.
 
-        :param `omit_tag`: If True, omit the celery queue tag.
-        :returns: A dict of steps and their corresponding task queues
+        This method constructs a dictionary where each key is a step name
+        and the corresponding value is the associated task queue. The
+        `omit_tag` parameter allows for the optional exclusion of the Celery
+        queue tag from the queue names. It serves as the inverse of the
+        [`get_queue_step_relationship`][spec.specification.MerlinSpec.get_queue_step_relationship]
+        method.
+
+        Args:
+            omit_tag: If True, the Celery queue tag will be omitted
+                from the task queue names. Default is False.
+
+        Returns:
+            A dictionary mapping step names to their corresponding task queues.
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
@@ -629,10 +926,17 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     def get_queue_step_relationship(self) -> Dict[str, List[str]]:
         """
-        Builds a dictionary of task queues and their associated steps.
-        This returns the inverse of get_task_queues().
+        Build a mapping of task queues to their associated steps.
 
-        :returns: A dict of task queues and their associated steps
+        This method constructs a dictionary where each key is a task queue
+        name and the corresponding value is a list of steps that are
+        associated with that queue. It serves as the inverse of the
+        [`get_task_queues`][spec.specification.MerlinSpec.get_task_queues]
+        method.
+
+        Returns:
+            A dictionary mapping task queue names to lists of step names
+                associated with each queue.
         """
         from merlin.config.configfile import CONFIG  # pylint: disable=C0415
 
@@ -654,13 +958,28 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         return relationship_tracker
 
-    def get_queue_list(self, steps, omit_tag=False) -> set:
+    def get_queue_list(self, steps: Union[List[str], str], omit_tag: bool = False) -> Set[str]:
         """
-        Return a sorted set of queues corresponding to spec steps
+        Return a sorted set of queues corresponding to specified steps.
 
-        :param `steps`: a list of step names or ['all']
-        :param `omit_tag`: If True, omit the celery queue tag.
-        :returns: A sorted set of queues corresponding to spec steps
+        This method retrieves a list of task queues associated with the
+        given steps. If the `steps` parameter is set to ['all'], it will
+        return all available queues. The `omit_tag` parameter allows for
+        the optional exclusion of the Celery queue tag from the queue names.
+
+        Args:
+            steps: A list of step names or a list containing the string 'all'
+                to represent all steps, or the name of a single step.
+            omit_tag: If True, the Celery queue tag will be omitted from the
+                task queue names.
+
+        Returns:
+            A sorted set of unique task queues corresponding to the specified
+                steps.
+
+        Raises:
+            KeyError: If any of the specified steps do not exist in the
+                task queues.
         """
         queues = self.get_task_queues(omit_tag=omit_tag)
         if steps[0] == "all":
@@ -677,17 +996,34 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 raise
         return sorted(set(task_queues))
 
-    def make_queue_string(self, steps):
+    def make_queue_string(self, steps: List[str]) -> str:
         """
-        Return a unique queue string for the steps
+        Return a unique queue string for the specified steps.
 
-        param steps: a list of step names
+        This method constructs a comma-separated string of unique task
+        queues associated with the provided steps. The resulting string
+        is suitable for use in command-line contexts.
+
+        Args:
+            steps: A list of step names for which to generate the
+                queue string.
+
+        Returns:
+            A quoted string of unique task queues, separated by commas.
         """
         queues = ",".join(set(self.get_queue_list(steps)))
         return shlex.quote(queues)
 
-    def get_worker_names(self):
-        """Builds a list of workers"""
+    def get_worker_names(self) -> List[str]:
+        """
+        Build a list of worker names.
+
+        This method retrieves the names of all workers defined in the
+        Merlin resources and returns them as a list.
+
+        Returns:
+            A list of worker names.
+        """
         result = []
         for worker in self.merlin["resources"]["workers"]:
             result.append(worker)
@@ -695,8 +1031,17 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     def get_tasks_per_step(self) -> Dict[str, int]:
         """
-        Get the number of tasks needed to complete each step, formatted as a dictionary.
-        :returns: A dict where the keys are the step names and the values are the number of tasks required for that step
+        Get the number of tasks needed to complete each step.
+
+        This method calculates the number of tasks required for each
+        step in the study based on the number of samples and parameters.
+        It returns a dictionary where the keys are the step names and
+        the values are the corresponding number of tasks required for
+        that step.
+
+        Returns:
+            A dictionary mapping step names to the number of tasks
+                required for each step.
         """
         # Get the number of samples used
         samples = []
@@ -729,20 +1074,33 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         return tasks_per_step
 
-    def _create_param_maps(self, param_gen: "ParameterGenerator", expanded_labels: Dict, label_param_map: Dict):  # noqa: F821
+    def _create_param_maps(self, param_gen: ParameterGenerator, expanded_labels: Dict, label_param_map: Dict):
         """
-        Given a parameters block like so:
+        Create mappings of tokens to expanded labels and labels to parameter values.
+
+        This private method processes a parameter generator to create two mappings:
+
+        1. `expanded_labels`: Maps tokens to their expanded labels based on the
+            provided parameter values.
+        2. `label_param_map`: Maps expanded labels to their corresponding parameter
+            values.
+
+        The expected structure for the parameter block is:
+
+        ```
         global.parameters:
             TOKEN:
                 values: [param_val_1, param_val_2]
                 label: label.%%
-        Expanded labels will map tokens to their expanded labels (e.g. {'TOKEN': ['label.param_val_1', 'label.param_val_2']})
-        Label param map will map labels to parameter values
-        (e.g. {'label.param_val_1': {'TOKEN': 'param_val_1'}, 'label.param_val_2': {'TOKEN': 'param_val_2'}})
+        ```
 
-        :param `param_gen`: A ParameterGenerator object from Maestro
-        :param `expanded_labels`: A dict to store the map from tokens to expanded labels
-        :param `label_param_map`: A dict to store the map from labels to parameter values
+        Args:
+            param_gen: A `ParameterGenerator` object from Maestro containing the
+                parameter definitions.
+            expanded_labels: A dictionary to store the mapping from tokens to their
+                expanded labels.
+            label_param_map: A dictionary to store the mapping from labels to their
+                corresponding parameter values.
         """
         for token, orig_label in param_gen.labels.items():
             for param in param_gen.parameters[token]:
@@ -755,9 +1113,13 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
     def get_step_param_map(self) -> Dict:  # pylint: disable=R0914
         """
-        Create a mapping of parameters used for each step. Each step will have a cmd
-        to search for parameters in and could also have a restart cmd to check, too.
-        This creates a mapping of the form:
+        Create a mapping of parameters used for each step in the study.
+
+        This method generates a mapping of parameters for each step, where each
+        step may have a command (`cmd`) and a restart command (`restart_cmd`).
+        The resulting mapping has a structure similar to the following:
+
+        ```python
         step_name_with_parameters: {
             "cmd": {
                 TOKEN_1: param_1_value_1,
@@ -768,8 +1130,11 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
                 TOKEN_3: param_3_value_1,
             }
         }
+        ```
 
-        :returns: A dict mapping between steps and params of the form shown above
+        Returns:
+            A dictionary mapping step names (with parameters) to their
+                respective command and restart command parameter mappings.
         """
         # Get the steps and the parameters in the study
         study_steps = self.get_study_steps()
