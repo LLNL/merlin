@@ -19,7 +19,6 @@ import getpass
 import logging
 import ssl
 from typing import Dict, List, Optional, Union
-from urllib.parse import quote
 
 from merlin.config.configfile import CONFIG, get_ssl_entries
 from merlin.config.utils import resolve_password
