@@ -80,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `use`: Point your active configuration to a new configuration file
 - The `merlin server` command no longer modifies the `~/.merlin/app.yaml` file by default. Instead, it modifies the `./merlin_server/app.yaml` file.
 - Dropped support for Python 3.7
+- Celery settings have been updated to try to improve resiliency
 - Ported all distributed tests of the integration test suite to pytest
   - There is now a `commands/` directory and a `workflows/` directory under the integration suite to house these tests
   - Removed the "Distributed-tests" GitHub action as these tests will now be run under "Integration-tests"
