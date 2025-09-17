@@ -249,7 +249,15 @@ class MerlinBaseFactory(ABC):
 
         # Create and return an instance of the component_class
         try:
-            instance = component_class() if config is None else component_class(**config)
+            if config is None:
+                # No configuration
+                instance = component_class()
+            elif isinstance(config, dict):
+                # Dict-based config
+                instance = component_class(**config)
+            else:
+                # Try to pass directly (config could be dataclass)
+                instance = component_class(config)
             LOG.info(f"Created component '{canonical_name}'")
             return instance
         except Exception as e:

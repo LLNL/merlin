@@ -16,9 +16,11 @@ This abstraction allows Merlin to support multiple task execution backends while
 a consistent interface for launching and managing worker processes.
 """
 
-import os
 from abc import ABC, abstractmethod
 from typing import Dict
+
+from merlin.study.batch import BatchManager
+from merlin.study.configurations import WorkerConfig
 
 
 class MerlinWorker(ABC):
@@ -29,9 +31,8 @@ class MerlinWorker(ABC):
     an individual worker based on its configuration.
 
     Attributes:
-        name: The name of the worker.
-        config: The dictionary configuration for the worker.
-        env: A dictionary representing the full environment for the current context.
+        worker_config (study.configurations.WorkerConfig): The worker configuration object.
+        batch_manager (study.batch.BatchManager): A manager object for batch settings.
 
     Methods:
         get_launch_command: Build the shell command to launch the worker.
@@ -39,19 +40,17 @@ class MerlinWorker(ABC):
         get_metadata: Return identifying metadata about the worker.
     """
 
-    def __init__(self, name: str, config: Dict, env: Dict[str, str] = None):
+    def __init__(self, worker_config: WorkerConfig):
         """
         Initialize a `MerlinWorker` instance.
 
         Args:
-            name: The name of the worker.
-            config: A dictionary containing the worker configuration.
-            env: Optional dictionary of environment variables to use; if not provided,
-                a copy of the current OS environment is used.
+            worker_config (study.configurations.WorkerConfig): The worker configuration object.
         """
-        self.name = name
-        self.config = config
-        self.env = env or os.environ.copy()
+        self.worker_config = worker_config
+
+        # Initialize BatchManager for this worker
+        self.batch_manager: BatchManager = BatchManager(self.worker_config.get_effective_batch_config())
 
     @abstractmethod
     def get_launch_command(self, override_args: str = "") -> str:
@@ -71,11 +70,11 @@ class MerlinWorker(ABC):
         Launch this worker.
         """
 
-    @abstractmethod
     def get_metadata(self) -> Dict:
         """
-        Return a dictionary of metadata about this worker (for logging/debugging).
+        Return metadata about this worker instance.
 
         Returns:
-            A metadata dictionary (e.g., name, queues, machines).
+            A dictionary containing key details about this worker.
         """
+        return self.worker_config.to_dict()

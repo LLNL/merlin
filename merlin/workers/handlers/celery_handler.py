@@ -55,12 +55,13 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
 
         # Launch the workers or echo out the command that will be used to launch the workers
         for worker in workers:
+            worker_name = worker.worker_config.name
             if echo_only:
-                LOG.debug(f"Not launching worker '{worker.name}', just echoing command.")
+                LOG.debug(f"Not launching worker '{worker_name}', just echoing command.")
                 launch_cmd = worker.get_launch_command(override_args=override_args, disable_logs=disable_logs)
                 print(launch_cmd)
             else:
-                LOG.debug(f"Launching worker '{worker.name}'.")
+                LOG.debug(f"Launching worker '{worker_name}'.")
                 worker.start(override_args=override_args, disable_logs=disable_logs)
 
     def stop_workers(self):

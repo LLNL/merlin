@@ -24,6 +24,7 @@ from maestrowf.datastructures.core.parameters import ParameterGenerator
 from maestrowf.specification import YAMLSpecification
 
 from merlin.spec import all_keys, defaults
+from merlin.study.configurations import BatchConfig, WorkerConfig
 from merlin.utils import find_vlaunch_var, get_yaml_var, load_array_file, needs_merlin_expansion, repr_timedelta
 from merlin.workers.worker import MerlinWorker
 from merlin.workers.worker_factory import worker_factory
@@ -1262,23 +1263,21 @@ class MerlinSpec(YAMLSpecification):  # pylint: disable=R0902
 
         for worker_name in workers_to_start:
             settings = all_workers[worker_name]
-            config = {
-                "args": settings.get("args", ""),
-                "machines": settings.get("machines", []),
-                "queues": set(self.get_queue_list(settings["steps"])),
-                "batch": settings["batch"] if settings["batch"] is not None else self.batch.copy(),
-            }
 
-            if "nodes" in settings and settings["nodes"] is not None:
-                if config["batch"]:
-                    config["batch"]["nodes"] = settings["nodes"]
-                else:
-                    config["batch"] = {"nodes": settings["nodes"]}
+            batch_settings = settings["batch"] if settings["batch"] is not None else self.batch.copy()
 
-            LOG.debug(f"config for worker '{worker_name}': {config}")
+            worker_config = WorkerConfig(
+                name=worker_name,
+                args=settings.get("args", ""),
+                queues=set(self.get_queue_list(settings["steps"])),
+                machines=settings.get("machines", []),
+                env=full_env,
+                overlap=overlap,
+                nodes=settings.get("nodes", None),
+                batch=BatchConfig.from_dict(batch_settings),
+            )
 
-            worker_params = {"name": worker_name, "config": config, "env": full_env, "overlap": overlap}
-            worker_instance = worker_factory.create(self.merlin["resources"]["task_server"], worker_params)
+            worker_instance = worker_factory.create(self.merlin["resources"]["task_server"], worker_config)
             workers.append(worker_instance)
             LOG.debug(f"Created CeleryWorker object for worker '{worker_name}'.")
 
