@@ -299,7 +299,8 @@ class Status:
         timestamp_regex = r"\d{8}-\d{6}"
         LOG.debug(f"All subdirs in output path: {study_output_subdirs}")
         matches = [  # Collect matching subdirs first
-            subdir for subdir in study_output_subdirs
+            subdir
+            for subdir in study_output_subdirs
             if re.search(rf"{self.args.spec_provided.name}_{timestamp_regex}", subdir)
         ]
         matches.sort()  # Sort alphabetically
