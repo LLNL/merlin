@@ -297,14 +297,16 @@ class Status:
         # Build a list of potential study output directories
         study_output_subdirs = next(os.walk(study_output_dir))[1]
         timestamp_regex = r"\d{8}-\d{6}"
-        potential_studies = []
-        num_studies = 0
         LOG.debug(f"All subdirs in output path: {study_output_subdirs}")
-        for subdir in study_output_subdirs:
-            match = re.search(rf"{self.args.spec_provided.name}_{timestamp_regex}", subdir)
-            if match:
-                potential_studies.append((num_studies + 1, subdir))
-                num_studies += 1
+        matches = [  # Collect matching subdirs first
+            subdir for subdir in study_output_subdirs
+            if re.search(rf"{self.args.spec_provided.name}_{timestamp_regex}", subdir)
+        ]
+        matches.sort()  # Sort alphabetically
+
+        # Rebuild potential_studies with sorted order and new indices
+        potential_studies = [(i + 1, subdir) for i, subdir in enumerate(matches)]
+        num_studies = len(potential_studies)
         LOG.debug(f"Potential studies: {potential_studies}")
 
         # Obtain the correct study to view the status of based on the list of potential studies we just built
