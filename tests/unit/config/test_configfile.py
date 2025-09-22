@@ -101,7 +101,7 @@ def config_path(configfile_testing_dir: FixtureStr, demo_app_yaml: FixtureStr) -
 
 
 @pytest.fixture(autouse=True)
-def reset_globals():
+def reset_local_mode():
     """
     Reset IS_LOCAL_MODE before each test.
 

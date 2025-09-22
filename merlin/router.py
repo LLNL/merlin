@@ -217,10 +217,8 @@ def stop_workers(task_server: str, spec_worker_names: List[str], queues: List[st
         LOG.error("Celery is not specified as the task server!")
 
 
-# TODO in Merlin 1.14 delete all of the below functions since we're deprecating the old version of the monitor
+# TODO in Merlin 2.0 delete all of the below functions since we're deprecating the old version of the monitor
 # and a lot of this stuff is in the new monitor classes
-
-
 def get_active_queues(task_server: str) -> Dict[str, List[str]]:
     """
     Retrieve a dictionary of active queues and their associated workers for the specified task server.

@@ -87,7 +87,7 @@ class TestSQLiteStoreBase:
 
         assert simple_store._get_sqlite_type(CustomType) == "TEXT"
 
-    def testcreate_table_if_not_exists(self, mock_sqlite_connection: FixtureTuple[MagicMock]):
+    def testcreate_table_if_not_exists(self, mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock]):
         """
         Test the create_table_if_not_exists method.
 
@@ -120,7 +120,7 @@ class TestSQLiteStoreBase:
         mocker: MockerFixture,
         test_models: FixtureDict,  # Assuming similar fixture structure
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test saving a new object to SQLite.
@@ -167,7 +167,7 @@ class TestSQLiteStoreBase:
         mocker: MockerFixture,
         test_models: FixtureDict,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test updating an existing object in SQLite.
@@ -219,7 +219,7 @@ class TestSQLiteStoreBase:
         mocker: MockerFixture,
         test_models: FixtureDict,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
         by_name: bool,
         identifier_key: str,
     ):
@@ -257,7 +257,7 @@ class TestSQLiteStoreBase:
     def test_retrieve_nonexistent_object(
         self,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test retrieving a non-existent object from SQLite.
@@ -284,7 +284,7 @@ class TestSQLiteStoreBase:
         mocker: MockerFixture,
         test_models: FixtureDict,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test retrieving all objects from SQLite.
@@ -322,7 +322,7 @@ class TestSQLiteStoreBase:
         self,
         mocker: MockerFixture,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test retrieving all objects when deserialization fails for some objects.
@@ -355,7 +355,7 @@ class TestSQLiteStoreBase:
         mocker: MockerFixture,
         test_models: FixtureDict,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test retrieving filtered entities using scalar column values.
@@ -389,7 +389,7 @@ class TestSQLiteStoreBase:
         mocker: MockerFixture,
         test_models: FixtureDict,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test retrieving filtered entities using a list of values (should generate LIKE/OR clause).
@@ -423,7 +423,7 @@ class TestSQLiteStoreBase:
     def test_retrieve_all_filtered_with_empty_list(
         self,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test filtering with an empty list value, which should yield no results (1 = 0 condition).
@@ -446,7 +446,7 @@ class TestSQLiteStoreBase:
         self,
         mocker: MockerFixture,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test that retrieve_all_filtered continues even if some rows fail to deserialize.
@@ -484,7 +484,7 @@ class TestSQLiteStoreBase:
         mocker: MockerFixture,
         test_models: FixtureDict,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
         identifier: str,
         by_name: bool,
         identifier_key: str,
@@ -551,7 +551,7 @@ class TestSQLiteStoreBase:
         mocker: MockerFixture,
         test_models: FixtureDict,
         simple_store: SQLiteStoreBase,
-        mock_sqlite_connection: FixtureTuple[MagicMock],
+        mock_sqlite_connection: FixtureTuple[MagicMock, MagicMock],
     ):
         """
         Test deleting an object that exists during retrieve but fails to delete (rowcount = 0).

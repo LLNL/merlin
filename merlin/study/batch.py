@@ -23,7 +23,7 @@ LOG = logging.getLogger(__name__)
 
 def batch_check_parallel(batch: Dict) -> bool:
     """
-    Check for a parallel batch section in the provided MerlinSpec object.
+    Check for a parallel batch section in the provided batch dictionary.
 
     This function examines the 'batch' section of the given specification to determine
     whether it is configured for parallel execution. It checks the 'type' attribute

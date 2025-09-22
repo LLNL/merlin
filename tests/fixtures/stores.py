@@ -93,7 +93,7 @@ def create_redis_hash_data() -> FixtureCallable:
 
 
 @pytest.fixture
-def mock_sqlite_connection(mocker: MockerFixture) -> FixtureTuple[MagicMock]:
+def mock_sqlite_connection(mocker: MockerFixture) -> FixtureTuple[MagicMock, MagicMock]:
     """
     Create a mocked SQLiteConnection context manager.
 

@@ -52,7 +52,7 @@ class CeleryWorker(MerlinWorker):
         _verify_args: Validate and adjust CLI args based on worker setup.
         get_launch_command: Construct the Celery launch command.
         should_launch: Determine whether the worker should be launched based on system state.
-        launch_worker: Launch the worker using subprocess.
+        start: Launch the worker using subprocess.
         get_metadata: Return identifying metadata about the worker.
     """
 
@@ -175,7 +175,7 @@ class CeleryWorker(MerlinWorker):
 
         return True
 
-    def launch_worker(self, override_args: str = "", disable_logs: bool = False):
+    def start(self, override_args: str = "", disable_logs: bool = False):
         """
         Launch the worker as a subprocess using the constructed launch command.
 

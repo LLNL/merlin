@@ -20,7 +20,7 @@ class DummyCeleryWorkerHandler(MerlinWorkerHandler):
     def __init__(self, *args, **kwargs):
         pass
 
-    def launch_workers(self):
+    def start_workers(self):
         pass
 
     def stop_workers(self):
@@ -34,7 +34,7 @@ class DummyKafkaWorkerHandler(MerlinWorkerHandler):
     def __init__(self, *args, **kwargs):
         pass
 
-    def launch_workers(self):
+    def start_workers(self):
         pass
 
     def stop_workers(self):

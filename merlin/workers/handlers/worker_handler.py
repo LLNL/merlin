@@ -26,7 +26,7 @@ class MerlinWorkerHandler(ABC):
     using a particular task server (e.g., Celery, Kafka, etc.).
 
     Methods:
-        launch_workers: Launch a list of MerlinWorker instances with optional configuration.
+        start_workers: Launch a list of MerlinWorker instances with optional configuration.
         stop_workers: Stop running worker processes managed by this handler.
         query_workers: Query the status of running workers and return summary information.
     """
@@ -35,7 +35,7 @@ class MerlinWorkerHandler(ABC):
         """Initialize the worker handler."""
 
     @abstractmethod
-    def launch_workers(self, workers: List[MerlinWorker], **kwargs):
+    def start_workers(self, workers: List[MerlinWorker], **kwargs):
         """
         Launch a list of worker instances.
 
@@ -43,7 +43,7 @@ class MerlinWorkerHandler(ABC):
             workers (List[MerlinWorker]): The list of workers to launch.
             **kwargs: Optional keyword arguments passed to subclass-specific logic.
         """
-        raise NotImplementedError("Subclasses of `MerlinWorkerHandler` must implement a `launch_workers` method.")
+        raise NotImplementedError("Subclasses of `MerlinWorkerHandler` must implement a `start_workers` method.")
 
     @abstractmethod
     def stop_workers(self):

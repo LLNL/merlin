@@ -124,7 +124,7 @@ class RunWorkersCommand(CommandEntryPoint):
 
         # Launch the workers or echo out the command that will be used to launch the workers
         worker_handler = worker_handler_factory.create(spec.merlin["resources"]["task_server"])
-        worker_handler.launch_workers(
+        worker_handler.start_workers(
             worker_instances,
             echo_only=args.worker_echo_only,
             override_args=args.worker_args,

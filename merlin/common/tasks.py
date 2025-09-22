@@ -21,7 +21,7 @@ from typing import Any, Callable, Dict, List, Optional
 # Need to disable an overwrite warning here since celery has an exception that we need that directly
 # overwrites a python built-in exception
 from celery import Signature, Task, chain, chord, group, shared_task, signature
-from celery.exceptions import MaxRetriesExceededError
+from celery.exceptions import BackendStoreError, MaxRetriesExceededError
 from celery.exceptions import OperationalError as CeleryOperationalError
 from celery.exceptions import TimeoutError as CeleryTimeoutError
 from celery.result import AsyncResult
@@ -52,6 +52,7 @@ retry_exceptions = (
     TimeoutError,
     FileNotFoundError,
     # Celery Exceptions
+    BackendStoreError,
     CeleryOperationalError,
     CeleryTimeoutError,
     # Kombu Exceptions
