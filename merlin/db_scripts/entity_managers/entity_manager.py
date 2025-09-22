@@ -147,16 +147,8 @@ class EntityManager(Generic[T, M], ABC):
 
             # Case where filter is a list
             if isinstance(expected, list):
-<<<<<<< HEAD
-                # Normalize actual to a list for comparison
-                actual_values = actual if isinstance(actual, (list, set)) else [actual]
-
-                # Match if any expected value is in the actual list (e.g., queues)
-                if not any(val in actual_values for val in expected):
-=======
                 # Match if any expected value is in the actual list (e.g., queues)
                 if not isinstance(actual, (list, set)) or not any(val in actual for val in expected):
->>>>>>> upstream/develop-2.0
                     return False
             # Case where filter is str or bool
             else:
