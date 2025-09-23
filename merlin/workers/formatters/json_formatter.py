@@ -86,9 +86,9 @@ class JSONWorkerFormatter(WorkerFormatter):
         for logical_worker in logical_workers:
             logical_data = {
                 "name": logical_worker.get_name(),
-                "queues": [
-                    q[len("[merlin]_") :] if q.startswith("[merlin]_") else q for q in sorted(logical_worker.get_queues())
-                ],
+                "queues": sorted([
+                    q[len("[merlin]_") :] if q.startswith("[merlin]_") else q for q in logical_worker.get_queues()
+                ]),
                 "physical_workers": [],
             }
 
@@ -118,4 +118,5 @@ class JSONWorkerFormatter(WorkerFormatter):
 
             data["logical_workers"].append(logical_data)
 
+        print(f"data: {data}")
         self.console.print(json.dumps(data, indent=2))

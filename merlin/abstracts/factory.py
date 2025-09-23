@@ -213,6 +213,7 @@ class MerlinBaseFactory(ABC):
 
         return component_class
 
+    # TODO should we change 'config' to 'kwargs'?
     def create(self, component_type: str, config: Dict = None) -> Any:
         """
         Instantiate and return a component of the specified type.
