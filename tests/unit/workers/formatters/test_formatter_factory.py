@@ -21,7 +21,7 @@ from merlin.workers.formatters.worker_formatter import WorkerFormatter
 
 class DummyJSONFormatter(WorkerFormatter):
     """Dummy JSON formatter implementation for testing."""
-    
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -31,7 +31,7 @@ class DummyJSONFormatter(WorkerFormatter):
 
 class DummyRichFormatter(WorkerFormatter):
     """Dummy Rich formatter implementation for testing."""
-    
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -41,7 +41,7 @@ class DummyRichFormatter(WorkerFormatter):
 
 class DummyCSVFormatter(WorkerFormatter):
     """Dummy CSV formatter implementation for testing."""
-    
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -91,7 +91,7 @@ class TestWorkerFormatterFactory:
         """
         json_instance = formatter_factory.create("json")
         assert isinstance(json_instance, DummyJSONFormatter)
-        
+
         rich_instance = formatter_factory.create("rich")
         assert isinstance(rich_instance, DummyRichFormatter)
 
@@ -103,11 +103,11 @@ class TestWorkerFormatterFactory:
             formatter_factory: Instance of the `WorkerFormatterFactory` for testing.
         """
         formatter_factory.register("csv", DummyCSVFormatter, aliases=["comma", "spreadsheet"])
-        
+
         instance_by_name = formatter_factory.create("csv")
         instance_by_alias = formatter_factory.create("comma")
         instance_by_alias2 = formatter_factory.create("spreadsheet")
-        
+
         assert isinstance(instance_by_name, DummyCSVFormatter)
         assert isinstance(instance_by_alias, DummyCSVFormatter)
         assert isinstance(instance_by_alias2, DummyCSVFormatter)
@@ -129,7 +129,7 @@ class TestWorkerFormatterFactory:
         Args:
             formatter_factory: Instance of the `WorkerFormatterFactory` for testing.
         """
-        
+
         class NotAFormatter:
             pass
 
@@ -146,10 +146,10 @@ class TestWorkerFormatterFactory:
         # Initially json should be DummyJSONFormatter
         instance1 = formatter_factory.create("json")
         assert isinstance(instance1, DummyJSONFormatter)
-        
+
         # Register a different formatter with the same name
         formatter_factory.register("json", DummyCSVFormatter)
-        
+
         # Should now return the new formatter type
         instance2 = formatter_factory.create("json")
         assert isinstance(instance2, DummyCSVFormatter)
@@ -164,10 +164,10 @@ class TestWorkerFormatterFactory:
         # Initial built-in formatters
         initial_available = set(formatter_factory.list_available())
         assert initial_available == {"json", "rich"}
-        
+
         # Register additional formatter
         formatter_factory.register("csv", DummyCSVFormatter)
-        
+
         # Should now include the new formatter
         updated_available = set(formatter_factory.list_available())
         assert updated_available == {"json", "rich", "csv"}
@@ -181,7 +181,7 @@ class TestWorkerFormatterFactory:
             formatter_factory: Instance of the `WorkerFormatterFactory` for testing.
         """
         formatter_factory.register("csv", DummyCSVFormatter, aliases=["comma", "spreadsheet"])
-        
+
         available = set(formatter_factory.list_available())
         # Should contain canonical name but not aliases
         assert "csv" in available
@@ -200,12 +200,12 @@ class TestWorkerFormatterFactory:
     #         def __init__(self, param1=None, param2=None):
     #             self.param1 = param1
     #             self.param2 = param2
-            
+
     #         def format_and_display(self, logical_workers: List, filters: Dict, merlin_db: MerlinDatabase):
     #             return f"Formatted with {self.param1} and {self.param2}"
-        
+
     #     formatter_factory.register("parameterized", ParameterizedFormatter)
-        
+
     #     # Test creating with arguments
     #     instance = formatter_factory.create("parameterized", param1="test", param2=42)
     #     assert isinstance(instance, ParameterizedFormatter)
@@ -241,9 +241,10 @@ class TestWorkerFormatterFactory:
         Args:
             formatter_factory: Instance of the `WorkerFormatterFactory` for testing.
         """
+
         class InvalidFormatter:
             pass
-        
+
         with pytest.raises(TypeError, match="must inherit from WorkerFormatter"):
             formatter_factory._validate_component(InvalidFormatter)
 
@@ -267,18 +268,18 @@ class TestWorkerFormatterFactory:
         # Mock the built-ins for both factories
         mocker.patch("merlin.workers.formatters.formatter_factory.JSONWorkerFormatter", DummyJSONFormatter)
         mocker.patch("merlin.workers.formatters.formatter_factory.RichWorkerFormatter", DummyRichFormatter)
-        
+
         factory1 = WorkerFormatterFactory()
         factory2 = WorkerFormatterFactory()
-        
+
         # Register formatter in only one factory
         factory1.register("csv", DummyCSVFormatter)
-        
+
         # factory1 should have the new formatter
         assert "csv" in factory1.list_available()
         csv_instance = factory1.create("csv")
         assert isinstance(csv_instance, DummyCSVFormatter)
-        
+
         # factory2 should not have the new formatter
         assert "csv" not in factory2.list_available()
         with pytest.raises(MerlinWorkerFormatterNotSupportedError):

@@ -84,7 +84,7 @@ class TestCeleryWorkerHandler:
             DummyCeleryWorker("worker1"),
             DummyCeleryWorker("worker2"),
         ]
-    
+
     @pytest.fixture
     def mock_logical_workers(self) -> List[MagicMock]:
         """
@@ -96,11 +96,11 @@ class TestCeleryWorkerHandler:
         worker1 = MagicMock()
         worker1.get_name.return_value = "logical_worker1"
         worker1.get_queues.return_value = ["[merlin]_queue1", "[merlin]_queue2"]
-        
+
         worker2 = MagicMock()
         worker2.get_name.return_value = "logical_worker2"
         worker2.get_queues.return_value = ["[merlin]_queue3"]
-        
+
         return [worker1, worker2]
 
     @pytest.fixture
@@ -115,10 +115,7 @@ class TestCeleryWorkerHandler:
             Mock formatter instance.
         """
         mock_formatter = MagicMock()
-        mocker.patch(
-            "merlin.workers.handlers.celery_handler.worker_formatter_factory.create",
-            return_value=mock_formatter
-        )
+        mocker.patch("merlin.workers.handlers.celery_handler.worker_formatter_factory.create", return_value=mock_formatter)
         return mock_formatter
 
     def test_echo_only_prints_commands(
@@ -174,13 +171,10 @@ class TestCeleryWorkerHandler:
         """
         queues = ["queue1", "queue2"]
         workers = ["worker1", "worker2"]
-        
+
         filters = handler._build_filters(queues, workers)
-        
-        assert filters == {
-            "queues": ["queue1", "queue2"],
-            "name": ["worker1", "worker2"]
-        }
+
+        assert filters == {"queues": ["queue1", "queue2"], "name": ["worker1", "worker2"]}
 
     def test_build_filters_with_only_queues(self, handler: CeleryWorkerHandler):
         """
@@ -190,9 +184,9 @@ class TestCeleryWorkerHandler:
             handler: CeleryWorkerHandler instance.
         """
         queues = ["queue1"]
-        
+
         filters = handler._build_filters(queues, None)
-        
+
         assert filters == {"queues": ["queue1"]}
 
     def test_build_filters_with_only_workers(self, handler: CeleryWorkerHandler):
@@ -203,9 +197,9 @@ class TestCeleryWorkerHandler:
             handler: CeleryWorkerHandler instance.
         """
         workers = ["worker1"]
-        
+
         filters = handler._build_filters(None, workers)
-        
+
         assert filters == {"name": ["worker1"]}
 
     def test_build_filters_with_no_parameters(self, handler: CeleryWorkerHandler):
@@ -216,14 +210,11 @@ class TestCeleryWorkerHandler:
             handler: CeleryWorkerHandler instance.
         """
         filters = handler._build_filters(None, None)
-        
+
         assert filters == {}
 
     def test_query_workers_calls_database_and_formatter(
-        self, 
-        handler: CeleryWorkerHandler, 
-        mock_logical_workers: List[MagicMock],
-        mock_formatter: MagicMock
+        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mock_formatter: MagicMock
     ):
         """
         Test that `query_workers` retrieves data from database and calls formatter.
@@ -235,23 +226,18 @@ class TestCeleryWorkerHandler:
         """
         # Mock the database get_all method
         handler.merlin_db.get_all.return_value = mock_logical_workers
-        
+
         handler.query_workers("rich", queues=["queue1"], workers=["worker1"])
-        
+
         # Verify database was called with correct filters
         expected_filters = {"queues": ["queue1"], "name": ["worker1"]}
         handler.merlin_db.get_all.assert_called_once_with("logical_worker", filters=expected_filters)
-        
+
         # Verify formatter was created and called
-        mock_formatter.format_and_display.assert_called_once_with(
-            mock_logical_workers, expected_filters, handler.merlin_db
-        )
+        mock_formatter.format_and_display.assert_called_once_with(mock_logical_workers, expected_filters, handler.merlin_db)
 
     def test_query_workers_with_no_filters(
-        self,
-        handler: CeleryWorkerHandler,
-        mock_logical_workers: List[MagicMock],
-        mock_formatter: MagicMock
+        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mock_formatter: MagicMock
     ):
         """
         Test that `query_workers` works correctly when no filters are provided.
@@ -262,22 +248,17 @@ class TestCeleryWorkerHandler:
             mock_formatter: Mock formatter instance.
         """
         handler.merlin_db.get_all.return_value = mock_logical_workers
-        
+
         handler.query_workers("json")
-        
+
         # Verify database was called with empty filters
         handler.merlin_db.get_all.assert_called_once_with("logical_worker", filters={})
-        
+
         # Verify formatter was called correctly
-        mock_formatter.format_and_display.assert_called_once_with(
-            mock_logical_workers, {}, handler.merlin_db
-        )
+        mock_formatter.format_and_display.assert_called_once_with(mock_logical_workers, {}, handler.merlin_db)
 
     def test_query_workers_uses_correct_formatter(
-        self,
-        handler: CeleryWorkerHandler,
-        mock_logical_workers: List[MagicMock],
-        mocker: MockerFixture
+        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mocker: MockerFixture
     ):
         """
         Test that `query_workers` uses the correct formatter type.
@@ -288,22 +269,18 @@ class TestCeleryWorkerHandler:
             mocker: Pytest mocker fixture.
         """
         handler.merlin_db.get_all.return_value = mock_logical_workers
-        
+
         mock_factory = mocker.patch("merlin.workers.handlers.celery_handler.worker_formatter_factory")
         mock_formatter = MagicMock()
         mock_factory.create.return_value = mock_formatter
-        
+
         handler.query_workers("json", queues=["test_queue"])
-        
+
         # Verify the correct formatter type was requested
         mock_factory.create.assert_called_once_with("json")
         mock_formatter.format_and_display.assert_called_once()
 
-    def test_query_workers_handles_empty_results(
-        self,
-        handler: CeleryWorkerHandler,
-        mock_formatter: MagicMock
-    ):
+    def test_query_workers_handles_empty_results(self, handler: CeleryWorkerHandler, mock_formatter: MagicMock):
         """
         Test that `query_workers` handles empty database results gracefully.
 
@@ -312,17 +289,14 @@ class TestCeleryWorkerHandler:
             mock_formatter: Mock formatter instance.
         """
         handler.merlin_db.get_all.return_value = []
-        
+
         handler.query_workers("rich")
-        
+
         # Verify formatter is still called with empty list
         mock_formatter.format_and_display.assert_called_once_with([], {}, handler.merlin_db)
 
     def test_query_workers_passes_all_parameters_to_formatter(
-        self,
-        handler: CeleryWorkerHandler,
-        mock_logical_workers: List[MagicMock],
-        mock_formatter: MagicMock
+        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mock_formatter: MagicMock
     ):
         """
         Test that `query_workers` passes all necessary parameters to formatter.
@@ -333,17 +307,13 @@ class TestCeleryWorkerHandler:
             mock_formatter: Mock formatter instance.
         """
         handler.merlin_db.get_all.return_value = mock_logical_workers
-        
+
         queues = ["queue1", "queue2"]
         workers = ["worker1"]
-        
+
         handler.query_workers("rich", queues=queues, workers=workers)
-        
+
         expected_filters = {"queues": queues, "name": workers}
-        
+
         # Verify all parameters are passed correctly
-        mock_formatter.format_and_display.assert_called_once_with(
-            mock_logical_workers,
-            expected_filters,
-            handler.merlin_db
-        )
+        mock_formatter.format_and_display.assert_called_once_with(mock_logical_workers, expected_filters, handler.merlin_db)

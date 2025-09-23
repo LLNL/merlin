@@ -30,10 +30,10 @@ class TestJSONWorkerFormatter:
     def formatter(self, mocker: MockerFixture) -> JSONWorkerFormatter:
         """
         Create a JSONWorkerFormatter instance for testing.
-        
+
         Args:
             mocker: Pytest mocker fixture.
-            
+
         Returns:
             JSONWorkerFormatter instance with mocked console.
         """
@@ -46,7 +46,7 @@ class TestJSONWorkerFormatter:
     def mock_logical_workers(self) -> List[MagicMock]:
         """
         Create mock logical worker entities for testing.
-        
+
         Returns:
             List of mock logical worker entities.
         """
@@ -54,30 +54,30 @@ class TestJSONWorkerFormatter:
         worker1.get_name.return_value = "logical_worker1"
         worker1.get_queues.return_value = ["queue1", "queue2", "custom_queue"]
         worker1.get_physical_workers.return_value = ["phys1", "phys2"]
-        
+
         worker2 = MagicMock(spec=LogicalWorkerEntity)
         worker2.get_name.return_value = "logical_worker2"
         worker2.get_queues.return_value = ["queue3"]
         worker2.get_physical_workers.return_value = []  # No physical workers
-        
+
         worker3 = MagicMock(spec=LogicalWorkerEntity)
         worker3.get_name.return_value = "logical_worker3"
         worker3.get_queues.return_value = ["queue4"]
         worker3.get_physical_workers.return_value = ["phys3"]
-        
+
         return [worker1, worker2, worker3]
 
     @pytest.fixture
     def mock_physical_workers(self) -> List[MagicMock]:
         """
         Create mock physical worker entities for testing.
-        
+
         Returns:
             List of mock physical worker entities.
         """
         # Current time for consistent testing
         now = datetime.now()
-        
+
         worker1 = MagicMock(spec=PhysicalWorkerEntity)
         worker1.get_id.return_value = "phys1"
         worker1.get_name.return_value = "physical_worker1"
@@ -87,7 +87,7 @@ class TestJSONWorkerFormatter:
         worker1.get_restart_count.return_value = 0
         worker1.get_latest_start_time.return_value = now - timedelta(hours=2)
         worker1.get_heartbeat_timestamp.return_value = now - timedelta(minutes=1)
-        
+
         worker2 = MagicMock(spec=PhysicalWorkerEntity)
         worker2.get_id.return_value = "phys2"
         worker2.get_name.return_value = "physical_worker2"
@@ -97,7 +97,7 @@ class TestJSONWorkerFormatter:
         worker2.get_restart_count.return_value = 3
         worker2.get_latest_start_time.return_value = None
         worker2.get_heartbeat_timestamp.return_value = None
-        
+
         worker3 = MagicMock(spec=PhysicalWorkerEntity)
         worker3.get_id.return_value = "phys3"
         worker3.get_name.return_value = "physical_worker3"
@@ -107,14 +107,14 @@ class TestJSONWorkerFormatter:
         worker3.get_restart_count.return_value = 1
         worker3.get_latest_start_time.return_value = now - timedelta(hours=1)
         worker3.get_heartbeat_timestamp.return_value = now - timedelta(minutes=30)
-        
+
         return [worker1, worker2, worker3]
 
     @pytest.fixture
     def mock_db(self) -> MagicMock:
         """
         Create a mock MerlinDatabase for testing.
-        
+
         Returns:
             Mock MerlinDatabase instance.
         """
@@ -124,7 +124,7 @@ class TestJSONWorkerFormatter:
     def sample_stats(self) -> Dict[str, int]:
         """
         Create sample worker statistics for testing.
-        
+
         Returns:
             Dictionary containing sample worker statistics.
         """
@@ -145,11 +145,11 @@ class TestJSONWorkerFormatter:
         mock_logical_workers: List[MagicMock],
         mock_physical_workers: List[MagicMock],
         mock_db: MagicMock,
-        sample_stats: Dict[str, int]
+        sample_stats: Dict[str, int],
     ):
         """
         Test that format_and_display outputs valid JSON with correct basic structure.
-        
+
         Args:
             formatter: JSONWorkerFormatter instance for testing.
             mock_logical_workers: List of mock logical worker entities.
@@ -159,33 +159,33 @@ class TestJSONWorkerFormatter:
         """
         # Setup database to return physical workers
         mock_db.get.side_effect = mock_physical_workers
-        
+
         # Mock get_worker_statistics method
         formatter.get_worker_statistics = MagicMock(return_value=sample_stats)
-        
+
         filters = {"queues": ["queue1"], "name": ["worker1"]}
         formatter.format_and_display(mock_logical_workers, filters, mock_db)
-        
+
         # Get the JSON output from the mocked console.print call
         formatter.console.print.assert_called_once()
         json_output = formatter.console.print.call_args[0][0]
         data = json.loads(json_output)
-        
+
         # Verify top-level structure
         assert "filters" in data
         assert "timestamp" in data
         assert "logical_workers" in data
         assert "summary" in data
-        
+
         # Verify filters are preserved
         assert data["filters"] == filters
-        
+
         # Verify timestamp is ISO format
         datetime.fromisoformat(data["timestamp"])  # Should not raise exception
-        
+
         # Verify summary matches expected stats
         assert data["summary"] == sample_stats
-        
+
         # Verify logical workers array exists
         assert isinstance(data["logical_workers"], list)
 
@@ -195,11 +195,11 @@ class TestJSONWorkerFormatter:
         mock_logical_workers: List[MagicMock],
         mock_physical_workers: List[MagicMock],
         mock_db: MagicMock,
-        sample_stats: Dict[str, int]
+        sample_stats: Dict[str, int],
     ):
         """
         Test JSON output includes filters correctly.
-        
+
         Args:
             formatter: JSONWorkerFormatter instance for testing.
             mock_logical_workers: List of mock logical worker entities.
@@ -209,18 +209,15 @@ class TestJSONWorkerFormatter:
         """
         mock_db.get.side_effect = mock_physical_workers
         formatter.get_worker_statistics = MagicMock(return_value=sample_stats)
-        
-        filters = {
-            "queues": ["queue1", "queue2"],
-            "name": ["worker_a", "worker_b"]
-        }
+
+        filters = {"queues": ["queue1", "queue2"], "name": ["worker_a", "worker_b"]}
         formatter.format_and_display(mock_logical_workers, filters, mock_db)
-        
+
         # Get the JSON output from the mocked console.print call
         formatter.console.print.assert_called_once()
         json_output = formatter.console.print.call_args[0][0]
         data = json.loads(json_output)
-        
+
         assert data["filters"]["queues"] == ["queue1", "queue2"]
         assert data["filters"]["name"] == ["worker_a", "worker_b"]
 
@@ -230,11 +227,11 @@ class TestJSONWorkerFormatter:
         mock_logical_workers: List[MagicMock],
         mock_physical_workers: List[MagicMock],
         mock_db: MagicMock,
-        sample_stats: Dict[str, int]
+        sample_stats: Dict[str, int],
     ):
         """
         Test JSON output with empty filters.
-        
+
         Args:
             formatter: JSONWorkerFormatter instance for testing.
             mock_logical_workers: List of mock logical worker entities.
@@ -244,13 +241,13 @@ class TestJSONWorkerFormatter:
         """
         mock_db.get.side_effect = mock_physical_workers
         formatter.get_worker_statistics = MagicMock(return_value=sample_stats)
-        
+
         filters = {}
         formatter.format_and_display(mock_logical_workers, filters, mock_db)
-        
+
         # Get the JSON output from the mocked console.print call
         formatter.console.print.assert_called_once()
         json_output = formatter.console.print.call_args[0][0]
         data = json.loads(json_output)
-        
+
         assert data["filters"] == {}

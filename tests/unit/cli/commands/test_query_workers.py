@@ -61,9 +61,7 @@ def test_process_command_without_spec(mocker: MockerFixture):
     cmd.process_command(args)
 
     create_mock.assert_called_once_with("celery")
-    worker_handler_mock.query_workers.assert_called_once_with(
-        "rich", queues=["q1", "q2"], workers=["worker1", "worker2"]
-    )
+    worker_handler_mock.query_workers.assert_called_once_with("rich", queues=["q1", "q2"], workers=["worker1", "worker2"])
 
 
 def test_process_command_with_spec(mocker: MockerFixture, caplog: CaptureFixture):
@@ -101,9 +99,7 @@ def test_process_command_with_spec(mocker: MockerFixture, caplog: CaptureFixture
     cmd.process_command(args)
 
     create_mock.assert_called_once_with("celery")
-    worker_handler_mock.query_workers.assert_called_once_with(
-        "rich", queues=None, workers=["foo", "bar"]
-    )
+    worker_handler_mock.query_workers.assert_called_once_with("rich", queues=None, workers=["foo", "bar"])
     assert "Searching for the following workers to stop" in caplog.text
 
 
@@ -142,6 +138,4 @@ def test_process_command_logs_warning_for_unexpanded_worker(mocker: MockerFixtur
     cmd.process_command(args)
 
     assert "Worker '$ENV_VAR' is unexpanded. Target provenance spec instead?" in caplog.text
-    worker_handler_mock.query_workers.assert_called_once_with(
-        "rich", queues=None, workers=["$ENV_VAR", "actual_worker"]
-    )
+    worker_handler_mock.query_workers.assert_called_once_with("rich", queues=None, workers=["$ENV_VAR", "actual_worker"])
