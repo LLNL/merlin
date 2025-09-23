@@ -97,6 +97,7 @@ def test_process_command_echo_only_mode_prints_command(mocker: MockerFixture, ca
 
     mocker.patch("merlin.cli.commands.run_workers.get_merlin_spec_with_override", return_value=(mock_spec, "file.yaml"))
     mocker.patch("merlin.cli.commands.run_workers.initialize_config")
+    mocker.patch("merlin.workers.handlers.celery_handler.MerlinDatabase")
     mocker.patch("merlin.cli.commands.run_workers.worker_handler_factory.create", wraps=lambda _: CeleryWorkerHandler())
 
     args = Namespace(
