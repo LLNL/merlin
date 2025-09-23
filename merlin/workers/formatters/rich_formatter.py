@@ -406,7 +406,7 @@ class RichWorkerFormatter(WorkerFormatter):
         Returns:
             A comma-delimited string of queues without the '[merlin]_' prefix.
         """
-        return ", ".join(q[len("[merlin]_") :] if q.startswith("[merlin]_") else q for q in sorted(queues))
+        return ", ".join(sorted(q[len("[merlin]_") :] if q.startswith("[merlin]_") else q for q in queues))
 
     def _display_compact_view(
         self,
@@ -517,7 +517,7 @@ class RichWorkerFormatter(WorkerFormatter):
 
         return table
 
-    def _get_physical_worker_data(self, logical_workers: List[LogicalWorkerEntity], merlin_db) -> List[Dict]:
+    def _get_physical_worker_data(self, logical_workers: List[LogicalWorkerEntity], merlin_db: MerlinDatabase) -> List[Dict]:
         """
         Extract and format physical worker data for table display.
 
@@ -693,6 +693,7 @@ class RichWorkerFormatter(WorkerFormatter):
                 uptime = datetime.now() - start_time
                 return self._format_time_duration(uptime)
         else:
+            # TODO when we refactor stop-workers, add this in
             stop_time = getattr(physical_worker, "get_stop_time", lambda: None)()
             if stop_time:
                 downtime = datetime.now() - stop_time
@@ -715,7 +716,7 @@ class RichWorkerFormatter(WorkerFormatter):
             Formatted duration string.
         """
         if duration.days > 0:
-            return f"{duration.days}d {duration.seconds // 3600}h"
+            return f"{duration.days}d {duration.seconds // 3600}h {duration.seconds % 3600 // 60}m"
         if duration.seconds >= 3600:
             return f"{duration.seconds // 3600}h {(duration.seconds % 3600) // 60}m"
         if duration.seconds >= 60:
