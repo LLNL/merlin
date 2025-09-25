@@ -9,7 +9,7 @@ Tests for the `merlin/workers/celery_worker.py` module.
 """
 
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
