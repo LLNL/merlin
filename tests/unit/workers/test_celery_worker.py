@@ -9,7 +9,7 @@ Tests for the `merlin/workers/celery_worker.py` module.
 """
 
 from typing import Any
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pytest_mock import MockerFixture
@@ -198,7 +198,7 @@ def test_get_launch_command_queues_wrapped_in_single_quotes(
 
     # Check that queues are wrapped in single quotes
     assert "-Q 'queue1,queue2'" in celery_cmd_arg
-    
+
     # Ensure no unquoted commas that would break tcsh parsing
     assert "-Q queue1,queue2" not in celery_cmd_arg
 
