@@ -41,39 +41,11 @@ class TestRunWorkersCommand:
     Base class for testing the `merlin run-workers` command.
     """
 
-    def kill_worker_process(self, worker_process: subprocess.Popen):
-        """
-        Kill a given worker process.
-
-        This method will execute Merlin's stop-workers command to attempt to
-        shut down the Celery workers. Then it will try to gracefully terminate
-        the process that was running said workers.
-
-        Args:
-            worker_process: A subprocess where the workers are living
-        """
-        # Run merlin's stop-workers first
-        subprocess.run(["merlin", "stop-workers"])
-
-        # Manually terminate the process as well, just to be safe
-        worker_process.terminate()
-        try:
-            worker_process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            worker_process.kill()
-            worker_process.wait()
-
     @pytest.mark.parametrize(
         "shell",
-        [
-            "/bin/bash",
-            "/bin/sh",
-            "/bin/tcsh",
-            "/bin/csh",
-            "/bin/zsh"
-        ],
+        ["/bin/bash", "/bin/sh", "/bin/tcsh", "/bin/csh", "/bin/zsh"],
     )
-    def test_workers_start_for_different_shells(
+    def test_workers_start_for_different_shells(  # pylint: disable=too-many-arguments,too-many-positional-arguments,unused-argument
         self,
         shell: str,
         base_study_config: FixtureDict,
@@ -110,12 +82,7 @@ class TestRunWorkersCommand:
         # Copy the app.yaml to the cwd so merlin will connect to the testing server
         copy_app_yaml_to_cwd(merlin_server_dir)
 
-        try:
-            # Start the workers
-            worker_process = subprocess.Popen(
-                ["merlin", "run-workers", spec_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-            )
-
+        with subprocess.Popen(["merlin", "run-workers", spec_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True):
             # Give the workers time to start
             time.sleep(10)
 
@@ -137,6 +104,6 @@ class TestRunWorkersCommand:
 
             # Check that all of the test conditions pass
             check_test_conditions(conditions, info)
-        finally:
-            # Always clean up
-            self.kill_worker_process(worker_process)
+
+            # Run merlin's stop-workers first
+            subprocess.run(["merlin", "stop-workers"])
