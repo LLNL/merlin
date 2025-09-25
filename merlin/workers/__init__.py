@@ -20,12 +20,12 @@ Subpackages:
         responsible for launching and managing groups of workers.
 
 Modules:
-    worker.py: Defines the `MerlinWorker` abstract base class, which represents a single
+    worker: Defines the `MerlinWorker` abstract base class, which represents a single
         task server worker and provides a common interface for launching and
         configuring worker instances.
-    celery_worker.py: Implements `CeleryWorker`, a concrete subclass of `MerlinWorker` that uses
+    celery_worker: Implements `CeleryWorker`, a concrete subclass of `MerlinWorker` that uses
         Celery to process tasks from configured queues. Supports local and batch launch modes.
-    worker_factory.py: Defines the `WorkerFactory`, which manages the registration, validation,
+    worker_factory: Defines the `WorkerFactory`, which manages the registration, validation,
         and instantiation of individual worker implementations such as `CeleryWorker`.
         Supports plugin discovery via entry points.
 """

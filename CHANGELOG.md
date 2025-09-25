@@ -4,6 +4,23 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- New classes for formatting `query-workers` output:
+  - `WorkerFormatter`: base class for defining formatted output for workers
+  - `RichWorkerFormatter`: implementation of `WorkerFormatter` for output using the rich library
+  - `JSONWorkerFormatter`: implementation of `WorkerFormatter` for JSON output
+  - `WorkerFormatterFactory`: factory class for selecting the desired worker formatter
+
+### Changed
+- Changes to the `query-workers` command:
+  - Output now displays a lot more information, including logical and physical worker specific info
+  - Output now formatted using rich tables or json
+  - Now handled through worker classes rather than functions in `celeryadapter.py` file
+  - Behind the scenes this is now querying the new Merlin Database
+
+
 ## [2.0.0b1]
 
 ### Added

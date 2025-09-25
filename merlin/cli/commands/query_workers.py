@@ -20,9 +20,10 @@ from argparse import ArgumentParser, Namespace
 
 from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
-from merlin.router import query_workers
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import verify_filepath
+from merlin.workers.formatters.formatter_factory import worker_formatter_factory
+from merlin.workers.handlers.handler_factory import worker_handler_factory
 
 
 LOG = logging.getLogger("merlin")
@@ -66,7 +67,15 @@ class QueryWorkersCommand(CommandEntryPoint):
             action="store",
             nargs="+",
             default=None,
-            help="Regex match for specific workers to query.",
+            help="Specific logical worker names to query.",
+        )
+        format_default = "rich"
+        query.add_argument(
+            "-f",
+            "--format",
+            choices=worker_formatter_factory.list_available(),
+            default=format_default,
+            help=f"Output format. Default: {format_default}",
         )
 
     def process_command(self, args: Namespace):
@@ -85,15 +94,21 @@ class QueryWorkersCommand(CommandEntryPoint):
         """
         print(banner_small)
 
-        # Get the workers from the spec file if --spec provided
         worker_names = []
+        if args.workers:
+            worker_names.extend(args.workers)
+
+        # Get the workers from the spec file if --spec provided
+        spec = None
         if args.spec:
             spec_path = verify_filepath(args.spec)
             spec = MerlinSpec.load_specification(spec_path)
-            worker_names = spec.get_worker_names()
+            worker_names.extend(spec.get_worker_names())
             for worker_name in worker_names:
                 if "$" in worker_name:
                     LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
             LOG.debug(f"Searching for the following workers to stop based on the spec {args.spec}: {worker_names}")
 
-        query_workers(args.task_server, worker_names, args.queues, args.workers)
+        task_server = spec.merlin["resources"]["task_server"] if spec else args.task_server
+        worker_handler = worker_handler_factory.create(task_server)
+        worker_handler.query_workers(args.format, queues=args.queues, workers=worker_names)

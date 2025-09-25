@@ -126,7 +126,7 @@ class EntityManager(Generic[T, M], ABC):
             entity: The entity instance to check against the filters.
             filters: A dictionary of filter keys and values used to narrow down the query results.
                     Filter keys must correspond to entries in the `_filter_accessor_map` defined
-                    by the subclass. Values are compared against the entity’s corresponding attributes
+                    by the subclass. Values are compared against the entity's corresponding attributes
                     or methods (e.g., {"name": "foo"}, {"queues": ["queue1", "queue2"]}).
 
         Returns:

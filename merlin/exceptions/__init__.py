@@ -114,6 +114,12 @@ class MerlinWorkerHandlerNotSupportedError(Exception):
     """
 
 
+class MerlinWorkerFormatterNotSupportedError(Exception):
+    """
+    Exception to signal that the provided worker formatter is not supported by Merlin.
+    """
+
+
 class MerlinWorkerNotSupportedError(Exception):
     """
     Exception to signal that the provided worker is not supported by Merlin.

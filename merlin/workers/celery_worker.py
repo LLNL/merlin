@@ -81,7 +81,7 @@ class CeleryWorker(MerlinWorker):
         """
         super().__init__(name, config, env)
         self.args = self.config.get("args", "")
-        self.queues = self.config.get("queues", {"[merlin]_merlin"})
+        self.queues = self.config.get("queues", {"merlin"})
         self.batch = self.config.get("batch", {})
         self.machines = self.config.get("machines", [])
         self.overlap = overlap
