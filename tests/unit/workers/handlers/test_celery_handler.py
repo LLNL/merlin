@@ -174,7 +174,7 @@ class TestCeleryWorkerHandler:
 
         filters = handler._build_filters(queues, workers)
 
-        assert filters == {"queues": ["queue1", "queue2"], "name": ["worker1", "worker2"]}
+        assert filters == {"queues": ["[merlin]_queue1", "[merlin]_queue2"], "name": ["worker1", "worker2"]}
 
     def test_build_filters_with_only_queues(self, handler: CeleryWorkerHandler):
         """
@@ -187,7 +187,7 @@ class TestCeleryWorkerHandler:
 
         filters = handler._build_filters(queues, None)
 
-        assert filters == {"queues": ["queue1"]}
+        assert filters == {"queues": ["[merlin]_queue1"]}
 
     def test_build_filters_with_only_workers(self, handler: CeleryWorkerHandler):
         """
@@ -230,7 +230,7 @@ class TestCeleryWorkerHandler:
         handler.query_workers("rich", queues=["queue1"], workers=["worker1"])
 
         # Verify database was called with correct filters
-        expected_filters = {"queues": ["queue1"], "name": ["worker1"]}
+        expected_filters = {"queues": ["[merlin]_queue1"], "name": ["worker1"]}
         handler.merlin_db.get_all.assert_called_once_with("logical_worker", filters=expected_filters)
 
         # Verify formatter was created and called
@@ -308,7 +308,7 @@ class TestCeleryWorkerHandler:
         """
         handler.merlin_db.get_all.return_value = mock_logical_workers
 
-        queues = ["queue1", "queue2"]
+        queues = ["[merlin]_queue1", "[merlin]_queue2"]
         workers = ["worker1"]
 
         handler.query_workers("rich", queues=queues, workers=workers)

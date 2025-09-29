@@ -98,7 +98,12 @@ class TestMonitor:
                     f"merlin purge -f {monitor_setup.auto_restart_yaml}".split(), capture_output=True, text=True
                 )
 
-                monitor_stdout, monitor_stderr = monitor_proc.communicate()
+                # Obtain stdout and stderr from the monitor process
+                try:
+                    monitor_stdout, monitor_stderr = monitor_proc.communicate(timeout=30)
+                except subprocess.TimeoutExpired:
+                    monitor_proc.kill()
+                    monitor_stdout, monitor_stderr = monitor_proc.communicate()
 
         # Define our test conditions
         study_name = "monitor_auto_restart_test"

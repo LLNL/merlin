@@ -88,7 +88,10 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         """
         filters = {}
         if queues:
-            filters["queues"] = queues
+            filters["queues"] = [
+                queue if queue.startswith("[merlin]_") else f"[merlin]_{queue}"
+                for queue in queues
+            ]
         if workers:
             filters["name"] = workers
         return filters
