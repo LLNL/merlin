@@ -85,3 +85,9 @@ class MerlinInvalidTaskServerError(Exception):
     """
     Exception to signal that an invalid task server was provided.
     """
+
+
+class TaskExecutorNotSupportedError(Exception):
+    """
+    Exception to signal that the provided task executor is not supported by Merlin.
+    """

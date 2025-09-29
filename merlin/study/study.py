@@ -28,7 +28,8 @@ from merlin.spec import defaults
 from merlin.spec.expansion import determine_user_variables, expand_by_line, expand_env_vars, expand_line
 from merlin.spec.override import error_override_vars, replace_override_vars
 from merlin.spec.specification import MerlinSpec
-from merlin.study.dag import DAG
+# from merlin.study.dag import DAG
+from merlin.dag.dag import DAG
 from merlin.utils import contains_shell_ref, contains_token, get_flux_cmd, load_array_file
 
 

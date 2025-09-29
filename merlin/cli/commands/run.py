@@ -22,6 +22,8 @@ from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.cli.utils import parse_override_vars
 from merlin.config.configfile import initialize_config
+from merlin.execution.executor_factory import executor_factory
+from merlin.execution.workflow_manager import WorkflowManager
 from merlin.router import run_task_server
 from merlin.study.study import MerlinStudy
 from merlin.utils import ARRAY_FILE_FORMATS, verify_filepath
@@ -154,7 +156,12 @@ class RunCommand(CommandEntryPoint):
             pargs=args.pargs,
         )
 
+        task_server = study.expanded_spec.merlin["resources"]["task_server"]
         if args.run_mode == "local":
             initialize_config(local_mode=True)
+            task_server = "local"
 
-        run_task_server(study, args.run_mode)
+        # run_task_server(study, args.run_mode)
+        executor = executor_factory.create(task_server)
+        wf_manager = WorkflowManager(study, executor)
+        wf_manager.run_workflow()
