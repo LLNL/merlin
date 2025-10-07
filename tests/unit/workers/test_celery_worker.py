@@ -178,6 +178,31 @@ def test_get_launch_command_returns_expanded_command(
     assert "celery" in cmd
 
 
+def test_get_launch_command_queues_wrapped_in_single_quotes(
+    mocker: MockerFixture,
+    basic_config: FixtureDict[str, Any],
+    dummy_env: FixtureDict[str, str],
+    mock_db: MagicMock,
+):
+    """Test that queue names are properly wrapped in single quotes."""
+    # This test assumes you have a way to create a worker instance from your study
+    # You'll need to adapt this to your actual class structure
+    mock_launch = mocker.patch("merlin.workers.celery_worker.batch_worker_launch")
+    worker = CeleryWorker("w2", basic_config, dummy_env)
+
+    worker.get_launch_command()
+
+    # Verify that batch_worker_launch was called with properly quoted queues
+    mock_launch.assert_called_once()
+    celery_cmd_arg = mock_launch.call_args[0][1]  # Second argument to batch_worker_launch
+
+    # Check that queues are wrapped in single quotes
+    assert "-Q 'queue1,queue2'" in celery_cmd_arg
+
+    # Ensure no unquoted commas that would break tcsh parsing
+    assert "-Q queue1,queue2" not in celery_cmd_arg
+
+
 def test_should_launch_rejects_if_machine_check_fails(
     mocker: MockerFixture,
     basic_config: FixtureDict[str, Any],

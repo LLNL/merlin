@@ -134,7 +134,7 @@ class CeleryWorker(MerlinWorker):
         self._verify_args(disable_logs=disable_logs)
 
         # Construct the launch command
-        celery_cmd = f"celery -A merlin worker {self.args} -Q {','.join(self.queues)}"
+        celery_cmd = f"celery -A merlin worker {self.args} -Q '{','.join(self.queues)}'"
         nodes = self.batch.get("nodes", None)
         launch_cmd = batch_worker_launch(self.batch, celery_cmd, nodes=nodes)
         return os.path.expandvars(launch_cmd)
