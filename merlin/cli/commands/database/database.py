@@ -61,6 +61,7 @@ class DatabaseCommand(CommandEntryPoint):
         """
         database: ArgumentParser = subparsers.add_parser(
             "database",
+            aliases=["db"],
             help="Interact with Merlin's database.",
             formatter_class=ArgumentDefaultsHelpFormatter,
         )
