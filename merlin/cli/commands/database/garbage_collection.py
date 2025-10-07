@@ -52,21 +52,21 @@ class DatabaseGarbageCollectionCommand(CommandEntryPoint):
             formatter_class=ArgumentDefaultsHelpFormatter,
         )
         db_gc_parser.set_defaults(func=self.process_command)
-        
+
         db_gc_parser.add_argument(
             "--dry-run",
             action="store_true",
             default=False,
             help="Show what would be deleted without actually deleting anything.",
         )
-        
+
         db_gc_parser.add_argument(
             "--skip-runs",
             action="store_true",
             default=False,
             help="Skip checking for runs with invalid workspaces.",
         )
-        
+
         db_gc_parser.add_argument(
             "--skip-workers",
             action="store_true",
@@ -80,7 +80,7 @@ class DatabaseGarbageCollectionCommand(CommandEntryPoint):
             default=False,
             help="Skip checking for empty studies.",
         )
-        
+
         db_gc_parser.add_argument(
             "--force",
             "-f",
@@ -108,18 +108,11 @@ class DatabaseGarbageCollectionCommand(CommandEntryPoint):
         check_runs = not args.skip_runs
         check_workers = not args.skip_workers
         check_studies = not args.skip_studies
-        
+
         # Run garbage collection
         if args.dry_run:
-            collector.scan(
-                check_runs=check_runs,
-                check_workers=check_workers,
-                check_studies=check_studies
-            )
+            collector.scan(check_runs=check_runs, check_workers=check_workers, check_studies=check_studies)
         else:
             collector.scan_and_clean(
-                check_runs=check_runs,
-                check_workers=check_workers,
-                check_studies=check_studies,
-                force=args.force
+                check_runs=check_runs, check_workers=check_workers, check_studies=check_studies, force=args.force
             )

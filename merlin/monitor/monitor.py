@@ -61,7 +61,9 @@ class Monitor:
         restart_workflow: Restart a run of a workflow.
     """
 
-    def __init__(self, spec: MerlinSpec, sleep: int, task_server: str, no_restart: bool, auto_cleanup: bool = True):
+    def __init__(
+        self, spec: MerlinSpec, sleep: int, task_server: str, no_restart: bool, auto_cleanup: bool = True
+    ):  # pylint: disable=too-many-arguments,too-many-positional-arguments
         """
         Initializes the `Monitor` instance with the given Merlin specification, sleep interval,
         and task server type. The task server monitor is created using the
@@ -85,28 +87,30 @@ class Monitor:
             self._run_cleanup()
         else:
             LOG.info("Monitor: Automatic database cleanup is disabled.")
-    
+
     def _run_cleanup(self):
         """
         Run automatic garbage collection of the database before monitoring.
-        
+
         This is often needed so that the monitor doesn't try to watch runs that
         no longer exist in the file system.
         """
         try:
-            LOG.info("Running automatic database cleanup before monitoring...")
+            LOG.info("Monitor: Running automatic database cleanup before monitoring...")
             collector = DatabaseGarbageCollector(self.merlin_db)
             collector.scan_and_clean(force=True)
-        except Exception as e:
-            LOG.warning(f"Automatic cleanup failed: {e}. Continuing with monitoring.")
+        # pylint complains about broad exception but we don't want the monitor to shut off
+        # for just running garbage collection
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            LOG.warning(f"Monitor: Automatic cleanup failed: {e}. Continuing with monitoring.")
 
     def _validate_run_workspace(self, run: RunEntity) -> bool:
         """
         Check if a run's workspace exists on the filesystem.
-        
+
         Args:
             run: The run entity to validate.
-        
+
         Returns:
             True if the workspace exists, False otherwise.
         """
@@ -158,10 +162,7 @@ class Monitor:
                 # Monitor the run until it completes
                 self.monitor_single_run(run)
             except RunNotFoundError as e:
-                LOG.error(
-                    f"Run with workspace '{run_workspace}' no longer exists in database: {e}. "
-                    "Skipping to next run."
-                )
+                LOG.error(f"Run with workspace '{run_workspace}' no longer exists in database: {e}. " "Skipping to next run.")
 
             index += 1
 
@@ -219,9 +220,7 @@ class Monitor:
 
         # Validate workspace exists before monitoring
         if not self._validate_run_workspace(run):
-            raise RunNotFoundError(
-                f"Cannot monitor run with invalid workspace '{run_workspace}'"
-            )
+            raise RunNotFoundError(f"Cannot monitor run with invalid workspace '{run_workspace}'")
 
         run_complete = run.run_complete  # Saving this to a variable as it queries the db each time it's called
 
