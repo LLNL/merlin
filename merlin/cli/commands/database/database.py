@@ -19,6 +19,7 @@ from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.cli.commands.database.delete import DatabaseDeleteCommand
+from merlin.cli.commands.database.garbage_collection import DatabaseGarbageCollectionCommand
 from merlin.cli.commands.database.get import DatabaseGetCommand
 from merlin.cli.commands.database.info import DatabaseInfoCommand
 
@@ -34,6 +35,8 @@ class DatabaseCommand(CommandEntryPoint):
         info_command (cli.commands.database.info.DatabaseInfoCommand): Handles the `database info` subcommand.
         get_command (cli.commands.database.get.DatabaseGetCommand): Handles the `database get` subcommand.
         delete_command (cli.commands.database.delete.DatabaseDeleteCommand): Handles the `database delete` subcommand.
+        garbage_collection_command (cli.commands.database.garbage_collection.DatabaseGarbageCollectionCommand):
+            Handles the `database garbage-collect` subcommand.
 
     Methods:
         add_parser: Adds the `database` command and its subcommands to the CLI parser.
@@ -47,6 +50,7 @@ class DatabaseCommand(CommandEntryPoint):
         self.info_command = DatabaseInfoCommand()
         self.get_command = DatabaseGetCommand()
         self.delete_command = DatabaseDeleteCommand()
+        self.garbage_collection_command = DatabaseGarbageCollectionCommand()
 
     def add_parser(self, subparsers: ArgumentParser):
         """
@@ -74,6 +78,7 @@ class DatabaseCommand(CommandEntryPoint):
         self.info_command.add_parser(database_commands)
         self.get_command.add_parser(database_commands)
         self.delete_command.add_parser(database_commands)
+        self.garbage_collection_command.add_parser(database_commands)
 
     def process_command(self, args: Namespace):
         """
