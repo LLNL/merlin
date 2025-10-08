@@ -165,6 +165,8 @@ def test_monitor_single_run_completes_successfully(mocker: MockerFixture, monito
     mock_worker.get_name.return_value = "worker-name"
     monitor.merlin_db.get.return_value = mock_worker
 
+    mocker.patch.object(monitor, "_validate_run_workspace", return_value=True)
+
     monitor.monitor_single_run(run)
 
     monitor.task_server_monitor.wait_for_workers.assert_called_once()

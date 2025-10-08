@@ -112,7 +112,7 @@ class DatabaseGarbageCollector:
                 LOG.debug(f"[GARBAGE COLLECTOR] Run {run.get_id()} has invalid workspace: {workspace}")
                 self._issues["runs"].append(run)
 
-        LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues["runs"])} runs with invalid workspaces.")
+        LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues['runs'])} runs with invalid workspaces.")
 
     def _check_orphaned_logical_workers(self):
         """
@@ -144,8 +144,8 @@ class DatabaseGarbageCollector:
             if not worker_runs or all(run_id in invalid_run_ids or run_id not in valid_run_ids for run_id in worker_runs):
                 self._issues["logical_workers"].append(worker)
 
-        LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues["logical_workers"])} orphaned logical workers.")
-        LOG.debug(f"[GARBAGE COLLECTOR] Orphaned logical workers: {self._issues["logical_workers"]}")
+        LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues['logical_workers'])} orphaned logical workers.")
+        LOG.debug(f"[GARBAGE COLLECTOR] Orphaned logical workers: {self._issues['logical_workers']}")
 
     def _check_orphaned_physical_workers(self):
         """
@@ -175,8 +175,8 @@ class DatabaseGarbageCollector:
             if logical_worker_id in orphaned_logical_ids or logical_worker_id not in valid_logical_ids:
                 self._issues["physical_workers"].append(worker)
 
-        LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues["physical_workers"])} orphaned physical workers.")
-        LOG.debug(f"[GARBAGE COLLECTOR] Orphaned physical workers: {self._issues["physical_workers"]}")
+        LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues['physical_workers'])} orphaned physical workers.")
+        LOG.debug(f"[GARBAGE COLLECTOR] Orphaned physical workers: {self._issues['physical_workers']}")
 
     def check_orphaned_workers(self):
         """
@@ -226,7 +226,7 @@ class DatabaseGarbageCollector:
                 LOG.debug(f"[GARBAGE COLLECTOR] Study {study.get_id()} ({study.get_name()}) has no valid runs.")
                 self._issues["studies"].append(study)
 
-        LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues["studies"])} empty studies.")
+        LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues['studies'])} empty studies.")
 
     def _cleanup_entity(self, entity_type: str):
         """
