@@ -105,7 +105,7 @@ class DatabaseGarbageCollector:
         """
         LOG.info("[GARBAGE COLLECTOR] Checking run workspaces for validity...")
 
-        all_runs = self.merlin_db.get_all("run")
+        all_runs = self.merlin_db.runs.get_all()
         for run in all_runs:
             workspace = run.get_workspace()
             if not os.path.exists(workspace):
@@ -131,10 +131,10 @@ class DatabaseGarbageCollector:
         invalid_run_ids = [run.get_id() for run in self._issues["runs"]]
 
         # Get all valid run IDs from the database
-        all_runs = self.merlin_db.get_all("run")
+        all_runs = self.merlin_db.runs.get_all()
         valid_run_ids = {run.get_id() for run in all_runs if run.get_id() not in invalid_run_ids}
 
-        all_logical_workers = self.merlin_db.get_all("logical_worker")
+        all_logical_workers = self.merlin_db.logical_workers.get_all()
         for worker in all_logical_workers:
             worker_runs = worker.get_runs()
             # Worker is orphaned if:
@@ -163,10 +163,10 @@ class DatabaseGarbageCollector:
         orphaned_logical_ids = [worker.get_id() for worker in self._issues["logical_workers"]]
 
         # Get all valid logical worker IDs from the database
-        all_logical_workers = self.merlin_db.get_all("logical_worker")
+        all_logical_workers = self.merlin_db.logical_workers.get_all()
         valid_logical_ids = {worker.get_id() for worker in all_logical_workers if worker.get_id() not in orphaned_logical_ids}
 
-        all_physical_workers = self.merlin_db.get_all("physical_worker")
+        all_physical_workers = self.merlin_db.physical_workers.get_all()
         for worker in all_physical_workers:
             logical_worker_id = worker.get_logical_worker_id()
             # Physical worker is orphaned if:
@@ -212,7 +212,7 @@ class DatabaseGarbageCollector:
         invalid_run_ids = [run.get_id() for run in self._issues["runs"]]
 
         # Get all valid run IDs from the database
-        all_runs = self.merlin_db.get_all("run")
+        all_runs = self.merlin_db.runs.get_all()
         valid_run_ids = {run.get_id() for run in all_runs if run.get_id() not in invalid_run_ids}
 
         all_studies = self.merlin_db.studies.get_all()
