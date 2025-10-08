@@ -12,6 +12,7 @@ import sys
 from copy import copy
 from glob import glob
 from time import sleep
+from typing import Dict
 
 import pytest
 import yaml
@@ -321,6 +322,51 @@ def test_encryption_key() -> FixtureBytes:
     :returns: The test encryption key
     """
     return b"Q3vLp07Ljm60ahfU9HwOOnfgGY91lSrUmqcTiP0v9i0="
+
+
+@pytest.fixture
+def base_study_config() -> FixtureDict:
+    """
+    Base study configuration that can be modified for different shell tests.
+
+    Returns:
+        A dictionary containing base information for running a Merlin study.
+    """
+    return {
+        "description": {"name": "shell_test_study", "description": "Test study for shell compatibility"},
+        "batch": {
+            "shell": "/bin/bash",
+        },
+        "study": [
+            {"name": "test_step", "description": "Simple test step", "run": {"cmd": 'echo "Hello from $(basename $SHELL)"'}}
+        ],
+        "merlin": {
+            "resources": {
+                "workers": {
+                    "test_worker": {"args": "-l INFO --concurrency 1 --prefetch-multiplier 1 -O fair", "steps": ["all"]}
+                }
+            }
+        },
+    }
+
+
+@pytest.fixture
+def create_spec_file():
+    """
+    Factory fixture to create YAML spec files for testing.
+
+    Returns:
+        A function to create a spec file.
+    """
+
+    def _create_spec_file(config: Dict, output_dir: str, file_name: str):
+        file_path = os.path.join(output_dir, file_name)
+        with open(file_path, "w") as f:
+            yaml.dump(config, f, default_flow_style=False)
+
+        return file_path
+
+    return _create_spec_file
 
 
 #######################################

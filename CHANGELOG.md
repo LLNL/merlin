@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Now handled through worker classes rather than functions in `celeryadapter.py` file
   - Behind the scenes this is now querying the new Merlin Database
 
+## [2.0.0b2]
+
+### Fixed
+- Bug where the worker launch using tcsh shell wasn't working
 
 ## [2.0.0b1]
 
