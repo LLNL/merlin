@@ -458,6 +458,10 @@ The Merlin library provides several commands for setting up and managing your Me
 
 ### Database (`merlin database`)
 
+!!! note "Alias"
+
+    The `database` command can be abbreviated as `db`.
+
 This command allows you to interact with Merlin's backend database by viewing database info, retrieving and printing entries, and deleting entries. If you ran your study locally, use the `--local` option here as well when running database commands.
 
 More information on this command can be found below or at [The Database Command](./database/database_cmd.md) page. See [Merlin's Database](./database/index.md) for more general information on the database itself.
@@ -469,6 +473,12 @@ More information on this command can be found below or at [The Database Command]
 
 ```
 merlin database [OPTIONS] COMMAND ...
+```
+
+*or*
+
+```bash
+merlin db [OPTIONS] COMMAND ...
 ```
 
 **Options:**
@@ -485,10 +495,13 @@ merlin database [OPTIONS] COMMAND ...
 | [info](#database-info-merlin-database-info) | Print general information about the database |
 | [get](#database-get-merlin-database-get) | Retrieve and print entries from the database |
 | [delete](#database-delete-merlin-database-delete) | Delete entries from the database |
+| [gc](#database-garbage-collect-merlin-database-gc) | Run garbage collection on the database |
 
 #### Database Info (`merlin database info`)
 
 The `info` subcommand prints general information about the database, including the database type, version, and brief details about the existing entries.
+
+More information on this subcommand can be found at [The Info Subcommand](./database/info.md).
 
 **Usage:**
 
@@ -505,6 +518,8 @@ merlin database info [OPTIONS]
 #### Database Get (`merlin database get`)
 
 The `get` subcommand allows users to retrieve entries from the database and print them to the console.
+
+More information on this subcommand can be found at [Retrieving Data](./database/retrieving_data.md).
 
 **Usage:**
 
@@ -690,6 +705,8 @@ merlin database get everything [OPTIONS]
 #### Database Delete (`merlin database delete`)
 
 The `delete` subcommand allows users to delete entries from the database.
+
+More information on this subcommand can be found at [Deleting Data](./database/deleting_data.md).
 
 **Usage:**
 
@@ -882,6 +899,76 @@ merlin database delete everything [OPTIONS]
 | ------------     | ------- | ----------- | ------- |
 | `-h`, `--help`   | boolean | Show this help message and exit | `False` |
 | `-f`, `--force`  | boolean | Delete everything in the database without confirmation | `False` |
+
+#### Database Garbage Collect (`merlin database gc`)
+
+!!! note "Aliases"
+
+    The `gc` command can be also be invoked with `garbage-collect` or `cleanup`.
+
+The `gc` subcommand performs garbage collection on the database to identify and remove stale entries. This cleanup process targets:
+
+1. Runs whose workspace directories no longer exist on the filesystem
+2. Studies that have no associated runs remaining after the run cleanup
+3. Logical workers that only reference runs that no longer exist
+4. Physical workers that only reference logical workers that no longer exist
+
+More information on this subcommand can be found at [Database Garbage Collection](./database/garbage_collection.md).
+
+**Usage:**
+
+```bash
+merlin database gc [OPTIONS]
+```
+
+*or*
+
+```bash
+merlin database garbage-collect [OPTIONS]
+```
+
+*or*
+
+```bash
+merlin database cleanup [OPTIONS]
+```
+
+**Options:**
+
+| Name             |  Type   | Description | Default |
+| ------------     | ------- | ----------- | ------- |
+| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
+| `--dry-run`      | boolean | Show what would be deleted without actually deleting anything | `False` |
+| `--skip-runs`    | boolean | Skip checking for runs with invalid workspaces | `False` |
+| `--skip-workers` | boolean | Skip checking for orphaned workers | `False` |
+| `--skip-studies` | boolean | Skip checking for empty studies | `False` |
+| `-f`, `--force`  | boolean | Skip confirmation prompt (use with caution) | `False` |
+
+**Examples:**
+
+!!! example "Clean Up All Stale Entries"
+
+    ```bash
+    merlin database gc
+    ```
+
+!!! example "Preview What Would Be Deleted Without Actually Deleting"
+
+    ```bash
+    merlin database gc --dry-run
+    ```
+
+!!! example "Don't Clean Up Stale Runs"
+
+    ```bash
+    merlin database gc --skip-runs
+    ```
+
+!!! example "Bypass Confirmation Prompt"
+
+    ```bash
+    merlin database gc --force
+    ```
 
 ### Example (`merlin example`)
 
@@ -1283,6 +1370,8 @@ If for some reason your workflow enters a stalled state where the queues are emp
 
 The `monitor` functionality will check for Celery workers for up to 10*(sleep) seconds before monitoring begins. The loop happens when the queue(s) in the spec contain tasks, but no running workers are detected. This is to protect against a failed worker launch.
 
+When the `monitor` is first started, it will run automatic [garbage collection](./database/garbage_collection.md) on the runs and studies in your database. To disable this use the `--disable-gc` option.
+
 For more information, see the [Monitoring Studies for Persistent Allocations documentation](./monitoring/monitor_for_allocation.md).
 
 **Usage:**
@@ -1301,6 +1390,7 @@ merlin monitor [OPTIONS] SPECIFICATION
 | `--sleep` | integer | The duration in seconds between checks for workers/tasks | 60 |
 | `--task_server`  | string | Task server type for which to monitor the workers. Currently only "celery" is implemented. | "celery" |
 | `--no-restart`, `-n` | boolean | Disable the automatic restart functionality for this monitor. | `False` |
+| `--disable-gc` | boolean | Disable automatic database garbage collection on monitor startup. | `False` |
 
 !!! example "Basic Monitor"
 

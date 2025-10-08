@@ -31,9 +31,20 @@ The resulting flowchart of this process can be seen below.
   <figcaption>Monitor Flowchart</figcaption>
 </figure>
 
+## Database Garbage Collection
+
+When the monitor first starts, it automatically performs [garbage collection](../database/garbage_collection.md) on the database to identify and remove stale entries. This cleanup process specifically targets:
+
+- **Runs:** Removes database entries for runs whose corresponding workspace directories no longer exist on the filesystem
+- **Studies:** Removes database entries for studies that have no associated runs remaining after the run cleanup
+
+Worker entries (both logical and physical), are not afftected by this automatic garbage collection, as they may be spun up prior to a run being executed.
+
+This automatic cleanup helps maintain database integrity and ensures the monitor is working with accurate, up-to-date information about active studies and runs. The garbage collection can be disabled using the `--disable-gc` option.
+
 ## Using the Monitor
 
-Adding the `merlin monitor` command to your workflow process is as simple as putting it at the end of your worker-startup script. The below templates showcase how this is done for [Slurm](../../faq.md#what-is-slurm) and [LSF](../../faq.md#what-is-lsf).
+Adding the `merlin monitor` command to your workflow process is as simple as putting it at the end of your worker-startup script. The below templates showcase how this is done for [Slurm](../../faq.md#what-is-slurm), [LSF](../../faq.md#what-is-lsf), and [Flux](../../faq.md#what-is-flux).
 
 === "Slurm"
 
@@ -126,11 +137,58 @@ Adding the `merlin monitor` command to your workflow process is as simple as put
 
     1. Modifying this value to be the path to your spec file would make it so you didn't have to pass the path in at the command line when submitting this script. In other words, you could submit this script with `bsub workers.bsub`.
 
+=== "Flux"
+
+    The below batch script can be submitted with:
+
+    ```bash
+    flux batch workers.sh <spec file>
+    ```
+
+    ```bash title="workers.sh"
+    #!/bin/bash
+    #flux: -N 1
+    #flux: --job-name Merlin
+    #flux: -t 10m
+    #flux: --output merlin_workers_{{id}}.out
+    #flux: --error merlin_workers_{{id}}.err
+
+    # Turn off core files to work aroung flux exec issue.
+    ulimit -c 0
+
+    YAML=default.yaml  # (1)
+
+    if [[ $# -gt 0 ]]
+    then
+        YAML=$1
+    fi
+
+    echo "Specification File: $YAML"
+
+    VENV_PATH=<set the path to the merlin venv here>
+
+    # Activate the virtual environment
+    source ${VENV_PATH}/bin/activate
+
+    # Show the workers command
+    merlin run-workers ${YAML} --echo
+
+    # Start workers to run the tasks in the broker
+    merlin run-workers ${YAML}
+
+    # Keep the allocation alive until all workers stop
+    merlin monitor ${YAML}
+    ```
+
+    1. Modifying this value to be the path to your spec file would make it so you didn't have to pass the path in at the command line when submitting this script. In other words, you could submit this script with `flux batch workers.sh`.
+
 ## Options For the Monitor
 
 There are three useful options that come with the `merlin monitor` command:
 
 - [`--sleep`](#sleep): The delay between checks on the task queues
+- [`--no-restart`](#no-restart): Disable automatic workflow restarts
+- [`--disable-gc`](#disable-garbage-collection): Disable automatic garbage collection at startup
 - [`--steps`](#steps) (*Deprecated*): Only monitor specific steps in your workflow
 - [`--vars`](#vars): Modify environment variables in a spec from the command line
 
@@ -264,6 +322,118 @@ merlin monitor <spec file> --sleep <number of seconds to sleep>
     [2025-02-20 14:42:37: INFO] Monitor: Run with workspace '/usr/WS1/gunny/debug/temp/sleep_demo_20250220-143820' has completed. Moving on to the next run.
     [2025-02-20 14:42:37: INFO] Monitor: ... stop condition met
     ```
+
+### No Restart
+
+The `--no-restart` option disables the automatic restart functionality of the monitor. By default, when the monitor detects that a workflow has stalled (no tasks in queues, no workers processing tasks, but the run is not complete), it will automatically attempt to restart the workflow using the [`merlin restart`](../command_line.md#restart-merlin-restart) command.
+
+Using this flag is particularly useful when multiple monitor processes may be running for the same study, as it helps prevent race conditions where multiple monitors might attempt to restart the same workflow simultaneously. This could otherwise lead to duplicate task execution or other unexpected behavior.
+
+**Usage:**
+
+```bash
+merlin monitor <spec file> --no-restart
+```
+
+??? example "Example of Using --no-restart With Monitor"
+
+    Consider a scenario where you have a large study that you're executing with multiple batches of workers, where each batch needs a new `merlin monitor` to keep the allocation alive. Without the `--no-restart` flag, if a workflow stalls, multiple monitors might detect this simultaneously and each attempt a restart, potentially causing issues.
+
+    This can be resolved by launching all but your first monitor with the `--no-restart` flag enabled.
+
+    ```bash
+    #!/bin/bash
+    #SBATCH -N 1
+    #SBATCH --ntasks-per-node=36
+    #SBATCH -J Merlin
+    #SBATCH -t 10:00
+    #SBATCH -o merlin_workers_%j.out
+
+    # Turn off core files to work around flux exec issue.
+    ulimit -c 0
+
+    YAML=my_study.yaml
+
+    if [[ $# -gt 0 ]]
+    then
+        YAML=$1
+    fi
+
+    echo "Specification File: $YAML"
+
+    VENV_PATH=<set the path to the merlin venv here>
+
+    # Activate the virtual environment
+    source ${VENV_PATH}/bin/activate
+
+    # Show the workers command
+    merlin run-workers ${YAML} --echo
+
+    # Start workers to run the tasks in the broker
+    merlin run-workers ${YAML}
+
+    # Keep the allocation alive until all workers stop
+    merlin monitor ${YAML} --no-restart
+    ```
+
+    With the `--no-restart` flag enabled, if the workflow appears to stall, the monitor will log a warning but will not attempt an automatic restart.
+
+### Disable Garbage Collection
+
+The `--disable-gc` option disables the automatic garbage collection that normally runs when the monitor starts. By default, the monitor performs a cleanup of stale database entries for runs and studies before beginning its monitoring loop.
+
+This option is useful when:
+
+- You want to preserve database entries for runs whose workspaces may have been temporarily removed or moved
+- Multiple monitor processes are starting simultaneously and you want to avoid race conditions during cleanup
+- You're debugging issues and want to examine all database entries, including those that might otherwise be cleaned up
+
+**Usage:**
+
+```bash
+merlin monitor <spec file> --disable-gc
+```
+
+??? example "Example of Using --disable-gc With Monitor"
+
+    Suppose you're working on a workflow where workspace directories might be temporarily unavailable due to filesystem issues, but you don't want those runs removed from the database.
+    
+    ```bash
+    #!/bin/bash
+    #SBATCH -N 1
+    #SBATCH --ntasks-per-node=36
+    #SBATCH -J Merlin
+    #SBATCH -t 10:00
+    #SBATCH -o merlin_workers_%j.out
+
+    # Turn off core files to work around flux exec issue.
+    ulimit -c 0
+
+    YAML=my_study.yaml
+
+    if [[ $# -gt 0 ]]
+    then
+        YAML=$1
+    fi
+
+    echo "Specification File: $YAML"
+
+    VENV_PATH=<set the path to the merlin venv here>
+
+    # Activate the virtual environment
+    source ${VENV_PATH}/bin/activate
+
+    # Show the workers command
+    merlin run-workers ${YAML} --echo
+
+    # Start workers to run the tasks in the broker
+    merlin run-workers ${YAML}
+
+    # Keep the allocation alive until all workers stop
+    merlin monitor ${YAML} --disable-gc
+    ```
+
+    With `--disable-gc`, the monitor will skip the initial garbage collection phase and proceed directly to monitoring the workflow, preserving all existing database entries regardless of workspace availability.
 
 ### Steps
 
