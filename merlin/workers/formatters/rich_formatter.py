@@ -272,8 +272,6 @@ class ResponsiveLayoutManager:
         Returns:
             A Rich Text object containing the styled status with an icon.
         """
-        status_str = str(status).replace("WorkerStatus.", "")
-
         status_config = {
             "RUNNING": ("✓", "bold green"),
             "STALLED": ("⚠", "bold yellow"),
@@ -281,8 +279,8 @@ class ResponsiveLayoutManager:
             "REBOOTING": ("↻", "bold cyan"),
         }
 
-        icon, color = status_config.get(status_str.upper(), ("?", "white"))
-        return Text(f"{icon} {status_str}", style=color)
+        icon, color = status_config.get(status.value, ("?", "white"))
+        return Text(f"{icon} {status.value}", style=color)
 
 
 class RichWorkerFormatter(WorkerFormatter):
@@ -559,11 +557,10 @@ class RichWorkerFormatter(WorkerFormatter):
 
             for physical_worker in physical_workers:
                 status = physical_worker.get_status()
-                status_str = str(status).replace("WorkerStatus.", "")
 
                 # Only show heartbeat for running workers
                 heartbeat_text = "-"
-                if status_str == "RUNNING":
+                if status.value == "RUNNING":
                     heartbeat_text = str(self._format_last_heartbeat(physical_worker.get_heartbeat_timestamp()))
 
                 instance_name = physical_worker.get_name() or "-"
@@ -575,11 +572,11 @@ class RichWorkerFormatter(WorkerFormatter):
                         "instance": instance_name,
                         "host": physical_worker.get_host() or "-",
                         "pid": str(physical_worker.get_pid()) if physical_worker.get_pid() else "-",
-                        "status": status,  # Raw status for formatter
+                        "status": status,
                         "runtime": self._format_uptime_or_downtime(physical_worker),
                         "heartbeat": heartbeat_text,
                         "restarts": str(physical_worker.get_restart_count()),
-                        "_sort_status": status_str,  # For sorting
+                        "_sort_status": status.value,
                     }
                 )
 
@@ -657,8 +654,6 @@ class RichWorkerFormatter(WorkerFormatter):
                     - "REBOOTING": ↻ cyan
                     - Unknown: ? white
         """
-        status_str = str(status).replace("WorkerStatus.", "")
-
         status_config = {
             "RUNNING": ("✓", "bold green"),
             "STALLED": ("⚠", "bold yellow"),
@@ -666,8 +661,8 @@ class RichWorkerFormatter(WorkerFormatter):
             "REBOOTING": ("↻", "bold cyan"),
         }
 
-        icon, color = status_config.get(status_str.upper(), ("?", "white"))
-        return Text(f"{icon} {status_str}", style=color)
+        icon, color = status_config.get(status.value, ("?", "white"))
+        return Text(f"{icon} {status.value}", style=color)
 
     def _format_uptime_or_downtime(self, physical_worker: PhysicalWorkerEntity) -> str:
         """

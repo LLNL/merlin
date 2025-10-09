@@ -417,7 +417,7 @@ class PhysicalWorkerModel(BaseDataModel):  # pylint: disable=too-many-instance-a
         name (str): The name of the physical worker.
         pid (str): The process ID (PID) of the worker process.
         restart_count (int): The number of times this worker has been restarted.
-        status (WorkerStatus): The current status of the worker (e.g., running, stopped).
+        status (str): The current status of the worker (e.g., RUNNING, STOPPED).
     """
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
@@ -425,8 +425,8 @@ class PhysicalWorkerModel(BaseDataModel):  # pylint: disable=too-many-instance-a
     name: str = None  # Will be of the form celery@worker_name.hostname
     launch_cmd: str = None
     args: Dict = field(default_factory=dict)
-    pid: str = None
-    status: WorkerStatus = WorkerStatus.STOPPED
+    pid: int = None
+    status: str = field(default=WorkerStatus.STOPPED.value)
     heartbeat_timestamp: datetime = field(default_factory=datetime.now)
     latest_start_time: datetime = field(default_factory=datetime.now)
     host: str = None

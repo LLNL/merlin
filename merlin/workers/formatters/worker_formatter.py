@@ -25,6 +25,7 @@ from typing import Dict, List
 
 from rich.console import Console
 
+from merlin.common.enums import WorkerStatus
 from merlin.db_scripts.entities.logical_worker_entity import LogicalWorkerEntity
 from merlin.db_scripts.merlin_db import MerlinDatabase
 
@@ -119,15 +120,15 @@ class WorkerFormatter(ABC):
 
                 for physical_worker in physical_workers:
                     stats["total_physical"] += 1
-                    status = str(physical_worker.get_status()).replace("WorkerStatus.", "")
+                    status = physical_worker.get_status()
 
-                    if status == "RUNNING":
+                    if status == WorkerStatus.RUNNING:
                         stats["physical_running"] += 1
-                    elif status == "STOPPED":
+                    elif status == WorkerStatus.STOPPED:
                         stats["physical_stopped"] += 1
-                    elif status == "STALLED":
+                    elif status == WorkerStatus.STALLED:
                         stats["physical_stalled"] += 1
-                    elif status == "REBOOTING":
+                    elif status == WorkerStatus.REBOOTING:
                         stats["physical_rebooting"] += 1
             else:
                 stats["logical_without_instances"] += 1
