@@ -16,7 +16,11 @@ such as echoing launch commands, overriding default worker arguments, and disabl
 import logging
 from typing import Dict, List
 
+from celery import Celery
+
+from merlin.common.enums import WorkerStatus
 from merlin.db_scripts.merlin_db import MerlinDatabase
+from merlin.db_scripts.entities.logical_worker_entity import LogicalWorkerEntity
 from merlin.workers import CeleryWorker
 from merlin.workers.formatters.formatter_factory import worker_formatter_factory
 from merlin.workers.handlers.worker_handler import MerlinWorkerHandler
@@ -75,6 +79,40 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         Attempt to stop Celery workers.
         """
 
+    def get_active_workers(self, app: Celery) -> Dict[str, List[str]]:
+        """
+        Retrieve a mapping of active workers to their associated queues for a Celery application.
+
+        This function serves as the inverse of
+        [`get_active_celery_queues()`][study.celeryadapter.get_active_celery_queues]. It constructs
+        a dictionary where each key is a worker's name and the corresponding value is a
+        list of queues that the worker is connected to. This allows for easy identification
+        of which queues are being handled by each worker.
+
+        Args:
+            app: The Celery application instance.
+
+        Returns:
+            A dictionary mapping active worker names to lists of queue names they are
+                attached to. If no active workers are found, an empty dictionary is returned.
+        """
+        # Get the information we need from celery
+        i = app.control.inspect()
+        active_workers = i.active_queues()
+        if active_workers is None:
+            active_workers = {}
+
+        # Build the mapping dictionary
+        worker_queue_map = {}
+        for worker, queues in active_workers.items():
+            for queue in queues:
+                if worker in worker_queue_map:
+                    worker_queue_map[worker].append(queue["name"])
+                else:
+                    worker_queue_map[worker] = [queue["name"]]
+
+        return worker_queue_map
+
     def _build_filters(self, queues: List[str], workers: List[str]) -> Dict[str, List[str]]:
         """
         Build filters dictionary for database queries.
@@ -92,6 +130,32 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         if workers:
             filters["name"] = workers
         return filters
+    
+    def _validate_worker_status(self, logical_workers: List[LogicalWorkerEntity]):
+        """
+        Cross-check database state with live Celery workers.
+        Update status for workers that are actually dead but marked running.
+
+        Args:
+            logical_workers: List of logical worker entities to validate.
+        """
+        from merlin.celery import app
+        
+        # Get actual running workers from Celery
+        live_workers = self.get_active_workers(app)  # Uses Celery inspection
+        
+        for logical_worker in logical_workers:
+            physical_ids = logical_worker.get_physical_workers()
+            for pid in physical_ids:
+                physical = self.merlin_db.get("physical_worker", pid)
+
+                # If database says running but Celery doesn't know about it
+                if physical.get_status() == WorkerStatus.RUNNING:
+                    worker_name = physical.get_name()
+                    if worker_name not in live_workers:
+                        # Mark as stalled in database
+                        LOG.warning(f"Worker {worker_name} marked running but not found in Celery")
+                        physical.set_status(WorkerStatus.STALLED)
 
     def query_workers(self, formatter: str, queues: List[str] = None, workers: List[str] = None):
         """
@@ -107,6 +171,9 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
 
         # Retrieve workers from database
         logical_workers = self.merlin_db.get_all("logical_worker", filters=filters)
+
+        # Validate/enrich with live Celery data
+        self._validate_worker_status(logical_workers)
 
         # Use formatter to display the results
         formatter = worker_formatter_factory.create(formatter)
