@@ -18,9 +18,12 @@ class CeleryExecutor(TaskExecutor):
     
     def __init__(self, default_queue: str = "default"):
         from merlin.celery import app
+        from merlin.execution.sample_expander import SampleExpander
+
         self.celery_app = app
         self.default_queue = default_queue
         self.active_tasks = {}  # Track running tasks
+        self.sample_expander = SampleExpander()
     
     def execute_plan(self, plan: ExecutionPlan, context: ExecutionContext) -> Dict[str, TaskResult]:
         """
@@ -52,11 +55,14 @@ class CeleryExecutor(TaskExecutor):
         return all_results
     
     def _execute_level_parallel(self, level: ExecutionLevel, context: ExecutionContext) -> Dict[str, TaskResult]:
-        """Queue all chains in a level to Celery (does not wait for completion)."""
+        """Execute all chains in a level in parallel, with sample expansion."""
+        from celery import group
+        from merlin.common.tasks import merlin_step
+
         level_results = {}
 
-        # Submit all chains to Celery (skip virtual nodes like _source)
-        chain_futures = []
+        # Expand all chains
+        all_expanded_tasks = []
         for chain in level.parallel_chains:
             # Check if chain has real tasks (not virtual nodes)
             has_real_tasks = False
@@ -67,7 +73,6 @@ class CeleryExecutor(TaskExecutor):
                         has_real_tasks = True
                         break
                 except (AttributeError, KeyError, TypeError):
-                    # This is a virtual node (like _source), skip it
                     pass
 
             if not has_real_tasks:
@@ -80,23 +85,37 @@ class CeleryExecutor(TaskExecutor):
                     )
                 continue
 
-            future = self._submit_chain_to_celery(chain, context)
-            chain_futures.append((chain, future))
+            expanded = self.sample_expander.expand_chain(chain, context)
+            all_expanded_tasks.extend(expanded)
 
-        # For Celery, we don't wait - just mark tasks as queued
-        for chain, future in chain_futures:
-            # Mark all tasks in chain as queued
-            for task in chain.tasks:
-                try:
-                    step = context.study.dag.step(task)
-                    if step is not None:
-                        level_results[task] = TaskResult(
-                            task_name=task,
-                            status=TaskStatus.COMPLETED,  # Use COMPLETED to indicate queued successfully
-                            celery_id=str(future) if hasattr(future, 'id') else None
-                        )
-                except (AttributeError, KeyError, TypeError):
-                    pass  # Virtual node, already handled
+        print(f"Expanded {len(level.parallel_chains)} chains into {len(all_expanded_tasks)} tasks")
+
+        # Submit all expanded tasks to Celery
+        sigs = []
+        for task_info in all_expanded_tasks:
+            step = task_info['step']
+            adapter_config = context.study.get_adapter_config(override_type="celery")
+
+            sig = merlin_step.s(
+                step,
+                adapter_config=adapter_config
+            )
+            sig.set(queue=step.get_task_queue())
+            sigs.append((task_info, sig))
+
+        # Execute as group (but don't wait for completion)
+        if sigs:
+            task_group = group([sig for _, sig in sigs])
+            async_result = task_group.apply_async()
+
+            # Mark all tasks as queued (not waiting for actual completion)
+            for task_info, _ in sigs:
+                task_name = task_info['step'].name()
+                level_results[task_name] = TaskResult(
+                    task_name=task_name,
+                    status=TaskStatus.COMPLETED,  # Indicates successfully queued
+                    result=None
+                )
 
         return level_results
     
