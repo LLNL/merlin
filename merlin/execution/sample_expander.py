@@ -53,21 +53,23 @@ class SampleExpander:
         self,
         chain: TaskChain,
         context: ExecutionContext
-    ) -> List[Dict]:
+    ) -> List[List[Dict]]:
         """
-        Expand a chain into sample-specific chains.
+        Expand a chain into sample-specific chains, preserving chain structure.
 
         Args:
             chain: The TaskChain to expand
             context: Execution context
 
         Returns:
-            List of dictionaries, each containing:
-                - 'chain': TaskChain object
+            2D list structure: [[step0_samples...], [step1_samples...], ...]
+            Each inner list contains dictionaries with:
                 - 'step': Step object
-                - 'sample_id': int
-                - 'sample_values': Dict
+                - 'sample_id': int (or None if no expansion)
+                - 'sample_values': Dict (or None if no expansion)
                 - 'workspace': str
+                - 'chain_position': int (position in original chain)
+                - 'original_chain': TaskChain (the original chain)
         """
         samples = context.study.samples
         labels = context.study.sample_labels
@@ -86,8 +88,13 @@ class SampleExpander:
                 level_max_dirs=self.level_max_dirs
             )
 
-            # Build glob_path (e.g., "*/*/*/*/")
-            glob_path = "*/" * len(directory_sizes)
+            # Build glob_path (e.g., "*/*/*/*/*")
+            # CRITICAL FIX: Add one extra level for Maestro execution directories (samples0-1.ext, etc.)
+            # Files end up in: workspace/sample_dir/execution_dir/file.json
+            # So we need: */* to match sample_dir/execution_dir
+            # Note: No trailing slash since the command adds one
+            glob_path = "/".join(["*"] * (len(directory_sizes) + 1))
+            LOG.info(f"Calculated glob_path: '{glob_path}' from directory_sizes={directory_sizes} (+1 for execution dir) for {len(samples)} samples")
 
             # Create sample index to get all sample paths
             sample_index = create_hierarchy(
@@ -121,21 +128,25 @@ class SampleExpander:
                     needs_expansion = True
                     break
 
+        LOG.info(f"Sample expansion check: needs_expansion={needs_expansion}, num_samples={len(samples) if samples is not None else 0}, labels={labels}")
+
         if not needs_expansion:
             # No expansion needed - return steps with glob substitutions applied
+            # Group by chain position (2D structure)
             result = []
-            for task_name, step in steps_with_glob:
-                result.append({
-                    'chain': TaskChain([task_name], chain.depth),
+            for position, (task_name, step) in enumerate(steps_with_glob):
+                result.append([{
                     'step': step,
                     'sample_id': None,
                     'sample_values': None,
-                    'workspace': step.get_workspace()
-                })
+                    'workspace': step.get_workspace(),
+                    'chain_position': position,
+                    'original_chain': chain
+                }])
             return result
 
         # STEP 4: Expand for each sample
-        expanded_tasks = []
+        # Group by chain position (2D structure: position -> samples)
 
         # Recreate sample_index for iteration
         directory_sizes = uniform_directories(
@@ -152,11 +163,15 @@ class SampleExpander:
             n_digits=len(str(self.level_max_dirs))
         )
 
-        for sample_id, sample in enumerate(samples):
-            # Get relative path for this sample
-            relative_path = sample_index.get_path_to_sample(sample_id)
+        # Build 2D structure: iterate over chain positions first, then samples
+        result = []
+        for position, (task_name, step_with_glob) in enumerate(steps_with_glob):
+            position_tasks = []  # All samples for this position
 
-            for task_name, step_with_glob in steps_with_glob:
+            for sample_id, sample in enumerate(samples):
+                # Get relative path for this sample
+                relative_path = sample_index.get_path_to_sample(sample_id)
+
                 # Get parameter substitutions for this sample
                 substitutions = parameter_substitutions_for_sample(
                     sample,
@@ -165,17 +180,30 @@ class SampleExpander:
                     relative_path
                 )
 
-                # Clone step (already has glob substitutions) with sample substitutions
+                # CRITICAL FIX: Append sample path to workspace for sample-specific directories
+                # Each sample should run in its own subdirectory
+                sample_workspace = f"{step_with_glob.get_workspace()}/{relative_path}".rstrip("/")
+                LOG.info(f"Expanded sample {sample_id} workspace: {sample_workspace}")
+
+                # Clone step (already has glob substitutions) with sample substitutions and workspace
                 expanded_step = step_with_glob.clone_changing_workspace_and_cmd(
-                    cmd_replacement_pairs=substitutions
+                    cmd_replacement_pairs=substitutions,
+                    new_workspace=sample_workspace
                 )
 
-                expanded_tasks.append({
-                    'chain': TaskChain([task_name], chain.depth),
+                position_tasks.append({
                     'step': expanded_step,
                     'sample_id': sample_id,
                     'sample_values': dict(zip(labels, sample)),
-                    'workspace': expanded_step.get_workspace()
+                    'workspace': expanded_step.get_workspace(),
+                    'chain_position': position,
+                    'original_chain': chain
                 })
 
-        return expanded_tasks
+            result.append(position_tasks)
+
+        # Log expansion results
+        total_tasks = sum(len(pos_tasks) for pos_tasks in result)
+        LOG.info(f"Sample expansion complete: created {total_tasks} tasks across {len(result)} positions for chain with {len(chain.tasks)} original tasks")
+
+        return result

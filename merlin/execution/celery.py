@@ -29,40 +29,40 @@ class CeleryExecutor(TaskExecutor):
         """
         Execute the plan level by level, respecting dependencies.
 
-        Note: For Celery, this queues tasks but does not wait for completion.
+        Each level is queued to Celery and we wait for completion before
+        proceeding to the next level to enforce dependencies.
         Workers must be running separately to execute the tasks.
         """
         all_results = {}
 
         for level in plan.levels:
-            print(f"Queuing depth {level.depth} with {len(level.parallel_chains)} parallel chains...")
+            print(f"Executing depth {level.depth} with {len(level.parallel_chains)} parallel chains...")
 
-            # Queue all chains in this level to Celery
+            # Queue all chains in this level to Celery and WAIT for completion
             level_results = self._execute_level_parallel(level, context)
             all_results.update(level_results)
-            
+
             # Check if any tasks failed - decide whether to continue
-            failed_tasks = [name for name, result in level_results.items() 
+            failed_tasks = [name for name, result in level_results.items()
                            if result.status == TaskStatus.FAILED]
-            
+
             if failed_tasks:
                 print(f"Tasks failed at depth {level.depth}: {failed_tasks}")
                 # Could implement different failure strategies here
                 # For now, let's continue but mark dependent tasks as skipped
                 self._mark_dependent_tasks_skipped(plan, level.depth, all_results)
                 break
-        
+
         return all_results
     
     def _execute_level_parallel(self, level: ExecutionLevel, context: ExecutionContext) -> Dict[str, TaskResult]:
-        """Execute all chains in a level in parallel, with sample expansion."""
+        """Execute all chains in a level in parallel, with sample expansion and dependencies."""
         from celery import group
-        from merlin.common.tasks import merlin_step
 
         level_results = {}
+        all_chain_sigs = []  # Collect signatures for all chains at this level
 
-        # Expand all chains
-        all_expanded_tasks = []
+        # Expand and build each chain
         for chain in level.parallel_chains:
             # Check if chain has real tasks (not virtual nodes)
             has_real_tasks = False
@@ -85,37 +85,55 @@ class CeleryExecutor(TaskExecutor):
                     )
                 continue
 
-            expanded = self.sample_expander.expand_chain(chain, context)
-            all_expanded_tasks.extend(expanded)
+            # Expand chain into 2D structure: [[pos0_tasks], [pos1_tasks], ...]
+            expanded_positions = self.sample_expander.expand_chain(chain, context)
 
-        print(f"Expanded {len(level.parallel_chains)} chains into {len(all_expanded_tasks)} tasks")
+            # Log expansion details
+            total_expanded = sum(len(pos) for pos in expanded_positions)
+            print(f"  Chain '{chain.tasks[0] if chain.tasks else 'unknown'}' expanded to {total_expanded} tasks across {len(expanded_positions)} positions")
 
-        # Submit all expanded tasks to Celery
-        sigs = []
-        for task_info in all_expanded_tasks:
-            step = task_info['step']
-            adapter_config = context.study.get_adapter_config(override_type="celery")
+            # Build chain with dependencies
+            chain_sigs = self._build_chain_with_dependencies(expanded_positions, context)
+            all_chain_sigs.extend(chain_sigs)
+            print(f"  Created {len(chain_sigs)} Celery signatures for this chain")
 
-            sig = merlin_step.s(
-                step,
-                adapter_config=adapter_config
-            )
-            sig.set(queue=step.get_task_queue())
-            sigs.append((task_info, sig))
+            # Mark tasks as queued
+            for position_tasks in expanded_positions:
+                for task_info in position_tasks:
+                    task_name = task_info['step'].name()
+                    level_results[task_name] = TaskResult(
+                        task_name=task_name,
+                        status=TaskStatus.COMPLETED,  # Indicates successfully queued
+                        result=None
+                    )
 
-        # Execute as group (but don't wait for completion)
-        if sigs:
-            task_group = group([sig for _, sig in sigs])
+        # Count tasks for reporting
+        total_tasks = len(level_results)
+        print(f"Expanded {len(level.parallel_chains)} chains into {total_tasks} tasks with dependencies")
+
+        # Execute all chains as group (parallel chains, but each chain maintains internal dependencies)
+        if all_chain_sigs:
+            print(f"Submitting {len(all_chain_sigs)} chain signatures to Celery...")
+            task_group = group(all_chain_sigs)
             async_result = task_group.apply_async()
 
-            # Mark all tasks as queued (not waiting for actual completion)
-            for task_info, _ in sigs:
-                task_name = task_info['step'].name()
-                level_results[task_name] = TaskResult(
-                    task_name=task_name,
-                    status=TaskStatus.COMPLETED,  # Indicates successfully queued
-                    result=None
-                )
+            # CRITICAL FIX: Wait for this level to complete before proceeding to next level
+            # This ensures dependencies between levels are properly enforced
+            print(f"Waiting for level {level.depth} to complete...")
+            try:
+                # Wait for all tasks in this level to complete
+                # Timeout set to 1 hour per level (can be adjusted)
+                results = async_result.get(timeout=3600)
+                print(f"Level {level.depth} completed successfully")
+            except Exception as e:
+                print(f"Level {level.depth} failed with error: {e}")
+                # Mark tasks as failed
+                for task_name in level_results.keys():
+                    level_results[task_name] = TaskResult(
+                        task_name=task_name,
+                        status=TaskStatus.FAILED,
+                        error=str(e)
+                    )
 
         return level_results
     
@@ -168,6 +186,90 @@ class CeleryExecutor(TaskExecutor):
                         status=TaskStatus.SKIPPED,
                         error="Dependency failed"
                     )
+
+    def _create_task_signature(self, task_info: Dict, adapter_config: Dict):
+        """
+        Create a Celery signature for a task.
+
+        Args:
+            task_info: Dictionary containing step and metadata
+            adapter_config: Adapter configuration
+
+        Returns:
+            Celery signature
+        """
+        from merlin.common.tasks import merlin_step
+
+        step = task_info['step']
+        sig = merlin_step.s(step, adapter_config=adapter_config)
+        sig.set(queue=step.get_task_queue())
+        return sig
+
+    def _link_chain_positions(self, all_chains: List[List]) -> List:
+        """
+        Link tasks at different chain positions with dependencies using Celery chains.
+
+        Args:
+            all_chains: 2D list [[pos0_tasks], [pos1_tasks], ...]
+
+        Returns:
+            List of Celery chain() primitives, one per parallel sample
+        """
+        from celery import chain
+
+        if len(all_chains) == 0:
+            return []
+
+        if len(all_chains) == 1:
+            # Single position - no linking needed
+            return all_chains[0]
+
+        # Multi-position chain: use Celery's chain() primitive
+        # Build one chain per parallel sample/task
+        chains = []
+        num_parallel = len(all_chains[0])  # Number of parallel tasks
+
+        for i in range(num_parallel):
+            # Collect tasks at position i across all chain positions
+            task_sequence = [all_chains[j][i] for j in range(len(all_chains))]
+            # Create a Celery chain
+            chains.append(chain(*task_sequence))
+
+        return chains
+
+    def _build_chain_with_dependencies(self, expanded_positions: List[List[Dict]], context: ExecutionContext) -> List:
+        """
+        Build a chain with dependencies from expanded positions.
+
+        Args:
+            expanded_positions: 2D structure from SampleExpander
+            context: Execution context
+
+        Returns:
+            List of signatures with dependencies properly linked
+        """
+        from celery import group
+
+        adapter_config = context.study.get_adapter_config(override_type="celery")
+
+        # Convert each position's tasks to signatures
+        all_sig_chains = []
+        for position_tasks in expanded_positions:
+            position_sigs = [
+                self._create_task_signature(task_info, adapter_config)
+                for task_info in position_tasks
+            ]
+            all_sig_chains.append(position_sigs)
+
+        # Link positions with dependencies
+        if len(all_sig_chains) > 1:
+            # Multi-position chain: use linking logic
+            linked_sigs = self._link_chain_positions(all_sig_chains)
+        else:
+            # Single position: just return the signatures
+            linked_sigs = all_sig_chains[0] if all_sig_chains else []
+
+        return linked_sigs
 
     def execute_chain(self, chain: TaskChain, context: ExecutionContext) -> List[TaskResult]:
         """Execute a single chain via Celery chain primitive."""

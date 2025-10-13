@@ -444,6 +444,12 @@ class Step:
 
         if new_workspace is None:
             new_workspace = self.get_workspace()
+
+        # CRITICAL FIX: Apply substitutions to workspace path as well
+        # This allows MERLIN_SAMPLE_PATH and other variables to be substituted in workspace paths
+        if cmd_replacement_pairs is not None:
+            for str1, str2 in cmd_replacement_pairs:
+                new_workspace = re.sub(re.escape(str1), str2, new_workspace, flags=re.I)
         LOG.debug(f"cloned step with workspace {new_workspace}")
         study_step = StudyStep()
         study_step.name = step_dict["_name"]
