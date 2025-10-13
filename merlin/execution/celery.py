@@ -25,13 +25,16 @@ class CeleryExecutor(TaskExecutor):
     def execute_plan(self, plan: ExecutionPlan, context: ExecutionContext) -> Dict[str, TaskResult]:
         """
         Execute the plan level by level, respecting dependencies.
+
+        Note: For Celery, this queues tasks but does not wait for completion.
+        Workers must be running separately to execute the tasks.
         """
         all_results = {}
-        
+
         for level in plan.levels:
-            print(f"Executing depth {level.depth} with {len(level.parallel_chains)} parallel chains...")
-            
-            # Execute all chains in this level in parallel
+            print(f"Queuing depth {level.depth} with {len(level.parallel_chains)} parallel chains...")
+
+            # Queue all chains in this level to Celery
             level_results = self._execute_level_parallel(level, context)
             all_results.update(level_results)
             
@@ -49,30 +52,52 @@ class CeleryExecutor(TaskExecutor):
         return all_results
     
     def _execute_level_parallel(self, level: ExecutionLevel, context: ExecutionContext) -> Dict[str, TaskResult]:
-        """Execute all chains in a level in parallel."""
+        """Queue all chains in a level to Celery (does not wait for completion)."""
         level_results = {}
-        
-        # Submit all chains to Celery
+
+        # Submit all chains to Celery (skip virtual nodes like _source)
         chain_futures = []
         for chain in level.parallel_chains:
-            future = self._submit_chain_to_celery(chain, context)
-            chain_futures.append((chain, future))
-        
-        # Wait for all chains to complete
-        for chain, future in chain_futures:
-            try:
-                chain_results = future.get(timeout=3600)  # 1 hour timeout
-                for result in chain_results:
-                    level_results[result.task_name] = result
-            except Exception as e:
-                # Mark all tasks in chain as failed
+            # Check if chain has real tasks (not virtual nodes)
+            has_real_tasks = False
+            for task in chain.tasks:
+                try:
+                    step = context.study.dag.step(task)
+                    if step is not None:
+                        has_real_tasks = True
+                        break
+                except (AttributeError, KeyError, TypeError):
+                    # This is a virtual node (like _source), skip it
+                    pass
+
+            if not has_real_tasks:
+                # This is a virtual chain (e.g., _source only), mark as skipped
                 for task in chain.tasks:
                     level_results[task] = TaskResult(
                         task_name=task,
-                        status=TaskStatus.FAILED,
-                        error=str(e)
+                        status=TaskStatus.SKIPPED,
+                        error="Virtual node, no execution needed"
                     )
-        
+                continue
+
+            future = self._submit_chain_to_celery(chain, context)
+            chain_futures.append((chain, future))
+
+        # For Celery, we don't wait - just mark tasks as queued
+        for chain, future in chain_futures:
+            # Mark all tasks in chain as queued
+            for task in chain.tasks:
+                try:
+                    step = context.study.dag.step(task)
+                    if step is not None:
+                        level_results[task] = TaskResult(
+                            task_name=task,
+                            status=TaskStatus.COMPLETED,  # Use COMPLETED to indicate queued successfully
+                            celery_id=str(future) if hasattr(future, 'id') else None
+                        )
+                except (AttributeError, KeyError, TypeError):
+                    pass  # Virtual node, already handled
+
         return level_results
     
     def _submit_chain_to_celery(self, chain: TaskChain, context: ExecutionContext):
@@ -84,23 +109,36 @@ class CeleryExecutor(TaskExecutor):
     
     def _build_celery_chain(self, chain: TaskChain, context: ExecutionContext):
         """Build a Celery chain from a TaskChain."""
-        # This is where you'd integrate with your actual Celery tasks
-        # Simplified mock implementation
         from celery import chain as celery_chain
-        
-        # Assuming you have a generic Celery task that can execute any step
+        from merlin.common.tasks import merlin_step
+
+        # Get adapter config for tasks
+        adapter_config = context.study.get_adapter_config(override_type="celery")
+
+        # Build signatures for each task in the chain (skip virtual nodes)
         celery_tasks = []
         for task_name in chain.tasks:
-            celery_tasks.append(
-                self.celery_app.signature(
-                    'merlin:execute_step',
-                    args=[task_name, context.study_name, context.parameter_info],
-                    queue=self.default_queue
+            try:
+                # Get Step object from DAG
+                step = context.study.dag.step(task_name)
+
+                # Skip virtual nodes (like _source)
+                if step is None:
+                    continue
+
+                # Create signature for merlin_step task
+                sig = merlin_step.s(
+                    step,
+                    adapter_config=adapter_config
                 )
-            )
-        
+                sig.set(queue=step.get_task_queue())
+                celery_tasks.append(sig)
+            except (AttributeError, KeyError, TypeError):
+                # This is a virtual node, skip it
+                continue
+
         return celery_chain(*celery_tasks)
-    
+
     def _mark_dependent_tasks_skipped(self, plan: ExecutionPlan, failed_depth: int, results: Dict[str, TaskResult]):
         """Mark tasks that depend on failed tasks as skipped."""
         for level in plan.levels:
@@ -111,52 +149,122 @@ class CeleryExecutor(TaskExecutor):
                         status=TaskStatus.SKIPPED,
                         error="Dependency failed"
                     )
-    
-    # TODO not sure if these will even be needed for Celery
-    # def execute_chain(self, chain: TaskChain, context: ExecutionContext) -> List[TaskResult]:
-    #     """Execute a single chain."""
-    #     results = []
-    #     for task_name in chain.tasks:
-    #         result = self.execute_task(task_name, context)
-    #         results.append(result)
-            
-    #         # Stop chain if task failed
-    #         if result.status == TaskStatus.FAILED:
-    #             break
-                
-    #     return results
-    
-    # def execute_task(self, task_name: str, context: ExecutionContext) -> TaskResult:
-    #     """Execute a single task via Celery."""
-    #     celery_id = str(uuid.uuid4())
-        
-    #     try:
-    #         # Submit to Celery
-    #         async_result = self.celery_app.send_task(
-    #             'merlin.execute_step',
-    #             args=[task_name, context.study_name, context.parameter_info],
-    #             task_id=celery_id,
-    #             queue=self.default_queue
-    #         )
-            
-    #         # Wait for result
-    #         start_time = time.time()
-    #         result = async_result.get(timeout=1800)  # 30 min timeout
-    #         end_time = time.time()
-            
-    #         return TaskResult(
-    #             task_name=task_name,
-    #             status=TaskStatus.COMPLETED,
-    #             start_time=start_time,
-    #             end_time=end_time,
-    #             result=result,
-    #             celery_id=celery_id
-    #         )
-            
-    #     except Exception as e:
-    #         return TaskResult(
-    #             task_name=task_name,
-    #             status=TaskStatus.FAILED,
-    #             error=str(e),
-    #             celery_id=celery_id
-    #         )
+
+    def execute_chain(self, chain: TaskChain, context: ExecutionContext) -> List[TaskResult]:
+        """Execute a single chain via Celery chain primitive."""
+        from celery import chain as celery_chain
+        from merlin.common.tasks import merlin_step
+
+        results = []
+        adapter_config = context.study.get_adapter_config(override_type="celery")
+
+        # Build Celery chain (skip virtual nodes)
+        sigs = []
+        real_task_names = []
+        for task_name in chain.tasks:
+            try:
+                step = context.study.dag.step(task_name)
+
+                # Skip virtual nodes
+                if step is None:
+                    results.append(TaskResult(
+                        task_name=task_name,
+                        status=TaskStatus.SKIPPED,
+                        error="Virtual node, no execution needed"
+                    ))
+                    continue
+
+                sig = merlin_step.s(step, adapter_config=adapter_config)
+                sig.set(queue=step.get_task_queue())
+                sigs.append(sig)
+                real_task_names.append(task_name)
+            except (AttributeError, KeyError, TypeError):
+                # This is a virtual node, skip it
+                results.append(TaskResult(
+                    task_name=task_name,
+                    status=TaskStatus.SKIPPED,
+                    error="Virtual node, no execution needed"
+                ))
+
+        # Execute chain (only if there are real tasks)
+        if sigs:
+            try:
+                start_time = time.time()
+                async_result = celery_chain(*sigs).apply_async()
+                result = async_result.get(timeout=3600)  # 1 hour timeout
+                end_time = time.time()
+
+                # Create success results for all real tasks
+                for task_name in real_task_names:
+                    results.append(TaskResult(
+                        task_name=task_name,
+                        status=TaskStatus.COMPLETED,
+                        start_time=start_time,
+                        end_time=end_time
+                    ))
+            except Exception as e:
+                # Mark all real tasks in chain as failed
+                for task_name in real_task_names:
+                    results.append(TaskResult(
+                        task_name=task_name,
+                        status=TaskStatus.FAILED,
+                        error=str(e)
+                    ))
+
+        return results
+
+    def execute_task(self, task_name: str, context: ExecutionContext) -> TaskResult:
+        """Execute a single task via Celery."""
+        from merlin.common.tasks import merlin_step
+
+        try:
+            # Get Step object from DAG
+            step = context.study.dag.step(task_name)
+
+            # Skip virtual nodes
+            if step is None:
+                return TaskResult(
+                    task_name=task_name,
+                    status=TaskStatus.SKIPPED,
+                    error="Virtual node, no execution needed"
+                )
+
+            celery_id = str(uuid.uuid4())
+
+            # Get adapter config
+            adapter_config = context.study.get_adapter_config(override_type="celery")
+
+            # Create Celery signature
+            sig = merlin_step.s(step, adapter_config=adapter_config)
+            sig.set(queue=step.get_task_queue())
+
+            # Submit to Celery
+            start_time = time.time()
+            async_result = sig.apply_async(task_id=celery_id)
+
+            # Wait for result
+            result = async_result.get(timeout=1800)  # 30 min timeout
+            end_time = time.time()
+
+            return TaskResult(
+                task_name=task_name,
+                status=TaskStatus.COMPLETED,
+                start_time=start_time,
+                end_time=end_time,
+                result=result,
+                celery_id=celery_id
+            )
+        except (AttributeError, KeyError, TypeError):
+            # This is a virtual node
+            return TaskResult(
+                task_name=task_name,
+                status=TaskStatus.SKIPPED,
+                error="Virtual node, no execution needed"
+            )
+        except Exception as e:
+            return TaskResult(
+                task_name=task_name,
+                status=TaskStatus.FAILED,
+                error=str(e),
+                celery_id=celery_id if 'celery_id' in locals() else None
+            )
