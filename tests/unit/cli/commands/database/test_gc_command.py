@@ -66,7 +66,8 @@ def test_add_parser_registers_gc_command_with_defaults(command: DatabaseGarbageC
     assert args.func == command.process_command
     assert args.dry_run is False
     assert args.skip_runs is False
-    assert args.skip_workers is False
+    assert args.skip_logical_workers is False
+    assert args.skip_physical_workers is False
     assert args.skip_studies is False
     assert args.force is False
 
@@ -88,7 +89,8 @@ def test_add_parser_dry_run_flag(command: DatabaseGarbageCollectionCommand):
 
 def test_add_parser_skip_flags(command: DatabaseGarbageCollectionCommand):
     """
-    Test that skip flags (`--skip-runs`, `--skip-workers`, `--skip-studies`) are parsed correctly.
+    Test that skip flags (`--skip-runs`, `--skip-logical-workers`, `--skip-physical-workers`, `--skip-studies`)
+    are parsed correctly.
 
     Args:
         command: Instance of the `DatabaseGarbageCollectionCommand` under test.
@@ -97,9 +99,10 @@ def test_add_parser_skip_flags(command: DatabaseGarbageCollectionCommand):
     subparsers = parser.add_subparsers(dest="subcmd", required=True)
     command.add_parser(subparsers)
 
-    args = parser.parse_args(["gc", "--skip-runs", "--skip-workers", "--skip-studies"])
+    args = parser.parse_args(["gc", "--skip-runs", "--skip-logical-workers", "--skip-physical-workers", "--skip-studies"])
     assert args.skip_runs is True
-    assert args.skip_workers is True
+    assert args.skip_logical_workers is True
+    assert args.skip_physical_workers is True
     assert args.skip_studies is True
 
 
@@ -159,6 +162,8 @@ def test_process_command_dry_run_calls_scan_only(
         dry_run=True,
         skip_runs=False,
         skip_workers=False,
+        skip_logical_workers=False,
+        skip_physical_workers=False,
         skip_studies=False,
         force=False,
     )
@@ -167,7 +172,8 @@ def test_process_command_dry_run_calls_scan_only(
     collector_instance = mock_garbage_collector.return_value
     collector_instance.scan.assert_called_once_with(
         check_runs=True,
-        check_workers=True,
+        check_logical_workers=True,
+        check_physical_workers=True,
         check_studies=True,
     )
     collector_instance.scan_and_clean.assert_not_called()
@@ -192,6 +198,8 @@ def test_process_command_normal_mode_calls_scan_and_clean(
         dry_run=False,
         skip_runs=False,
         skip_workers=False,
+        skip_logical_workers=False,
+        skip_physical_workers=False,
         skip_studies=False,
         force=False,
     )
@@ -200,7 +208,8 @@ def test_process_command_normal_mode_calls_scan_and_clean(
     collector_instance = mock_garbage_collector.return_value
     collector_instance.scan_and_clean.assert_called_once_with(
         check_runs=True,
-        check_workers=True,
+        check_logical_workers=True,
+        check_physical_workers=True,
         check_studies=True,
         force=False,
     )
@@ -222,6 +231,8 @@ def test_process_command_skip_runs_flag_passed_correctly(
         dry_run=True,
         skip_runs=True,
         skip_workers=False,
+        skip_logical_workers=False,
+        skip_physical_workers=False,
         skip_studies=False,
         force=False,
     )
@@ -230,7 +241,8 @@ def test_process_command_skip_runs_flag_passed_correctly(
     collector_instance = mock_garbage_collector.return_value
     collector_instance.scan.assert_called_once_with(
         check_runs=False,
-        check_workers=True,
+        check_logical_workers=True,
+        check_physical_workers=True,
         check_studies=True,
     )
 
@@ -240,7 +252,8 @@ def test_process_command_skip_workers_flag_passed_correctly(
     mock_garbage_collector: MagicMock,
 ):
     """
-    Test that `--skip-workers` flag correctly sets `check_workers=False`.
+    Test that `--skip-workers` flag correctly sets `check_logical_workers=False`
+    and `check_physical_workers=False`.
 
     Args:
         command: Instance of the `DatabaseGarbageCollectionCommand` under test.
@@ -250,6 +263,8 @@ def test_process_command_skip_workers_flag_passed_correctly(
         dry_run=True,
         skip_runs=False,
         skip_workers=True,
+        skip_logical_workers=False,
+        skip_physical_workers=False,
         skip_studies=False,
         force=False,
     )
@@ -258,7 +273,70 @@ def test_process_command_skip_workers_flag_passed_correctly(
     collector_instance = mock_garbage_collector.return_value
     collector_instance.scan.assert_called_once_with(
         check_runs=True,
-        check_workers=False,
+        check_logical_workers=False,
+        check_physical_workers=False,
+        check_studies=True,
+    )
+
+
+def test_process_command_skip_logical_workers_flag_passed_correctly(
+    command: DatabaseGarbageCollectionCommand,
+    mock_garbage_collector: MagicMock,
+):
+    """
+    Test that `--skip-logical-workers` flag correctly sets `check_logical_workers=False`.
+
+    Args:
+        command: Instance of the `DatabaseGarbageCollectionCommand` under test.
+        mock_garbage_collector: Mocked `DatabaseGarbageCollector` class.
+    """
+    args = Namespace(
+        dry_run=True,
+        skip_runs=False,
+        skip_workers=False,
+        skip_logical_workers=True,
+        skip_physical_workers=False,
+        skip_studies=False,
+        force=False,
+    )
+    command.process_command(args)
+
+    collector_instance = mock_garbage_collector.return_value
+    collector_instance.scan.assert_called_once_with(
+        check_runs=True,
+        check_logical_workers=False,
+        check_physical_workers=True,
+        check_studies=True,
+    )
+
+
+def test_process_command_skip_physical_workers_flag_passed_correctly(
+    command: DatabaseGarbageCollectionCommand,
+    mock_garbage_collector: MagicMock,
+):
+    """
+    Test that `--skip-physical-workers` flag correctly sets `check_physical_workers=False`.
+
+    Args:
+        command: Instance of the `DatabaseGarbageCollectionCommand` under test.
+        mock_garbage_collector: Mocked `DatabaseGarbageCollector` class.
+    """
+    args = Namespace(
+        dry_run=True,
+        skip_runs=False,
+        skip_workers=False,
+        skip_logical_workers=False,
+        skip_physical_workers=True,
+        skip_studies=False,
+        force=False,
+    )
+    command.process_command(args)
+
+    collector_instance = mock_garbage_collector.return_value
+    collector_instance.scan.assert_called_once_with(
+        check_runs=True,
+        check_logical_workers=True,
+        check_physical_workers=False,
         check_studies=True,
     )
 
@@ -278,6 +356,8 @@ def test_process_command_skip_studies_flag_passed_correctly(
         dry_run=True,
         skip_runs=False,
         skip_workers=False,
+        skip_logical_workers=False,
+        skip_physical_workers=False,
         skip_studies=True,
         force=False,
     )
@@ -286,7 +366,8 @@ def test_process_command_skip_studies_flag_passed_correctly(
     collector_instance = mock_garbage_collector.return_value
     collector_instance.scan.assert_called_once_with(
         check_runs=True,
-        check_workers=True,
+        check_logical_workers=True,
+        check_physical_workers=True,
         check_studies=False,
     )
 
@@ -306,6 +387,8 @@ def test_process_command_all_skip_flags_combined(
         dry_run=True,
         skip_runs=True,
         skip_workers=True,
+        skip_logical_workers=True,
+        skip_physical_workers=True,
         skip_studies=True,
         force=False,
     )
@@ -314,7 +397,8 @@ def test_process_command_all_skip_flags_combined(
     collector_instance = mock_garbage_collector.return_value
     collector_instance.scan.assert_called_once_with(
         check_runs=False,
-        check_workers=False,
+        check_logical_workers=False,
+        check_physical_workers=False,
         check_studies=False,
     )
 
@@ -334,6 +418,8 @@ def test_process_command_force_flag_passed_correctly(
         dry_run=False,
         skip_runs=False,
         skip_workers=False,
+        skip_logical_workers=False,
+        skip_physical_workers=False,
         skip_studies=False,
         force=True,
     )
@@ -342,7 +428,8 @@ def test_process_command_force_flag_passed_correctly(
     collector_instance = mock_garbage_collector.return_value
     collector_instance.scan_and_clean.assert_called_once_with(
         check_runs=True,
-        check_workers=True,
+        check_logical_workers=True,
+        check_physical_workers=True,
         check_studies=True,
         force=True,
     )
@@ -365,6 +452,8 @@ def test_process_command_force_flag_not_passed_to_scan(
         dry_run=True,
         skip_runs=False,
         skip_workers=False,
+        skip_logical_workers=False,
+        skip_physical_workers=False,
         skip_studies=False,
         force=True,  # Should be ignored in dry-run mode
     )
@@ -373,7 +462,8 @@ def test_process_command_force_flag_not_passed_to_scan(
     collector_instance = mock_garbage_collector.return_value
     collector_instance.scan.assert_called_once_with(
         check_runs=True,
-        check_workers=True,
+        check_logical_workers=True,
+        check_physical_workers=True,
         check_studies=True,
     )
     # Verify force wasn't passed to scan (it doesn't accept that parameter)
@@ -395,6 +485,8 @@ def test_process_command_complex_flag_combination(
         dry_run=False,
         skip_runs=True,
         skip_workers=False,
+        skip_logical_workers=False,
+        skip_physical_workers=False,
         skip_studies=True,
         force=True,
     )
@@ -403,7 +495,8 @@ def test_process_command_complex_flag_combination(
     collector_instance = mock_garbage_collector.return_value
     collector_instance.scan_and_clean.assert_called_once_with(
         check_runs=False,
-        check_workers=True,
+        check_logical_workers=True,
+        check_physical_workers=True,
         check_studies=False,
         force=True,
     )
@@ -424,6 +517,8 @@ def test_garbage_collector_instantiation(
         dry_run=True,
         skip_runs=False,
         skip_workers=False,
+        skip_logical_workers=False,
+        skip_physical_workers=False,
         skip_studies=False,
         force=False,
     )

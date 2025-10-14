@@ -14,6 +14,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from merlin.db_scripts.garbage_collector import DatabaseGarbageCollector
+from merlin.exceptions import RunNotFoundError
 
 
 @pytest.fixture
@@ -120,7 +121,7 @@ class TestDatabaseGarbageCollectorInit:
         """
         gc = DatabaseGarbageCollector(merlin_db=mock_db)
         assert gc.merlin_db is mock_db
-        assert gc._issues == {"runs": [], "logical_workers": [], "physical_workers": [], "studies": []}
+        assert gc._issues == {"run": [], "logical_worker": [], "physical_worker": [], "study": []}
 
     def test_init_without_provided_db(self, mock_db: MagicMock):
         """
@@ -132,7 +133,7 @@ class TestDatabaseGarbageCollectorInit:
         gc = DatabaseGarbageCollector()
         mock_db.assert_called_once()
         assert gc.merlin_db is not None
-        assert gc._issues == {"runs": [], "logical_workers": [], "physical_workers": [], "studies": []}
+        assert gc._issues == {"run": [], "logical_worker": [], "physical_worker": [], "study": []}
 
 
 class TestPromptForConfirmation:
@@ -189,7 +190,7 @@ class TestCheckRunWorkspaces:
         with mocker.patch("os.path.exists", return_value=True):
             gc.check_run_workspaces()
 
-        assert len(gc._issues["runs"]) == 0
+        assert len(gc._issues["run"]) == 0
 
     def test_check_with_invalid_workspace(
         self, mocker: MockerFixture, gc: DatabaseGarbageCollector, mock_run: MagicMock, mock_db: MagicMock
@@ -209,8 +210,8 @@ class TestCheckRunWorkspaces:
         with mocker.patch("os.path.exists", return_value=False):
             gc.check_run_workspaces()
 
-        assert len(gc._issues["runs"]) == 1
-        assert gc._issues["runs"][0] == mock_run
+        assert len(gc._issues["run"]) == 1
+        assert gc._issues["run"][0] == mock_run
 
     def test_check_with_multiple_runs(self, mocker: MockerFixture, gc: DatabaseGarbageCollector, mock_db: MagicMock):
         """
@@ -235,12 +236,12 @@ class TestCheckRunWorkspaces:
         with mocker.patch("os.path.exists", side_effect=path_exists_side_effect):
             gc.check_run_workspaces()
 
-        assert len(gc._issues["runs"]) == 1
-        assert gc._issues["runs"][0] == invalid_run
+        assert len(gc._issues["run"]) == 1
+        assert gc._issues["run"][0] == invalid_run
 
 
 class TestCheckOrphanedLogicalWorkers:
-    """Tests for the _check_orphaned_logical_workers method."""
+    """Tests for the check_orphaned_logical_workers method."""
 
     def test_worker_with_valid_runs(self, gc: DatabaseGarbageCollector, mock_db: MagicMock):
         """
@@ -256,10 +257,10 @@ class TestCheckOrphanedLogicalWorkers:
         mock_db.runs.get_all.return_value = [valid_run]
         mock_db.logical_workers.get_all.return_value = []
 
-        gc._issues["runs"] = []
-        gc._check_orphaned_logical_workers()
+        gc._issues["run"] = []
+        gc.check_orphaned_logical_workers()
 
-        assert len(gc._issues["logical_workers"]) == 0
+        assert len(gc._issues["logical_worker"]) == 0
 
     def test_worker_with_no_runs(self, gc: DatabaseGarbageCollector, mock_logical_worker: MagicMock, mock_db: MagicMock):
         """
@@ -275,10 +276,10 @@ class TestCheckOrphanedLogicalWorkers:
         mock_db.runs.get_all.return_value = []
         mock_db.logical_workers.get_all.return_value = [mock_logical_worker]
 
-        gc._check_orphaned_logical_workers()
+        gc.check_orphaned_logical_workers()
 
-        assert len(gc._issues["logical_workers"]) == 1
-        assert gc._issues["logical_workers"][0] == mock_logical_worker
+        assert len(gc._issues["logical_worker"]) == 1
+        assert gc._issues["logical_worker"][0] == mock_logical_worker
 
     def test_worker_with_invalid_runs(self, gc: DatabaseGarbageCollector, mock_logical_worker: MagicMock, mock_db: MagicMock):
         """
@@ -293,14 +294,14 @@ class TestCheckOrphanedLogicalWorkers:
         invalid_run.get_id.return_value = "run-123"
 
         mock_logical_worker.get_runs.return_value = ["run-123"]
-        gc._issues["runs"] = [invalid_run]
+        gc._issues["run"] = [invalid_run]
 
         mock_db.runs.get_all.return_value = [invalid_run]
         mock_db.logical_workers.get_all.return_value = [mock_logical_worker]
 
-        gc._check_orphaned_logical_workers()
+        gc.check_orphaned_logical_workers()
 
-        assert len(gc._issues["logical_workers"]) == 1
+        assert len(gc._issues["logical_worker"]) == 1
 
     def test_worker_with_nonexistent_runs(
         self, gc: DatabaseGarbageCollector, mock_logical_worker: MagicMock, mock_db: MagicMock
@@ -321,13 +322,13 @@ class TestCheckOrphanedLogicalWorkers:
         mock_db.runs.get_all.return_value = [valid_run]
         mock_db.logical_workers.get_all.return_value = [mock_logical_worker]
 
-        gc._check_orphaned_logical_workers()
+        gc.check_orphaned_logical_workers()
 
-        assert len(gc._issues["logical_workers"]) == 1
+        assert len(gc._issues["logical_worker"]) == 1
 
 
 class TestCheckOrphanedPhysicalWorkers:
-    """Tests for the _check_orphaned_physical_workers method."""
+    """Tests for the check_orphaned_physical_workers method."""
 
     def test_worker_with_valid_logical_worker(
         self, gc: DatabaseGarbageCollector, mock_physical_worker: MagicMock, mock_db: MagicMock
@@ -346,10 +347,10 @@ class TestCheckOrphanedPhysicalWorkers:
         mock_db.physical_workers.get_all.return_value = [mock_physical_worker]
         mock_db.logical_workers.get_all.return_value = [valid_logical]
 
-        gc._issues["logical_workers"] = []
-        gc._check_orphaned_physical_workers()
+        gc._issues["logical_worker"] = []
+        gc.check_orphaned_physical_workers()
 
-        assert len(gc._issues["physical_workers"]) == 0
+        assert len(gc._issues["physical_worker"]) == 0
 
     def test_worker_with_orphaned_logical_worker(
         self, gc: DatabaseGarbageCollector, mock_physical_worker: MagicMock, mock_db: MagicMock
@@ -365,14 +366,14 @@ class TestCheckOrphanedPhysicalWorkers:
         orphaned_logical = MagicMock()
         orphaned_logical.get_id.return_value = "logical-worker-123"
 
-        gc._issues["logical_workers"] = [orphaned_logical]
+        gc._issues["logical_worker"] = [orphaned_logical]
 
         mock_db.physical_workers.get_all.return_value = [mock_physical_worker]
         mock_db.logical_workers.get_all.return_value = [orphaned_logical]
 
-        gc._check_orphaned_physical_workers()
+        gc.check_orphaned_physical_workers()
 
-        assert len(gc._issues["physical_workers"]) == 1
+        assert len(gc._issues["physical_worker"]) == 1
 
     def test_worker_with_nonexistent_logical_worker(
         self, gc: DatabaseGarbageCollector, mock_physical_worker: MagicMock, mock_db: MagicMock
@@ -393,29 +394,9 @@ class TestCheckOrphanedPhysicalWorkers:
         mock_db.physical_workers.get_all.return_value = [mock_physical_worker]
         mock_db.logical_workers.get_all.return_value = [valid_logical]
 
-        gc._check_orphaned_physical_workers()
+        gc.check_orphaned_physical_workers()
 
-        assert len(gc._issues["physical_workers"]) == 1
-
-
-class TestCheckOrphanedWorkers:
-    """Tests for the check_orphaned_workers method."""
-
-    def test_check_orphaned_workers_calls_both_checks(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
-        """
-        Test that check_orphaned_workers calls both logical and physical checks.
-
-        Args:
-            mocker: Pytest mocker fixture.
-            gc: DatabaseGarbageCollector instance.
-        """
-        mock_logical = mocker.patch.object(gc, "_check_orphaned_logical_workers")
-        mock_physical = mocker.patch.object(gc, "_check_orphaned_physical_workers")
-
-        gc.check_orphaned_workers()
-
-        mock_logical.assert_called_once()
-        mock_physical.assert_called_once()
+        assert len(gc._issues["physical_worker"]) == 1
 
 
 class TestCheckEmptyStudies:
@@ -438,7 +419,7 @@ class TestCheckEmptyStudies:
 
         gc.check_empty_studies()
 
-        assert len(gc._issues["studies"]) == 0
+        assert len(gc._issues["study"]) == 0
 
     def test_study_with_no_runs(self, gc: DatabaseGarbageCollector, mock_study: MagicMock, mock_db: MagicMock):
         """
@@ -456,7 +437,7 @@ class TestCheckEmptyStudies:
 
         gc.check_empty_studies()
 
-        assert len(gc._issues["studies"]) == 1
+        assert len(gc._issues["study"]) == 1
 
     def test_study_with_invalid_runs(self, gc: DatabaseGarbageCollector, mock_study: MagicMock, mock_db: MagicMock):
         """
@@ -471,14 +452,14 @@ class TestCheckEmptyStudies:
         invalid_run.get_id.return_value = "run-123"
 
         mock_study.get_runs.return_value = ["run-123"]
-        gc._issues["runs"] = [invalid_run]
+        gc._issues["run"] = [invalid_run]
 
         mock_db.runs.get_all.return_value = [invalid_run]
         mock_db.studies.get_all.return_value = [mock_study]
 
         gc.check_empty_studies()
 
-        assert len(gc._issues["studies"]) == 1
+        assert len(gc._issues["study"]) == 1
 
     def test_study_with_nonexistent_runs(self, gc: DatabaseGarbageCollector, mock_study: MagicMock, mock_db: MagicMock):
         """
@@ -499,7 +480,7 @@ class TestCheckEmptyStudies:
 
         gc.check_empty_studies()
 
-        assert len(gc._issues["studies"]) == 1
+        assert len(gc._issues["study"]) == 1
 
 
 class TestCleanupEntity:
@@ -513,7 +494,7 @@ class TestCleanupEntity:
             gc: DatabaseGarbageCollector instance.
             mock_db: Mocked database instance.
         """
-        gc._cleanup_entity("runs")
+        gc._cleanup_entity("run")
         mock_db.delete.assert_not_called()
 
     def test_cleanup_runs(self, gc: DatabaseGarbageCollector, mock_run: MagicMock, mock_db: MagicMock):
@@ -525,8 +506,8 @@ class TestCleanupEntity:
             mock_run: Mocked run instance.
             mock_db: Mocked database instance.
         """
-        gc._issues["runs"] = [mock_run]
-        gc._cleanup_entity("runs")
+        gc._issues["run"] = [mock_run]
+        gc._cleanup_entity("run")
 
         mock_db.delete.assert_called_once_with("run", "run-123")
 
@@ -539,8 +520,8 @@ class TestCleanupEntity:
             mock_logical_worker: Mocked logical worker instance.
             mock_db: Mocked database instance.
         """
-        gc._issues["logical_workers"] = [mock_logical_worker]
-        gc._cleanup_entity("logical_workers")
+        gc._issues["logical_worker"] = [mock_logical_worker]
+        gc._cleanup_entity("logical_worker")
 
         mock_db.delete.assert_called_once_with("logical_worker", "logical-worker-123")
 
@@ -553,8 +534,8 @@ class TestCleanupEntity:
             mock_physical_worker: Mocked physical worker instance.
             mock_db: Mocked database instance.
         """
-        gc._issues["physical_workers"] = [mock_physical_worker]
-        gc._cleanup_entity("physical_workers")
+        gc._issues["physical_worker"] = [mock_physical_worker]
+        gc._cleanup_entity("physical_worker")
 
         mock_db.delete.assert_called_once_with("physical_worker", "physical-worker-123")
 
@@ -567,8 +548,8 @@ class TestCleanupEntity:
             mock_study: Mocked study instance.
             mock_db: Mocked database instance.
         """
-        gc._issues["studies"] = [mock_study]
-        gc._cleanup_entity("studies")
+        gc._issues["study"] = [mock_study]
+        gc._cleanup_entity("study")
 
         mock_db.delete.assert_called_once_with("study", "study-123", remove_associated_runs=False)
 
@@ -581,16 +562,18 @@ class TestCleanupEntity:
             mock_run: Mocked run instance.
             mock_db: Mocked database instance.
         """
-        gc._issues["runs"] = [mock_run]
-        mock_db.delete.side_effect = Exception("Deletion failed")
+        gc._issues["run"] = [mock_run]
+        mock_db.delete.side_effect = RunNotFoundError("Deletion failed")
 
         # Should not raise exception
-        gc._cleanup_entity("runs")
+        gc._cleanup_entity("run")
         mock_db.delete.assert_called_once()
 
 
 class TestCleanupMethods:
-    """Tests for cleanup_runs, cleanup_workers, and cleanup_studies."""
+    """
+    Tests for cleanup_runs, cleanup_logical_workers, cleanup_physical_workers, and cleanup_studies.
+    """
 
     def test_cleanup_runs_calls_cleanup_entity(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
@@ -602,24 +585,31 @@ class TestCleanupMethods:
         """
         mock_cleanup = mocker.patch.object(gc, "_cleanup_entity")
         gc.cleanup_runs()
-        mock_cleanup.assert_called_once_with("runs")
+        mock_cleanup.assert_called_once_with("run")
 
-    def test_cleanup_workers_calls_cleanup_entity_twice(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
+    def test_cleanup_logical_workers_calls_cleanup_entity(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
-        Test that cleanup_workers calls _cleanup_entity for both worker types,
-        in order.
+        Test that cleanup_logical_workers calls _cleanup_entity.
 
         Args:
             mocker: Pytest Mocker fixture.
             gc: DatabaseGarbageCollector instance.
         """
         mock_cleanup = mocker.patch.object(gc, "_cleanup_entity")
-        gc.cleanup_workers()
+        gc.cleanup_logical_workers()
+        mock_cleanup.assert_called_once_with("logical_worker")
 
-        assert mock_cleanup.call_count == 2
-        calls = mock_cleanup.call_args_list
-        assert calls[0] == call("physical_workers")
-        assert calls[1] == call("logical_workers")
+    def test_cleanup_physical_workers_calls_cleanup_entity(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
+        """
+        Test that cleanup_physical_workers calls _cleanup_entity.
+
+        Args:
+            mocker: Pytest Mocker fixture.
+            gc: DatabaseGarbageCollector instance.
+        """
+        mock_cleanup = mocker.patch.object(gc, "_cleanup_entity")
+        gc.cleanup_physical_workers()
+        mock_cleanup.assert_called_once_with("physical_worker")
 
     def test_cleanup_studies_calls_cleanup_entity(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
@@ -631,7 +621,7 @@ class TestCleanupMethods:
         """
         mock_cleanup = mocker.patch.object(gc, "_cleanup_entity")
         gc.cleanup_studies()
-        mock_cleanup.assert_called_once_with("studies")
+        mock_cleanup.assert_called_once_with("study")
 
 
 class TestGenerateReport:
@@ -669,10 +659,10 @@ class TestGenerateReport:
             mock_physical_worker: MagicMock instance representing a physical worker.
             mock_study: MagicMock instance representing a study.
         """
-        gc._issues["runs"] = [mock_run]
-        gc._issues["logical_workers"] = [mock_logical_worker]
-        gc._issues["physical_workers"] = [mock_physical_worker]
-        gc._issues["studies"] = [mock_study]
+        gc._issues["run"] = [mock_run]
+        gc._issues["logical_worker"] = [mock_logical_worker]
+        gc._issues["physical_worker"] = [mock_physical_worker]
+        gc._issues["study"] = [mock_study]
 
         report = gc.generate_report()
 
@@ -700,14 +690,16 @@ class TestScan:
             gc: DatabaseGarbageCollector instance.
         """
         mock_runs = mocker.patch.object(gc, "check_run_workspaces")
-        mock_workers = mocker.patch.object(gc, "check_orphaned_workers")
+        mock_logical_workers = mocker.patch.object(gc, "check_orphaned_logical_workers")
+        mock_physical_workers = mocker.patch.object(gc, "check_orphaned_physical_workers")
         mock_studies = mocker.patch.object(gc, "check_empty_studies")
         mocker.patch.object(gc, "generate_report", return_value="Report")
 
         gc.scan()
 
         mock_runs.assert_called_once()
-        mock_workers.assert_called_once()
+        mock_logical_workers.assert_called_once()
+        mock_physical_workers.assert_called_once()
         mock_studies.assert_called_once()
 
     def test_scan_selective_checks(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
@@ -719,14 +711,16 @@ class TestScan:
             gc: DatabaseGarbageCollector instance.
         """
         mock_runs = mocker.patch.object(gc, "check_run_workspaces")
-        mock_workers = mocker.patch.object(gc, "check_orphaned_workers")
+        mock_logical_workers = mocker.patch.object(gc, "check_orphaned_logical_workers")
+        mock_physical_workers = mocker.patch.object(gc, "check_orphaned_physical_workers")
         mock_studies = mocker.patch.object(gc, "check_empty_studies")
         mocker.patch.object(gc, "generate_report", return_value="Report")
 
-        gc.scan(check_runs=True, check_workers=False, check_studies=False)
+        gc.scan(check_runs=True, check_logical_workers=False, check_physical_workers=False, check_studies=False)
 
         mock_runs.assert_called_once()
-        mock_workers.assert_not_called()
+        mock_logical_workers.assert_not_called()
+        mock_physical_workers.assert_not_called()
         mock_studies.assert_not_called()
 
 
@@ -742,13 +736,15 @@ class TestClean:
             gc: DatabaseGarbageCollector instance.
         """
         mock_cleanup_runs = mocker.patch.object(gc, "cleanup_runs")
-        mock_cleanup_workers = mocker.patch.object(gc, "cleanup_workers")
+        mock_cleanup_logical_workers = mocker.patch.object(gc, "cleanup_logical_workers")
+        mock_cleanup_physical_workers = mocker.patch.object(gc, "cleanup_physical_workers")
         mock_cleanup_studies = mocker.patch.object(gc, "cleanup_studies")
 
         gc.clean()
 
         mock_cleanup_runs.assert_not_called()
-        mock_cleanup_workers.assert_not_called()
+        mock_cleanup_logical_workers.assert_not_called()
+        mock_cleanup_physical_workers.assert_not_called()
         mock_cleanup_studies.assert_not_called()
 
     def test_clean_with_force(self, mocker: MockerFixture, gc: DatabaseGarbageCollector, mock_run: MagicMock):
@@ -760,7 +756,7 @@ class TestClean:
             gc: DatabaseGarbageCollector instance.
             mock_run: Mocked run instance.
         """
-        gc._issues["runs"] = [mock_run]
+        gc._issues["run"] = [mock_run]
 
         mock_prompt = mocker.patch.object(gc, "_prompt_for_confirmation")
         mock_cleanup = mocker.patch.object(gc, "cleanup_runs")
@@ -779,7 +775,7 @@ class TestClean:
             gc: DatabaseGarbageCollector instance.
             mock_run: Mocked run instance.
         """
-        gc._issues["runs"] = [mock_run]
+        gc._issues["run"] = [mock_run]
 
         mocker.patch.object(gc, "_prompt_for_confirmation", return_value=True)
         mock_cleanup = mocker.patch.object(gc, "cleanup_runs")
@@ -797,7 +793,7 @@ class TestClean:
             gc: DatabaseGarbageCollector instance.
             mock_run: Mocked run instance.
         """
-        gc._issues["runs"] = [mock_run]
+        gc._issues["run"] = [mock_run]
 
         mocker.patch.object(gc, "_prompt_for_confirmation", return_value=False)
         mock_cleanup = mocker.patch.object(gc, "cleanup_runs")
@@ -822,17 +818,25 @@ class TestClean:
             mock_run: Mocked run instance.
             mock_logical_worker: Mocked logical worker instance.
         """
-        gc._issues["runs"] = [mock_run]
-        gc._issues["logical_workers"] = [mock_logical_worker]
+        gc._issues["run"] = [mock_run]
+        gc._issues["logical_worker"] = [mock_logical_worker]
 
         mock_runs = mocker.patch.object(gc, "cleanup_runs")
-        mock_workers = mocker.patch.object(gc, "cleanup_workers")
+        mock_logical_workers = mocker.patch.object(gc, "cleanup_logical_workers")
+        mock_physical_workers = mocker.patch.object(gc, "cleanup_physical_workers")
         mock_studies = mocker.patch.object(gc, "cleanup_studies")
 
-        gc.clean(check_runs=True, check_workers=False, check_studies=False, force=True)
+        gc.clean(
+            check_runs=True,
+            check_logical_workers=False,
+            check_physical_workers=False,
+            check_studies=False,
+            force=True,
+        )
 
         mock_runs.assert_called_once()
-        mock_workers.assert_not_called()
+        mock_logical_workers.assert_not_called()
+        mock_physical_workers.assert_not_called()
         mock_studies.assert_not_called()
 
 
@@ -850,10 +854,27 @@ class TestScanAndClean:
         mock_scan = mocker.patch.object(gc, "scan")
         mock_clean = mocker.patch.object(gc, "clean")
 
-        gc.scan_and_clean(check_runs=True, check_workers=False, check_studies=True, force=True)
+        gc.scan_and_clean(
+            check_runs=True,
+            check_logical_workers=False,
+            check_physical_workers=False,
+            check_studies=True,
+            force=True,
+        )
 
-        mock_scan.assert_called_once_with(check_runs=True, check_workers=False, check_studies=True)
-        mock_clean.assert_called_once_with(check_runs=True, check_workers=False, check_studies=True, force=True)
+        mock_scan.assert_called_once_with(
+            check_runs=True,
+            check_logical_workers=False,
+            check_physical_workers=False,
+            check_studies=True,
+        )
+        mock_clean.assert_called_once_with(
+            check_runs=True,
+            check_logical_workers=False,
+            check_physical_workers=False,
+            check_studies=True,
+            force=True,
+        )
 
 
 # TODO should we move this to the integration test suite?
