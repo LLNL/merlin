@@ -38,7 +38,7 @@ When the monitor first starts, it automatically performs [garbage collection](..
 - **Runs:** Removes database entries for runs whose corresponding workspace directories no longer exist on the filesystem
 - **Studies:** Removes database entries for studies that have no associated runs remaining after the run cleanup
 
-Worker entries (both logical and physical), are not afftected by this automatic garbage collection, as they may be spun up prior to a run being executed.
+Worker entries (both logical and physical), are not affected by this automatic garbage collection, as they may be spun up prior to a run being executed.
 
 This automatic cleanup helps maintain database integrity and ensures the monitor is working with accurate, up-to-date information about active studies and runs. The garbage collection can be disabled using the `--disable-gc` option.
 
