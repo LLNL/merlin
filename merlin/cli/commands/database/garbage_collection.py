@@ -71,7 +71,21 @@ class DatabaseGarbageCollectionCommand(CommandEntryPoint):
             "--skip-workers",
             action="store_true",
             default=False,
-            help="Skip checking for orphaned workers.",
+            help="Skip checking for orphaned workers (both logical and physical).",
+        )
+
+        db_gc_parser.add_argument(
+            "--skip-logical-workers",
+            action="store_true",
+            default=False,
+            help="Skip checking for orphaned logical workers.",
+        )
+
+        db_gc_parser.add_argument(
+            "--skip-physical-workers",
+            action="store_true",
+            default=False,
+            help="Skip checking for orphaned physical workers.",
         )
 
         db_gc_parser.add_argument(
@@ -106,13 +120,23 @@ class DatabaseGarbageCollectionCommand(CommandEntryPoint):
 
         # Determine what to check
         check_runs = not args.skip_runs
-        check_workers = not args.skip_workers
+        check_logical_workers = not (args.skip_workers or args.skip_logical_workers)
+        check_physical_workers = not (args.skip_workers or args.skip_physical_workers)
         check_studies = not args.skip_studies
 
         # Run garbage collection
         if args.dry_run:
-            collector.scan(check_runs=check_runs, check_workers=check_workers, check_studies=check_studies)
+            collector.scan(
+                check_runs=check_runs,
+                check_logical_workers=check_logical_workers,
+                check_physical_workers=check_physical_workers,
+                check_studies=check_studies,
+            )
         else:
             collector.scan_and_clean(
-                check_runs=check_runs, check_workers=check_workers, check_studies=check_studies, force=args.force
+                check_runs=check_runs,
+                check_logical_workers=check_logical_workers,
+                check_physical_workers=check_physical_workers,
+                check_studies=check_studies,
+                force=args.force,
             )
