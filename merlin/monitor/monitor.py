@@ -63,7 +63,7 @@ class Monitor:
 
     def __init__(
         self, spec: MerlinSpec, sleep: int, task_server: str, no_restart: bool, auto_cleanup: bool = True
-    ):  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    ):
         """
         Initializes the `Monitor` instance with the given Merlin specification, sleep interval,
         and task server type. The task server monitor is created using the
