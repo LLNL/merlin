@@ -8,7 +8,7 @@
 Unit tests for the `merlin/db_scripts/garbage_collector.py` module.
 """
 
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
