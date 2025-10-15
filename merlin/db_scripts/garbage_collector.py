@@ -13,12 +13,15 @@ reference non-existent filesystem resources or have other consistency issues.
 
 import logging
 import os
-from typing import Dict, List
+import socket
+import textwrap
+from pathlib import Path
+from typing import Dict, List, Union
 
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import RunNotFoundError, StudyNotFoundError, WorkerNotFoundError
-from merlin.utils import get_plural_of_entity
+from merlin.utils import get_accessible_mounts, get_plural_of_entity
 
 
 LOG = logging.getLogger(__name__)
@@ -85,7 +88,13 @@ class DatabaseGarbageCollector:
             merlin_db: Optional MerlinDatabase instance. Creates one if not provided.
         """
         self.merlin_db = merlin_db or MerlinDatabase()
-        self._issues: Dict[str, List[DatabaseEntity]] = {"run": [], "logical_worker": [], "physical_worker": [], "study": []}
+        self._issues: Dict[str, List[DatabaseEntity]] = {
+            "run": [],
+            "logical_worker": [],
+            "physical_worker": [],
+            "study": [],
+            "inaccessible_runs": [],
+        }
 
     def _prompt_for_confirmation(self) -> bool:
         """
@@ -104,6 +113,44 @@ class DatabaseGarbageCollector:
 
         LOG.debug(f"[GARBAGE COLLECTOR] response: {response}")
         return response in ["yes", "y"]
+    
+    def _is_workspace_on_accessible_mount(self, workspace: Union[str, Path]) -> bool:
+        """
+        Check if a workspace path is on an accessible mount point (excluding root).
+
+        This purposefully does NOT include '/' as an accessible mount point. We do this
+        since every workspace is relative to the root filesystem, and we want to
+        specifically check for other mounted filesystems that may not be accessible.
+        
+        Args:
+            workspace: The workspace path to check.
+            
+        Returns:
+            True if workspace is on an accessible mount (excluding root), False otherwise.
+        """
+        if not isinstance(workspace, Path):
+            workspace = Path(workspace)
+
+        accessible_mounts = get_accessible_mounts(exclude_root=True)
+        workspace_path = workspace.resolve()
+        
+        # Check if workspace path starts with any accessible mount
+        for mount in sorted(accessible_mounts, key=lambda p: len(str(p)), reverse=True):
+            # Sort by length (longest first) to match most specific mount point
+            try:
+                workspace_path.relative_to(mount)
+                # If we get here, workspace is under this mount
+                return True
+            except ValueError:
+                # Not relative to this mount, continue checking
+                continue
+        
+        # If we didn't find any matching mount, it's not accessible or it's on the root filesystem
+        LOG.warning(
+            f"[GARBAGE COLLECTOR] Workspace '{workspace}' is either on the root filesystem or does not exist "
+            f"in a valid mounted file system on current host '{socket.gethostname()}'."
+        )
+        return False
 
     def check_run_workspaces(self):
         """
@@ -115,13 +162,43 @@ class DatabaseGarbageCollector:
         LOG.info("[GARBAGE COLLECTOR] Checking run workspaces for validity...")
 
         all_runs = self.merlin_db.runs.get_all()
+
         for run in all_runs:
             workspace = run.get_workspace()
-            if not os.path.exists(workspace):
-                LOG.debug(f"[GARBAGE COLLECTOR] Run {run.get_id()} has invalid workspace: {workspace}")
+
+            # Check if workspace is on an accessible NON-ROOT mount (e.g., a network filesystem).
+            # This will be False for workspaces on the local root filesystem.
+            is_accessible_mount = self._is_workspace_on_accessible_mount(workspace)
+            
+            # Check if the workspace physically exists on the current host.
+            workspace_exists = os.path.exists(workspace)
+
+            if is_accessible_mount and not workspace_exists:
+                # Case 1: Workspace is on an accessible NON-ROOT mount (e.g., /mnt/nfs) but is missing.
+                # This is an invalid workspace issue.
+                LOG.debug(f"[GARBAGE COLLECTOR] Run {run.get_id()} has invalid workspace on an accessible mount: {workspace}")
                 self._issues["run"].append(run)
 
+            elif not is_accessible_mount and not workspace_exists:
+                # Case 2: Workspace is NOT on a non-root accessible mount AND does not physically exist on current host.
+                # This indicates the workspace is likely on an inaccessible mount *or* it was a local 
+                # workspace that was deleted, but we treat this as *potentially* inaccessible 
+                # to avoid premature deletion of runs accessible from another host.
+                LOG.debug(f"[GARBAGE COLLECTOR] Run '{run.get_id()}' has workspace on potentially inaccessible mount and does not exist: {workspace}")
+                self._issues["inaccessible_runs"].append(run)
+
+            # Case 3: Workspace is NOT on a non-root accessible mount, but DOES exist.
+            # This is the expected state for a valid workspace on the local root filesystem.
+            # No action needed, it's considered valid.
+
+            # Case 4: is_accessible_mount and workspace_exists: Valid non-root workspace. No action.
+
         LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues['run'])} runs with invalid workspaces.")
+        if self._issues["inaccessible_runs"]:
+            LOG.warning(
+                f"[GARBAGE COLLECTOR] Found {len(self._issues['inaccessible_runs'])} runs with workspaces on file systems not accessible " \
+                f"from the current host '{socket.gethostname()}'. Run garbage collection from a machine with access to verify these."
+            )
 
     def check_orphaned_logical_workers(self):
         """
@@ -305,6 +382,27 @@ class DatabaseGarbageCollector:
         if self._issues["study"]:
             for study in self._issues["study"]:
                 report_lines.append(f"  - {study.get_name()}")
+
+        report_lines.append("")
+
+        report_lines.append("=" * 60)
+
+        report_lines.append("")
+
+        # Potentially Inaccessible Runs section
+        report_lines.append(f"Potentially Inaccessible Runs: {len(self._issues['inaccessible_runs'])}")
+        if self._issues["inaccessible_runs"]:
+            for run in self._issues["inaccessible_runs"]:
+                report_lines.append(f"  - {run.get_workspace()}")
+            report_lines.append("")
+            inaccessible_message = (
+                "You may need to re-run garbage collection on a machine that can access these runs, "
+                "or remove them manually if they are local runs being flagged as inaccessible."
+            )
+            wrapped_message = textwrap.fill(inaccessible_message, width=60)
+            report_lines.append(wrapped_message)
+
+        report_lines.append("")
 
         report_lines.append("=" * 60)
 
