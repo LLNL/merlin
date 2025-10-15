@@ -569,8 +569,6 @@ def get_accessible_mounts(exclude_root: bool = False) -> Set[Path]:
     LOG.debug(f"Accessible mounts on {socket.gethostname()}: {accessible}")
     return accessible
 
-# (mountpoint == Path("/") or mountpoint == Path("C:\\"))
-
 
 @contextmanager
 def cd(path: str) -> Generator[None, None, None]:  # pylint: disable=C0103

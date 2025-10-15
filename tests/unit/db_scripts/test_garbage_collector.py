@@ -12,8 +12,8 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from pytest_mock import MockerFixture
 from _pytest.monkeypatch import MonkeyPatch
+from pytest_mock import MockerFixture
 
 from merlin.db_scripts.garbage_collector import DatabaseGarbageCollector
 from merlin.exceptions import RunNotFoundError
@@ -203,9 +203,7 @@ class TestPromptForConfirmation:
 class TestIsWorkspaceOnAccessibleMount:
     """Tests for the _is_workspace_on_accessible_mount method."""
 
-    def test_workspace_on_specific_mount(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_workspace_on_specific_mount(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test workspace on a specific non-root mount point.
 
@@ -214,10 +212,9 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = "/mnt/shared/workspace"
-        
+
         mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={Path("/mnt/shared"), Path("/home")}
+            "merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={Path("/mnt/shared"), Path("/home")}
         )
 
         result = gc._is_workspace_on_accessible_mount(workspace)
@@ -225,12 +222,10 @@ class TestIsWorkspaceOnAccessibleMount:
         assert result is True
 
     # TODO is there a way to check which mount point is matched?
-    def test_workspace_on_longest_matching_mount(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_workspace_on_longest_matching_mount(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test that most specific (longest) mount point is matched.
-        
+
         If workspace is /p/lustre3/data/workspace and both /p and /p/lustre3
         are mounted, should match /p/lustre3.
 
@@ -239,10 +234,10 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = "/p/lustre3/data/workspace"
-        
+
         mocker.patch(
             "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={Path("/p"), Path("/p/lustre3"), Path("/home")}
+            return_value={Path("/p"), Path("/p/lustre3"), Path("/home")},
         )
 
         result = gc._is_workspace_on_accessible_mount(workspace)
@@ -250,9 +245,7 @@ class TestIsWorkspaceOnAccessibleMount:
         # Should match, and internally should prefer /p/lustre3 over /p
         assert result is True
 
-    def test_workspace_not_on_any_mount(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_workspace_not_on_any_mount(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test workspace that is not on any accessible non-root mount.
 
@@ -261,12 +254,9 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = "/p/lustre3/workspace"
-        
+
         # Only /home is accessible, not /p/lustre3
-        mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={Path("/home")}
-        )
+        mocker.patch("merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={Path("/home")})
 
         mock_log = mocker.patch("merlin.db_scripts.garbage_collector.LOG")
 
@@ -277,12 +267,10 @@ class TestIsWorkspaceOnAccessibleMount:
         warning_msg = str(mock_log.warning.call_args)
         assert "root filesystem" in warning_msg and "mounted file system" in warning_msg
 
-    def test_workspace_on_root_filesystem(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_workspace_on_root_filesystem(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test workspace on root filesystem (e.g., /tmp, /var).
-        
+
         Since get_accessible_mounts excludes root, this should return False.
 
         Args:
@@ -290,20 +278,17 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = "/tmp/workspace"
-        
+
         # No specific mount for /tmp
         mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={Path("/home"), Path("/mnt/data")}
+            "merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={Path("/home"), Path("/mnt/data")}
         )
 
         result = gc._is_workspace_on_accessible_mount(workspace)
 
         assert result is False
 
-    def test_workspace_with_path_object(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_workspace_with_path_object(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test that Path objects are handled correctly.
 
@@ -312,11 +297,8 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = Path("/mnt/shared/workspace")
-        
-        mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={Path("/mnt/shared")}
-        )
+
+        mocker.patch("merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={Path("/mnt/shared")})
 
         result = gc._is_workspace_on_accessible_mount(workspace)
 
@@ -342,21 +324,22 @@ class TestIsWorkspaceOnAccessibleMount:
 
         symlink = gc_testing_dir / "link"
         symlink.symlink_to(real_dir.parent)
-        
+
         workspace = symlink / "workspace"
-        
+
         # Mock the mount to match the real path
-        mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={gc_testing_dir / "real"}
-        )
+        mocker.patch("merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={gc_testing_dir / "real"})
 
         result = gc._is_workspace_on_accessible_mount(workspace)
 
         assert result is True
 
     def test_workspace_with_relative_path(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector, garbage_collection_testing_dir: FixtureStr, monkeypatch: MonkeyPatch
+        self,
+        mocker: MockerFixture,
+        gc: DatabaseGarbageCollector,
+        garbage_collection_testing_dir: FixtureStr,
+        monkeypatch: MonkeyPatch,
     ):
         """
         Test that relative paths are resolved to absolute paths.
@@ -373,28 +356,25 @@ class TestIsWorkspaceOnAccessibleMount:
         # Create a test directory structure
         test_dir = gc_testing_dir / "mnt" / "shared"
         test_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Change to the workspace parent directory
         workspace_dir = test_dir / "workspace"
         workspace_dir.mkdir()
-        
+
         monkeypatch.chdir(test_dir)
-        
+
         # Use relative path
         workspace = "./workspace"
-        
+
         mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={gc_testing_dir / "mnt" / "shared"}
+            "merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={gc_testing_dir / "mnt" / "shared"}
         )
 
         result = gc._is_workspace_on_accessible_mount(workspace)
 
         assert result is True
 
-    def test_no_accessible_mounts(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_no_accessible_mounts(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test behavior when there are no accessible non-root mounts.
 
@@ -403,12 +383,9 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = "/any/workspace"
-        
+
         # No mounts at all (empty set)
-        mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value=set()
-        )
+        mocker.patch("merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value=set())
 
         mock_log = mocker.patch("merlin.db_scripts.garbage_collector.LOG")
 
@@ -417,9 +394,7 @@ class TestIsWorkspaceOnAccessibleMount:
         assert result is False
         mock_log.warning.assert_called_once()
 
-    def test_workspace_at_mount_root(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_workspace_at_mount_root(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test workspace located directly at mount point root.
 
@@ -428,22 +403,17 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = "/mnt/shared"
-        
-        mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={Path("/mnt/shared")}
-        )
+
+        mocker.patch("merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={Path("/mnt/shared")})
 
         result = gc._is_workspace_on_accessible_mount(workspace)
 
         assert result is True
 
-    def test_workspace_similar_but_not_matching_mount(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_workspace_similar_but_not_matching_mount(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test workspace with path similar to mount but not under it.
-        
+
         E.g., /p/lustre2 should not match mount /p/lustre1
 
         Args:
@@ -451,19 +421,14 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = "/p/lustre2/workspace"
-        
-        mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={Path("/p/lustre1")}
-        )
+
+        mocker.patch("merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={Path("/p/lustre1")})
 
         result = gc._is_workspace_on_accessible_mount(workspace)
 
         assert result is False
 
-    def test_get_accessible_mounts_called_with_exclude_root(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_get_accessible_mounts_called_with_exclude_root(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test that get_accessible_mounts is called with exclude_root=True.
 
@@ -472,19 +437,16 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = "/mnt/shared/workspace"
-        
+
         mock_get_mounts = mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={Path("/mnt/shared")}
+            "merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={Path("/mnt/shared")}
         )
 
         gc._is_workspace_on_accessible_mount(workspace)
 
         mock_get_mounts.assert_called_once_with(exclude_root=True)
 
-    def test_workspace_with_trailing_slash(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector
-    ):
+    def test_workspace_with_trailing_slash(self, mocker: MockerFixture, gc: DatabaseGarbageCollector):
         """
         Test workspace path with trailing slash is handled correctly.
 
@@ -493,11 +455,8 @@ class TestIsWorkspaceOnAccessibleMount:
             gc: DatabaseGarbageCollector instance.
         """
         workspace = "/mnt/shared/workspace/"  # Note trailing slash
-        
-        mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={Path("/mnt/shared")}
-        )
+
+        mocker.patch("merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={Path("/mnt/shared")})
 
         result = gc._is_workspace_on_accessible_mount(workspace)
 
@@ -516,18 +475,15 @@ class TestIsWorkspaceOnAccessibleMount:
                 tests will store their results.
         """
         gc_testing_dir = Path(garbage_collection_testing_dir)
-    
+
         # Create test structure
         mount_dir = gc_testing_dir / "mnt" / "shared"
         mount_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Path with .. segments that resolves to mount_dir
         workspace = gc_testing_dir / "mnt" / "other" / ".." / "shared" / "workspace"
 
-        mocker.patch(
-            "merlin.db_scripts.garbage_collector.get_accessible_mounts",
-            return_value={mount_dir}
-        )
+        mocker.patch("merlin.db_scripts.garbage_collector.get_accessible_mounts", return_value={mount_dir})
 
         result = gc._is_workspace_on_accessible_mount(workspace)
 
@@ -542,7 +498,7 @@ class TestCheckRunWorkspaces:
     ):
         """
         Test checking runs when workspace is on an accessible mount but doesn't exist.
-        
+
         Case 1: is_accessible_mount=True but workspace_exists=False
         Expected: Workspace flagged as invalid.
 
@@ -572,7 +528,7 @@ class TestCheckRunWorkspaces:
     ):
         """
         Test checking runs when workspace is on an inaccessible mount.
-        
+
         Case 2: is_accessible_mount=False and workspace_exists=False
         Expected: Counted as inaccessible, not flagged as invalid.
 
@@ -611,7 +567,7 @@ class TestCheckRunWorkspaces:
     ):
         """
         Test checking runs when workspace exists on root filesystem (e.g., /tmp).
-        
+
         Case 3: is_accessible_mount=False but workspace_exists=True
         Expected: No issues flagged (valid local workspace).
 
@@ -639,7 +595,7 @@ class TestCheckRunWorkspaces:
     ):
         """
         Test checking runs when workspace exists on an accessible non-root mount.
-        
+
         Case 4: is_accessible_mount=True and workspace_exists=True
         Expected: No issues flagged.
 
@@ -676,7 +632,7 @@ class TestCheckRunWorkspaces:
         # Case 1: Invalid workspace on accessible mount (should be flagged)
         invalid_accessible = MagicMock()
         invalid_accessible.get_workspace.return_value = "/mnt/shared/invalid"
-        invalid_accessible.get_id.return_value = "run-invalid-accessible"        
+        invalid_accessible.get_id.return_value = "run-invalid-accessible"
 
         # Case 2: Workspace on inaccessible mount (should not be flagged)
         inaccessible = MagicMock()
@@ -693,21 +649,14 @@ class TestCheckRunWorkspaces:
         valid_accessible.get_workspace.return_value = "/mnt/shared/valid"
         valid_accessible.get_id.return_value = "run-valid-accessible"
 
-        mock_db.runs.get_all.return_value = [
-            invalid_accessible,
-            inaccessible,
-            valid_local,
-            valid_accessible
-        ]
+        mock_db.runs.get_all.return_value = [invalid_accessible, inaccessible, valid_local, valid_accessible]
 
         # Mock _is_workspace_on_accessible_mount based on workspace path
         def is_accessible_side_effect(workspace):
             # Only /mnt/shared/* workspaces are on accessible mounts
             return str(workspace).startswith("/mnt/shared")
 
-        mocker.patch.object(
-            gc, "_is_workspace_on_accessible_mount", side_effect=is_accessible_side_effect
-        )
+        mocker.patch.object(gc, "_is_workspace_on_accessible_mount", side_effect=is_accessible_side_effect)
 
         # Mock os.path.exists based on workspace path
         def path_exists_side_effect(path):
@@ -730,9 +679,7 @@ class TestCheckRunWorkspaces:
         assert len(gc._issues["inaccessible_runs"]) == 1
         assert gc._issues["inaccessible_runs"][0] == inaccessible
 
-    def test_check_logs_inaccessible_count(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector, mock_db: MagicMock
-    ):
+    def test_check_logs_inaccessible_count(self, mocker: MockerFixture, gc: DatabaseGarbageCollector, mock_db: MagicMock):
         """
         Test that inaccessible workspace count is logged correctly.
 
@@ -777,9 +724,7 @@ class TestCheckRunWorkspaces:
         summary_warning = str(log_calls[-1])
         assert "3" in summary_warning
 
-    def test_check_with_no_runs(
-        self, gc: DatabaseGarbageCollector, mock_db: MagicMock
-    ):
+    def test_check_with_no_runs(self, gc: DatabaseGarbageCollector, mock_db: MagicMock):
         """
         Test checking when there are no runs in the database.
 

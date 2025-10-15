@@ -113,7 +113,7 @@ class DatabaseGarbageCollector:
 
         LOG.debug(f"[GARBAGE COLLECTOR] response: {response}")
         return response in ["yes", "y"]
-    
+
     def _is_workspace_on_accessible_mount(self, workspace: Union[str, Path]) -> bool:
         """
         Check if a workspace path is on an accessible mount point (excluding root).
@@ -121,10 +121,10 @@ class DatabaseGarbageCollector:
         This purposefully does NOT include '/' as an accessible mount point. We do this
         since every workspace is relative to the root filesystem, and we want to
         specifically check for other mounted filesystems that may not be accessible.
-        
+
         Args:
             workspace: The workspace path to check.
-            
+
         Returns:
             True if workspace is on an accessible mount (excluding root), False otherwise.
         """
@@ -133,7 +133,7 @@ class DatabaseGarbageCollector:
 
         accessible_mounts = get_accessible_mounts(exclude_root=True)
         workspace_path = workspace.resolve()
-        
+
         # Check if workspace path starts with any accessible mount
         for mount in sorted(accessible_mounts, key=lambda p: len(str(p)), reverse=True):
             # Sort by length (longest first) to match most specific mount point
@@ -144,7 +144,7 @@ class DatabaseGarbageCollector:
             except ValueError:
                 # Not relative to this mount, continue checking
                 continue
-        
+
         # If we didn't find any matching mount, it's not accessible or it's on the root filesystem
         LOG.warning(
             f"[GARBAGE COLLECTOR] Workspace '{workspace}' is either on the root filesystem or does not exist "
@@ -169,7 +169,7 @@ class DatabaseGarbageCollector:
             # Check if workspace is on an accessible NON-ROOT mount (e.g., a network filesystem).
             # This will be False for workspaces on the local root filesystem.
             is_accessible_mount = self._is_workspace_on_accessible_mount(workspace)
-            
+
             # Check if the workspace physically exists on the current host.
             workspace_exists = os.path.exists(workspace)
 
@@ -181,10 +181,13 @@ class DatabaseGarbageCollector:
 
             elif not is_accessible_mount and not workspace_exists:
                 # Case 2: Workspace is NOT on a non-root accessible mount AND does not physically exist on current host.
-                # This indicates the workspace is likely on an inaccessible mount *or* it was a local 
-                # workspace that was deleted, but we treat this as *potentially* inaccessible 
+                # This indicates the workspace is likely on an inaccessible mount *or* it was a local
+                # workspace that was deleted, but we treat this as *potentially* inaccessible
                 # to avoid premature deletion of runs accessible from another host.
-                LOG.debug(f"[GARBAGE COLLECTOR] Run '{run.get_id()}' has workspace on potentially inaccessible mount and does not exist: {workspace}")
+                LOG.debug(
+                    f"[GARBAGE COLLECTOR] Run '{run.get_id()}' has workspace on potentially inaccessible mount "
+                    f"and does not exist: {workspace}"
+                )
                 self._issues["inaccessible_runs"].append(run)
 
             # Case 3: Workspace is NOT on a non-root accessible mount, but DOES exist.
@@ -196,8 +199,9 @@ class DatabaseGarbageCollector:
         LOG.info(f"[GARBAGE COLLECTOR] Found {len(self._issues['run'])} runs with invalid workspaces.")
         if self._issues["inaccessible_runs"]:
             LOG.warning(
-                f"[GARBAGE COLLECTOR] Found {len(self._issues['inaccessible_runs'])} runs with workspaces on file systems not accessible " \
-                f"from the current host '{socket.gethostname()}'. Run garbage collection from a machine with access to verify these."
+                f"[GARBAGE COLLECTOR] Found {len(self._issues['inaccessible_runs'])} runs with workspaces "
+                f"on file systems not accessible from the current host '{socket.gethostname()}'. Run garbage "
+                "collection from a machine with access to verify these."
             )
 
     def check_orphaned_logical_workers(self):

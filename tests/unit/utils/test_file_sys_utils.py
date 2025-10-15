@@ -29,7 +29,7 @@ class TestGetAccessibleMounts:
             mocker.Mock(mountpoint="/"),
             mocker.Mock(mountpoint="/home"),
         ]
-        
+
         mocker.patch("psutil.disk_partitions", return_value=mock_partitions)
 
         result = get_accessible_mounts(exclude_root=False)
@@ -50,7 +50,7 @@ class TestGetAccessibleMounts:
             mocker.Mock(mountpoint="/home"),
             mocker.Mock(mountpoint="/mnt/data"),
         ]
-        
+
         mocker.patch("psutil.disk_partitions", return_value=mock_partitions)
 
         result = get_accessible_mounts(exclude_root=True)
@@ -82,7 +82,7 @@ class TestGetAccessibleMounts:
             mocker: Pytest mocker fixture.
         """
         mock_partitions = [mocker.Mock(mountpoint="/")]
-        
+
         mocker.patch("psutil.disk_partitions", return_value=mock_partitions)
 
         result = get_accessible_mounts()
@@ -98,7 +98,7 @@ class TestGetAccessibleMounts:
             mocker: Pytest mocker fixture.
         """
         mock_partitions = [mocker.Mock(mountpoint="/")]
-        
+
         mocker.patch("psutil.disk_partitions", return_value=mock_partitions)
 
         result = get_accessible_mounts(exclude_root=True)
@@ -119,7 +119,7 @@ class TestGetAccessibleMounts:
             mocker.Mock(mountpoint="/home"),  # Duplicate
             mocker.Mock(mountpoint="/mnt/data"),
         ]
-        
+
         mocker.patch("psutil.disk_partitions", return_value=mock_partitions)
 
         result = get_accessible_mounts()
@@ -139,7 +139,7 @@ class TestGetAccessibleMounts:
             mocker.Mock(mountpoint="/mnt/my mount"),
             mocker.Mock(mountpoint="/mnt/another mount point"),
         ]
-        
+
         mocker.patch("psutil.disk_partitions", return_value=mock_partitions)
 
         result = get_accessible_mounts()
@@ -161,7 +161,7 @@ class TestGetAccessibleMounts:
             mocker.Mock(mountpoint="/p/lustre2"),
             mocker.Mock(mountpoint="/p/lustre3"),
         ]
-        
+
         mocker.patch("psutil.disk_partitions", return_value=mock_partitions)
 
         result = get_accessible_mounts()
@@ -185,7 +185,7 @@ class TestGetAccessibleMounts:
             mocker.Mock(mountpoint="/p"),
             mocker.Mock(mountpoint="/p/lustre3"),
         ]
-        
+
         mocker.patch("psutil.disk_partitions", return_value=mock_partitions)
 
         result = get_accessible_mounts(exclude_root=True)
@@ -206,7 +206,7 @@ class TestGetAccessibleMounts:
             mocker.Mock(mountpoint="C:\\"),
             mocker.Mock(mountpoint="D:\\"),
         ]
-        
+
         mocker.patch("psutil.disk_partitions", return_value=mock_partitions)
 
         result = get_accessible_mounts()
