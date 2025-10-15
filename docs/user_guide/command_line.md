@@ -935,14 +935,16 @@ merlin database cleanup [OPTIONS]
 
 **Options:**
 
-| Name             |  Type   | Description | Default |
-| ------------     | ------- | ----------- | ------- |
-| `-h`, `--help`   | boolean | Show this help message and exit | `False` |
-| `--dry-run`      | boolean | Show what would be deleted without actually deleting anything | `False` |
-| `--skip-runs`    | boolean | Skip checking for runs with invalid workspaces | `False` |
-| `--skip-workers` | boolean | Skip checking for orphaned workers | `False` |
-| `--skip-studies` | boolean | Skip checking for empty studies | `False` |
-| `-f`, `--force`  | boolean | Skip confirmation prompt (use with caution) | `False` |
+| Name                      |  Type   | Description                                                     | Default |
+| ------------------------- | ------- | --------------------------------------------------------------- | ------- |
+| `-h`, `--help`            | boolean | Show this help message and exit                                 | `False` |
+| `--dry-run`               | boolean | Show what would be deleted without actually deleting anything   | `False` |
+| `--skip-runs`             | boolean | Skip checking for runs with invalid workspaces                  | `False` |
+| `--skip-workers`          | boolean | Skip checking for orphaned workers (both logical and physical)  | `False` |
+| `--skip-logical-workers`  | boolean | Skip checking for orphaned logical workers                      | `False` |
+| `--skip-physical-workers` | boolean | Skip checking for orphaned physical workers                     | `False` |
+| `--skip-studies`          | boolean | Skip checking for empty studies                                 | `False` |
+| `-f`, `--force`           | boolean | Skip confirmation prompt (use with caution)                     | `False` |
 
 **Examples:**
 

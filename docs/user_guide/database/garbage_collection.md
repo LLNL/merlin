@@ -31,6 +31,49 @@ The garbage collection process follows a cascading cleanup approach:
 
 This cascading approach ensures that removing a run with a missing workspace automatically cleans up its dependent entities.
 
+### Distributed Filesystem Awareness
+
+!!! info "Multi-Machine Considerations"
+
+    Merlin is designed to work across distributed computing environments where different machines may have access to different filesystems. The garbage collector intelligently handles this by:
+    
+    - **Detecting accessible mount points**: Automatically identifies which filesystems are mounted on the current machine
+    - **Skipping inaccessible workspaces**: Won't flag workspaces as invalid if they're on filesystems not mounted on the current machine
+    - **Logging inaccessible workspaces**: Provides informative warnings about workspaces that couldn't be verified
+
+When garbage collection runs, it checks whether each workspace is on a filesystem that's accessible from the current machine:
+
+- **Accessible workspaces** (e.g., on `/p/lustre3` when that filesystem is mounted): Checked for existence and flagged as invalid if missing
+- **Inaccessible workspaces** (e.g., on `/p/lustre3` when that filesystem is NOT mounted): Skipped with a warning, not flagged as invalid
+- **Local workspaces** (e.g., on root filesystem like `/tmp`): Always checked if they exist locally
+
+??? example "Example: Running Garbage Collection on Different Machines"
+
+    **Scenario**: You have workspaces on `/p/lustre3` (shared filesystem).
+
+    **Machine A** (has `/p/lustre3` mounted):
+
+    ```bash
+    $ merlin database gc --dry-run
+    [INFO] [GARBAGE COLLECTOR] Checking run workspaces for validity...
+    [INFO] [GARBAGE COLLECTOR] Found 2 runs with invalid workspaces.
+    ...
+    ```
+
+    **Machine B** (does NOT have `/p/lustre3` mounted):
+
+    ```bash
+    $ merlin database gc --dry-run
+    [INFO] [GARBAGE COLLECTOR] Checking run workspaces for validity...
+    [INFO] [GARBAGE COLLECTOR] Found 0 runs with invalid workspaces.
+    [WARNING] [GARBAGE COLLECTOR] Found 5 runs with workspaces on file systems not 
+            accessible from the current host 'machine-b'. Run garbage collection 
+            from a machine with access to verify these.
+    ...
+    ```
+
+    The 5 workspaces on `/p/lustre3` are safely skipped on Machine B because that filesystem isn't mounted there. Run garbage collection from Machine A to properly verify those workspaces.
+
 ## Basic Usage
 
 To preview what would be removed without actually deleting anything:
@@ -44,6 +87,7 @@ This displays a detailed report showing:
 - Which runs have missing workspaces
 - Which workers would be removed due to having no valid runs
 - Which studies would be removed due to having no remaining runs
+- Which workspaces are on filesystems not accessible from the current machine (for informational purposes)
 
 ??? example "Example Output for Dry Run"
 
@@ -57,6 +101,9 @@ This displays a detailed report showing:
     [2025-10-08 10:27:31: INFO] Fetching all runs from Redis...
     [2025-10-08 10:27:31: INFO] Successfully retrieved 2 runs from Redis.
     [2025-10-08 10:27:31: INFO] [GARBAGE COLLECTOR] Found 1 runs with invalid workspaces.
+    [2025-10-08 10:27:31: WARNING] [GARBAGE COLLECTOR] Found 1 runs with workspaces on file systems not 
+                                accessible from the current host 'machine-a'. Run garbage collection 
+                                from a machine with access to verify these.
     [2025-10-08 10:27:31: INFO] [GARBAGE COLLECTOR] Checking for orphaned logical workers...
     [2025-10-08 10:27:31: INFO] Fetching all runs from Redis...
     [2025-10-08 10:27:31: INFO] Successfully retrieved 2 runs from Redis.
@@ -82,16 +129,30 @@ This displays a detailed report showing:
     ============================================================
 
     Invalid Runs: 1
-      - /path/to/hello_samples_20251008-102348
+    - /path/to/hello_samples_20251008-102348
+
+    Inaccessible Workspaces: 1
+    - /p/lustre3/other_workspace_20251008-101234
+        (on filesystem not accessible from current host)
 
     Orphaned Logical Workers: 1
-      - hello_samples_worker (queues: [merlin]_step_1_queue, [merlin]_step_2_queue)
+    - hello_samples_worker (queues: [merlin]_step_1_queue, [merlin]_step_2_queue)
 
     Orphaned Physical Workers: 1
-      - celery@hello_samples_worker.%dane13 (host: dane13)
+    - celery@hello_samples_worker.%dane13 (host: dane13)
 
     Empty Studies: 1
-      - hello_samples
+    - hello_samples
+
+    ============================================================
+
+    Potentially Inaccessible Runs: 1
+    - /p/lustre3/other_workspace_20251008-101234
+    
+    You may need to re-run garbage collection on a machine that
+    can access these runs, or remove them manually if they are
+    local runs being flagged as inaccessible.
+
     ============================================================
     ```
 
@@ -150,6 +211,11 @@ Orphaned Physical Workers: 1
 
 Empty Studies: 1
   - hello_samples
+
+============================================================
+
+Potentially Inaccessible Runs: 0
+
 ============================================================
 [2025-10-08 10:32:47: WARNING] [GARBAGE COLLECTOR] WARNING: This will permanently delete stale database entries. Run with --dry-run first to see what would be deleted.
 
@@ -204,6 +270,22 @@ merlin database gc --skip-runs --dry-run
 merlin database gc --skip-workers --skip-studies
 ```
 
+## Best Practices for Distributed Environments
+
+When working across multiple machines with different filesystem access:
+
+1. **Run from a machine with broad filesystem access**: For the most comprehensive cleanup, run garbage collection from a machine that has access to the most access shared file systems.
+
+2. **Use --dry-run first**: Always preview what will be cleaned up before running the actual cleanup:
+
+    ```bash
+    merlin database gc --dry-run
+    ```
+
+3. **Check inaccessible workspace warnings**: Pay attention to warnings about inaccessible workspaces. If you see many of these, you may need to run garbage collection from a different machine or manually delete certain runs.
+
+4. **Understand your filesystem topology**: Know which filesystems are shared (e.g., `/p/lustre3`) vs. local (e.g., `/tmp`, `/home`) in your environment.
+
 ## Limitations
 
 The garbage collection process:
@@ -211,3 +293,5 @@ The garbage collection process:
 - Only checks for missing workspace directories (it does not validate workspace contents)
 - Does not clean up data in the workspace directories themselves (only database entries)
 - Requires read access to the filesystem paths referenced in run entries
+- **Cannot verify workspaces on filesystems that are not mounted on the current machine**: Workspaces on inaccessible filesystems are conservatively skipped to avoid incorrectly flagging valid workspaces as stale
+- **Does not distinguish between truly deleted workspaces and temporarily inaccessible ones**: If a shared filesystem is temporarily unmounted or experiencing issues, those workspaces will be skipped but not flagged as invalid
