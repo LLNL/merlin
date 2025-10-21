@@ -500,7 +500,9 @@ class TestCheckRunWorkspaces:
         """
         Test checking runs when workspace is on an accessible mount but doesn't exist.
 
-        Case 1: is_accessible_mount=True but workspace_exists=False
+        Case 1: Workspace is on an accessible NON-ROOT mount (e.g., /mnt/nfs) but is missing.
+        This is an invalid workspace issue (is_accessible_mount=True but workspace_exists=False).
+    
         Expected: Workspace flagged as invalid.
 
         Args:
@@ -530,7 +532,11 @@ class TestCheckRunWorkspaces:
         """
         Test checking runs when workspace is on an inaccessible mount.
 
-        Case 2: is_accessible_mount=False and workspace_exists=False
+        Case 2: Workspace is NOT on a non-root accessible mount AND does not physically exist on current host.
+        This indicates the workspace is likely on an inaccessible mount *or* it was a local workspace that was
+        deleted, but we treat this as *potentially* inaccessible to avoid premature deletion of runs accessible
+        from another host (is_accessible_mount=False and workspace_exists=False).
+
         Expected: Counted as inaccessible, not flagged as invalid.
 
         Args:
@@ -574,7 +580,10 @@ class TestCheckRunWorkspaces:
         """
         Test checking runs when workspace exists on root filesystem (e.g., /tmp).
 
-        Case 3: is_accessible_mount=False but workspace_exists=True
+        Case 3: Workspace is NOT on a non-root accessible mount, but DOES exist. This is the expected state for
+        a valid workspace on the local root filesystem. No action needed, it's considered valid
+        (is_accessible_mount=False but workspace_exists=True).
+
         Expected: No issues flagged (valid local workspace).
 
         Args:
@@ -602,7 +611,9 @@ class TestCheckRunWorkspaces:
         """
         Test checking runs when workspace exists on an accessible non-root mount.
 
-        Case 4: is_accessible_mount=True and workspace_exists=True
+        Case 4: Mount is accessible and the workspace exists. No action needed (is_accessible_mount=True and
+        workspace_exists=True).
+
         Expected: No issues flagged.
 
         Args:
