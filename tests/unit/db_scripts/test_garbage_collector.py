@@ -502,7 +502,7 @@ class TestCheckRunWorkspaces:
 
         Case 1: Workspace is on an accessible NON-ROOT mount (e.g., /mnt/nfs) but is missing.
         This is an invalid workspace issue (is_accessible_mount=True but workspace_exists=False).
-    
+
         Expected: Workspace flagged as invalid.
 
         Args:
@@ -636,7 +636,11 @@ class TestCheckRunWorkspaces:
         assert len(gc._issues["inaccessible_runs"]) == 0
 
     def test_check_with_multiple_runs_mixed_cases(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector, mock_db: MagicMock, garbage_collection_testing_dir: FixtureStr
+        self,
+        mocker: MockerFixture,
+        gc: DatabaseGarbageCollector,
+        mock_db: MagicMock,
+        garbage_collection_testing_dir: FixtureStr,
     ):
         """
         Test checking multiple runs covering all four cases.
@@ -653,10 +657,12 @@ class TestCheckRunWorkspaces:
         valid_mount_path = os.path.join(garbage_collection_testing_dir, "mnt", "shared", "valid")
         os.makedirs(valid_local_path, exist_ok=True)
         os.makedirs(valid_mount_path, exist_ok=True)
-        
+
         # Case 1: Invalid workspace on accessible mount (should be flagged)
         invalid_accessible = MagicMock()
-        invalid_accessible.get_workspace.return_value = os.path.join(garbage_collection_testing_dir, "mnt", "shared", "invalid")
+        invalid_accessible.get_workspace.return_value = os.path.join(
+            garbage_collection_testing_dir, "mnt", "shared", "invalid"
+        )
         invalid_accessible.get_id.return_value = "run-invalid-accessible"
 
         # Case 2: Workspace on inaccessible mount (should not be flagged)
@@ -681,10 +687,9 @@ class TestCheckRunWorkspaces:
             # Workspaces under garbage_collection_testing_dir/mnt/shared are accessible
             # /p/lustre3 is inaccessible (real shared mount)
             workspace_str = str(workspace)
-            return (
-                workspace_str.startswith(os.path.join(garbage_collection_testing_dir, "mnt", "shared"))
-                and not workspace_str.startswith("/p/lustre3")
-            )
+            return workspace_str.startswith(
+                os.path.join(garbage_collection_testing_dir, "mnt", "shared")
+            ) and not workspace_str.startswith("/p/lustre3")
 
         mocker.patch.object(gc, "_is_workspace_on_accessible_mount", side_effect=is_accessible_side_effect)
 
