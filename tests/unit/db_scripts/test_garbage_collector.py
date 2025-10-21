@@ -8,6 +8,7 @@
 Unit tests for the `merlin/db_scripts/garbage_collector.py` module.
 """
 
+import os
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -563,7 +564,12 @@ class TestCheckRunWorkspaces:
         assert any("inaccessible" in str(call).lower() for call in warning_calls)
 
     def test_check_with_valid_workspace_on_root_filesystem(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector, mock_run: MagicMock, mock_db: MagicMock
+        self,
+        mocker: MockerFixture,
+        gc: DatabaseGarbageCollector,
+        mock_run: MagicMock,
+        mock_db: MagicMock,
+        garbage_collection_testing_dir: FixtureStr,
     ):
         """
         Test checking runs when workspace exists on root filesystem (e.g., /tmp).
@@ -576,14 +582,14 @@ class TestCheckRunWorkspaces:
             gc: DatabaseGarbageCollector instance.
             mock_run: Mocked run instance.
             mock_db: Mocked database instance.
+            garbage_collection_testing_dir: The path to the temporary output directory where garbage collection
+                tests will store files associated with this test.
         """
-        workspace = "/tmp/local_workspace"
+        workspace = os.path.join(garbage_collection_testing_dir, "local_workspace")
+        os.makedirs(workspace, exist_ok=True)
         mock_run.get_workspace.return_value = workspace
         mock_run.get_id.return_value = "run-123"
         mock_db.runs.get_all.return_value = [mock_run]
-
-        mocker.patch.object(gc, "_is_workspace_on_accessible_mount", return_value=False)
-        mocker.patch("os.path.exists", return_value=True)
 
         gc.check_run_workspaces()
 
@@ -619,7 +625,7 @@ class TestCheckRunWorkspaces:
         assert len(gc._issues["inaccessible_runs"]) == 0
 
     def test_check_with_multiple_runs_mixed_cases(
-        self, mocker: MockerFixture, gc: DatabaseGarbageCollector, mock_db: MagicMock
+        self, mocker: MockerFixture, gc: DatabaseGarbageCollector, mock_db: MagicMock, garbage_collection_testing_dir: FixtureStr
     ):
         """
         Test checking multiple runs covering all four cases.
@@ -628,10 +634,18 @@ class TestCheckRunWorkspaces:
             mocker: Pytest mocker fixture.
             gc: DatabaseGarbageCollector instance.
             mock_db: Mocked database instance.
+            garbage_collection_testing_dir: The path to the temporary output directory where garbage collection
+                tests will store files associated with this test.
         """
+        # Create real directories for valid workspaces
+        valid_local_path = os.path.join(garbage_collection_testing_dir, "valid_local")
+        valid_mount_path = os.path.join(garbage_collection_testing_dir, "mnt", "shared", "valid")
+        os.makedirs(valid_local_path, exist_ok=True)
+        os.makedirs(valid_mount_path, exist_ok=True)
+        
         # Case 1: Invalid workspace on accessible mount (should be flagged)
         invalid_accessible = MagicMock()
-        invalid_accessible.get_workspace.return_value = "/mnt/shared/invalid"
+        invalid_accessible.get_workspace.return_value = os.path.join(garbage_collection_testing_dir, "mnt", "shared", "invalid")
         invalid_accessible.get_id.return_value = "run-invalid-accessible"
 
         # Case 2: Workspace on inaccessible mount (should not be flagged)
@@ -641,33 +655,27 @@ class TestCheckRunWorkspaces:
 
         # Case 3: Valid local workspace on root filesystem
         valid_local = MagicMock()
-        valid_local.get_workspace.return_value = "/tmp/local"
+        valid_local.get_workspace.return_value = valid_local_path
         valid_local.get_id.return_value = "run-valid-local"
 
         # Case 4: Valid workspace on accessible mount
         valid_accessible = MagicMock()
-        valid_accessible.get_workspace.return_value = "/mnt/shared/valid"
+        valid_accessible.get_workspace.return_value = valid_mount_path
         valid_accessible.get_id.return_value = "run-valid-accessible"
 
         mock_db.runs.get_all.return_value = [invalid_accessible, inaccessible, valid_local, valid_accessible]
 
         # Mock _is_workspace_on_accessible_mount based on workspace path
         def is_accessible_side_effect(workspace):
-            # Only /mnt/shared/* workspaces are on accessible mounts
-            return str(workspace).startswith("/mnt/shared")
+            # Workspaces under garbage_collection_testing_dir/mnt/shared are accessible
+            # /p/lustre3 is inaccessible (real shared mount)
+            workspace_str = str(workspace)
+            return (
+                workspace_str.startswith(os.path.join(garbage_collection_testing_dir, "mnt", "shared"))
+                and not workspace_str.startswith("/p/lustre3")
+            )
 
         mocker.patch.object(gc, "_is_workspace_on_accessible_mount", side_effect=is_accessible_side_effect)
-
-        # Mock os.path.exists based on workspace path
-        def path_exists_side_effect(path):
-            # Specific paths that exist
-            existing_paths = {
-                "/mnt/shared/valid",
-                "/tmp/local",
-            }
-            return path in existing_paths
-
-        mocker.patch("os.path.exists", side_effect=path_exists_side_effect)
 
         gc.check_run_workspaces()
 
@@ -675,7 +683,7 @@ class TestCheckRunWorkspaces:
         assert len(gc._issues["run"]) == 1
         assert gc._issues["run"][0] == invalid_accessible
 
-        # Only inaccessible should be in 'inaccessible_runs' issues (Cases 2)
+        # Only inaccessible should be in 'inaccessible_runs' issues (Case 2)
         assert len(gc._issues["inaccessible_runs"]) == 1
         assert gc._issues["inaccessible_runs"][0] == inaccessible
 
