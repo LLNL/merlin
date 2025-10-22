@@ -13,7 +13,6 @@ from unittest.mock import MagicMock
 import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
-from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.exceptions import RestartException
 from merlin.monitor.monitor import Monitor
@@ -79,12 +78,12 @@ def test_monitor_all_runs_handles_completed_and_incomplete_runs(mocker: MockerFi
     # Mock monitoring methods
     monitor.wait_for_workers = mocker.MagicMock()
     monitor.check_run_health = mocker.MagicMock()
-    
+
     # Use sleep side effect to mark run as complete after first cycle
     def sleep_side_effect(duration):
         # After first cycle, mark run 2 as complete to exit the loop
         mock_run_2.run_complete = True
-    
+
     mocker.patch("time.sleep", side_effect=sleep_side_effect)
 
     monitor.monitor_all_runs()
@@ -158,7 +157,7 @@ def test_monitor_all_runs_monitors_multiple_active_runs(mocker: MockerFixture, m
     mock_study.get_runs.return_value = ["run0", "run1", "run2"]
 
     call_count = 0
-    
+
     def mock_get(model, *args, **kwargs):
         nonlocal call_count
         if model == "study":
@@ -180,11 +179,11 @@ def test_monitor_all_runs_monitors_multiple_active_runs(mocker: MockerFixture, m
 
     # Mock monitoring methods
     monitor.wait_for_workers = mocker.MagicMock()
-    
+
     def check_health_side_effect(run):
         nonlocal call_count
         call_count += 1
-    
+
     monitor.check_run_health = mocker.MagicMock(side_effect=check_health_side_effect)
 
     # Mock sleep to avoid delays
@@ -219,16 +218,16 @@ def test_monitor_all_runs_detects_new_runs_dynamically(mocker: MockerFixture, mo
 
     # Mock study
     mock_study = mocker.MagicMock()
-    
+
     # First call returns one run, second call returns two runs, third returns two complete runs
     mock_study.get_runs.side_effect = [
-        ["run1"],           # First cycle: 1 run
-        ["run1", "run2"],   # Second cycle: 2 runs (new run added)
-        ["run1", "run2"]    # Third cycle: both complete
+        ["run1"],  # First cycle: 1 run
+        ["run1", "run2"],  # Second cycle: 2 runs (new run added)
+        ["run1", "run2"],  # Third cycle: both complete
     ]
 
     cycle_count = 0
-    
+
     def mock_get(model, *args, **kwargs):
         nonlocal cycle_count
         if model == "study":
@@ -250,11 +249,11 @@ def test_monitor_all_runs_detects_new_runs_dynamically(mocker: MockerFixture, mo
 
     # Mock monitoring methods
     monitor.wait_for_workers = mocker.MagicMock()
-    
+
     def check_health_side_effect(run):
         nonlocal cycle_count
         cycle_count += 1
-    
+
     monitor.check_run_health = mocker.MagicMock(side_effect=check_health_side_effect)
 
     # Mock sleep
@@ -279,7 +278,7 @@ def test_wait_for_workers(mocker: MockerFixture, monitor: Monitor):
 
     mock_worker_1 = mocker.MagicMock()
     mock_worker_1.get_name.return_value = "worker_1"
-    
+
     mock_worker_2 = mocker.MagicMock()
     mock_worker_2.get_name.return_value = "worker_2"
 
@@ -291,9 +290,7 @@ def test_wait_for_workers(mocker: MockerFixture, monitor: Monitor):
 
     monitor.wait_for_workers(run)
 
-    monitor.task_server_monitor.wait_for_workers.assert_called_once_with(
-        ["worker_1", "worker_2"], monitor.sleep
-    )
+    monitor.task_server_monitor.wait_for_workers.assert_called_once_with(["worker_1", "worker_2"], monitor.sleep)
 
 
 def test_check_task_activity_tasks_in_queue(mocker: MockerFixture, monitor: Monitor):
@@ -394,7 +391,7 @@ def test_check_run_health_no_restart_when_disabled(mocker: MockerFixture, monito
         monitor: A mocked Monitor instance.
     """
     monitor.no_restart = True
-    
+
     run = mocker.MagicMock()
     run.run_complete = False
     run.get_workspace.return_value = "workspace"
@@ -426,7 +423,7 @@ def test_monitor_single_run_completes_successfully(mocker: MockerFixture, monito
     def sleep_side_effect(duration):
         # After first cycle, mark run as complete to exit the loop
         run.run_complete = True
-    
+
     mocker.patch("time.sleep", side_effect=sleep_side_effect)
 
     monitor.wait_for_workers = mocker.MagicMock()

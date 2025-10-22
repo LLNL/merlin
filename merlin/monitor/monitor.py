@@ -159,14 +159,14 @@ class Monitor:
         This method performs worker health checks to detect and restart dead workers,
         monitors task activity to determine if the workflow is making progress, and
         automatically restarts stalled workflows (unless auto-restart is disabled).
-        
+
         The health check considers a workflow stalled if there are no tasks in the queues,
         no workers processing tasks, and the run is not marked as complete. This typically
         indicates a workflow that has hung and needs to be restarted.
 
         Transient exceptions such as Redis timeouts are caught and handled gracefully
         to avoid terminating the monitoring process.
-        
+
         Args:
             run: A RunEntity instance representing the run to monitor.
         """
@@ -207,20 +207,22 @@ class Monitor:
         study_entity = self.merlin_db.get("study", self.spec.name)
 
         while True:
-            all_runs = [self.merlin_db.get("run", run_id) 
-                       for run_id in study_entity.get_runs()]
+            all_runs = [self.merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
 
             # Filter to complete and incomplete runs
             active_runs = []
             completed_runs = []
             for run in all_runs:
-                completed_runs.append(run) if run.run_complete else active_runs.append(run)
-            
+                if run.run_complete:
+                    completed_runs.append(run)
+                else:
+                    active_runs.append(run)
+
             # Log completed runs
             if completed_runs:
                 completed_workspaces = [run.get_workspace() for run in completed_runs]
                 LOG.info(f"Monitor: The following runs have completed: {completed_workspaces}")
-            
+
             # Log active runs
             if active_runs:
                 active_workspaces = [run.get_workspace() for run in active_runs]
@@ -228,12 +230,12 @@ class Monitor:
             else:
                 LOG.info("Monitor: No active runs remaining.")
                 break
-                
+
             # Check each active run
             for run in active_runs:
                 self.wait_for_workers(run)
                 self.check_run_health(run)
-            
+
             time.sleep(self.sleep)
 
     def monitor_single_run(self, run: RunEntity):
