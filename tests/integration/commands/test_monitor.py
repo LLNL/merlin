@@ -16,6 +16,7 @@ from typing import Generator, List, Tuple
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from pytest_mock import MockerFixture
 
 from merlin.config.configfile import initialize_config
 from merlin.db_scripts.entities.run_entity import RunEntity
@@ -344,6 +345,7 @@ class TestMultiRunMonitoring:
 
     def test_monitor_detects_stalled_workflow_across_multiple_runs(
         self,
+        mocker: MockerFixture,
         mock_spec: MagicMock,
         mock_task_server_monitor: MagicMock,
         setup_database_with_runs: Generator[Tuple[MerlinDatabase, StudyEntity, List[RunEntity]], None, None],
@@ -357,6 +359,7 @@ class TestMultiRunMonitoring:
         and the run has not been marked as complete.
 
         Args:
+            mocker: Pytest mocker fixture.
             mock_spec: A mocked MerlinSpec instance.
             mock_task_server_monitor: A mocked task server monitor instance.
             setup_database_with_runs: A tuple containing the MerlinDatabase instance, StudyEntity, and a list of RunEntities.
@@ -374,27 +377,25 @@ class TestMultiRunMonitoring:
         mock_task_server_monitor.check_tasks.side_effect = check_tasks_side_effect
         mock_task_server_monitor.check_workers_processing.return_value = False
 
-        with (
-            patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor),
-            patch("merlin.monitor.monitor.subprocess.run") as mock_subprocess,
-        ):
+        mocker.patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor)
+        mock_subprocess = mocker.patch("merlin.monitor.monitor.subprocess.run")
 
-            mock_subprocess.return_value = Mock(returncode=0, stdout="Restart successful", stderr="")
+        mock_subprocess.return_value = Mock(returncode=0, stdout="Restart successful", stderr="")
 
-            monitor = Monitor(mock_spec, sleep=1, task_server="celery", no_restart=False)
+        monitor = Monitor(mock_spec, sleep=1, task_server="celery", no_restart=False)
 
-            # Perform health check on all runs
-            all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
-            active_runs = [run for run in all_runs if not run.run_complete]
+        # Perform health check on all runs
+        all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
+        active_runs = [run for run in all_runs if not run.run_complete]
 
-            for run in active_runs:
-                monitor.wait_for_workers(run)
-                monitor.check_run_health(run)
+        for run in active_runs:
+            monitor.wait_for_workers(run)
+            monitor.check_run_health(run)
 
-            # Verify restart was called only for the stalled run
-            assert mock_subprocess.call_count == 1
-            called_workspace = mock_subprocess.call_args[0][0]
-            assert temp_workspaces[1] in called_workspace
+        # Verify restart was called only for the stalled run
+        assert mock_subprocess.call_count == 1
+        called_workspace = mock_subprocess.call_args[0][0]
+        assert temp_workspaces[1] in called_workspace
 
     def test_monitor_all_runs_exits_when_all_complete(
         self,
@@ -486,6 +487,7 @@ class TestMultiRunMonitoring:
 
     def test_monitor_handles_concurrent_restarts(
         self,
+        mocker: MockerFixture,
         mock_spec: MagicMock,
         mock_task_server_monitor: MagicMock,
         setup_database_with_runs: Generator[Tuple[MerlinDatabase, StudyEntity, List[RunEntity]], None, None],
@@ -496,6 +498,7 @@ class TestMultiRunMonitoring:
         in the same monitoring cycle.
 
         Args:
+            mocker: Pytest mocker fixture.
             mock_spec: A mocked MerlinSpec instance.
             mock_task_server_monitor: A mocked task server monitor instance.
             setup_database_with_runs: A tuple containing the MerlinDatabase instance, StudyEntity, and a list of RunEntities.
@@ -507,33 +510,32 @@ class TestMultiRunMonitoring:
         mock_task_server_monitor.check_tasks.return_value = False
         mock_task_server_monitor.check_workers_processing.return_value = False
 
-        with (
-            patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor),
-            patch("merlin.monitor.monitor.subprocess.run") as mock_subprocess,
-        ):
+        mocker.patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor)
+        mock_subprocess = mocker.patch("merlin.monitor.monitor.subprocess.run")
 
-            mock_subprocess.return_value = Mock(returncode=0, stdout="Restart successful", stderr="")
+        mock_subprocess.return_value = Mock(returncode=0, stdout="Restart successful", stderr="")
 
-            monitor = Monitor(mock_spec, sleep=1, task_server="celery", no_restart=False)
+        monitor = Monitor(mock_spec, sleep=1, task_server="celery", no_restart=False)
 
-            # Perform health check on all runs
-            all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
-            active_runs = [run for run in all_runs if not run.run_complete]
+        # Perform health check on all runs
+        all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
+        active_runs = [run for run in all_runs if not run.run_complete]
 
-            for run in active_runs:
-                monitor.wait_for_workers(run)
-                monitor.check_run_health(run)
+        for run in active_runs:
+            monitor.wait_for_workers(run)
+            monitor.check_run_health(run)
 
-            # Verify restart was called for all 3 runs
-            assert mock_subprocess.call_count == 3
+        # Verify restart was called for all 3 runs
+        assert mock_subprocess.call_count == 3
 
-            # Verify each workspace was restarted
-            called_workspaces = [call[0][0] for call in mock_subprocess.call_args_list]
-            for workspace in temp_workspaces:
-                assert any(workspace in cmd for cmd in called_workspaces)
+        # Verify each workspace was restarted
+        called_workspaces = [call[0][0] for call in mock_subprocess.call_args_list]
+        for workspace in temp_workspaces:
+            assert any(workspace in cmd for cmd in called_workspaces)
 
     def test_monitor_no_restart_flag_prevents_restarts(
         self,
+        mocker: MockerFixture,
         mock_spec: MagicMock,
         mock_task_server_monitor: MagicMock,
         setup_database_with_runs: Generator[Tuple[MerlinDatabase, StudyEntity, List[RunEntity]], None, None],
@@ -542,6 +544,7 @@ class TestMultiRunMonitoring:
         Test that the no_restart flag prevents automatic restarts across all runs.
 
         Args:
+            mocker: Pytest mocker fixture.
             mock_spec: A mocked MerlinSpec instance.
             mock_task_server_monitor: A mocked task server monitor instance.
             setup_database_with_runs: A tuple containing the MerlinDatabase instance, StudyEntity, and a list of RunEntities.
@@ -552,23 +555,21 @@ class TestMultiRunMonitoring:
         mock_task_server_monitor.check_tasks.return_value = False
         mock_task_server_monitor.check_workers_processing.return_value = False
 
-        with (
-            patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor),
-            patch("merlin.monitor.monitor.subprocess.run") as mock_subprocess,
-        ):
+        mocker.patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor)
+        mock_subprocess = mocker.patch("merlin.monitor.monitor.subprocess.run")
 
-            monitor = Monitor(mock_spec, sleep=1, task_server="celery", no_restart=True)
+        monitor = Monitor(mock_spec, sleep=1, task_server="celery", no_restart=True)
 
-            # Perform health check on all runs
-            all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
-            active_runs = [run for run in all_runs if not run.run_complete]
+        # Perform health check on all runs
+        all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
+        active_runs = [run for run in all_runs if not run.run_complete]
 
-            for run in active_runs:
-                monitor.wait_for_workers(run)
-                monitor.check_run_health(run)
+        for run in active_runs:
+            monitor.wait_for_workers(run)
+            monitor.check_run_health(run)
 
-            # Verify no restarts occurred
-            assert mock_subprocess.call_count == 0
+        # Verify no restarts occurred
+        assert mock_subprocess.call_count == 0
 
     def test_monitor_all_runs_monitoring_loop(
         self,
