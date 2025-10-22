@@ -573,6 +573,7 @@ class TestMultiRunMonitoring:
 
     def test_monitor_all_runs_monitoring_loop(
         self,
+        mocker: MockerFixture,
         mock_spec: MagicMock,
         mock_task_server_monitor: MagicMock,
         setup_database_with_runs: Generator[Tuple[MerlinDatabase, StudyEntity, List[RunEntity]], None, None],
@@ -581,6 +582,7 @@ class TestMultiRunMonitoring:
         Test the full monitor_all_runs loop with multiple cycles.
 
         Args:
+            mocker: Pytest mocker fixture.
             mock_spec: A mocked MerlinSpec instance.
             mock_task_server_monitor: A mocked task server monitor instance.
             setup_database_with_runs: A tuple containing the MerlinDatabase instance, StudyEntity, and a list of RunEntities.
@@ -601,18 +603,17 @@ class TestMultiRunMonitoring:
 
         mock_task_server_monitor.check_tasks.return_value = True  # Runs are active
 
-        with (
-            patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor),
-            patch("merlin.monitor.monitor.time.sleep", side_effect=sleep_side_effect),
-        ):
-            monitor = Monitor(mock_spec, sleep=1, task_server="celery", no_restart=True)
+        mocker.patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor)
+        mocker.patch("merlin.monitor.monitor.time.sleep", side_effect=sleep_side_effect)
 
-            # Run the monitor
-            monitor.monitor_all_runs()
+        monitor = Monitor(mock_spec, sleep=1, task_server="celery", no_restart=True)
 
-            # Verify we went through 3 monitoring cycles
-            assert cycle_count == 3
+        # Run the monitor
+        monitor.monitor_all_runs()
 
-            # Verify health checks were performed multiple times
-            # 3 runs * 3 cycles = 9 health checks
-            assert mock_task_server_monitor.run_worker_health_check.call_count == 9
+        # Verify we went through 3 monitoring cycles
+        assert cycle_count == 3
+
+        # Verify health checks were performed multiple times
+        # 3 runs * 3 cycles = 9 health checks
+        assert mock_task_server_monitor.run_worker_health_check.call_count == 9
