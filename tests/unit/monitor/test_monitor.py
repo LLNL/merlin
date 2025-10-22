@@ -159,7 +159,6 @@ def test_monitor_all_runs_monitors_multiple_active_runs(mocker: MockerFixture, m
     call_count = 0
 
     def mock_get(model, *args, **kwargs):
-        nonlocal call_count
         if model == "study":
             return mock_study
         elif model == "run":
@@ -229,7 +228,6 @@ def test_monitor_all_runs_detects_new_runs_dynamically(mocker: MockerFixture, mo
     cycle_count = 0
 
     def mock_get(model, *args, **kwargs):
-        nonlocal cycle_count
         if model == "study":
             return mock_study
         elif model == "run":
