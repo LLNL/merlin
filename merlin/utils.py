@@ -18,8 +18,9 @@ import sys
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
+from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Dict, Generator, List, Tuple, Union
+from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
 import numpy as np
 import pkg_resources
@@ -465,6 +466,11 @@ def load_array_file(filename: str, ndmin: int = 2) -> np.ndarray:
     return array
 
 
+#################################
+# File system utility functions #
+#################################
+
+
 def determine_protocol(fname: str) -> str:
     """
     Determine the file protocol based on the file name extension.
@@ -535,6 +541,33 @@ def verify_dirpath(dirpath: str) -> str:
     if not os.path.isdir(dirpath):
         raise ValueError(f"'{dirpath}' is not a valid directory path")
     return dirpath
+
+
+def get_accessible_mounts(exclude_root: bool = False) -> Set[Path]:
+    """
+    Get set of mount points that are actually accessible on this machine.
+
+    By default, this likely includes the root filesystem (e.g., '/' or 'C:\\') as an
+    accessible mount point. You may want to exclude it if you are specifically
+    interested in other mounted filesystems.
+
+    Args:
+        exclude_root: If True, exclude the root filesystem from the list of
+            accessible mounts.
+
+    Returns:
+        Set of accessible mount point paths.
+    """
+    accessible = set()
+
+    for part in psutil.disk_partitions(all=True):
+        mountpoint = Path(part.mountpoint)
+        if exclude_root and mountpoint == Path(mountpoint.anchor):
+            continue
+        accessible.add(mountpoint)
+
+    LOG.debug(f"Accessible mounts on {socket.gethostname()}: {accessible}")
+    return accessible
 
 
 @contextmanager
