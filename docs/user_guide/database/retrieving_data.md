@@ -334,7 +334,7 @@ Additional Data: {}
 
 !!! tip "Large Databases"
 
-    If you have a large database with many entries, the `everything` option may produce substantial output. Consider using the [`merlin database info`](./info.md) command first to see how many entries exist, or use the specific entity type retrieval commands to get only what you need. You can also pipe the output into a pager such as less to make browsing and searching easier.
+    If you have a large database with many entries, the `everything` option may produce substantial output. Consider using the [`merlin database info`](./info.md) command first to see how many entries exist, or use the specific entity type retrieval commands to get only what you need. You can also pipe the output into a pager such as `less` to make browsing and searching easier.
 
 Using the `everything` option will retrieve and display every entry in our database. In our case this would be 8 entries: 2 studies, 2 runs, 2 logical workers, and 2 physical workers.
 

@@ -274,17 +274,17 @@ merlin database gc --skip-workers --skip-studies
 
 When working across multiple machines with different filesystem access:
 
-1. **Run from a machine with broad filesystem access**: For the most comprehensive cleanup, run garbage collection from a machine that has access to the most access shared file systems.
-
-2. **Use --dry-run first**: Always preview what will be cleaned up before running the actual cleanup:
+1. **Use --dry-run first**: Always preview what will be cleaned up before running the actual cleanup:
 
     ```bash
     merlin database gc --dry-run
     ```
 
-3. **Check inaccessible workspace warnings**: Pay attention to warnings about inaccessible workspaces. If you see many of these, you may need to run garbage collection from a different machine or manually delete certain runs.
+2. **Check inaccessible workspace warnings**: Pay attention to warnings about inaccessible workspaces. If you see many of these, you may need to run garbage collection from a different machine or manually delete certain runs.
 
-4. **Understand your filesystem topology**: Know which filesystems are shared (e.g., `/p/lustre3`) vs. local (e.g., `/tmp`, `/home`) in your environment.
+3. **Understand your filesystem topology**: Know which filesystems are shared (e.g., `/p/lustre3`) vs. local (e.g., `/tmp`, `/home`) in your environment.
+
+4. **Run from a machine with broad filesystem access**: For the most comprehensive cleanup, run garbage collection from a machine that has access to the most access shared file systems.
 
 ## Limitations
 
