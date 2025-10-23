@@ -18,6 +18,7 @@ handled gracefully to ensure that monitoring continues without interruption.
 """
 
 import logging
+import os
 import subprocess
 import time
 import traceback
@@ -26,8 +27,9 @@ from kombu.exceptions import OperationalError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.db_scripts.entities.run_entity import RunEntity
+from merlin.db_scripts.garbage_collector import DatabaseGarbageCollector
 from merlin.db_scripts.merlin_db import MerlinDatabase
-from merlin.exceptions import RestartException
+from merlin.exceptions import RestartException, RunNotFoundError
 from merlin.monitor.monitor_factory import monitor_factory
 from merlin.monitor.task_server_monitor import TaskServerMonitor
 from merlin.spec.specification import MerlinSpec
@@ -67,7 +69,7 @@ class Monitor:
         restart_workflow: Restart a run of a workflow.
     """
 
-    def __init__(self, spec: MerlinSpec, sleep: int, task_server: str, no_restart: bool):
+    def __init__(self, spec: MerlinSpec, sleep: int, task_server: str, no_restart: bool, auto_cleanup: bool = True):
         """
         Initializes the `Monitor` instance with the given Merlin specification, sleep interval,
         and task server type. The task server monitor is created using the
@@ -78,12 +80,56 @@ class Monitor:
             sleep (int): The interval (in seconds) between monitoring checks.
             task_server (str): The type of task server being used (e.g., "celery").
             no_restart (bool): If True, the monitor will not try to restart the workflow.
+            auto_cleanup (bool): If True, run garbage collection before monitoring.
         """
         self.spec: MerlinSpec = spec
         self.sleep: int = sleep
         self.no_restart: bool = no_restart
         self.task_server_monitor: TaskServerMonitor = monitor_factory.create(task_server)
         self.merlin_db = MerlinDatabase()
+
+        # Run garbage collection if enabled
+        if auto_cleanup:
+            self._run_cleanup()
+        else:
+            LOG.info("Monitor: Automatic database cleanup is disabled.")
+
+    def _run_cleanup(self):
+        """
+        Run automatic garbage collection of the database before monitoring.
+
+        This is often needed so that the monitor doesn't try to watch runs that
+        no longer exist in the file system.
+        """
+        try:
+            LOG.info("Monitor: Running automatic database cleanup before monitoring...")
+            collector = DatabaseGarbageCollector(self.merlin_db)
+            # Set check_workers to False since workers can be started prior to runs being launched
+            collector.scan_and_clean(force=True, check_workers=False)
+        # pylint complains about broad exception but we don't want the monitor to shut off
+        # for just running garbage collection
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            LOG.warning(f"Monitor: Automatic cleanup failed: {e}. Continuing with monitoring.")
+
+    def _validate_run_workspace(self, run: RunEntity) -> bool:
+        """
+        Check if a run's workspace exists on the filesystem.
+
+        Args:
+            run: The run entity to validate.
+
+        Returns:
+            True if the workspace exists, False otherwise.
+        """
+        workspace = run.get_workspace()
+        if not os.path.exists(workspace):
+            LOG.error(
+                f"Run {run.get_id()} has an invalid or inaccessible workspace '{workspace}'. "
+                "This run will be skipped. Consider running garbage collection "
+                "to clean up stale entries."
+            )
+            return False
+        return True
 
     def wait_for_workers(self, run: RunEntity):
         """
@@ -207,12 +253,22 @@ class Monitor:
         study_entity = self.merlin_db.get("study", self.spec.name)
 
         while True:
-            all_runs = [self.merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
+            all_runs = []
+            for run_id in study_entity.get_runs():
+                try:
+                    all_runs.append(self.merlin_db.get("run", run_id))
+                except RunNotFoundError:
+                    LOG.warning(f"Monitor: Run with ID '{run_id}' no longer exists in database. Skipping this run")
+                    continue
 
             # Filter to complete and incomplete runs
             active_runs = []
             completed_runs = []
             for run in all_runs:
+                if not self._validate_run_workspace(run):
+                    LOG.warning(f"Monitor: Skipping run '{run.get_workspace()}' with invalid or inaccessible workspace.")
+                    continue
+
                 if run.run_complete:
                     completed_runs.append(run)
                 else:
@@ -253,8 +309,15 @@ class Monitor:
         Args:
             run: A [`RunEntity`][db_scripts.entities.run_entity.RunEntity] instance representing
                 the run that's going to be monitored.
+
+        Raises:
+            RunNotFoundError: If the run's workspace is invalid or inaccessible.
         """
         run_workspace = run.get_workspace()
+
+        # Validate workspace exists before monitoring
+        if not self._validate_run_workspace(run):
+            raise RunNotFoundError(f"Cannot monitor run with invalid or inaccessible workspace '{run_workspace}'")
 
         LOG.info(f"Monitor: Monitoring run with workspace '{run_workspace}'...")
 

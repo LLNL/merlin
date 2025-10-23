@@ -58,10 +58,22 @@ def mock_delete_command(mocker: MockerFixture) -> MagicMock:
 
 
 @pytest.fixture
+def mock_gc_command(mocker: MockerFixture) -> MagicMock:
+    """
+    Fixture to patch the `DatabaseGarbageCollectionCommand` class with a mock object.
+
+    Returns:
+        Mocked `DatabaseGarbageCollectionCommand` class.
+    """
+    return mocker.patch("merlin.cli.commands.database.database.DatabaseGarbageCollectionCommand")
+
+
+@pytest.fixture
 def database_command(
     mock_info_command: MagicMock,
     mock_get_command: MagicMock,
     mock_delete_command: MagicMock,
+    mock_gc_command: MagicMock,
 ) -> DatabaseCommand:
     """
     Fixture to create a DatabaseCommand instance using the mocked subcommands.
@@ -70,6 +82,7 @@ def database_command(
         mock_info_command: Mocked `DatabaseInfoCommand` class.
         mock_get_command: Mocked `DatabaseGetCommand` class.
         mock_delete_command: Mocked `DatabaseDeleteCommand` class.
+        mock_gc_command: Mocked `DatabaseGarbageCollectionCommand` class.
 
     Returns:
         Instance of DatabaseCommand.
@@ -81,6 +94,7 @@ def test_add_parser_calls_subcommand_add_parser_methods(
     mock_info_command: MagicMock,
     mock_get_command: MagicMock,
     mock_delete_command: MagicMock,
+    mock_gc_command: MagicMock,
     database_command: DatabaseCommand,
 ):
     """
@@ -91,6 +105,7 @@ def test_add_parser_calls_subcommand_add_parser_methods(
         mock_info_command: Mocked `DatabaseInfoCommand` class.
         mock_get_command: Mocked `DatabaseGetCommand` class.
         mock_delete_command: Mocked `DatabaseDeleteCommand` class.
+        mock_gc_command: Mocked `DatabaseGarbageCollectionCommand` class.
         database_command: Instance of `DatabaseCommand`.
     """
     parser = ArgumentParser()
@@ -102,6 +117,7 @@ def test_add_parser_calls_subcommand_add_parser_methods(
     mock_info_command.return_value.add_parser.assert_called_once()
     mock_get_command.return_value.add_parser.assert_called_once()
     mock_delete_command.return_value.add_parser.assert_called_once()
+    mock_gc_command.return_value.add_parser.assert_called_once()
 
 
 def test_process_command_noop(database_command: DatabaseCommand):

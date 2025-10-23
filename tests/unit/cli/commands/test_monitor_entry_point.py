@@ -60,10 +60,11 @@ def test_process_command_all_steps(mocker: MockerFixture):
         task_server="celery",
         sleep=5,
         no_restart=False,
+        disable_gc=True,
     )
     command.process_command(args)
 
-    monitor_class.assert_called_once_with(mock_spec, 5, "celery", False)
+    monitor_class.assert_called_once_with(mock_spec, 5, "celery", no_restart=False, auto_cleanup=False)
     mock_monitor.monitor_all_runs.assert_called_once()
 
 
