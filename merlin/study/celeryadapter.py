@@ -15,7 +15,6 @@ from typing import Dict, List, Set, Tuple
 
 from amqp.exceptions import ChannelError
 from celery import Celery
-from tabulate import tabulate
 
 from merlin.common.dumper import dump_handler
 from merlin.config import Config

@@ -217,13 +217,13 @@ def merlin_server_dir(temp_output_dir: FixtureStr) -> FixtureStr:
 def mock_db_class(mocker: MockerFixture) -> MagicMock:
     """
     Mock MerlinDatabase globally for all tests.
-    
+
     This fixture mocks MerlinDatabase at its source, so all imports
     across the codebase will use this mock.
-    
+
     Args:
         mocker: Pytest mocker fixture.
-    
+
     Returns:
         A mocked MerlinDatabase class.
     """
@@ -235,12 +235,12 @@ def mock_db_class(mocker: MockerFixture) -> MagicMock:
 def mock_db_instance(mock_db_class: MagicMock) -> MagicMock:
     """
     Returns a mocked instance of MerlinDatabase.
-    
+
     Use this when you need an instance rather than the class itself.
-    
+
     Args:
         mock_db_class: The mocked MerlinDatabase class.
-    
+
     Returns:
         A mocked MerlinDatabase instance.
     """

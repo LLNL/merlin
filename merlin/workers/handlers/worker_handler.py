@@ -38,7 +38,7 @@ class MerlinWorkerHandler(ABC):
     def __init__(self, merlin_db: MerlinDatabase = None):
         """
         Initialize the worker handler.
-        
+
         Args:
             merlin_db: The database instance used for worker management or None.
         """

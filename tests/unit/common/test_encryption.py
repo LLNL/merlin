@@ -127,28 +127,28 @@ class TestEncryption:
     def test_set_backend_funcs(self, mocker: MockerFixture):
         """
         Test the `set_backend_funcs` function.
-        
+
         Args:
             mocker: Pytest mocker fixture.
         """
         # Mock the Backend class to ensure clean state
         mock_backend = mocker.patch("celery.backends.base.Backend")
-        
+
         # Set up mock encode/decode attributes
         mock_backend.encode = mocker.MagicMock()
         mock_backend.decode = mocker.MagicMock()
-        
+
         # Store original values
         orig_encode = mock_backend.encode
         orig_decode = mock_backend.decode
-        
+
         # Call the function
         set_backend_funcs()
-        
+
         # Verify the functions were replaced
         assert mock_backend.encode == _encrypt_encode
         assert mock_backend.decode == _decrypt_decode
-        
+
         # Verify they're different from the originals
         assert mock_backend.encode != orig_encode
         assert mock_backend.decode != orig_decode

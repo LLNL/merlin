@@ -79,7 +79,9 @@ def test_process_command_launches_workers(mocker: MockerFixture):
     mock_log.info.assert_called_once_with("Launching workers from 'workflow.yaml'")
 
 
-def test_process_command_echo_only_mode_prints_command(mocker: MockerFixture, capsys: CaptureFixture, mock_db_instance: MagicMock):
+def test_process_command_echo_only_mode_prints_command(
+    mocker: MockerFixture, capsys: CaptureFixture, mock_db_instance: MagicMock
+):
     """
     Test `process_command` prints the launch command and initializes config in echo-only mode.
 
@@ -100,7 +102,10 @@ def test_process_command_echo_only_mode_prints_command(mocker: MockerFixture, ca
     mocker.patch("merlin.cli.commands.run_workers.get_merlin_spec_with_override", return_value=(mock_spec, "file.yaml"))
     mocker.patch("merlin.cli.commands.run_workers.initialize_config")
     mock_app = mocker.patch("merlin.celery.app")
-    mocker.patch("merlin.cli.commands.run_workers.worker_handler_factory.create", wraps=lambda _: CeleryWorkerHandler(merlin_db=mock_db_instance, app=mock_app))
+    mocker.patch(
+        "merlin.cli.commands.run_workers.worker_handler_factory.create",
+        wraps=lambda _: CeleryWorkerHandler(merlin_db=mock_db_instance, app=mock_app),
+    )
 
     args = Namespace(
         specification="spec.yaml",
