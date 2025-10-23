@@ -77,8 +77,8 @@ class Monitor:
         self.spec: MerlinSpec = spec
         self.sleep: int = sleep
         self.no_restart: bool = no_restart
-        self.task_server_monitor: TaskServerMonitor = monitor_factory.create(task_server)
         self.merlin_db = MerlinDatabase()
+        self.task_server_monitor: TaskServerMonitor = monitor_factory.create(task_server, {"merlin_db": self.merlin_db})
 
         # Run garbage collection if enabled
         if auto_cleanup:

@@ -19,14 +19,19 @@ from merlin.monitor.celery_monitor import CeleryMonitor
 
 
 @pytest.fixture
-def monitor() -> CeleryMonitor:
+def monitor(mocker: MockerFixture, mock_db_instance: MagicMock) -> CeleryMonitor:
     """
     Fixture to provide a CeleryMonitor instance.
+
+    Args:
+        mocker: Pytest mocker fixture.
+        mock_db_instance: Mocked MerlinDatabase instance.
 
     Returns:
         An instance of the `CeleryMonitor` object.
     """
-    return CeleryMonitor()
+    mock_app = mocker.patch("merlin.celery.Celery")
+    return CeleryMonitor(merlin_db=mock_db_instance, app=mock_app)
 
 
 def test_wait_for_workers_success(mocker: MockerFixture, monitor: CeleryMonitor):
@@ -37,7 +42,7 @@ def test_wait_for_workers_success(mocker: MockerFixture, monitor: CeleryMonitor)
         mocker: PyTest mocker fixture.
         monitor: An instance of the `CeleryMonitor` object.
     """
-    mock_get_workers = mocker.patch("merlin.monitor.celery_monitor.get_workers_from_app", return_value=["worker1@node"])
+    mock_get_workers = monitor.worker_handler.get_workers_from_app = MagicMock(return_value=["worker1@node"])
 
     monitor.wait_for_workers(["worker1"], sleep=1)
 
@@ -52,7 +57,7 @@ def test_wait_for_workers_timeout(mocker: MockerFixture, monitor: CeleryMonitor)
         mocker: PyTest mocker fixture.
         monitor: An instance of the `CeleryMonitor` object.
     """
-    mocker.patch("merlin.monitor.celery_monitor.get_workers_from_app", return_value=[])
+    monitor.worker_handler.get_workers_from_app = MagicMock(return_value=[])
     mocker.patch("time.sleep")
 
     with pytest.raises(NoWorkersException):

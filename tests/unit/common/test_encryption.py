@@ -10,8 +10,8 @@ Tests for the `encrypt.py` and `encrypt_backend_traffic.py` files.
 
 import os
 
-import celery
 import pytest
+from pytest_mock import MockerFixture
 
 from merlin.common.security.encrypt import _gen_key, _get_key, _get_key_path, decrypt, encrypt
 from merlin.common.security.encrypt_backend_traffic import _decrypt_decode, _encrypt_encode, set_backend_funcs
@@ -124,22 +124,31 @@ class TestEncryption:
         with open(key_path, "w") as key_file:
             key_file.write(test_encryption_key.decode("utf-8"))
 
-    def test_set_backend_funcs(self):
+    def test_set_backend_funcs(self, mocker: MockerFixture):
         """
         Test the `set_backend_funcs` function.
+        
+        Args:
+            mocker: Pytest mocker fixture.
         """
-        orig_encode = celery.backends.base.Backend.encode
-        orig_decode = celery.backends.base.Backend.decode
-
-        # Make sure these values haven't been set yet
-        assert celery.backends.base.Backend.encode != _encrypt_encode
-        assert celery.backends.base.Backend.decode != _decrypt_decode
-
+        # Mock the Backend class to ensure clean state
+        mock_backend = mocker.patch("celery.backends.base.Backend")
+        
+        # Set up mock encode/decode attributes
+        mock_backend.encode = mocker.MagicMock()
+        mock_backend.decode = mocker.MagicMock()
+        
+        # Store original values
+        orig_encode = mock_backend.encode
+        orig_decode = mock_backend.decode
+        
+        # Call the function
         set_backend_funcs()
-
-        # Ensure the new functions have been set
-        assert celery.backends.base.Backend.encode == _encrypt_encode
-        assert celery.backends.base.Backend.decode == _decrypt_decode
-
-        celery.backends.base.Backend.encode = orig_encode
-        celery.backends.base.Backend.decode = orig_decode
+        
+        # Verify the functions were replaced
+        assert mock_backend.encode == _encrypt_encode
+        assert mock_backend.decode == _decrypt_decode
+        
+        # Verify they're different from the originals
+        assert mock_backend.encode != orig_encode
+        assert mock_backend.decode != orig_decode

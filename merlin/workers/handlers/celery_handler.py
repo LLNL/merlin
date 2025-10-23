@@ -38,16 +38,20 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
     Celery-specific behavior, including launching workers with optional command-line overrides,
     stopping workers, and querying their status.
 
+    Attributes:
+        merlin_db (MerlinDatabase): The database instance used for worker management.
+
     Methods:
         start_workers: Launch or echo Celery workers with optional arguments.
         stop_workers: Attempt to stop active Celery workers.
         query_workers: Return a basic summary of Celery worker status.
     """
 
-    def __init__(self):
-        """ """
-        super().__init__()
-        self.merlin_db = MerlinDatabase()
+    def __init__(self, merlin_db: MerlinDatabase = None, app: Celery = None):
+        super().__init__(merlin_db=merlin_db)
+        if app is None:
+            from merlin.celery import app  # pylint: disable=import-outside-toplevel
+        self.app = app
 
     def start_workers(self, workers: List[CeleryWorker], **kwargs):
         """
@@ -79,7 +83,28 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         Attempt to stop Celery workers.
         """
 
-    def get_active_workers(self, app: Celery) -> Dict[str, List[str]]:
+    def get_workers_from_app(self) -> List[str]:
+        """
+        Retrieve a list of all workers connected to the Celery application.
+
+        This method uses the Celery control interface to inspect the current state
+        of the application and returns a list of workers that are currently connected.
+        If no workers are found, an empty list is returned.
+
+        Args:
+            app: The Celery application instance.
+
+        Returns:
+            A list of worker names that are currently connected to the Celery application.
+                If no workers are connected, an empty list is returned.
+        """
+        i = self.app.control.inspect()
+        workers = i.ping()
+        if workers is None:
+            return []
+        return [*workers]
+
+    def get_active_workers(self) -> Dict[str, List[str]]:
         """
         Retrieve a mapping of active workers to their associated queues for a Celery application.
 
@@ -89,15 +114,12 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         list of queues that the worker is connected to. This allows for easy identification
         of which queues are being handled by each worker.
 
-        Args:
-            app: The Celery application instance.
-
         Returns:
             A dictionary mapping active worker names to lists of queue names they are
                 attached to. If no active workers are found, an empty dictionary is returned.
         """
         # Get the information we need from celery
-        i = app.control.inspect()
+        i = self.app.control.inspect()
         active_workers = i.active_queues()
         if active_workers is None:
             active_workers = {}
@@ -139,10 +161,8 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         Args:
             logical_workers: List of logical worker entities to validate.
         """
-        from merlin.celery import app
-
         # Get actual running workers from Celery
-        live_workers = self.get_active_workers(app)  # Uses Celery inspection
+        live_workers = self.get_active_workers()  # Uses Celery inspection
 
         for logical_worker in logical_workers:
             physical_ids = logical_worker.get_physical_workers()

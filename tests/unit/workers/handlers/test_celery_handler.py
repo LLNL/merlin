@@ -14,6 +14,7 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
+from merlin.common.enums import WorkerStatus
 from merlin.workers.celery_worker import CeleryWorker
 from merlin.workers.handlers import CeleryWorkerHandler
 
@@ -43,18 +44,19 @@ class TestCeleryWorkerHandler:
     """
 
     @pytest.fixture
-    def handler(self, mocker: MockerFixture) -> CeleryWorkerHandler:
+    def handler(self, mocker: MockerFixture, mock_db_instance: MagicMock) -> CeleryWorkerHandler:
         """
         Create a CeleryWorkerHandler instance with mocked database.
 
         Args:
             mocker: Pytest mocker fixture.
+            mock_db_instance: Mocked MerlinDatabase instance.
 
         Returns:
             CeleryWorkerHandler instance with mocked dependencies.
         """
-        mocker.patch("merlin.workers.handlers.celery_handler.MerlinDatabase")
-        return CeleryWorkerHandler()
+        mock_app = mocker.patch("merlin.celery.app")
+        return CeleryWorkerHandler(merlin_db=mock_db_instance, app=mock_app)
 
     @pytest.fixture
     def mock_db(self, mocker: MockerFixture) -> MagicMock:
@@ -214,7 +216,7 @@ class TestCeleryWorkerHandler:
         assert filters == {}
 
     def test_query_workers_calls_database_and_formatter(
-        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mock_formatter: MagicMock
+        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mock_formatter: MagicMock, mocker: MockerFixture
     ):
         """
         Test that `query_workers` retrieves data from database and calls formatter.
@@ -223,9 +225,13 @@ class TestCeleryWorkerHandler:
             handler: CeleryWorkerHandler instance.
             mock_logical_workers: Mock logical worker entities.
             mock_formatter: Mock formatter instance.
+            mocker: Pytest mocker fixture.
         """
         # Mock the database get_all method
         handler.merlin_db.get_all.return_value = mock_logical_workers
+        
+        # Mock the validation method to avoid Celery inspection
+        mocker.patch.object(handler, "_validate_worker_status")
 
         handler.query_workers("rich", queues=["queue1"], workers=["worker1"])
 
@@ -237,7 +243,7 @@ class TestCeleryWorkerHandler:
         mock_formatter.format_and_display.assert_called_once_with(mock_logical_workers, expected_filters, handler.merlin_db)
 
     def test_query_workers_with_no_filters(
-        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mock_formatter: MagicMock
+        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mock_formatter: MagicMock, mocker: MockerFixture
     ):
         """
         Test that `query_workers` works correctly when no filters are provided.
@@ -246,8 +252,12 @@ class TestCeleryWorkerHandler:
             handler: CeleryWorkerHandler instance.
             mock_logical_workers: Mock logical worker entities.
             mock_formatter: Mock formatter instance.
+            mocker: Pytest mocker fixture.
         """
         handler.merlin_db.get_all.return_value = mock_logical_workers
+        
+        # Mock the validation method to avoid Celery inspection
+        mocker.patch.object(handler, "_validate_worker_status")
 
         handler.query_workers("json")
 
@@ -269,6 +279,9 @@ class TestCeleryWorkerHandler:
             mocker: Pytest mocker fixture.
         """
         handler.merlin_db.get_all.return_value = mock_logical_workers
+        
+        # Mock the validation method to avoid Celery inspection
+        mocker.patch.object(handler, "_validate_worker_status")
 
         mock_factory = mocker.patch("merlin.workers.handlers.celery_handler.worker_formatter_factory")
         mock_formatter = MagicMock()
@@ -280,15 +293,19 @@ class TestCeleryWorkerHandler:
         mock_factory.create.assert_called_once_with("json")
         mock_formatter.format_and_display.assert_called_once()
 
-    def test_query_workers_handles_empty_results(self, handler: CeleryWorkerHandler, mock_formatter: MagicMock):
+    def test_query_workers_handles_empty_results(self, handler: CeleryWorkerHandler, mock_formatter: MagicMock, mocker: MockerFixture):
         """
         Test that `query_workers` handles empty database results gracefully.
 
         Args:
             handler: CeleryWorkerHandler instance.
             mock_formatter: Mock formatter instance.
+            mocker: Pytest mocker fixture.
         """
         handler.merlin_db.get_all.return_value = []
+        
+        # Mock the validation method to avoid Celery inspection
+        mocker.patch.object(handler, "_validate_worker_status")
 
         handler.query_workers("rich")
 
@@ -296,7 +313,7 @@ class TestCeleryWorkerHandler:
         mock_formatter.format_and_display.assert_called_once_with([], {}, handler.merlin_db)
 
     def test_query_workers_passes_all_parameters_to_formatter(
-        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mock_formatter: MagicMock
+        self, handler: CeleryWorkerHandler, mock_logical_workers: List[MagicMock], mock_formatter: MagicMock, mocker: MockerFixture
     ):
         """
         Test that `query_workers` passes all necessary parameters to formatter.
@@ -305,8 +322,12 @@ class TestCeleryWorkerHandler:
             handler: CeleryWorkerHandler instance.
             mock_logical_workers: Mock logical worker entities.
             mock_formatter: Mock formatter instance.
+            mocker: Pytest mocker fixture.
         """
         handler.merlin_db.get_all.return_value = mock_logical_workers
+        
+        # Mock the validation method to avoid Celery inspection
+        mocker.patch.object(handler, "_validate_worker_status")
 
         queues = ["[merlin]_queue1", "[merlin]_queue2"]
         workers = ["worker1"]
@@ -317,3 +338,297 @@ class TestCeleryWorkerHandler:
 
         # Verify all parameters are passed correctly
         mock_formatter.format_and_display.assert_called_once_with(mock_logical_workers, expected_filters, handler.merlin_db)
+
+    def test_get_active_workers_returns_worker_queue_mapping(self, handler: CeleryWorkerHandler):
+        """
+        Test that `get_active_workers` correctly maps workers to their queues.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+        """
+        # Mock Celery app and inspection
+        mock_inspect = MagicMock()
+        handler.app.control.inspect.return_value = mock_inspect
+
+        # Mock active queues response
+        mock_inspect.active_queues.return_value = {
+            "celery@worker1": [
+                {"name": "[merlin]_queue1"},
+                {"name": "[merlin]_queue2"}
+            ],
+            "celery@worker2": [
+                {"name": "[merlin]_queue1"}
+            ]
+        }
+
+        result = handler.get_active_workers()
+
+        expected = {
+            "celery@worker1": ["[merlin]_queue1", "[merlin]_queue2"],
+            "celery@worker2": ["[merlin]_queue1"]
+        }
+        assert result == expected
+
+    def test_get_active_workers_handles_no_active_workers(self, handler: CeleryWorkerHandler):
+        """
+        Test that `get_active_workers` handles case when no workers are active.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+        """
+        # Mock Celery app and inspection
+        mock_inspect = MagicMock()
+        handler.app.control.inspect.return_value = mock_inspect
+
+        # Mock empty response
+        mock_inspect.active_queues.return_value = None
+
+        result = handler.get_active_workers()
+
+        assert result == {}
+
+    def test_get_active_workers_handles_empty_worker_dict(self, handler: CeleryWorkerHandler):
+        """
+        Test that `get_active_workers` handles empty worker dictionary.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+        """
+        # Mock Celery app and inspection
+        mock_inspect = MagicMock()
+        handler.app.control.inspect.return_value = mock_inspect
+
+        # Mock empty dictionary response
+        mock_inspect.active_queues.return_value = {}
+
+        result = handler.get_active_workers()
+
+        assert result == {}
+
+    def test_validate_worker_status_marks_dead_workers_as_stalled(
+        self, handler: CeleryWorkerHandler, mocker: MockerFixture
+    ):
+        """
+        Test that `_validate_worker_status` marks workers as stalled when not found in Celery.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        # # Mock Celery app import
+        # mock_app = MagicMock()
+        # mocker.patch("merlin.workers.handlers.celery_handler.app", mock_app)
+        
+        # Mock get_active_workers to return empty dict (no live workers)
+        mocker.patch.object(handler, "get_active_workers", return_value={})
+        
+        # Create mock physical worker that's marked as RUNNING
+        mock_physical = MagicMock()
+        mock_physical.get_status.return_value = WorkerStatus.RUNNING
+        mock_physical.get_name.return_value = "celery@dead_worker"
+        
+        # Create mock logical worker
+        mock_logical = MagicMock()
+        mock_logical.get_physical_workers.return_value = ["physical_id_1"]
+        
+        # Mock database get method
+        handler.merlin_db.get.return_value = mock_physical
+        
+        handler._validate_worker_status([mock_logical])
+        
+        # Verify status was set to STALLED
+        mock_physical.set_status.assert_called_once()
+
+    def test_validate_worker_status_leaves_running_workers_unchanged(
+        self, handler: CeleryWorkerHandler, mocker: MockerFixture
+    ):
+        """
+        Test that `_validate_worker_status` doesn't change status of workers found in Celery.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """        
+        # # Mock Celery app import
+        # mock_app = MagicMock()
+        # mocker.patch("merlin.workers.handlers.celery_handler.app", mock_app)
+        
+        # Mock get_active_workers to return live worker
+        mocker.patch.object(handler, "get_active_workers", return_value={"celery@live_worker": ["[merlin]_queue1"]})
+        
+        # Create mock physical worker that's marked as RUNNING
+        mock_physical = MagicMock()
+        mock_physical.get_status.return_value = WorkerStatus.RUNNING
+        mock_physical.get_name.return_value = "celery@live_worker"
+        
+        # Create mock logical worker
+        mock_logical = MagicMock()
+        mock_logical.get_physical_workers.return_value = ["physical_id_1"]
+        
+        # Mock database get method
+        handler.merlin_db.get.return_value = mock_physical
+        
+        handler._validate_worker_status([mock_logical])
+        
+        # Verify status was NOT changed
+        mock_physical.set_status.assert_not_called()
+
+    def test_validate_worker_status_ignores_stopped_workers(
+        self, handler: CeleryWorkerHandler, mocker: MockerFixture
+    ):
+        """
+        Test that `_validate_worker_status` doesn't check workers already marked as stopped.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """        
+        # # Mock Celery app import
+        # mock_app = MagicMock()
+        # mocker.patch("merlin.workers.handlers.celery_handler.app", mock_app)
+        
+        # Mock get_active_workers (doesn't matter what it returns)
+        mocker.patch.object(handler, "get_active_workers", return_value={})
+        
+        # Create mock physical worker that's marked as STOPPED
+        mock_physical = MagicMock()
+        mock_physical.get_status.return_value = WorkerStatus.STOPPED
+        mock_physical.get_name.return_value = "celery@stopped_worker"
+        
+        # Create mock logical worker
+        mock_logical = MagicMock()
+        mock_logical.get_physical_workers.return_value = ["physical_id_1"]
+        
+        # Mock database get method
+        handler.merlin_db.get.return_value = mock_physical
+        
+        handler._validate_worker_status([mock_logical])
+        
+        # Verify status was NOT changed (worker already stopped)
+        mock_physical.set_status.assert_not_called()
+
+    def test_validate_worker_status_handles_multiple_physical_workers(
+        self, handler: CeleryWorkerHandler, mocker: MockerFixture
+    ):
+        """
+        Test that `_validate_worker_status` validates all physical workers for a logical worker.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """        
+        # # Mock Celery app import
+        # mock_app = MagicMock()
+        # mocker.patch("merlin.workers.handlers.celery_handler.app", mock_app)
+        
+        # Mock get_active_workers - only worker1 is live
+        mocker.patch.object(handler, "get_active_workers", return_value={"celery@worker1": ["[merlin]_queue1"]})
+        
+        # Create mock physical workers
+        mock_physical1 = MagicMock()
+        mock_physical1.get_status.return_value = WorkerStatus.RUNNING
+        mock_physical1.get_name.return_value = "celery@worker1"
+        
+        mock_physical2 = MagicMock()
+        mock_physical2.get_status.return_value = WorkerStatus.RUNNING
+        mock_physical2.get_name.return_value = "celery@worker2"
+        
+        # Create mock logical worker with multiple physical workers
+        mock_logical = MagicMock()
+        mock_logical.get_physical_workers.return_value = ["physical_id_1", "physical_id_2"]
+        
+        # Mock database get method to return different workers
+        handler.merlin_db.get.side_effect = [mock_physical1, mock_physical2]
+        
+        handler._validate_worker_status([mock_logical])
+        
+        # Verify worker1 status was NOT changed (it's live)
+        mock_physical1.set_status.assert_not_called()
+        
+        # Verify worker2 status WAS changed (it's not live)
+        mock_physical2.set_status.assert_called_once()
+
+    def test_get_workers_from_app_returns_worker_list(self, handler: CeleryWorkerHandler):
+        """
+        Test that `get_workers_from_app` returns a list of connected workers.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+        """
+        # Mock Celery app inspection
+        mock_inspect = MagicMock()
+        handler.app.control.inspect.return_value = mock_inspect
+        
+        # Mock ping response with worker names as dict keys
+        mock_inspect.ping.return_value = {
+            "celery@worker1": {"ok": "pong"},
+            "celery@worker2": {"ok": "pong"},
+            "celery@worker3": {"ok": "pong"}
+        }
+
+        result = handler.get_workers_from_app()
+
+        expected = ["celery@worker1", "celery@worker2", "celery@worker3"]
+        assert sorted(result) == sorted(expected)
+
+    def test_get_workers_from_app_handles_no_workers(self, handler: CeleryWorkerHandler):
+        """
+        Test that `get_workers_from_app` returns empty list when no workers are connected.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+        """
+        # Mock Celery app inspection
+        mock_inspect = MagicMock()
+        handler.app.control.inspect.return_value = mock_inspect
+        
+        # Mock ping returning None (no workers)
+        mock_inspect.ping.return_value = None
+
+        result = handler.get_workers_from_app()
+
+        assert result == []
+
+    def test_get_workers_from_app_handles_empty_worker_dict(self, handler: CeleryWorkerHandler):
+        """
+        Test that `get_workers_from_app` returns empty list when ping returns empty dict.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+        """
+        # Mock Celery app inspection
+        mock_inspect = MagicMock()
+        handler.app.control.inspect.return_value = mock_inspect
+        
+        # Mock ping returning empty dict
+        mock_inspect.ping.return_value = {}
+
+        result = handler.get_workers_from_app()
+
+        assert result == []
+
+    def test_get_workers_from_app_preserves_worker_names(self, handler: CeleryWorkerHandler):
+        """
+        Test that `get_workers_from_app` preserves exact worker names from Celery.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+        """
+        # Mock Celery app inspection
+        mock_inspect = MagicMock()
+        handler.app.control.inspect.return_value = mock_inspect
+        
+        # Mock ping response with various worker name formats
+        mock_inspect.ping.return_value = {
+            "celery@worker1.hostname.com": {"ok": "pong"},
+            "celery@worker2": {"ok": "pong"},
+            "worker3@localhost": {"ok": "pong"}
+        }
+
+        result = handler.get_workers_from_app()
+
+        # Verify all names are preserved exactly
+        assert "celery@worker1.hostname.com" in result
+        assert "celery@worker2" in result
+        assert "worker3@localhost" in result
+        assert len(result) == 3

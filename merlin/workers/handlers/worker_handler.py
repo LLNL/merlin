@@ -15,6 +15,7 @@ for different task servers to be plugged in with consistent behavior.
 from abc import ABC, abstractmethod
 from typing import List
 
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.workers.worker import MerlinWorker
 
 
@@ -25,14 +26,23 @@ class MerlinWorkerHandler(ABC):
     Subclasses must implement the methods to launch, stop, and query workers
     using a particular task server (e.g., Celery, Kafka, etc.).
 
+    Attributes:
+        merlin_db (MerlinDatabase): The database instance used for worker management.
+
     Methods:
         start_workers: Launch a list of MerlinWorker instances with optional configuration.
         stop_workers: Stop running worker processes managed by this handler.
         query_workers: Query the status of running workers and return summary information.
     """
 
-    def __init__(self):
-        """Initialize the worker handler."""
+    def __init__(self, merlin_db: MerlinDatabase = None):
+        """
+        Initialize the worker handler.
+        
+        Args:
+            merlin_db: The database instance used for worker management or None.
+        """
+        self.merlin_db = merlin_db or MerlinDatabase()
 
     @abstractmethod
     def start_workers(self, workers: List[MerlinWorker], **kwargs):

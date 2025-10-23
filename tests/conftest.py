@@ -13,11 +13,13 @@ from copy import copy
 from glob import glob
 from time import sleep
 from typing import Dict
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
 from _pytest.tmpdir import TempPathFactory
 from celery import Celery
+from pytest_mock import MockerFixture
 from redis import Redis
 
 from merlin.config.configfile import CONFIG
@@ -209,6 +211,40 @@ def merlin_server_dir(temp_output_dir: FixtureStr) -> FixtureStr:
     if not os.path.exists(server_dir):
         os.mkdir(server_dir)
     return server_dir
+
+
+@pytest.fixture
+def mock_db_class(mocker: MockerFixture) -> MagicMock:
+    """
+    Mock MerlinDatabase globally for all tests.
+    
+    This fixture mocks MerlinDatabase at its source, so all imports
+    across the codebase will use this mock.
+    
+    Args:
+        mocker: Pytest mocker fixture.
+    
+    Returns:
+        A mocked MerlinDatabase class.
+    """
+    mock_db_class = mocker.patch("merlin.db_scripts.merlin_db.MerlinDatabase", autospec=True)
+    return mock_db_class
+
+
+@pytest.fixture
+def mock_db_instance(mock_db_class: MagicMock) -> MagicMock:
+    """
+    Returns a mocked instance of MerlinDatabase.
+    
+    Use this when you need an instance rather than the class itself.
+    
+    Args:
+        mock_db_class: The mocked MerlinDatabase class.
+    
+    Returns:
+        A mocked MerlinDatabase instance.
+    """
+    return mock_db_class.return_value
 
 
 @pytest.fixture(scope="session")
