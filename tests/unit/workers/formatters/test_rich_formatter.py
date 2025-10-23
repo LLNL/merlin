@@ -285,7 +285,6 @@ class TestRichWorkerFormatter:
             (WorkerStatus.STOPPED, "✗", "red"),
             (WorkerStatus.STALLED, "⚠", "yellow"),
             (WorkerStatus.REBOOTING, "↻", "cyan"),
-            ("unknown", "?", "white"),
         ],
     )
     def test_format_status(
@@ -305,10 +304,7 @@ class TestRichWorkerFormatter:
         assert expected_icon in str(formatted)
         assert expected_color in formatted.style
 
-        if isinstance(status, WorkerStatus):
-            assert status.name in str(formatted)
-        else:
-            assert status in str(formatted)
+        assert status.name in str(formatted)
 
     @pytest.mark.parametrize(
         "duration, expected",

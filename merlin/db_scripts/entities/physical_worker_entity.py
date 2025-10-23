@@ -205,7 +205,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
         self.reload_data()
         if not self.entity_info.pid:
             return None
-        
+
         # Handle both int strings and float strings
         try:
             # Convert to float first, then to int

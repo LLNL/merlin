@@ -19,8 +19,8 @@ from typing import Dict, List
 from celery import Celery
 
 from merlin.common.enums import WorkerStatus
-from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.db_scripts.entities.logical_worker_entity import LogicalWorkerEntity
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.workers import CeleryWorker
 from merlin.workers.formatters.formatter_factory import worker_formatter_factory
 from merlin.workers.handlers.worker_handler import MerlinWorkerHandler
@@ -130,7 +130,7 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         if workers:
             filters["name"] = workers
         return filters
-    
+
     def _validate_worker_status(self, logical_workers: List[LogicalWorkerEntity]):
         """
         Cross-check database state with live Celery workers.
@@ -140,10 +140,10 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
             logical_workers: List of logical worker entities to validate.
         """
         from merlin.celery import app
-        
+
         # Get actual running workers from Celery
         live_workers = self.get_active_workers(app)  # Uses Celery inspection
-        
+
         for logical_worker in logical_workers:
             physical_ids = logical_worker.get_physical_workers()
             for pid in physical_ids:
