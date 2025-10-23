@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Garbage collection functionality for the database. Called with: `merlin database gc`, `merlin database garbage-collect`, or `merlin database cleanup`
+- Built-in database garbage collection to the `merlin monitor`
+  - Can be disabled with `--disable-gc`
+- Alias for `merlin database` command so it can be called with `merlin db`
 - New classes for formatting `query-workers` output:
   - `WorkerFormatter`: base class for defining formatted output for workers
   - `RichWorkerFormatter`: implementation of `WorkerFormatter` for output using the rich library

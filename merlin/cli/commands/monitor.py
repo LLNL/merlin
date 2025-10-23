@@ -90,6 +90,11 @@ class MonitorCommand(CommandEntryPoint):
             action="store_true",
             help="Disable the automatic restart functionality for this monitor.",
         )
+        monitor.add_argument(
+            "--disable-gc",
+            action="store_true",
+            help="Disable automatic garbage collection of the database prior to running the monitor.",
+        )
 
     def process_command(self, args: Namespace):
         """
@@ -121,7 +126,7 @@ class MonitorCommand(CommandEntryPoint):
                 LOG.info("Monitor: found tasks in queues and/or tasks being processed")
                 time.sleep(args.sleep)
         else:
-            monitor = Monitor(spec, args.sleep, args.task_server, args.no_restart)
+            monitor = Monitor(spec, args.sleep, args.task_server, no_restart=args.no_restart, auto_cleanup=not args.disable_gc)
             monitor.monitor_all_runs()
 
         LOG.info("Monitor: ... stop condition met")

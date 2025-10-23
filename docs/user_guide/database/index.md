@@ -12,8 +12,12 @@ When a Merlin study is run with the [`merlin run`](../command_line.md#run-merlin
 
 See the below sections for [how the database works](#how-it-works) and [why it's needed](#why-is-this-needed). Additional info about Merlin's database can be found at the below pages:
 
-- [The Database Command](./database_cmd.md)
 - [Understanding Merlin's Database Entities](./entities.md)
+- [The Database Command](./database_cmd.md) - Overview of the `database` command
+- [Info](./info.md) - Using the `info` subcommand
+- [Retrieving Data](./retrieving_data.md) - Using the `get` subcommand
+- [Deleting Data](./deleting_data.md) - Using the `delete` subcommand
+- [Garbage Collection](./garbage_collection.md) - Using the `gc` subcommand
 
 ## How it Works
 
