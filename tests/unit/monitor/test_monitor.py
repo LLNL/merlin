@@ -667,7 +667,7 @@ def test_monitor_all_runs_handles_run_not_found_error(mocker: MockerFixture, mon
 
     monitor.merlin_db.get.side_effect = mock_get
     mocker.patch.object(monitor, "_validate_run_workspace", return_value=True)
-    
+
     # Mock the other methods to prevent infinite loop and further processing
     mocker.patch.object(monitor, "wait_for_workers")
     mocker.patch.object(monitor, "check_run_health")
@@ -678,9 +678,9 @@ def test_monitor_all_runs_handles_run_not_found_error(mocker: MockerFixture, mon
     # Verify that the warning was logged for run2
     assert "Run with ID 'run2' no longer exists in database" in caplog.text
     assert "Skipping this run" in caplog.text
-    
+
     # Verify that run1 and run3 were still processed (both show up in completed runs)
     assert "The following runs have completed: ['ws1', 'ws3']" in caplog.text
-    
+
     # Verify the database was queried for all three runs
     assert monitor.merlin_db.get.call_count == 4  # 1 study + 3 run attempts
