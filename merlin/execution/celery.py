@@ -27,31 +27,99 @@ class CeleryExecutor(TaskExecutor):
     
     def execute_plan(self, plan: ExecutionPlan, context: ExecutionContext) -> Dict[str, TaskResult]:
         """
-        Execute the plan level by level, respecting dependencies.
+        Execute the plan using chain(group(...), group(...), ...) pattern.
 
-        Each level is queued to Celery and we wait for completion before
-        proceeding to the next level to enforce dependencies.
-        Workers must be running separately to execute the tasks.
+        This creates a single Celery workflow where:
+        - Each batch is a group() (tasks execute in parallel)
+        - Batches are chained together (sequential execution)
+        - Levels are naturally separated by the chain structure
         """
+        from celery import chain, group
+
         all_results = {}
+        all_groups = []  # List of group() primitives to chain together
 
+        # Build all groups upfront
         for level in plan.levels:
-            print(f"Executing depth {level.depth} with {len(level.parallel_chains)} parallel chains...")
+            print(f"Preparing depth {level.depth} with {len(level.parallel_chains)} parallel chains...")
 
-            # Queue all chains in this level to Celery and WAIT for completion
-            level_results = self._execute_level_parallel(level, context)
-            all_results.update(level_results)
+            # Expand and build chain signatures for this level
+            all_chain_sigs = []
+            for chain_obj in level.parallel_chains:
+                # Check if chain has real tasks (not virtual nodes)
+                has_real_tasks = False
+                for task in chain_obj.tasks:
+                    try:
+                        step = context.study.dag.step(task)
+                        if step is not None:
+                            has_real_tasks = True
+                            break
+                    except (AttributeError, KeyError, TypeError):
+                        pass
 
-            # Check if any tasks failed - decide whether to continue
-            failed_tasks = [name for name, result in level_results.items()
-                           if result.status == TaskStatus.FAILED]
+                if not has_real_tasks:
+                    # This is a virtual chain (e.g., _source only), mark as skipped
+                    for task in chain_obj.tasks:
+                        all_results[task] = TaskResult(
+                            task_name=task,
+                            status=TaskStatus.SKIPPED,
+                            error="Virtual node, no execution needed"
+                        )
+                    continue
 
-            if failed_tasks:
-                print(f"Tasks failed at depth {level.depth}: {failed_tasks}")
-                # Could implement different failure strategies here
-                # For now, let's continue but mark dependent tasks as skipped
-                self._mark_dependent_tasks_skipped(plan, level.depth, all_results)
-                break
+                # Expand chain into 2D structure: [[pos0_tasks], [pos1_tasks], ...]
+                expanded_positions = self.sample_expander.expand_chain(chain_obj, context)
+
+                # Log expansion details
+                total_expanded = sum(len(pos) for pos in expanded_positions)
+                print(f"  Chain '{chain_obj.tasks[0] if chain_obj.tasks else 'unknown'}' expanded to {total_expanded} tasks across {len(expanded_positions)} positions")
+
+                # Build chain with dependencies (creates proper celery chains for each sample)
+                chain_sigs = self._build_chain_with_dependencies(expanded_positions, context)
+                all_chain_sigs.extend(chain_sigs)
+                print(f"  Created {len(chain_sigs)} Celery chain signatures")
+
+                # Track tasks as queued
+                for position_tasks in expanded_positions:
+                    for task_info in position_tasks:
+                        task_name = task_info['step'].name()
+                        all_results[task_name] = TaskResult(
+                            task_name=task_name,
+                            status=TaskStatus.COMPLETED,
+                            result=None
+                        )
+
+            # Create batches for this level (batch the chain signatures)
+            batches = self._create_batches(all_chain_sigs, batch_size=100)
+            print(f"Level {level.depth}: {len(all_chain_sigs)} chain signatures split into {len(batches)} batches")
+
+            # Convert each batch to a group()
+            for batch_idx, batch in enumerate(batches):
+                if batch:
+                    batch_group = group(*batch)
+                    all_groups.append(batch_group)
+                    print(f"  Created batch group {batch_idx + 1}/{len(batches)} with {len(batch)} chain signatures")
+
+        # Chain all groups together and execute
+        if all_groups:
+            print(f"\nSubmitting workflow chain with {len(all_groups)} batch groups...")
+            workflow_chain = chain(*all_groups)
+            async_result = workflow_chain.apply_async()
+
+            # Wait for completion
+            print(f"Waiting for workflow to complete...")
+            try:
+                async_result.get(timeout=7200)  # 2 hours timeout
+                print(f"Workflow completed successfully")
+            except Exception as e:
+                print(f"Workflow failed with error: {e}")
+                # Mark tasks as failed
+                for task_name in all_results.keys():
+                    all_results[task_name] = TaskResult(
+                        task_name=task_name,
+                        status=TaskStatus.FAILED,
+                        error=str(e)
+                    )
 
         return all_results
     
@@ -186,6 +254,28 @@ class CeleryExecutor(TaskExecutor):
                         status=TaskStatus.SKIPPED,
                         error="Dependency failed"
                     )
+
+    def _create_batches(self, task_infos: List[Dict], batch_size: int = 100) -> List[List[Dict]]:
+        """
+        Split task infos into batches.
+
+        Args:
+            task_infos: List of task info dicts
+            batch_size: Max tasks per batch (default: 100)
+
+        Returns:
+            List of batches
+        """
+        if not task_infos:
+            return []
+
+        batches = []
+        for i in range(0, len(task_infos), batch_size):
+            batch = task_infos[i:i + batch_size]
+            batches.append(batch)
+
+        print(f"Created {len(batches)} batches from {len(task_infos)} tasks (batch_size={batch_size})")
+        return batches
 
     def _create_task_signature(self, task_info: Dict, adapter_config: Dict):
         """
