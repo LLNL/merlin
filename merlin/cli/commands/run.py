@@ -110,6 +110,20 @@ class RunCommand(CommandEntryPoint):
             "a custom parameter generation function. Reuse '--parg' "
             "to pass multiple arguments. [Use with '--pgen']",
         )
+        run.add_argument(
+            "--wait",
+            action="store_true",
+            dest="wait",
+            default=False,
+            help="Wait for workflow to complete before exiting. By default, merlin run exits immediately after submitting tasks.",
+        )
+        run.add_argument(
+            "--timeout",
+            type=int,
+            dest="timeout",
+            default=7200,
+            help="Timeout in seconds when using --wait (default: 7200 = 2 hours).",
+        )
 
     def process_command(self, args: Namespace):
         """
@@ -164,4 +178,4 @@ class RunCommand(CommandEntryPoint):
         # run_task_server(study, args.run_mode)
         executor = executor_factory.create(task_server)
         wf_manager = WorkflowManager(study, executor)
-        wf_manager.run_workflow()
+        wf_manager.run_workflow(wait=args.wait, timeout=args.timeout)

@@ -25,7 +25,7 @@ class CeleryExecutor(TaskExecutor):
         self.active_tasks = {}  # Track running tasks
         self.sample_expander = SampleExpander()
     
-    def execute_plan(self, plan: ExecutionPlan, context: ExecutionContext) -> Dict[str, TaskResult]:
+    def execute_plan(self, plan: ExecutionPlan, context: ExecutionContext, wait: bool = False, timeout: int = 7200) -> Dict:
         """
         Execute the plan using chain(group(...), group(...), ...) pattern.
 
@@ -33,7 +33,21 @@ class CeleryExecutor(TaskExecutor):
         - Each batch is a group() (tasks execute in parallel)
         - Batches are chained together (sequential execution)
         - Levels are naturally separated by the chain structure
+
+        Args:
+            plan: Execution plan to execute
+            context: Execution context
+            wait: If True, block until workflow completes. Default: False (non-blocking)
+            timeout: Timeout in seconds when using wait=True. Default: 7200 (2 hours)
+
+        Returns:
+            Dictionary containing:
+                - 'results': Dict of task results
+                - 'async_result': Celery AsyncResult object (if workflow was submitted)
+                - 'workflow_id': Workflow ID string (if workflow was submitted)
         """
+        import json
+        import os
         from celery import chain, group
 
         all_results = {}
@@ -105,23 +119,77 @@ class CeleryExecutor(TaskExecutor):
             print(f"\nSubmitting workflow chain with {len(all_groups)} batch groups...")
             workflow_chain = chain(*all_groups)
             async_result = workflow_chain.apply_async()
+            workflow_id = async_result.id
 
-            # Wait for completion
-            print(f"Waiting for workflow to complete...")
+            # store workflow information in workspace
+            workspace = context.study.workspace
+            workflow_info_file = os.path.join(workspace, "WORKFLOW_INFO.json")
+            workflow_info = {
+                'workflow_id': workflow_id,
+                'submitted_at': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'study_name': context.study.expanded_spec.name,
+                'num_levels': len(plan.levels),
+                'num_tasks': len(all_results),
+                'status': 'SUBMITTED'
+            }
+
             try:
-                async_result.get(timeout=7200)  # 2 hours timeout
-                print(f"Workflow completed successfully")
+                with open(workflow_info_file, 'w') as f:
+                    json.dump(workflow_info, f, indent=2)
+                print(f"\nWorkflow submitted!")
+                print(f"Workflow ID: {workflow_id}")
+                print(f"Workflow info saved to: {workflow_info_file}")
             except Exception as e:
-                print(f"Workflow failed with error: {e}")
-                # Mark tasks as failed
-                for task_name in all_results.keys():
-                    all_results[task_name] = TaskResult(
-                        task_name=task_name,
-                        status=TaskStatus.FAILED,
-                        error=str(e)
-                    )
+                print(f"Warning: Could not save workflow info: {e}")
 
-        return all_results
+            # wait for completion if requested
+            if wait:
+                print(f"\nWaiting for workflow to complete (timeout: {timeout}s)...")
+                print("Press Ctrl+C to stop waiting (workflow will continue in background)")
+                try:
+                    async_result.get(timeout=timeout)
+                    print(f"Workflow completed successfully")
+
+                    # update workflow info
+                    try:
+                        workflow_info['status'] = 'COMPLETED'
+                        workflow_info['completed_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
+                        with open(workflow_info_file, 'w') as f:
+                            json.dump(workflow_info, f, indent=2)
+                    except Exception as e:
+                        print(f"Warning: Could not update workflow info: {e}")
+
+                except KeyboardInterrupt:
+                    print(f"\n\nStopped waiting. Workflow continues in background.")
+                    print(f"Check status with: merlin status {context.study.expanded_spec.name}")
+                    print(f"Workflow ID: {workflow_id}")
+                except Exception as e:
+                    print(f"Workflow failed with error: {e}")
+                    # mark tasks as failed
+                    for task_name in all_results.keys():
+                        all_results[task_name] = TaskResult(
+                            task_name=task_name,
+                            status=TaskStatus.FAILED,
+                            error=str(e)
+                        )
+
+                    # update workflow info
+                    try:
+                        workflow_info['status'] = 'FAILED'
+                        workflow_info['error'] = str(e)
+                        workflow_info['failed_at'] = time.strftime('%Y-%m-%d %H:%M:%S')
+                        with open(workflow_info_file, 'w') as f:
+                            json.dump(workflow_info, f, indent=2)
+                    except Exception as ex:
+                        print(f"Warning: Could not update workflow info: {ex}")
+
+            return {
+                'results': all_results,
+                'async_result': async_result,
+                'workflow_id': workflow_id
+            }
+
+        return {'results': all_results, 'async_result': None, 'workflow_id': None}
     
     def _execute_level_parallel(self, level: ExecutionLevel, context: ExecutionContext) -> Dict[str, TaskResult]:
         """Execute all chains in a level in parallel, with sample expansion and dependencies."""

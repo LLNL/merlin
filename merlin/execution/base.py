@@ -12,10 +12,21 @@ from merlin.execution.models import ExecutionContext, TaskResult
 
 class TaskExecutor(ABC):
     """Abstract base class for different execution strategies."""
-    
+
     @abstractmethod
-    def execute_plan(self, plan: ExecutionPlan, context: ExecutionContext) -> Dict[str, TaskResult]:
-        """Execute the entire plan and return results."""
+    def execute_plan(self, plan: ExecutionPlan, context: ExecutionContext, wait: bool = False, timeout: int = 7200) -> Dict:
+        """
+        Execute the entire plan and return results.
+
+        Args:
+            plan: Execution plan to execute
+            context: Execution context
+            wait: If True, block until execution completes. Default: False
+            timeout: Timeout in seconds when using wait=True. Default: 7200
+
+        Returns:
+            Dictionary containing results and execution information
+        """
         pass
     
     @abstractmethod
