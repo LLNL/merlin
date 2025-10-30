@@ -448,6 +448,7 @@ merlin server config [OPTIONS]
 
 The Merlin library provides several commands for setting up and managing your Merlin workflow:
 
+- *[cancel](#cancel-merlin-cancel)*: Cancel a study.
 - *[database](#database-merlin-database)*: Interact with Merlin's backend database
 - *[example](#example-merlin-example)*: Download pre-made workflow specifications that can be modified for your own workflow needs
 - *[purge](#purge-merlin-purge)*: Clear any tasks that are currently living in the central server
@@ -455,6 +456,66 @@ The Merlin library provides several commands for setting up and managing your Me
 - *[run](#run-merlin-run)*: Send tasks to the central server
 - *[run workers](#run-workers-merlin-run-workers)*: Start up workers that will execute the tasks that exist on the central server
 - *[stop workers](#stop-workers-merlin-stop-workers)*: Stop existing workers
+
+### Cancel (`merlin cancel`)
+
+The `merlin cancel` command allows you to cancel a running study. A study may have multiple runs executing concurrently on multiple workers being watched by a monitor process to ensure every run finishes. This command will help ensure that every piece of this process is cancelled gracefully.
+
+In other words, the `merlin cancel` command acts as a wrapper around the [`merlin purge`](#purge-merlin-purge) and [`merlin stop-workers`](#stop-workers-merlin-stop-workers) commands. Additionally, any running studies associated with the study being cancelled will be marked as cancelled in the database. This ensures that the `merlin monitor` command will no longer track these studies.
+
+In short, this command will:
+
+1. Purge the queues from the study
+2. Stop the workers for that study
+3. Mark all runs associated with that study as cancelled
+
+**Usage:**
+
+```bash
+merlin cancel [OPTIONS] SPECIFICATION
+```
+
+**Options:**
+
+| Name                      |  Type   | Description | Default |
+| ------------------------- | ------- | ----------- | ------- |
+| `-h`, `--help`            | boolean | Show this help message and exit | `False` |
+| `--no-purge`              | boolean | Skip purging the queues for the study (skip step 1 above). | `False` |
+| `--no-stop-workers`       | boolean | Skip stopping the workers for the study (skip step 2 above). | `False` |
+| `--no-mark-cancelled`     | boolean | Skip marking runs as cancelled in the database (skip step 3 above). | `False` |
+| `--vars` | List[string] | A space-delimited list of variables to override in the spec file. This list should be given after the spec file is provided. Ex: `--vars LEARN=/path/to/new_learn.py EPOCHS=3` | None |
+
+**Examples:**
+
+!!! example "Basic Cancel Example"
+
+    ```bash
+    merlin cancel my_specification.yaml
+    ```
+
+!!! example "Cancel Without Purging Queues Example"
+
+    ```bash
+    merlin cancel my_specification.yaml --no-purge
+    ```
+
+!!! example "Cancel Without Stopping Workers Example"
+
+    ```bash
+    merlin cancel my_specification.yaml --no-stop-workers
+    ```
+
+!!! example "Cancel Without Marking Runs as Cancelled Example"
+
+    ```bash
+    merlin cancel my_specification.yaml --no-mark-cancelled
+    ```
+
+!!! example "Cancel and Substitute Variables Example"
+
+    ```bash
+    merlin cancel my_specification.yaml --vars CUSTOM_QUEUE=new_queue
+    ```
 
 ### Database (`merlin database`)
 

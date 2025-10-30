@@ -36,7 +36,7 @@ The `RunEntity` represents a single execution of a study. It captures the config
 | `workers`      | `List[uuid4]`    | List of [`LogicalWorker`](#logical-worker-entity) IDs serving tasks for this run. |
 | `parent`       | `uuid4 \| NULL`  | ID of parent run (if this run was started by another run).                        |
 | `child`        | `uuid4 \| NULL`  | ID of child run (if this run spawned a new run).                                  |
-| `run_complete` | `bool`           | Indicates whether the run has finished.                                           |
+| `status`       | `str`            | The status of a run.                                                              |
 | `parameters`   | `Dict`           | Arbitrary key/value parameters provided to the run.                               |
 | `samples`      | `Dict`           | Arbitrary samples provided to the run.                                            |
 
@@ -45,6 +45,21 @@ The `RunEntity` represents a single execution of a study. It captures the config
 - Many-to-one with [`StudyEntity`](#study-entity): Multiple runs can be assigned to the same study.
 - Many-to-many with [`LogicalWorkerEntity`](#logical-worker-entity): Multiple runs can be linked to multiple logical workers.
 - Optional one-to-one with parent/child `RunEntity`: A single run can link to another run.
+
+### Run Status
+
+The `status` entry is *not* what [the status commands](../monitoring/status_cmds.md) are tracking. Those commands track step- and task-level statuses. This entry is tracking run-level status which becomes important for the [`merlin monitor`](../command_line.md#monitor-merlin-monitor) command.
+
+Below is a table of possible statuses for a run.
+
+| Status        | Description                                               |
+| ------------- | --------------------------------------------------------- |
+| `INITIALIZED` | Run has been created in the database but not queued.      |
+| `QUEUED`      | Run is queued on the task server and waiting to start.    |
+| `RUNNING`     | Run is currently executing.                               |
+| `COMPLETED`   | Run has finished successfully.                            |
+| `CANCELLED`   | Run was cancelled by the user.                            |
+| `FAILED`      | Run hard failed due to an error.                          |
 
 ## Worker Entities
 
