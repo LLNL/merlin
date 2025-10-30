@@ -22,7 +22,7 @@ from typing import Dict, List, Set, Tuple, Type, TypeVar
 
 from filelock import FileLock
 
-from merlin.common.enums import WorkerStatus
+from merlin.common.enums import RunStatus, WorkerStatus
 
 
 LOG = logging.getLogger("merlin")
@@ -279,7 +279,7 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
         parameters (Dict): The parameters used in this run.
         parent (str): The ID of the parent run (if any).
         queues (List[str]): The task queues used for this run.
-        run_complete (bool): Wether the run is complete.
+        status (common.enums.RunStatus): The current status of the run.
         samples (Dict): The samples used in this run.
         steps (List[str]): A list of unique step IDs that are executed in this run.
             Each ID will correspond to a `StepInfo` entry.
@@ -298,7 +298,7 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
     workers: List[str] = field(default_factory=list)
     parent: str = None  # TODO NOT YET IMPLEMENTED; do we even have a good way that this and `child` can be set?
     child: str = None  # TODO NOT YET IMPLEMENTED
-    run_complete: bool = False
+    status: str = field(default=RunStatus.INITIALIZED.value)
     parameters: Dict = field(default_factory=dict)  # TODO NOT YET IMPLEMENTED
     samples: Dict = field(default_factory=dict)  # TODO NOT YET IMPLEMENTED
 
@@ -310,7 +310,7 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
         Returns:
             A list of fields that are allowed to be updated in this class.
         """
-        return ["parent", "child", "run_complete", "additional_data", "workers"]
+        return ["parent", "child", "status", "additional_data", "workers"]
 
 
 @dataclass

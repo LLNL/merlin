@@ -57,3 +57,23 @@ class WorkerStatus(Enum):
     STALLED = "stalled"
     STOPPED = "stopped"
     REBOOTING = "rebooting"
+
+
+class RunStatus(Enum):
+    """
+    Enumeration of possible run statuses.
+    
+    Attributes:
+        INITIALIZED: Run has been created in the database but not queued.
+        QUEUED: Run is queued and waiting to start.
+        RUNNING: Run is currently executing.
+        COMPLETED: Run has finished successfully.
+        CANCELLED: Run was cancelled by the user.
+        FAILED: Run failed due to an error.
+    """
+    INITIALIZED = "INITIALIZED"
+    QUEUED = "QUEUED"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+    FAILED = "FAILED"

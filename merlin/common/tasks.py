@@ -29,12 +29,18 @@ from filelock import FileLock, Timeout
 from kombu.exceptions import OperationalError as KombuOperationalError
 from redis.exceptions import TimeoutError as RedisTimeoutError
 
-from merlin.common.enums import ReturnCode
+from merlin.common.enums import ReturnCode, RunStatus
 from merlin.common.sample_index import SampleIndex, uniform_directories
 from merlin.common.sample_index_factory import create_hierarchy
 from merlin.config.utils import Priority, get_priority
 from merlin.db_scripts.merlin_db import MerlinDatabase
-from merlin.exceptions import HardFailException, InvalidChainException, RestartException, RetryException
+from merlin.exceptions import (
+    BackendNotSupportedError,
+    HardFailException,
+    InvalidChainException,
+    RestartException,
+    RetryException,
+)
 from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
 from merlin.study.dag import DAG
@@ -75,14 +81,30 @@ STOP_COUNTDOWN = 60
 # R0914: too many local variables
 # R0915: too many statements
 
+def update_run_status(study_workspace: str, status: RunStatus):
+    """
+    Helper function to update the status of a run.
+    
+    Args:
+        study_workspace: The workspace path for the run.
+        status: The new RunStatus to set.
+    """
+    try:
+        merlin_db = MerlinDatabase()
+        run_entity = merlin_db.get("run", study_workspace)
+        run_entity.set_status(status)
+        LOG.info(f"Marked run in workspace '{study_workspace}' as {status.value}.")
+    except (ValueError, BackendNotSupportedError) as e:
+        LOG.warning(f"Could not mark run as {status.value}: {e}")
 
-@shared_task(  # noqa: C901
+
+@shared_task(
     bind=True,
     autoretry_for=retry_exceptions,
     retry_backoff=True,
     priority=get_priority(Priority.HIGH),
 )
-def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C901 pylint: disable=R0912,R0915
+def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:
     """
     Executes a Merlin step.
 
@@ -101,7 +123,9 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C
             - adapter_config (`Dict`): Configuration for the adapter,
               defaulting to `{'type': 'local'}`.
             - next_in_chain ([`Step`][study.step.Step]): The next step in
-                the workflow chain, if applicable.\n
+                the workflow chain, if applicable.
+            - study_workspace (`str`): The workspace path for the study run.
+
             Example kwargs dict where `merlin_step` will be added to the
             current chord with `next_in_chain` as an argument:\n
             ```
@@ -109,7 +133,8 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C
                 "adapter_config": {
                     'type': 'local'
                 },
-                "next_in_chain": <Step object>
+                "next_in_chain": <Step object>,
+                "study_workspace": "/path/to/study/workspace"
             }
             ```
 
@@ -130,6 +155,7 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C
 
     config: Dict[str, str] = kwargs.pop("adapter_config", {"type": "local"})
     next_in_chain: Optional[Step] = kwargs.pop("next_in_chain", None)
+    study_workspace: Optional[str] = kwargs.pop("study_workspace", None)
 
     if step:
         self.max_retries = step.max_retries
@@ -190,6 +216,10 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C
         elif result == ReturnCode.SOFT_FAIL:
             LOG.warning(f"*** Step '{step_name}' in '{step_dir}' soft failed. Continuing with workflow.")
         elif result == ReturnCode.HARD_FAIL:
+            # Mark the run as FAILED
+            if study_workspace:
+                update_run_status(study_workspace, RunStatus.FAILED)
+            
             # stop all workers attached to this queue
             step_queue = step.get_task_queue()
             LOG.error(f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow.")
@@ -311,6 +341,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
     sample_index: SampleIndex,
     adapter_config: Dict,
     min_sample_id: int,
+    study_workspace: str = None,
 ):
     """
     Expand tasks in a chain and add the expanded tasks to the current chord.
@@ -333,6 +364,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
         adapter_config: Configuration settings for the adapter used in task
             execution.
         min_sample_id: An offset to use for the sample index.
+        study_workspace: The workspace path for the study run.
     """
     num_samples = len(samples)
     # Use the index to get a path to each sample
@@ -364,7 +396,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
                         ),
                     ),
                     adapter_config=adapter_config,
-                    top_lvl_workspace=top_lvl_workspace,
+                    study_workspace=study_workspace,
                 )
                 new_step.set(queue=step.get_task_queue())
                 new_step.set(task_id=os.path.join(workspace, relative_paths[sample_id]))
@@ -404,6 +436,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
                     next_index,
                     adapter_config,
                     next_index.min,
+                    study_workspace,
                 )
                 next_step.set(queue=chain_[0].get_task_queue())
                 LOG.debug(f"recursing with range {next_index.min}:{next_index.max}, {next_index.name} {signature(next_step)}")
@@ -421,7 +454,7 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
     return ReturnCode.OK
 
 
-def add_simple_chain_to_chord(self: Task, task_type: Signature, chain_: List[Step], adapter_config: Dict):
+def add_simple_chain_to_chord(self: Task, task_type: Signature, chain_: List[Step], adapter_config: Dict, study_workspace: str = None):
     """
     Add a chain of tasks to the current chord for execution.
 
@@ -442,6 +475,7 @@ def add_simple_chain_to_chord(self: Task, task_type: Signature, chain_: List[Ste
             Each task should provide necessary parameters for signature creation.
         adapter_config: Configuration settings for the adapter used in task
             execution.
+        study_workspace: The workspace path for the study run.
     """
     LOG.debug(f"simple chain with {chain_}")
     all_chains = []
@@ -451,7 +485,7 @@ def add_simple_chain_to_chord(self: Task, task_type: Signature, chain_: List[Ste
         # a given sample.
 
         new_steps = [
-            task_type.s(step, adapter_config=adapter_config).set(
+            task_type.s(step, adapter_config=adapter_config, study_workspace=study_workspace).set(
                 queue=step.get_task_queue(),
                 task_id=step.get_workspace(),
             )
@@ -729,6 +763,7 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
     task_type: Callable,
     adapter_config: Dict,
     level_max_dirs: int,
+    study_workspace: str = None,
 ):
     """
     Expands a chain of task names into a group of Celery chains, using samples
@@ -755,7 +790,20 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
             script adapters.
         level_max_dirs: The maximum number of directories allowed per
             level in the sample hierarchy.
+        study_workspace: The workspace path for this study run (used for status tracking).
     """
+    # Mark the run as RUNNING on first execution (only once per run)
+    if study_workspace:
+        try:
+            merlin_db = MerlinDatabase()
+            run_entity = merlin_db.get("run", study_workspace)
+            
+            # Only mark as RUNNING if it's currently marked as QUEUED or INITIALIZED
+            if run_entity.get_status() in (RunStatus.QUEUED, RunStatus.INITIALIZED):
+                update_run_status(study_workspace, RunStatus.RUNNING)
+        except Exception as e:
+            LOG.warning(f"Could not mark run as RUNNING: {e}")
+    
     LOG.debug(f"expand_tasks_with_samples called with chain,{chain_}\n")
     # Figure out how many directories there are, make a glob string
     directory_sizes = uniform_directories(len(samples), bundle_size=1, level_max_dirs=level_max_dirs)
@@ -786,15 +834,11 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
         for step in steps
     ]
 
-    # workspaces = [step.get_workspace() for step in steps]
-    # LOG.debug(f"workspaces : {workspaces}")
-
     needs_expansion = is_chain_expandable(steps, labels)
 
     LOG.debug(f"needs_expansion {needs_expansion}")
 
     if needs_expansion:
-        # prepare_chain_workspace(sample_index, steps)
         sample_index.name = ""
         LOG.debug("queuing merlin expansion tasks")
         found_tasks = False
@@ -820,6 +864,7 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
                         next_index,
                         adapter_config,
                         next_index.min,
+                        study_workspace,
                     )
                     sig.set(queue=steps[0].get_task_queue())
 
@@ -832,7 +877,7 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
                     found_tasks = True
     else:
         LOG.debug("queuing simple chain task")
-        add_simple_chain_to_chord(self, task_type, steps, adapter_config)
+        add_simple_chain_to_chord(self, task_type, steps, adapter_config, study_workspace)
         LOG.debug("simple chain task queued")
 
 
@@ -916,10 +961,7 @@ def mark_run_as_complete(study_workspace: str) -> str:
     Returns:
         A string denoting that this run has completed.
     """
-    merlin_db = MerlinDatabase()
-    run_entity = merlin_db.get("run", study_workspace)
-    run_entity.run_complete = True
-    run_entity.save()
+    update_run_status(study_workspace, RunStatus.COMPLETED)
     return "Run Completed"
 
 
@@ -950,6 +992,9 @@ def queue_merlin_study(study: MerlinStudy, adapter: Dict) -> AsyncResult:
         An instance representing the asynchronous result of the task chain,
             allowing for tracking and management of the task's execution.
     """
+    # Mark the run as QUEUED
+    update_run_status(study.workspace, RunStatus.QUEUED)
+    
     samples = study.samples
     sample_labels = study.sample_labels
     egraph = study.dag
@@ -970,6 +1015,7 @@ def queue_merlin_study(study: MerlinStudy, adapter: Dict) -> AsyncResult:
                         merlin_step,
                         adapter,
                         study.level_max_dirs,
+                        study.workspace,  # Pass workspace for status tracking of full runs
                     ).set(queue=egraph.step(chain_group[0][0]).get_task_queue())
                     for gchain in chain_group
                 ]

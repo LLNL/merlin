@@ -18,6 +18,7 @@ import os
 from typing import List
 
 from merlin.backends.results_backend import ResultsBackend
+from merlin.common.enums import RunStatus
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.db_scripts.entities.mixins.queue_management import QueueManagementMixin
@@ -40,7 +41,6 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             containing the run's metadata.
         backend (backends.results_backend.ResultsBackend): An instance of the `ResultsBackend`
             class used to interact with the database.
-        run_complete (bool): A property to get or set the completion status of the run.
 
     Methods:
         __repr__:
@@ -59,6 +59,18 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
         get_additional_data:
             Retrieve any additional data saved to this run. _Implementation found in
                 [`DatabaseEntity.get_additional_data`][db_scripts.entities.db_entity.DatabaseEntity.get_additional_data]._
+
+        get_status:
+            Get the current status of the run.
+
+        set_status:
+            Update the status of the run.
+
+        is_active:
+            Check if this run is currently active (RUNNING or INITIALIZED).
+
+        is_finished:
+            Check if this run has reached a terminal state.
 
         get_metadata_file:
             Retrieve the path to the metadata file for this run.
@@ -136,7 +148,7 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             f"workers={self.get_workers()}, "
             f"parent={self.get_parent()}, "
             f"child={self.get_child()}, "
-            f"run_complete={self.run_complete}, "
+            f"status={self.get_status()}, "
             f"additional_data={self.get_additional_data()}, "
             f"backend={self.backend.get_name()})"
         )
@@ -162,32 +174,49 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             f"Workers: {self.get_workers()}\n"
             f"Parent: {self.get_parent()}\n"
             f"Child: {self.get_child()}\n"
-            f"Run Complete: {self.run_complete}\n"
+            f"Status: {self.get_status().value}\n"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 
-    @property
-    def run_complete(self) -> bool:
+    def get_status(self) -> RunStatus:
         """
-        An attribute representing whether this run is complete.
-
-        A "complete" study is a study that has executed all steps.
-
+        Get the current status of the run.
+        
         Returns:
-            True if the study is complete. False, otherwise.
+            The current RunStatus of the run.
         """
         self.reload_data()
-        return self.entity_info.run_complete
-
-    @run_complete.setter
-    def run_complete(self, value: bool):
+        # Convert string value to enum
+        return RunStatus(self.entity_info.status)
+    
+    def set_status(self, status: RunStatus):
         """
-        Update the run's completion status.
-
+        Update the status of the run.
+        
         Args:
-            value: The completion status of the run.
+            status: The new RunStatus for the run.
         """
-        self.entity_info.run_complete = value
+        # Store the string value
+        self.entity_info.status = status.value
+        self.save()
+    
+    def is_active(self) -> bool:
+        """
+        Check if this run is currently active (RUNNING or INITIALIZED).
+        
+        Returns:
+            True if the run is active, False otherwise.
+        """
+        return self.get_status() in (RunStatus.INITIALIZED, RunStatus.QUEUED, RunStatus.RUNNING)
+    
+    def is_finished(self) -> bool:
+        """
+        Check if this run has reached a terminal state.
+        
+        Returns:
+            True if the run is in a terminal state (COMPLETED, CANCELLED, FAILED).
+        """
+        return self.get_status() in (RunStatus.COMPLETED, RunStatus.CANCELLED, RunStatus.FAILED)
 
     def get_metadata_file(self) -> str:
         """

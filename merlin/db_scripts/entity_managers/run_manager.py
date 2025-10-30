@@ -60,7 +60,7 @@ class RunManager(EntityManager[RunEntity, RunModel]):
 
     _filter_accessor_map: Dict[str, Callable[[T], Any]] = {
         "study_id": lambda e: e.get_study_id(),
-        "run_complete": lambda e: e.run_complete,
+        "status": lambda e: e.get_status().value,
         "queues": lambda e: e.get_queues(),
         "workers": lambda e: e.get_workers(),
     }
@@ -190,3 +190,20 @@ class RunManager(EntityManager[RunEntity, RunModel]):
                 access to related entity managers.
         """
         self.db = db
+
+    def get_all(self, filters: Dict[str, Any] = None) -> List[RunEntity]:
+        """
+        Retrieve all run entities managed by this run entity manager, optionally filtered by attributes.
+
+        Args:
+            filters: A dictionary of filter keys and values used to narrow down the query results.
+                 Filter keys must correspond to supported filters defined in the ENTITY_REGISTRY
+                 for the run entity type. Values are compared against entity attributes or
+                 accessor methods (e.g., {"name": "foo"}, {"queues": ["queue1", "queue2"]}).
+
+        Returns:
+            A list of all entities of the specified type matching the filters.
+        """
+        if filters and "status" in filters:
+            filters["status"] = filters["status"].upper()
+        return super().get_all(filters=filters)
