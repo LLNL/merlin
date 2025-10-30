@@ -10,7 +10,7 @@ Tests for the `merlin/cli/commands/cancel.py` module.
 
 import logging
 from argparse import ArgumentParser, Namespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
@@ -173,9 +173,7 @@ def test_add_parser_vars_flag_multiple_variables(command: CancelCommand):
     subparsers = parser.add_subparsers(dest="subcmd", required=True)
     command.add_parser(subparsers)
 
-    args = parser.parse_args(
-        ["cancel", "test_spec.yaml", "--vars", "QUEUE=custom_queue", "WORKER=special_worker"]
-    )
+    args = parser.parse_args(["cancel", "test_spec.yaml", "--vars", "QUEUE=custom_queue", "WORKER=special_worker"])
     assert args.variables == ["QUEUE=custom_queue", "WORKER=special_worker"]
 
 
@@ -190,16 +188,18 @@ def test_add_parser_all_flags_combined(command: CancelCommand):
     subparsers = parser.add_subparsers(dest="subcmd", required=True)
     command.add_parser(subparsers)
 
-    args = parser.parse_args([
-        "cancel",
-        "test_spec.yaml",
-        "--no-purge",
-        "--no-stop-workers",
-        "--no-mark-cancelled",
-        "--vars",
-        "VAR1=value1",
-        "VAR2=value2",
-    ])
+    args = parser.parse_args(
+        [
+            "cancel",
+            "test_spec.yaml",
+            "--no-purge",
+            "--no-stop-workers",
+            "--no-mark-cancelled",
+            "--vars",
+            "VAR1=value1",
+            "VAR2=value2",
+        ]
+    )
     assert args.no_purge is True
     assert args.no_stop_workers is True
     assert args.no_mark_cancelled is True

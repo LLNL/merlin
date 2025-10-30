@@ -160,7 +160,7 @@ class TestRunEntity:
             (RunStatus.COMPLETED, True),
             (RunStatus.CANCELLED, True),
             (RunStatus.FAILED, True),
-        ]
+        ],
     )
     def test_is_finished(self, status_to_set: RunStatus, expected_result: bool, run_entity: RunEntity):
         """
@@ -183,7 +183,7 @@ class TestRunEntity:
             (RunStatus.COMPLETED, False),
             (RunStatus.CANCELLED, False),
             (RunStatus.FAILED, False),
-        ]
+        ],
     )
     def test_is_active(self, status_to_set: RunStatus, expected_result: bool, run_entity: RunEntity):
         """

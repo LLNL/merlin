@@ -427,6 +427,7 @@ def test_monitor_single_run_completes_successfully(mocker: MockerFixture, monito
     def sleep_side_effect(duration):
         # After first cycle, mark run as complete to exit the loop
         run.is_finished.return_value = True
+
     mocker.patch("time.sleep", side_effect=sleep_side_effect)
 
     monitor.wait_for_workers = mocker.MagicMock()
@@ -508,7 +509,9 @@ def test_run_cleanup_success(mocker: MockerFixture, monitor: Monitor):
     monitor._run_cleanup()
 
     mock_collector.assert_called_once_with(monitor.merlin_db)
-    mock_collector.return_value.scan_and_clean.assert_called_once_with(force=True, check_logical_workers=False, check_physical_workers=False)
+    mock_collector.return_value.scan_and_clean.assert_called_once_with(
+        force=True, check_logical_workers=False, check_physical_workers=False
+    )
 
 
 def test_run_cleanup_handles_exception(mocker: MockerFixture, monitor: Monitor, caplog: CaptureFixture):
@@ -544,7 +547,9 @@ def test_init_runs_cleanup_by_default(mocker: MockerFixture):
     Monitor(spec=mock_spec, sleep=1, task_server="celery", no_restart=False)
 
     mock_collector.assert_called_once()
-    mock_collector.return_value.scan_and_clean.assert_called_once_with(force=True, check_logical_workers=False, check_physical_workers=False)
+    mock_collector.return_value.scan_and_clean.assert_called_once_with(
+        force=True, check_logical_workers=False, check_physical_workers=False
+    )
 
 
 def test_init_skips_cleanup_when_disabled(mocker: MockerFixture, caplog: CaptureFixture):
@@ -680,7 +685,9 @@ def test_monitor_all_runs_handles_run_not_found_error(mocker: MockerFixture, mon
     assert "Skipping this run" in caplog.text
 
     # Verify that run1 and run3 were still processed (both show up in completed runs)
-    assert "The following runs will not be monitored because they're either finished or cancelled: ['ws1', 'ws3']" in caplog.text
+    assert (
+        "The following runs will not be monitored because they're either finished or cancelled: ['ws1', 'ws3']" in caplog.text
+    )
 
     # Verify the database was queried for all three runs
     assert monitor.merlin_db.get.call_count == 4  # 1 study + 3 run attempts

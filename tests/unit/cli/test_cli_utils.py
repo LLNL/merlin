@@ -13,10 +13,7 @@ from argparse import Namespace
 import pytest
 from pytest_mock import MockerFixture
 
-from merlin.cli.utils import (
-    get_merlin_spec_with_override,
-    parse_override_vars,
-)
+from merlin.cli.utils import get_merlin_spec_with_override, parse_override_vars
 
 
 class TestParseOverrideVars:

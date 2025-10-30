@@ -73,7 +73,8 @@ class EntityManager(Generic[T, M], ABC):
             backend: The backend interface used to persist and retrieve entities.
         """
         self.backend: ResultsBackend = backend
-        self.db: "MerlinDatabase" = None  # Subclasses can set this by creating a set_db_reference method
+        # Subclasses can set self.db by creating a set_db_reference method which is called by the MerlinDatabase class
+        self.db: "MerlinDatabase" = None  # noqa: F821
         self._entity_type: str = None  # Subclasses need to set this
         self._entity_class: Callable = None  # Subclasses need to set this
 

@@ -28,12 +28,12 @@ def mock_db(mocker: MockerFixture) -> MagicMock:
         A mocked MerlinDatabase instance with pre-configured behavior.
     """
     mock_db = mocker.MagicMock()
-    
+
     # Mock study entity
     mock_study = mocker.MagicMock()
     mock_study.get_runs.return_value = ["run1", "run2", "run3"]
     mock_db.get.return_value = mock_study
-    
+
     return mock_db
 
 
@@ -83,7 +83,7 @@ def mock_purge_tasks(mocker: MockerFixture) -> MagicMock:
 class TestStudyManagerCancel:
     """
     Test suite for the StudyManager.cancel method.
-    
+
     This class contains all tests related to cancelling studies, including
     full cancellation, partial cancellation, error handling, and edge cases.
     """
@@ -307,7 +307,7 @@ class TestStudyManagerCancel:
         mock_db.get.side_effect = StudyNotFoundError("Study not found")
 
         manager = StudyManager(merlin_db=mock_db)
-        
+
         with caplog.at_level(logging.ERROR):
             result = manager.cancel(mock_spec)
 
@@ -357,7 +357,7 @@ class TestStudyManagerCancel:
         ]
 
         manager = StudyManager(merlin_db=mock_db)
-        
+
         with caplog.at_level(logging.ERROR):
             result = manager.cancel(mock_spec)
 
@@ -442,7 +442,7 @@ class TestStudyManagerCancel:
         ]
 
         manager = StudyManager(merlin_db=mock_db)
-        
+
         with caplog.at_level(logging.WARNING):
             manager.cancel(mock_spec)
 
@@ -451,9 +451,7 @@ class TestStudyManagerCancel:
         assert "Target provenance spec instead?" in caplog.text
 
         # Verify workers were still stopped (including unexpanded one)
-        mock_stop_workers.assert_called_once_with(
-            spec_worker_names=["worker1", "$(UNEXPANDED_WORKER)", "worker2"]
-        )
+        mock_stop_workers.assert_called_once_with(spec_worker_names=["worker1", "$(UNEXPANDED_WORKER)", "worker2"])
 
     def test_cancel_queue_formatting(
         self,
