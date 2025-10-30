@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 
 from merlin.backends.results_backend import ResultsBackend
+from merlin.common.enums import RunStatus
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.entities.run_entity import RunEntity
 from merlin.db_scripts.entities.study_entity import StudyEntity
@@ -110,8 +111,8 @@ class TestRunManager:
         queues = ["queue1"]
 
         # Valid RunModel field and additional data
-        valid_field = "run_complete"
-        valid_value = False
+        valid_field = "status"
+        valid_value = RunStatus.INITIALIZED.value
         invalid_field = "non_model_field"
         invalid_value = "extra_data"
 
@@ -125,7 +126,7 @@ class TestRunManager:
 
         # Assert
         saved_model = mock_backend.save.call_args[0][0]
-        assert saved_model.run_complete == valid_value
+        assert saved_model.status == valid_value
         assert saved_model.additional_data == {invalid_field: invalid_value}
 
     def test_get_run(self, run_manager: RunManager, mock_backend: MagicMock):

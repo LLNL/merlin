@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from merlin.backends.results_backend import ResultsBackend
+from merlin.common.enums import RunStatus
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.entities.run_entity import RunEntity
 from merlin.db_scripts.entities.study_entity import StudyEntity
@@ -37,7 +38,7 @@ class TestRunEntity:
         model.workers = ["worker_1", "worker_2"]
         model.parent = "parent_run"
         model.child = "child_run"
-        model.run_complete = False
+        model.status = RunStatus.RUNNING
         model.additional_data = {"key": "value"}
         return model
 
@@ -129,17 +130,72 @@ class TestRunEntity:
             assert f"Workspace: {run_entity.get_workspace()}" in str_output
             assert "Study:" in str_output
 
-    def test_run_complete_property(self, run_entity: RunEntity, mock_model: MagicMock):
+    def test_get_status(self, run_entity: RunEntity, mock_model: MagicMock):
         """
-        Test the `run_complete` property getter and setter.
+        Test that `get_status` returns the correct value.
 
         Args:
             run_entity: A fixture that returns a `RunEntity` instance.
             mock_model: A fixture that returns a mocked `RunModel` instance.
         """
-        assert run_entity.run_complete == mock_model.run_complete
-        run_entity.run_complete = True
-        assert run_entity.entity_info.run_complete is True
+        assert run_entity.get_status() == mock_model.status
+
+    def test_set_status(self, run_entity: RunEntity, mock_model: MagicMock):
+        """
+        Test that `set_status` sets the correct value.
+
+        Args:
+            run_entity: A fixture that returns a `RunEntity` instance.
+            mock_model: A fixture that returns a mocked `RunModel` instance.
+        """
+        run_entity.set_status(RunStatus.COMPLETED)
+        assert run_entity.get_status() == RunStatus.COMPLETED
+
+    @pytest.mark.parametrize(
+        "status_to_set, expected_result",
+        [
+            (RunStatus.INITIALIZED, False),
+            (RunStatus.QUEUED, False),
+            (RunStatus.RUNNING, False),
+            (RunStatus.COMPLETED, True),
+            (RunStatus.CANCELLED, True),
+            (RunStatus.FAILED, True),
+        ]
+    )
+    def test_is_finished(self, status_to_set: RunStatus, expected_result: bool, run_entity: RunEntity):
+        """
+        Test that `is_finished` returns the correct value.
+
+        Args:
+            status_to_set: The status to set for the run.
+            expected_result: The expected result of `is_finished`.
+            run_entity: A fixture that returns a `RunEntity` instance.
+        """
+        run_entity.set_status(status_to_set)
+        assert run_entity.is_finished() == expected_result
+
+    @pytest.mark.parametrize(
+        "status_to_set, expected_result",
+        [
+            (RunStatus.INITIALIZED, True),
+            (RunStatus.QUEUED, True),
+            (RunStatus.RUNNING, True),
+            (RunStatus.COMPLETED, False),
+            (RunStatus.CANCELLED, False),
+            (RunStatus.FAILED, False),
+        ]
+    )
+    def test_is_active(self, status_to_set: RunStatus, expected_result: bool, run_entity: RunEntity):
+        """
+        Test that `is_active` returns the correct value.
+
+        Args:
+            status_to_set: The status to set for the run.
+            expected_result: The expected result of `is_active`.
+            run_entity: A fixture that returns a `RunEntity` instance.
+        """
+        run_entity.set_status(status_to_set)
+        assert run_entity.is_active() == expected_result
 
     def test_get_metadata_file(self, run_entity: RunEntity):
         """

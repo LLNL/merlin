@@ -18,7 +18,7 @@ import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
-from merlin.common.enums import WorkerStatus
+from merlin.common.enums import RunStatus, WorkerStatus
 from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
 from tests.fixture_types import FixtureCallable, FixtureStr
 
@@ -344,7 +344,7 @@ class TestRunModel:
         assert run.workers == []
         assert run.parent is None
         assert run.child is None
-        assert run.run_complete is False
+        assert run.status == RunStatus.INITIALIZED.value
         assert run.parameters == {}
         assert run.samples == {}
         assert run.additional_data == {}
@@ -360,7 +360,7 @@ class TestRunModel:
             workers=["worker1"],
             parent="parent-run",
             child="child-run",
-            run_complete=True,
+            status=RunStatus.RUNNING.value,
             parameters={"param1": "value1"},
             samples={"sample1": "data1"},
             additional_data={"meta": "data"},
@@ -374,7 +374,7 @@ class TestRunModel:
         assert run.workers == ["worker1"]
         assert run.parent == "parent-run"
         assert run.child == "child-run"
-        assert run.run_complete is True
+        assert run.status == RunStatus.RUNNING.value
         assert run.parameters == {"param1": "value1"}
         assert run.samples == {"sample1": "data1"}
         assert run.additional_data == {"meta": "data"}
@@ -400,7 +400,7 @@ class TestRunModel:
     def test_fields_allowed_to_be_updated(self):
         """Test that fields_allowed_to_be_updated returns expected values."""
         run = RunModel()
-        assert set(run.fields_allowed_to_be_updated) == {"parent", "child", "run_complete", "additional_data", "workers"}
+        assert set(run.fields_allowed_to_be_updated) == {"parent", "child", "status", "additional_data", "workers"}
 
 
 class TestLogicalWorkerModel:
