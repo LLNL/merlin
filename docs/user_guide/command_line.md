@@ -469,6 +469,8 @@ In short, this command will:
 2. Stop the workers for that study
 3. Mark all runs associated with that study as cancelled
 
+Each of these options can be disabled with their respective options in the table below.
+
 **Usage:**
 
 ```bash
