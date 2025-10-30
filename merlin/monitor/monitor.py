@@ -104,8 +104,8 @@ class Monitor:
         try:
             LOG.info("Monitor: Running automatic database cleanup before monitoring...")
             collector = DatabaseGarbageCollector(self.merlin_db)
-            # Set check_workers to False since workers can be started prior to runs being launched
-            collector.scan_and_clean(force=True, check_workers=False)
+            # Set both check workers args to False since workers can be started prior to runs being launched
+            collector.scan_and_clean(force=True, check_logical_workers=False, check_physical_workers=False)
         # pylint complains about broad exception but we don't want the monitor to shut off
         # for just running garbage collection
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -277,7 +277,9 @@ class Monitor:
             # Log completed runs
             if completed_runs:
                 completed_workspaces = [run.get_workspace() for run in completed_runs]
-                LOG.info(f"Monitor: The following runs will not be monitored because they're either finished or cancelled: {completed_workspaces}")
+                LOG.info(
+                    f"Monitor: The following runs will not be monitored because they're either finished or cancelled: {completed_workspaces}"
+                )
 
             # Log active runs
             if active_runs:

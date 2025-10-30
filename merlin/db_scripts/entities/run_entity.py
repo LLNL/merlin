@@ -181,38 +181,38 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
     def get_status(self) -> RunStatus:
         """
         Get the current status of the run.
-        
+
         Returns:
             The current RunStatus of the run.
         """
         self.reload_data()
         # Convert string value to enum
         return RunStatus(self.entity_info.status)
-    
+
     def set_status(self, status: RunStatus):
         """
         Update the status of the run.
-        
+
         Args:
             status: The new RunStatus for the run.
         """
         # Store the string value
         self.entity_info.status = status.value
         self.save()
-    
+
     def is_active(self) -> bool:
         """
         Check if this run is currently active (RUNNING or INITIALIZED).
-        
+
         Returns:
             True if the run is active, False otherwise.
         """
         return self.get_status() in (RunStatus.INITIALIZED, RunStatus.QUEUED, RunStatus.RUNNING)
-    
+
     def is_finished(self) -> bool:
         """
         Check if this run has reached a terminal state.
-        
+
         Returns:
             True if the run is in a terminal state (COMPLETED, CANCELLED, FAILED).
         """

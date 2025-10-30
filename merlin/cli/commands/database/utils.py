@@ -36,7 +36,6 @@ def setup_db_entity_subcommands(subcommand_parser: ArgumentParser, subcommand_na
     parser_map = {}
 
     for entity_key, config in ENTITY_REGISTRY.items():
-        identifiers = config["identifiers"]
         ident_help = config["ident_help"].format(verb=subcommand_name)
         plural_name = get_plural_of_entity(entity_key)
         filters = config["filters"]
@@ -44,7 +43,7 @@ def setup_db_entity_subcommands(subcommand_parser: ArgumentParser, subcommand_na
         # <entity> command
         singular = subcommand_parser.add_parser(
             entity_key,
-            help=f"{subcommand_name.capitalize()} one or more {plural_name} by {identifiers}.",
+            help=f"{subcommand_name.capitalize()} one or more {plural_name} by {config['identifiers']}.",
             formatter_class=ArgumentDefaultsHelpFormatter,
         )
         singular.add_argument(

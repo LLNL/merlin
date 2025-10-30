@@ -22,7 +22,6 @@ from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import RunNotFoundError, StudyNotFoundError
 from merlin.spec.specification import MerlinSpec
 from merlin.study.celeryadapter import purge_celery_tasks, stop_celery_workers
-from merlin.utils import verify_filepath
 
 
 LOG = logging.getLogger(__name__)
@@ -31,15 +30,15 @@ LOG = logging.getLogger(__name__)
 class StudyManager:
     """
     High-level manager for Merlin study operations.
-    
+
     This class provides a unified interface for common study operations like
     running and cancelling studies. It coordinates between MerlinStudy, the
     database, and task server components.
-    
+
     Attributes:
         merlin_db: The MerlinDatabase instance for database operations.
         study_identifier: Optional StudyIdentifier for the study being managed.
-    
+
     Methods:
         run: Initialize and run a new study.
         cancel: Cancel an existing study.
@@ -49,7 +48,7 @@ class StudyManager:
     def __init__(self, merlin_db: MerlinDatabase = None):
         """
         Initialize a StudyManager.
-        
+
         Args:
             merlin_db: Optional MerlinDatabase instance. If not provided, creates one.
         """

@@ -81,10 +81,11 @@ STOP_COUNTDOWN = 60
 # R0914: too many local variables
 # R0915: too many statements
 
+
 def update_run_status(study_workspace: str, status: RunStatus):
     """
     Helper function to update the status of a run.
-    
+
     Args:
         study_workspace: The workspace path for the run.
         status: The new RunStatus to set.
@@ -104,7 +105,7 @@ def update_run_status(study_workspace: str, status: RunStatus):
     retry_backoff=True,
     priority=get_priority(Priority.HIGH),
 )
-def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:
+def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:  # noqa: C901 pylint: disable=R0912,R0915
     """
     Executes a Merlin step.
 
@@ -219,7 +220,7 @@ def merlin_step(self: Task, *args: Any, **kwargs: Any) -> ReturnCode:
             # Mark the run as FAILED
             if study_workspace:
                 update_run_status(study_workspace, RunStatus.FAILED)
-            
+
             # stop all workers attached to this queue
             step_queue = step.get_task_queue()
             LOG.error(f"*** Step '{step_name}' in '{step_dir}' hard failed. Quitting workflow.")
@@ -454,7 +455,9 @@ def add_merlin_expanded_chain_to_chord(  # pylint: disable=R0913,R0914
     return ReturnCode.OK
 
 
-def add_simple_chain_to_chord(self: Task, task_type: Signature, chain_: List[Step], adapter_config: Dict, study_workspace: str = None):
+def add_simple_chain_to_chord(
+    self: Task, task_type: Signature, chain_: List[Step], adapter_config: Dict, study_workspace: str = None
+):
     """
     Add a chain of tasks to the current chord for execution.
 
@@ -797,13 +800,13 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
         try:
             merlin_db = MerlinDatabase()
             run_entity = merlin_db.get("run", study_workspace)
-            
+
             # Only mark as RUNNING if it's currently marked as QUEUED or INITIALIZED
             if run_entity.get_status() in (RunStatus.QUEUED, RunStatus.INITIALIZED):
                 update_run_status(study_workspace, RunStatus.RUNNING)
         except Exception as e:
             LOG.warning(f"Could not mark run as RUNNING: {e}")
-    
+
     LOG.debug(f"expand_tasks_with_samples called with chain,{chain_}\n")
     # Figure out how many directories there are, make a glob string
     directory_sizes = uniform_directories(len(samples), bundle_size=1, level_max_dirs=level_max_dirs)
@@ -994,7 +997,7 @@ def queue_merlin_study(study: MerlinStudy, adapter: Dict) -> AsyncResult:
     """
     # Mark the run as QUEUED
     update_run_status(study.workspace, RunStatus.QUEUED)
-    
+
     samples = study.samples
     sample_labels = study.sample_labels
     egraph = study.dag

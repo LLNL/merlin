@@ -109,9 +109,11 @@ class CancelCommand(CommandEntryPoint):
         )
 
         # Print summary
-        result_summary = "\nCancellation Summary:\n" \
-                         f"  Study: {result['study_name']}\n" \
-                         f"  Runs cancelled: {result['runs_cancelled']}\n" \
-                         f"  Queues purged: {len(result['queues_purged'])}\n" \
-                         f"  Workers stopped: {len(result['workers_stopped'])}"
+        result_summary = (
+            "\nCancellation Summary:\n"
+            f"  Study: {result['study_name']}\n"
+            f"  Runs cancelled: {result['runs_cancelled']}\n"
+            f"  Queues purged: {len(result['queues_purged'])}\n"
+            f"  Workers stopped: {len(result['workers_stopped'])}"
+        )
         LOG.info(result_summary)
