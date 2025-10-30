@@ -87,9 +87,6 @@ class StudyManager:
             purge_queues (bool): Whether to purge the queues for the study. Defaults to True.
             stop_workers (bool): Whether to stop the workers for the study. Defaults to True.
             mark_runs_cancelled (bool): Whether to mark all runs as cancelled. Defaults to True.
-
-        Raises:
-            StudyNotFoundError: If the study cannot be identified.
         """
         result = {
             "study_name": spec.name,
@@ -130,12 +127,14 @@ class StudyManager:
                 study_entity = self.merlin_db.get("study", spec.name)
             except StudyNotFoundError:
                 LOG.error(f"Study '{spec.name}' not found in database. Cannot mark runs as cancelled.")
+                return result
 
             for run_id in study_entity.get_runs():
                 try:
                     run_entity = self.merlin_db.get("run", run_id)
                 except RunNotFoundError:
                     LOG.error(f"Run '{run_id}' not found in database. Cannot mark as cancelled.")
+                    continue
 
                 if run_entity.is_active():
                     run_entity.set_status(RunStatus.CANCELLED)
