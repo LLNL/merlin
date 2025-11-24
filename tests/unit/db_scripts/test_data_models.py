@@ -581,7 +581,15 @@ class TestPhysicalWorkerModel:
         allowed_fields = worker.fields_allowed_to_be_updated
 
         # Check each expected field is in the list
-        expected_fields = ["launch_cmd", "args", "pid", "worker_status", "heartbeat_timestamp", "latest_start_time", "restart_count"]
+        expected_fields = [
+            "launch_cmd",
+            "args",
+            "pid",
+            "worker_status",
+            "heartbeat_timestamp",
+            "latest_start_time",
+            "restart_count",
+        ]
         for field in expected_fields:
             assert field in allowed_fields
 
