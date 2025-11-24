@@ -179,7 +179,7 @@ class ResponsiveLayoutManager:
                     ColumnConfig(key="worker", title="Worker", style="bold cyan", max_width=12),
                     ColumnConfig(key="host", title="Host", style="blue", max_width=10),
                     ColumnConfig(key="pid", title="PID", style="yellow", width=8, justify="right"),
-                    ColumnConfig(key="status", title="Status", style="bold", width=10, formatter=self._format_status),
+                    ColumnConfig(key="worker_status", title="Status", style="bold", width=10, formatter=self._format_status),
                 ],
                 logical_worker_columns=[
                     ColumnConfig(key="worker", title="Worker", style="bold white", max_width=20),
@@ -195,7 +195,7 @@ class ResponsiveLayoutManager:
                     ColumnConfig(key="instance", title="Instance", style="bold magenta", max_width=25),
                     ColumnConfig(key="host", title="Host", style="blue", max_width=12),
                     ColumnConfig(key="pid", title="PID", style="yellow", width=8, justify="right"),
-                    ColumnConfig(key="status", title="Status", style="bold", width=10, formatter=self._format_status),
+                    ColumnConfig(key="worker_status", title="Status", style="bold", width=10, formatter=self._format_status),
                     ColumnConfig(key="runtime", title="Runtime", style="cyan", width=8),
                 ],
                 logical_worker_columns=[
@@ -214,7 +214,7 @@ class ResponsiveLayoutManager:
                     ColumnConfig(key="instance", title="Instance Name", style="bold magenta", max_width=30),
                     ColumnConfig(key="host", title="Host", style="blue", max_width=12),
                     ColumnConfig(key="pid", title="PID", style="yellow", width=8, justify="right"),
-                    ColumnConfig(key="status", title="Status", style="bold", width=10, formatter=self._format_status),
+                    ColumnConfig(key="worker_status", title="Status", style="bold", width=10, formatter=self._format_status),
                     ColumnConfig(key="runtime", title="Runtime", style="cyan", width=8),
                     ColumnConfig(key="heartbeat", title="Heartbeat", style="bright_blue", width=10),
                     ColumnConfig(key="restarts", title="Restarts", style="red", width=8, justify="right"),
@@ -556,11 +556,11 @@ class RichWorkerFormatter(WorkerFormatter):
             physical_workers = [merlin_db.get("physical_worker", pid) for pid in physical_worker_ids]
 
             for physical_worker in physical_workers:
-                status = physical_worker.get_status()
+                status = physical_worker.get_worker_status()
 
                 # Only show heartbeat for running workers
                 heartbeat_text = "-"
-                if status.value == "RUNNING":
+                if status == WorkerStatus.RUNNING:
                     heartbeat_text = str(self._format_last_heartbeat(physical_worker.get_heartbeat_timestamp()))
 
                 instance_name = physical_worker.get_name() or "-"
@@ -572,7 +572,7 @@ class RichWorkerFormatter(WorkerFormatter):
                         "instance": instance_name,
                         "host": physical_worker.get_host() or "-",
                         "pid": str(physical_worker.get_pid()) if physical_worker.get_pid() else "-",
-                        "status": status,
+                        "worker_status": status,
                         "runtime": self._format_uptime_or_downtime(physical_worker),
                         "heartbeat": heartbeat_text,
                         "restarts": str(physical_worker.get_restart_count()),
@@ -680,7 +680,7 @@ class RichWorkerFormatter(WorkerFormatter):
         Returns:
             Human-readable uptime or downtime string.
         """
-        status = str(physical_worker.get_status()).replace("WorkerStatus.", "")
+        status = physical_worker.get_worker_status().value
 
         if status == "RUNNING":
             start_time = physical_worker.get_latest_start_time()
@@ -836,7 +836,7 @@ class RichWorkerFormatter(WorkerFormatter):
                 physical_workers = [merlin_db.get("physical_worker", pid) for pid in physical_worker_ids]
 
                 for physical_worker in physical_workers:
-                    status = str(physical_worker.get_status()).replace("WorkerStatus.", "")
+                    status = physical_worker.get_worker_status().value
                     host = physical_worker.get_host() or "?"
                     pid = physical_worker.get_pid() or "-"
 

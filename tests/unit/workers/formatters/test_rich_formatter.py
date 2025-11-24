@@ -229,7 +229,7 @@ class TestRichWorkerFormatter:
         worker1.get_name.return_value = "physical_worker1"
         worker1.get_host.return_value = "host1"
         worker1.get_pid.return_value = 12345
-        worker1.get_status.return_value = WorkerStatus.RUNNING
+        worker1.get_worker_status.return_value = WorkerStatus.RUNNING
         worker1.get_restart_count.return_value = 0
         worker1.get_latest_start_time.return_value = datetime.now() - timedelta(hours=2)
         worker1.get_heartbeat_timestamp.return_value = datetime.now() - timedelta(minutes=1)
@@ -239,7 +239,7 @@ class TestRichWorkerFormatter:
         worker2.get_name.return_value = "physical_worker2"
         worker2.get_host.return_value = "host2"
         worker2.get_pid.return_value = 54321
-        worker2.get_status.return_value = WorkerStatus.STOPPED
+        worker2.get_worker_status.return_value = WorkerStatus.STOPPED
         worker2.get_restart_count.return_value = 2
         worker2.get_latest_start_time.return_value = None
         worker2.get_heartbeat_timestamp.return_value = None
@@ -370,7 +370,7 @@ class TestRichWorkerFormatter:
             expected: Expected formatted string.
         """
         mock_worker = MagicMock()
-        mock_worker.get_status.return_value = status
+        mock_worker.get_worker_status.return_value = status
         mock_worker.get_latest_start_time.return_value = timestamp
 
         result = formatter._format_uptime_or_downtime(mock_worker)
@@ -396,7 +396,7 @@ class TestRichWorkerFormatter:
             expected: Expected formatted string.
         """
         mock_worker = MagicMock()
-        mock_worker.get_status.return_value = status
+        mock_worker.get_worker_status.return_value = status
         mock_worker.get_stop_time.return_value = timestamp
 
         result = formatter._format_uptime_or_downtime(mock_worker)
@@ -427,7 +427,7 @@ class TestRichWorkerFormatter:
         assert data[0]["worker"] == "logical_worker1"
         assert data[0]["host"] == "host1"
         assert data[0]["pid"] == "12345"
-        assert data[0]["status"] == WorkerStatus.RUNNING
+        assert data[0]["worker_status"] == WorkerStatus.RUNNING
 
     def test_get_logical_workers_without_instances_data(
         self, formatter: RichWorkerFormatter, mock_logical_workers: List[MagicMock]

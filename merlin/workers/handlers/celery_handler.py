@@ -170,12 +170,12 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
                 physical = self.merlin_db.get("physical_worker", pid)
 
                 # If database says running but Celery doesn't know about it
-                if physical.get_status() == WorkerStatus.RUNNING:
+                if physical.get_worker_status() == WorkerStatus.RUNNING:
                     worker_name = physical.get_name()
                     if worker_name not in live_workers:
                         # Mark as stalled in database
                         LOG.warning(f"Worker {worker_name} marked running but not found in Celery")
-                        physical.set_status(WorkerStatus.STALLED)
+                        physical.set_worker_status(WorkerStatus.STALLED)
 
     def query_workers(self, formatter: str, queues: List[str] = None, workers: List[str] = None):
         """

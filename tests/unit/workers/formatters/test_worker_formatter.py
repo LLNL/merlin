@@ -100,13 +100,13 @@ class TestWorkerFormatter:
             List of mock physical worker entities.
         """
         worker1 = MagicMock()
-        worker1.get_status.return_value = WorkerStatus.RUNNING
+        worker1.get_worker_status.return_value = WorkerStatus.RUNNING
 
         worker2 = MagicMock()
-        worker2.get_status.return_value = WorkerStatus.STOPPED
+        worker2.get_worker_status.return_value = WorkerStatus.STOPPED
 
         worker3 = MagicMock()
-        worker3.get_status.return_value = WorkerStatus.STALLED
+        worker3.get_worker_status.return_value = WorkerStatus.STALLED
 
         return [worker1, worker2, worker3]
 
@@ -241,7 +241,7 @@ class TestWorkerFormatter:
         statuses = [WorkerStatus.RUNNING, WorkerStatus.STOPPED, WorkerStatus.STALLED, WorkerStatus.REBOOTING]
         for i, status in enumerate(statuses):
             worker = MagicMock()
-            worker.get_status.return_value = status
+            worker.get_worker_status.return_value = status
             physical_workers.append(worker)
 
         mock_db.get.side_effect = physical_workers
@@ -313,9 +313,9 @@ class TestWorkerFormatter:
 
         # Create physical workers
         physical_workers = [
-            MagicMock(get_status=lambda: WorkerStatus.RUNNING),
-            MagicMock(get_status=lambda: WorkerStatus.STOPPED),
-            MagicMock(get_status=lambda: WorkerStatus.STALLED),
+            MagicMock(get_worker_status=lambda: WorkerStatus.RUNNING),
+            MagicMock(get_worker_status=lambda: WorkerStatus.STOPPED),
+            MagicMock(get_worker_status=lambda: WorkerStatus.STALLED),
         ]
 
         mock_db.get.side_effect = physical_workers
