@@ -295,7 +295,7 @@ class TestMultiRunMonitoring:
         merlin_db, study_entity, run_entities = setup_database_with_runs
 
         # Mark first run as complete
-        run_entities[0].set_status(RunStatus.COMPLETED)
+        run_entities[0].set_run_status(RunStatus.COMPLETED)
         run_entities[0].save()
 
         with patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor):
@@ -327,7 +327,7 @@ class TestMultiRunMonitoring:
         merlin_db, study_entity, run_entities = setup_database_with_runs
 
         # Mark last run as complete so we only check 2 runs
-        run_entities[2].set_status(RunStatus.COMPLETED)
+        run_entities[2].set_run_status(RunStatus.COMPLETED)
         run_entities[2].save()
 
         with patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor):
@@ -416,7 +416,7 @@ class TestMultiRunMonitoring:
 
         # Mark all runs as complete
         for run_entity in run_entities:
-            run_entity.set_status(RunStatus.COMPLETED)
+            run_entity.set_run_status(RunStatus.COMPLETED)
             run_entity.save()
 
         with patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor):
@@ -470,7 +470,7 @@ class TestMultiRunMonitoring:
                 all_run_ids = study_entity.get_runs()
                 for run_id in all_run_ids:
                     run = merlin_db.get("run", run_id)
-                    run.set_status(RunStatus.COMPLETED)
+                    run.set_run_status(RunStatus.COMPLETED)
                     run.save()
 
         mock_task_server_monitor.wait_for_workers.side_effect = wait_for_workers_side_effect
@@ -599,7 +599,7 @@ class TestMultiRunMonitoring:
             if cycle_count >= 3:
                 for run_entity in run_entities:
                     run = merlin_db.get("run", run_entity.get_id())
-                    run.set_status(RunStatus.COMPLETED)
+                    run.set_run_status(RunStatus.COMPLETED)
                     run.save()
 
         mock_task_server_monitor.check_tasks.return_value = True  # Runs are active

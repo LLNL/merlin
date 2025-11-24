@@ -135,9 +135,9 @@ class TestStudyManagerCancel:
         mock_purge_tasks.assert_called_once_with("queue1,queue2,queue3", True)
 
         # Verify runs were marked as cancelled (only active ones)
-        mock_run1.set_status.assert_called_once_with(RunStatus.CANCELLED)
-        mock_run2.set_status.assert_called_once_with(RunStatus.CANCELLED)
-        mock_run3.set_status.assert_not_called()
+        mock_run1.set_run_status.assert_called_once_with(RunStatus.CANCELLED)
+        mock_run2.set_run_status.assert_called_once_with(RunStatus.CANCELLED)
+        mock_run3.set_run_status.assert_not_called()
 
         # Verify result
         assert result["study_name"] == "test_study"
@@ -178,7 +178,7 @@ class TestStudyManagerCancel:
 
         # Verify other steps still executed
         mock_stop_workers.assert_called_once()
-        mock_run.set_status.assert_called()
+        mock_run.set_run_status.assert_called()
 
         # Verify result shows no queues purged
         assert result["queues_purged"] == []
@@ -216,7 +216,7 @@ class TestStudyManagerCancel:
 
         # Verify other steps still executed
         mock_purge_tasks.assert_called_once()
-        mock_run.set_status.assert_called()
+        mock_run.set_run_status.assert_called()
 
         # Verify result shows no workers stopped
         assert result["workers_stopped"] == []
@@ -365,8 +365,8 @@ class TestStudyManagerCancel:
         assert "Run 'run2' not found in database" in caplog.text
 
         # Verify other runs were still cancelled
-        mock_run1.set_status.assert_called_once_with(RunStatus.CANCELLED)
-        mock_run3.set_status.assert_called_once_with(RunStatus.CANCELLED)
+        mock_run1.set_run_status.assert_called_once_with(RunStatus.CANCELLED)
+        mock_run3.set_run_status.assert_called_once_with(RunStatus.CANCELLED)
 
         # Verify result shows correct count (2 out of 3 runs)
         assert result["runs_cancelled"] == 2
@@ -405,9 +405,9 @@ class TestStudyManagerCancel:
         result = manager.cancel(mock_spec)
 
         # Verify only active run was marked as cancelled
-        mock_run1.set_status.assert_called_once_with(RunStatus.CANCELLED)
-        mock_run2.set_status.assert_not_called()
-        mock_run3.set_status.assert_not_called()
+        mock_run1.set_run_status.assert_called_once_with(RunStatus.CANCELLED)
+        mock_run2.set_run_status.assert_not_called()
+        mock_run3.set_run_status.assert_not_called()
 
         # Verify result shows correct count
         assert result["runs_cancelled"] == 1

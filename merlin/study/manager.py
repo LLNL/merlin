@@ -137,7 +137,7 @@ class StudyManager:
                     continue
 
                 if run_entity.is_active():
-                    run_entity.set_status(RunStatus.CANCELLED)
+                    run_entity.set_run_status(RunStatus.CANCELLED)
                     result["runs_cancelled"] += 1
         else:
             LOG.info("Skipping marking runs as cancelled.")
