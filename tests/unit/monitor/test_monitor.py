@@ -14,7 +14,6 @@ from unittest.mock import MagicMock
 import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
-from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from merlin.exceptions import RestartException, RunNotFoundError
 from merlin.monitor.monitor import Monitor
@@ -32,6 +31,7 @@ def monitor(mocker: MockerFixture) -> Monitor:
         A `Monitor` object with mocked properties.
     """
     mock_spec = MagicMock(name="MockSpec")
+    mock_spec.name = "test_study"
     mocker.patch("merlin.monitor.monitor.MerlinDatabase", autospec=True)
     mock_monitor = Monitor(spec=mock_spec, sleep=1, task_server="celery", no_restart=False)
     mock_monitor.task_server_monitor = mocker.MagicMock(name="MockTaskServerMonitor")
@@ -46,24 +46,76 @@ def test_monitor_all_runs_handles_completed_and_incomplete_runs(mocker: MockerFi
         mocker: PyTest mocker fixture.
         monitor: A mocked Monitor instance.
     """
-
-    # Set up two mock run objects
+    # Set up two mock run objects (one complete, one incomplete)
     mock_run_1 = mocker.MagicMock()
     mock_run_1.run_complete = True
     mock_run_1.get_workspace.return_value = "ws1"
+    mock_run_1.get_workers.return_value = ["worker1"]
 
     mock_run_2 = mocker.MagicMock()
     mock_run_2.run_complete = False
     mock_run_2.get_workspace.return_value = "ws2"
+    mock_run_2.get_workers.return_value = ["worker2"]
 
     # Mock study that returns a list of run IDs
     mock_study = mocker.MagicMock()
     mock_study.get_runs.return_value = ["run1", "run2"]
 
-    # Patch monitor_single_run so it doesn't run real logic
-    monitor.monitor_single_run = mocker.MagicMock()
+    # Mock the database get method
+    def mock_get(model, *args, **kwargs):
+        if model == "study":
+            return mock_study
+        elif model == "run":
+            run_id = args[0]
+            return {"run1": mock_run_1, "run2": mock_run_2}[run_id]
+        elif model == "logical_worker":
+            mock_worker = mocker.MagicMock()
+            mock_worker.get_name.return_value = "test_worker"
+            return mock_worker
+        return mocker.MagicMock()
 
-    # Patch monitor.merlin_db.get so it returns appropriate values depending on the arguments
+    monitor.merlin_db.get.side_effect = mock_get
+    mocker.patch.object(monitor, "_validate_run_workspace", return_value=True)
+
+    # Mock monitoring methods
+    monitor.wait_for_workers = mocker.MagicMock()
+    monitor.check_run_health = mocker.MagicMock()
+
+    # Use sleep side effect to mark run as complete after first cycle
+    def sleep_side_effect(duration):
+        # After first cycle, mark run 2 as complete to exit the loop
+        mock_run_2.run_complete = True
+
+    mocker.patch("time.sleep", side_effect=sleep_side_effect)
+
+    monitor.monitor_all_runs()
+
+    # Should have called wait_for_workers and check_run_health for the incomplete run
+    monitor.wait_for_workers.assert_called_once_with(mock_run_2)
+    monitor.check_run_health.assert_called_once_with(mock_run_2)
+
+
+def test_monitor_all_runs_exits_when_all_complete(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test `monitor_all_runs` exits immediately when all runs are complete.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
+    # Set up two mock run objects that are both complete
+    mock_run_1 = mocker.MagicMock()
+    mock_run_1.run_complete = True
+    mock_run_1.get_workspace.return_value = "ws1"
+
+    mock_run_2 = mocker.MagicMock()
+    mock_run_2.run_complete = True
+    mock_run_2.get_workspace.return_value = "ws2"
+
+    # Mock study
+    mock_study = mocker.MagicMock()
+    mock_study.get_runs.return_value = ["run1", "run2"]
+
     def mock_get(model, *args, **kwargs):
         if model == "study":
             return mock_study
@@ -73,15 +125,180 @@ def test_monitor_all_runs_handles_completed_and_incomplete_runs(mocker: MockerFi
         return mocker.MagicMock()
 
     monitor.merlin_db.get.side_effect = mock_get
+    mocker.patch.object(monitor, "_validate_run_workspace", return_value=True)
+
+    # Mock monitoring methods
+    monitor.wait_for_workers = mocker.MagicMock()
+    monitor.check_run_health = mocker.MagicMock()
 
     monitor.monitor_all_runs()
 
-    monitor.monitor_single_run.assert_called_once_with(mock_run_2)
+    # Should not have called wait_for_workers or check_run_health
+    monitor.wait_for_workers.assert_not_called()
+    monitor.check_run_health.assert_not_called()
+
+
+def test_monitor_all_runs_monitors_multiple_active_runs(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test `monitor_all_runs` performs health checks on all active runs in a single cycle.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
+    # Set up three mock runs, all incomplete
+    mock_runs = []
+    for i in range(3):
+        mock_run = mocker.MagicMock()
+        mock_run.run_complete = False
+        mock_run.get_workspace.return_value = f"ws{i}"
+        mock_run.get_workers.return_value = [f"worker{i}"]
+        mock_runs.append(mock_run)
+
+    # Mock study
+    mock_study = mocker.MagicMock()
+    mock_study.get_runs.return_value = ["run0", "run1", "run2"]
+
+    call_count = 0
+
+    def mock_get(model, *args, **kwargs):
+        if model == "study":
+            return mock_study
+        elif model == "run":
+            run_id = args[0]
+            run_idx = int(run_id.replace("run", ""))
+            # On second iteration, mark all runs complete to exit
+            if call_count >= 3:
+                mock_runs[run_idx].run_complete = True
+            return mock_runs[run_idx]
+        elif model == "logical_worker":
+            mock_worker = mocker.MagicMock()
+            mock_worker.get_name.return_value = "test_worker"
+            return mock_worker
+        return mocker.MagicMock()
+
+    monitor.merlin_db.get.side_effect = mock_get
+    mocker.patch.object(monitor, "_validate_run_workspace", return_value=True)
+
+    # Mock monitoring methods
+    monitor.wait_for_workers = mocker.MagicMock()
+
+    def check_health_side_effect(run):
+        nonlocal call_count
+        call_count += 1
+
+    monitor.check_run_health = mocker.MagicMock(side_effect=check_health_side_effect)
+
+    # Mock sleep to avoid delays
+    mocker.patch("time.sleep")
+
+    monitor.monitor_all_runs()
+
+    # Should have been called once for each run in the first cycle (3 runs)
+    assert monitor.check_run_health.call_count == 3
+    assert monitor.wait_for_workers.call_count == 3
+
+
+def test_monitor_all_runs_detects_new_runs_dynamically(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test `monitor_all_runs` detects new runs added during monitoring (iterative workflows).
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
+    # Set up initial run
+    mock_run_1 = mocker.MagicMock()
+    mock_run_1.run_complete = False
+    mock_run_1.get_workspace.return_value = "ws1"
+    mock_run_1.get_workers.return_value = ["worker1"]
+
+    # New run that will be added
+    mock_run_2 = mocker.MagicMock()
+    mock_run_2.run_complete = False
+    mock_run_2.get_workspace.return_value = "ws2"
+    mock_run_2.get_workers.return_value = ["worker2"]
+
+    # Mock study
+    mock_study = mocker.MagicMock()
+
+    # First call returns one run, second call returns two runs, third returns two complete runs
+    mock_study.get_runs.side_effect = [
+        ["run1"],  # First cycle: 1 run
+        ["run1", "run2"],  # Second cycle: 2 runs (new run added)
+        ["run1", "run2"],  # Third cycle: both complete
+    ]
+
+    cycle_count = 0
+
+    def mock_get(model, *args, **kwargs):
+        if model == "study":
+            return mock_study
+        elif model == "run":
+            run_id = args[0]
+            # On third cycle, mark all runs complete
+            if cycle_count >= 2:
+                mock_run_1.run_complete = True
+                mock_run_2.run_complete = True
+            return {"run1": mock_run_1, "run2": mock_run_2}[run_id]
+        elif model == "logical_worker":
+            mock_worker = mocker.MagicMock()
+            mock_worker.get_name.return_value = "test_worker"
+            return mock_worker
+        return mocker.MagicMock()
+
+    monitor.merlin_db.get.side_effect = mock_get
+    mocker.patch.object(monitor, "_validate_run_workspace", return_value=True)
+
+    # Mock monitoring methods
+    monitor.wait_for_workers = mocker.MagicMock()
+
+    def check_health_side_effect(run):
+        nonlocal cycle_count
+        cycle_count += 1
+
+    monitor.check_run_health = mocker.MagicMock(side_effect=check_health_side_effect)
+
+    # Mock sleep
+    mocker.patch("time.sleep")
+
+    monitor.monitor_all_runs()
+
+    # Should have monitored: 1 run in cycle 1, 2 runs in cycle 2 = 3 total health checks
+    assert monitor.check_run_health.call_count == 3
+
+
+def test_wait_for_workers(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test `wait_for_workers` retrieves worker names and waits for them to start.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
+    run = mocker.MagicMock()
+    run.get_workers.return_value = ["worker_id_1", "worker_id_2"]
+
+    mock_worker_1 = mocker.MagicMock()
+    mock_worker_1.get_name.return_value = "worker_1"
+
+    mock_worker_2 = mocker.MagicMock()
+    mock_worker_2.get_name.return_value = "worker_2"
+
+    def mock_get(model, *args, **kwargs):
+        worker_id = kwargs.get("worker_id")
+        return {"worker_id_1": mock_worker_1, "worker_id_2": mock_worker_2}[worker_id]
+
+    monitor.merlin_db.get.side_effect = mock_get
+
+    monitor.wait_for_workers(run)
+
+    monitor.task_server_monitor.wait_for_workers.assert_called_once_with(["worker_1", "worker_2"], monitor.sleep)
 
 
 def test_check_task_activity_tasks_in_queue(mocker: MockerFixture, monitor: Monitor):
     """
-    Test that `_check_task_activity` returns True when there are tasks in the queues.
+    Test that `check_task_activity` returns True when there are tasks in the queues.
 
     Args:
         mocker: PyTest mocker fixture.
@@ -89,13 +306,13 @@ def test_check_task_activity_tasks_in_queue(mocker: MockerFixture, monitor: Moni
     """
     run = mocker.MagicMock()
     monitor.task_server_monitor.check_tasks.return_value = True
-    result = monitor._check_task_activity(run)
+    result = monitor.check_task_activity(run)
     assert result is True
 
 
 def test_check_task_activity_workers_processing(mocker: MockerFixture, monitor: Monitor):
     """
-    Test that `_check_task_activity` returns True when workers are processing tasks.
+    Test that `check_task_activity` returns True when workers are processing tasks.
 
     Args:
         mocker: PyTest mocker fixture.
@@ -105,13 +322,13 @@ def test_check_task_activity_workers_processing(mocker: MockerFixture, monitor: 
     monitor.task_server_monitor.check_tasks.return_value = False
     monitor.task_server_monitor.check_workers_processing.return_value = True
     run.get_queues.return_value = ["queue1"]
-    result = monitor._check_task_activity(run)
+    result = monitor.check_task_activity(run)
     assert result is True
 
 
 def test_check_task_activity_inactive(mocker: MockerFixture, monitor: Monitor):
     """
-    Test that `_check_task_activity` returns False when no tasks are in the queue and no workers are active.
+    Test that `check_task_activity` returns False when no tasks are in the queue and no workers are active.
 
     Args:
         mocker: PyTest mocker fixture.
@@ -120,22 +337,75 @@ def test_check_task_activity_inactive(mocker: MockerFixture, monitor: Monitor):
     run = mocker.MagicMock()
     monitor.task_server_monitor.check_tasks.return_value = False
     monitor.task_server_monitor.check_workers_processing.return_value = False
-    result = monitor._check_task_activity(run)
+    result = monitor.check_task_activity(run)
     assert result is False
 
 
-def test_handle_transient_exception_logs_and_sleeps(mocker: MockerFixture, monitor: Monitor):
+def test_check_run_health_performs_health_check(mocker: MockerFixture, monitor: Monitor):
     """
-    Test that `_handle_transient_exception` logs the exception and sleeps for the specified interval.
+    Test that `check_run_health` performs worker health checks and task activity checks.
 
     Args:
         mocker: PyTest mocker fixture.
         monitor: A mocked Monitor instance.
     """
-    mock_sleep = mocker.patch("time.sleep")
-    mock_exception = RedisTimeoutError("redis timed out")
-    monitor._handle_transient_exception(mock_exception)
-    mock_sleep.assert_called_once_with(monitor.sleep)
+    run = mocker.MagicMock()
+    run.run_complete = False
+    run.get_workspace.return_value = "workspace"
+    run.get_workers.return_value = ["worker1"]
+
+    monitor.check_task_activity = mocker.MagicMock(return_value=True)
+    monitor.restart_workflow = mocker.MagicMock()
+
+    monitor.check_run_health(run)
+
+    monitor.task_server_monitor.run_worker_health_check.assert_called_once_with(["worker1"])
+    monitor.check_task_activity.assert_called_once_with(run)
+    monitor.restart_workflow.assert_not_called()
+
+
+def test_check_run_health_restarts_stalled_workflow(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test that `check_run_health` restarts a workflow when it's stalled (no activity, not complete).
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
+    run = mocker.MagicMock()
+    run.run_complete = False
+    run.get_workspace.return_value = "workspace"
+    run.get_workers.return_value = ["worker1"]
+
+    monitor.check_task_activity = mocker.MagicMock(return_value=False)
+    monitor.restart_workflow = mocker.MagicMock()
+
+    monitor.check_run_health(run)
+
+    monitor.restart_workflow.assert_called_once_with(run)
+
+
+def test_check_run_health_no_restart_when_disabled(mocker: MockerFixture, monitor: Monitor):
+    """
+    Test that `check_run_health` does not restart when no_restart flag is True.
+
+    Args:
+        mocker: PyTest mocker fixture.
+        monitor: A mocked Monitor instance.
+    """
+    monitor.no_restart = True
+
+    run = mocker.MagicMock()
+    run.run_complete = False
+    run.get_workspace.return_value = "workspace"
+    run.get_workers.return_value = ["worker1"]
+
+    monitor.check_task_activity = mocker.MagicMock(return_value=False)
+    monitor.restart_workflow = mocker.MagicMock()
+
+    monitor.check_run_health(run)
+
+    monitor.restart_workflow.assert_not_called()
 
 
 def test_monitor_single_run_completes_successfully(mocker: MockerFixture, monitor: Monitor):
@@ -153,26 +423,21 @@ def test_monitor_single_run_completes_successfully(mocker: MockerFixture, monito
     run.get_queues.return_value = ["q1"]
     run.run_complete = False
 
-    # run_complete toggles to True after one loop iteration
-    type(run).run_complete = mocker.PropertyMock(side_effect=[False, True])
+    def sleep_side_effect(duration):
+        # After first cycle, mark run as complete to exit the loop
+        run.run_complete = True
 
-    monitor.task_server_monitor.check_tasks.return_value = False
-    monitor.task_server_monitor.check_workers_processing.return_value = False
-    monitor.restart_workflow = mocker.MagicMock()
-    monitor.task_server_monitor.run_worker_health_check = mocker.MagicMock()
-    monitor.task_server_monitor.wait_for_workers = mocker.MagicMock()
+    mocker.patch("time.sleep", side_effect=sleep_side_effect)
 
-    mock_worker = mocker.MagicMock()
-    mock_worker.get_name.return_value = "worker-name"
-    monitor.merlin_db.get.return_value = mock_worker
+    monitor.wait_for_workers = mocker.MagicMock()
+    monitor.check_run_health = mocker.MagicMock()
 
     mocker.patch.object(monitor, "_validate_run_workspace", return_value=True)
 
     monitor.monitor_single_run(run)
 
-    monitor.task_server_monitor.wait_for_workers.assert_called_once()
-    monitor.task_server_monitor.run_worker_health_check.assert_called_once()
-    monitor.restart_workflow.assert_not_called()
+    monitor.wait_for_workers.assert_called_once_with(run)
+    monitor.check_run_health.assert_called_once_with(run)
 
 
 def test_restart_workflow_success(mocker: MockerFixture, monitor: Monitor):
@@ -337,7 +602,7 @@ def test_validate_run_workspace_invalid_path(mocker: MockerFixture, monitor: Mon
     result = monitor._validate_run_workspace(run)
 
     assert result is False
-    assert "has an invalid workspace" in caplog.text
+    assert "has an invalid or inaccessible workspace" in caplog.text
 
 
 def test_monitor_single_run_raises_exception_for_invalid_workspace(mocker: MockerFixture, monitor: Monitor):
@@ -354,45 +619,68 @@ def test_monitor_single_run_raises_exception_for_invalid_workspace(mocker: Mocke
 
     mocker.patch.object(monitor, "_validate_run_workspace", return_value=False)
 
-    with pytest.raises(RunNotFoundError, match="Cannot monitor run with invalid workspace"):
+    with pytest.raises(RunNotFoundError, match="Cannot monitor run with invalid or inaccessible workspace"):
         monitor.monitor_single_run(run)
 
 
 def test_monitor_all_runs_handles_run_not_found_error(mocker: MockerFixture, monitor: Monitor, caplog: CaptureFixture):
     """
-    Test that `monitor_all_runs` handles RunNotFoundError gracefully and continues to next run.
+    Test that `monitor_all_runs` handles RunNotFoundError gracefully when fetching runs.
+
+    This test verifies that when a run_id exists in the study but the corresponding
+    run entity no longer exists in the database, the monitor logs a warning and
+    continues processing other runs without crashing.
 
     Args:
         mocker: PyTest mocker fixture.
         monitor: A mocked Monitor instance.
         caplog: PyTest caplog fixture.
     """
+    caplog.set_level(logging.INFO)
+
+    # Create mock run entities
     mock_run_1 = mocker.MagicMock()
-    mock_run_1.run_complete = False
+    mock_run_1.run_complete = True  # This run will complete immediately
     mock_run_1.get_workspace.return_value = "ws1"
 
-    mock_run_2 = mocker.MagicMock()
-    mock_run_2.run_complete = False
-    mock_run_2.get_workspace.return_value = "ws2"
+    mock_run_3 = mocker.MagicMock()
+    mock_run_3.run_complete = True  # This run will also complete immediately
+    mock_run_3.get_workspace.return_value = "ws3"
 
+    # Create mock study entity
     mock_study = mocker.MagicMock()
-    mock_study.get_runs.return_value = ["run1", "run2"]
+    mock_study.get_runs.return_value = ["run1", "run2", "run3"]
 
-    def mock_get(model, *args, **kwargs):
+    # Mock the database get method
+    def mock_get(model, identifier):
         if model == "study":
             return mock_study
         elif model == "run":
-            run_id = args[0]
-            return {"run1": mock_run_1, "run2": mock_run_2}[run_id]
-        return mocker.MagicMock()
+            if identifier == "run1":
+                return mock_run_1
+            elif identifier == "run2":
+                # run2 no longer exists in the database
+                raise RunNotFoundError(f"Run with ID '{identifier}' not found")
+            elif identifier == "run3":
+                return mock_run_3
+        raise ValueError(f"Unexpected model: {model}")
 
     monitor.merlin_db.get.side_effect = mock_get
+    mocker.patch.object(monitor, "_validate_run_workspace", return_value=True)
 
-    # First run raises RunNotFoundError, second run should still be processed
-    monitor.monitor_single_run = mocker.MagicMock(side_effect=[RunNotFoundError("Run not found"), None])
+    # Mock the other methods to prevent infinite loop and further processing
+    mocker.patch.object(monitor, "wait_for_workers")
+    mocker.patch.object(monitor, "check_run_health")
 
+    # Run the monitor
     monitor.monitor_all_runs()
 
-    assert monitor.monitor_single_run.call_count == 2
-    assert "no longer exists in database" in caplog.text
-    assert "Skipping to next run" in caplog.text
+    # Verify that the warning was logged for run2
+    assert "Run with ID 'run2' no longer exists in database" in caplog.text
+    assert "Skipping this run" in caplog.text
+
+    # Verify that run1 and run3 were still processed (both show up in completed runs)
+    assert "The following runs have completed: ['ws1', 'ws3']" in caplog.text
+
+    # Verify the database was queried for all three runs
+    assert monitor.merlin_db.get.call_count == 4  # 1 study + 3 run attempts

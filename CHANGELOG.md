@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Monitor now checks each run of a study on every loop
 - Garbage collection functionality for the database. Called with: `merlin database gc`, `merlin database garbage-collect`, or `merlin database cleanup`
 - Built-in database garbage collection to the `merlin monitor`
   - Can be disabled with `--disable-gc`
