@@ -22,7 +22,7 @@ from typing import Dict, List, Set, Tuple, Type, TypeVar
 
 from filelock import FileLock
 
-from merlin.common.enums import WorkerStatus
+from merlin.common.enums import RunStatus, WorkerStatus
 
 
 LOG = logging.getLogger("merlin")
@@ -279,7 +279,7 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
         parameters (Dict): The parameters used in this run.
         parent (str): The ID of the parent run (if any).
         queues (List[str]): The task queues used for this run.
-        run_complete (bool): Wether the run is complete.
+        run_status (common.enums.RunStatus): The current status of the run.
         samples (Dict): The samples used in this run.
         steps (List[str]): A list of unique step IDs that are executed in this run.
             Each ID will correspond to a `StepInfo` entry.
@@ -298,7 +298,7 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
     workers: List[str] = field(default_factory=list)
     parent: str = None  # TODO NOT YET IMPLEMENTED; do we even have a good way that this and `child` can be set?
     child: str = None  # TODO NOT YET IMPLEMENTED
-    run_complete: bool = False
+    run_status: str = field(default=RunStatus.INITIALIZED.value)
     parameters: Dict = field(default_factory=dict)  # TODO NOT YET IMPLEMENTED
     samples: Dict = field(default_factory=dict)  # TODO NOT YET IMPLEMENTED
 
@@ -310,7 +310,7 @@ class RunModel(BaseDataModel):  # pylint: disable=too-many-instance-attributes
         Returns:
             A list of fields that are allowed to be updated in this class.
         """
-        return ["parent", "child", "run_complete", "additional_data", "workers"]
+        return ["parent", "child", "run_status", "additional_data", "workers"]
 
 
 @dataclass
@@ -417,7 +417,7 @@ class PhysicalWorkerModel(BaseDataModel):  # pylint: disable=too-many-instance-a
         name (str): The name of the physical worker.
         pid (str): The process ID (PID) of the worker process.
         restart_count (int): The number of times this worker has been restarted.
-        status (str): The current status of the worker (e.g., RUNNING, STOPPED).
+        worker_status (WorkerStatus): The current status of the worker (e.g., running, stopped).
     """
 
     id: str = field(default_factory=lambda: str(uuid.uuid4()))  # pylint: disable=invalid-name
@@ -425,8 +425,8 @@ class PhysicalWorkerModel(BaseDataModel):  # pylint: disable=too-many-instance-a
     name: str = None  # Will be of the form celery@worker_name.hostname
     launch_cmd: str = None
     args: Dict = field(default_factory=dict)
-    pid: int = None
-    status: str = field(default=WorkerStatus.STOPPED.value)
+    pid: str = None
+    worker_status: WorkerStatus = WorkerStatus.STOPPED
     heartbeat_timestamp: datetime = field(default_factory=datetime.now)
     latest_start_time: datetime = field(default_factory=datetime.now)
     host: str = None
@@ -444,7 +444,7 @@ class PhysicalWorkerModel(BaseDataModel):  # pylint: disable=too-many-instance-a
             "launch_cmd",
             "args",
             "pid",
-            "status",
+            "worker_status",
             "heartbeat_timestamp",
             "latest_start_time",
             "restart_count",
