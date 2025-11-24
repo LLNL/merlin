@@ -202,7 +202,6 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             The process ID for this worker or None if not set.
         """
         self.reload_data()
-        self.reload_data()
         if not self.entity_info.pid:
             return None
 
