@@ -20,6 +20,7 @@ from argparse import ArgumentParser, Namespace
 
 from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
+from merlin.config.configfile import initialize_config
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import verify_filepath
 from merlin.workers.formatters.formatter_factory import worker_formatter_factory
@@ -77,6 +78,12 @@ class QueryWorkersCommand(CommandEntryPoint):
             default=format_default,
             help=f"Output format. Default: {format_default}",
         )
+        query.add_argument(
+            "-l",
+            "--local-db",
+            action="store_true",
+            help="Use the local Merlin database for querying workers.",
+        )
 
     def process_command(self, args: Namespace):
         """
@@ -93,6 +100,9 @@ class QueryWorkersCommand(CommandEntryPoint):
                 - `workers`: List of specific worker names to query.
         """
         print(banner_small)
+
+        if args.local_db:
+            initialize_config(local_mode=True)
 
         worker_names = []
         if args.workers:
@@ -111,4 +121,4 @@ class QueryWorkersCommand(CommandEntryPoint):
 
         task_server = spec.merlin["resources"]["task_server"] if spec else args.task_server
         worker_handler = worker_handler_factory.create(task_server)
-        worker_handler.query_workers(args.format, queues=args.queues, workers=worker_names)
+        worker_handler.query_workers(args.format, queues=args.queues, workers=worker_names, local_db=args.local_db)

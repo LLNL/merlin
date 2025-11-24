@@ -177,7 +177,13 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
                         LOG.warning(f"Worker {worker_name} marked running but not found in Celery")
                         physical.set_worker_status(WorkerStatus.STALLED)
 
-    def query_workers(self, formatter: str, queues: List[str] = None, workers: List[str] = None):
+    def query_workers(
+        self,
+        formatter: str,
+        queues: List[str] = None,
+        workers: List[str] = None,
+        local_db: bool = False,
+    ):
         """
         Query the status of Celery workers and display using the configured formatter.
 
@@ -185,6 +191,7 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
             formatter: The worker formatter to use (rich or json).
             queues: List of queue names to filter by (optional).
             workers: List of worker names to filter by (optional).
+            local_db: Whether to use the local database for querying (optional).
         """
         # Build filters dictionary
         filters = self._build_filters(queues, workers)
@@ -193,7 +200,8 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         logical_workers = self.merlin_db.get_all("logical_worker", filters=filters)
 
         # Validate/enrich with live Celery data
-        self._validate_worker_status(logical_workers)
+        if not local_db:
+            self._validate_worker_status(logical_workers)
 
         # Use formatter to display the results
         formatter = worker_formatter_factory.create(formatter)
