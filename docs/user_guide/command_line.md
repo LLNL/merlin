@@ -1499,6 +1499,7 @@ merlin query-workers [OPTIONS]
 | `--queues` | List[string] | Takes a space-delimited list of queues as input. This will query for workers associated with the names of the queues you provide here. | None |
 | `--workers` | List[string] | A space-delimited list of logical worker names to query | None |
 | `-f`, `--format` | choice(`rich` \| `json`) | Output format | rich |
+| `-l`, `--local-db` | boolean | Use the local Merlin database for querying workers | `False` |
 
 **Examples:**
 
