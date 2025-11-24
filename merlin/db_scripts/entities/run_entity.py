@@ -60,10 +60,10 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             Retrieve any additional data saved to this run. _Implementation found in
                 [`DatabaseEntity.get_additional_data`][db_scripts.entities.db_entity.DatabaseEntity.get_additional_data]._
 
-        get_status:
+        get_run_status:
             Get the current status of the run.
 
-        set_status:
+        set_run_status:
             Update the status of the run.
 
         is_active:
@@ -148,7 +148,7 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             f"workers={self.get_workers()}, "
             f"parent={self.get_parent()}, "
             f"child={self.get_child()}, "
-            f"status={self.get_status()}, "
+            f"run_status={self.get_run_status()}, "
             f"additional_data={self.get_additional_data()}, "
             f"backend={self.backend.get_name()})"
         )
@@ -174,11 +174,11 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             f"Workers: {self.get_workers()}\n"
             f"Parent: {self.get_parent()}\n"
             f"Child: {self.get_child()}\n"
-            f"Status: {self.get_status().value}\n"
+            f"Run Status: {self.get_run_status().value}\n"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
 
-    def get_status(self) -> RunStatus:
+    def get_run_status(self) -> RunStatus:
         """
         Get the current status of the run.
 
@@ -187,9 +187,9 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
         """
         self.reload_data()
         # Convert string value to enum
-        return RunStatus(self.entity_info.status)
+        return RunStatus(self.entity_info.run_status)
 
-    def set_status(self, status: RunStatus):
+    def set_run_status(self, status: RunStatus):
         """
         Update the status of the run.
 
@@ -197,7 +197,7 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             status: The new RunStatus for the run.
         """
         # Store the string value
-        self.entity_info.status = status.value
+        self.entity_info.run_status = status.value
         self.save()
 
     def is_active(self) -> bool:
@@ -207,7 +207,7 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
         Returns:
             True if the run is active, False otherwise.
         """
-        return self.get_status() in (RunStatus.INITIALIZED, RunStatus.QUEUED, RunStatus.RUNNING)
+        return self.get_run_status() in (RunStatus.INITIALIZED, RunStatus.QUEUED, RunStatus.RUNNING)
 
     def is_finished(self) -> bool:
         """
@@ -216,7 +216,7 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
         Returns:
             True if the run is in a terminal state (COMPLETED, CANCELLED, FAILED).
         """
-        return self.get_status() in (RunStatus.COMPLETED, RunStatus.CANCELLED, RunStatus.FAILED)
+        return self.get_run_status() in (RunStatus.COMPLETED, RunStatus.CANCELLED, RunStatus.FAILED)
 
     def get_metadata_file(self) -> str:
         """

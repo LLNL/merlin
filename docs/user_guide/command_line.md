@@ -465,8 +465,8 @@ In other words, the `merlin cancel` command acts as a wrapper around the [`merli
 
 In short, this command will:
 
-1. Purge the queues from the study
-2. Stop the workers for that study
+1. Purge the queues from the study (`merlin purge -f SPECIFICATION`)
+2. Stop the workers for that study (`merlin stop-workers --spec SPECIFICATON`)
 3. Mark all runs associated with that study as cancelled
 
 Each of these options can be disabled with their respective options in the table below.

@@ -38,7 +38,7 @@ class TestRunEntity:
         model.workers = ["worker_1", "worker_2"]
         model.parent = "parent_run"
         model.child = "child_run"
-        model.status = RunStatus.RUNNING
+        model.run_status = RunStatus.RUNNING
         model.additional_data = {"key": "value"}
         return model
 
@@ -130,26 +130,26 @@ class TestRunEntity:
             assert f"Workspace: {run_entity.get_workspace()}" in str_output
             assert "Study:" in str_output
 
-    def test_get_status(self, run_entity: RunEntity, mock_model: MagicMock):
+    def test_get_run_status(self, run_entity: RunEntity, mock_model: MagicMock):
         """
-        Test that `get_status` returns the correct value.
+        Test that `get_run_status` returns the correct value.
 
         Args:
             run_entity: A fixture that returns a `RunEntity` instance.
             mock_model: A fixture that returns a mocked `RunModel` instance.
         """
-        assert run_entity.get_status() == mock_model.status
+        assert run_entity.get_run_status() == mock_model.run_status
 
-    def test_set_status(self, run_entity: RunEntity, mock_model: MagicMock):
+    def test_set_run_status(self, run_entity: RunEntity, mock_model: MagicMock):
         """
-        Test that `set_status` sets the correct value.
+        Test that `set_run_status` sets the correct value.
 
         Args:
             run_entity: A fixture that returns a `RunEntity` instance.
             mock_model: A fixture that returns a mocked `RunModel` instance.
         """
-        run_entity.set_status(RunStatus.COMPLETED)
-        assert run_entity.get_status() == RunStatus.COMPLETED
+        run_entity.set_run_status(RunStatus.COMPLETED)
+        assert run_entity.get_run_status() == RunStatus.COMPLETED
 
     @pytest.mark.parametrize(
         "status_to_set, expected_result",
@@ -171,7 +171,7 @@ class TestRunEntity:
             expected_result: The expected result of `is_finished`.
             run_entity: A fixture that returns a `RunEntity` instance.
         """
-        run_entity.set_status(status_to_set)
+        run_entity.set_run_status(status_to_set)
         assert run_entity.is_finished() == expected_result
 
     @pytest.mark.parametrize(
@@ -194,7 +194,7 @@ class TestRunEntity:
             expected_result: The expected result of `is_active`.
             run_entity: A fixture that returns a `RunEntity` instance.
         """
-        run_entity.set_status(status_to_set)
+        run_entity.set_run_status(status_to_set)
         assert run_entity.is_active() == expected_result
 
     def test_get_metadata_file(self, run_entity: RunEntity):

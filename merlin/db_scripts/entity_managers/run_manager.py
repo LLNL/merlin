@@ -60,7 +60,7 @@ class RunManager(EntityManager[RunEntity, RunModel]):
 
     _filter_accessor_map: Dict[str, Callable[[T], Any]] = {
         "study_id": lambda e: e.get_study_id(),
-        "status": lambda e: e.get_status().value,
+        "status": lambda e: e.get_run_status().value,
         "queues": lambda e: e.get_queues(),
         "workers": lambda e: e.get_workers(),
     }

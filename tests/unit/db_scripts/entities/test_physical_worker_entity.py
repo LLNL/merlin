@@ -37,7 +37,7 @@ class TestPhysicalWorkerEntity:
         model.launch_cmd = "python worker.py"
         model.args = {"arg1": "value1"}
         model.pid = "12345"
-        model.status = WorkerStatus.RUNNING
+        model.worker_status = WorkerStatus.RUNNING
         model.heartbeat_timestamp = datetime.now().isoformat()
         model.latest_start_time = datetime.now()
         model.host = "test_host"
@@ -193,27 +193,27 @@ class TestPhysicalWorkerEntity:
         assert worker_entity.entity_info.pid == new_pid
         mock_backend.save.assert_called_once()
 
-    def test_get_status(self, worker_entity: PhysicalWorkerEntity, mock_model: MagicMock):
+    def test_get_worker_status(self, worker_entity: PhysicalWorkerEntity, mock_model: MagicMock):
         """
-        Test get_status returns the correct value.
+        Test get_worker_status returns the correct value.
 
         Args:
             worker_entity: A fixture that returns a `PhysicalWorkerEntity` instance.
             mock_model: A fixture that returns a mocked `PhysicalWorkerModel` instance.
         """
-        assert worker_entity.get_status() == mock_model.status
+        assert worker_entity.get_worker_status() == mock_model.worker_status
 
-    def test_set_status(self, worker_entity: PhysicalWorkerEntity, mock_backend: MagicMock):
+    def test_set_worker_status(self, worker_entity: PhysicalWorkerEntity, mock_backend: MagicMock):
         """
-        Test set_status updates the model and saves it.
+        Test set_worker_status updates the model and saves it.
 
         Args:
             worker_entity: A fixture that returns a `PhysicalWorkerEntity` instance.
             mock_backend: A fixture that returns a mocked `ResultsBackend` instance.
         """
         new_status = WorkerStatus.STOPPED
-        worker_entity.set_status(new_status)
-        assert worker_entity.entity_info.status == new_status
+        worker_entity.set_worker_status(new_status)
+        assert worker_entity.entity_info.worker_status == new_status
         mock_backend.save.assert_called_once()
 
     def test_get_heartbeat_timestamp(self, worker_entity: PhysicalWorkerEntity, mock_model: MagicMock):

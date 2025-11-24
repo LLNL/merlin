@@ -111,7 +111,7 @@ class TestRunManager:
         queues = ["queue1"]
 
         # Valid RunModel field and additional data
-        valid_field = "status"
+        valid_field = "run_status"
         valid_value = RunStatus.INITIALIZED.value
         invalid_field = "non_model_field"
         invalid_value = "extra_data"
@@ -126,7 +126,7 @@ class TestRunManager:
 
         # Assert
         saved_model = mock_backend.save.call_args[0][0]
-        assert saved_model.status == valid_value
+        assert saved_model.run_status == valid_value
         assert saved_model.additional_data == {invalid_field: invalid_value}
 
     def test_get_run(self, run_manager: RunManager, mock_backend: MagicMock):

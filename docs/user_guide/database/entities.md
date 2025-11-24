@@ -36,7 +36,7 @@ The `RunEntity` represents a single execution of a study. It captures the config
 | `workers`      | `List[uuid4]`    | List of [`LogicalWorker`](#logical-worker-entity) IDs serving tasks for this run. |
 | `parent`       | `uuid4 \| NULL`  | ID of parent run (if this run was started by another run).                        |
 | `child`        | `uuid4 \| NULL`  | ID of child run (if this run spawned a new run).                                  |
-| `status`       | `str`            | The status of a run.                                                              |
+| `run_status`   | `str`            | The status of a run.                                                              |
 | `parameters`   | `Dict`           | Arbitrary key/value parameters provided to the run.                               |
 | `samples`      | `Dict`           | Arbitrary samples provided to the run.                                            |
 
@@ -48,7 +48,7 @@ The `RunEntity` represents a single execution of a study. It captures the config
 
 ### Run Status
 
-The `status` entry is *not* what [the status commands](../monitoring/status_cmds.md) are tracking. Those commands track step- and task-level statuses. This entry is tracking run-level status which becomes important for the [`merlin monitor`](../command_line.md#monitor-merlin-monitor) command.
+The `run_status` entry is *not* what [the status commands](../monitoring/status_cmds.md) are tracking. Those commands track step- and task-level statuses. This entry is tracking run-level status which becomes important for the [`merlin monitor`](../command_line.md#monitor-merlin-monitor) command.
 
 Below is a table of possible statuses for a run.
 
@@ -94,7 +94,7 @@ The `PhysicalWorkerEntity` represents an actual running instance of a worker pro
 | `launch_cmd`          | `str`          | Exact CLI used to start the worker.                             |
 | `args`                | `Dict`         | Additional runtime args or config passed to the worker process. |
 | `pid`                 | `str`          | OS process ID in string format.                                 |
-| `status`              | `WorkerStatus` | Current status (e.g., `RUNNING`, `STOPPED`).                    |
+| `worker_status`       | `WorkerStatus` | Current status of the worker (e.g., `RUNNING`, `STOPPED`).      |
 | `heartbeat_timestamp` | `datetime`     | Last time the worker checked in.                                |
 | `latest_start_time`   | `datetime`     | When this process was most recently (re)launched.               |
 | `host`                | `str`          | Hostname or IP where this process is running.                   |

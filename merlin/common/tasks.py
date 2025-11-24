@@ -93,7 +93,7 @@ def update_run_status(study_workspace: str, status: RunStatus):
     try:
         merlin_db = MerlinDatabase()
         run_entity = merlin_db.get("run", study_workspace)
-        run_entity.set_status(status)
+        run_entity.set_run_status(status)
         LOG.info(f"Marked run in workspace '{study_workspace}' as {status.value}.")
     except (ValueError, BackendNotSupportedError) as e:
         LOG.warning(f"Could not mark run as {status.value}: {e}")
@@ -802,7 +802,7 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
             run_entity = merlin_db.get("run", study_workspace)
 
             # Only mark as RUNNING if it's currently marked as QUEUED or INITIALIZED
-            if run_entity.get_status() in (RunStatus.QUEUED, RunStatus.INITIALIZED):
+            if run_entity.get_run_status() in (RunStatus.QUEUED, RunStatus.INITIALIZED):
                 update_run_status(study_workspace, RunStatus.RUNNING)
         except Exception as e:
             LOG.warning(f"Could not mark run as RUNNING: {e}")
