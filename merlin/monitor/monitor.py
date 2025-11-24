@@ -104,8 +104,8 @@ class Monitor:
         try:
             LOG.info("Monitor: Running automatic database cleanup before monitoring...")
             collector = DatabaseGarbageCollector(self.merlin_db)
-            # Set check_workers to False since workers can be started prior to runs being launched
-            collector.scan_and_clean(force=True, check_workers=False)
+            # Set both check workers args to False since workers can be started prior to runs being launched
+            collector.scan_and_clean(force=True, check_logical_workers=False, check_physical_workers=False)
         # pylint complains about broad exception but we don't want the monitor to shut off
         # for just running garbage collection
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -223,9 +223,9 @@ class Monitor:
             # Check if any tasks are currently in the queues or if workers are processing tasks
             active_tasks = self.check_task_activity(run)
 
-            # If no tasks are in the queues or being processed by workers and the run is not complete, we have a hanging
+            # If no tasks are in the queues or being processed by workers and the run is not finished, we have a hanging
             # workflow so restart it
-            if not active_tasks and not run.run_complete:
+            if not active_tasks and not run.is_finished():
                 if self.no_restart:
                     LOG.warning(
                         f"Monitor: Determined restart was required for '{run.get_workspace()}' but auto-restart is disabled."
@@ -269,7 +269,7 @@ class Monitor:
                     LOG.warning(f"Monitor: Skipping run '{run.get_workspace()}' with invalid or inaccessible workspace.")
                     continue
 
-                if run.run_complete:
+                if run.is_finished():
                     completed_runs.append(run)
                 else:
                     active_runs.append(run)
@@ -277,7 +277,9 @@ class Monitor:
             # Log completed runs
             if completed_runs:
                 completed_workspaces = [run.get_workspace() for run in completed_runs]
-                LOG.info(f"Monitor: The following runs have completed: {completed_workspaces}")
+                LOG.info(
+                    f"Monitor: The following runs will not be monitored because they're either finished or cancelled: {completed_workspaces}"
+                )
 
             # Log active runs
             if active_runs:
@@ -324,9 +326,9 @@ class Monitor:
         # Wait for workers to spin up before checking on tasks
         self.wait_for_workers(run)
 
-        while not run.run_complete:
+        while not run.is_finished():
             self.check_run_health(run)
-            if not run.run_complete:
+            if not run.is_finished():
                 time.sleep(self.sleep)
 
         LOG.info(f"Monitor: Run with workspace '{run_workspace}' has completed.")

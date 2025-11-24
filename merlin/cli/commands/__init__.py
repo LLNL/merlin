@@ -33,6 +33,7 @@ Subpackages:
         for interacting with the Merlin database.
 """
 
+from merlin.cli.commands.cancel import CancelCommand
 from merlin.cli.commands.config import ConfigCommand
 from merlin.cli.commands.database import DatabaseCommand
 from merlin.cli.commands.example import ExampleCommand
@@ -51,6 +52,7 @@ from merlin.cli.commands.stop_workers import StopWorkersCommand
 
 # Keep these in alphabetical order
 ALL_COMMANDS = [
+    CancelCommand(),
     ConfigCommand(),
     DatabaseCommand(),
     DetailedStatusCommand(),

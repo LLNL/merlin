@@ -18,7 +18,7 @@ import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
-from merlin.common.enums import WorkerStatus
+from merlin.common.enums import RunStatus, WorkerStatus
 from merlin.db_scripts.data_models import BaseDataModel, LogicalWorkerModel, PhysicalWorkerModel, RunModel, StudyModel
 from tests.fixture_types import FixtureCallable, FixtureStr
 
@@ -344,7 +344,7 @@ class TestRunModel:
         assert run.workers == []
         assert run.parent is None
         assert run.child is None
-        assert run.run_complete is False
+        assert run.run_status == RunStatus.INITIALIZED.value
         assert run.parameters == {}
         assert run.samples == {}
         assert run.additional_data == {}
@@ -360,7 +360,7 @@ class TestRunModel:
             workers=["worker1"],
             parent="parent-run",
             child="child-run",
-            run_complete=True,
+            run_status=RunStatus.RUNNING.value,
             parameters={"param1": "value1"},
             samples={"sample1": "data1"},
             additional_data={"meta": "data"},
@@ -374,7 +374,7 @@ class TestRunModel:
         assert run.workers == ["worker1"]
         assert run.parent == "parent-run"
         assert run.child == "child-run"
-        assert run.run_complete is True
+        assert run.run_status == RunStatus.RUNNING.value
         assert run.parameters == {"param1": "value1"}
         assert run.samples == {"sample1": "data1"}
         assert run.additional_data == {"meta": "data"}
@@ -400,7 +400,7 @@ class TestRunModel:
     def test_fields_allowed_to_be_updated(self):
         """Test that fields_allowed_to_be_updated returns expected values."""
         run = RunModel()
-        assert set(run.fields_allowed_to_be_updated) == {"parent", "child", "run_complete", "additional_data", "workers"}
+        assert set(run.fields_allowed_to_be_updated) == {"parent", "child", "run_status", "additional_data", "workers"}
 
 
 class TestLogicalWorkerModel:
@@ -512,7 +512,7 @@ class TestPhysicalWorkerModel:
         assert worker.launch_cmd is None
         assert worker.args == {}
         assert worker.pid is None
-        assert worker.status == WorkerStatus.STOPPED
+        assert worker.worker_status == WorkerStatus.STOPPED
         assert isinstance(worker.heartbeat_timestamp, datetime)
         assert isinstance(worker.latest_start_time, datetime)
         assert worker.host is None
@@ -529,7 +529,7 @@ class TestPhysicalWorkerModel:
             launch_cmd="celery worker",
             args={"arg1": "value1"},
             pid="12345",
-            status=WorkerStatus.RUNNING,
+            worker_status=WorkerStatus.RUNNING,
             heartbeat_timestamp=current_time,
             latest_start_time=current_time,
             host="hostname",
@@ -543,7 +543,7 @@ class TestPhysicalWorkerModel:
         assert worker.launch_cmd == "celery worker"
         assert worker.args == {"arg1": "value1"}
         assert worker.pid == "12345"
-        assert worker.status == WorkerStatus.RUNNING
+        assert worker.worker_status == WorkerStatus.RUNNING
         assert worker.heartbeat_timestamp == current_time
         assert worker.latest_start_time == current_time
         assert worker.host == "hostname"
@@ -563,8 +563,8 @@ class TestPhysicalWorkerModel:
         worker.update_fields({"pid": "67890"})
         assert worker.pid == "67890"
 
-        worker.update_fields({"status": WorkerStatus.RUNNING})
-        assert worker.status == WorkerStatus.RUNNING
+        worker.update_fields({"worker_status": WorkerStatus.RUNNING})
+        assert worker.worker_status == WorkerStatus.RUNNING
 
         # Test not allowed field
         worker.update_fields({"name": "celery@new.host"})
@@ -581,7 +581,15 @@ class TestPhysicalWorkerModel:
         allowed_fields = worker.fields_allowed_to_be_updated
 
         # Check each expected field is in the list
-        expected_fields = ["launch_cmd", "args", "pid", "status", "heartbeat_timestamp", "latest_start_time", "restart_count"]
+        expected_fields = [
+            "launch_cmd",
+            "args",
+            "pid",
+            "worker_status",
+            "heartbeat_timestamp",
+            "latest_start_time",
+            "restart_count",
+        ]
         for field in expected_fields:
             assert field in allowed_fields
 

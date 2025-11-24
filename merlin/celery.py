@@ -241,7 +241,7 @@ def handle_worker_shutdown(sender: str = None, **kwargs):
         merlin_db = MerlinDatabase()
         physical_worker = merlin_db.get("physical_worker", str(sender))
         if physical_worker:
-            physical_worker.set_status(WorkerStatus.STOPPED)
+            physical_worker.set_worker_status(WorkerStatus.STOPPED)
             physical_worker.set_pid(None)  # Clear the pid
         else:
             LOG.warning(f"Worker {sender} not found in the database.")

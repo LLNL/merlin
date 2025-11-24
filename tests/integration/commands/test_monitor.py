@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from pytest_mock import MockerFixture
 
+from merlin.common.enums import RunStatus
 from merlin.config.configfile import initialize_config
 from merlin.db_scripts.entities.run_entity import RunEntity
 from merlin.db_scripts.entities.study_entity import StudyEntity
@@ -272,7 +273,7 @@ class TestMultiRunMonitoring:
 
             # Get all runs before any complete
             all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
-            active_runs = [run for run in all_runs if not run.run_complete]
+            active_runs = [run for run in all_runs if not run.is_finished()]
 
             assert len(active_runs) == 3, "Should detect all 3 active runs"
             assert len(all_runs) == 3, "Should have 3 total runs"
@@ -294,16 +295,16 @@ class TestMultiRunMonitoring:
         merlin_db, study_entity, run_entities = setup_database_with_runs
 
         # Mark first run as complete
-        run_entities[0].run_complete = True
+        run_entities[0].set_run_status(RunStatus.COMPLETED)
         run_entities[0].save()
 
         with patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor):
             Monitor(mock_spec, sleep=1, task_server="celery", no_restart=True)
 
-            # Get active runs
+            # Get active and completed runs
             all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
-            active_runs = [run for run in all_runs if not run.run_complete]
-            completed_runs = [run for run in all_runs if run.run_complete]
+            active_runs = [run for run in all_runs if run.is_active()]
+            completed_runs = [run for run in all_runs if run.is_finished()]
 
             assert len(active_runs) == 2, "Should have 2 active runs"
             assert len(completed_runs) == 1, "Should have 1 completed run"
@@ -326,7 +327,7 @@ class TestMultiRunMonitoring:
         merlin_db, study_entity, run_entities = setup_database_with_runs
 
         # Mark last run as complete so we only check 2 runs
-        run_entities[2].run_complete = True
+        run_entities[2].set_run_status(RunStatus.COMPLETED)
         run_entities[2].save()
 
         with patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor):
@@ -334,7 +335,7 @@ class TestMultiRunMonitoring:
 
             # Run one monitoring cycle
             all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
-            active_runs = [run for run in all_runs if not run.run_complete]
+            active_runs = [run for run in all_runs if run.is_active()]
 
             for run in active_runs:
                 monitor.wait_for_workers(run)
@@ -386,7 +387,7 @@ class TestMultiRunMonitoring:
 
         # Perform health check on all runs
         all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
-        active_runs = [run for run in all_runs if not run.run_complete]
+        active_runs = [run for run in all_runs if run.is_active()]
 
         for run in active_runs:
             monitor.wait_for_workers(run)
@@ -415,7 +416,7 @@ class TestMultiRunMonitoring:
 
         # Mark all runs as complete
         for run_entity in run_entities:
-            run_entity.run_complete = True
+            run_entity.set_run_status(RunStatus.COMPLETED)
             run_entity.save()
 
         with patch("merlin.monitor.monitor.monitor_factory.create", return_value=mock_task_server_monitor):
@@ -469,7 +470,7 @@ class TestMultiRunMonitoring:
                 all_run_ids = study_entity.get_runs()
                 for run_id in all_run_ids:
                     run = merlin_db.get("run", run_id)
-                    run.run_complete = True
+                    run.set_run_status(RunStatus.COMPLETED)
                     run.save()
 
         mock_task_server_monitor.wait_for_workers.side_effect = wait_for_workers_side_effect
@@ -519,7 +520,7 @@ class TestMultiRunMonitoring:
 
         # Perform health check on all runs
         all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
-        active_runs = [run for run in all_runs if not run.run_complete]
+        active_runs = [run for run in all_runs if run.is_active()]
 
         for run in active_runs:
             monitor.wait_for_workers(run)
@@ -562,7 +563,7 @@ class TestMultiRunMonitoring:
 
         # Perform health check on all runs
         all_runs = [merlin_db.get("run", run_id) for run_id in study_entity.get_runs()]
-        active_runs = [run for run in all_runs if not run.run_complete]
+        active_runs = [run for run in all_runs if run.is_active()]
 
         for run in active_runs:
             monitor.wait_for_workers(run)
@@ -598,7 +599,7 @@ class TestMultiRunMonitoring:
             if cycle_count >= 3:
                 for run_entity in run_entities:
                     run = merlin_db.get("run", run_entity.get_id())
-                    run.run_complete = True
+                    run.set_run_status(RunStatus.COMPLETED)
                     run.save()
 
         mock_task_server_monitor.check_tasks.return_value = True  # Runs are active

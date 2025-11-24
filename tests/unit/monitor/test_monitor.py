@@ -15,6 +15,7 @@ import pytest
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
 
+from merlin.common.enums import RunStatus
 from merlin.exceptions import RestartException, RunNotFoundError
 from merlin.monitor.monitor import Monitor
 
@@ -48,12 +49,12 @@ def test_monitor_all_runs_handles_completed_and_incomplete_runs(mocker: MockerFi
     """
     # Set up two mock run objects (one complete, one incomplete)
     mock_run_1 = mocker.MagicMock()
-    mock_run_1.run_complete = True
+    mock_run_1.is_finished.return_value = True
     mock_run_1.get_workspace.return_value = "ws1"
     mock_run_1.get_workers.return_value = ["worker1"]
 
     mock_run_2 = mocker.MagicMock()
-    mock_run_2.run_complete = False
+    mock_run_2.is_finished.return_value = False
     mock_run_2.get_workspace.return_value = "ws2"
     mock_run_2.get_workers.return_value = ["worker2"]
 
@@ -84,7 +85,7 @@ def test_monitor_all_runs_handles_completed_and_incomplete_runs(mocker: MockerFi
     # Use sleep side effect to mark run as complete after first cycle
     def sleep_side_effect(duration):
         # After first cycle, mark run 2 as complete to exit the loop
-        mock_run_2.run_complete = True
+        mock_run_2.is_finished.return_value = True
 
     mocker.patch("time.sleep", side_effect=sleep_side_effect)
 
@@ -105,11 +106,11 @@ def test_monitor_all_runs_exits_when_all_complete(mocker: MockerFixture, monitor
     """
     # Set up two mock run objects that are both complete
     mock_run_1 = mocker.MagicMock()
-    mock_run_1.run_complete = True
+    mock_run_1.is_finished.return_value = True
     mock_run_1.get_workspace.return_value = "ws1"
 
     mock_run_2 = mocker.MagicMock()
-    mock_run_2.run_complete = True
+    mock_run_2.is_finished.return_value = True
     mock_run_2.get_workspace.return_value = "ws2"
 
     # Mock study
@@ -150,7 +151,7 @@ def test_monitor_all_runs_monitors_multiple_active_runs(mocker: MockerFixture, m
     mock_runs = []
     for i in range(3):
         mock_run = mocker.MagicMock()
-        mock_run.run_complete = False
+        mock_run.is_finished.return_value = False
         mock_run.get_workspace.return_value = f"ws{i}"
         mock_run.get_workers.return_value = [f"worker{i}"]
         mock_runs.append(mock_run)
@@ -167,9 +168,9 @@ def test_monitor_all_runs_monitors_multiple_active_runs(mocker: MockerFixture, m
         elif model == "run":
             run_id = args[0]
             run_idx = int(run_id.replace("run", ""))
-            # On second iteration, mark all runs complete to exit
+            # On second iteration, mark all runs complete to exit the loop
             if call_count >= 3:
-                mock_runs[run_idx].run_complete = True
+                mock_runs[run_idx].is_finished.return_value = True
             return mock_runs[run_idx]
         elif model == "logical_worker":
             mock_worker = mocker.MagicMock()
@@ -209,13 +210,13 @@ def test_monitor_all_runs_detects_new_runs_dynamically(mocker: MockerFixture, mo
     """
     # Set up initial run
     mock_run_1 = mocker.MagicMock()
-    mock_run_1.run_complete = False
+    mock_run_1.is_finished.return_value = False
     mock_run_1.get_workspace.return_value = "ws1"
     mock_run_1.get_workers.return_value = ["worker1"]
 
     # New run that will be added
     mock_run_2 = mocker.MagicMock()
-    mock_run_2.run_complete = False
+    mock_run_2.is_finished.return_value = False
     mock_run_2.get_workspace.return_value = "ws2"
     mock_run_2.get_workers.return_value = ["worker2"]
 
@@ -238,8 +239,8 @@ def test_monitor_all_runs_detects_new_runs_dynamically(mocker: MockerFixture, mo
             run_id = args[0]
             # On third cycle, mark all runs complete
             if cycle_count >= 2:
-                mock_run_1.run_complete = True
-                mock_run_2.run_complete = True
+                mock_run_1.is_finished.return_value = True
+                mock_run_2.is_finished.return_value = True
             return {"run1": mock_run_1, "run2": mock_run_2}[run_id]
         elif model == "logical_worker":
             mock_worker = mocker.MagicMock()
@@ -350,7 +351,7 @@ def test_check_run_health_performs_health_check(mocker: MockerFixture, monitor: 
         monitor: A mocked Monitor instance.
     """
     run = mocker.MagicMock()
-    run.run_complete = False
+    run.is_finished.return_value = False
     run.get_workspace.return_value = "workspace"
     run.get_workers.return_value = ["worker1"]
 
@@ -373,7 +374,7 @@ def test_check_run_health_restarts_stalled_workflow(mocker: MockerFixture, monit
         monitor: A mocked Monitor instance.
     """
     run = mocker.MagicMock()
-    run.run_complete = False
+    run.is_finished.return_value = False
     run.get_workspace.return_value = "workspace"
     run.get_workers.return_value = ["worker1"]
 
@@ -396,7 +397,7 @@ def test_check_run_health_no_restart_when_disabled(mocker: MockerFixture, monito
     monitor.no_restart = True
 
     run = mocker.MagicMock()
-    run.run_complete = False
+    run.is_finished.return_value = False
     run.get_workspace.return_value = "workspace"
     run.get_workers.return_value = ["worker1"]
 
@@ -421,11 +422,11 @@ def test_monitor_single_run_completes_successfully(mocker: MockerFixture, monito
     run.get_workspace.return_value = "workspace1"
     run.get_workers.return_value = ["w1"]
     run.get_queues.return_value = ["q1"]
-    run.run_complete = False
+    run.is_finished.return_value = False
 
     def sleep_side_effect(duration):
         # After first cycle, mark run as complete to exit the loop
-        run.run_complete = True
+        run.is_finished.return_value = True
 
     mocker.patch("time.sleep", side_effect=sleep_side_effect)
 
@@ -508,7 +509,9 @@ def test_run_cleanup_success(mocker: MockerFixture, monitor: Monitor):
     monitor._run_cleanup()
 
     mock_collector.assert_called_once_with(monitor.merlin_db)
-    mock_collector.return_value.scan_and_clean.assert_called_once_with(force=True, check_workers=False)
+    mock_collector.return_value.scan_and_clean.assert_called_once_with(
+        force=True, check_logical_workers=False, check_physical_workers=False
+    )
 
 
 def test_run_cleanup_handles_exception(mocker: MockerFixture, monitor: Monitor, caplog: CaptureFixture):
@@ -544,7 +547,9 @@ def test_init_runs_cleanup_by_default(mocker: MockerFixture):
     Monitor(spec=mock_spec, sleep=1, task_server="celery", no_restart=False)
 
     mock_collector.assert_called_once()
-    mock_collector.return_value.scan_and_clean.assert_called_once_with(force=True, check_workers=False)
+    mock_collector.return_value.scan_and_clean.assert_called_once_with(
+        force=True, check_logical_workers=False, check_physical_workers=False
+    )
 
 
 def test_init_skips_cleanup_when_disabled(mocker: MockerFixture, caplog: CaptureFixture):
@@ -615,7 +620,7 @@ def test_monitor_single_run_raises_exception_for_invalid_workspace(mocker: Mocke
     """
     run = mocker.MagicMock()
     run.get_workspace.return_value = "/invalid/workspace"
-    run.run_complete = False
+    run.status = RunStatus.RUNNING.value
 
     mocker.patch.object(monitor, "_validate_run_workspace", return_value=False)
 
@@ -640,11 +645,11 @@ def test_monitor_all_runs_handles_run_not_found_error(mocker: MockerFixture, mon
 
     # Create mock run entities
     mock_run_1 = mocker.MagicMock()
-    mock_run_1.run_complete = True  # This run will complete immediately
+    mock_run_1.is_finished.return_value = True  # This run will complete immediately
     mock_run_1.get_workspace.return_value = "ws1"
 
     mock_run_3 = mocker.MagicMock()
-    mock_run_3.run_complete = True  # This run will also complete immediately
+    mock_run_3.is_finished.return_value = True  # This run will also complete immediately
     mock_run_3.get_workspace.return_value = "ws3"
 
     # Create mock study entity
@@ -680,7 +685,9 @@ def test_monitor_all_runs_handles_run_not_found_error(mocker: MockerFixture, mon
     assert "Skipping this run" in caplog.text
 
     # Verify that run1 and run3 were still processed (both show up in completed runs)
-    assert "The following runs have completed: ['ws1', 'ws3']" in caplog.text
+    assert (
+        "The following runs will not be monitored because they're either finished or cancelled: ['ws1', 'ws3']" in caplog.text
+    )
 
     # Verify the database was queried for all three runs
     assert monitor.merlin_db.get.call_count == 4  # 1 study + 3 run attempts

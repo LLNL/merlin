@@ -35,7 +35,7 @@ ENTITY_REGISTRY = {
     "run": {
         "filters": [
             {"name": "study_id", "type": str},
-            {"name": "run_complete", "type": bool},
+            {"name": "status", "type": str},
             {"name": "queues", "type": str, "nargs": "+"},
             {"name": "workers", "type": str, "nargs": "+"},
         ],
