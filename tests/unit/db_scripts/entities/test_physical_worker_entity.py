@@ -213,7 +213,7 @@ class TestPhysicalWorkerEntity:
         """
         new_status = WorkerStatus.STOPPED
         worker_entity.set_worker_status(new_status)
-        assert worker_entity.entity_info.worker_status == new_status
+        assert worker_entity.entity_info.worker_status == new_status.value
         mock_backend.save.assert_called_once()
 
     def test_get_heartbeat_timestamp(self, worker_entity: PhysicalWorkerEntity, mock_model: MagicMock):
