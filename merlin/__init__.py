@@ -14,7 +14,7 @@ import os
 import sys
 
 
-__version__ = "2.0.0b2"
+__version__ = "2.0.0b3"
 VERSION = __version__
 PATH_TO_PROJ = os.path.join(os.path.dirname(__file__), "")
 
