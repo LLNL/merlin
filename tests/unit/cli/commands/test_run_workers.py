@@ -9,6 +9,7 @@ Tests for the `run_workers.py` file of the `cli/` folder.
 """
 
 from argparse import Namespace
+from unittest.mock import MagicMock
 
 from _pytest.capture import CaptureFixture
 from pytest_mock import MockerFixture
@@ -78,13 +79,16 @@ def test_process_command_launches_workers(mocker: MockerFixture):
     mock_log.info.assert_called_once_with("Launching workers from 'workflow.yaml'")
 
 
-def test_process_command_echo_only_mode_prints_command(mocker: MockerFixture, capsys: CaptureFixture):
+def test_process_command_echo_only_mode_prints_command(
+    mocker: MockerFixture, capsys: CaptureFixture, mock_db_instance: MagicMock
+):
     """
     Test `process_command` prints the launch command and initializes config in echo-only mode.
 
     Args:
         mocker: PyTest mocker fixture.
         capsys: PyTest capsys fixture.
+        mock_db_instance: Mocked MerlinDatabase instance.
     """
     mock_spec = mocker.Mock()
     mock_spec.get_workers_to_start.return_value = ["workerB"]
@@ -97,7 +101,11 @@ def test_process_command_echo_only_mode_prints_command(mocker: MockerFixture, ca
 
     mocker.patch("merlin.cli.commands.run_workers.get_merlin_spec_with_override", return_value=(mock_spec, "file.yaml"))
     mocker.patch("merlin.cli.commands.run_workers.initialize_config")
-    mocker.patch("merlin.cli.commands.run_workers.worker_handler_factory.create", wraps=lambda _: CeleryWorkerHandler())
+    mock_app = mocker.patch("merlin.celery.app")
+    mocker.patch(
+        "merlin.cli.commands.run_workers.worker_handler_factory.create",
+        wraps=lambda _: CeleryWorkerHandler(merlin_db=mock_db_instance, app=mock_app),
+    )
 
     args = Namespace(
         specification="spec.yaml",

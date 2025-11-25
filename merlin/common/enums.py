@@ -53,10 +53,10 @@ class WorkerStatus(Enum):
         REBOOTING (str): Indicates the worker is actively restarting itself. String value: "rebooting".
     """
 
-    RUNNING = "running"
-    STALLED = "stalled"
-    STOPPED = "stopped"
-    REBOOTING = "rebooting"
+    RUNNING = "RUNNING"
+    STALLED = "STALLED"
+    STOPPED = "STOPPED"
+    REBOOTING = "REBOOTING"
 
 
 class RunStatus(Enum):

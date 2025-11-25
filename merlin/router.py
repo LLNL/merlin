@@ -26,7 +26,6 @@ from merlin.study.celeryadapter import (
     get_workers_from_app,
     purge_celery_tasks,
     query_celery_queues,
-    query_celery_workers,
     run_celery,
     stop_celery_workers,
 )
@@ -157,24 +156,6 @@ def query_queues(
     else:
         LOG.error("Celery is not specified as the task server!")
         return {}
-
-
-def query_workers(task_server: str, spec_worker_names: List[str], queues: List[str], workers_regex: str):
-    """
-    Retrieves information from workers associated with the specified task server.
-
-    Args:
-        task_server: The task server to query.
-        spec_worker_names: A list of specific worker names to query.
-        queues: A list of queues to search for associated workers.
-        workers_regex: A regex pattern used to filter worker names during the query.
-    """
-    LOG.info("Searching for workers...")
-
-    if task_server == "celery":
-        query_celery_workers(spec_worker_names, queues, workers_regex)
-    else:
-        LOG.error("Celery is not specified as the task server!")
 
 
 def get_workers(task_server: str) -> List[str]:

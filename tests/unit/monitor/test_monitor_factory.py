@@ -8,7 +8,10 @@
 Tests for the `monitor_factory.py` module.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
+from pytest_mock import MockerFixture
 
 from merlin.exceptions import MerlinInvalidTaskServerError
 from merlin.monitor.celery_monitor import CeleryMonitor
@@ -94,14 +97,16 @@ class TestMonitorFactory:
         assert "celery" in available
         assert len(available) == 1
 
-    def test_create_valid_monitor(self, monitor_factory: MonitorFactory):
+    def test_create_valid_monitor(self, mocker: MockerFixture, monitor_factory: MonitorFactory, mock_db_instance: MagicMock):
         """
         Test that `create` instantiates a monitor for a valid task server.
 
         Args:
+            mocker: Pytest mocker fixture.
             monitor_factory: Instance of `MonitorFactory` for testing.
+            mock_db_instance: Mocked MerlinDatabase instance.
         """
-        monitor = monitor_factory.create("celery")
+        monitor = monitor_factory.create("celery", {"merlin_db": mock_db_instance})
         assert isinstance(monitor, CeleryMonitor)
 
     def test_create_invalid_monitor_raises(self, monitor_factory: MonitorFactory):

@@ -23,10 +23,14 @@ import logging
 import time
 from typing import List, Set
 
+from celery import Celery
+
 from merlin.db_scripts.entities.run_entity import RunEntity
+from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import NoWorkersException
 from merlin.monitor.task_server_monitor import TaskServerMonitor
-from merlin.study.celeryadapter import get_workers_from_app, query_celery_queues
+from merlin.study.celeryadapter import query_celery_queues
+from merlin.workers.handlers.celery_handler import CeleryWorkerHandler
 
 
 LOG = logging.getLogger(__name__)
@@ -38,6 +42,9 @@ class CeleryMonitor(TaskServerMonitor):
     for Celery task servers. This class provides methods to monitor Celery workers, tasks,
     and workflows.
 
+    Attributes:
+        worker_handler (CeleryWorkerHandler): The worker handler for managing Celery workers.
+
     Methods:
         wait_for_workers: Wait for Celery workers to start up.
         check_workers_processing: Check if any Celery workers are still processing tasks.
@@ -46,6 +53,16 @@ class CeleryMonitor(TaskServerMonitor):
         run_worker_health_check: Check the health of Celery workers and restart any that are dead.
         check_tasks: Checks the status of tasks in the Celery queues for a given workflow run.
     """
+
+    def __init__(self, merlin_db: MerlinDatabase = None, app: Celery = None):
+        """
+        Constructor for CeleryMonitor.
+
+        Args:
+            merlin_db: The MerlinDatabase instance or None.
+            app: The Celery application instance or None.
+        """
+        self.worker_handler: CeleryWorkerHandler = CeleryWorkerHandler(merlin_db=merlin_db, app=app)
 
     def wait_for_workers(self, workers: List[str], sleep: int):
         """
@@ -61,7 +78,7 @@ class CeleryMonitor(TaskServerMonitor):
         count = 0
         max_count = 10
         while count < max_count:
-            worker_status = get_workers_from_app()
+            worker_status = self.worker_handler.get_workers_from_app()
             LOG.debug(f"CeleryMonitor: checking for workers, running workers = {worker_status} ...")
 
             # Check if any of the desired workers have started
@@ -114,6 +131,7 @@ class CeleryMonitor(TaskServerMonitor):
             except Exception as e:  # pylint: disable=broad-exception-caught
                 LOG.error(f"CeleryMonitor: Failed to restart worker '{worker}'. Error: {e}")
 
+    # TODO when we create worker watchdog process we may need a method like this in the CeleryWorkerHandler
     def _get_dead_workers(self, workers: List[str]) -> Set[str]:
         """
         Identify unresponsive Celery workers from a given list.

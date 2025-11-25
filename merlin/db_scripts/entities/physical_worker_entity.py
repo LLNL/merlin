@@ -202,9 +202,17 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             The process ID for this worker or None if not set.
         """
         self.reload_data()
-        return int(self.entity_info.pid) if self.entity_info.pid else None
+        if not self.entity_info.pid:
+            return None
 
-    def set_pid(self, pid: str):
+        # Handle both int strings and float strings
+        try:
+            # Convert to float first, then to int
+            return int(float(self.entity_info.pid))
+        except (ValueError, TypeError):
+            return None
+
+    def set_pid(self, pid: int):
         """
         Set the PID of this worker.
 
@@ -223,7 +231,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
                 the status of this worker.
         """
         self.reload_data()
-        return self.entity_info.worker_status
+        return WorkerStatus(self.entity_info.worker_status)
 
     def set_worker_status(self, status: WorkerStatus):
         """
@@ -233,7 +241,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             status: A [`WorkerStatus`][common.enums.WorkerStatus] enum representing
                 the new status of the worker.
         """
-        self.entity_info.worker_status = status
+        self.entity_info.worker_status = status.value
         self.save()
 
     def get_heartbeat_timestamp(self) -> str:
@@ -294,7 +302,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             The number of times that this worker has been restarted.
         """
         self.reload_data()
-        return self.entity_info.restart_count
+        return int(float(self.entity_info.restart_count))
 
     def increment_restart_count(self):
         """

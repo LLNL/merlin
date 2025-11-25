@@ -15,11 +15,11 @@ This design allows Merlin to support multiple task server backends through a con
 interface while enabling future integration with additional systems such as Kafka.
 
 Modules:
-    handler_factory.py: Factory for registering and instantiating Merlin worker
+    handler_factory: Factory for registering and instantiating Merlin worker
         handler implementations.
-    worker_handler.py: Abstract base class that defines the interface for all Merlin
+    worker_handler: Abstract base class that defines the interface for all Merlin
         worker handlers.
-    celery_handler.py: Celery-specific implementation of the worker handler interface.
+    celery_handler: Celery-specific implementation of the worker handler interface.
 """
 
 

@@ -9,6 +9,7 @@ Tests for the `merlin/workers/handlers/worker_handler.py` module.
 """
 
 from typing import Any, Dict, List
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -28,8 +29,8 @@ class DummyWorker(MerlinWorker):
 
 
 class DummyWorkerHandler(MerlinWorkerHandler):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, merlin_db: MagicMock):
+        super().__init__(merlin_db=merlin_db)
         self.started = False
         self.stopped = False
         self.queried = False
@@ -69,11 +70,11 @@ def test_unimplemented_methods_raise_not_implemented():
         IncompleteHandler()
 
 
-def test_launch_workers_calls_worker_launch():
+def test_launch_workers_calls_worker_launch(mock_db_instance: MagicMock):
     """
     Test that `start_workers` calls each worker's `start` method.
     """
-    handler = DummyWorkerHandler()
+    handler = DummyWorkerHandler(merlin_db=mock_db_instance)
     workers = [DummyWorker("w1", {}, {}), DummyWorker("w2", {}, {})]
 
     result = handler.start_workers(workers)
@@ -82,22 +83,22 @@ def test_launch_workers_calls_worker_launch():
     assert result == ["launched", "launched"]
 
 
-def test_stop_workers_sets_flag():
+def test_stop_workers_sets_flag(mock_db_instance: MagicMock):
     """
     Test that `stop_workers` sets the internal state and returns expected value.
     """
-    handler = DummyWorkerHandler()
+    handler = DummyWorkerHandler(merlin_db=mock_db_instance)
     response = handler.stop_workers()
 
     assert handler.stopped
     assert response == "Stopped all workers"
 
 
-def test_query_workers_returns_summary():
+def test_query_workers_returns_summary(mock_db_instance: MagicMock):
     """
     Test that `query_workers` returns a valid summary of current worker state.
     """
-    handler = DummyWorkerHandler()
+    handler = DummyWorkerHandler(merlin_db=mock_db_instance)
     workers = [DummyWorker("a", {}, {}), DummyWorker("b", {}, {})]
     handler.start_workers(workers)
 

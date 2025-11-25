@@ -14,6 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Can be disabled with `--disable-gc`
 - Alias for `merlin database` command so it can be called with `merlin db`
 - Status of run entities in the database (this will differ from task statuses)
+- New classes for formatting `query-workers` output:
+  - `WorkerFormatter`: base class for defining formatted output for workers
+  - `RichWorkerFormatter`: implementation of `WorkerFormatter` for output using the rich library
+  - `JSONWorkerFormatter`: implementation of `WorkerFormatter` for JSON output
+  - `WorkerFormatterFactory`: factory class for selecting the desired worker formatter
+
+### Changed
+- Changes to the `query-workers` command:
+  - Output now displays a lot more information, including logical and physical worker specific info
+  - Output now formatted using rich tables or json
+  - Now handled through worker classes rather than functions in `celeryadapter.py` file
+  - Behind the scenes this is now querying the new Merlin Database
 
 ## [2.0.0b2]
 

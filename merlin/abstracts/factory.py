@@ -124,19 +124,6 @@ class MerlinBaseFactory(ABC):
         except ImportError:
             LOG.debug("pkg_resources not available for plugin discovery")
 
-    def _discover_builtin_modules(self):
-        """
-        Optional hook to discover built-in components by scanning local modules.
-
-        Default implementation does nothing.
-
-        Subclasses can override this method to implement package/module scanning.
-        """
-        LOG.warning(
-            f"Class {self.__class__.__name__} did not override _discover_builtin_modules(). "
-            "Built-in module discovery will be skipped."
-        )
-
     def _discover_plugins(self):
         """
         Discover and register plugin components via entry points.
@@ -144,7 +131,6 @@ class MerlinBaseFactory(ABC):
         Subclasses can override this to support more discovery mechanisms.
         """
         self._discover_plugins_via_entry_points()
-        self._discover_builtin_modules()
 
     def _raise_component_error_class(self, msg: str) -> Type[Exception]:
         """
@@ -227,6 +213,7 @@ class MerlinBaseFactory(ABC):
 
         return component_class
 
+    # TODO should we change 'config' to 'kwargs'?
     def create(self, component_type: str, config: Dict = None) -> Any:
         """
         Instantiate and return a component of the specified type.

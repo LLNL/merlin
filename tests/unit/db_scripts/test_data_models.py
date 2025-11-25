@@ -512,7 +512,7 @@ class TestPhysicalWorkerModel:
         assert worker.launch_cmd is None
         assert worker.args == {}
         assert worker.pid is None
-        assert worker.worker_status == WorkerStatus.STOPPED
+        assert worker.worker_status == WorkerStatus.STOPPED.value
         assert isinstance(worker.heartbeat_timestamp, datetime)
         assert isinstance(worker.latest_start_time, datetime)
         assert worker.host is None

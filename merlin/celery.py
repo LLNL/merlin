@@ -214,7 +214,7 @@ def handle_worker_startup(sender: str = None, **kwargs):
                     "physical_worker",
                     name=str(sender),
                     host=host,
-                    status=WorkerStatus.RUNNING,
+                    worker_status=WorkerStatus.RUNNING.value,
                     logical_worker_id=logical_worker.get_id(),
                     pid=os.getpid(),
                 )
