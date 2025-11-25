@@ -231,7 +231,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
                 the status of this worker.
         """
         self.reload_data()
-        return self.entity_info.worker_status
+        return WorkerStatus(self.entity_info.worker_status)
 
     def set_worker_status(self, status: WorkerStatus):
         """
@@ -241,7 +241,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             status: A [`WorkerStatus`][common.enums.WorkerStatus] enum representing
                 the new status of the worker.
         """
-        self.entity_info.worker_status = status
+        self.entity_info.worker_status = status.value
         self.save()
 
     def get_heartbeat_timestamp(self) -> str:
