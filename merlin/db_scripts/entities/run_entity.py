@@ -217,6 +217,37 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             True if the run is in a terminal state (COMPLETED, CANCELLED, FAILED).
         """
         return self.get_run_status() in (RunStatus.COMPLETED, RunStatus.CANCELLED, RunStatus.FAILED)
+    
+    @property
+    def run_complete(self) -> bool:
+        """
+        Backwards compatibility property for old code/databases using run_complete.
+        
+        Returns:
+            True if the run has completed (successfully or otherwise), False otherwise.
+        
+        Deprecated: Use run_status instead.
+        """
+        return self.is_finished()
+    
+    @run_complete.setter
+    def run_complete(self, value: bool):
+        """
+        Backwards compatibility setter for old code using run_complete.
+        Maps boolean values to the appropriate run_status.
+        
+        Deprecated: Use run_status instead.
+        """
+        if value:
+            # If setting to complete and current status is not already a terminal state,
+            # default to COMPLETED
+            if self.get_run_status() not in (RunStatus.COMPLETED, RunStatus.FAILED, RunStatus.CANCELLED):
+                self.set_run_status(RunStatus.COMPLETED)
+        else:
+            # If setting to not complete, assume RUNNING
+            # (unless it's already in a terminal state, which would be odd)
+            if self.get_run_status() in (RunStatus.COMPLETED, RunStatus.FAILED, RunStatus.CANCELLED):
+                self.set_run_status(RunStatus.RUNNING)
 
     def get_metadata_file(self) -> str:
         """

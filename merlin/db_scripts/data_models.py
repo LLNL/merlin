@@ -105,6 +105,15 @@ class BaseDataModel(ABC):
         Returns:
             An instance of the dataclass that called this.
         """
+        # Handle backwards compatibility between 2.0.0b2 and 2.0.0b3: migrate run_complete to run_status
+        if "run_complete" in data and "run_status" not in data:
+            run_complete = data.pop("run_complete")
+            # Map the boolean to an appropriate status
+            data["run_status"] = RunStatus.COMPLETED.value if run_complete else RunStatus.RUNNING.value
+        elif "run_complete" in data and "run_status" in data:
+            # Remove run_complete if both keys exist to avoid conflicts
+            data.pop("run_complete")
+
         return cls(**data)
 
     @classmethod
