@@ -22,7 +22,7 @@ For each run of a study, the monitor ensures completion by performing the follow
 
 The monitor includes a [`--sleep` option](#sleep), which introduces a deliberate delay. Before starting, the monitor waits for the specified `--sleep` duration, giving users time to populate the task queues for their run using the [`merlin run`](../command_line.md#run-merlin-run) command. Additionally, the monitor pauses for the `--sleep` duration between each check of the run. Finally, it will wait up to 10 times the specified `--sleep` duration for workers to spin up for the run.
 
-A run is considered complete when the monitor reads the run's `run_complete` entry from the database and it returns `True`. This entry is always set as the final task of a run.
+A run is considered complete when the monitor reads the [run's `status` entry](../database/entities.md#run-status) from the database and it returns a finished status ("COMPLETED", "CANCELLED", or "FAILED"). This entry is always set as the final task of a run.
 
 The resulting flowchart of this process can be seen below.
 

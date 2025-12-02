@@ -72,10 +72,11 @@ class EntityManager(Generic[T, M], ABC):
         Args:
             backend: The backend interface used to persist and retrieve entities.
         """
-        self.backend = backend
-        self.db = None  # Subclasses can set this by creating a set_db_reference method
-        self._entity_type = None  # Subclasses need to set this
-        self._entity_class = None  # Subclasses need to set this
+        self.backend: ResultsBackend = backend
+        # Subclasses can set self.db by creating a set_db_reference method which is called by the MerlinDatabase class
+        self.db: "MerlinDatabase" = None  # noqa: F821
+        self._entity_type: str = None  # Subclasses need to set this
+        self._entity_class: Callable = None  # Subclasses need to set this
 
     @abstractmethod
     def create(self, *args: Any, **kwargs: Any) -> T:
@@ -180,7 +181,7 @@ class EntityManager(Generic[T, M], ABC):
         if not raw_entities:
             return []
 
-        entities = [self._entity_class(data, self.backend) for data in raw_entities]
+        entities = [self._entity_class(data, self.backend) for data in raw_entities]  # pylint: disable=not-callable
 
         if filters and not isinstance(self.backend, FilterSupportMixin):
             entities = [entity for entity in entities if self._matches_filters(entity, filters)]

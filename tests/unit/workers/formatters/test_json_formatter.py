@@ -83,7 +83,7 @@ class TestJSONWorkerFormatter:
         worker1.get_name.return_value = "physical_worker1"
         worker1.get_host.return_value = "host1.example.com"
         worker1.get_pid.return_value = 12345
-        worker1.get_status.return_value = WorkerStatus.RUNNING
+        worker1.get_worker_status.return_value = WorkerStatus.RUNNING
         worker1.get_restart_count.return_value = 0
         worker1.get_latest_start_time.return_value = now - timedelta(hours=2)
         worker1.get_heartbeat_timestamp.return_value = now - timedelta(minutes=1)
@@ -93,7 +93,7 @@ class TestJSONWorkerFormatter:
         worker2.get_name.return_value = "physical_worker2"
         worker2.get_host.return_value = "host2.example.com"
         worker2.get_pid.return_value = 54321
-        worker2.get_status.return_value = WorkerStatus.STOPPED
+        worker2.get_worker_status.return_value = WorkerStatus.STOPPED
         worker2.get_restart_count.return_value = 3
         worker2.get_latest_start_time.return_value = None
         worker2.get_heartbeat_timestamp.return_value = None
@@ -103,7 +103,7 @@ class TestJSONWorkerFormatter:
         worker3.get_name.return_value = "physical_worker3"
         worker3.get_host.return_value = "host3.example.com"
         worker3.get_pid.return_value = 99999
-        worker3.get_status.return_value = WorkerStatus.STALLED
+        worker3.get_worker_status.return_value = WorkerStatus.STALLED
         worker3.get_restart_count.return_value = 1
         worker3.get_latest_start_time.return_value = now - timedelta(hours=1)
         worker3.get_heartbeat_timestamp.return_value = now - timedelta(minutes=30)

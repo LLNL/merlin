@@ -428,7 +428,7 @@ class TestCeleryWorkerHandler:
 
         # Create mock physical worker that's marked as RUNNING
         mock_physical = MagicMock()
-        mock_physical.get_status.return_value = WorkerStatus.RUNNING
+        mock_physical.get_worker_status.return_value = WorkerStatus.RUNNING
         mock_physical.get_name.return_value = "celery@dead_worker"
 
         # Create mock logical worker
@@ -441,7 +441,7 @@ class TestCeleryWorkerHandler:
         handler._validate_worker_status([mock_logical])
 
         # Verify status was set to STALLED
-        mock_physical.set_status.assert_called_once()
+        mock_physical.set_worker_status.assert_called_once()
 
     def test_validate_worker_status_leaves_running_workers_unchanged(
         self, handler: CeleryWorkerHandler, mocker: MockerFixture
@@ -462,7 +462,7 @@ class TestCeleryWorkerHandler:
 
         # Create mock physical worker that's marked as RUNNING
         mock_physical = MagicMock()
-        mock_physical.get_status.return_value = WorkerStatus.RUNNING
+        mock_physical.get_worker_status.return_value = WorkerStatus.RUNNING
         mock_physical.get_name.return_value = "celery@live_worker"
 
         # Create mock logical worker
@@ -475,7 +475,7 @@ class TestCeleryWorkerHandler:
         handler._validate_worker_status([mock_logical])
 
         # Verify status was NOT changed
-        mock_physical.set_status.assert_not_called()
+        mock_physical.set_worker_status.assert_not_called()
 
     def test_validate_worker_status_ignores_stopped_workers(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
         """
@@ -494,7 +494,7 @@ class TestCeleryWorkerHandler:
 
         # Create mock physical worker that's marked as STOPPED
         mock_physical = MagicMock()
-        mock_physical.get_status.return_value = WorkerStatus.STOPPED
+        mock_physical.get_worker_status.return_value = WorkerStatus.STOPPED
         mock_physical.get_name.return_value = "celery@stopped_worker"
 
         # Create mock logical worker
@@ -507,7 +507,7 @@ class TestCeleryWorkerHandler:
         handler._validate_worker_status([mock_logical])
 
         # Verify status was NOT changed (worker already stopped)
-        mock_physical.set_status.assert_not_called()
+        mock_physical.set_worker_status.assert_not_called()
 
     def test_validate_worker_status_handles_multiple_physical_workers(
         self, handler: CeleryWorkerHandler, mocker: MockerFixture
@@ -528,11 +528,11 @@ class TestCeleryWorkerHandler:
 
         # Create mock physical workers
         mock_physical1 = MagicMock()
-        mock_physical1.get_status.return_value = WorkerStatus.RUNNING
+        mock_physical1.get_worker_status.return_value = WorkerStatus.RUNNING
         mock_physical1.get_name.return_value = "celery@worker1"
 
         mock_physical2 = MagicMock()
-        mock_physical2.get_status.return_value = WorkerStatus.RUNNING
+        mock_physical2.get_worker_status.return_value = WorkerStatus.RUNNING
         mock_physical2.get_name.return_value = "celery@worker2"
 
         # Create mock logical worker with multiple physical workers
@@ -545,10 +545,10 @@ class TestCeleryWorkerHandler:
         handler._validate_worker_status([mock_logical])
 
         # Verify worker1 status was NOT changed (it's live)
-        mock_physical1.set_status.assert_not_called()
+        mock_physical1.set_worker_status.assert_not_called()
 
         # Verify worker2 status WAS changed (it's not live)
-        mock_physical2.set_status.assert_called_once()
+        mock_physical2.set_worker_status.assert_called_once()
 
     def test_get_workers_from_app_returns_worker_list(self, handler: CeleryWorkerHandler):
         """

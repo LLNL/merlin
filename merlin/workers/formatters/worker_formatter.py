@@ -120,7 +120,7 @@ class WorkerFormatter(ABC):
 
                 for physical_worker in physical_workers:
                     stats["total_physical"] += 1
-                    status = physical_worker.get_status()
+                    status = physical_worker.get_worker_status()
 
                     if status == WorkerStatus.RUNNING:
                         stats["physical_running"] += 1

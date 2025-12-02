@@ -65,7 +65,7 @@ class PhysicalWorkerManager(EntityManager[PhysicalWorkerEntity, PhysicalWorkerMo
     _filter_accessor_map: Dict[str, Callable[[T], Any]] = {
         "logical_worker_id": lambda e: e.get_logical_worker_id(),
         "name": lambda e: e.get_name(),
-        "status": lambda e: e.get_status(),
+        "status": lambda e: e.get_worker_status(),
         "host": lambda e: e.get_host(),
     }
 

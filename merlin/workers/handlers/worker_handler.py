@@ -65,7 +65,7 @@ class MerlinWorkerHandler(ABC):
         raise NotImplementedError("Subclasses of `MerlinWorkerHandler` must implement a `stop_workers` method.")
 
     @abstractmethod
-    def query_workers(self, formatter: str, queues: List[str] = None, workers: List[str] = None):
+    def query_workers(self, formatter: str, queues: List[str] = None, workers: List[str] = None, local_db: bool = False):
         """
         Query the status of all currently running workers.
 
@@ -73,5 +73,6 @@ class MerlinWorkerHandler(ABC):
             formatter: The worker formatter to use (rich or json).
             queues: List of queue names to filter by (optional).
             workers: List of worker names to filter by (optional).
+            local_db: Whether to use the local database for querying (optional).
         """
         raise NotImplementedError("Subclasses of `MerlinWorkerHandler` must implement a `query_workers` method.")

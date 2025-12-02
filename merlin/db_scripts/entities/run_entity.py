@@ -18,6 +18,7 @@ import os
 from typing import List
 
 from merlin.backends.results_backend import ResultsBackend
+from merlin.common.enums import RunStatus
 from merlin.db_scripts.data_models import RunModel
 from merlin.db_scripts.entities.db_entity import DatabaseEntity
 from merlin.db_scripts.entities.mixins.queue_management import QueueManagementMixin
@@ -40,7 +41,6 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             containing the run's metadata.
         backend (backends.results_backend.ResultsBackend): An instance of the `ResultsBackend`
             class used to interact with the database.
-        run_complete (bool): A property to get or set the completion status of the run.
 
     Methods:
         __repr__:
@@ -59,6 +59,18 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
         get_additional_data:
             Retrieve any additional data saved to this run. _Implementation found in
                 [`DatabaseEntity.get_additional_data`][db_scripts.entities.db_entity.DatabaseEntity.get_additional_data]._
+
+        get_run_status:
+            Get the current status of the run.
+
+        set_run_status:
+            Update the status of the run.
+
+        is_active:
+            Check if this run is currently active (RUNNING or INITIALIZED).
+
+        is_finished:
+            Check if this run has reached a terminal state.
 
         get_metadata_file:
             Retrieve the path to the metadata file for this run.
@@ -136,7 +148,7 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             f"workers={self.get_workers()}, "
             f"parent={self.get_parent()}, "
             f"child={self.get_child()}, "
-            f"run_complete={self.run_complete}, "
+            f"run_status={self.get_run_status()}, "
             f"additional_data={self.get_additional_data()}, "
             f"backend={self.backend.get_name()})"
         )
@@ -162,32 +174,80 @@ class RunEntity(DatabaseEntity[RunModel], QueueManagementMixin):
             f"Workers: {self.get_workers()}\n"
             f"Parent: {self.get_parent()}\n"
             f"Child: {self.get_child()}\n"
-            f"Run Complete: {self.run_complete}\n"
+            f"Run Status: {self.get_run_status().value}\n"
             f"Additional Data: {self.get_additional_data()}\n\n"
         )
+
+    def get_run_status(self) -> RunStatus:
+        """
+        Get the current status of the run.
+
+        Returns:
+            The current RunStatus of the run.
+        """
+        self.reload_data()
+        # Convert string value to enum
+        return RunStatus(self.entity_info.run_status)
+
+    def set_run_status(self, status: RunStatus):
+        """
+        Update the status of the run.
+
+        Args:
+            status: The new RunStatus for the run.
+        """
+        # Store the string value
+        self.entity_info.run_status = status.value
+        self.save()
+
+    def is_active(self) -> bool:
+        """
+        Check if this run is currently active (RUNNING or INITIALIZED).
+
+        Returns:
+            True if the run is active, False otherwise.
+        """
+        return self.get_run_status() in (RunStatus.INITIALIZED, RunStatus.QUEUED, RunStatus.RUNNING)
+
+    def is_finished(self) -> bool:
+        """
+        Check if this run has reached a terminal state.
+
+        Returns:
+            True if the run is in a terminal state (COMPLETED, CANCELLED, FAILED).
+        """
+        return self.get_run_status() in (RunStatus.COMPLETED, RunStatus.CANCELLED, RunStatus.FAILED)
 
     @property
     def run_complete(self) -> bool:
         """
-        An attribute representing whether this run is complete.
-
-        A "complete" study is a study that has executed all steps.
+        Backwards compatibility property for old code/databases using run_complete.
 
         Returns:
-            True if the study is complete. False, otherwise.
+            True if the run has completed (successfully or otherwise), False otherwise.
+
+        Deprecated: Use run_status instead.
         """
-        self.reload_data()
-        return self.entity_info.run_complete
+        return self.is_finished()
 
     @run_complete.setter
     def run_complete(self, value: bool):
         """
-        Update the run's completion status.
+        Backwards compatibility setter for old code using run_complete.
+        Maps boolean values to the appropriate run_status.
 
-        Args:
-            value: The completion status of the run.
+        Deprecated: Use run_status instead.
         """
-        self.entity_info.run_complete = value
+        if value:
+            # If setting to complete and current status is not already a terminal state,
+            # default to COMPLETED
+            if self.get_run_status() not in (RunStatus.COMPLETED, RunStatus.FAILED, RunStatus.CANCELLED):
+                self.set_run_status(RunStatus.COMPLETED)
+        else:
+            # If setting to not complete, assume RUNNING
+            # (unless it's already in a terminal state, which would be odd)
+            if self.get_run_status() in (RunStatus.COMPLETED, RunStatus.FAILED, RunStatus.CANCELLED):
+                self.set_run_status(RunStatus.RUNNING)
 
     def get_metadata_file(self) -> str:
         """

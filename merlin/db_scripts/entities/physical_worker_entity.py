@@ -69,9 +69,9 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             Retrieve the process ID for this worker.
         set_pid:
             Update the process ID for this worker.
-        get_status:
+        get_worker_status:
             Retrieve the status of this worker.
-        set_status:
+        set_worker_status:
             Update the status of this worker.
         get_heartbeat_timestamp:
             Retrieve the last heartbeat timestamp of this worker.
@@ -114,7 +114,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             f"launch_cmd={self.get_launch_cmd()}, "
             f"args={self.get_args()}, "
             f"pid={self.get_pid()}, "
-            f"status={self.get_status()}, "
+            f"worker_status={self.get_worker_status()}, "
             f"heartbeat_timestamp={self.get_heartbeat_timestamp()}, "
             f"latest_start_time={self.get_latest_start_time()}, "
             f"host={self.get_host()}, "
@@ -139,7 +139,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             f"Launch Command: {self.get_launch_cmd()}\n"
             f"Args: {self.get_args()}\n"
             f"Process ID: {self.get_pid()}\n"
-            f"Status: {self.get_status()}\n"
+            f"Worker Status: {self.get_worker_status()}\n"
             f"Last Heartbeat: {self.get_heartbeat_timestamp()}\n"
             f"Last Spinup: {self.get_latest_start_time()}\n"
             f"Host: {self.get_host()}\n"
@@ -202,7 +202,6 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             The process ID for this worker or None if not set.
         """
         self.reload_data()
-        self.reload_data()
         if not self.entity_info.pid:
             return None
 
@@ -223,7 +222,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
         self.entity_info.pid = pid
         self.save()
 
-    def get_status(self) -> WorkerStatus:
+    def get_worker_status(self) -> WorkerStatus:
         """
         Get the status of this worker.
 
@@ -232,10 +231,9 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
                 the status of this worker.
         """
         self.reload_data()
-        # Convert string value to enum
-        return WorkerStatus(self.entity_info.status)
+        return WorkerStatus(self.entity_info.worker_status)
 
-    def set_status(self, status: WorkerStatus):
+    def set_worker_status(self, status: WorkerStatus):
         """
         Set the status of this worker.
 
@@ -243,8 +241,7 @@ class PhysicalWorkerEntity(DatabaseEntity[PhysicalWorkerModel], NameMixin):
             status: A [`WorkerStatus`][common.enums.WorkerStatus] enum representing
                 the new status of the worker.
         """
-        # Store the string value
-        self.entity_info.status = status.value
+        self.entity_info.worker_status = status.value
         self.save()
 
     def get_heartbeat_timestamp(self) -> str:

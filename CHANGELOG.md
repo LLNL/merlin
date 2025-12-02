@@ -4,13 +4,21 @@ All notable changes to Merlin will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0b4]
 
 ### Added
+- Backwards compatibility for `run_complete` entries in the database
+
+## [2.0.0b3]
+
+### Added
+- New `merlin cancel <yaml>` command that cancels all runs of a current study
+- Monitor now checks each run of a study on every loop
 - Garbage collection functionality for the database. Called with: `merlin database gc`, `merlin database garbage-collect`, or `merlin database cleanup`
 - Built-in database garbage collection to the `merlin monitor`
   - Can be disabled with `--disable-gc`
 - Alias for `merlin database` command so it can be called with `merlin db`
+- Status of run entities in the database (this will differ from task statuses)
 - New classes for formatting `query-workers` output:
   - `WorkerFormatter`: base class for defining formatted output for workers
   - `RichWorkerFormatter`: implementation of `WorkerFormatter` for output using the rich library

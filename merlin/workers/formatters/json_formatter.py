@@ -101,7 +101,7 @@ class JSONWorkerFormatter(WorkerFormatter):
                     "name": physical_worker.get_name(),
                     "host": physical_worker.get_host(),
                     "pid": physical_worker.get_pid(),
-                    "status": physical_worker.get_status().value,
+                    "worker_status": physical_worker.get_worker_status().value,
                     "restart_count": physical_worker.get_restart_count(),
                     "latest_start_time": (
                         physical_worker.get_latest_start_time().isoformat()

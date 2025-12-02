@@ -73,7 +73,7 @@ def serialize_entity(entity: T) -> Dict[str, str]:
     Returns:
         A dictionary of information that the database can interpret.
     """
-    LOG.debug("Deserializing data...")
+    LOG.debug("Serializing data...")
     serialized_data = {}
 
     for field in entity.get_instance_fields():
@@ -90,7 +90,7 @@ def serialize_entity(entity: T) -> Dict[str, str]:
         else:
             serialized_data[field.name] = str(field_value)
 
-    LOG.debug("Successfully deserialized data.")
+    LOG.debug("Successfully serialized data.")
     return serialized_data
 
 
