@@ -23,7 +23,6 @@ from argparse import ArgumentParser, Namespace, RawTextHelpFormatter
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
 from merlin.cli.utils import get_merlin_spec_with_override
 from merlin.monitor.monitor import Monitor
-from merlin.router import check_merlin_status
 
 
 LOG = logging.getLogger("merlin")
@@ -52,14 +51,6 @@ class MonitorCommand(CommandEntryPoint):
         )
         monitor.set_defaults(func=self.process_command)
         monitor.add_argument("specification", type=str, help="Path to a Merlin YAML spec file")
-        monitor.add_argument(
-            "--steps",
-            nargs="+",
-            type=str,
-            dest="steps",
-            default=["all"],
-            help="The specific steps (tasks on the server) in the YAML file defining the queues you want to monitor",
-        )
         monitor.add_argument(
             "--vars",
             action="store",
@@ -116,17 +107,8 @@ class MonitorCommand(CommandEntryPoint):
         # Give the user time to queue up jobs in case they haven't already
         time.sleep(args.sleep)
 
-        if args.steps != ["all"]:
-            LOG.warning(
-                "The `--steps` argument of the `merlin monitor` command is set to be deprecated in Merlin v1.14 "
-                "For now, using this argument will tell merlin to use the version of the monitor command from Merlin v1.12."
-            )
-            # Check if we still need our allocation
-            while check_merlin_status(args, spec):
-                LOG.info("Monitor: found tasks in queues and/or tasks being processed")
-                time.sleep(args.sleep)
-        else:
-            monitor = Monitor(spec, args.sleep, args.task_server, no_restart=args.no_restart, auto_cleanup=not args.disable_gc)
-            monitor.monitor_all_runs()
+        # Monitor the allocation
+        monitor = Monitor(spec, args.sleep, args.task_server, no_restart=args.no_restart, auto_cleanup=not args.disable_gc)
+        monitor.monitor_all_runs()
 
         LOG.info("Monitor: ... stop condition met")

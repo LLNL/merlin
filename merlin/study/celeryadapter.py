@@ -430,56 +430,6 @@ def query_celery_queues(queues: List[str], app: Celery = None, config: Config = 
     return queue_info
 
 
-def get_workers_from_app() -> List[str]:
-    """
-    Retrieve a list of all workers connected to the Celery application.
-
-    This function uses the Celery control interface to inspect the current state
-    of the application and returns a list of workers that are currently connected.
-    If no workers are found, an empty list is returned.
-
-    Returns:
-        A list of worker names that are currently connected to the Celery application.
-            If no workers are connected, an empty list is returned.
-    """
-    from merlin.celery import app  # pylint: disable=C0415
-
-    i = app.control.inspect()
-    workers = i.ping()
-    if workers is None:
-        return []
-    return [*workers]
-
-
-def check_celery_workers_processing(queues_in_spec: List[str], app: Celery) -> bool:
-    """
-    Check if any Celery workers are currently processing tasks from specified queues.
-
-    This function queries the Celery application to determine if there are any active
-    tasks being processed by workers for the given list of queues. It returns a boolean
-    indicating whether any tasks are currently active.
-
-    Args:
-        queues_in_spec: A list of queue names to check for active tasks.
-        app: The Celery application instance used for querying.
-
-    Returns:
-        True if any workers are processing tasks in the specified queues; False
-            otherwise.
-    """
-    # Query celery for active tasks
-    active_tasks = app.control.inspect().active()
-
-    # Search for the queues we provided if necessary
-    if active_tasks is not None:
-        for tasks in active_tasks.values():
-            for task in tasks:
-                if task["delivery_info"]["routing_key"] in queues_in_spec:
-                    return True
-
-    return False
-
-
 def purge_celery_tasks(queues: str, force: bool) -> int:
     """
     Purge Celery tasks from the specified queues.
