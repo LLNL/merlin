@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Removed old monitor code from v1.0
+- Moved `stop-workers` functionality to the `CeleryWorkerHandlers` class
 
 ## [2.0.0b4]
 
