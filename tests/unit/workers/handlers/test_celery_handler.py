@@ -634,3 +634,249 @@ class TestCeleryWorkerHandler:
         assert "celery@worker2" in result
         assert "worker3@localhost" in result
         assert len(result) == 3
+
+    def test_normalize_queue_names_with_valid_queues(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `normalize_queue_names` correctly normalizes valid queue names.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_config = mocker.patch("merlin.config.configfile.CONFIG")
+        mock_config.celery.queue_tag = "[merlin]_"
+        queues = ["queue1", "queue2"]
+
+        result = handler.normalize_queue_names(queues)
+
+        assert result == ["[merlin]_queue1", "[merlin]_queue2"]
+
+    def test_normalize_queue_names_with_empty_list(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `normalize_queue_names` handles an empty list of queues.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_config = mocker.patch("merlin.config.configfile.CONFIG")
+        mock_config.celery.queue_tag = "[merlin]_"
+        queues = []
+
+        result = handler.normalize_queue_names(queues)
+
+        assert result == []
+
+    def test_normalize_queue_names_with_special_characters(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `normalize_queue_names` handles queue names with special characters.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_config = mocker.patch("merlin.config.configfile.CONFIG")
+        mock_config.celery.queue_tag = "[merlin]_"
+        queues = ["queue@1", "queue#2"]
+
+        result = handler.normalize_queue_names(queues)
+
+        assert result == ["[merlin]_queue@1", "[merlin]_queue#2"]
+
+    def test_get_workers_from_queues_with_matching_queues(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `get_workers_from_queues` retrieves workers associated with specified queues.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mocker.patch.object(handler, "get_active_workers", return_value={
+            "worker1": ["queue1", "queue2"],
+            "worker2": ["queue2", "queue3"],
+        })
+        queues = ["queue1", "queue3"]
+
+        result = handler.get_workers_from_queues(queues)
+
+        assert result == ["worker1", "worker2"]
+
+    def test_get_workers_from_queues_with_no_matching_queues(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `get_workers_from_queues` returns an empty list when no queues match.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mocker.patch.object(handler, "get_active_workers", return_value={
+            "worker1": ["queue1", "queue2"],
+            "worker2": ["queue2", "queue3"],
+        })
+        queues = ["queue4"]
+
+        result = handler.get_workers_from_queues(queues)
+
+        assert result == []
+
+    def test_get_workers_from_queues_with_empty_queues(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `get_workers_from_queues` returns an empty list when the queues list is empty.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mocker.patch.object(handler, "get_active_workers", return_value={
+            "worker1": ["queue1", "queue2"],
+            "worker2": ["queue2", "queue3"],
+        })
+        queues = []
+
+        result = handler.get_workers_from_queues(queues)
+
+        assert result == []
+
+    def test_filter_workers_with_matching_filters(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `filter_workers` filters workers based on matching filters.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_apply_list_of_regex = mocker.patch("merlin.workers.handlers.celery_handler.apply_list_of_regex")
+        all_workers = ["worker1", "worker2", "worker3"]
+        filters = ["worker1", "worker3"]
+
+        handler.filter_workers(all_workers, filters)
+
+        mock_apply_list_of_regex.assert_called_once_with(filters, all_workers, [])
+
+    def test_filter_workers_with_no_matching_filters(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `filter_workers` returns an empty list when no filters match.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_apply_list_of_regex = mocker.patch("merlin.workers.handlers.celery_handler.apply_list_of_regex")
+        all_workers = ["worker1", "worker2", "worker3"]
+        filters = ["worker4"]
+
+        handler.filter_workers(all_workers, filters)
+
+        mock_apply_list_of_regex.assert_called_once_with(filters, all_workers, [])
+
+    def test_filter_workers_with_empty_filters(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `filter_workers` returns all workers when filters are empty.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_apply_list_of_regex = mocker.patch("merlin.workers.handlers.celery_handler.apply_list_of_regex")
+        all_workers = ["worker1", "worker2", "worker3"]
+        filters = []
+
+        handler.filter_workers(all_workers, filters)
+
+        mock_apply_list_of_regex.assert_called_once_with(filters, all_workers, [])
+
+    def test_send_shutdown_signal_with_workers(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `send_shutdown_signal` sends a shutdown signal to specified workers.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_broadcast = mocker.patch.object(handler.app.control, "broadcast")
+        workers_to_stop = ["worker1", "worker2"]
+
+        handler.send_shutdown_signal(workers_to_stop)
+
+        mock_broadcast.assert_called_once_with("shutdown", destination=workers_to_stop)
+
+    def test_send_shutdown_signal_with_no_workers(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `send_shutdown_signal` logs a warning when no workers are provided.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_broadcast = mocker.patch.object(handler.app.control, "broadcast")
+        mock_logger = mocker.patch("merlin.workers.handlers.celery_handler.LOG")
+        workers_to_stop = []
+
+        handler.send_shutdown_signal(workers_to_stop)
+
+        mock_broadcast.assert_not_called()
+        mock_logger.warning.assert_called_once_with("No workers found to stop.")
+
+    def test_stop_workers_with_matching_queues_and_workers(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `stop_workers` stops workers matching both queues and worker names.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_normalize_queue_names = mocker.patch.object(handler, "normalize_queue_names", return_value=["[merlin]_queue1"])
+        mock_get_workers_from_queues = mocker.patch.object(handler, "get_workers_from_queues", return_value=["worker1", "worker2"])
+        mock_filter_workers = mocker.patch.object(handler, "filter_workers", return_value=["worker1"])
+        mock_send_shutdown_signal = mocker.patch.object(handler, "send_shutdown_signal")
+
+        handler.stop_workers(queues=["queue1"], workers=["worker1"], dry_run=False)
+
+        mock_normalize_queue_names.assert_called_once_with(["queue1"])
+        mock_get_workers_from_queues.assert_called_once_with(["[merlin]_queue1"])
+        mock_filter_workers.assert_called_once_with(["worker1", "worker2"], ["worker1"])
+        mock_send_shutdown_signal.assert_called_once_with(["worker1"])
+
+    def test_stop_workers_with_dry_run(self, handler: CeleryWorkerHandler, mocker: MockerFixture, capsys: pytest.CaptureFixture):
+        """
+        Test that `stop_workers` performs a dry run and prints the workers to be stopped.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+            capsys: Pytest system output capture fixture.
+        """
+        mock_normalize_queue_names = mocker.patch.object(handler, "normalize_queue_names", return_value=["[merlin]_queue1"])
+        mock_get_workers_from_queues = mocker.patch.object(handler, "get_workers_from_queues", return_value=["worker1", "worker2"])
+        mock_filter_workers = mocker.patch.object(handler, "filter_workers", return_value=["worker1"])
+        mock_send_shutdown_signal = mocker.patch.object(handler, "send_shutdown_signal")
+
+        handler.stop_workers(queues=["queue1"], workers=["worker1"], dry_run=True)
+
+        mock_normalize_queue_names.assert_called_once_with(["queue1"])
+        mock_get_workers_from_queues.assert_called_once_with(["[merlin]_queue1"])
+        mock_filter_workers.assert_called_once_with(["worker1", "worker2"], ["worker1"])
+        mock_send_shutdown_signal.assert_not_called()
+
+        captured = capsys.readouterr()
+        assert "Would send shutdown signal to workers: ['worker1']." in captured.out
+
+    def test_stop_workers_with_no_workers_found(self, handler: CeleryWorkerHandler, mocker: MockerFixture):
+        """
+        Test that `stop_workers` logs a warning when no workers are found to stop.
+
+        Args:
+            handler: CeleryWorkerHandler instance.
+            mocker: Pytest mocker fixture.
+        """
+        mock_normalize_queue_names = mocker.patch.object(handler, "normalize_queue_names", return_value=["[merlin]_queue1"])
+        mock_get_workers_from_queues = mocker.patch.object(handler, "get_workers_from_queues", return_value=[])
+        mock_filter_workers = mocker.patch.object(handler, "filter_workers", return_value=[])
+        mock_logger = mocker.patch("merlin.workers.handlers.celery_handler.LOG")
+
+        handler.stop_workers(queues=["queue1"], workers=["worker1"], dry_run=False)
+
+        mock_normalize_queue_names.assert_called_once_with(["queue1"])
+        mock_get_workers_from_queues.assert_called_once_with(["[merlin]_queue1"])
+        mock_filter_workers.assert_called_once_with([], ["worker1"])
+        mock_logger.warning.assert_called_once_with("No workers found to stop.")

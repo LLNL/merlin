@@ -81,6 +81,80 @@ def mock_db(mocker: MockerFixture) -> MagicMock:
     return mocker.patch("merlin.workers.celery_worker.MerlinDatabase")
 
 
+def test_stop_worker_with_valid_pid(
+    mocker: MockerFixture,
+    basic_config: FixtureDict[str, Any],
+    dummy_env: FixtureDict[str, str],
+    mock_db: MagicMock,
+):
+    """
+    Test that `stop` successfully terminates a worker with a valid PID.
+
+    Args:
+        mocker: Pytest mocker fixture.
+        basic_config: Basic configuration dictionary fixture.
+        dummy_env: Dummy environment dictionary fixture.
+        mock_db: Mocked MerlinDatabase object.
+    """
+    mock_kill = mocker.patch("os.kill")
+    worker = CeleryWorker("worker1", basic_config, dummy_env)
+    worker.pid = 12345
+
+    worker.stop()
+
+    mock_kill.assert_called_once_with(12345, 15)
+    assert worker.pid is None
+
+
+def test_stop_worker_handles_exception(
+    mocker: MockerFixture,
+    basic_config: FixtureDict[str, Any],
+    dummy_env: FixtureDict[str, str],
+    mock_db: MagicMock,
+):
+    """
+    Test that `stop` logs an error if `os.kill` raises an exception.
+
+    Args:
+        mocker: Pytest mocker fixture.
+        basic_config: Basic configuration dictionary fixture.
+        dummy_env: Dummy environment dictionary fixture.
+        mock_db: Mocked MerlinDatabase object.
+    """
+    mock_kill = mocker.patch("os.kill", side_effect=OSError("Failed to stop process"))
+    mock_logger = mocker.patch("merlin.workers.celery_worker.LOG")
+    worker = CeleryWorker("worker2", basic_config, dummy_env)
+    worker.pid = 12345
+
+    worker.stop()
+
+    mock_kill.assert_called_once_with(12345, 15)
+    mock_logger.error.assert_called_once_with("Cannot stop celery worker 'worker2', Failed to stop process")
+
+
+def test_stop_worker_without_pid(
+    mocker: MockerFixture,
+    basic_config: FixtureDict[str, Any],
+    dummy_env: FixtureDict[str, str],
+    mock_db: MagicMock,
+):
+    """
+    Test that `stop` logs a warning if the worker has no PID.
+
+    Args:
+        mocker: Pytest mocker fixture.
+        basic_config: Basic configuration dictionary fixture.
+        dummy_env: Dummy environment dictionary fixture.
+        mock_db: Mocked MerlinDatabase object.
+    """
+    mock_logger = mocker.patch("merlin.workers.celery_worker.LOG")
+    worker = CeleryWorker("worker3", basic_config, dummy_env)
+
+    worker.stop()
+
+    mock_logger.warning.assert_called_once_with("Worker 'worker3' is not running or PID is unknown; cannot stop.")
+    
+    
 def test_constructor_sets_fields_and_calls_db_create(
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],

@@ -55,15 +55,18 @@ def mock_spec(mocker: MockerFixture) -> MagicMock:
 @pytest.fixture
 def mock_stop_workers(mocker: MockerFixture) -> MagicMock:
     """
-    Fixture that mocks the stop_celery_workers function.
+    Fixture that mocks the CeleryWorkerHandler class and its stop_workers method.
 
     Args:
         mocker: PyTest mocker fixture.
 
     Returns:
-        The mocked stop_celery_workers function.
+        A mocked CeleryWorkerHandler instance with the stop_workers method mocked.
     """
-    return mocker.patch("merlin.study.manager.stop_celery_workers")
+    mock_handler = mocker.MagicMock()
+    mock_handler.stop_workers = mocker.MagicMock()
+    mocker.patch("merlin.study.manager.CeleryWorkerHandler", return_value=mock_handler)
+    return mock_handler.stop_workers
 
 
 @pytest.fixture
@@ -129,7 +132,7 @@ class TestStudyManagerCancel:
         result = manager.cancel(mock_spec)
 
         # Verify workers were stopped
-        mock_stop_workers.assert_called_once_with(spec_worker_names=["worker1", "worker2"])
+        mock_stop_workers.assert_called_once_with(workers=["worker1", "worker2"])
 
         # Verify queues were purged
         mock_purge_tasks.assert_called_once_with("queue1,queue2,queue3", True)
@@ -451,7 +454,7 @@ class TestStudyManagerCancel:
         assert "Target provenance spec instead?" in caplog.text
 
         # Verify workers were still stopped (including unexpanded one)
-        mock_stop_workers.assert_called_once_with(spec_worker_names=["worker1", "$(UNEXPANDED_WORKER)", "worker2"])
+        mock_stop_workers.assert_called_once_with(workers=["worker1", "$(UNEXPANDED_WORKER)", "worker2"])
 
     def test_cancel_queue_formatting(
         self,
@@ -519,7 +522,7 @@ class TestStudyManagerCancel:
         result = manager.cancel(mock_spec)
 
         # Verify stop_workers was still called with empty list
-        mock_stop_workers.assert_called_once_with(spec_worker_names=[])
+        mock_stop_workers.assert_called_once_with(workers=[])
 
         # Verify result reflects empty worker list
         assert result["workers_stopped"] == []
