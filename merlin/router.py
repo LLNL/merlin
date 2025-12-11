@@ -21,7 +21,6 @@ from merlin.study.celeryadapter import (
     purge_celery_tasks,
     query_celery_queues,
     run_celery,
-    stop_celery_workers,
 )
 from merlin.study.study import MerlinStudy
 
@@ -150,24 +149,3 @@ def query_queues(
     else:
         LOG.error("Celery is not specified as the task server!")
         return {}
-
-
-def stop_workers(task_server: str, spec_worker_names: List[str], queues: List[str], workers_regex: str):
-    """
-    This function sends a command to stop workers that match the specified
-    criteria from the designated task server.
-
-    Args:
-        task_server: The task server from which to stop workers.
-        spec_worker_names: A list of worker names to stop, as defined
-            in a specification.
-        queues: A list of queues from which to stop associated workers.
-        workers_regex: A regex pattern used to filter the workers to stop.
-    """
-    LOG.info("Stopping workers...")
-
-    if task_server == "celery":  # pylint: disable=R1705
-        # Stop workers
-        stop_celery_workers(queues, spec_worker_names, workers_regex)
-    else:
-        LOG.error("Celery is not specified as the task server!")

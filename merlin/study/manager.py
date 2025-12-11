@@ -21,7 +21,8 @@ from merlin.common.enums import RunStatus
 from merlin.db_scripts.merlin_db import MerlinDatabase
 from merlin.exceptions import RunNotFoundError, StudyNotFoundError
 from merlin.spec.specification import MerlinSpec
-from merlin.study.celeryadapter import purge_celery_tasks, stop_celery_workers
+from merlin.study.celeryadapter import purge_celery_tasks
+from merlin.workers.handlers.celery_handler import CeleryWorkerHandler
 
 
 LOG = logging.getLogger(__name__)
@@ -97,12 +98,13 @@ class StudyManager:
 
         # Step 1: Stop the workers
         if stop_workers:
-            # TODO when we refactor `stop-workers`, update this
             worker_names = spec.get_worker_names()
             for worker_name in worker_names:
                 if "$" in worker_name:
                     LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
-            stop_celery_workers(spec_worker_names=worker_names)
+
+            worker_handler = CeleryWorkerHandler()
+            worker_handler.stop_workers(workers=worker_names)
 
             # TODO when we refactor `stop-workers`, may want to do some extra validation here to ensure
             # all of these workers have actually been stopped
