@@ -19,9 +19,9 @@ from argparse import ArgumentParser, Namespace
 
 from merlin.ascii_art import banner_small
 from merlin.cli.commands.command_entry_point import CommandEntryPoint
-from merlin.router import stop_workers
 from merlin.spec.specification import MerlinSpec
 from merlin.utils import verify_filepath
+from merlin.workers.handlers.handler_factory import worker_handler_factory
 
 
 LOG = logging.getLogger("merlin")
@@ -67,6 +67,12 @@ class StopWorkersCommand(CommandEntryPoint):
             default=None,
             help="regex match for specific workers to stop",
         )
+        stop.add_argument(
+            "-d",
+            "--dry-run",
+            action="store_true",
+            help="Display which workers would be stopped without actually stopping them"
+        )
 
     def process_command(self, args: Namespace):
         """
@@ -87,6 +93,7 @@ class StopWorkersCommand(CommandEntryPoint):
         worker_names = []
 
         # Load in the spec if one was provided via the CLI
+        spec = None
         if args.spec:
             spec_path = verify_filepath(args.spec)
             spec = MerlinSpec.load_specification(spec_path)
@@ -94,6 +101,19 @@ class StopWorkersCommand(CommandEntryPoint):
             for worker_name in worker_names:
                 if "$" in worker_name:
                     LOG.warning(f"Worker '{worker_name}' is unexpanded. Target provenance spec instead?")
+            LOG.debug(f"Searching for the following workers to stop based on the spec {args.spec}: {worker_names}")
 
-        # Send stop command to router
-        stop_workers(args.task_server, worker_names, args.queues, args.workers)
+        # If we have workers from --workers flag, add them to the list
+        if args.workers:
+            worker_names.extend(args.workers)
+
+        # Get the task server from spec or CLI argument
+        task_server = spec.merlin["resources"]["task_server"] if spec else args.task_server
+
+        # Create the handler and send stop command
+        worker_handler = worker_handler_factory.create(task_server)
+        worker_handler.stop_workers(
+            queues=args.queues,
+            workers=worker_names if worker_names else None,
+            dry_run=args.dry_run,
+        )

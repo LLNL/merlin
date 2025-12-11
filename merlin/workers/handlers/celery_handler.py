@@ -21,6 +21,7 @@ from celery import Celery
 from merlin.common.enums import WorkerStatus
 from merlin.db_scripts.entities.logical_worker_entity import LogicalWorkerEntity
 from merlin.db_scripts.merlin_db import MerlinDatabase
+from merlin.utils import apply_list_of_regex
 from merlin.workers import CeleryWorker
 from merlin.workers.formatters.formatter_factory import worker_formatter_factory
 from merlin.workers.handlers.worker_handler import MerlinWorkerHandler
@@ -78,11 +79,6 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
                 LOG.debug(f"Launching worker '{worker.name}'.")
                 worker.start(override_args=override_args, disable_logs=disable_logs)
 
-    def stop_workers(self):
-        """
-        Attempt to stop Celery workers.
-        """
-
     def get_workers_from_app(self) -> List[str]:
         """
         Retrieve a list of all workers connected to the Celery application.
@@ -108,10 +104,8 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         """
         Retrieve a mapping of active workers to their associated queues for a Celery application.
 
-        This function serves as the inverse of
-        [`get_active_celery_queues()`][study.celeryadapter.get_active_celery_queues]. It constructs
-        a dictionary where each key is a worker's name and the corresponding value is a
-        list of queues that the worker is connected to. This allows for easy identification
+        This method constructs a dictionary where each key is a worker's name and the corresponding
+        value is a list of queues that the worker is connected to. This allows for easy identification
         of which queues are being handled by each worker.
 
         Returns:
@@ -206,3 +200,114 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
         # Use formatter to display the results
         formatter = worker_formatter_factory.create(formatter)
         formatter.format_and_display(logical_workers, filters, self.merlin_db)
+
+    def normalize_queue_names(self, queues: List[str]) -> List[str]:
+        """
+        Normalize queue names to conform to Celery's naming conventions.
+
+        Args:
+            queues (List[str]): List of queue names to normalize.
+
+        Returns:
+            List[str]: Normalized queue names.
+        """
+        from merlin.config.configfile import CONFIG  # Importing configuration for queue tag
+        return [f"{CONFIG.celery.queue_tag}{queue}" for queue in queues]
+
+    def get_workers_from_queues(self, queues: List[str]) -> List[str]:
+        """
+        Given a list of queue names, retrieve the Celery workers associated with those queues.
+
+        Args:
+            queues (List[str]): The list of queue names to filter workers by.
+
+        Returns:
+            List[str]: A list of Celery worker names associated with the specified queues.
+        """
+        live_workers = self.get_active_workers()
+        return [worker for worker, live_queues in live_workers.items() if set(queues) & set(live_queues)]
+
+    def filter_workers(self, all_workers: List[str], filters: List[str]) -> List[str]:
+        """
+        Filter workers based on regex patterns or specific names.
+
+        Args:
+            all_workers (List[str]): List of all available workers.
+            filters (List[str]): List of regex patterns or specific names to filter workers.
+
+        Returns:
+            List[str]: Filtered list of workers.
+        """
+        filtered_workers = []
+        apply_list_of_regex(filters, all_workers, filtered_workers)
+        return list(set(filtered_workers))
+
+    def send_shutdown_signal(self, workers_to_stop: List[str]):
+        """
+        Send a shutdown signal to the specified workers.
+
+        Args:
+            workers_to_stop (List[str]): List of worker names to send the shutdown signal to.
+        """
+        if workers_to_stop:
+            LOG.info(f"Sending shutdown signal to workers: {workers_to_stop}")
+            self.app.control.broadcast("shutdown", destination=workers_to_stop)
+        else:
+            LOG.warning("No workers found to stop.")
+
+    def stop_workers(self, queues: List[str] = None, workers: List[str] = None, dry_run: bool = False):
+        """
+        Stop worker processes, optionally filtered by queue or worker name.
+
+        This method terminates active worker processes based on the provided filters.
+        The behavior varies by implementation:
+
+        - If both `queues` and `workers` are None, all active workers are stopped.
+        - If `queues` is provided, only workers attached to those queues are stopped.
+        - If `workers` is provided, only workers matching those names/patterns are stopped.
+        - If both are provided, workers must match both criteria (intersection).
+
+        Args:
+            queues: Optional list of queue names to filter workers by.
+            workers: Optional list of worker names or patterns to match. For Celery,
+                these can be logical worker names from the spec or regex patterns
+                matching physical worker names (e.g., "celery@worker1.*").
+            dry_run: If True, just print out the names of the workers that will be stopped.
+
+        Example:
+            ```python
+            handler = CeleryWorkerHandler()
+
+            # Stop all workers
+            handler.stop_workers()
+
+            # Stop workers on specific queues
+            handler.stop_workers(queues=['hello_queue', 'world_queue'])
+
+            # Stop specific workers by name
+            handler.stop_workers(workers=['worker1', 'worker2'])
+
+            # Stop workers matching both criteria
+            handler.stop_workers(queues=['hello_queue'], workers=['worker1.*'])
+            ```
+        """
+        LOG.debug(f"Stopping workers with queues: {queues}, workers: {workers}")
+
+        # Step 1: Normalize queue names
+        if queues:
+            queues = self.normalize_queue_names(queues)
+
+        # Step 2: Get workers from queues
+        all_workers = self.get_workers_from_queues(queues) if queues else self.get_workers_from_app()
+
+        # Step 3: Filter workers
+        workers_to_stop = self.filter_workers(all_workers, workers) if workers else all_workers
+
+        # Step 4: Send shutdown signal
+        if len(workers_to_stop) == 0:
+            LOG.warning("No workers found to stop.")
+        else:
+            if dry_run:
+                print(f"Would send shutdown signal to workers: {workers_to_stop}.")
+            else:
+                self.send_shutdown_signal(workers_to_stop)
