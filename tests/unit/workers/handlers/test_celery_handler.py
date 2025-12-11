@@ -691,10 +691,14 @@ class TestCeleryWorkerHandler:
             handler: CeleryWorkerHandler instance.
             mocker: Pytest mocker fixture.
         """
-        mocker.patch.object(handler, "get_active_workers", return_value={
-            "worker1": ["queue1", "queue2"],
-            "worker2": ["queue2", "queue3"],
-        })
+        mocker.patch.object(
+            handler,
+            "get_active_workers",
+            return_value={
+                "worker1": ["queue1", "queue2"],
+                "worker2": ["queue2", "queue3"],
+            },
+        )
         queues = ["queue1", "queue3"]
 
         result = handler.get_workers_from_queues(queues)
@@ -709,10 +713,14 @@ class TestCeleryWorkerHandler:
             handler: CeleryWorkerHandler instance.
             mocker: Pytest mocker fixture.
         """
-        mocker.patch.object(handler, "get_active_workers", return_value={
-            "worker1": ["queue1", "queue2"],
-            "worker2": ["queue2", "queue3"],
-        })
+        mocker.patch.object(
+            handler,
+            "get_active_workers",
+            return_value={
+                "worker1": ["queue1", "queue2"],
+                "worker2": ["queue2", "queue3"],
+            },
+        )
         queues = ["queue4"]
 
         result = handler.get_workers_from_queues(queues)
@@ -727,10 +735,14 @@ class TestCeleryWorkerHandler:
             handler: CeleryWorkerHandler instance.
             mocker: Pytest mocker fixture.
         """
-        mocker.patch.object(handler, "get_active_workers", return_value={
-            "worker1": ["queue1", "queue2"],
-            "worker2": ["queue2", "queue3"],
-        })
+        mocker.patch.object(
+            handler,
+            "get_active_workers",
+            return_value={
+                "worker1": ["queue1", "queue2"],
+                "worker2": ["queue2", "queue3"],
+            },
+        )
         queues = []
 
         result = handler.get_workers_from_queues(queues)
@@ -826,7 +838,9 @@ class TestCeleryWorkerHandler:
             mocker: Pytest mocker fixture.
         """
         mock_normalize_queue_names = mocker.patch.object(handler, "normalize_queue_names", return_value=["[merlin]_queue1"])
-        mock_get_workers_from_queues = mocker.patch.object(handler, "get_workers_from_queues", return_value=["worker1", "worker2"])
+        mock_get_workers_from_queues = mocker.patch.object(
+            handler, "get_workers_from_queues", return_value=["worker1", "worker2"]
+        )
         mock_filter_workers = mocker.patch.object(handler, "filter_workers", return_value=["worker1"])
         mock_send_shutdown_signal = mocker.patch.object(handler, "send_shutdown_signal")
 
@@ -837,7 +851,9 @@ class TestCeleryWorkerHandler:
         mock_filter_workers.assert_called_once_with(["worker1", "worker2"], ["worker1"])
         mock_send_shutdown_signal.assert_called_once_with(["worker1"])
 
-    def test_stop_workers_with_dry_run(self, handler: CeleryWorkerHandler, mocker: MockerFixture, capsys: pytest.CaptureFixture):
+    def test_stop_workers_with_dry_run(
+        self, handler: CeleryWorkerHandler, mocker: MockerFixture, capsys: pytest.CaptureFixture
+    ):
         """
         Test that `stop_workers` performs a dry run and prints the workers to be stopped.
 
@@ -847,7 +863,9 @@ class TestCeleryWorkerHandler:
             capsys: Pytest system output capture fixture.
         """
         mock_normalize_queue_names = mocker.patch.object(handler, "normalize_queue_names", return_value=["[merlin]_queue1"])
-        mock_get_workers_from_queues = mocker.patch.object(handler, "get_workers_from_queues", return_value=["worker1", "worker2"])
+        mock_get_workers_from_queues = mocker.patch.object(
+            handler, "get_workers_from_queues", return_value=["worker1", "worker2"]
+        )
         mock_filter_workers = mocker.patch.object(handler, "filter_workers", return_value=["worker1"])
         mock_send_shutdown_signal = mocker.patch.object(handler, "send_shutdown_signal")
 

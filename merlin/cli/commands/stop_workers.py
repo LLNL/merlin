@@ -71,7 +71,7 @@ class StopWorkersCommand(CommandEntryPoint):
             "-d",
             "--dry-run",
             action="store_true",
-            help="Display which workers would be stopped without actually stopping them"
+            help="Display which workers would be stopped without actually stopping them",
         )
 
     def process_command(self, args: Namespace):

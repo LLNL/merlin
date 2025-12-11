@@ -212,6 +212,7 @@ class CeleryWorkerHandler(MerlinWorkerHandler):
             List[str]: Normalized queue names.
         """
         from merlin.config.configfile import CONFIG  # Importing configuration for queue tag
+
         return [f"{CONFIG.celery.queue_tag}{queue}" for queue in queues]
 
     def get_workers_from_queues(self, queues: List[str]) -> List[str]:

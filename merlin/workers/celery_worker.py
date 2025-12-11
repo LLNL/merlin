@@ -190,7 +190,9 @@ class CeleryWorker(MerlinWorker):
         if self.should_launch():
             launch_cmd = self.get_launch_command(override_args=override_args, disable_logs=disable_logs)
             try:
-                worker_proc = subprocess.Popen(launch_cmd, env=self.env, shell=True, universal_newlines=True)  # pylint: disable=R1732
+                worker_proc = subprocess.Popen(
+                    launch_cmd, env=self.env, shell=True, universal_newlines=True
+                )  # pylint: disable=R1732
                 self.pid = worker_proc.pid
                 LOG.debug(f"Launched worker '{self.name}' with command: {launch_cmd}.")
             except Exception as e:  # pylint: disable=C0103

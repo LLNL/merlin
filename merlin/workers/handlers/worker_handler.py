@@ -62,7 +62,7 @@ class MerlinWorkerHandler(ABC):
 
         This method terminates active worker processes based on the provided filters.
         The behavior varies by implementation:
-        
+
         - If both `queues` and `workers` are None, all active workers are stopped.
         - If `queues` is provided, only workers attached to those queues are stopped.
         - If `workers` is provided, only workers matching those names/patterns are stopped.
@@ -78,16 +78,16 @@ class MerlinWorkerHandler(ABC):
         Example:
             ```python
             handler = CeleryWorkerHandler()
-            
+
             # Stop all workers
             handler.stop_workers()
-            
+
             # Stop workers on specific queues
             handler.stop_workers(queues=['hello_queue', 'world_queue'])
-            
+
             # Stop specific workers by name
             handler.stop_workers(workers=['worker1', 'worker2'])
-            
+
             # Stop workers matching both criteria
             handler.stop_workers(queues=['hello_queue'], workers=['worker1.*'])
             ```

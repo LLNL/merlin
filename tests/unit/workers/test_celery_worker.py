@@ -153,8 +153,8 @@ def test_stop_worker_without_pid(
     worker.stop()
 
     mock_logger.warning.assert_called_once_with("Worker 'worker3' is not running or PID is unknown; cannot stop.")
-    
-    
+
+
 def test_constructor_sets_fields_and_calls_db_create(
     basic_config: FixtureDict[str, Any],
     dummy_env: FixtureDict[str, str],

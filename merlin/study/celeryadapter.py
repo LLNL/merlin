@@ -20,7 +20,7 @@ from merlin.common.dumper import dump_handler
 from merlin.config import Config
 from merlin.spec.specification import MerlinSpec
 from merlin.study.study import MerlinStudy
-from merlin.utils import apply_list_of_regex, get_procs, is_running
+from merlin.utils import get_procs, is_running
 
 
 LOG = logging.getLogger(__name__)
