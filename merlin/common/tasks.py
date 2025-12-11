@@ -41,7 +41,6 @@ from merlin.exceptions import (
     RestartException,
     RetryException,
 )
-from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
 from merlin.study.dag import DAG
 from merlin.study.status import read_status, status_conflict_handler
