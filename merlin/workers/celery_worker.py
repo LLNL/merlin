@@ -85,6 +85,7 @@ class CeleryWorker(MerlinWorker):
         self.batch = self.config.get("batch", {})
         self.machines = self.config.get("machines", [])
         self.overlap = overlap
+        self.pid = None  # Set when the worker is launched
 
         # Add this worker to the database
         merlin_db = MerlinDatabase()
@@ -189,11 +190,31 @@ class CeleryWorker(MerlinWorker):
         if self.should_launch():
             launch_cmd = self.get_launch_command(override_args=override_args, disable_logs=disable_logs)
             try:
-                subprocess.Popen(launch_cmd, env=self.env, shell=True, universal_newlines=True)  # pylint: disable=R1732
+                worker_proc = subprocess.Popen(
+                    launch_cmd, env=self.env, shell=True, universal_newlines=True
+                )  # pylint: disable=R1732
+                self.pid = worker_proc.pid
                 LOG.debug(f"Launched worker '{self.name}' with command: {launch_cmd}.")
             except Exception as e:  # pylint: disable=C0103
                 LOG.error(f"Cannot start celery workers, {e}")
                 raise MerlinWorkerLaunchError from e
+
+    def stop(self):
+        """
+        Stop the worker process.
+
+        If the worker has a known PID, sends a SIGTERM to terminate it.
+        Otherwise, logs a warning that the worker cannot be stopped.
+        """
+        if self.pid:
+            try:
+                os.kill(self.pid, 15)  # Send SIGTERM
+                LOG.debug(f"Stopped worker '{self.name}' with PID {self.pid}.")
+                self.pid = None  # Reset PID after stopping
+            except Exception as e:  # pylint: disable=C0103
+                LOG.error(f"Cannot stop celery worker '{self.name}', {e}")
+        else:
+            LOG.warning(f"Worker '{self.name}' is not running or PID is unknown; cannot stop.")
 
     def get_metadata(self) -> Dict:
         """

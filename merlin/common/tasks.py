@@ -41,13 +41,13 @@ from merlin.exceptions import (
     RestartException,
     RetryException,
 )
-from merlin.router import stop_workers
 from merlin.spec.expansion import parameter_substitutions_for_cmd, parameter_substitutions_for_sample
 from merlin.study.dag import DAG
 from merlin.study.status import read_status, status_conflict_handler
 from merlin.study.step import Step
 from merlin.study.study import MerlinStudy
 from merlin.utils import dict_deep_merge
+from merlin.workers.handlers.celery_handler import CeleryWorkerHandler
 
 
 retry_exceptions = (
@@ -894,12 +894,13 @@ def expand_tasks_with_samples(  # pylint: disable=R0913,R0914
     name="merlin:shutdown_workers",
     priority=get_priority(Priority.HIGH),
 )
-def shutdown_workers(self: Task, shutdown_queues: List[str]):  # pylint: disable=W0613
+def shutdown_workers(self: Task, shutdown_queues: List[str] = None):  # pylint: disable=W0613
     """
     Initiates the shutdown of Celery workers.
 
-    This task wraps the [`stop_celery_workers`][study.celeryadapter.stop_celery_workers]
-    function, allowing for the graceful shutdown of specified Celery worker queues. It is
+    This task wraps the [`stop_workers`][workers.handlers.celery_handler.CeleryWorkerHandler.stop_workers]
+    method of the [`CeleryWorkerHandler`][workers.handlers.celery_handler.CeleryWorkerHandler]
+    class, allowing for the graceful shutdown of specified Celery worker queues. It is
     acknowledged immediately upon execution, ensuring that it will not be requeued, even
     if executed by a worker.
 
@@ -908,11 +909,8 @@ def shutdown_workers(self: Task, shutdown_queues: List[str]):  # pylint: disable
         shutdown_queues: A list of specific queues to shut down. If None, all queues will
             be shut down.
     """
-    if shutdown_queues is not None:
-        LOG.warning(f"Shutting down workers in queues {shutdown_queues}!")
-    else:
-        LOG.warning("Shutting down workers in all queues!")
-    return stop_workers("celery", None, shutdown_queues, None)
+    worker_handler = CeleryWorkerHandler()
+    worker_handler.stop_workers(queues=shutdown_queues)
 
 
 # Pylint complains that these args are unused but celery passes args

@@ -56,11 +56,44 @@ class MerlinWorkerHandler(ABC):
         raise NotImplementedError("Subclasses of `MerlinWorkerHandler` must implement a `start_workers` method.")
 
     @abstractmethod
-    def stop_workers(self):
+    def stop_workers(self, queues: List[str] = None, workers: List[str] = None):
         """
-        Stop worker processes.
+        Stop worker processes, optionally filtered by queue or worker name.
 
-        This method should terminate any active worker sessions that were previously launched.
+        This method terminates active worker processes based on the provided filters.
+        The behavior varies by implementation:
+
+        - If both `queues` and `workers` are None, all active workers are stopped.
+        - If `queues` is provided, only workers attached to those queues are stopped.
+        - If `workers` is provided, only workers matching those names/patterns are stopped.
+        - If both are provided, workers must match both criteria (intersection).
+
+        Args:
+            queues: Optional list of queue names to filter workers by. Queue names
+                will be normalized with the appropriate task server prefix if needed.
+            workers: Optional list of worker names or patterns to match. For Celery,
+                these can be logical worker names from the spec or regex patterns
+                matching physical worker names (e.g., "celery@worker1.*").
+
+        Example:
+            ```python
+            handler = CeleryWorkerHandler()
+
+            # Stop all workers
+            handler.stop_workers()
+
+            # Stop workers on specific queues
+            handler.stop_workers(queues=['hello_queue', 'world_queue'])
+
+            # Stop specific workers by name
+            handler.stop_workers(workers=['worker1', 'worker2'])
+
+            # Stop workers matching both criteria
+            handler.stop_workers(queues=['hello_queue'], workers=['worker1.*'])
+            ```
+
+        Raises:
+            May raise task-server-specific exceptions if connection fails.
         """
         raise NotImplementedError("Subclasses of `MerlinWorkerHandler` must implement a `stop_workers` method.")
 
