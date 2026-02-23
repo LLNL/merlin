@@ -27,7 +27,7 @@ fake_package_list = [
 def mock_get_distribution():
     """Mock call to get python distribution"""
     with patch("pkg_resources.get_distribution") as mock_get_distribution:
-        mock_get_distribution.side_effect = [mock_distribution(*package) for    package in fake_package_list[1:]]
+        mock_get_distribution.side_effect = [mock_distribution(*package) for package in fake_package_list[1:]]
         yield mock_get_distribution
 
 

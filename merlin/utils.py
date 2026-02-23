@@ -18,7 +18,7 @@ import sys
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
-from importlib.metadata import distribution, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
