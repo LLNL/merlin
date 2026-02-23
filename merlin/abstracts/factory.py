@@ -113,7 +113,7 @@ class MerlinBaseFactory(ABC):
         Discover and register plugins via Python entry points.
         """
         try:
-            for entry_point in entry_points().get(self._entry_point_group(), []):
+            for entry_point in entry_points().select(group=self._entry_point_group()):
                 try:
                     plugin_class = entry_point.load()
                     self.register(entry_point.name, plugin_class)
