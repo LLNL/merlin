@@ -121,7 +121,7 @@ class MerlinBaseFactory(ABC):
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     LOG.warning(f"Failed to load plugin '{entry_point.name}': {e}")
         except ImportError:
-            LOG.debug("pkg_resources not available for plugin discovery")
+            LOG.debug("Plugin discovery not available")
 
     def _discover_plugins(self):
         """
