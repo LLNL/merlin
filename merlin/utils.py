@@ -18,12 +18,12 @@ import sys
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta
+from importlib.metadata import distribution, PackageNotFoundError
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, Generator, List, Set, Tuple, Union
 
 import numpy as np
-import pkg_resources
 import psutil
 import yaml
 from tabulate import tabulate
@@ -1282,11 +1282,16 @@ def get_package_versions(package_list: List[str]) -> str:
     table = []
     for package in package_list:
         try:
-            distribution = pkg_resources.get_distribution(package)
-            version = distribution.version
-            location = distribution.location
+            dist = distribution(package)
+            version = dist.metadata["Version"]
+            # requires_python and direct_url are not always present,
+            # so fall back gracefully for location
+            try:
+                location = str(list(dist.files)[0].locate().parent.parent)
+            except Exception:
+                location = "N/A"
             table.append([package, version, location])
-        except pkg_resources.DistributionNotFound:
+        except PackageNotFoundError:
             table.append([package, "Not installed", "N/A"])
 
     table.insert(0, ["python", sys.version.split()[0], sys.executable])

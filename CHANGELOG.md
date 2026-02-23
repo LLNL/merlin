@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- A flux check is now available to determine if the workers are in in alloction/start shell.
+
 ### Changed
 - Removed old monitor code from v1.0
 - Moved `stop-workers` functionality to the `CeleryWorkerHandlers` class
+- Removed pkg_resources and replaced with importlib.metadata
 
 ## [2.0.0b4]
 

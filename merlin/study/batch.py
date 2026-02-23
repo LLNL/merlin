@@ -261,6 +261,51 @@ def parse_batch_block(batch: Dict) -> Dict:
     return parsed_batch
 
 
+def flux_is_running() -> bool:
+    """Check whether a Flux instance is already active in the current environment.
+
+    Uses two complementary strategies:
+      1. Check for FLUX_URI in the environment -- set by both flux alloc
+         and flux start in child processes.
+      2. Verify the instance is actually responsive via flux uptime, since
+         FLUX_URI could be stale (e.g. inherited from a parent shell after the
+         instance has exited).
+
+    Returns:
+        True if a live Flux instance is reachable, False otherwise.
+    """
+    if not os.environ.get("FLUX_URI"):
+        LOG.debug("FLUX_URI not set; no active Flux instance detected.")
+        return False
+    try:
+        result = subprocess.run(
+            ["flux", "uptime"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+        )
+        if result.returncode == 0:
+            LOG.debug("Active Flux instance detected via FLUX_URI=%s", os.environ["FLUX_URI"])
+            return True
+        LOG.debug("FLUX_URI set but flux uptime returned non-zero; treating as not running.")
+        return False
+    except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
+        LOG.debug("Could not verify Flux instance: %s", exc)
+        return False
+
+
+def flux_in_alloc() -> bool:
+    """Return True if the current process is running inside a flux alloc job.
+
+    flux alloc sets FLUX_JOB_ID in the environment of its child processes.
+    flux start (launched via srun/jsrun) does not set this variable.
+
+    Returns:
+        True if FLUX_JOB_ID is present, False otherwise.
+    """
+    return bool(os.environ.get("FLUX_JOB_ID"))
+
+
 def get_flux_launch(parsed_batch: Dict) -> str:
     """
     Build the Flux launch command based on the batch section of the YAML configuration.
@@ -282,6 +327,15 @@ def get_flux_launch(parsed_batch: Dict) -> str:
     flux_exec: str = ""
     if parsed_batch["flux exec workers"]:
         flux_exec = parsed_batch["flux exec"] if parsed_batch["flux exec"] else default_flux_exec
+
+    if flux_is_running():
+        instance_kind = "flux alloc" if flux_in_alloc() else "flux start"
+        LOG.debug(
+            "Flux instance already active (via %s, FLUX_URI=%s). Skipping alloc/start prefix.",
+            instance_kind,
+            os.environ.get("FLUX_URI"),
+        )
+        return f"{flux_exec} `which {parsed_batch['shell']}` -c"
 
     if parsed_batch["launch command"] and "flux" not in parsed_batch["launch command"]:
         launch: str = (

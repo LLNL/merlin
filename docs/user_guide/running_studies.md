@@ -94,6 +94,60 @@ You can specify workers in [the `merlin` block](./specification.md#the-merlin-bl
     sbatch workers.sbatch
     ```
 
+    A full [Flux](../faq.md#what-is-flux) batch submission script to run the workflow on 3 nodes is shown below.
+
+    ```bash title="workers.flux"
+    #!/bin/bash
+    #FLUX: -N 3
+    #FLUX: --job-name=Merlin
+    #FLUX: -t 30m
+    #FLUX: -q pdebug
+    #FLUX: --output=merlin_workers_{id}.out
+
+    # Assumes you are running this in the same dir as the yaml file.
+    YAML_FILE=input.yaml
+
+    # Source the merlin virtualenv (if using csh, change this to 'activate.csh' in the statement below)
+    source <path to merlin venv>/bin/activate
+
+    # Print out the workers command
+    merlin run-workers ${YAML_FILE} --echo
+
+    # Run the workers on the allocation
+    merlin run-workers ${YAML_FILE}
+
+    # Delay until the workers cease running
+    merlin monitor
+    ```
+
+    This script can be submitted using:
+
+    ```bash
+    flux batch workers.flux
+    ```
+
+    The output of the flux workers launch will depend on the base system and current state of the allocation. The three cases are; a slurm batch system using a flux batch configuration, a flux batch system, and a batch system with an flux allocation already available.
+
+    ```bash
+    # SLURM batch systems
+    srun -N 3 -n 3 flux start -o,-S,log-filename=flux_`date +%F:%T`.out flux exec `which /bin/tcsh` -c "celery -A merlin worker -O fair --prefetch-multiplier 1 -E -l info --concurrency 1 -n all_workers.%%h -Q '[merlin]_sim_q,[merlin]_non_sim_q,[merlin]_learner'"
+
+    ```
+
+    ```bash
+    # FLUX batch systems
+    flux alloc -o pty -N 3 --exclusive --job-name=merlin flux exec `which /bin/tcsh` -c "celery -A merlin worker -O fair --prefetch-multiplier 1 -E -l info --concurrency 1 -n all_workers.%%h -Q '[merlin]_sim_q,[merlin]_non_sim_q,[merlin]_learner'"
+
+    ```
+
+    Only the "flux exec ..." component of the workers launch will be called on a SLURM batch system, with the "srun ... flux start" already called or a FLUX batch system with a "flux alloc" already called.
+
+    ```bash
+    # Flux alloc/start already called
+    flux exec `which /bin/tcsh` -c "celery -A merlin worker -O fair --prefetch-multiplier 1 -E -l info --concurrency 1 -n all_workers.%%h -Q '[merlin]_sim_q,[merlin]_non_sim_q,[merlin]_learner'"
+
+    ```
+
     Below is a visual demonstration of this worker startup process. Steps 1 and 2 in this diagram are both handled by the bash script given above.
 
     !!! note

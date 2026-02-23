@@ -18,9 +18,8 @@ and identify the appropriate entry point group for plugin discovery.
 
 import logging
 from abc import ABC, abstractmethod
+from importlib.metadata import entry_points
 from typing import Any, Dict, List, Type
-
-import pkg_resources
 
 
 LOG = logging.getLogger("merlin")
@@ -114,7 +113,7 @@ class MerlinBaseFactory(ABC):
         Discover and register plugins via Python entry points.
         """
         try:
-            for entry_point in pkg_resources.iter_entry_points(self._entry_point_group()):
+            for entry_point in entry_points(group=self._entry_point_group()):
                 try:
                     plugin_class = entry_point.load()
                     self.register(entry_point.name, plugin_class)
