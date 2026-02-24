@@ -17,6 +17,7 @@ and identify the appropriate entry point group for plugin discovery.
 """
 
 import logging
+import sys
 from abc import ABC, abstractmethod
 from importlib.metadata import entry_points
 from typing import Any, Dict, List, Type
@@ -113,7 +114,11 @@ class MerlinBaseFactory(ABC):
         Discover and register plugins via Python entry points.
         """
         try:
-            for entry_point in entry_points().select(group=self._entry_point_group()):
+            if sys.version_info >= (3, 9):
+                eps = entry_points().select(group=self._entry_point_group())
+            else:
+                eps = entry_points().get(self._entry_point_group(), [])
+            for entry_point in eps:
                 try:
                     plugin_class = entry_point.load()
                     self.register(entry_point.name, plugin_class)
