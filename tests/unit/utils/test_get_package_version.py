@@ -48,15 +48,10 @@ def mock_distribution():
     with patch("merlin.utils.distribution") as mock_dist:
         mock_dist.side_effect = [
             make_mock_distribution(pkg, ver, loc)
-            for _, pkg, ver, loc in [
-                (None, *row) for row in [p for p in fake_package_list[1:]]
-            ]
+            for _, pkg, ver, loc in [(None, *row) for row in [p for p in fake_package_list[1:]]]
         ]
         # Re-build side_effect cleanly
-        mock_dist.side_effect = [
-            make_mock_distribution(pkg, ver, loc)
-            for pkg, ver, loc in fake_package_list[1:]
-        ]
+        mock_dist.side_effect = [make_mock_distribution(pkg, ver, loc) for pkg, ver, loc in fake_package_list[1:]]
         yield mock_dist
 
 
