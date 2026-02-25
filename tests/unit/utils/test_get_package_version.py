@@ -3,9 +3,9 @@
 # Project developers. See top-level LICENSE and COPYRIGHT files for dates and
 # other details. No copyright assignment is required to contribute to Merlin.
 ##############################################################################
-
 import sys
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 from tabulate import tabulate
@@ -23,25 +23,45 @@ fake_package_list = [
 ]
 
 
+def make_mock_distribution(package, version, location):
+    """
+    Build a mock that mimics importlib.metadata.distribution().
+
+    get_package_versions accesses:
+      - dist.metadata["Version"]
+      - dist.files[0].locate().parent.parent
+    """
+    dist = MagicMock()
+    dist.metadata = {"Version": version}
+
+    # Build a mock file whose .locate().parent.parent resolves to location
+    mock_file = MagicMock()
+    mock_file.locate.return_value = Path(location) / "pkg" / "file.py"
+    dist.files = [mock_file]
+
+    return dist
+
+
 @pytest.fixture
-def mock_get_distribution():
-    """Mock call to get python distribution"""
-    with patch("pkg_resources.get_distribution") as mock_get_distribution:
-        mock_get_distribution.side_effect = [mock_distribution(*package) for package in fake_package_list[1:]]
-        yield mock_get_distribution
+def mock_distribution():
+    """Mock importlib.metadata.distribution used inside get_package_versions."""
+    with patch("merlin.utils.distribution") as mock_dist:
+        mock_dist.side_effect = [
+            make_mock_distribution(pkg, ver, loc)
+            for _, pkg, ver, loc in [
+                (None, *row) for row in [p for p in fake_package_list[1:]]
+            ]
+        ]
+        # Re-build side_effect cleanly
+        mock_dist.side_effect = [
+            make_mock_distribution(pkg, ver, loc)
+            for pkg, ver, loc in fake_package_list[1:]
+        ]
+        yield mock_dist
 
 
-class mock_distribution:
-    """A mock python distribution"""
-
-    def __init__(self, package, version, location):
-        self.key = package
-        self.version = version
-        self.location = location
-
-
-def test_get_package_versions(mock_get_distribution):
-    """Test ability to get versions and format as correct table"""
+def test_get_package_versions(mock_distribution):
+    """Test ability to get versions and format as correct table."""
     package_list = ["merlin", "celery", "kombu", "redis", "amqp"]
     fake_table = tabulate(fake_package_list, headers=["Package", "Version", "Location"], tablefmt="simple")
     expected_result = f"Python Packages\n\n{fake_table}\n"
@@ -50,13 +70,12 @@ def test_get_package_versions(mock_get_distribution):
 
 
 def test_bad_package():
-    """Test that it only gets the things we have in our real environment."""
+    """Test that not-installed packages show 'Not installed'."""
     bogus_packages = ["garbage_package_1", "junk_package_2"]
     result = get_package_versions(bogus_packages)
-    expected_data = [fake_package_list[0]]  # python
+    expected_data = [fake_package_list[0]]  # python row
     for package in bogus_packages:
         expected_data.append([package, "Not installed", "N/A"])
-
     expected_table = tabulate(expected_data, headers=["Package", "Version", "Location"], tablefmt="simple")
     expected_result = f"Python Packages\n\n{expected_table}\n"
     assert result == expected_result
