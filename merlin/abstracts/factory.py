@@ -17,13 +17,39 @@ and identify the appropriate entry point group for plugin discovery.
 """
 
 import logging
-import sys
 from abc import ABC, abstractmethod
-from importlib.metadata import entry_points
+from importlib.metadata import entry_points as _entry_points
 from typing import Any, Dict, List, Type
 
 
 LOG = logging.getLogger("merlin")
+
+
+def _get_entry_points(group: str):
+    """
+    Retrieve entry points for a given group in a way that is compatible with
+    Python 3.8 through 3.14.
+
+    - Python 3.8 / 3.9  : entry_points() returns a plain dict
+    - Python 3.10 / 3.11: entry_points() returns a SelectableGroups object
+    - Python 3.12+      : entry_points(group=...) is the preferred API
+
+    Args:
+        group: The entry point group to look up.
+
+    Returns:
+        An iterable of entry points belonging to the specified group.
+    """
+    eps = _entry_points()
+    if isinstance(eps, dict):
+        # Python 3.8 / 3.9
+        return eps.get(group, [])
+    if hasattr(eps, "select"):
+        # Python 3.10 / 3.11
+        return eps.select(group=group)
+    # Python 3.12+ -- entry_points() with no args still works but
+    # calling with group= is cleaner; fall back to dict-style .get()
+    return eps.get(group, [])
 
 
 class MerlinBaseFactory(ABC):
@@ -114,11 +140,7 @@ class MerlinBaseFactory(ABC):
         Discover and register plugins via Python entry points.
         """
         try:
-            if sys.version_info >= (3, 9):
-                eps = entry_points().select(group=self._entry_point_group())
-            else:
-                eps = entry_points().get(self._entry_point_group(), [])
-            for entry_point in eps:
+            for entry_point in _get_entry_points(self._entry_point_group()):
                 try:
                     plugin_class = entry_point.load()
                     self.register(entry_point.name, plugin_class)
